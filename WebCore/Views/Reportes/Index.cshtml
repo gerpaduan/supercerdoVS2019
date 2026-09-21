@@ -256,7 +256,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive js-sync-scroll-body">
+                        <div class="table-responsive js-sync-scroll-body reportes-scroll-y">
                             <table class="table table-bordered table-hover mb-0 reportes-tabla js-sticky-first-col" id="tablaReporteStockActual">
                                 <thead class="thead-light">
                                     <tr>
@@ -271,7 +271,7 @@
                                         <th class="text-right reporte-detalle-col d-none">Ingr. stock</th>
                                         <th class="text-right reporte-detalle-col d-none">Ingr. mov.</th>
                                         <th class="text-right reporte-detalle-col d-none">Ajustes</th>
-                                        <th class="text-right reporte-detalle-col d-none" title="Incluye St. inicial">Tot. ingresos*</th>
+                                        <th class="text-right reporte-detalle-col d-none">Tot. ingresos</th>
                                         <th class="text-right reporte-detalle-col d-none">Egr. stock</th>
                                         <th class="text-right reporte-detalle-col d-none">Egr. mov.</th>
                                         <th class="text-right reporte-detalle-col d-none">Egr. elab.</th>
@@ -377,9 +377,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="reportes-tabla-nota text-muted small px-3 py-2">
-                            * Tot. ingresos incluye St. inicial.
-                        </div>
                     </div>
                 }
             }
@@ -392,7 +389,7 @@
                 else
                 {
                     var periodosVentas = Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<WebCore.Models.ReportePeriodoComparativoVm>();
-                    <div class="table-responsive js-sync-scroll-body">
+                    <div class="table-responsive js-sync-scroll-body reportes-scroll-y">
                         <table class="table table-bordered table-hover mb-0 reportes-tabla js-sticky-first-col" id="tablaReporteVentasProducto">
                             <thead class="thead-light">
                                 <tr>
@@ -895,7 +892,7 @@
                                 <div class="reporte-stock-modal-line"><span>Movimiento</span><strong id="modalDetalleStockReporteIngresoMovimiento">0,000</strong></div>
                                 <div class="reporte-stock-modal-line"><span>Ajustes</span><strong id="modalDetalleStockReporteAjusteStock">0,000</strong></div>
                                 <div class="reporte-stock-modal-line reporte-stock-modal-line-total">
-                                    <span>Tot. ingresos<small class="reporte-stock-modal-line-note">Incluye St. inicial</small></span>
+                                    <span>Tot. ingresos</span>
                                     <strong id="modalDetalleStockReporteTotalIngresos">0,000</strong>
                                 </div>
                             </div>
@@ -1408,6 +1405,27 @@
 
     .reportes-floating-zone {
         position: relative;
+    }
+
+    /* Cabecera fija al desplazar verticalmente: .table-responsive (overflow-x:auto) es el
+       contenedor de scroll del sticky, y como no scrolleaba en vertical el th nunca se pegaba.
+       Se le da alto maximo para que scrollee adentro y la cabecera (top:0) quede visible.
+       Solo tablas con UNA fila de cabecera (stock y ventas); proyeccion tiene 2 filas y
+       necesitaria un offset por fila. */
+    .reportes-scroll-y {
+        max-height: calc(100vh - 8rem);
+        overflow-y: auto;
+    }
+
+    .reportes-scroll-y thead th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+    }
+
+    /* La esquina (Producto/Codigo) va por encima de las demas cabeceras al cruzar ambos ejes. */
+    .reportes-scroll-y.table-responsive thead th:first-child {
+        z-index: 4;
     }
 
     .reportes-sticky-stack {

@@ -1863,14 +1863,34 @@ namespace DatosPostgres
         // el mapa madre/hija jerarquico, con columna nivel + WHERE nivel<10 reemplazando
         // OPTION(MAXRECURSION 20), que no tiene equivalente nativo en Postgres). Sin
         // funciones/procedimientos Postgres, mismo criterio que el resto del proyecto.
-        // "c.fechaCompra LIKE @fechaDesde/@fechaHasta" del original (match exacto de
-        // datetime via conversion implicita a string, sin wildcards) -> "=" directo:
-        // el propio SP documenta la intencion como "cargado EXACTO en @fecha".
+        // "c.fechaCompra LIKE @fechaDesde/@fechaHasta" del original: con ambos lados datetime,
+        // SQL Server los convierte a texto con el formato por defecto ("Sep  7 2026  7:46AM"),
+        // que NO lleva segundos -> el cierre coincide si cae en el MISMO MINUTO que la fecha
+        // pedida. Se replica con un rango de 1 minuto sobre date_trunc('minute', ...) (sargable).
+        // CORREGIDO 2026-09-21: la primera traduccion uso "=" (timestamp exacto) creyendo que
+        // el LIKE era un match exacto; con la fecha al minuto que manda la pantalla no
+        // encontraba el cierre y Stock.Ini/Stock.Cierre quedaban en 0 (ver docs/DECISIONS.md).
+        //
+        // PERFORMANCE (2026-09-21, ver docs/DECISIONS.md y docs/07-operacion-y-soporte/
+        // incidencias-frecuentes.md): la version original era UNA sola consulta con todos los CTE
+        // (corteefectivoporsucursal, mapacorte, etc.). Postgres estima ~25 filas para esos CTE
+        // (recursivos, sin estadisticas) cuando en realidad tienen miles, y resolvia cada JOIN
+        // contra ellos con bucles anidados: 40-80 s por reporte con la empresa 1 de SuperCerdo
+        // (577k ventas, 255 subproductos sobre 256 cortes), bloqueando una conexion y trabando
+        // la app. Ahora las 2 partes que no dependen de las fechas se materializan en tablas
+        // TEMP (ON COMMIT DROP) con indice + ANALYZE, y la consulta principal las lee con
+        // estadisticas reales: ~0,2 s, mismo resultado fila por fila (verificado contra la
+        // version original). Alternativa descartada: SET LOCAL enable_nestloop=off (~0,8 s,
+        // desactiva bucles anidados para TODA la consulta).
+        // Los nombres de las tablas temp coinciden con los de los CTE originales a proposito:
+        // la consulta principal quedo textualmente igual y sigue leyendo "mapacorte" y
+        // "corteefectivoporsucursal". Se ejecutan via DbPg.DataTableConPreparacion (misma
+        // conexion/transaccion, las tablas se borran solas al commit).
         public DataTable CierreStockWeb(string texto, int idEmpresa, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
         {
-            const string sql = @"
-                WITH RECURSIVE
-                corteefectivoporsucursal AS (
+            // Paso 1: valor efectivo de independiente/encierrestock por (corte, sucursal).
+            const string sqlPrepCorteEfectivo = @"
+                CREATE TEMP TABLE corteefectivoporsucursal ON COMMIT DROP AS (
                     -- Resuelve, por (idcorte, idsucursal), el valor EFECTIVO de independiente/
                     -- encierrestock (override de cortejerarquiasucursal si existe, si no el
                     -- global de corte) y si hay una EXCEPCION activa marcando independiente=true
@@ -1896,7 +1916,13 @@ namespace DatosPostgres
                     WHERE c.idempresa = @idEmpresa
                       AND s.idempresa = @idEmpresa
                       AND (@idSucursal = 0 OR s.idsucursal = @idSucursal)
-                ),
+                )";
+
+            // Paso 2: mapa corte origen -> corte de stock (con factor), resuelto por recursion
+            // sobre la jerarquia madre/hija. Es la parte cara: se calcula una vez y se indexa.
+            const string sqlPrepMapaCorte = @"
+                CREATE TEMP TABLE mapacorte ON COMMIT DROP AS
+                WITH RECURSIVE
                 selfmap AS (
                     SELECT ce.idsucursal, c.idcorte AS idcorteorigen, c.idcorte AS idcortestock, 1::numeric(38,10) AS factor
                     FROM corte c
@@ -1963,7 +1989,25 @@ namespace DatosPostgres
                     FROM mapa
                     WHERE factor <> 0
                     GROUP BY idsucursal, idcorteorigen, idcortestock
-                ),
+                )
+                SELECT idsucursal, idcorteorigen, idcortestock, factor FROM mapacorte";
+
+            // Sentencias de preparacion, en orden. ANALYZE despues de cada tabla es lo que le da
+            // al planificador las cardinalidades reales (es la razon de todo este cambio); el
+            // indice sirve al JOIN por (sucursal, corte origen) de las ramas de 'operaciones'.
+            var sentenciasPreparacion = new[]
+            {
+                sqlPrepCorteEfectivo,
+                "ANALYZE corteefectivoporsucursal",
+                sqlPrepMapaCorte,
+                "CREATE INDEX ON mapacorte (idsucursal, idcorteorigen)",
+                "ANALYZE mapacorte"
+            };
+
+            // Consulta principal: idem a la original, sin los 2 CTE que ahora son tablas temp.
+            // Sin RECURSIVE: ya no queda ningun CTE recursivo aca.
+            const string sql = @"
+                WITH
                 sucursales AS (
                     SELECT s.idsucursal, s.sucursal
                     FROM sucursal s
@@ -1994,7 +2038,9 @@ namespace DatosPostgres
                     INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = cpc.idsucursal
                     INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte AND mc.idsucursal = cpc.idsucursal
-                    WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = '' AND c.fechacompra = @fechaDesde
+                    WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = ''
+                      AND c.fechacompra >= date_trunc('minute', @fechaDesde::timestamp)
+                      AND c.fechacompra <  date_trunc('minute', @fechaDesde::timestamp) + interval '1 minute'
                     GROUP BY cpc.idsucursal, mc.idcortestock
 
                     UNION ALL
@@ -2005,7 +2051,9 @@ namespace DatosPostgres
                     INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = cpc.idsucursal
                     INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte AND mc.idsucursal = cpc.idsucursal
-                    WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = '' AND c.fechacompra = @fechaHasta
+                    WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = ''
+                      AND c.fechacompra >= date_trunc('minute', @fechaHasta::timestamp)
+                      AND c.fechacompra <  date_trunc('minute', @fechaHasta::timestamp) + interval '1 minute'
                     GROUP BY cpc.idsucursal, mc.idcortestock
 
                     UNION ALL
@@ -2195,7 +2243,7 @@ namespace DatosPostgres
 
             string textoLimpio = (texto ?? "").Trim();
 
-            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            return DbPg.DataTableConPreparacion(_connectionString, _idEmpresa, sentenciasPreparacion, sql, p =>
             {
                 p.AddWithValue("textoLimpio", textoLimpio);
                 p.AddWithValue("idEmpresa", idEmpresa);
@@ -2597,25 +2645,54 @@ namespace DatosPostgres
         // patron de WITH RECURSIVE que CierreStockWeb, con FechaUltimoCierre calculado
         // por sucursal (no un @fechaDesde fijo) y el CROSS APPLY final resuelto como
         // columnas calculadas directas (no hace falta LATERAL, son expresiones simples).
+        //
+        // PERFORMANCE (2026-09-21): mismo problema y mismo arreglo que CierreStockWeb (ver el
+        // comentario de ese metodo y docs/DECISIONS.md): los CTE sucursales /
+        // corteefectivoporsucursal / mapacorte se materializan como tablas TEMP (ON COMMIT DROP)
+        // con ANALYZE (+ indice en mapacorte) via DbPg.ReaderConPreparacion, y la consulta
+        // principal las lee con estadisticas reales en vez de los ~25 filas que estima Postgres
+        // para un CTE recursivo. Los nombres de las tablas temp coinciden con los de los CTE
+        // originales a proposito, asi la consulta principal quedo textualmente igual.
         public List<Entidades.ExistenciaStockPorSucursalPlanoVm> ObtenerExistenciaPorSucursalesPlano(
             string texto, int idSucursal, DateTime? fechaHasta, string tipo, int idProveedor, int idMarca, int idCorte, bool soloConStock)
         {
             DateTime fechaHastaEfectiva = fechaHasta ?? DateTime.Now;
             string textoLimpio = (texto ?? "").Trim();
 
-            const string sql = @"
-                WITH RECURSIVE
-                sucursales AS (
+            // Paso 1: sucursales pedidas, cada una con la fecha de su ultimo Cierre Stock <= @fechaHasta.
+            // Equivalente al LEFT JOIN corteporcompra + MAX(fechacompra) original (el ultimo cierre
+            // que tiene AL MENOS UNA linea de esa sucursal), pero con EXISTS: recorre solo los
+            // cierres (~1.2k) en vez de unir las ~113k lineas de compra (309 ms -> pocos ms).
+            const string sqlPrepSucursales = @"
+                CREATE TEMP TABLE sucursales ON COMMIT DROP AS (
                     SELECT s.idsucursal, s.sucursal,
-                           COALESCE(MAX(c.fechacompra), '1900-01-01'::timestamp) AS fechaultimocierre
+                           COALESCE(uc.fechaultimocierre, '1900-01-01'::timestamp) AS fechaultimocierre
                     FROM sucursal s
-                    LEFT JOIN corteporcompra cpc ON cpc.idsucursal = s.idsucursal
-                    LEFT JOIN compras c ON c.idcompra = cpc.idcompra
-                        AND c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = '' AND c.fechacompra <= @fechaHasta
+                    LEFT JOIN LATERAL (
+                        SELECT MAX(c.fechacompra) AS fechaultimocierre
+                        FROM compras c
+                        WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = '' AND c.fechacompra <= @fechaHasta
+                          AND EXISTS (SELECT 1 FROM corteporcompra cpc WHERE cpc.idcompra = c.idcompra AND cpc.idsucursal = s.idsucursal)
+                    ) uc ON true
                     WHERE (@idSucursal = 0 OR s.idsucursal = @idSucursal) AND s.idempresa = @idEmpresa
-                    GROUP BY s.idsucursal, s.sucursal
-                ),
-                corteefectivoporsucursal AS (
+                )";
+
+            // Paso 1b: ventas del periodo (desde el ultimo cierre de su sucursal hasta @fechaHasta).
+            // Se materializan aparte porque la fecha de corte viene de OTRA tabla (sucursales): el
+            // planificador no puede estimar cuantas ventas caen ahi (estimaba ~95k, reales ~276) y
+            // resolvia el JOIN con lineaventa leyendola ENTERA (1M+ filas, y crece con el historial
+            // de todas las empresas). Con la tabla chica y ANALYZE usa el indice de idventa.
+            const string sqlPrepVentasPeriodo = @"
+                CREATE TEMP TABLE ventasperiodo ON COMMIT DROP AS (
+                    SELECT v.idventa, v.idsucursal
+                    FROM ventas v
+                    INNER JOIN sucursales s ON s.idsucursal = v.idsucursal
+                    WHERE v.fechaventa >= s.fechaultimocierre AND v.fechaventa <= @fechaHasta
+                )";
+
+            // Paso 2: valor efectivo de independiente/encierrestock por (corte, sucursal).
+            const string sqlPrepCorteEfectivo = @"
+                CREATE TEMP TABLE corteefectivoporsucursal ON COMMIT DROP AS (
                     -- Ver Datos/DB-Procedures/20260917-Alter_a_ExistenciaStockPorSucursales_
                     -- JerarquiaPorSucursal.sql (SQL Server, ya probado) para el razonamiento
                     -- completo, incluido el bug real corregido ahi: la exclusion de
@@ -2633,7 +2710,13 @@ namespace DatosPostgres
                     LEFT JOIN cortejerarquiasucursal ov
                         ON ov.idempresa = c.idempresa AND ov.idcorte = c.idcorte AND ov.idsucursal = s.idsucursal
                     WHERE c.idempresa = @idEmpresa
-                ),
+                )";
+
+            // Paso 3: mapa corte origen -> corte de stock (con factor), por recursion sobre la
+            // jerarquia madre/hija. Es la parte cara: se calcula una vez y se indexa.
+            const string sqlPrepMapaCorte = @"
+                CREATE TEMP TABLE mapacorte ON COMMIT DROP AS
+                WITH RECURSIVE
                 selfmap AS (
                     SELECT ce.idsucursal, c.idcorte AS idcorteorigen, c.idcorte AS idcortestock, 1::numeric(38,10) AS factor
                     FROM corte c
@@ -2696,7 +2779,29 @@ namespace DatosPostgres
                     FROM mapa
                     WHERE factor <> 0 AND (@idCorte = 0 OR idcortestock = @idCorte)
                     GROUP BY idsucursal, idcorteorigen, idcortestock
-                ),
+                )
+                SELECT idsucursal, idcorteorigen, idcortestock, factor FROM mapacorte";
+
+            // Sentencias de preparacion, en orden. ANALYZE despues de cada tabla le da al
+            // planificador las cardinalidades reales (razon de todo este cambio); el indice sirve
+            // al JOIN por (sucursal, corte origen) de las ramas de 'operaciones'.
+            var sentenciasPreparacion = new[]
+            {
+                sqlPrepSucursales,
+                "ANALYZE sucursales",
+                sqlPrepVentasPeriodo,
+                "ANALYZE ventasperiodo",
+                sqlPrepCorteEfectivo,
+                "ANALYZE corteefectivoporsucursal",
+                sqlPrepMapaCorte,
+                "CREATE INDEX ON mapacorte (idsucursal, idcorteorigen)",
+                "ANALYZE mapacorte"
+            };
+
+            // Consulta principal: idem a la original, sin los CTE que ahora son tablas temp.
+            // Sin RECURSIVE: ya no queda ningun CTE recursivo aca.
+            const string sql = @"
+                WITH
                 allcortes AS (
                     SELECT DISTINCT
                         c.idcorte, c.codigo::text AS codigo, c.corte, s.idsucursal, s.sucursal, s.fechaultimocierre,
@@ -2768,11 +2873,9 @@ namespace DatosPostgres
 
                     SELECT 'Ventas', v.idsucursal, mc.idcortestock,
                            SUM((COALESCE(lv.cantkg,0) - COALESCE(lv.kgsajustetarj,0))::numeric(38,6) * mc.factor)
-                    FROM ventas v
+                    FROM ventasperiodo v
                     INNER JOIN lineaventa lv ON lv.idventa = v.idventa
-                    INNER JOIN sucursales s ON s.idsucursal = v.idsucursal
                     INNER JOIN mapacorte mc ON mc.idcorteorigen = lv.idcorte AND mc.idsucursal = v.idsucursal
-                    WHERE v.fechaventa >= s.fechaultimocierre AND v.fechaventa <= @fechaHasta
                     GROUP BY v.idsucursal, mc.idcortestock
 
                     UNION ALL
@@ -2883,7 +2986,7 @@ namespace DatosPostgres
                     TRIM(COALESCE(f.codigo,'')) ASC,
                     f.sucursal ASC;";
 
-            return DbPg.Reader(_connectionString, _idEmpresa, sql,
+            return DbPg.ReaderConPreparacion(_connectionString, _idEmpresa, sentenciasPreparacion, sql,
                 dr => new Entidades.ExistenciaStockPorSucursalPlanoVm
                 {
                     IdCorte = dr["idcorte"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idcorte"]),

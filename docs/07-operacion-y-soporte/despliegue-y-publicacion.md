@@ -306,7 +306,7 @@ Reemplaza la clasica descripta arriba. Mismo patron de diseño que el planificad
 
 ## Migración "Login solo desde dispositivos seguros" (2026-09-19) -- orden de despliegue
 
-Cambio con esquema nuevo (todo aditivo, defaults apagados: no cambia el comportamiento del login hasta que un admin active el switch de "Mi Empresa" o el tilde por usuario). **Orden obligatorio: migración primero, código después** -- `Datos/Empresa.cs` (UPDATE explícito), `Datos/DispositivoSeguro.cs` (SELECT/INSERT explícitos) y `EmpresaPg.findById` usan las columnas nuevas y fallan si faltan. **Cada servidor requiere aprobación explícita del usuario; no se aplicó en ninguno todavía** (solo bases de dev locales).
+Cambio con esquema nuevo (todo aditivo, defaults apagados: no cambia el comportamiento del login hasta que un admin active el switch de "Mi Empresa" o el tilde por usuario). **Orden obligatorio: migración primero, código después** -- `Datos/Empresa.cs` (UPDATE explícito), `Datos/DispositivoSeguro.cs` (SELECT/INSERT explícitos) y `EmpresaPg.findById` usan las columnas nuevas y fallan si faltan. **Cada servidor requiere aprobación explícita del usuario.** Estado: **aplicado y desplegado en Servidor SM y San Lorenzo el 2026-09-19** (ver "Registro de aplicación" abajo); **VM CarniSys (Postgres) NO migrada ni redesplegada** (PENDIENTE).
 
 | Servidor | Motor | Script | Notas |
 |---|---|---|---|
@@ -319,3 +319,25 @@ Después del deploy de código (mismos pasos que el resto de esta sección, incl
 2. **Antes de activar el switch de empresa**: cargar el mail de cada empleado no-admin (sin mail no puede autorizar un celular) y que el SMTP esté configurado en el servidor (`SmtpHost`/`SmtpFromEmail` en `WebCore.dll.config`).
 3. Activar desde `/Empresa` ("Exigir dispositivo seguro a no-administradores") o por usuario, y probar con un usuario no-admin desde un celular. **Prueba manual pendiente del mail real** (no automatizable).
 4. Rollback funcional: apagar el switch/tilde (los admin siempre entran, así que nunca queda nadie afuera). Las columnas nuevas no requieren rollback de esquema.
+
+### Registro de aplicación (2026-09-19, Servidor SM y San Lorenzo)
+
+Deploy de `codex_ia` (HEAD `aa2070ef`) + migraciones SQL Server, pedido explícito del usuario, sin usuarios activos. Aplicadas en cada servidor sobre la BD `SuperCerdo` (SQL Server 2008 RTM 10.0.1600.22 en ambos):
+- `Datos/DB-Procedures/20260917-Create_CorteJerarquiaSucursal.sql`, `20260917-Alter_a_CierreStockWeb_JerarquiaPorSucursal.sql`, `20260917-Alter_a_ExistenciaStockPorSucursales_JerarquiaPorSucursal.sql` (Jerarquía por sucursal) y `20260919-Alter_Login_DispositivoSeguro_{ServidorSM|SanLorenzo}.sql`.
+
+**Método (repetible para próximas migraciones en producción)**:
+1. Antes de tocar: volcar la definición de cada SP a modificar y compararla por hash con la esperada (si difiere, parar: alguien la cambió a mano). Los volcados originales sirven de rollback.
+2. `BACKUP DATABASE ... WITH COPY_ONLY, CHECKSUM` + `RESTORE VERIFYONLY`. Archivos: `SuperCerdo_PRE_dispositivos_jerarquia_20260919.bak` en el directorio de backups de cada SQL Server.
+3. Ensayo dentro de `BEGIN TRAN ... ROLLBACK` contra el motor real (2008) para detectar sintaxis/compatibilidad sin dejar rastro.
+4. Aplicar y verificar (`sys.columns`, `OBJECT_ID`).
+5. Paridad de SPs: crear copias temporales `zz_old_*` con la definición vieja, comparar salidas viejo vs nuevo sobre datos reales (fechas en sqlcmd como `YYYYMMDD`: con locale es-AR `2026-09-19` da error de conversión en ambos lados y engaña como "paridad"), y borrar las `zz_old_*`.
+
+**Deploy de código**:
+- SM: se deshabilitó `WebCoreAppWatchdog` (`Disable-ScheduledTask`; `Stop-ScheduledTask` no alcanza porque el trigger repite), se paró `WebCoreApp`, backup de la carpeta en `C:\WebCore-backup-20260919`, subida por SFTP (820/820), restaurar `WebCore.dll.config`, arrancar, re-habilitar watchdog. Verificado: puerto 5250 escuchando, `/Login` 200, sin excepciones en el Event Log.
+- SL: solo se paró el pool `CarniSysWebCore` (el pool `web` es de SuperCerdoWeb, no se toca), staging `C:\inetpub\wwwroot\web\_deploy\webcore_sl_20260919`, `robocopy /MIR` (exit code 1 = ok) a `CarniSysWeb`, restaurar `WebCore.dll.config` desde `C:\WebCore-SL-config-20260919.txt` (DataEngine=SqlServer), arrancar pool. Backup de la carpeta previa: `C:\inetpub\wwwroot\web\CarniSysWeb-backup-predispositivos-20260919`. Verificado por HTTPS: `/CarniSysWeb/Login/Index` 200 con cookie `cs_dev` (`secure; samesite=lax; httponly`), POST con usuario inexistente responde el mensaje normal (confirma acceso a la BD con el código nuevo), `/SuperCerdoWeb/` 200, sin excepciones .NET en el Event Log.
+- Lección: en Git Bash (MSYS) los argumentos que empiezan con `/` se convierten a rutas Windows (`/C:/WebCore` -> nada escrito, SFTP 0/820); exportar `MSYS_NO_PATHCONV=1` para rutas remotas.
+
+**Hallazgos sin resolver (PENDIENTE)**:
+- San Lorenzo: la carpeta viva `CarniSysWeb` no tiene `AFIP/` (la clásica sí, en `CarniSysWeb-backup-20260916`). La facturación electrónica desde WebCore en SL no tendría certificados. No verificado ni tocado.
+- San Lorenzo: las llaves de DataProtection son efímeras; cada reciclado del pool cierra las sesiones (este deploy incluido).
+- No probado: login real de un usuario (no hay credenciales en esta sesión), mail real por SMTP y flujo desde un celular.

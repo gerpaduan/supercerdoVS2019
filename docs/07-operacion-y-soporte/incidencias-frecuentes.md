@@ -13,6 +13,19 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-09-21 - Stock inicial / Stock cierre en 0 en los reportes de stock sobre Postgres
+
+- **Sintoma**: Cierre Stock, Stock Actual y Stock Retroactivo mostraban Stock inicial y Stock cierre en 0 (y `Faltante` distinto al de SQL Server `SuperCerdo`), aunque los datos migrados eran identicos.
+- **Causa**: `CortePg.CierreStockWeb` buscaba el cierre con `fechacompra = @fecha` (instante exacto). El SP original usa `LIKE` entre dos `datetime`, que en SQL Server compara como texto **al minuto**; la web manda la fecha al minuto (`yyyy-MM-ddTHH:mm`) y el cierre real tiene segundos (1225 de 1256 cierres) -> no coincidia.
+- **Fix**: rango de 1 minuto con `date_trunc('minute', ...)` para `@fechaDesde` y `@fechaHasta`. Verificado fila por fila contra el SP original (5 casos, fecha al minuto y exacta). Detalle en `docs/DECISIONS.md` (2026-09-21).
+
+## 2026-09-21 - Reportes de stock (Cierre Stock / Stock Actual) se cuelgan 40-80 s en Postgres
+
+- **Sintoma**: con la empresa 1 de SuperCerdo (577k ventas, 255 subproductos sobre 256 cortes) cada reporte de stock tardaba 40-80 s y bloqueaba una conexion; varios usuarios a la vez trababan la app.
+- **Causa**: `CortePg.CierreStockWeb` era una sola consulta con CTE recursivos (`corteefectivoporsucursal`, `mapacorte`). Postgres estimaba ~25 filas para esos CTE (eran miles) y resolvia los JOIN con bucles anidados (202 M de filas descartadas en un solo join).
+- **Fix**: esos 2 CTE se materializan en tablas TEMP (`ON COMMIT DROP`) con indice + `ANALYZE` via `DbPg.DataTableConPreparacion`: ~0,2-0,7 s, resultado identico fila por fila. Detalle y alternativa descartada en `docs/DECISIONS.md` (2026-09-21).
+- **Tambien afectaba a** `CortePg.ObtenerExistenciaPorSucursalesPlano` (Stock > Existencia por sucursales, 19-36 s): corregido el mismo dia con el mismo mecanismo + tabla temp `ventasperiodo` (0,7-1,3 s). Ver `docs/DECISIONS.md`.
+
 ## 2026-08-29 (mas reciente) - Sandbox local del agente bloquea tambien `Remove-Item -Recurse -Force` dentro de un loop (no solo `/MIR`)
 
 - **Contexto**: deploy del fix de `Web.csproj` a Servidor SM, usando `net use` + `Copy-Item`/`Remove-Item` sobre el drive mapeado (`Z:\`) en vez de `robocopy` (para evitar el bloqueo de `/MIR` ya documentado). El comando corre **local** esta vez (no via SSH a un server remoto como San Lorenzo/VM) -- mismo sandbox del tool de PowerShell, otro disparador.
@@ -249,3 +262,18 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Resolucion**: se saco la llamada a `showNavigationLoading()` del handler de `submit`, dejando solo `saveState()` (que de todos modos ya se dispara en cada `change`/`input` de los campos del filtro, asi que no se pierde nada).
 - **Verificacion**: Playwright contra `/Cajas/EgresosCaja` local — resultados visibles a los 0.6s, cero apariciones de "Cargando solicitud" en los 4s siguientes (antes aparecia puntual a los 2s).
 - **REGLA**: cuando una busqueda/formulario se reescribe de "postback de pagina completa" a AJAX, hay que auditar y sacar cualquier wiring viejo que asumia navegacion real (`trackNavigation()`, `showNavigationLoading()`, etc.) del handler de `submit` original — el `preventDefault()` del nuevo handler AJAX no cancela un `trackNavigation()` ya armado por otro listener en el mismo evento.
+
+## 2026-09-20 -- VPS luden (Docker): signo `¤` en vez de `$`, separadores invertidos y decimales mal leidos
+**Sintoma**: en `Ventas/Index` el total salia como `¤1,234.50` en vez de `$ 1.234,50`. Mismo origen en toda la app: fechas `09/20/2026` y `"1267,5"` leido como `12675` (sin error, riesgo de datos x10/x100).
+**Causa**: el contenedor `carnisys-web` arranca sin `LANG` -> .NET usa cultura invariante (en la VM Windows la cultura salia del SO, es-AR). Comprobado con un test en `mcr.microsoft.com/dotnet/aspnet:10.0`: sin `LANG` -> `¤1,234.50`; con `LANG=es_AR.UTF-8` -> `$ 1.234,50`.
+**Fix**: `LANG` y `LC_ALL=es_AR.UTF-8` en `environment` del servicio `web` (`deploy/luden/docker-compose.yml` y `/srv/carnisys/docker-compose.yml`), `docker compose up -d web`. Cualquier stack nuevo de WebCore en Docker necesita estas dos variables.
+
+## 2026-09-20 -- Lector de codigo de barras por camara lento (Chrome, celular)
+**Sintoma**: en Compras/Stock/Movimientos (`barcode-code-input.js`) cada producto tardaba 2 s o mas en leerse; en general la camara enfocaba/leia lento.
+**Causa**: (1) `scanner.js` ignoraba 2 s el mismo codigo (`TIEMPO_RELECTURA`), pero `barcode-code-input.js` exige dos lecturas iguales para confirmar -> la segunda solo llegaba pasados 2 s con el codigo quieto; (2) `getUserMedia` pedia 640x480 (codigo borroso) y sin autoenfoque continuo; (3) sondeo del detector cada 200 ms. La lectora USB/Bluetooth por teclado no esta afectada.
+**Fix**: `scanner.js` acepta `tiempoRelectura` (default 2000, sin cambio para POS, donde evita agregar el mismo producto en cada frame) y `intervaloLecturaMs` (100); `barcode-code-input.js` pasa `tiempoRelectura: 0`; con detector nativo (Chromium) pide 1280x720 y `focusMode: continuous` si el dispositivo lo soporta; ZXing (Firefox/iOS) sigue en 640x480. Desplegado 2026-09-20 (imagen `carnisys-web:20260920-0119`; rollback: `docker tag carnisys-web:20260919-2352 carnisys-web:latest && docker compose up -d web`). **Pendiente**: validar con camara real de celular; si iOS/Safari es lento, evaluar un decodificador WASM (dependencia nueva, requiere OK por §3).
+
+## 2026-09-21 -- Dashboard (WebCore): filtros Periodo y Sucursal desalineados
+**Sintoma**: en `Home/Index` el label "Periodo" quedaba al lado del select (no arriba) y los dos selects tenian ancho y altura distintos.
+**Causa**: WebCore usa Bootstrap 5, que no define `.custom-select` (en BS4 traia `display:inline-block; width:100%`); ni `bootstrap4-compat.css` ni `ui-refresh.css` lo cubren. `<label>` y `<select>` quedaban inline, con el select tomando el ancho de su opcion mas larga.
+**Fix**: en `WebCore/Views/Home/Index.cshtml`, `.dashboard-filters label { display:block }` y `.dashboard-filters .custom-select { display:block; width:100% }`. Verificado en navegador con los CSS reales de WebCore: ambos selects a la misma altura (top) y 182 px de ancho. Los unicos `.custom-select` de WebCore estan en este bloque; si otra vista portada del clasico lo usa, necesita lo mismo (o definirlo en `bootstrap4-compat.css`).
