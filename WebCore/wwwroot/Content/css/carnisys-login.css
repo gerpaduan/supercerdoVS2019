@@ -106,3 +106,15 @@ body.carnisys-login {
     .brand-content h1 { font-size: 31px; }
     .login-heading h2 { font-size: 28px; }
 }
+
+/* Login por huella (passkeys, 2026-09-21): boton principal arriba del formulario clasico. `hidden`
+   no alcanza con estos display:flex/block, por eso el [hidden] explicito. */
+.passkey-login[hidden], .passkey-login [hidden] { display: none !important; }
+.passkey-login { margin-bottom: 22px; }
+.passkey-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 58px; color: #fff; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; background: linear-gradient(95deg, var(--login-navy-dark), var(--login-navy)); border: 0; border-radius: 12px; box-shadow: 0 12px 20px rgba(6,45,99,.22); transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; }
+.passkey-btn i { font-size: 22px; }
+.passkey-btn:hover, .passkey-btn:focus { transform: translateY(-1px); box-shadow: 0 15px 24px rgba(6,45,99,.3); }
+.passkey-btn:disabled { cursor: progress; opacity: .7; transform: none; }
+.passkey-login .login-alert { margin: 14px 0 0; }
+.passkey-divider { display: flex; align-items: center; gap: 12px; margin-top: 22px; color: var(--login-muted); font-size: 13px; }
+.passkey-divider::before, .passkey-divider::after { flex: 1; height: 1px; content: ""; background: var(--login-line); }

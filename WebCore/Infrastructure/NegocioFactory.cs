@@ -146,6 +146,17 @@ namespace WebCore.Infrastructure
             return new Negocio.DispositivoSeguro(repo);
         }
 
+        // Passkeys (huella): solo existe en Postgres, no hay rama SQL Server. Quien la llame debe
+        // haber chequeado antes PasskeySettings.Habilitado (que ya exige UsarPostgres).
+        public static Negocio.UsuarioPasskey CrearUsuarioPasskey(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres)
+                throw new InvalidOperationException("El login por huella solo está disponible con DataEngine=Postgres.");
+
+            var repo = new DatosPostgres.UsuarioPasskeyPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.UsuarioPasskey(repo);
+        }
+
         public static Negocio.Empresa CrearEmpresa(IEmpresaContext empresa)
         {
             if (!UsarPostgres) return new Negocio.Empresa(empresa);

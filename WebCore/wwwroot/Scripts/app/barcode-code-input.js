@@ -109,6 +109,10 @@
         var scanner = new BarcodeScanner({
             videoSelector: options.videoSelector,
             containerSelector: options.containerSelector,
+            // Este modulo ya exige dos lecturas iguales y tiene su propio enfriamiento tras aceptar
+            // (TIEMPO_RELECTURA). Con el dedupe de 2 s de scanner.js la 2da lectura solo llegaba
+            // pasados 2 s, y el usuario tenia que sostener el codigo ese tiempo por cada producto.
+            tiempoRelectura: 0,
             onCodeDetected: function (codigoLeido) {
                 if (pausaLecturaActiva) return;
 

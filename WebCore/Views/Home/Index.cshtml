@@ -80,6 +80,21 @@
         pointer-events: none;
     }
 
+    /* Bug real (2026-09-21): Periodo y Sucursal quedaban desalineados. Bootstrap 5 (WebCore) no
+       define .custom-select (en BS4 traia display:inline-block + width:100%), asi que el <select>
+       quedaba con ancho = su opcion mas larga (distinto en cada uno) y, al ser <label> y <select>
+       inline, el label se acomodaba AL LADO del select en vez de arriba, desfasando la altura.
+       Se fuerza label en bloque y select a todo el ancho de su columna, scoped a .dashboard-filters
+       (los unicos .custom-select de WebCore viven en este bloque). */
+    .dashboard-filters label {
+        display: block;
+    }
+
+    .dashboard-filters .custom-select {
+        display: block;
+        width: 100%;
+    }
+
     .dashboard-filters .form-control,
     .dashboard-filters .custom-select {
         border-radius: .7rem;

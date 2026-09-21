@@ -29,6 +29,14 @@
          SQL Server queda solo como legado -- el switch (WebCore/Infrastructure/NegocioFactory.cs)
          se mantiene por compatibilidad, pero el default real es "Postgres". -->
     <add key="DataEngine" value="Postgres" />
+    <!-- Login por huella (passkeys WebAuthn, 2026-09-21, ver docs/DECISIONS.md). Solo Postgres.
+         Requiere HTTPS con un dominio real (no una IP) o localhost. ServerDomain = dominio sin
+         esquema ni puerto; Origins = origenes completos separados por coma. Con Enabled=false (o
+         sin las otras claves) el boton de huella no aparece en el login. -->
+    <add key="Passkeys:Enabled" value="false" />
+    <add key="Passkeys:ServerDomain" value="carnisys.com" />
+    <add key="Passkeys:Origins" value="https://carnisys.com" />
+    <add key="Passkeys:ServerName" value="CarniSys" />
     <!-- Sidebar de _Layout.cshtml: modulos todavia no migrados a WebCore linkean con URL
          absoluta al Web clasico. Sin barra final. -->
     <add key="WebClasicoBaseUrl" value="https://localhost:44371" />

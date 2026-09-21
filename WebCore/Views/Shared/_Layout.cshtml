@@ -696,6 +696,13 @@
                                         <i class="fas fa-laptop fa-sm fa-fw mr-2 text-gray-400"></i>
                                         Número de serie
                                     </a>
+                                    @if (WebCore.Helpers.PasskeySettings.Habilitado)
+                                    {
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalMiHuella" title="Registrar la huella para ingresar sin contraseña">
+                                            <i class="fas fa-fingerprint fa-sm fa-fw mr-2 text-gray-400"></i>
+                                            Mi huella
+                                        </a>
+                                    }
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="@Url.Action("ChangePassword", "Login")">
                                         <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -740,6 +747,12 @@
        "Batch 6: Dispositivos Seguros -- numero de serie + auto-deteccion + autoservicio". *@
     @Html.Partial("~/Views/Shared/_ModalMiDispositivo.cshtml")
 
+    @* Login por huella (passkeys, 2026-09-21, ver docs/DECISIONS.md): alta/baja de huellas del usuario. *@
+    @if (WebCore.Helpers.PasskeySettings.Habilitado)
+    {
+        @Html.Partial("~/Views/Shared/_ModalMiHuella.cshtml")
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/Scripts/app/bootstrap4-compat.js" asp-append-version="true"></script>
@@ -750,6 +763,10 @@
        Index.cshtml. DESPUES de jquery.min.js a proposito: la IIFE de print-agent.js lee
        window.jQuery apenas se ejecuta, no espera a ningun evento de carga. *@
     <script src="~/Scripts/app/print-agent.js" asp-append-version="true"></script>
+    @if (WebCore.Helpers.PasskeySettings.Habilitado)
+    {
+        <script src="~/Scripts/app/passkey.js" asp-append-version="true"></script>
+    }
     @* Gap real cerrado 2026-09-05 (ver docs/DECISIONS.md): el HTML de las vistas con tablas
        anchas ya tenia la clase .js-sync-scroll-body desde que se portaron (fiel al original),
        pero este script y su CSS nunca se cargaron -- la barra de scroll flotante nunca aparecia,

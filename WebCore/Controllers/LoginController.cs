@@ -12,6 +12,8 @@
 // caracteres (el clasico aceptaba 1).
 using System.Globalization;
 using System.Security.Claims;
+using Fido2NetLib;
+using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -139,21 +141,13 @@ namespace WebCore.Controllers
                 // Horario laboral (a nivel empresa): un empleado no-admin que intenta loguearse
                 // fuera de las 2 jornadas configuradas queda bloqueado aca, ANTES de crear sesion
                 // -- no se toca el rate limiter (las credenciales eran correctas).
-                if (!user.Admin)
+                switch (EvaluarReglasPostCredencial(user, esDispositivoSeguro))
                 {
-                    var empresaActual = _oEmpresaN.findById(user.IdEmpresa);
-                    if (!EstaDentroDelHorarioPermitido(empresaActual, DateTime.Now))
-                    {
+                    case ReglaPostCredencial.FueraDeHorario:
                         model.Clave = "";
-                        model.Error = "Fuera del horario laboral permitido para iniciar sesión.";
+                        model.Error = MensajeFueraDeHorario;
                         return View(model);
-                    }
-
-                    // Login solo desde dispositivos seguros (2026-09-19, ver docs/DECISIONS.md): se
-                    // exige a los no-admin si la empresa lo activo o el usuario esta marcado. Los
-                    // admin quedan exentos siempre (evita quedarse sin acceso para autorizar).
-                    bool requiereDispositivo = user.RequiereDispositivoSeguro || (empresaActual?.ExigirDispositivoSeguro ?? false);
-                    if (requiereDispositivo && !esDispositivoSeguro)
+                    case ReglaPostCredencial.DispositivoNoAutorizado:
                         return DispositivoNoAutorizadoTrasClaveValida(user, ip, model, serieToken, dispositivoBloqueado);
                 }
 
@@ -339,6 +333,163 @@ namespace WebCore.Controllers
                 return minutes;
 
             return 60;
+        }
+
+        // ---------------------------------------------------------------------------------
+        // Login por huella (passkeys WebAuthn, 2026-09-21, ver docs/DECISIONS.md "Login por huella
+        // (passkeys)"). Credencial "descubrible": el usuario no escribe nada, el navegador le
+        // muestra sus huellas registradas para este sitio y la firma identifica al usuario. La
+        // huella reemplaza SOLO la contraseña: cuenta activa/bloqueada, rate limit, horario
+        // laboral, dispositivo seguro y auditoria se siguen aplicando (EvaluarReglasPostCredencial,
+        // CompletarLoginAsync). Las dos acciones responden JSON: el JS de Login/Index navega a la
+        // URL que devuelven. El registro de una huella nueva vive en PasskeyController (con sesion).
+        // ---------------------------------------------------------------------------------
+
+        private const string SessionAssertionOptions = "fido2.assertionOptions";
+
+        // Clave que se usa en LoginRateLimiter para los intentos por huella (no hay usuario tipeado);
+        // el limite efectivo es por IP.
+        private const string ClaveRateLimiterHuella = "(huella)";
+
+        private const string MensajeHuellaInvalida = "No fue posible iniciar sesión con la huella. Probá de nuevo o ingresá con usuario y contraseña.";
+
+        private JsonResult PasskeyError(string mensaje, int status = 400)
+        {
+            Response.StatusCode = status;
+            return Json(new { ok = false, error = mensaje });
+        }
+
+        // Paso 1: desafio para que el navegador pida la huella. El desafio se guarda en la Session
+        // y se consume una sola vez en PasskeyLogin.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult PasskeyOptions()
+        {
+            if (!PasskeySettings.Habilitado)
+                return NotFound();
+
+            if (LoginRateLimiter.IsBlocked(ObtenerDireccionIp(), ClaveRateLimiterHuella, out var retryAfter))
+                return PasskeyError(MensajeRateLimit(retryAfter), 429);
+
+            var fido2 = HttpContext.RequestServices.GetRequiredService<IFido2>();
+            var options = fido2.GetAssertionOptions(new GetAssertionOptionsParams
+            {
+                // Lista vacia = credencial descubrible (sin pedir usuario antes).
+                AllowedCredentials = new List<PublicKeyCredentialDescriptor>(),
+                // Exige que el autenticador verifique al usuario (huella / PIN), no solo presencia.
+                UserVerification = UserVerificationRequirement.Required
+            });
+
+            HttpContext.Session.SetString(SessionAssertionOptions, options.ToJson());
+            return Json(options);
+        }
+
+        // Paso 2: verifica la firma que devolvio el autenticador y, si es valida, inicia sesion.
+        // serieDispositivo = ID de hardware que informa el agente de impresion (igual que el login
+        // por clave, para que el dispositivo seguro se reconozca tambien con la huella).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PasskeyLogin(
+            [FromBody] AuthenticatorAssertionRawResponse clientResponse, string? returnUrl = "", string? serieDispositivo = "")
+        {
+            if (!PasskeySettings.Habilitado)
+                return NotFound();
+
+            string ip = ObtenerDireccionIp();
+            if (LoginRateLimiter.IsBlocked(ip, ClaveRateLimiterHuella, out var retryAfter))
+                return PasskeyError(MensajeRateLimit(retryAfter), 429);
+
+            // Desafio de un solo uso: se borra siempre, aunque la verificacion falle.
+            string? optionsJson = HttpContext.Session.GetString(SessionAssertionOptions);
+            HttpContext.Session.Remove(SessionAssertionOptions);
+            if (string.IsNullOrEmpty(optionsJson))
+                return PasskeyError("La solicitud venció. Volvé a intentar.");
+
+            var options = AssertionOptions.FromJson(optionsJson);
+            var oPasskeyN = WebCore.Infrastructure.NegocioFactory.CrearUsuarioPasskey(new EmpresaContextNulo());
+
+            // El tenant sale de la propia credencial (login sin usuario tipeado, tenant desconocido).
+            var guardada = oPasskeyN.ObtenerPorCredentialIdSinTenant(clientResponse.RawId);
+            if (guardada == null)
+            {
+                LoginRateLimiter.RegisterFailure(ip, ClaveRateLimiterHuella);
+                return PasskeyError(MensajeHuellaInvalida, 401);
+            }
+
+            VerifyAssertionResult resultado;
+            try
+            {
+                var fido2 = HttpContext.RequestServices.GetRequiredService<IFido2>();
+                resultado = await fido2.MakeAssertionAsync(new MakeAssertionParams
+                {
+                    AssertionResponse = clientResponse,
+                    OriginalOptions = options,
+                    StoredPublicKey = guardada.PublicKey,
+                    StoredSignatureCounter = (uint)guardada.SignCount,
+                    // La credencial debe pertenecer al userHandle que informa el autenticador.
+                    IsUserHandleOwnerOfCredentialIdCallback = (args, cancellationToken) => Task.FromResult(
+                        args.UserHandle != null
+                        && args.UserHandle.AsSpan().SequenceEqual(guardada.UserHandle)
+                        && args.CredentialId.AsSpan().SequenceEqual(guardada.CredentialId))
+                });
+            }
+            catch (Fido2VerificationException ex)
+            {
+                _logger.LogWarning(ex, "Verificacion de huella fallida para la passkey {IdPasskey} (usuario {IdUsuario}).", guardada.Id, guardada.IdUsuario);
+                LoginRateLimiter.RegisterFailure(ip, ClaveRateLimiterHuella);
+                return PasskeyError(MensajeHuellaInvalida, 401);
+            }
+
+            var oUsuarioN = CrearUsuarioNegocio(guardada.IdEmpresa);
+            var user = CargarUsuarioParaSesion(oUsuarioN, guardada.IdUsuario, guardada.IdEmpresa);
+            if (user == null || !user.Activo)
+            {
+                LoginRateLimiter.RegisterFailure(ip, ClaveRateLimiterHuella);
+                return PasskeyError(MensajeHuellaInvalida, 401);
+            }
+
+            if (user.Bloqueado)
+            {
+                LoginRateLimiter.RegisterFailure(ip, ClaveRateLimiterHuella);
+                return PasskeyError("Tu cuenta está bloqueada por intentos fallidos. Pedile a un administrador que la desbloquee.", 403);
+            }
+
+            // Firma valida: se registra el uso (el contador detecta credenciales clonadas).
+            oPasskeyN.RegistrarUsoSinTenant(guardada.Id, resultado.SignCount);
+            oUsuarioN.RegistrarLoginExitoso(user);
+
+            // Mismo criterio de dispositivo seguro que el login por clave.
+            string serieToken = Negocio.DispositivoSeguro.SerieDeToken(DispositivoNavegador.AsegurarToken(HttpContext));
+            var (dispositivoAutorizado, dispositivoBloqueado) = ResolverDispositivo(user.IdEmpresa, serieDispositivo, serieToken);
+
+            switch (EvaluarReglasPostCredencial(user, dispositivoAutorizado != null))
+            {
+                case ReglaPostCredencial.FueraDeHorario:
+                    return PasskeyError(MensajeFueraDeHorario, 403);
+                case ReglaPostCredencial.DispositivoNoAutorizado:
+                    if (dispositivoBloqueado != null)
+                    {
+                        RegistrarAcceso(user, false, "Dispositivo bloqueado por el administrador", ip, dispositivoBloqueado);
+                        return PasskeyError("Este dispositivo fue bloqueado por el administrador. Pedile que lo habilite o ingresá desde otro dispositivo autorizado.", 403);
+                    }
+
+                    // Mismo flujo que el login por clave: codigo por mail para autorizar el dispositivo.
+                    string nonce = VerificacionDispositivoStore.Instancia.CrearPedido(user.Id, user.IdEmpresa, serieToken, returnUrl ?? "");
+                    DispositivoNavegador.GuardarNoncePedido(HttpContext, nonce);
+                    RegistrarAcceso(user, false, "Dispositivo no autorizado", ip, null);
+                    return Json(new { ok = true, redirectUrl = Url.Action(nameof(DispositivoNoAutorizado)) });
+            }
+
+            var destino = await CompletarLoginAsync(user, returnUrl ?? "", ip, ClaveRateLimiterHuella, dispositivoAutorizado, "Login con huella");
+            return Json(new { ok = true, redirectUrl = (destino as RedirectResult)?.Url ?? Url.Content("~/Home/Index") });
+        }
+
+        private static string MensajeRateLimit(TimeSpan retryAfter)
+        {
+            return string.Format(
+                CultureInfo.CurrentCulture,
+                "Se superó el máximo de intentos. Esperá {0} minuto(s) y volvé a intentar.",
+                Math.Max(1, (int)Math.Ceiling(retryAfter.TotalMinutes)));
         }
 
         public async Task<IActionResult> Logout()
@@ -759,6 +910,36 @@ namespace WebCore.Controllers
             // sitio IIS no tiene nada mapeado ahi. Url.Content("~/...") resuelve el "~" contra el
             // PathBase real de la request, evitando el 404 sin reintroducir el colapso a "/".
             return Redirect(Url.Content("~/Home/Index"));
+        }
+
+        // Reglas que se aplican DESPUES de validar la credencial (clave o huella), compartidas por
+        // ambos caminos de login (2026-09-21, se extrajo del POST de Index para el login por huella,
+        // ver docs/DECISIONS.md "Login por huella (passkeys)"): horario laboral y dispositivo seguro.
+        // Solo a no-admin: los admin quedan exentos siempre (evita quedarse sin acceso para
+        // autorizar dispositivos). Cada caller decide como mostrar el rechazo.
+        private enum ReglaPostCredencial { Ok, FueraDeHorario, DispositivoNoAutorizado }
+
+        private const string MensajeFueraDeHorario = "Fuera del horario laboral permitido para iniciar sesión.";
+
+        private ReglaPostCredencial EvaluarReglasPostCredencial(Entidades.Usuario user, bool esDispositivoSeguro)
+        {
+            if (user.Admin)
+                return ReglaPostCredencial.Ok;
+
+            // Horario laboral (a nivel empresa): un empleado no-admin que intenta loguearse fuera de
+            // las 2 jornadas configuradas queda bloqueado ANTES de crear sesion -- no se toca el rate
+            // limiter (las credenciales eran correctas).
+            var empresaActual = _oEmpresaN.findById(user.IdEmpresa);
+            if (!EstaDentroDelHorarioPermitido(empresaActual, DateTime.Now))
+                return ReglaPostCredencial.FueraDeHorario;
+
+            // Login solo desde dispositivos seguros (2026-09-19, ver docs/DECISIONS.md): se exige a
+            // los no-admin si la empresa lo activo o el usuario esta marcado.
+            bool requiereDispositivo = user.RequiereDispositivoSeguro || (empresaActual?.ExigirDispositivoSeguro ?? false);
+            if (requiereDispositivo && !esDispositivoSeguro)
+                return ReglaPostCredencial.DispositivoNoAutorizado;
+
+            return ReglaPostCredencial.Ok;
         }
 
         // Compara la hora actual del servidor contra las 2 jornadas configuradas en la empresa.

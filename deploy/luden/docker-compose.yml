@@ -1,0 +1,62 @@
+# Stack de CarniSys WebCore en la VPS compartida luden (DonWeb).
+# Convencion del host (briefing 2026-09-20): vive en /srv/carnisys/, NO publica puertos; el TLS y el
+# ruteo los hace el Caddy de /srv/proxy y esta web se cuelga de la red `edge` con el alias
+# carnisys-web. Secretos en /srv/carnisys/.env (chmod 600). Detalle operativo: docs/RUNBOOK.md.
+name: carnisys
+
+services:
+  db:
+    # Misma major que produccion (Postgres 17, ver docs/06-datos-e-integraciones/rls-postgres.md).
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - carnisys-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: carnisys-web:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Kestrel queda detras de Caddy (HTTP plano): sin esto ve http y trata mal el redirect a
+      # https / las cookies. Habilita el middleware de X-Forwarded-* sin tocar codigo.
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      TZ: America/Argentina/Buenos_Aires
+      # Cultura es-AR: sin LANG el contenedor arranca en cultura invariante y .NET formatea/parsea
+      # distinto que en Windows ("$ 1.234,50" pasa a "¤1,234.50" y "1267,5" se lee como 12675).
+      # La app asume es-AR en toda la UI (moneda, decimales con coma, fechas dd/MM/yyyy).
+      LANG: es_AR.UTF-8
+      LC_ALL: es_AR.UTF-8
+    volumes:
+      # Config real (base + SMTP): el archivo que System.Configuration lee en runtime es
+      # WebCore.dll.config, no App.config (bug real documentado en despliegue-y-publicacion.md).
+      - ./WebCore.dll.config:/app/WebCore.dll.config:ro
+      - carnisys-dataprotection:/home/app/.aspnet/DataProtection-Keys
+    healthcheck:
+      # La imagen no trae curl/wget: GET por /dev/tcp (bash, no sh/dash). Cualquier respuesta < 500 = vivo.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /Login HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -qE ' (200|30[0-9]|40[0-9]) '"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      default: {}
+      edge:
+        aliases: [carnisys-web]
+
+volumes:
+  carnisys-pgdata:
+  carnisys-dataprotection:
+
+networks:
+  edge:
+    external: true

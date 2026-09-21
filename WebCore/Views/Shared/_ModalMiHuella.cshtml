@@ -1,0 +1,47 @@
+@{
+    // "Mi huella" (2026-09-21, ver docs/DECISIONS.md "Login por huella (passkeys)"): el usuario
+    // logueado registra, lista y quita las huellas (passkeys WebAuthn) con las que puede ingresar
+    // sin contraseña. Solo se incluye si el ambiente lo habilita (WebCore.Helpers.PasskeySettings:
+    // Postgres + HTTPS con dominio). El JS vive en Scripts/app/passkey.js (se engancha por los ids
+    // de este modal); las URLs llegan por data-* (Url.Action respeta el PathBase).
+}
+<div class="modal fade" id="modalMiHuella" tabindex="-1" role="dialog"
+     data-listar-url="@Url.Action("Listar", "Passkey")"
+     data-options-url="@Url.Action("RegistrationOptions", "Passkey")"
+     data-complete-url="@Url.Action("RegistrationComplete", "Passkey")"
+     data-revocar-url="@Url.Action("Revocar", "Passkey")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-fingerprint mr-2"></i> Mi huella</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">
+                    Registrá la huella (o el PIN / reconocimiento facial) de este equipo o de tu celular para ingresar a CarniSys sin escribir usuario ni contraseña. La huella no se envía ni se guarda en el sistema: la verifica tu dispositivo.
+                </p>
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr><th>Nombre</th><th>Alta</th><th>Último uso</th><th></th></tr>
+                        </thead>
+                        <tbody id="miHuellaLista"></tbody>
+                    </table>
+                </div>
+
+                <label for="miHuellaNombre" class="small font-weight-bold">Nombre para reconocerla</label>
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="miHuellaNombre" maxlength="60" placeholder="Ej.: Notebook de caja" />
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-primary" id="btnMiHuellaAgregar">
+                            <i class="fas fa-plus mr-1"></i> Agregar huella
+                        </button>
+                    </div>
+                </div>
+                <div id="miHuellaEstado" class="small" role="status"></div>
+            </div>
+        </div>
+    </div>
+</div>

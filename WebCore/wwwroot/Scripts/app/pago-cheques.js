@@ -175,7 +175,9 @@
                 // WebCore nombra este campo #txtImporte (no #importe como el original clasico,
                 // ver Web/Views/Finanzas/AddOrEditPago.cshtml:212) -- ya establecido asi en el
                 // resto de esta vista antes de portar el pago con cheque, no se renombra.
-                $("#txtImporte").val((totalCheques + efectivo).toFixed(2));
+                // .trigger('input'): #txtImporte lleva MoneyInputMask (formato "1.234,50"); un valor
+                // escrito por JS solo se reformatea/resincroniza si el mask recibe 'input'.
+                $("#txtImporte").val((totalCheques + efectivo).toFixed(2)).trigger("input");
             }
         }
 

@@ -1,5 +1,10 @@
 class BarcodeScanner {
-    constructor({ videoSelector, containerSelector, onCodeDetected }) {
+    // tiempoRelectura: ms durante los que se ignora un codigo IGUAL al ultimo entregado (evita que
+    // el mismo codigo, aun frente a la camara, dispare onCodeDetected en cada frame). Default 2000 =
+    // comportamiento historico; un consumidor que pide doble lectura propia (BarcodeCodeInput) pasa 0
+    // para que la segunda lectura llegue en el siguiente frame y no 2 s despues.
+    // intervaloLecturaMs: pausa entre deteccion y deteccion del motor nativo (BarcodeDetector).
+    constructor({ videoSelector, containerSelector, onCodeDetected, tiempoRelectura = 2000, intervaloLecturaMs = 100 }) {
         this.video = document.querySelector(videoSelector);
         this.container = document.querySelector(containerSelector);
         this.onCodeDetected = onCodeDetected;
@@ -15,7 +20,8 @@ class BarcodeScanner {
 
         this.ultimoCodigo = null;
         this.ultimoTiempo = 0;
-        this.TIEMPO_RELECTURA = 2000;
+        this.TIEMPO_RELECTURA = tiempoRelectura;
+        this.INTERVALO_LECTURA_MS = intervaloLecturaMs;
     }
 
     // Formatos soportados por el ticket/POS. Se usan tanto para el detector nativo
@@ -38,18 +44,33 @@ class BarcodeScanner {
             return;
         }
 
+        // Resolucion: con 640x480 un EAN-13 chico o algo lejos se ve borroso y se lee lento o no se
+        // lee. El detector nativo (Chromium) resuelve 720p sin problema; ZXing decodifica en JS y con
+        // 720p se pone lento en celulares viejos, por eso queda en 640x480.
+        const ideal = usaDetectorNativo
+            ? { width: { ideal: 1280 }, height: { ideal: 720 } }
+            : { width: { ideal: 640 }, height: { ideal: 480 } };
+
         this.stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: { ideal: "environment" },
-                width: { ideal: 640 },
-                height: { ideal: 480 }
-            }
+            video: { facingMode: { ideal: "environment" }, ...ideal }
         });
 
         this.video.srcObject = this.stream;
 
         // ✅ guardamos el track para el flash (funciona igual con cualquiera de los dos motores)
         this.track = this.stream.getVideoTracks()[0];
+
+        // Autoenfoque continuo: sin el, la camara puede quedar enfocada lejos y el codigo, que esta
+        // a pocos cm, sale borroso hasta que el usuario "busca" el foco. Es opcional: solo se aplica
+        // si el dispositivo lo declara, y un fallo no debe impedir escanear.
+        try {
+            const cap = this.track.getCapabilities?.();
+            if (cap?.focusMode?.includes("continuous")) {
+                await this.track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+            }
+        } catch (e) {
+            console.warn("No se pudo activar el enfoque continuo:", e);
+        }
 
         await this.video.play();
 
@@ -132,7 +153,7 @@ class BarcodeScanner {
             console.error("Error en detector:", e);
         }
 
-        if (this.scanning) setTimeout(() => this.leerContinuamente(), 200);
+        if (this.scanning) setTimeout(() => this.leerContinuamente(), this.INTERVALO_LECTURA_MS);
     }
 
     cerrar() {

@@ -329,6 +329,11 @@
 <script src="@Url.Content("~/Scripts/app/modal-cheque.js")" asp-append-version="true"></script>
 <script src="@Url.Content("~/Scripts/app/pago-cheques.js")" asp-append-version="true"></script>
 <script src="@Url.Content("~/Scripts/app/form-hotkeys.js")" asp-append-version="true"></script>
+@* money-input-mask.js NO puede ir como <script src> normal: se cancela solo si jQuery todavia no cargo
+   (en el layout completo jquery.min.js carga al final del <body>). type="text/plain" evita que el
+   navegador lo ejecute ni jQuery lo evalue al inyectar el partial; solo sirve para que asp-append-version
+   calcule la URL versionada, que el init de abajo lee para cargarlo cuando jQuery ya existe. *@
+<script type="text/plain" id="moneyInputMaskSrc" src="@Url.Content("~/Scripts/app/money-input-mask.js")" asp-append-version="true"></script>
 <script>
     (function () {
         // Esta vista se renderiza tanto con layout completo (navegacion directa) como sin layout
@@ -394,6 +399,41 @@
             e.preventDefault();
             moverFocoSiguienteCampoPago('#' + this.id);
         });
+
+        // Importe con formato monetario es-AR (pedido 2026-09-21): "." o "," tipeados = coma decimal, y
+        // los puntos de miles se ponen solos ("1.234,50"). Lo hace MoneyInputMask, que se carga aca
+        // (ver el <script type="text/plain"> de arriba) porque necesita jQuery ya cargado.
+        function adjuntarMascaraImporte() {
+            var origen = document.getElementById('moneyInputMaskSrc');
+            if (!origen) return;
+
+            function adjuntar() {
+                if (window.MoneyInputMask) window.MoneyInputMask.attach('#txtImporte');
+            }
+
+            if (window.MoneyInputMask) {
+                adjuntar();
+                return;
+            }
+
+            var script = document.createElement('script');
+            script.src = origen.getAttribute('src');
+            script.onload = adjuntar;
+            // Sin mascara el campo sigue siendo un input de texto valido (el server acepta "1234.50"),
+            // pero se deja rastro: silenciarlo esconderia por que el importe no se formatea.
+            script.onerror = function () { console.error('AddOrEditPago: no se pudo cargar money-input-mask.js'); };
+            document.head.appendChild(script);
+        }
+
+        adjuntarMascaraImporte();
+
+        // El server (FinanzasController.ParseFloat) espera "1234,50" o "1234.50": con puntos de miles
+        // ("1.234,50") leeria mal el valor. getRawValue saca los puntos de miles.
+        function importeParaEnviar() {
+            return window.MoneyInputMask
+                ? window.MoneyInputMask.getRawValue('#txtImporte')
+                : ($('#txtImporte').val() || '');
+        }
 
         function parseDecimal(value) {
             var text = String(value == null ? '' : value).trim().replace(/\./g, '').replace(',', '.');
@@ -638,7 +678,7 @@
             var params = $.param(payload) +
                 '&SucursalId=' + encodeURIComponent($('#SucursalId').val()) +
                 '&idPersona=' + encodeURIComponent(idPersona) +
-                '&importe=' + encodeURIComponent($('#txtImporte').val()) +
+                '&importe=' + encodeURIComponent(importeParaEnviar()) +
                 '&Efectivo=' + encodeURIComponent($('#Efectivo').val() || '0') +
                 '&ChequesJson=' + encodeURIComponent($('#ChequesJson').val() || '') +
                 '&returnUrl=' + encodeURIComponent($('#hddReturnUrl').val() || '') +

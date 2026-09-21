@@ -69,6 +69,23 @@
                     </div>
                 }
 
+                @* Login por huella (passkeys, 2026-09-21, ver docs/DECISIONS.md "Login por huella
+                   (passkeys)"): primera opcion visible, ARRIBA del formulario de usuario/clave. Solo se
+                   renderiza si el ambiente lo habilita (Postgres + Passkeys:* en App.config) y queda
+                   oculto (hidden) hasta que passkey.js confirma que el navegador soporta WebAuthn. *@
+                @if (WebCore.Helpers.PasskeySettings.Habilitado)
+                {
+                    <div class="passkey-login" id="passkeyLogin" hidden>
+                        <button type="button" class="passkey-btn" id="btnPasskeyLogin"
+                                data-options-url="@Url.Action("PasskeyOptions", "Login")"
+                                data-login-url="@Url.Action("PasskeyLogin", "Login")">
+                            <i class="fas fa-fingerprint" aria-hidden="true"></i> Ingresar con huella
+                        </button>
+                        <div class="login-alert login-alert-error" id="passkeyLoginEstado" role="alert" hidden></div>
+                        <div class="passkey-divider"><span>o ingresá con usuario y contraseña</span></div>
+                    </div>
+                }
+
                 <form asp-controller="Login" asp-action="Index" method="post" class="carnisys-login-form" novalidate="novalidate">
                     @Html.AntiForgeryToken()
                     @Html.HiddenFor(m => m.ReturnUrl)
@@ -120,6 +137,10 @@
        sigue normal: ahi se usa la cookie del navegador. El submit espera como maximo ~1,5 s a que
        responda el agente. *@
     <script src="@Url.Content("~/Scripts/app/print-agent.js")" asp-append-version="true"></script>
+    @if (WebCore.Helpers.PasskeySettings.Habilitado)
+    {
+        <script src="@Url.Content("~/Scripts/app/passkey.js")" asp-append-version="true"></script>
+    }
     <script>
         (function () {
             var form = document.querySelector('form.carnisys-login-form');

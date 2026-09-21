@@ -55,6 +55,21 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
 
+// Login por huella (passkeys WebAuthn, ver docs/DECISIONS.md "Login por huella (passkeys)"). Solo se
+// registra si el ambiente lo habilita (Postgres + Passkeys:* en App.config, ver PasskeySettings):
+// los ambientes por IP con certificado autofirmado no pueden usar WebAuthn. El desafio de cada
+// operacion se guarda en la Session de arriba (in-memory, un solo servidor).
+if (WebCore.Helpers.PasskeySettings.Habilitado)
+{
+    builder.Services.AddFido2(options =>
+    {
+        // RPID/RPName: en Fido2 4.x ServerDomain/ServerName estan marcados obsoletos.
+        options.RPID = WebCore.Helpers.PasskeySettings.ServerDomain;
+        options.RPName = WebCore.Helpers.PasskeySettings.ServerName;
+        options.Origins = WebCore.Helpers.PasskeySettings.Origenes;
+    });
+}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
