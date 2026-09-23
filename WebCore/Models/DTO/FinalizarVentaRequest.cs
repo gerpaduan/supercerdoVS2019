@@ -23,5 +23,10 @@ namespace WebCore.Models.DTO
         public List<LineaVentaDto> LineasVenta { get; set; }
         public List<int> ListaExpendios { get; set; }
         public string PosInstanceId { get; set; }
+
+        // Token del carrito (ventas en curso, ver VentasController.Borradores.cs). Opcional: los clientes
+        // viejos no lo mandan. Con el, FinalizarVenta es idempotente (un reintento no duplica la venta) y
+        // marca la venta en curso como FINALIZADA.
+        public Guid? ClientId { get; set; }
     }
 }

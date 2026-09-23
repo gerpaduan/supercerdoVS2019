@@ -96,6 +96,7 @@
                     case 'F7':
                     case 'F8':
                     case 'AvPag':
+                    case 'VentasSinCerrar':
                         runHook(key);
                         break;
                 }

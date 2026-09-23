@@ -310,6 +310,8 @@
             };
 
             POSState.addLinea(linea);
+            // Vigilancia de "producto sin agregar": agregar es el camino normal, cancela el pendiente.
+            if (typeof options.onLineaAgregada === 'function') options.onLineaAgregada(linea);
             renderTable(POSState.getLineas());
             recalculateTotal();
             options.beep();
@@ -445,6 +447,11 @@
             hayVentaEnCurso = lineas.some(function (linea) {
                 return !!linea;
             });
+
+            // Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): cada cambio del carrito se resguarda
+            // en el navegador y, con debounce, en el servidor. No-op si POSDraft todavia no existe (se
+            // define en POS.cshtml) o si la funcion esta apagada.
+            window.POSDraft?.autosave?.();
         }
 
         window.desactivarAvisoSalidaPOS = function () {

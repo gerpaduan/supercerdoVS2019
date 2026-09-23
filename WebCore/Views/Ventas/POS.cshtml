@@ -592,10 +592,12 @@
                                             </button>
                                         </div>
                                         <div class="col-4">
-                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
+                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1) <span id="badgeVentasSinCerrar" class="badge badge-warning d-none" title="Ventas sin guardar">0</span></button>
                                         </div>
                                     </div>
                                 </div>
+                                @* Ventas en curso: estado discreto del resguardo en el servidor (lo pinta pos-borrador.js). *@
+                                <div id="posBorradorEstado" class="small text-muted text-center mt-1 d-none"></div>
                                 <div class="pos-balanza-card">
                                     <small class="text-muted pos-balanza-caption">
                                         Conexión balanza: <span id="estadoBalanza">Desconocida</span>
@@ -1165,6 +1167,43 @@
         </div>
     </div>
 
+    @* Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): "Ver ventas sin cerrar" (panel de Ayuda F1).
+       Lista las ventas sin cerrar de la sucursal con usuario e items; el contenido lo pinta Scripts/app/pos-borrador.js. *@
+    <div class="modal fade" id="modalVentasSinCerrarPOS" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cart-arrow-down mr-2"></i>Ventas sin guardar
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0 ventas-sin-cerrar-pos" id="contenedorVentasSinCerrarPOS">
+                    <div class="p-4 text-center text-muted">Cargando...</div>
+                </div>
+                <div class="modal-footer small text-muted justify-content-start" style="font-size:.78rem;">
+                    Las ventas interrumpidas son las que quedaron sin finalizar (corte de luz, cierre del navegador o de la caja).
+                    Solo podés cargar o descartar las tuyas; las de otro usuario piden la autorización de un supervisor.
+                </div>
+
+                @* Compacto, mismo criterio que Cajas/_MisEgresosCaja.cshtml (.mis-actividades-modal): la tabla
+                   original quedaba con el tamaño de fuente default del modal, demasiado grande al lado del resto
+                   de los modales del POS (pedido del usuario, 2026-09-21). *@
+                <style>
+                    .ventas-sin-cerrar-pos { font-size: .82rem; }
+                    .ventas-sin-cerrar-pos table { font-size: .82rem; }
+                    .ventas-sin-cerrar-pos table th, .ventas-sin-cerrar-pos table td { padding: .4rem .5rem; vertical-align: middle; }
+                    .ventas-sin-cerrar-pos .badge { font-size: .68rem; font-weight: 600; }
+                    .ventas-sin-cerrar-pos .btn-sm { font-size: .74rem; padding: .25rem .5rem; }
+                    .ventas-sin-cerrar-pos table table { font-size: .74rem; }
+                    .ventas-sin-cerrar-pos table table th, .ventas-sin-cerrar-pos table table td { padding: .28rem .4rem; }
+                </style>
+            </div>
+        </div>
+    </div>
+
     @* Batch 10 de la quinta ronda (2026-09-10, ver docs/DECISIONS.md): "Nuevo Pago" en POS --
        #modalPagoPOS se apila SOBRE #modalFinanzasPOS (que ya está abierto cuando se llega acá,
        vía F2 -> Cuentas Corrientes -> #btnAgregarPagoCtaCte con data-pos-ajax). Mismo mecanismo
@@ -1240,6 +1279,28 @@ else
     <script src="~/Scripts/app/ventas-expendios-pos.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-comment.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-help.js" asp-append-version="true"></script>
+    @* Ventas en curso: borrador en servidor, "Ver ventas sin cerrar" y vigilancia de "producto sin agregar" (ver
+       docs/DECISIONS.md "Ventas en curso: borrador en servidor y advertencias del POS"). Solo Postgres. *@
+    <script>
+        window.POSBorradorConfig = {
+            habilitado: @(WebCore.Helpers.PosBorradorSettings.Habilitado ? "true" : "false"),
+            advertenciaHabilitada: @(WebCore.Helpers.PosBorradorSettings.AdvertenciaProductoSinAgregarHabilitada ? "true" : "false"),
+            latidoSegundos: @WebCore.Helpers.PosBorradorSettings.LatidoSegundos,
+            segundosProductoSinAgregar: @WebCore.Helpers.PosBorradorSettings.SegundosProductoSinAgregar,
+            segundosCantidadCero: @WebCore.Helpers.PosBorradorSettings.SegundosCantidadCeroConfirmacion,
+            posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)),
+            urls: {
+                guardar: '@Url.Action("GuardarBorradorPOS", "Ventas")',
+                evento: '@Url.Action("EventoBorradorPOS", "Ventas")',
+                sinAgregar: '@Url.Action("RegistrarProductoSinAgregarPOS", "Ventas")',
+                listar: '@Url.Action("ListarBorradoresPOS", "Ventas")',
+                recuperar: '@Url.Action("RecuperarBorradorPOS", "Ventas")',
+                descartar: '@Url.Action("DescartarBorradorPOS", "Ventas")'
+            }
+        };
+    </script>
+    <script src="~/Scripts/app/pos-borrador.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-producto-pendiente.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes-targets.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/money-input-mask.js" asp-append-version="true"></script>
@@ -1387,6 +1448,8 @@ else
                 $(function () {
                     $("#fechaHoraApertura").val(nowAR());
                     $("#modalAbrirCaja").modal("show");
+                    // Ventas en curso: avisa si el usuario tiene ventas sin cerrar para recuperarlas al abrir caja.
+                    window.POSBorrador?.avisarSinCaja?.();
                     $("#modalAbrirCaja").on("shown.bs.modal", function () {
                         $("#montoInicial").trigger("focus");
                     });
@@ -1486,7 +1549,11 @@ else
                 getInputActivo: function () { return posKeyboard.getInputActivo(); },
                 clearInputActivo: function () { return posKeyboard.clearInputActivo(); },
                 showConnectionError: mostrarErrorConexion,
-                onProductoChanged: function (producto) { return posBalanza ? posBalanza.onProductoChanged(producto) : null; },
+                onProductoChanged: function (producto) {
+                    // Vigilancia de "producto sin agregar" (ver docs/DECISIONS.md "Ventas en curso").
+                    window.POSProductoPendiente?.onProductoChanged?.(producto);
+                    return posBalanza ? posBalanza.onProductoChanged(producto) : null;
+                },
                 onProductoConfirmed: function (producto) { return posBalanza ? posBalanza.onProductoConfirmed(producto) : null; }
             });
 
@@ -1507,7 +1574,9 @@ else
                 handleEnter: function () { return posProduct.handleEnter(); },
                 getTypingTimer: function () { return posProduct.getTypingTimer(); },
                 setEnterDesdeTecladoVirtual: function (value) { return posProduct.setEnterDesdeTecladoVirtual(value); },
-                beforeAddProduct: function (producto, cantidad) { return posBalanza ? posBalanza.beforeAddProduct(producto, cantidad) : { ok: true }; }
+                beforeAddProduct: function (producto, cantidad) { return posBalanza ? posBalanza.beforeAddProduct(producto, cantidad) : { ok: true }; },
+                // Agregar al carrito cancela la vigilancia de "producto sin agregar".
+                onLineaAgregada: function () { window.POSProductoPendiente?.onLineaAgregada?.(); }
             });
 
             // ===== Batch 4: balanza fisica =====
@@ -1569,6 +1638,11 @@ else
             window.posHotkeysHooks = window.posHotkeysHooks || {};
             window.posHotkeysHooks.AvPag = function () {
                 window.POSExpendiosCurrent?.open?.();
+            };
+            // Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): boton "Ver ventas sin cerrar" del
+            // panel de Ayuda (F1). La logica vive en Scripts/app/pos-borrador.js.
+            window.posHotkeysHooks.VentasSinCerrar = function () {
+                window.POSBorrador?.abrir?.();
             };
             // ===== Batch 7, iteracion 3: calculadora de billetes (F3) =====
             // Standalone -- sin usarDetalleExterno/selectorInputTotal, distinto del uso en
@@ -1727,6 +1801,8 @@ else
                         success: function (html) {
                             renderConScripts(html, "#contenedorFinanzasPOS", function () {
                                 window.POSModalLoading?.hide();
+                                // Solo aplica si lo cargado es el historial de precios (no-op en el resto).
+                                window.POSFinanzas.marcarProductosEnCarrito();
                             });
                         },
                         error: function () {
@@ -1757,6 +1833,37 @@ else
                     // cuenta compartida (ver FinanzasController.ResolverOperadorPOS).
                     if (window.POSModo && window.POSModo.instanceId) url += '&posInstanceId=' + encodeURIComponent(window.POSModo.instanceId);
                     this.cargar(url, "Cuenta corriente");
+                },
+
+                // Reconocimiento visual en el historial de precios (2026-09-21, pedido del usuario):
+                // las filas cuyo codigo ya esta en el carrito (lineas no anuladas) se resaltan y
+                // muestran un badge "En carrito" (con la cantidad de lineas si son mas de una).
+                // Se ejecuta tras renderizar el HTML del modal; si no hay tabla de historial, no hace nada.
+                marcarProductosEnCarrito: function () {
+                    var $filas = $("#contenedorFinanzasPOS .historial-precios-tabla tbody tr");
+                    if (!$filas.length || !window.POSState) return;
+
+                    // codigo -> cantidad de lineas activas en el carrito
+                    var lineasPorCodigo = {};
+                    (window.POSState.getLineas() || []).forEach(function (linea) {
+                        if (!linea || linea.anulado) return;
+                        var cod = String(linea.codigo == null ? "" : linea.codigo).trim();
+                        if (cod) lineasPorCodigo[cod] = (lineasPorCodigo[cod] || 0) + 1;
+                    });
+
+                    $filas.each(function () {
+                        var $fila = $(this);
+                        var cod = String($fila.find(".js-copiar-precio-historial").data("codigo") ?? "").trim();
+                        var cantidad = lineasPorCodigo[cod];
+                        if (!cantidad) return;
+
+                        $fila.addClass("historial-en-carrito");
+                        var texto = cantidad > 1 ? "En carrito (" + cantidad + ")" : "En carrito";
+                        $("<span>", { "class": "badge badge-success ml-2 historial-badge-carrito", text: texto })
+                            .attr("title", "Este producto ya está cargado en la venta actual")
+                            .prepend('<i class="fas fa-shopping-cart mr-1"></i>')
+                            .appendTo($fila.children("td").eq(1));
+                    });
                 },
 
                 // Historial de precios de cliente (F8), 2026-09-06 (retomado -- ver docs/DECISIONS.md).
@@ -2030,13 +2137,15 @@ else
             // seteado y el carrito lo muestra igual que cualquier otra bonificacion). Si el
             // usuario dice que no, o el producto no esta en el carrito, se comporta como antes
             // (solo copia el precio para pegar despues en el modal de linea).
-            function buscarLineaCarritoPorCodigo(codigo) {
+            // Devuelve TODAS las lineas activas con ese codigo (2026-09-21): el mismo producto puede
+            // estar cargado en varias lineas y el precio del historial debe aplicarse a todas.
+            function buscarLineasCarritoPorCodigo(codigo) {
                 var cod = String(codigo == null ? "" : codigo).trim();
-                if (!cod) return null;
+                if (!cod) return [];
 
-                return (POSState.getLineas() || []).find(function (linea) {
+                return (POSState.getLineas() || []).filter(function (linea) {
                     return linea && !linea.anulado && String(linea.codigo) === cod;
-                }) || null;
+                });
             }
 
             function aplicarPrecioHistorialALineaCarrito(linea, precioNuevo) {
@@ -2051,12 +2160,23 @@ else
                 linea.precio = "$ " + precioNuevo.toFixed(2);
                 linea.subtotal = "$ " + (precioNuevo * cant).toFixed(2);
                 linea.bonificacion = pct;
-
-                posCart.renderTable(POSState.getLineas());
-                posCart.recalculateTotal();
-                posCart.updateSaleState();
-                posCart.updateCartSummary?.();
                 return true;
+            }
+
+            // Aplica el precio a todas las lineas dadas y refresca el carrito una sola vez.
+            // Devuelve la cantidad de lineas efectivamente modificadas.
+            function aplicarPrecioHistorialALineasCarrito(lineas, precioNuevo) {
+                var aplicadas = lineas.filter(function (linea) {
+                    return aplicarPrecioHistorialALineaCarrito(linea, precioNuevo);
+                }).length;
+
+                if (aplicadas > 0) {
+                    posCart.renderTable(POSState.getLineas());
+                    posCart.recalculateTotal();
+                    posCart.updateSaleState();
+                    posCart.updateCartSummary?.();
+                }
+                return aplicadas;
             }
 
             $(document).on("click", "#modalFinanzasPOS .js-copiar-precio-historial", function () {
@@ -2074,17 +2194,20 @@ else
                 }, 1200);
 
                 var codigo = $btn.data("codigo");
-                var lineaEnCarrito = buscarLineaCarritoPorCodigo(codigo);
-                if (!lineaEnCarrito) return;
+                var lineasEnCarrito = buscarLineasCarritoPorCodigo(codigo);
+                if (!lineasEnCarrito.length) return;
 
-                var producto = $btn.data("producto") || lineaEnCarrito.producto || ("código " + codigo);
+                var producto = $btn.data("producto") || lineasEnCarrito[0].producto || ("código " + codigo);
+                var sufijoLineas = lineasEnCarrito.length > 1 ? " (" + lineasEnCarrito.length + " líneas)" : "";
                 var preguntar = function () {
-                    if (aplicarPrecioHistorialALineaCarrito(lineaEnCarrito, precio)) {
+                    var aplicadas = aplicarPrecioHistorialALineasCarrito(lineasEnCarrito, precio);
+                    if (aplicadas > 0) {
                         if (window.Swal) {
                             window.Swal.fire({
                                 icon: "success",
                                 title: "Precio actualizado",
-                                text: producto + " quedó con el precio del historial en el carrito.",
+                                text: producto + " quedó con el precio del historial en el carrito" +
+                                    (aplicadas > 1 ? " (" + aplicadas + " líneas)." : "."),
                                 timer: 1800,
                                 timerProgressBar: true,
                                 showConfirmButton: false
@@ -2097,7 +2220,7 @@ else
                     window.Swal.fire({
                         icon: "question",
                         title: "Cambiar precio en el carrito",
-                        text: producto + " ya está cargado en la venta actual. ¿Cambiar su precio al de este historial?",
+                        text: producto + " ya está cargado en la venta actual" + sufijoLineas + ". ¿Cambiar su precio al de este historial?",
                         showCancelButton: true,
                         confirmButtonText: "Sí, cambiar",
                         cancelButtonText: "No, solo copiar"
@@ -2240,6 +2363,7 @@ else
                 obtenerExpendioPos: "@Url.Action("ObtenerExpendioPOS", "Ventas")",
                 imprimir: "@Url.Action("Imprimir", "Ventas")",
                 imprimirTicketHtml: "@Url.Action("ImprimirTicketHtml", "Ventas")",
+                imprimirTicketPayload: "@Url.Action("ImprimirTicketPayload", "Ventas")",
                 obtenerDatosEmailComprobante: "@Url.Action("ObtenerDatosEmailComprobante", "Ventas")",
                 enviarComprobanteEmail: "@Url.Action("EnviarComprobanteEmail", "Ventas")"
             };
@@ -2558,8 +2682,15 @@ else
                         return;
                     }
 
-                    localStorage.setItem(key, JSON.stringify({
-                        lineas: lineas,
+                    localStorage.setItem(key, JSON.stringify(snapshot()));
+                }
+
+                // Foto del carrito: es lo que se guarda en localStorage y lo que se manda al servidor como venta en
+                // curso (ver Scripts/app/pos-borrador.js). clientId identifica este carrito; savedAt es solo
+                // informativo (no se usa para ninguna decision).
+                function snapshot() {
+                    return {
+                        lineas: POSState.getLineas(),
                         listaExpendios: POSState.getListaExpendios ? POSState.getListaExpendios() : [],
                         formaPagoPreseleccionada: POSState.getFormaPagoPreseleccionada ? POSState.getFormaPagoPreseleccionada() : null,
                         idUsuarioPOS: idUsuarioActual,
@@ -2567,8 +2698,18 @@ else
                         idPersona: $("#idPersona").val(),
                         razonSocial: $("#razonSocial").val(),
                         observaciones: POSState.getObservaciones(),
-                        fechaVenta: $("#fechaVenta").val()
-                    }));
+                        fechaVenta: $("#fechaVenta").val(),
+                        clientId: window.POSBorrador ? window.POSBorrador.getClientId() : null,
+                        savedAt: Date.now()
+                    };
+                }
+
+                // Guardado automatico (ventas en curso): local inmediato + servidor con debounce. Lo llama
+                // pos-cart.js updateSaleState() en cada cambio del carrito.
+                function autosave() {
+                    if (window.esEdicionVenta) return;
+                    save();
+                    window.POSBorrador?.programarGuardado?.();
                 }
 
                 function tryParseDraft() {
@@ -2609,6 +2750,16 @@ else
 
                     if (!draft) return false;
 
+                    aplicarSnapshot(draft, {});
+                    // Retoma el token del carrito: el servidor puede o no conocerlo, se resuelve en el primer guardado.
+                    window.POSBorrador?.adoptarClientId?.(draft.clientId);
+
+                    return true;
+                }
+
+                // Vuelca un snapshot (del localStorage o de una venta sin cerrar del servidor) en el estado del POS.
+                // opciones.sinFecha: no pisar #fechaVenta (una venta recuperada se cobra "ahora").
+                function aplicarSnapshot(draft, opciones) {
                     POSState.setLineas(draft.lineas);
                     POSState.setListaExpendios?.(draft.listaExpendios || []);
                     POSState.setFormaPagoPreseleccionada?.(draft.formaPagoPreseleccionada || null);
@@ -2625,27 +2776,65 @@ else
                         actualizarAccesoHistorialPreciosCliente(draft.idPersona);
                     }
                     if (draft.observaciones != null) POSState.setObservaciones(draft.observaciones);
-                    if (draft.fechaVenta) $("#fechaVenta").val(draft.fechaVenta);
+                    if (draft.fechaVenta && !(opciones && opciones.sinFecha)) $("#fechaVenta").val(draft.fechaVenta);
+                }
 
+                // Carga al carrito una venta sin cerrar recuperada del servidor (Ver ventas sin cerrar, F1): la
+                // aplica, retoma su clientId (el mismo carrito sigue latiendo, no se duplica) y refresca la UI.
+                function restaurarDesdeSnapshot(snapshotServidor, clientId) {
+                    if (!snapshotServidor || !Array.isArray(snapshotServidor.lineas)) return false;
+
+                    aplicarSnapshot(snapshotServidor, { sinFecha: true });
+                    window.POSBorrador?.adoptarClientId?.(clientId);
+                    window.POSDraftRefrescarUI?.();
+                    save();
+                    window.POSBorrador?.programarGuardado?.();
                     return true;
                 }
 
                 function clear() {
                     localStorage.removeItem(key);
+                    // Carrito nuevo: se descarta el token del anterior y se frena el guardado pendiente.
+                    window.POSBorrador?.reiniciar?.();
                 }
 
-                return { save: save, restore: restore, clear: clear };
+                return {
+                    save: save,
+                    restore: restore,
+                    clear: clear,
+                    snapshot: snapshot,
+                    autosave: autosave,
+                    restaurarDesdeSnapshot: restaurarDesdeSnapshot
+                };
             })();
 
-            const ventaRestauradaPOS = window.esEdicionVenta ? false : window.POSDraft.restore();
-            if (ventaRestauradaPOS) {
+            // Refresca la UI del POS despues de volcar un carrito (restaurado del navegador o recuperado del
+            // servidor con "Ver ventas sin cerrar").
+            window.POSDraftRefrescarUI = function () {
                 posCart.renderTable(window.POSState.getLineas());
                 posCart.recalculateTotal();
                 posCart.updateSaleState();
                 posCart.updateCartSummary?.();
                 posComment.updateButtonState?.();
                 posExpendios.syncAssignedFromCart?.();
+            };
+
+            // Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): arranca el resguardo en el servidor y la
+            // vigilancia de "producto sin agregar". Va DESPUES de definir window.esEdicionVenta/POSModo y ANTES de
+            // restaurar el carrito (el clientId del borrador local se retoma en restore()).
+            window.POSBorrador?.init?.();
+            window.POSProductoPendiente?.init?.({
+                getModoCantidad: function () { return posBalanza ? posBalanza.getModoCantidad() : 'Manual'; },
+                getUltimaLectura: function () { return posBalanza ? posBalanza.getUltimaLectura() : null; }
+            });
+
+            const ventaRestauradaPOS = window.esEdicionVenta ? false : window.POSDraft.restore();
+            if (ventaRestauradaPOS) {
+                window.POSDraftRefrescarUI();
             }
+
+            // Badge de "Ver ventas sin cerrar" (y limpieza si el carrito local ya era una venta registrada).
+            window.POSBorrador?.actualizarBadgeInicial?.();
 
             function hayVentaActivaPOS() {
                 if (window.POSFinalizandoVenta) return false;
@@ -2914,7 +3103,12 @@ else
                 var mmRecordado = pvbObtenerMedidaTicket();
 
                 function abrirTicket(mm) {
-                    window.open(window.api.venta.imprimirTicketHtml + "?id=" + ventaId + "&mm=" + mm, "_blank");
+                    // Agente local si esta instalado; si no, dialogo del navegador via iframe
+                    // oculto -- nunca pestaña nueva (ver ticket-print.js)
+                    window.TicketPrint.imprimir({
+                        ticketUrl: window.api.venta.imprimirTicketHtml + "?id=" + ventaId + "&mm=" + mm,
+                        payloadUrl: window.api.venta.imprimirTicketPayload + "?id=" + ventaId + "&mm=" + mm
+                    });
                 }
 
                 if (mmRecordado) {

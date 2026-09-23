@@ -76,7 +76,7 @@ using WebCore.Models.DTO;
 
 namespace WebCore.Controllers
 {
-    public class VentasController : Controller
+    public partial class VentasController : Controller
     {
         // Tamano de pagina de la carga progresiva de Facturas -- mismo criterio que
         // ProductosController.CatalogoGlobalTamanoPagina.
@@ -2421,6 +2421,16 @@ namespace WebCore.Controllers
                 if (request == null || request.LineasVenta == null || !request.LineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });
 
+                // Idempotencia (ventas en curso): si este carrito ya se convirtio en una venta real
+                // (ej. el POST anterior llego pero la respuesta se perdio), se devuelve esa venta en vez
+                // de registrar otra igual.
+                if (request.ClientId.HasValue && WebCore.Helpers.PosBorradorSettings.Habilitado)
+                {
+                    int? ventaYaRegistrada = CrearVentaBorradorN().ObtenerIdVentaSiYaFinalizada(request.ClientId.Value);
+                    if (ventaYaRegistrada.HasValue)
+                        return Json(new { ok = true, ventaId = ventaYaRegistrada.Value, yaRegistrada = true });
+                }
+
                 if (user.IdSucursal == 0)
                     return Json(new { ok = false, msg = "Seleccione una sucursal antes de finalizar la venta." });
 
@@ -2510,6 +2520,21 @@ namespace WebCore.Controllers
                     .ToList();
 
                 int idVenta = _oVentaN.agregarVenta(venta);
+
+                // Ventas en curso: la venta ya quedo guardada, se marca el borrador como FINALIZADA. Mejor
+                // esfuerzo: si esto falla NO se le avisa al cajero (la venta esta bien); solo queda el
+                // borrador ACTIVA, que luego aparece como "interrumpida" y el admin lo ve.
+                if (request.ClientId.HasValue && WebCore.Helpers.PosBorradorSettings.Habilitado)
+                {
+                    try
+                    {
+                        CrearVentaBorradorN().MarcarFinalizada(request.ClientId.Value, idVenta);
+                    }
+                    catch (Exception exBorrador)
+                    {
+                        System.Diagnostics.Trace.TraceWarning("No se pudo marcar la venta en curso como finalizada (venta #" + idVenta + "): " + exBorrador.Message);
+                    }
+                }
 
                 return Json(new { ok = true, ventaId = idVenta });
             }

@@ -168,6 +168,18 @@
                         </button>
                     </div>
 
+                    @* Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): lista las ventas sin cerrar de la
+                       sucursal (usuario e items) y permite cargarlas al carrito. Lo maneja Scripts/app/pos-borrador.js
+                       (hook window.posHotkeysHooks.VentasSinCerrar); el badge cuenta las interrumpidas. *@
+                    <div class="col-12 col-md-6 d-none" id="colVentasSinCerrarAyuda">
+                        <button type="button" class="btn btn-outline-warning btn-block pos-help-action" data-accion="VentasSinCerrar">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Ver ventas sin guardar <span id="badgeVentasSinCerrarAyuda" class="badge badge-warning d-none">0</span></span>
+                                <span class="badge badge-warning pos-help-key"><i class="fas fa-cart-arrow-down"></i></span>
+                            </span>
+                        </button>
+                    </div>
+
                     <div class="col-12 col-md-6">
                         <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F9">
                             <span class="pos-help-action-inner">

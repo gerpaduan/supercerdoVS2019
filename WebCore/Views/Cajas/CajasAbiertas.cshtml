@@ -1137,14 +1137,16 @@
             return toFloat(texto).toFixed(2);
         }
 
-        function guardarCierreCaja() {
+        // confirmarVentaEnCurso: la segunda vuelta, tras avisar que el cajero tiene ventas sin finalizar.
+        function guardarCierreCaja(confirmarVentaEnCurso) {
             let data = {
                 Id: $("#Id").val(),
                 CajaCierre: toPostNumberString($("#CajaCierre").val()),
                 Diferencia: toPostNumberString($("#Diferencia").val()),
                 ImporteRetirado: toPostNumberString($("#ImporteRetirado").val()),
                 CajaInicioSiguiente: toPostNumberString($("#CajaInicioSiguiente").val()),
-                modoModificacion: $("#ModoModificacion").val() === "true"
+                modoModificacion: $("#ModoModificacion").val() === "true",
+                confirmarVentaEnCurso: confirmarVentaEnCurso === true
             };
 
             $.ajax({
@@ -1152,6 +1154,31 @@
                 type: 'POST',
                 data: data,
                 success: function (resp) {
+                    // Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): el cajero dueno de la caja tiene
+                    // ventas sin finalizar. Se muestra el detalle y, si se confirma, se cierra igual (queda
+                    // registrado y el cajero podra recuperarlas al abrir una caja nueva).
+                    if (!resp.ok && resp.requiereConfirmacion) {
+                        const escapar = function (t) { return $("<div>").text(t == null ? "" : String(t)).html(); };
+                        const filas = (resp.ventasEnCurso || []).map(function (v) {
+                            return "<li>" + escapar(v.operador || "Cajero") + ": <b>$ " + escapar(v.total) + "</b> (" +
+                                escapar(v.cantLineas) + " ítem(s)), iniciada el " + escapar(v.inicio) + "</li>";
+                        }).join("");
+
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Hay ventas en curso',
+                            html: '<div class="text-left">Esta caja tiene ventas sin finalizar:<ul class="mt-2">' + filas + '</ul>' +
+                                'Si cerrás igual, queda <b>registrado</b> y se le avisa al administrador. El cajero podrá recuperar los datos al abrir una caja nueva.</div>',
+                            showCancelButton: true,
+                            confirmButtonText: 'Cerrar igual',
+                            cancelButtonText: 'Volver',
+                            confirmButtonColor: '#e74a3b'
+                        }).then(function (r) {
+                            if (r.isConfirmed) guardarCierreCaja(true);
+                        });
+                        return;
+                    }
+
                     if (!resp.ok) {
                         $("#cerrarCajaError").removeClass("d-none").text(resp.error);
                         return;

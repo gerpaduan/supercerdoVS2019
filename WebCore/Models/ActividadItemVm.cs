@@ -34,6 +34,17 @@ namespace WebCore.Models
         // claro el caso concreto (ej. "esta venta es del 15/08 pero se cargo/edito el 16/09").
         // Mismo alcance que OrigenFecha/EsAnomalia (null para Precio/Formula/Egreso).
         public DateTime? FechaNegocio { get; set; }
+
+        // Ventas en curso / advertencias del POS (ver docs/DECISIONS.md "Ventas en curso"): true para los items
+        // que son una ADVERTENCIA (producto pesado sin agregar, venta interrumpida...). Se muestran con estilo
+        // de advertencia y con la hora exacta con segundos.
+        public bool EsAdvertencia { get; set; }
+
+        // URL del detalle (modal) de la venta en curso o de las advertencias del cajero; vacio si no hay.
+        public string DetalleUrl { get; set; } = "";
+
+        // Estado de revision del admin ("Sin revisar" / "Justificada" / "Sospechosa"); vacio si no aplica.
+        public string Revision { get; set; } = "";
     }
 
     public class ActividadesIndexVm

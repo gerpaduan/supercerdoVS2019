@@ -26,7 +26,10 @@ namespace WebCore.Services
             _parametros = parametros;
         }
 
-        public List<Models.ActividadItemVm> ObtenerActividades(DateTime desdeConHora, DateTime hastaConHora)
+        // urlDetalle (opcional): arma la URL del detalle de una venta en curso / advertencia (accion, valores)
+        // -> URL. Lo pasa el controller con Url.Action; sin el, los items no llevan boton "Ver detalle".
+        public List<Models.ActividadItemVm> ObtenerActividades(DateTime desdeConHora, DateTime hastaConHora,
+            Func<string, object, string?>? urlDetalle = null)
         {
             var repo = WebCore.Infrastructure.NegocioFactory.CrearActividadRepository(_empresa);
             var oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _parametros);
@@ -153,7 +156,87 @@ namespace WebCore.Services
                 });
             }
 
+            // Ventas en curso interrumpidas/descartadas/cortadas y productos pesados sin agregar (solo Postgres).
+            if (WebCore.Helpers.PosBorradorSettings.Habilitado)
+                AgregarActividadesPosBorrador(items, desdeConHora, hastaConHora, urlDetalle);
+
             return items.OrderByDescending(i => i.Fecha).ToList();
+        }
+
+        // Fuentes nuevas de "Ventas en curso: borrador en servidor y advertencias del POS" (ver
+        // docs/DECISIONS.md): eventos de las ventas sin cerrar, ventas interrumpidas (sin senal) y productos
+        // pesados que quedaron en pantalla sin agregarse. Las advertencias se marcan EsAdvertencia/EsAnomalia y
+        // llevan la hora exacta del evento (no la de una venta). Una falla de estas consultas no debe romper la
+        // pantalla de Actividades: se omiten y se deja el resto.
+        private void AgregarActividadesPosBorrador(List<Models.ActividadItemVm> items, DateTime desde, DateTime hasta,
+            Func<string, object, string?>? urlDetalle)
+        {
+            var es = new CultureInfo("es-AR");
+            Negocio.VentaBorrador negocio;
+            try
+            {
+                negocio = WebCore.Infrastructure.NegocioFactory.CrearVentaBorrador(_empresa);
+
+                // 1) Eventos de las ventas en curso (cierre de pestaña, logout, cierre de caja, recuperada, descartada).
+                foreach (var ev in negocio.ListarEventosPorRango(desde, hasta))
+                {
+                    string quien = string.IsNullOrWhiteSpace(ev.NombreOperador) ? "Un cajero" : ev.NombreOperador;
+                    string detalle = string.IsNullOrWhiteSpace(ev.Detalle) ? "" : " — " + ev.Detalle;
+                    items.Add(new Models.ActividadItemVm
+                    {
+                        Fecha = ev.Fecha,
+                        Tipo = WebCore.Helpers.AdvertenciasTextos.TipoEvento(ev.Tipo),
+                        Descripcion = quien + ": venta sin finalizar de $ " + ev.Total.ToString("N2", es) + " (" + ev.CantLineas + " ítem(s))" + detalle,
+                        EsAdvertencia = ev.Tipo != Entidades.VentaBorradorEvento.TipoRecuperada,
+                        EsAnomalia = ev.Tipo != Entidades.VentaBorradorEvento.TipoRecuperada,
+                        DetalleUrl = urlDetalle?.Invoke("DetalleBorrador", new { id = ev.IdBorrador }) ?? ""
+                    });
+                }
+
+                // 2) Ventas interrumpidas: siguen ACTIVAS pero sin senal (posible corte de luz o de red).
+                foreach (var b in negocio.ListarInterrumpidasPorRango(desde, hasta, WebCore.Helpers.PosBorradorSettings.MinutosSinLatidoInterrumpida))
+                {
+                    if (b.CantLineas <= 0) continue;
+                    string quien = string.IsNullOrWhiteSpace(b.NombreOperador) ? "Un cajero" : b.NombreOperador;
+                    items.Add(new Models.ActividadItemVm
+                    {
+                        Fecha = b.UltimoLatido,
+                        Tipo = "Venta en curso interrumpida",
+                        Descripcion = quien + " dejó una venta sin finalizar de $ " + b.Total.ToString("N2", es) + " (" + b.CantLineas
+                            + " ítem(s)); última señal " + b.UltimoLatido.ToString("dd/MM/yyyy HH:mm:ss", es) + " (posible corte de luz o de red)",
+                        EsAdvertencia = true,
+                        EsAnomalia = true,
+                        DetalleUrl = urlDetalle?.Invoke("DetalleBorrador", new { id = b.Id }) ?? ""
+                    });
+                }
+
+                // 3) Productos pesados que quedaron en pantalla y no se agregaron al carrito.
+                if (WebCore.Helpers.PosBorradorSettings.AdvertenciaProductoSinAgregarHabilitada)
+                {
+                    foreach (var p in negocio.ListarProductoSinAgregarPorRango(desde, hasta))
+                    {
+                        string quien = string.IsNullOrWhiteSpace(p.NombreOperador) ? "Un cajero" : p.NombreOperador;
+                        string salida = p.Motivo == Entidades.ProductoSinAgregar.MotivoCodigoBorrado ? "borrado" : "salió";
+                        items.Add(new Models.ActividadItemVm
+                        {
+                            Fecha = p.Fin,
+                            Tipo = "Producto pesado sin agregar",
+                            Descripcion = quien + " — " + p.Producto + " " + p.CantidadKg.ToString("N3", es) + " kg ($ " + p.Importe.ToString("N2", es)
+                                + ") · tipeado " + p.Inicio.ToString("dd/MM/yyyy HH:mm:ss", es) + " → " + salida + " " + p.Fin.ToString("HH:mm:ss", es)
+                                + " (" + p.SegundosEnPantalla + " s en pantalla) · terminó: " + WebCore.Helpers.AdvertenciasTextos.Motivo(p.Motivo),
+                            EsAdvertencia = true,
+                            EsAnomalia = true,
+                            Revision = WebCore.Helpers.AdvertenciasTextos.Revision(p.Revision),
+                            DetalleUrl = urlDetalle?.Invoke("DetalleProductoSinAgregar",
+                                new { idOperador = p.IdOperador, dia = p.Fin.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) }) ?? ""
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("Actividades: no se pudieron leer las advertencias del POS: " + ex.Message);
+            }
         }
 
         // Batch 9 de la quinta ronda (2026-09-10, ver docs/DECISIONS.md): resuelve, para las 4

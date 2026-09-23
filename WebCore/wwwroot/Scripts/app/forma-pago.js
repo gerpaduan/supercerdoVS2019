@@ -583,6 +583,10 @@ function finalizarVenta(data) {
         return;
     }
 
+    // Producto pesado todavia en pantalla sin agregar al confirmar el cobro: se registra como advertencia.
+    // Cancelar Venta (omitirPostVenta) no cuenta.
+    if (!data.omitirPostVenta) window.POSProductoPendiente?.alFinalizarVenta?.();
+
     window.POSFinalizandoVenta = true;
     window.POSVentaFinalizada = false;
     setEstadoVentaEnProceso(true);
@@ -635,7 +639,10 @@ function finalizarVenta(data) {
         Observaciones: window.POSState?.getObservaciones?.() || '',
         listaExpendios: window.POSState?.getListaExpendios?.() || [],
         lineasVenta: lineasPayload,
-        posInstanceId: window.POSModo?.instanceId || ''
+        posInstanceId: window.POSModo?.instanceId || '',
+        // Token del carrito (ventas en curso): hace la finalizacion idempotente y marca la venta en curso
+        // como FINALIZADA. null si la funcion esta apagada.
+        clientId: window.POSBorrador?.getClientId?.() || null
     };
 
     // El filtro global de antiforgery (Web/Filters/ValidateAppAntiForgeryTokenAttribute.cs) exige el token

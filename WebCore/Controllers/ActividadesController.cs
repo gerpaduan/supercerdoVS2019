@@ -50,7 +50,9 @@ namespace WebCore.Controllers
             DateTime desdeConHora = desde.Date;
             DateTime hastaConHora = hasta.Date.AddDays(1).AddTicks(-1);
 
-            var items = _feed.ObtenerActividades(desdeConHora, hastaConHora);
+            // El detalle (modal) de ventas en curso y advertencias lo resuelve NotificacionesController.
+            var items = _feed.ObtenerActividades(desdeConHora, hastaConHora,
+                (accion, valores) => Url.Action(accion, "Notificaciones", valores));
 
             // Filtro "solo anomalías" (Batch 9 de la quinta ronda, 2026-09-10, ver
             // docs/DECISIONS.md) -- se aplica ANTES de paginar, sobre la lista ya completa, para

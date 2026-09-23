@@ -270,7 +270,8 @@ namespace WebCore.Controllers
                 string Diferencia,
                 string ImporteRetirado,
                 string CajaInicioSiguiente,
-                bool modoModificacion = false
+                bool modoModificacion = false,
+                bool confirmarVentaEnCurso = false
             )
         {
             // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) -- port
@@ -296,6 +297,44 @@ namespace WebCore.Controllers
             if (modoModificacion && !model.FechaHoraCierre.HasValue)
                 return Json(new { ok = false, error = "La caja seleccionada todavía no tiene cierre para modificar." });
 
+            // Ventas en curso (borrador en servidor, ver docs/DECISIONS.md "Ventas en curso"): si el cajero
+            // dueno de esta caja tiene ventas sin finalizar, se avisa y hace falta confirmar. Al confirmar
+            // queda registrado (evento + notificacion al admin) y las ventas quedan recuperables. No aplica
+            // al modificar un cierre historico (la caja ya estaba cerrada).
+            var ventasEnCursoAlCerrar = new List<Entidades.VentaBorrador>();
+            if (!modoModificacion && WebCore.Helpers.PosBorradorSettings.Habilitado)
+            {
+                try
+                {
+                    ventasEnCursoAlCerrar = WebCore.Infrastructure.NegocioFactory.CrearVentaBorrador(_empresa)
+                        .ListarEnCursoDelOperador(model.UsuarioInicio.Id, model.Sucursal.idSucursal)
+                        .Where(b => b.CantLineas > 0)
+                        .ToList();
+                }
+                catch (Exception exBorrador)
+                {
+                    // No bloquear el cierre de caja por una falla del resguardo: se sigue sin el aviso.
+                    System.Diagnostics.Trace.TraceWarning("No se pudieron consultar las ventas en curso al cerrar la caja: " + exBorrador.Message);
+                }
+
+                if (ventasEnCursoAlCerrar.Count > 0 && !confirmarVentaEnCurso)
+                {
+                    var culturaAr = System.Globalization.CultureInfo.GetCultureInfo("es-AR");
+                    return Json(new
+                    {
+                        ok = false,
+                        requiereConfirmacion = true,
+                        ventasEnCurso = ventasEnCursoAlCerrar.Select(b => new
+                        {
+                            operador = b.NombreOperador,
+                            total = b.Total.ToString("N2", culturaAr),
+                            cantLineas = b.CantLineas,
+                            inicio = b.Creado.ToString("dd/MM/yyyy HH:mm:ss", culturaAr)
+                        })
+                    });
+                }
+            }
+
             model.CajaCierre = ParseFloat(CajaCierre);
             model.Diferencia = ParseFloat(Diferencia);
             model.ImporteRetirado = ParseFloat(ImporteRetirado);
@@ -312,6 +351,20 @@ namespace WebCore.Controllers
 
             if (!result.Ok)
                 return Json(new { ok = false, error = result.Mensaje });
+
+            if (ventasEnCursoAlCerrar.Count > 0)
+            {
+                try
+                {
+                    WebCore.Infrastructure.NegocioFactory.CrearVentaBorrador(_empresa)
+                        .RegistrarCierreCajaConVentas(model.UsuarioInicio.Id, model.Sucursal.idSucursal, usuarioAutorizado.Id, usuarioAutorizado.Nombre);
+                }
+                catch (Exception exRegistro)
+                {
+                    // La caja ya se cerro bien: si falla el registro solo se pierde el aviso, no se revierte el cierre.
+                    System.Diagnostics.Trace.TraceWarning("No se pudo registrar el cierre de caja con ventas en curso: " + exRegistro.Message);
+                }
+            }
 
             return Json(new
             {

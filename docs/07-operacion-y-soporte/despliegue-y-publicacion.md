@@ -361,6 +361,17 @@ Host compartido con 4 clientes ajenos (cat, crm, cancha5, multeo): reglas y conv
 
 **Email en la VPS luden: Resend, no Postmark (2026-09-20)**: `SmtpMailHelper` es SMTP generico, no se toco codigo. `/srv/carnisys/WebCore.dll.config`: `SmtpHost=smtp.resend.com`, `SmtpPort=587` (STARTTLS; el 465 implicito no lo soporta `SmtpClient`), `SmtpEnableSsl=true`, `SmtpUser=resend` (literal), `SmtpPass`=API key de Resend (en `~/hosts/resend.env`), `SmtpFromEmail=notificaciones@carnisys.com`. El dominio `carnisys.com` esta **verificado en Resend** (region sa-east-1, envio habilitado); `mail.carnisys.com` NO esta en esa cuenta, por eso el remitente es del dominio raiz. Verificado: login SMTP contra Resend `235 Authentication successful` (sin enviar mail) y web healthy tras el restart. **NO probado**: un envio real desde la app (reset de contrasena / codigo de dispositivo). La VM Windows sigue con Postmark, sin cambios. Siguen `PENDIENTE` en el config: `cuit`, `WebClasicoBaseUrl`.
 
+## Ventas en curso (borrador en servidor) y advertencias del POS -- orden de despliegue (2026-09-21)
+
+Solo Postgres. Ver `docs/DECISIONS.md` "Ventas en curso: borrador en servidor y advertencias del POS". **Orden obligatorio: migracion primero, codigo despues** (mismo motivo que passkeys: el codigo nuevo solo consulta las tablas si `PosBorradorSettings.Habilitado` da true, pero conviene tenerlas antes de activar).
+
+1. **Migracion**: `DatosPostgres/DB-Migrations/20260921b-Create_ventaborrador_productosinagregar_notificaciones.sql`, como `carnisys_admin`. Crea `ventaborrador`, `ventaborradorevento`, `ventaproductosinagregar` y `notificaciones` (todas con RLS) y da `GRANT` a `carnisys_user`, `cs_admin_pg`. Aditiva: no toca tablas existentes. Sin variante SQL Server.
+2. **Deploy de codigo**: mismos pasos que el resto de esta guia. Sin dependencias NuGet nuevas.
+3. **Activar/ajustar por ambiente** (opcional) en `WebCore.dll.config`: seccion `PosBorrador:*` (`Habilitado`, `LatidoSegundos`, `MinutosSinLatidoInterrumpida`, `DiasRetencionFinalizadas`, `MaxLineas`, `MaxPayloadKb`, `SegundosProductoSinAgregar`, `SegundosCantidadCeroConfirmacion`, `AdvertenciaProductoSinAgregarHabilitada`). Sin estas claves, `PosBorradorSettings` usa los defaults documentados en `WebCore/Helpers/PosBorradorSettings.cs` — con `DataEngine=Postgres` la funcion queda activa por default apenas se aplica la migracion.
+4. **Verificar**: en el POS, cargar un item y confirmar que aparece un indicador de "Venta resguardada hh:mm:ss" bajo la balanza; cerrar la pestana sin finalizar y volver a entrar -> el boton "Ayuda (F1)" muestra un badge con la cantidad y "Ver ventas sin cerrar" la lista; como admin, la campana del topbar debe aparecer junto al toggle de tema.
+5. **Rollback funcional**: `PosBorrador:Habilitado=false` y reiniciar (el POS vuelve a depender solo del `POSDraft` local). Para revertir el esquema: las 4 tablas se pueden `DROP` sin afectar `ventas`/`lineaventa` (nunca las referencian por FK).
+6. **Servidor SM / San Lorenzo (SQL Server)**: sin cambios, la funcion no existe ahi (mismo criterio que passkeys).
+
 ## Login por huella (passkeys) -- orden de despliegue (2026-09-21)
 
 Solo Postgres + HTTPS con dominio real. Ver `docs/DECISIONS.md` "Login por huella (passkeys WebAuthn)". **Orden obligatorio: migracion primero, codigo despues** (el codigo nuevo consulta `usuariopasskeys` solo si el ambiente lo habilita, pero conviene tener la tabla antes de activar).

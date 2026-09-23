@@ -652,6 +652,26 @@
                         <span class="navbar-text h5 mb-0 fw-bold text-dark page-section-title">@ViewData["Title"]</span>
 
                         <ul class="navbar-nav ml-auto">
+                            @* Campana de notificaciones del admin (ventas en curso interrumpidas/descartadas, cierres de
+                               caja con venta en curso y advertencias de "producto pesado sin agregar"). Solo admin y solo
+                               con Postgres; la llena Scripts/app/advertencias-admin.js. Ver docs/DECISIONS.md "Ventas en
+                               curso: borrador en servidor y advertencias del POS". *@
+                            @if (esAdmin && WebCore.Helpers.PosBorradorSettings.Habilitado)
+                            {
+                                <li class="nav-item dropdown no-arrow d-flex align-items-center">
+                                    <a class="nav-link topbar-icon-btn position-relative" href="#" id="campanaNotificaciones" role="button"
+                                       data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Notificaciones" aria-label="Notificaciones">
+                                        <i class="fas fa-bell"></i>
+                                        <span id="campanaContador" class="badge bg-danger position-absolute d-none" style="top:0;right:-4px;font-size:.6rem;">0</span>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end shadow p-0" aria-labelledby="campanaNotificaciones" style="min-width:340px;max-width:420px;">
+                                        <h6 class="dropdown-header">Notificaciones pendientes</h6>
+                                        <div id="campanaLista" style="max-height:360px;overflow-y:auto;"><div class="px-3 py-2 text-muted small">Cargando...</div></div>
+                                        <div class="dropdown-divider m-0"></div>
+                                        <a class="dropdown-item text-center small" href="@Url.Action("Index", "Actividades")">Ver actividades</a>
+                                    </div>
+                                </li>
+                            }
                             <li class="nav-item no-arrow d-flex align-items-center">
                                 <a class="nav-link topbar-icon-btn" href="#" id="btnToggleTheme" role="button" title="Activar modo oscuro" aria-label="Cambiar tema">
                                     <i id="icoTheme" class="fas fa-moon"></i>
@@ -757,6 +777,46 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/Scripts/app/bootstrap4-compat.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (esAdmin && WebCore.Helpers.PosBorradorSettings.Habilitado)
+    {
+        @* Modal global de detalle de advertencias (lo abre la campana y /Actividades) + token antiforgery
+           para las acciones POST (revisar / marcar atendida). *@
+        <div id="advertenciasAntiForgery" style="display:none;">@Html.AntiForgeryToken()</div>
+        <div class="modal fade" id="modalAdvertenciaDetalle" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Detalle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body" id="modalAdvertenciaDetalleBody"></div>
+                </div>
+            </div>
+        </div>
+        @* Compacto (pedido del usuario, 2026-09-21): el detalle de venta en curso / producto sin agregar
+           (Views/Notificaciones/_DetalleBorradorVenta.cshtml y _DetalleProductoSinAgregar.cshtml) se inserta
+           con innerHTML dentro de #modalAdvertenciaDetalleBody -- se escala aca, una sola vez, para las dos vistas. *@
+        <style>
+            #modalAdvertenciaDetalleBody { font-size: .82rem; }
+            #modalAdvertenciaDetalleBody h5 { font-size: 1rem; }
+            #modalAdvertenciaDetalleBody h6 { font-size: .88rem; }
+            #modalAdvertenciaDetalleBody table { font-size: .8rem; }
+            #modalAdvertenciaDetalleBody table th, #modalAdvertenciaDetalleBody table td { padding: .35rem .5rem; vertical-align: middle; }
+            #modalAdvertenciaDetalleBody .badge { font-size: .68rem; }
+            #modalAdvertenciaDetalleBody .form-select-sm, #modalAdvertenciaDetalleBody .form-control-sm { font-size: .76rem; }
+            #modalAdvertenciaDetalleBody .alert { padding: .5rem .75rem; font-size: .8rem; }
+            #modalAdvertenciaDetalleBody .border.rounded.p-2 { padding: .4rem !important; }
+        </style>
+        <script>
+            window.AdvertenciasAdminConfig = {
+                resumenUrl: '@Url.Action("Resumen", "Notificaciones")',
+                atenderUrl: '@Url.Action("Atender", "Notificaciones")',
+                revisarUrl: '@Url.Action("RevisarProductoSinAgregar", "Notificaciones")',
+                intervaloMs: 60000
+            };
+        </script>
+        <script src="~/Scripts/app/advertencias-admin.js" asp-append-version="true"></script>
+    }
     @* print-agent.js (cliente contra el agente de impresion local, 127.0.0.1:18777) -- cargado
        globalmente (2026-09-10, ver docs/DECISIONS.md "Batch 6"): lo necesita tanto el modal de
        arriba (disponible en toda pagina via el dropdown de usuario) como DispositivosSeguros/

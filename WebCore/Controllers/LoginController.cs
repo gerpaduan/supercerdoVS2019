@@ -494,9 +494,28 @@ namespace WebCore.Controllers
 
         public async Task<IActionResult> Logout()
         {
+            RegistrarLogoutConVentaEnCurso();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.Clear();
             return RedirectToAction("Index");
+        }
+
+        // Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): si al cerrar sesion la cuenta tiene
+        // ventas del POS sin finalizar, queda constancia en cada una (evento LOGOUT). Nunca debe impedir el
+        // logout: si falla solo se loguea.
+        private void RegistrarLogoutConVentaEnCurso()
+        {
+            try
+            {
+                if (!WebCore.Helpers.PosBorradorSettings.Habilitado || !_sesion.EstaAutenticado) return;
+
+                var usuario = _sesion.UsuarioActual;
+                WebCore.Infrastructure.NegocioFactory.CrearVentaBorrador(_sesion.Empresa).RegistrarLogout(usuario.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo registrar el logout con ventas en curso.");
+            }
         }
 
         // Cambiar clave desde el menu de usuario del POS (2026-09-10, item 6 de la segunda ronda

@@ -282,6 +282,31 @@
             </div>
 
             <div class="d-flex align-items-center">
+                @* Campana de "ventas sin guardar" para el cajero (no solo el admin): sus propias ventas
+                   en curso interrumpidas (corte de luz, cierre de pestaña). Reusa el mismo fetch que ya
+                   hace pos-borrador.js para el badge de Ayuda (ListarBorradoresPOS), filtrado por
+                   esMia -- sin pedido extra al servidor. Solo Ventas/POS (PuntosExpendio no usa
+                   VentaBorrador) y solo con el feature habilitado. Ver docs/DECISIONS.md "Ventas en
+                   curso: borrador en servidor y advertencias del POS". *@
+                @if (controller == "Ventas" && WebCore.Helpers.PosBorradorSettings.Habilitado)
+                {
+                    <div class="nav-item dropdown no-arrow d-flex align-items-center">
+                        <a class="nav-link topbar-icon-btn position-relative" href="#" id="campanaVentasPOS" role="button"
+                           data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Ventas sin guardar" aria-label="Ventas sin guardar">
+                            <i class="fas fa-bell text-light"></i>
+                            <span id="campanaVentasPOSContador" class="badge bg-danger position-absolute d-none" style="top:2px;right:-2px;font-size:.6rem;">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow p-0" aria-labelledby="campanaVentasPOS" style="min-width:300px;max-width:380px;">
+                            <h6 class="dropdown-header">Tus ventas sin guardar</h6>
+                            <div id="campanaVentasPOSLista" style="max-height:320px;overflow-y:auto;">
+                                <div class="px-3 py-2 text-muted small">Ninguna por ahora.</div>
+                            </div>
+                            <div class="dropdown-divider m-0"></div>
+                            <a class="dropdown-item text-center small" href="#" id="campanaVentasPOSVerTodas">Ver ventas sin guardar</a>
+                        </div>
+                    </div>
+                }
+
                 <a href="#" id="btnToggleTheme" class="nav-link topbar-icon-btn" title="Cambiar tema">
                     <i id="icoTheme" class="fas fa-moon text-light"></i>
                 </a>

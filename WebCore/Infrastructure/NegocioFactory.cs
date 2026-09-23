@@ -157,6 +157,18 @@ namespace WebCore.Infrastructure
             return new Negocio.UsuarioPasskey(repo);
         }
 
+        // Ventas en curso / advertencias del POS / notificaciones al admin: solo existe en Postgres, no
+        // hay rama SQL Server. Quien la llame debe haber chequeado antes PosBorradorSettings.Habilitado
+        // (que ya exige UsarPostgres).
+        public static Negocio.VentaBorrador CrearVentaBorrador(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres)
+                throw new InvalidOperationException("Las ventas en curso solo están disponibles con DataEngine=Postgres.");
+
+            var repo = new DatosPostgres.VentaBorradorPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.VentaBorrador(repo);
+        }
+
         public static Negocio.Empresa CrearEmpresa(IEmpresaContext empresa)
         {
             if (!UsarPostgres) return new Negocio.Empresa(empresa);

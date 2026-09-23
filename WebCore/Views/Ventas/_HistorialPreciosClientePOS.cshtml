@@ -65,4 +65,7 @@ else
 <style>
     #modalFinanzasPOS .historial-precios-tabla td,
     #modalFinanzasPOS .historial-precios-tabla th { padding: .55rem .75rem; font-size: .92rem; line-height: 1.3; }
+    /* Filas de productos que ya estan en el carrito (las marca marcarProductosEnCarrito() en POS.cshtml). */
+    #modalFinanzasPOS .historial-precios-tabla tr.historial-en-carrito > td { background-color: rgba(40, 167, 69, .12); }
+    #modalFinanzasPOS .historial-precios-tabla tr.historial-en-carrito > td:first-child { box-shadow: inset 4px 0 0 #28a745; }
 </style>

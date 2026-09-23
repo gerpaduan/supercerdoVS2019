@@ -48,13 +48,24 @@
         </form>
     </div>
 
+    @* Ayuda para el admin sobre las advertencias del POS (producto pesado sin agregar, ventas en curso). Solo si la
+       pagina muestra alguna. Los numeros salen de la configuracion real. Ver docs/DECISIONS.md "Ventas en curso". *@
+    @if (Model.Items.Any(i => i.EsAdvertencia))
+    {
+        @await Html.PartialAsync("~/Views/Notificaciones/_AyudaAdvertencias.cshtml", new WebCore.Models.DetalleProductoSinAgregarVm
+        {
+            SegundosUmbral = WebCore.Helpers.PosBorradorSettings.SegundosProductoSinAgregar,
+            SegundosCantidadCero = WebCore.Helpers.PosBorradorSettings.SegundosCantidadCeroConfirmacion
+        })
+    }
+
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-sm mb-0">
                     <thead class="thead-light">
                         <tr>
-                            <th style="width:150px;">Fecha</th>
+                            <th style="width:170px;">Fecha</th>
                             <th style="width:170px;">Tipo</th>
                             <th>Descripción</th>
                             <th style="width:110px;"></th>
@@ -69,9 +80,10 @@
                         }
                         @foreach (var item in Model.Items)
                         {
-                            <tr>
+                            <tr class="@(item.EsAdvertencia ? "table-warning" : "")">
                                 <td class="text-nowrap" style="font-size:13px;">
-                                    @item.Fecha.ToString("dd/MM/yyyy HH:mm")
+                                    @* Las advertencias muestran la hora EXACTA con segundos (momento en que se genero, no la de la venta). *@
+                                    @item.Fecha.ToString(item.EsAdvertencia ? "dd/MM/yyyy HH:mm:ss" : "dd/MM/yyyy HH:mm")
                                     @if (item.EsAnomalia && item.FechaNegocio.HasValue)
                                     {
                                         string origenTexto = string.IsNullOrWhiteSpace(item.OrigenFecha) ? "cargó" : (item.OrigenFecha == "modificación" ? "modificó" : "cargó");
@@ -90,13 +102,34 @@
                                         <br /><small class="text-muted">(@item.OrigenFecha)</small>
                                     }
                                 </td>
-                                <td><span class="badge badge-secondary">@item.Tipo</span></td>
-                                <td>@item.Descripcion</td>
+                                <td>
+                                    @if (item.EsAdvertencia)
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-triangle-exclamation mr-1"></i>@item.Tipo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">@item.Tipo</span>
+                                    }
+                                </td>
+                                <td>
+                                    @item.Descripcion
+                                    @if (!string.IsNullOrWhiteSpace(item.Revision))
+                                    {
+                                        <span class="badge @(item.Revision == "Sospechosa" ? "bg-danger" : (item.Revision == "Justificada" ? "bg-success" : "bg-secondary")) ml-1">@item.Revision</span>
+                                    }
+                                </td>
                                 <td class="text-center">
                                     @if (item.IdVenta.HasValue)
                                     {
                                         <button type="button" class="btn btn-sm btn-outline-primary js-ver-venta-actividad" data-venta-id="@item.IdVenta">
                                             Ver venta
+                                        </button>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.DetalleUrl))
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-warning js-abrir-detalle-advertencia" data-url="@item.DetalleUrl">
+                                            Ver detalle
                                         </button>
                                     }
                                 </td>
