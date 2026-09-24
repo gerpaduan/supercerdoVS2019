@@ -20,11 +20,18 @@ namespace AFIP
 
         private readonly LoginClass login;
         private readonly string servicioAfip = "wsfe";
-        private readonly string clave = "";
 
-        //"Producción"
-        private readonly string urlLogin = "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl";
-        private readonly string urlWSFE = "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL";
+        // URLs de WSAA y WSFE segun el entorno de la empresa (produccion o homologacion), tomadas de
+        // AfipConfig (por defecto los endpoints oficiales de siempre). Se les agrega el mismo sufijo
+        // de siempre ("?wsdl" / "?WSDL") para que el request de produccion no cambie.
+        private const string SufijoWsaa = "?wsdl";
+        private const string SufijoWsfe = "?WSDL";
+        private readonly string urlLogin;
+        private readonly string urlWSFE;
+
+        // true si la empresa esta en homologacion: los comprobantes que se emitan son de PRUEBA y no
+        // tienen validez fiscal (el llamador lo guarda en FacturaElectronica.EsPrueba).
+        public bool EsHomologacion { get; }
 
         // privados / contexto
         private readonly Venta _ventaCtx;
@@ -37,7 +44,9 @@ namespace AFIP
         // corre IIS las apps ASP.NET), pero para WebCore (Kestrel self-hosted) es la carpeta de
         // build (bin/Debug/net10.0), no el content root del proyecto -- ahi no esta AFIP/<cuit>/.
         // Sin override, comportamiento identico al original (net472 no cambia).
-        public GenerarFacturaService(Entidades.Venta venta, string basePathOverride = null)
+        // config: opcional (URLs por entorno y clave del pfx); null = endpoints oficiales y pfx sin clave,
+        // o sea el comportamiento historico.
+        public GenerarFacturaService(Entidades.Venta venta, string basePathOverride = null, AfipConfig config = null)
         {
             if (venta == null) throw new ArgumentNullException(nameof(venta));
             if (venta.Sucursal == null) throw new ArgumentException("Venta sin Sucursal", nameof(venta));
@@ -51,32 +60,24 @@ namespace AFIP
             cuit = venta.Sucursal.Empresa.Cuit.ToString();
             ptoVtaAfip = venta.Sucursal.CodPuntoVentaAfip;
 
-            string appBaseDirectory = string.IsNullOrWhiteSpace(basePathOverride)
-                ? AppDomain.CurrentDomain.BaseDirectory
-                : basePathOverride;
+            config = config ?? AfipConfig.PorDefecto();
+            EsHomologacion = config.EsHomologacion(venta.Sucursal.Empresa.Entorno_HOMO_PROD);
+            var endpoints = config.Para(venta.Sucursal.Empresa.Entorno_HOMO_PROD);
+            urlLogin = endpoints.WsaaUrl + SufijoWsaa;
+            urlWSFE = endpoints.WsfeUrl + SufijoWsfe;
 
-            string basePath = Path.Combine(
-                appBaseDirectory,
-                "AFIP",
-                cuit
-            );
-
-            string rutaCertificado = Path.Combine(
-                basePath,
-                venta.Sucursal.Empresa.NombreCertificado_pfx
-            );
-
-            string rutaTA = Path.Combine(
-                basePath,
-                "TicketAcceso.txt"
-            );
+            // <base>/AFIP/<cuit>/<pfx>: la regla vive en AfipRutas (compartida con el padron y con la
+            // pantalla Certificado ARCA). Ticket de homologacion separado del de produccion.
+            string basePath = AfipRutas.Carpeta(basePathOverride, cuit);
+            string rutaCertificado = AfipRutas.Certificado(basePath, venta.Sucursal.Empresa.NombreCertificado_pfx);
+            string rutaTA = AfipRutas.Ticket(basePath, esPadron: false, homologacion: EsHomologacion);
 
             login = new LoginClass(
                 servicioAfip,
                 urlLogin,
-                Path.Combine(rutaCertificado),
-                "",
-                Path.Combine(rutaTA),
+                rutaCertificado,
+                config.ClaveCertificado ?? "",
+                rutaTA,
                 basePath
             );
 
@@ -482,7 +483,10 @@ namespace AFIP
                         ImporteTotal = (float)Math.Round(impTotal, 2, MidpointRounding.AwayFromZero),
 
                         IdVenta = factura.Venta.IdVenta,
-                        PorcentajeFacturacion = (float)pct
+                        PorcentajeFacturacion = (float)pct,
+
+                        // Emitida en homologacion = comprobante de PRUEBA (sin validez fiscal).
+                        EsPrueba = EsHomologacion
                     };
 
                     // IVA discriminado para persistencia (si hay)

@@ -321,6 +321,20 @@ namespace Entidades
             set { mensajeError = value; }
         }
 
+        // Valores del filtro de entorno del listado de facturas (null/vacio = todas).
+        public const string FiltroEntornoProduccion = "PROD";
+        public const string FiltroEntornoPrueba = "PRUEBA";
+
+        bool esPrueba;
+
+        // true si se emitio en homologacion de AFIP (comprobante de PRUEBA, sin validez fiscal). Solo
+        // Postgres lo persiste (columna esprueba); en SQL Server queda siempre false.
+        public bool EsPrueba
+        {
+            get { return esPrueba; }
+            set { esPrueba = value; }
+        }
+
         DateTime? fechaError;
 
         public DateTime? FechaError

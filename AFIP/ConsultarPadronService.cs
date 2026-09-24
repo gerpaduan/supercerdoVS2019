@@ -29,12 +29,14 @@ namespace AFIP
             public string CondicionIvaAfip { get; set; }
             public int IdIvaSugerido { get; set; }
             public personaReturn RawResponse { get; set; }
+            // true si fallo la conexion o el certificado (no "el CUIT no existe"): sirve para cortar/derivar a otro certificado.
+            public bool ErrorTecnico { get; set; }
         }
 
         private const string ServicioAfipPadron = "ws_sr_padron_a13";
 
-        private readonly Entidades.Empresa _empresa;
-        private readonly string _cuitEmpresa;
+        // CUIT dueno del certificado con el que se firma (el de la empresa, o el de la plataforma en el padron compartido).
+        private readonly long _cuitRepresentada;
         private readonly string _urlLogin;
         private readonly string _urlPadron;
         private readonly LoginClass _login;
@@ -45,42 +47,52 @@ namespace AFIP
         // (Kestrel self-hosted) es la carpeta de build (bin/Debug/net10.0), no el content root del
         // proyecto -- ahi no esta AFIP/<cuit>/. Sin override, comportamiento identico al original
         // (net472 no cambia).
-        public ConsultarPadronService(Entidades.Empresa empresa, string basePathOverride = null)
+        // config: opcional (URLs por entorno y clave del pfx); null = endpoints oficiales y pfx sin clave.
+        // OJO: antes un Entorno_HOMO_PROD vacio se trataba como HOMOLOGACION; ahora es PRODUCCION, igual
+        // que en facturacion (AfipEntorno). Las empresas con el campo vacio deben tenerlo seteado explicito.
+        public ConsultarPadronService(Entidades.Empresa empresa, string basePathOverride = null, AfipConfig config = null)
         {
             if (empresa == null) throw new ArgumentNullException(nameof(empresa));
             if (empresa.Cuit <= 0) throw new ArgumentException("Empresa sin CUIT válido.", nameof(empresa));
 
-            _empresa = empresa;
-            _cuitEmpresa = empresa.Cuit.ToString();
+            _cuitRepresentada = empresa.Cuit;
 
-            bool entornoProduccion = !string.IsNullOrWhiteSpace(empresa.Entorno_HOMO_PROD)
-                && empresa.Entorno_HOMO_PROD.Trim().ToUpperInvariant().Contains("PROD");
+            config = config ?? AfipConfig.PorDefecto();
+            bool homologacion = config.EsHomologacion(empresa.Entorno_HOMO_PROD);
+            var endpoints = config.Para(empresa.Entorno_HOMO_PROD);
+            _urlLogin = endpoints.WsaaUrl;
+            _urlPadron = endpoints.PadronUrl;
 
-            _urlLogin = entornoProduccion
-                ? "https://wsaa.afip.gov.ar/ws/services/LoginCms"
-                : "https://wsaahomo.afip.gov.ar/ws/services/LoginCms";
+            // Regla de rutas compartida con facturacion (AfipRutas): <base>/AFIP/<cuit>/...
+            string basePath = AfipRutas.Carpeta(basePathOverride, _cuitRepresentada.ToString());
+            _login = IniciarLogin(
+                basePath,
+                AfipRutas.Certificado(basePath, empresa.NombreCertificado_pfx),
+                config.ClaveCertificado ?? "",
+                homologacion);
+        }
 
-            _urlPadron = entornoProduccion
-                ? "https://aws.afip.gov.ar/sr-padron/webservices/personaServiceA13"
-                : "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA13";
+        // Con una credencial explicita: cuitRepresentada es el CUIT dueno del certificado (en el padron
+        // compartido, el de la PLATAFORMA, no el de la empresa que consulta); carpeta es donde estan su pfx,
+        // su LoginTemplate.xml y su ticket. Ver WebCore.Services.PadronAfipGateway.
+        public ConsultarPadronService(long cuitRepresentada, string carpeta, string nombrePfx, string clave, AfipEndpoints endpoints, bool homologacion = false)
+        {
+            if (cuitRepresentada <= 0) throw new ArgumentException("CUIT representado inválido.", nameof(cuitRepresentada));
+            if (string.IsNullOrWhiteSpace(carpeta)) throw new ArgumentException("Falta la carpeta del certificado.", nameof(carpeta));
+            if (endpoints == null) throw new ArgumentNullException(nameof(endpoints));
 
-            string appBaseDirectory = string.IsNullOrWhiteSpace(basePathOverride)
-                ? AppDomain.CurrentDomain.BaseDirectory
-                : basePathOverride;
+            _cuitRepresentada = cuitRepresentada;
+            _urlLogin = endpoints.WsaaUrl;
+            _urlPadron = endpoints.PadronUrl;
 
-            string basePath = Path.Combine(
-                appBaseDirectory,
-                "AFIP",
-                _cuitEmpresa
-            );
+            _login = IniciarLogin(carpeta, AfipRutas.Certificado(carpeta, nombrePfx), clave ?? "", homologacion);
+        }
 
-            string nombreCertificado = string.IsNullOrWhiteSpace(empresa.NombreCertificado_pfx)
-                ? "certif-prod.pfx"
-                : empresa.NombreCertificado_pfx;
-
-            string rutaCertificado = Path.Combine(basePath, nombreCertificado);
-            string rutaTA = Path.Combine(basePath, "TicketAccesoPerson.txt");
-            string rutaTemplate = Path.Combine(basePath, "LoginTemplate.xml");
+        // Verifica los archivos, arma el LoginClass y hace el login (reusa el ticket vigente del archivo).
+        private LoginClass IniciarLogin(string carpeta, string rutaCertificado, string clave, bool homologacion)
+        {
+            string rutaTA = AfipRutas.Ticket(carpeta, esPadron: true, homologacion: homologacion);
+            string rutaTemplate = AfipRutas.Template(carpeta);
 
             if (!File.Exists(rutaCertificado))
                 throw new FileNotFoundException("No se encontró el certificado AFIP configurado para la empresa.", rutaCertificado);
@@ -88,23 +100,18 @@ namespace AFIP
             if (!File.Exists(rutaTemplate))
                 throw new FileNotFoundException("No se encontró el template de login AFIP configurado para la empresa.", rutaTemplate);
 
-            _login = new LoginClass(
-                ServicioAfipPadron,
-                _urlLogin,
-                rutaCertificado,
-                "",
-                rutaTA,
-                basePath
-            );
+            var login = new LoginClass(ServicioAfipPadron, _urlLogin, rutaCertificado, clave, rutaTA, carpeta);
 
             try
             {
-                _login.HacerLogin();
+                login.HacerLogin();
             }
             catch (Exception ex)
             {
                 throw new InvalidOperationException(TraducirMensajeError(ex), ex);
             }
+
+            return login;
         }
 
         public PadronAfipResult ConsultarDatosContribuyente(string cuitPersona)
@@ -131,7 +138,7 @@ namespace AFIP
                 var response = servicePerson.getPersona(
                     _login.Token,
                     _login.Sign,
-                    _empresa.Cuit,
+                    _cuitRepresentada,
                     cuitConsulta
                 );
 
@@ -206,6 +213,7 @@ namespace AFIP
                 return new PadronAfipResult
                 {
                     Ok = false,
+                    ErrorTecnico = true,
                     Mensaje = TraducirMensajeError(ex)
                 };
             }

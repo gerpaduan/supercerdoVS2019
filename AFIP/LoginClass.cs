@@ -113,26 +113,17 @@ namespace AFIP
 
         private string ObtenerLoginTicketResponse(string cmsFirmadoBase64)
         {
-            // Intentar usar TA existente
-            if (File.Exists(_rutaTA))
+            // Reusar el TA vigente o pedir uno nuevo, UNA sola vez aunque lleguen varios pedidos a la vez
+            // (ARCA no entrega otro TA mientras hay uno vigente) y con escritura atomica del archivo.
+            return AfipTicketCache.ObtenerOPedir(_rutaTA, TAActivo, () =>
             {
-                string ultimoTA = File.ReadAllText(_rutaTA);
-                if (TAActivo(ultimoTA))
-                    return ultimoTA;
-            }
+                var servicio = new WSAA.LoginCMSService
+                {
+                    Url = _urlLogin
+                };
 
-            // Solicitar nuevo TA
-            var servicio = new WSAA.LoginCMSService
-            {
-                Url = _urlLogin
-            };
-
-            string respuesta = servicio.loginCms(cmsFirmadoBase64);
-
-            Directory.CreateDirectory(Path.GetDirectoryName(_rutaTA));
-            File.WriteAllText(_rutaTA, respuesta);
-
-            return respuesta;
+                return servicio.loginCms(cmsFirmadoBase64);
+            });
         }
 
         private void ProcesarRespuesta(string loginTicketResponse)
