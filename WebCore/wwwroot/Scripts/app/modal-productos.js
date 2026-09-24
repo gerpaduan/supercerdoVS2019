@@ -61,8 +61,47 @@
     }
 
     function getColspanMensajes(state) {
-        return state.mostrarPrecio ? 3 : 2;
+        // +1 por la columna "#" (siempre visible, a diferencia de precio que se puede ocultar).
+        return (state.mostrarPrecio ? 3 : 2) + 1;
     }
+
+    // Alt+1..9 selecciona la fila N -- fila superior (DigitN) o numpad (NumpadN), matcheado por
+    // e.code (no e.key: en layouts no-US Alt puede alterar el caracter que reporta e.key).
+    function altDigitFromEvent(e) {
+        if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return null;
+
+        var m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code || '');
+        return m ? parseInt(m[1], 10) : null;
+    }
+
+    // En Windows, Alt+digito del NUMPAD dispara la composicion de "codigo Alt" del sistema
+    // operativo (mantener Alt, tipear digitos, soltar Alt inserta un caracter, ej. Alt+4 = "♦")
+    // -- independiente de que hayamos hecho preventDefault() en el keydown del digito, porque el
+    // caracter se compone a nivel de SO y se entrega recien al soltar Alt, contra lo que tenga el
+    // foco EN ESE MOMENTO (que ya puede ser otro campo si nuestro atajo cerro el modal). Bug real
+    // reportado 2026-09-23 (ver docs/DECISIONS.md): sin este guard, el caracter aparecia tipeado
+    // en el input que quedaba enfocado tras seleccionar con Alt+numero. armarSupresionCaracterAlt()
+    // se llama junto con el preventDefault() del digito, y el listener de mas abajo cancela el
+    // primer beforeinput/keypress que llegue mientras el guard esta activo, sea cual sea el
+    // elemento que termine con el foco.
+    var suprimirCaracterAlt = false;
+    var suprimirCaracterAltTimer = null;
+
+    function armarSupresionCaracterAlt() {
+        suprimirCaracterAlt = true;
+        clearTimeout(suprimirCaracterAltTimer);
+        suprimirCaracterAltTimer = setTimeout(function () { suprimirCaracterAlt = false; }, 500);
+    }
+
+    function cancelarSiSupresionActiva(e) {
+        if (!suprimirCaracterAlt) return;
+        suprimirCaracterAlt = false;
+        clearTimeout(suprimirCaracterAltTimer);
+        e.preventDefault();
+    }
+
+    document.addEventListener('beforeinput', cancelarSiSupresionActiva, true);
+    document.addEventListener('keypress', cancelarSiSupresionActiva, true);
 
     function aplicarVisibilidadPrecio($modal, state) {
         var mostrar = !!state.mostrarPrecio;
@@ -98,6 +137,8 @@
             var precioTexto = isNaN(precioNum) ? '0.00' : precioNum.toFixed(2);
             var precioData = isNaN(precioNum) ? 0 : precioNum;
 
+            var numTexto = (i < 9) ? String(i + 1) : '–';
+
             html += ''
                 + '<tr '
                 + 'data-id="' + escHtml(p.id != null ? p.id : '') + '" '
@@ -105,6 +146,7 @@
                 + 'data-nombre="' + escHtml(p.nombre) + '" '
                 + 'data-precio="' + escHtml(precioData) + '" '
                 + 'style="cursor:pointer;">'
+                + '    <td class="col-numero-cell d-none d-md-table-cell">' + numTexto + '</td>'
                 + '    <td>' + escHtml(p.codigo) + '</td>'
                 + '    <td>' + escHtml(p.nombre) + '</td>'
                 + '    <td class="text-right col-precio-cell">$ ' + precioTexto + '</td>'
@@ -220,7 +262,7 @@
             }, 250);
         });
 
-        // Enter -> seleccionar activa (o primera)
+        // Enter -> seleccionar activa (o primera); Alt+1..9 -> seleccionar la fila N directamente
         $input.on('keydown.buscarProducto', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -230,6 +272,18 @@
 
                 if ($row.length && !esFilaMensaje($row)) {
                     seleccionarProductoDesdeRow($modal, $row);
+                }
+                return;
+            }
+
+            var digit = altDigitFromEvent(e);
+            if (digit != null) {
+                e.preventDefault();
+                armarSupresionCaracterAlt();
+
+                var $rowDigit = $tbody.find('tr').eq(digit - 1);
+                if ($rowDigit.length && !esFilaMensaje($rowDigit)) {
+                    seleccionarProductoDesdeRow($modal, $rowDigit);
                 }
             }
         });

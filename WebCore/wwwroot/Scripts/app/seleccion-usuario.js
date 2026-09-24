@@ -5,6 +5,46 @@
 (function (window, $) {
     'use strict';
 
+    // Alt+1..9 selecciona el usuario N -- fila superior (DigitN) o numpad (NumpadN), matcheado
+    // por e.code (no e.key: en layouts no-US Alt puede alterar el caracter que reporta e.key).
+    // Duplicado a proposito en cada modal de seleccion (no hay modulo de utils compartido en
+    // este proyecto).
+    function altDigitFromEvent(e) {
+        if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return null;
+
+        var m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code || '');
+        return m ? parseInt(m[1], 10) : null;
+    }
+
+    // En Windows, Alt+digito del NUMPAD dispara la composicion de "codigo Alt" del sistema
+    // operativo (mantener Alt, tipear digitos, soltar Alt inserta un caracter, ej. Alt+4 = "♦")
+    // -- independiente de que hayamos hecho preventDefault() en el keydown del digito, porque el
+    // caracter se compone a nivel de SO y se entrega recien al soltar Alt, contra lo que tenga el
+    // foco EN ESE MOMENTO (que ya puede ser otro campo si nuestro atajo cerro el modal). Bug real
+    // reportado 2026-09-23 (ver docs/DECISIONS.md): sin este guard, el caracter aparecia tipeado
+    // en el input que quedaba enfocado tras seleccionar con Alt+numero. armarSupresionCaracterAlt()
+    // se llama junto con el preventDefault() del digito, y el listener de mas abajo cancela el
+    // primer beforeinput/keypress que llegue mientras el guard esta activo, sea cual sea el
+    // elemento que termine con el foco.
+    var suprimirCaracterAlt = false;
+    var suprimirCaracterAltTimer = null;
+
+    function armarSupresionCaracterAlt() {
+        suprimirCaracterAlt = true;
+        clearTimeout(suprimirCaracterAltTimer);
+        suprimirCaracterAltTimer = setTimeout(function () { suprimirCaracterAlt = false; }, 500);
+    }
+
+    function cancelarSiSupresionActiva(e) {
+        if (!suprimirCaracterAlt) return;
+        suprimirCaracterAlt = false;
+        clearTimeout(suprimirCaracterAltTimer);
+        e.preventDefault();
+    }
+
+    document.addEventListener('beforeinput', cancelarSiSupresionActiva, true);
+    document.addEventListener('keypress', cancelarSiSupresionActiva, true);
+
     function createSeleccionUsuario() {
         var usuariosActuales = [];
         var requierePassword = false;
@@ -36,10 +76,15 @@
             });
 
             coincidencias.forEach(function (u, index) {
-                var $item = $('<button type="button" class="list-group-item list-group-item-action seleccion-usuario-item"></button>')
-                    .text(u.nombre)
+                var $num = $('<span class="seleccion-usuario-num d-none d-md-inline-block"></span>')
+                    .text((index < 9) ? String(index + 1) : '–');
+                var $nombre = $('<span></span>').text(u.nombre);
+
+                var $item = $('<button type="button" class="list-group-item list-group-item-action seleccion-usuario-item d-flex align-items-center"></button>')
                     .attr('data-id', u.id)
-                    .attr('data-nombre', u.nombre);
+                    .attr('data-nombre', u.nombre)
+                    .append($num)
+                    .append($nombre);
 
                 if (index === 0) $item.addClass('is-selected');
                 $lista.append($item);
@@ -266,6 +311,24 @@
                 })
                 .off('keydown.seleccionUsuario', '#txtSeleccionUsuario')
                 .on('keydown.seleccionUsuario', '#txtSeleccionUsuario', function (e) {
+                    if (e.altKey) {
+                        var digit = altDigitFromEvent(e);
+                        if (digit != null) {
+                            e.preventDefault();
+                            armarSupresionCaracterAlt();
+                            var $destino = $('#listaSeleccionUsuario .seleccion-usuario-item').eq(digit - 1);
+                            if ($destino.length) {
+                                marcarUsuario($destino);
+                                if (requierePassword) {
+                                    $('#passSeleccionUsuario').trigger('focus');
+                                } else {
+                                    confirmar();
+                                }
+                            }
+                            return;
+                        }
+                    }
+
                     if (e.key === 'ArrowDown') { e.preventDefault(); navegarLista('down'); return; }
                     if (e.key === 'ArrowUp') { e.preventDefault(); navegarLista('up'); return; }
 

@@ -63,6 +63,14 @@
         font-size: .73rem;
         line-height: 1.15;
     }
+
+    #@(modalId) .col-numero-cell {
+        text-align: center;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        font-size: .72rem;
+        color: #adb5bd;
+    }
 </style>
 
 <div class="modal fade modal-search-compact"
@@ -107,6 +115,7 @@
                     <table class="table table-hover table-sm mb-0">
                         <thead class="thead-light">
                             <tr>
+                                <th class="text-center d-none d-md-table-cell" style="width:1%; white-space:nowrap;">#</th>
                                 <th style="width:120px">Código</th>
                                 <th>Producto</th>
                                 <th class="text-right js-col-precio-header" style="width:120px">Precio</th>
@@ -118,6 +127,7 @@
 
                 <small class="text-muted d-block mt-2 modal-search-help">
                     Enter selecciona la fila activa (o la primera). Doble clic también selecciona.
+                    <span class="d-none d-md-inline">Alt+número selecciona esa fila directamente.</span>
                 </small>
 
             </div>

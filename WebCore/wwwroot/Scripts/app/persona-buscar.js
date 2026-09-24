@@ -106,11 +106,67 @@ $(document).on('submit', '#formPersonaModal', function (e) {
     });
 });
 
-// Navegación + Enter selecciona primera/seleccionada
+// Alt+1..9 selecciona la fila N -- fila superior (DigitN) o numpad (NumpadN), matcheado por
+// e.code (no e.key: en layouts no-US Alt puede alterar el caracter que reporta e.key). Duplicado
+// a proposito en cada modal de seleccion (no hay modulo de utils compartido en este proyecto,
+// mismo criterio que form-hotkeys.js).
+function altDigitFromEvent(e) {
+    if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return null;
+
+    const m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code || '');
+    return m ? parseInt(m[1], 10) : null;
+}
+
+// En Windows, Alt+digito del NUMPAD dispara la composicion de "codigo Alt" del sistema operativo
+// (mantener Alt, tipear digitos, soltar Alt inserta un caracter, ej. Alt+4 = "♦") -- independiente
+// de que hayamos hecho preventDefault() en el keydown del digito, porque el caracter se compone a
+// nivel de SO y se entrega recien al soltar Alt, contra lo que tenga el foco EN ESE MOMENTO (que
+// ya puede ser otro campo si nuestro atajo cerro el modal). Bug real reportado 2026-09-23 (ver
+// docs/DECISIONS.md): sin este guard, el caracter aparecia tipeado en el input que quedaba
+// enfocado tras seleccionar con Alt+numero. armarSupresionCaracterAlt() se llama junto con el
+// preventDefault() del digito, y el listener de mas abajo cancela el primer beforeinput/keypress
+// que llegue mientras el guard esta activo, sea cual sea el elemento que termine con el foco.
+let suprimirCaracterAlt = false;
+let suprimirCaracterAltTimer = null;
+
+function armarSupresionCaracterAlt() {
+    suprimirCaracterAlt = true;
+    clearTimeout(suprimirCaracterAltTimer);
+    suprimirCaracterAltTimer = setTimeout(function () { suprimirCaracterAlt = false; }, 500);
+}
+
+function cancelarSiSupresionActiva(e) {
+    if (!suprimirCaracterAlt) return;
+    suprimirCaracterAlt = false;
+    clearTimeout(suprimirCaracterAltTimer);
+    e.preventDefault();
+}
+
+document.addEventListener('beforeinput', cancelarSiSupresionActiva, true);
+document.addEventListener('keypress', cancelarSiSupresionActiva, true);
+
+// Navegación + Enter selecciona primera/seleccionada + Alt+1..9 selecciona la fila N directamente
 $(document).on('keydown', '#filtroPersona', function (e) {
 
     const $rows = $('#tablaPersonas tr.fila-persona');
     if (!$rows.length) return;
+
+    // Alt+digito: selecciona esa fila de una, sin pasar por la logica de "fila activa" de abajo.
+    if (e.altKey) {
+        const digit = altDigitFromEvent(e);
+        if (digit != null) {
+            e.preventDefault();
+            armarSupresionCaracterAlt();
+            const $target = $rows.eq(digit - 1);
+            if ($target.length) {
+                const idPersona = $target.data('id');
+                const razonSocial = $target.data('razon');
+                const identificacion = $target.data('identificacion') || '';
+                seleccionarPersona(idPersona, razonSocial, identificacion);
+            }
+            return;
+        }
+    }
 
     // Si no hay seleccionada, seleccionamos la primera
     let $sel = $rows.filter('.is-selected').first();
@@ -169,12 +225,15 @@ function cargarPersonas() {
 
         let html = '';
 
-        data.forEach(p => {
+        data.forEach((p, index) => {
+            const numTexto = (index < 9) ? String(index + 1) : '–';
+
             html += `
                 <tr class="fila-persona"
                     data-id="${p.idPersona}"
                     data-razon="${p.razonSocial}"
                     data-identificacion="${p.identificacion ?? ''}">
+                    <td class="col-numero-cell d-none d-md-table-cell">${numTexto}</td>
                     <td>${p.cuit ?? ''}</td>
                     <td>${p.razonSocial}</td>
                     <td>${p.identificacion ?? ''}</td>

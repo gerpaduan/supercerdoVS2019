@@ -49,6 +49,14 @@
         font-size: .73rem;
         line-height: 1.15;
     }
+
+    #modalBuscarPersona .col-numero-cell {
+        text-align: center;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        font-size: .72rem;
+        color: #adb5bd;
+    }
 </style>
 
 <div class="modal fade modal-search-compact" id="modalBuscarPersona" tabindex="-1" role="dialog">
@@ -82,6 +90,7 @@
                     <table class="table table-hover table-sm">
                         <thead class="thead-light">
                             <tr>
+                                <th class="text-center d-none d-md-table-cell" style="width:1%; white-space:nowrap;">#</th>
                                 <th>CUIT</th>
                                 <th>Razón Social</th>
                                 <th>Identificación</th>
@@ -93,6 +102,7 @@
 
                 <small class="text-muted d-block mt-2 modal-search-help">
                     Enter selecciona la fila activa. Doble clic también selecciona.
+                    <span class="d-none d-md-inline">Alt+número selecciona esa fila directamente.</span>
                 </small>
 
             </div>
