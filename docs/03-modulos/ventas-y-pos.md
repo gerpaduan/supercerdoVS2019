@@ -31,7 +31,13 @@ borrador en servidor y advertencias del POS", 2026-09-21). Resumen operativo:
   al "Finalizar venta", como siempre.
 - **Recuperación**: panel de Ayuda (F1) → "Ver ventas sin cerrar" lista las de toda la sucursal con
   usuario e ítems; el cajero carga/descarta solo las propias, una ajena pide autorización de un
-  supervisor (usuario+clave).
+  supervisor (usuario+clave). Una venta figura "En uso" (no cargable) mientras su último latido sea
+  más nuevo que `PosBorrador:MinutosSinLatidoInterrumpida` (default 5 min); cuando la pestaña avisa
+  su cierre (`pagehide` → `EventoBorradorPOS`) el latido se retrocede 1 día
+  (`IVentaBorradorRepository.EnvejecerLatidoPorCierre`) y la venta queda "Interrumpida" y cargable
+  **al instante**. Solo un corte sin aviso (luz, crash del navegador) espera el umbral. (Corregido
+  2026-09-24: antes el POS no envejecía el latido y siempre había que esperar los 5 min; los
+  formularios genéricos ya lo hacían.)
 - **Al cerrar la caja** con una venta en curso del dueño de esa caja, se avisa y hace falta confirmar;
   si se confirma, queda registrado (evento + notificación al admin) y la venta sigue recuperable.
 - **Advertencia "producto pesado sin agregar"**: si un producto queda en pantalla con peso/cantidad

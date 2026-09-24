@@ -256,6 +256,21 @@ namespace DatosPostgres
             return filas > 0;
         }
 
+        public bool EnvejecerLatidoPorCierre(int idBorrador)
+        {
+            // 1 dia alcanza y sobra para superar cualquier umbral configurado (maximo 240 min = 4 h):
+            // queda "interrumpida" de inmediato en vez de esperar el latido, sin tocar el estado.
+            int filas = DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                UPDATE ventaborrador SET ultimolatido = now() - interval '1 day'
+                WHERE idempresa = @idEmpresa AND id = @id AND estado = 'ACTIVA';",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("id", idBorrador);
+                });
+            return filas > 0;
+        }
+
         public Entidades.VentaBorrador ObtenerPorClientId(Guid clientId)
         {
             var lista = DbPg.Reader(_connectionString, _idEmpresa,

@@ -18,6 +18,11 @@ namespace Contratos
         // Solo actualiza ultimolatido (el carrito no cambio). false si no existe, esta cerrada o es ajena.
         bool RegistrarLatido(Guid clientId, int idOperador, int idSucursal);
 
+        // Cierre de pestana informado por el navegador: retrocede ultimolatido para que la venta quede
+        // "interrumpida" (recuperable) de inmediato, sin esperar el umbral. No cambia el estado.
+        // false si no existe o ya no esta ACTIVA.
+        bool EnvejecerLatidoPorCierre(int idBorrador);
+
         // Con Payload incluido. null si no existe.
         Entidades.VentaBorrador ObtenerPorClientId(Guid clientId);
         Entidades.VentaBorrador ObtenerPorId(int id);

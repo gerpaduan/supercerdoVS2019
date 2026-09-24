@@ -66,6 +66,10 @@ namespace Negocio
                 IdUsuario = idUsuarioActor,
                 Detalle = "El navegador se cerró o abandonó el POS con la venta sin finalizar."
             });
+
+            // Un pagehide real es una señal mas confiable que "no hubo latido": en vez de esperar el
+            // umbral configurado (5 min por defecto), la venta queda interrumpida (recuperable) de inmediato.
+            oBorradorD.EnvejecerLatidoPorCierre(borrador.Id);
             return true;
         }
 

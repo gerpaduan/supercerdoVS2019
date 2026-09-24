@@ -94,6 +94,27 @@ namespace Datos.BorradoresTests
         }
 
         [SkippableFact]
+        public void EnvejecerLatidoPorCierre_deja_la_venta_interrumpida_de_inmediato_y_el_latido_la_reactiva()
+        {
+            var (repo, _) = Nuevo();
+            var v = Venta(); repo.Guardar(v);
+            Assert.False(repo.ObtenerPorId(v.Id).EstaInterrumpida(5));
+
+            Assert.True(repo.EnvejecerLatidoPorCierre(v.Id));
+            var leida = repo.ObtenerPorId(v.Id);
+            Assert.True(leida.EstaInterrumpida(5), "SegundosSinLatido=" + leida.SegundosSinLatido);
+            Assert.Equal(Entidades.VentaBorrador.EstadoActiva, leida.Estado);
+
+            // Si la pestaña vuelve (F5, bfcache), el latido la deja "en uso" otra vez.
+            Assert.True(repo.RegistrarLatido(v.ClientId, Operador, Sucursal));
+            Assert.False(repo.ObtenerPorId(v.Id).EstaInterrumpida(5));
+
+            // Una venta ya cerrada no se toca.
+            Assert.True(repo.MarcarDescartada(v.Id));
+            Assert.False(repo.EnvejecerLatidoPorCierre(v.Id));
+        }
+
+        [SkippableFact]
         public void Latido_listados_toma_y_descarte()
         {
             var (repo, _) = Nuevo();
