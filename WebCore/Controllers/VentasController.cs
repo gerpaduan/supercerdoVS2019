@@ -22,9 +22,10 @@
 //    CerrarOperadorPOS, AutorizarModuloVentas, AutorizarOperadorModuloVentas.
 //  - AgregarProducto: confirmado codigo muerto en el original (PLAN-POS.md seccion 2), no se
 //    porta nunca.
-//  - Impresion con agente local ESC/POS (distinto del PDF y del ticket HTML, que si estan
-//    portados -- Imprimir, ImprimirTicketHtml): ImprimirTicketPayload, ImprimirIngresoBilletesPayload,
-//    DescargarAgenteImpresion. ImprimirTicket (el nombre clasico) esta ocupado en este controller
+//  - Impresion con agente local ESC/POS: ImprimirTicketPayload SI se porto (2026-09-23, ver
+//    docs/DECISIONS.md); siguen sin portar ImprimirIngresoBilletesPayload (la calculadora usa
+//    HomeController) y DescargarAgenteImpresion (vive en HomeController).
+//    ImprimirTicket (el nombre clasico) esta ocupado en este controller
 //    por el modal de Factura Electronica (ver su propio comentario) -- el ticket termico HTML real
 //    (58/80mm, mismo diseño de _TicketHTML.cshtml, retomado 2026-09-06) vive en ImprimirTicketHtml,
 //    ruta nueva para no pisar esa URL.
@@ -1724,9 +1725,9 @@ namespace WebCore.Controllers
         // Web/Controllers/VentasController.cs:ImprimirTicket (clasico) -- mismo diseño de
         // _TicketHTML.cshtml (WebCore/Views/Ventas/_TicketHTML.cshtml, portado sin cambios de
         // logica). El navegador hace de "agente" (dialogo nativo de impresion via window.print()
-        // en la vista), igual que el resto de comprobantes de este controller -- el agente local
-        // ESC/POS (ImprimirTicketPayload en el clasico) sigue explicitamente fuera de alcance, ver
-        // header de este archivo. Ruta separada de ImprimirTicket (que ya esta ocupada en este
+        // en la vista), igual que el resto de comprobantes de este controller. Es el fallback
+        // cuando no hay agente local (el cliente la carga en un iframe oculto, ver
+        // ticket-print.js); con agente se usa ImprimirTicketPayload. Ruta separada de ImprimirTicket (que ya esta ocupada en este
         // controller por el modal de Factura Electronica, ver su propio comentario) para no
         // pisar esa URL que ya consume factura-electronica.js.
         //
@@ -1766,6 +1767,282 @@ namespace WebCore.Controllers
             ViewBag.NegocioAgregado3 = empresaTicket != null ? empresaTicket.Slogan3 ?? "" : "";
 
             return View("~/Views/Ventas/_TicketHTML.cshtml", venta);
+        }
+
+        // GET /Ventas/ImprimirTicketPayload?id=X&mm=58|80 -- payload JSON para el agente local de
+        // impresion (PrintAgent, ESC/POS). Port de Web/Controllers/VentasController.cs:1472-1511,
+        // agregado a pedido explicito del usuario (ver docs/DECISIONS.md, 2026-09-23): imprimir
+        // directo si el agente esta instalado, sin dialogo ni pestaña. Devuelve las mismas lineas
+        // que el ticket HTML (ConstruirLineasTicketVenta) mas el QR de AFIP como string (el agente
+        // lo dibuja con ESC/POS nativo, el server no genera imagen).
+        [HttpGet]
+        public IActionResult ImprimirTicketPayload(int id, int mm = 80)
+        {
+            try
+            {
+                var venta = _oVentaN.getVentaById(id);
+                if (venta == null)
+                    return Json(new { ok = false, mensaje = "Venta no encontrada." });
+
+                int ticketMm = mm == 58 ? 58 : 80;
+                var facturaTicket = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                var notaCreditoTicket = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+                bool tieneFactura = facturaTicket != null && facturaTicket.Id > 0;
+                var facturaDto = tieneFactura ? BuildFacturaDTO(venta, facturaTicket) : null;
+
+                // Vacio si la venta no esta facturada o GenerarQrUrl no pudo armar la URL (falta
+                // algun dato obligatorio) -- el agente simplemente no imprime QR en ese caso.
+                string qrValue = tieneFactura
+                    ? (WebCore.Services.GenerarDocsCore.GenerarQrUrl(facturaTicket, venta) ?? "")
+                    : "";
+
+                return Json(new
+                {
+                    ok = true,
+                    ticketMm = ticketMm,
+                    ticketLines = ConstruirLineasTicketVenta(venta, ticketMm, facturaDto, ObtenerEmpresaVenta(venta)),
+                    qrValue = qrValue,
+                    tieneFactura = tieneFactura,
+                    tieneNotaCredito = notaCreditoTicket != null && notaCreditoTicket.Id > 0,
+                    facturaAgrupaItems = tieneFactura && !string.IsNullOrWhiteSpace(facturaTicket.DescItemUnitario)
+                });
+            }
+            catch (Exception ex)
+            {
+                // Se responde con ok=false en vez de 500: el cliente cae al ticket por navegador.
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
+        // Lineas de texto plano del ticket termico para ESC/POS (ancho fijo 32 chars a 58mm, 43 a
+        // 80mm). Port de Web/Controllers/VentasController.cs:2926-3129. Debe mantenerse alineado
+        // con Views/Ventas/_TicketHTML.cshtml (misma informacion, distinta salida: aca lista de
+        // strings, alla HTML) -- igual que en el clasico, no comparten codigo. Diferencia con el
+        // clasico: Negocio/Slogans salen de Empresa (mismo criterio y mismo TODO que
+        // ImprimirTicketHtml, no de AppSettings), y se agrega el bloque de datos a completar para
+        // transferencias que ya tiene la vista HTML.
+        private List<string> ConstruirLineasTicketVenta(Entidades.Venta venta, int ticketMm, FacturaElectronicaDto factura, Entidades.Empresa empresa)
+        {
+            int cantMaxChar = ticketMm == 58 ? 32 : 43;
+            bool esFacturada = factura != null && factura.IdFactura > 0 && !string.IsNullOrWhiteSpace(factura.CAE);
+            bool esFacturaA = esFacturada && factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codFacturaA_Afip;
+            bool agruparItemUnitario = esFacturada && !string.IsNullOrWhiteSpace(factura.DescItemUnitario);
+
+            Func<string, int, string> truncar = (texto, maximo) =>
+            {
+                texto = texto ?? "";
+                return texto.Length > maximo ? texto.Substring(0, maximo) : texto;
+            };
+
+            Func<string, int, string> centrar = (texto, ancho) =>
+            {
+                texto = truncar(texto, ancho);
+                int espaciosIzquierda = (ancho - texto.Length) / 2;
+                if (espaciosIzquierda < 0) espaciosIzquierda = 0;
+                return new string(' ', espaciosIzquierda) + texto;
+            };
+
+            Func<string, string, int, string> alinearExtremos = (izquierda, derecha, ancho) =>
+            {
+                izquierda = truncar(izquierda, 18);
+                derecha = truncar(derecha, 18);
+                int espacios = ancho - (izquierda.Length + derecha.Length);
+                if (espacios < 1) espacios = 1;
+                return izquierda + new string(' ', espacios) + derecha;
+            };
+
+            Func<string, decimal, int, string> formatearTotal = (etiqueta, importe, ancho) =>
+            {
+                string derecha = importe.ToString("N2");
+                int espacios = ancho - (etiqueta.Length + derecha.Length);
+                if (espacios < 1) espacios = 1;
+                return etiqueta + new string(' ', espacios) + derecha;
+            };
+
+            Func<string, decimal, int, string> formatearArticulo = (producto, total, ancho) =>
+            {
+                string descripcion = truncar(producto, 22);
+                string importe = total.ToString("N2");
+                int espacios = ancho - (descripcion.Length + importe.Length);
+                if (espacios < 1) espacios = 1;
+                return descripcion + new string(' ', espacios) + importe;
+            };
+
+            Func<int, string> obtenerTituloComprobante = cod =>
+            {
+                switch (cod)
+                {
+                    case 1: return "Factura A";
+                    case 6: return "Factura B";
+                    case 11: return "Factura C";
+                    default: return "Factura";
+                }
+            };
+
+            var lineas = new List<string>();
+            string negocio = ObtenerNombreEmpresaVenta(venta);
+            string negocioAgregado1 = empresa != null ? empresa.Slogan1 ?? "" : "";
+            string negocioAgregado2 = empresa != null ? empresa.Slogan2 ?? "" : "";
+            string negocioAgregado3 = empresa != null ? empresa.Slogan3 ?? "" : "";
+            string formaPagoImprimir = venta.PagoMixtoEfectivo > 0
+                ? (venta.FormaPago ?? "") + "|Efvo"
+                : (venta.FormaPago ?? "");
+
+            // Encabezado: titulo del comprobante y datos del negocio
+            lineas.Add(centrar(esFacturada ? obtenerTituloComprobante(factura.CodTipoCbteAfip) : "X", cantMaxChar));
+            lineas.Add(centrar(esFacturada ? ("COD." + factura.CodTipoCbteAfip.ToString("00")) : "-No valido como Factura-", cantMaxChar));
+            lineas.Add("");
+            if (!string.IsNullOrWhiteSpace(negocio)) lineas.Add(centrar(negocio, cantMaxChar));
+            if (!string.IsNullOrWhiteSpace(negocioAgregado1)) lineas.Add(centrar(negocioAgregado1, cantMaxChar));
+            if (!string.IsNullOrWhiteSpace(negocioAgregado2)) lineas.Add(centrar(negocioAgregado2, cantMaxChar));
+            if (!string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-") lineas.Add(centrar(negocioAgregado3, cantMaxChar));
+
+            // Datos fiscales de la empresa (solo comprobantes con CAE); se omiten los vacios
+            if (esFacturada && empresa != null)
+            {
+                var lineasEmpresa = new List<string>
+                {
+                    "CUIT: " + empresa.Cuit,
+                    "IIBB: " + empresa.Iibb,
+                    empresa.RazonSocialAfip,
+                    (empresa.Domicilio ?? "") + (string.IsNullOrWhiteSpace(empresa.Ciudad) ? "" : " - " + empresa.Ciudad),
+                    "Inicio Activ.: " + empresa.InicioActividad.ToString("dd/MM/yyyy"),
+                    empresa.CondicionIVA
+                };
+                foreach (var l in lineasEmpresa.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    lineas.Add(truncar(l, cantMaxChar));
+            }
+
+            // Datos del comprobante y del cliente
+            if (!esFacturada)
+            {
+                if (venta.EnCtaCte && venta.FormaPago == "Efectivo")
+                    lineas.Add(centrar("A Cta. Cte.", cantMaxChar));
+
+                lineas.Add(truncar("A " + (venta.Persona != null ? venta.Persona.razonSocial : ""), cantMaxChar));
+                lineas.Add(truncar("Forma Pago: " + formaPagoImprimir, cantMaxChar));
+                lineas.Add(truncar("Nro. T. " + venta.IdVenta, cantMaxChar));
+                lineas.Add(alinearExtremos("Fecha: " + venta.FechaVenta.ToString("dd/MM/yyyy"), "Hora: " + venta.FechaVenta.ToString("HH:mm"), cantMaxChar));
+                lineas.Add(new string('-', cantMaxChar));
+            }
+            else
+            {
+                lineas.Add(new string('-', cantMaxChar));
+                lineas.Add(truncar("Nro. " + (factura.PtoVtaAfip ?? "") + "-" + (factura.NroCbteAfip ?? ""), cantMaxChar));
+                lineas.Add(truncar("Fecha: " + (factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value.ToString("dd/MM/yyyy") : venta.FechaVenta.ToString("dd/MM/yyyy")), cantMaxChar));
+                lineas.Add(truncar("Pago: " + (factura.FormaPago ?? formaPagoImprimir), cantMaxChar));
+                lineas.Add(new string('-', cantMaxChar));
+                lineas.Add(truncar(factura.RazonSocialAFIP ?? (venta.Persona != null ? venta.Persona.razonSocial : ""), cantMaxChar));
+                if (!string.IsNullOrWhiteSpace(factura.NroDocAfip)) lineas.Add(truncar("CUIT: " + factura.NroDocAfip, cantMaxChar));
+                if (!string.IsNullOrWhiteSpace(factura.CondicionIvaAFIP)) lineas.Add(truncar(factura.CondicionIvaAFIP, cantMaxChar));
+                if (!string.IsNullOrWhiteSpace(factura.DomicilioAFIP)) lineas.Add(truncar(factura.DomicilioAFIP, cantMaxChar));
+                lineas.Add(new string('-', cantMaxChar));
+            }
+
+            // Items: una linea "cantidad x precio" y otra "producto ... importe"
+            if (agruparItemUnitario)
+            {
+                decimal totalAgrupado = esFacturaA ? factura.ImporteNetoGravado : factura.ImporteTotal;
+                lineas.Add("1,000 x " + totalAgrupado.ToString("N2"));
+                lineas.Add(formatearArticulo(factura.DescItemUnitario, totalAgrupado, cantMaxChar));
+            }
+            else
+            {
+                foreach (var item in venta.LineasVenta ?? new List<Entidades.LineaVenta>())
+                {
+                    if (item == null) continue;
+
+                    decimal cantidad = Convert.ToDecimal(item.CantKg);
+                    decimal precio = Convert.ToDecimal(item.PrecioKg);
+                    string producto = ((item.Corte != null ? item.Corte.corte : "") ?? "").Trim();
+
+                    if (esFacturaA)
+                    {
+                        // Factura A: se detalla a precio neto (sin IVA)
+                        decimal divisorIva = 1m + (Convert.ToDecimal(item.AlicuotaIva) / 100m);
+                        decimal precioNeto = divisorIva != 0 ? (precio / divisorIva) : precio;
+                        lineas.Add(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"));
+                        lineas.Add(formatearArticulo(producto, cantidad * precioNeto, cantMaxChar));
+                    }
+                    else
+                    {
+                        lineas.Add(cantidad.ToString("F3") + " x " + precio.ToString("N2"));
+                        lineas.Add(formatearArticulo(producto, cantidad * precio, cantMaxChar));
+                    }
+                }
+            }
+
+            // Totales
+            lineas.Add("-------".PadLeft(cantMaxChar));
+            if (!esFacturaA)
+            {
+                lineas.Add(formatearTotal(esFacturada ? "TOTAL" : "Total", esFacturada ? factura.ImporteTotal : Convert.ToDecimal(venta.TotalImporte), cantMaxChar));
+            }
+            else
+            {
+                lineas.Add(formatearTotal("Neto s/iva", factura.ImporteNetoGravado, cantMaxChar));
+
+                var alicuotas = (venta.LineasVenta ?? new List<Entidades.LineaVenta>())
+                    .GroupBy(x => x.AlicuotaIva)
+                    .Select(g => new
+                    {
+                        Alicuota = g.Key,
+                        Importe = g.Sum(x => Convert.ToDecimal(x.ImporteIva()))
+                    })
+                    .Where(x => x.Importe != 0m)
+                    .OrderBy(x => x.Alicuota)
+                    .ToList();
+
+                foreach (var item in alicuotas)
+                    lineas.Add(formatearTotal("IVA " + Convert.ToDecimal(item.Alicuota).ToString("N2") + "%", item.Importe, cantMaxChar));
+
+                lineas.Add(formatearTotal("TOTAL", factura.ImporteTotal, cantMaxChar));
+            }
+
+            if (!esFacturada && venta.Abona > 0)
+            {
+                lineas.Add(formatearTotal("Pago", Convert.ToDecimal(venta.Abona), cantMaxChar));
+                lineas.Add(formatearTotal("Vuelto", Convert.ToDecimal(venta.Cambio), cantMaxChar));
+            }
+
+            // Pie fiscal (solo comprobantes con CAE)
+            if (esFacturada)
+            {
+                lineas.Add("");
+                lineas.Add(truncar("Regimen de Transparencia Fiscal", cantMaxChar));
+                lineas.Add(truncar("Al Consumidor (Ley 27.743)", cantMaxChar));
+                lineas.Add(truncar("IVA Contenido: " + factura.Iva.ToString("N2"), cantMaxChar));
+                lineas.Add(truncar("CAE: " + (factura.CAE ?? ""), cantMaxChar));
+                lineas.Add(truncar("Vto: " + (factura.FecVtoCAE ?? ""), cantMaxChar));
+                lineas.Add("");
+
+                // Datos a completar a mano en pagos por transferencia (igual que _TicketHTML.cshtml)
+                if ((factura.FormaPago ?? "").Equals(Entidades.Pago.formasPago.Transferencia.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    lineas.Add("Nombre:");
+                    lineas.Add("DNI:");
+                    lineas.Add("Telefono:");
+                    lineas.Add("");
+                    lineas.Add("");
+                    lineas.Add("");
+                }
+            }
+
+            string observacionComprobante = esFacturada
+                ? (factura.Observaciones ?? "")
+                : (venta.Observaciones ?? "");
+
+            if (!string.IsNullOrWhiteSpace(observacionComprobante))
+            {
+                lineas.Add("");
+                lineas.Add("Comentario:");
+                for (int i = 0; i < observacionComprobante.Length; i += cantMaxChar)
+                    lineas.Add(observacionComprobante.Substring(i, Math.Min(cantMaxChar, observacionComprobante.Length - i)));
+            }
+
+            lineas.Add("");
+            lineas.Add("Gracias por su visita");
+            return lineas;
         }
 
         // ===== PDF (QuestPDF, ver docs/DECISIONS.md) y email real =====

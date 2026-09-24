@@ -2,12 +2,11 @@
 // docs/DECISIONS.md "Batch 6: Dispositivos Seguros -- numero de serie + auto-deteccion +
 // autoservicio"). Cliente HTTP contra el agente de impresion local (proyecto PrintAgent/, un .exe
 // que el usuario instala y corre en su PC, escuchando en 127.0.0.1:18777). Cargado globalmente en
-// _Layout.cshtml (igual que clasico) porque lo necesitan 2 lugares: DispositivosSeguros/Index.cshtml
-// (alta de dispositivo por un admin) y _ModalMiDispositivo.cshtml (autoservicio, disponible desde
-// el dropdown de usuario en cualquier pagina). Solo se usan getDeviceId() -- las funciones de
-// impresion ESC/POS que expone (printExpendio/getPrinters/etc.) siguen sin consumirse en ningun
-// lado de WebCore (esa integracion no se porta, decision ya tomada en rondas anteriores). Sin
-// cambios de logica respecto al clasico.
+// _Layout.cshtml y _LayoutPOS.cshtml (igual que clasico). Consumidores: getDeviceId() en
+// DispositivosSeguros/Index.cshtml y _ModalMiDispositivo.cshtml; health()/printExpendio() en
+// ticket-print.js (tickets de Ventas y Movimientos, 2026-09-23) y calculadora-billetes.js;
+// getPrinters()/getConfig()/saveConfig() en calculadora-billetes.js. Sin cambios de logica
+// respecto al clasico.
 (function (window, $) {
     if (!$) return;
 

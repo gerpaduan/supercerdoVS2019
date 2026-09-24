@@ -212,16 +212,19 @@ public sealed class MovimientosTests
         await page.ClickAsync("#btnPostMovimientoImprimir");
         await page.Locator("#bloqueTicketOpcionesMovimiento.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
 
-        var popup = await page.Context.RunAndWaitForPageAsync(async () =>
-        {
-            await page.ClickAsync("button.btnTicketMovimientoOpt[data-mm='80']");
-        });
-        await popup.WaitForLoadStateAsync(LoadState.Load);
-        Assert.Contains("/Movimientos/ImprimirTicket/" + movimientoId, popup.Url);
-        Assert.Contains("mm=80", popup.Url);
-        var contenidoTicket = await popup.Locator("pre.ticket-text").InnerTextAsync();
+        // Sin agente local el ticket se carga en un iframe oculto (ticket-print.js, 2026-09-23):
+        // no se abre pestaña nueva y la pagina de origen (el listado) no cambia.
+        var urlOrigen = page.Url;
+        await page.ClickAsync("button.btnTicketMovimientoOpt[data-mm='80']");
+        var iframe = page.Locator("#iframeTicketPrint");
+        await iframe.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 5000 });
+        var srcTicket = await iframe.GetAttributeAsync("src");
+        Assert.Contains("/Movimientos/ImprimirTicket/" + movimientoId, srcTicket);
+        Assert.Contains("mm=80", srcTicket);
+        var contenidoTicket = await page.FrameLocator("#iframeTicketPrint").Locator("pre.ticket-text").InnerTextAsync();
         Assert.Contains("Movimiento", contenidoTicket);
-        await popup.CloseAsync();
+        Assert.Single(page.Context.Pages);
+        Assert.Equal(urlOrigen, page.Url);
 
         Assert.Empty(errors);
         await page.CloseAsync();

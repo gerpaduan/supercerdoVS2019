@@ -1,11 +1,10 @@
 @*
-    Version reducida de Web/Views/Movimientos/_ModalPostMovimiento.cshtml -- excluye el ticket
-    ESC/POS via agente local (print-agent.js, ImprimirTicketPayload/DescargarAgenteImpresion,
-    "Configurar impresora") porque el agente no esta portado, mismo criterio ya usado en Ventas/
-    PuntosExpendio (_ModalPostVentaBasico/_ModalPostPuntoExpendioBasico). El ticket termico HTML
-    (opcion 2, sin agente) SI se porto (cuarta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
-    "Batch 7: boton Imprimir en Movimientos + ticket termico") -- mismo patron ya usado en Ventas
-    (recordar tamaño 58/80mm en localStorage, poder cambiarlo). "Enviar a WhatsApp" sigue
+    Version reducida de Web/Views/Movimientos/_ModalPostMovimiento.cshtml -- excluye la UI del
+    agente local (indicador de estado y "Configurar impresora"), decision del usuario 2026-09-23:
+    el agente se usa en silencio si esta instalado (ticket-print.js) y la impresora se elige desde
+    el icono de bandeja del propio PrintAgent. El ticket termico (opcion 2, cuarta ronda de
+    pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 7: boton Imprimir en Movimientos + ticket
+    termico") recuerda el tamaño 58/80mm en localStorage y permite cambiarlo, igual que Ventas. "Enviar a WhatsApp" sigue
     funcionando (el boton/id/handler NO se borraron) pero queda OCULTO (d-none) a pedido explicito
     del usuario -- su atajo numerico se retiro (ver modal-postmovimiento.js) para no mostrar un
     atajo de una accion invisible.

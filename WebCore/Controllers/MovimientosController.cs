@@ -3,12 +3,10 @@
 // (alta/edicion), Detalle (AJAX), BuscarProducto/BuscarProductoPorCodigo (autocompletado),
 // ImprimirPdf (QuestPDF, ver GenerarDocsCore.GenerarPdfMovimiento), ImprimirTicket (2026-09-10,
 // ver docs/DECISIONS.md "Batch 7") -- HTML plano con window.print(), NO depende del agente local.
-// NO portado: ImprimirTicketPayload/DescargarAgenteImpresion -- esos si dependen del agente de
-// impresion local (print-agent.js), mismo bloqueante ya documentado en el resto de la migracion
-// (Ventas/PuntosExpendio). El comentario anterior de esta cabecera decia que ImprimirTicket
-// TAMBIEN dependia del agente -- error de lectura corregido esta ronda: en clasico, ImprimirTicket
-// (Web/Controllers/MovimientosController.cs:415-425) genera HTML propio, ImprimirTicketPayload es
-// la unica que habla con el agente. "Enviar a WhatsApp" tambien portado, sin cambios.
+// ImprimirTicketPayload portado 2026-09-23 (ver docs/DECISIONS.md): payload JSON para imprimir
+// directo por el agente local (print-agent.js); ImprimirTicket queda como fallback por navegador.
+// NO portado: DescargarAgenteImpresion (vive en HomeController).
+// "Enviar a WhatsApp" tambien portado, sin cambios.
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06). Permisos reales y gate de "usuario de sala de produccion" portados 2026-09-09
@@ -379,6 +377,7 @@ namespace WebCore.Controllers
                     redirectUrl = Url.Action("Index", "Movimientos"),
                     pdfUrl = Url.Action("ImprimirPdf", "Movimientos", new { id = idMovimiento }),
                     imprimirUrl = Url.Action("ImprimirTicket", "Movimientos", new { id = idMovimiento }),
+                    imprimirPayloadUrl = Url.Action("ImprimirTicketPayload", "Movimientos", new { id = idMovimiento }),
                     whatsappTexto = ConstruirMensajeWhatsapp(idMovimiento)
                 });
             }
@@ -402,10 +401,9 @@ namespace WebCore.Controllers
 
         // Port de Web/Controllers/MovimientosController.cs:415-425 (cuarta ronda de pedidos,
         // 2026-09-10, ver docs/DECISIONS.md "Batch 7: boton Imprimir en Movimientos + ticket
-        // termico"). Corrige la premisa del comentario de cabecera de este archivo: ImprimirTicket
-        // NO depende del agente de impresion local (a diferencia de ImprimirTicketPayload, que si
-        // -- ese sigue sin portarse) -- genera HTML plano con onload="window.print()", mismo
-        // patron ya portado para Ventas (_TicketHTML.cshtml).
+        // termico"). Genera HTML plano con onload="window.print()" -- es el fallback cuando el
+        // agente local no esta disponible (el cliente lo carga en un iframe oculto, no en una
+        // pestaña); el camino con agente es ImprimirTicketPayload.
         [HttpGet]
         public IActionResult ImprimirTicket(int id, int mm = 80)
         {
@@ -416,6 +414,106 @@ namespace WebCore.Controllers
             movimiento.ListaCortesPorMov = _oCorteN.cargarCortesPorMovimiento(id, true) ?? new List<Entidades.CortePorMovimiento>();
             ViewBag.TicketMm = mm == 58 ? 58 : 80;
             return View("_TicketMovimiento", movimiento);
+        }
+
+        // GET /Movimientos/ImprimirTicketPayload?id=X&mm=58|80 -- payload JSON para el agente local
+        // de impresion (ESC/POS). Port de Web/Controllers/MovimientosController.cs:428-442, agregado
+        // a pedido explicito del usuario (ver docs/DECISIONS.md, 2026-09-23).
+        [HttpGet]
+        public IActionResult ImprimirTicketPayload(int id, int mm = 80)
+        {
+            var movimiento = _oCorteN.cargarMovimiento(id, true);
+            if (movimiento == null || movimiento.IdMovimiento <= 0)
+                return Json(new { ok = false, mensaje = "No se encontró el movimiento." });
+
+            movimiento.ListaCortesPorMov = _oCorteN.cargarCortesPorMovimiento(id, true) ?? new List<Entidades.CortePorMovimiento>();
+            int ticketMm = mm == 58 ? 58 : 80;
+            return Json(new
+            {
+                ok = true,
+                ticketMm = ticketMm,
+                ticketLines = ConstruirLineasTicketMovimiento(movimiento, ticketMm)
+            });
+        }
+
+        // Lineas de texto plano del ticket de movimiento para ESC/POS. Port de
+        // Web/Controllers/MovimientosController.cs:738-813; debe mantenerse alineado con
+        // Views/Movimientos/_TicketMovimiento.cshtml (misma informacion, sin codigo compartido,
+        // igual que en el clasico).
+        private List<string> ConstruirLineasTicketMovimiento(Entidades.Movimiento movimiento, int ticketMm)
+        {
+            var lineas = movimiento.ListaCortesPorMov ?? new List<Entidades.CortePorMovimiento>();
+            int cantMaxChar = ticketMm == 58 ? 32 : 43;
+            int totalUnidades = 0;
+            decimal totalKilos = 0m;
+            int anchoProducto = cantMaxChar == 32 ? 15 : 22;
+            int anchoCant = cantMaxChar == 32 ? 5 : 6;
+            int anchoKgs = cantMaxChar == 32 ? 7 : 8;
+
+            Func<string, int, string> truncar = (texto, maximo) =>
+            {
+                texto = texto ?? "";
+                return texto.Length > maximo ? texto.Substring(0, maximo) : texto;
+            };
+
+            Func<string, int, string> centrar = (texto, ancho) =>
+            {
+                texto = truncar(texto, ancho);
+                int espaciosIzquierda = (ancho - texto.Length) / 2;
+                if (espaciosIzquierda < 0) espaciosIzquierda = 0;
+                return new string(' ', espaciosIzquierda) + texto;
+            };
+
+            Func<string, int, bool, string> ajustarColumna = (texto, ancho, derecha) =>
+            {
+                texto = truncar(texto, ancho);
+                return derecha ? texto.PadLeft(ancho) : texto.PadRight(ancho);
+            };
+
+            var resultado = new List<string>();
+
+            // Encabezado
+            resultado.Add(centrar("Movimiento", cantMaxChar));
+            resultado.Add(truncar("ID: " + movimiento.IdMovimiento, cantMaxChar));
+            resultado.Add(truncar("Origen: " + (movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre : "-"), cantMaxChar));
+            resultado.Add(truncar("Destino: " + (movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre : "-"), cantMaxChar));
+            resultado.Add(truncar("Fecha: " + movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"), cantMaxChar));
+            resultado.Add(" ");
+            resultado.Add(ajustarColumna("Producto", anchoProducto, false) + " " + ajustarColumna("Cant.", anchoCant, true) + "    " + ajustarColumna("Kgs.", anchoKgs, true));
+            resultado.Add(new string('-', cantMaxChar));
+
+            // Detalle: una linea por producto y otra con su codigo
+            foreach (var item in lineas)
+            {
+                if (item == null)
+                    continue;
+
+                string nombreProducto = item.Corte != null ? item.Corte.CorteDesc : "";
+                string codigoProducto = item.Corte != null ? item.Corte.Codigo.ToString() : "";
+                string cantidadTexto = item.CantUnidad.ToString();
+                string kilosTexto = Convert.ToDecimal(item.CantKg).ToString("N3");
+
+                totalUnidades += item.CantUnidad;
+                totalKilos += Convert.ToDecimal(item.CantKg);
+
+                resultado.Add(ajustarColumna(nombreProducto, anchoProducto, false) + " " + ajustarColumna(cantidadTexto, anchoCant, true) + "    " + ajustarColumna(kilosTexto, anchoKgs, true));
+                resultado.Add(ajustarColumna("Cod:" + codigoProducto, anchoProducto, false));
+            }
+
+            // Totales y observaciones
+            resultado.Add(new string('-', cantMaxChar));
+            resultado.Add(ajustarColumna("Total", anchoProducto, false) + " " + ajustarColumna(totalUnidades.ToString(), anchoCant, true) + "    " + ajustarColumna(totalKilos.ToString("N3"), anchoKgs, true));
+
+            if (!string.IsNullOrWhiteSpace(movimiento.Observaciones))
+            {
+                resultado.Add("");
+                resultado.Add("Observaciones:");
+                string observacion = movimiento.Observaciones;
+                for (int i = 0; i < observacion.Length; i += cantMaxChar)
+                    resultado.Add(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
+            }
+
+            return resultado;
         }
 
         // Sin equivalente en clasico: el boton "Imprimir" nuevo de la columna Acciones del listado
@@ -435,6 +533,7 @@ namespace WebCore.Controllers
                 ok = true,
                 pdfUrl = Url.Action("ImprimirPdf", "Movimientos", new { id }),
                 imprimirUrl = Url.Action("ImprimirTicket", "Movimientos", new { id }),
+                imprimirPayloadUrl = Url.Action("ImprimirTicketPayload", "Movimientos", new { id }),
                 whatsappTexto = ConstruirMensajeWhatsapp(id)
             });
         }

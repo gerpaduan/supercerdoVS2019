@@ -1,11 +1,11 @@
-// Version reducida de Web/Scripts/app/modal-postmovimiento.js -- sin ticket ESC/POS via agente
-// local (print-agent.js no esta portado, ver _ModalPostMovimiento.cshtml). Mantiene "Generar PDF"
-// y "Enviar a WhatsApp" (oculto, ver abajo), que no dependen del agente. Ticket termico HTML
-// (opcion 2, cuarta ronda de pedidos, 2026-09-10 -- ver docs/DECISIONS.md "Batch 7") agregado:
-// recuerda el tamaño en localStorage (clave propia de este modulo, no compartida con
-// postventa_ticket_mm de Ventas), mismo patron de "abrir en pestaña nueva, la vista del ticket
-// dispara window.print() sola" ya usado en Ventas/POS.cshtml -- mejora deliberada frente al
-// clasico, que usa un <iframe> oculto (ver entrada de DECISIONS.md de este batch).
+// Version reducida de Web/Scripts/app/modal-postmovimiento.js -- sin la UI de estado/config del
+// agente local (indicador "Impresion local activa", "Configurar impresora", ver
+// _ModalPostMovimiento.cshtml). Mantiene "Generar PDF" y "Enviar a WhatsApp" (oculto, ver abajo).
+// Ticket termico (opcion 2, ver docs/DECISIONS.md "Batch 7" y la entrada de 2026-09-23): recuerda
+// el tamaño en localStorage (clave propia de este modulo, no compartida con postventa_ticket_mm
+// de Ventas) e imprime via TicketPrint (ticket-print.js): directo por el agente local si esta
+// instalado, o por iframe oculto con el dialogo del navegador si no -- nunca pestaña nueva ni
+// redireccion como efecto de imprimir.
 (function () {
     var KEY_TICKET_MM = 'postmovimiento_ticket_mm';
 
@@ -13,6 +13,7 @@
         redirectUrl: '',
         pdfUrl: '',
         imprimirUrl: '',
+        imprimirPayloadUrl: '',
         whatsappTexto: '',
         stayOnPage: false
     };
@@ -74,6 +75,21 @@
         window.open(url, '_blank', 'noopener');
     }
 
+    function conMm(url, mm) {
+        if (!url) return '';
+        return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'mm=' + mm;
+    }
+
+    // Imprime el ticket sin salir de la vista: solo cierra el modal (no redirige, a diferencia de
+    // "Continuar"/"No imprimir"). Pedido explicito del usuario, ver docs/DECISIONS.md 2026-09-23.
+    function imprimirTicket(mm) {
+        window.TicketPrint.imprimir({
+            ticketUrl: conMm(state.imprimirUrl, mm),
+            payloadUrl: conMm(state.imprimirPayloadUrl, mm)
+        });
+        cerrarModal();
+    }
+
     function abrirWhatsapp() {
         var texto = state.whatsappTexto || '';
         var url = 'https://wa.me/?text=' + encodeURIComponent(texto);
@@ -86,6 +102,7 @@
             state.redirectUrl = resp.redirectUrl || '';
             state.pdfUrl = resp.pdfUrl || '';
             state.imprimirUrl = resp.imprimirUrl || '';
+            state.imprimirPayloadUrl = resp.imprimirPayloadUrl || '';
             state.whatsappTexto = resp.whatsappTexto || '';
             state.stayOnPage = !!resp.stayOnPage;
             actualizarTextoTicket();
@@ -122,8 +139,7 @@
         $('#btnPostMovimientoImprimir').on('click', function () {
             var mm = getUltimoTicketMm();
             if (mm) {
-                abrirNuevaVentana(state.imprimirUrl + (state.imprimirUrl.indexOf('?') >= 0 ? '&' : '?') + 'mm=' + mm);
-                cerrarYRedirigir();
+                imprimirTicket(mm);
                 return;
             }
 
@@ -145,8 +161,7 @@
             var collapse = getBloqueTicketCollapse();
             if (collapse) collapse.hide();
 
-            abrirNuevaVentana(state.imprimirUrl + (state.imprimirUrl.indexOf('?') >= 0 ? '&' : '?') + 'mm=' + mm);
-            cerrarYRedirigir();
+            imprimirTicket(mm);
         });
 
         $('#btnPostMovimientoPdf').on('click', function () {

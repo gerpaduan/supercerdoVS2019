@@ -110,16 +110,21 @@ public sealed class DetalleVentaComprobanteTests
         await page.WaitForTimeoutAsync(500);
 
         // Primera vez (sin tamaño recordado en localStorage): aparece un SweetAlert para elegir
-        // 58/80mm -- confirmar con el default (80mm) antes de que se abra el ticket.
+        // 58/80mm -- confirmar con el default (80mm) antes de imprimir el ticket.
         var swalVisible = await page.Locator(".swal2-popup:visible").CountAsync();
         if (swalVisible > 0)
         {
-            await page.RunAndWaitForPopupAsync(async () => await page.ClickAsync(".swal2-confirm"));
+            await page.ClickAsync(".swal2-confirm");
         }
         await page.WaitForTimeoutAsync(1500);
 
+        // Sin agente local el ticket se carga en un iframe oculto (ticket-print.js, 2026-09-23):
+        // no se abre pestaña nueva y la pagina de origen no cambia.
         Assert.NotNull(respuestaTicket);
         Assert.Equal(200, respuestaTicket!.Status);
+        Assert.Equal(1, await page.Locator("#iframeTicketPrint").CountAsync());
+        Assert.Single(page.Context.Pages);
+        Assert.Contains("/Ventas/DetalleVenta", page.Url);
 
         Assert.Empty(errors);
         await page.CloseAsync();

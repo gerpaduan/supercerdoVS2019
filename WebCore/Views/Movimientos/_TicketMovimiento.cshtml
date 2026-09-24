@@ -136,7 +136,7 @@
         }
     </style>
 </head>
-<body class="@ticketClass" onload="window.print()">
+<body class="@ticketClass" onload="if (window.top === window) window.print()">
     <pre class="ticket-text">@ticketTexto</pre>
 
     @for (int i = 0; i < 10; i++)

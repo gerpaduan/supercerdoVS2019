@@ -824,6 +824,7 @@
        Index.cshtml. DESPUES de jquery.min.js a proposito: la IIFE de print-agent.js lee
        window.jQuery apenas se ejecuta, no espera a ningun evento de carga. *@
     <script src="~/Scripts/app/print-agent.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/ticket-print.js" asp-append-version="true"></script>
     @if (WebCore.Helpers.PasskeySettings.Habilitado)
     {
         <script src="~/Scripts/app/passkey.js" asp-append-version="true"></script>

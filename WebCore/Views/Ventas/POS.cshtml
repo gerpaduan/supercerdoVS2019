@@ -3105,9 +3105,13 @@ else
                 function abrirTicket(mm) {
                     // Agente local si esta instalado; si no, dialogo del navegador via iframe
                     // oculto -- nunca pestaña nueva (ver ticket-print.js)
+                    // Al terminar de imprimir se cierra el modal y se vuelve al POS listo para
+                    // otra venta (igual que "Nueva venta" y que el clasico, cerrarPostVentaSegunOrigen);
+                    // el retraso deja que el spool del navegador/agente termine antes del reload.
                     window.TicketPrint.imprimir({
                         ticketUrl: window.api.venta.imprimirTicketHtml + "?id=" + ventaId + "&mm=" + mm,
-                        payloadUrl: window.api.venta.imprimirTicketPayload + "?id=" + ventaId + "&mm=" + mm
+                        payloadUrl: window.api.venta.imprimirTicketPayload + "?id=" + ventaId + "&mm=" + mm,
+                        onDone: function () { setTimeout(pvbContinuarNuevaVenta, 400); }
                     });
                 }
 
@@ -3137,6 +3141,9 @@ else
 
                 function abrirPdf(documento) {
                     window.open(window.api.venta.imprimir + "?id=" + ventaId + "&documento=" + documento, "_blank");
+                    // Con el PDF ya abierto se cierra el modal y se deja el POS listo para la
+                    // siguiente venta (igual que "Nueva venta" y que el ticket, opcion 2)
+                    setTimeout(pvbContinuarNuevaVenta, 400);
                 }
 
                 $.ajax({
@@ -3381,6 +3388,7 @@ else
             $("#btnPvbEmail").on("click", function () {
                 var ventaId = $(this).data("venta-id");
                 $("#pvbEmailError").addClass("d-none").text("");
+                pvbEmailEnviado = false;
 
                 $.ajax({
                     url: window.api.venta.obtenerDatosEmailComprobante,
@@ -3401,6 +3409,15 @@ else
                 }).fail(function (xhr) {
                     Swal.fire({ icon: "error", title: "No se pudo preparar el email", text: (xhr.responseJSON && xhr.responseJSON.msg) || "Error de conexión." });
                 });
+            });
+
+            // Cancelar el envio (boton Cancelar, Escape o click afuera) tambien deja el POS listo
+            // para la siguiente venta: el formulario se cierra sin enviar -> se cierra el modal de
+            // venta completada y se recarga. Si el email SI se envio, el cierre lo maneja el
+            // aviso de exito (pvbEmailEnviado evita recargar dos veces).
+            var pvbEmailEnviado = false;
+            $("#modalEmailPostVentaPOS").on("hidden.bs.modal", function () {
+                if (!pvbEmailEnviado) pvbContinuarNuevaVenta();
             });
 
             $("#btnPvbConfirmarEmail").on("click", function () {
@@ -3436,8 +3453,18 @@ else
                         return;
                     }
 
+                    // Con el email enviado se cierra el modal de venta completada y se deja el POS
+                    // listo para la siguiente venta, al cerrarse (o vencer) el aviso de exito. Si el
+                    // envio falla no se llega aca: el modal queda abierto para reintentar.
+                    pvbEmailEnviado = true;
                     $("#modalEmailPostVentaPOS").modal("hide");
-                    Swal.fire({ icon: "success", title: "Email enviado", text: "El comprobante se envió correctamente." });
+                    Swal.fire({
+                        icon: "success",
+                        title: "Email enviado",
+                        text: "El comprobante se envió correctamente.",
+                        timer: 1800,
+                        timerProgressBar: true
+                    }).then(pvbContinuarNuevaVenta);
                 }).fail(function (xhr) {
                     $btn.prop("disabled", false);
                     $("#pvbEmailError").removeClass("d-none").text((xhr.responseJSON && xhr.responseJSON.msg) || "No se pudo enviar el email.");

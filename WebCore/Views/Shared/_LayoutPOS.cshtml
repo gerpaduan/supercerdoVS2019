@@ -374,6 +374,11 @@
        PuntosExpendio/POS. Mismo criterio que scanner.js/zxing de arriba: cargado global aca en
        vez de por vista, para no repetirlo en cada .cshtml de POS. *@
     <script src="~/Scripts/app/barcode-code-input.js" asp-append-version="true"></script>
+    @* print-agent.js + ticket-print.js: impresion del ticket termico por el agente local o, sin
+       agente, por iframe oculto (2026-09-23, ver docs/DECISIONS.md). Faltaba en este layout, asi
+       que en el POS window.CarniSysPrintAgent nunca existia aunque el agente estuviera corriendo. *@
+    <script src="~/Scripts/app/print-agent.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/ticket-print.js" asp-append-version="true"></script>
 
     <script>
         window.buscarProductoUrl = '@Url.Action("BuscarProducto", "Ventas")';

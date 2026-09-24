@@ -349,7 +349,7 @@
         }
     </style>
 </head>
-<body class="@ticketClass" onload="window.print()">
+<body class="@ticketClass" onload="if (window.top === window) window.print()">
     <div class="ticket-wrap">
         <div class="ticket-title">@tituloComprobante</div>
         <div class="ticket-subtitle">@codigoComprobante</div>

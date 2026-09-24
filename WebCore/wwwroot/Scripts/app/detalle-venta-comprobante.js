@@ -58,7 +58,12 @@
             var mmRecordado = obtenerMedidaTicket();
 
             function abrirTicket(mm) {
-                window.open(urls.imprimirTicketHtml + '?id=' + ventaId + '&mm=' + mm, '_blank');
+                // Agente local si esta instalado; si no, dialogo del navegador via iframe oculto
+                // -- nunca pestaña nueva (ver ticket-print.js)
+                window.TicketPrint.imprimir({
+                    ticketUrl: urls.imprimirTicketHtml + '?id=' + ventaId + '&mm=' + mm,
+                    payloadUrl: urls.imprimirTicketPayload + '?id=' + ventaId + '&mm=' + mm
+                });
             }
 
             if (mmRecordado) {
