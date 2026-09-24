@@ -277,3 +277,9 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 **Sintoma**: en `Home/Index` el label "Periodo" quedaba al lado del select (no arriba) y los dos selects tenian ancho y altura distintos.
 **Causa**: WebCore usa Bootstrap 5, que no define `.custom-select` (en BS4 traia `display:inline-block; width:100%`); ni `bootstrap4-compat.css` ni `ui-refresh.css` lo cubren. `<label>` y `<select>` quedaban inline, con el select tomando el ancho de su opcion mas larga.
 **Fix**: en `WebCore/Views/Home/Index.cshtml`, `.dashboard-filters label { display:block }` y `.dashboard-filters .custom-select { display:block; width:100% }`. Verificado en navegador con los CSS reales de WebCore: ambos selects a la misma altura (top) y 182 px de ancho. Los unicos `.custom-select` de WebCore estan en este bloque; si otra vista portada del clasico lo usa, necesita lo mismo (o definirlo en `bootstrap4-compat.css`).
+
+## La campanita del admin abría el modal "Salir sin guardar" en pantallas con datos cargados (2026-09-24)
+**Síntoma**: en una pantalla de alta/edición con el formulario "sucio", al tocar la campana de notificaciones aparecía "Salir sin guardar / ¿Está seguro de salir sin guardar?" en vez del desplegable.
+**Causa**: el guard de `WebCore/Views/Shared/_Layout.cshtml` intercepta todo `<a>` con `href` no vacío; la campana es `<a href="#" data-bs-toggle="dropdown">`, que no navega.
+**Fix**: el guard ignora `href` que empiecen con `#`, `javascript:` y toggles `data-bs-toggle|data-toggle="dropdown"`. Los enlaces que sí navegan siguen preguntando.
+**REGLA**: un enlace nuevo que solo abra UI (desplegable/modal/ancla) debe usar `href="#..."` o `data-ignore-exit`, nunca una URL real.

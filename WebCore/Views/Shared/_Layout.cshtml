@@ -1401,6 +1401,12 @@
             var url = $(this).attr("href");
             if (!url) return;
 
+            // Enlaces que no salen de la pagina (href="#", "#ancla", javascript:) o que solo abren un
+            // desplegable/modal (la campana del admin es <a href="#" data-bs-toggle="dropdown">) no
+            // navegan: no hay nada que perder, asi que no se pregunta.
+            if (url.charAt(0) === "#" || /^\s*javascript:/i.test(url)) return;
+            if ($(this).is("[data-bs-toggle='dropdown'], [data-toggle='dropdown']")) return;
+
             e.preventDefault();
             if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
