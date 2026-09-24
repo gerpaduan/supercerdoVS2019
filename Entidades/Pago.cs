@@ -171,5 +171,13 @@ namespace Entidades
         public int IdSucursal { get; set; }
         public int IdCreadoPor { get; set; }
         public int? IdActualizadoPor { get; set; } // nullable porque puede venir NULL
+
+        // Eliminacion logica: un pago eliminado no se borra, queda marcado y con su asiento opuesto en
+        // la cta cte. Ver Negocio.CuentaCorriente.eliminarPagoConContraasiento.
+        public bool Eliminado { get; set; }
+        public int? IdEliminadoPor { get; set; }
+        public string NombreEliminadoPor { get; set; }
+        public DateTime? FechaEliminacion { get; set; }
+        public string MotivoEliminacion { get; set; }
     }
 }

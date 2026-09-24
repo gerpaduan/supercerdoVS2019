@@ -46,6 +46,7 @@ public sealed class PermisosGateTests
     [InlineData("/Reportes", "Permisos.Stock.VerStock (Reportes reusa este permiso, ver ReportesController.cs)")]
     [InlineData("/Finanzas/CtasCtes", "Permisos.Finanza.VerCtasCtes")]
     [InlineData("/Finanzas/Cheques", "Permisos.Finanza.VerCheques")]
+    [InlineData("/Finanzas/Pagos", "Permisos.Finanza.VerPagos")]
     public async Task UsuarioCajero_SinElPermiso_MuestraAccesoDenegado(string url, string permisoEsperado)
     {
         var page = await NewCajeroAuthenticatedPageAsync();

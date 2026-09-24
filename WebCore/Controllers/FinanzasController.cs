@@ -532,6 +532,9 @@ namespace WebCore.Controllers
                     saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
             }
 
+            // Observaciones del registro origen (Pagos/Ventas/Compras) para la columna "Obs." de la grilla.
+            ViewBag.ObservacionesCtaCte = _oCtaCteN.obtenerObservacionesCtaCte(idPersona);
+
             ViewBag.IdPersona = idPersona;
             ViewBag.Persona = persona;
             ViewBag.SaldoPersona = saldo;
@@ -702,6 +705,81 @@ namespace WebCore.Controllers
         //      CON un cheque desde este formulario todavia. Ver gaps.md.
         // Gap de permisos real encontrado en el original (Permisos.Finanza.AddOrEditPago nunca se
         // valida) -- documentado en gaps.md, no se corrige (bypass, mismo criterio de siempre).
+        // ===== Pagos: listado de todos los pagos y cobros (2026-09-24, ver docs/DECISIONS.md "Pagos:
+        // listado, cambio de persona y eliminacion"). Cada fila abre AddOrEditPago del pago. Los eliminados
+        // se muestran con la etiqueta ELIMINADO (nunca se borran). =====
+        [HttpGet]
+        public IActionResult Pagos(string texto = "", string desde = "", string hasta = "", string operacion = "", bool verEliminados = true)
+        {
+            bool renderParcial = EsPeticionAjax();
+
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerPagos, DateTime.Today, -1))
+            {
+                ViewBag.Seccion = "Pagos";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            // por defecto el ultimo mes; fechas invalidas caen al default en vez de romper la pantalla
+            DateTime fechaDesde = DateTime.Today.AddMonths(-1);
+            DateTime fechaHasta = DateTime.Today;
+            if (!string.IsNullOrWhiteSpace(desde) && DateTime.TryParse(desde, out var desdeParseado)) fechaDesde = desdeParseado.Date;
+            if (!string.IsNullOrWhiteSpace(hasta) && DateTime.TryParse(hasta, out var hastaParseado)) fechaHasta = hastaParseado.Date;
+
+            DataTable dt = _oCtaCteN.obtenerPagos(texto ?? "", fechaDesde, fechaHasta);
+
+            // filtros de operacion y eliminados sobre lo ya traido (el repositorio no los conoce)
+            var filtros = new List<string>();
+            if (string.Equals(operacion, "Cobro", StringComparison.OrdinalIgnoreCase)) filtros.Add("Operacion = 'Cobro'");
+            else if (string.Equals(operacion, "Pago", StringComparison.OrdinalIgnoreCase)) filtros.Add("Operacion = 'Pago'");
+            if (!verEliminados) filtros.Add("eliminado = false");
+            DataView vista = dt.DefaultView;
+            vista.RowFilter = string.Join(" AND ", filtros);
+
+            ViewBag.Texto = texto ?? "";
+            ViewBag.Desde = fechaDesde.ToString("yyyy-MM-dd");
+            ViewBag.Hasta = fechaHasta.ToString("yyyy-MM-dd");
+            ViewBag.Operacion = operacion ?? "";
+            ViewBag.VerEliminados = verEliminados;
+            ViewBag.RenderSinLayout = renderParcial;
+            ViewBag.Title = "Pagos y cobros";
+
+            if (renderParcial)
+                return PartialView("~/Views/Finanzas/Pagos.cshtml", vista.ToTable());
+
+            return View("~/Views/Finanzas/Pagos.cshtml", vista.ToTable());
+        }
+
+        // Cambiar la persona de un pago o eliminarlo son operaciones sensibles (mueven saldos de cta cte):
+        // requieren el permiso de edicion de pagos. Al resto de la edicion del pago no se le agrega gate
+        // (paridad con el clasico, ver comentario de cabecera del controller). Admin siempre puede.
+        private bool PuedeReasignarOEliminarPago(Entidades.Pago pago)
+        {
+            if (pago == null) return false;
+            int idCreador = pago.CreadoPor != null ? pago.CreadoPor.Id : 0;
+            return _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.AddOrEditPago, pago.Fecha, idCreador);
+        }
+
+        // Eliminacion logica del pago/cobro (con asiento opuesto en la cta cte). Motivo obligatorio.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EliminarPago(int id, string motivo)
+        {
+            Entidades.Pago pago = id > 0 ? _oCtaCteN.getPagoById(id) : null;
+            if (pago == null)
+                return Json(new { ok = false, mensaje = "No se encontró el pago o cobro." });
+
+            if (!PuedeReasignarOEliminarPago(pago))
+                return Json(new { ok = false, mensaje = "No tiene permiso para eliminar pagos o cobros." });
+
+            var (ok, mensaje) = _oCtaCteN.eliminarPagoConContraasiento(id, motivo, _usuarioActual);
+            return Json(new
+            {
+                ok,
+                mensaje,
+                redirectUrl = Url.Action("Pagos", "Finanzas")
+            });
+        }
+
         [HttpGet]
         public IActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false, string posInstanceId = "")
         {
@@ -755,6 +833,15 @@ namespace WebCore.Controllers
             ViewBag.Persona = persona;
             ViewBag.SaldoPersona = saldo;
             ViewBag.ImprimirPagoPdfUrl = idPago > 0 ? Url.Action("ImprimirPdfPago", "Finanzas", new { id = idPago }) : "";
+
+            // Pago existente fuera de POS: solo lectura hasta "Modificar"; cambio de persona y eliminacion
+            // solo con permiso de edicion de pagos. Un pago eliminado queda solo lectura para siempre.
+            bool pagoEliminado = pagoExistente != null && pagoExistente.Eliminado;
+            ViewBag.PagoEliminado = pagoEliminado;
+            ViewBag.PuedeReasignarOEliminar = pagoExistente != null && !desdePos && !pagoEliminado && PuedeReasignarOEliminarPago(pagoExistente);
+            ViewBag.UrlPagosListado = Url.Action("Pagos", "Finanzas");
+            ViewBag.UrlEliminarPago = Url.Action("EliminarPago", "Finanzas");
+            ViewBag.UrlListarPersonas = Url.Action("Listar", "Personas");
 
             Entidades.Pago model;
             if (idPago == 0)
@@ -826,6 +913,15 @@ namespace WebCore.Controllers
             if (oPagoE.Id > 0 && pagoAnterior == null)
                 return Json(new { ok = false, mensaje = "No se encontró el pago o cobro a modificar." });
 
+            if (pagoAnterior != null)
+            {
+                if (pagoAnterior.Eliminado)
+                    return Json(new { ok = false, mensaje = "El pago o cobro fue eliminado y no puede modificarse." });
+
+                if (idPersona != pagoAnterior.IdPersona && (desdePos || !PuedeReasignarOEliminarPago(pagoAnterior)))
+                    return Json(new { ok = false, mensaje = "No tiene permiso para cambiar la persona del pago o cobro." });
+            }
+
             oPagoE.CreadoPor = oPagoE.Id > 0 ? pagoAnterior.CreadoPor : _usuarioActual;
             oPagoE.ActualizadoPor = oPagoE.Id > 0 ? _usuarioActual : oPagoE.ActualizadoPor;
             oPagoE.FormaPago = oPagoE.FormaPago_.ToString();
@@ -876,7 +972,21 @@ namespace WebCore.Controllers
                 }
             }
 
-            _ = _oCtaCteN.addOrEditPago(oPagoE, cierreCajaActual, pagoAnterior);
+            // Un fallo inesperado del guardado (base, egreso de caja, etc.) se responde como JSON controlado con el
+            // motivo, en vez de un 500 sin cuerpo que la pantalla mostraba como "No se pudo guardar el pago." a secas.
+            try
+            {
+                _ = _oCtaCteN.addOrEditPago(oPagoE, cierreCajaActual, pagoAnterior);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("AddOrEditPagoPost: fallo al guardar el pago " + oPagoE.Id + " (desdePos=" + desdePos + "): " + ex);
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = "No se pudo guardar el pago: " + ex.GetBaseException().Message
+                });
+            }
 
             string urlRetornoDefault = !string.IsNullOrWhiteSpace(returnUrl)
                 ? returnUrl
@@ -1090,6 +1200,11 @@ namespace WebCore.Controllers
 
             foreach (DataRow row in dtMov.Rows)
             {
+                // El asiento opuesto de un pago eliminado ("ELIMINADO - ...") no compite por ser "el ultimo":
+                // se muestra siempre junto al asiento vigente del pago, para que se vea la pareja
+                // original / eliminado en vez de solo un movimiento con el signo invertido.
+                if (EsAsientoDePagoEliminado(row)) continue;
+
                 string clave = string.Join("|",
                     Convert.ToString(row["tabla"]),
                     Convert.ToString(row["idTabla"]),
@@ -1114,11 +1229,18 @@ namespace WebCore.Controllers
                 int id = Convert.ToInt32(row["id"]);
 
                 int idMaximo;
-                if (maxIdPorClave.TryGetValue(clave, out idMaximo) && id == idMaximo)
+                if (EsAsientoDePagoEliminado(row) || (maxIdPorClave.TryGetValue(clave, out idMaximo) && id == idMaximo))
                     filtrado.ImportRow(row);
             }
 
             return filtrado;
+        }
+
+        // Contra-asiento que genera Negocio.CuentaCorriente.eliminarPagoConContraasiento (detalle "ELIMINADO - ...").
+        private static bool EsAsientoDePagoEliminado(DataRow row)
+        {
+            return string.Equals(Convert.ToString(row["tabla"]), "Pagos", StringComparison.OrdinalIgnoreCase)
+                && Convert.ToString(row["detalle"]).StartsWith("ELIMINADO - ", StringComparison.Ordinal);
         }
 
         private DataTable TomarUltimosRegistros(DataTable dtMov, int cantidad)
@@ -1240,12 +1362,13 @@ namespace WebCore.Controllers
         private byte[] GenerarExcelCuentaCorrienteBytes(int idPersona, DateTime fecha, bool mostrarAnulados, out string fileName)
         {
             DataTable dt = ObtenerMovimientosCuentaCorrienteParaExportacion(idPersona, fecha, mostrarAnulados);
-            string csv = "Fecha;Tabla;Detalle;Importe;Saldo;Sucursal\n";
+            string csv = "Fecha;Tabla;Nro.Doc;Detalle;Importe;Saldo;Sucursal\n";
 
             foreach (DataRow r in dt.Rows)
             {
                 csv += Convert.ToDateTime(r["Fecha"]).ToString("dd/MM/yyyy") + ";" +
                        r["Tabla"] + ";" +
+                       r["NroDoc"] + ";" +
                        r["Detalle"] + ";" +
                        Convert.ToDecimal(r["Importe"]).ToString("N2") + ";" +
                        Convert.ToDecimal(r["Saldo"]).ToString("N2") + ";" +

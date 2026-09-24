@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using Entidades;
@@ -31,7 +31,10 @@ namespace NegocioTests.Fakes
         public DataTable obtenerGastosAgrupadosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal) => throw new NotImplementedException();
         public EgresoCaja getEgresoCajaById(int idEgresoCaja) => throw new NotImplementedException();
         public List<EgresoCaja> getEgresosCajaByIds(List<int> ids) => throw new NotImplementedException();
-        public EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID) => throw new NotImplementedException();
+        // Egreso "existente" que devuelve findEgresoCajaByTablaYId (null = no hay: devuelve uno vacio, Id 0,
+        // igual que CierreCajaPg). Lo usan los tests de eliminar / cambiar persona de un pago.
+        public EgresoCaja EgresoCajaExistente { get; set; }
+        public EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID) => EgresoCajaExistente ?? new EgresoCaja();
         public float getMontoEgresosCajaVendedor(CierreCaja oCierre) => throw new NotImplementedException();
         public DataTable getEgresosCajaVendedor(CierreCaja oCierre) => throw new NotImplementedException();
         public Contratos.CambioSucursalCajaPreview obtenerPreviewCambioSucursalCaja(CierreCaja cierreCaja, int idSucursalNueva) => throw new NotImplementedException();

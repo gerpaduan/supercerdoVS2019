@@ -37,6 +37,10 @@
     bool enStock = controller == "Stock";
     bool enPuntosExpendio = controller == "PuntosExpendio";
     bool enFinanzas = controller == "Finanzas";
+    // "Pagos" queda activo tambien al abrir un pago desde ese listado (AddOrEditPago con returnUrl a /Finanzas/Pagos).
+    string returnUrlActual = Context.Request.Query["returnUrl"].ToString();
+    bool enPagos = enFinanzas && (action == "Pagos"
+        || (action == "AddOrEditPago" && returnUrlActual.StartsWith("/Finanzas/Pagos", StringComparison.OrdinalIgnoreCase)));
     bool enConfiguracion = controller == "Usuarios" || controller == "AuditoriaLogin" || controller == "Parametros"
         || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros";
     bool enAdministracionSistema = controller == "SystemAdministration";
@@ -555,6 +559,7 @@
                 <div id="collapseFinanzas" class="collapse @(enFinanzas ? "show" : "")">
                     <div class="collapse-inner rounded">
                         <a class="collapse-item @(enFinanzas && (action == "CtasCtes" || action == "CtaCtePersona") ? "active" : "")" href="@Url.Action("CtasCtes", "Finanzas")">Cuentas Corrientes</a>
+                        <a class="collapse-item @(enPagos ? "active" : "")" href="@Url.Action("Pagos", "Finanzas")">Pagos</a>
                         <a class="collapse-item @(enFinanzas && action == "Cheques" ? "active" : "")" href="@Url.Action("Cheques", "Finanzas")">Cheques</a>
                     </div>
                 </div>

@@ -35,6 +35,17 @@
     int idPersona = ViewBag.IdPersona != null ? (int)ViewBag.IdPersona : 0;
     string returnUrl = ViewBag.ReturnUrl as string ?? "";
     bool esNuevo = Model.Id == 0;
+
+    // Pago existente fuera de POS: todos los campos en solo lectura (con texto bien legible) hasta apretar
+    // "Modificar"; el boton pasa a "Guardar". En alta y en POS no cambia nada (2026-09-24, ver docs/DECISIONS.md).
+    bool pagoEliminado = ViewBag.PagoEliminado != null && (bool)ViewBag.PagoEliminado;
+    bool puedeReasignarOEliminar = ViewBag.PuedeReasignarOEliminar != null && (bool)ViewBag.PuedeReasignarOEliminar;
+    bool soloLecturaInicial = !esNuevo && !desdePos;
+    // Advertencia: la fecha del pago no es el dia en que se cargo el registro. En alta, "carga" = hoy.
+    DateTime fechaDeCarga = Model.Creado ?? DateTime.Now;
+    bool fechaDistinta = Negocio.CuentaCorriente.TieneFechaDistintaALaCarga(Model);
+    // Observaciones: el area de texto aparece desplegada solo si ya tiene contenido.
+    bool observacionesConContenido = !string.IsNullOrWhiteSpace(Model.Observaciones);
     ViewBag.Title = esNuevo ? "Nuevo pago o cobro" : "Editar pago o cobro";
 
     var formasPago = new (string valor, string texto)[]
@@ -53,19 +64,53 @@
     chequeBusquedaViewData["ChequeBusquedaEnPago"] = true;
 }
 
-<div id="addOrEditPagoContainer" class="container-fluid px-2 px-md-3 pago-form-compact">
+<div id="addOrEditPagoContainer" class="container-fluid px-2 px-md-3 pago-form-compact @(desdePos ? "" : "pago-form-pagina")">
     <div class="alert alert-primary d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
             <a href="@(string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("CtaCtePersona", "Finanzas", new { idPersona }) : returnUrl)"
                class="btn btn-sm btn-outline-secondary mr-2" id="btnVolverAddOrEditPago">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <h5 class="mb-0"><strong>@persona</strong></h5>
+            <h5 class="mb-0"><strong id="lblPersonaPago">@persona</strong></h5>
+            @if (puedeReasignarOEliminar)
+            {
+                <button type="button" class="btn btn-sm btn-outline-primary ml-2 d-none" id="btnCambiarPersonaPago" data-pago-fijo="true"
+                        title="Asignar este pago o cobro a otra persona">
+                    <i class="fas fa-exchange-alt mr-1"></i>Cambiar persona
+                </button>
+            }
+            <span class="badge badge-warning ml-2 d-none" id="avisoCambioPersonaPago"></span>
+            @if (pagoEliminado)
+            {
+                <span class="badge badge-danger ml-2">ELIMINADO</span>
+            }
         </div>
-        <h5 class="mb-0">
+        <h5 class="mb-0" id="saldoPersonaPagoWrap">
             Saldo:
             <span class="@(saldo >= 0 ? "text-success" : "text-danger") font-weight-bold">$ @saldo.ToString("N2")</span>
         </h5>
+    </div>
+
+    @if (pagoEliminado)
+    {
+        <div class="alert alert-danger" role="alert" id="alertPagoEliminado">
+            <i class="fas fa-ban mr-1"></i>
+            <strong>Este @(Model.AProveedor ? "pago" : "cobro") fue eliminado</strong>
+            @(Model.FechaEliminacion.HasValue ? "el " + Model.FechaEliminacion.Value.ToString("dd/MM/yyyy HH:mm") : "")
+            @(string.IsNullOrWhiteSpace(Model.NombreEliminadoPor) ? "" : "por " + Model.NombreEliminadoPor).
+            Su asiento en la cuenta corriente quedó revertido y ya no se puede modificar.
+            @if (!string.IsNullOrWhiteSpace(Model.MotivoEliminacion))
+            {
+                <div class="mt-1"><strong>Motivo:</strong> @Model.MotivoEliminacion</div>
+            }
+        </div>
+    }
+
+    <div class="alert alert-warning py-2 @(fechaDistinta ? "" : "d-none")" role="alert" id="alertFechaDistinta"
+         data-fecha-carga="@fechaDeCarga.ToString("yyyy-MM-dd")" style="@(fechaDistinta ? "" : "display:none;")">
+        <i class="fas fa-exclamation-triangle mr-1"></i>
+        Advertencia: la fecha del pago es distinta al día en que se cargó
+        (<span id="lblFechaCarga">@fechaDeCarga.ToString("dd/MM/yyyy")</span>).
     </div>
 
     <div class="card shadow-sm mb-3">
@@ -77,12 +122,20 @@
             {
                 <div class="form-group mb-3 pago-operacion-elegir">
                     <label>Operación</label>
-                    <div class="d-flex" style="gap:.5rem;">
-                        <button type="button" class="btn btn-outline-danger flex-fill pago-operacion-opcion" data-operacion-valor="true">
-                            <i class="fas fa-arrow-up mr-1"></i>Realizar un pago <small class="d-block text-muted">Atajo: 1</small>
+                    <div class="d-flex" style="gap:.6rem;">
+                        <button type="button" class="pago-op-card pago-op-pago flex-fill pago-operacion-opcion" data-operacion-valor="true">
+                            <span class="pago-op-icono"><i class="fas fa-arrow-up"></i></span>
+                            <span class="pago-op-texto">
+                                <span class="pago-op-titulo">Realizar un pago</span>
+                                <small class="pago-op-sub">Entrego dinero &middot; tecla <kbd>1</kbd></small>
+                            </span>
                         </button>
-                        <button type="button" class="btn btn-outline-success flex-fill pago-operacion-opcion" data-operacion-valor="false">
-                            <i class="fas fa-arrow-down mr-1"></i>Recibir un cobro <small class="d-block text-muted">Atajo: 2</small>
+                        <button type="button" class="pago-op-card pago-op-cobro flex-fill pago-operacion-opcion" data-operacion-valor="false">
+                            <span class="pago-op-icono"><i class="fas fa-arrow-down"></i></span>
+                            <span class="pago-op-texto">
+                                <span class="pago-op-titulo">Recibir un cobro</span>
+                                <small class="pago-op-sub">Recibo dinero &middot; tecla <kbd>2</kbd></small>
+                            </span>
                         </button>
                     </div>
                     <select id="AProveedor" name="AProveedor" class="form-control d-none">
@@ -93,10 +146,24 @@
                 </div>
             }
 
+            @* Orden pensado para leer de corrido en un ancho corto: 1) cuando y donde (fecha, recibo, sucursal),
+               2) que y cuanto (operacion, forma de pago, importe), 3) observaciones, 4) botones. *@
+            <div class="form-row">
+                <div class="col-md-6 mb-3 pago-requiere-operacion">
+                    <label for="Fecha">Fecha</label>
+                    <input type="datetime-local" id="Fecha" class="form-control" value="@Model.Fecha.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                </div>
+
+                <div class="col-md-6 mb-3 pago-requiere-operacion">
+                    <label for="NroRecibo">N° Recibo</label>
+                    <input type="text" id="NroRecibo" class="form-control" value="@Model.NroRecibo" maxlength="50" autocomplete="off" />
+                </div>
+            </div>
+
             <div class="form-row">
                 @if (!esNuevo)
                 {
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="AProveedor">Operación</label>
                         <select id="AProveedor" name="AProveedor" class="form-control">
                             <option value="false" selected="@(!Model.AProveedor ? "selected" : null)">Cobro (recibo dinero)</option>
@@ -104,28 +171,6 @@
                         </select>
                     </div>
                 }
-                <div class="col-md-3 mb-3 pago-requiere-operacion">
-                    <label for="SucursalId">Sucursal</label>
-                    <select id="SucursalId" name="SucursalId" class="form-control">
-                        @foreach (var sucursal in sucursales)
-                        {
-                            <option value="@sucursal.idSucursal" selected="@((Model.Sucursal != null && Model.Sucursal.idSucursal == sucursal.idSucursal) ? "selected" : null)">@sucursal.sucursal</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-3 mb-3 pago-requiere-operacion">
-                    <label for="Fecha">Fecha</label>
-                    <input type="datetime-local" id="Fecha" class="form-control" value="@Model.Fecha.ToString("yyyy-MM-ddTHH:mm:ss")" />
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label for="NroRecibo">N° Recibo</label>
-                    <input type="text" id="NroRecibo" class="form-control" value="@Model.NroRecibo" maxlength="50" autocomplete="off" />
-                </div>
-            </div>
-
-            <div class="form-row">
                 <div class="col-md-4 mb-3 pago-requiere-operacion">
                     <label for="FormaPago_">Forma de pago</label>
                     <select id="FormaPago_" name="FormaPago_" class="form-control">
@@ -188,8 +233,13 @@
             </div>
 
             <div class="form-group pago-requiere-operacion">
-                <label for="Observaciones">Observaciones</label>
-                <textarea id="Observaciones" class="form-control" rows="3" maxlength="500">@Model.Observaciones</textarea>
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="chkObservaciones" @(observacionesConContenido ? "checked" : "") />
+                    <label class="custom-control-label" for="chkObservaciones">Observaciones</label>
+                </div>
+                <div id="bloqueObservaciones" class="mt-2 @(observacionesConContenido ? "" : "d-none")">
+                    <textarea id="Observaciones" class="form-control" rows="3" maxlength="500">@Model.Observaciones</textarea>
+                </div>
             </div>
 
             <input type="hidden" id="Id" value="@Model.Id" />
@@ -197,23 +247,80 @@
 
             <div class="alert alert-danger d-none" id="msgErrorPago"></div>
 
-            <div class="d-flex justify-content-end" style="gap:.5rem;">
+            <div class="d-flex justify-content-end flex-wrap" style="gap:.5rem;">
+                @if (puedeReasignarOEliminar)
+                {
+                    <button type="button" class="btn btn-outline-danger mr-auto" id="btnEliminarPago" data-pago-fijo="true"
+                            title="Eliminar: genera el asiento opuesto y queda visible como ELIMINADO">
+                        <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                    </button>
+                }
                 @if (!esNuevo)
                 {
                     <a class="btn btn-outline-secondary" id="btnPdfPago" href="@ViewBag.ImprimirPagoPdfUrl" target="_blank" rel="noopener">
                         <i class="fas fa-file-pdf mr-1"></i>Ver PDF
                     </a>
-                    <button type="button" class="btn btn-outline-success" id="btnEmailPago">
+                    <button type="button" class="btn btn-outline-success" id="btnEmailPago" data-pago-fijo="true">
                         <i class="fas fa-envelope mr-1"></i>Enviar por email
                     </button>
                 }
-                <button type="button" class="btn btn-primary" id="btnGuardarPago">
-                    <i class="fas fa-save mr-1"></i>Guardar
+                <button type="button" class="btn btn-outline-secondary" id="btnCancelarPago" data-pago-fijo="true" title="Cancelar (Alt+C o Esc)">
+                    <i class="fas fa-times mr-1"></i>Cancelar
+                    <small class="pago-atajo">Alt+C / Esc</small>
                 </button>
+                @if (!pagoEliminado)
+                {
+                    <button type="button" class="btn btn-primary" id="btnGuardarPago" data-pago-fijo="true">
+                        <i class="fas fa-save mr-1"></i><span id="btnGuardarPagoTexto">Guardar</span>
+                        <small class="pago-atajo">Alt+Enter</small>
+                    </button>
+                }
+            </div>
+
+            @* Sucursal: se muestra ARRIBA de todo (order:-1) pero va al FINAL del DOM, asi el Tab solo llega hasta
+               aca si da toda la vuelta. Por defecto es la sucursal del usuario logueado (FinanzasController). *@
+            <div class="form-row pago-sucursal-fila">
+                <div class="col-md-6 mb-3 pago-requiere-operacion">
+                    <label for="SucursalId">Sucursal</label>
+                    <select id="SucursalId" name="SucursalId" class="form-control">
+                        @foreach (var sucursal in sucursales)
+                        {
+                            <option value="@sucursal.idSucursal" selected="@((Model.Sucursal != null && Model.Sucursal.idSucursal == sucursal.idSucursal) ? "selected" : null)">@sucursal.sucursal</option>
+                        }
+                    </select>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@if (puedeReasignarOEliminar)
+{
+    <div class="modal fade" id="modalCambiarPersonaPago" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-exchange-alt mr-2"></i>Asignar a otra persona</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-2" id="filtroPersonaPago" placeholder="Buscar por razón social, CUIT o identificación..." autocomplete="off" />
+                    <div class="table-responsive" style="max-height:320px; overflow:auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="thead-light">
+                                <tr><th>CUIT</th><th>Razón social</th><th>Identificación</th></tr>
+                            </thead>
+                            <tbody id="tablaPersonasPago"></tbody>
+                        </table>
+                    </div>
+                    <small class="text-muted d-block mt-2">Elegí la persona con clic o con Enter (primera de la lista). El cambio se aplica al guardar.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="modal fade" id="modalEmailPago" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -328,7 +435,10 @@
 
 <script src="@Url.Content("~/Scripts/app/modal-cheque.js")" asp-append-version="true"></script>
 <script src="@Url.Content("~/Scripts/app/pago-cheques.js")" asp-append-version="true"></script>
-<script src="@Url.Content("~/Scripts/app/form-hotkeys.js")" asp-append-version="true"></script>
+@* form-hotkeys.js tampoco puede ir como <script src> normal: necesita jQuery y con layout completo jQuery carga
+   al final del <body> (el modulo salia sin registrar window.FormHotkeys y Alt+Enter / Alt+C no funcionaban fuera
+   de POS). Mismo patron que money-input-mask.js: se carga desde el init, cuando jQuery ya existe. *@
+<script type="text/plain" id="formHotkeysSrc" src="@Url.Content("~/Scripts/app/form-hotkeys.js")" asp-append-version="true"></script>
 @* money-input-mask.js NO puede ir como <script src> normal: se cancela solo si jQuery todavia no cargo
    (en el layout completo jquery.min.js carga al final del <body>). type="text/plain" evita que el
    navegador lo ejecute ni jQuery lo evalue al inyectar el partial; solo sirve para que asp-append-version
@@ -348,6 +458,13 @@
         var desdePosPago = @(desdePos ? "true" : "false");
         var posInstanceIdPago = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceIdPago));
         var operacionPendienteSeleccion = esNuevoPago;
+        // Pago existente fuera de POS: arranca en solo lectura hasta "Modificar" (ver aplicarModoLectura).
+        var soloLecturaPago = @(soloLecturaInicial && !pagoEliminado ? "true" : "false");
+        var pagoEliminadoVista = @(pagoEliminado ? "true" : "false");
+        var idPersonaOriginal = @idPersona;
+        var nombrePersonaOriginal = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(persona));
+        var urlEliminarPago = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UrlEliminarPago as string ?? ""));
+        var urlListarPersonasPago = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UrlListarPersonas as string ?? ""));
         var urlPost = '@Url.Action("AddOrEditPagoPost", "Finanzas")';
         var pdfUrlBase = '@Url.Action("ImprimirPdfPago", "Finanzas")';
         var emailConfigUrl = '@Url.Action("ObtenerDatosEmailPago", "Finanzas")';
@@ -363,11 +480,27 @@
         // dispara un click sintetico, asi que ese gate se respeta solo, sin logica extra aca.
         // #btnVolverAddOrEditPago ya sabe volver (navegacion normal) o cerrar #modalPagoPOS
         // (desdePos, ver el handler unas lineas mas abajo) -- mismo criterio.
-        window.FormHotkeys && window.FormHotkeys.init({
-            formSelector: '#addOrEditPagoContainer',
-            saveSelector: '#btnGuardarPago',
-            cancelSelector: '#btnVolverAddOrEditPago'
-        });
+        function iniciarAtajosPago() {
+            if (!window.FormHotkeys) return;
+            window.FormHotkeys.init({
+                formSelector: '#addOrEditPagoContainer',
+                saveSelector: '#btnGuardarPago',
+                cancelSelector: '#btnCancelarPago'
+            });
+        }
+
+        if (window.FormHotkeys) {
+            iniciarAtajosPago();
+        } else {
+            var origenAtajos = document.getElementById('formHotkeysSrc');
+            if (origenAtajos) {
+                var scriptAtajos = document.createElement('script');
+                scriptAtajos.src = origenAtajos.getAttribute('src');
+                scriptAtajos.onload = iniciarAtajosPago;
+                scriptAtajos.onerror = function () { console.error('AddOrEditPago: no se pudo cargar form-hotkeys.js'); };
+                document.head.appendChild(scriptAtajos);
+            }
+        }
 
         // Enter-como-Tab (Batch 5, 2026-09-11, ver docs/DECISIONS.md): Enter en un input avanza
         // al siguiente campo en vez de no hacer nada -- mismo criterio que Productos/AddOrEdit.
@@ -377,7 +510,9 @@
         // #modalPagoPOS sobre #modalFinanzasPOS). Observaciones (textarea) queda como destino
         // final de la cadena pero SIN el keydown -- Enter ahi debe insertar un salto de linea,
         // mismo criterio de exclusion de textarea que el resto del proyecto.
-        var ORDEN_CAMPOS_ENTER_PAGO = ['#SucursalId', '#Fecha', '#NroRecibo', '#FormaPago_', '#txtImporte', '#Efectivo', '#Observaciones'];
+        // Flujo: fecha > recibo > forma de pago > importe > (efectivo) > interruptor de observaciones (se activa con la
+        // barra espaciadora). La sucursal queda fuera del flujo: solo se llega con Tab dando toda la vuelta.
+        var ORDEN_CAMPOS_ENTER_PAGO = ['#Fecha', '#NroRecibo', '#FormaPago_', '#txtImporte', '#Efectivo', '#chkObservaciones', '#Observaciones'];
 
         function moverFocoSiguienteCampoPago(idActual) {
             var indiceActual = ORDEN_CAMPOS_ENTER_PAGO.indexOf(idActual);
@@ -473,18 +608,13 @@
 
         function actualizarBotonesOperacion() {
             var valor = ($('#AProveedor').val() || '').toString();
-            $('.pago-operacion-opcion')
-                .removeClass('active btn-danger btn-success')
-                .each(function () {
-                    var esEsteBotonPago = $(this).attr('data-operacion-valor') === 'true';
-                    $(this).addClass(esEsteBotonPago ? 'btn-outline-danger' : 'btn-outline-success');
-                });
+            // Los colores de cada tarjeta (pago = rojo, cobro = verde) salen del CSS (.pago-op-card);
+            // aca solo se marca cual esta elegida.
+            $('.pago-operacion-opcion').removeClass('active').attr('aria-pressed', 'false');
 
             if (valor === '') return;
 
-            $('.pago-operacion-opcion[data-operacion-valor="' + valor + '"]')
-                .removeClass('btn-outline-danger btn-outline-success')
-                .addClass('active ' + (valor === 'true' ? 'btn-danger' : 'btn-success'));
+            $('.pago-operacion-opcion[data-operacion-valor="' + valor + '"]').addClass('active').attr('aria-pressed', 'true');
         }
 
         function seleccionarOperacion(valor) {
@@ -506,8 +636,10 @@
                 actualizarVisibilidadCheques();
 
                 if (estabaPendiente) {
-                    var $sucursal = $('#SucursalId:visible:not(:disabled)');
-                    if ($sucursal.length) $sucursal.trigger('focus');
+                    // tras elegir la operacion el foco pasa a la fecha; la sucursal (ya cargada con la del
+                    // usuario) queda al final del Tab
+                    var $fecha = $('#Fecha:visible:not(:disabled)');
+                    if ($fecha.length) $fecha.trigger('focus');
                 }
             });
 
@@ -613,6 +745,9 @@
             } else if (!esCheque && window.PagoCheques) {
                 window.PagoCheques.clearCheques();
             }
+
+            // esta funcion puede correr despues de aplicarModoLectura (init asincrono de PagoCheques)
+            if (soloLecturaPago) aplicarModoLectura(true);
         }
 
         var ultimaFormaPago = $('#FormaPago_').val();
@@ -663,6 +798,11 @@
         inicializarPagoChequesCuandoListo();
 
         $('#btnGuardarPago').on('click', function () {
+            if (soloLecturaPago) {
+                habilitarEdicionPago();
+                return;
+            }
+
             $('#msgErrorPago').addClass('d-none').text('');
             construirChequesJson();
 
@@ -705,27 +845,304 @@
                     return;
                 }
 
-                // Modo POS (Batch 10 de la quinta ronda, 2026-09-10, ver docs/DECISIONS.md): antes
-                // navegaba afuera de /Ventas/POS con window.location.href, perdiendo la venta en
-                // curso -- ahora cierra #modalPagoPOS y refresca la Cuenta Corriente ya cargada en
-                // #modalFinanzasPOS (resp.redirectUrl ya trae desdePos=true, heredado del
-                // returnUrl con el que se abrio este formulario).
-                if (resp.cerrarModalPago) {
-                    if (window.POSFinanzas && typeof window.POSFinanzas.cerrarModalPago === 'function') {
-                        window.POSFinanzas.cerrarModalPago();
+                // Aviso de guardado: se cierra solo a los 2 segundos, o antes con Enter (mismo criterio que
+                // "Compra guardada" y el resto de las vistas). Recien despues se cierra el modal / se navega.
+                // El boton queda deshabilitado mientras tanto para no guardar dos veces.
+                $btn.prop('disabled', true);
+
+                function continuarTrasGuardarPago() {
+                    // Modo POS (Batch 10 de la quinta ronda, 2026-09-10, ver docs/DECISIONS.md): antes
+                    // navegaba afuera de /Ventas/POS con window.location.href, perdiendo la venta en
+                    // curso -- ahora cierra #modalPagoPOS y refresca la Cuenta Corriente ya cargada en
+                    // #modalFinanzasPOS (resp.redirectUrl ya trae desdePos=true, heredado del
+                    // returnUrl con el que se abrio este formulario).
+                    if (resp.cerrarModalPago) {
+                        if (window.POSFinanzas && typeof window.POSFinanzas.cerrarModalPago === 'function') {
+                            window.POSFinanzas.cerrarModalPago();
+                        }
+                        if (resp.redirectUrl && window.POSFinanzas && typeof window.POSFinanzas.cargar === 'function') {
+                            window.POSFinanzas.cargar(resp.redirectUrl, 'Cuenta corriente');
+                        }
+                        return;
                     }
-                    if (resp.redirectUrl && window.POSFinanzas && typeof window.POSFinanzas.cargar === 'function') {
-                        window.POSFinanzas.cargar(resp.redirectUrl, 'Cuenta corriente');
-                    }
-                    return;
+
+                    window.location.href = resp.redirectUrl;
                 }
 
-                window.location.href = resp.redirectUrl;
+                Swal.fire({
+                    icon: 'success',
+                    title: esNuevoPago ? 'Pago guardado' : 'Cambios guardados',
+                    text: 'El ' + ($('#AProveedor').val() === 'true' ? 'pago' : 'cobro') + ' se registró correctamente.',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Aceptar (Enter)',
+                    allowEnterKey: true,
+                    focusConfirm: true
+                }).then(continuarTrasGuardarPago);
             }).fail(function (xhr) {
                 $btn.prop('disabled', false);
                 $('#msgErrorPago').removeClass('d-none').text((xhr.responseJSON && xhr.responseJSON.mensaje) || 'No se pudo guardar el pago.');
             });
         });
+
+        // ===== Solo lectura / Modificar / Cancelar / cambio de persona / Eliminar (2026-09-24) =====
+
+        // Controles de datos del formulario. Los que llevan data-pago-fijo (botones de accion, total de
+        // cheques) nunca se bloquean ni se habilitan desde aca.
+        function controlesDeDatosPago() {
+            return $('#addOrEditPagoContainer .card-body')
+                .find('input:not([type="hidden"]), select, textarea, button')
+                .not('[data-pago-fijo]');
+        }
+
+        // Texto y numeros -> readonly (se ven como campo normal, sin editar); select/checkbox/boton -> disabled.
+        function aplicarModoLectura(soloLectura) {
+            controlesDeDatosPago().each(function () {
+                var $el = $(this);
+                var esTexto = $el.is('textarea') || $el.is('input:not([type="checkbox"]):not([type="radio"]):not([type="button"])');
+                if (esTexto) {
+                    $el.prop('readonly', soloLectura);
+                } else {
+                    $el.prop('disabled', soloLectura);
+                }
+            });
+            $('#addOrEditPagoContainer').toggleClass('pago-solo-lectura', soloLectura);
+        }
+
+        function actualizarBotonPrincipalPago() {
+            var $btn = $('#btnGuardarPago');
+            if (!$btn.length) return;
+            $btn.find('#btnGuardarPagoTexto').text(soloLecturaPago ? 'Modificar' : 'Guardar');
+            $btn.find('i').attr('class', soloLecturaPago ? 'fas fa-edit mr-1' : 'fas fa-save mr-1');
+            $btn.attr('title', (soloLecturaPago ? 'Modificar' : 'Guardar') + ' (Alt+Enter)');
+        }
+
+        function habilitarEdicionPago() {
+            soloLecturaPago = false;
+            aplicarModoLectura(false);
+            // #txtImporte vuelve a su estado real (solo lectura si la forma de pago incluye cheques)
+            actualizarVisibilidadCheques();
+            actualizarBotonPrincipalPago();
+            $('#btnCambiarPersonaPago').removeClass('d-none');
+            $('#Fecha').trigger('focus');
+        }
+
+        // Cancelar (Alt+C): editando un pago existente descarta los cambios recargando el pago; en cualquier
+        // otro caso (alta, solo lectura, POS) equivale a "Volver".
+        var salidaConfirmadaPago = false;
+
+        // Sale del pago SIN preguntar (ya se confirmo, o no habia nada que perder).
+        function salirDelPago() {
+            if (!esNuevoPago && !desdePosPago && !soloLecturaPago) {
+                window.location.reload();
+                return;
+            }
+            var $volver = $('#btnVolverAddOrEditPago');
+            salidaConfirmadaPago = true;
+            if (desdePosPago) {
+                $volver.trigger('click');
+            } else if ($volver.attr('href')) {
+                window.location.href = $volver.attr('href');
+            }
+            salidaConfirmadaPago = false;
+        }
+
+        // ¿El usuario toco algo? Se compara con una foto de los campos tomada al terminar de cargar la pantalla.
+        var estadoInicialPago = null;
+        function fotoDelFormularioPago() {
+            var partes = [];
+            $('#addOrEditPagoContainer .card-body').find('input:not([type="hidden"]), select, textarea').each(function () {
+                partes.push(this.id + '=' + (this.type === 'checkbox' ? this.checked : $(this).val()));
+            });
+            construirChequesJson();
+            return partes.join('|') + '|persona=' + idPersona + '|cheques=' + ($('#ChequesJson').val() || '');
+        }
+        function formularioPagoModificado() {
+            return estadoInicialPago !== null && fotoDelFormularioPago() !== estadoInicialPago;
+        }
+        // Espera a que terminen de cargar los cheques y la mascara del importe antes de tomar la foto.
+        window.setTimeout(function () { estadoInicialPago = fotoDelFormularioPago(); }, 700);
+
+        // Con cambios sin guardar pide confirmacion: Enter = salir y perder los datos, Esc = seguir en el pago.
+        function pedirSalidaDelPago() {
+            if (!formularioPagoModificado()) {
+                salirDelPago();
+                return;
+            }
+            Swal.fire({
+                icon: 'warning',
+                title: '¿Salir sin guardar?',
+                text: 'Hiciste cambios que todavía no se guardaron. Si salís, se perderán los datos ingresados.',
+                showCancelButton: true,
+                confirmButtonText: 'Salir y perder los datos (Enter)',
+                cancelButtonText: 'Seguir en el pago (Esc)',
+                confirmButtonColor: '#d33',
+                reverseButtons: true,
+                focusConfirm: true,
+                allowEnterKey: true,
+                allowEscapeKey: true
+            }).then(function (resultado) {
+                if (resultado.isConfirmed) salirDelPago();
+            });
+        }
+
+        $('#btnCancelarPago').on('click', function (e) {
+            e.preventDefault();
+            pedirSalidaDelPago();
+        });
+
+        // Esc = Cancelar. Y la flecha "volver" del encabezado tambien avisa si hay cambios. Van en captura sobre
+        // document para adelantarse a los handlers propios del POS; se guardan en window para no duplicarlos si la
+        // pantalla se vuelve a cargar por AJAX dentro del modal.
+        if (window.__pagoAtajosSalida) {
+            document.removeEventListener('keydown', window.__pagoAtajosSalida.teclado, true);
+            document.removeEventListener('click', window.__pagoAtajosSalida.clic, true);
+        }
+        window.__pagoAtajosSalida = {
+            teclado: function (e) {
+                if (e.key !== 'Escape') return;
+                if (!document.getElementById('addOrEditPagoContainer')) return;
+                if (window.Swal && typeof window.Swal.isVisible === 'function' && window.Swal.isVisible()) return;
+
+                // solo si el pago es lo de arriba: con otro modal abierto (buscar cheques, persona, email) Esc es de ese modal
+                var $arriba = $('.modal.show:visible').last();
+                if ($arriba.length && $arriba.attr('id') !== 'modalPagoPOS') return;
+
+                e.preventDefault();
+                e.stopPropagation();
+                pedirSalidaDelPago();
+            },
+            clic: function (e) {
+                if (salidaConfirmadaPago || !e.target.closest || !e.target.closest('#btnVolverAddOrEditPago')) return;
+                if (!formularioPagoModificado()) return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                pedirSalidaDelPago();
+            }
+        };
+        document.addEventListener('keydown', window.__pagoAtajosSalida.teclado, true);
+        document.addEventListener('click', window.__pagoAtajosSalida.clic, true);
+
+        // Observaciones: el interruptor despliega/pliega el area de texto. Con texto cargado no se puede
+        // plegar (quedaria oculto algo que se va a guardar).
+        $('#chkObservaciones').on('change', function () {
+            var $area = $('#Observaciones');
+            if (!this.checked && ($area.val() || '').trim() !== '') {
+                this.checked = true;
+                return;
+            }
+            $('#bloqueObservaciones').toggleClass('d-none', !this.checked);
+            if (this.checked) $area.trigger('focus');
+        });
+
+        // Advertencia "fecha distinta al dia de carga": en vivo al cambiar la fecha.
+        function actualizarAlertaFechaDistinta() {
+            var $alerta = $('#alertFechaDistinta');
+            if (!$alerta.length) return;
+            var fechaPago = String($('#Fecha').val() || '').substring(0, 10);
+            var fechaCarga = $alerta.attr('data-fecha-carga') || '';
+            var distinta = fechaPago !== '' && fechaCarga !== '' && fechaPago !== fechaCarga;
+            $alerta.toggleClass('d-none', !distinta).css('display', distinta ? '' : 'none');
+        }
+        $('#Fecha').on('input change', actualizarAlertaFechaDistinta);
+
+        // ----- Cambiar persona -----
+        function cargarPersonasPago() {
+            var filtro = ($('#filtroPersonaPago').val() || '').trim();
+            $.getJSON(urlListarPersonasPago, { filtro: filtro }).done(function (lista) {
+                var $tbody = $('#tablaPersonasPago').empty();
+                (lista || []).forEach(function (persona) {
+                    // .text() y no un template HTML: la razon social viene de la base y no se confia en ella
+                    var $fila = $('<tr style="cursor:pointer;"></tr>')
+                        .attr('data-id', persona.idPersona)
+                        .data('razon', persona.razonSocial)
+                        .append($('<td></td>').text(persona.cuit || ''))
+                        .append($('<td></td>').text(persona.razonSocial || ''))
+                        .append($('<td></td>').text(persona.identificacion || ''));
+                    $tbody.append($fila);
+                });
+                $tbody.find('tr').first().addClass('table-active');
+            }).fail(function () {
+                Swal.fire({ icon: 'error', title: 'No se pudo buscar', text: 'Error de conexión al buscar personas.' });
+            });
+        }
+
+        function seleccionarPersonaPago(id, razonSocial) {
+            idPersona = parseInt(id, 10);
+            $('#hddIdPersona').val(idPersona);
+            $('#lblPersonaPago').text(razonSocial);
+            var cambio = idPersona !== idPersonaOriginal;
+            $('#avisoCambioPersonaPago')
+                .toggleClass('d-none', !cambio)
+                .text(cambio ? 'Se reasignará de ' + nombrePersonaOriginal + ' a ' + razonSocial + ' al guardar' : '');
+            // el saldo mostrado es el de la persona original: al cambiar deja de ser el de esta operacion
+            $('#saldoPersonaPagoWrap').toggleClass('d-none', cambio);
+            $('#modalCambiarPersonaPago').modal('hide');
+        }
+
+        var temporizadorFiltroPersonaPago = null;
+        $('#btnCambiarPersonaPago').on('click', function () {
+            $('#filtroPersonaPago').val('');
+            $('#tablaPersonasPago').empty();
+            $('#modalCambiarPersonaPago').modal('show');
+            cargarPersonasPago();
+        });
+        $('#modalCambiarPersonaPago').on('shown.bs.modal', function () { $('#filtroPersonaPago').trigger('focus'); });
+        $('#filtroPersonaPago').on('input', function () {
+            window.clearTimeout(temporizadorFiltroPersonaPago);
+            temporizadorFiltroPersonaPago = window.setTimeout(cargarPersonasPago, 250);
+        });
+        $('#filtroPersonaPago').on('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            var $primera = $('#tablaPersonasPago tr').first();
+            if ($primera.length) seleccionarPersonaPago($primera.attr('data-id'), $primera.data('razon'));
+        });
+        $('#tablaPersonasPago').on('click', 'tr', function () {
+            seleccionarPersonaPago($(this).attr('data-id'), $(this).data('razon'));
+        });
+
+        // ----- Eliminar (asiento opuesto, queda visible como ELIMINADO) -----
+        $('#btnEliminarPago').on('click', function () {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Eliminar pago o cobro',
+                html: 'Se genera el asiento opuesto en la cuenta corriente y el registro queda visible como <b>ELIMINADO</b>. No se puede deshacer.',
+                input: 'textarea',
+                inputPlaceholder: 'Motivo de la eliminación (obligatorio)',
+                inputAttributes: { maxlength: '300' },
+                inputValidator: function (valor) { return (valor || '').trim() ? null : 'El motivo es obligatorio.'; },
+                showCancelButton: true,
+                confirmButtonText: 'Eliminar',
+                confirmButtonColor: '#d33',
+                cancelButtonText: 'Cancelar'
+            }).then(function (resultado) {
+                if (!resultado.isConfirmed) return;
+
+                $.ajax({
+                    url: urlEliminarPago,
+                    type: 'POST',
+                    data: { id: idPago, motivo: resultado.value },
+                    headers: { RequestVerificationToken: tokenAntiForgery() }
+                }).done(function (resp) {
+                    if (!resp || !resp.ok) {
+                        Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: (resp && resp.mensaje) || 'Error desconocido.' });
+                        return;
+                    }
+                    Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false }).then(function () {
+                        window.location.href = $('#hddReturnUrl').val() || resp.redirectUrl;
+                    });
+                }).fail(function (xhr) {
+                    Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: (xhr.responseJSON && xhr.responseJSON.mensaje) || 'Error de conexión.' });
+                });
+            });
+        });
+
+        // Estado inicial
+        if (soloLecturaPago || pagoEliminadoVista) aplicarModoLectura(true);
+        actualizarBotonPrincipalPago();
+        actualizarAlertaFechaDistinta();
 
         $('#btnEmailPago').on('click', function () {
             $('#pagoEmailError').addClass('d-none').text('');
@@ -785,10 +1202,100 @@
 </script>
 
 <style>
+    /* Pantalla completa (fuera de POS): mismo ancho que el modal de pagos del POS (modal-lg, 800px) y centrada. */
+    #addOrEditPagoContainer.pago-form-pagina { max-width: 760px !important; margin-left: auto; margin-right: auto; }
+    /* El layout usa Bootstrap 5: las utilidades de margen de Bootstrap 4 (mr-1, ml-2) no existen y los iconos de los botones
+       y del encabezado quedaban pegados al texto. Se definen aca, solo para esta pantalla. */
+    #addOrEditPagoContainer .mr-1 { margin-right: .35rem; }
+    #addOrEditPagoContainer .mr-2 { margin-right: .5rem; }
+    #addOrEditPagoContainer .ml-2 { margin-left: .5rem; }
+    #addOrEditPagoContainer .mr-auto { margin-right: auto; }
+    /* Encabezado y tarjeta mas juntos: menos aire entre bloques para no recorrer la pantalla con la vista */
+    .pago-form-pagina .alert { margin-bottom: .75rem; }
+    .pago-form-pagina .card-body { padding: 1rem 1.15rem; }
+    .pago-form-pagina .form-row { margin-left: -.4rem; margin-right: -.4rem; }
+    .pago-form-pagina .form-row > [class*="col-"] { padding-left: .4rem; padding-right: .4rem; }
+    /* Tamaño de letra y controles como en el modal de pagos del POS: en el layout completo el tamaño base es mas
+       grande y la pantalla se veia "inflada". Con el id para ganarle a los estilos del tema. */
+    #addOrEditPagoContainer.pago-form-pagina { font-size: .82rem; }
+    #addOrEditPagoContainer.pago-form-pagina h5 { font-size: 1rem; }
+    #addOrEditPagoContainer.pago-form-pagina label { font-size: .76rem; margin-bottom: .15rem; }
+    #addOrEditPagoContainer.pago-form-pagina .form-control,
+    #addOrEditPagoContainer.pago-form-pagina .form-select {
+        font-size: .82rem;
+        padding: .28rem .55rem;
+        height: calc(1.5em + .56rem);
+        min-height: 0;
+        border-radius: .3rem;
+    }
+    #addOrEditPagoContainer.pago-form-pagina textarea.form-control { height: auto; }
+    #addOrEditPagoContainer.pago-form-pagina .btn { font-size: .82rem; padding: .32rem .75rem; }
+    #addOrEditPagoContainer.pago-form-pagina .btn-sm { font-size: .76rem; padding: .2rem .5rem; }
+    /* La sucursal esta al final del DOM (el Tab llega ultimo) pero se ve arriba de todo: la tarjeta es una columna
+       flex y esa fila lleva order:-1. */
+    #addOrEditPagoContainer .card-body { display: flex; flex-direction: column; }
+    #addOrEditPagoContainer .pago-sucursal-fila { order: -1; }
+
+    /* Tarjetas "Realizar un pago" / "Recibir un cobro" */
+    #addOrEditPagoContainer .pago-op-card {
+        --pago-op-color: #6c757d; --pago-op-suave: #f1f3f5;
+        display: flex; align-items: center; gap: .7rem; text-align: left;
+        padding: .6rem .85rem; cursor: pointer;
+        border: 2px solid var(--pago-op-color); border-radius: .75rem;
+        background: var(--bs-body-bg, #fff); color: inherit;
+        transition: background-color .15s, box-shadow .15s, transform .1s;
+    }
+    #addOrEditPagoContainer .pago-op-pago { --pago-op-color: #dc3545; --pago-op-suave: #fdecee; }
+    #addOrEditPagoContainer .pago-op-cobro { --pago-op-color: #198754; --pago-op-suave: #e7f5ee; }
+    #addOrEditPagoContainer .pago-op-icono {
+        flex: none; width: 2.1rem; height: 2.1rem; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--pago-op-suave); color: var(--pago-op-color);
+    }
+    #addOrEditPagoContainer .pago-op-texto { display: flex; flex-direction: column; line-height: 1.2; }
+    #addOrEditPagoContainer .pago-op-titulo { font-weight: 700; font-size: .95rem; color: var(--pago-op-color); }
+    #addOrEditPagoContainer .pago-op-sub { color: #6c757d; font-size: .72rem; }
+    #addOrEditPagoContainer .pago-op-card kbd {
+        background: #fff; color: #495057; border: 1px solid #ced4da; border-bottom-width: 2px;
+        border-radius: .3rem; padding: 0 .3rem; font-size: .7rem; box-shadow: none;
+    }
+    #addOrEditPagoContainer .pago-op-card:hover,
+    #addOrEditPagoContainer .pago-op-card:focus-visible { background: var(--pago-op-suave); box-shadow: 0 .2rem .55rem rgba(0,0,0,.12); outline: none; }
+    #addOrEditPagoContainer .pago-op-card:active { transform: scale(.985); }
+    #addOrEditPagoContainer .pago-op-card.active { background: var(--pago-op-color); box-shadow: 0 .25rem .65rem rgba(0,0,0,.2); }
+    #addOrEditPagoContainer .pago-op-card.active .pago-op-titulo,
+    #addOrEditPagoContainer .pago-op-card.active .pago-op-sub { color: #fff; }
+    #addOrEditPagoContainer .pago-op-card.active .pago-op-icono { background: rgba(255,255,255,.22); color: #fff; }
+
+    /* Atajo escrito dentro del boton */
+    #addOrEditPagoContainer .pago-atajo { margin-left: .4rem; opacity: .75; font-size: .68rem; font-weight: 500; }
+
+    /* Botones de accion juntos y alineados a la derecha, bajo el ultimo campo */
+    .pago-form-pagina #btnGuardarPago { min-width: 8.5rem; }
     .pago-form-compact label {
         font-size: .82rem;
         font-weight: 600;
         color: #495057;
         margin-bottom: .2rem;
     }
+
+    /* Pago en solo lectura: Bootstrap pinta los campos deshabilitados/readonly en gris claro. Aca se
+       muestran con texto oscuro y en negrita para que se lea bien; solo cambia el fondo levemente. */
+    #addOrEditPagoContainer.pago-solo-lectura .form-control[readonly],
+    #addOrEditPagoContainer.pago-solo-lectura .form-control:disabled,
+    #addOrEditPagoContainer.pago-solo-lectura select:disabled,
+    #addOrEditPagoContainer.pago-solo-lectura textarea[readonly] {
+        background-color: #f4f6fb;
+        color: #212529;
+        -webkit-text-fill-color: #212529;
+        font-weight: 600;
+        opacity: 1;
+        border-color: #cfd6e4;
+    }
+    #addOrEditPagoContainer.pago-solo-lectura .custom-control-input:disabled ~ .custom-control-label {
+        color: #212529;
+        font-weight: 600;
+    }
+    /* en solo lectura no se pueden quitar cheques ni agregar otros */
+    #addOrEditPagoContainer.pago-solo-lectura #tablaCheques .btn { display: none; }
 </style>

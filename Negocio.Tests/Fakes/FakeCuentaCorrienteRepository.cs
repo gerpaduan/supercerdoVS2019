@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -98,9 +98,10 @@ namespace NegocioTests.Fakes
         public DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde) => throw new NotImplementedException();
         public DataTable obtenerCheques(string texto, DateTime fechaDesde, DateTime fechaHasta, bool soloPropios, string estado) => throw new NotImplementedException();
         public Cheque getChequePorIDorNro(int id, string nroCheque) => throw new NotImplementedException();
-        // Fiel al real: idPago<=0 (pago nuevo, sin persistir todavia) no tiene cheques que buscar.
+        // Los pagos de los tests no tienen cheques: siempre lista vacia (idPago<=0 es un pago nuevo, sin
+        // persistir todavia; los tests de edicion de un pago existente tampoco usan cheques).
         public List<Cheque> getChequesPorPago(int idPago, bool conPagos = true, Contratos.IUnitOfWork unitOfWork = null) =>
-            idPago <= 0 ? new List<Cheque>() : throw new NotImplementedException();
+            new List<Cheque>();
 
         public bool AddOrEditCheque(Cheque oCheque) => throw new NotImplementedException();
         public bool EliminarCheque(int id) => throw new NotImplementedException();
@@ -120,6 +121,25 @@ namespace NegocioTests.Fakes
         public DataTable obtenerTotalesPagosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal) => throw new NotImplementedException();
         public DataTable obtenerUltimosPagosDashboard(int cantidad) => throw new NotImplementedException();
         public DataTable obtenerChequesPendientesDashboard(int cantidad, DateTime fechaActual) => throw new NotImplementedException();
-        public Pago getPagoById(int idPago, bool conCheques = true) => throw new NotImplementedException();
+        // Pagos "guardados" que devuelve getPagoById (los tests de eliminar los cargan aca).
+        public Dictionary<int, Pago> PagosGuardados { get; } = new Dictionary<int, Pago>();
+        public Pago getPagoById(int idPago, bool conCheques = true) =>
+            PagosGuardados.TryGetValue(idPago, out var pago) ? pago : null;
+
+        public List<int> PagosMarcadosEliminados { get; } = new List<int>();
+        public bool marcarPagoEliminado(int idPago, int idUsuario, string motivo, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            if (PagosMarcadosEliminados.Contains(idPago)) return false;
+            PagosMarcadosEliminados.Add(idPago);
+            return true;
+        }
+
+        public List<AuditoriaPago> Auditorias { get; } = new List<AuditoriaPago>();
+        public void registrarAuditoriaPago(AuditoriaPago auditoria, Contratos.IUnitOfWork unitOfWork = null) => Auditorias.Add(auditoria);
+
+        public DataTable obtenerObservacionesCtaCte(int idPersona) => throw new NotImplementedException();
+
+        public List<Notificacion> Notificaciones { get; } = new List<Notificacion>();
+        public void upsertNotificacion(Notificacion notificacion, bool reabrir) => Notificaciones.Add(notificacion);
     }
 }

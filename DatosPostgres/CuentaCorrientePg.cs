@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using Entidades;
@@ -25,8 +25,8 @@ namespace DatosPostgres
     // (algunos con espacios/puntos, ej. "Nombre Identif.", "Razon Social", "obs.", citados
     // entre comillas dobles) al conectar HomeController/FinanzasController/ReportesController
     // via NegocioFactory. obtenerChequesPendientesDashboard no necesito cambios (sin alias
-    // multi-palabra en el original). obtenerPagos sigue sin verificar -- sin caller en los
-    // controllers ya cableados.
+    // multi-palabra en el original). obtenerPagos: desde 2026-09-24 lo usa Finanzas/Pagos (listado)
+    // y su SELECT se ejecuto contra la base local (con idPersona, idSucursal y eliminado agregados).
     public class CuentaCorrientePg : Contratos.ICuentaCorrienteRepository
     {
         private readonly string _connectionString;
@@ -704,7 +704,8 @@ namespace DatosPostgres
         {
             const string sql = @"
                 SELECT
-                    p.id, p.fecha, per.razonsocial AS ""razonSocial"",
+                    p.id, p.fecha, p.idpersona AS ""idPersona"", p.idsucursal AS ""idSucursal"",
+                    per.razonsocial AS ""razonSocial"", p.eliminado AS ""eliminado"",
                     p.nrorecibo AS ""nroRecibo"", p.importe, p.aproveedor AS ""aProveedor"",
                     CASE p.aproveedor WHEN false THEN 'Cobro' ELSE 'Pago' END AS ""Operacion"",
                     p.formapago AS ""formaPago"", p.efectivo, p.observaciones, p.creado, creadopor.nombre AS ""CreadoPor"",
@@ -792,13 +793,15 @@ namespace DatosPostgres
                     uc.id AS creadoporid, uc.nombre AS creadopornombre, uc.usuario AS creadoporuser, uc.email AS creadoporemail,
                     uc.idsucursaluser AS creadoporidsucursal, uc.idempresa AS creadoporidempresa,
                     ua.id AS actualizadoporid, ua.nombre AS actualizadopornombre, ua.usuario AS actualizadoporuser, ua.email AS actualizadoporemail,
-                    ua.idsucursaluser AS actualizadoporidsucursal, ua.idempresa AS actualizadoporidempresa
+                    ua.idsucursaluser AS actualizadoporidsucursal, ua.idempresa AS actualizadoporidempresa,
+                    ue.nombre AS eliminadopornombre
                 FROM pagos p
                 LEFT JOIN personas per ON per.idpersona = p.idpersona
                 LEFT JOIN iva ON iva.id = per.idiva
                 LEFT JOIN sucursal s ON s.idsucursal = p.idsucursal
                 LEFT JOIN usuarios uc ON uc.id = p.creadopor
                 LEFT JOIN usuarios ua ON ua.id = p.actualizadopor
+                LEFT JOIN usuarios ue ON ue.id = p.eliminadopor
                 WHERE p.id = @id;";
 
             var lista = DbPg.Reader(_connectionString, _idEmpresa, sql, dr => new Pago
@@ -824,6 +827,11 @@ namespace DatosPostgres
                 Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]),
                 IdCreadoPor = Convert.ToInt32(dr["creadopor"]),
                 IdActualizadoPor = dr["actualizadopor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["actualizadopor"]),
+                Eliminado = GetBool(dr, "eliminado"),
+                IdEliminadoPor = dr["eliminadopor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["eliminadopor"]),
+                NombreEliminadoPor = GetString(dr, "eliminadopornombre"),
+                FechaEliminacion = dr["fechaeliminacion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaeliminacion"]),
+                MotivoEliminacion = GetString(dr, "motivoeliminacion"),
                 Persona = MapPersonaLiviana(dr, "persona"),
                 Sucursal = MapSucursalLiviana(dr, "sucursal"),
                 CreadoPor = MapUsuarioLiviano(dr, "creadopor"),
@@ -841,6 +849,85 @@ namespace DatosPostgres
                 oPagoE.Cheques = getChequesPorPago(oPagoE.Id, false);
 
             return oPagoE;
+        }
+
+        // Eliminacion logica: marca el pago sin borrarlo. El WHERE eliminado = false hace idempotente la
+        // operacion (false = ya estaba eliminado). Participa del UnitOfWork del llamador si viene uno.
+        public bool marcarPagoEliminado(int idPago, int idUsuario, string motivo, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            int filas = DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                UPDATE pagos SET eliminado = true, eliminadopor = @idUsuario, fechaeliminacion = now(),
+                    motivoeliminacion = @motivo, actualizado = now(), actualizadopor = @idUsuario
+                WHERE id = @id AND eliminado = false;",
+                p =>
+                {
+                    p.AddWithValue("id", idPago);
+                    p.AddWithValue("idUsuario", idUsuario);
+                    p.AddWithValue("motivo", motivo ?? "");
+                }, unitOfWork);
+            return filas > 0;
+        }
+
+        public void registrarAuditoriaPago(AuditoriaPago auditoria, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO auditoriapagos (idempresa, idpago, tipo, idpersonaanterior, idpersonanueva, idusuario, fecha, detalle)
+                VALUES (@idEmpresa, @idPago, @tipo, @anterior, @nueva, @idUsuario, now(), @detalle);",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("idPago", auditoria.IdPago);
+                    p.AddWithValue("tipo", auditoria.Tipo);
+                    p.AddWithValue("anterior", (object)auditoria.IdPersonaAnterior ?? DBNull.Value);
+                    p.AddWithValue("nueva", (object)auditoria.IdPersonaNueva ?? DBNull.Value);
+                    p.AddWithValue("idUsuario", auditoria.IdUsuario);
+                    p.AddWithValue("detalle", (object)auditoria.Detalle ?? DBNull.Value);
+                }, unitOfWork);
+        }
+
+        public DataTable obtenerObservacionesCtaCte(int idPersona)
+        {
+            const string sql = @"
+                SELECT m.tabla AS ""tabla"", m.idtabla AS ""idTabla"",
+                       COALESCE(pg.observaciones, v.observaciones, c.observaciones) AS ""observaciones""
+                FROM movctacte m
+                LEFT JOIN pagos pg ON m.tabla = 'Pagos' AND pg.id = m.idtabla
+                LEFT JOIN ventas v ON m.tabla = 'Ventas' AND v.idventa = m.idtabla
+                LEFT JOIN compras c ON m.tabla = 'Compras' AND c.idcompra = m.idtabla
+                WHERE m.idpersona = @idPersona
+                  AND COALESCE(TRIM(COALESCE(pg.observaciones, v.observaciones, c.observaciones)), '') <> '';";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idPersona", idPersona));
+        }
+
+        // Misma tabla y SQL que BorradorGenericoPg.UpsertNotificacion (idempotente por idempresa+tipo+refid).
+        public void upsertNotificacion(Notificacion notificacion, bool reabrir)
+        {
+            if (notificacion == null) throw new ArgumentNullException(nameof(notificacion));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO notificaciones (idempresa, idsucursal, tipo, severidad, titulo, mensaje, refid, creado, actualizado)
+                VALUES (@idEmpresa, @idSucursal, @tipo, @severidad, @titulo, @mensaje, @refId, now(), now())
+                ON CONFLICT (idempresa, tipo, refid) DO UPDATE SET
+                    severidad   = EXCLUDED.severidad,
+                    titulo      = EXCLUDED.titulo,
+                    mensaje     = EXCLUDED.mensaje,
+                    actualizado = now(),
+                    atendidapor = CASE WHEN @reabrir THEN NULL ELSE notificaciones.atendidapor END,
+                    atendidaen  = CASE WHEN @reabrir THEN NULL ELSE notificaciones.atendidaen END;",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("idSucursal", (object)notificacion.IdSucursal ?? DBNull.Value);
+                    p.AddWithValue("tipo", notificacion.Tipo);
+                    p.AddWithValue("severidad", notificacion.Severidad ?? Notificacion.SeveridadAdvertencia);
+                    p.AddWithValue("titulo", notificacion.Titulo ?? "");
+                    p.AddWithValue("mensaje", notificacion.Mensaje ?? "");
+                    p.AddWithValue("refId", notificacion.RefId);
+                    p.AddWithValue("reabrir", reabrir);
+                });
         }
 
         #endregion

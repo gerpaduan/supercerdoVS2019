@@ -1,4 +1,4 @@
-// Port de Utilidades/GenerarDocs.cs (iTextSharp) a QuestPDF -- ver docs/10-migracion-aspnet-core/
+﻿// Port de Utilidades/GenerarDocs.cs (iTextSharp) a QuestPDF -- ver docs/10-migracion-aspnet-core/
 // README.md. Porta GenerarFacturaPDF (factura/ticket A4, VentasController) con el QR oficial de
 // AFIP (RG 4892/2020) y GenerarPdfCtaCtePersona (extracto de cuenta corriente, FinanzasController).
 //
@@ -69,18 +69,20 @@ namespace WebCore.Services
                         {
                             table.ColumnsDefinition(c =>
                             {
-                                c.RelativeColumn(1.4f);
-                                c.RelativeColumn(1.4f);
-                                c.RelativeColumn(3.6f);
-                                c.RelativeColumn(1.4f);
-                                c.RelativeColumn(1.4f);
                                 c.RelativeColumn(1.2f);
+                                c.RelativeColumn(1.3f);
+                                c.RelativeColumn(1.6f);
+                                c.RelativeColumn(3.0f);
+                                c.RelativeColumn(1.4f);
+                                c.RelativeColumn(1.4f);
+                                c.RelativeColumn(1.1f);
                             });
 
                             table.Header(h =>
                             {
                                 h.Cell().Background("#F0F0F0").Padding(5).Text("Fecha").Bold();
                                 h.Cell().Background("#F0F0F0").Padding(5).Text("Operacion").Bold();
+                                h.Cell().Background("#F0F0F0").Padding(5).Text("Nro.Doc").Bold();
                                 h.Cell().Background("#F0F0F0").Padding(5).Text("Detalle").Bold();
                                 h.Cell().Background("#F0F0F0").Padding(5).AlignRight().Text("Importe").Bold();
                                 h.Cell().Background("#F0F0F0").Padding(5).AlignRight().Text("Saldo").Bold();
@@ -90,11 +92,10 @@ namespace WebCore.Services
                             foreach (DataRow row in dt.Rows)
                             {
                                 decimal importe = Convert.ToDecimal(row["importe"]);
-                                string detalle = (string.IsNullOrEmpty(row["nroDoc"].ToString()) ? "" : (row["nroDoc"].ToString() + " | ")) + row["detalle"].ToString();
-
                                 table.Cell().Padding(5).Text(Convert.ToDateTime(row["fecha"]).ToString("dd/MM/yyyy"));
                                 table.Cell().Padding(5).Text(row["tabla"].ToString());
-                                table.Cell().Padding(5).Text(detalle);
+                                table.Cell().Padding(5).Text(row["nroDoc"].ToString());
+                                table.Cell().Padding(5).Text(row["detalle"].ToString());
                                 table.Cell().Padding(5).AlignRight().Text(importe.ToString("N2", culturaAr))
                                     .FontColor(importe >= 0 ? Colors.Green.Darken2 : Colors.Red.Darken2);
                                 table.Cell().Padding(5).AlignRight().Text(Convert.ToDecimal(row["Saldo"]).ToString("N2", culturaAr));

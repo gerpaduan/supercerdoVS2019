@@ -799,7 +799,7 @@ namespace Datos
         {
             const string sql = @"
                 SELECT 
-                    p.id, p.fecha, per.razonSocial,
+                    p.id, p.fecha, p.idPersona, p.idSucursal, per.razonSocial, p.eliminado,
                     p.nroRecibo, p.importe, p.aProveedor,
                     CASE p.aProveedor WHEN 0 THEN 'Cobro' WHEN 1 THEN 'Pago' END AS Operacion,
                     p.formaPago, p.efectivo, p.observaciones, p.creado, CreadoPor.nombre AS CreadoPor,
@@ -942,13 +942,15 @@ namespace Datos
                     ua.usuario AS actualizadoPorUser,
                     ua.email AS actualizadoPorEmail,
                     ua.idSucursalUser AS actualizadoPorIdSucursal,
-                    ua.idEmpresa AS actualizadoPorIdEmpresa
+                    ua.idEmpresa AS actualizadoPorIdEmpresa,
+                    ue.nombre AS eliminadoPorNombre
                 FROM Pagos p
                 LEFT JOIN Personas per ON per.idPersona = p.idPersona
                 LEFT JOIN Iva iva ON iva.id = per.idIva
                 LEFT JOIN Sucursal s ON s.idSucursal = p.idSucursal
                 LEFT JOIN Usuarios uc ON uc.id = p.creadoPor
                 LEFT JOIN Usuarios ua ON ua.id = p.actualizadoPor
+                LEFT JOIN Usuarios ue ON ue.id = p.eliminadoPor
                 WHERE p.id = @id", con))
             {
                 cmd.CommandType = CommandType.Text;
@@ -979,6 +981,11 @@ namespace Datos
                             Actualizado = dr["actualizado"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(dr["actualizado"]),
                             IdCreadoPor = Convert.ToInt32(dr["creadoPor"]),
                             IdActualizadoPor = dr["actualizadoPor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["actualizadoPor"]),
+                            Eliminado = dr["eliminado"] != DBNull.Value && Convert.ToBoolean(dr["eliminado"]),
+                            IdEliminadoPor = dr["eliminadoPor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["eliminadoPor"]),
+                            NombreEliminadoPor = dr["eliminadoPorNombre"] == DBNull.Value ? "" : Convert.ToString(dr["eliminadoPorNombre"]),
+                            FechaEliminacion = dr["fechaEliminacion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaEliminacion"]),
+                            MotivoEliminacion = dr["motivoEliminacion"] == DBNull.Value ? "" : Convert.ToString(dr["motivoEliminacion"]),
                             Persona = MapPersonaLiviana(dr, "persona"),
                             Sucursal = MapSucursalLiviana(dr, "sucursal"),
                             CreadoPor = MapUsuarioLiviano(dr, "creadoPor"),
@@ -999,6 +1006,72 @@ namespace Datos
                 oPagoE.Cheques = getChequesPorPago(oPagoE.Id, false);
 
             return oPagoE;
+        }
+
+        // Eliminacion logica: marca el pago sin borrarlo. El WHERE eliminado = 0 hace idempotente la
+        // operacion (false = ya estaba eliminado). SQL Server no usa IUnitOfWork: corre dentro del
+        // TransactionScope ambiental que abre Negocio.CuentaCorriente.
+        public bool marcarPagoEliminado(int idPago, int idUsuario, string motivo, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            int filas = Db.NonQuery(
+                _empresa,
+                @"UPDATE dbo.Pagos SET eliminado = 1, eliminadoPor = @idUsuario, fechaEliminacion = GETDATE(),
+                      motivoEliminacion = @motivo, actualizado = GETDATE(), actualizadoPor = @idUsuario
+                  WHERE id = @id AND eliminado = 0;",
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@id", SqlDbType.Int).Value = idPago;
+                    p.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+                    p.Add("@motivo", SqlDbType.NVarChar, -1).Value = (object)motivo ?? "";
+                });
+            return filas > 0;
+        }
+
+        public void registrarAuditoriaPago(Entidades.AuditoriaPago auditoria, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            Db.NonQuery(
+                _empresa,
+                @"INSERT INTO dbo.AuditoriaPagos (idEmpresa, idPago, tipo, idPersonaAnterior, idPersonaNueva, idUsuario, fecha, detalle)
+                  VALUES (@idEmpresa, @idPago, @tipo, @anterior, @nueva, @idUsuario, GETDATE(), @detalle);",
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    p.Add("@idPago", SqlDbType.Int).Value = auditoria.IdPago;
+                    p.Add("@tipo", SqlDbType.VarChar, 20).Value = auditoria.Tipo;
+                    p.Add("@anterior", SqlDbType.Int).Value = (object)auditoria.IdPersonaAnterior ?? DBNull.Value;
+                    p.Add("@nueva", SqlDbType.Int).Value = (object)auditoria.IdPersonaNueva ?? DBNull.Value;
+                    p.Add("@idUsuario", SqlDbType.Int).Value = auditoria.IdUsuario;
+                    p.Add("@detalle", SqlDbType.NVarChar, -1).Value = (object)auditoria.Detalle ?? DBNull.Value;
+                });
+        }
+
+        public DataTable obtenerObservacionesCtaCte(int idPersona)
+        {
+            const string sql = @"
+                SELECT m.tabla AS tabla, m.idTabla AS idTabla,
+                       COALESCE(pg.observaciones, v.observaciones, c.observaciones) AS observaciones
+                FROM dbo.MovCtaCte m
+                LEFT JOIN dbo.Pagos pg ON m.tabla = 'Pagos' AND pg.id = m.idTabla
+                LEFT JOIN dbo.Ventas v ON m.tabla = 'Ventas' AND v.idVenta = m.idTabla
+                LEFT JOIN dbo.Compras c ON m.tabla = 'Compras' AND c.idCompra = m.idTabla
+                WHERE m.idPersona = @idPersona
+                  AND LTRIM(RTRIM(COALESCE(pg.observaciones, v.observaciones, c.observaciones, ''))) <> '';";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@idPersona", SqlDbType.Int).Value = idPersona);
+        }
+
+        // Las notificaciones al admin (campana) no existen todavia en SQL Server (etapa 2, mismo criterio
+        // que Datos.BorradorGenerico.UpsertNotificacion): no-op. La advertencia queda solo en pantalla.
+        public void upsertNotificacion(Entidades.Notificacion notificacion, bool reabrir)
+        {
         }
 
         #endregion

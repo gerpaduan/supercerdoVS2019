@@ -41,5 +41,18 @@ namespace Contratos
         DataTable obtenerUltimosPagosDashboard(int cantidad);
         DataTable obtenerChequesPendientesDashboard(int cantidad, DateTime fechaActual);
         Entidades.Pago getPagoById(int idPago, bool conCheques = true);
+
+        // Eliminacion logica de un pago (pagos.eliminado = true + quien/cuando/motivo). NO borra la
+        // fila; el asiento opuesto en MovCtaCte lo genera Negocio. Devuelve false si ya estaba
+        // eliminado (no toca nada).
+        bool marcarPagoEliminado(int idPago, int idUsuario, string motivo, Contratos.IUnitOfWork unitOfWork = null);
+        // Auditoria append-only (auditoriapagos): cambio de persona y eliminacion.
+        void registrarAuditoriaPago(Entidades.AuditoriaPago auditoria, Contratos.IUnitOfWork unitOfWork = null);
+        // Observaciones del registro origen (Pagos/Ventas/Compras) de cada movimiento de la cta cte de
+        // una persona. Columnas: tabla, idTabla, observaciones. Solo devuelve los que tienen texto.
+        DataTable obtenerObservacionesCtaCte(int idPersona);
+        // Notificacion al admin (campana). Postgres: tabla notificaciones. SQL Server: no-op (etapa 2,
+        // mismo criterio que Datos.BorradorGenerico).
+        void upsertNotificacion(Entidades.Notificacion notificacion, bool reabrir);
     }
 }

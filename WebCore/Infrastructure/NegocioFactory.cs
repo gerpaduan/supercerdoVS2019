@@ -113,11 +113,14 @@ namespace WebCore.Infrastructure
 
         public static Negocio.CuentaCorriente CrearCuentaCorriente(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            if (!UsarPostgres) return new Negocio.CuentaCorriente(empresa, param);
+            // CierreCajaFactory: los egresos de caja del cambio de persona / eliminacion de un pago tienen que
+            // ir contra el motor activo. Lazy (Func) para no armar el CierreCaja si no hace falta.
+            if (!UsarPostgres)
+                return new Negocio.CuentaCorriente(empresa, param) { CierreCajaFactory = () => CrearCierreCaja(empresa, param) };
 
             var personaRepo = new DatosPostgres.PersonaPg(PgConnString, empresa.IdEmpresa);
             var repo = new DatosPostgres.CuentaCorrientePg(PgConnString, empresa.IdEmpresa, personaRepo);
-            return new Negocio.CuentaCorriente(repo, empresa, param);
+            return new Negocio.CuentaCorriente(repo, empresa, param) { CierreCajaFactory = () => CrearCierreCaja(empresa, param) };
         }
 
         public static Negocio.BarcodeInterpreter CrearBarcodeInterpreter(IEmpresaContext empresa, IParametrosContext param = null)

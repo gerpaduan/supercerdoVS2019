@@ -1,4 +1,4 @@
-@model System.Data.DataTable
+﻿@model System.Data.DataTable
 @using System.Collections.Generic
 @*
     Port simplificado de Web/Views/Finanzas/CtaCtePersona.cshtml (1201 lineas en el original) --
@@ -41,12 +41,35 @@
     var cantidadPorClave = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
     bool tieneColumnaNroDoc = Model != null && Model.Columns.Contains("NroDoc");
 
+    // Observaciones del registro origen (Pagos/Ventas/Compras), indexadas por "Tabla|IdTabla".
+    var observacionesPorMovimiento = ViewBag.ObservacionesCtaCte as Dictionary<string, string> ?? new Dictionary<string, string>();
+
+    // Pago eliminado: su contra-asiento tiene Detalle "ELIMINADO - ..." (Negocio.CuentaCorriente.
+    // eliminarPagoConContraasiento). El contra-asiento no cuenta como "version actual" del pago: el
+    // original sigue siendo el vigente, y ambos se muestran como pareja con su etiqueta.
+    Func<System.Data.DataRow, bool> esContraasientoEliminado = r =>
+        string.Equals(Convert.ToString(r["Tabla"]), "Pagos", StringComparison.OrdinalIgnoreCase)
+        && Convert.ToString(r["Detalle"]).StartsWith("ELIMINADO - ", StringComparison.Ordinal);
+    var clavesPagoEliminado = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    // Valor de una columna del movimiento, "" si no existe o es NULL (varios motores/SP difieren).
+    Func<System.Data.DataRow, string, string> valorColumna = (r, nombre) =>
+        Model.Columns.Contains(nombre) && r[nombre] != DBNull.Value ? Convert.ToString(r[nombre]) : "";
+    Func<System.Data.DataRow, string, string> fechaHoraColumna = (r, nombre) =>
+    {
+        string valor = valorColumna(r, nombre);
+        DateTime fechaParseada;
+        return DateTime.TryParse(valor, out fechaParseada) ? fechaParseada.ToString("dd/MM/yyyy HH:mm") : valor;
+    };
+
     foreach (System.Data.DataRow row in Model.Rows)
     {
         string clave = claveMovimiento(row);
         int id = Convert.ToInt32(row["ID"]);
 
-        if (!ultimoIdPorClave.ContainsKey(clave) || id > ultimoIdPorClave[clave])
+        if (esContraasientoEliminado(row))
+            clavesPagoEliminado.Add(clave);
+        else if (!ultimoIdPorClave.ContainsKey(clave) || id > ultimoIdPorClave[clave])
             ultimoIdPorClave[clave] = id;
 
         cantidadPorClave[clave] = cantidadPorClave.ContainsKey(clave) ? cantidadPorClave[clave] + 1 : 1;
@@ -184,14 +207,16 @@
                             <th>Detalle</th>
                             <th style="text-align:right;">Importe</th>
                             <th style="text-align:right;">Saldo</th>
+                            <th class="text-center" title="Tiene observaciones">Obs.</th>
                             <th>Sucursal</th>
+                            <th style="width:1%;"></th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (Model.Rows.Count == 0)
                         {
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-4">No hay movimientos para mostrar.</td>
+                                <td colspan="11" class="text-center text-muted py-4">No hay movimientos para mostrar.</td>
                             </tr>
                         }
                         @foreach (System.Data.DataRow row in Model.Rows)
@@ -203,7 +228,8 @@
                             string claseColorOperacion = importePositivo ? "ctacte-color-positivo" : "ctacte-color-negativo";
                             string tipoImporte = importePositivo ? "Crédito" : "Débito";
                             bool tieneMasVersiones = cantidadPorClave.ContainsKey(clave) && cantidadPorClave[clave] > 1;
-                            bool esVersionActual = ultimoIdPorClave.ContainsKey(clave) && ultimoIdPorClave[clave] == id;
+                            bool esContraasiento = esContraasientoEliminado(row);
+                            bool esVersionActual = esContraasiento || (ultimoIdPorClave.ContainsKey(clave) && ultimoIdPorClave[clave] == id);
                             bool esHistorico = tieneMasVersiones && !esVersionActual;
                             bool esPago = string.Equals(Convert.ToString(row["Tabla"]), "Pagos", StringComparison.OrdinalIgnoreCase);
                             bool mostrarAdvertenciaAdmin = tieneMasVersiones && !esPago;
@@ -237,9 +263,17 @@
                                 <td>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
                                 <td class="@claseColorOperacion" style="font-weight:bold;">
                                     @row["Tabla"]
-                                    @if (esHistorico)
+                                    @if (esContraasiento)
+                                    {
+                                        <span class="badge badge-danger ml-1">ELIMINADO</span>
+                                    }
+                                    else if (esHistorico)
                                     {
                                         <span class="badge badge-secondary ml-1">Versión anterior</span>
+                                    }
+                                    else if (esPago && clavesPagoEliminado.Contains(clave))
+                                    {
+                                        <span class="badge badge-dark ml-1">Anulado por eliminación</span>
                                     }
                                     else if (mostrarAdvertenciaAdmin)
                                     {
@@ -261,8 +295,58 @@
                                 </td>
                                 <td class="@claseColorOperacion" style="text-align:right; font-weight:bold;">@importeFila.ToString("N2")</td>
                                 <td style="text-align:right;">@(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))</td>
+                                @{
+                                    string claveObs = Convert.ToString(row["Tabla"]) + "|" + Convert.ToString(row["IdTabla"]);
+                                    string observacionMov = observacionesPorMovimiento.ContainsKey(claveObs) ? observacionesPorMovimiento[claveObs] : "";
+                                    bool tieneObs = !string.IsNullOrWhiteSpace(observacionMov);
+                                    bool puedeDesplegar = id > 0; // la fila "Saldo Anterior" (id 0) no tiene detalle
+                                }
+                                <td class="text-center">
+                                    @if (tieneObs)
+                                    {
+                                        <span class="ctacte-obs-icono" title="@observacionMov"><i class="fas fa-comment-dots text-info"></i> <span class="badge badge-info">1</span></span>
+                                    }
+                                </td>
                                 <td>@row["Sucursal"]</td>
+                                <td class="text-center">
+                                    @if (puedeDesplegar)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-secondary js-toggle-detalle-ctacte"
+                                                data-detalle-de="@id" title="Ver detalle completo" aria-expanded="false">
+                                            <i class="fas fa-angle-down"></i>
+                                        </button>
+                                    }
+                                </td>
                             </tr>
+                            @if (puedeDesplegar)
+                            {
+                                <tr class="ctacte-detalle-row d-none" data-detalle-de="@id">
+                                    <td colspan="11" class="bg-light">
+                                        <div class="row small ctacte-detalle-grid">
+                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Fecha</span>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</div>
+                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Operación</span>@row["Tabla"] - @tipoImporte</div>
+                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Nro.Doc</span>@(tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : "-")</div>
+                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Sucursal</span>@row["Sucursal"]</div>
+                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Importe</span>@importeFila.ToString("N2")</div>
+                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Saldo</span>@(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))</div>
+                                            <div class="col-12 col-md-6 mb-2"><span class="text-muted d-block">Detalle</span>[ID: @row["IdTabla"]] @row["Detalle"]</div>
+                                            <div class="col-12 mb-2">
+                                                <span class="text-muted d-block">Observaciones</span>
+                                                @if (tieneObs)
+                                                {
+                                                    <div class="ctacte-detalle-obs">@observacionMov</div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Sin observaciones</span>
+                                                }
+                                            </div>
+                                            <div class="col-12 col-md-6 mb-1"><span class="text-muted d-block">Creado</span>@(fechaHoraColumna(row, "Creado")) @(string.IsNullOrEmpty(valorColumna(row, "CreadoPor")) ? "" : "por " + valorColumna(row, "CreadoPor"))</div>
+                                            <div class="col-12 col-md-6 mb-1"><span class="text-muted d-block">Actualizado</span>@(string.IsNullOrEmpty(valorColumna(row, "Actualizado")) ? "-" : fechaHoraColumna(row, "Actualizado")) @(string.IsNullOrEmpty(valorColumna(row, "ActualizadoPor")) ? "" : "por " + valorColumna(row, "ActualizadoPor"))</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
                         }
                     </tbody>
                 </table>
@@ -354,6 +438,9 @@
     #modalCompraCtaCte .modal-dialog { max-width: 1320px; width: calc(100% - 1.25rem); }
     .ctacte-row-historico { opacity: .7; }
     .ctacte-row-modificado { background-color: #fff8e1; }
+    .ctacte-detalle-row td { white-space: normal !important; }
+    .ctacte-detalle-obs { white-space: pre-wrap; word-break: break-word; }
+    .ctacte-obs-icono { white-space: nowrap; cursor: help; }
 </style>
 
 <script>
@@ -380,7 +467,9 @@
             if ($topModal.length && !$.contains($topModal[0], $btn[0]) && !$btn.is($topModal)) return;
 
             e.preventDefault();
-            $btn.trigger('click');
+            // click NATIVO, no $btn.trigger('click'): el boton es un <a href> y jQuery no sigue el href de un
+            // link con trigger(), asi que fuera de POS (sin el interceptor de data-pos-ajax) no navegaba.
+            $btn[0].click();
         }, true);
         var puedeExportarCuentaCorriente = @Html.Raw(puedeExportarCuentaCorriente ? "true" : "false");
         var emailConfigUrl = '@Url.Action("ObtenerDatosEmailCuentaCorriente", "Finanzas")';
@@ -562,6 +651,22 @@
             }
             if (document.readyState === 'complete') mostrar(); else window.addEventListener('load', mostrar);
         })();
+
+        document.querySelectorAll('.js-toggle-detalle-ctacte').forEach(function (boton) {
+            boton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var filaDetalle = document.querySelector('.ctacte-detalle-row[data-detalle-de="' + boton.dataset.detalleDe + '"]');
+                if (!filaDetalle) return;
+                var abrir = filaDetalle.classList.contains('d-none');
+                filaDetalle.classList.toggle('d-none', !abrir);
+                boton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+                var icono = boton.querySelector('i');
+                if (icono) {
+                    icono.classList.toggle('fa-angle-down', !abrir);
+                    icono.classList.toggle('fa-angle-up', abrir);
+                }
+            });
+        });
 
         document.querySelectorAll('.js-fila-ctacte').forEach(function (fila) {
             if (fila.dataset.esCompra === 'true') {

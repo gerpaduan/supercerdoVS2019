@@ -12,6 +12,10 @@ namespace Entidades
         public const string TipoCierreCajaConVenta = "CIERRE_CAJA_CON_VENTA";
         public const string TipoProductoSinAgregar = "PRODUCTO_SIN_AGREGAR";
 
+        // Pagos/cobros de Finanzas. RefId = id del pago (una notificacion por pago y tipo).
+        public const string TipoPagoEliminado = "PAGO_ELIMINADO";
+        public const string TipoPagoFechaDistinta = "PAGO_FECHA_DISTINTA";
+
         // Borrador generico descartado (Compras/Stock/Movimientos/Embutidos) -- un tipo por modulo para
         // que NotificacionesController.DetalleUrl() pueda enrutar el detalle sin parsear el mensaje.
         public const string PrefijoBorradorGenericoDescartado = "BORRADOR_DESCARTADO_";

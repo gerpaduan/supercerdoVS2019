@@ -392,3 +392,11 @@ Solo Postgres + HTTPS con dominio real. Ver `docs/DECISIONS.md` "Login por huell
 3. **Activar por ambiente** en `WebCore.dll.config` (env vars / archivo de la app segun el destino; PENDIENTE confirmar el mecanismo exacto en el contenedor de luden): `Passkeys:Enabled=true`, `Passkeys:ServerDomain=carnisys.com`, `Passkeys:Origins=https://carnisys.com`, `Passkeys:ServerName=CarniSys`. Sin estas claves (o con `Enabled` distinto de `true`) el boton de huella no aparece y `/Login/PasskeyOptions` responde 404. Servidor SM y San Lorenzo: dejar apagado.
 4. **Verificar**: `/Login` muestra "Ingresar con huella" arriba del formulario (solo con HTTPS y navegador compatible); iniciar sesion normal, menu de usuario -> "Mi huella" -> agregar; cerrar sesion e ingresar con la huella. Detras de proxy, `Origins` debe coincidir exactamente con el origen que ve el navegador (esquema + host + puerto).
 5. **Rollback funcional**: `Passkeys:Enabled=false` y reiniciar. La tabla no requiere rollback de esquema (queda sin uso). Para revocar una huella puntual: el propio usuario desde "Mi huella", o `DELETE FROM usuariopasskeys WHERE id = ...` como `carnisys_admin`.
+
+## Pagos: eliminación lógica y auditoría (2026-09-24) — migraciones ANTES del código
+
+Agrega columnas a `pagos` (`eliminado`, `eliminadopor`, `fechaeliminacion`, `motivoeliminacion`) y la tabla `auditoriapagos`. Sin estas columnas **fallan `getPagoById` y el listado de pagos** del código nuevo.
+- **Postgres (VPS luden / local)**: `DatosPostgres/DB-Migrations/20260924-Alter_pagos_eliminado_create_auditoriapagos.sql` como `carnisys_admin`, con el procedimiento de "Redeploy 2026-09-23" (`psql -v ON_ERROR_STOP=1 --single-transaction`). Idempotente. **Aplicada en la base local de desarrollo el 2026-09-24; NO aplicada en la VPS** (PENDIENTE).
+- **SQL Server (SM / San Lorenzo)**: `Datos/DB-Procedures/20260924-Alter_Pagos_Eliminado_Create_AuditoriaPagos.sql` sobre `SuperCerdo` (`sqlcmd -d SuperCerdo -i ...`), con backup y ensayo en `BEGIN TRAN ... ROLLBACK` como en "Borradores en SQL Server". Idempotente. **NO aplicada** (PENDIENTE). En SQL Server no hay campana de notificaciones: la advertencia es solo en pantalla.
+- Rollback del esquema: `ALTER TABLE pagos DROP COLUMN eliminado, ...` y `DROP TABLE auditoriapagos` (verificar antes que no haya pagos eliminados: perderían la marca).
+
