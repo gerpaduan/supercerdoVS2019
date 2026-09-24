@@ -41,6 +41,13 @@
          sin la clave valen los endpoints oficiales de AFIP y estos umbrales. El entorno (homologacion o
          produccion) NO va aca: es de cada empresa (Empresa.Entorno_HOMO_PROD). Solo se aceptan URLs https. -->
     <add key="Afip:DiasAviso" value="60,30,15" />
+    <!-- Padron de ARCA para el alta de clientes (certificado de plataforma, ver docs afip-y-facturacion.md).
+         Todas opcionales. UsarPlataforma=false apaga el certificado de plataforma (cada empresa usa el suyo). -->
+    <add key="Afip:Padron:UsarPlataforma" value="true" />
+    <add key="Afip:Padron:MaxPorHoraEmpresa" value="30" />
+    <add key="Afip:Padron:CacheHoras" value="24" />
+    <add key="Afip:Padron:FallosParaCortar" value="3" />
+    <add key="Afip:Padron:MinutosCorte" value="10" />
     <!--
     <add key="Afip:Produccion:WsaaUrl" value="https://wsaa.afip.gov.ar/ws/services/LoginCms" />
     <add key="Afip:Produccion:WsfeUrl" value="https://servicios1.afip.gov.ar/wsfev1/service.asmx" />

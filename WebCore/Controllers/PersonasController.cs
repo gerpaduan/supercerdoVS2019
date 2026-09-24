@@ -33,18 +33,20 @@ namespace WebCore.Controllers
         private readonly ITempDataProvider _tempDataProvider;
         private readonly IWebHostEnvironment _env;
         private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly WebCore.Services.IPadronAfipGateway _padron;
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Usuario _oUsuarioN;
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public PersonasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion)
+        public PersonasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.IPadronAfipGateway padron)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
             _env = env;
             _sesion = sesion;
+            _padron = padron;
             _empresa = sesion.Empresa;
 
             // Negocio.Persona/Datos.Persona.findById necesita un IParametrosContext real (no null)
@@ -347,8 +349,7 @@ namespace WebCore.Controllers
                 if (empresaAfip == null || empresaAfip.Cuit <= 0)
                     return Json(new { ok = false, msg = "No se encontró la configuración AFIP de la empresa actual." });
 
-                var servicioPadron = new AFIP.ConsultarPadronService(empresaAfip, _env.ContentRootPath);
-                var resultado = servicioPadron.ConsultarDatosContribuyente(cuitNormalizado);
+                var resultado = _padron.Consultar(empresaAfip, cuitNormalizado);
 
                 if (!resultado.Ok || resultado.Persona == null)
                     return Json(new { ok = false, msg = resultado.Mensaje ?? "No se encontraron datos para el CUIT especificado." });
@@ -385,8 +386,7 @@ namespace WebCore.Controllers
                 if (empresaAfip == null || empresaAfip.Cuit <= 0)
                     return Json(new { ok = false, msg = "No se encontró la configuración AFIP de la empresa actual.", tipo = "error" });
 
-                var servicioPadron = new AFIP.ConsultarPadronService(empresaAfip, _env.ContentRootPath);
-                var resultado = servicioPadron.ConsultarDatosContribuyente(cuitNormalizado);
+                var resultado = _padron.Consultar(empresaAfip, cuitNormalizado);
 
                 if (!resultado.Ok || resultado.Persona == null)
                 {

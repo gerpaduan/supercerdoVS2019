@@ -1,0 +1,22 @@
+@* Tutorial: alias de la plataforma para el padron compartido. Nombres de menu confirmados 2026-09-24 contra fuentes
+   publicas: "Administracion de Certificados Digitales", "Agregar alias", "Administrador de Relaciones de Clave
+   Fiscal". PENDIENTE verificar contra el portal real de ARCA el nombre exacto del servicio "Consulta de Padron
+   Alcance 13" (ws_sr_padron_a13). *@
+<div class="alert alert-info">
+    <strong>Por qué un alias aparte:</strong> este certificado consulta el padrón para todas las empresas. Si tiene autorizado
+    <em>solo</em> <code>ws_sr_padron_a13</code> y no <code>wsfe</code>, aunque el archivo se filtrara nadie podría facturar con él.
+    No reutilices el certificado con el que se factura.
+</div>
+<ol>
+    <li class="mb-2">Ingresá a <code>auth.arca.gob.ar</code> con el CUIT de la plataforma y su clave fiscal.</li>
+    <li class="mb-2">Con el servicio <em>Administración de Certificados Digitales</em> (si no aparece, adherilo desde <em>Administrador de Relaciones de Clave Fiscal</em>), elegí el CUIT y usá <em>Agregar alias</em>.</li>
+    <li class="mb-2">En esta pantalla, paso 1: cargá el CUIT, la razón social y un alias (ej. <code>carnisys-padron-@DateTime.Now.ToString("yyyyMM")</code>) y descargá el <code>.csr</code>.</li>
+    <li class="mb-2">En ARCA, subí ese <code>.csr</code> al alias y descargá el <code>.crt</code>.</li>
+    <li class="mb-2">En <em>Administrador de Relaciones de Clave Fiscal</em> → <em>Nueva relación</em>: servicio <em>ARCA → WebServices → Consulta de Padrón Alcance 13</em> (<code>ws_sr_padron_a13</code>); representante: el alias del paso 4. <strong>Nada más.</strong></li>
+    <li class="mb-2">Acá, paso 2: subí el <code>.crt</code> y tocá <em>Instalar certificado</em>.</li>
+    <li>Tocá <em>Probar</em>: si ARCA responde, desde ese momento todas las empresas usan este certificado para buscar CUITs. Si falla, las empresas siguen con su propio certificado o cargan a mano.</li>
+</ol>
+<div class="alert alert-secondary mb-0 small">
+    <strong>Renovación:</strong> el certificado dura 2 años. Repetí el proceso con un alias nuevo antes de que venza; el sistema avisa en el menú de Administración del sistema.
+    Si se cortara por fallos, las empresas usan su propio certificado automáticamente y nadie queda sin poder dar de alta clientes.
+</div>

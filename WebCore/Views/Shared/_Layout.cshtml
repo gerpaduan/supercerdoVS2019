@@ -1,5 +1,6 @@
 ﻿@using System.Linq
 @inject WebCore.Services.IUsuarioSesionService Sesion
+@inject WebCore.Services.IPadronPlataforma PadronPlataforma
 @{
     // Sidebar + identidad visual (2026-09-05, ver docs/DECISIONS.md "UI de WebCore igual al
     // clasico"): porta la estructura real de Web/Views/Shared/_LayoutBase.cshtml (mismos nombres
@@ -43,7 +44,7 @@
         || (action == "AddOrEditPago" && returnUrlActual.StartsWith("/Finanzas/Pagos", StringComparison.OrdinalIgnoreCase)));
     bool enConfiguracion = controller == "Usuarios" || controller == "AuditoriaLogin" || controller == "Parametros"
         || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros" || controller == "CertificadoArca";
-    bool enAdministracionSistema = controller == "SystemAdministration";
+    bool enAdministracionSistema = controller == "SystemAdministration" || controller == "PadronPlataforma";
 
     var usuarioActual = Sesion.UsuarioActual;
     bool esAdmin = usuarioActual.Admin;
@@ -631,6 +632,7 @@
                             <a class="collapse-item @(enAdministracionSistema && (action == "Sucursales" || action == "EditarSucursal") ? "active" : "")" href="@Url.Action("Sucursales", "SystemAdministration")">Sucursales</a>
                             <a class="collapse-item @(enAdministracionSistema && (action == "Usuarios" || action == "EditarUsuario") ? "active" : "")" href="@Url.Action("Usuarios", "SystemAdministration")">Usuarios</a>
                             <a class="collapse-item @(enAdministracionSistema && action == "AltaRapidaEmpresa" ? "active" : "")" href="@Url.Action("AltaRapidaEmpresa", "SystemAdministration")">Alta rapida de empresa</a>
+                            <a class="collapse-item @(controller == "PadronPlataforma" ? "active" : "")" href="@Url.Action("Index", "PadronPlataforma")">Certificado de padron</a>
                         </div>
                     </div>
                 </li>
@@ -658,6 +660,21 @@
                         <span class="navbar-text h5 mb-0 fw-bold text-dark page-section-title">@ViewData["Title"]</span>
 
                         <ul class="navbar-nav ml-auto">
+                            @* Aviso al super-admin: el certificado de padron de la plataforma esta por vencer o vencido
+                               (estado cacheado 1 h; ver PadronPlataformaService). *@
+                            @if (puedeAdministrarSistema)
+                            {
+                                var estadoPadron = PadronPlataforma.EstadoCacheado();
+                                if (estadoPadron.Estado == AFIP.EstadoCertificado.PorVencer || estadoPadron.Estado == AFIP.EstadoCertificado.Vencido)
+                                {
+                                    <li class="nav-item d-flex align-items-center me-2">
+                                        <a class="badge bg-warning text-dark text-decoration-none" href="@Url.Action("Index", "PadronPlataforma")"
+                                           title="El certificado de padrón de la plataforma @(estadoPadron.Estado == AFIP.EstadoCertificado.Vencido ? "está vencido" : "vence pronto")">
+                                            Certificado de padrón @(estadoPadron.Estado == AFIP.EstadoCertificado.Vencido ? "vencido" : "por vencer")
+                                        </a>
+                                    </li>
+                                }
+                            }
                             @* Etiqueta de MODO PRUEBA (homologacion de AFIP): siempre visible para el admin mientras la
                                empresa emite comprobantes de prueba, para no confundirlos con facturas reales. *@
                             @if (esAdmin && AFIP.AfipEntorno.EsHomologacion(usuarioActual.Empresa?.Entorno_HOMO_PROD))

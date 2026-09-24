@@ -172,6 +172,12 @@ namespace WebCore.Infrastructure
             return new Negocio.VentaBorrador(repo);
         }
 
+        // Certificado de la plataforma para el padron compartido (solo Postgres; ver PadronPlataformaService).
+        public static DatosPostgres.PlataformaCertificadoArcaPg CrearPlataformaCertificadoArca()
+        {
+            return new DatosPostgres.PlataformaCertificadoArcaPg(PgConnString);
+        }
+
         // Clave cifrada del pfx del certificado ARCA (solo Postgres; ver AfipConfigProvider).
         public static DatosPostgres.CertificadoArcaClavePg CrearCertificadoArcaClave(IEmpresaContext empresa)
         {

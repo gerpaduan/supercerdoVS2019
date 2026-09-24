@@ -1,0 +1,254 @@
+@model WebCore.Controllers.PadronPlataformaVm
+@using AFIP
+@{
+    ViewBag.Title = "Certificado de padrón";
+    var info = Model.Info;
+    var esES = new System.Globalization.CultureInfo("es-AR");
+    string clase, etiqueta;
+    switch (info.Estado)
+    {
+        case EstadoCertificado.Vigente: clase = "success"; etiqueta = "Vigente"; break;
+        case EstadoCertificado.PorVencer: clase = "warning"; etiqueta = "Por vencer"; break;
+        case EstadoCertificado.Vencido: clase = "danger"; etiqueta = "Vencido"; break;
+        case EstadoCertificado.Ilegible: clase = "danger"; etiqueta = "No se puede leer"; break;
+        default: clase = "secondary"; etiqueta = "Sin certificado"; break;
+    }
+    bool hayCertificado = info.Estado != EstadoCertificado.SinCertificado;
+    string valorCuit = (Model.CuitPedidoPendiente ?? Model.Cuit)?.ToString() ?? "";
+}
+
+@* Certificado UNICO de la plataforma para consultar el padron de ARCA al dar de alta clientes, para todas las
+   empresas. Solo super-admin (ver PadronPlataformaController). Alias dedicado: solo ws_sr_padron_a13. *@
+<div class="container-fluid padron-plataforma-page">
+
+    @if (TempData["PadronMensaje"] is string mensajeOk)
+    {
+        <div class="alert alert-success" role="alert">@mensajeOk</div>
+    }
+    @if (TempData["PadronError"] is string mensajeError)
+    {
+        <div class="alert alert-danger" role="alert">@mensajeError</div>
+    }
+
+    @if (!Model.Soportado)
+    {
+        <div class="alert alert-warning">El certificado de plataforma requiere la base Postgres.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1">Certificado de padrón de la plataforma</h5>
+                        <div class="text-muted small">
+                            Lo usan <strong>todas las empresas</strong> para buscar un CUIT en ARCA al dar de alta un cliente.
+                            @if (Model.Cuit.HasValue) { <span>CUIT del alias: @Model.Cuit</span> }
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge bg-@clase @(clase == "warning" ? "text-dark" : "") fs-6">@etiqueta</span>
+                        @if (!Model.UsarPlataforma)
+                        {
+                            <span class="badge bg-secondary fs-6 ms-1" title="Afip:Padron:UsarPlataforma=false en la configuración">Desactivado por configuración</span>
+                        }
+                    </div>
+                </div>
+
+                @if (info.Estado == EstadoCertificado.SinCertificado)
+                {
+                    <p class="mt-3 mb-0">Todavía no hay certificado de plataforma. Mientras tanto cada empresa consulta el padrón con su propio certificado (si lo tiene) o carga los datos a mano. Seguí los pasos de abajo para cargarlo.</p>
+                }
+                else if (info.Estado == EstadoCertificado.Ilegible)
+                {
+                    <div class="alert alert-danger mt-3 mb-0">@info.Mensaje</div>
+                }
+                else
+                {
+                    <dl class="row mt-3 mb-0">
+                        <dt class="col-sm-3">Vence</dt>
+                        <dd class="col-sm-9">
+                            <strong>@info.Vence?.ToString("dd/MM/yyyy", esES)</strong>
+                            @if (info.Estado == EstadoCertificado.Vencido)
+                            {
+                                <span class="text-danger">— venció hace @(Math.Abs(info.DiasRestantes ?? 0)) día(s). Las empresas usan su propio certificado hasta renovarlo.</span>
+                            }
+                            else
+                            {
+                                <span class="@(info.Estado == EstadoCertificado.PorVencer ? "text-warning fw-bold" : "text-muted")">— faltan @info.DiasRestantes día(s)</span>
+                            }
+                        </dd>
+                        <dt class="col-sm-3">Archivo</dt>
+                        <dd class="col-sm-9">@info.NombreArchivo</dd>
+                        <dt class="col-sm-3">Titular</dt>
+                        <dd class="col-sm-9"><small class="text-break">@info.Subject</small></dd>
+                    </dl>
+                    <p class="text-muted small mt-2 mb-0">Se avisa en el menú de Administración del sistema cuando faltan @string.Join(", ", Model.DiasAviso) días y al vencer.</p>
+                }
+            </div>
+        </div>
+
+        @* ---- Estado del uso ---- *@
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h5 class="mb-3">Uso y protecciones</h5>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <ul class="list-unstyled mb-0 small">
+                            <li>Tope de consultas por empresa: <strong>@Model.MaxPorHoraEmpresa por hora</strong> (<code>Afip:Padron:MaxPorHoraEmpresa</code>).</li>
+                            <li>Cada resultado exitoso se recuerda por empresa y CUIT (<code>Afip:Padron:CacheHoras</code>).</li>
+                            <li>
+                                Corte automático:
+                                @if (Model.Cortada)
+                                {
+                                    <span class="badge bg-danger">Cortado hasta @Model.CortadaHasta?.ToLocalTime().ToString("HH:mm", esES)</span>
+                                    <span class="text-muted">(las empresas usan su propio certificado)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Activo</span>
+                                    <span class="text-muted">fallos seguidos: @Model.FallosSeguidos</span>
+                                }
+                            </li>
+                            <li>Interruptor general: <code>Afip:Padron:UsarPlataforma</code> (hoy <strong>@(Model.UsarPlataforma ? "activado" : "desactivado")</strong>).</li>
+                        </ul>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="small text-muted mb-1">Consultas desde que arrancó el sistema, por credencial:</div>
+                        @if (Model.Contadores.Count == 0)
+                        {
+                            <div class="small">Todavía no hubo consultas.</div>
+                        }
+                        else
+                        {
+                            <ul class="list-inline mb-0">
+                                @foreach (var c in Model.Contadores.OrderBy(x => x.Key))
+                                {
+                                    <li class="list-inline-item"><span class="badge bg-light text-dark border">@c.Key: @c.Value</span></li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (hayCertificado)
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">Probar el certificado</h5>
+                            <div class="text-muted small">Consulta en ARCA el padrón del propio CUIT del alias. Es de solo lectura.</div>
+                        </div>
+                        <form id="formProbarPadron" class="mt-2 mt-md-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-primary" id="btnProbarPadron"><i class="fas fa-plug me-1"></i> Probar</button>
+                        </form>
+                    </div>
+                    <div id="resultadoProbarPadron" class="mt-3" aria-live="polite"></div>
+                </div>
+            </div>
+        }
+
+        @* ---- Cargar o renovar ---- *@
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h5 class="mb-3">@(hayCertificado ? "Renovar el certificado" : "Cargar el certificado")</h5>
+                <p class="text-muted">
+                    Mismo proceso que el certificado de una empresa. Mientras tanto <strong>el certificado actual sigue funcionando</strong>.
+                    Usá un alias <strong>dedicado al padrón</strong> y autorizá en ARCA solamente <code>ws_sr_padron_a13</code>.
+                </p>
+                <div class="row g-3">
+                    <div class="col-12 col-lg-6">
+                        <div class="border rounded p-3 h-100">
+                            <h6><span class="badge bg-primary me-1">1</span> Generar el pedido (.csr)</h6>
+                            <form method="post" asp-controller="PadronPlataforma" asp-action="GenerarCsr">
+                                @Html.AntiForgeryToken()
+                                <div class="mb-2">
+                                    <label for="cuit" class="form-label small mb-1">CUIT dueño del alias (11 dígitos)</label>
+                                    <input type="text" class="form-control" id="cuit" name="cuit" value="@valorCuit" maxlength="11" required pattern="[0-9]{11}" />
+                                </div>
+                                <div class="mb-2">
+                                    <label for="razonSocial" class="form-label small mb-1">Razón social del titular</label>
+                                    <input type="text" class="form-control" id="razonSocial" name="razonSocial" maxlength="100" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label for="alias" class="form-label small mb-1">Alias en ARCA</label>
+                                    <input type="text" class="form-control" id="alias" name="alias" value="carnisys-padron-@DateTime.Now.ToString("yyyyMM")" maxlength="40" required pattern="[A-Za-z0-9_\-]+" />
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-file-download me-1"></i> Generar y descargar pedido</button>
+                            </form>
+                            @if (info.HayPedidoPendiente)
+                            {
+                                <div class="alert alert-info mt-3 mb-0 py-2 small">
+                                    Hay un pedido pendiente (CUIT @Model.CuitPedidoPendiente).
+                                    <a asp-action="DescargarCsrPendiente">Volver a descargarlo</a>. Si generás otro, el anterior deja de servir.
+                                </div>
+                                <form method="post" asp-action="DescartarPedido" class="mt-2" onsubmit="return confirm('¿Descartar el pedido pendiente?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Descartar pedido pendiente</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="border rounded p-3 h-100">
+                            <h6><span class="badge bg-primary me-1">2</span> Subir el certificado que devolvió ARCA (.crt)</h6>
+                            <form method="post" asp-controller="PadronPlataforma" asp-action="SubirCertificado" enctype="multipart/form-data">
+                                @Html.AntiForgeryToken()
+                                <div class="mb-2">
+                                    <input type="file" class="form-control" name="certificado" accept=".crt,.cer,.pem" required @(info.HayPedidoPendiente ? "" : "disabled") />
+                                    @if (!info.HayPedidoPendiente)
+                                    {
+                                        <div class="form-text">Primero generá el pedido (paso 1).</div>
+                                    }
+                                </div>
+                                <button type="submit" class="btn btn-success" @(info.HayPedidoPendiente ? "" : "disabled")><i class="fas fa-upload me-1"></i> Instalar certificado</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Cómo dar de alta el alias del padrón en ARCA</h5>
+            @await Html.PartialAsync("_TutorialPadron")
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var form = document.getElementById('formProbarPadron');
+            if (!form) return;
+            var salida = document.getElementById('resultadoProbarPadron');
+            var boton = document.getElementById('btnProbarPadron');
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                boton.disabled = true;
+                salida.textContent = 'Consultando a ARCA...';
+                fetch('@Url.Action("Probar", "PadronPlataforma")', {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]').value },
+                    credentials: 'same-origin'
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (resp) {
+                        var alerta = document.createElement('div');
+                        alerta.className = 'alert mb-0 ' + (resp.ok ? 'alert-success' : 'alert-danger');
+                        alerta.textContent = resp.mensaje || '';
+                        salida.textContent = '';
+                        salida.appendChild(alerta);
+                    })
+                    .catch(function () { salida.textContent = 'No se pudo hacer la prueba. Reintentá en un momento.'; })
+                    .finally(function () { boton.disabled = false; });
+            });
+        })();
+    </script>
+}

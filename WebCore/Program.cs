@@ -29,6 +29,9 @@ builder.Services.AddScoped<WebCore.Services.IUsuarioSesionService, WebCore.Servi
 // Data Protection (default de ASP.NET Core, ya presente por la cookie de autenticacion).
 builder.Services.AddScoped<WebCore.Services.IAfipConfigProvider, WebCore.Services.AfipConfigProvider>();
 builder.Services.AddScoped<WebCore.Services.ICertificadoArcaEstado, WebCore.Services.CertificadoArcaEstadoService>();
+// Padron de ARCA para el alta de clientes: certificado de plataforma (super-admin) con salvaguardas y fallback al de la empresa.
+builder.Services.AddScoped<WebCore.Services.IPadronPlataforma, WebCore.Services.PadronPlataformaService>();
+builder.Services.AddScoped<WebCore.Services.IPadronAfipGateway, WebCore.Services.PadronAfipGateway>();
 
 builder.Services
     .AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
