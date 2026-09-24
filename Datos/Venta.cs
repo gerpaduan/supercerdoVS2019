@@ -1274,7 +1274,7 @@ namespace Datos
 
         #region FACTURA ELECTRONICA
 
-        public int esVentaSinFacturar(int idVenta, bool esNotaCredito)
+        public int esVentaSinFacturar(int idVenta, bool esNotaCredito, bool ignorarPrueba = false)
         {
             string validarComprobantes = esNotaCredito
                 ? $"(codTipoCbteAfip = {Entidades.FacturaElectronica.codNotaCreditoA_Afip} OR codTipoCbteAfip = {Entidades.FacturaElectronica.codNotaCreditoB_Afip} OR codTipoCbteAfip = {Entidades.FacturaElectronica.codNotaCreditoC_Afip})"
@@ -1298,7 +1298,7 @@ namespace Datos
             return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
         }
 
-        public int existeFacturaElect(int idVenta)
+        public int existeFacturaElect(int idVenta, bool ignorarPrueba = false)
         {
             string sql = $@"
                 SELECT TOP 1 id
@@ -1322,7 +1322,7 @@ namespace Datos
             return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
         }
 
-        public int existeNotaCreditoElect(int idVenta)
+        public int existeNotaCreditoElect(int idVenta, bool ignorarPrueba = false)
         {
             string sql = $@"
                 SELECT TOP 1 id
@@ -1588,8 +1588,10 @@ namespace Datos
         public List<Entidades.FacturaElectronica> BuscarFacturasPagina(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            int pagina, int cantidad, int cantidadExtra)
+            int pagina, int cantidad, int cantidadExtra, string entorno = null)
         {
+            // entorno (Produccion/Pruebas) se ignora en SQL Server: no existe la columna esprueba, todas
+            // las facturas son de produccion (ver docs/DECISIONS.md, 2026-09-24).
             pagina = pagina < 1 ? 1 : pagina;
             cantidad = cantidad < 1 ? 1 : cantidad;
             cantidadExtra = cantidadExtra < 0 ? 0 : cantidadExtra;
@@ -1685,12 +1687,19 @@ namespace Datos
             );
         }
 
+        // SQL Server no distingue facturas de prueba (sin columna esprueba): nunca hay.
+        public bool ExistenFacturasPrueba()
+        {
+            return false;
+        }
+
         // Cantidad y total ($) del MISMO filtro completo (sin paginar) que BuscarFacturasPagina,
         // para el resumen "Cant./Total" del header -- se pide aparte en vez de sumar solo lo ya
         // cargado en el scroll, que seria el total de la pagina, no el del filtro completo.
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
-            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante)
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
+            string entorno = null)
         {
             string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
 

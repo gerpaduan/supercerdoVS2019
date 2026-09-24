@@ -139,6 +139,13 @@
         lineasEmpresa = lineasEmpresa.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
 
         lineasDetalle.Add(new string('-', cantMaxChar));
+        if (factura.EsPrueba)
+        {
+            // Emitida en homologacion de AFIP: no vale como comprobante fiscal.
+            lineasDetalle.Add(truncar("*** PRUEBA ***", cantMaxChar));
+            lineasDetalle.Add(truncar("SIN VALIDEZ FISCAL", cantMaxChar));
+            lineasDetalle.Add(new string('-', cantMaxChar));
+        }
         lineasDetalle.Add(truncar("Nro. " + (factura.PtoVtaAfip ?? "") + "-" + (factura.NroCbteAfip ?? ""), cantMaxChar));
         lineasDetalle.Add(truncar("Fecha: " + (factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value.ToString("dd/MM/yyyy") : Model.FechaVenta.ToString("dd/MM/yyyy")), cantMaxChar));
         lineasDetalle.Add(truncar("Pago: " + (factura.FormaPago ?? formaPagoImprimir), cantMaxChar));

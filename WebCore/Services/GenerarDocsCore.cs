@@ -283,6 +283,11 @@ namespace WebCore.Services
                     {
                         col.Spacing(6);
 
+                        // Factura emitida en homologacion de AFIP: marca bien visible, sin validez fiscal.
+                        if (factura != null && factura.EsPrueba)
+                            col.Item().Background("#B71C1C").Padding(4).AlignCenter()
+                                .Text("COMPROBANTE DE PRUEBA (HOMOLOGACIÓN AFIP) — SIN VALIDEZ FISCAL").FontColor("#FFFFFF").Bold();
+
                         // ===== CABECERA =====
                         col.Item().Row(row =>
                         {

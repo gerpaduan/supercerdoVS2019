@@ -1453,7 +1453,7 @@ namespace DatosPostgres
 
         #region FacturaElectronica (Etapa 12c)
 
-        public int esVentaSinFacturar(int idVenta, bool esNotaCredito)
+        public int esVentaSinFacturar(int idVenta, bool esNotaCredito, bool ignorarPrueba = false)
         {
             string validarComprobantes = esNotaCredito
                 ? $"(codtipocbteafip = {FacturaElectronica.codNotaCreditoA_Afip} OR codtipocbteafip = {FacturaElectronica.codNotaCreditoB_Afip} OR codtipocbteafip = {FacturaElectronica.codNotaCreditoC_Afip})"
@@ -1464,44 +1464,47 @@ namespace DatosPostgres
                 FROM facturaelectronica
                 WHERE idventa = @idVenta
                   AND cae IS NOT NULL
+                  AND (NOT @ignorarPrueba OR esprueba = false)
                   AND {validarComprobantes}
                 ORDER BY id DESC
                 LIMIT 1;",
-                p => p.AddWithValue("idVenta", idVenta));
+                p => { p.AddWithValue("idVenta", idVenta); p.AddWithValue("ignorarPrueba", ignorarPrueba); });
 
             return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
         }
 
-        public int existeFacturaElect(int idVenta)
+        public int existeFacturaElect(int idVenta, bool ignorarPrueba = false)
         {
             object scalar = DbPg.Scalar(_connectionString, _idEmpresa, $@"
                 SELECT id
                 FROM facturaelectronica
                 WHERE cae <> ''
+                  AND (NOT @ignorarPrueba OR esprueba = false)
                   AND idventa = @idVenta
                   AND (codtipocbteafip = {FacturaElectronica.codFacturaA_Afip}
                     OR codtipocbteafip = {FacturaElectronica.codFacturaB_Afip}
                     OR codtipocbteafip = {FacturaElectronica.codFacturaC_Afip})
                 ORDER BY id DESC
                 LIMIT 1;",
-                p => p.AddWithValue("idVenta", idVenta));
+                p => { p.AddWithValue("idVenta", idVenta); p.AddWithValue("ignorarPrueba", ignorarPrueba); });
 
             return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
         }
 
-        public int existeNotaCreditoElect(int idVenta)
+        public int existeNotaCreditoElect(int idVenta, bool ignorarPrueba = false)
         {
             object scalar = DbPg.Scalar(_connectionString, _idEmpresa, $@"
                 SELECT id
                 FROM facturaelectronica
                 WHERE cae <> ''
+                  AND (NOT @ignorarPrueba OR esprueba = false)
                   AND idventa = @idVenta
                   AND (codtipocbteafip = {FacturaElectronica.codNotaCreditoA_Afip}
                     OR codtipocbteafip = {FacturaElectronica.codNotaCreditoB_Afip}
                     OR codtipocbteafip = {FacturaElectronica.codNotaCreditoC_Afip})
                 ORDER BY id DESC
                 LIMIT 1;",
-                p => p.AddWithValue("idVenta", idVenta));
+                p => { p.AddWithValue("idVenta", idVenta); p.AddWithValue("ignorarPrueba", ignorarPrueba); });
 
             return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
         }
@@ -1525,12 +1528,12 @@ namespace DatosPostgres
                                 (ptovtaafip, fechaemisionafip, desctipocbteafip, codtipocbteafip, nrocbteafip, tipodocafip, nrodocafip,
                                  razonsocialafip, condicionivaafip, domicilioafip, condicionventa, formapago, cae, fecvtocae,
                                  importenetogravado, iva, importetotal, porcentajefacturacion, descitemunitario, observaciones,
-                                 idventa, creado, error, mensajeerror, fechaerror, canterrores, idempresa)
+                                 idventa, creado, error, mensajeerror, fechaerror, canterrores, idempresa, esprueba)
                             VALUES
                                 (@ptoVtaAfip, @fechaEmisionAfip, @descTipoCbteAfip, @codTipoCbteAfip, @nroCbteAfip, @tipoDocAfip, @nroDocAfip,
                                  @razonSocialAFIP, @condicionIvaAFIP, @domicilioAFIP, @condicionVenta, @formaPago, @CAE, @fecVtoCAE,
                                  @importeNetoGravado, @iva, @importeTotal, @porcentajeFacturacion, @descItemUnitario, @observaciones,
-                                 @idVenta, now(), @error, @mensajeError, @fechaError, 0, @idEmpresa)
+                                 @idVenta, now(), @error, @mensajeError, @fechaError, 0, @idEmpresa, @esPrueba)
                             RETURNING id;", con, tx))
                         {
                             cmd.Parameters.AddWithValue("ptoVtaAfip", oFacturaElectronicaE.PtoVtaAfip ?? "");
@@ -1566,6 +1569,7 @@ namespace DatosPostgres
                             cmd.Parameters.AddWithValue("idVenta", oFacturaElectronicaE.IdVenta);
                             cmd.Parameters.AddWithValue("error", oFacturaElectronicaE.Error);
                             cmd.Parameters.AddWithValue("mensajeError", oFacturaElectronicaE.MensajeError ?? "");
+                            cmd.Parameters.AddWithValue("esPrueba", oFacturaElectronicaE.EsPrueba);
                             cmd.Parameters.AddWithValue("fechaError", (oFacturaElectronicaE.FechaError == null || oFacturaElectronicaE.FechaError < DateTime.Today.AddYears(-100)) ? (object)DBNull.Value : (object)oFacturaElectronicaE.FechaError);
                             cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
 
@@ -1610,7 +1614,8 @@ namespace DatosPostgres
                                 error = @error,
                                 mensajeerror = @mensajeError,
                                 fechaerror = @fechaError,
-                                canterrores = @cantErrores
+                                canterrores = @cantErrores,
+                                esprueba = @esPrueba
                             WHERE id = @id;", con, tx))
                         {
                             cmd.Parameters.AddWithValue("ptoVtaAfip", oFacturaElectronicaE.PtoVtaAfip ?? "");
@@ -1635,6 +1640,7 @@ namespace DatosPostgres
                             cmd.Parameters.AddWithValue("idVenta", oFacturaElectronicaE.IdVenta);
                             cmd.Parameters.AddWithValue("error", oFacturaElectronicaE.Error);
                             cmd.Parameters.AddWithValue("mensajeError", oFacturaElectronicaE.MensajeError ?? "");
+                            cmd.Parameters.AddWithValue("esPrueba", oFacturaElectronicaE.EsPrueba);
                             cmd.Parameters.AddWithValue("fechaError", (oFacturaElectronicaE.FechaError == null || oFacturaElectronicaE.FechaError < DateTime.Today.AddYears(-100)) ? (object)DBNull.Value : (object)oFacturaElectronicaE.FechaError);
                             cmd.Parameters.AddWithValue("cantErrores", cantErrores);
                             cmd.Parameters.AddWithValue("id", oFacturaElectronicaE.Id);
@@ -1701,6 +1707,7 @@ namespace DatosPostgres
                     IdVenta = dr["idventa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idventa"]),
                     Error = GetBool(dr, "error"),
                     MensajeError = GetString(dr, "mensajeerror"),
+                    EsPrueba = GetBool(dr, "esprueba"),
                     FechaError = dr["fechaerror"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaerror"])
                 },
                 p => p.AddWithValue("id", idFactuElec));
@@ -1736,7 +1743,7 @@ namespace DatosPostgres
         // compartido entre BuscarFacturasPagina y ObtenerFacturasResumen para que las dos
         // consultas filtren exactamente igual. Placeholders numerados para los IN(...), nunca
         // concatenados directo.
-        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante)
+        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante, string entorno = null)
         {
             string whereFormaPago = "1 = 1";
             if (formasPago != null && formasPago.Count > 0)
@@ -1762,8 +1769,16 @@ namespace DatosPostgres
                 whereComprobante = "f.codtipocbteafip IN (" + placeholders + ")";
             }
 
+            // Filtro de entorno: solo dos literales fijos, nunca texto del usuario dentro del SQL.
+            string whereEntorno = "1 = 1";
+            if (string.Equals(entorno, FacturaElectronica.FiltroEntornoProduccion, StringComparison.OrdinalIgnoreCase))
+                whereEntorno = "f.esprueba = false";
+            else if (string.Equals(entorno, FacturaElectronica.FiltroEntornoPrueba, StringComparison.OrdinalIgnoreCase))
+                whereEntorno = "f.esprueba = true";
+
             return $@"
                 COALESCE(f.cae, '') <> ''
+                AND ({whereEntorno})
                 AND f.fechaemisionafip >= @fechaDesde
                 AND f.fechaemisionafip < @fechaHastaMas1
                 AND (@idSucursal = -1 OR v.idsucursal = @idSucursal)
@@ -1809,7 +1824,7 @@ namespace DatosPostgres
         public List<FacturaElectronica> BuscarFacturasPagina(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            int pagina, int cantidad, int cantidadExtra)
+            int pagina, int cantidad, int cantidadExtra, string entorno = null)
         {
             pagina = pagina < 1 ? 1 : pagina;
             cantidad = cantidad < 1 ? 1 : cantidad;
@@ -1817,7 +1832,7 @@ namespace DatosPostgres
             int desdeFila = (int)Math.Min(((long)(pagina - 1) * cantidad) + 1, int.MaxValue);
             int hastaFila = (int)Math.Min((long)desdeFila + cantidad + cantidadExtra - 1, int.MaxValue);
 
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno);
 
             string sql = $@"
                 WITH facturasfiltradas AS
@@ -1919,6 +1934,7 @@ namespace DatosPostgres
                 IdVenta = dr["idventa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idventa"]),
                 Error = GetBool(dr, "error"),
                 MensajeError = GetString(dr, "mensajeerror"),
+                EsPrueba = GetBool(dr, "esprueba"),
                 FechaError = dr["fechaerror"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaerror"])
             };
 
@@ -1930,11 +1946,21 @@ namespace DatosPostgres
             return factura;
         }
 
+        // Hay al menos una factura de homologacion? (RLS ya filtra por empresa via AbrirConTenant).
+        public bool ExistenFacturasPrueba()
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT 1 FROM facturaelectronica WHERE esprueba = true LIMIT 1;",
+                p => { });
+            return scalar != null && scalar != DBNull.Value;
+        }
+
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
-            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante)
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
+            string entorno = null)
         {
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno);
 
             string sql = $@"
                 SELECT

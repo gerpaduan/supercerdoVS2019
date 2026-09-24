@@ -106,7 +106,14 @@
                 </div>
                 <div class="form-group col-md-4">
                     <label>Entorno AFIP</label>
-                    @Html.TextBoxFor(m => m.EntornoHomoProd, new { @class = "form-control", placeholder = "HOMO o PROD" })
+                    @* PROD = comprobantes reales; HOMO = homologacion (PRUEBA, sin validez fiscal). Se normaliza el
+                       valor guardado ("homo", "Homologación", vacio...) para que el select muestre lo que el sistema
+                       realmente usa (vacio = PROD). Ojo: en HOMO hace falta un certificado de homologacion. *@
+                    @{ Model.EntornoHomoProd = AFIP.AfipEntorno.Normalizar(Model.EntornoHomoProd); }
+                    @Html.DropDownListFor(m => m.EntornoHomoProd,
+                        new SelectList(new[] { AFIP.AfipEntorno.Produccion, AFIP.AfipEntorno.Homologacion }),
+                        new { @class = "form-control" })
+                    <small class="form-text text-muted">HOMO = modo prueba: las facturas no tienen validez fiscal.</small>
                 </div>
             </div>
 

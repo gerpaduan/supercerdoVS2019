@@ -404,18 +404,51 @@
      #feObservacionesWrap {
          display: none;
      }
+
+     /* Banner de modo prueba (homologacion): franja roja fija, no se puede pasar por alto. */
+     .fe-banner-prueba {
+         flex: 0 0 auto;
+         background: #b71c1c;
+         color: #fff;
+         text-align: center;
+         padding: .55rem 1rem;
+         font-size: 1rem;
+         letter-spacing: .02em;
+         border-bottom: 3px solid #ffc107;
+     }
 </style>
 
+@{
+    // Modo prueba (homologacion de AFIP, 2026-09-24): banner fijo y bien visible arriba del modal.
+    // modoPrueba = la empresa emite hoy en homologacion; facturaDePrueba = esta factura YA emitida es de
+    // prueba (aunque la empresa haya vuelto a produccion). Ninguna tiene validez fiscal.
+    bool modoPrueba = ViewBag.EntornoAfipHomologacion as bool? ?? false;
+    bool facturaDePrueba = yaEmitida && (Model?.EsPrueba ?? false);
+    bool mostrarBannerPrueba = modoPrueba || facturaDePrueba;
+    string textoBannerPrueba = facturaDePrueba
+        ? "FACTURA DE PRUEBA — emitida en homologación de AFIP, sin validez fiscal."
+        : (yaEmitida
+            ? "MODO PRUEBA (homologación de AFIP) — esta empresa está emitiendo comprobantes de prueba."
+            : "MODO PRUEBA (homologación de AFIP) — la factura que se genere NO tiene validez fiscal.");
+}
+
 <!-- HEADER -->
-<div class="modal-header bg-success text-white py-2">
+<div class="modal-header @(mostrarBannerPrueba ? "bg-warning text-dark" : "bg-success text-white") py-2">
     <h6 class="modal-title mb-0">
         @(yaEmitida ? "Factura Electrónica (emitida)" : "Generar Factura Electrónica")
     </h6>
     <small class="d-block" style="opacity:.85;">@empresaNombre</small>
-    <button type="button" class="close text-white" id="btnCerrarXFacturaElectronica">
+    <button type="button" class="close @(mostrarBannerPrueba ? "text-dark" : "text-white")" id="btnCerrarXFacturaElectronica">
         <span>&times;</span>
     </button>
 </div>
+
+@if (mostrarBannerPrueba)
+{
+    <div id="feBannerModoPrueba" class="fe-banner-prueba" role="alert">
+        <strong>@textoBannerPrueba</strong>
+    </div>
+}
 
 <form id="formFacturaElectronica" class="fe-root"
       data-ya-emitida="@(yaEmitida ? "1" : "0")"

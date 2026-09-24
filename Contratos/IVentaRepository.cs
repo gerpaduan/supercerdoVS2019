@@ -75,17 +75,22 @@ namespace Contratos
         DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
         Entidades.Venta getExpedioById(int idExpendio);
 
-        int esVentaSinFacturar(int idVenta, bool esNotaCredito);
-        int existeFacturaElect(int idVenta);
-        int existeNotaCreditoElect(int idVenta);
+        // ignorarPrueba: no cuenta las facturas emitidas en homologacion (esprueba). Solo Postgres; SQL Server lo ignora.
+        int esVentaSinFacturar(int idVenta, bool esNotaCredito, bool ignorarPrueba = false);
+        int existeFacturaElect(int idVenta, bool ignorarPrueba = false);
+        int existeNotaCreditoElect(int idVenta, bool ignorarPrueba = false);
         void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE);
         Entidades.FacturaElectronica getFactuElecById(int idFactuElec);
         List<Entidades.FacturaElectronica> BuscarFacturasPagina(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            int pagina, int cantidad, int cantidadExtra);
+            int pagina, int cantidad, int cantidadExtra, string entorno = null);
         (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
-            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante);
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
+            string entorno = null);
+        // true si la empresa tiene al menos una factura emitida en homologacion (esprueba). Sirve para
+        // mostrar el filtro Produccion/Pruebas solo cuando hace falta. SQL Server: siempre false.
+        bool ExistenFacturasPrueba();
     }
 }

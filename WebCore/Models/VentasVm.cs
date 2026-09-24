@@ -70,6 +70,10 @@ namespace WebCore.Models
         public string Vendedor { get; set; }
         public string FormasPagoCsv { get; set; }
         public string TiposComprobanteCsv { get; set; }
+        // Filtro de entorno: "PROD" (default), "PRUEBA" o "TODAS". Solo se muestra si hay facturas de
+        // prueba (MostrarFiltroEntorno); si no, no filtra nada.
+        public string Entorno { get; set; }
+        public bool MostrarFiltroEntorno { get; set; }
         // Cantidad/TotalFacturado son del filtro completo (Negocio.Venta.ObtenerFacturasResumen),
         // no de Facturas.Count -- que con paginacion solo trae la pagina actual (50).
         public int Cantidad { get; set; }

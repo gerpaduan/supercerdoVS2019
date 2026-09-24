@@ -79,12 +79,13 @@ namespace NegocioTests.Fakes
         public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null) => throw new NotImplementedException();
         public DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null) => throw new NotImplementedException();
         public Venta getExpedioById(int idExpendio) => throw new NotImplementedException();
-        public int esVentaSinFacturar(int idVenta, bool esNotaCredito) => throw new NotImplementedException();
-        public int existeFacturaElect(int idVenta) => throw new NotImplementedException();
-        public int existeNotaCreditoElect(int idVenta) => throw new NotImplementedException();
+        public int esVentaSinFacturar(int idVenta, bool esNotaCredito, bool ignorarPrueba = false) => throw new NotImplementedException();
+        public int existeFacturaElect(int idVenta, bool ignorarPrueba = false) => throw new NotImplementedException();
+        public int existeNotaCreditoElect(int idVenta, bool ignorarPrueba = false) => throw new NotImplementedException();
         public void addOrEditFactuElec(FacturaElectronica oFacturaElectronicaE) => throw new NotImplementedException();
         public FacturaElectronica getFactuElecById(int idFactuElec) => throw new NotImplementedException();
-        public List<FacturaElectronica> BuscarFacturasPagina(DateTime fechaDesde, DateTime fechaHasta, int idSucursal, string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante, int pagina, int cantidad, int cantidadExtra) => throw new NotImplementedException();
-        public (int Cantidad, decimal Total) ObtenerFacturasResumen(DateTime fechaDesde, DateTime fechaHasta, int idSucursal, string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante) => throw new NotImplementedException();
+        public List<FacturaElectronica> BuscarFacturasPagina(DateTime fechaDesde, DateTime fechaHasta, int idSucursal, string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante, int pagina, int cantidad, int cantidadExtra, string entorno = null) => throw new NotImplementedException();
+        public (int Cantidad, decimal Total) ObtenerFacturasResumen(DateTime fechaDesde, DateTime fechaHasta, int idSucursal, string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante, string entorno = null) => throw new NotImplementedException();
+        public bool ExistenFacturasPrueba() => throw new NotImplementedException();
     }
 }

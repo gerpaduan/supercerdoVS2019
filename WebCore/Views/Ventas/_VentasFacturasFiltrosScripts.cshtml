@@ -256,6 +256,16 @@
                 });
             });
 
+            // Filtro de entorno (Produccion/Pruebas/Todas): filtro de servidor, recarga igual que la sucursal.
+            const filtroEntornoSelect = document.getElementById('filtroEntorno');
+            if (filtroEntornoSelect) {
+                filtroEntornoSelect.addEventListener('change', function () {
+                    saveServerState();
+                    setBuscando('Actualizando búsqueda en vivo...');
+                    submitConLoader();
+                });
+            }
+
             if (idSucursal) {
                 idSucursal.addEventListener('change', function () {
                     saveServerState();
@@ -359,6 +369,7 @@
             params.set("fechaDesde", fechaDesde ? fechaDesde.value : "");
             params.set("fechaHasta", fechaHasta ? fechaHasta.value : "");
             params.set("idSucursal", (idSucursal && idSucursal.value) || "-1");
+            params.set("entorno", (document.getElementById("filtroEntorno") || {}).value || "");
             params.set("cliente", buscadorCliente ? buscadorCliente.value : "");
             params.set("vendedor", buscadorVendedor ? buscadorVendedor.value : "");
             params.set("formasPago", csvSeleccionados(filtroFormaPagoChecks));

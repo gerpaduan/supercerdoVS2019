@@ -658,6 +658,15 @@
                         <span class="navbar-text h5 mb-0 fw-bold text-dark page-section-title">@ViewData["Title"]</span>
 
                         <ul class="navbar-nav ml-auto">
+                            @* Etiqueta de MODO PRUEBA (homologacion de AFIP): siempre visible para el admin mientras la
+                               empresa emite comprobantes de prueba, para no confundirlos con facturas reales. *@
+                            @if (esAdmin && AFIP.AfipEntorno.EsHomologacion(usuarioActual.Empresa?.Entorno_HOMO_PROD))
+                            {
+                                <li class="nav-item d-flex align-items-center me-2">
+                                    <a class="badge bg-danger text-white text-decoration-none" href="@Url.Action("Index", "CertificadoArca")"
+                                       title="Las facturas se emiten en el ambiente de pruebas de AFIP: no tienen validez fiscal">MODO PRUEBA (AFIP)</a>
+                                </li>
+                            }
                             @* Campana de notificaciones del admin (ventas en curso interrumpidas/descartadas, cierres de
                                caja con venta en curso y advertencias de "producto pesado sin agregar"). Solo admin y solo
                                con Postgres (SQL Server no tiene tabla de notificaciones todavia: etapa 2, ver

@@ -78,6 +78,20 @@
                             }
                         </select>
                     </div>
+
+                    @* Filtro de entorno: solo aparece si la empresa tiene alguna factura de PRUEBA (emitida en
+                       homologacion de AFIP). Default Produccion, asi las pruebas no ensucian el total facturado. *@
+                    @if (Model.MostrarFiltroEntorno)
+                    {
+                        <div class="form-group mb-0 filtro-sucursal">
+                            <label for="filtroEntorno" class="filtro-label">Entorno</label>
+                            <select id="filtroEntorno" name="entorno" class="form-control">
+                                <option value="PROD" selected="@(Model.Entorno == "PROD" ? "selected" : null)">Producción</option>
+                                <option value="PRUEBA" selected="@(Model.Entorno == "PRUEBA" ? "selected" : null)">Pruebas (sin validez fiscal)</option>
+                                <option value="TODAS" selected="@(Model.Entorno == "TODAS" ? "selected" : null)">Todas</option>
+                            </select>
+                        </div>
+                    }
                 </div>
 
                 <div class="filtros-fila filtros-fila-busqueda">

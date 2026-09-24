@@ -579,9 +579,9 @@ namespace Negocio
         /// </summary>
         /// <param name="idVenta"></param>
         /// <returns></returns>
-            public int esVentaSinFacturar(int idVenta, bool esNotaCredito)
+            public int esVentaSinFacturar(int idVenta, bool esNotaCredito, bool ignorarPrueba = false)
         {
-            return oVentaD.esVentaSinFacturar(idVenta, esNotaCredito);
+            return oVentaD.esVentaSinFacturar(idVenta, esNotaCredito, ignorarPrueba);
         }
 
         /// <summary>
@@ -589,15 +589,15 @@ namespace Negocio
         /// </summary>
         /// <param name="idVenta"></param>
         /// <returns></returns>
-        public int existeFactuElectParaVenta(int idVenta)
+        public int existeFactuElectParaVenta(int idVenta, bool ignorarPrueba = false)
         {
-            int idFactuElec = oVentaD.existeFacturaElect(idVenta);
+            int idFactuElec = oVentaD.existeFacturaElect(idVenta, ignorarPrueba);
             return idFactuElec;
         }
 
-        public int existeNotaCreditoParaVenta(int idVenta)
+        public int existeNotaCreditoParaVenta(int idVenta, bool ignorarPrueba = false)
         {
-            return oVentaD.existeNotaCreditoElect(idVenta);
+            return oVentaD.existeNotaCreditoElect(idVenta, ignorarPrueba);
         }
 
         public void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE)
@@ -637,16 +637,22 @@ namespace Negocio
         public List<Entidades.FacturaElectronica> BuscarFacturasPagina(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            int pagina, int cantidad, int cantidadExtra)
+            int pagina, int cantidad, int cantidadExtra, string entorno = null)
         {
-            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra);
+            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra, entorno);
         }
 
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
-            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante)
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
+            string entorno = null)
         {
-            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
+            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, entorno);
+        }
+
+        public bool ExistenFacturasPrueba()
+        {
+            return oVentaD.ExistenFacturasPrueba();
         }
 
         #endregion

@@ -97,15 +97,17 @@ namespace WebCore.Controllers
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
+        private readonly WebCore.Services.IAfipConfigProvider _afip;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion)
+        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.IAfipConfigProvider afip)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
             _env = env;
             _sesion = sesion;
+            _afip = afip;
             _empresa = sesion.Empresa;
 
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
@@ -652,7 +654,7 @@ namespace WebCore.Controllers
 
         public IActionResult Facturas(
             DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1,
-            string cliente = "", string vendedor = "", string formasPago = "", string tiposComprobante = "")
+            string cliente = "", string vendedor = "", string formasPago = "", string tiposComprobante = "", string entorno = "")
         {
             // Mismo gate que Index() (ver docs/DECISIONS.md, 2026-09-12) -- el listado de facturas
             // usa el mismo permiso Permisos.Venta.VerVentas en el clasico (Web/Controllers/
@@ -685,9 +687,12 @@ namespace WebCore.Controllers
                 Cliente = cliente ?? "",
                 Vendedor = vendedor ?? "",
                 FormasPagoCsv = formasPago ?? "",
-                TiposComprobanteCsv = tiposComprobante ?? ""
+                TiposComprobanteCsv = tiposComprobante ?? "",
+                MostrarFiltroEntorno = _oVentaN.ExistenFacturasPrueba()
             };
 
+            // Sin facturas de prueba no hay filtro (no filtra nada); con ellas el default es Produccion.
+            model.Entorno = model.MostrarFiltroEntorno ? NormalizarEntornoFiltro(entorno) : "TODAS";
             CargarPaginaFacturas(model, formasPagoSeleccionadas, codigosComprobante, pagina: 1, incluirResumen: true);
 
             return View("~/Views/Ventas/Facturas.cshtml", model);
@@ -699,7 +704,7 @@ namespace WebCore.Controllers
         [HttpGet]
         public async System.Threading.Tasks.Task<IActionResult> BuscarFacturas(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
-            string cliente, string vendedor, string formasPago, string tiposComprobante,
+            string cliente, string vendedor, string formasPago, string tiposComprobante, string entorno = "",
             int pagina = 1)
         {
             // Mismo gate que Index()/Facturas() -- port de Web/Controllers/VentasController.cs:186.
@@ -719,6 +724,8 @@ namespace WebCore.Controllers
                 Vendedor = vendedor ?? ""
             };
 
+            // El JS manda el valor del select (o vacio si el filtro no se muestra = no filtrar).
+            model.Entorno = string.IsNullOrWhiteSpace(entorno) ? "TODAS" : NormalizarEntornoFiltro(entorno);
             CargarPaginaFacturas(model, formasPagoSeleccionadas, codigosComprobante, pagina, incluirResumen: pagina == 1);
 
             string html = await RenderPartialViewToStringAsync("_FacturasRows", model.Facturas);
@@ -734,6 +741,22 @@ namespace WebCore.Controllers
             });
         }
 
+        // Valor del select de entorno -> "PROD" (default), "PRUEBA" o "TODAS". Cualquier otro texto = PROD.
+        private static string NormalizarEntornoFiltro(string entorno)
+        {
+            string valor = (entorno ?? "").Trim().ToUpperInvariant();
+            if (valor == "PRUEBA" || valor == "TODAS") return valor;
+            return "PROD";
+        }
+
+        // "TODAS" = sin filtro (null) para el repositorio; "PROD"/"PRUEBA" filtran por la columna esprueba.
+        private static string EntornoParaRepositorio(string entornoNormalizado)
+        {
+            if (entornoNormalizado == "PROD") return Entidades.FacturaElectronica.FiltroEntornoProduccion;
+            if (entornoNormalizado == "PRUEBA") return Entidades.FacturaElectronica.FiltroEntornoPrueba;
+            return null;
+        }
+
         private void CargarPaginaFacturas(
             FacturasIndexVm model, List<string> formasPagoSeleccionadas, List<int> codigosComprobante,
             int pagina, bool incluirResumen)
@@ -741,7 +764,7 @@ namespace WebCore.Controllers
             var facturas = _oVentaN.BuscarFacturasPagina(
                 model.FechaDesde, model.FechaHasta, model.IdSucursal,
                 model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante,
-                pagina, FacturasTamanoPagina, cantidadExtra: 1) ?? new List<Entidades.FacturaElectronica>();
+                pagina, FacturasTamanoPagina, cantidadExtra: 1, entorno: EntornoParaRepositorio(model.Entorno)) ?? new List<Entidades.FacturaElectronica>();
 
             model.HayMas = facturas.Count > FacturasTamanoPagina;
             if (model.HayMas)
@@ -754,8 +777,8 @@ namespace WebCore.Controllers
                 {
                     Factura = factura,
                     Venta = factura.Venta,
-                    FacturaAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? ObtenerFacturaAsociadaVenta(factura.IdVenta) : null,
-                    NotaCreditoAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? null : ObtenerNotaCreditoAsociadaVenta(factura.IdVenta)
+                    FacturaAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? ObtenerFacturaAsociadaVenta(factura.IdVenta, !factura.EsPrueba) : null,
+                    NotaCreditoAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? null : ObtenerNotaCreditoAsociadaVenta(factura.IdVenta, !factura.EsPrueba)
                 });
             }
 
@@ -763,7 +786,7 @@ namespace WebCore.Controllers
             {
                 var resumen = _oVentaN.ObtenerFacturasResumen(
                     model.FechaDesde, model.FechaHasta, model.IdSucursal,
-                    model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante);
+                    model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante, EntornoParaRepositorio(model.Entorno));
                 model.Cantidad = resumen.Cantidad;
                 model.TotalFacturado = resumen.Total;
             }
@@ -952,8 +975,8 @@ namespace WebCore.Controllers
                 Factura = factura,
                 Venta = venta,
                 ReturnUrl = DecodeReturnUrlIfNeeded(returnUrl),
-                FacturaAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? ObtenerFacturaAsociadaVenta(venta.IdVenta) : null,
-                NotaCreditoAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? null : ObtenerNotaCreditoAsociadaVenta(venta.IdVenta)
+                FacturaAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? ObtenerFacturaAsociadaVenta(venta.IdVenta, !factura.EsPrueba) : null,
+                NotaCreditoAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? null : ObtenerNotaCreditoAsociadaVenta(venta.IdVenta, !factura.EsPrueba)
             };
 
             return View("~/Views/Ventas/DetalleFactura.cshtml", model);
@@ -1000,6 +1023,7 @@ namespace WebCore.Controllers
             ViewBag.SucursalNombreFactura = !string.IsNullOrWhiteSpace(sucursal.SucursalNombre) ? sucursal.SucursalNombre : sucursal.sucursal;
             ViewBag.EsSinVenta = true;
 
+            ViewBag.EntornoAfipHomologacion = EmpresaEnHomologacionAfip(); // banner "MODO PRUEBA" del modal
             return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
         }
 
@@ -1110,6 +1134,7 @@ namespace WebCore.Controllers
                     if (facturaExistente == null)
                         return Json(new { ok = false, msg = "Factura no encontrada" });
 
+                    factura.EsPrueba = facturaExistente.EsPrueba; // el entorno de emision no se edita
                     factura.PtoVtaAfip = facturaExistente.PtoVtaAfip;
                     factura.CodTipoCbteAfip = facturaExistente.CodTipoCbteAfip;
                     factura.DescTipoCbteAfip = facturaExistente.DescTipoCbteAfip;
@@ -1143,7 +1168,7 @@ namespace WebCore.Controllers
                 if (factura.Venta == null)
                     return Json(new { ok = false, msg = "Venta no encontrada" });
 
-                int idFactExistente = _oVentaN.esVentaSinFacturar(factura.Venta.IdVenta, false);
+                int idFactExistente = _oVentaN.esVentaSinFacturar(factura.Venta.IdVenta, false, IgnorarFacturasPrueba);
                 if (idFactExistente > 0)
                 {
                     var fExist = _oVentaN.getFactuElecById(idFactExistente);
@@ -1158,7 +1183,11 @@ namespace WebCore.Controllers
                     });
                 }
 
-                var afipSvc = new AFIP.GenerarFacturaService(factura.Venta, _env.ContentRootPath);
+                string errorEntorno = ValidarEntornoAfipSoportado();
+                if (errorEntorno != null)
+                    return Json(new { ok = false, msg = errorEntorno });
+
+                var afipSvc = new AFIP.GenerarFacturaService(factura.Venta, _env.ContentRootPath, _afip.Crear());
                 var afipRes = afipSvc.GenerarFactura(factura, false);
 
                 if (!afipRes.Ok)
@@ -1168,6 +1197,7 @@ namespace WebCore.Controllers
                         var factErr = new Entidades.FacturaElectronica
                         {
                             IdVenta = factura.Venta.IdVenta,
+                            EsPrueba = afipSvc.EsHomologacion,
                             Error = true,
                             MensajeError = afipRes.Mensaje,
                             FechaError = DateTime.Now
@@ -1191,7 +1221,7 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, msg = "Error guardando factura en BD: " + saveEx.Message });
                 }
 
-                int idGuardado = _oVentaN.esVentaSinFacturar(factura.Venta.IdVenta, false);
+                int idGuardado = _oVentaN.esVentaSinFacturar(factura.Venta.IdVenta, false, IgnorarFacturasPrueba);
                 var facturaGuardada = idGuardado > 0 ? _oVentaN.getFactuElecById(idGuardado) : factura;
 
                 return Json(new
@@ -1245,7 +1275,7 @@ namespace WebCore.Controllers
                 if (venta == null)
                     return Json(new { ok = false, msg = "No se encontró la venta asociada" });
 
-                int idNotaExistente = _oVentaN.esVentaSinFacturar(venta.IdVenta, true);
+                int idNotaExistente = _oVentaN.esVentaSinFacturar(venta.IdVenta, true, IgnorarFacturasPrueba);
                 if (idNotaExistente > 0)
                 {
                     var ncExistente = _oVentaN.getFactuElecById(idNotaExistente);
@@ -1264,7 +1294,22 @@ namespace WebCore.Controllers
                 facturaOrigen.Venta = venta;
                 var notaCredito = CrearNotaCreditoDesdeFactura(facturaOrigen, venta);
 
-                var afipSvc = new AFIP.GenerarFacturaService(venta, _env.ContentRootPath);
+                string errorEntorno = ValidarEntornoAfipSoportado();
+                if (errorEntorno != null)
+                    return Json(new { ok = false, msg = errorEntorno });
+
+                // Una factura de prueba solo se puede anular con nota de credito de prueba (y una real,
+                // con una real): AFIP rechazaria el comprobante asociado del otro entorno.
+                if (facturaOrigen.EsPrueba != EmpresaEnHomologacionAfip())
+                    return Json(new
+                    {
+                        ok = false,
+                        msg = facturaOrigen.EsPrueba
+                            ? "La factura es de PRUEBA (homologación): la empresa está en producción, no se puede emitir la nota de crédito."
+                            : "La factura es de producción: la empresa está en modo prueba (homologación), no se puede emitir la nota de crédito."
+                    });
+
+                var afipSvc = new AFIP.GenerarFacturaService(venta, _env.ContentRootPath, _afip.Crear());
                 var afipRes = afipSvc.GenerarNotaCredito(notaCredito, facturaOrigen);
 
                 if (!afipRes.Ok)
@@ -1272,7 +1317,7 @@ namespace WebCore.Controllers
 
                 _oVentaN.addOrEditFactuElec(afipRes.Factura);
 
-                int idNotaGenerada = _oVentaN.esVentaSinFacturar(venta.IdVenta, true);
+                int idNotaGenerada = _oVentaN.esVentaSinFacturar(venta.IdVenta, true, IgnorarFacturasPrueba);
 
                 return Json(new
                 {
@@ -1365,7 +1410,7 @@ namespace WebCore.Controllers
                 if (venta == null)
                     return Json(new { ok = false, msg = "Venta no encontrada" });
 
-                int idFacturaExistente = _oVentaN.esVentaSinFacturar(idVenta, false);
+                int idFacturaExistente = _oVentaN.esVentaSinFacturar(idVenta, false, IgnorarFacturasPrueba);
                 if (idFacturaExistente > 0)
                     return Json(new { ok = false, msg = "La venta ya tiene una factura electrónica registrada." });
 
@@ -1435,6 +1480,7 @@ namespace WebCore.Controllers
                 ? (!string.IsNullOrWhiteSpace(venta.Sucursal.SucursalNombre) ? venta.Sucursal.SucursalNombre : venta.Sucursal.sucursal)
                 : "";
 
+            ViewBag.EntornoAfipHomologacion = EmpresaEnHomologacionAfip(); // banner "MODO PRUEBA" del modal
             return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
         }
 
@@ -1445,6 +1491,7 @@ namespace WebCore.Controllers
 
             dto.IdVenta = venta.IdVenta;
             dto.IdFactura = factuElec.Id;
+            dto.EsPrueba = factuElec.EsPrueba;
 
             dto.CodTipoCbteAfip = factuElec.CodTipoCbteAfip == 0 ?
                 factuElec.getCodTipoCbteAFIP(venta.Sucursal.Empresa.EsRRII, venta.Persona.EsRRII(venta.Persona.IdIva), false) :
@@ -1708,15 +1755,20 @@ namespace WebCore.Controllers
                 || codTipoCbteAfip == FacturaElectronica.codNotaCreditoC_Afip;
         }
 
-        private Entidades.FacturaElectronica ObtenerFacturaAsociadaVenta(int idVenta)
+        // Modo produccion: las facturas de PRUEBA (homologacion) no cuentan, asi una venta con factura de prueba
+        // se puede facturar de verdad. Modo prueba: se ven todas. Los listados/detalles de una factura puntual
+        // pasan ignorarPrueba = !factura.EsPrueba para mostrar los comprobantes de su mismo entorno.
+        private bool IgnorarFacturasPrueba => !EmpresaEnHomologacionAfip();
+
+        private Entidades.FacturaElectronica ObtenerFacturaAsociadaVenta(int idVenta, bool? ignorarPrueba = null)
         {
-            int idFactura = _oVentaN.existeFactuElectParaVenta(idVenta);
+            int idFactura = _oVentaN.existeFactuElectParaVenta(idVenta, ignorarPrueba ?? IgnorarFacturasPrueba);
             return idFactura > 0 ? _oVentaN.getFactuElecById(idFactura) : null;
         }
 
-        private Entidades.FacturaElectronica ObtenerNotaCreditoAsociadaVenta(int idVenta)
+        private Entidades.FacturaElectronica ObtenerNotaCreditoAsociadaVenta(int idVenta, bool? ignorarPrueba = null)
         {
-            int idNotaCredito = _oVentaN.existeNotaCreditoParaVenta(idVenta);
+            int idNotaCredito = _oVentaN.existeNotaCreditoParaVenta(idVenta, ignorarPrueba ?? IgnorarFacturasPrueba);
             return idNotaCredito > 0 ? _oVentaN.getFactuElecById(idNotaCredito) : null;
         }
 
@@ -2632,6 +2684,36 @@ namespace WebCore.Controllers
         // y PersonasController.ObtenerEmpresaAfipActual: getUsuarioById (DatosPostgres/UsuarioPg.cs:219)
         // ya carga user.Empresa via findEmpresaById, asi que el fallback por Sucursal casi nunca
         // deberia ejecutarse -- se deja igual por si algun camino de resolucion de usuario no la trae.
+        // Empresa del usuario con su entorno AFIP (Entorno_HOMO_PROD). Mismo criterio de carga que
+        // EmpresaTieneCertificadoFacturaElectronica.
+        private Entidades.Empresa ObtenerEmpresaAfipActual()
+        {
+            var empresa = _usuarioActual?.Empresa;
+            if (empresa == null)
+            {
+                int idEmpresa = _usuarioActual?.IdEmpresa ?? 0;
+                if (idEmpresa > 0)
+                    empresa = _oSucursalN.findEmpresaById(idEmpresa);
+            }
+            return empresa;
+        }
+
+        // true si la empresa emite en homologacion de AFIP (modo prueba, comprobantes sin validez fiscal).
+        private bool EmpresaEnHomologacionAfip()
+        {
+            return AFIP.AfipEntorno.EsHomologacion(ObtenerEmpresaAfipActual()?.Entorno_HOMO_PROD);
+        }
+
+        // El modo prueba marca las facturas con la columna esprueba, que solo existe en Postgres: en SQL
+        // Server se bloquea para que una factura de homologacion no quede guardada como real.
+        // Devuelve el mensaje de error, o null si se puede emitir.
+        private string ValidarEntornoAfipSoportado()
+        {
+            if (EmpresaEnHomologacionAfip() && !WebCore.Infrastructure.NegocioFactory.UsarPostgres)
+                return "El modo prueba (homologación de AFIP) requiere Postgres: en este ambiente no se puede emitir.";
+            return null;
+        }
+
         private bool EmpresaTieneCertificadoFacturaElectronica(Entidades.Usuario user)
         {
             var empresaAfip = user?.Empresa;

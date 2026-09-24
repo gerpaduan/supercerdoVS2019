@@ -71,7 +71,13 @@
             </a>
             <h6 class="m-0 font-weight-bold text-primary detalle-documento-titulo">Detalle de Factura</h6>
         </div>
-        <span class="badge badge-info">#@(factura != null ? factura.Id : 0)</span>
+        <span>
+            @if (factura != null && factura.EsPrueba)
+            {
+                <span class="badge badge-danger mr-1" title="Emitida en homologación de AFIP: sin validez fiscal">PRUEBA – sin validez fiscal</span>
+            }
+            <span class="badge badge-info">#@(factura != null ? factura.Id : 0)</span>
+        </span>
     </div>
 
     <div class="card-body bg-white">

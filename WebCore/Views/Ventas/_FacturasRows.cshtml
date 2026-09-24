@@ -63,6 +63,10 @@
                     <div class="venta-info">
                         <div class="venta-tipo-persona font-weight-bold">
                             @tipoComprobante - @formaPago
+                            @if (factura != null && factura.EsPrueba)
+                            {
+                                <span class="badge badge-danger ml-1" title="Emitida en homologación de AFIP: sin validez fiscal">PRUEBA</span>
+                            }
                         </div>
                         @if (!string.IsNullOrWhiteSpace(cliente))
                         {

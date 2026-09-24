@@ -11,6 +11,9 @@ namespace WebCore.Models.DTO
         public int IdVenta { get; set; }
         public int IdFactura { get; set; }
 
+        // true si la factura ya emitida es de PRUEBA (se emitio en homologacion, sin validez fiscal).
+        public bool EsPrueba { get; set; }
+
         public int CodTipoCbteAfip { get; set; }
         public string DescTipoCbteAfip { get; set; }
         public string LetraCbte { get; set; }
