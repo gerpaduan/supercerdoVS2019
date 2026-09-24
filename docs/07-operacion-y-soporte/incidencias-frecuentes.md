@@ -278,6 +278,21 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 **Causa**: WebCore usa Bootstrap 5, que no define `.custom-select` (en BS4 traia `display:inline-block; width:100%`); ni `bootstrap4-compat.css` ni `ui-refresh.css` lo cubren. `<label>` y `<select>` quedaban inline, con el select tomando el ancho de su opcion mas larga.
 **Fix**: en `WebCore/Views/Home/Index.cshtml`, `.dashboard-filters label { display:block }` y `.dashboard-filters .custom-select { display:block; width:100% }`. Verificado en navegador con los CSS reales de WebCore: ambos selects a la misma altura (top) y 182 px de ancho. Los unicos `.custom-select` de WebCore estan en este bloque; si otra vista portada del clasico lo usa, necesita lo mismo (o definirlo en `bootstrap4-compat.css`).
 
+## 2026-09-24 -- Facturacion falla con "Error WSAA Login" / certificado vencido o ilegible
+**Sintoma**: al facturar o consultar el padron sale "Error WSAA Login" o "certificado invalido o vencido"; en Configuracion > Certificado ARCA el estado es Vencido / No se puede leer.
+**Causas**: (1) certificado vencido; (2) el alias no tiene la relacion `wsfe` (o `ws_sr_padron_a13`) en ARCA; (3) la empresa esta en HOMO con el certificado de produccion (o al reves); (4) clave del pfx que no se puede descifrar (claves de Data Protection perdidas); (5) falta `AFIP/<CUIT>/LoginTemplate.xml` o la carpeta no es escribible (no puede guardar el ticket).
+**Fix**: abrir Configuracion > Certificado ARCA y ver el estado y el aviso de entorno; renovar con el tutorial de la misma pantalla (mientras tanto el certificado anterior queda como `*.bak` en `AFIP/<CUIT>/`). Para (5) verificar permisos de escritura del usuario del sitio sobre `AFIP\` (IIS) o el volumen `carnisys-afip` (Docker).
+
+## 2026-09-24 -- "Buscar en AFIP" (padron) no devuelve datos
+**Sintoma**: en el alta de un cliente el boton "Buscar en AFIP" avisa "El padron de ARCA no esta disponible" o "limite de consultas por hora".
+**Causas**: (1) no hay certificado de plataforma y la empresa tampoco tiene certificado; (2) el certificado de plataforma esta cortado por fallos seguidos (ver Administracion del sistema > Certificado de padron) y la empresa no tiene el suyo; (3) la empresa llego al tope `Afip:Padron:MaxPorHoraEmpresa`; (4) alias de la plataforma sin `ws_sr_padron_a13` autorizado o certificado vencido.
+**Fix**: el cliente siempre se puede cargar a mano. Para (1)-(2)-(4) revisar la pantalla de la plataforma (estado, "Probar") y renovar; el corte se levanta solo a los `MinutosCorte`. Interruptor de emergencia: `Afip:Padron:UsarPlataforma=false` (cada empresa vuelve a consultar con su propio certificado).
+
+## 2026-09-24 -- La campana de notificaciones del admin da error 500 (22001)
+**Sintoma**: `GET /Notificaciones/Resumen` devuelve 500 con "22001: el valor es demasiado largo para el tipo character varying(30)"; la campana no carga.
+**Causa**: `notificaciones.tipo` era `varchar(30)` y los tipos de aviso de borradores (`BORRADOR_INTERRUMPIDO_MOVIMIENTO` = 32, los de Embutidos 34-37) no entran; falla el INSERT de `BorradorGenericoPg.CrearNotificacionesInterrumpidas` cuando hay borradores activos con lineas sin latido.
+**Fix**: correr como `carnisys_admin` `DatosPostgres/DB-Migrations/20260924c-Alter_notificaciones_tipo_varchar60.sql` (`ALTER TABLE notificaciones ALTER COLUMN tipo TYPE varchar(60);`). No hace falta reiniciar. Verificar con `GET /Notificaciones/Resumen` (debe responder 200).
+
 ## La campanita del admin abría el modal "Salir sin guardar" en pantallas con datos cargados (2026-09-24)
 **Síntoma**: en una pantalla de alta/edición con el formulario "sucio", al tocar la campana de notificaciones aparecía "Salir sin guardar / ¿Está seguro de salir sin guardar?" en vez del desplegable.
 **Causa**: el guard de `WebCore/Views/Shared/_Layout.cshtml` intercepta todo `<a>` con `href` no vacío; la campana es `<a href="#" data-bs-toggle="dropdown">`, que no navega.
