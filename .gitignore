@@ -104,6 +104,14 @@ bld/
 # mini-spike AFIP). NUNCA debe trackearse una segunda copia del certificado.
 /WebCore/AFIP/
 
+# Certificados y claves privadas en cualquier lado (un pfx/key commiteado queda en el historial para
+# siempre -- ver docs/DECISIONS.md, 2026-09-24). El /AFIP/ de la raiz es el proyecto C#, no se ignora
+# entero: solo sus tickets WSAA (estado vivo) y los archivos de certificado.
+*.pfx
+*.p12
+*.key
+/AFIP/TicketAcceso*.txt
+
 # Salidas de "dotnet publish" para pruebas/deploy manual (WebCore-sm-test, WebCore-sl-publish, etc.):
 # ~700 MB de binarios regenerables y, ademas, cada WebCore.dll.config trae conexiones y SMTP reales
 # del servidor. Nunca deben trackearse (ver docs/07-operacion-y-soporte/despliegue-y-publicacion.md).
