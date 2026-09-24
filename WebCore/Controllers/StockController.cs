@@ -459,9 +459,10 @@ namespace WebCore.Controllers
 
             try
             {
-                _oCompraN.AddOrEditCompra(compra, compra.TipoCompra, null, lineas, false, null);
+                int idCompraGuardada = _oCompraN.AddOrEditCompra(compra, compra.TipoCompra, null, lineas, false, null);
                 SincronizarPesajesVinculados(compra, model.PesajesVinculadosIds, usuarioCreador);
                 TempData["StockDraftKeyToClear"] = model.DraftKey ?? "";
+                MarcarBorradorGenericoFinalizado(model.BorradorGenericoClientId, idCompraGuardada);
                 TempData["StockSuccessMessage"] = model.IdCompra > 0
                     ? "El movimiento de stock se guardó correctamente."
                     : "El movimiento de stock se registró correctamente.";
@@ -1846,6 +1847,29 @@ namespace WebCore.Controllers
         {
             int idUsuario = user != null ? user.Id : 0;
             return "stock_draft_" + idUsuario + "_" + idSucursal + "_" + tipoCompra + "_" + idCompra;
+        }
+
+        // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+        // Embutidos"): mejor esfuerzo, nunca debe romper el guardado real del movimiento de stock si
+        // falla (igual criterio que VentasController.FinalizarVenta con MarcarFinalizada). Sin AJAX en
+        // esta pantalla (POST tradicional + RedirectToAction): el clientId llega en el propio POST,
+        // no hay respuesta JSON donde el navegador pueda marcarlo el solo.
+        private void MarcarBorradorGenericoFinalizado(string clientIdTexto, int idCompraGuardada)
+        {
+            if (!WebCore.Helpers.BorradorGenericoSettings.Habilitado) return;
+            if (!Guid.TryParse(clientIdTexto, out Guid clientId) || clientId == Guid.Empty) return;
+
+            try
+            {
+                WebCore.Infrastructure.NegocioFactory.CrearBorradorGenerico(_empresa)
+                    .MarcarFinalizada(clientId, Entidades.BorradorGenerico.ModuloStock, idCompraGuardada);
+            }
+            catch (Exception)
+            {
+                // Best-effort: el movimiento de stock ya se guardo bien: no se rompe el flujo del
+                // usuario por un problema al cerrar el borrador (quedara "interrumpido", visible y
+                // recuperable/descartable desde "Ver borradores sin cerrar").
+            }
         }
 
         private static void RecalcularTotales(StockEditVm model)

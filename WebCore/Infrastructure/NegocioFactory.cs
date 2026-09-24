@@ -157,16 +157,28 @@ namespace WebCore.Infrastructure
             return new Negocio.UsuarioPasskey(repo);
         }
 
-        // Ventas en curso / advertencias del POS / notificaciones al admin: solo existe en Postgres, no
-        // hay rama SQL Server. Quien la llame debe haber chequeado antes PosBorradorSettings.Habilitado
-        // (que ya exige UsarPostgres).
+        // Ventas en curso del POS: Postgres (VentaBorradorPg) o SQL Server (Datos.VentaBorrador, tablas de
+        // Datos/DB-Procedures/20260923-Create_Borradores.sql). En SQL Server las notificaciones al admin y
+        // "producto sin agregar" NO existen todavia (etapa 2, ver docs/DECISIONS.md "Borradores en SQL
+        // Server"). Quien la llame debe haber chequeado antes PosBorradorSettings.Habilitado.
         public static Negocio.VentaBorrador CrearVentaBorrador(IEmpresaContext empresa)
         {
-            if (!UsarPostgres)
-                throw new InvalidOperationException("Las ventas en curso solo están disponibles con DataEngine=Postgres.");
-
-            var repo = new DatosPostgres.VentaBorradorPg(PgConnString, empresa.IdEmpresa);
+            Contratos.IVentaBorradorRepository repo = UsarPostgres
+                ? (Contratos.IVentaBorradorRepository)new DatosPostgres.VentaBorradorPg(PgConnString, empresa.IdEmpresa)
+                : new Datos.VentaBorrador(empresa);
             return new Negocio.VentaBorrador(repo);
+        }
+
+        // Borradores de Compras/Stock/Movimientos/Embutidos: Postgres (BorradorGenericoPg) o SQL Server
+        // (Datos.BorradorGenerico), mismo criterio que CrearVentaBorrador. Quien la llame debe haber
+        // chequeado antes BorradorGenericoSettings.Habilitado. Infraestructura separada de
+        // CrearVentaBorrador: ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/Embutidos".
+        public static Negocio.BorradorGenerico CrearBorradorGenerico(IEmpresaContext empresa)
+        {
+            Contratos.IBorradorGenericoRepository repo = UsarPostgres
+                ? (Contratos.IBorradorGenericoRepository)new DatosPostgres.BorradorGenericoPg(PgConnString, empresa.IdEmpresa)
+                : new Datos.BorradorGenerico(empresa);
+            return new Negocio.BorradorGenerico(repo);
         }
 
         public static Negocio.Empresa CrearEmpresa(IEmpresaContext empresa)

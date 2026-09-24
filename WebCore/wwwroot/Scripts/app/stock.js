@@ -58,6 +58,46 @@
             .replace(/'/g, '&#39;');
     }
 
+    // Alt+1..9 selecciona la fila N -- fila superior (DigitN) o numpad (NumpadN), matcheado por
+    // e.code (no e.key: en layouts no-US Alt puede alterar el caracter que reporta e.key).
+    // Duplicado a proposito en cada modal de seleccion (no hay modulo de utils compartido en este
+    // proyecto, mismo criterio que form-hotkeys.js/persona-buscar.js/compras.js).
+    function altDigitFromEvent(e) {
+        if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return null;
+
+        var m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code || '');
+        return m ? parseInt(m[1], 10) : null;
+    }
+
+    // En Windows, Alt+digito del NUMPAD dispara la composicion de "codigo Alt" del sistema
+    // operativo (mantener Alt, tipear digitos, soltar Alt inserta un caracter, ej. Alt+4 = "♦")
+    // -- independiente de que hayamos hecho preventDefault() en el keydown del digito, porque el
+    // caracter se compone a nivel de SO y se entrega recien al soltar Alt, contra lo que tenga el
+    // foco EN ESE MOMENTO (que ya puede ser otro campo si nuestro atajo cerro el modal). Bug real
+    // reportado 2026-09-23 (ver docs/DECISIONS.md): sin este guard, el caracter aparecia tipeado
+    // en el input que quedaba enfocado tras seleccionar con Alt+numero. armarSupresionCaracterAlt()
+    // se llama junto con el preventDefault() del digito, y el listener de mas abajo cancela el
+    // primer beforeinput/keypress que llegue mientras el guard esta activo, sea cual sea el
+    // elemento que termine con el foco.
+    var suprimirCaracterAlt = false;
+    var suprimirCaracterAltTimer = null;
+
+    function armarSupresionCaracterAlt() {
+        suprimirCaracterAlt = true;
+        clearTimeout(suprimirCaracterAltTimer);
+        suprimirCaracterAltTimer = setTimeout(function () { suprimirCaracterAlt = false; }, 500);
+    }
+
+    function cancelarSiSupresionActiva(e) {
+        if (!suprimirCaracterAlt) return;
+        suprimirCaracterAlt = false;
+        clearTimeout(suprimirCaracterAltTimer);
+        e.preventDefault();
+    }
+
+    document.addEventListener('beforeinput', cancelarSiSupresionActiva, true);
+    document.addEventListener('keypress', cancelarSiSupresionActiva, true);
+
     function formatNumber(value, decimals) {
         var places = typeof decimals === 'number' ? decimals : 3;
         return toNumber(value).toFixed(places);
@@ -96,7 +136,11 @@
             focusAgregarPendiente: false,
             sortKey: 'creado',
             sortDirection: 'asc',
-            searchText: ''
+            searchText: '',
+            // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+            // Embutidos"): instancia de BorradorGenerico.crear() cuando esta habilitado, o null
+            // cuando no (ahi se sigue con localStorage/CapturaRespaldo de siempre).
+            borradorGenerico: null
         };
     }
 
@@ -1691,43 +1735,63 @@
         }
     }
 
-    function saveDraft($form) {
+    function buildDraft($form) {
         var state = getState($form);
+        return {
+            idSucursal: $form.find('#IdSucursal').val(),
+            fechaCompra: $form.find('#FechaCompra').val(),
+            observaciones: $form.find('#Observaciones').val(),
+            idProveedor: $form.find('#IdProveedor').val(),
+            idPesajeAjustado: $form.find('#IdPesajeAjustado').val(),
+            proveedorNombre: $form.find('#razonSocial').val(),
+            proveedorCuit: ($form.find('#lblProveedorCuit').text() || '').replace(/^CUIT:\s*/i, ''),
+            compraVinculadaFecha: $form.find('#stockCompraVinculadaFecha').text() || '',
+            compraVinculadaProveedor: $form.find('#stockCompraVinculadaProveedor').text() || '',
+            compraVinculadaEstado: $form.find('#stockCompraVinculadaEstado').text() || '',
+            cantMedias: $form.find('#CantMedias').val(),
+            kgsMedias: $form.find('#KgsMedias').val(),
+            currentLine: {
+                id: $form.find('#txtProductoId').val(),
+                codigo: $form.find('#txtCodigoProducto').val(),
+                nombre: $form.find('#txtProductoNombre').val(),
+                pesable: $form.find('#txtProductoPesable').val(),
+                tipo: $form.find('#txtProductoTipo').val(),
+                promedio: $form.find('#txtProductoPromedio').val(),
+                cantidad: $form.find('#txtCantKgs').val(),
+                balanza: $form.find('#chkBalanzaLinea').is(':checked')
+            },
+            lineas: state.lineas
+        };
+    }
+
+    function saveDraft($form) {
         var key = $form.find('#DraftKey').val();
         if (!key || !window.localStorage) return;
-
         try {
-            window.localStorage.setItem(key, JSON.stringify({
-                idSucursal: $form.find('#IdSucursal').val(),
-                fechaCompra: $form.find('#FechaCompra').val(),
-                observaciones: $form.find('#Observaciones').val(),
-                idProveedor: $form.find('#IdProveedor').val(),
-                idPesajeAjustado: $form.find('#IdPesajeAjustado').val(),
-                proveedorNombre: $form.find('#razonSocial').val(),
-                proveedorCuit: ($form.find('#lblProveedorCuit').text() || '').replace(/^CUIT:\s*/i, ''),
-                compraVinculadaFecha: $form.find('#stockCompraVinculadaFecha').text() || '',
-                compraVinculadaProveedor: $form.find('#stockCompraVinculadaProveedor').text() || '',
-                compraVinculadaEstado: $form.find('#stockCompraVinculadaEstado').text() || '',
-                cantMedias: $form.find('#CantMedias').val(),
-                kgsMedias: $form.find('#KgsMedias').val(),
-                currentLine: {
-                    id: $form.find('#txtProductoId').val(),
-                    codigo: $form.find('#txtCodigoProducto').val(),
-                    nombre: $form.find('#txtProductoNombre').val(),
-                    pesable: $form.find('#txtProductoPesable').val(),
-                    tipo: $form.find('#txtProductoTipo').val(),
-                    promedio: $form.find('#txtProductoPromedio').val(),
-                    cantidad: $form.find('#txtCantKgs').val(),
-                    balanza: $form.find('#chkBalanzaLinea').is(':checked')
-                },
-                lineas: state.lineas
-            }));
+            window.localStorage.setItem(key, JSON.stringify(buildDraft($form)));
         } catch (err) {
         }
     }
 
+    // Respaldo por captura de pantalla (ver captura-respaldo.js): se omite cuando el borrador en
+    // servidor esta habilitado, es un reemplazo mejor del mismo caso de uso (ver docs/DECISIONS.md
+    // "Borradores de Compras/Stock/Movimientos/Embutidos").
+    function capturarRespaldo(etiqueta, $form) {
+        var state = getState($form);
+        if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) return;
+        window.CapturaRespaldo && window.CapturaRespaldo.capturar(etiqueta);
+    }
+
     function scheduleDraft($form) {
         var state = getState($form);
+
+        // Con el borrador en servidor habilitado, ese es el unico resguardo: no se escribe en
+        // localStorage (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/Embutidos").
+        if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+            state.borradorGenerico.programarGuardado();
+            return;
+        }
+
         window.clearTimeout(state.draftTimer);
         state.draftTimer = window.setTimeout(function () {
             saveDraft($form);
@@ -2043,17 +2107,18 @@
         var state = getState($form);
         var $modal = $(state.config.modalProductoSelector);
         var $tbody = $modal.find('.js-buscar-producto-tbody');
-        $tbody.html('<tr><td colspan="3" class="text-center text-muted">Cargando...</td></tr>');
+        $tbody.html('<tr><td colspan="4" class="text-center text-muted">Cargando...</td></tr>');
 
         $.getJSON(state.config.urls.buscarCorte, { q: filtro || '' })
             .done(function (items) {
                 if (!$.isArray(items) || !items.length) {
-                    $tbody.html('<tr><td colspan="3" class="text-center text-muted">Sin resultados.</td></tr>');
+                    $tbody.html('<tr><td colspan="4" class="text-center text-muted">Sin resultados.</td></tr>');
                     return;
                 }
 
                 var html = '';
-                $.each(items, function (_, item) {
+                $.each(items, function (index, item) {
+                    var numTexto = (index < 9) ? String(index + 1) : '–';
                     html += '<tr class="js-buscar-producto-row"'
                         + ' data-id="' + escapeHtml(item.id) + '"'
                         + ' data-codigo="' + escapeHtml(item.codigo) + '"'
@@ -2061,6 +2126,7 @@
                         + ' data-pesable="' + (item.pesable ? 'true' : 'false') + '"'
                         + ' data-tipo="' + escapeHtml(item.tipo || '') + '"'
                         + ' data-promedio="' + escapeHtml(item.promedio || 0) + '">'
+                        + '<td class="col-numero-cell d-none d-md-table-cell">' + numTexto + '</td>'
                         + '<td>' + escapeHtml(item.codigo) + '</td>'
                         + '<td>' + escapeHtml(item.nombre) + '</td>'
                         + '<td class="text-right text-muted">' + (item.pesable ? 'Pesable' : 'Unidad') + '</td>'
@@ -2070,7 +2136,7 @@
                 $tbody.html(html);
             })
             .fail(function () {
-                $tbody.html('<tr><td colspan="3" class="text-center text-danger">No se pudo cargar el listado.</td></tr>');
+                $tbody.html('<tr><td colspan="4" class="text-center text-danger">No se pudo cargar el listado.</td></tr>');
             });
     }
 
@@ -2099,8 +2165,10 @@
         $.get(state.config.urls.personaListar, { filtro: filtro || '' })
             .done(function (items) {
                 var html = '';
-                $.each(items || [], function (_, item) {
+                $.each(items || [], function (index, item) {
+                    var numTexto = (index < 9) ? String(index + 1) : '–';
                     html += '<tr class="fila-persona" data-id="' + item.idPersona + '" data-razon="' + escapeHtml(item.razonSocial) + '" data-cuit="' + escapeHtml(item.cuit || '') + '">'
+                        + '<td class="col-numero-cell d-none d-md-table-cell">' + numTexto + '</td>'
                         + '<td>' + escapeHtml(item.cuit || '') + '</td>'
                         + '<td>' + escapeHtml(item.razonSocial || '') + '</td>'
                         + '<td>' + escapeHtml(item.identificacion || '') + '</td>'
@@ -2233,7 +2301,7 @@
         // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
         // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
         window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
-        window.CapturaRespaldo && window.CapturaRespaldo.capturar('Stock');
+        capturarRespaldo('Stock', $form);
         clearProductoInputs($form);
         $form.find('#txtCodigoProducto').focus();
     }
@@ -2498,7 +2566,7 @@
             if (isNaN(index)) return;
             state.lineas.splice(index, 1);
             renderLineas($form);
-            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Stock');
+            capturarRespaldo('Stock', $form);
             scheduleDraft($form);
         });
 
@@ -2556,6 +2624,14 @@
                     kgsMedias.val(formatNumberForPost(kgsMediasRaw));
                 }
             }
+
+            // Sin AJAX en esta pantalla (POST tradicional + RedirectToAction): el clientId del
+            // borrador viaja en el propio POST para que StockController.Guardar lo marque
+            // FINALIZADA del lado del servidor (ver docs/DECISIONS.md "Borradores de
+            // Compras/Stock/Movimientos/Embutidos", MarcarBorradorGenericoFinalizado).
+            if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                $form.find('#BorradorGenericoClientId').val(state.borradorGenerico.getClientId() || '');
+            }
         });
 
         $form.closest('.stock-page').on('click.stock', '[data-action="restore-draft"]', function () {
@@ -2570,6 +2646,12 @@
             clearDraft($form);
         });
 
+        // Fuera de <form> (barra de arriba, junto a "Volver"): igual que restore-draft/clear-draft de
+        // arriba, se delega desde .stock-page en vez de $form, que solo ve clics de sus descendientes.
+        $form.closest('.stock-page').on('click.stock', '#btnVerBorradoresStock', function () {
+            state.borradorGenerico && state.borradorGenerico.abrirModalBorradores();
+        });
+
         $(document)
             .on('input.stock', state.config.modalProductoSelector + ' .js-buscar-producto-input', function () {
                 loadProductsModal($form, $(this).val() || '');
@@ -2582,12 +2664,23 @@
                 selectProductFromModal($form, $(this));
             })
             .on('keydown.stock', state.config.modalProductoSelector + ' .js-buscar-producto-input', function (e) {
-                if (e.key !== 'Enter') return;
-                e.preventDefault();
-                var $modal = $(state.config.modalProductoSelector);
-                var $target = $modal.find('.js-buscar-producto-row.is-selected').first();
-                if (!$target.length) $target = $modal.find('.js-buscar-producto-row').first();
-                selectProductFromModal($form, $target);
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var $modal = $(state.config.modalProductoSelector);
+                    var $target = $modal.find('.js-buscar-producto-row.is-selected').first();
+                    if (!$target.length) $target = $modal.find('.js-buscar-producto-row').first();
+                    selectProductFromModal($form, $target);
+                    return;
+                }
+
+                var digit = altDigitFromEvent(e);
+                if (digit != null) {
+                    e.preventDefault();
+                    armarSupresionCaracterAlt();
+                    var $modalDigit = $(state.config.modalProductoSelector);
+                    var $rowDigit = $modalDigit.find('.js-buscar-producto-row').eq(digit - 1);
+                    if ($rowDigit.length) selectProductFromModal($form, $rowDigit);
+                }
             })
             .on('input.stock', '#filtroPersona', function () {
                 cargarProveedores($form, $(this).val() || '');
@@ -2607,10 +2700,20 @@
                 scheduleDraft($form);
             })
             .on('keydown.stock', '#filtroPersona', function (e) {
-                if (e.key !== 'Enter') return;
-                e.preventDefault();
-                var $target = $('#tablaPersonas tr.fila-persona.is-selected').first();
-                if (!$target.length) $target = $('#tablaPersonas tr.fila-persona:first');
+                var $target;
+
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    $target = $('#tablaPersonas tr.fila-persona.is-selected').first();
+                    if (!$target.length) $target = $('#tablaPersonas tr.fila-persona:first');
+                } else {
+                    var digit = altDigitFromEvent(e);
+                    if (digit == null) return;
+                    e.preventDefault();
+                    armarSupresionCaracterAlt();
+                    $target = $('#tablaPersonas tr.fila-persona').eq(digit - 1);
+                }
+
                 if (!$target.length) return;
                 setProveedor($form, {
                     id: $target.data('id'),
@@ -2666,6 +2769,44 @@
         });
     }
 
+    // Arma la instancia de borrador en servidor (ver borrador-generico.js) a partir del config que
+    // inyecta la vista. null si esta deshabilitado (SQL Server / feature apagado): ahi
+    // scheduleDraft/capturarRespaldo siguen con localStorage/CapturaRespaldo de siempre.
+    function crearBorradorGenerico($form, cfgBorrador) {
+        if (!cfgBorrador || cfgBorrador.habilitado !== true) return null;
+
+        return window.BorradorGenerico.crear({
+            modulo: cfgBorrador.modulo,
+            habilitado: true,
+            latidoSegundos: cfgBorrador.latidoSegundos,
+            urls: cfgBorrador.urls,
+            obtenerIdSucursal: function () { return parseInt($form.find('#IdSucursal').val(), 10) || cfgBorrador.idSucursal || 0; },
+            obtenerIdRegistro: function () { return cfgBorrador.idRegistro || null; },
+            obtenerIdOperador: function () { return cfgBorrador.idOperador || 0; },
+            obtenerNombreOperador: function () { return cfgBorrador.nombreOperador || ''; },
+            obtenerSnapshot: function () { return buildDraft($form); },
+            obtenerCantLineas: function () { return (getState($form).lineas || []).filter(function (l) { return !!l; }).length; },
+            obtenerResumen: function () {
+                var state = getState($form);
+                var proveedor = ($form.find('#razonSocial').val() || '').trim();
+                var lineas = (state.lineas || []).filter(function (l) { return !!l; }).length;
+                var partes = [];
+                if (proveedor) partes.push(proveedor);
+                partes.push(lineas + (lineas === 1 ? ' línea' : ' líneas'));
+                return partes.join(' — ');
+            },
+            hayFormularioCargado: function () { return (getState($form).lineas || []).some(function (l) { return !!l; }); },
+            finalizando: function () { return false; },
+            aplicarPayload: function (payload) { applyDraft($form, payload); },
+            renderizarLineas: function (payload) {
+                var lineas = (payload && payload.lineas) || [];
+                return lineas.filter(function (l) { return !!l; }).map(function (l) {
+                    return { codigo: l.codigo, producto: l.producto, cantidad: formatNumber(l.cantKgs) + ' kg' };
+                });
+            }
+        });
+    }
+
     window.StockUI = window.StockUI || {
         init: function (config) {
             var $form = $(config && config.formSelector ? config.formSelector : '#formStock');
@@ -2673,6 +2814,7 @@
 
             var state = buildState(config || {});
             state.lineas = $.isArray(config.initialLines) ? $.map(config.initialLines, function (linea) { return normalizeLinea(linea); }) : [];
+            state.borradorGenerico = crearBorradorGenerico($form, config.borradorGenerico);
             setState($form, state);
             renderLineas($form);
             bindEvents($form);
@@ -2685,7 +2827,10 @@
             autoResizeObservaciones($form);
             actualizarEstadoAjustePesaje($form, $.trim($('#stockEstadoAjusteTexto').text() || ''));
             syncPrimaryAction($form);
-            if (readDraft($form)) {
+
+            if (state.borradorGenerico) {
+                state.borradorGenerico.actualizarBadgeInicial();
+            } else if (readDraft($form)) {
                 showDraftBanner($form);
             }
 

@@ -1,11 +1,19 @@
 ﻿@model WebCore.Models.ElaboradoRapidoEditVm
 @using System.Collections.Generic
 @using Entidades
+@inject WebCore.Services.IUsuarioSesionService Sesion
 
 @{
     ViewBag.Title = Model.EsDesarme ? "Desarme de elaborado" : "Ingreso rapido";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     bool esAnulado = string.Equals(Model.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
+
+    // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+    // Embutidos"): esta pantalla no tenia ningun resguardo (ni local ni servidor) -- se cubre solo
+    // con el borrador en servidor cuando esta habilitado (Postgres); en SQL Server sigue sin nada.
+    bool borradorGenericoHabilitado = WebCore.Helpers.BorradorGenericoSettings.Habilitado;
+    var modalBorradoresData = new ViewDataDictionary(ViewData);
+    modalBorradoresData["TituloBorradoresGenerico"] = "Embutidos sin guardar";
 }
 
 <div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="ingreso-rapido-edicion">
@@ -15,6 +23,13 @@
         <a class="btn btn-outline-secondary mb-2" href="@Url.Action(Model.EsDesarme ? "Desarme" : "IngresoRapido", "Elaborados")">
             <i class="fas fa-arrow-left mr-1"></i> Volver
         </a>
+        @if (borradorGenericoHabilitado)
+        {
+            <button type="button" class="btn btn-outline-secondary mb-2" id="btnVerBorradoresElaborados">
+                <i class="fas fa-clock-rotate-left mr-1"></i> Embutidos sin guardar
+                <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
+            </button>
+        }
         @if (esAnulado)
         {
             <span class="badge badge-danger px-3 py-2 text-uppercase">Anulado</span>
@@ -174,6 +189,10 @@
                                                 <th>Ingrediente</th>
                                                 <th class="d-none">%</th>
                                                 <th class="text-right" style="width:120px;">Kgs</th>
+                                                @if (Model.EsAdmin)
+                                                {
+                                                    <th class="text-right d-none" style="width:190px;" id="colCostoRapido">Costo</th>
+                                                }
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -185,6 +204,45 @@
                                     <span>Total formula</span>
                                     <strong id="lblTotalFormulaRapida">0.000</strong>
                                 </div>
+
+                                @if (Model.EsAdmin)
+                                {
+                                    <hr />
+                                    <div class="custom-control custom-switch mb-2">
+                                        <input type="checkbox" class="custom-control-input" id="chkMostrarCosteoRapido" />
+                                        <label class="custom-control-label" for="chkMostrarCosteoRapido">Mostrar costeo</label>
+                                    </div>
+                                    <div id="bloqueCosteoRapido" class="d-none">
+                                        <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Costeo de producción</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Costo total</span>
+                                            <strong id="lblCostoTotalRapido">$ 0,00</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Costo por kg/unidad</span>
+                                            <strong id="lblCostoUnitarioRapido">$ 0,00</strong>
+                                        </div>
+                                        <div class="form-group mt-2 mb-2">
+                                            <label for="txtMargenRapido" class="mb-1">Margen sobre costo (%)</label>
+                                            <input type="text" id="txtMargenRapido" class="form-control form-control-sm solo-decimal" inputmode="decimal" autocomplete="off" />
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Precio actual del producto</span>
+                                            <strong id="lblPrecioActualRapido">$ 0,00</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Precio de venta sugerido</span>
+                                            <strong id="lblPrecioVentaSugeridoRapido">$ 0,00</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Diferencia</span>
+                                            <strong id="lblDiferenciaPrecioRapido">$ 0,00 (0,00%)</strong>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm btn-block mt-2" id="btnAplicarPrecioRapido" disabled>
+                                            <i class="fas fa-tag mr-1"></i> Actualizar precio del producto
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -227,6 +285,10 @@
 
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+@if (borradorGenericoHabilitado)
+{
+    @Html.Partial("~/Views/Shared/_ModalBorradoresGenerico.cshtml", modalBorradoresData)
+}
 
 <style>
     .js-auto-receta {
@@ -251,7 +313,30 @@
             balanzaUrl: 'http://localhost:5100/peso',
             esAnulado: @(esAnulado ? "true" : "false"),
             puedeAnular: @(Model.PuedeAnular ? "true" : "false"),
-            initialFormula: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Formula ?? new List<WebCore.Models.ElaboradoFormulaLineaVm>()))
+            initialFormula: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Formula ?? new List<WebCore.Models.ElaboradoFormulaLineaVm>())),
+            borradorGenerico: {
+                habilitado: @(borradorGenericoHabilitado ? "true" : "false"),
+                modulo: 'EMBUTIDO_RAPIDO',
+                idSucursal: @Model.IdSucursal,
+                idRegistro: @Model.IdEmbutido,
+                idOperador: @Sesion.UsuarioActual.Id,
+                nombreOperador: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Sesion.UsuarioActual.Nombre)),
+                elaboradoNombre: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Elaborado ?? "")),
+                latidoSegundos: @WebCore.Helpers.BorradorGenericoSettings.LatidoSegundos,
+                urls: {
+                    guardar: '@Url.Action("GuardarBorrador", "BorradoresGenerico")',
+                    evento: '@Url.Action("EventoBorrador", "BorradoresGenerico")',
+                    listar: '@Url.Action("ListarBorradores", "BorradoresGenerico")',
+                    recuperar: '@Url.Action("RecuperarBorrador", "BorradoresGenerico")',
+                    descartar: '@Url.Action("DescartarBorrador", "BorradoresGenerico")',
+                    marcarFinalizado: '@Url.Action("MarcarFinalizado", "BorradoresGenerico")'
+                }
+            },
+            // Costeo (efimero, solo Usuario.Admin) -- pedido 2026-09-21.
+            esAdmin: @(Model.EsAdmin ? "true" : "false"),
+            precioActualElaborado: @Model.PrecioActualElaborado.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            obtenerPrecioCompraUrl: '@Url.Action("ObtenerPrecioCompra", "Elaborados")',
+            editPrecioCorteUrl: '@Url.Action("EditPrecioCorte", "Productos")'
         };
         window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
@@ -260,13 +345,16 @@
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>
         // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en la cantidad a elaborar/desarmar.
-        window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#CantidadRapida');
+        // Los selectores de costeo (margen, precio por linea) se agregan aca porque las celdas de
+        // precio se crean dinamicamente en renderFormula().
+        window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#CantidadRapida, #txtMargenRapido, .js-precio-costo-produccion');
     </script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

@@ -1,6 +1,7 @@
 ﻿@model WebCore.Models.MovimientoEditVm
 @using System.Collections.Generic
 @using Entidades
+@inject WebCore.Services.IUsuarioSesionService Sesion
 
 @{
     ViewBag.Title = Model.EsEdicion ? "Modificar Movimiento" : "Nuevo Movimiento";
@@ -10,6 +11,13 @@
     modalProductoData["ApiUrl"] = Url.Action("BuscarProducto", "Movimientos");
     modalProductoData["Titulo"] = "Buscar producto para Movimiento";
     modalProductoData["MostrarPrecio"] = "false";
+
+    // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+    // Embutidos"): cuando esta habilitado (Postgres) reemplaza al borrador local (localStorage) y al
+    // respaldo por captura de pantalla de esta pantalla.
+    bool borradorGenericoHabilitado = WebCore.Helpers.BorradorGenericoSettings.Habilitado;
+    var modalBorradoresData = new ViewDataDictionary(ViewData);
+    modalBorradoresData["TituloBorradoresGenerico"] = "Movimientos sin guardar";
 }
 
 <div class="container-fluid px-2 px-md-3 movimiento-page movimiento-form-compact" data-movimiento-page="1">
@@ -27,6 +35,13 @@
         {
             <button type="button" class="btn btn-outline-primary" id="btnImprimirMovimiento">
                 <i class="fas fa-print mr-1"></i> Imprimir
+            </button>
+        }
+        @if (borradorGenericoHabilitado)
+        {
+            <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresMovimientos">
+                <i class="fas fa-clock-rotate-left mr-1"></i> Movimientos sin guardar
+                <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
             </button>
         }
     </div>
@@ -340,6 +355,10 @@
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
 @Html.Partial("~/Views/Movimientos/_ModalPostMovimiento.cshtml")
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+@if (borradorGenericoHabilitado)
+{
+    @Html.Partial("~/Views/Shared/_ModalBorradoresGenerico.cshtml", modalBorradoresData)
+}
 
 <style>
     .movimiento-page .movimiento-panel-card {
@@ -667,9 +686,27 @@
             redirectUrl: '@Url.Action("Index", "Movimientos")',
             pdfUrl: '@(Model.EsEdicion ? Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             imprimirUrl: '@(Model.EsEdicion ? Url.Action("ImprimirTicket", "Movimientos", new { id = Model.IdMovimiento }) : "")',
+            imprimirPayloadUrl: '@(Model.EsEdicion ? Url.Action("ImprimirTicketPayload", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             whatsappTexto: '@(Model.EsEdicion ? System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode("Movimiento " + Model.IdMovimiento + " - " + Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }, Context.Request.Scheme)) : "")',
             balanzaUrl: 'http://localhost:5100/peso',
-            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false")
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
+            borradorGenerico: {
+                habilitado: @(borradorGenericoHabilitado ? "true" : "false"),
+                modulo: 'MOVIMIENTO',
+                idSucursal: @Model.IdSucursalOrigen,
+                idRegistro: @Model.IdMovimiento,
+                idOperador: @Sesion.UsuarioActual.Id,
+                nombreOperador: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Sesion.UsuarioActual.Nombre)),
+                latidoSegundos: @WebCore.Helpers.BorradorGenericoSettings.LatidoSegundos,
+                urls: {
+                    guardar: '@Url.Action("GuardarBorrador", "BorradoresGenerico")',
+                    evento: '@Url.Action("EventoBorrador", "BorradoresGenerico")',
+                    listar: '@Url.Action("ListarBorradores", "BorradoresGenerico")',
+                    recuperar: '@Url.Action("RecuperarBorrador", "BorradoresGenerico")',
+                    descartar: '@Url.Action("DescartarBorrador", "BorradoresGenerico")',
+                    marcarFinalizado: '@Url.Action("MarcarFinalizado", "BorradoresGenerico")'
+                }
+            }
         };
         window.movimientoLineasIniciales = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas ?? new List<WebCore.Models.MovimientoLineaVm>()));
         window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
@@ -727,6 +764,7 @@
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
     <script>
         // Solo en mobile: el aviso de validacion queda entre codigo y
         // producto (a la vista del usuario, en vez de arriba de todo,
@@ -735,7 +773,10 @@
             "#movimientoWarning",
             ".movimiento-col-codigo"
         );
-        window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+        @if (!borradorGenericoHabilitado)
+        {
+            @:window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+        }
     </script>
     <script>
         // Escanear codigo de barra: pisa #txtCodigoProducto y dispara el mismo

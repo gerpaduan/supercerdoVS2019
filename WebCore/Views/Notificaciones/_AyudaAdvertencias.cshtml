@@ -1,0 +1,29 @@
+@model WebCore.Models.DetalleProductoSinAgregarVm
+
+@* Ayuda para el admin: como funcionan las advertencias "producto pesado sin agregar". Los numeros salen de la
+   configuracion real (PosBorradorSettings), asi el texto nunca queda desactualizado. Ver docs/DECISIONS.md
+   "Ventas en curso: borrador en servidor y advertencias del POS". *@
+<details class="mb-3 advertencias-ayuda">
+    <summary class="font-weight-bold" style="cursor:pointer;"><i class="fas fa-circle-info mr-1"></i> ¿Cómo funcionan estas advertencias?</summary>
+    <div class="small mt-2">
+        <p class="mb-2">
+            El POS registra una advertencia cuando un <b>producto pesado queda en pantalla con cantidad estable más de
+            @Model.SegundosUmbral segundos</b> (el cliente ve kilos y total) y después <b>sale sin agregarse al carrito</b>:
+            se borra el código, se cambia por otro, la cantidad vuelve a 0 (más de @Model.SegundosCantidadCero s),
+            se aprieta Finalizar sin agregarlo o se cierra la pestaña.
+        </p>
+        <ul class="mb-2 pl-3">
+            <li><b>El cajero no se entera</b>: no hay aviso ni bloqueo en su pantalla.</li>
+            <li>Las horas (tipeado y borrado) las fija el <b>servidor</b>, no la PC del cajero.</li>
+            <li>Se agrupan por <b>cajero y día</b>: una sola notificación que se reabre con cada advertencia nueva.</li>
+            <li><b>Puede haber falsos positivos</b>: un cliente que se arrepiente, un código equivocado o una consulta de precio
+                también la disparan. Lo que importa es el patrón (mirá los últimos 7 y 30 días).</li>
+            <li>Nada se borra: cada advertencia y su revisión quedan como historial.</li>
+        </ul>
+        <p class="mb-0">
+            <b>Qué hacer:</b> revisá cada advertencia y marcala <span class="badge bg-success">Justificada</span> o
+            <span class="badge bg-danger">Sospechosa</span> (con un comentario si querés); cuando termines, <b>Marcar atendida</b>
+            cierra la notificación. Si el mismo cajero genera otra advertencia ese día, se reabre sola.
+        </p>
+    </div>
+</details>

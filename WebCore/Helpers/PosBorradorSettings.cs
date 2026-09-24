@@ -19,14 +19,26 @@ namespace WebCore.Helpers
         private const int SegundosProductoSinAgregarDefault = 7;
         private const int SegundosCantidadCeroConfirmacionDefault = 3;
 
-        // Habilitado solo si el motor es Postgres (las tablas no existen en SQL Server) y la clave no
-        // esta en "false". Por defecto, prendido.
+        // En Postgres: prendido por defecto (la clave lo apaga con "false"). En SQL Server: APAGADO por
+        // defecto (opt-in con PosBorrador:Habilitado=true) porque hay que haber corrido antes
+        // Datos/DB-Procedures/20260923-Create_Borradores.sql en ese servidor; con la clave prendida y las
+        // tablas sin crear, cada autoguardado fallaria.
         public static bool Habilitado =>
-            NegocioFactory.UsarPostgres && LeerBool("PosBorrador:Habilitado", true);
+            LeerBool("PosBorrador:Habilitado", NegocioFactory.UsarPostgres);
+
+        // Notificaciones al admin (campana, feed de Actividades con avisos, detalle) y "producto sin
+        // agregar": solo existen en Postgres (tablas notificaciones/ventaproductosinagregar). En SQL Server
+        // son etapa 2: los repositorios de Datos/ las tienen como no-op y estos consumidores se apagan.
+        public static bool SoportaNotificaciones => NegocioFactory.UsarPostgres;
+
+        // La campana del admin y todo lo que cuelga de notificaciones: ventas en curso o borradores
+        // genericos habilitados Y motor con tabla notificaciones. Ver SoportaNotificaciones.
+        public static bool CampanaAdminHabilitada =>
+            SoportaNotificaciones && (Habilitado || BorradorGenericoSettings.Habilitado);
 
         // La advertencia de producto sin agregar se puede apagar sola, sin apagar el resguardo de ventas.
         public static bool AdvertenciaProductoSinAgregarHabilitada =>
-            Habilitado && LeerBool("PosBorrador:AdvertenciaProductoSinAgregarHabilitada", true);
+            Habilitado && SoportaNotificaciones && LeerBool("PosBorrador:AdvertenciaProductoSinAgregarHabilitada", true);
 
         // Cada cuantos segundos el POS avisa al servidor que la venta sigue viva.
         public static int LatidoSegundos => LeerEntero("PosBorrador:LatidoSegundos", LatidoSegundosDefault, 5, 300);

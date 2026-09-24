@@ -654,9 +654,10 @@
                         <ul class="navbar-nav ml-auto">
                             @* Campana de notificaciones del admin (ventas en curso interrumpidas/descartadas, cierres de
                                caja con venta en curso y advertencias de "producto pesado sin agregar"). Solo admin y solo
-                               con Postgres; la llena Scripts/app/advertencias-admin.js. Ver docs/DECISIONS.md "Ventas en
-                               curso: borrador en servidor y advertencias del POS". *@
-                            @if (esAdmin && WebCore.Helpers.PosBorradorSettings.Habilitado)
+                               con Postgres (SQL Server no tiene tabla de notificaciones todavia: etapa 2, ver
+                               PosBorradorSettings.SoportaNotificaciones); la llena Scripts/app/advertencias-admin.js. Ver
+                               docs/DECISIONS.md "Ventas en curso: borrador en servidor y advertencias del POS". *@
+                            @if (esAdmin && WebCore.Helpers.PosBorradorSettings.CampanaAdminHabilitada)
                             {
                                 <li class="nav-item dropdown no-arrow d-flex align-items-center">
                                     <a class="nav-link topbar-icon-btn position-relative" href="#" id="campanaNotificaciones" role="button"

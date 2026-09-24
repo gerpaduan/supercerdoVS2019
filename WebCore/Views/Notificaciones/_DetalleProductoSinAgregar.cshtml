@@ -1,0 +1,126 @@
+@model WebCore.Models.DetalleProductoSinAgregarVm
+@using System.Globalization
+@using WebCore.Helpers
+
+@* Detalle de las advertencias "producto pesado sin agregar" de un cajero en un dia (admin). Se carga dentro del
+   modal global #modalAdvertenciaDetalle del _Layout; los botones los maneja Scripts/app/advertencias-admin.js
+   (delegacion de eventos, el HTML se inserta con innerHTML). Ver docs/DECISIONS.md "Ventas en curso". *@
+
+@{
+    var es = new CultureInfo("es-AR");
+    decimal importeDia = Model.Eventos.Sum(e => e.Importe);
+    bool hayPendiente = Model.Notificacion != null && !Model.Notificacion.EstaAtendida;
+}
+
+<div class="mb-2">
+    <h5 class="mb-1"><i class="fas fa-triangle-exclamation text-warning mr-1"></i> Productos pesados sin agregar — @Model.NombreOperador</h5>
+    <div class="text-muted small">Día @Model.Dia.ToString("dd/MM/yyyy", es)</div>
+</div>
+
+<div class="row text-center mb-3">
+    <div class="col-4">
+        <div class="border rounded p-2">
+            <div class="small text-muted">Ese día</div>
+            <div class="h5 mb-0">@Model.Eventos.Count</div>
+            <div class="small">$ @importeDia.ToString("N2", es)</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="border rounded p-2">
+            <div class="small text-muted">Últimos 7 días</div>
+            <div class="h5 mb-0">@Model.Ultimos7Dias.Cantidad</div>
+            <div class="small">$ @Model.Ultimos7Dias.Importe.ToString("N2", es)</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="border rounded p-2">
+            <div class="small text-muted">Últimos 30 días</div>
+            <div class="h5 mb-0">@Model.Ultimos30Dias.Cantidad</div>
+            <div class="small">$ @Model.Ultimos30Dias.Importe.ToString("N2", es)</div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AyudaAdvertencias", Model)
+
+@if (Model.Eventos.Count == 0)
+{
+    <div class="alert alert-info mb-0">No hay advertencias de este cajero en ese día.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-nowrap">Tipeado → borrado</th>
+                    <th>Producto</th>
+                    <th class="text-end">Kg</th>
+                    <th class="text-end">Importe</th>
+                    <th class="text-nowrap">En pantalla</th>
+                    <th>Cómo terminó</th>
+                    <th style="min-width:230px;">Revisión</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Eventos)
+                {
+                    <tr data-advertencia-id="@e.Id">
+                        <td class="text-nowrap">
+                            @e.Inicio.ToString("dd/MM/yyyy HH:mm:ss", es)<br />
+                            <span class="text-muted">→</span> @e.Fin.ToString("HH:mm:ss", es)
+                        </td>
+                        <td>
+                            @e.Producto
+                            <div class="small text-muted">Cód. @e.Codigo · $ @e.PrecioKg.ToString("N2", es)/kg · @AdvertenciasTextos.Origen(e.Origen)</div>
+                        </td>
+                        <td class="text-end">@e.CantidadKg.ToString("N3", es)</td>
+                        <td class="text-end">$ @e.Importe.ToString("N2", es)</td>
+                        <td class="text-nowrap">@e.SegundosEnPantalla s <span class="small text-muted">(@e.SegundosEstables s estable)</span></td>
+                        <td>@AdvertenciasTextos.Motivo(e.Motivo)</td>
+                        <td>
+                            <div class="js-revision-estado small mb-1">
+                                @if (e.Revision != null)
+                                {
+                                    <span class="badge @(e.Revision == "SOSPECHOSA" ? "bg-danger" : "bg-success")">@AdvertenciasTextos.Revision(e.Revision)</span>
+                                    <span class="text-muted">por @e.NombreRevisor, @(e.RevisadaEn.HasValue ? e.RevisadaEn.Value.ToString("dd/MM/yyyy HH:mm", es) : "")</span>
+                                    @if (!string.IsNullOrWhiteSpace(e.ComentarioRevision))
+                                    {
+                                        <div class="fst-italic">“@e.ComentarioRevision”</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Sin revisar</span>
+                                }
+                            </div>
+                            <div class="d-flex" style="gap:.25rem;">
+                                <select class="form-select form-select-sm js-revision-valor" style="max-width:120px;">
+                                    <option value="JUSTIFICADA" selected="@(e.Revision == "JUSTIFICADA")">Justificada</option>
+                                    <option value="SOSPECHOSA" selected="@(e.Revision == "SOSPECHOSA")">Sospechosa</option>
+                                </select>
+                                <input type="text" class="form-control form-control-sm js-revision-comentario" maxlength="500" placeholder="Comentario (opcional)" value="@e.ComentarioRevision" />
+                                <button type="button" class="btn btn-sm btn-outline-primary js-revisar-producto" title="Guardar revisión"><i class="fas fa-check"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (hayPendiente)
+{
+    <div class="text-end mt-3">
+        <button type="button" class="btn btn-success js-atender-notificacion" data-id="@Model.Notificacion!.Id">
+            <i class="fas fa-check-double mr-1"></i> Marcar atendida
+        </button>
+    </div>
+}
+else if (Model.Notificacion != null)
+{
+    <div class="text-muted small mt-3">
+        Atendida por @Model.Notificacion.NombreAtendidaPor el @(Model.Notificacion.AtendidaEn.HasValue ? Model.Notificacion.AtendidaEn.Value.ToString("dd/MM/yyyy HH:mm", es) : "").
+    </div>
+}

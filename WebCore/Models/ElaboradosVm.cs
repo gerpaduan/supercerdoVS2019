@@ -101,6 +101,10 @@ namespace WebCore.Models
         public string ActualizadoPor { get; set; }
         public float TotalPorcentaje { get; set; }
         public float TotalUnidades { get; set; }
+        // Costeo (efimero, no se persiste): visible solo para Usuario.Admin. Se recalcula en el
+        // cliente a partir del precio de compra/venta de cada ingrediente, ver EditarFormula.cshtml.
+        public bool EsAdmin { get; set; }
+        public float PrecioActualElaborado { get; set; }
         public List<ElaboradoFormulaEditLineaVm> Lineas { get; set; }
         public List<ElaboradoTabVm> Tabs { get; set; }
     }
@@ -183,6 +187,9 @@ namespace WebCore.Models
         public string Receta { get; set; }
         public float Cantidad { get; set; }
         public bool EsPesableElaborado { get; set; }
+        // Costeo (efimero, no se persiste): visible solo para Usuario.Admin, ver EditarIngresoRapido.cshtml.
+        public bool EsAdmin { get; set; }
+        public float PrecioActualElaborado { get; set; }
         public List<ElaboradoFormulaLineaVm> Formula { get; set; }
         public List<ElaboradoTabVm> Tabs { get; set; }
     }
@@ -219,6 +226,9 @@ namespace WebCore.Models
         public string Elaborado { get; set; }
         public string Receta { get; set; }
         public bool IngresoRapidoSugerido { get; set; }
+        // Costeo (efimero, no se persiste): visible solo para Usuario.Admin, ver Carga.cshtml.
+        public bool EsAdmin { get; set; }
+        public float PrecioActualElaborado { get; set; }
 
         public List<ElaboradoCargaLineaVm> Lineas { get; set; }
         public List<ElaboradoFormulaLineaVm> Formula { get; set; }

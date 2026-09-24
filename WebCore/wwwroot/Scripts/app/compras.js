@@ -24,6 +24,46 @@
             .replace(/'/g, '&#39;');
     }
 
+    // Alt+1..9 selecciona la fila N -- fila superior (DigitN) o numpad (NumpadN), matcheado por
+    // e.code (no e.key: en layouts no-US Alt puede alterar el caracter que reporta e.key).
+    // Duplicado a proposito en cada modal de seleccion (no hay modulo de utils compartido en este
+    // proyecto, mismo criterio que form-hotkeys.js/persona-buscar.js).
+    function altDigitFromEvent(e) {
+        if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return null;
+
+        var m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code || '');
+        return m ? parseInt(m[1], 10) : null;
+    }
+
+    // En Windows, Alt+digito del NUMPAD dispara la composicion de "codigo Alt" del sistema
+    // operativo (mantener Alt, tipear digitos, soltar Alt inserta un caracter, ej. Alt+4 = "♦")
+    // -- independiente de que hayamos hecho preventDefault() en el keydown del digito, porque el
+    // caracter se compone a nivel de SO y se entrega recien al soltar Alt, contra lo que tenga el
+    // foco EN ESE MOMENTO (que ya puede ser otro campo si nuestro atajo cerro el modal). Bug real
+    // reportado 2026-09-23 (ver docs/DECISIONS.md): sin este guard, el caracter aparecia tipeado
+    // en el input que quedaba enfocado tras seleccionar con Alt+numero. armarSupresionCaracterAlt()
+    // se llama junto con el preventDefault() del digito, y el listener de mas abajo cancela el
+    // primer beforeinput/keypress que llegue mientras el guard esta activo, sea cual sea el
+    // elemento que termine con el foco.
+    var suprimirCaracterAlt = false;
+    var suprimirCaracterAltTimer = null;
+
+    function armarSupresionCaracterAlt() {
+        suprimirCaracterAlt = true;
+        clearTimeout(suprimirCaracterAltTimer);
+        suprimirCaracterAltTimer = setTimeout(function () { suprimirCaracterAlt = false; }, 500);
+    }
+
+    function cancelarSiSupresionActiva(e) {
+        if (!suprimirCaracterAlt) return;
+        suprimirCaracterAlt = false;
+        clearTimeout(suprimirCaracterAltTimer);
+        e.preventDefault();
+    }
+
+    document.addEventListener('beforeinput', cancelarSiSupresionActiva, true);
+    document.addEventListener('keypress', cancelarSiSupresionActiva, true);
+
     function formatNumber(value) {
         return toNumber(value).toFixed(2);
     }
@@ -60,7 +100,12 @@
             personaTimer: null,
             productoTimer: null,
             draftTimer: null,
-            loadingPersonaModal: false
+            loadingPersonaModal: false,
+            // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+            // Embutidos"): instancia de BorradorGenerico.crear() cuando esta habilitado (Postgres), o
+            // null cuando no (SQL Server / feature apagado) -- ahi se sigue con localStorage/
+            // CapturaRespaldo de siempre, sin cambios.
+            borradorGenerico: null
         };
     }
 
@@ -578,10 +623,28 @@
 
     function scheduleDraft($form) {
         var state = getState($form);
+
+        // Con el borrador en servidor habilitado, ese es el unico resguardo (ver §3 de
+        // docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/Embutidos"): no se escribe en
+        // localStorage. Sin el (SQL Server o feature apagado), sigue exactamente el comportamiento de
+        // siempre.
+        if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+            state.borradorGenerico.programarGuardado();
+            return;
+        }
+
         window.clearTimeout(state.draftTimer);
         state.draftTimer = window.setTimeout(function () {
             saveDraft($form);
         }, 250);
+    }
+
+    // Respaldo por captura de pantalla (ver captura-respaldo.js): se omite cuando el borrador en
+    // servidor esta habilitado, es un reemplazo mejor del mismo caso de uso (ver docs/DECISIONS.md).
+    function capturarRespaldo(etiqueta, $form) {
+        var state = getState($form);
+        if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) return;
+        window.CapturaRespaldo && window.CapturaRespaldo.capturar(etiqueta);
     }
 
     function applyDraft($form, draft) {
@@ -628,8 +691,10 @@
         $.get(state.config.urls.personaListar, { filtro: filtro || '' })
             .done(function (items) {
                 var html = '';
-                $.each(items || [], function (_, item) {
+                $.each(items || [], function (index, item) {
+                    var numTexto = (index < 9) ? String(index + 1) : '–';
                     html += '<tr class="fila-persona" data-id="' + item.idPersona + '" data-razon="' + escapeHtml(item.razonSocial) + '" data-cuit="' + escapeHtml(item.cuit || '') + '">'
+                        + '<td class="col-numero-cell d-none d-md-table-cell">' + numTexto + '</td>'
                         + '<td>' + escapeHtml(item.cuit || '') + '</td>'
                         + '<td>' + escapeHtml(item.razonSocial || '') + '</td>'
                         + '<td>' + escapeHtml(item.identificacion || '') + '</td>'
@@ -805,8 +870,10 @@
             .done(function (items) {
                 var mostrarPrecio = String($modal.data('mostrar-precio') || 'true').toLowerCase() === 'true';
                 var html = '';
-                $.each(items || [], function (_, item) {
+                $.each(items || [], function (index, item) {
+                    var numTexto = (index < 9) ? String(index + 1) : '–';
                     html += '<tr class="js-buscar-producto-row" data-id="' + item.id + '" data-codigo="' + escapeHtml(item.codigo) + '" data-nombre="' + escapeHtml(item.nombre) + '" data-precio="' + escapeHtml(item.precio) + '">'
+                        + '<td class="col-numero-cell d-none d-md-table-cell">' + numTexto + '</td>'
                         + '<td>' + escapeHtml(item.codigo) + '</td>'
                         + '<td>' + escapeHtml(item.nombre) + '</td>'
                         + '<td class="text-right js-col-precio-cell"' + (mostrarPrecio ? '' : ' style="display:none;"') + '>' + formatNumber(item.precio) + '</td>'
@@ -1097,7 +1164,7 @@
         // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
         // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
         window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
-        window.CapturaRespaldo && window.CapturaRespaldo.capturar('Compra');
+        capturarRespaldo('Compra', $form);
         scheduleDraft($form);
         if (isContinuousProductMode($form)) {
             clearProductoCantidadOnly($form);
@@ -1134,7 +1201,7 @@
         // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
         // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
         window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
-        window.CapturaRespaldo && window.CapturaRespaldo.capturar('Compra');
+        capturarRespaldo('Compra', $form);
         scheduleDraft($form);
         if (isContinuousMediaMode($form)) {
             clearMediaResCantidadOnly($form);
@@ -1219,7 +1286,11 @@
                     return;
                 }
 
-                clearDraft($form);
+                if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                    state.borradorGenerico.marcarFinalizado(res.idCompra);
+                } else {
+                    clearDraft($form);
+                }
 
                 // Bug real (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 8:
                 // advertencia de salir sin guardar despues de guardar una compra"): EditPageGuard
@@ -1426,6 +1497,15 @@
                     var $target = $('#tablaPersonas tr.fila-persona.is-selected').first();
                     if (!$target.length) $target = $('#tablaPersonas tr.fila-persona').first();
                     if ($target.length) $target.trigger('dblclick');
+                    return;
+                }
+
+                var digit = altDigitFromEvent(e);
+                if (digit != null) {
+                    e.preventDefault();
+                    armarSupresionCaracterAlt();
+                    var $rowDigit = $('#tablaPersonas tr.fila-persona').eq(digit - 1);
+                    if ($rowDigit.length) $rowDigit.trigger('dblclick');
                 }
             });
 
@@ -1557,6 +1637,16 @@
                     var $target = $modal.find('.js-buscar-producto-row.is-selected').first();
                     if (!$target.length) $target = $modal.find('.js-buscar-producto-row').first();
                     seleccionarProductoDesdeModal($form, $target);
+                    return;
+                }
+
+                var digit = altDigitFromEvent(e);
+                if (digit != null) {
+                    e.preventDefault();
+                    armarSupresionCaracterAlt();
+                    var $modalDigit = $(state.config.modalProductoSelector);
+                    var $rowDigit = $modalDigit.find('.js-buscar-producto-row').eq(digit - 1);
+                    if ($rowDigit.length) seleccionarProductoDesdeModal($form, $rowDigit);
                 }
             });
 
@@ -1586,7 +1676,7 @@
             state.lineas.splice(index, 1);
             renderLineas($form);
             rebuildHiddenInputs($form);
-            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Compra');
+            capturarRespaldo('Compra', $form);
             scheduleDraft($form);
         });
 
@@ -1607,6 +1697,11 @@
         $form.on('click.compras', '#btnLimpiarBorrador', function () {
             if (!confirm('Se eliminará el borrador local de esta compra. ¿Continuar?')) return;
             clearDraft($form);
+        });
+
+        $form.on('click.compras', '#btnVerBorradoresCompras', function () {
+            var state = getState($form);
+            state.borradorGenerico && state.borradorGenerico.abrirModalBorradores();
         });
 
         $page.on('click.compras', '[data-action="restore-draft"]', function () {
@@ -1682,10 +1777,53 @@
         };
     }
 
+    // Arma la instancia de borrador en servidor (ver borrador-generico.js) a partir del config que
+    // inyecta la vista. null si esta deshabilitado (SQL Server / feature apagado): ahi
+    // scheduleDraft/capturarRespaldo siguen con localStorage/CapturaRespaldo de siempre.
+    function crearBorradorGenerico($form, cfgBorrador) {
+        if (!cfgBorrador || cfgBorrador.habilitado !== true) return null;
+
+        return window.BorradorGenerico.crear({
+            modulo: cfgBorrador.modulo,
+            habilitado: true,
+            latidoSegundos: cfgBorrador.latidoSegundos,
+            urls: cfgBorrador.urls,
+            obtenerIdSucursal: function () { return parseInt($form.find('#IdSucursal').val(), 10) || cfgBorrador.idSucursal || 0; },
+            obtenerIdRegistro: function () { return cfgBorrador.idRegistro || null; },
+            obtenerIdOperador: function () { return cfgBorrador.idOperador || 0; },
+            obtenerNombreOperador: function () { return cfgBorrador.nombreOperador || ''; },
+            obtenerSnapshot: function () { return buildDraft($form); },
+            obtenerCantLineas: function () { return (getState($form).lineas || []).filter(function (l) { return !!l; }).length; },
+            obtenerResumen: function () {
+                var state = getState($form);
+                var proveedor = ($form.find('#razonSocial').val() || '').trim();
+                var total = 0;
+                (state.lineas || []).forEach(function (l) { if (l) total += toNumber(l.totalLinea); });
+                var lineas = (state.lineas || []).filter(function (l) { return !!l; }).length;
+                var partes = [];
+                if (proveedor) partes.push(proveedor);
+                partes.push(lineas + (lineas === 1 ? ' línea' : ' líneas'));
+                if (total > 0) partes.push('$ ' + formatNumber(total));
+                return partes.join(' — ');
+            },
+            hayFormularioCargado: function () { return (getState($form).lineas || []).some(function (l) { return !!l; }); },
+            finalizando: function () { return getState($form).saving === true; },
+            aplicarPayload: function (payload, clientId, idRegistro) { applyDraft($form, payload); },
+            renderizarLineas: function (payload) {
+                var lineas = (payload && payload.lineas) || [];
+                return lineas.filter(function (l) { return !!l; }).map(function (l) {
+                    var cant = toNumber(l.cantKgs) > 0 ? toNumber(l.cantKgs) : toNumber(l.kgMedia);
+                    return { codigo: l.codigo, producto: l.corteNombre, cantidad: formatNumber(cant) + ' kg' };
+                });
+            }
+        });
+    }
+
     function initState($form, config) {
         var state = buildState(config);
         state.lineas = $.isArray(config.initialLines) ? $.map(config.initialLines, function (linea) { return normalizeLinea(linea); }) : [];
         setState($form, state);
+        state.borradorGenerico = crearBorradorGenerico($form, config.borradorGenerico);
         syncTipoPanels($form);
         syncPriceHelpers($form, 'init');
         syncContinuousProductState($form);
@@ -1694,9 +1832,13 @@
         rebuildHiddenInputs($form);
         syncPrimaryAction($form);
 
-        var draft = readDraft($form);
-        if (draft) {
-            $form.closest('.compra-page').find('#compraDraftBanner').removeClass('d-none');
+        if (state.borradorGenerico) {
+            state.borradorGenerico.actualizarBadgeInicial();
+        } else {
+            var draft = readDraft($form);
+            if (draft) {
+                $form.closest('.compra-page').find('#compraDraftBanner').removeClass('d-none');
+            }
         }
     }
 

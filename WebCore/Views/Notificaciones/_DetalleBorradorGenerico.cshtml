@@ -1,0 +1,91 @@
+@model WebCore.Models.DetalleBorradorGenericoVm
+@using System.Globalization
+@using WebCore.Helpers
+
+@* Detalle de un borrador de Compras/Stock/Movimientos/Embutidos (interrumpido, descartado o guardado)
+   para el admin: resumen, estado final, payload crudo y linea de tiempo de eventos. Se carga dentro del
+   modal global #modalAdvertenciaDetalle del _Layout; el boton "Marcar atendida" lo maneja
+   Scripts/app/advertencias-admin.js. Sin desglose de items (a diferencia de _DetalleBorradorVenta): el
+   payload tiene una forma distinta por modulo, se muestra crudo. Ver docs/DECISIONS.md "Borradores de
+   Compras/Stock/Movimientos/Embutidos". *@
+
+@{
+    var es = new CultureInfo("es-AR");
+    var b = Model.Borrador;
+    bool hayPendiente = Model.Notificacion != null && !Model.Notificacion.EstaAtendida;
+    string tituloModulo = b.Modulo switch
+    {
+        Entidades.BorradorGenerico.ModuloCompra => "Compra",
+        Entidades.BorradorGenerico.ModuloStock => "Stock",
+        Entidades.BorradorGenerico.ModuloMovimiento => "Movimiento",
+        Entidades.BorradorGenerico.ModuloEmbutidoCarga => "Embutido",
+        Entidades.BorradorGenerico.ModuloEmbutidoRapido => "Embutido (ingreso rápido)",
+        _ => b.Modulo
+    };
+}
+
+<div class="mb-3">
+    <h5 class="mb-1"><i class="fas fa-file-pen text-warning mr-1"></i> Borrador de @tituloModulo — @(string.IsNullOrWhiteSpace(b.NombreOperador) ? "Usuario #" + b.IdOperador : b.NombreOperador)</h5>
+    <div class="small text-muted">Iniciado el @b.Creado.ToString("dd/MM/yyyy HH:mm:ss", es) · última señal @b.UltimoLatido.ToString("dd/MM/yyyy HH:mm:ss", es)</div>
+</div>
+
+<div class="alert @(b.Estado == "ACTIVA" ? "alert-warning" : "alert-secondary") py-2">
+    <b>Estado:</b> @Model.EstadoTexto
+</div>
+
+<div class="row mb-3">
+    <div class="col-sm-8"><b>Resumen:</b> @(string.IsNullOrWhiteSpace(b.Resumen) ? "—" : b.Resumen)</div>
+    <div class="col-sm-4"><b>Líneas:</b> @b.CantLineas</div>
+</div>
+
+@if (b.IdRegistro.HasValue && b.IdRegistro.Value > 0)
+{
+    <div class="text-muted small mb-3">Editando el registro #@b.IdRegistro.Value.</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(b.Payload))
+{
+    <details class="mb-3">
+        <summary class="small text-muted">Ver payload crudo (solo lectura)</summary>
+        <pre class="small bg-light border rounded p-2 mt-2 mb-0" style="max-height:300px;overflow:auto;">@b.Payload</pre>
+    </details>
+}
+else
+{
+    <div class="text-muted small mb-3">El payload ya no está disponible (el borrador se guardó o se descartó).</div>
+}
+
+<h6>Línea de tiempo</h6>
+@if (Model.Eventos.Count == 0)
+{
+    <div class="text-muted small">Sin eventos registrados: el borrador dejó de dar señal sin que el navegador avisara (típico de un corte de luz o de red).</div>
+}
+else
+{
+    <ul class="list-unstyled small mb-0">
+        @foreach (var ev in Model.Eventos)
+        {
+            <li class="mb-1">
+                <span class="text-nowrap">@ev.Fecha.ToString("dd/MM/yyyy HH:mm:ss", es)</span> —
+                <b>@AdvertenciasTextos.TipoEventoGenerico(ev.Tipo)</b>
+                @if (!string.IsNullOrWhiteSpace(ev.NombreUsuario)) { <span class="text-muted">(@ev.NombreUsuario)</span> }
+                @if (!string.IsNullOrWhiteSpace(ev.Detalle)) { <div class="text-muted">@ev.Detalle</div> }
+            </li>
+        }
+    </ul>
+}
+
+@if (hayPendiente)
+{
+    <div class="text-end mt-3">
+        <button type="button" class="btn btn-success js-atender-notificacion" data-id="@Model.Notificacion!.Id">
+            <i class="fas fa-check-double mr-1"></i> Marcar atendida
+        </button>
+    </div>
+}
+else if (Model.Notificacion != null)
+{
+    <div class="text-muted small mt-3">
+        Atendida por @Model.Notificacion.NombreAtendidaPor el @(Model.Notificacion.AtendidaEn.HasValue ? Model.Notificacion.AtendidaEn.Value.ToString("dd/MM/yyyy HH:mm", es) : "").
+    </div>
+}

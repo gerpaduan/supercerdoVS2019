@@ -171,6 +171,7 @@
                         redirectUrl: '',
                         pdfUrl: resp.pdfUrl,
                         imprimirUrl: resp.imprimirUrl,
+                        imprimirPayloadUrl: resp.imprimirPayloadUrl,
                         whatsappTexto: resp.whatsappTexto,
                         stayOnPage: true
                     });
@@ -196,8 +197,13 @@
             sortKey: 'ordenIngreso',
             sortDirection: 'asc',
             lineSequence: 0,
-            searchText: ''
+            searchText: '',
+            // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+            // Embutidos"): se completa abajo (crearBorradorGenerico), null si esta deshabilitado
+            // (ahi se sigue con localStorage/CapturaRespaldo de siempre).
+            borradorGenerico: null
         };
+        state.borradorGenerico = crearBorradorGenerico(config.borradorGenerico);
 
         var $codigo = $('#txtCodigoProducto');
         var $productoId = $('#txtProductoId');
@@ -334,11 +340,63 @@
             }
         }
 
+        // Respaldo por captura de pantalla (ver captura-respaldo.js): se omite cuando el borrador en
+        // servidor esta habilitado, es un reemplazo mejor del mismo caso de uso (ver docs/DECISIONS.md
+        // "Borradores de Compras/Stock/Movimientos/Embutidos").
+        function capturarRespaldo(etiqueta) {
+            if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) return;
+            window.CapturaRespaldo && window.CapturaRespaldo.capturar(etiqueta);
+        }
+
         function scheduleDraft() {
+            // Con el borrador en servidor habilitado, ese es el unico resguardo: no se escribe en
+            // localStorage.
+            if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                state.borradorGenerico.programarGuardado();
+                return;
+            }
+
             window.clearTimeout(state.draftTimer);
             state.draftTimer = window.setTimeout(function () {
                 saveDraft();
             }, 250);
+        }
+
+        // Arma la instancia de borrador en servidor (ver borrador-generico.js) a partir del config
+        // que inyecta la vista. null si esta deshabilitado.
+        function crearBorradorGenerico(cfgBorrador) {
+            if (!cfgBorrador || cfgBorrador.habilitado !== true) return null;
+
+            return window.BorradorGenerico.crear({
+                modulo: cfgBorrador.modulo,
+                habilitado: true,
+                latidoSegundos: cfgBorrador.latidoSegundos,
+                urls: cfgBorrador.urls,
+                obtenerIdSucursal: function () { return toInt($('#IdSucursalOrigen').val()) || cfgBorrador.idSucursal || 0; },
+                obtenerIdRegistro: function () { return cfgBorrador.idRegistro || null; },
+                obtenerIdOperador: function () { return cfgBorrador.idOperador || 0; },
+                obtenerNombreOperador: function () { return cfgBorrador.nombreOperador || ''; },
+                obtenerSnapshot: buildDraft,
+                obtenerCantLineas: function () { return (state.lines || []).length; },
+                obtenerResumen: function () {
+                    var origen = $('#IdSucursalOrigen option:selected').text() || '';
+                    var destino = $('#IdSucursalDestino option:selected').text() || '';
+                    var partes = [];
+                    if (origen.trim() && destino.trim()) partes.push(origen.trim() + ' → ' + destino.trim());
+                    partes.push((state.lines || []).length + ((state.lines || []).length === 1 ? ' línea' : ' líneas'));
+                    return partes.join(' — ');
+                },
+                hayFormularioCargado: function () { return (state.lines || []).length > 0; },
+                finalizando: function () { return state.saving === true; },
+                aplicarPayload: function (payload) { applyDraft(payload); },
+                renderizarLineas: function (payload) {
+                    var lineas = (payload && payload.lineas) || [];
+                    return lineas.filter(function (l) { return !!l; }).map(function (l) {
+                        var cant = toFloat(l.CantKg) > 0 ? formatKg(l.CantKg) + ' kg' : (toInt(l.CantUnidad) || 0) + ' un.';
+                        return { codigo: l.Codigo, producto: l.Producto, cantidad: cant };
+                    });
+                }
+            });
         }
 
         function showWarning(text) {
@@ -851,7 +909,7 @@
             // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
             // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
             window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
-            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Movimiento');
+            capturarRespaldo('Movimiento');
             clearProducto();
             scheduleDraft();
             focusCodigo();
@@ -939,12 +997,9 @@
         }
 
         function openPrintOptions() {
-            // El guard antes miraba config.imprimirUrl (ticket ESC/POS via agente local,
-            // print-agent.js) -- ese campo quedo siempre vacio porque el agente de impresion
-            // local nunca se porto a WebCore (decision ya tomada, ver docs/DECISIONS.md), asi
-            // que el boton "Imprimir" nunca abria el modal aunque "Generar PDF"/"Enviar a
-            // WhatsApp" ya funcionaban perfectamente. PostMovimientoModal.open() no lee
-            // imprimirUrl/imprimirPayloadUrl para nada -- el campo real que necesita es pdfUrl.
+            // El guard mira config.pdfUrl (no imprimirUrl): en un movimiento nuevo sin guardar
+            // ambos vienen vacios y no hay nada que imprimir todavia. imprimirUrl/
+            // imprimirPayloadUrl se pasan al modal para el ticket termico (ver ticket-print.js).
             if (!config.pdfUrl || !window.PostMovimientoModal || typeof window.PostMovimientoModal.open !== 'function') {
                 showAlert('warning', 'Movimiento', 'Todavía no se pueden mostrar las opciones de impresión para este movimiento.');
                 return;
@@ -954,6 +1009,7 @@
                 redirectUrl: '',
                 pdfUrl: config.pdfUrl,
                 imprimirUrl: config.imprimirUrl,
+                imprimirPayloadUrl: config.imprimirPayloadUrl,
                 whatsappTexto: config.whatsappTexto,
                 stayOnPage: true
             });
@@ -988,7 +1044,7 @@
             var index = toInt($(this).data('index'));
             state.lines.splice(index, 1);
             renderLines();
-            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Movimiento');
+            capturarRespaldo('Movimiento');
             scheduleDraft();
         });
 
@@ -1200,7 +1256,11 @@
                         return;
                     }
 
-                    clearDraft();
+                    if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                        state.borradorGenerico.marcarFinalizado(resp.movimientoId);
+                    } else {
+                        clearDraft();
+                    }
                     if (window.PostMovimientoModal && typeof window.PostMovimientoModal.open === 'function') {
                         window.PostMovimientoModal.open(resp);
                     } else {
@@ -1239,6 +1299,10 @@
             clearDraft();
         });
 
+        $page.on('click.movimientosDraft', '#btnVerBorradoresMovimientos', function () {
+            state.borradorGenerico && state.borradorGenerico.abrirModalBorradores();
+        });
+
         $('#formMovimiento').on('input change', 'input, select, textarea', function () {
             scheduleDraft();
         });
@@ -1250,7 +1314,9 @@
         verificarBalanzaInicial();
         autoResizeObservaciones();
         syncPrimaryAction();
-        if (readDraft()) {
+        if (state.borradorGenerico) {
+            state.borradorGenerico.actualizarBadgeInicial();
+        } else if (readDraft()) {
             showDraftBanner();
         }
         focusCodigo();

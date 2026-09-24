@@ -1,11 +1,19 @@
 ﻿@model WebCore.Models.ElaboradoCargaVm
 @using System.Collections.Generic
 @using Entidades
+@inject WebCore.Services.IUsuarioSesionService Sesion
 
 @{
     ViewBag.Title = Model.EsEdicion ? "Modificar elaborado" : "Carga / ingreso de elaborado";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     bool esAnulado = string.Equals(Model.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
+
+    // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+    // Embutidos"): cuando esta habilitado (Postgres) reemplaza al borrador local (localStorage) y al
+    // respaldo por captura de pantalla de esta pantalla.
+    bool borradorGenericoHabilitado = WebCore.Helpers.BorradorGenericoSettings.Habilitado;
+    var modalBorradoresData = new ViewDataDictionary(ViewData);
+    modalBorradoresData["TituloBorradoresGenerico"] = "Embutidos sin guardar";
 
     var modalElaboradoData = new ViewDataDictionary(ViewData);
     modalElaboradoData["ModalId"] = "modalBuscarElaborado";
@@ -33,6 +41,13 @@
         <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Elaborados")">
             <i class="fas fa-arrow-left mr-1"></i> Volver
         </a>
+        @if (borradorGenericoHabilitado)
+        {
+            <button type="button" class="btn btn-outline-secondary mb-2" id="btnVerBorradoresElaborados">
+                <i class="fas fa-clock-rotate-left mr-1"></i> Embutidos sin guardar
+                <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
+            </button>
+        }
         @if (esAnulado)
         {
             <span class="badge badge-danger px-3 py-2 text-uppercase mb-2">Anulado</span>
@@ -245,6 +260,10 @@
                                         <th>Ingrediente</th>
                                         <th class="text-right" style="width:120px;">Kilos</th>
                                         <th class="text-center" style="width:90px;">Balanza</th>
+                                        @if (Model.EsAdmin)
+                                        {
+                                            <th class="text-right d-none" style="width:190px;" id="colCostoManualCarga" title="Precio de compra o venta del ingrediente (editable, no se guarda) y costo de la linea segun los kilos cargados.">Costo</th>
+                                        }
                                         <th style="width:70px;">Accion</th>
                                     </tr>
                                 </thead>
@@ -274,6 +293,10 @@
                                                 <th>Ingrediente</th>
                                                 <th class="text-right" style="width:100px;">Kgs</th>
                                                 <th class="text-center" style="width:70px;" title="Auto activado: el ingrediente se agrega solo al guardar el Elaborado, calculado como % de lo cargado a mano. Auto desactivado: hay que cargarlo a mano en el Elaborado.">Auto</th>
+                                                @if (Model.EsAdmin)
+                                                {
+                                                    <th class="text-right d-none" style="width:190px;" id="colCostoFormulaCarga">Costo</th>
+                                                }
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -288,6 +311,45 @@
                                     <span>Total a producir</span>
                                     <strong id="lblTotalProducir">0.000</strong>
                                 </div>
+
+                                @if (Model.EsAdmin)
+                                {
+                                    <hr />
+                                    <div class="custom-control custom-switch mb-2">
+                                        <input type="checkbox" class="custom-control-input" id="chkMostrarCosteoCarga" />
+                                        <label class="custom-control-label" for="chkMostrarCosteoCarga">Mostrar costeo</label>
+                                    </div>
+                                    <div id="bloqueCosteoCarga" class="d-none">
+                                    <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Costeo de producción</h6>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Costo total</span>
+                                        <strong id="lblCostoTotalCarga">$ 0,00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Costo por kg/unidad</span>
+                                        <strong id="lblCostoUnitarioCarga">$ 0,00</strong>
+                                    </div>
+                                    <div class="form-group mt-2 mb-2">
+                                        <label for="txtMargenCarga" class="mb-1">Margen sobre costo (%)</label>
+                                        <input type="text" id="txtMargenCarga" class="form-control form-control-sm solo-decimal" inputmode="decimal" autocomplete="off" />
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Precio actual del producto</span>
+                                        <strong id="lblPrecioActualCarga">$ 0,00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Precio de venta sugerido</span>
+                                        <strong id="lblPrecioVentaSugeridoCarga">$ 0,00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Diferencia</span>
+                                        <strong id="lblDiferenciaPrecioCarga">$ 0,00 (0,00%)</strong>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm btn-block mt-2" id="btnAplicarPrecioCarga" disabled>
+                                        <i class="fas fa-tag mr-1"></i> Actualizar precio del producto
+                                    </button>
+                                    </div>
+                                }
                             </div>
                         </div>
 
@@ -375,6 +437,10 @@
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalIngredienteData)
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+@if (borradorGenericoHabilitado)
+{
+    @Html.Partial("~/Views/Shared/_ModalBorradoresGenerico.cshtml", modalBorradoresData)
+}
 
 <style>
     .js-auto-receta {
@@ -398,7 +464,29 @@
             permiteGuardarEdicion: @(Model.PermiteGuardarEdicion ? "true" : "false"),
             puedeAnular: @(Model.PuedeAnular ? "true" : "false"),
             initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas ?? new List<WebCore.Models.ElaboradoCargaLineaVm>())),
-            initialFormula: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Formula ?? new List<WebCore.Models.ElaboradoFormulaLineaVm>()))
+            initialFormula: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Formula ?? new List<WebCore.Models.ElaboradoFormulaLineaVm>())),
+            // Costeo (efimero, solo Usuario.Admin) -- pedido 2026-09-21.
+            esAdmin: @(Model.EsAdmin ? "true" : "false"),
+            precioActualElaborado: @Model.PrecioActualElaborado.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            obtenerPrecioCompraUrl: '@Url.Action("ObtenerPrecioCompra", "Elaborados")',
+            editPrecioCorteUrl: '@Url.Action("EditPrecioCorte", "Productos")',
+            borradorGenerico: {
+                habilitado: @(borradorGenericoHabilitado ? "true" : "false"),
+                modulo: 'EMBUTIDO_CARGA',
+                idSucursal: @Model.IdSucursal,
+                idRegistro: @Model.IdEmbutido,
+                idOperador: @Sesion.UsuarioActual.Id,
+                nombreOperador: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Sesion.UsuarioActual.Nombre)),
+                latidoSegundos: @WebCore.Helpers.BorradorGenericoSettings.LatidoSegundos,
+                urls: {
+                    guardar: '@Url.Action("GuardarBorrador", "BorradoresGenerico")',
+                    evento: '@Url.Action("EventoBorrador", "BorradoresGenerico")',
+                    listar: '@Url.Action("ListarBorradores", "BorradoresGenerico")',
+                    recuperar: '@Url.Action("RecuperarBorrador", "BorradoresGenerico")',
+                    descartar: '@Url.Action("DescartarBorrador", "BorradoresGenerico")',
+                    marcarFinalizado: '@Url.Action("MarcarFinalizado", "BorradoresGenerico")'
+                }
+            }
         };
         window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
@@ -414,7 +502,9 @@
     <script>
         $(function () {
             // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en el Kg del ingrediente.
-            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtKgIngrediente');
+            // Los selectores de costeo (margen, precio por linea) se agregan aca porque las
+            // celdas de precio se crean dinamicamente en renderLineas()/renderFormula().
+            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtKgIngrediente, #txtMargenCarga, .js-precio-costo-produccion');
 
             if (window.NumericKeypad) {
                 window.NumericKeypad.create({
@@ -434,6 +524,7 @@
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
     <script>
         // Solo en mobile: cada aviso de validacion queda entre su propio
         // input de codigo y el de nombre (elaborado / ingrediente), a la
@@ -446,7 +537,10 @@
             "#cargaWarning",
             ".ingrediente-col-codigo"
         );
-        window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+        @if (!borradorGenericoHabilitado)
+        {
+            @:window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+        }
     </script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>

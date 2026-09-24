@@ -15,6 +15,7 @@
 // MovimientosController.cs): ConstruirMensajePermisoFecha/ConfigurarAdvertenciaFechaEnVivo.
 using System.Data;
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
 using WebCore.Models;
@@ -29,6 +30,17 @@ namespace WebCore.Controllers
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Usuario _oUsuarioN;
+
+        // El formateador JSON global de ASP.NET Core cameliza los nombres de propiedad
+        // (IdCorte -> idCorte). elaborados-carga.js/elaborados-rapido.js (renderFormula/
+        // recalcularFormula) leen los campos en PascalCase tal cual estan en
+        // ElaboradoFormulaLineaVm -- mismo criterio que Model.Formula embebido en la vista via
+        // System.Text.Json.JsonSerializer.Serialize (que no camel-iza por defecto). Sin esto,
+        // ObtenerFormula devuelve producto/kgs "camelizados" y el JS los lee como undefined/0.
+        private static readonly JsonSerializerOptions PascalCaseJsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null
+        };
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
@@ -193,6 +205,10 @@ namespace WebCore.Controllers
                 };
             }
 
+            // Costeo (solo Usuario.Admin, ver docs/DECISIONS.md pedido 2026-09-21): visibilidad de
+            // toda la columna/panel de costo en EditarFormula.cshtml.
+            model.EsAdmin = user.Admin;
+
             ViewBag.Title = model.EsEdicion ? "Modificar fórmula" : "Nueva fórmula";
             return View(model);
         }
@@ -254,6 +270,9 @@ namespace WebCore.Controllers
 
                 modelEdicion.SoloLecturaInicial = !string.Equals(modelEdicion.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
                 modelEdicion.PuedeHabilitarEdicion = puedeModificar;
+                // Costeo (solo Usuario.Admin), ver docs/DECISIONS.md pedido 2026-09-21.
+                modelEdicion.EsAdmin = user.Admin;
+                modelEdicion.PrecioActualElaborado = embutido.Corte != null ? embutido.Corte.PrecioKg : 0f;
                 if (!puedeModificar)
                     modelEdicion.PuedeAnular = false;
                 if (operadorResuelto != null)
@@ -294,7 +313,10 @@ namespace WebCore.Controllers
                 EsPesableElaborado = corte.Pesable,
                 Formula = formulaItems,
                 Tabs = BuildTabs(esDesarme ? "Desarme" : "IngresoRapido"),
-                PuedeHabilitarEdicion = true
+                PuedeHabilitarEdicion = true,
+                // Costeo (solo Usuario.Admin), ver docs/DECISIONS.md pedido 2026-09-21.
+                EsAdmin = user.Admin,
+                PrecioActualElaborado = corte.PrecioKg
             };
 
             RecalcularFormulaRapida(model);
@@ -348,6 +370,8 @@ namespace WebCore.Controllers
                     model.PuedeAnular = false;
                 if (operadorResuelto != null)
                     model.UsuarioNombre = operadorResuelto.Nombre;
+                // Costeo (solo Usuario.Admin), ver docs/DECISIONS.md pedido 2026-09-21.
+                model.PrecioActualElaborado = embutido.Corte != null ? embutido.Corte.PrecioKg : 0f;
             }
             else
             {
@@ -370,6 +394,9 @@ namespace WebCore.Controllers
                     PuedeHabilitarEdicion = true
                 };
             }
+
+            // Costeo (solo Usuario.Admin), ver docs/DECISIONS.md pedido 2026-09-21.
+            model.EsAdmin = user.Admin;
 
             ViewBag.Title = model.EsEdicion ? "Modificar elaborado" : "Carga / ingreso de elaborado";
             ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
@@ -437,7 +464,11 @@ namespace WebCore.Controllers
                 promedio = corte.Promedio,
                 ingresoRapido = corte.IngresoRapidoEmbutido,
                 pesable = corte.Pesable,
-                tieneFormula = tieneOtraFormula
+                tieneFormula = tieneOtraFormula,
+                // Costeo (solo Usuario.Admin): precio de venta actual del producto, reutilizado
+                // tanto para el toggle Compra/Venta del ingrediente como para "precio actual" del
+                // elaborado en las vistas de Formula/Carga/Ingreso Rapido.
+                precioVenta = corte.PrecioKg
             });
         }
 
@@ -469,6 +500,54 @@ namespace WebCore.Controllers
                     receta = formula != null ? (formula.Receta ?? "") : "",
                     tieneFormula = items.Count > 0,
                     formula = items
+                }, PascalCaseJsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
+        // Costeo de formula/carga/ingreso rapido (solo Usuario.Admin, ver docs del pedido
+        // 2026-09-21): precio de compra mas reciente de un producto entre todos los proveedores.
+        // obtenerCorteProveedor ya viene ordenado por fechaultimacompra DESC (CortePg.cs), asi que
+        // la primera fila es la compra mas reciente.
+        [HttpGet]
+        public JsonResult ObtenerPrecioCompra(int idCorte)
+        {
+            if (idCorte <= 0)
+                return Json(new { ok = false, mensaje = "Producto invalido." });
+
+            try
+            {
+                // El precio de venta viaja siempre (aunque no haya referencia de compra): alimenta
+                // el toggle Compra/Venta del cliente sin necesidad de otro request.
+                var corte = _oCorteN.findCorteById(idCorte, false);
+                float precioVenta = corte != null ? corte.PrecioKg : 0f;
+
+                var dt = _oCorteN.obtenerCorteProveedor(idCorte) ?? new DataTable();
+                if (dt.Rows.Count == 0)
+                {
+                    return Json(new
+                    {
+                        ok = true,
+                        idCorte,
+                        encontrado = false,
+                        precioVenta,
+                        mensaje = "No se encontro referencia de compra para este producto."
+                    });
+                }
+
+                var row = dt.Rows[0];
+                return Json(new
+                {
+                    ok = true,
+                    idCorte,
+                    encontrado = true,
+                    precioCompra = ToFloat(row, "ultimoprecio", "UltimoPrecio"),
+                    precioVenta,
+                    proveedor = ToString(row, "razonsocial", "RazonSocial"),
+                    fecha = ToDateString(row, "fechaultimacompra", "FechaUltimaCompra")
                 });
             }
             catch (Exception ex)
@@ -713,7 +792,7 @@ namespace WebCore.Controllers
                 TempData["AlertTitle"] = "Elaborados";
                 TempData["AlertMsg"] = mensajeExito;
 
-                return Json(new { ok = true, redirectUrl = Url.Action("Index", "Elaborados") });
+                return Json(new { ok = true, idEmbutido = embutido.idEmbutido, redirectUrl = Url.Action("Index", "Elaborados") });
             }
             catch (Exception ex)
             {
@@ -813,6 +892,7 @@ namespace WebCore.Controllers
                 return Json(new
                 {
                     ok = true,
+                    idEmbutido = idEmbutido,
                     mensaje = "El elaborado se registro correctamente.",
                     redirectUrl = Url.Action("Index", "Elaborados")
                 });
@@ -1206,6 +1286,7 @@ namespace WebCore.Controllers
                 Elaborado = formula.Embutido != null ? formula.Embutido.CorteDesc : "",
                 EsPesableElaborado = formula.Embutido != null && formula.Embutido.Pesable,
                 EsIngresoRapidoElaborado = formula.Embutido != null && formula.Embutido.IngresoRapidoEmbutido,
+                PrecioActualElaborado = formula.Embutido != null ? formula.Embutido.PrecioKg : 0f,
                 EtiquetaValorFormula = escalaUnidad ? "Unidad" : "Porcentaje",
                 EscalaUnidad = escalaUnidad,
                 AjustarUnidad = formula.AjustarUnidad,
@@ -1357,6 +1438,11 @@ namespace WebCore.Controllers
             if (model == null)
                 return;
 
+            // Costeo (solo Usuario.Admin): este metodo se llama tambien en todos los redisplays
+            // de GuardarFormula tras un error de validacion, asi que es el unico punto que
+            // garantiza el flag correcto en esos casos.
+            model.EsAdmin = _usuarioActual.Admin;
+
             AplicarProductoGenericoFormula(model);
 
             if (model.IdElaborado <= 0)
@@ -1374,6 +1460,7 @@ namespace WebCore.Controllers
             model.Elaborado = !string.IsNullOrWhiteSpace(elaborado.CorteDesc) ? elaborado.CorteDesc : elaborado.corte;
             model.EsPesableElaborado = elaborado.Pesable;
             model.EsIngresoRapidoElaborado = elaborado.IngresoRapidoEmbutido;
+            model.PrecioActualElaborado = elaborado.PrecioKg;
             model.EtiquetaValorFormula = model.EscalaUnidad ? "Unidad" : "Porcentaje";
         }
 

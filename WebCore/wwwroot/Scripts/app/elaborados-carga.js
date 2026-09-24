@@ -102,6 +102,10 @@
         $textarea.css('height', $textarea.get(0).scrollHeight + 'px');
     }
 
+    function formatDinero(value) {
+        return toFloat(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     function initCarga() {
         var $page = $('[data-elaborados-page="carga"]');
         if (!$page.length) return;
@@ -120,8 +124,22 @@
             ingredienteRequestSeq: 0,
             elaboradoRequestSeq: 0,
             draftTimer: null,
-            guardando: false
+            guardando: false,
+            // Costeo (efimero, solo Usuario.Admin, ver docs del pedido 2026-09-21): cache
+            // compartida de precio de compra/venta por idCorte, para no repetir requests cuando
+            // el mismo ingrediente aparece en la tabla manual y en la de formula.
+            costoCache: {},
+            costoFetching: {},
+            precioVentaSugerido: 0,
+            // Interruptor de costeo (pedido 2026-09-22): apagado por defecto, el Admin lo activa
+            // a proposito antes de ver precios/costos.
+            mostrarCosteo: false,
+            // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+            // Embutidos"): se completa abajo (crearBorradorGenerico), null si esta deshabilitado
+            // (ahi se sigue con localStorage/CapturaRespaldo de siempre).
+            borradorGenerico: null
         };
+        state.borradorGenerico = crearBorradorGenerico(config.borradorGenerico);
 
         var $form = $('#formCargaElaborado');
         var $receta = $('#Receta');
@@ -257,11 +275,63 @@
             }
         }
 
+        // Respaldo por captura de pantalla (ver captura-respaldo.js): se omite cuando el borrador en
+        // servidor esta habilitado, es un reemplazo mejor del mismo caso de uso (ver docs/DECISIONS.md
+        // "Borradores de Compras/Stock/Movimientos/Embutidos").
+        function capturarRespaldo(etiqueta) {
+            if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) return;
+            window.CapturaRespaldo && window.CapturaRespaldo.capturar(etiqueta);
+        }
+
         function scheduleDraft() {
+            if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                state.borradorGenerico.programarGuardado();
+                return;
+            }
+
             window.clearTimeout(state.draftTimer);
             state.draftTimer = window.setTimeout(function () {
                 saveDraft();
             }, 250);
+        }
+
+        // Arma la instancia de borrador en servidor (ver borrador-generico.js) a partir del config
+        // que inyecta la vista. null si esta deshabilitado. idRegistro viaja como el IdEmbutido
+        // ORIGINAL que se esta reemplazando (editar = anular+recrear en este modulo, ver
+        // docs/DECISIONS.md): el payload es siempre el mismo objeto de una alta nueva.
+        function crearBorradorGenerico(cfgBorrador) {
+            if (!cfgBorrador || cfgBorrador.habilitado !== true) return null;
+
+            return window.BorradorGenerico.crear({
+                modulo: cfgBorrador.modulo,
+                habilitado: true,
+                latidoSegundos: cfgBorrador.latidoSegundos,
+                urls: cfgBorrador.urls,
+                obtenerIdSucursal: function () { return toInt($('#IdSucursal').val()) || cfgBorrador.idSucursal || 0; },
+                obtenerIdRegistro: function () { return cfgBorrador.idRegistro || null; },
+                obtenerIdOperador: function () { return cfgBorrador.idOperador || 0; },
+                obtenerNombreOperador: function () { return cfgBorrador.nombreOperador || ''; },
+                obtenerSnapshot: buildDraft,
+                obtenerCantLineas: function () { return (state.lineas || []).length; },
+                obtenerResumen: function () {
+                    var elaborado = ($elaboradoNombre.val() || '').trim();
+                    var partes = [];
+                    if (elaborado) partes.push(elaborado);
+                    partes.push((state.lineas || []).length + ((state.lineas || []).length === 1 ? ' ingrediente' : ' ingredientes'));
+                    return partes.join(' — ');
+                },
+                hayFormularioCargado: function () { return (state.lineas || []).length > 0; },
+                finalizando: function () { return state.guardando === true; },
+                aplicarPayload: function (payload) { applyDraft(payload); },
+                renderizarLineas: function (payload) {
+                    var manuales = (payload && payload.lineas) || [];
+                    var formula = (payload && payload.formula) || [];
+                    return manuales.concat(formula).filter(function (l) { return !!l; }).map(function (l) {
+                        var kg = l.CantKg != null ? l.CantKg : l.Kgs;
+                        return { codigo: l.Codigo, producto: l.Producto, cantidad: formatKg(kg) + ' kg' };
+                    });
+                }
+            });
         }
 
         function applyDraft(draft) {
@@ -362,6 +432,7 @@
             $elaboradoPromedio.val('');
             $receta.val('');
             state.formula = [];
+            config.precioActualElaborado = 0;
             renderFormula();
             $elaboradoWarning.addClass('d-none').text('');
             autoResizeTextarea($receta);
@@ -383,11 +454,117 @@
                 $elaboradoWarning.addClass('d-none').text('');
             }
 
+            // Costeo (solo Admin): precio de venta actual del elaborado, para la comparacion
+            // contra el precio sugerido -- viaja en la misma respuesta de busqueda del producto.
+            config.precioActualElaborado = toFloat(producto.precioVenta);
+            recalcularCosteoProduccion();
+
             obtenerFormula(producto.id);
         }
 
         function formatBool(v) {
             return v ? 'Si' : 'No';
+        }
+
+        // Costeo de produccion (solo Usuario.Admin): busca (y cachea por idCorte) el precio de
+        // compra mas reciente y el precio de venta actual del ingrediente, y los aplica a toda
+        // linea (manual o de formula) de ese producto que el usuario no haya editado a mano.
+        function asegurarCostoIngrediente(idCorte) {
+            if (!config.esAdmin || !idCorte || !config.obtenerPrecioCompraUrl) return;
+            if (state.costoCache[idCorte]) {
+                // Ya se pidio este idCorte antes (ej. aparece en la tabla manual y en la de
+                // formula): aplica el valor cacheado a esta linea sin repetir el request.
+                aplicarCostoCacheALineas(idCorte);
+                return;
+            }
+            if (state.costoFetching[idCorte]) return;
+            state.costoFetching[idCorte] = true;
+
+            $.get(config.obtenerPrecioCompraUrl, { idCorte: idCorte }).done(function (resp) {
+                var encontrado = !!(resp && resp.encontrado);
+                state.costoCache[idCorte] = {
+                    precioCompra: encontrado ? toFloat(resp.precioCompra) : 0,
+                    precioVenta: resp ? toFloat(resp.precioVenta) : 0,
+                    sinReferencia: !encontrado
+                };
+                delete state.costoFetching[idCorte];
+                aplicarCostoCacheALineas(idCorte);
+                renderLineas();
+                renderFormula();
+            });
+        }
+
+        function aplicarCostoCacheALineas(idCorte) {
+            var datos = state.costoCache[idCorte];
+            if (!datos) return;
+
+            [state.lineas, state.formula].forEach(function (arr) {
+                arr.forEach(function (l) {
+                    if (toInt(l.IdCorte) !== idCorte || l.CostoManual) return;
+                    l.FuenteCosto = l.FuenteCosto || 'compra';
+                    l.PrecioCompra = datos.precioCompra;
+                    l.PrecioVenta = datos.precioVenta;
+                    l.SinReferenciaCompra = datos.sinReferencia;
+                    l.PrecioCosto = l.FuenteCosto === 'venta' ? datos.precioVenta : datos.precioCompra;
+                });
+            });
+        }
+
+        function renderCostoCeldaProduccion(linea, index, tabla) {
+            var fuente = linea.FuenteCosto || 'compra';
+            var kg = toFloat(tabla === 'manual' ? linea.CantKg : linea.Kgs);
+            var costoLinea = toFloat(linea.PrecioCosto) * kg;
+            var soloLectura = !!config.esAnulado;
+
+            var html = '<td class="text-right produccion-costo-cell' + (state.mostrarCosteo ? '' : ' d-none') + '">';
+            html += '<div class="btn-group btn-group-toggle btn-block mb-1" role="group">';
+            html += '<button type="button" class="btn btn-sm ' + (fuente === 'compra' ? 'btn-primary' : 'btn-outline-secondary') + ' js-fuente-costo-produccion" data-tabla="' + tabla + '" data-index="' + index + '" data-fuente="compra"' + (soloLectura ? ' disabled' : '') + '>Compra</button>';
+            html += '<button type="button" class="btn btn-sm ' + (fuente === 'venta' ? 'btn-primary' : 'btn-outline-secondary') + ' js-fuente-costo-produccion" data-tabla="' + tabla + '" data-index="' + index + '" data-fuente="venta"' + (soloLectura ? ' disabled' : '') + '>Venta</button>';
+            html += '</div>';
+            html += '<div class="input-group input-group-sm justify-content-end mb-1">';
+            html += '<div class="input-group-prepend"><span class="input-group-text">$</span></div>';
+            html += '<input type="text" class="form-control form-control-sm text-right js-precio-costo-produccion solo-decimal" style="max-width:100px" inputmode="decimal" data-tabla="' + tabla + '" data-index="' + index + '" value="' + (linea.PrecioCosto ? formatDinero(linea.PrecioCosto) : '') + '"' + (soloLectura ? ' readonly' : '') + ' />';
+            html += '</div>';
+            if (fuente === 'compra' && linea.SinReferenciaCompra) {
+                html += '<span class="badge badge-warning d-block">Sin referencia</span>';
+            } else {
+                html += '<small class="text-muted d-block">$ ' + formatDinero(costoLinea) + '</small>';
+            }
+            html += '</td>';
+            return html;
+        }
+
+        // Costo total de produccion = suma de los costos de linea de ambas tablas (manual + auto
+        // de formula, en kg reales, sin pasar por porcentajes). Costo unitario = costo total /
+        // total a producir (lblTotalProducir, ya calculado por renderLineas/renderFormula).
+        function recalcularCosteoProduccion() {
+            if (!config.esAdmin) return;
+
+            var costoTotal = 0;
+            state.lineas.forEach(function (l) { costoTotal += toFloat(l.PrecioCosto) * toFloat(l.CantKg); });
+            state.formula.forEach(function (l) { costoTotal += toFloat(l.PrecioCosto) * toFloat(l.Kgs); });
+
+            var totalProducir = toFloat($('#lblTotalProducir').text());
+            var costoUnitario = totalProducir > 0 ? (costoTotal / totalProducir) : 0;
+            var margen = toFloat($('#txtMargenCarga').val());
+            var sugerido = costoUnitario > 0 ? costoUnitario * (1 + margen / 100) : 0;
+            state.precioVentaSugerido = sugerido;
+
+            var precioActual = toFloat(config.precioActualElaborado);
+            $('#lblCostoTotalCarga').text('$ ' + formatDinero(costoTotal));
+            $('#lblCostoUnitarioCarga').text('$ ' + formatDinero(costoUnitario));
+            $('#lblPrecioActualCarga').text('$ ' + formatDinero(precioActual));
+            $('#lblPrecioVentaSugeridoCarga').text('$ ' + formatDinero(sugerido));
+
+            var diferencia = sugerido - precioActual;
+            var diferenciaPct = precioActual > 0 ? (diferencia / precioActual * 100) : 0;
+            var $diferencia = $('#lblDiferenciaPrecioCarga');
+            $diferencia.text((diferencia >= 0 ? '+' : '') + '$ ' + formatDinero(diferencia) + ' (' + (diferencia >= 0 ? '+' : '') + formatDinero(diferenciaPct) + '%)');
+            $diferencia.toggleClass('text-success', diferencia >= 0).toggleClass('text-danger', diferencia < 0);
+
+            var idElaborado = toInt($elaboradoId.val());
+            var puedeAplicar = costoTotal > 0 && sugerido > 0 && idElaborado > 0 && !config.esAnulado;
+            $('#btnAplicarPrecioCarga').prop('disabled', !puedeAplicar);
         }
 
         function renderLineas() {
@@ -397,11 +574,13 @@
 
             state.lineas.forEach(function (linea, index) {
                 totalManual += toFloat(linea.CantKg);
+                if (config.esAdmin) asegurarCostoIngrediente(toInt(linea.IdCorte));
                 html += '<tr>'
                     + '<td>' + linea.Codigo + '</td>'
                     + '<td>' + linea.Producto + '</td>'
                     + '<td class="text-right">' + formatKg(linea.CantKg) + '</td>'
                     + '<td class="text-center">' + formatBool(linea.PesoBalanza) + '</td>'
+                    + (config.esAdmin ? renderCostoCeldaProduccion(linea, index, 'manual') : '')
                     + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-linea" data-index="' + index + '"' + (config.esAnulado ? ' disabled' : '') + '><i class="fas fa-trash"></i></button></td>'
                     + '</tr>';
 
@@ -414,7 +593,7 @@
             });
 
             if (!html) {
-                html = '<tr><td colspan="5" class="text-center text-muted">Todavia no agregaste ingredientes manuales.</td></tr>';
+                html = '<tr><td colspan="' + (config.esAdmin ? 6 : 5) + '" class="text-center text-muted">Todavia no agregaste ingredientes manuales.</td></tr>';
             }
 
             $('#tablaLineasElaborado tbody').html(html);
@@ -432,21 +611,24 @@
             var html = '';
             var totalAuto = 0;
             if (!state.formula.length) {
-                html = '<tr><td colspan="3" class="text-center text-muted">El elaborado no tiene formula cargada.</td></tr>';
+                html = '<tr><td colspan="' + (config.esAdmin ? 4 : 3) + '" class="text-center text-muted">El elaborado no tiene formula cargada.</td></tr>';
             } else {
-                state.formula.forEach(function (item) {
+                state.formula.forEach(function (item, index) {
                     if (item.AgregarAuto) {
                         totalAuto += toFloat(item.Kgs);
                     }
+                    if (config.esAdmin) asegurarCostoIngrediente(toInt(item.IdCorte));
                     html += '<tr>'
                         + '<td>' + item.Producto + '</td>'
                         + '<td class="text-right">' + formatKg(item.Kgs) + '</td>'
                         + '<td class="text-center">' + formatBool(item.AgregarAuto) + '</td>'
+                        + (config.esAdmin ? renderCostoCeldaProduccion(item, index, 'formula') : '')
                         + '</tr>';
                 });
             }
             $('#tablaFormulaElaborado tbody').html(html);
             $('#lblTotalProducir').text(formatKg(toFloat($('#lblTotalManual').text()) + totalAuto));
+            recalcularCosteoProduccion();
         }
 
         function recalcularFormula() {
@@ -702,7 +884,12 @@
                 Producto: $ingredienteNombre.val(),
                 TipoProducto: $ingredienteTipo.val(),
                 CantKg: toFloat($ingredienteKg.val()),
-                PesoBalanza: $balanza.is(':checked')
+                PesoBalanza: $balanza.is(':checked'),
+                FuenteCosto: 'compra',
+                PrecioCosto: 0,
+                PrecioCompra: 0,
+                PrecioVenta: 0,
+                SinReferenciaCompra: true
             };
 
             state.lineas.push(linea);
@@ -711,7 +898,7 @@
             // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
             // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
             window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
-            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Elaborado');
+            capturarRespaldo('Elaborado');
             scheduleDraft();
             focusIngredienteCodigo();
         }
@@ -801,8 +988,95 @@
             var index = toInt($(this).data('index'));
             state.lineas.splice(index, 1);
             renderLineas();
-            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Elaborado');
+            capturarRespaldo('Elaborado');
             scheduleDraft();
+        });
+
+        // Costeo: toggle Compra/Venta y precio editable por linea, en cualquiera de las dos
+        // tablas (manual o formula automatica) -- data-tabla indica el array a modificar.
+        function arrayCosteoPorTabla(tabla) {
+            return tabla === 'manual' ? state.lineas : state.formula;
+        }
+
+        $(document).on('click', '.js-fuente-costo-produccion', function () {
+            if (config.esAnulado) return;
+            var tabla = $(this).attr('data-tabla');
+            var index = toInt($(this).attr('data-index'));
+            var fuente = $(this).attr('data-fuente');
+            var arr = arrayCosteoPorTabla(tabla);
+            if (!arr[index]) return;
+            arr[index].FuenteCosto = fuente;
+            arr[index].PrecioCosto = fuente === 'venta' ? arr[index].PrecioVenta : arr[index].PrecioCompra;
+            arr[index].CostoManual = true;
+            renderLineas();
+        });
+
+        $(document).on('change', '.js-precio-costo-produccion', function () {
+            var tabla = $(this).attr('data-tabla');
+            var index = toInt($(this).attr('data-index'));
+            var arr = arrayCosteoPorTabla(tabla);
+            if (!arr[index]) return;
+            arr[index].PrecioCosto = toFloat($(this).val());
+            arr[index].CostoManual = true;
+            if (arr[index].FuenteCosto === 'compra') arr[index].SinReferenciaCompra = false;
+            renderLineas();
+        });
+
+        $('#txtMargenCarga').on('change input', recalcularCosteoProduccion);
+
+        // Interruptor de costeo (pedido 2026-09-22): apagado por defecto. Controla ambas columnas
+        // Costo (manual y formula) y el panel de la derecha.
+        $('#chkMostrarCosteoCarga').on('change', function () {
+            state.mostrarCosteo = $(this).is(':checked');
+            $('#colCostoManualCarga, #colCostoFormulaCarga').toggleClass('d-none', !state.mostrarCosteo);
+            $('#bloqueCosteoCarga').toggleClass('d-none', !state.mostrarCosteo);
+            renderLineas();
+        });
+
+        $('#btnAplicarPrecioCarga').on('click', function () {
+            var idElaborado = toInt($elaboradoId.val());
+            var sugerido = state.precioVentaSugerido || 0;
+            if (!idElaborado || sugerido <= 0 || !config.editPrecioCorteUrl) return;
+
+            var precioRaw = sugerido.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            function ejecutarActualizacionPrecio() {
+                $.ajax({
+                    url: config.editPrecioCorteUrl,
+                    type: 'POST',
+                    data: {
+                        __RequestVerificationToken: $form.find('input[name="__RequestVerificationToken"]').val(),
+                        IdCorte: idElaborado,
+                        PrecioKg: precioRaw
+                    }
+                }).done(function (resp) {
+                    if (resp && resp.error) { showAlert('error', 'Precio', resp.error); return; }
+                    config.precioActualElaborado = toFloat(resp && resp.precio ? resp.precio : sugerido);
+                    recalcularCosteoProduccion();
+                    if (window.Swal) {
+                        Swal.fire({ icon: 'success', title: 'Precio actualizado', text: 'Nuevo precio: ' + ((resp && resp.precioFormateado) || precioRaw), timer: 2000, showConfirmButton: false });
+                    }
+                }).fail(function () {
+                    showAlert('error', 'Precio', 'No se pudo actualizar el precio.');
+                });
+            }
+
+            // Confirmacion previa (pedido 2026-09-22): evitar aplicar un precio por error.
+            var mensajeConfirmacion = 'Se va a actualizar el precio de venta del producto a $ ' + precioRaw + '. ¿Confirmar?';
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'question',
+                    title: 'Actualizar precio',
+                    text: mensajeConfirmacion,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, actualizar',
+                    cancelButtonText: 'Cancelar'
+                }).then(function (result) {
+                    if (result.isConfirmed) ejecutarActualizacionPrecio();
+                });
+            } else if (window.confirm(mensajeConfirmacion)) {
+                ejecutarActualizacionPrecio();
+            }
         });
 
         $('#btnBuscarElaborado').on('click', function (e) {
@@ -1026,7 +1300,11 @@
                         return;
                     }
 
-                    clearDraft();
+                    if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                        state.borradorGenerico.marcarFinalizado(resp.idEmbutido);
+                    } else {
+                        clearDraft();
+                    }
                     showSuccessAndRedirect(resp.mensaje, resp.redirectUrl || config.redirectUrl || '/Elaborados');
                 }).fail(function (xhr) {
                     state.guardando = false;
@@ -1058,7 +1336,9 @@
         syncBalanzaStatusVisibility();
         syncIngredienteReadonly();
         syncPrimaryAction();
-        if (readDraft()) {
+        if (state.borradorGenerico) {
+            state.borradorGenerico.actualizarBadgeInicial();
+        } else if (readDraft()) {
             showDraftBanner();
         }
 
@@ -1072,6 +1352,10 @@
         $page.on('click.elaboradosDraft', '[data-action="clear-draft"]', function () {
             if (!confirm('Se eliminara el borrador local de este elaborado. ¿Continuar?')) return;
             clearDraft();
+        });
+
+        $page.on('click.elaboradosDraft', '#btnVerBorradoresElaborados', function () {
+            state.borradorGenerico && state.borradorGenerico.abrirModalBorradores();
         });
         window.ElaboradosCarga = window.ElaboradosCarga || {};
         window.ElaboradosCarga.syncPrimaryAction = syncPrimaryAction;

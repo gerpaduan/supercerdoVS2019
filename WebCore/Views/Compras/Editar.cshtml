@@ -2,6 +2,7 @@
 @using System
 @using System.Collections.Generic
 @using Entidades
+@inject WebCore.Services.IUsuarioSesionService Sesion
 
 @{
     // Bug real (cuarta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 3: modal Nueva
@@ -33,6 +34,15 @@
     bool mostrarSelectorTipo = Model.EmpresaPropia;
     string tipoCompraInicial = !mostrarSelectorTipo && !Model.EsEdicion ? tipoCortes : (string.IsNullOrWhiteSpace(Model.TipoCompra) ? tipoCortes : Model.TipoCompra);
     bool mostrarMediaInicial = string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase);
+
+    // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+    // Embutidos"): cuando esta habilitado (Postgres) reemplaza al borrador local (localStorage) y al
+    // respaldo por captura de pantalla de esta pantalla -- ver §3 de esa entrada. El "operador" del
+    // borrador es el usuario de la sesion actual: es solo metadata de quien lo armo, no necesita
+    // coincidir con el CreadoPor final si despues se autoriza como cuenta de produccion.
+    bool borradorGenericoHabilitado = WebCore.Helpers.BorradorGenericoSettings.Habilitado;
+    var modalBorradoresData = new ViewDataDictionary(ViewData);
+    modalBorradoresData["TituloBorradoresGenerico"] = "Compras sin guardar";
 }
 
 <div class="container-fluid px-2 px-md-3 compra-page @(embebido ? "compra-page-pos" : "")" data-compra-page="1">
@@ -488,9 +498,19 @@
 
                 <div class="d-flex justify-content-between flex-wrap mt-4 compra-actions-bar">
                     <div class="mb-2 d-flex align-items-center flex-wrap">
-                        <button type="button" class="btn btn-outline-secondary" id="btnLimpiarBorrador">
-                            Limpiar borrador
-                        </button>
+                        @if (borradorGenericoHabilitado)
+                        {
+                            <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresCompras">
+                                <i class="fas fa-clock-rotate-left mr-1"></i> Compras sin guardar
+                                <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-outline-secondary" id="btnLimpiarBorrador">
+                                Limpiar borrador
+                            </button>
+                        }
                         <small class="text-muted ml-0 ml-md-3 mt-2 mt-md-0 compra-shortcuts-help">Atajos: F9 proveedor, F10 producto, Alt+G guardar, Alt+Enter guardar, Alt+C cancelar.</small>
                     </div>
                     <div class="mb-2">
@@ -522,6 +542,10 @@
 <link rel="stylesheet" href="@Url.Content("~/Content/css/compras-editar.css?v=1")" />
 
 <div id="contenedorModalPersonaCompra"></div>
+@if (borradorGenericoHabilitado && !Model.DesdePos)
+{
+    @await Html.PartialAsync("_ModalBorradoresGenerico", null, modalBorradoresData)
+}
 @if (!Model.DesdePos)
 {
     @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
@@ -560,13 +584,17 @@
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/money-input-mask.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
+        <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
         <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
         <script>
             (function () {
-                window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+                @if (!borradorGenericoHabilitado)
+                {
+                    @:window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+                }
 
                 if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
                     return;
@@ -583,6 +611,23 @@
                     draftKey: "@Model.DraftKey",
                     modalProductoSelector: "@(Model.DesdePos ? "#modalBuscarProducto" : "#modalBuscarProductoCompra")",
                     initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas)),
+                    borradorGenerico: {
+                        habilitado: @(borradorGenericoHabilitado ? "true" : "false"),
+                        modulo: "COMPRA",
+                        idSucursal: @Model.IdSucursal,
+                        idRegistro: @Model.IdCompra,
+                        idOperador: @Sesion.UsuarioActual.Id,
+                        nombreOperador: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Sesion.UsuarioActual.Nombre)),
+                        latidoSegundos: @WebCore.Helpers.BorradorGenericoSettings.LatidoSegundos,
+                        urls: {
+                            guardar: "@Url.Action("GuardarBorrador", "BorradoresGenerico")",
+                            evento: "@Url.Action("EventoBorrador", "BorradoresGenerico")",
+                            listar: "@Url.Action("ListarBorradores", "BorradoresGenerico")",
+                            recuperar: "@Url.Action("RecuperarBorrador", "BorradoresGenerico")",
+                            descartar: "@Url.Action("DescartarBorrador", "BorradoresGenerico")",
+                            marcarFinalizado: "@Url.Action("MarcarFinalizado", "BorradoresGenerico")"
+                        }
+                    },
                     urls: {
                         guardar: "@Url.Action("Guardar", "Compras")",
                         personaBuscarModal: "@Url.Action("Buscar", "Personas")",
@@ -617,13 +662,17 @@
             <script src="@Url.Content("~/Scripts/app/money-input-mask.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
             <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
             <script>
                 (function () {
-                    window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+                    @if (!borradorGenericoHabilitado)
+                    {
+                        @:window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+                    }
 
                     if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
                         return;
@@ -638,6 +687,23 @@
                         draftKey: "@Model.DraftKey",
                         modalProductoSelector: "#modalBuscarProductoCompra",
                         initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas)),
+                        borradorGenerico: {
+                            habilitado: @(borradorGenericoHabilitado ? "true" : "false"),
+                            modulo: "COMPRA",
+                            idSucursal: @Model.IdSucursal,
+                            idRegistro: @Model.IdCompra,
+                            idOperador: @Sesion.UsuarioActual.Id,
+                            nombreOperador: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Sesion.UsuarioActual.Nombre)),
+                            latidoSegundos: @WebCore.Helpers.BorradorGenericoSettings.LatidoSegundos,
+                            urls: {
+                                guardar: "@Url.Action("GuardarBorrador", "BorradoresGenerico")",
+                                evento: "@Url.Action("EventoBorrador", "BorradoresGenerico")",
+                                listar: "@Url.Action("ListarBorradores", "BorradoresGenerico")",
+                                recuperar: "@Url.Action("RecuperarBorrador", "BorradoresGenerico")",
+                                descartar: "@Url.Action("DescartarBorrador", "BorradoresGenerico")",
+                            marcarFinalizado: "@Url.Action("MarcarFinalizado", "BorradoresGenerico")"
+                            }
+                        },
                         urls: {
                             guardar: "@Url.Action("Guardar", "Compras")",
                             personaBuscarModal: "@Url.Action("Buscar", "Personas")",

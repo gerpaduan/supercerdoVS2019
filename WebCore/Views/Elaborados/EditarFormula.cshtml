@@ -196,6 +196,10 @@
                                         <th class="text-right" style="width:120px;" id="lblValorFormulaColumna">@Model.EtiquetaValorFormula</th>
                                         <th class="text-center" style="width:90px;" title="Auto activado: el ingrediente se agrega solo al guardar el Elaborado, calculado como % de lo cargado a mano. Auto desactivado: hay que cargarlo a mano en el Elaborado.">Auto</th>
                                         <th class="text-center d-none" style="width:110px;" id="colNoSumaPeso" title="Tildado: este ingrediente no suma al peso del elaborado (ej. tripa) -- se resta en la fila de Ajuste de Formula.">No suma peso</th>
+                                        @if (Model.EsAdmin)
+                                        {
+                                            <th class="text-right d-none" style="width:190px;" id="colCostoFormula" title="Precio de compra o venta del ingrediente (editable, no se guarda) y costo de la linea segun la cantidad cargada.">Costo</th>
+                                        }
                                         <th style="width:70px;">Accion</th>
                                     </tr>
                                 </thead>
@@ -227,6 +231,41 @@
                                     <span>Equivalencia en unidades</span>
                                     <strong id="lblTotalUnidades">@Model.TotalUnidades.ToString("N2")</strong>
                                 </div>
+
+                                @if (Model.EsAdmin)
+                                {
+                                    <hr />
+                                    <div class="custom-control custom-switch mb-2">
+                                        <input type="checkbox" class="custom-control-input" id="chkMostrarCosteoFormula" />
+                                        <label class="custom-control-label" for="chkMostrarCosteoFormula">Mostrar costeo</label>
+                                    </div>
+                                    <div id="bloqueCosteoFormula" class="d-none">
+                                        <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Costeo</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Costo total (ingredientes)</span>
+                                            <strong id="lblCostoTotalFormula">$ 0,00</strong>
+                                        </div>
+                                        <div class="form-group mt-2 mb-2">
+                                            <label for="txtMargenFormula" class="mb-1">Margen sobre costo (%)</label>
+                                            <input type="text" id="txtMargenFormula" class="form-control form-control-sm solo-decimal" inputmode="decimal" autocomplete="off" />
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Precio actual del producto</span>
+                                            <strong id="lblPrecioActualFormula">$ 0,00</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Precio de venta sugerido</span>
+                                            <strong id="lblPrecioVentaSugeridoFormula">$ 0,00</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Diferencia</span>
+                                            <strong id="lblDiferenciaPrecioFormula">$ 0,00 (0,00%)</strong>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm btn-block mt-2" id="btnAplicarPrecioFormula" disabled>
+                                            <i class="fas fa-tag mr-1"></i> Actualizar precio del producto
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -283,7 +322,9 @@
     <script>
         // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en el valor de la formula.
         // attach() usa delegacion sobre document, no requiere que el input ya exista en el DOM.
-        window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtPorcentajeFormula');
+        // Los selectores de costeo (margen, precio por linea) se agregan aca porque se crean
+        // dinamicamente dentro de renderLineas().
+        window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtPorcentajeFormula, #txtMargenFormula, .js-precio-costo-formula');
     </script>
     <script>
         (function () {
@@ -303,7 +344,16 @@
                 soloLectura: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SoloLecturaInicial)),
                 codigoElaboradoInicial: @Model.CodigoElaborado,
                 // Interruptor 2 (Modo A, "ajustar a formula unitaria") -- ver docs/DECISIONS.md 2026-08-22.
-                ajustarUnidad: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AjustarUnidad))
+                ajustarUnidad: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AjustarUnidad)),
+                // Costeo (efimero, no se persiste, solo Usuario.Admin) -- pedido 2026-09-21.
+                // mostrarCosteo: interruptor aparte, apagado por defecto (pedido 2026-09-22) --
+                // el usuario Admin tiene que activarlo a proposito para ver precios/costos.
+                esAdmin: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EsAdmin)),
+                mostrarCosteo: false,
+                precioActualElaborado: @Model.PrecioActualElaborado.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                costoTotal: 0,
+                precioVentaSugerido: 0,
+                pendingCosto: null
             };
             // Interruptor 1 (maestro, "Agregar Ajuste de Formula") -- se infiere del estado inicial:
             // si ya hay una linea de ajuste, si el Modo A esta activo, o si algun ingrediente ya
@@ -454,8 +504,10 @@
                 $('#chkAgregarAutoFormula, #chkTieneAjusteFormula, #chkAjustarUnidad, #chkIngresoRapidoElaborado, #chkEscalaUnidadFormula, .js-no-suma-peso').prop('disabled', readOnly);
                 $('#btnAgregarPasoReceta, .js-remove-paso').prop('disabled', readOnly);
                 $pasosContainer.find('.formula-paso-texto').prop('readonly', readOnly);
+                $('#txtMargenFormula').prop('readonly', readOnly);
                 syncPrimaryAction();
                 actualizarVisibilidadAjuste();
+                if (state.esAdmin) renderLineas();
             }
 
             // Mensaje dinamico junto al interruptor "Auto", explicando que va a pasar con la
@@ -547,15 +599,55 @@
                 $('#lineasFormulaHiddenContainer').html(html);
             }
 
+            // Costo de una linea (no aplica a la fila de Ajuste de Formula, que no tiene compra
+            // real): en modo porcentaje, el Porcentaje ya persiste en base-100 -- costoLinea es el
+            // costo por 1 kg/unidad del elaborado producido. En modo unidad, Porcentaje ya es la
+            // cantidad literal de unidades del ingrediente por 1 unidad final (ver
+            // NormalizarFormulaElaborado en Negocio/Corte.cs).
+            function costoLineaFormula(linea) {
+                if (linea.EsAjusteFormula) return 0;
+                var precio = toNumber(linea.PrecioCosto);
+                var cantidad = toNumber(linea.Porcentaje);
+                return state.escalaUnidad ? (precio * cantidad) : (precio * cantidad / 100);
+            }
+
+            function renderCostoCelda(linea, index) {
+                var oculto = !state.mostrarCosteo;
+                if (linea.EsAjusteFormula) {
+                    return '<td class="text-right' + (oculto ? ' d-none' : '') + '"><span class="text-muted">-</span></td>';
+                }
+
+                var fuente = linea.FuenteCosto || 'compra';
+                var costoLinea = costoLineaFormula(linea);
+                var html = '<td class="text-right formula-costo-cell' + (oculto ? ' d-none' : '') + '">';
+                html += '<div class="btn-group btn-group-toggle btn-block mb-1" role="group">';
+                html += '<button type="button" class="btn btn-sm ' + (fuente === 'compra' ? 'btn-primary' : 'btn-outline-secondary') + ' js-fuente-costo-formula" data-index="' + index + '" data-fuente="compra"' + (state.soloLectura ? ' disabled' : '') + '>Compra</button>';
+                html += '<button type="button" class="btn btn-sm ' + (fuente === 'venta' ? 'btn-primary' : 'btn-outline-secondary') + ' js-fuente-costo-formula" data-index="' + index + '" data-fuente="venta"' + (state.soloLectura ? ' disabled' : '') + '>Venta</button>';
+                html += '</div>';
+                html += '<div class="input-group input-group-sm justify-content-end mb-1">';
+                html += '<div class="input-group-prepend"><span class="input-group-text">$</span></div>';
+                html += '<input type="text" class="form-control form-control-sm text-right js-precio-costo-formula solo-decimal" style="max-width:100px" inputmode="decimal" data-index="' + index + '" value="' + (linea.PrecioCosto ? formatValue(linea.PrecioCosto) : '') + '"' + (state.soloLectura ? ' readonly' : '') + ' />';
+                html += '</div>';
+                if (fuente === 'compra' && linea.SinReferenciaCompra) {
+                    html += '<span class="badge badge-warning d-block">Sin referencia de compra</span>';
+                } else {
+                    html += '<small class="text-muted d-block">Costo: <strong>$ ' + formatValue(costoLinea) + '</strong></small>';
+                }
+                html += '</td>';
+                return html;
+            }
+
             function renderLineas() {
                 syncAjusteFormula();
                 rebuildHidden();
 
                 var html = '';
                 var total = 0;
+                var totalCosto = 0;
                 var modoB = state.tieneAjuste && !state.ajustarUnidad && !state.esIngresoRapido;
                 state.lineas.forEach(function (linea, index) {
                     total += toNumber(linea.Porcentaje);
+                    totalCosto += costoLineaFormula(linea);
                     html += '<tr' + (linea.EsAjusteFormula ? ' class="table-warning"' : '') + '>';
                     html += '<td>' + (linea.EsAjusteFormula ? 'Ajuste Formula' : (linea.Codigo || '')) + '</td>';
                     html += '<td>' + (linea.Producto || '') + '</td>';
@@ -566,6 +658,9 @@
                         html += '<input type="checkbox" class="js-no-suma-peso" data-index="' + index + '"' + (linea.NoSumaPeso ? ' checked' : '') + (state.soloLectura ? ' disabled' : '') + ' />';
                     }
                     html += '</td>';
+                    if (state.esAdmin) {
+                        html += renderCostoCelda(linea, index);
+                    }
                     html += '<td>';
                     if (!linea.EsAjusteFormula) {
                         html += '<button type="button" class="btn btn-sm btn-outline-danger js-remove-linea-formula" data-index="' + index + '"' + (state.soloLectura ? ' disabled' : '') + '><i class="fas fa-trash"></i></button>';
@@ -577,6 +672,38 @@
                 $('#tablaLineasFormula tbody').html(html);
                 $('#lblTotalPorcentaje').text(formatValue(total));
                 $('#lblTotalUnidades').text(formatValue(state.escalaUnidad ? total : (total / 100)));
+
+                if (state.esAdmin) {
+                    state.costoTotal = totalCosto;
+                    $('#lblCostoTotalFormula').text('$ ' + formatValue(totalCosto));
+                    recalcularPrecioSugeridoFormula();
+                }
+            }
+
+            // Recalcula precio sugerido (costo + margen, misma formula que Compras -- ver
+            // compras.js syncPrecioVentaMargen) y la diferencia contra el precio actual del
+            // elaborado. Habilita el boton de aplicar solo si hay costo, precio sugerido y
+            // elaborado seleccionado, y la vista no esta en solo-lectura.
+            function recalcularPrecioSugeridoFormula() {
+                if (!state.esAdmin) return;
+
+                var margen = toNumber($('#txtMargenFormula').val());
+                var costo = state.costoTotal || 0;
+                var sugerido = costo > 0 ? costo * (1 + margen / 100) : 0;
+                state.precioVentaSugerido = sugerido;
+
+                $('#lblPrecioActualFormula').text('$ ' + formatValue(state.precioActualElaborado));
+                $('#lblPrecioVentaSugeridoFormula').text('$ ' + formatValue(sugerido));
+
+                var diferencia = sugerido - (state.precioActualElaborado || 0);
+                var diferenciaPct = state.precioActualElaborado > 0 ? (diferencia / state.precioActualElaborado * 100) : 0;
+                var $diferencia = $('#lblDiferenciaPrecioFormula');
+                $diferencia.text((diferencia >= 0 ? '+' : '') + '$ ' + formatValue(diferencia) + ' (' + (diferencia >= 0 ? '+' : '') + formatValue(diferenciaPct) + '%)');
+                $diferencia.toggleClass('text-success', diferencia >= 0).toggleClass('text-danger', diferencia < 0);
+
+                var idElaborado = parseInt($('#IdElaborado').val(), 10) || 0;
+                var puedeAplicar = costo > 0 && sugerido > 0 && idElaborado > 0 && !state.soloLectura;
+                $('#btnAplicarPrecioFormula').prop('disabled', !puedeAplicar);
             }
 
             // Al togglear el interruptor, reescala en memoria los valores ya cargados para que
@@ -648,14 +775,74 @@
                                 state.escalaUnidad = !resp.pesable;
                             }
                             state.esIngresoRapido = !!resp.ingresoRapido;
+                            state.precioActualElaborado = toNumber(resp.precioVenta);
                         } else {
                             setProducto($('#txtCodigoIngredienteFormula'), $('#txtIngredienteFormulaId'), $('#txtIngredienteFormulaNombre'), resp);
+                            buscarPrecioCompraIngrediente(resp.id, toNumber(resp.precioVenta));
                         }
 
                         updateModeLabels();
                         renderLineas();
                         if (callback) callback(resp);
                     });
+            }
+
+            // Costeo: busca el precio de compra mas reciente del ingrediente recien resuelto
+            // (F10/modal/codigo+Enter, ver buscarPorCodigo) y lo deja en pendingCosto hasta que se
+            // presiona "Agregar" (btnAgregarLineaFormula). Guarda de carrera: si el usuario cambia
+            // de ingrediente antes de que responda, se descarta la respuesta vieja comparando
+            // contra el id vigente en el input oculto.
+            function buscarPrecioCompraIngrediente(idCorte, precioVenta) {
+                state.pendingCosto = null;
+                if (!state.esAdmin || !idCorte) return;
+
+                $.get('@Url.Action("ObtenerPrecioCompra", "Elaborados")', { idCorte: idCorte })
+                    .done(function (resp) {
+                        if (parseInt($('#txtIngredienteFormulaId').val(), 10) !== idCorte) return;
+                        var encontrado = !!(resp && resp.encontrado);
+                        var precioCompra = encontrado ? toNumber(resp.precioCompra) : 0;
+                        state.pendingCosto = {
+                            idCorte: idCorte,
+                            precioCompra: precioCompra,
+                            precioVenta: toNumber(precioVenta),
+                            sinReferencia: !encontrado
+                        };
+                    });
+            }
+
+            // Costea en batch todas las lineas ya guardadas de una formula existente (un
+            // ObtenerPrecioCompra por idCorte unico) antes del primer render.
+            function cargarCostosIniciales(callback) {
+                if (!state.esAdmin) { callback(); return; }
+
+                var ids = state.lineas
+                    .filter(function (l) { return !l.EsAjusteFormula && l.IdCorte > 0; })
+                    .map(function (l) { return l.IdCorte; })
+                    .filter(function (id, i, arr) { return arr.indexOf(id) === i; });
+
+                state.lineas.forEach(function (l) {
+                    if (!l.EsAjusteFormula) l.FuenteCosto = l.FuenteCosto || 'compra';
+                });
+
+                if (ids.length === 0) { callback(); return; }
+
+                var pendientes = ids.map(function (id) {
+                    return $.get('@Url.Action("ObtenerPrecioCompra", "Elaborados")', { idCorte: id })
+                        .then(function (resp) {
+                            var encontrado = !!(resp && resp.encontrado);
+                            var precioCompra = encontrado ? toNumber(resp.precioCompra) : 0;
+                            var precioVenta = resp ? toNumber(resp.precioVenta) : 0;
+                            state.lineas.forEach(function (l) {
+                                if (l.IdCorte !== id || l.EsAjusteFormula) return;
+                                l.PrecioCompra = precioCompra;
+                                l.PrecioVenta = precioVenta;
+                                l.SinReferenciaCompra = !encontrado;
+                                l.PrecioCosto = precioCompra;
+                            });
+                        });
+                });
+
+                $.when.apply($, pendientes).always(callback);
             }
 
             function abrirModalElaborado() {
@@ -733,6 +920,85 @@
                 renderLineas();
             });
 
+            // Costeo: toggle Compra/Venta por linea -- al cambiar de fuente, el precio editable
+            // se reemplaza por el de la fuente elegida (si el usuario lo habia corregido a mano,
+            // se pierde esa correccion, es el comportamiento esperado al cambiar de fuente).
+            $('#tablaLineasFormula').on('click', '.js-fuente-costo-formula', function () {
+                if (state.soloLectura) return;
+                var index = parseInt($(this).attr('data-index'), 10);
+                var fuente = $(this).attr('data-fuente');
+                if (isNaN(index) || !state.lineas[index]) return;
+                state.lineas[index].FuenteCosto = fuente;
+                state.lineas[index].PrecioCosto = fuente === 'venta' ? state.lineas[index].PrecioVenta : state.lineas[index].PrecioCompra;
+                renderLineas();
+            });
+
+            $('#tablaLineasFormula').on('change', '.js-precio-costo-formula', function () {
+                var index = parseInt($(this).attr('data-index'), 10);
+                if (isNaN(index) || !state.lineas[index]) return;
+                state.lineas[index].PrecioCosto = toNumber($(this).val());
+                if (state.lineas[index].FuenteCosto === 'compra') state.lineas[index].SinReferenciaCompra = false;
+                renderLineas();
+            });
+
+            $('#txtMargenFormula').on('change input', recalcularPrecioSugeridoFormula);
+
+            // Interruptor de costeo (pedido 2026-09-22): apagado por defecto, el Admin lo activa
+            // a proposito. Controla la columna Costo de la tabla y el panel de la derecha.
+            $('#chkMostrarCosteoFormula').on('change', function () {
+                state.mostrarCosteo = $(this).is(':checked');
+                $('#colCostoFormula').toggleClass('d-none', !state.mostrarCosteo);
+                $('#bloqueCosteoFormula').toggleClass('d-none', !state.mostrarCosteo);
+                renderLineas();
+            });
+
+            $('#btnAplicarPrecioFormula').on('click', function () {
+                var idElaborado = parseInt($('#IdElaborado').val(), 10) || 0;
+                var sugerido = state.precioVentaSugerido || 0;
+                if (!idElaborado || sugerido <= 0) return;
+
+                var precioRaw = sugerido.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                function ejecutarActualizacionPrecio() {
+                    $.ajax({
+                        url: '@Url.Action("EditPrecioCorte", "Productos")',
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: $form.find('input[name="__RequestVerificationToken"]').val(),
+                            IdCorte: idElaborado,
+                            PrecioKg: precioRaw
+                        }
+                    }).done(function (resp) {
+                        if (resp && resp.error) {
+                            if (window.Swal) Swal.fire('Precio', resp.error, 'error'); else alert(resp.error);
+                            return;
+                        }
+                        state.precioActualElaborado = toNumber(resp && resp.precio ? resp.precio : sugerido);
+                        recalcularPrecioSugeridoFormula();
+                        if (window.Swal) Swal.fire({ icon: 'success', title: 'Precio actualizado', text: 'Nuevo precio: ' + ((resp && resp.precioFormateado) || precioRaw), timer: 2000, showConfirmButton: false });
+                    }).fail(function () {
+                        if (window.Swal) Swal.fire('Precio', 'No se pudo actualizar el precio.', 'error'); else alert('No se pudo actualizar el precio.');
+                    });
+                }
+
+                // Confirmacion previa (pedido 2026-09-22): evitar aplicar un precio por error.
+                var mensajeConfirmacion = 'Se va a actualizar el precio de venta del producto a $ ' + precioRaw + '. ¿Confirmar?';
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'question',
+                        title: 'Actualizar precio',
+                        text: mensajeConfirmacion,
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, actualizar',
+                        cancelButtonText: 'Cancelar'
+                    }).then(function (result) {
+                        if (result.isConfirmed) ejecutarActualizacionPrecio();
+                    });
+                } else if (window.confirm(mensajeConfirmacion)) {
+                    ejecutarActualizacionPrecio();
+                }
+            });
+
             $('#btnBuscarElaboradoFormula').on('click', abrirModalElaborado);
             $('#btnBuscarIngredienteFormula').on('click', abrirModalIngrediente);
 
@@ -776,14 +1042,21 @@
                     return;
                 }
 
+                var costo = (state.pendingCosto && state.pendingCosto.idCorte === idCorte) ? state.pendingCosto : null;
                 state.lineas.push({
                     IdCorte: idCorte,
                     Codigo: codigo,
                     Producto: producto,
                     Porcentaje: porcentaje,
                     AgregarAuto: $('#chkAgregarAutoFormula').is(':checked'),
-                    EsAjusteFormula: false
+                    EsAjusteFormula: false,
+                    FuenteCosto: 'compra',
+                    PrecioCompra: costo ? costo.precioCompra : 0,
+                    PrecioVenta: costo ? costo.precioVenta : 0,
+                    PrecioCosto: costo ? costo.precioCompra : 0,
+                    SinReferenciaCompra: costo ? costo.sinReferencia : true
                 });
+                state.pendingCosto = null;
 
                 limpiarIngrediente();
                 renderLineas();
@@ -852,9 +1125,15 @@
             renderPasosReceta();
 
             updateModeLabels();
-            renderLineas();
             actualizarMensajeAuto();
-            setReadOnly(state.soloLectura);
+
+            // Costeo (solo Admin): costea en batch las lineas ya guardadas de una formula
+            // existente antes del primer render; en una formula nueva no hay nada que costear
+            // todavia y el callback se dispara enseguida.
+            cargarCostosIniciales(function () {
+                renderLineas();
+                setReadOnly(state.soloLectura);
+            });
 
             if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
                 window.EditPageGuard.init({

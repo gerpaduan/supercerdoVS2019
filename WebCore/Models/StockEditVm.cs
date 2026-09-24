@@ -83,6 +83,14 @@ namespace WebCore.Models
 
         public string DraftKey { get; set; } = "";
 
+        // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+        // Embutidos"): clientId del formulario, para que StockController.Guardar marque el borrador
+        // como FINALIZADA al confirmar. A diferencia de Compras/Movimientos/Elaborados (AJAX, el JS
+        // llama a marcarFinalizado tras recibir la respuesta), Stock guarda con un POST tradicional
+        // (RedirectToAction) sin callback en el navegador -- por eso viaja como hidden y se resuelve
+        // del lado del servidor, no del cliente.
+        public string BorradorGenericoClientId { get; set; } = "";
+
         public StockEditVm()
         {
             TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock);

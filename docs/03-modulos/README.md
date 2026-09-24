@@ -7,6 +7,7 @@
 - [Códigos de barra internos (balanza, prefijo 20-29)](./codigos-de-barra-internos.md)
 - [Compras y abastecimiento](./compras-y-abastecimiento.md)
 - [Stock e inventario](./stock-e-inventario.md)
+- [Elaborados / Embutidos](./elaborados-y-embutidos.md)
 - [Caja y tesoreria](./caja-y-tesoreria.md)
 - [Clientes y proveedores](./clientes-y-proveedores.md)
 - [Reportes y administracion](./reportes-y-administracion.md)

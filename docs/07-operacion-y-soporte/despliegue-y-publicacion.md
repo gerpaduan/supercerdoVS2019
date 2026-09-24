@@ -370,7 +370,18 @@ Solo Postgres. Ver `docs/DECISIONS.md` "Ventas en curso: borrador en servidor y 
 3. **Activar/ajustar por ambiente** (opcional) en `WebCore.dll.config`: seccion `PosBorrador:*` (`Habilitado`, `LatidoSegundos`, `MinutosSinLatidoInterrumpida`, `DiasRetencionFinalizadas`, `MaxLineas`, `MaxPayloadKb`, `SegundosProductoSinAgregar`, `SegundosCantidadCeroConfirmacion`, `AdvertenciaProductoSinAgregarHabilitada`). Sin estas claves, `PosBorradorSettings` usa los defaults documentados en `WebCore/Helpers/PosBorradorSettings.cs` — con `DataEngine=Postgres` la funcion queda activa por default apenas se aplica la migracion.
 4. **Verificar**: en el POS, cargar un item y confirmar que aparece un indicador de "Venta resguardada hh:mm:ss" bajo la balanza; cerrar la pestana sin finalizar y volver a entrar -> el boton "Ayuda (F1)" muestra un badge con la cantidad y "Ver ventas sin cerrar" la lista; como admin, la campana del topbar debe aparecer junto al toggle de tema.
 5. **Rollback funcional**: `PosBorrador:Habilitado=false` y reiniciar (el POS vuelve a depender solo del `POSDraft` local). Para revertir el esquema: las 4 tablas se pueden `DROP` sin afectar `ventas`/`lineaventa` (nunca las referencian por FK).
-6. **Servidor SM / San Lorenzo (SQL Server)**: sin cambios, la funcion no existe ahi (mismo criterio que passkeys).
+6. **Servidor SM / San Lorenzo (SQL Server)**: la funcion no existe por defecto; desde 2026-09-23 se puede activar (version reducida, sin notificaciones) -- ver la seccion "Borradores en SQL Server" mas abajo.
+
+## Borradores en SQL Server (`SuperCerdo`) -- orden de despliegue (2026-09-23, PREPARADO, NO APLICADO en SM/SL)
+
+Ver `docs/DECISIONS.md` "Borradores en SQL Server". Cubre las recuperaciones de Compras, Stock, Movimientos, Embutidos (2 pantallas) y ventas en curso del POS. **No incluye** notificaciones/campana del admin ni "producto sin agregar" (etapa 2). **Estado**: probado solo contra SQL Server 2022 local; **PENDIENTE el ensayo en un 2008 real** y la prueba manual de UI.
+
+1. **Antes de tocar**: backup (`BACKUP DATABASE ... WITH COPY_ONLY, CHECKSUM` + `RESTORE VERIFYONLY`) segun el metodo de "Registro de aplicacion (2026-09-19)". El script solo crea 4 tablas nuevas (no modifica objetos existentes), asi que no hace falta comparar hashes de SP.
+2. **Ensayo**: correr `Datos/DB-Procedures/20260923-Create_Borradores.sql` dentro de `BEGIN TRAN ... ROLLBACK` contra el motor real (2008) para detectar sintaxis/compatibilidad sin dejar rastro; luego aplicarlo de verdad (`sqlcmd -S <servidor> -d SuperCerdo -i ...`; es idempotente, se puede repetir). Verificar con `SELECT name FROM sys.tables WHERE name LIKE '%Borrador%'` (deben ser 4: `BorradorGenerico`, `BorradorGenericoEvento`, `VentaBorrador`, `VentaBorradorEvento`).
+3. **Deploy de codigo**: mismos pasos de cada servidor (SM: watchdog + `WebCoreApp`; SL: pool `CarniSysWebCore`). Con el codigo nuevo y **sin** las claves de abajo nada cambia (en SQL Server el flag arranca apagado).
+4. **Activar** en el `WebCore.dll.config` **del servidor** (el archivo real, no `App.config`; ver bug ya documentado) y reiniciar: `<add key="BorradorGenerico:Habilitado" value="true" />` y `<add key="PosBorrador:Habilitado" value="true" />`. Umbrales opcionales: mismas claves `BorradorGenerico:*` / `PosBorrador:*` que en Postgres. **Efecto visible**: en esas pantallas se desactivan `localStorage` y el respaldo por captura de pantalla (el servidor pasa a ser la unica fuente).
+5. **Verificar**: cargar una linea en Compras, cerrar la pestana y volver -> "Compras sin guardar" muestra el borrador; en el POS, el badge de "Ventas sin guardar". No debe aparecer la campana del admin (etapa 2).
+6. **Rollback funcional**: poner ambas claves en `false` (o quitarlas) y reiniciar. Para revertir el esquema: las 4 tablas se pueden `DROP` (nada las referencia por FK).
 
 ## Login por huella (passkeys) -- orden de despliegue (2026-09-21)
 

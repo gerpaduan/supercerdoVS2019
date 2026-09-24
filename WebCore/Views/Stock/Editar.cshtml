@@ -3,6 +3,7 @@
 @using System.Collections.Generic
 @using System.Linq
 @using Entidades
+@inject WebCore.Services.IUsuarioSesionService Sesion
 
 @{
     // Diferencia deliberada respecto al original: se elimina la distincion
@@ -30,6 +31,13 @@
     modalProductoData["ApiUrl"] = Url.Action("BuscarCorte", "Stock");
     modalProductoData["Titulo"] = "Buscar Producto de Stock";
     modalProductoData["MostrarPrecio"] = "false";
+
+    // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
+    // Embutidos"): cuando esta habilitado (Postgres) reemplaza al borrador local (localStorage) y al
+    // respaldo por captura de pantalla de esta pantalla.
+    bool borradorGenericoHabilitado = WebCore.Helpers.BorradorGenericoSettings.Habilitado;
+    var modalBorradoresData = new ViewDataDictionary(ViewData);
+    modalBorradoresData["TituloBorradoresGenerico"] = "Stock sin guardar";
 }
 
 <div class="container-fluid px-2 px-md-3 stock-page stock-form-compact" data-stock-page="1">
@@ -40,9 +48,18 @@
     </div>
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Stock")">
-            <i class="fas fa-arrow-left mr-1"></i> Volver
-        </a>
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Stock")">
+                <i class="fas fa-arrow-left mr-1"></i> Volver
+            </a>
+            @if (borradorGenericoHabilitado)
+            {
+                <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresStock">
+                    <i class="fas fa-clock-rotate-left mr-1"></i> Stock sin guardar
+                    <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
+                </button>
+            }
+        </div>
         <span id="stockEstadoAjusteBadge"
               class="badge badge-pill @(string.Equals(Model.Estado, "Actualizado", StringComparison.OrdinalIgnoreCase) ? "badge-success" : "badge-warning") px-3 py-2 @(!esPesaje || string.IsNullOrWhiteSpace(Model.Estado) ? "d-none" : "")">
             Ajuste: <span id="stockEstadoAjusteTexto">@Model.Estado</span>
@@ -65,6 +82,7 @@
                 @Html.HiddenFor(m => m.IdProveedor)
                 @Html.HiddenFor(m => m.IdPesajeAjustado)
                 @Html.HiddenFor(m => m.DraftKey)
+                @Html.HiddenFor(m => m.BorradorGenericoClientId)
                 <div id="lineasHiddenContainer"></div>
                 <div id="pesajesVinculadosHiddenContainer"></div>
 
@@ -731,6 +749,10 @@
 <div id="contenedorModalPersonaStock"></div>
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+@if (borradorGenericoHabilitado)
+{
+    @Html.Partial("~/Views/Shared/_ModalBorradoresGenerico.cshtml", modalBorradoresData)
+}
 
 <style>
     .stock-page .stock-panel-card {
@@ -1073,11 +1095,15 @@
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script>
         (function () {
-            window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+            @if (!borradorGenericoHabilitado)
+            {
+                @:window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+            }
 
             if (!window.StockUI || typeof window.StockUI.init !== "function") {
                 return;
@@ -1098,6 +1124,23 @@
                 proveedorDefaultId: @Model.IdProveedor,
                 proveedorDefaultNombre: "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.ProveedorNombre ?? ""))",
                 proveedorDefaultCuit: "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.ProveedorCuit ?? ""))",
+                borradorGenerico: {
+                    habilitado: @(borradorGenericoHabilitado ? "true" : "false"),
+                    modulo: "STOCK",
+                    idSucursal: @Model.IdSucursal,
+                    idRegistro: @Model.IdCompra,
+                    idOperador: @Sesion.UsuarioActual.Id,
+                    nombreOperador: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Sesion.UsuarioActual.Nombre)),
+                    latidoSegundos: @WebCore.Helpers.BorradorGenericoSettings.LatidoSegundos,
+                    urls: {
+                        guardar: "@Url.Action("GuardarBorrador", "BorradoresGenerico")",
+                        evento: "@Url.Action("EventoBorrador", "BorradoresGenerico")",
+                        listar: "@Url.Action("ListarBorradores", "BorradoresGenerico")",
+                        recuperar: "@Url.Action("RecuperarBorrador", "BorradoresGenerico")",
+                        descartar: "@Url.Action("DescartarBorrador", "BorradoresGenerico")",
+                        marcarFinalizado: "@Url.Action("MarcarFinalizado", "BorradoresGenerico")"
+                    }
+                },
                 urls: {
                     buscarCorte: "@Url.Action("BuscarCorte", "Stock")",
                     buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Stock")",

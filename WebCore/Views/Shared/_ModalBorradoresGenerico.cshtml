@@ -1,0 +1,37 @@
+@{
+    // Modal compartido "Ver borradores sin guardar" para Compras/Stock/Movimientos/Embutidos (ver
+    // docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/Embutidos"). Un solo partial
+    // parametrizado por titulo -- cada pantalla que lo incluye solo tiene un borrador activo a la vez,
+    // por eso los ids son fijos (sin sufijo por modulo). El contenido lo pinta
+    // Scripts/app/borrador-generico.js. Analogo de Views/Ventas/_ModalAyudaPOS.cshtml
+    // (#modalVentasSinCerrarPOS), simplificado: sin desglose de items (el payload tiene una forma
+    // distinta por modulo), solo resumen.
+    string titulo = ViewData["TituloBorradoresGenerico"] as string ?? "Borradores sin guardar";
+}
+<div class="modal fade" id="modalBorradoresGenerico" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-pen mr-2"></i>@titulo
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0 borradores-sin-cerrar-generico" id="contenedorBorradoresGenerico">
+                <div class="p-4 text-center text-muted">Cargando...</div>
+            </div>
+            <div class="modal-footer small text-muted justify-content-start" style="font-size:.78rem;">
+                Los interrumpidos quedaron sin guardar (corte de luz, cierre del navegador). Solo podés cargar o
+                descartar los tuyos; los de otro usuario piden la autorización de un supervisor.
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .borradores-sin-cerrar-generico { font-size: .82rem; }
+    .borradores-sin-cerrar-generico table { font-size: .82rem; }
+    .borradores-sin-cerrar-generico table th, .borradores-sin-cerrar-generico table td { padding: .4rem .5rem; vertical-align: middle; }
+    .borradores-sin-cerrar-generico .badge { font-size: .68rem; font-weight: 600; }
+</style>

@@ -1,0 +1,91 @@
+@model WebCore.Models.DetalleBorradorVm
+@using System.Globalization
+@using WebCore.Helpers
+
+@* Detalle de una venta en curso (interrumpida, descartada o cortada por cierre de caja) para el admin: cliente,
+   total, items, estado final y linea de tiempo de eventos. Se carga dentro del modal global
+   #modalAdvertenciaDetalle del _Layout; el boton "Marcar atendida" lo maneja Scripts/app/advertencias-admin.js.
+   Ver docs/DECISIONS.md "Ventas en curso". *@
+
+@{
+    var es = new CultureInfo("es-AR");
+    var b = Model.Borrador;
+    bool hayPendiente = Model.Notificacion != null && !Model.Notificacion.EstaAtendida;
+}
+
+<div class="mb-3">
+    <h5 class="mb-1"><i class="fas fa-cart-shopping text-warning mr-1"></i> Venta en curso — @(string.IsNullOrWhiteSpace(b.NombreOperador) ? "Usuario #" + b.IdOperador : b.NombreOperador)</h5>
+    <div class="small text-muted">Iniciada el @b.Creado.ToString("dd/MM/yyyy HH:mm:ss", es) · última señal @b.UltimoLatido.ToString("dd/MM/yyyy HH:mm:ss", es)</div>
+</div>
+
+<div class="alert @(b.Estado == "ACTIVA" ? "alert-warning" : "alert-secondary") py-2">
+    <b>Estado:</b> @Model.EstadoTexto
+</div>
+
+<div class="row mb-3">
+    <div class="col-sm-6"><b>Cliente:</b> @(string.IsNullOrWhiteSpace(b.RazonSocial) ? "Consumidor Final" : b.RazonSocial)</div>
+    <div class="col-sm-3"><b>Total:</b> $ @b.Total.ToString("N2", es)</div>
+    <div class="col-sm-3"><b>Ítems:</b> @b.CantLineas</div>
+</div>
+
+@if (Model.Items.Count > 0)
+{
+    <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered mb-0">
+            <thead class="table-light">
+                <tr><th>Código</th><th>Producto</th><th class="text-end">Cantidad</th><th class="text-end">Precio</th><th class="text-end">Importe</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr class="@(item.Anulado ? "text-muted text-decoration-line-through" : "")">
+                        <td>@item.Codigo</td>
+                        <td>@item.Producto @(item.Anulado ? "(anulado)" : "")</td>
+                        <td class="text-end">@item.Cantidad</td>
+                        <td class="text-end">@item.Precio</td>
+                        <td class="text-end">@item.Importe</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="text-muted small mb-3">El detalle de ítems ya no está disponible (la venta se finalizó o se descartó).</div>
+}
+
+<h6>Línea de tiempo</h6>
+@if (Model.Eventos.Count == 0)
+{
+    <div class="text-muted small">Sin eventos registrados: la venta dejó de dar señal sin que el navegador avisara (típico de un corte de luz o de red).</div>
+}
+else
+{
+    <ul class="list-unstyled small mb-0">
+        @foreach (var ev in Model.Eventos)
+        {
+            <li class="mb-1">
+                <span class="text-nowrap">@ev.Fecha.ToString("dd/MM/yyyy HH:mm:ss", es)</span> —
+                <b>@AdvertenciasTextos.TipoEvento(ev.Tipo)</b>
+                @if (!string.IsNullOrWhiteSpace(ev.NombreUsuario)) { <span class="text-muted">(@ev.NombreUsuario)</span> }
+                @if (!string.IsNullOrWhiteSpace(ev.Detalle)) { <div class="text-muted">@ev.Detalle</div> }
+            </li>
+        }
+    </ul>
+}
+
+@if (hayPendiente)
+{
+    <div class="text-end mt-3">
+        <button type="button" class="btn btn-success js-atender-notificacion" data-id="@Model.Notificacion!.Id">
+            <i class="fas fa-check-double mr-1"></i> Marcar atendida
+        </button>
+    </div>
+}
+else if (Model.Notificacion != null)
+{
+    <div class="text-muted small mt-3">
+        Atendida por @Model.Notificacion.NombreAtendidaPor el @(Model.Notificacion.AtendidaEn.HasValue ? Model.Notificacion.AtendidaEn.Value.ToString("dd/MM/yyyy HH:mm", es) : "").
+    </div>
+}

@@ -18,9 +18,13 @@ Documentar el flujo de ventas, caja, articulos, pesaje y uso del POS.
 Ver decisión completa, verificación y lista de archivos en `docs/DECISIONS.md` ("Ventas en curso:
 borrador en servidor y advertencias del POS", 2026-09-21). Resumen operativo:
 
-- **Solo Postgres.** Con `DataEngine=SqlServer` (Servidor SM, San Lorenzo) toda esta función queda
-  apagada sin errores: `WebCore/Helpers/PosBorradorSettings.Habilitado` exige `UsarPostgres`, y todos
-  los endpoints/vistas la chequean antes de actuar. El POS sigue con el `POSDraft` local de siempre.
+- **Motores.** Postgres: completa y prendida por defecto. **SQL Server (`SuperCerdo`: Servidor SM,
+  San Lorenzo): desde 2026-09-23 hay una versión reducida, opt-in** (`PosBorrador:Habilitado=true` +
+  `Datos/DB-Procedures/20260923-Create_Borradores.sql`; ver `docs/DECISIONS.md` "Borradores en SQL
+  Server"): ventas en curso, recuperación, campana propia del cajero y "Ventas sin guardar" **sí**;
+  campana/notificaciones del admin y advertencia "producto pesado sin agregar" **no** (etapa 2, apagadas
+  con `PosBorradorSettings.SoportaNotificaciones`). Apagada (default en SQL Server), el POS sigue con
+  el `POSDraft` local de siempre.
 - **Qué guarda**: mientras el cajero arma la venta, el carrito se resguarda en la tabla
   `ventaborrador` (identificado por un `clientid` GUID del navegador), con autoguardado en cada
   cambio y un latido periódico. **Nunca toca `ventas`/`lineaventa`** — esas tablas se escriben recién
