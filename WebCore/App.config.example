@@ -37,6 +37,18 @@
     <add key="Passkeys:ServerDomain" value="carnisys.com" />
     <add key="Passkeys:Origins" value="https://carnisys.com" />
     <add key="Passkeys:ServerName" value="CarniSys" />
+    <!-- AFIP/ARCA (2026-09-24, ver docs/06-datos-e-integraciones/afip-y-facturacion.md). TODAS opcionales:
+         sin la clave valen los endpoints oficiales de AFIP y estos umbrales. El entorno (homologacion o
+         produccion) NO va aca: es de cada empresa (Empresa.Entorno_HOMO_PROD). Solo se aceptan URLs https. -->
+    <add key="Afip:DiasAviso" value="60,30,15" />
+    <!--
+    <add key="Afip:Produccion:WsaaUrl" value="https://wsaa.afip.gov.ar/ws/services/LoginCms" />
+    <add key="Afip:Produccion:WsfeUrl" value="https://servicios1.afip.gov.ar/wsfev1/service.asmx" />
+    <add key="Afip:Produccion:PadronUrl" value="https://aws.afip.gov.ar/sr-padron/webservices/personaServiceA13" />
+    <add key="Afip:Homologacion:WsaaUrl" value="https://wsaahomo.afip.gov.ar/ws/services/LoginCms" />
+    <add key="Afip:Homologacion:WsfeUrl" value="https://wswhomo.afip.gov.ar/wsfev1/service.asmx" />
+    <add key="Afip:Homologacion:PadronUrl" value="https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA13" />
+    -->
     <!-- Sidebar de _Layout.cshtml: modulos todavia no migrados a WebCore linkean con URL
          absoluta al Web clasico. Sin barra final. -->
     <add key="WebClasicoBaseUrl" value="https://localhost:44371" />

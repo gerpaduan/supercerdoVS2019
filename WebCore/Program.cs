@@ -25,6 +25,11 @@ builder.Services.AddControllersWithViews(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<WebCore.Services.IUsuarioSesionService, WebCore.Services.UsuarioSesionService>();
 
+// Config de AFIP por empresa (URLs por entorno + clave cifrada del pfx del certificado ARCA). Usa
+// Data Protection (default de ASP.NET Core, ya presente por la cookie de autenticacion).
+builder.Services.AddScoped<WebCore.Services.IAfipConfigProvider, WebCore.Services.AfipConfigProvider>();
+builder.Services.AddScoped<WebCore.Services.ICertificadoArcaEstado, WebCore.Services.CertificadoArcaEstadoService>();
+
 builder.Services
     .AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

@@ -18,7 +18,8 @@ COPY --chown=app:app . .
 # Claves de Data Protection (firman la cookie de login): si viven solo en el contenedor, cada
 # recreate cierra todas las sesiones. Se persisten en un volumen montado en esta ruta (el directorio
 # se crea aca, con dueno `app`, para que el volumen nombrado herede el permiso).
-RUN mkdir -p /home/app/.aspnet/DataProtection-Keys && chown -R app:app /home/app
+# /app/AFIP: punto de montaje del volumen carnisys-afip (certificados); creado con dueno app para que el volumen lo herede y la app pueda escribir.
+RUN mkdir -p /home/app/.aspnet/DataProtection-Keys /app/AFIP && chown -R app:app /home/app /app/AFIP
 
 USER app
 # Puerto 8080 = default de las imagenes .NET 8+ (ASPNETCORE_HTTP_PORTS). Nadie lo publica al host.

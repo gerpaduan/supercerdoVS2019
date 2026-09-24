@@ -25,10 +25,12 @@ namespace WebCore.Controllers
         private static readonly CultureInfo CulturaAr = new CultureInfo("es-AR");
 
         private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly WebCore.Services.ICertificadoArcaEstado _certificadoArca;
 
-        public NotificacionesController(WebCore.Services.IUsuarioSesionService sesion)
+        public NotificacionesController(WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.ICertificadoArcaEstado certificadoArca)
         {
             _sesion = sesion;
+            _certificadoArca = certificadoArca;
         }
 
         private bool EsAdmin => _sesion.UsuarioActual.Admin;
@@ -50,6 +52,9 @@ namespace WebCore.Controllers
                 return Url.Action("DetalleProductoSinAgregar", "Notificaciones",
                     new { idOperador, dia = dia.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) }) ?? "";
             }
+
+            if (n.Tipo == Entidades.Notificacion.TipoCertificadoArcaPorVencer)
+                return Url.Action("Index", "CertificadoArca") ?? "";
 
             if (n.Tipo != null && n.Tipo.StartsWith(Entidades.Notificacion.PrefijoBorradorGenericoDescartado, StringComparison.Ordinal))
             {
@@ -88,6 +93,10 @@ namespace WebCore.Controllers
                 {
                     CrearNegocioGenerico().CrearNotificacionesInterrumpidas(WebCore.Helpers.BorradorGenericoSettings.MinutosSinLatidoInterrumpida);
                 }
+
+                // Aviso de certificado ARCA por vencer (evaluacion limitada a 1/hora, ver
+                // CertificadoArcaEstadoService): mismo mecanismo perezoso que los borradores.
+                _certificadoArca.EvaluarAviso(_certificadoArca.EmpresaActual());
 
                 int pendientes = CrearNegocio().ResumenParaCampana(
                     WebCore.Helpers.PosBorradorSettings.MinutosSinLatidoInterrumpida, MaximoEnCampana, out var ultimas);

@@ -42,7 +42,7 @@
     bool enPagos = enFinanzas && (action == "Pagos"
         || (action == "AddOrEditPago" && returnUrlActual.StartsWith("/Finanzas/Pagos", StringComparison.OrdinalIgnoreCase)));
     bool enConfiguracion = controller == "Usuarios" || controller == "AuditoriaLogin" || controller == "Parametros"
-        || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros";
+        || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros" || controller == "CertificadoArca";
     bool enAdministracionSistema = controller == "SystemAdministration";
 
     var usuarioActual = Sesion.UsuarioActual;
@@ -605,6 +605,7 @@
                             <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
                             <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
                             <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
+                            <a class="collapse-item @(controller == "CertificadoArca" ? "active" : "")" href="@Url.Action("Index", "CertificadoArca")">Certificado ARCA</a>
                             <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Codigos de barra</a>
                             @* Bug real evitado 2026-09-14 (ver docs/DECISIONS.md): la clasica se retiro de
                                produccion (VM CarniSys) -- WebClasicoBaseUrl quedo vacio, asi que @legacy(...)

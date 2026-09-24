@@ -354,6 +354,14 @@ namespace Negocio
             return oBorradorD.ListarNotificaciones(soloPendientes, max);
         }
 
+        // Registra (o actualiza, idempotente por empresa+tipo+refid) una notificacion al admin que no nace
+        // de un borrador: p. ej. el aviso de certificado ARCA por vencer. reabrir=true la vuelve a dejar
+        // pendiente aunque ya la hubiera atendido un admin.
+        public void RegistrarNotificacion(Entidades.Notificacion notificacion, bool reabrir)
+        {
+            oBorradorD.UpsertNotificacion(notificacion, reabrir);
+        }
+
         public Entidades.Notificacion ObtenerNotificacion(int id)
         {
             return oBorradorD.ObtenerNotificacion(id);

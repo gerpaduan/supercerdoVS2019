@@ -17,6 +17,8 @@
        Presentacion\Cortes, WinForms) queda fuera de alcance, no se toca. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <Compile Remove="ServiceReferenceCore\**\*.cs" />
+    <!-- Gestion de certificados (CSR/pfx/vencimiento): usa APIs de criptografia modernas, solo WebCore. -->
+    <Compile Remove="CertificadoArcaService.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="Web References\**\*.cs" />

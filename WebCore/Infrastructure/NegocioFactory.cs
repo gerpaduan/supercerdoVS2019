@@ -172,6 +172,12 @@ namespace WebCore.Infrastructure
             return new Negocio.VentaBorrador(repo);
         }
 
+        // Clave cifrada del pfx del certificado ARCA (solo Postgres; ver AfipConfigProvider).
+        public static DatosPostgres.CertificadoArcaClavePg CrearCertificadoArcaClave(IEmpresaContext empresa)
+        {
+            return new DatosPostgres.CertificadoArcaClavePg(PgConnString, empresa.IdEmpresa);
+        }
+
         // Borradores de Compras/Stock/Movimientos/Embutidos: Postgres (BorradorGenericoPg) o SQL Server
         // (Datos.BorradorGenerico), mismo criterio que CrearVentaBorrador. Quien la llame debe haber
         // chequeado antes BorradorGenericoSettings.Habilitado. Infraestructura separada de

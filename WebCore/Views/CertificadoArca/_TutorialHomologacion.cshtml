@@ -1,0 +1,27 @@
+@* Tutorial: modo prueba (homologacion / testing de AFIP). *@
+<div class="alert alert-warning">
+    En <strong>modo prueba</strong> el sistema emite contra el ambiente de pruebas de ARCA: las facturas <strong>no tienen validez fiscal</strong>,
+    quedan marcadas como <span class="badge bg-danger">PRUEBA</span> y no se cuentan en el total facturado del listado (salvo que elijas verlas).
+    Sirve para probar el sistema o capacitar personal sin facturar de verdad.
+</div>
+<ol>
+    <li class="mb-3">
+        <strong>El certificado de pruebas es otro.</strong> El de producción no sirve en homologación. Se pide en el servicio
+        <em>WSASS - Autogestión de Certificados Homologación</em> (ARCA, con clave fiscal): <em>Nuevo Certificado</em> → subís el <code>.csr</code>
+        (generalo en el paso 1 de esta pantalla) → descargás el <code>.crt</code>.
+    </li>
+    <li class="mb-3">
+        <strong>Autorizá el servicio de pruebas</strong> en el mismo WSASS: <em>Crear autorización a servicio</em> → <code>wsfe</code> (Facturación Electrónica).
+    </li>
+    <li class="mb-3">
+        <strong>Cambiá el entorno de la empresa a HOMO</strong> (Administración del sistema → Empresas → <em>Entorno AFIP</em>) y cargá el <code>.crt</code> de pruebas
+        en el paso 2. El sistema guarda el certificado de homologación con el nombre <code>certif-homo.pfx</code> si la empresa todavía no tenía uno.
+    </li>
+    <li class="mb-3">
+        <strong>Al terminar, volvé a PROD</strong> y cargá otra vez el certificado de producción (paso 1 y 2). No se pueden mezclar: una factura de prueba solo se anula con nota de crédito de prueba.
+    </li>
+</ol>
+<div class="alert alert-secondary mb-0 small">
+    Mientras la empresa está en modo prueba se ve una franja roja “MODO PRUEBA” en el modal de facturación electrónica y una etiqueta en la barra superior.
+    Una venta con factura de prueba figura como “ya facturada”: usá ventas de prueba para probar.
+</div>

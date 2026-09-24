@@ -34,6 +34,10 @@ namespace Entidades
         public const string TipoBorradorInterrumpidoEmbutidoCarga = PrefijoBorradorGenericoInterrumpido + "EMBUTIDO_CARGA";
         public const string TipoBorradorInterrumpidoEmbutidoRapido = PrefijoBorradorGenericoInterrumpido + "EMBUTIDO_RAPIDO";
 
+        // Certificado digital de AFIP/ARCA por vencer o vencido. RefId = fecha de vencimiento (yyyyMMdd):
+        // al renovar cambia y el aviso anterior deja de aplicar. Ver WebCore.Services.CertificadoArcaEstadoService.
+        public const string TipoCertificadoArcaPorVencer = "CERTIFICADO_ARCA_POR_VENCER";
+
         public const string SeveridadAdvertencia = "ADVERTENCIA";
         public const string SeveridadInfo = "INFO";
 

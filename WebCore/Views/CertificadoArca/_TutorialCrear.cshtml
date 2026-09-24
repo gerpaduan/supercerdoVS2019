@@ -1,0 +1,48 @@
+@* Tutorial: certificado nuevo (empresa que factura por primera vez o que nunca cargo uno).
+   Nombres de menu: "Administracion de Certificados Digitales", "Agregar alias", "Administrador de
+   Relaciones de Clave Fiscal" y "Facturacion Electronica (wsfe)" confirmados 2026-09-24 contra fuentes
+   publicas. PENDIENTE verificar contra el portal real de ARCA: "Consulta de Padron Alcance 13",
+   "Administracion de Puntos de Venta y Domicilios" y "RECE para aplicativo y web services" (vienen de
+   memoria/documentacion previa). Si ARCA cambia los nombres, actualizar aca y en
+   docs/06-datos-e-integraciones/afip-y-facturacion.md. *@
+<p class="text-muted">
+    Necesitás la <strong>clave fiscal</strong> del CUIT de la empresa (nivel 3 o superior) y ser el titular o tener
+    delegada la administración de servicios. Todo el proceso dura unos 10 minutos.
+</p>
+<ol class="tutorial-pasos">
+    <li class="mb-3">
+        <strong>Generá el pedido acá.</strong> En el paso 1 de esta pantalla poné un alias (ej. <code>carnisys-@DateTime.Now.ToString("yyyyMM")</code>)
+        y descargá el archivo <code>.csr</code>. La clave privada queda guardada de forma segura en el servidor: no hace falta que la veas ni la copies.
+    </li>
+    <li class="mb-3">
+        <strong>Ingresá a ARCA.</strong> Entrá a <code>auth.arca.gob.ar</code> con el CUIT y la clave fiscal.
+    </li>
+    <li class="mb-3">
+        <strong>Habilitá el servicio “Administración de Certificados Digitales”.</strong> Si no aparece en tu lista de servicios, se adhiere desde
+        <em>Administrador de Relaciones de Clave Fiscal</em> → <em>Adherir servicio</em> → ARCA → Servicios Interactivos → <em>Administración de Certificados Digitales</em>.
+    </li>
+    <li class="mb-3">
+        <strong>Agregá el alias.</strong> Entrá a <em>Administración de Certificados Digitales</em> y elegí el CUIT. Usá <em>Agregar alias</em>: escribí el mismo alias
+        del paso 1 y subí el archivo <code>.csr</code>. ARCA emite el certificado en el momento.
+    </li>
+    <li class="mb-3">
+        <strong>Descargá el certificado (<code>.crt</code>).</strong> En la lista de alias, abrí el que acabás de crear y descargá el certificado.
+    </li>
+    <li class="mb-3">
+        <strong>Autorizá el servicio de facturación.</strong> Entrá a <em>Administrador de Relaciones de Clave Fiscal</em> → <em>Nueva relación</em>.
+        Como servicio elegí <em>ARCA → WebServices → Facturación Electrónica</em> (<code>wsfe</code>); como representante (el “computador fiscal”), el alias del paso 4.
+        <strong>El padrón no hace falta:</strong> la búsqueda de CUIT al dar de alta un cliente la resuelve la plataforma con su propio certificado (solo si la plataforma todavía no lo tiene, o para consultar con el certificado de esta empresa, autorizá también <code>ws_sr_padron_a13</code>).
+        Sin esta relación ARCA rechaza las facturas aunque el certificado sea válido.
+    </li>
+    <li class="mb-3">
+        <strong>Verificá el punto de venta.</strong> En <em>Administración de Puntos de Venta y Domicilios</em> el punto de venta que usa el sistema debe estar
+        habilitado con el sistema <em>“RECE para aplicativo y web services”</em>. Es el mismo número que tiene cargado la sucursal en el sistema.
+    </li>
+    <li class="mb-3">
+        <strong>Volvé acá y subí el certificado.</strong> En el paso 2 elegí el <code>.crt</code> descargado y tocá <em>Instalar certificado</em>.
+        El sistema verifica que corresponda al pedido y al CUIT, y te muestra la fecha de vencimiento.
+    </li>
+    <li>
+        <strong>Probá.</strong> Volvé arriba y tocá <em>Probar conexión</em>: verifica el certificado, el login en ARCA y el punto de venta sin emitir nada. Si falla, el mensaje indica la causa: casi siempre es la relación del paso 6 o el punto de venta del paso 7.
+    </li>
+</ol>

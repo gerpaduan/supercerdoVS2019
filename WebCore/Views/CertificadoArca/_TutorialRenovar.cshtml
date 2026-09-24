@@ -1,0 +1,34 @@
+@* Tutorial: renovar o reemplazar un certificado existente (por vencer, vencido, perdido o comprometido). *@
+<p class="text-muted">
+    Conviene renovarlo antes de que venza: el sistema te avisa en la campana. <strong>El certificado actual sigue funcionando hasta el último paso</strong>,
+    así que no se interrumpe la facturación.
+</p>
+<ol>
+    <li class="mb-3">
+        <strong>Generá un pedido nuevo</strong> en el paso 1 de esta pantalla, con un alias distinto al que ya usás (ej. <code>carnisys-@DateTime.Now.ToString("yyyyMM")</code>).
+        Cada renovación necesita un pedido nuevo: no se reutiliza el anterior.
+    </li>
+    <li class="mb-3">
+        <strong>Agregá el alias nuevo en ARCA.</strong> <code>auth.arca.gob.ar</code> → <em>Administración de Certificados Digitales</em> → <em>Agregar alias</em>,
+        subí el <code>.csr</code> y descargá el <code>.crt</code>.
+    </li>
+    <li class="mb-3">
+        <strong>Pasá la autorización al alias nuevo.</strong> Como el alias es nuevo, en <em>Administrador de Relaciones de Clave Fiscal</em> creá de nuevo la relación
+        para <em>Facturación Electrónica</em> (<code>wsfe</code>) —y <code>ws_sr_padron_a13</code> si lo usás— con el alias nuevo como representante.
+        Podés dejar la relación del alias viejo hasta confirmar que todo anda.
+    </li>
+    <li class="mb-3">
+        <strong>Subí el <code>.crt</code></strong> en el paso 2. El sistema reemplaza el certificado, guarda una copia del anterior en la carpeta del CUIT
+        (archivo <code>.bak</code>) y hace que el próximo pedido a ARCA use el nuevo.
+    </li>
+    <li class="mb-3">
+        <strong>Probá una factura.</strong> Si algo sale mal, el <code>.bak</code> es el certificado anterior (mientras no haya vencido) y la relación vieja sigue en ARCA.
+    </li>
+    <li>
+        <strong>Limpieza.</strong> Cuando confirmes que factura bien, en ARCA podés revocar el alias viejo y sacar su relación.
+    </li>
+</ol>
+<div class="alert alert-info mb-0">
+    <strong>¿Se sospecha que alguien tiene el certificado?</strong> Hacé el proceso completo y, además, revocá el alias anterior en ARCA:
+    quien tenga el archivo viejo podría emitir comprobantes a nombre de la empresa hasta que se revoque.
+</div>
