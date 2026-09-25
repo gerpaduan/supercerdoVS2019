@@ -606,7 +606,11 @@
                             <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
                             <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
                             <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
-                            <a class="collapse-item @(controller == "CertificadoArca" ? "active" : "")" href="@Url.Action("Index", "CertificadoArca")">Certificado ARCA</a>
+                            @* Certificados de AFIP: solo Postgres (multitenant). En SQL Server (una sola empresa) el certificado sigue siendo el .pfx de AFIP<CUIT> y no hay pantalla. *@
+                            @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres)
+                            {
+                                <a class="collapse-item @(controller == "CertificadoArca" ? "active" : "")" href="@Url.Action("Index", "CertificadoArca")">Certificado ARCA</a>
+                            }
                             <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Codigos de barra</a>
                             @* Bug real evitado 2026-09-14 (ver docs/DECISIONS.md): la clasica se retiro de
                                produccion (VM CarniSys) -- WebClasicoBaseUrl quedo vacio, asi que @legacy(...)
@@ -632,7 +636,10 @@
                             <a class="collapse-item @(enAdministracionSistema && (action == "Sucursales" || action == "EditarSucursal") ? "active" : "")" href="@Url.Action("Sucursales", "SystemAdministration")">Sucursales</a>
                             <a class="collapse-item @(enAdministracionSistema && (action == "Usuarios" || action == "EditarUsuario") ? "active" : "")" href="@Url.Action("Usuarios", "SystemAdministration")">Usuarios</a>
                             <a class="collapse-item @(enAdministracionSistema && action == "AltaRapidaEmpresa" ? "active" : "")" href="@Url.Action("AltaRapidaEmpresa", "SystemAdministration")">Alta rapida de empresa</a>
-                            <a class="collapse-item @(controller == "PadronPlataforma" ? "active" : "")" href="@Url.Action("Index", "PadronPlataforma")">Certificado de padron</a>
+                            @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres)
+                            {
+                                <a class="collapse-item @(controller == "PadronPlataforma" ? "active" : "")" href="@Url.Action("Index", "PadronPlataforma")">Certificado de padron</a>
+                            }
                         </div>
                     </div>
                 </li>
