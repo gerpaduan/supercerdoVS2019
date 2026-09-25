@@ -100,7 +100,7 @@ namespace WebCore.Controllers
 
             try
             {
-                string csr = CertificadoArcaService.ParaPlataforma(_env.ContentRootPath).GenerarCsr(cuitNumero, razonSocial, alias);
+                string csr = CertificadoArcaService.ParaPlataforma(_env.ContentRootPath).GenerarCsr(cuitNumero, false, razonSocial, alias);
                 _log.LogInformation("Certificado de padrón de la plataforma: pedido (CSR) generado por el usuario {IdUsuario}.", _sesion.UsuarioActual.Id);
                 return File(System.Text.Encoding.ASCII.GetBytes(csr), "application/x-pem-file", cuitNumero + "-padron.csr");
             }
@@ -120,7 +120,7 @@ namespace WebCore.Controllers
         {
             var servicio = CertificadoArcaService.ParaPlataforma(_env.ContentRootPath);
             long? cuit = servicio.LeerCuitPendiente();
-            string? csr = cuit.HasValue ? servicio.LeerCsrPendiente(cuit.Value) : null;
+            string? csr = cuit.HasValue ? servicio.LeerCsrPendiente(cuit.Value, false) : null;
             if (csr == null) return Volver(error: "No hay un pedido pendiente.");
             return File(System.Text.Encoding.ASCII.GetBytes(csr), "application/x-pem-file", cuit + "-padron.csr");
         }
@@ -131,7 +131,7 @@ namespace WebCore.Controllers
         {
             var servicio = CertificadoArcaService.ParaPlataforma(_env.ContentRootPath);
             long? cuit = servicio.LeerCuitPendiente();
-            servicio.DescartarPedidoPendiente(cuit ?? 0);
+            servicio.DescartarPedidoPendiente(cuit ?? 0, false);
             return Volver(mensaje: "Se descartó el pedido pendiente.");
         }
 
@@ -164,7 +164,7 @@ namespace WebCore.Controllers
                 }
 
                 int idUsuario = _sesion.UsuarioActual.Id;
-                var resultado = servicio.Instalar(cuit.Value, AfipRutas.NombreCertificadoPlataforma, contenido,
+                var resultado = servicio.Instalar(cuit.Value, false, AfipRutas.NombreCertificadoPlataforma, contenido,
                     clave => _plataforma.Guardar(cuit.Value, AfipRutas.NombreCertificadoPlataforma, clave, idUsuario));
 
                 _log.LogInformation("Certificado de padrón de la plataforma instalado: huella {Huella}, vence {Vence:yyyy-MM-dd}, usuario {IdUsuario}.",

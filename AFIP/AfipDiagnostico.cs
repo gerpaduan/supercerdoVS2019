@@ -39,33 +39,39 @@ namespace AFIP
         private const string SufijoWsfe = "?WSDL";
 
         // puntosVenta: los codigos de punto de venta AFIP de las sucursales de la empresa (distintos, > 0).
-        public static ResultadoDiagnostico ProbarFacturacion(Entidades.Empresa empresa, IEnumerable<int> puntosVenta, string basePathOverride, AfipConfig config)
+        // entornoForzado: "HOMO"/"PROD" para probar un entorno puntual aunque la empresa este configurada en el
+        // otro (la pantalla Certificado ARCA tiene una tarjeta por entorno). null = el de la empresa.
+        public static ResultadoDiagnostico ProbarFacturacion(Entidades.Empresa empresa, IEnumerable<int> puntosVenta, string basePathOverride, AfipConfig config, string entornoForzado = null)
         {
             var resultado = new ResultadoDiagnostico();
             config = config ?? AfipConfig.PorDefecto();
-            resultado.EsHomologacion = config.EsHomologacion(empresa.Entorno_HOMO_PROD);
-            var endpoints = config.Para(empresa.Entorno_HOMO_PROD);
+            string entorno = entornoForzado ?? empresa.Entorno_HOMO_PROD;
+            resultado.EsHomologacion = config.EsHomologacion(entorno);
+            var endpoints = config.Para(entorno);
 
             // ---- 1) archivos
             string cuit = empresa.Cuit.ToString();
-            string carpeta;
-            try { carpeta = AfipRutas.Carpeta(basePathOverride, cuit); }
+            AfipRutas.UbicacionAfip ubicacion;
+            try { ubicacion = AfipRutas.Resolver(basePathOverride, cuit, resultado.EsHomologacion, empresa.NombreCertificado_pfx); }
             catch (ArgumentException)
             {
                 resultado.Pasos.Add(Paso("Datos de la empresa", false, "La empresa no tiene un CUIT válido cargado."));
                 return resultado;
             }
 
-            string rutaPfx = AfipRutas.Certificado(carpeta, empresa.NombreCertificado_pfx);
-            string rutaTicket = AfipRutas.Ticket(carpeta, esPadron: false, homologacion: resultado.EsHomologacion);
+            string carpeta = ubicacion.Carpeta;
+            string rutaPfx = ubicacion.RutaPfx;
+            string rutaTicket = ubicacion.RutaTicket(false);
             if (!File.Exists(rutaPfx))
             {
-                resultado.Pasos.Add(Paso("Certificado", false, "No se encontró el archivo del certificado (" + Path.GetFileName(rutaPfx) + "). Cargalo con los pasos de esta pantalla."));
+                resultado.Pasos.Add(Paso("Certificado", false, "No hay certificado de " + (resultado.EsHomologacion ? "pruebas (homologación)" : "producción")
+                    + " cargado para esta empresa. Cargalo con los pasos de esta pantalla."));
                 return resultado;
             }
-            if (!File.Exists(AfipRutas.Template(carpeta)))
+            AfipRutas.AsegurarPlantilla(ubicacion);
+            if (!File.Exists(ubicacion.RutaTemplate))
             {
-                resultado.Pasos.Add(Paso("Plantilla de login", false, "Falta el archivo LoginTemplate.xml en la carpeta del CUIT. Al instalar un certificado desde esta pantalla se crea solo."));
+                resultado.Pasos.Add(Paso("Plantilla de login", false, "Falta el archivo LoginTemplate.xml en la carpeta del certificado. Al instalar un certificado desde esta pantalla se crea solo."));
                 return resultado;
             }
             resultado.Pasos.Add(Paso("Archivos", true, "Certificado " + Path.GetFileName(rutaPfx) + " y plantilla de login presentes."));

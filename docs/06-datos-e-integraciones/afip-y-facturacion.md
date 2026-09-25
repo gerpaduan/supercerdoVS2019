@@ -1,31 +1,38 @@
 # AFIP / ARCA y facturacion electronica
 
-Estado al 2026-09-24. Codigo en `AFIP/` (proyecto compartido `net472;net10.0`) y pantalla en `WebCore` (`CertificadoArcaController`).
+Estado al 2026-09-25. Codigo en `AFIP/` (proyecto compartido `net472;net10.0`) y pantalla en `WebCore` (`CertificadoArcaController`).
 
 ## Donde vive el certificado
 
-- Carpeta por empresa: `<ContentRoot>/AFIP/<CUIT>/` (una sola implementacion de la regla: `AFIP/AfipRutas.cs`).
+- Carpeta por empresa: `<ContentRoot>/AFIP/<CUIT>/` (una sola implementacion de la regla: `AFIP/AfipRutas.cs`, `Resolver`).
   - `ContentRoot` = carpeta del sitio en IIS (`C:\inetpub\wwwroot\{CarniSysWeb,web}`), `WebCore/` en desarrollo, `/app` en Docker (volumen `carnisys-afip` -> `/app/AFIP`).
-- Archivo del certificado: `Empresa.NombreCertificado_pfx` (columna `empresas.nombrecertificado_pfx`); si esta vacio el codigo usa `certif-prod.pfx`. **Solo el nombre**: cualquier ruta que venga en el campo se descarta (no puede salir de la carpeta del CUIT).
-- Otros archivos de la carpeta: `LoginTemplate.xml` (plantilla del pedido de acceso; lo crea la pantalla si falta), tickets de acceso WSAA (`TicketAcceso.txt` factura, `TicketAccesoPerson.txt` padron; en homologacion `*.homo.txt`), `pendiente/` (clave privada + CSR mientras se espera el `.crt` de ARCA), `*.bak` (copia del pfx anterior tras una renovacion).
-- Formato `.pfx` unico. **La clave del pfx**: los certificados historicos no tienen (clave vacia); los cargados por la pantalla llevan una clave aleatoria de 24 caracteres guardada **cifrada** (ASP.NET Data Protection) en `certificado_arca_clave` (una fila por empresa, RLS). Sin fila = clave vacia.
+- **Un certificado por entorno, cada uno en su carpeta y con nombre fijo** (desde 2026-09-25; el nombre del archivo ya no decide nada):
+  ```
+  AFIP/<CUIT>/prod/  certificado.pfx  LoginTemplate.xml  TicketAcceso.txt  TicketAccesoPerson.txt  pendiente/  *.bak
+  AFIP/<CUIT>/homo/  (igual, para pruebas / homologacion)
+  ```
+  El entorno de la empresa (`Entorno_HOMO_PROD`) decide de cual carpeta se lee. Las carpetas se crean **al escribir** (generar pedido / instalar), no al dar de alta la empresa; el codigo nunca exige que existan.
+- **Produccion historica (respaldo de solo lectura)**: si `prod/certificado.pfx` no existe pero si el pfx de siempre en la raiz del CUIT (`AFIP/<CUIT>/<nombrecertificado_pfx | certif-prod.pfx>`, con su `LoginTemplate.xml` y tickets de la raiz), produccion sigue usando ese, exactamente como antes; SM, San Lorenzo y las PC actuales no se tocan ni se migran. Al cargar un certificado de produccion desde la pantalla, el nuevo va a `prod/` y desde ahi tiene prioridad; **lo de la raiz nunca se mueve ni se borra** (queda de respaldo). Homologacion nunca cae a la raiz.
+- `empresas.nombrecertificado_pfx` (columna sin cambios) ya no decide rutas, salvo para hallar el pfx historico de la raiz; sigue siendo el "la empresa tiene certificado" que habilita la facturacion electronica (se completa con `certificado.pfx` solo si estaba vacio). **Solo el nombre**: cualquier ruta que venga en el campo se descarta (no puede salir de la carpeta del CUIT).
+- `LoginTemplate.xml`: lo crea la instalacion; si se copia un pfx a mano a `prod/` u `homo/` sin plantilla, el sistema la crea al usarlo (`AfipRutas.AsegurarPlantilla`; nunca en la raiz historica). Tickets WSAA: `TicketAcceso.txt` factura, `TicketAccesoPerson.txt` padron, dentro de la carpeta del entorno (ya no hay sufijo `.homo`). `pendiente/` = clave privada + CSR mientras se espera el `.crt`, **uno por entorno**.
+- Formato `.pfx` unico. **La clave del pfx**: los certificados historicos no tienen (clave vacia); los cargados por la pantalla llevan una clave aleatoria de 24 caracteres guardada **cifrada** (ASP.NET Data Protection) en `certificado_arca_clave` (una fila por empresa **y entorno** -`entorno` `PROD`/`HOMO`, PK `(idempresa, entorno)`-, RLS; migracion `20260925`). Sin fila = clave vacia: el pfx de produccion historico no tiene clave y cargar uno de homologacion nunca la pisa.
 - Nunca commitear certificados: `.gitignore` bloquea `*.pfx`, `*.p12`, `*.key`, `/Web/AFIP/`, `/WebCore/AFIP/` y los tickets de `/AFIP/`.
 
 ## Entorno: homologacion (prueba) o produccion
 
 - Se define por empresa en `Empresa.Entorno_HOMO_PROD` (`PROD` / `HOMO`; se edita solo desde Administracion del sistema > Empresas). **Solo un valor que diga HOMO es homologacion; vacio = produccion** (`AfipEntorno`). Antes de 2026-09-24 el padron trataba el vacio como homologacion: ahora igual que facturacion.
 - URLs de WSAA / WSFE / padron A13 por entorno: por defecto los endpoints oficiales (`AfipConfig`); se pisan en `App.config` con `Afip:Produccion:*` y `Afip:Homologacion:*` (`WsaaUrl`, `WsfeUrl`, `PadronUrl`, solo https). Ver `WebCore/App.config.example`.
-- El certificado de homologacion es **otro** (se pide en WSASS) y no sirve en produccion. Cambiar de entorno = cambiar tambien el certificado cargado.
+- El certificado de homologacion es **otro** (se pide en WSASS) y no sirve en produccion. Ambos conviven, cada uno en su carpeta (`prod/`, `homo/`): cambiar de entorno es solo cambiar el selector de la empresa, **no hay que recargar nada**. Se puede cargar y probar el de homologacion con la empresa todavia en produccion. Ojo: el entorno es un dato de la empresa en la base; si varias PC comparten esa base, el cambio les llega a todas.
 - Las facturas emitidas en HOMO quedan con `facturaelectronica.esprueba = true`: badge PRUEBA en el listado, marca "SIN VALIDEZ FISCAL" en el modal, el detalle, el ticket termico y el PDF, y **no suman al total facturado por defecto** (el filtro Produccion/Pruebas/Todas del listado aparece solo si hay alguna de prueba). Una nota de credito solo se emite en el mismo entorno de la factura original.
 - Solo Postgres: en SQL Server (sin la columna) emitir en HOMO esta bloqueado con un mensaje.
 - Una factura de prueba **no cuenta como "ya facturada" en produccion**: `esVentaSinFacturar`/`existeFacturaElect`/`existeNotaCreditoElect` reciben `ignorarPrueba` (Postgres agrega `esprueba = false`); en modo prueba se ven todas. Los listados/detalles de una factura puntual muestran los comprobantes de su mismo entorno (verificado 2026-09-24 contra la base local dentro de una transaccion con rollback).
 
 ## Alta y renovacion del certificado (pantalla Configuracion > Certificado ARCA)
 
-Solo admin, solo Postgres, siempre sobre la empresa de la sesion.
-1. **Generar pedido**: crea clave RSA 2048 + CSR (subject `C=AR, O=<razon social>, CN=<alias>, serialNumber=CUIT <cuit>`), guarda la clave en `AFIP/<CUIT>/pendiente/clave.key` y descarga el `.csr`.
+Solo admin, solo Postgres, siempre sobre la empresa de la sesion. **Una pestana por entorno** (Produccion / Pruebas), cada una con su estado, vencimiento, "Probar conexion", pedido y subida; el `entorno` (`PROD`/`HOMO`) viaja en cada formulario y se valida contra esos dos valores (nunca es una ruta). Instalar en un entorno **solo escribe en su carpeta** (pfx, `.bak`, tickets, pedido pendiente): un certificado de pruebas jamas toca los archivos ni los tickets de produccion.
+1. **Generar pedido**: crea clave RSA 2048 + CSR (subject `C=AR, O=<razon social>, CN=<alias>, serialNumber=CUIT <cuit>`), guarda la clave en `AFIP/<CUIT>/<prod|homo>/pendiente/clave.key` y descarga el `.csr`.
 2. En ARCA: *Administracion de Certificados Digitales* > *Agregar alias* > subir el `.csr` > bajar el `.crt`; en *Administrador de Relaciones de Clave Fiscal* autorizar `wsfe` (y `ws_sr_padron_a13` si se usa el padron) para el alias. El tutorial completo esta en la propia pantalla.
-3. **Subir el `.crt`**: se valida (corresponde al ultimo CSR, es del CUIT, no esta vencido), se arma el pfx con clave nueva, se guarda la clave cifrada, se deja `*.bak` del pfx anterior y se borran los tickets WSAA. Si algo falla queda el certificado anterior.
+3. **Subir el `.crt`**: se valida (corresponde al ultimo CSR, es del CUIT, no esta vencido), se arma el pfx con clave nueva, se guarda la clave cifrada, se deja `*.bak` del pfx anterior del mismo entorno y se borran los tickets WSAA de ese entorno. Si algo falla queda el certificado anterior.
 - **Probar conexion** (boton en la pantalla, `AFIP/AfipDiagnostico.cs`): verifica sin emitir nada (1) archivos, (2) login WSAA con el certificado (abre el pfx, reusa el ticket vigente), (3) consulta de solo lectura `FECompUltimoAutorizado` por cada punto de venta de las sucursales (valida la relacion `wsfe` del alias y el punto de venta). Cada paso trae la causa probable. Falta probarlo contra ARCA real (PENDIENTE: necesita un certificado valido).
 - Vencimiento: se lee del pfx real. Aviso en la campana (`CERTIFICADO_ARCA_POR_VENCER`, `RefId` = fecha de vencimiento yyyyMMdd) a `Afip:DiasAviso` dias (default 60,30,15) y al vencer; se evalua a lo sumo 1 vez por hora por empresa cuando un admin consulta la campana (no hay proceso en segundo plano: si nadie entra, no se calcula) y al abrir la pantalla. La campana exige `PosBorrador`/`BorradorGenerico` habilitados y Postgres (`PosBorradorSettings.CampanaAdminHabilitada`); la etiqueta de estado de la pantalla funciona igual.
 - Si las claves de Data Protection se pierden (volumen `carnisys-dataprotection` borrado; en IIS PENDIENTE verificar donde se persisten) la clave del pfx no se puede descifrar: la pantalla lo informa y se resuelve cargando el certificado de nuevo.

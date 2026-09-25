@@ -8,17 +8,21 @@
     <li class="mb-3">
         <strong>El certificado de pruebas es otro.</strong> El de producción no sirve en homologación. Se pide en el servicio
         <em>WSASS - Autogestión de Certificados Homologación</em> (ARCA, con clave fiscal): <em>Nuevo Certificado</em> → subís el <code>.csr</code>
-        (generalo en el paso 1 de esta pantalla) → descargás el <code>.crt</code>.
+        (generalo en el paso 1 de la pestaña <strong>Pruebas (homologación)</strong> de esta pantalla) → descargás el <code>.crt</code>.
     </li>
     <li class="mb-3">
         <strong>Autorizá el servicio de pruebas</strong> en el mismo WSASS: <em>Crear autorización a servicio</em> → <code>wsfe</code> (Facturación Electrónica).
+        El punto de venta de pruebas también se da de alta ahí.
     </li>
     <li class="mb-3">
-        <strong>Cambiá el entorno de la empresa a HOMO</strong> (Administración del sistema → Empresas → <em>Entorno AFIP</em>) y cargá el <code>.crt</code> de pruebas
-        en el paso 2. El sistema guarda el certificado de homologación con el nombre <code>certif-homo.pfx</code> si la empresa todavía no tenía uno.
+        <strong>Cargá el <code>.crt</code> de pruebas</strong> en el paso 2 de la pestaña <strong>Pruebas (homologación)</strong>. Cada entorno tiene su propia carpeta
+        (<code>AFIP/&lt;CUIT&gt;/homo</code>): el certificado de pruebas <strong>no toca</strong> el de producción ni sus tickets, y podés cargarlo y usar
+        <em>Probar conexión</em> con la empresa todavía en producción, sin cambiar lo que se factura.
     </li>
     <li class="mb-3">
-        <strong>Al terminar, volvé a PROD</strong> y cargá otra vez el certificado de producción (paso 1 y 2). No se pueden mezclar: una factura de prueba solo se anula con nota de crédito de prueba.
+        <strong>Recién cuando quieras facturar de prueba</strong>, cambiá el entorno de la empresa a HOMO (Administración del sistema → Empresas → <em>Entorno AFIP</em>).
+        Al terminar, volvé a PROD: el certificado de producción sigue cargado, no hay que volver a instalarlo. Ojo: el entorno es un dato de la empresa,
+        así que si varias PC comparten la misma base, el cambio les llega a todas. Una factura de prueba solo se anula con nota de crédito de prueba.
     </li>
 </ol>
 <div class="alert alert-secondary mb-0 small">

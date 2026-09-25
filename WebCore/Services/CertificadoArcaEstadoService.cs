@@ -1,5 +1,5 @@
 // Estado del certificado ARCA de la empresa actual y aviso de vencimiento en la campana del admin.
-//  - Leer: abre el .pfx (con la clave guardada) y devuelve vencimiento/estado, para la pantalla.
+//  - Leer: abre el .pfx del entorno pedido (con su clave guardada) y devuelve vencimiento/estado, para la pantalla.
 //  - EvaluarAviso: si el certificado esta por vencer o vencido, crea/actualiza la notificacion
 //    CERTIFICADO_ARCA_POR_VENCER; si ya esta bien, cierra las pendientes. No hay proceso en segundo plano:
 //    lo dispara NotificacionesController.Resumen (la campana consulta cada ~60 s) y se limita a una
@@ -18,7 +18,8 @@ namespace WebCore.Services
         // Empresa del usuario actual (con CUIT, nombre del pfx y entorno), o null si no se pudo resolver.
         Entidades.Empresa EmpresaActual();
 
-        InfoCertificado Leer(Entidades.Empresa empresa);
+        // Estado del certificado de UN entorno (cada empresa puede tener el de produccion y el de homologacion).
+        InfoCertificado Leer(Entidades.Empresa empresa, bool homologacion);
 
         // Crea/actualiza/cierra el aviso segun el estado. Solo Postgres (usa la tabla notificaciones).
         void EvaluarAviso(Entidades.Empresa empresa, bool forzar = false);
@@ -57,13 +58,13 @@ namespace WebCore.Services
             return empresa;
         }
 
-        public InfoCertificado Leer(Entidades.Empresa empresa)
+        public InfoCertificado Leer(Entidades.Empresa empresa, bool homologacion)
         {
             var servicio = new CertificadoArcaService(_env.ContentRootPath);
             string clave;
             try
             {
-                clave = _afip.Crear().ClaveCertificado;
+                clave = _afip.Crear(homologacion).ClaveCertificado;
             }
             catch (InvalidOperationException ex)
             {
@@ -76,7 +77,7 @@ namespace WebCore.Services
                 };
             }
 
-            return servicio.Leer(empresa.Cuit, empresa.NombreCertificado_pfx, clave, AfipSettings.DiasAviso);
+            return servicio.Leer(empresa.Cuit, homologacion, empresa.NombreCertificado_pfx, clave, AfipSettings.DiasAviso);
         }
 
         public void EvaluarAviso(Entidades.Empresa empresa, bool forzar = false)
@@ -91,7 +92,8 @@ namespace WebCore.Services
 
             try
             {
-                var info = Leer(empresa);
+                // El aviso es del certificado que se usa para facturar: el del entorno activo de la empresa.
+                var info = Leer(empresa, AfipEntorno.EsHomologacion(empresa.Entorno_HOMO_PROD));
                 var negocio = NegocioFactory.CrearVentaBorrador(_sesion.Empresa);
                 var pendientes = negocio.ListarNotificaciones(true, 200)
                     .Where(n => n.Tipo == Entidades.Notificacion.TipoCertificadoArcaPorVencer).ToList();

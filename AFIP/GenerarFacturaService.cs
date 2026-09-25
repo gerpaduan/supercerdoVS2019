@@ -66,19 +66,18 @@ namespace AFIP
             urlLogin = endpoints.WsaaUrl + SufijoWsaa;
             urlWSFE = endpoints.WsfeUrl + SufijoWsfe;
 
-            // <base>/AFIP/<cuit>/<pfx>: la regla vive en AfipRutas (compartida con el padron y con la
-            // pantalla Certificado ARCA). Ticket de homologacion separado del de produccion.
-            string basePath = AfipRutas.Carpeta(basePathOverride, cuit);
-            string rutaCertificado = AfipRutas.Certificado(basePath, venta.Sucursal.Empresa.NombreCertificado_pfx);
-            string rutaTA = AfipRutas.Ticket(basePath, esPadron: false, homologacion: EsHomologacion);
+            // AFIP/<cuit>/prod o /homo segun el entorno (produccion cae al pfx historico de la raiz si todavia
+            // no tiene el suyo): la regla vive en AfipRutas, compartida con el padron y la pantalla Certificado ARCA.
+            var ubicacion = AfipRutas.Resolver(basePathOverride, cuit, EsHomologacion, venta.Sucursal.Empresa.NombreCertificado_pfx);
+            AfipRutas.AsegurarPlantilla(ubicacion);
 
             login = new LoginClass(
                 servicioAfip,
                 urlLogin,
-                rutaCertificado,
+                ubicacion.RutaPfx,
                 config.ClaveCertificado ?? "",
-                rutaTA,
-                basePath
+                ubicacion.RutaTicket(false),
+                ubicacion.Carpeta
             );
 
             login.HacerLogin();

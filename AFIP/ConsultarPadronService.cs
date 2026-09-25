@@ -63,13 +63,10 @@ namespace AFIP
             _urlLogin = endpoints.WsaaUrl;
             _urlPadron = endpoints.PadronUrl;
 
-            // Regla de rutas compartida con facturacion (AfipRutas): <base>/AFIP/<cuit>/...
-            string basePath = AfipRutas.Carpeta(basePathOverride, _cuitRepresentada.ToString());
-            _login = IniciarLogin(
-                basePath,
-                AfipRutas.Certificado(basePath, empresa.NombreCertificado_pfx),
-                config.ClaveCertificado ?? "",
-                homologacion);
+            // Regla de rutas compartida con facturacion (AfipRutas): AFIP/<cuit>/prod o /homo (o el pfx historico).
+            var ubicacion = AfipRutas.Resolver(basePathOverride, _cuitRepresentada.ToString(), homologacion, empresa.NombreCertificado_pfx);
+            AfipRutas.AsegurarPlantilla(ubicacion);
+            _login = IniciarLogin(ubicacion.Carpeta, ubicacion.RutaPfx, config.ClaveCertificado ?? "");
         }
 
         // Con una credencial explicita: cuitRepresentada es el CUIT dueno del certificado (en el padron
@@ -85,13 +82,13 @@ namespace AFIP
             _urlLogin = endpoints.WsaaUrl;
             _urlPadron = endpoints.PadronUrl;
 
-            _login = IniciarLogin(carpeta, AfipRutas.Certificado(carpeta, nombrePfx), clave ?? "", homologacion);
+            _login = IniciarLogin(carpeta, AfipRutas.Certificado(carpeta, nombrePfx), clave ?? "");
         }
 
         // Verifica los archivos, arma el LoginClass y hace el login (reusa el ticket vigente del archivo).
-        private LoginClass IniciarLogin(string carpeta, string rutaCertificado, string clave, bool homologacion)
+        private LoginClass IniciarLogin(string carpeta, string rutaCertificado, string clave)
         {
-            string rutaTA = AfipRutas.Ticket(carpeta, esPadron: true, homologacion: homologacion);
+            string rutaTA = AfipRutas.Ticket(carpeta, esPadron: true);
             string rutaTemplate = AfipRutas.Template(carpeta);
 
             if (!File.Exists(rutaCertificado))

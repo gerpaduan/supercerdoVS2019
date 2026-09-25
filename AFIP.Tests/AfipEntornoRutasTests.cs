@@ -24,7 +24,7 @@ namespace AFIP.Tests
         }
 
         [Fact]
-        public void Rutas_ProduccionCoincideConLoQueArmabaElCodigoAnterior()
+        public void Rutas_LegadoCoincideConLoQueArmabaElCodigoAnterior()
         {
             string baseDir = Path.Combine(Path.GetTempPath(), "app");
             string cuit = "20306210786";
@@ -34,17 +34,157 @@ namespace AFIP.Tests
             Assert.Equal(carpetaVieja, AfipRutas.Carpeta(baseDir, cuit));
             Assert.Equal(Path.Combine(carpetaVieja, "mi-cert.pfx"), AfipRutas.Certificado(carpetaVieja, "mi-cert.pfx"));
             Assert.Equal(Path.Combine(carpetaVieja, "certif-prod.pfx"), AfipRutas.Certificado(carpetaVieja, ""));
-            Assert.Equal(Path.Combine(carpetaVieja, "TicketAcceso.txt"), AfipRutas.Ticket(carpetaVieja, esPadron: false, homologacion: false));
-            Assert.Equal(Path.Combine(carpetaVieja, "TicketAccesoPerson.txt"), AfipRutas.Ticket(carpetaVieja, esPadron: true, homologacion: false));
+            Assert.Equal(Path.Combine(carpetaVieja, "TicketAcceso.txt"), AfipRutas.Ticket(carpetaVieja, esPadron: false));
+            Assert.Equal(Path.Combine(carpetaVieja, "TicketAccesoPerson.txt"), AfipRutas.Ticket(carpetaVieja, esPadron: true));
             Assert.Equal(Path.Combine(carpetaVieja, "LoginTemplate.xml"), AfipRutas.Template(carpetaVieja));
         }
 
         [Fact]
-        public void Rutas_HomologacionUsaTicketsPropios()
+        public void CarpetaEntorno_ProdYHomoSonSubcarpetasDelCuit()
         {
-            string carpeta = Path.Combine(Path.GetTempPath(), "AFIP", "20306210786");
-            Assert.Equal(Path.Combine(carpeta, "TicketAcceso.homo.txt"), AfipRutas.Ticket(carpeta, false, true));
-            Assert.Equal(Path.Combine(carpeta, "TicketAccesoPerson.homo.txt"), AfipRutas.Ticket(carpeta, true, true));
+            string baseDir = Path.Combine(Path.GetTempPath(), "app");
+            Assert.Equal(Path.Combine(baseDir, "AFIP", "20306210786", "prod"), AfipRutas.CarpetaEntorno(baseDir, "20306210786", false));
+            Assert.Equal(Path.Combine(baseDir, "AFIP", "20306210786", "homo"), AfipRutas.CarpetaEntorno(baseDir, "20306210786", true));
+            Assert.Throws<System.ArgumentException>(() => AfipRutas.CarpetaEntorno(baseDir, "../x", true));
+        }
+
+        // ---- Resolver: donde se lee el certificado de cada entorno ----
+
+        private static string Temporal()
+        {
+            string dir = Path.Combine(Path.GetTempPath(), "rutas-" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+
+        [Fact]
+        public void Resolver_ProduccionSinNadaApuntaAProdParaElMensajeDeSinCertificado()
+        {
+            string baseDir = Temporal();
+            try
+            {
+                var u = AfipRutas.Resolver(baseDir, "20306210786", false, "");
+                Assert.False(u.EsLegado);
+                Assert.Equal(Path.Combine(baseDir, "AFIP", "20306210786", "prod", "certificado.pfx"), u.RutaPfx);
+                Assert.Equal(Path.Combine(baseDir, "AFIP", "20306210786", "prod"), u.Carpeta);
+                Assert.Equal(Path.Combine(u.Carpeta, "TicketAcceso.txt"), u.RutaTicket(false));
+                Assert.Equal(Path.Combine(u.Carpeta, "TicketAccesoPerson.txt"), u.RutaTicket(true));
+                Assert.Equal(Path.Combine(u.Carpeta, "LoginTemplate.xml"), u.RutaTemplate);
+            }
+            finally { Directory.Delete(baseDir, true); }
+        }
+
+        [Fact]
+        public void Resolver_ProduccionConPfxHistoricoUsaLaRaizComoSiempre()
+        {
+            string baseDir = Temporal();
+            try
+            {
+                string raiz = Path.Combine(baseDir, "AFIP", "20306210786");
+                Directory.CreateDirectory(raiz);
+                File.WriteAllText(Path.Combine(raiz, "mi-cert.pfx"), "x");
+
+                var u = AfipRutas.Resolver(baseDir, "20306210786", false, "mi-cert.pfx");
+                Assert.True(u.EsLegado);
+                Assert.Equal(raiz, u.Carpeta);
+                Assert.Equal(Path.Combine(raiz, "mi-cert.pfx"), u.RutaPfx);
+                Assert.Equal(Path.Combine(raiz, "TicketAcceso.txt"), u.RutaTicket(false)); // el ticket de siempre
+                Assert.Equal(Path.Combine(raiz, "LoginTemplate.xml"), u.RutaTemplate);
+            }
+            finally { Directory.Delete(baseDir, true); }
+        }
+
+        [Fact]
+        public void Resolver_ProduccionConPfxHistoricoSinNombreConfiguradoUsaCertifProd()
+        {
+            string baseDir = Temporal();
+            try
+            {
+                string raiz = Path.Combine(baseDir, "AFIP", "20306210786");
+                Directory.CreateDirectory(raiz);
+                File.WriteAllText(Path.Combine(raiz, "certif-prod.pfx"), "x");
+                Assert.True(AfipRutas.Resolver(baseDir, "20306210786", false, null).EsLegado);
+            }
+            finally { Directory.Delete(baseDir, true); }
+        }
+
+        [Fact]
+        public void Resolver_ProdConPfxNuevoGanaAlHistorico()
+        {
+            string baseDir = Temporal();
+            try
+            {
+                string raiz = Path.Combine(baseDir, "AFIP", "20306210786");
+                Directory.CreateDirectory(Path.Combine(raiz, "prod"));
+                File.WriteAllText(Path.Combine(raiz, "certif-prod.pfx"), "viejo");
+                File.WriteAllText(Path.Combine(raiz, "prod", "certificado.pfx"), "nuevo");
+
+                var u = AfipRutas.Resolver(baseDir, "20306210786", false, "certif-prod.pfx");
+                Assert.False(u.EsLegado);
+                Assert.Equal(Path.Combine(raiz, "prod", "certificado.pfx"), u.RutaPfx);
+                Assert.Equal(Path.Combine(raiz, "prod", "TicketAcceso.txt"), u.RutaTicket(false));
+            }
+            finally { Directory.Delete(baseDir, true); }
+        }
+
+        [Fact]
+        public void Resolver_HomologacionSiempreVaAHomoYNuncaAlHistorico()
+        {
+            string baseDir = Temporal();
+            try
+            {
+                string raiz = Path.Combine(baseDir, "AFIP", "20306210786");
+                Directory.CreateDirectory(raiz);
+                File.WriteAllText(Path.Combine(raiz, "certif-prod.pfx"), "prod");
+                File.WriteAllText(Path.Combine(raiz, "TicketAcceso.txt"), "ticket-prod");
+
+                var u = AfipRutas.Resolver(baseDir, "20306210786", true, "certif-prod.pfx");
+                Assert.False(u.EsLegado);
+                Assert.Equal(Path.Combine(raiz, "homo", "certificado.pfx"), u.RutaPfx);
+                Assert.Equal(Path.Combine(raiz, "homo", "TicketAcceso.txt"), u.RutaTicket(false));
+                Assert.NotEqual(AfipRutas.Resolver(baseDir, "20306210786", false, "certif-prod.pfx").RutaTicket(false), u.RutaTicket(false));
+            }
+            finally { Directory.Delete(baseDir, true); }
+        }
+
+        [Fact]
+        public void Resolver_NoPuedeSalirDeAfipNiConCuitNiConNombreLegado()
+        {
+            string baseDir = Temporal();
+            try
+            {
+                Assert.Throws<System.ArgumentException>(() => AfipRutas.Resolver(baseDir, "../x", false, ""));
+                string raiz = Path.Combine(baseDir, "AFIP", "20306210786");
+                Directory.CreateDirectory(raiz);
+                File.WriteAllText(Path.Combine(raiz, "cert.pfx"), "x");
+                // Un nombre con ruta se reduce al nombre de archivo: sigue dentro de la carpeta del CUIT.
+                var u = AfipRutas.Resolver(baseDir, "20306210786", false, "../../cert.pfx");
+                Assert.Equal(Path.Combine(raiz, "cert.pfx"), u.RutaPfx);
+            }
+            finally { Directory.Delete(baseDir, true); }
+        }
+
+        [Fact]
+        public void AsegurarPlantilla_CreaLoginTemplateEnCarpetaNuevaConPfxPeroNoEnLaLegada()
+        {
+            string baseDir = Temporal();
+            try
+            {
+                string raiz = Path.Combine(baseDir, "AFIP", "20306210786");
+                Directory.CreateDirectory(Path.Combine(raiz, "homo"));
+                File.WriteAllText(Path.Combine(raiz, "homo", "certificado.pfx"), "x"); // copiado a mano, sin plantilla
+                var homo = AfipRutas.Resolver(baseDir, "20306210786", true, "");
+                AfipRutas.AsegurarPlantilla(homo);
+                Assert.True(File.Exists(homo.RutaTemplate));
+
+                // Legado: nunca se escribe nada en la raiz.
+                File.WriteAllText(Path.Combine(raiz, "certif-prod.pfx"), "x");
+                var legado = AfipRutas.Resolver(baseDir, "20306210786", false, "");
+                Assert.True(legado.EsLegado);
+                AfipRutas.AsegurarPlantilla(legado);
+                Assert.False(File.Exists(Path.Combine(raiz, "LoginTemplate.xml")));
+            }
+            finally { Directory.Delete(baseDir, true); }
         }
 
         [Theory]

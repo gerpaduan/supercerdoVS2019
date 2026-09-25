@@ -2,23 +2,12 @@
 @using AFIP
 @{
     ViewBag.Title = "Certificado ARCA";
-    var info = Model.Info;
-    var esES = new System.Globalization.CultureInfo("es-AR");
-
-    // Semaforo del estado: verde vigente, ambar por vencer, rojo vencido/ilegible, gris sin certificado.
-    string clase, etiqueta;
-    switch (info.Estado)
-    {
-        case EstadoCertificado.Vigente: clase = "success"; etiqueta = "Vigente"; break;
-        case EstadoCertificado.PorVencer: clase = "warning"; etiqueta = "Por vencer"; break;
-        case EstadoCertificado.Vencido: clase = "danger"; etiqueta = "Vencido"; break;
-        case EstadoCertificado.Ilegible: clase = "danger"; etiqueta = "No se puede leer"; break;
-        default: clase = "secondary"; etiqueta = "Sin certificado"; break;
-    }
-    bool hayCertificado = info.Estado != EstadoCertificado.SinCertificado;
+    // Pestana abierta: la del entorno pedido, o la del entorno con el que factura la empresa.
+    string abierto = (ViewBag.EntornoAbierto as string) ?? Model.Entorno;
 }
 
-@* Pantalla de gestion del certificado digital de AFIP/ARCA (ver CertificadoArcaController).
+@* Pantalla de gestion de los certificados digitales de AFIP/ARCA (ver CertificadoArcaController).
+   Un certificado por entorno (produccion / pruebas), cada uno en su carpeta: cargar uno no toca el otro.
    El vencimiento sale de leer el .pfx real; el aviso llega a la campana de notificaciones. *@
 <div class="container-fluid certificado-arca-page">
 
@@ -41,152 +30,28 @@
     }
     else
     {
-        @* ============ Estado del certificado ============ *@
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <div class="d-flex flex-wrap justify-content-between align-items-start">
-                    <div>
-                        <h5 class="mb-1">Certificado de facturación electrónica</h5>
-                        <div class="text-muted small">CUIT @Model.Cuit @(string.IsNullOrWhiteSpace(Model.RazonSocial) ? "" : "· " + Model.RazonSocial)</div>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge bg-@clase @(clase == "warning" ? "text-dark" : "") fs-6">@etiqueta</span>
-                        @if (Model.EsHomologacion)
-                        {
-                            <span class="badge bg-danger fs-6 ms-1" title="Los comprobantes que se emiten NO tienen validez fiscal">MODO PRUEBA (homologación)</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-dark fs-6 ms-1">Producción</span>
-                        }
-                    </div>
+        @* ============ Un entorno por pestana ============ *@
+        <ul class="nav nav-pills mb-3" role="tablist">
+            @foreach (var entorno in Model.Entornos)
+            {
+                bool esHomo = entorno.EsHomologacion;
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link @(entorno.Entorno == abierto ? "active" : "")" id="pill-@entorno.Entorno" data-bs-toggle="pill"
+                            data-bs-target="#entorno-@entorno.Entorno" type="button" role="tab">
+                        @(esHomo ? "Pruebas (homologación)" : "Producción")
+                        @if (entorno.EsActivo) { <span class="badge bg-@(esHomo ? "danger" : "dark") ms-1">en uso</span> }
+                    </button>
+                </li>
+            }
+        </ul>
+        <div class="tab-content">
+            @foreach (var entorno in Model.Entornos)
+            {
+                ViewData["Padre"] = Model;
+                <div class="tab-pane fade @(entorno.Entorno == abierto ? "show active" : "")" id="entorno-@entorno.Entorno" role="tabpanel">
+                    @await Html.PartialAsync("_TarjetaEntorno", entorno)
                 </div>
-
-                @if (!string.IsNullOrWhiteSpace(Model.AdvertenciaEntorno))
-                {
-                    <div class="alert alert-warning mt-3 mb-0">@Model.AdvertenciaEntorno</div>
-                }
-
-                @if (info.Estado == EstadoCertificado.SinCertificado)
-                {
-                    <p class="mt-3 mb-0">Todavía no hay un certificado cargado. Seguí los pasos de abajo para pedirlo en ARCA y cargarlo.</p>
-                }
-                else if (info.Estado == EstadoCertificado.Ilegible)
-                {
-                    <div class="alert alert-danger mt-3 mb-0">@info.Mensaje <br />Cargá el certificado de nuevo con los pasos de abajo.</div>
-                }
-                else
-                {
-                    <dl class="row mt-3 mb-0">
-                        <dt class="col-sm-3">Vence</dt>
-                        <dd class="col-sm-9">
-                            <strong>@info.Vence?.ToString("dd/MM/yyyy", esES)</strong>
-                            @if (info.Estado == EstadoCertificado.Vencido)
-                            {
-                                <span class="text-danger">— venció hace @(Math.Abs(info.DiasRestantes ?? 0)) día(s). No se puede facturar hasta renovarlo.</span>
-                            }
-                            else
-                            {
-                                <span class="@(info.Estado == EstadoCertificado.PorVencer ? "text-warning fw-bold" : "text-muted")">— faltan @info.DiasRestantes día(s)</span>
-                            }
-                        </dd>
-                        <dt class="col-sm-3">Válido desde</dt>
-                        <dd class="col-sm-9">@info.Desde?.ToString("dd/MM/yyyy", esES)</dd>
-                        <dt class="col-sm-3">Archivo</dt>
-                        <dd class="col-sm-9">@info.NombreArchivo</dd>
-                        <dt class="col-sm-3">Titular</dt>
-                        <dd class="col-sm-9"><small class="text-break">@info.Subject</small></dd>
-                        <dt class="col-sm-3">Huella</dt>
-                        <dd class="col-sm-9"><small class="text-muted">@info.Huella</small></dd>
-                    </dl>
-                    <p class="text-muted small mt-2 mb-0">
-                        Te avisamos en la campana de notificaciones cuando falten @string.Join(", ", Model.DiasAviso) días y cuando venza.
-                    </p>
-                }
-            </div>
-        </div>
-
-        @* ============ Probar conexion ============ *@
-        @if (hayCertificado)
-        {
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1">Probar la conexión con ARCA</h5>
-                            <div class="text-muted small">
-                                Comprueba que el certificado abre, que ARCA lo acepta y que el punto de venta está habilitado. <strong>No emite ninguna factura.</strong>
-                                @if (Model.EsHomologacion) { <span class="text-danger"> Se prueba contra el ambiente de pruebas (homologación).</span> }
-                            </div>
-                        </div>
-                        <form id="formProbarConexion" class="mt-2 mt-md-0">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-outline-primary" id="btnProbarConexion"><i class="fas fa-plug me-1"></i> Probar conexión</button>
-                        </form>
-                    </div>
-                    <div id="resultadoProbarConexion" class="mt-3" aria-live="polite"></div>
-                </div>
-            </div>
-        }
-
-        @* ============ Cargar o renovar ============ *@
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <h5 class="mb-3">@(hayCertificado ? "Renovar el certificado" : "Cargar el certificado")</h5>
-                <p class="text-muted">
-                    Es el mismo proceso para un certificado nuevo o para renovarlo: el sistema arma el pedido, vos lo llevás a ARCA y
-                    volvés con el certificado que te devuelve. Mientras tanto <strong>el certificado actual sigue funcionando</strong>.
-                </p>
-
-                <div class="row g-3">
-                    <div class="col-12 col-lg-6">
-                        <div class="border rounded p-3 h-100">
-                            <h6><span class="badge bg-primary me-1">1</span> Generar el pedido (.csr)</h6>
-                            <form method="post" asp-controller="CertificadoArca" asp-action="GenerarCsr">
-                                @Html.AntiForgeryToken()
-                                <div class="mb-2">
-                                    <label for="alias" class="form-label small mb-1">Alias (nombre del certificado en ARCA)</label>
-                                    <input type="text" class="form-control" id="alias" name="alias" value="@Model.AliasSugerido" maxlength="40" required pattern="[A-Za-z0-9_\-]+" />
-                                    <div class="form-text">Letras, números y guiones. Si renovás, usá uno distinto al anterior.</div>
-                                </div>
-                                <button type="submit" class="btn btn-primary"><i class="fas fa-file-download me-1"></i> Generar y descargar pedido</button>
-                            </form>
-                            @if (info.HayPedidoPendiente)
-                            {
-                                <div class="alert alert-info mt-3 mb-0 py-2 small">
-                                    Hay un pedido pendiente esperando el certificado de ARCA.
-                                    <a asp-action="DescargarCsrPendiente">Volver a descargarlo</a>.
-                                    Si generás otro, el anterior deja de servir.
-                                </div>
-                                <form method="post" asp-action="DescartarPedido" class="mt-2" onsubmit="return confirm('¿Descartar el pedido pendiente?');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Descartar pedido pendiente</button>
-                                </form>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-lg-6">
-                        <div class="border rounded p-3 h-100">
-                            <h6><span class="badge bg-primary me-1">2</span> Subir el certificado que devolvió ARCA (.crt)</h6>
-                            <form method="post" asp-controller="CertificadoArca" asp-action="SubirCertificado" enctype="multipart/form-data">
-                                @Html.AntiForgeryToken()
-                                <div class="mb-2">
-                                    <input type="file" class="form-control" name="certificado" accept=".crt,.cer,.pem" required @(info.HayPedidoPendiente ? "" : "disabled") />
-                                    @if (!info.HayPedidoPendiente)
-                                    {
-                                        <div class="form-text">Primero generá el pedido (paso 1).</div>
-                                    }
-                                </div>
-                                <button type="submit" class="btn btn-success" @(info.HayPedidoPendiente ? "" : "disabled")><i class="fas fa-upload me-1"></i> Instalar certificado</button>
-                            </form>
-                            <div class="form-text mt-2">
-                                Se verifica que sea de este pedido y de este CUIT. El certificado anterior queda guardado como copia de respaldo.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            }
         </div>
     }
 
@@ -220,49 +85,52 @@
     </div>
 </div>
 
+
 @section Scripts {
     <script>
-        // "Probar conexion": llama a ProbarConexion (solo lectura, no emite) y muestra cada paso.
+        // "Probar conexion": llama a ProbarConexion del entorno de la tarjeta (solo lectura, no emite) y muestra cada paso.
         (function () {
-            var form = document.getElementById('formProbarConexion');
-            if (!form) return;
-            var salida = document.getElementById('resultadoProbarConexion');
-            var boton = document.getElementById('btnProbarConexion');
-
             function escapar(texto) {
                 var d = document.createElement('div');
                 d.textContent = texto == null ? '' : String(texto);
                 return d.innerHTML;
             }
 
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                boton.disabled = true;
-                salida.innerHTML = '<div class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i> Consultando a ARCA...</div>';
+            document.querySelectorAll('.form-probar-conexion').forEach(function (form) {
+                var tarjeta = form.closest('.card');
+                var salida = tarjeta.querySelector('.resultado-probar-conexion');
+                var boton = form.querySelector('.btn-probar-conexion');
 
-                fetch('@Url.Action("ProbarConexion", "CertificadoArca")', {
-                    method: 'POST',
-                    headers: { 'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]').value },
-                    credentials: 'same-origin'
-                })
-                    .then(function (r) { return r.json(); })
-                    .then(function (resp) {
-                        var html = '<ul class="list-group">';
-                        (resp.pasos || []).forEach(function (p) {
-                            html += '<li class="list-group-item d-flex align-items-start">'
-                                + '<i class="fas ' + (p.ok ? 'fa-check-circle text-success' : 'fa-times-circle text-danger') + ' me-2 mt-1"></i>'
-                                + '<div><strong>' + escapar(p.titulo) + '</strong><div class="small ' + (p.ok ? 'text-muted' : 'text-danger') + '">' + escapar(p.detalle) + '</div></div></li>';
-                        });
-                        html += '</ul>';
-                        html += resp.ok
-                            ? '<div class="alert alert-success mt-2 mb-0">Todo bien: el certificado sirve para facturar' + (resp.homologacion ? ' (en modo prueba).' : '.') + '</div>'
-                            : '<div class="alert alert-danger mt-2 mb-0">Hay un problema. Revisá el paso marcado y el tutorial de abajo.</div>';
-                        salida.innerHTML = html;
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    boton.disabled = true;
+                    salida.innerHTML = '<div class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i> Consultando a ARCA...</div>';
+
+                    fetch('@Url.Action("ProbarConexion", "CertificadoArca")', {
+                        method: 'POST',
+                        headers: { 'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]').value },
+                        body: new FormData(form),
+                        credentials: 'same-origin'
                     })
-                    .catch(function () {
-                        salida.innerHTML = '<div class="alert alert-danger mb-0">No se pudo hacer la prueba. Reintentá en un momento.</div>';
-                    })
-                    .finally(function () { boton.disabled = false; });
+                        .then(function (r) { return r.json(); })
+                        .then(function (resp) {
+                            var html = '<ul class="list-group">';
+                            (resp.pasos || []).forEach(function (p) {
+                                html += '<li class="list-group-item d-flex align-items-start">'
+                                    + '<i class="fas ' + (p.ok ? 'fa-check-circle text-success' : 'fa-times-circle text-danger') + ' me-2 mt-1"></i>'
+                                    + '<div><strong>' + escapar(p.titulo) + '</strong><div class="small ' + (p.ok ? 'text-muted' : 'text-danger') + '">' + escapar(p.detalle) + '</div></div></li>';
+                            });
+                            html += '</ul>';
+                            html += resp.ok
+                                ? '<div class="alert alert-success mt-2 mb-0">Todo bien: el certificado sirve para facturar' + (resp.homologacion ? ' (en modo prueba).' : '.') + '</div>'
+                                : '<div class="alert alert-danger mt-2 mb-0">Hay un problema. Revisá el paso marcado y el tutorial de abajo.</div>';
+                            salida.innerHTML = html;
+                        })
+                        .catch(function () {
+                            salida.innerHTML = '<div class="alert alert-danger mb-0">No se pudo hacer la prueba. Reintentá en un momento.</div>';
+                        })
+                        .finally(function () { boton.disabled = false; });
+                });
             });
         })();
     </script>

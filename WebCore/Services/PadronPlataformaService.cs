@@ -125,7 +125,7 @@ namespace WebCore.Services
             }
 
             return CertificadoArcaService.ParaPlataforma(_env.ContentRootPath)
-                .Leer(registro.Cuit, registro.NombreArchivo, clave, AfipSettings.DiasAviso);
+                .Leer(registro.Cuit, false, registro.NombreArchivo, clave, AfipSettings.DiasAviso);
         }
 
         public InfoCertificado EstadoCacheado()

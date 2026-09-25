@@ -152,13 +152,14 @@ namespace WebCore.Services
         {
             if (empresa.Cuit <= 0) return null;
 
-            string carpeta;
-            try { carpeta = AfipRutas.Carpeta(_env.ContentRootPath, empresa.Cuit.ToString()); }
+            bool homologacion = AfipEntorno.EsHomologacion(empresa.Entorno_HOMO_PROD);
+            AfipRutas.UbicacionAfip ubicacion;
+            try { ubicacion = AfipRutas.Resolver(_env.ContentRootPath, empresa.Cuit.ToString(), homologacion, empresa.NombreCertificado_pfx); }
             catch (ArgumentException) { return null; }
-            if (!File.Exists(AfipRutas.Certificado(carpeta, empresa.NombreCertificado_pfx))) return null;
+            if (!File.Exists(ubicacion.RutaPfx)) return null;
 
             AfipConfig config;
-            try { config = _afip.Crear(); }
+            try { config = _afip.Crear(homologacion); }
             catch (InvalidOperationException ex)
             {
                 return new ConsultarPadronService.PadronAfipResult { Ok = false, ErrorTecnico = true, Mensaje = ex.Message };

@@ -1187,7 +1187,7 @@ namespace WebCore.Controllers
                 if (errorEntorno != null)
                     return Json(new { ok = false, msg = errorEntorno });
 
-                var afipSvc = new AFIP.GenerarFacturaService(factura.Venta, _env.ContentRootPath, _afip.Crear());
+                var afipSvc = new AFIP.GenerarFacturaService(factura.Venta, _env.ContentRootPath, _afip.Crear(AFIP.AfipEntorno.EsHomologacion(factura.Venta.Sucursal?.Empresa?.Entorno_HOMO_PROD)));
                 var afipRes = afipSvc.GenerarFactura(factura, false);
 
                 if (!afipRes.Ok)
@@ -1309,7 +1309,7 @@ namespace WebCore.Controllers
                             : "La factura es de producción: la empresa está en modo prueba (homologación), no se puede emitir la nota de crédito."
                     });
 
-                var afipSvc = new AFIP.GenerarFacturaService(venta, _env.ContentRootPath, _afip.Crear());
+                var afipSvc = new AFIP.GenerarFacturaService(venta, _env.ContentRootPath, _afip.Crear(AFIP.AfipEntorno.EsHomologacion(venta.Sucursal?.Empresa?.Entorno_HOMO_PROD)));
                 var afipRes = afipSvc.GenerarNotaCredito(notaCredito, facturaOrigen);
 
                 if (!afipRes.Ok)

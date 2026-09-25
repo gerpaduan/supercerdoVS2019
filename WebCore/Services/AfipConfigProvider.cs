@@ -11,12 +11,13 @@ namespace WebCore.Services
 {
     public interface IAfipConfigProvider
     {
-        // Config lista para pasar a GenerarFacturaService / ConsultarPadronService. Lanza
-        // InvalidOperationException (mensaje mostrable) si la clave guardada no se puede descifrar.
-        AfipConfig Crear();
+        // Config lista para pasar a GenerarFacturaService / ConsultarPadronService, con la clave del pfx del
+        // ENTORNO indicado (cada entorno tiene su certificado y su clave). Lanza InvalidOperationException
+        // (mensaje mostrable) si la clave guardada no se puede descifrar.
+        AfipConfig Crear(bool homologacion);
 
-        // Persiste (cifrada) la clave del pfx recien generado. Solo Postgres.
-        void GuardarClave(string claveEnClaro);
+        // Persiste (cifrada) la clave del pfx recien generado para ese entorno. Solo Postgres.
+        void GuardarClave(bool homologacion, string claveEnClaro);
 
         // true si este ambiente puede guardar claves (Postgres); la pantalla de certificados lo exige.
         bool SoportaCertificados { get; }
@@ -40,12 +41,12 @@ namespace WebCore.Services
 
         public bool SoportaCertificados => NegocioFactory.UsarPostgres;
 
-        public AfipConfig Crear()
+        public AfipConfig Crear(bool homologacion)
         {
             var config = AfipSettings.ConfigBase();
             if (!SoportaCertificados) return config;
 
-            string protegida = Repo().ObtenerProtegida();
+            string protegida = Repo().ObtenerProtegida(homologacion);
             if (string.IsNullOrEmpty(protegida)) return config;
 
             try
@@ -55,16 +56,16 @@ namespace WebCore.Services
             catch (System.Security.Cryptography.CryptographicException ex)
             {
                 // Claves de Data Protection perdidas o cambiadas: la solucion es cargar el certificado de nuevo.
-                _log.LogError(ex, "No se pudo descifrar la clave del certificado ARCA de la empresa {IdEmpresa}.", _sesion.Empresa.IdEmpresa);
+                _log.LogError(ex, "No se pudo descifrar la clave del certificado ARCA de la empresa {IdEmpresa} ({Entorno}).", _sesion.Empresa.IdEmpresa, homologacion ? "HOMO" : "PROD");
                 throw new InvalidOperationException(
                     "No se pudo descifrar la clave del certificado de AFIP. Cargá el certificado de nuevo en Configuración > Certificado ARCA.", ex);
             }
         }
 
-        public void GuardarClave(string claveEnClaro)
+        public void GuardarClave(bool homologacion, string claveEnClaro)
         {
             if (!SoportaCertificados) throw new InvalidOperationException("La gestión de certificados requiere Postgres.");
-            Repo().GuardarProtegida(_protector.Protect(claveEnClaro), _sesion.UsuarioActual?.Id ?? 0);
+            Repo().GuardarProtegida(homologacion, _protector.Protect(claveEnClaro), _sesion.UsuarioActual?.Id ?? 0);
         }
 
         private DatosPostgres.CertificadoArcaClavePg Repo()

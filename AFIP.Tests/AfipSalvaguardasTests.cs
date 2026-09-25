@@ -211,7 +211,7 @@ namespace AFIP.Tests
         public void FlujoCompleto_TrabajaEnLaCarpetaDeLaPlataformaYNoEnLaDeUnaEmpresa()
         {
             var servicio = CertificadoArcaService.ParaPlataforma(_raiz);
-            servicio.GenerarCsr(CuitPlataforma, "CarniSys SA", "carnisys-padron");
+            servicio.GenerarCsr(CuitPlataforma, false, "CarniSys SA", "carnisys-padron");
 
             string carpeta = AfipRutas.CarpetaPlataforma(_raiz);
             Assert.True(File.Exists(Path.Combine(carpeta, "pendiente", "clave.key")));
@@ -228,14 +228,14 @@ namespace AFIP.Tests
             }
 
             string? clave = null;
-            var resultado = servicio.Instalar(CuitPlataforma, AfipRutas.NombreCertificadoPlataforma, crt, c => clave = c);
+            var resultado = servicio.Instalar(CuitPlataforma, false, AfipRutas.NombreCertificadoPlataforma, crt, c => clave = c);
 
             Assert.Equal(AfipRutas.NombreCertificadoPlataforma, resultado.NombreArchivo);
             Assert.True(File.Exists(Path.Combine(carpeta, AfipRutas.NombreCertificadoPlataforma)));
             Assert.True(File.Exists(Path.Combine(carpeta, "LoginTemplate.xml")));
             Assert.False(Directory.Exists(Path.Combine(carpeta, "pendiente")));
 
-            var info = servicio.Leer(CuitPlataforma, AfipRutas.NombreCertificadoPlataforma, clave, new[] { 60, 30, 15 });
+            var info = servicio.Leer(CuitPlataforma, false, AfipRutas.NombreCertificadoPlataforma, clave, new[] { 60, 30, 15 });
             Assert.Equal(EstadoCertificado.Vigente, info.Estado);
             Assert.InRange(info.DiasRestantes!.Value, 698, 701);
         }

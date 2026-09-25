@@ -1,0 +1,194 @@
+@model WebCore.Models.CertificadoEntornoVm
+@using AFIP
+@{
+    // Una tarjeta = un entorno (produccion o pruebas) con su propio certificado: estado, probar conexion y
+    // cargar/renovar. Todo lo que envia lleva el campo "entorno", asi nunca toca el certificado del otro.
+    var padre = (WebCore.Models.CertificadoArcaVm)ViewData["Padre"]!;
+    var info = Model.Info;
+    var esES = new System.Globalization.CultureInfo("es-AR");
+    string e = Model.Entorno;
+    string nombreEntorno = Model.EsHomologacion ? "pruebas (homologación)" : "producción";
+
+    // Semaforo del estado: verde vigente, ambar por vencer, rojo vencido/ilegible, gris sin certificado.
+    string clase, etiqueta;
+    switch (info.Estado)
+    {
+        case EstadoCertificado.Vigente: clase = "success"; etiqueta = "Vigente"; break;
+        case EstadoCertificado.PorVencer: clase = "warning"; etiqueta = "Por vencer"; break;
+        case EstadoCertificado.Vencido: clase = "danger"; etiqueta = "Vencido"; break;
+        case EstadoCertificado.Ilegible: clase = "danger"; etiqueta = "No se puede leer"; break;
+        default: clase = "secondary"; etiqueta = "Sin certificado"; break;
+    }
+    bool hayCertificado = info.Estado != EstadoCertificado.SinCertificado;
+}
+
+@* ============ Estado del certificado ============ *@
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start">
+            <div>
+                <h5 class="mb-1">Certificado de @nombreEntorno</h5>
+                <div class="text-muted small">CUIT @padre.Cuit @(string.IsNullOrWhiteSpace(padre.RazonSocial) ? "" : "· " + padre.RazonSocial)</div>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-@clase @(clase == "warning" ? "text-dark" : "") fs-6">@etiqueta</span>
+                @if (Model.EsActivo)
+                {
+                    <span class="badge @(Model.EsHomologacion ? "bg-danger" : "bg-dark") fs-6 ms-1" title="Es el entorno con el que la empresa factura hoy">
+                        @(Model.EsHomologacion ? "MODO PRUEBA en uso" : "Producción en uso")
+                    </span>
+                }
+            </div>
+        </div>
+
+        @if (Model.EsActivo && info.Estado == EstadoCertificado.SinCertificado)
+        {
+            <div class="alert alert-warning mt-3 mb-0">La empresa factura en <strong>@nombreEntorno</strong> pero todavía no tiene el certificado de ese entorno: no se puede emitir hasta cargarlo.</div>
+        }
+        else if (!Model.EsActivo)
+        {
+            <div class="alert alert-light border mt-3 mb-0 small">
+                Este entorno <strong>no está en uso</strong>: la empresa factura en @(Model.EsHomologacion ? "producción" : "pruebas (homologación)").
+                Podés cargar y probar este certificado sin afectar lo que se factura hoy.
+            </div>
+        }
+
+        @if (info.Estado == EstadoCertificado.SinCertificado)
+        {
+            <p class="mt-3 mb-0">Todavía no hay un certificado de @nombreEntorno. Seguí los pasos de abajo para pedirlo en ARCA y cargarlo.</p>
+        }
+        else if (info.Estado == EstadoCertificado.Ilegible)
+        {
+            <div class="alert alert-danger mt-3 mb-0">@info.Mensaje <br />Cargá el certificado de nuevo con los pasos de abajo.</div>
+        }
+        else
+        {
+            <dl class="row mt-3 mb-0">
+                <dt class="col-sm-3">Vence</dt>
+                <dd class="col-sm-9">
+                    <strong>@info.Vence?.ToString("dd/MM/yyyy", esES)</strong>
+                    @if (info.Estado == EstadoCertificado.Vencido)
+                    {
+                        <span class="text-danger">— venció hace @(Math.Abs(info.DiasRestantes ?? 0)) día(s). No se puede facturar hasta renovarlo.</span>
+                    }
+                    else
+                    {
+                        <span class="@(info.Estado == EstadoCertificado.PorVencer ? "text-warning fw-bold" : "text-muted")">— faltan @info.DiasRestantes día(s)</span>
+                    }
+                </dd>
+                <dt class="col-sm-3">Válido desde</dt>
+                <dd class="col-sm-9">@info.Desde?.ToString("dd/MM/yyyy", esES)</dd>
+                <dt class="col-sm-3">Archivo</dt>
+                <dd class="col-sm-9">
+                    @info.NombreArchivo
+                    @if (info.EsLegado)
+                    {
+                        <span class="badge bg-secondary ms-1" title="Certificado histórico en la raíz de la carpeta del CUIT. Al cargar uno nuevo desde esta pantalla pasa a la carpeta prod/ y el histórico queda como respaldo.">histórico</span>
+                    }
+                </dd>
+                <dt class="col-sm-3">Titular</dt>
+                <dd class="col-sm-9"><small class="text-break">@info.Subject</small></dd>
+                <dt class="col-sm-3">Huella</dt>
+                <dd class="col-sm-9"><small class="text-muted">@info.Huella</small></dd>
+            </dl>
+            @if (Model.EsActivo)
+            {
+                <p class="text-muted small mt-2 mb-0">
+                    Te avisamos en la campana de notificaciones cuando falten @string.Join(", ", padre.DiasAviso) días y cuando venza.
+                </p>
+            }
+        }
+        <p class="text-muted small mt-2 mb-0">Carpeta en el servidor: <code>@Model.Ruta</code> (si copiás un certificado a mano, va como <code>certificado.pfx</code>).</p>
+    </div>
+</div>
+
+@* ============ Probar conexion ============ *@
+@if (hayCertificado)
+{
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1">Probar la conexión con ARCA</h5>
+                    <div class="text-muted small">
+                        Comprueba que el certificado abre, que ARCA lo acepta y que el punto de venta está habilitado. <strong>No emite ninguna factura.</strong>
+                        @if (Model.EsHomologacion) { <span class="text-danger"> Se prueba contra el ambiente de pruebas (homologación).</span> }
+                    </div>
+                </div>
+                <form class="form-probar-conexion mt-2 mt-md-0" data-entorno="@e">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="entorno" value="@e" />
+                    <button type="submit" class="btn btn-outline-primary btn-probar-conexion"><i class="fas fa-plug me-1"></i> Probar conexión</button>
+                </form>
+            </div>
+            <div class="resultado-probar-conexion mt-3" aria-live="polite"></div>
+        </div>
+    </div>
+}
+
+@* ============ Cargar o renovar ============ *@
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <h5 class="mb-3">@(hayCertificado ? "Renovar" : "Cargar") el certificado de @nombreEntorno</h5>
+        <p class="text-muted">
+            Es el mismo proceso para un certificado nuevo o para renovarlo: el sistema arma el pedido, vos lo llevás a ARCA y
+            volvés con el certificado que te devuelve. Mientras tanto <strong>el certificado actual sigue funcionando</strong>.
+            @if (Model.EsHomologacion)
+            {
+                <span>El certificado de pruebas se pide en WSASS (ver la pestaña "Modo prueba" del tutorial) y <strong>no toca</strong> el de producción.</span>
+            }
+        </p>
+
+        <div class="row g-3">
+            <div class="col-12 col-lg-6">
+                <div class="border rounded p-3 h-100">
+                    <h6><span class="badge bg-primary me-1">1</span> Generar el pedido (.csr)</h6>
+                    <form method="post" asp-controller="CertificadoArca" asp-action="GenerarCsr">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="entorno" value="@e" />
+                        <div class="mb-2">
+                            <label for="alias-@e" class="form-label small mb-1">Alias (nombre del certificado en ARCA)</label>
+                            <input type="text" class="form-control" id="alias-@e" name="alias" value="@padre.AliasSugerido" maxlength="40" required pattern="[A-Za-z0-9_\-]+" />
+                            <div class="form-text">Letras, números y guiones. Si renovás, usá uno distinto al anterior.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-file-download me-1"></i> Generar y descargar pedido</button>
+                    </form>
+                    @if (info.HayPedidoPendiente)
+                    {
+                        <div class="alert alert-info mt-3 mb-0 py-2 small">
+                            Hay un pedido pendiente esperando el certificado de ARCA.
+                            <a asp-action="DescargarCsrPendiente" asp-route-entorno="@e">Volver a descargarlo</a>.
+                            Si generás otro, el anterior deja de servir.
+                        </div>
+                        <form method="post" asp-action="DescartarPedido" class="mt-2" onsubmit="return confirm('¿Descartar el pedido pendiente?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="entorno" value="@e" />
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Descartar pedido pendiente</button>
+                        </form>
+                    }
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <div class="border rounded p-3 h-100">
+                    <h6><span class="badge bg-primary me-1">2</span> Subir el certificado que devolvió ARCA (.crt)</h6>
+                    <form method="post" asp-controller="CertificadoArca" asp-action="SubirCertificado" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="entorno" value="@e" />
+                        <div class="mb-2">
+                            <input type="file" class="form-control" name="certificado" accept=".crt,.cer,.pem" required @(info.HayPedidoPendiente ? "" : "disabled") />
+                            @if (!info.HayPedidoPendiente)
+                            {
+                                <div class="form-text">Primero generá el pedido (paso 1).</div>
+                            }
+                        </div>
+                        <button type="submit" class="btn btn-success" @(info.HayPedidoPendiente ? "" : "disabled")><i class="fas fa-upload me-1"></i> Instalar certificado</button>
+                    </form>
+                    <div class="form-text mt-2">
+                        Se verifica que sea de este pedido y de este CUIT. Si ya había un certificado de este entorno, queda guardado como copia de respaldo.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

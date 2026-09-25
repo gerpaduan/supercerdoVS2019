@@ -1,6 +1,6 @@
 // Gestion del certificado digital de AFIP/ARCA de una empresa, sin tocar el servidor a mano:
 //   1) GenerarCsr: crea una clave RSA + el pedido (.csr) que se sube a ARCA. La clave privada queda en
-//      AFIP/<cuit>/pendiente/clave.key (nunca se descarga).
+//      AFIP/<cuit>/<prod|homo>/pendiente/clave.key (nunca se descarga).
 //   2) Instalar: recibe el .crt que devuelve ARCA, verifica que corresponda a la clave pendiente y al
 //      CUIT, arma el .pfx (con clave) y lo reemplaza dejando backup del anterior.
 //   3) Leer: abre el .pfx vigente y devuelve su vencimiento/estado (para la pantalla y el aviso).
@@ -37,6 +37,9 @@ namespace AFIP
         public string Mensaje { get; set; }
         // Hay un pedido (CSR) generado esperando el .crt de ARCA.
         public bool HayPedidoPendiente { get; set; }
+        // Carpeta de donde se lee el certificado (para mostrarla en la pantalla) y si es el pfx historico de la raiz.
+        public string Carpeta { get; set; }
+        public bool EsLegado { get; set; }
     }
 
     public class ResultadoInstalacion
@@ -88,12 +91,25 @@ namespace AFIP
             return new CertificadoArcaService(baseDirectory, true);
         }
 
-        // Carpeta donde viven el pfx, el ticket y el pedido pendiente.
-        private string CarpetaDe(string cuitTexto)
+        // Donde leer el pfx (con su LoginTemplate.xml y tickets): AFIP/<cuit>/prod o /homo (produccion cae al pfx
+        // historico de la raiz si todavia no tiene el suyo), o AFIP/_plataforma para el certificado de la plataforma.
+        private AfipRutas.UbicacionAfip UbicacionDe(string cuitTexto, bool homologacion, string nombreLegado)
+        {
+            if (_plataforma)
+            {
+                string carpeta = AfipRutas.CarpetaPlataforma(_baseDirectory);
+                return new AfipRutas.UbicacionAfip(carpeta, AfipRutas.Certificado(carpeta, nombreLegado), false);
+            }
+            return AfipRutas.Resolver(_baseDirectory, cuitTexto, homologacion, nombreLegado);
+        }
+
+        // Carpeta DONDE SE ESCRIBE (pfx nuevo, pedido pendiente, tickets): la del entorno, nunca la raiz historica.
+        // Un certificado de homologacion jamas toca los archivos de produccion.
+        private string CarpetaEscritura(string cuitTexto, bool homologacion)
         {
             return _plataforma
                 ? AfipRutas.CarpetaPlataforma(_baseDirectory)
-                : AfipRutas.Carpeta(_baseDirectory, cuitTexto);
+                : AfipRutas.CarpetaEntorno(_baseDirectory, cuitTexto, homologacion);
         }
 
         // ------------------------------------------------------------------ aviso
@@ -117,17 +133,21 @@ namespace AFIP
         // clave incorrecta, formato) vuelve como estado SinCertificado/Ilegible con un mensaje.
         // clave: la del pfx (null/vacia = pfx historico sin clave). diasAviso: umbrales en dias; el
         // mayor define desde cuando el estado es PorVencer.
-        public InfoCertificado Leer(long cuit, string nombreCertificadoPfx, string clave, int[] diasAviso, DateTime? ahoraUtc = null)
+        // homologacion: que entorno se lee (cada uno tiene su carpeta). nombreCertificadoPfx: solo cuenta para el
+        // pfx historico de produccion (raiz del CUIT) y para la plataforma; en prod/ y homo/ el nombre es fijo.
+        public InfoCertificado Leer(long cuit, bool homologacion, string nombreCertificadoPfx, string clave, int[] diasAviso, DateTime? ahoraUtc = null)
         {
-            string carpeta = CarpetaDe(cuit.ToString());
-            string nombre = AfipRutas.NombreCertificado(nombreCertificadoPfx);
+            string cuitTexto = cuit.ToString();
+            var ubicacion = UbicacionDe(cuitTexto, homologacion, nombreCertificadoPfx);
             var info = new InfoCertificado
             {
-                NombreArchivo = nombre,
-                HayPedidoPendiente = File.Exists(Path.Combine(carpeta, AfipRutas.CarpetaClavePendiente, ArchivoClavePendiente))
+                NombreArchivo = Path.GetFileName(ubicacion.RutaPfx),
+                Carpeta = ubicacion.Carpeta,
+                EsLegado = ubicacion.EsLegado,
+                HayPedidoPendiente = File.Exists(Path.Combine(CarpetaPendiente(cuitTexto, homologacion), ArchivoClavePendiente))
             };
 
-            string ruta = Path.Combine(carpeta, nombre);
+            string ruta = ubicacion.RutaPfx;
             if (!File.Exists(ruta))
             {
                 info.Estado = EstadoCertificado.SinCertificado;
@@ -170,7 +190,7 @@ namespace AFIP
         // Genera clave + CSR para el CUIT y devuelve el .csr en PEM. Pisa un pedido pendiente anterior
         // (el .crt que devuelva ARCA solo sirve para el ultimo CSR generado).
         // alias: nombre del "computador fiscal" en ARCA (letras/numeros/guiones, hasta 40).
-        public string GenerarCsr(long cuit, string razonSocial, string alias)
+        public string GenerarCsr(long cuit, bool homologacion, string razonSocial, string alias)
         {
             string cuitTexto = cuit.ToString();
             if (cuitTexto.Length != 11)
@@ -198,7 +218,8 @@ namespace AFIP
                 var pedido = new CertificateRequest(subject, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
                 string csrPem = PemEncoding.WriteString("CERTIFICATE REQUEST", pedido.CreateSigningRequest());
 
-                string carpetaPendiente = CarpetaPendiente(cuitTexto);
+                // Las carpetas se crean al escribir (no al dar de alta la empresa): un solo lugar, idempotente.
+                string carpetaPendiente = CarpetaPendiente(cuitTexto, homologacion);
                 Directory.CreateDirectory(carpetaPendiente);
                 EscribirAtomico(Path.Combine(carpetaPendiente, ArchivoClavePendiente), Encoding.ASCII.GetBytes(rsa.ExportPkcs8PrivateKeyPem()));
                 EscribirAtomico(Path.Combine(carpetaPendiente, ArchivoCsrPendiente), Encoding.ASCII.GetBytes(csrPem));
@@ -212,21 +233,21 @@ namespace AFIP
         // empresa sale de la propia empresa), o null si no hay pedido.
         public long? LeerCuitPendiente()
         {
-            string ruta = Path.Combine(CarpetaDe("0"), AfipRutas.CarpetaClavePendiente, ArchivoCuitPendiente);
+            string ruta = Path.Combine(CarpetaPendiente("0", false), ArchivoCuitPendiente);
             if (!File.Exists(ruta)) return null;
             return long.TryParse(File.ReadAllText(ruta, Encoding.ASCII).Trim(), out long cuit) ? cuit : (long?)null;
         }
 
-        // Devuelve el CSR del pedido pendiente (para volver a descargarlo), o null si no hay.
-        public string LeerCsrPendiente(long cuit)
+        // Devuelve el CSR del pedido pendiente del entorno (para volver a descargarlo), o null si no hay.
+        public string LeerCsrPendiente(long cuit, bool homologacion)
         {
-            string ruta = Path.Combine(CarpetaPendiente(cuit.ToString()), ArchivoCsrPendiente);
+            string ruta = Path.Combine(CarpetaPendiente(cuit.ToString(), homologacion), ArchivoCsrPendiente);
             return File.Exists(ruta) ? File.ReadAllText(ruta, Encoding.ASCII) : null;
         }
 
-        public void DescartarPedidoPendiente(long cuit)
+        public void DescartarPedidoPendiente(long cuit, bool homologacion)
         {
-            string carpeta = CarpetaPendiente(cuit.ToString());
+            string carpeta = CarpetaPendiente(cuit.ToString(), homologacion);
             if (Directory.Exists(carpeta))
                 Directory.Delete(carpeta, recursive: true);
         }
@@ -237,15 +258,17 @@ namespace AFIP
         // en AFIP/<cuit>/<nombreArchivo>, con backup del anterior y borrando los tickets WSAA (para que
         // el proximo login use el certificado nuevo). guardarClave persiste la clave del pfx (cifrada,
         // en la base); si falla, se restaura el pfx anterior y se relanza el error.
-        public ResultadoInstalacion Instalar(long cuit, string nombreArchivo, byte[] crt, Action<string> guardarClave)
+        // Instala SOLO en la carpeta del entorno (prod/ u homo/, nombre fijo certificado.pfx): nunca toca la raiz
+        // historica ni el otro entorno, ni sus tickets. nombreArchivo solo cuenta para la plataforma.
+        public ResultadoInstalacion Instalar(long cuit, bool homologacion, string nombreArchivo, byte[] crt, Action<string> guardarClave)
         {
             if (guardarClave == null) throw new ArgumentNullException(nameof(guardarClave));
             string cuitTexto = cuit.ToString();
             if (crt == null || crt.Length == 0 || crt.Length > MaxBytesCertificado)
                 throw new CertificadoArcaException("El archivo del certificado está vacío o es demasiado grande.");
 
-            string carpeta = CarpetaDe(cuitTexto);
-            string rutaClave = Path.Combine(CarpetaPendiente(cuitTexto), ArchivoClavePendiente);
+            string carpeta = CarpetaEscritura(cuitTexto, homologacion);
+            string rutaClave = Path.Combine(CarpetaPendiente(cuitTexto, homologacion), ArchivoClavePendiente);
             if (!File.Exists(rutaClave))
                 throw new CertificadoArcaException("No hay un pedido pendiente: generá primero el pedido (CSR) y subilo a ARCA.");
 
@@ -261,7 +284,7 @@ namespace AFIP
                 {
                     ValidarCertificado(cert, rsa, cuitTexto);
 
-                    string nombre = AfipRutas.NombreCertificado(nombreArchivo);
+                    string nombre = _plataforma ? AfipRutas.NombreCertificado(nombreArchivo) : AfipRutas.NombreCertificadoFijo;
                     string claveNueva = GenerarClaveAleatoria();
                     byte[] pfx;
                     using (var conClave = cert.CopyWithPrivateKey(rsa))
@@ -271,7 +294,7 @@ namespace AFIP
                     using (CargarPfx(pfx, claveNueva)) { }
 
                     Directory.CreateDirectory(carpeta);
-                    AsegurarPlantillaLogin(carpeta);
+                    AfipRutas.EscribirPlantillaEstandar(carpeta);
                     string destino = Path.Combine(carpeta, nombre);
                     string temporal = destino + ".nuevo";
                     string backup = null;
@@ -307,7 +330,7 @@ namespace AFIP
                     }
 
                     BorrarTickets(carpeta);
-                    DescartarPedidoPendiente(cuit);
+                    DescartarPedidoPendiente(cuit, homologacion);
 
                     return new ResultadoInstalacion
                     {
@@ -322,9 +345,9 @@ namespace AFIP
 
         // ------------------------------------------------------------------ helpers
 
-        private string CarpetaPendiente(string cuitTexto)
+        private string CarpetaPendiente(string cuitTexto, bool homologacion)
         {
-            return Path.Combine(CarpetaDe(cuitTexto), AfipRutas.CarpetaClavePendiente);
+            return Path.Combine(CarpetaEscritura(cuitTexto, homologacion), AfipRutas.CarpetaClavePendiente);
         }
 
         // Reglas del .crt: vigente, con la misma clave publica que el pedido y del CUIT de la empresa.
@@ -369,26 +392,6 @@ namespace AFIP
                 // Algunos pfx historicos sin clave estan armados sin contraseña (null) y no abren con "".
                 return X509CertificateLoader.LoadPkcs12(contenido, null, X509KeyStorageFlags.EphemeralKeySet);
             }
-        }
-
-        // LoginClass arma el pedido de acceso (WSAA) a partir de AFIP/<cuit>/LoginTemplate.xml. Una empresa nueva
-        // no lo tiene: se crea el estandar (los campos vacios los completa LoginClass en cada login).
-        // Nunca pisa uno existente.
-        private static void AsegurarPlantillaLogin(string carpeta)
-        {
-            string ruta = AfipRutas.Template(carpeta);
-            if (File.Exists(ruta)) return;
-            const string plantilla =
-                "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\r\n" +
-                "<loginTicketRequest>\r\n" +
-                "  <header>\r\n" +
-                "    <uniqueId></uniqueId>\r\n" +
-                "    <generationTime></generationTime>\r\n" +
-                "    <expirationTime></expirationTime>\r\n" +
-                "  </header>\r\n" +
-                "  <service></service>\r\n" +
-                "</loginTicketRequest>\r\n";
-            File.WriteAllText(ruta, plantilla, new UTF8Encoding(false));
         }
 
         // Los tickets vencen en ~12 h; borrarlos fuerza un login nuevo con el certificado recien instalado.
