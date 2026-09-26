@@ -183,8 +183,23 @@
 
                 <div class="col-md-4 mb-3 pago-requiere-operacion">
                     <label for="txtImporte">Importe</label>
-                    <input type="text" id="txtImporte" class="form-control text-right" inputmode="decimal" autocomplete="off"
-                           value="@(Model.Importe > 0 ? Model.Importe.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                    <div class="input-group">
+                        <input type="text" id="txtImporte" class="form-control text-right" inputmode="decimal" autocomplete="off"
+                               value="@(Model.Importe > 0 ? Model.Importe.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                        @* Calculadora de billetes (mismo boton que Egresos de caja): carga el total en el importe y el
+                           detalle del conteo en Observaciones. Se oculta con cheques (el importe sale de los cheques). *@
+                        <div class="input-group-append" id="btnCalculadoraBilletesPagoWrap">
+                            <button type="button"
+                                    id="btnCalculadoraBilletesPago"
+                                    class="btn btn-outline-secondary js-calculadora-billetes-launch"
+                                    data-cb-context="pago-importe"
+                                    data-cb-input="#txtImporte"
+                                    data-cb-detail="#Observaciones"
+                                    title="Calcular efectivo">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-md-4 mb-3" id="bloqueEfectivo" style="display:none;">
@@ -732,6 +747,7 @@
 
             $('#bloqueCheques').toggle(esCheque);
             $('#txtImporte').prop('readonly', esCheque);
+            $('#btnCalculadoraBilletesPagoWrap').toggle(!esCheque);
 
             if (esCheque && esMixto) {
                 $('#bloqueEfectivo').show();
@@ -1034,6 +1050,14 @@
             }
             $('#bloqueObservaciones').toggleClass('d-none', !this.checked);
             if (this.checked) $area.trigger('focus');
+        });
+
+        // La calculadora de billetes escribe el detalle del conteo en #Observaciones por JS: si el area estaba
+        // plegada, se despliega para que se vea lo que se va a guardar.
+        $('#Observaciones').on('input', function () {
+            if (($(this).val() || '').trim() === '' || !$('#bloqueObservaciones').hasClass('d-none')) return;
+            $('#chkObservaciones').prop('checked', true);
+            $('#bloqueObservaciones').removeClass('d-none');
         });
 
         // Advertencia "fecha distinta al dia de carga": en vivo al cambiar la fecha.
