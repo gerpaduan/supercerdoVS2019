@@ -14,7 +14,10 @@
     el resto sigue el orden visual de los botones. Wireado en Ventas/POS.cshtml
     (posbAtajosNumericos).
 *@
-<div class="modal fade" id="modalPostVentaBasico" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+@* 2026-09-26 (pedido explicito del usuario): este modal NO se cierra con Escape ni con click afuera, solo
+   eligiendo una de sus opciones. Bootstrap 5 ignora los data-backdrop/data-keyboard de Bootstrap 4, por eso
+   se agregan tambien data-bs-backdrop/data-bs-keyboard (los que realmente lee). *@
+<div class="modal fade" id="modalPostVentaBasico" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content modal-postventa-compact">
             <div class="modal-header bg-success text-white">
@@ -23,9 +26,6 @@
                 </h5>
             </div>
             <div class="modal-body text-center">
-                <p class="mb-1" id="pvbResumenVenta">Venta registrada correctamente.</p>
-                <h3 class="mb-3 font-weight-bold text-success" id="pvbTotalVenta"></h3>
-
                 @* Resultado de la factura electronica recien emitida (lo completa mostrarModalPostVenta en POS.cshtml
                    con lo que deja factura-electronica.js). Oculto si la venta no se facturo en este paso. *@
                 <div id="pvbFacturaRegistrada" class="alert alert-success d-none mb-3 py-2" role="status" style="border:2px solid #198754;">
@@ -34,6 +34,9 @@
                     </div>
                     <div class="font-weight-bold" style="font-size:1.25rem;" id="pvbFacturaDetalle"></div>
                 </div>
+                <p class="mb-1" id="pvbResumenVenta">Venta registrada correctamente.</p>
+                <h3 class="mb-3 font-weight-bold text-success" id="pvbTotalVenta"></h3>
+
                 <div class="d-flex flex-column" style="gap:.5rem;">
                     <button type="button" class="btn btn-success" id="btnPvbContinuar">
                         <span class="badge badge-light mr-1">1</span>

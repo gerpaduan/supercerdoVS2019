@@ -355,6 +355,8 @@
                                     <div class="pos-forma-pago-copy">
                                         <span class="pos-forma-pago-label">Forma de pago:</span>
                                         <strong id="posFormaPagoNombre">-</strong>
+                                        @* Cambiar la forma en medio de la venta (2026-09-25): el click lo maneja forma-pago.js (solo venta nueva con precios por forma de pago). *@
+                                        <i id="posFormaPagoEditar" class="fas fa-pen ml-1 d-none" title="Cambiar forma de pago"></i>
                                     </div>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center">
@@ -2836,6 +2838,9 @@ else
             // Badge de "Ver ventas sin cerrar" (y limpieza si el carrito local ya era una venta registrada).
             window.POSBorrador?.actualizarBadgeInicial?.();
 
+            // (La apertura automatica del modal de forma de pago al cargar el POS vive en
+            // forma-pago.js -- abrirFormaPagoAlCargarPOS --, no aca: ver docs/DECISIONS.md 2026-09-26.)
+
             function hayVentaActivaPOS() {
                 if (window.POSFinalizandoVenta) return false;
                 if (window.POSCancelacionEnCurso) return true;
@@ -3093,11 +3098,6 @@ else
                 $("#btnPvbEmail").data("venta-id", ventaId);
                 pvbActualizarTextoMedida();
 
-                $("#modalPostVentaBasico").modal("show");
-            };
-
-            // ===== Ticket termico HTML (58/80mm), 2026-09-06 (pedido explicito del usuario -- ver
-            // docs/DECISIONS.md) =====
                 // Si se acaba de emitir/actualizar una factura, se resalta aca (un solo modal en vez de un
                 // aviso aparte). Se consume una sola vez: la proxima venta sin factura no lo muestra.
                 var facturaResultado = window.__pvbFacturaResultado;
@@ -3113,6 +3113,11 @@ else
                     $("#pvbResumenVenta").removeClass("d-none");
                 }
 
+                $("#modalPostVentaBasico").modal("show");
+            };
+
+            // ===== Ticket termico HTML (58/80mm), 2026-09-06 (pedido explicito del usuario -- ver
+            // docs/DECISIONS.md) =====
             $("#btnPvbTicket").on("click", function () {
                 var ventaId = $(this).data("venta-id");
                 var mmRecordado = pvbObtenerMedidaTicket();

@@ -6581,6 +6581,18 @@ Al redesplegar el código de Actividades en Servidor SM, se hizo `Stop-Scheduled
 
 **Verificado**: `Negocio.Tests` 121/121 (30 casos nuevos de `AjusteFormaPagoTests`, via `vstest.console.exe`). **PENDIENTE**: prueba en navegador contra WebCore -- el build de WebCore no compila hoy por cambios ajenos en curso en `AFIP/CertificadoArcaService.cs` (firmas nuevas sin actualizar los llamadores), y hay un WebCore corriendo que bloquea las DLL.
 
+## 2026-09-25 -- POS: cambiar la forma de pago en medio de la venta y al finalizar; Enter mantiene la forma (venta nueva)
+
+**Que se decidio** (pedido explicito del usuario, solo aplica con precios distintos por forma de pago, `requierePreseleccionFormaPago`): (1) el banner "Forma de pago" del POS es clickeable y reabre el modal en modo preseleccion; al elegir, se recalculan los precios del carrito (`aplicarFormaPagoPreseleccionada`). (2) En el modal de cobro de venta NUEVA con pago normal ya no se bloquean las formas distintas a la preseleccionada: al elegir otra se recalcula el carrito y se pide confirmar (total anterior -> nuevo); cancelar revierte. (3) Enter en el modal de cobro finaliza con la forma preseleccionada (mismo atajo que ya existia en modificar venta); no aplica si esta tildado pago mixto.
+
+**Por que**: antes, tras elegir la forma al inicio no habia forma de cambiarla (el modal solo se abria al cargar el primer producto y al cobrar quedaban deshabilitadas las otras formas -- restriccion heredada del Web clasico).
+
+**Sin cambios**: modificar venta (sigue bloqueado a la forma original, precios historicos fijos) y pago mixto (el "otro medio" debe ser la forma preseleccionada). El servidor sigue sin recalcular: el precio correcto lo garantiza recalcular en el cliente ANTES de `finalizarVenta`.
+
+**Alternativa descartada**: permitir el cambio solo desde el POS y no desde el modal de cobro -- mas restrictivo; el usuario prefirio permitir ambos.
+
+**Archivos**: `WebCore/wwwroot/Scripts/app/forma-pago.js`, `WebCore/Views/Ventas/POS.cshtml`, `WebCore/wwwroot/Content/css/pos.css`. **PENDIENTE**: prueba manual en navegador y E2E (no corridos en esta sesion).
+
 ## 2026-09-26 -- Punto de Expendio: sectores globales PRESUPUESTO y REMITOS, fecha editable y presupuesto como carta de precios (Entrega 1)
 
 **Que se decidio** (pedido explicito del usuario): (1) `PRESUPUESTO` y `REMITOS` son sectores **globales** (una fila con `idempresa = 0` en `sectores`, visible a todas las empresas por la RLS de lectura) y **reservados**: no se crean, renombran ni eliminan desde el ABM (`PuntosExpendioController.GuardarSector/EliminarSector` + `VentaPg` filtra `idempresa <> 0` en UPDATE/DELETE + la vista oculta Modificar/Eliminar). (2) En esos dos sectores la fecha del POS de expendio se cambia clickeando (mismo patron que Ventas/POS): REMITOS nunca futura, PRESUPUESTO futura hasta 365 dias (los precios rigen "a partir de"); el resto de los sectores ignora la fecha manual. Regla en `Negocio.SectorPuntoExpendio.ResolverFecha`, validada en `FinalizarPOS`. (3) El PDF y el email de PRESUPUESTO salen como carta: encabezado de empresa (no fiscal, solo nombre y domicilio), texto "Nos dirigimos a ustedes desde {empresa}, con el fin de hacerles llegar los nuevos precios a partir del {fecha}." y tabla; dos formatos elegibles al imprimir/enviar (`?formato=precios`): completo (Kgs, precio, total y totales) o lista de precios (sin cantidades ni totales). Los demas sectores conservan el PDF de siempre.
@@ -6608,3 +6620,27 @@ Al redesplegar el código de Actividades en Servidor SM, se hizo `Stop-Scheduled
 ## 2026-09-26 -- PDF de expendio: todos los sectores con el diseño del comprobante de venta
 
 **Que se decidio** (pedido explicito del usuario): el PDF de los sectores que no son PRESUPUESTO (Carniceria, Remitos, etc.) copia el diseño ya usado en el comprobante de venta y en el presupuesto (`GenerarDocsCore.GenerarFacturaPDF`), en vez del PDF simple original. Un solo generador (`GenerarPdfExpendio`): presupuesto = "P"/"PRESUPUESTO"; otros = "X"/"EXPENDIO" con sector, nro de remito y fecha con hora. Lista de precios y texto de presentacion siguen siendo solo del presupuesto (`formato=precios` se ignora en los demas). **Alternativa descartada**: mantener dos generadores (duplicaba cabecera y tabla). **PENDIENTE**: revision visual (no se pudo capturar el PDF renderizado en esta sesion).
+
+## 2026-09-26 -- POS: la preseleccion de forma de pago solo salta al tipear un digito
+
+**Que se decidio** (pedido explicito del usuario, solo con precios distintos por forma de pago): en `bindLiveSearch()` (`pos-product.js`) el modal de preseleccion se abre unicamente si la tecla del `keyup` es un digito (`/^[0-9]$/` sobre `e.key`). Antes se abria con cualquier tecla mientras el campo Codigo tuviera texto (letras, Shift, Tab...).
+
+**Por que**: con una letra el cajero no esta cargando un codigo de producto y el modal interrumpia. Sin preseleccion el modal igual se abre al agregar el producto (`asegurarFormaPagoAntesDeAgregar`, `pos-cart.js`), asi que no queda ningun camino que cargue precios sin forma elegida.
+
+**Alternativa descartada**: abrirlo solo al finalizar (Fin / boton Finalizar): implica cargar el carrito a precio de lista y recalcular al cobrar; el usuario aclaro que si quiere el modal con un numero.
+
+**Archivo**: `WebCore/wwwroot/Scripts/app/pos-product.js`. **PENDIENTE**: prueba manual en navegador (no corrida en esta sesion).
+
+## 2026-09-26 -- POS: modal de forma de pago al cargar la pagina; Escape = precio de lista y recalculo al cobrar
+
+**Que se decidio** (pedido explicito del usuario, solo con precios distintos por forma de pago, `requierePreseleccionFormaPago`, venta nueva): (1) al cargar/recargar el POS lo primero que aparece es el modal de forma de pago en modo preseleccion (`abrirFormaPagoAlCargarPOS` en `forma-pago.js`; se omite si ya hay forma preseleccionada por un borrador restaurado, en modificar venta y en "solo forma de pago"). (2) Cerrarlo sin elegir (Escape, X, click afuera) = trabajar a **precio de lista**: `window.POSPrecioListaAceptado()` (`forma-pago.js`) hace que ni el `keyup` de un digito (`pos-product.js`) ni el agregar producto (`pos-cart.js`) vuelvan a pedir la forma. (3) Al cobrar sin preseleccion, elegir la forma recalcula el carrito y muestra el aviso "total anterior -> nuevo" (el de 2026-09-25, ahora tambien sin preseleccion previa); cancelarlo vuelve a precio de lista (`revertirAPreciosDeListaSinFormaPago`). En pago mixto sin preseleccion, el "otro medio" define los precios: al elegirlo se recalcula y se resincroniza total y split.
+
+**Por que**: el usuario quiere elegir la forma antes de cargar, pero poder saltearlo sin trabas y decidir recien al cobrar.
+
+**Alternativas descartadas**: (a) abrir el modal solo al finalizar, sin modal inicial (se pidio el inicial); (b) abrir el modal con cualquier tecla (ver entrada anterior: solo con un digito).
+
+**Riesgos aceptados**: el flag de precio de lista vive en memoria (no en el borrador): si se recarga con el carrito armado a precio de lista, el modal vuelve a aparecer y, si se elige una forma, se recalculan las lineas. Mientras se carga a precio de lista el total en pantalla es el de lista; el definitivo aparece al cobrar. El servidor sigue sin recalcular.
+
+**Archivos**: `WebCore/wwwroot/Scripts/app/forma-pago.js`, `pos-product.js`, `pos-cart.js`, `docs/03-modulos/productos.md`. **PENDIENTE**: prueba manual en navegador (no corrida en esta sesion).
+
+**Ajuste 2026-09-26 (mismo dia, pedido explicito del usuario)**: (a) tras "Nueva venta" en el modal de venta completada el POS recarga y el modal de forma de pago vuelve a aparecer (es el mismo camino de carga). (b) `#modalPostVentaBasico` ya **no se cierra con Escape ni con click afuera**, solo eligiendo una opcion: se agregaron `data-bs-backdrop="static"` y `data-bs-keyboard="false"` (Bootstrap 5 ignora los `data-backdrop`/`data-keyboard` de Bootstrap 4 que tenia; el resto de los modales del sistema con esos atributos BS4 tienen el mismo defecto, **no se tocaron**: fuera de alcance). (c) el modal de forma de pago de preseleccion **nunca se abre si ya hay otro modal activo** (Bootstrap `.modal.show` o popup de SweetAlert2 no-toast): guardia central en `window.abrirModalFormaPagoPreseleccion` (`hayOtroModalActivoEnPOS`), que cubre carga inicial, digito en Codigo, agregar producto y banner; el modal de finalizacion (`abrirModalFormaPagoFinalizacion`) no cambia. (d) La apertura automatica se movio de `POS.cshtml` a `forma-pago.js`: WebCore no recompila las vistas `.cshtml` en caliente (sin `AddRazorRuntimeCompilation`), asi que un cambio en la vista no se ve hasta reiniciar el servidor; el `.js` es estatico y se ve al recargar. **Los `data-bs-*` del modal de venta completada SI requieren reiniciar el servidor** (estan en un `.cshtml`).

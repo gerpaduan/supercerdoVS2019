@@ -107,11 +107,18 @@
             alert(text || title);
         }
 
-        function debeAbrirPreseleccionFormaPago(codigo) {
+        // 2026-09-26 (pedido explicito del usuario): solo un DIGITO abre el modal. Con una letra (o
+        // Shift, Tab, flechas, etc.) el cajero no esta tipeando un codigo de producto, y el modal
+        // saltaba de mas. Sin preseleccion, el modal igual se abre al agregar el producto
+        // (asegurarFormaPagoAntesDeAgregar en pos-cart.js), asi que ningun camino queda sin cubrir.
+        function debeAbrirPreseleccionFormaPago(codigo, tecla) {
             if (soloFormaPago) return false;
             if (!codigo) return false;
+            if (!/^[0-9]$/.test(String(tecla ?? ''))) return false;
             if (window.POSState?.getRequierePreseleccionFormaPago?.() !== true) return false;
             if (window.POSState?.getFormaPagoPreseleccionada?.()?.tipo) return false;
+            // El cajero ya cerro el modal inicial con Escape: trabaja a precio de lista (forma-pago.js).
+            if (window.POSPrecioListaAceptado?.() === true) return false;
             if ($('#modalFormaPago').hasClass('show')) return false;
             return typeof window.abrirModalFormaPagoPreseleccion === 'function';
         }
@@ -698,7 +705,7 @@
 
                 clearTimeout(typingTimer);
 
-                if (debeAbrirPreseleccionFormaPago(codigo)) {
+                if (debeAbrirPreseleccionFormaPago(codigo, e.key)) {
                     window.abrirModalFormaPagoPreseleccion();
                     return;
                 }

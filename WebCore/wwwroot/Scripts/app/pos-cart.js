@@ -226,6 +226,9 @@
         function requiereFormaPagoAntesDeAgregar() {
             if (soloFormaPago) return false;
             if (window.esEdicionVenta === true) return false;
+            // El cajero ya cerro el modal inicial con Escape: trabaja a precio de lista y la forma
+            // de pago se elige al cobrar (forma-pago.js recalcula el carrito ahi).
+            if (window.POSPrecioListaAceptado?.() === true) return false;
             return POSState.getRequierePreseleccionFormaPago && POSState.getRequierePreseleccionFormaPago();
         }
 

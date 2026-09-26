@@ -92,6 +92,91 @@ function formatearNombreFormaPagoConAtajo(tipo) {
     return atajo ? (nombre + ' ' + atajo) : nombre;
 }
 
+// "Enter mantiene la forma de pago": en modificar venta (2026-09-07) y, desde 2026-09-25, tambien
+// en venta NUEVA cuando el negocio tiene precios distintos por forma de pago y ya hay una forma
+// preseleccionada (es la "original" de la venta en curso). Sin preseleccion no hay nada que mantener.
+function puedeMantenerFormaPagoConEnter() {
+    if (window.esEdicionVenta) return true;
+    if (getModoFormaPagoActual() !== 'finalizacion') return false;
+    const preseleccion = getFormaPagoPreseleccionada();
+    return requierePreseleccionFormaPago() && !!(preseleccion && preseleccion.tipo);
+}
+
+// "Cargar a precio de lista" (2026-09-26, pedido explicito del usuario -- ver docs/DECISIONS.md):
+// con precios distintos por forma de pago, el POS abre el modal de forma de pago al cargar la
+// pagina. Si el cajero lo cierra SIN elegir (Escape, X o click afuera), acepta trabajar a precio de
+// lista: pos-product.js y pos-cart.js dejan de pedirle la forma de pago al tipear/agregar (ver
+// window.POSPrecioListaAceptado) y la forma se elige recien al cobrar, donde el carrito se recalcula.
+let precioListaAceptado = false;
+window.POSPrecioListaAceptado = function () { return precioListaAceptado; };
+
+$('#modalFormaPago').on('hidden.bs.modal', function () {
+    if (getModoFormaPagoActual() !== 'preseleccion') return;
+    const seleccion = getFormaPagoPreseleccionada();
+    // Elegir una forma cierra el modal por codigo, pero ya con preseleccion: eso no es "precio de lista".
+    if (seleccion && seleccion.tipo) return;
+    precioListaAceptado = true;
+});
+
+// Vuelve al estado "precio de lista" (sin forma preseleccionada y cada linea a su precio original)
+// cuando el cajero cancela el aviso de cambio de total al cobrar sin haber preseleccionado nada.
+// El recalculo con tipo '' usa factor 1 (ver obtenerFactorFormaPago), o sea el precio original.
+function revertirAPreciosDeListaSinFormaPago() {
+    setFormaPagoPreseleccionada(null);
+    actualizarPOSFormaPagoActual({ tipo: '', pagoMixtoEfectivo: 0, total: obtenerTotalVenta() });
+
+    if (window.POSFormaPagoPrecios && window.POSState?.getLineas) {
+        const lineas = window.POSState.getLineas() || [];
+        const recalculadas = window.POSFormaPagoPrecios.recalcularCarritoSegunFormaPago(lineas, '', window.POSFormaPagoConfig || {});
+        if (recalculadas > 0) {
+            window.renderTablaProductos?.(lineas);
+            window.recalcularTotal?.();
+            window.actualizarEstadoVentaEnCurso?.();
+        }
+    }
+
+    window.actualizarResumenFormaPagoPOS?.();
+    limpiarSeleccionFormaPago();
+}
+
+// true mientras se muestra el aviso de cambio de forma de pago al finalizar: evita que un click
+// doble o el Enter que confirma el aviso dispare otra finalizacion.
+let cambioFormaPagoPendiente = false;
+
+// Venta nueva: al elegir al cobrar una forma distinta a la preseleccionada, se recalcula el
+// carrito con esa forma y se pide confirmar mostrando total anterior -> nuevo. Cancelar revierte
+// (recalcular es idempotente: parte siempre de precioOriginal). Devuelve Promise<boolean>.
+function confirmarCambioFormaPagoAlFinalizar(tipoNuevo) {
+    const anterior = getFormaPagoPreseleccionada();
+    const totalAnterior = Number(obtenerTotalVenta() || 0);
+
+    aplicarFormaPagoPreseleccionada(tipoNuevo);
+    const totalNuevo = Number(obtenerTotalVenta() || 0);
+
+    // Mismo total (ej. ambas formas con el mismo factor): no hay nada que avisar.
+    if (Math.abs(totalNuevo - totalAnterior) < 0.005 || !window.Swal) return Promise.resolve(true);
+
+    return window.Swal.fire({
+        icon: 'question',
+        title: 'Cambio de forma de pago',
+        html: 'Con <strong>' + normalizarNombreFormaPago(tipoNuevo) + '</strong> el total pasa de $ ' +
+            formatearImporteFormaPago(totalAnterior) + ' a <strong>$ ' + formatearImporteFormaPago(totalNuevo) + '</strong>.',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar y finalizar',
+        cancelButtonText: 'Cancelar'
+    }).then(function (r) {
+        if (r && r.isConfirmed) return true;
+        // Cancelado: volver a la forma y los precios anteriores.
+        if (anterior && anterior.tipo) {
+            aplicarFormaPagoPreseleccionada(anterior.tipo);
+            marcarFormaPagoSeleccionada(anterior.tipo);
+        } else {
+            revertirAPreciosDeListaSinFormaPago();
+        }
+        return false;
+    });
+}
+
 function actualizarLeyendaFormaPagoActual() {
     const $info = $('#formaPagoActualInfo');
     if (!$info.length) return;
@@ -118,7 +203,7 @@ function actualizarLeyendaFormaPagoActual() {
     // docs/DECISIONS.md): solo tiene sentido al MODIFICAR una venta ya guardada (esEdicionVenta),
     // donde "la actual" es un dato real de la venta -- en modo preseleccion (armar precios antes
     // de cargar productos) no hay nada que "mantener" todavia.
-    if (window.esEdicionVenta) {
+    if (puedeMantenerFormaPagoConEnter()) {
         texto += '<br><span class="text-muted"><i class="fas fa-level-down-alt fa-rotate-90 mr-1"></i>Presione <strong>Enter</strong> para mantener la misma forma de pago.</span>';
     }
 
@@ -160,7 +245,13 @@ function bloquearFormasPagoNoPreseleccionadas() {
     const modo = getModoFormaPagoActual();
     const preseleccion = getFormaPagoPreseleccionada();
 
-    if (modo === 'finalizacion' && requierePreseleccionFormaPago() && preseleccion && preseleccion.tipo) {
+    // 2026-09-25 (pedido explicito del usuario -- ver docs/DECISIONS.md): en venta NUEVA con pago
+    // normal se puede elegir cualquier forma al cobrar; si difiere de la preseleccionada, el click
+    // recalcula el carrito y pide confirmacion (confirmarCambioFormaPagoAlFinalizar). El bloqueo
+    // solo sigue vigente para pago mixto y para modificar venta (precios historicos fijos).
+    const restringirALaPreseleccionada = window.esEdicionVenta === true || $('#chkPagoMixto').is(':checked');
+
+    if (modo === 'finalizacion' && restringirALaPreseleccionada && requierePreseleccionFormaPago() && preseleccion && preseleccion.tipo) {
         // Preseleccion real activa (negocio con precio distinto por forma de pago): el "otro
         // medio" del pago mixto tiene que ser la MISMA forma de pago preseleccionada, para no
         // mezclar un precio ya ajustado con una forma de pago distinta a la que lo genero.
@@ -196,7 +287,27 @@ window.actualizarResumenFormaPagoPOS = function () {
 
     $nombre.text(normalizarNombreFormaPago(seleccion.nombre || seleccion.tipo));
     $wrap.removeClass('d-none');
+
+    // El banner solo es clickeable en venta nueva con precios distintos por forma de pago.
+    const editable = puedeCambiarFormaPagoDesdeBanner();
+    $wrap.toggleClass('pos-forma-pago-banner-editable', editable)
+        .attr('title', editable ? 'Click para cambiar la forma de pago' : null);
+    $('#posFormaPagoEditar').toggleClass('d-none', !editable);
 };
+
+function puedeCambiarFormaPagoDesdeBanner() {
+    return requierePreseleccionFormaPago() && window.esEdicionVenta !== true &&
+        !(window.POSModo && window.POSModo.soloFormaPago === true);
+}
+
+// Cambiar la forma de pago con el carrito cargado (2026-09-25, pedido explicito del usuario -- ver
+// docs/DECISIONS.md). Reusa el modal en modo preseleccion: al elegir, aplicarFormaPagoPreseleccionada
+// recalcula los precios del carrito y el total.
+$(document).on('click', '#posFormaPagoActual', function () {
+    if (!puedeCambiarFormaPagoDesdeBanner()) return;
+    if ($('.modal.show').length) return;
+    window.abrirModalFormaPagoPreseleccion();
+});
 
 function configurarModalFormaPagoSegunModo() {
     const modo = getModoFormaPagoActual();
@@ -335,10 +446,22 @@ function aplicarFormaPagoPreseleccionada(tipo) {
     }
 }
 
+// true si hay OTRO modal activo en el POS: un modal de Bootstrap abierto o un popup de SweetAlert2
+// (los toasts no cuentan: no bloquean nada). El modal de forma de pago de preseleccion nunca se
+// apila sobre otro modal (pedido explicito del usuario, 2026-09-26).
+function hayOtroModalActivoEnPOS() {
+    if ($('.modal.show').not('#modalFormaPago').length) return true;
+    return !!document.querySelector('.swal2-popup.swal2-show:not(.swal2-toast)');
+}
+
+// Devuelve false (sin abrir nada) si hay otro modal activo; true si lo abrio.
 window.abrirModalFormaPagoPreseleccion = function () {
+    if (hayOtroModalActivoEnPOS()) return false;
+
     getPOSStateFormaPago()?.setModoFormaPago?.('preseleccion');
     window.preCargarFormaPagoActual?.();
     $('#modalFormaPago').modal('show');
+    return true;
 };
 
 window.abrirModalFormaPagoFinalizacion = function () {
@@ -447,14 +570,45 @@ $('.btn-forma-pago').on('click', function () {
     // ---------------------------
     if (!esPagoMixto) {
 
-        if (!aplicarDescuentoTotalVentaAntesDeFinalizarSiCorresponde()) return;
+        const finalizarPagoNormal = function () {
+            // El % de descuento (si hay) se aplica DESPUES de recalcular por forma de pago:
+            // las lineas bonificadas quedan fuera del recalculo (ver puedeRecalcularLinea).
+            if (!aplicarDescuentoTotalVentaAntesDeFinalizarSiCorresponde()) return;
 
-        finalizarVenta({
-            formaPago: tipo,
-            esPagoMixto: false,
-            efectivo: 0,
-            idPersona: $('#idPersona').val()
-        });
+            finalizarVenta({
+                formaPago: tipo,
+                esPagoMixto: false,
+                efectivo: 0,
+                idPersona: $('#idPersona').val()
+            });
+        };
+
+        // Venta nueva con precios distintos por forma de pago: si la forma elegida difiere de la
+        // preseleccionada -- o si no hay ninguna (carrito a precio de lista, el cajero cerro el
+        // modal inicial con Escape; 2026-09-26) -- recalcular y confirmar antes de guardar
+        // (2026-09-25, ver docs/DECISIONS.md).
+        const preseleccionada = getFormaPagoPreseleccionada();
+        const cambiaFormaPago = !window.esEdicionVenta && requierePreseleccionFormaPago() &&
+            (!preseleccionada || !preseleccionada.tipo ||
+                normalizarTipoFormaPago(preseleccionada.tipo) !== tipo);
+
+        if (!cambiaFormaPago) {
+            finalizarPagoNormal();
+            return;
+        }
+
+        if (cambioFormaPagoPendiente) return;
+        cambioFormaPagoPendiente = true;
+        confirmarCambioFormaPagoAlFinalizar(tipo)
+            .then(function (confirmado) {
+                if (confirmado) finalizarPagoNormal();
+            })
+            .catch(function (err) {
+                console.error('Error al cambiar la forma de pago al finalizar', err);
+            })
+            .finally(function () {
+                cambioFormaPagoPendiente = false;
+            });
 
         return;
     }
@@ -465,6 +619,18 @@ $('.btn-forma-pago').on('click', function () {
     otroTipoPagoSeleccionado = tipo;
     $('#labelOtroPago').text(normalizarNombreFormaPago(tipo));
     marcarFormaPagoSeleccionada(tipo);
+
+    // Sin forma preseleccionada (carrito a precio de lista), el "otro medio" define los precios:
+    // se recalcula el carrito con esa forma y se resincroniza el total y el split del mixto.
+    // Con preseleccion real este boton ya viene restringido a esa misma forma (ver
+    // bloquearFormasPagoNoPreseleccionadas), asi que ahi no hay nada que recalcular.
+    const preseleccionadaMixto = getFormaPagoPreseleccionada();
+    if (!window.esEdicionVenta && requierePreseleccionFormaPago() &&
+        (!preseleccionadaMixto || normalizarTipoFormaPago(preseleccionadaMixto.tipo) !== tipo)) {
+        aplicarFormaPagoPreseleccionada(tipo);
+        totalVentaOriginal = Number(obtenerTotalVenta() || 0);
+        actualizarTotalConDescuento();
+    }
 });
 
 // ===============================
@@ -984,13 +1150,45 @@ function aplicarDescuentoTotalVentaAntesDeFinalizarSiCorresponde() {
 }
 
 // ===============================
+// APERTURA AUTOMATICA AL CARGAR EL POS
+// ===============================
+// 2026-09-26 (pedido explicito del usuario -- ver docs/DECISIONS.md): con precios distintos por
+// forma de pago, al cargar/recargar el POS -- incluido el reload tras "Nueva venta" en el modal de
+// venta completada -- lo primero que aparece es el modal para elegir la forma de pago. Escape (o
+// cerrarlo sin elegir) = trabajar a precio de lista (ver precioListaAceptado). No aplica a modificar
+// venta ni a "solo forma de pago" (ya traen su forma), ni si ya hay una preseleccionada (borrador
+// restaurado), ni si otro modal ya esta activo (abrirModalFormaPagoPreseleccion lo verifica).
+// Vive aca y no en POS.cshtml para no depender de recompilar la vista. Corre en document.ready,
+// o sea despues de que POS.cshtml restauro el borrador y seteo esEdicionVenta/POSModo/POSState.
+function abrirFormaPagoAlCargarPOS() {
+    if (!document.getElementById('inputCodigo')) return; // sin caja/operador el POS no se renderiza
+    if (window.esEdicionVenta || window.POSModo?.soloFormaPago) return;
+    if (window.POSMultiInstance?.isBlocked?.()) return;
+    if (!requierePreseleccionFormaPago()) return;
+    const preseleccion = getFormaPagoPreseleccionada();
+    if (preseleccion && preseleccion.tipo) return;
+
+    // Pequeña espera: deja terminar de armarse la pantalla y que otros modales de arranque
+    // (ej. aviso de ventas sin cerrar) se abran primero -- en ese caso este no se apila.
+    setTimeout(function () {
+        if (window.POSGuard) {
+            window.POSGuard.requestModalOpen('formaPago', window.abrirModalFormaPagoPreseleccion);
+        } else {
+            window.abrirModalFormaPagoPreseleccion();
+        }
+    }, 250);
+}
+
+$(document).ready(abrirFormaPagoAlCargarPOS);
+
+// ===============================
 // ATAJOS DE TECLADO
 // ===============================
 $(document).ready(function () {
 
     $(document).on('keydown', function (e) {
 
-        if (ventaEnProceso) return;
+        if (ventaEnProceso || cambioFormaPagoPendiente) return;
         if (!$('#modalFormaPago').hasClass('show')) return;
         if (window.POSGuard && !window.POSGuard.isModalOnTop('#modalFormaPago')) return;
 
@@ -1003,7 +1201,9 @@ $(document).ready(function () {
         // stopPropagation, asi que nunca llega hasta aca -- este guard cubre los demas inputs,
         // ej. montoEfectivo/montoOtroPago del bloque mixto). Si la venta era pago mixto, "mantener"
         // equivale a confirmar el split ya precargado (mismo botón que ya usa el atajo "End").
-        if (e.key === 'Enter' && window.esEdicionVenta && window.POSFormaPagoActual?.formaPago) {
+        // 2026-09-25: tambien en venta nueva con forma preseleccionada (puedeMantenerFormaPagoConEnter).
+        if (e.key === 'Enter' && puedeMantenerFormaPagoConEnter() && window.POSFormaPagoActual?.formaPago &&
+            (window.esEdicionVenta || !esPagoMixto)) { // venta nueva: el mixto no viene precargado, Enter no lo confirma
             const tagFocoEnter = (document.activeElement && document.activeElement.tagName) || '';
             if (tagFocoEnter !== 'INPUT' && tagFocoEnter !== 'TEXTAREA' && tagFocoEnter !== 'SELECT') {
                 e.preventDefault();

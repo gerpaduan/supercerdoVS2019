@@ -900,6 +900,10 @@
         color: #56728f;
     }
 
+    .pos-forma-pago-banner-editable {
+        cursor: pointer;
+    }
+
     html.dark-mode .pos-forma-pago-banner {
         background: rgba(78, 115, 223, .18);
         border-color: rgba(110, 168, 254, .32);
