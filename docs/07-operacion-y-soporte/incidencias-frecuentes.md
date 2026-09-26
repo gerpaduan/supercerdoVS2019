@@ -309,3 +309,8 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 **Causa**: el guard de `WebCore/Views/Shared/_Layout.cshtml` intercepta todo `<a>` con `href` no vacío; la campana es `<a href="#" data-bs-toggle="dropdown">`, que no navega.
 **Fix**: el guard ignora `href` que empiecen con `#`, `javascript:` y toggles `data-bs-toggle|data-toggle="dropdown"`. Los enlaces que sí navegan siguen preguntando.
 **REGLA**: un enlace nuevo que solo abra UI (desplegable/modal/ancla) debe usar `href="#..."` o `data-ignore-exit`, nunca una URL real.
+
+## El PDF de la factura A4 dejaba el pie pegado al total, no al borde de la hoja (2026-09-26)
+**Síntoma**: en `GenerarDocsCore.GenerarFacturaPDF` (A4) los totales, leyendas fiscales, QR y CAE aparecían inmediatamente después del último renglón, a mitad de hoja.
+**Causa**: todo el comprobante iba dentro de `page.Content()`, que fluye de arriba hacia abajo sin anclar nada al fondo.
+**Fix**: se mantiene el formato original (el de iTextSharp: sin recuadros; el comprobante X sigue igual). Solo el bloque de la factura electrónica (importe en letras, totales, Ley 27.743, QR, CAE) pasó a `col.Item().ExtendVertical().AlignBottom().Column(...)` en `GenerarFacturaPDF`: queda al borde inferior de la última hoja, como el `PdfStamper` del original. Verificado con facturas B/A de 1 y 2 hojas: el pie aparece solo en la última, a la misma altura.

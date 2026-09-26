@@ -2,12 +2,9 @@
 // README.md. Porta GenerarFacturaPDF (factura/ticket A4, VentasController) con el QR oficial de
 // AFIP (RG 4892/2020) y GenerarPdfCtaCtePersona (extracto de cuenta corriente, FinanzasController).
 //
-// Simplificacion deliberada: el original fija el bloque de totales/regimen fiscal/QR/CAE a una
-// posicion absoluta en la ULTIMA pagina via PdfStamper/PdfContentByte (especifico de iTextSharp,
-// sin equivalente directo en QuestPDF, que compone paginas de forma declarativa). Aca ese bloque
-// fluye al final del contenido en vez de anclarse al pie de la ultima pagina -- mismo contenido y
-// orden, sin el ajuste de posicion fino; para el caso tipico (pocas lineas, 1 pagina) el resultado
-// visual es equivalente.
+// Pie de factura electronica (totales/regimen fiscal/QR/CAE): el original lo fija con PdfStamper al fondo de
+// la ULTIMA pagina; aca se replica con ExtendVertical().AlignBottom() dentro del flujo del contenido (ver
+// GenerarFacturaPDF), asi queda pegado al borde inferior de la ultima hoja A4 y no a continuacion del total.
 //
 // GenerateQRCode: el original usa QRCodeGenerator + System.Drawing.Bitmap (bloqueante ya señalado
 // desde el plan original de la migracion -- GDI+ no corre en Linux desde .NET 6+). Aca se usa
@@ -430,44 +427,73 @@ namespace WebCore.Services
                         }
                         else
                         {
-                            col.Item().PaddingTop(6).Row(row =>
+                            // Pie de la factura electronica anclado al fondo de la ULTIMA hoja (el original lo fijaba con
+                            // PdfStamper): ExtendVertical ocupa el espacio libre bajo el detalle y AlignBottom empuja el
+                            // bloque al borde inferior. De arriba a abajo: importe en letras + totales, observaciones,
+                            // y una franja con el QR de AFIP a la izquierda y la leyenda fiscal + CAE a la derecha.
+                            col.Item().ExtendVertical().AlignBottom().Column(pie =>
                             {
-                                row.RelativeItem().Text(importeTexto);
-                                row.RelativeItem().Column(totCol =>
+                                pie.Spacing(6);
+                                pie.Item().LineHorizontal(1).LineColor(Colors.Grey.Medium);
+
+                                // Importe en letras (izquierda) | desglose de totales (derecha, etiqueta y valor en columnas)
+                                pie.Item().Row(row =>
                                 {
-                                    if (esFacturaA)
+                                    row.RelativeItem(3).PaddingRight(12).Text(importeTexto).FontSize(8).Italic();
+                                    row.RelativeItem(2).Column(totCol =>
                                     {
-                                        totCol.Item().AlignRight().Text("Neto s/iva: $ " + factura.ImporteNetoGravado.ToString("#,##0.00", culturaAr)).Bold();
-                                        foreach (var item in (factura.ListaAlicuota ?? new System.Collections.Generic.List<Entidades.AlicuotaIva>()).Where(a => a.Importe > 0))
-                                            totCol.Item().AlignRight().Text("Iva " + item.Iva + "%: $ " + item.Importe.ToString("#,##0.00", culturaAr)).Bold();
-                                    }
-                                    else
+                                        void FilaTotal(string etiqueta, string valor, bool destacada)
+                                        {
+                                            totCol.Item().Row(r =>
+                                            {
+                                                var etiquetaTxt = r.RelativeItem().Text(etiqueta).Bold();
+                                                var valorTxt = r.ConstantItem(90).AlignRight().Text(valor).Bold();
+                                                if (destacada) { etiquetaTxt.FontSize(12); valorTxt.FontSize(12); }
+                                            });
+                                        }
+
+                                        if (esFacturaA)
+                                        {
+                                            FilaTotal("Neto s/iva: $", factura.ImporteNetoGravado.ToString("#,##0.00", culturaAr), false);
+                                            foreach (var item in (factura.ListaAlicuota ?? new System.Collections.Generic.List<Entidades.AlicuotaIva>()).Where(a => a.Importe > 0))
+                                                FilaTotal("Iva " + item.Iva + "%: $", item.Importe.ToString("#,##0.00", culturaAr), false);
+                                        }
+                                        else
+                                        {
+                                            FilaTotal("Subtotal: $", factura.ImporteTotal.ToString("#,##0.00", culturaAr), false);
+                                        }
+
+                                        totCol.Item().PaddingTop(2).LineHorizontal(0.5f).LineColor(Colors.Grey.Medium);
+                                        FilaTotal("Total: $", factura.ImporteTotal.ToString("#,##0.00", culturaAr), true);
+                                    });
+                                });
+
+                                if (!string.IsNullOrWhiteSpace(observaciones))
+                                    pie.Item().Text(t =>
                                     {
-                                        totCol.Item().AlignRight().Text("Subtotal: $ " + factura.ImporteTotal.ToString("#,##0.00", culturaAr)).Bold();
-                                    }
+                                        t.DefaultTextStyle(x => x.FontSize(8));
+                                        t.Span("Obs: ").Bold();
+                                        t.Span(observaciones);
+                                    });
 
-                                    totCol.Item().AlignRight().Text("Total: $ " + factura.ImporteTotal.ToString("#,##0.00", culturaAr)).Bold();
-                                });
-                            });
+                                pie.Item().LineHorizontal(0.5f).LineColor(Colors.Grey.Lighten1);
 
-                            if (!string.IsNullOrWhiteSpace(observaciones))
-                                col.Item().Text("Obs: " + observaciones);
-
-                            col.Item().PaddingTop(8).AlignRight().Text("Régimen de Transparencia Fiscal Al Consumidor (Ley 27.743)").FontSize(7);
-                            col.Item().AlignRight().Text("IVA Contenido: " + factura.Iva.ToString("N2")).FontSize(7);
-
-                            col.Item().PaddingTop(8).Row(row =>
-                            {
-                                row.ConstantItem(100).Column(qrCol =>
+                                // QR oficial (izquierda) | leyenda fiscal y CAE (derecha, alineados al margen)
+                                pie.Item().Row(row =>
                                 {
-                                    if (qrBytes != null && qrBytes.Length > 0)
-                                        qrCol.Item().Width(100).Height(100).Image(qrBytes);
-                                });
+                                    row.ConstantItem(100).Column(qrCol =>
+                                    {
+                                        if (qrBytes != null && qrBytes.Length > 0)
+                                            qrCol.Item().Width(100).Height(100).Image(qrBytes);
+                                    });
 
-                                row.RelativeItem().PaddingLeft(15).Column(caeCol =>
-                                {
-                                    caeCol.Item().AlignRight().Text("CAE: " + factura.CAE1).FontSize(7);
-                                    caeCol.Item().AlignRight().Text("Fecha de Vencimiento del CAE: " + factura.FecVtoCAE).FontSize(7);
+                                    row.RelativeItem().PaddingLeft(15).Column(der =>
+                                    {
+                                        der.Item().AlignRight().Text("Régimen de Transparencia Fiscal Al Consumidor (Ley 27.743)").FontSize(7);
+                                        der.Item().AlignRight().Text("IVA Contenido: $ " + factura.Iva.ToString("#,##0.00", culturaAr)).FontSize(7);
+                                        der.Item().PaddingTop(10).AlignRight().Text("CAE: " + factura.CAE1).FontSize(9).Bold();
+                                        der.Item().AlignRight().Text("Fecha de Vencimiento del CAE: " + factura.FecVtoCAE).FontSize(8);
+                                    });
                                 });
                             });
                         }
