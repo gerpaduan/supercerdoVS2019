@@ -1,7 +1,7 @@
 @* Tutorial: alias de la plataforma para el padron compartido. Nombres de menu confirmados 2026-09-24 contra fuentes
    publicas: "Administracion de Certificados Digitales", "Agregar alias", "Administrador de Relaciones de Clave
-   Fiscal". PENDIENTE verificar contra el portal real de ARCA el nombre exacto del servicio "Consulta de Padron
-   Alcance 13" (ws_sr_padron_a13). *@
+   Fiscal". El servicio se llama "Servicio Consulta Padron A13" (ws_sr_padron_a13), verificado en el portal real
+   2026-09-26; sin esa relacion ARCA responde "Computador no autorizado a acceder al servicio". *@
 <div class="alert alert-info">
     <strong>Por qué un alias aparte:</strong> este certificado consulta el padrón para todas las empresas. Si tiene autorizado
     <em>solo</em> <code>ws_sr_padron_a13</code> y no <code>wsfe</code>, aunque el archivo se filtrara nadie podría facturar con él.
@@ -10,12 +10,28 @@
 <ol>
     <li class="mb-2">Ingresá a <code>auth.arca.gob.ar</code> con el CUIT de la plataforma y su clave fiscal.</li>
     <li class="mb-2">Con el servicio <em>Administración de Certificados Digitales</em> (si no aparece, adherilo desde <em>Administrador de Relaciones de Clave Fiscal</em>), elegí el CUIT y usá <em>Agregar alias</em>.</li>
-    <li class="mb-2">En esta pantalla, paso 1: cargá el CUIT, la razón social y un alias (ej. <code>carnisys-padron-@DateTime.Now.ToString("yyyyMM")</code>) y descargá el <code>.csr</code>.</li>
+    <li class="mb-2">En esta pantalla, paso 1: cargá el CUIT, la razón social y un alias (solo letras y números, sin guiones; ej. <code>carnisyspadron@DateTime.Now.ToString("yyyyMM")</code>) y descargá el <code>.csr</code>.</li>
     <li class="mb-2">En ARCA, subí ese <code>.csr</code> al alias y descargá el <code>.crt</code>.</li>
-    <li class="mb-2">En <em>Administrador de Relaciones de Clave Fiscal</em> → <em>Nueva relación</em>: servicio <em>ARCA → WebServices → Consulta de Padrón Alcance 13</em> (<code>ws_sr_padron_a13</code>); representante: el alias del paso 4. <strong>Nada más.</strong></li>
+    <li class="mb-2">
+        <strong>Autorizá el servicio (este paso es obligatorio).</strong> Tener el certificado válido no alcanza: ARCA también tiene que saber
+        que ese alias puede usar el padrón. En <em>Administrador de Relaciones de Clave Fiscal</em> (portal de <strong>producción</strong>):
+        <ol type="a" class="mt-1">
+            <li>Tocá <em>Nueva Relación</em>.</li>
+            <li>En <em>Servicio</em> elegí <em>ARCA → WebServices → <strong>Servicio Consulta Padron A13</strong></em> (<code>ws_sr_padron_a13</code>). No elijas A4 ni A10: son otros servicios y dan error.</li>
+            <li>En <em>Representante</em> tocá <em>Buscar</em> y elegí el computador fiscal con el <strong>alias del paso 4</strong>.</li>
+            <li>El representado es el mismo CUIT y confirmá. <strong>Nada más</strong>: no autorices <code>wsfe</code>.</li>
+        </ol>
+        Si te salteás este paso, <em>Probar</em> devuelve <em>"Computador no autorizado a acceder al servicio"</em>.
+    </li>
     <li class="mb-2">Acá, paso 2: subí el <code>.crt</code> y tocá <em>Instalar certificado</em>.</li>
     <li>Tocá <em>Probar</em>: si ARCA responde, desde ese momento todas las empresas usan este certificado para buscar CUITs. Si falla, las empresas siguen con su propio certificado o cargan a mano.</li>
 </ol>
+<div class="alert alert-warning small">
+    <strong>Si <em>Probar</em> dice "Computador no autorizado a acceder al servicio":</strong> el certificado está bien, falta o está mal la autorización del paso 5.
+    Revisá en orden: (1) que el servicio sea <em>Consulta Padron A13</em> y no A4 o A10; (2) que el representante sea el alias de este certificado y no otro;
+    (3) que la hayas creado en el portal de producción, no en el de homologación; (4) que el representado sea el mismo CUIT del certificado;
+    (5) si la acabás de crear, esperá unos minutos y probá de nuevo. No hace falta generar otro certificado.
+</div>
 <div class="alert alert-secondary mb-0 small">
     <strong>Renovación:</strong> el certificado dura 2 años. Repetí el proceso con un alias nuevo antes de que venza; el sistema avisa en el menú de Administración del sistema.
     Si se cortara por fallos, las empresas usan su propio certificado automáticamente y nadie queda sin poder dar de alta clientes.

@@ -176,7 +176,7 @@
                                 </div>
                                 <div class="mb-2">
                                     <label for="alias" class="form-label small mb-1">Alias en ARCA</label>
-                                    <input type="text" class="form-control" id="alias" name="alias" value="carnisys-padron-@DateTime.Now.ToString("yyyyMM")" maxlength="40" required pattern="[A-Za-z0-9_\-]+" />
+                                    <input type="text" class="form-control" id="alias" name="alias" value="carnisyspadron@DateTime.Now.ToString("yyyyMM")" maxlength="40" required pattern="[A-Za-z0-9]+" title="Solo letras y números, sin guiones ni espacios" />
                                 </div>
                                 <button type="submit" class="btn btn-primary"><i class="fas fa-file-download me-1"></i> Generar y descargar pedido</button>
                             </form>

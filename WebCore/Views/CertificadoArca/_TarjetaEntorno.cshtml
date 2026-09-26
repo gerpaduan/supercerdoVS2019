@@ -135,7 +135,7 @@
             volvés con el certificado que te devuelve. Mientras tanto <strong>el certificado actual sigue funcionando</strong>.
             @if (Model.EsHomologacion)
             {
-                <span>El certificado de pruebas se pide en WSASS (ver la pestaña "Modo prueba" del tutorial) y <strong>no toca</strong> el de producción.</span>
+                <span>El certificado de pruebas se pide en WSASS y <strong>no toca</strong> el de producción. <a href="#tutorial-arca" class="fw-bold" onclick="var t=document.getElementById('tab-homo'); if (t) { bootstrap.Tab.getOrCreateInstance(t).show(); }">Ver el paso a paso</a>.</span>
             }
         </p>
 
@@ -148,8 +148,8 @@
                         <input type="hidden" name="entorno" value="@e" />
                         <div class="mb-2">
                             <label for="alias-@e" class="form-label small mb-1">Alias (nombre del certificado en ARCA)</label>
-                            <input type="text" class="form-control" id="alias-@e" name="alias" value="@padre.AliasSugerido" maxlength="40" required pattern="[A-Za-z0-9_\-]+" />
-                            <div class="form-text">Letras, números y guiones. Si renovás, usá uno distinto al anterior.</div>
+                            <input type="text" class="form-control" id="alias-@e" name="alias" value="@padre.AliasSugerido" maxlength="40" required pattern="[A-Za-z0-9]+" title="Solo letras y números, sin guiones ni espacios" />
+                            <div class="form-text">Solo letras y números (sin guiones ni espacios: ARCA no los acepta). Si renovás, usá uno distinto al anterior.</div>
                         </div>
                         <button type="submit" class="btn btn-primary"><i class="fas fa-file-download me-1"></i> Generar y descargar pedido</button>
                     </form>

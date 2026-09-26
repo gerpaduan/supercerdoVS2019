@@ -51,7 +51,7 @@ namespace WebCore.Controllers
                 vm.Cuit = empresa.Cuit;
                 vm.RazonSocial = empresa.RazonSocialAfip ?? empresa.NombreFantasia ?? "";
                 vm.Entorno = AfipEntorno.Normalizar(empresa.Entorno_HOMO_PROD);
-                vm.AliasSugerido = "carnisys-" + DateTime.Now.ToString("yyyyMM", CultureInfo.InvariantCulture);
+                vm.AliasSugerido = "carnisys" + DateTime.Now.ToString("yyyyMM", CultureInfo.InvariantCulture);
                 if (vm.Soportado && empresa.Cuit > 0)
                 {
                     foreach (bool homologacion in new[] { false, true })

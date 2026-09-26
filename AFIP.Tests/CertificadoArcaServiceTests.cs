@@ -82,7 +82,7 @@ namespace AFIP.Tests
         [Fact]
         public void GenerarCsr_DejaClavePendienteEnLaCarpetaDelEntornoYDevuelveCsrConElCuit()
         {
-            string csr = _svc.GenerarCsr(Cuit, Prod, "Empresa, Test S.A.", "mi-alias");
+            string csr = _svc.GenerarCsr(Cuit, Prod, "Empresa, Test S.A.", "mialias");
 
             Assert.StartsWith("-----BEGIN CERTIFICATE REQUEST-----", csr);
             Assert.True(File.Exists(Path.Combine(CarpetaProd, "pendiente", "clave.key")));
@@ -92,13 +92,16 @@ namespace AFIP.Tests
 
             var pedido = CertificateRequest.LoadSigningRequestPem(csr, HashAlgorithmName.SHA256);
             Assert.Contains("CUIT " + Cuit, pedido.SubjectName.Name);
-            Assert.Contains("CN=mi-alias", pedido.SubjectName.Name);
+            Assert.Contains("CN=mialias", pedido.SubjectName.Name);
         }
 
         [Theory]
         [InlineData("")]
         [InlineData("alias con espacios")]
         [InlineData("../x")]
+        [InlineData("mi-alias")]
+        [InlineData("mi_alias")]
+        [InlineData("ñandú")]
         public void GenerarCsr_RechazaAliasInvalido(string alias)
         {
             Assert.Throws<CertificadoArcaException>(() => _svc.GenerarCsr(Cuit, Prod, "Empresa", alias));

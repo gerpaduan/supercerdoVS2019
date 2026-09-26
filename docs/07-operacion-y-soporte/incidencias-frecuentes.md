@@ -294,6 +294,11 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 **Causas**: (1) no hay certificado de plataforma y la empresa tampoco tiene certificado; (2) el certificado de plataforma esta cortado por fallos seguidos (ver Administracion del sistema > Certificado de padron) y la empresa no tiene el suyo; (3) la empresa llego al tope `Afip:Padron:MaxPorHoraEmpresa`; (4) alias de la plataforma sin `ws_sr_padron_a13` autorizado o certificado vencido.
 **Fix**: el cliente siempre se puede cargar a mano. Para (1)-(2)-(4) revisar la pantalla de la plataforma (estado, "Probar") y renovar; el corte se levanta solo a los `MinutosCorte`. Interruptor de emergencia: `Afip:Padron:UsarPlataforma=false` (cada empresa vuelve a consultar con su propio certificado).
 
+## 2026-09-26 -- "Probar" del certificado de padron: "Computador no autorizado a acceder al servicio"
+**Sintoma**: en Administracion del sistema > Certificado de padron, "Probar" devuelve `Error WSAA Login (Servicio: ws_sr_padron_a13) | Computador no autorizado a acceder al servicio`, aunque el alias figura VALIDO en Administracion de Certificados Digitales.
+**Causa**: falta la relacion en *Administrador de Relaciones de Clave Fiscal* (portal de produccion): servicio "Servicio Consulta Padron A13" con el alias como computador fiscal representante. Tambien pasa si se eligio A4/A10, otro alias, o se hizo en el portal de homologacion.
+**Fix**: crear la relacion y esperar unos minutos; no hace falta otro certificado. El tutorial de la pantalla (`_TutorialPadron.cshtml`) tiene el paso a paso y este diagnostico.
+
 ## 2026-09-24 -- La campana de notificaciones del admin da error 500 (22001)
 **Sintoma**: `GET /Notificaciones/Resumen` devuelve 500 con "22001: el valor es demasiado largo para el tipo character varying(30)"; la campana no carga.
 **Causa**: `notificaciones.tipo` era `varchar(30)` y los tipos de aviso de borradores (`BORRADOR_INTERRUMPIDO_MOVIMIENTO` = 32, los de Embutidos 34-37) no entran; falla el INSERT de `BorradorGenericoPg.CrearNotificacionesInterrumpidas` cuando hay borradores activos con lineas sin latido.

@@ -189,15 +189,15 @@ namespace AFIP
 
         // Genera clave + CSR para el CUIT y devuelve el .csr en PEM. Pisa un pedido pendiente anterior
         // (el .crt que devuelva ARCA solo sirve para el ultimo CSR generado).
-        // alias: nombre del "computador fiscal" en ARCA (letras/numeros/guiones, hasta 40).
+        // alias: nombre del "computador fiscal" en ARCA (solo letras y numeros, hasta 40: WSASS rechaza guiones y espacios).
         public string GenerarCsr(long cuit, bool homologacion, string razonSocial, string alias)
         {
             string cuitTexto = cuit.ToString();
             if (cuitTexto.Length != 11)
                 throw new CertificadoArcaException("El CUIT de la empresa no es válido (11 dígitos).");
             alias = (alias ?? "").Trim();
-            if (alias.Length == 0 || alias.Length > 40 || !alias.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_'))
-                throw new CertificadoArcaException("El alias debe tener hasta 40 caracteres: letras, números, guiones.");
+            if (alias.Length == 0 || alias.Length > 40 || !alias.All(c => c < 128 && char.IsLetterOrDigit(c)))
+                throw new CertificadoArcaException("El alias debe tener hasta 40 caracteres, solo letras y números (sin guiones ni espacios).");
             razonSocial = (razonSocial ?? "").Trim();
             if (razonSocial.Length == 0)
                 throw new CertificadoArcaException("La empresa no tiene razón social cargada.");

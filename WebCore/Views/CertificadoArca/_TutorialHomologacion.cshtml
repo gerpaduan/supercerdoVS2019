@@ -1,30 +1,64 @@
-@* Tutorial: modo prueba (homologacion / testing de AFIP). *@
+@* Tutorial: modo prueba (homologacion / testing de AFIP), paso a paso con el formulario de WSASS.
+   PENDIENTE verificar contra el portal real (pide clave fiscal): nombres exactos de los campos de WSASS
+   ("Nombre simbolico del DN", campo del pedido de certificado) y del boton de crear. *@
 <div class="alert alert-warning">
     En <strong>modo prueba</strong> el sistema emite contra el ambiente de pruebas de ARCA: las facturas <strong>no tienen validez fiscal</strong>,
     quedan marcadas como <span class="badge bg-danger">PRUEBA</span> y no se cuentan en el total facturado del listado (salvo que elijas verlas).
     Sirve para probar el sistema o capacitar personal sin facturar de verdad.
 </div>
+
+<div class="alert alert-info">
+    <strong>El certificado de pruebas es otro.</strong> El de producción no sirve en homologación: se pide en <strong>WSASS</strong>
+    (<em>Autogestión de Certificados Homologación</em>, con la clave fiscal), que es un portal aparte del de producción.
+    Pedirlo <strong>no afecta</strong> a tu certificado de producción: es un alias nuevo y se guarda en su propia carpeta
+    (<code>AFIP/&lt;CUIT&gt;/homo</code>), sin tocar el de producción ni sus tickets.
+</div>
+
 <ol>
     <li class="mb-3">
-        <strong>El certificado de pruebas es otro.</strong> El de producción no sirve en homologación. Se pide en el servicio
-        <em>WSASS - Autogestión de Certificados Homologación</em> (ARCA, con clave fiscal): <em>Nuevo Certificado</em> → subís el <code>.csr</code>
-        (generalo en el paso 1 de la pestaña <strong>Pruebas (homologación)</strong> de esta pantalla) → descargás el <code>.crt</code>.
+        <strong>Generá el pedido acá, antes de entrar a WSASS.</strong> En la pestaña <strong>Pruebas (homologación)</strong>, paso 1: escribí un alias
+        (ej. <code>carnisyshomo</code>; <strong>solo letras y números</strong>: WSASS rechaza guiones, guiones bajos y espacios), tocá <em>Generar y descargar pedido</em> y <strong>anotá el alias</strong>. Se descarga un archivo <code>.csr</code>.
     </li>
     <li class="mb-3">
-        <strong>Autorizá el servicio de pruebas</strong> en el mismo WSASS: <em>Crear autorización a servicio</em> → <code>wsfe</code> (Facturación Electrónica).
-        El punto de venta de pruebas también se da de alta ahí.
+        <strong>Entrá a WSASS</strong> con la clave fiscal del CUIT de la empresa y elegí <em>Nuevo certificado</em>. El formulario pide dos cosas:
+        <ul class="mt-2">
+            <li>
+                <strong>Nombre simbólico del DN</strong> (en algunos textos aparece como “DN”): es el <strong>alias</strong>. Escribí <strong>el mismo alias</strong>
+                que pusiste en el paso 1 (ej. <code>carnisyshomo</code>). Si WSASS responde “El Nombre simbólico del DN sólo puede contener números y/o letras”, sacale los guiones.
+            </li>
+            <li>
+                <strong>Solicitud del certificado (el pedido / CSR)</strong>: acá va el archivo del paso 1. Abrilo con el Bloc de notas, copiá <strong>todo</strong> el texto
+                (desde <code>-----BEGIN CERTIFICATE REQUEST-----</code> hasta <code>-----END CERTIFICATE REQUEST-----</code>) y pegalo en ese campo.
+                Si el formulario deja adjuntar el archivo, subí el <code>.csr</code> directamente.
+            </li>
+        </ul>
     </li>
     <li class="mb-3">
-        <strong>Cargá el <code>.crt</code> de pruebas</strong> en el paso 2 de la pestaña <strong>Pruebas (homologación)</strong>. Cada entorno tiene su propia carpeta
-        (<code>AFIP/&lt;CUIT&gt;/homo</code>): el certificado de pruebas <strong>no toca</strong> el de producción ni sus tickets, y podés cargarlo y usar
-        <em>Probar conexión</em> con la empresa todavía en producción, sin cambiar lo que se factura.
+        <strong>Creá el certificado</strong> con el botón del formulario y <strong>descargá el <code>.crt</code></strong> que te devuelve WSASS.
+    </li>
+    <li class="mb-3">
+        <strong>Autorizá el servicio de pruebas</strong>, todavía en WSASS: <em>Crear autorización a servicio</em> → servicio <code>wsfe</code>
+        (Facturación Electrónica) → asocialo al alias que creaste. El punto de venta de pruebas también se da de alta ahí.
+    </li>
+    <li class="mb-3">
+        <strong>Volvé a esta pantalla</strong> y, en la pestaña <strong>Pruebas (homologación)</strong>, paso 2, subí el <code>.crt</code> y tocá
+        <em>Instalar certificado</em>. Después usá <em>Probar conexión</em>: podés hacerlo con la empresa todavía en producción, sin cambiar lo que se factura.
     </li>
     <li class="mb-3">
         <strong>Recién cuando quieras facturar de prueba</strong>, cambiá el entorno de la empresa a HOMO (Administración del sistema → Empresas → <em>Entorno AFIP</em>).
-        Al terminar, volvé a PROD: el certificado de producción sigue cargado, no hay que volver a instalarlo. Ojo: el entorno es un dato de la empresa,
-        así que si varias PC comparten la misma base, el cambio les llega a todas. Una factura de prueba solo se anula con nota de crédito de prueba.
+        Al terminar, volvé a PROD: el certificado de producción sigue cargado, no hay que volver a instalarlo. Una factura de prueba solo se anula con nota de crédito de prueba.
     </li>
 </ol>
+
+<div class="alert alert-secondary small">
+    <strong>Ojo:</strong>
+    <ul class="mb-0">
+        <li>No generes <strong>otro pedido</strong> en esta pestaña entre el paso 1 y el paso 5: el <code>.crt</code> solo sirve para el <strong>último</strong> pedido generado y el sistema lo rechaza si no coincide.</li>
+        <li>El certificado tiene que ser del <strong>CUIT de esta empresa</strong>; si es de otro, el sistema lo rechaza.</li>
+        <li>No cambies el entorno de la empresa a HOMO mientras se factura de verdad: el entorno es un dato de la empresa, y si varias PC comparten la misma base, el cambio les llega a todas.</li>
+    </ul>
+</div>
+
 <div class="alert alert-secondary mb-0 small">
     Mientras la empresa está en modo prueba se ve una franja roja “MODO PRUEBA” en el modal de facturación electrónica y una etiqueta en la barra superior.
     Una venta con factura de prueba figura como “ya facturada”: usá ventas de prueba para probar.

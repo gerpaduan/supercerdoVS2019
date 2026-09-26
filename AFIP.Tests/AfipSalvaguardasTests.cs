@@ -211,7 +211,7 @@ namespace AFIP.Tests
         public void FlujoCompleto_TrabajaEnLaCarpetaDeLaPlataformaYNoEnLaDeUnaEmpresa()
         {
             var servicio = CertificadoArcaService.ParaPlataforma(_raiz);
-            servicio.GenerarCsr(CuitPlataforma, false, "CarniSys SA", "carnisys-padron");
+            servicio.GenerarCsr(CuitPlataforma, false, "CarniSys SA", "carnisyspadron");
 
             string carpeta = AfipRutas.CarpetaPlataforma(_raiz);
             Assert.True(File.Exists(Path.Combine(carpeta, "pendiente", "clave.key")));
@@ -222,7 +222,7 @@ namespace AFIP.Tests
             using (var rsa = RSA.Create())
             {
                 rsa.ImportFromPem(File.ReadAllText(Path.Combine(carpeta, "pendiente", "clave.key")));
-                var pedido = new CertificateRequest("CN=carnisys-padron, SERIALNUMBER=CUIT " + CuitPlataforma, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                var pedido = new CertificateRequest("CN=carnisyspadron, SERIALNUMBER=CUIT " + CuitPlataforma, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
                 using var cert = pedido.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(700));
                 crt = cert.Export(X509ContentType.Cert);
             }
