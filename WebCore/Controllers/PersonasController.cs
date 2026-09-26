@@ -573,7 +573,8 @@ namespace WebCore.Controllers
             if (string.IsNullOrWhiteSpace(model.RazonSocial))
                 ModelState.AddModelError("RazonSocial", "La razón social es obligatoria.");
 
-            if (model.IdIva <= 0)
+            // IdIva es int?: sin el "?? 0", un IVA sin elegir (null) no cumpliria "<= 0" y se guardaria vacio.
+            if ((model.IdIva ?? 0) <= 0)
                 ModelState.AddModelError("IdIva", "Seleccione una condición frente al IVA.");
 
             int idPersonaCuitEncontrado = _oPersonaN.existeCuit(model.Cuit);

@@ -13,6 +13,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-09-26 - Alta rapida de persona (modal "Nueva persona" del POS/Compras) se guardaba sin condicion frente al IVA
+
+- **Sintoma**: en POS/Compras > buscar persona > "Nueva persona", el alta (manual o tras traer datos de ARCA sin IVA reconocible) se guardaba con IVA vacio (0), a diferencia de Personas/Editar que lo exige.
+- **Causa**: (1) `_AddOrEditPersonaModal.cshtml` no validaba el IVA en cliente y los submit delegados (`persona-buscar.js`, `compras.js`) envian por AJAX sin chequear; (2) `PersonasController.ValidarPersona` comparaba `model.IdIva <= 0` sobre un `int?`: `null <= 0` es `false`, asi que el servidor tampoco lo frenaba.
+- **Fix**: el modal valida el IVA en un submit directo sobre el form (corta la propagacion a los delegados) y marca/enfoca el desplegable; `ValidarPersona` usa `(model.IdIva ?? 0) <= 0`. Tambien queda exigido en Personas/Editar (mismo metodo).
+
 ## 2026-09-21 - Stock inicial / Stock cierre en 0 en los reportes de stock sobre Postgres
 
 - **Sintoma**: Cierre Stock, Stock Actual y Stock Retroactivo mostraban Stock inicial y Stock cierre en 0 (y `Faltante` distinto al de SQL Server `SuperCerdo`), aunque los datos migrados eran identicos.

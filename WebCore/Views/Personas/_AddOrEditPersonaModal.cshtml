@@ -108,7 +108,36 @@
         var urlBuscarAfip = '@Url.Action("BuscarPadronAfipAjax", "Personas")';
         var $cuit = $('#PersonaModalCuit');
 
+        var $iva = $('#PersonaModalIdIva');
+
         function limpiarCuit(v) { return (v || '').replace(/\D/g, ''); }
+
+        function ivaValido() {
+            var valor = $.trim($iva.val() || '');
+            return valor !== '' && Number(valor) > 0;
+        }
+
+        // Marca el IVA como faltante, avisa en el banner del modal y deja el foco en el desplegable.
+        function exigirIva() {
+            $iva.addClass('is-invalid').trigger('focus');
+            $('#personaModalError').removeClass('d-none').text('Seleccione la condición frente al IVA antes de guardar.');
+        }
+
+        $iva.on('change', function () {
+            if (!ivaValido()) return;
+            $iva.removeClass('is-invalid');
+            $('#personaModalError').addClass('d-none').text('');
+        });
+
+        // Validacion previa al guardado (alta manual o con datos de ARCA). El handler va directo sobre el
+        // form y corta la propagacion: asi no llegan los submit delegados en document de persona-buscar.js
+        // (POS), compras.js ni punto-expendio-pos.js, que envian el alta por AJAX sin validar el IVA.
+        $('#formPersonaModal').off('submit.ivaObligatorio').on('submit.ivaObligatorio', function (e) {
+            if (ivaValido()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            exigirIva();
+        });
 
         function consultarAfip() {
             var cuit = limpiarCuit($cuit.val());
@@ -124,7 +153,9 @@
                     if (resp.razonSocial) $('#PersonaModalRazonSocial').val(resp.razonSocial);
                     if (resp.domicilio) $('#PersonaModalDomicilio').val(resp.domicilio);
                     if (resp.ciudad) $('#PersonaModalCiudad').val(resp.ciudad);
-                    if (resp.idIva && Number(resp.idIva) > 0) $('#PersonaModalIdIva').val(String(resp.idIva));
+                    if (resp.idIva && Number(resp.idIva) > 0) $iva.val(String(resp.idIva)).trigger('change');
+                    // Si ARCA no informo una condicion IVA reconocible, hay que elegirla a mano antes de guardar.
+                    else exigirIva();
                 })
                 .fail(function () { alert('No se pudo conectar con AFIP/ARCA.'); })
                 .always(function () { $('#btnBuscarAfipPersonaModal').prop('disabled', false); });
