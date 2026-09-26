@@ -49,6 +49,45 @@ namespace Negocio
         }
 
         // ==========================================================
+        // Guardado puntual por nombre (varias claves en una sola transaccion)
+        // ==========================================================
+        // Para pantallas que editan unos pocos parametros fuera del grid generico (ej. el modal de
+        // "Ajuste por forma de pago" de Productos). Resuelve idParametro por nombre desde el
+        // catalogo y delega en GuardarGrid, que ya es transaccional en ambos motores: o se
+        // guardan todas las claves o ninguna. Lanza InvalidOperationException si alguna clave no
+        // existe en el catalogo de parametros (no la crea: el catalogo es global).
+        public void GuardarValores(IDictionary<string, string> valoresPorNombre)
+        {
+            if (valoresPorNombre == null) throw new ArgumentNullException("valoresPorNombre");
+            if (valoresPorNombre.Count == 0) return;
+
+            DataTable grid = datos.ObtenerGrid();
+
+            // Mapa nombre -> idParametro (comparacion sin distinguir mayusculas, igual que el diccionario de valores).
+            var idPorNombre = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (DataRow fila in grid.Rows)
+            {
+                if (fila["nombre"] == DBNull.Value || fila["idParametro"] == DBNull.Value) continue;
+                idPorNombre[Convert.ToString(fila["nombre"])] = Convert.ToInt32(fila["idParametro"]);
+            }
+
+            var aGuardar = new DataTable();
+            aGuardar.Columns.Add("idParametro", typeof(int));
+            aGuardar.Columns.Add("valor", typeof(string));
+
+            foreach (var par in valoresPorNombre)
+            {
+                int idParametro;
+                if (!idPorNombre.TryGetValue(par.Key, out idParametro))
+                    throw new InvalidOperationException("No existe el parámetro '" + par.Key + "' en el catálogo de parámetros.");
+
+                aGuardar.Rows.Add(idParametro, par.Value);
+            }
+
+            GuardarGrid(aGuardar); // transaccional + Reload()
+        }
+
+        // ==========================================================
         // Cache
         // ==========================================================
         private Dictionary<string, string> CacheEmpresa()

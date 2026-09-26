@@ -22,6 +22,19 @@ Dos caminos, conviven en `Web/Controllers/ProductosController.cs`:
    - `Guardar`: si el codigo tipeado a mano coincide con uno del catalogo global (`Negocio.CatalogoGlobalProducto.findCorteGlobalByCodigo`), se marca `altaDesdeCatalogoGlobal=true` y se inserta via `InsertarCorteEnEmpresa` en vez de `addOrEditCorte` -- este chequeo es solo un existence-check (booleano), no clona campos; el usuario ya tipeo el formulario a mano.
    - `ClonarProductoGlobal` tiene un segundo overload que toma `Entidades.Corte` en vez de `Entidades.CatalogoGlobalProducto`: cubre el caso defensivo de editar (`vm.IdCorte > 0`) un producto que resulta tener `IdEmpresa == 0` -- residual de cuando el catalogo global vivia dentro de `Corte`. Deberia dejar de dispararse una vez que se corra el borrado de esas filas (`Datos/DB-Procedures/20260804-Delete_Corte_IdEmpresa0.sql`), pero se dejo sin retirar por las dudas.
 
+## Ajuste de precio por forma de pago (WebCore, desde 2026-09-25)
+
+Recargo (+) o descuento (-) sobre el **precio de lista** del producto segun como pague el cliente. Es **un solo porcentaje por forma de pago para toda la empresa** (no por producto). Se edita desde `Productos/Index` -> boton "Ajuste por forma de pago" (modal `#modalAjusteFormaPago`), solo con el permiso `Permisos.Producto.ModificarPrecios` (`formModificarPrecios`).
+
+- **Formas**: Efectivo, Debito, Credito, Qr, Transferencia (`Negocio.AjusteFormaPago.Formas`). CtaCte siempre sin ajuste; Billetera no existe como forma de pago.
+- **Interruptor**: apagado = sin recargo ni descuento (se guarda factor `1`). No se recuerda el % previo.
+- **Unidad**: el usuario ve/carga porcentaje con signo (`+10`, `-5,5`; mayor a -100, hasta 500, max 2 decimales). Se **guarda como factor** (`1,10`) en `empresaparametros` bajo las claves `porcAjEfectivo/Debito/Credito/Qr/Tranf` -- es lo que ya lee el POS, que no cambio.
+- **Endpoints** (`WebCore/Controllers/ProductosController.cs`): `GET Productos/AjustesFormaPago` (JSON con `clave/activo/porcentaje`) y `POST Productos/GuardarAjustesFormaPago` (form-urlencoded, antiforgery; campos `<Clave>_activo` y `<Clave>_porcentaje`). Valida en servidor; guarda las 5 claves en una sola transaccion via `Negocio.Parametros.GuardarValores`.
+- **Conversion y validacion**: `Negocio/AjusteFormaPago.cs` (tests: `Negocio.Tests/AjusteFormaPagoTests.cs`).
+- **Parametros**: los `porcAj*` (y `porcAjBilletera`) quedaron ocultos en la pantalla Parametros (`ParametrosController.EsParametroSiempreOculto`); ya no se editan ahi.
+- **Como se aplica en el POS**: en el navegador, `precioLista x factor` (`wwwroot/Scripts/app/pos-forma-pago-precios.js`); el servidor guarda el precio final de cada linea y no recalcula. Si algun factor es distinto de 1 (`RequierePreseleccionFormaPagoPOS`), el POS abre el modal de forma de pago **al cargar la pagina**: si se elige una, los precios se calculan con ella; si se cierra con Escape, se carga a **precio de lista** y la forma se elige al finalizar la venta, donde el carrito se recalcula y se avisa el cambio de total (2026-09-26). Las ventas ya guardadas no cambian.
+- **Limite conocido**: no hay historial de quien cambio el porcentaje (igual que cuando eran parametros).
+
 ## Dependencias
 
 - `Web/Models/CorteUpsertVM.cs`, `CatalogoGlobalProductosVm.cs`, `ProductoGlobalSeleccionVm.cs`, `ImportarProductosGlobalesRequest.cs`.

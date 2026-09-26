@@ -289,6 +289,16 @@ namespace WebCore.Controllers
                 case "idIndefinido":
                 case "idPagoCobroEgresoCaja":
                 case "idPagoTarjetaEgresoCaja":
+                // Ajuste por forma de pago: desde 2026-09-25 se edita SOLO en Productos (modal
+                // "Ajuste por forma de pago", como porcentaje). Ocultos aca para no editarlos dos
+                // veces ni como factor. porcAjBilletera: sin forma de pago asociada, huerfano.
+                case "porcAjEfectivo":
+                case "porcAjDebito":
+                case "porcAjCredito":
+                case "porcAjCtaCte":
+                case "porcAjQr":
+                case "porcAjTranf":
+                case "porcAjBilletera":
                     return true;
                 default:
                     return false;

@@ -59,7 +59,9 @@ namespace WebCore.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly WebCore.Services.IUsuarioSesionService _sesion;
         private readonly IEmpresaContext _empresa;
-        private readonly IParametrosContext _param;
+        // Negocio.Parametros (implementa IParametrosContext): ademas de leer, GuardarValores lo usa
+        // el modal "Ajuste por forma de pago".
+        private readonly Negocio.Parametros _param;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Persona _oPersonaN;
@@ -1839,6 +1841,98 @@ namespace WebCore.Controllers
                 precio = precioDecimal,
                 precioFormateado = "$ " + precioDecimal.ToString("N2", new CultureInfo("es-AR"))
             });
+        }
+
+        // ===== Ajuste de precio por forma de pago (modal de Productos) =====
+        //
+        // Antes se editaba como factor (1,10) en la pantalla Parametros; ahora se edita aca como
+        // porcentaje con signo (+10 / -5), igual para todos los productos, siempre sobre el precio
+        // de lista. Se sigue guardando en los parametros porcAj* (factor) para que el POS no cambie
+        // -- ver Negocio.AjusteFormaPago y docs/DECISIONS.md (2026-09-25). Ambas acciones exigen
+        // ModificarPrecios: el modal solo se abre con ese permiso.
+        [HttpGet]
+        public IActionResult AjustesFormaPago()
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.ModificarPrecios, DateTime.Today, -1))
+                return StatusCode(403);
+
+            // Lectura fresca: el constructor ya hizo Reload(), pero el modal puede abrirse tras
+            // un cambio hecho desde otra sesion.
+            _param.Reload();
+
+            var formas = Negocio.AjusteFormaPago.Formas.Select(forma =>
+            {
+                decimal factor = _param.GetDecimal(forma.Parametro, 1m);
+                decimal porcentaje = Negocio.AjusteFormaPago.FactorAPorcentaje(factor);
+                return new
+                {
+                    clave = forma.Clave,
+                    activo = porcentaje != 0m,
+                    porcentaje = porcentaje
+                };
+            }).ToList();
+
+            return Json(new { ok = true, formas });
+        }
+
+        // Viaja como form-urlencoded (no JSON): mismo motivo que GuardarRapidoPOS -- sin
+        // AntiforgeryOptions.HeaderName, [ValidateAntiForgeryToken] rechaza siempre un body JSON.
+        // Campos por forma: "<Clave>_activo" ("true"/"false") y "<Clave>_porcentaje" (texto).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GuardarAjustesFormaPago()
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.ModificarPrecios, DateTime.Today, -1))
+                return StatusCode(403, new { ok = false, error = "No tenés permisos para modificar los precios." });
+
+            var valoresAGuardar = new Dictionary<string, string>();
+
+            foreach (var forma in Negocio.AjusteFormaPago.Formas)
+            {
+                string activoRaw = Request.Form[forma.Clave + "_activo"].ToString();
+                bool activo = string.Equals(activoRaw, "true", StringComparison.OrdinalIgnoreCase);
+
+                // Apagado = sin recargo ni descuento (factor 1), sin importar el % que quedo tipeado.
+                if (!activo)
+                {
+                    valoresAGuardar[forma.Parametro] = Negocio.AjusteFormaPago.FactorATexto(1m);
+                    continue;
+                }
+
+                decimal porcentaje;
+                if (!Negocio.AjusteFormaPago.TryParsePorcentaje(Request.Form[forma.Clave + "_porcentaje"].ToString(), out porcentaje))
+                {
+                    // Un valor invalido rechaza todo el guardado: no se dejan formas a medio actualizar.
+                    return Json(new
+                    {
+                        ok = false,
+                        error = "El porcentaje de " + forma.Clave + " es inválido. Debe ser un número mayor a -100 y hasta "
+                                + Negocio.AjusteFormaPago.PorcentajeMaximo.ToString("0", CultureInfo.InvariantCulture)
+                                + ", con hasta 2 decimales."
+                    });
+                }
+
+                valoresAGuardar[forma.Parametro] = Negocio.AjusteFormaPago.FactorATexto(Negocio.AjusteFormaPago.PorcentajeAFactor(porcentaje));
+            }
+
+            try
+            {
+                _param.GuardarValores(valoresAGuardar); // transaccional + Reload()
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Falta alguna fila en el catalogo de parametros de esta base: error controlado,
+                // sin tocar nada (GuardarValores resuelve todos los ids antes de escribir).
+                System.Diagnostics.Trace.TraceError("GuardarAjustesFormaPago - parametro faltante en el catalogo: {0}", ex.Message);
+                return Json(new { ok = false, error = "No se pudo guardar: falta configurar los parámetros de ajuste en esta base de datos." });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("GuardarAjustesFormaPago - error al guardar: {0}", ex);
+                return Json(new { ok = false, error = "No se pudo guardar el ajuste por forma de pago." });
+            }
+
+            return Json(new { ok = true });
         }
 
         [HttpGet]

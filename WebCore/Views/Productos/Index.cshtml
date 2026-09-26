@@ -71,6 +71,16 @@
                     <i class="fas fa-globe-americas mr-1"></i> Ver catálogo global
                 </button>
 
+                @* Recargo/descuento por forma de pago (antes en Parametros). Mismo permiso que "Modificar precio". *@
+                <button type="button"
+                        id="btnAjusteFormaPago"
+                        class="btn btn-outline-success"
+                        onclick="abrirModalAjusteFormaPago()"
+                        title="Recargo o descuento sobre el precio de lista según cómo pague el cliente"
+                        @(puedeModificarPreciosProducto ? "" : "disabled")>
+                    <i class="fas fa-percent mr-1"></i> Ajuste por forma de pago
+                </button>
+
                 @if (modoEtiquetas)
                 {
                     <a id="lnkVolver"
@@ -630,6 +640,77 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             Cancelar
                         </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- =========================
+         MODAL AJUSTE POR FORMA DE PAGO
+         Mismo % para todos los productos, siempre sobre el precio de lista. Switch apagado =
+         sin recargo ni descuento (se guarda como factor 1). Ver docs/DECISIONS.md (2026-09-25).
+         ========================= -->
+    <form id="formAjusteFormaPago" method="post" onsubmit="return false;">
+        @Html.AntiForgeryToken()
+
+        <div class="modal fade" id="modalAjusteFormaPago" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Ajuste por forma de pago</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">
+                            Porcentaje que se suma (+) o se descuenta (-) al precio de lista del producto según la forma de pago.
+                            Es el mismo para todos los productos. Con el interruptor apagado no hay recargo ni descuento.
+                        </p>
+
+                        @foreach (var forma in new[] {
+                            new { Clave = "Efectivo", Texto = "Efectivo" },
+                            new { Clave = "Debito", Texto = "Débito" },
+                            new { Clave = "Credito", Texto = "Crédito" },
+                            new { Clave = "Qr", Texto = "QR" },
+                            new { Clave = "Transferencia", Texto = "Transferencia" } })
+                        {
+                            <div class="row align-items-center mb-2 ajuste-fp-fila" data-clave="@forma.Clave">
+                                <div class="col-5">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input ajuste-fp-activo" id="ajusteFpActivo@(forma.Clave)">
+                                        <label class="custom-control-label" for="ajusteFpActivo@(forma.Clave)">@forma.Texto</label>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control text-end ajuste-fp-porcentaje" inputmode="decimal"
+                                               autocomplete="off" placeholder="+10 o -5" disabled aria-label="Porcentaje @forma.Texto">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-4 small text-muted ajuste-fp-vista">Sin ajuste</div>
+                            </div>
+                        }
+
+                        <div class="alert alert-warning small mt-3 mb-0">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            Si hay algún ajuste activo, el POS obliga a elegir la forma de pago <strong>antes</strong> de cargar productos,
+                            para que el precio ya salga ajustado. Las ventas ya guardadas no cambian.
+                        </div>
+
+                        <small id="errorAjusteFp" class="text-danger d-none"></small>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="btnGuardarAjusteFp" onclick="guardarAjusteFormaPago()">
+                            <i class="fas fa-save mr-1"></i> Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                     </div>
 
                 </div>
@@ -2150,6 +2231,129 @@
         const fila = button ? button.closest("tr") : getProductRowById(id);
         if (!fila) return;
         abrirModalPrecioParaFila(fila, { preserveBatchState: false });
+    }
+
+    // ===== Ajuste por forma de pago (modal) =====
+    // Precio de lista de ejemplo para la vista previa de cada fila (solo ilustrativo).
+    const AJUSTE_FP_PRECIO_EJEMPLO = 10000;
+    // Mismos limites que Negocio.AjusteFormaPago (el servidor es la validacion real).
+    const AJUSTE_FP_MIN_EXCLUSIVO = -100;
+    const AJUSTE_FP_MAX = 500;
+
+    // Devuelve el porcentaje numerico, o null si el texto es invalido.
+    function parseAjusteFpPorcentaje(texto) {
+        const limpio = (texto || "").trim().replace(",", ".");
+        if (!/^[+-]?\d+(\.\d{1,2})?$/.test(limpio)) return null;
+        const numero = Number(limpio);
+        if (!(numero > AJUSTE_FP_MIN_EXCLUSIVO && numero <= AJUSTE_FP_MAX)) return null;
+        return numero;
+    }
+
+    // Refresca habilitacion del input y vista previa de una fila.
+    function actualizarFilaAjusteFp(fila) {
+        const $fila = $(fila);
+        const activo = $fila.find(".ajuste-fp-activo").is(":checked");
+        const $input = $fila.find(".ajuste-fp-porcentaje");
+        const $vista = $fila.find(".ajuste-fp-vista");
+
+        $input.prop("disabled", !activo);
+        if (!activo) {
+            $vista.text("Sin ajuste");
+            return;
+        }
+
+        const pct = parseAjusteFpPorcentaje($input.val());
+        if (pct === null) {
+            $vista.text("Ingrese un % válido");
+            return;
+        }
+        const ajustado = AJUSTE_FP_PRECIO_EJEMPLO * (1 + pct / 100);
+        $vista.text("$ " + formatNumberEs(AJUSTE_FP_PRECIO_EJEMPLO, 0) + " → $ " + formatNumberEs(round2(ajustado), 2));
+    }
+
+    function abrirModalAjusteFormaPago() {
+        $("#errorAjusteFp").addClass("d-none").text("");
+
+        $.ajax({
+            url: '@Url.Action("AjustesFormaPago", "Productos")',
+            type: 'GET',
+            dataType: 'json',
+            cache: false
+        }).done(function (resp) {
+            (resp.formas || []).forEach(function (forma) {
+                const $fila = $("#modalAjusteFormaPago .ajuste-fp-fila[data-clave='" + forma.clave + "']");
+                $fila.find(".ajuste-fp-activo").prop("checked", !!forma.activo);
+                // Se muestra con coma decimal (es-AR); vacio si esta apagado.
+                $fila.find(".ajuste-fp-porcentaje").val(forma.activo ? String(forma.porcentaje).replace(".", ",") : "");
+                actualizarFilaAjusteFp($fila);
+            });
+            $("#modalAjusteFormaPago").modal("show");
+        }).fail(function () {
+            Swal.fire("Error", "No se pudieron cargar los ajustes por forma de pago.", "error");
+        });
+    }
+
+    $(document).on("change", "#modalAjusteFormaPago .ajuste-fp-activo", function () {
+        const $fila = $(this).closest(".ajuste-fp-fila");
+        // Al prender una fila vacia, se enfoca el input para cargar el % enseguida.
+        actualizarFilaAjusteFp($fila);
+        if (this.checked) $fila.find(".ajuste-fp-porcentaje").trigger("focus");
+    });
+
+    $(document).on("input", "#modalAjusteFormaPago .ajuste-fp-porcentaje", function () {
+        actualizarFilaAjusteFp($(this).closest(".ajuste-fp-fila"));
+    });
+
+    function guardarAjusteFormaPago() {
+        const $error = $("#errorAjusteFp").addClass("d-none").text("");
+        const payload = {
+            __RequestVerificationToken: $("#formAjusteFormaPago input[name='__RequestVerificationToken']").val()
+        };
+
+        let invalido = false;
+        $("#modalAjusteFormaPago .ajuste-fp-fila").each(function () {
+            const $fila = $(this);
+            const clave = $fila.data("clave");
+            const activo = $fila.find(".ajuste-fp-activo").is(":checked");
+            const texto = $fila.find(".ajuste-fp-porcentaje").val();
+
+            if (activo && parseAjusteFpPorcentaje(texto) === null) {
+                invalido = true;
+                $fila.find(".ajuste-fp-porcentaje").addClass("is-invalid");
+            } else {
+                $fila.find(".ajuste-fp-porcentaje").removeClass("is-invalid");
+            }
+
+            payload[clave + "_activo"] = activo ? "true" : "false";
+            payload[clave + "_porcentaje"] = texto;
+        });
+
+        if (invalido) {
+            $error.text("Revisá los porcentajes marcados: número mayor a -100 y hasta 500, con hasta 2 decimales.").removeClass("d-none");
+            return;
+        }
+
+        const $btn = $("#btnGuardarAjusteFp").prop("disabled", true);
+        $.ajax({
+            url: '@Url.Action("GuardarAjustesFormaPago", "Productos")',
+            type: 'POST',
+            data: payload,
+            dataType: 'json'
+        }).done(function (resp) {
+            if (resp && resp.ok) {
+                $("#modalAjusteFormaPago").modal("hide");
+                Swal.fire({ icon: "success", title: "Ajuste guardado", timer: 1600, showConfirmButton: false });
+            } else {
+                $error.text((resp && resp.error) || "No se pudo guardar.").removeClass("d-none");
+            }
+        }).fail(function (xhr) {
+            const msg = xhr.status === 403
+                ? "No tenés permisos para modificar los precios."
+                : "No se pudo guardar el ajuste por forma de pago.";
+            $error.text(msg).removeClass("d-none");
+        }).always(function () {
+            $btn.prop("disabled", false);
+        });
     }
 
     function getPrecioFormPayload(id, precioRaw) {
