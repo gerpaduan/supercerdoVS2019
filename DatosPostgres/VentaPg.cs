@@ -538,6 +538,7 @@ namespace DatosPostgres
                         cmd.Parameters.AddWithValue("idSucNueva", oVentaE.Sucursal.idSucursal);
                         cmd.Parameters.AddWithValue("idVendedor", oVentaE.Vendedor.Id);
                         cmd.Parameters.AddWithValue("observaciones", oVentaE.Observaciones ?? "");
+                        cmd.Parameters.AddWithValue("nroRemito", oVentaE.NroRemito ?? "");
                         cmd.Parameters.AddWithValue("idPersona", oVentaE.Persona.idPersona);
                         cmd.Parameters.AddWithValue("nroRemito", oVentaE.NroRemito ?? "");
                         cmd.Parameters.AddWithValue("estado", oVentaE.Estado ?? "");
@@ -1071,7 +1072,7 @@ namespace DatosPostgres
             {
                 try
                 {
-                    using (var cmd = new NpgsqlCommand("UPDATE sectores SET sector = @sectorNuevo WHERE sector = @sectorActual;", con, tx))
+                    using (var cmd = new NpgsqlCommand("UPDATE sectores SET sector = @sectorNuevo WHERE sector = @sectorActual AND idempresa <> 0;", con, tx))
                     {
                         cmd.Parameters.AddWithValue("sectorNuevo", sectorNuevo ?? "");
                         cmd.Parameters.AddWithValue("sectorActual", sectorActual ?? "");
@@ -1117,7 +1118,7 @@ namespace DatosPostgres
             {
                 try
                 {
-                    using (var cmd = new NpgsqlCommand("DELETE FROM sectores WHERE sector = @sector;", con, tx))
+                    using (var cmd = new NpgsqlCommand("DELETE FROM sectores WHERE sector = @sector AND idempresa <> 0;", con, tx))
                     {
                         cmd.Parameters.AddWithValue("sector", sector ?? "");
                         cmd.ExecuteNonQuery();
@@ -1171,8 +1172,8 @@ namespace DatosPostgres
                     }
 
                     using (var cmd = new NpgsqlCommand(@"
-                        INSERT INTO expendios (idvendedor, fechaexpendio, idsucursal, identificacionexpendio, sector, cantitems, importe, creado, observaciones, idempresa)
-                        VALUES (@idVendedor, @fechaExpendio, @idSucursal, @identificacionExpendio, @sector, @cantItems, @importe, now(), @observaciones, @idEmpresa);", con, tx))
+                        INSERT INTO expendios (idvendedor, fechaexpendio, idsucursal, identificacionexpendio, sector, cantitems, importe, creado, observaciones, nroremito, idempresa)
+                        VALUES (@idVendedor, @fechaExpendio, @idSucursal, @identificacionExpendio, @sector, @cantItems, @importe, now(), @observaciones, @nroRemito, @idEmpresa);", con, tx))
                     {
                         cmd.Parameters.AddWithValue("idVendedor", oVentaE.Vendedor.Id);
                         cmd.Parameters.AddWithValue("fechaExpendio", oVentaE.FechaVenta);
@@ -1182,6 +1183,7 @@ namespace DatosPostgres
                         cmd.Parameters.AddWithValue("cantItems", int.TryParse(oVentaE.CantItems, out int cantItems) ? cantItems : 0);
                         cmd.Parameters.AddWithValue("importe", oVentaE.TotalImporte);
                         cmd.Parameters.AddWithValue("observaciones", oVentaE.Observaciones ?? "");
+                        cmd.Parameters.AddWithValue("nroRemito", oVentaE.NroRemito ?? "");
                         cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
                         cmd.ExecuteNonQuery();
                     }
@@ -1298,6 +1300,7 @@ namespace DatosPostgres
                        idventa,
                        u.nombre AS vendedor,
                        e.observaciones,
+                       e.nroremito,
                        e.idsucursal,
                        s.sucursal AS sucursalnombre
                 FROM expendios e
@@ -1324,6 +1327,7 @@ namespace DatosPostgres
                        e.idexpendio,
                        e.identificacionexpendio,
                        e.sector,
+                       e.nroremito,
                        e.cantitems,
                        e.importe,
                        e.idventa,
@@ -1336,7 +1340,7 @@ namespace DatosPostgres
                   AND e.idvendedor = @idVendedor
                   AND (@fechaDesde::date IS NULL OR e.fechaexpendio::date >= @fechaDesde::date)
                   AND (@fechaHasta::date IS NULL OR e.fechaexpendio::date <= @fechaHasta::date)
-                GROUP BY e.fechaexpendio, e.idexpendio, e.identificacionexpendio, e.sector,
+                GROUP BY e.fechaexpendio, e.idexpendio, e.identificacionexpendio, e.sector, e.nroremito,
                          e.cantitems, e.importe, e.idventa, u.nombre
                 ORDER BY e.fechaexpendio DESC, e.idexpendio DESC
                 LIMIT @top;",
@@ -1357,6 +1361,7 @@ namespace DatosPostgres
                        e.idexpendio,
                        e.identificacionexpendio,
                        e.sector,
+                       e.nroremito,
                        e.cantitems,
                        e.importe,
                        e.idventa,
@@ -1372,7 +1377,7 @@ namespace DatosPostgres
                 WHERE e.idempresa = @idEmpresa
                   AND (@fechaDesde::timestamp IS NULL OR e.fechaexpendio >= @fechaDesde)
                   AND (@fechaHasta::timestamp IS NULL OR e.fechaexpendio <= @fechaHasta)
-                GROUP BY e.fechaexpendio, e.idexpendio, e.identificacionexpendio, e.sector,
+                GROUP BY e.fechaexpendio, e.idexpendio, e.identificacionexpendio, e.sector, e.nroremito,
                          e.cantitems, e.importe, e.idventa, e.idsucursal, e.idvendedor, u.nombre, s.sucursal
                 ORDER BY e.fechaexpendio DESC, e.idexpendio DESC
                 LIMIT @top;",
@@ -1418,6 +1423,38 @@ namespace DatosPostgres
                 p => p.AddWithValue("idExpendio", idExpendio));
         }
 
+        // Remitos (2026-09-26, ver Negocio.NroRemito): mayor correlativo ya usado en la sucursal
+        // para el prefijo dado (PPPP-NNNNNNNN). Solo cuentan los numeros con ese formato exacto:
+        // los editados a mano con otro formato no interfieren. 0 si no hay ninguno.
+        public long ultimoCorrelativoRemito(int idSucursal, string prefijo)
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa, @"
+                SELECT COALESCE(MAX(substring(nroremito FROM char_length(@prefijo) + 2)::bigint), 0)
+                FROM expendios
+                WHERE idsucursal = @idSucursal
+                  AND nroremito ~ ('^' || @prefijo || '-[0-9]+$');",
+                p =>
+                {
+                    p.AddWithValue("idSucursal", idSucursal);
+                    p.AddWithValue("prefijo", prefijo ?? "");
+                });
+
+            return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt64(scalar);
+        }
+
+        public bool existeNroRemito(int idSucursal, string nroRemito)
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT COUNT(1) FROM expendios WHERE idsucursal = @idSucursal AND nroremito = @nroRemito;",
+                p =>
+                {
+                    p.AddWithValue("idSucursal", idSucursal);
+                    p.AddWithValue("nroRemito", nroRemito ?? "");
+                });
+
+            return scalar != null && scalar != DBNull.Value && Convert.ToInt32(scalar) > 0;
+        }
+
         public Entidades.Venta getExpedioById(int idExpendio)
         {
             var list = DbPg.Reader(_connectionString, _idEmpresa,
@@ -1434,6 +1471,7 @@ namespace DatosPostgres
                         CantItems = GetString(dr, "cantitems"),
                         TotalImporte = GetFloat(dr, "importe"),
                         Observaciones = GetString(dr, "observaciones"),
+                        NroRemito = ColumnaExiste(dr, "nroremito") ? GetString(dr, "nroremito") : "",
                         Vendedor = GetUsuarioLiviano(Convert.ToInt32(dr["idvendedor"])),
                         Sucursal = _sucursalRepo.findById(Convert.ToInt32(dr["idsucursal"]))
                     };

@@ -68,8 +68,8 @@
 
             <div class="form-row">
                 <div class="col-12 col-md-3 mb-2 mb-md-0">
-                    <label class="small font-weight-bold mb-1" for="filtroExpendiosCliente">Identificacion cliente</label>
-                    <input type="text" class="form-control form-control-sm" id="filtroExpendiosCliente" placeholder="Filtrar por cliente o identificacion" />
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosCliente">Identificación / Nro remito</label>
+                    <input type="text" class="form-control form-control-sm" id="filtroExpendiosCliente" placeholder="Cliente, identificación o nro de remito" />
                 </div>
                 <div class="col-12 col-md-3 mb-2 mb-md-0">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosProducto">Producto</label>
@@ -323,7 +323,7 @@
                     + '<span class="expendio-card-fecha">' + escapeHtml(item.fecha || '') + ' ' + escapeHtml(item.hora || '') + '</span>'
                     + '<span class="badge ' + estadoClass + '">' + escapeHtml(item.estado || '') + '</span>'
                     + '</div>'
-                    + '<div class="expendio-card-cliente">' + escapeHtml(item.identificacionExpendio || 'Consumidor final') + '</div>'
+                    + '<div class="expendio-card-cliente">' + escapeHtml(item.identificacionExpendio || 'Consumidor final') + (item.nroRemito ? ' <span class="badge badge-secondary">Remito ' + escapeHtml(item.nroRemito) + '</span>' : '') + '</div>'
                     + '<div class="expendio-card-meta">' + meta + '</div>'
                     + '</div>'
                     + '<div>'
@@ -369,7 +369,8 @@
                         return normalizeText(linea.producto).indexOf(producto) >= 0;
                     });
 
-                    if (cliente && normalizeText(item.identificacionExpendio).indexOf(cliente) < 0) return false;
+                    // Busca por identificacion del cliente O por numero de remito (sector REMITOS).
+                    if (cliente && normalizeText(item.identificacionExpendio).indexOf(cliente) < 0 && normalizeText(item.nroRemito).indexOf(cliente) < 0) return false;
                     if (sucursal && normalizeText(item.sucursal) !== sucursal) return false;
                     if (estado && normalizeText(item.estado) !== estado) return false;
                     if (sector && normalizeText(item.sector) !== sector) return false;

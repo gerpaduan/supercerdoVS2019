@@ -75,6 +75,13 @@ namespace Contratos
         DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
         Entidades.Venta getExpedioById(int idExpendio);
 
+        // Remitos (2026-09-26, ver Negocio.NroRemito). Solo Postgres persiste el numero de remito del
+        // expendio (columna expendios.nroremito); la implementacion SQL Server devuelve 0 / false.
+        // ultimoCorrelativoRemito: mayor correlativo usado en la sucursal con el prefijo dado
+        // (0 si no hay). existeNroRemito: ya hay un expendio de esa sucursal con ese numero.
+        long ultimoCorrelativoRemito(int idSucursal, string prefijo);
+        bool existeNroRemito(int idSucursal, string nroRemito);
+
         // ignorarPrueba: no cuenta las facturas emitidas en homologacion (esprueba). Solo Postgres; SQL Server lo ignora.
         int esVentaSinFacturar(int idVenta, bool esNotaCredito, bool ignorarPrueba = false);
         int existeFacturaElect(int idVenta, bool ignorarPrueba = false);

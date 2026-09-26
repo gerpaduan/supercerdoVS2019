@@ -13,6 +13,8 @@ namespace WebCore.Models.DTO
         public string Sector { get; set; }
         public string IdentificacionCliente { get; set; }
         public string Observaciones { get; set; }
+        // Solo sector REMITOS (Negocio.NroRemito): numero sugerido por el POS, editable.
+        public string NroRemito { get; set; }
         public List<LineaVentaDto> LineasVenta { get; set; }
         public string PosInstanceId { get; set; }
     }

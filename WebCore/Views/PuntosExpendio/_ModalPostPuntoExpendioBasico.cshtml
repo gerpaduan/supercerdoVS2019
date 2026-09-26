@@ -20,6 +20,11 @@
                     <a class="btn btn-outline-primary" id="btnPpebPdf" target="_blank" rel="noopener">
                         <i class="fas fa-file-pdf mr-1"></i>Ver / imprimir PDF
                     </a>
+                    @* Solo sector PRESUPUESTO (lo muestra punto-expendio-pos.js): variante del PDF con
+                       la lista de precios sin cantidades ni totales (formato=precios). *@
+                    <a class="btn btn-outline-primary d-none" id="btnPpebPdfPrecios" target="_blank" rel="noopener">
+                        <i class="fas fa-tags mr-1"></i>PDF lista de precios (sin cantidades)
+                    </a>
                     <button type="button" class="btn btn-outline-success" id="btnPpebEmail">
                         <i class="fas fa-envelope mr-1"></i>Enviar por email
                     </button>
@@ -42,6 +47,14 @@
                 </button>
             </div>
             <div class="modal-body">
+                @* Solo sector PRESUPUESTO: elige que PDF se adjunta (completo o lista de precios). *@
+                <div class="form-group d-none" id="ppebEmailFormatoWrap">
+                    <label for="ppebEmailFormato">PDF adjunto</label>
+                    <select class="form-control" id="ppebEmailFormato">
+                        <option value="completo">Completo (cantidades y totales)</option>
+                        <option value="precios">Lista de precios (sin cantidades)</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label for="ppebEmailDestino">Email destino</label>
                     <input type="email" class="form-control" id="ppebEmailDestino" maxlength="200" placeholder="cliente@dominio.com">

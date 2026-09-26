@@ -23,6 +23,8 @@ namespace WebCore.Models
         public DateTime FechaExpendio { get; set; }
         public string IdentificacionCliente { get; set; }
         public string Observaciones { get; set; }
+        // Solo sector REMITOS: numero de remito sugerido para la sucursal (ver Negocio.NroRemito).
+        public string NroRemito { get; set; }
         public string SucursalNombre { get; set; }
         public string VendedorNombre { get; set; }
         public bool PermiteEditarPrecio { get; set; }

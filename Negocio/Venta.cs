@@ -166,6 +166,8 @@ namespace Negocio
                     oVentaE.ComisionTarjeta = 0;
                     break;
             }
+            // Remitos asociados: se agrega la leyenda a las observaciones ANTES de guardar la venta.
+            AgregarLeyendaRemitosAsociados(oVentaE);
             oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE, unitOfWork);
 
             ///llama al metodo para asinar el idVenta a la tabla Expendios
@@ -272,6 +274,7 @@ namespace Negocio
                     oVentaE.ComisionTarjeta = 0;
                     break;
             }
+            AgregarLeyendaRemitosAsociados(oVentaE);
             oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas, unitOfWork);
 
             if (lineaNuevosAnulados != null)
@@ -568,6 +571,41 @@ namespace Negocio
         public Entidades.Venta getExpedioById(int idExpendio)
         {
             return oVentaD.getExpedioById((int)idExpendio);
+        }
+
+        // ===== Remitos (2026-09-26) =====
+
+        // Numero de remito sugerido para la sucursal: el siguiente al ultimo del formato
+        // PPPP-NNNNNNNN. El usuario lo puede editar; la unicidad la garantiza la base.
+        public string proximoNroRemito(int idSucursal)
+        {
+            long ultimo = oVentaD.ultimoCorrelativoRemito(idSucursal, NroRemito.Prefijo(idSucursal));
+            return NroRemito.Siguiente(idSucursal, ultimo);
+        }
+
+        public bool existeNroRemito(int idSucursal, string nroRemito)
+        {
+            return oVentaD.existeNroRemito(idSucursal, NroRemito.Normalizar(nroRemito));
+        }
+
+        // Si la venta trae expendios del sector REMITOS con numero, agrega a sus observaciones la
+        // leyenda "REMITOS ASOCIADOS: a / b". Se hace aca (servidor) y no en el navegador para que
+        // quede siempre, con cualquier cliente, y sin el tope de largo del comentario del POS.
+        // Sin expendios asociados no hace nada ni consulta la base.
+        private void AgregarLeyendaRemitosAsociados(Entidades.Venta oVentaE)
+        {
+            if (oVentaE == null || oVentaE.ListaExpendios == null || oVentaE.ListaExpendios.Count == 0)
+                return;
+
+            var nros = new List<string>();
+            foreach (int idExpendio in oVentaE.ListaExpendios)
+            {
+                var expendio = oVentaD.getExpedioById(idExpendio);
+                if (expendio != null && SectorPuntoExpendio.EsRemitos(expendio.Sector))
+                    nros.Add(expendio.NroRemito);
+            }
+
+            oVentaE.Observaciones = NroRemito.AplicarAObservaciones(oVentaE.Observaciones, nros);
         }
         #endregion
 

@@ -73,12 +73,19 @@ namespace NegocioTests.Fakes
         public string getUltimoSectorSelect(string serialCPU) => throw new NotImplementedException();
         public int agregarExpendio(Venta oVentaE) => throw new NotImplementedException();
         public LineaVenta agregarLineaExprendio(LineaVenta oLineaE) => throw new NotImplementedException();
-        public void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
+        public void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null) { }  // no-op: los tests de remitos solo miran las observaciones
         public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal) => throw new NotImplementedException();
         public DataTable obtenerExpendiosAvanzado(DateTime fechaDesde, DateTime? fechaHasta, int idSucursal) => throw new NotImplementedException();
         public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null) => throw new NotImplementedException();
         public DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null) => throw new NotImplementedException();
-        public Venta getExpedioById(int idExpendio) => throw new NotImplementedException();
+        // Expendios que devuelve getExpedioById (por id); vacio = ninguno (devuelve null). Lo usa la
+        // leyenda "REMITOS ASOCIADOS" de Negocio.Venta.
+        public Dictionary<int, Venta> Expendios { get; } = new Dictionary<int, Venta>();
+        public Venta getExpedioById(int idExpendio) => Expendios.TryGetValue(idExpendio, out var e) ? e : null;
+        public Func<int, string, long> OnUltimoCorrelativoRemito { get; set; }
+        public Func<int, string, bool> OnExisteNroRemito { get; set; }
+        public long ultimoCorrelativoRemito(int idSucursal, string prefijo) => OnUltimoCorrelativoRemito != null ? OnUltimoCorrelativoRemito(idSucursal, prefijo) : throw new NotImplementedException();
+        public bool existeNroRemito(int idSucursal, string nroRemito) => OnExisteNroRemito != null ? OnExisteNroRemito(idSucursal, nroRemito) : throw new NotImplementedException();
         public int esVentaSinFacturar(int idVenta, bool esNotaCredito, bool ignorarPrueba = false) => throw new NotImplementedException();
         public int existeFacturaElect(int idVenta, bool ignorarPrueba = false) => throw new NotImplementedException();
         public int existeNotaCreditoElect(int idVenta, bool ignorarPrueba = false) => throw new NotImplementedException();

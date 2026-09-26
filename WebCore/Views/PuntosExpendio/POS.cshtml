@@ -50,6 +50,8 @@
 
     bool haySectores = Model.SectoresDisponibles != null && Model.SectoresDisponibles.Count > 0;
     bool permiteEditarPrecio = Model.PermiteEditarPrecio;
+    // PRESUPUESTO / REMITOS: la fecha y hora se puede cambiar clickeando (ver Negocio.SectorPuntoExpendio).
+    bool fechaEditable = Negocio.SectorPuntoExpendio.PermiteFechaManual(Model.Sector);
     string posModoInstancia = ViewBag.PosModoInstancia as string ?? "original";
     string posInstanceId = ViewBag.PosInstanceId as string ?? "";
     int idUsuarioPOS = ViewBag.IdUsuarioPOS != null ? (int)ViewBag.IdUsuarioPOS : 0;
@@ -66,7 +68,7 @@
         <input type="hidden" id="permiteEditarPrecioPuntoExpendio" value="@(permiteEditarPrecio ? "1" : "0")" />
         <input type="hidden" id="fechaExpendio" value="@Model.FechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss")" />
 
-        <div class="pos-topbar-grid">
+        <div class="pos-topbar-grid@(Negocio.SectorPuntoExpendio.EsRemitos(Model.Sector) ? " pos-topbar-grid-remito" : "")">
             <div class="pos-topbar-item pos-topbar-item-cliente">
                 <div class="pos-topbar-label">Cliente / Identificación</div>
                 <input type="hidden" id="clienteRazonSocialValor" value="" />
@@ -108,8 +110,44 @@
 
             <div class="pos-topbar-item pos-topbar-item-fecha">
                 <div class="pos-topbar-label">Fecha y hora</div>
-                <div class="pos-topbar-value" id="fechaHoraPOSExpendio"></div>
+                @if (fechaEditable)
+                {
+                    @* PRESUPUESTO y REMITOS: click en la fecha revela un input para cambiarla (mismo
+                       patron que Ventas/POS). El servidor valida el rango (Negocio.SectorPuntoExpendio). *@
+                    <div class="pos-topbar-value" id="fechaHoraPOSExpendioWrap">
+                        <span class="pos-time-chip" id="fechaHoraPOSExpendioChip" role="button" tabindex="0" title="Click para editar la fecha y hora">
+                            <i class="far fa-clock"></i>
+                            <span id="fechaHoraPOSExpendio" class="font-weight-bold"></span>
+                        </span>
+                    </div>
+                    <div class="d-none" id="fechaExpendioEditableWrap">
+                        <input type="datetime-local"
+                               id="fechaExpendioEditable"
+                               class="form-control form-control-sm"
+                               data-dias-futuro-max="@(Negocio.SectorPuntoExpendio.EsPresupuesto(Model.Sector) ? Negocio.SectorPuntoExpendio.DiasMaximosFuturoPresupuesto : 0)" />
+                    </div>
+                }
+                else
+                {
+                    <div class="pos-topbar-value" id="fechaHoraPOSExpendio"></div>
+                }
             </div>
+
+            @if (Negocio.SectorPuntoExpendio.EsRemitos(Model.Sector))
+            {
+                @* Sector REMITOS: numero de remito sugerido por sucursal (PPPP-NNNNNNNN), editable.
+                   Va entre la fecha y el bloque de acciones (Duplicar POS / Salir). *@
+                <div class="pos-topbar-item pos-topbar-item-remito">
+                    <div class="pos-topbar-label">Nro de remito</div>
+                    <input type="text"
+                           id="nroRemito"
+                           class="form-control form-control-sm"
+                           value="@Model.NroRemito"
+                           maxlength="@Negocio.NroRemito.LargoMaximo"
+                           autocomplete="off"
+                           title="Sugerido automáticamente por sucursal; se puede editar" />
+                </div>
+            }
 
             <div class="pos-topbar-item pos-topbar-item-action pos-topbar-item-actions-group">
                 <span id="posInstanceBadge" class="badge badge-pill @(posModoInstancia == "duplicado" ? "badge-warning" : "badge-info d-none")">

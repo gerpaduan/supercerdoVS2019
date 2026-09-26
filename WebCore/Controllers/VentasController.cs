@@ -3169,7 +3169,10 @@ namespace WebCore.Controllers
                         if (buscarPorNumero && idExpendio == nroExpendio)
                             return true;
 
-                        return identificacion.IndexOf(textoNormalizado, StringComparison.OrdinalIgnoreCase) >= 0;
+                        // Tambien busca por numero de remito (sector REMITOS). La columna solo existe en Postgres.
+                        string nroRemitoFila = row.Table.Columns.Contains("nroremito") ? ToStr(row["nroremito"]) : "";
+                        return identificacion.IndexOf(textoNormalizado, StringComparison.OrdinalIgnoreCase) >= 0
+                            || nroRemitoFila.IndexOf(textoNormalizado, StringComparison.OrdinalIgnoreCase) >= 0;
                     })
                     .OrderBy(row => ToDate(row["fechaExpendio"]))
                     .ThenBy(row => ToInt(row["idExpendio"]))
@@ -3186,6 +3189,7 @@ namespace WebCore.Controllers
                             idExpendio = idExpendio,
                             identificacionExpendio = ToStr(row["identificacionExpendio"]),
                             sector = ToStr(row["sector"]),
+                            nroRemito = row.Table.Columns.Contains("nroremito") ? ToStr(row["nroremito"]) : "",
                             codigo = ToInt(row["codigo"]),
                             producto = ToStr(row["corte"]),
                             cantKg = ToDecimal(row["cantKg"]),
@@ -3255,6 +3259,7 @@ namespace WebCore.Controllers
                     fechaExpendio = expendio.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss"),
                     identificacionExpendio = expendio.IdentificacionExpendio ?? "",
                     sector = expendio.Sector ?? "",
+                    nroRemito = expendio.NroRemito ?? "",
                     vendedor = expendio.Vendedor != null ? expendio.Vendedor.Nombre : "",
                     idVenta = expendio.IdVenta,
                     asignado = expendio.IdVenta > 0 && expendio.IdVenta != expendio.IdExpendio,

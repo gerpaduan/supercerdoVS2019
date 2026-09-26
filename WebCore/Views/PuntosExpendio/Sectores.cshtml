@@ -65,9 +65,25 @@
                                     foreach (var item in Model.Sectores)
                                     {
                                         <tr>
-                                            <td>@item.Nombre</td>
+                                            @* PRESUPUESTO y REMITOS son sectores del sistema (globales para todas
+                                               las empresas): sin Modificar ni Eliminar. El servidor tambien lo
+                                               rechaza (PuntosExpendioController.GuardarSector/EliminarSector). *@
+                                            @{ bool esSectorSistema = Negocio.SectorPuntoExpendio.EsReservado(item.Nombre); }
+                                            <td>
+                                                @item.Nombre
+                                                @if (esSectorSistema)
+                                                {
+                                                    <span class="badge badge-secondary ml-1">Sistema</span>
+                                                }
+                                            </td>
                                             <td class="text-center">@(item.EnUso ? "Sí" : "No")</td>
                                             <td>
+                                                @if (esSectorSistema)
+                                                {
+                                                    <span class="text-muted small">No editable</span>
+                                                }
+                                                else
+                                                {
                                                 <div class="btn-group btn-group-sm">
                                                     <a class="btn btn-outline-primary" href="@Url.Action("Sectores", "PuntosExpendio", new { editar = item.Nombre })" title="Modificar sector">
                                                         <i class="fas fa-edit"></i>
@@ -80,6 +96,7 @@
                                                         </button>
                                                     </form>
                                                 </div>
+                                                }
                                             </td>
                                         </tr>
                                     }

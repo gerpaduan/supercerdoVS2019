@@ -259,7 +259,7 @@
                     '<td>' + formatDate(item.fechaExpendio) + '</td>' +
                     '<td>' + (item.hora || '') + '</td>' +
                     '<td><strong>' + item.idExpendio + '</strong><div>' + estadoBadge + '</div></td>' +
-                    '<td>' + (item.identificacionExpendio || '') + '</td>' +
+                    '<td>' + escapeHtml(item.identificacionExpendio || '') + (item.nroRemito ? '<div><span class="badge badge-secondary">Remito ' + escapeHtml(item.nroRemito) + '</span></div>' : '') + '</td>' +
                     '<td>' + (item.sector || '') + '</td>' +
                     (mostrarSucursal ? '<td class="exp-col-sucursal">' + escapeHtml(item.sucursal || '') + '</td>' : '') +
                     '<td colspan="4" class="text-muted small">' + grupo.lineas.length + ' ítem(s)</td>' +

@@ -1206,6 +1206,19 @@ namespace Datos
             return (scalar == null || scalar == DBNull.Value) ? "" : scalar.ToString().Trim();
         }
 
+        // Remitos (2026-09-26): el numero de remito del expendio solo existe en Postgres
+        // (expendios.nroremito). En SQL Server no hay columna ni SP: sin numeracion automatica y
+        // sin persistencia del numero (PENDIENTE documentado en docs/DECISIONS.md).
+        public long ultimoCorrelativoRemito(int idSucursal, string prefijo)
+        {
+            return 0;
+        }
+
+        public bool existeNroRemito(int idSucursal, string nroRemito)
+        {
+            return false;
+        }
+
         public Entidades.Venta getExpedioById(int idExpendio)
         {
             const string sql = "SELECT * FROM Expendios WHERE idExpendio = @idExpendio;";

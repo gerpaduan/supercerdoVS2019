@@ -239,6 +239,7 @@ namespace WebCore.Controllers
                             hora = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("HH:mm") : "",
                             idExpendio = idExpendio,
                             identificacionExpendio = Convert.ToString(row["identificacionExpendio"] ?? ""),
+                            nroRemito = ValorString(row, "nroremito"),
                             sucursal = sucursalNombre,
                             sector = Convert.ToString(row["sector"] ?? ""),
                             cantItems = Convert.ToString(row["cantItems"] ?? "0"),
@@ -314,10 +315,14 @@ namespace WebCore.Controllers
                 Observaciones = "",
                 EsGuardado = false,
                 SectoresDisponibles = ObtenerSectores(),
-                PermiteEditarPrecio = string.Equals(sectorNormalizado, "PRESUPUESTO", StringComparison.OrdinalIgnoreCase),
+                PermiteEditarPrecio = Negocio.SectorPuntoExpendio.EsPresupuesto(sectorNormalizado),
                 VendedorNombre = user.Nombre ?? "",
                 SucursalNombre = user.Sucursal?.SucursalNombre ?? ""
             };
+
+            // Sector REMITOS: se sugiere el proximo numero de remito de la sucursal (editable en el POS).
+            if (Negocio.SectorPuntoExpendio.EsRemitos(sectorNormalizado) && user.IdSucursal > 0)
+                model.NroRemito = _oVentaN.proximoNroRemito(user.IdSucursal);
 
             ViewBag.IdConsumidorFinal = _oPersonaN.getConsumidorFinal()?.idPersona ?? 0;
             // -1 = Utilidades.ValoresParametrosMetodos.IdCreadorNulo() (chequeo de "ver", no de
@@ -503,6 +508,7 @@ namespace WebCore.Controllers
                             hora = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("HH:mm") : "",
                             idExpendio = idExpendio,
                             identificacionExpendio = Convert.ToString(row["identificacionExpendio"] ?? ""),
+                            nroRemito = ValorString(row, "nroremito"),
                             sucursal = Convert.ToString(row["sucursal"] ?? ""),
                             sector = Convert.ToString(row["sector"] ?? ""),
                             usuario = Convert.ToString(row["vendedor"] ?? ""),
@@ -584,6 +590,16 @@ namespace WebCore.Controllers
                 return RedirectToAction("Sectores", new { editar = sectorOriginal });
             }
 
+            // PRESUPUESTO y REMITOS son sectores globales reservados: no se crean, renombran ni
+            // se les puede poner de nombre a otro sector (ver Negocio.SectorPuntoExpendio).
+            if (Negocio.SectorPuntoExpendio.EsReservado(sectorOriginal) || Negocio.SectorPuntoExpendio.EsReservado(nombreNormalizado))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sectores";
+                TempData["AlertMsg"] = "PRESUPUESTO y REMITOS son sectores del sistema: no se pueden crear, modificar ni usar como nombre de otro sector.";
+                return RedirectToAction("Sectores");
+            }
+
             if (_oVentaN.existeSector(nombreNormalizado, sectorOriginal))
             {
                 TempData["AlertType"] = "warning";
@@ -633,6 +649,14 @@ namespace WebCore.Controllers
                 return RedirectToAction("Sectores");
             }
 
+            if (Negocio.SectorPuntoExpendio.EsReservado(nombre))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sectores";
+                TempData["AlertMsg"] = "PRESUPUESTO y REMITOS son sectores del sistema: no se pueden eliminar.";
+                return RedirectToAction("Sectores");
+            }
+
             if (_oVentaN.sectorEstaEnUso(nombre))
             {
                 TempData["AlertType"] = "warning";
@@ -657,7 +681,15 @@ namespace WebCore.Controllers
         public IActionResult FinalizarPOS([FromBody] FinalizarPuntoExpendioRequest request)
         {
             var user = _usuarioActual;
-            DateTime fecha = request != null && request.FechaExpendio.HasValue ? request.FechaExpendio.Value : DateTime.Today;
+            // Fecha del expendio segun el sector: PRESUPUESTO admite futura (con tope), REMITOS
+            // nunca futura, el resto siempre "ahora" (ver Negocio.SectorPuntoExpendio). Se valida
+            // aca en el servidor: el chip del POS es solo UX y no se puede confiar en el cliente.
+            string sectorSolicitado = request != null ? (request.Sector ?? "").Trim() : "";
+            DateTime fecha = Negocio.SectorPuntoExpendio.ResolverFecha(
+                sectorSolicitado, request != null ? request.FechaExpendio : null, DateTime.Now, out string errorFecha);
+            if (!string.IsNullOrEmpty(errorFecha))
+                return Json(new { ok = false, mensaje = errorFecha });
+
             var operador = ResolverOperadorPOS(request?.PosInstanceId, user);
 
             // Port de Web/Controllers/PuntosExpendioController.cs:198-204 (accion "Guardar" del
@@ -670,10 +702,12 @@ namespace WebCore.Controllers
 
             var model = new PuntoExpendioEditVm
             {
-                FechaExpendio = request != null && request.FechaExpendio.HasValue ? request.FechaExpendio.Value : DateTime.Now,
+                FechaExpendio = fecha,
                 Sector = request != null ? request.Sector : "",
                 IdentificacionCliente = request != null ? request.IdentificacionCliente : "",
                 Observaciones = request != null ? request.Observaciones : "",
+                // El numero de remito solo aplica al sector REMITOS; en los demas se descarta.
+                NroRemito = request != null && Negocio.SectorPuntoExpendio.EsRemitos(request.Sector) ? Negocio.NroRemito.Normalizar(request.NroRemito) : "",
                 Lineas = new List<PuntoExpendioLineaVm>()
             };
 
@@ -705,6 +739,17 @@ namespace WebCore.Controllers
             if (sucursal == null)
                 return Json(new { ok = false, mensaje = "No se encontró la sucursal activa del usuario." });
 
+            // REMITOS: el numero no puede repetirse en la sucursal (tambien lo garantiza un indice unico
+            // en la base, por si dos usuarios toman el mismo numero a la vez). Se devuelve el siguiente
+            // libre para que el POS lo cargue.
+            if (Negocio.SectorPuntoExpendio.EsRemitos(model.Sector) && _oVentaN.existeNroRemito(sucursal.idSucursal, model.NroRemito))
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = "El número de remito " + model.NroRemito + " ya existe en esta sucursal. Se sugiere el " + _oVentaN.proximoNroRemito(sucursal.idSucursal) + ".",
+                    nroRemitoSugerido = _oVentaN.proximoNroRemito(sucursal.idSucursal)
+                });
+
             var expendio = new Entidades.Venta
             {
                 IdVenta = 0,
@@ -724,7 +769,7 @@ namespace WebCore.Controllers
                 Sector = (model.Sector ?? "").Trim(),
                 CantItems = model.Lineas.Count.ToString(CultureInfo.InvariantCulture),
                 Observaciones = model.Observaciones ?? "",
-                NroRemito = "",
+                NroRemito = model.NroRemito,
                 SerialCPU = "",
                 Vendedor = operador
             };
@@ -774,8 +819,28 @@ namespace WebCore.Controllers
             }
             catch (Exception ex)
             {
+                // Dos usuarios tomaron el mismo numero de remito a la vez: salta el indice unico.
+                if (Negocio.SectorPuntoExpendio.EsRemitos(model.Sector) && ex.ToString().Contains("ux_expendios_nroremito"))
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "El número de remito " + model.NroRemito + " acaba de ser usado en esta sucursal. Se sugiere el " + _oVentaN.proximoNroRemito(sucursal.idSucursal) + ".",
+                        nroRemitoSugerido = _oVentaN.proximoNroRemito(sucursal.idSucursal)
+                    });
+
                 return Json(new { ok = false, mensaje = ex.Message });
             }
+        }
+
+        // Proximo numero de remito de la sucursal del usuario (para refrescar la sugerencia del POS).
+        [HttpGet]
+        public IActionResult ProximoNroRemito()
+        {
+            var user = _usuarioActual;
+            if (user.IdSucursal == 0)
+                return Json(new { ok = false, mensaje = "Sesión inválida o sucursal no seleccionada." });
+
+            return Json(new { ok = true, nroRemito = _oVentaN.proximoNroRemito(user.IdSucursal) });
         }
 
         private string ValidarModelo(PuntoExpendioEditVm model)
@@ -789,6 +854,16 @@ namespace WebCore.Controllers
 
             if (!ObtenerSectores().Any(s => string.Equals(s, model.Sector, StringComparison.OrdinalIgnoreCase)))
                 return "El sector seleccionado no existe o ya no está disponible.";
+
+            // REMITOS: el numero de remito es obligatorio (se sugiere solo en el POS, pero puede borrarse).
+            if (Negocio.SectorPuntoExpendio.EsRemitos(model.Sector))
+            {
+                if (string.IsNullOrWhiteSpace(model.NroRemito))
+                    return "Debe indicar el número de remito.";
+
+                if (model.NroRemito.Length > Negocio.NroRemito.LargoMaximo)
+                    return "El número de remito no puede superar los " + Negocio.NroRemito.LargoMaximo + " caracteres.";
+            }
 
             if (model.Lineas == null || model.Lineas.Count == 0)
                 return "Debe cargar al menos un producto en el punto de expendio.";
@@ -825,15 +900,25 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult ImprimirPdf(int id)
+        public IActionResult ImprimirPdf(int id, string formato = null)
         {
             var expendio = _oVentaN.getExpedioById(id);
             if (expendio == null || expendio.IdExpendio <= 0)
                 return NotFound();
 
-            byte[] bytes = GenerarPdfPuntoExpendio(expendio);
-            return File(bytes, "application/pdf", "PuntoExpendio_" + id + ".pdf");
+            // formato=precios solo aplica a PRESUPUESTO (lista de precios sin cantidades ni totales).
+            byte[] bytes = GenerarPdfExpendio(expendio, EsFormatoSoloPrecios(formato));
+            string prefijoArchivo = Negocio.SectorPuntoExpendio.EsPresupuesto(expendio.Sector) ? "Presupuesto_" : "PuntoExpendio_";
+            return File(bytes, "application/pdf", prefijoArchivo + id + ".pdf");
         }
+
+        private static bool EsFormatoSoloPrecios(string formato)
+        {
+            return string.Equals((formato ?? "").Trim(), FormatoPdfPrecios, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Valor del parametro `formato` que pide la lista de precios (sin cantidades ni totales).
+        private const string FormatoPdfPrecios = "precios";
 
         // Reemplazo de "Enviar por WhatsApp" en el modal post-expendio (ver docs/DECISIONS.md).
         // El punto de expendio no tiene factura electronica ni nota de credito, y el cliente es
@@ -857,6 +942,18 @@ namespace WebCore.Controllers
                     "Atentamente,\n" +
                     nombreEmpresa;
 
+                // Presupuesto: va dirigido al cliente con el texto de "nuevos precios".
+                if (Negocio.SectorPuntoExpendio.EsPresupuesto(expendio.Sector))
+                {
+                    asunto = "Presupuesto - " + nombreEmpresa;
+                    cuerpo =
+                        "Hola:\n\n" +
+                        TextoPresentacionPresupuesto(expendio, nombreEmpresa) + "\n\n" +
+                        "Adjuntamos el detalle en PDF. Ante cualquier consulta, pueden responder este correo directamente.\n\n" +
+                        "Atentamente,\n" +
+                        nombreEmpresa;
+                }
+
                 return Json(new { ok = true, email = "", asunto, mensaje = cuerpo });
             }
             catch (Exception ex)
@@ -866,7 +963,7 @@ namespace WebCore.Controllers
         }
 
         [HttpPost]
-        public IActionResult EnviarComprobanteEmailExpendio(int idExpendio, string emailDestino, string asunto, string mensaje)
+        public IActionResult EnviarComprobanteEmailExpendio(int idExpendio, string emailDestino, string asunto, string mensaje, string formato = null)
         {
             try
             {
@@ -889,8 +986,8 @@ namespace WebCore.Controllers
 
                 string nombreEmpresa = ObtenerNombreEmpresaExpendio(expendio);
                 var empresaExpendio = ObtenerEmpresaExpendio(expendio);
-                byte[] pdfBytes = GenerarPdfPuntoExpendio(expendio);
-                string nombreAdjunto = "PuntoExpendio_" + expendio.IdExpendio + ".pdf";
+                byte[] pdfBytes = GenerarPdfExpendio(expendio, EsFormatoSoloPrecios(formato));
+                string nombreAdjunto = (Negocio.SectorPuntoExpendio.EsPresupuesto(expendio.Sector) ? "Presupuesto_" : "PuntoExpendio_") + expendio.IdExpendio + ".pdf";
                 string fromName = SmtpMailHelper.BuildTenantFromName(nombreEmpresa);
                 string replyToEmail = empresaExpendio != null ? (empresaExpendio.Email ?? "").Trim() : "";
 
@@ -946,50 +1043,187 @@ namespace WebCore.Controllers
             return cuerpoHtml + pieHtml;
         }
 
-        // Port de GenerarPdfPuntoExpendio (Web/Controllers/PuntosExpendioController.cs) de
-        // iTextSharp a QuestPDF -- mismo contenido/orden de campos, sintaxis nueva.
-        private byte[] GenerarPdfPuntoExpendio(Entidades.Venta expendio)
+        // Texto de presentacion del presupuesto (PDF y email): plantilla fija, decision del
+        // usuario 2026-09-26 (ver docs/DECISIONS.md). La fecha es la del expendio, o sea la que
+        // se eligio en el POS (puede ser futura), no la de hoy.
+        private static string TextoPresentacionPresupuesto(Entidades.Venta expendio, string nombreEmpresa)
         {
+            return "Nos dirigimos a ustedes desde " + nombreEmpresa +
+                   ", con el fin de hacerles llegar los nuevos precios a partir del " +
+                   expendio.FechaVenta.ToString("dd/MM/yyyy") + ".";
+        }
+
+        // PDF de un expendio (todos los sectores), con el mismo formato visual que el comprobante
+        // de venta (GenerarDocsCore.GenerarFacturaPDF): nombre de fantasia en rojo, letra central,
+        // datos a la derecha, encabezado de tabla rosado y lineas grises. Pedido del usuario
+        // 2026-09-26: los demas sectores usan el mismo diseno que el presupuesto (letra "X" y
+        // titulo "EXPENDIO" en vez de "P" / "PRESUPUESTO", con el sector y el nro de remito).
+        // Solo PRESUPUESTO admite la lista de precios (soloPrecios) y el texto de presentacion.
+        //  - soloPrecios=true (lista de precios, solo presupuesto): Codigo, Descripcion, Precio (sin cantidades ni
+        //    totales, sin sucursal ni vendedor); con texto de presentacion y datos fiscales de la empresa.
+        //  - soloPrecios=false (Ver / imprimir): ademas Cantidad e Importe y totales, con sucursal y
+        //    vendedor; sin texto de presentacion, vigencia, CUIT, IIBB, razon social ni cond. IVA.
+        // La columna se llama "Precio" (no "por kg") porque un producto no pesable se vende por unidad.
+        // Es un documento no fiscal (letra + leyenda, como la "X" de los comprobantes internos).
+        private byte[] GenerarPdfExpendio(Entidades.Venta expendio, bool soloPrecios)
+        {
+            bool esPresupuesto = Negocio.SectorPuntoExpendio.EsPresupuesto(expendio.Sector);
+            soloPrecios = soloPrecios && esPresupuesto;   // la lista de precios es solo del presupuesto
+            string tituloDocumento = esPresupuesto ? "PRESUPUESTO" : "EXPENDIO";
+            string letraDocumento = esPresupuesto ? "P" : "X";
+            string nroDocumentoTexto = (esPresupuesto ? "N° Presupuesto: " : "N° Expendio: ") + expendio.IdExpendio;
+            string sector = (expendio.Sector ?? "").Trim();
+            string nroRemito = (expendio.NroRemito ?? "").Trim();
+
+            const string ColorMarca = "#AE0000";      // rojo de marca del comprobante de venta
+            const string ColorEncabezadoTabla = "#FFC8C8";
+
             var lineas = expendio.LineasVenta ?? new List<Entidades.LineaVenta>();
             var culturaAr = new CultureInfo("es-AR");
+            var empresa = ObtenerEmpresaExpendio(expendio);
+            string nombreEmpresa = ObtenerNombreEmpresaExpendio(expendio);
+            string razonSocial = empresa != null ? (empresa.RazonSocialAfip ?? "").Trim() : "";
+            string domicilio = empresa != null
+                ? ((empresa.Domicilio ?? "").Trim() + (string.IsNullOrWhiteSpace(empresa.Ciudad) ? "" : " - " + empresa.Ciudad.Trim()))
+                : "";
+            string contacto = empresa != null
+                ? string.Join("  |  ", new[] { (empresa.Telefono ?? "").Trim(), (empresa.Email ?? "").Trim() }.Where(x => x.Length > 0))
+                : "";
+            string cliente = (expendio.IdentificacionExpendio ?? "").Trim();
+            string vendedor = expendio.Vendedor != null ? (expendio.Vendedor.Nombre ?? "") : "";
+            string sucursal = expendio.Sucursal != null ? (expendio.Sucursal.SucursalNombre ?? "") : "";
+            string observaciones = (expendio.Observaciones ?? "").Trim();
 
             var documento = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(36, Unit.Point);
-                    page.DefaultTextStyle(x => x.FontSize(10));
+                    page.Margin(24, Unit.Point);
+                    page.DefaultTextStyle(x => x.FontSize(9));
 
                     page.Content().Column(col =>
                     {
-                        col.Spacing(4);
-                        col.Item().Text("Punto de Expendio").FontSize(16).Bold();
-                        col.Item().PaddingTop(6);
-                        col.Item().Text("Nro: " + expendio.IdExpendio);
-                        col.Item().Text("Sector: " + (expendio.Sector ?? "-"));
-                        col.Item().Text("Fecha: " + expendio.FechaVenta.ToString("dd/MM/yyyy HH:mm"));
-                        col.Item().Text("Cliente: " + (!string.IsNullOrWhiteSpace(expendio.IdentificacionExpendio) ? expendio.IdentificacionExpendio : "-"));
-                        col.Item().Text("Sucursal: " + (expendio.Sucursal != null ? expendio.Sucursal.SucursalNombre : "-"));
-                        col.Item().Text("Vendedor: " + (expendio.Vendedor != null ? expendio.Vendedor.Nombre : "-"));
-                        col.Item().PaddingTop(10);
+                        col.Spacing(6);
 
-                        col.Item().Table(table =>
+                        // ===== CABECERA =====
+                        col.Item().Row(row =>
                         {
-                            table.ColumnsDefinition(columns =>
+                            row.RelativeItem().Column(izq =>
                             {
-                                columns.RelativeColumn(2.5f);
-                                columns.RelativeColumn(6f);
-                                columns.RelativeColumn(2f);
-                                columns.RelativeColumn(2f);
+                                izq.Item().Text(nombreEmpresa).FontSize(20).FontColor(ColorMarca).Bold();
+                                // Razon social y condicion de IVA solo en la lista de precios; el PDF
+                                // completo (Ver / imprimir) los omite, pedido del usuario 2026-09-26.
+                                if (soloPrecios && !string.IsNullOrWhiteSpace(razonSocial) && !string.Equals(razonSocial, nombreEmpresa, StringComparison.OrdinalIgnoreCase))
+                                    izq.Item().PaddingTop(6).Text("Razón Social: " + razonSocial);
+                                if (!string.IsNullOrWhiteSpace(domicilio))
+                                    izq.Item().Text(domicilio);
+                                if (!string.IsNullOrWhiteSpace(contacto))
+                                    izq.Item().Text(contacto);
+                                if (soloPrecios && empresa != null && !string.IsNullOrWhiteSpace(empresa.CondicionIVA))
+                                    izq.Item().Text("Cond. IVA: " + empresa.CondicionIVA);
                             });
 
-                            table.Header(header =>
+                            row.RelativeItem().AlignCenter().Column(centro =>
                             {
-                                header.Cell().Text("Código").Bold();
-                                header.Cell().Text("Producto").Bold();
-                                header.Cell().Text("Kgs.").Bold();
-                                header.Cell().Text("Total").Bold();
+                                centro.Item().AlignCenter().Text(letraDocumento).FontSize(34).Bold();
+                                centro.Item().AlignCenter().Text("- Documento no válido como factura -").FontSize(7);
+                            });
+
+                            row.RelativeItem().AlignRight().Column(der =>
+                            {
+                                der.Item().AlignRight().Text(tituloDocumento).FontSize(12).Bold();
+                                der.Item().AlignRight().Text(nroDocumentoTexto).Bold();
+                                der.Item().AlignRight().Text("Fecha: " + expendio.FechaVenta.ToString(esPresupuesto ? "dd/MM/yyyy" : "dd/MM/yyyy HH:mm"));
+                                if (soloPrecios && empresa != null && empresa.Cuit > 0)
+                                    der.Item().AlignRight().Text("CUIT: " + empresa.Cuit);
+                                if (soloPrecios && empresa != null && empresa.Iibb > 0)
+                                    der.Item().AlignRight().Text("IIBB: " + empresa.Iibb);
+                            });
+                        });
+
+                        col.Item().LineHorizontal(1).LineColor(Colors.Grey.Medium);
+
+                        // ===== CLIENTE / DATOS =====
+                        col.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn(1.5f);
+                                c.RelativeColumn(4.5f);
+                                c.RelativeColumn(1.5f);
+                                c.RelativeColumn(2.5f);
+                            });
+
+                            table.Cell().Text("Cliente:").Bold();
+                            table.Cell().Text(string.IsNullOrWhiteSpace(cliente) ? "-" : cliente);
+
+                            if (soloPrecios)
+                            {
+                                // Lista de precios: sin sucursal ni vendedor, con la fecha desde la que rigen.
+                                table.Cell().Text("Vigencia desde:").Bold();
+                                table.Cell().Text(expendio.FechaVenta.ToString("dd/MM/yyyy"));
+                            }
+                            else
+                            {
+                                // PDF completo (Ver / imprimir): sin vigencia; conserva sucursal y vendedor.
+                                // Los demas sectores muestran el sector a la derecha del cliente.
+                                if (esPresupuesto)
+                                {
+                                    table.Cell();
+                                    table.Cell();
+                                }
+                                else
+                                {
+                                    table.Cell().Text("Sector:").Bold();
+                                    table.Cell().Text(string.IsNullOrWhiteSpace(sector) ? "-" : sector);
+                                }
+
+                                table.Cell().Text("Sucursal:").Bold();
+                                table.Cell().Text(string.IsNullOrWhiteSpace(sucursal) ? "-" : sucursal);
+                                table.Cell().Text("Vendedor:").Bold();
+                                table.Cell().Text(string.IsNullOrWhiteSpace(vendedor) ? "-" : vendedor);
+
+                                // Sector REMITOS: numero de remito (ver Negocio.NroRemito).
+                                if (!esPresupuesto && nroRemito.Length > 0)
+                                {
+                                    table.Cell().Text("Nro remito:").Bold();
+                                    table.Cell().Text(nroRemito).Bold();
+                                    table.Cell();
+                                    table.Cell();
+                                }
+                            }
+                        });
+
+                        col.Item().LineHorizontal(1).LineColor(Colors.Grey.Medium);
+
+                        // ===== TEXTO DE PRESENTACION (solo lista de precios) =====
+                        if (soloPrecios)
+                            col.Item().PaddingVertical(4).Text(TextoPresentacionPresupuesto(expendio, nombreEmpresa)).FontSize(10);
+
+                        // ===== PRODUCTOS =====
+                        col.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn(1.5f);
+                                c.RelativeColumn(6f);
+                                if (!soloPrecios)
+                                    c.RelativeColumn(2f);
+                                c.RelativeColumn(2.2f);
+                                if (!soloPrecios)
+                                    c.RelativeColumn(2.2f);
+                            });
+
+                            table.Header(h =>
+                            {
+                                h.Cell().Background(ColorEncabezadoTabla).Padding(4).Text("Código").Bold();
+                                h.Cell().Background(ColorEncabezadoTabla).Padding(4).Text("Descripción").Bold();
+                                if (!soloPrecios)
+                                    h.Cell().Background(ColorEncabezadoTabla).Padding(4).AlignRight().Text("Cantidad").Bold();
+                                h.Cell().Background(ColorEncabezadoTabla).Padding(4).AlignRight().Text("Precio").Bold();
+                                if (!soloPrecios)
+                                    h.Cell().Background(ColorEncabezadoTabla).Padding(4).AlignRight().Text("Importe").Bold();
                             });
 
                             foreach (var linea in lineas)
@@ -998,17 +1232,53 @@ namespace WebCore.Controllers
                                     ? (!string.IsNullOrWhiteSpace(linea.Corte.corte) ? linea.Corte.corte : linea.Corte.CorteDesc)
                                     : "";
 
-                                table.Cell().Text(linea.Corte != null ? linea.Corte.Codigo.ToString() : "");
-                                table.Cell().Text(nombreProducto);
-                                table.Cell().Text(linea.CantKg.ToString("F3", CultureInfo.InvariantCulture));
-                                table.Cell().Text((linea.CantKg * linea.PrecioKg).ToString("$ #,##0.00", culturaAr));
+                                // Filita gris fina entre productos para que la lista de precios se lea de corrido.
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(linea.Corte != null ? linea.Corte.Codigo.ToString() : "");
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(nombreProducto);
+                                if (!soloPrecios)
+                                    table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(linea.CantKg.ToString("F3"));
+                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(linea.PrecioKg.ToString("$ #,##0.00", culturaAr));
+                                if (!soloPrecios)
+                                    table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text((linea.CantKg * linea.PrecioKg).ToString("$ #,##0.00", culturaAr));
                             }
                         });
 
-                        col.Item().PaddingTop(10);
-                        col.Item().Text("Total items: " + lineas.Count).Bold();
-                        col.Item().Text("Total kilos: " + lineas.Sum(x => x.CantKg).ToString("F3", CultureInfo.InvariantCulture)).Bold();
-                        col.Item().Text("Total importe: " + expendio.TotalImporte.ToString("$ #,##0.00", culturaAr)).Bold();
+                        // ===== TOTALES (solo formato completo) =====
+                        if (!soloPrecios)
+                        {
+                            col.Item().LineHorizontal(1).LineColor(Colors.Grey.Medium);
+                            col.Item().Row(row =>
+                            {
+                                row.RelativeItem(5).Text("Items: " + lineas.Count + "   |   Kilos: " + lineas.Sum(x => x.CantKg).ToString("F3", culturaAr));
+                                row.RelativeItem(1).AlignRight().Text("TOTAL:").Bold();
+                                row.RelativeItem(1.4f).AlignRight().Text(expendio.TotalImporte.ToString("$ #,##0.00", culturaAr)).Bold();
+                            });
+                            col.Item().LineHorizontal(1).LineColor(Colors.Grey.Medium);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(observaciones))
+                        {
+                            col.Item().Text(t =>
+                            {
+                                t.DefaultTextStyle(x => x.FontSize(8));
+                                t.Span("Obs: ").Bold();
+                                t.Span(observaciones);
+                            });
+                        }
+                    });
+
+                    // Pie en cada hoja: empresa y numeracion de paginas.
+                    page.Footer().Row(row =>
+                    {
+                        row.RelativeItem().Text(nombreEmpresa + " — " + (esPresupuesto ? "Presupuesto" : "Expendio") + " N° " + expendio.IdExpendio).FontSize(7).FontColor(Colors.Grey.Darken1);
+                        row.RelativeItem().AlignRight().Text(t =>
+                        {
+                            t.DefaultTextStyle(x => x.FontSize(7).FontColor(Colors.Grey.Darken1));
+                            t.Span("Página ");
+                            t.CurrentPageNumber();
+                            t.Span(" de ");
+                            t.TotalPages();
+                        });
                     });
                 });
             });

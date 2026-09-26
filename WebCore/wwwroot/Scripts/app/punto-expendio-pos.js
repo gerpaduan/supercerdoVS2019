@@ -84,7 +84,23 @@
                 fecha.getFullYear() + '. ' + pad(fecha.getHours()) + ':' + pad(fecha.getMinutes());
         }
 
+        // Sector actual (hidden #sectorPuntoExpendio). PRESUPUESTO y REMITOS son sectores
+        // globales con reglas propias (ver Negocio.SectorPuntoExpendio en el servidor, que es
+        // quien decide de verdad: esto es solo UX).
+        function sectorActual() {
+            return String($('#sectorPuntoExpendio').val() || '').trim().toUpperCase();
+        }
+
+        function esSectorPresupuesto() { return sectorActual() === 'PRESUPUESTO'; }
+        function esSectorRemitos() { return sectorActual() === 'REMITOS'; }
+
+        // Con true, el usuario eligio una fecha a mano (chip clickeable): el reloj de 60 s ya no
+        // debe pisar #fechaExpendio con la hora actual.
+        var fechaManual = false;
+
         function actualizarFechaHora() {
+            if (fechaManual) return;
+
             var lineas = POSState.getLineas().filter(function (linea) { return !!linea; });
             if (!(lineas.length === 0 || lineas.length === 1)) return;
 
@@ -258,6 +274,63 @@
         actualizarFechaHora();
         window.setInterval(actualizarFechaHora, 60000);
 
+        // Fecha y hora editable (solo PRESUPUESTO y REMITOS, mismo patron click-para-editar que
+        // Ventas/POS). REMITOS: nunca futura. PRESUPUESTO: futura hasta N dias (precios que rigen
+        // a partir de otro dia). Fuera de rango vuelve a "ahora". El servidor valida lo mismo
+        // (Negocio.SectorPuntoExpendio.ResolverFecha) -- esto no es el unico control.
+        var $fechaChip = $('#fechaHoraPOSExpendioChip');
+        var $fechaEditable = $('#fechaExpendioEditable');
+
+        if ($fechaChip.length && $fechaEditable.length) {
+            var diasFuturoMax = parseInt($fechaEditable.data('dias-futuro-max'), 10) || 0;
+
+            function formatDatetimeLocal(fecha) {
+                return fecha.getFullYear() + '-' + pad(fecha.getMonth() + 1) + '-' + pad(fecha.getDate()) +
+                    'T' + pad(fecha.getHours()) + ':' + pad(fecha.getMinutes());
+            }
+
+            function revelarFechaEditable() {
+                $fechaEditable.val(formatDatetimeLocal(new Date($('#fechaExpendio').val() || new Date())));
+                $('#fechaHoraPOSExpendioWrap').addClass('d-none');
+                $('#fechaExpendioEditableWrap').removeClass('d-none');
+                $fechaEditable.trigger('focus');
+            }
+
+            $fechaChip.on('click', revelarFechaEditable).on('keydown', function (e) {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                revelarFechaEditable();
+            });
+
+            $fechaEditable.on('change', function () {
+                var valor = $(this).val();
+                if (!valor) return;
+
+                var seleccionada = new Date(valor);
+                var ahora = new Date();
+                var maxima = esSectorPresupuesto()
+                    ? new Date(ahora.getTime() + diasFuturoMax * 24 * 60 * 60 * 1000)
+                    : ahora;
+
+                if (isNaN(seleccionada.getTime()) || seleccionada > maxima) {
+                    seleccionada = ahora;
+                    $(this).val(formatDatetimeLocal(ahora));
+                    firePosAlert({
+                        icon: 'warning',
+                        title: 'Fecha',
+                        text: esSectorPresupuesto()
+                            ? 'La fecha del presupuesto no puede superar ' + diasFuturoMax + ' días a futuro.'
+                            : 'La fecha no puede ser futura.'
+                    });
+                }
+
+                fechaManual = true;
+                POSState.setFechaVenta(seleccionada);
+                if (fechaInput) fechaInput.value = formatFechaSql(seleccionada);
+                if (fechaLabel) fechaLabel.textContent = formatFechaVisible(seleccionada);
+            });
+        }
+
         $('#inputPrecioManualExpendio').on('input', function () {
             posCart.calculateSubtotal();
         });
@@ -421,6 +494,8 @@
                 Sector: $('#sectorPuntoExpendio').val(),
                 IdentificacionCliente: ($('#razonSocial').val() || '').trim(),
                 Observaciones: POSState.getObservaciones(),
+                // Solo sector REMITOS (existe #nroRemito); en los demas sectores no se envia nada.
+                NroRemito: ($('#nroRemito').val() || '').trim(),
                 LineasVenta: lineas,
                 PosInstanceId: config.posInstanceId || ''
             };
@@ -434,6 +509,16 @@
             $('#ppebResumen').text('Expendio #' + resp.idExpendio + ' registrado correctamente.');
             $('#btnPpebPdf').attr('href', resp.pdfUrl);
             $('#btnPpebPdf, #btnPpebEmail').data('id-expendio', resp.idExpendio);
+
+            // Presupuesto: ademas del PDF completo se ofrece la lista de precios (sin cantidades
+            // ni totales) y, en el email, elegir cual se adjunta. Otros sectores no cambian.
+            var esPresupuesto = esSectorPresupuesto();
+            var separador = (resp.pdfUrl || '').indexOf('?') >= 0 ? '&' : '?';
+            $('#btnPpebPdfPrecios')
+                .attr('href', (resp.pdfUrl || '') + separador + 'formato=precios')
+                .toggleClass('d-none', !esPresupuesto);
+            $('#ppebEmailFormatoWrap').toggleClass('d-none', !esPresupuesto);
+            $('#ppebEmailFormato').val('completo');
             $('#modalPostPuntoExpendioBasico').modal('show');
         }
 
@@ -501,7 +586,8 @@
                 idExpendio: idExpendio,
                 emailDestino: email,
                 asunto: asunto,
-                mensaje: mensaje
+                mensaje: mensaje,
+                formato: esSectorPresupuesto() ? ($('#ppebEmailFormato').val() || 'completo') : 'completo'
             }).done(function (resp) {
                 $btn.prop('disabled', false);
 
@@ -536,6 +622,13 @@
                 return;
             }
 
+            // REMITOS: el numero de remito es obligatorio (el servidor lo vuelve a validar).
+            if (esSectorRemitos() && !payload.NroRemito) {
+                firePosAlert({ icon: 'warning', title: 'Remito', text: 'Debe indicar el número de remito.' });
+                $('#nroRemito').trigger('focus');
+                return;
+            }
+
             guardando = true;
             $('#btnFinalizar').prop('disabled', true);
 
@@ -548,6 +641,8 @@
             })
                 .done(function (resp) {
                     if (!resp || !resp.ok) {
+                        // Numero de remito repetido: el servidor devuelve el siguiente libre y se carga en el campo.
+                        if (resp && resp.nroRemitoSugerido && $('#nroRemito').length) $('#nroRemito').val(resp.nroRemitoSugerido);
                         firePosAlert({
                             icon: 'error',
                             title: 'Punto de Expendio',
@@ -669,7 +764,8 @@
             var estado = normalizeText($('#filtroMisExpendiosEstado').val());
 
             return (misExpendiosCache || []).filter(function (item) {
-                var clienteTexto = normalizeText(item.identificacionExpendio);
+                // El texto del filtro busca por identificacion del cliente O por numero de remito.
+                var clienteTexto = normalizeText((item.identificacionExpendio || '') + ' ' + (item.nroRemito || ''));
                 var sucursalTexto = normalizeText(item.sucursal);
                 var estadoTexto = normalizeText(item.estado);
                 var coincideProducto = !producto || (item.lineas || []).some(function (linea) {
@@ -743,7 +839,7 @@
                     '<td>' + (item.fecha || '') + '</td>' +
                     '<td>' + (item.hora || '') + '</td>' +
                     '<td><strong>' + (item.idExpendio || 0) + '</strong></td>' +
-                    '<td>' + (item.identificacionExpendio || '') + '</td>' +
+                    '<td>' + (item.identificacionExpendio || '') + (item.nroRemito ? ' <span class="badge badge-secondary">Remito ' + item.nroRemito + '</span>' : '') + '</td>' +
                     '<td><span class="badge ' + estadoClass + '">' + (item.estado || '') + '</span></td>' +
                     '<td class="text-right">' + (item.cantItems || '0') + '</td>' +
                     '<td class="text-right">' + formatKg(item.totalKg) + '</td>' +
