@@ -37,6 +37,31 @@
     z-index: var(--z-layout-dropdown) !important;
 }
 
+/* Campanas de notificaciones (admin en _Layout, "ventas sin guardar" en _LayoutPOS): en pantallas
+   chicas el menu (min-width 300-340px) anclado al boton de la campana -- que queda lejos del borde
+   derecho -- se salia por la izquierda del viewport. En movil se ancla al ancho de la barra
+   (topbar / header del POS) en vez de al boton. */
+@media (max-width: 575.98px) {
+    .topbar,
+    .pos-header-venta,
+    .pos-header-expendio {
+        position: relative;
+    }
+
+    .campana-dropdown {
+        position: static !important;
+    }
+
+    .campana-dropdown > .dropdown-menu {
+        position: absolute !important;
+        inset: 100% 8px auto 8px !important;
+        transform: none !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        width: auto;
+    }
+}
+
 .modal-backdrop {
     z-index: var(--z-modal-backdrop) !important;
 }
