@@ -26,6 +26,14 @@
                 <p class="mb-1" id="pvbResumenVenta">Venta registrada correctamente.</p>
                 <h3 class="mb-3 font-weight-bold text-success" id="pvbTotalVenta"></h3>
 
+                @* Resultado de la factura electronica recien emitida (lo completa mostrarModalPostVenta en POS.cshtml
+                   con lo que deja factura-electronica.js). Oculto si la venta no se facturo en este paso. *@
+                <div id="pvbFacturaRegistrada" class="alert alert-success d-none mb-3 py-2" role="status" style="border:2px solid #198754;">
+                    <div class="font-weight-bold" style="font-size:1.75rem;line-height:1.2;">
+                        <i class="fas fa-file-invoice mr-2"></i><span id="pvbFacturaTitulo"></span>
+                    </div>
+                    <div class="font-weight-bold" style="font-size:1.25rem;" id="pvbFacturaDetalle"></div>
+                </div>
                 <div class="d-flex flex-column" style="gap:.5rem;">
                     <button type="button" class="btn btn-success" id="btnPvbContinuar">
                         <span class="badge badge-light mr-1">1</span>

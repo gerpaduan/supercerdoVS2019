@@ -936,11 +936,22 @@
             .done(function (resp) {
                 if (resp && resp.ok) {
                     const esActualizacion = isYaEmitida() || resp.updated === true;
-                    Swal.fire({
-                        icon: 'success',
-                        title: esActualizacion ? 'Factura actualizada' : 'Factura registrada',
-                        text: esActualizacion ? (resp.msg || 'Los cambios se guardaron correctamente.') : ('Nro: ' + (resp.nro || ''))
-                    });
+                    const tituloFactura = esActualizacion ? 'Factura actualizada correctamente' : 'Factura registrada correctamente';
+                    const detalleFactura = esActualizacion ? (resp.msg || 'Los cambios se guardaron correctamente.') : ('Nro: ' + (resp.nro || ''));
+
+                    // En el POS el resultado se muestra resaltado DENTRO del modal "Venta completada"
+                    // (pedido del usuario 2026-09-25: un solo modal en vez de dos, el aviso de factura
+                    // no tapa al de venta). POS.cshtml lo consume en mostrarModalPostVenta. En las demas
+                    // pantallas (listado de facturas, detalle) no existe ese modal: se mantiene el aviso.
+                    if (document.getElementById('modalPostVentaBasico')) {
+                        window.__pvbFacturaResultado = { titulo: tituloFactura, detalle: detalleFactura };
+                    } else {
+                        Swal.fire({
+                            icon: 'success',
+                            title: tituloFactura,
+                            text: detalleFactura
+                        });
+                    }
 
                     // Bug real (2026-09-11, ver docs/DECISIONS.md): el evento se disparaba
                     // sincronicamente justo despues de pedir el hide, pero modal('hide') de

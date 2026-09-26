@@ -3098,6 +3098,21 @@ else
 
             // ===== Ticket termico HTML (58/80mm), 2026-09-06 (pedido explicito del usuario -- ver
             // docs/DECISIONS.md) =====
+                // Si se acaba de emitir/actualizar una factura, se resalta aca (un solo modal en vez de un
+                // aviso aparte). Se consume una sola vez: la proxima venta sin factura no lo muestra.
+                var facturaResultado = window.__pvbFacturaResultado;
+                window.__pvbFacturaResultado = null;
+                if (facturaResultado) {
+                    $("#pvbFacturaTitulo").text(facturaResultado.titulo);
+                    $("#pvbFacturaDetalle").text(facturaResultado.detalle || "");
+                    $("#pvbFacturaRegistrada").removeClass("d-none");
+                    // El titulo grande de la factura reemplaza al renglon "Venta registrada correctamente".
+                    $("#pvbResumenVenta").addClass("d-none");
+                } else {
+                    $("#pvbFacturaRegistrada").addClass("d-none");
+                    $("#pvbResumenVenta").removeClass("d-none");
+                }
+
             $("#btnPvbTicket").on("click", function () {
                 var ventaId = $(this).data("venta-id");
                 var mmRecordado = pvbObtenerMedidaTicket();
