@@ -521,8 +521,8 @@ namespace DatosPostgres
         private void EjecutarAgregarCortePorCompra(CortePorCompra oCorteE, NpgsqlConnection con, NpgsqlTransaction tx)
         {
                     using (var cmdIns = new NpgsqlCommand(@"
-                        INSERT INTO corteporcompra (idcompra, idcorte, idsucursal, preciokg, cantkg, balanza, creado, creadopor, idempresa)
-                        VALUES (@idCompra, @idCorte, @idSucursal, @precioKg, @cantKg, @balanza, @creado, @creadoPor, @idEmpresa);", con, tx))
+                        INSERT INTO corteporcompra (idcompra, idcorte, idsucursal, preciokg, cantkg, balanza, creado, creadopor, idempresa, nocontado)
+                        VALUES (@idCompra, @idCorte, @idSucursal, @precioKg, @cantKg, @balanza, @creado, @creadoPor, @idEmpresa, @noContado);", con, tx))
                     {
                         cmdIns.Parameters.AddWithValue("idCompra", oCorteE.Compra.IdCompra);
                         cmdIns.Parameters.AddWithValue("idCorte", oCorteE.Corte.idCorte);
@@ -533,6 +533,7 @@ namespace DatosPostgres
                         cmdIns.Parameters.AddWithValue("creado", (object)oCorteE.Creado ?? DBNull.Value);
                         cmdIns.Parameters.AddWithValue("creadoPor", oCorteE.CreadoPor != null ? oCorteE.CreadoPor.Id : 0);
                         cmdIns.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                        cmdIns.Parameters.AddWithValue("noContado", oCorteE.NoContado);
                         cmdIns.ExecuteNonQuery();
                     }
 
@@ -607,7 +608,7 @@ namespace DatosPostgres
         {
             const string sql = @"
                 SELECT cpc.idcorteporcompra, cpc.idcorte, co.codigo, co.corte, cpc.cantkg, cpc.preciokg,
-                       cpc.cantkg * cpc.preciokg AS totals, cpc.balanza, cpc.idsucursal, s.sucursal, cpc.creado, cpc.creadopor
+                       cpc.cantkg * cpc.preciokg AS totals, cpc.balanza, cpc.idsucursal, s.sucursal, cpc.creado, cpc.creadopor, cpc.nocontado
                 FROM corteporcompra cpc
                 INNER JOIN corte co ON cpc.idcorte = co.idcorte
                 INNER JOIN sucursal s ON cpc.idsucursal = s.idsucursal

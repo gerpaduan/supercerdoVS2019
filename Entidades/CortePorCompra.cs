@@ -108,5 +108,6 @@ namespace Entidades
         public bool ActualizarPrecioVenta { get => actualizarPrecioVenta; set => actualizarPrecioVenta = value; }
         public float Desc_recargo { get => desc_recargo; set => desc_recargo = value; }
         public float Iva_compra { get => iva_compra; set => iva_compra = value; }
+        public bool NoContado { get; set; }
     }
 }

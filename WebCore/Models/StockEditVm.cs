@@ -121,5 +121,7 @@ namespace WebCore.Models
         public int? IdPesajeVinculado { get; set; }
 
         public string PesajeVinculadoTexto { get; set; } = "";
+
+        public bool NoContado { get; set; }
     }
 }

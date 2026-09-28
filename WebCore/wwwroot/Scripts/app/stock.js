@@ -610,6 +610,7 @@
             html += '<input type="hidden" name="Lineas[' + index + '].Pesable" value="' + (linea.pesable ? 'true' : 'false') + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].IdPesajeVinculado" value="' + escapeHtml(linea.idPesajeVinculado || 0) + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].PesajeVinculadoTexto" value="' + escapeHtml(linea.pesajeVinculadoTexto || '') + '"/>';
+            html += '<input type="hidden" name="Lineas[' + index + '].NoContado" value="' + (linea.noContado ? 'true' : 'false') + '"/>';
         });
 
         $container.html(html);

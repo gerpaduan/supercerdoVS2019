@@ -21,3 +21,7 @@ Con `BorradorGenerico:Habilitado` (Postgres: prendido por defecto; SQL Server: o
 - **Stock** guarda con un POST tradicional (`StockController.Guardar`, `RedirectToAction`, no AJAX): el `clientId` del borrador viaja en un campo hidden (`BorradorGenericoClientId`) y el servidor marca el borrador `FINALIZADA` (`MarcarBorradorGenericoFinalizado`, mejor esfuerzo) al guardar, porque no hay respuesta JSON donde el navegador pueda hacerlo. Botón "Stock sin cerrar" junto a "Volver".
 - **Movimientos** guarda por AJAX (`MovimientosController.Guardar` devuelve JSON): el propio JS (`movimientos.js`) marca el borrador finalizado tras la respuesta exitosa. Botón "Movimientos sin cerrar" junto a "Imprimir".
 - En ambos, cualquier operador de la sucursal ve los borradores sin cerrar del módulo y puede recuperar/descartar los propios; uno ajeno exige autorización de supervisor.
+
+## Cierre de Stock: productos "no contado"
+
+En `Stock/Editar`, el modal "Productos no cargados" completa en bloque los productos con `Corte.EnCierreStock=true` que el operador nunca escaneó/tipeó durante el conteo (con el stock actual, o en 0). Esas líneas quedan marcadas `NoContado=true` (columna `noContado`/`nocontado` en `dbo.CortePorCompra`/`corteporcompra`, ver bitácora 2026-09-28) y se muestran con un badge "No contado" en la grilla, tanto al cargar como al reabrir el registro guardado. Las líneas cargadas a mano (escaneo/código+Enter, o vinculación de pesajes) siempre quedan en `false`.

@@ -366,6 +366,7 @@ namespace Datos
                     p.AddWithValue("@balanza", oCorteE.Balanza);
                     p.AddWithValue("@creado", oCorteE.Creado);
                     p.AddWithValue("@creadoPor", oCorteE.CreadoPor != null ? oCorteE.CreadoPor.Id : 0);
+                    p.AddWithValue("@noContado", oCorteE.NoContado);
                 }
             );
         }

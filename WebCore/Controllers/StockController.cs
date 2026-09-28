@@ -453,7 +453,8 @@ namespace WebCore.Controllers
                     Balanza = linea.Balanza,
                     Sucursal = sucursal,
                     Creado = creadoLinea,
-                    CreadoPor = usuarioCreador
+                    CreadoPor = usuarioCreador,
+                    NoContado = linea.NoContado
                 });
             }
 
@@ -1539,7 +1540,8 @@ namespace WebCore.Controllers
                     CreadoTexto = FormatearFechaHora(corte.Creado),
                     Pesable = corte.Corte != null && corte.Corte.Pesable,
                     IdPesajeVinculado = null,
-                    PesajeVinculadoTexto = ""
+                    PesajeVinculadoTexto = "",
+                    NoContado = corte.NoContado
                 });
             }
 
