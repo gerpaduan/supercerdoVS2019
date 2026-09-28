@@ -81,3 +81,13 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* .text-gray-700 no esta definido ni cubierto por ningun CSS que cargue
+       _LayoutPOS.cshtml (solo existe en ui-refresh.css, scopeado a
+       body.app-shell) -- las etiquetas "Sucursal"/"Fecha y hora"/"Caja
+       inicial" quedaban en gris oscuro fijo sobre el fondo oscuro del modal. */
+    html.dark-mode #modalAbrirCaja .text-gray-700 {
+        color: #cbd8ea !important;
+    }
+</div>

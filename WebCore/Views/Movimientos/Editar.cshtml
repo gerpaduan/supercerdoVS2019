@@ -519,6 +519,17 @@
         opacity: 1;
     }
 
+    /* Mismo tratamiento que .app-product-highlight (custom.css), que ya tiene esta variante --
+       este input propio del modulo de Movimientos nunca la heredo. */
+    html.dark-mode .movimiento-page .movimiento-producto-highlight,
+    html.dark-mode .movimiento-page .movimiento-producto-highlight[readonly] {
+        color: var(--ui-text, #ecf2ff) !important;
+        -webkit-text-fill-color: var(--ui-text, #ecf2ff);
+        background: var(--ui-input-bg, #1d293a) !important;
+        border-color: var(--ui-border, #3d5168) !important;
+        opacity: 1;
+    }
+
     .movimiento-page .movimiento-btn-add {
         width: 100%;
     }

@@ -1018,6 +1018,16 @@
             text-shadow: none !important;
         }
 
+        /* La regla de arriba tiene !important + un ID: le gana en especificidad al override
+           generico "html.dark-mode body .modal .modal-title" de pos.css (3 clases, sin ID), asi
+           que el titulo "Cuentas Corrientes" (F2) y la "x" quedaban en gris azulado oscuro sobre
+           el fondo oscuro del modal -- practicamente invisibles. Se agrega la variante con
+           especificidad igual (mismo ID) para que gane en modo oscuro. */
+        html.dark-mode #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-title,
+        html.dark-mode #modalFinanzasPOS.modal-ctasctes-pos-compacto .close {
+            color: #ecf2ff !important;
+        }
+
         #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-title {
             font-weight: 700;
         }

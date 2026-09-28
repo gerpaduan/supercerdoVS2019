@@ -2689,3 +2689,160 @@
         background: #d8e7f7 !important;
         color: #1b2d41 !important;
     }
+
+    /* Bloque de descuento/recargo % (#bloquePorcentajeTotalVenta en
+       _FormaPagoModal.cshtml) usa bg-light de Bootstrap (fondo claro fijo) sin
+       clase propia -- el bloque "MODALES DARK - POS" de arriba solo cubre
+       modal-header.bg-light y btn-light, no un bg-light suelto en el body.
+       Sin esto el texto queda con el color claro heredado del modal-body
+       (#ecf2ff) sobre ese fondo claro: invisible (ver docs/DECISIONS.md,
+       "Modo oscuro: fondos claros con texto ilegible"). */
+    html.dark-mode body .modal .modal-body .bg-light {
+        background: #132032 !important;
+        border-color: #2a3b52 !important;
+        color: #ecf2ff !important;
+    }
+
+    /* =========================================================
+     PANELES CLAROS COMPARTIDOS (custom.css) FUERA DE UN .modal
+     ========================================================= */
+    /* .egresos-filtros, .egresos-pos-toolbar, .egreso-form-wrap,
+       .egreso-form-head, .egreso-card y .egresos-resumen > div (custom.css)
+       tienen fondo claro fijo (#fff/#f8f9fc) sin variante oscura propia. En
+       las pantallas de POS (Mis actividades/Mis ventas/Nuevo Egreso) se
+       muestran dentro de un SweetAlert2 (no un .modal Bootstrap), asi que las
+       reglas "MODALES DARK - POS" de arriba tampoco les llegan. Sus hijos ya
+       tenian override de texto claro (ej. mis-actividades-vendedor, en
+       _MisEgresosCaja.cshtml) que asumia un fondo oscuro que nunca llegaba a
+       aplicarse -- texto claro sobre fondo claro, ilegible (mismo patron
+       repetido en 4+ elementos, ver docs/DECISIONS.md). */
+    html.dark-mode .egresos-filtros,
+    html.dark-mode .egresos-pos-toolbar,
+    html.dark-mode .egreso-form-wrap,
+    html.dark-mode .egreso-form-head,
+    html.dark-mode .egreso-card {
+        background: #132032 !important;
+        border-color: #2a3b52 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .egresos-resumen > div {
+        background: #132032 !important;
+        border-color: #2a3b52 !important;
+    }
+
+    /* .egreso-form-wrap NO esta dentro de .egresos-pos (es un partial aparte,
+       _AddOrEditEgresoCaja.cshtml, mostrado solo via SweetAlert2), asi que no
+       hereda el ".egresos-pos .text-muted{color:#97a7bd}" de _MisEgresosCaja.cshtml.
+       Sin esto, .text-muted usa el color por defecto de Bootstrap 5
+       (rgba(33,37,41,.75), pensado para fondo claro) sobre el fondo oscuro de
+       arriba: "Vendedor"/"Sucursal" casi invisibles (verificado con
+       getComputedStyle). */
+    html.dark-mode .egreso-form-wrap .text-muted,
+    html.dark-mode .egreso-form-wrap small.text-muted,
+    html.dark-mode .egreso-form-wrap .small.text-muted {
+        color: #97a7bd !important;
+    }
+
+    /* Texto de las tarjetas mobile de egresos (.egresos-cards-mobile): tenian
+       color fijo pensado para el fondo claro de arriba; con .egreso-card ya
+       oscuro por la regla anterior, se ajustan para seguir siendo legibles. */
+    html.dark-mode .egreso-card-line,
+    html.dark-mode .egreso-card-detail {
+        color: #cbd8ea !important;
+    }
+
+    html.dark-mode .egreso-card-detail {
+        border-top-color: #2a3b52 !important;
+    }
+
+    html.dark-mode .egreso-card-foot {
+        color: #97a7bd !important;
+    }
+
+    /* =========================================================
+     DROPDOWNS DEL TOPBAR POS (campana "ventas sin guardar" y menu de usuario,
+     _LayoutPOS.cshtml) -- sin ninguna cobertura oscura (grep confirma que
+     .dropdown-menu/.dropdown-item/.dropdown-header/.dropdown-divider no
+     aparecen en pos.css ni pos-expendio.css). El unico override existente
+     (ui-refresh.css) esta scopeado a body.app-shell, que POS no usa: quedaba
+     un rectangulo blanco de Bootstrap flotando sobre el header oscuro.
+     ========================================================= */
+    html.dark-mode .dropdown-menu {
+        background: #1a2b40 !important;
+        border: 1px solid #2f4d69 !important;
+        color: #ecf2ff !important;
+        box-shadow: 0 18px 42px rgba(2, 6, 23, .42) !important;
+    }
+
+    html.dark-mode .dropdown-item {
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .dropdown-item:hover,
+    html.dark-mode .dropdown-item:focus {
+        background: #223449 !important;
+        color: #f4f9ff !important;
+    }
+
+    html.dark-mode .dropdown-item.disabled,
+    html.dark-mode .dropdown-item:disabled {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .dropdown-header {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .dropdown-divider {
+        border-color: #2f4d69 !important;
+    }
+
+    /* =========================================================
+     MODAL "SELECCIONAR USUARIO" (_ModalSeleccionUsuario.cshtml, compartido --
+     se abre al iniciar el POS cuando requiereOperadorPOS es true). La lista
+     de usuarios usa el fondo blanco default de .list-group-item de Bootstrap;
+     no se toca .list-group-item en general (lo usan listados que hoy quedan
+     bien en blanco a proposito, ej. la lista de "Mis ventas"), se acota a
+     esta lista puntual por su clase propia.
+     ========================================================= */
+    html.dark-mode .seleccion-usuario-lista .list-group-item {
+        background: #132032 !important;
+        border-color: #2a3b52 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .seleccion-usuario-lista .list-group-item:hover,
+    html.dark-mode .seleccion-usuario-lista .list-group-item:focus {
+        background: #1a2b40 !important;
+    }
+
+    /* =========================================================
+     ALERT-DANGER / ALERT-SUCCESS EN POS -- el bloque de modales de arriba solo
+     cubre alert-info/alert-warning. custom.css les da color de texto fijo
+     (legible igual, ver docs/DECISIONS.md) pero quedan como parche claro fijo
+     en un modal oscuro; se agrega variante oscura por consistencia con
+     info/warning, mismo criterio de paleta.
+     ========================================================= */
+    html.dark-mode .alert-danger {
+        background: rgba(140, 44, 44, .22) !important;
+        border-color: rgba(199, 84, 84, .35) !important;
+        color: #ffd6d6 !important;
+    }
+
+    html.dark-mode .alert-success {
+        background: rgba(29, 111, 82, .22) !important;
+        border-color: rgba(43, 141, 105, .32) !important;
+        color: #c7f3e1 !important;
+    }
+
+    /* Banners alert-warning fuera de un .modal (ej. #alertaCajaCerradaPOS en
+     Ventas/POS.cshtml, "no hay sectores" en PuntosExpendio/POS.cshtml): el
+     override existente esta scopeado a "body .modal .alert-warning" y no les
+     llega. Regla sin ese scope (no reemplaza a la de dentro de modal, coincide
+     en color). */
+    html.dark-mode .alert-warning {
+        background: rgba(118, 92, 37, .22) !important;
+        border-color: rgba(186, 146, 57, .30) !important;
+        color: #f7e6b5 !important;
+    }

@@ -13,6 +13,19 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-09-28 - Modo oscuro: auditoria completa de toda la app (segunda pasada)
+
+- **Sintoma**: a pedido del usuario ("modo oscuro en todos los campos, analiza cada pantalla"), se audito el resto de la app (no solo POS): dropdowns de filtros, modal Cuentas Corrientes del POS, modal de apertura de caja, modal de seleccion de usuario, filas de stock/cuenta corriente, tarjeta de Pago/Cobro.
+- **Causa**: mismo patron de siempre (fondo claro fijo + texto que hereda de una variable clara) mas un caso nuevo: `--bs-dropdown-link-color` (variable nativa de Bootstrap 5.3) nunca se redefinia para dark mode, igual que ya pasaba con `--bs-table-bg`. Detalle completo, archivo por archivo, en `docs/DECISIONS.md` (2026-09-28, "auditoria completa").
+- **Nota de proceso**: 3 hallazgos de la auditoria automatica eran falsos positivos (verificados con un harness real antes de tocar codigo) y se descartaron sin cambios.
+- **Fix**: reglas `html.dark-mode` nuevas en `ui-refresh.css` (variables `--bs-dropdown-*`) y `pos.css`, mas overrides puntuales en 8 vistas. Verificado con harness estatico + `getComputedStyle` (y hover real via `computer.hover` para descartar falsos positivos de `:hover`), no con la app completa corriendo.
+
+## 2026-09-28 - Modo oscuro en POS: texto ilegible sobre fondo claro (Mis actividades, Nuevo Egreso, Mis ventas, Forma de Pago)
+
+- **Sintoma**: en el POS, con modo oscuro activo, varios paneles ("Mis actividades", "Nuevo Egreso de Caja", "Mis ventas", el bloque de descuento % de "Seleccione la Forma de Pago") mostraban texto casi invisible (texto claro sobre fondo claro).
+- **Causa**: paneles definidos en `custom.css` con fondo claro fijo (`.egresos-pos-toolbar`, `.egreso-form-wrap`, `.egreso-form-head`, `.egreso-card`, `.egresos-resumen > div`) sin variante oscura en `pos.css`, mas un `bg-light` de Bootstrap suelto sin cubrir dentro de un modal. Detalle completo en `docs/DECISIONS.md` (2026-09-28).
+- **Fix**: nuevas reglas `html.dark-mode` en `pos.css` para esos selectores y para `.text-muted` dentro de `.egreso-form-wrap`. Verificado con un harness estatico (CSS reales + `getComputedStyle`), no con la app completa.
+
 ## 2026-09-26 - Alta rapida de persona (modal "Nueva persona" del POS/Compras) se guardaba sin condicion frente al IVA
 
 - **Sintoma**: en POS/Compras > buscar persona > "Nueva persona", el alta (manual o tras traer datos de ARCA sin IVA reconocible) se guardaba con IVA vacio (0), a diferencia de Personas/Editar que lo exige.

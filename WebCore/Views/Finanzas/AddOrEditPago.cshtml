@@ -1266,7 +1266,7 @@
         display: flex; align-items: center; gap: .7rem; text-align: left;
         padding: .6rem .85rem; cursor: pointer;
         border: 2px solid var(--pago-op-color); border-radius: .75rem;
-        background: var(--bs-body-bg, #fff); color: inherit;
+        background: var(--ui-surface, #fff); color: inherit;
         transition: background-color .15s, box-shadow .15s, transform .1s;
     }
     #addOrEditPagoContainer .pago-op-pago { --pago-op-color: #dc3545; --pago-op-suave: #fdecee; }
@@ -1282,6 +1282,11 @@
     #addOrEditPagoContainer .pago-op-card kbd {
         background: #fff; color: #495057; border: 1px solid #ced4da; border-bottom-width: 2px;
         border-radius: .3rem; padding: 0 .3rem; font-size: .7rem; box-shadow: none;
+    }
+    html.dark-mode #addOrEditPagoContainer .pago-op-card kbd {
+        background: var(--ui-surface-alt, #1d293a);
+        color: var(--ui-text, #ecf2ff);
+        border-color: var(--ui-border, #3d5168);
     }
     #addOrEditPagoContainer .pago-op-card:hover,
     #addOrEditPagoContainer .pago-op-card:focus-visible { background: var(--pago-op-suave); box-shadow: 0 .2rem .55rem rgba(0,0,0,.12); outline: none; }
@@ -1320,6 +1325,25 @@
         color: #212529;
         font-weight: 600;
     }
+
+    /* La regla de arriba tiene un ID (#addOrEditPagoContainer) y le gana en especificidad al
+       override oscuro generico de ui-refresh.css (body.app-shell .form-control[readonly], sin ID) --
+       predata el trabajo de modo oscuro y nunca tuvo variante propia: todos los campos de un pago
+       existente quedaban en gris claro fijo hasta apretar "Modificar". */
+    html.dark-mode #addOrEditPagoContainer.pago-solo-lectura .form-control[readonly],
+    html.dark-mode #addOrEditPagoContainer.pago-solo-lectura .form-control:disabled,
+    html.dark-mode #addOrEditPagoContainer.pago-solo-lectura select:disabled,
+    html.dark-mode #addOrEditPagoContainer.pago-solo-lectura textarea[readonly] {
+        background-color: var(--ui-input-disabled, #223044);
+        color: var(--ui-text, #ecf2ff);
+        -webkit-text-fill-color: var(--ui-text, #ecf2ff);
+        border-color: var(--ui-border, #3d5168);
+    }
+
+    html.dark-mode #addOrEditPagoContainer.pago-solo-lectura .custom-control-input:disabled ~ .custom-control-label {
+        color: var(--ui-text, #ecf2ff);
+    }
+
     /* en solo lectura no se pueden quitar cheques ni agregar otros */
     #addOrEditPagoContainer.pago-solo-lectura #tablaCheques .btn { display: none; }
 </style>

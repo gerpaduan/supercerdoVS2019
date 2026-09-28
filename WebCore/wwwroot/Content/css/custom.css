@@ -126,6 +126,23 @@ a > code {
     background-color: #f1dfd8;
 }
 
+/* .table-danger no fija su propio color de texto (queda el rojo oscuro fijo que trae Bootstrap
+   para esta variante) -- en modo oscuro sigue siendo legible, pero es un parche rosado claro
+   fijo en una tabla oscura (custom.css se carga tanto en el layout normal como en POS, asi que
+   se corrige aca en vez de en ui-refresh.css/pos.css por separado). */
+html.dark-mode .table-danger,
+html.dark-mode .table-danger > td,
+html.dark-mode .table-danger > th {
+    background-color: #3b1f1a;
+    color: #ffd9d0;
+}
+
+html.dark-mode .table-hover .table-danger:hover,
+html.dark-mode .table-hover .table-danger:hover > td,
+html.dark-mode .table-hover .table-danger:hover > th {
+    background-color: #4a2820;
+}
+
 .app-product-highlight {
     font-size: .92rem !important;
     font-weight: 700 !important;

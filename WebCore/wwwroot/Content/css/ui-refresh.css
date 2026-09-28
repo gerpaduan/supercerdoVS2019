@@ -71,6 +71,12 @@ body.app-shell.dark-mode {
     --ui-table-hover: #1f2d41;
     --ui-input-bg: #132032;
     --ui-input-disabled: #223044;
+    /* Bootstrap 5 pinta .form-control:disabled con background-color: var(--bs-secondary-bg), que
+       nunca se redefinia para dark mode (mismo patron que --bs-table-bg/--bs-dropdown-*) -- hoy es
+       inofensivo porque las reglas .form-control:disabled/[readonly] de mas abajo usan
+       --ui-input-disabled directo con mas especificidad, pero un .form-control:disabled fuera de
+       ese alcance heredaria el fondo claro fijo de Bootstrap. Se redefine por las dudas. */
+    --bs-secondary-bg: #223044;
     --ui-topbar-bg: rgba(24, 34, 50, 0.9);
     --ui-sidebar-start: #0d1f44;
     --ui-sidebar-end: #0b1730;
@@ -386,6 +392,28 @@ body.app-shell .table td,
 body.app-shell .table th {
     border-color: var(--ui-border);
     vertical-align: middle;
+}
+
+/* Mismo bug que --bs-table-bg de arriba, pero en dropdowns (Bootstrap 5.3): un <button
+   class="dropdown-item"> (ej. "Todas las formas de pago" en el filtro de Ventas/Index y
+   Facturas) usa color: var(--bs-dropdown-link-color), que nunca se redefine para .dark-mode --
+   texto oscuro fijo sobre el fondo oscuro de .dropdown-menu (var(--ui-surface) de la regla
+   generica de arriba). Confirmado con getComputedStyle: sin esto el texto queda casi invisible.
+   Se pisan las variables de Bootstrap (no el selector .dropdown-item celda por celda) para que
+   :hover/:active/:disabled sigan funcionando, mismo criterio que .table. */
+html.dark-mode body.app-shell .dropdown-menu,
+body.app-shell.dark-mode .dropdown-menu {
+    --bs-dropdown-bg: var(--ui-surface);
+    --bs-dropdown-color: var(--ui-text);
+    --bs-dropdown-border-color: var(--ui-border);
+    --bs-dropdown-link-color: var(--ui-text);
+    --bs-dropdown-link-hover-color: var(--ui-text);
+    --bs-dropdown-link-hover-bg: var(--ui-table-hover);
+    --bs-dropdown-link-active-color: #ffffff;
+    --bs-dropdown-link-active-bg: var(--ui-primary);
+    --bs-dropdown-link-disabled-color: var(--ui-text-muted);
+    --bs-dropdown-header-color: var(--ui-text-muted);
+    --bs-dropdown-divider-bg: var(--ui-border);
 }
 
 /* Primera columna fija al desplazar horizontalmente (.js-sticky-first-col). El markup de las

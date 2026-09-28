@@ -1035,6 +1035,15 @@
             background-color: #fafafa;
         }
 
+        /* En modo oscuro, Bootstrap deja --bs-table-bg en transparent (ver ui-refresh.css) para
+           que .table-striped/.table-hover sigan funcionando -- eso deja pasar el fondo claro fijo
+           de arriba, con el texto de la celda en var(--ui-text) (claro): ilegible. Mismo criterio
+           que el fix ya existente para #tablaPorcCortesStock (11 lineas mas abajo). */
+        html.dark-mode #tablaNoCargadosStock tbody tr:nth-child(even) td {
+            background-color: #2f3541;
+            color: #f8f9fc;
+        }
+
         #tablaNoCargadosStock tbody tr + tr td {
             border-top: 1px solid #e9ecef;
         }

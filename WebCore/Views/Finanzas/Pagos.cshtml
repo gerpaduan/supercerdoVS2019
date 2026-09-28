@@ -118,8 +118,22 @@
 <style>
     #tablaPagos td, #tablaPagos th { white-space: nowrap; }
     .pagos-tabla { font-size: .88rem; }
-    .pagos-fila-eliminado { background-color: #fdf0f0; color: #6c757d; }
     .pagos-importe-eliminado { text-decoration: line-through; }
+
+    /* Bug real encontrado al verificar el modo oscuro (2026-09-28, ver docs/DECISIONS.md): Bootstrap
+       5.3 le da a cada <td> su propio background-color/color via variables (--bs-table-bg/--bs-table-color,
+       ver comentario en ui-refresh.css) -- un background-color/color puesto en la <tr> (como estaba
+       antes) nunca llegaba a verse, en NINGUN tema: el resaltado rosado de "fila eliminada" jamas se
+       mostro, tampoco en modo claro. Se apunta directo al <td> en los dos temas. */
+    .pagos-fila-eliminado td {
+        background-color: #fdf0f0 !important;
+        color: #6c757d !important;
+    }
+
+    html.dark-mode .pagos-fila-eliminado td {
+        background-color: #3a2426 !important;
+        color: #c9b8ba !important;
+    }
 </style>
 
 <script>
