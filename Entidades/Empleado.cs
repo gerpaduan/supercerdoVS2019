@@ -23,10 +23,6 @@ namespace Entidades
         public Persona Persona { get; set; }
         public Usuario Usuario { get; set; }
 
-        // Codigo interno de busqueda/filtro, distinto del CUIT/DNI (que ya vive en
-        // Persona.Identificacion). Unico por empresa.
-        public string Legajo { get; set; }
-
         public formaLiquidacion FormaLiquidacion { get; set; }
 
         public DateTime FechaIngreso { get; set; }

@@ -8,7 +8,12 @@
 }
 
 <div class="container-fluid empleados-editar-page">
-    <h4 class="mb-3">@ViewBag.Title</h4>
+    <h4 class="mb-3">
+        @ViewBag.Title
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoEmpleadoEditar" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
 
     @if (!ViewData.ModelState.IsValid)
     {
@@ -111,11 +116,7 @@
             <div class="card-header">Datos del empleado</div>
             <div class="card-body">
                 <div class="form-row">
-                    <div class="form-group col-md-3">
-                        <label>Legajo</label>
-                        <input type="text" name="Legajo" value="@Model.Legajo" class="form-control" required />
-                    </div>
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-4">
                         <label>Forma de liquidación</label>
                         <select name="FormaLiquidacion" class="form-control">
                             @if (formasLiquidacion != null)
@@ -127,11 +128,11 @@
                             }
                         </select>
                     </div>
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-4">
                         <label>Fecha de ingreso</label>
                         <input type="date" name="FechaIngreso" value="@Model.FechaIngreso.ToString("yyyy-MM-dd")" class="form-control" />
                     </div>
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-4">
                         <label>Activo</label>
                         <select name="Activo" class="form-control">
                             <option value="true" selected="@Model.Activo">Sí</option>
@@ -219,6 +220,22 @@
    DispositivosSeguros/Index.cshtml): un modal con position:fixed anidado dentro del wrapper de
    contenido del layout queda atrapado por su stacking context y no se ve. Cargan igual la clase
    "empleados-editar-page" para heredar el mismo tamaño compacto del resto de la vista. *@
+<div class="modal fade empleados-editar-page" id="modalInfoEmpleadoEditar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Alta/Edición de empleado" (admin)</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Vinculá una Persona existente (para la cuenta corriente) y un Usuario existente (con el que ese empleado va a fichar) mediante los buscadores — no se puede asociar una persona o usuario que ya esté vinculado a otro empleado.</p>
+                <p>La forma de liquidación define cómo se calcula el sueldo: por hora/jornada/media jornada requieren que el empleado registre su asistencia (ver Jornadas); semana/quincena/mes son de importe fijo por período.</p>
+                <p>Las tarifas son siempre un importe fijo (nunca porcentaje) y tienen vigencia desde una fecha — se puede cargar una general, una por turno, una por día de la semana, y una para "Feriado" (se usa cuando la marcación está marcada como feriada, antes que la del día real).</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (!Model.EsEdicion)
 {
     <div class="modal fade empleados-editar-page" id="modalBuscarPersonaEmpleado" tabindex="-1" role="dialog" aria-hidden="true">

@@ -229,6 +229,121 @@ public sealed class FormaPagoModalLayoutTests
         await page.CloseAsync();
     }
 
+    // Atajo "+" del Pago Mixto (2026-09-30, ver docs/DECISIONS.md "Modal Forma de Pago: atajo +
+    // para Pago Mixto"): activa/desactiva el interruptor desde cualquier lado del modal -- incluso
+    // con el foco dentro de un input, sin escribir el "+" en el campo -- y la leyenda chica guia al
+    // cajero (el mixto siempre incluye Efectivo).
+    [Fact]
+    public async Task VentasPOS_ModalFormaPago_AtajoMasActivaYDesactivaPagoMixto_ConLeyendaGuia()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        await AbrirModalFormaPagoAsync(page);
+
+        var leyenda = page.Locator("#lblAtajoPagoMixto");
+        Assert.True(await leyenda.IsVisibleAsync());
+        Assert.Contains("+", await leyenda.InnerTextAsync());
+
+        await page.Keyboard.PressAsync("+");
+        await page.WaitForTimeoutAsync(600);
+        Assert.True(await page.IsCheckedAsync("#chkPagoMixto"));
+        Assert.True(await page.Locator("#bloquePagoMixto").IsVisibleAsync());
+        Assert.Contains("además de Efectivo", await leyenda.InnerTextAsync());
+
+        // Con el foco dentro de un input tambien funciona, y el "+" no se escribe en el campo.
+        await page.FocusAsync("#montoEfectivo");
+        await page.Keyboard.PressAsync("+");
+        await page.WaitForTimeoutAsync(600);
+        Assert.False(await page.IsCheckedAsync("#chkPagoMixto"));
+        Assert.False(await page.Locator("#bloquePagoMixto").IsVisibleAsync());
+        Assert.Equal("", await page.InputValueAsync("#montoEfectivo"));
+        Assert.Contains("+", await leyenda.InnerTextAsync());
+
+        await page.CloseAsync();
+    }
+
+    // Al elegir el 2do medio en pago mixto, el foco pasa a Efectivo (el cajero tipea lo recibido).
+    [Fact]
+    public async Task VentasPOS_ModalFormaPago_PagoMixto_AlElegirSegundoMedioElFocoVaAEfectivo()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        await AbrirModalFormaPagoAsync(page);
+
+        await page.Keyboard.PressAsync("+");
+        await page.WaitForTimeoutAsync(600);
+        await page.ClickAsync("#modalFormaPago .btn-forma-pago[data-tipo='Debito']");
+        await page.WaitForTimeoutAsync(300);
+
+        Assert.Equal("montoEfectivo", await page.EvaluateAsync<string>("() => document.activeElement && document.activeElement.id"));
+        Assert.Contains("efectivo recibido", await page.Locator("#lblAtajoPagoMixto").InnerTextAsync());
+
+        await page.CloseAsync();
+    }
+
+    // Con Pago Mixto + descuento desplegados a la vez, el modal-body no debe necesitar scroll
+    // interno en un viewport desktop realista (1366x720), y los botones se compactan mientras
+    // alguno de los dos bloques esta abierto y vuelven a su altura normal al cerrar ambos.
+    [Fact]
+    public async Task VentasPOS_ModalFormaPago_ConMixtoYDescuento_SinScrollInterno_YCompactaBotones()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1366, Height = 720 }
+        });
+        await AbrirModalFormaPagoAsync(page);
+
+        var botonEfectivo = page.Locator("#modalFormaPago .btn-forma-pago[data-tipo='Efectivo']");
+        var alturaNormal = (await botonEfectivo.BoundingBoxAsync())!.Height;
+
+        await page.Keyboard.PressAsync("+");
+        await page.WaitForTimeoutAsync(600);
+        Assert.True(await page.Locator("#modalFormaPago").EvaluateAsync<bool>("el => el.classList.contains('pos-modal-compacto')"));
+        var alturaCompacta = (await botonEfectivo.BoundingBoxAsync())!.Height;
+        Assert.True(alturaCompacta < alturaNormal,
+            $"El boton deberia achicarse con el pago mixto activo (normal={alturaNormal}px, compacto={alturaCompacta}px).");
+
+        await page.ClickAsync("#btnTogglePorcentajeTotalVenta");
+        await page.WaitForTimeoutAsync(400);
+        await page.ClickAsync("#modalFormaPago .btn-forma-pago[data-tipo='Debito']");
+        await page.WaitForTimeoutAsync(400);
+
+        var medidas = await page.EvaluateAsync<double[]>(
+            "() => { var el = document.querySelector('#modalFormaPago .modal-body'); return [el.scrollHeight, el.clientHeight]; }");
+        Assert.True(medidas[0] <= medidas[1] + 1,
+            $"El modal-body tiene scroll interno con mixto + descuento (scrollHeight={medidas[0]}, clientHeight={medidas[1]}) -- revisar el compacto v2 en _FormaPagoModal.cshtml.");
+
+        // Cerrar el descuento: el mixto sigue activo, el modal sigue compacto. Cerrar el mixto: normal.
+        await page.ClickAsync("#btnTogglePorcentajeTotalVenta");
+        await page.WaitForTimeoutAsync(400);
+        Assert.True(await page.Locator("#modalFormaPago").EvaluateAsync<bool>("el => el.classList.contains('pos-modal-compacto')"));
+
+        await page.ClickAsync("label[for='chkPagoMixto']");
+        await page.WaitForTimeoutAsync(600);
+        Assert.False(await page.Locator("#modalFormaPago").EvaluateAsync<bool>("el => el.classList.contains('pos-modal-compacto')"));
+        var alturaTrasCerrar = (await botonEfectivo.BoundingBoxAsync())!.Height;
+        Assert.True(System.Math.Abs(alturaTrasCerrar - alturaNormal) < 2,
+            $"El boton deberia volver a su altura normal (esperado ~{alturaNormal}px, obtuvo {alturaTrasCerrar}px).");
+
+        await page.CloseAsync();
+    }
+
+    // Carga 1 producto y abre el modal de forma de pago con "End" (mismo flujo que los demas tests).
+    private static async Task AbrirModalFormaPagoAsync(IPage page)
+    {
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Ventas/POS", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(500);
+
+        await page.FillAsync("#inputCodigo", "1");
+        await page.Keyboard.PressAsync("Enter");
+        await page.WaitForTimeoutAsync(600);
+        await page.FillAsync("#inputCantidad", "1");
+        await page.Keyboard.PressAsync("Enter");
+        await page.WaitForTimeoutAsync(600);
+
+        await page.Keyboard.PressAsync("End");
+        await page.WaitForTimeoutAsync(600);
+        Assert.Equal(1, await page.Locator("#modalFormaPago.show").CountAsync());
+    }
+
     // Etiqueta visible del atajo "/" (mismo item): antes solo estaba como title (tooltip on-hover).
     [Fact]
     public async Task VentasPOS_ModalFormaPago_EtiquetaDeAtajoDescuentoEsVisible()

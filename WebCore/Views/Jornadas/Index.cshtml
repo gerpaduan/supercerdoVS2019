@@ -1,10 +1,16 @@
 @model WebCore.Models.JornadasIndexVm
 @{
     ViewBag.Title = "Jornadas";
+    var nombresPorUsuario = ViewBag.NombresPorUsuario as Dictionary<int, string> ?? new Dictionary<int, string>();
 }
 
 <div class="container-fluid jornadas-index-page">
-    <h4 class="mb-3">Jornadas</h4>
+    <h4 class="mb-3">
+        Jornadas
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoJornadas" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
 
     @if (Model.CorreccionesPendientes != null && Model.CorreccionesPendientes.Count > 0)
     {
@@ -15,16 +21,43 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">
-                    <thead class="thead-light"><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Motivo</th><th>Corregido el</th></tr></thead>
+                    <thead class="thead-light"><tr><th>Marcación del</th><th>Tipo</th><th>Antes</th><th>Motivo</th><th>Quién / cuándo</th></tr></thead>
                     <tbody>
-                        @foreach (var r in Model.CorreccionesPendientes)
+                        @foreach (var h in Model.CorreccionesPendientes.OrderByDescending(h => h.FechaEvento))
                         {
                             <tr>
-                                <td>@r.Fecha.ToString("dd/MM/yyyy")</td>
-                                <td>@(r.HoraEntrada?.ToString(@"hh\:mm") ?? "-")</td>
-                                <td>@(r.HoraSalida?.ToString(@"hh\:mm") ?? "-")</td>
-                                <td>@r.MotivoCorreccion</td>
-                                <td>@(r.Actualizado?.ToString("dd/MM/yyyy HH:mm") ?? "(fichaje con motivo)")</td>
+                                <td>@h.FechaRegistroJornada.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    @if (h.TipoEvento == Entidades.RegistroJornadaHistorial.tipoEvento.Correccion)
+                                    {
+                                        <span class="badge badge-warning">Corrección</span>
+                                    }
+                                    else if (h.TipoEvento == Entidades.RegistroJornadaHistorial.tipoEvento.AltaManualPropia)
+                                    {
+                                        <span class="badge badge-info">Autoreporte del empleado</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">Alta manual (admin)</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (h.TipoEvento == Entidades.RegistroJornadaHistorial.tipoEvento.Correccion)
+                                    {
+                                        <span>
+                                            @(h.TurnoAnterior?.ToString() ?? "-") /
+                                            @(h.HoraEntradaAnterior?.ToString(@"hh\:mm") ?? "-")-@(h.HoraSalidaAnterior?.ToString(@"hh\:mm") ?? "-") /
+                                            @(h.CantidadAnterior?.ToString("0.##") ?? "-") /
+                                            @(h.EsFeriadoAnterior == true ? "feriado" : "no feriado")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">(marcación nueva)</span>
+                                    }
+                                </td>
+                                <td>@h.Motivo</td>
+                                <td>@(nombresPorUsuario.TryGetValue(h.ModificadoPor, out var nom) ? nom : ("#" + h.ModificadoPor)) — @h.FechaEvento.ToString("dd/MM/yyyy HH:mm")</td>
                             </tr>
                         }
                     </tbody>
@@ -33,29 +66,46 @@
         </div>
     }
 
+    @{
+        var primerDiaEsteMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var primerDiaMesAnterior = primerDiaEsteMes.AddMonths(-1);
+        var ultimoDiaMesAnterior = primerDiaEsteMes.AddDays(-1);
+    }
     <div class="card shadow-sm mb-3">
         <div class="card-body">
-            <form asp-controller="Jornadas" asp-action="Index" method="get" class="form-inline">
+            <form asp-controller="Jornadas" asp-action="Index" method="get" class="form-inline mb-2">
                 <label class="mr-2">Empleado</label>
-                <select name="idEmpleado" class="form-control mr-3" onchange="this.form.submit()">
+                <select id="selEmpleado" name="idEmpleado" class="form-control mr-3" onchange="location.href = '@Url.Action("Index")' + (this.value ? '?idEmpleado=' + this.value : '')">
                     <option value="">-- Elegir --</option>
                     @foreach (var e in Model.Empleados)
                     {
-                        <option value="@e.Id" selected="@(Model.IdEmpleadoSeleccionado == e.Id)">@e.RazonSocial (@e.Legajo)</option>
+                        <option value="@e.Id" selected="@(Model.IdEmpleadoSeleccionado == e.Id)">@WebCore.Helpers.EmpleadoDisplay.NombreConIdentificacion(e.RazonSocial, e.Identificacion)</option>
                     }
                 </select>
                 <label class="mr-2">Desde</label>
                 <input type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" class="form-control mr-3" />
                 <label class="mr-2">Hasta</label>
                 <input type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" class="form-control mr-3" />
-                <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+                <button type="submit" class="btn btn-outline-secondary">Filtrar (otro período)</button>
             </form>
+            @if (Model.IdEmpleadoSeleccionado.HasValue)
+            {
+                <a class="btn btn-sm btn-outline-secondary mr-1" href="@Url.Action("Index", new { idEmpleado = Model.IdEmpleadoSeleccionado, desde = primerDiaEsteMes.ToString("yyyy-MM-dd"), hasta = DateTime.Today.ToString("yyyy-MM-dd") })">Este mes</a>
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { idEmpleado = Model.IdEmpleadoSeleccionado, desde = primerDiaMesAnterior.ToString("yyyy-MM-dd"), hasta = ultimoDiaMesAnterior.ToString("yyyy-MM-dd") })">Mes anterior</a>
+            }
         </div>
     </div>
 
+    @if (Model.IdEmpleadoSeleccionado.HasValue && !string.IsNullOrEmpty(Model.ResumenTotales))
+    {
+        <p class="text-muted">@Model.ResumenTotales</p>
+    }
+
     @if (Model.IdEmpleadoSeleccionado.HasValue)
     {
-        <div class="card shadow-sm">
+        bool esHora = Model.FormaLiquidacionSeleccionado == Entidades.Empleado.formaLiquidacion.Hora.ToString();
+
+        <div class="card shadow-sm mb-3">
             <div class="card-body p-0">
                 <table class="table table-bordered mb-0">
                     <thead class="thead-light">
@@ -70,23 +120,61 @@
                         {
                             foreach (var r in Model.Registros)
                             {
-                                <tr>
-                                    <td>@r.Fecha.ToString("dd/MM/yyyy")</td>
-                                    <td>@(r.Turno == Entidades.Turno.Manana ? "Mañana" : r.Turno == Entidades.Turno.Tarde ? "Tarde" : "-")</td>
+                                // Hora no guarda Turno: se infiere solo para mostrar, por la hora de
+                                // entrada (00-12 manana, 12-24 tarde) -- no se persiste ni participa
+                                // del calculo de tarifa (Hora no distingue turno, ver Negocio/Empleado.cs).
+                                string turnoTexto = r.Turno == Entidades.Turno.Manana ? "Mañana"
+                                    : r.Turno == Entidades.Turno.Tarde ? "Tarde"
+                                    : r.HoraEntrada.HasValue ? (r.HoraEntrada.Value.Hours < 12 ? "Mañana" : "Tarde")
+                                    : "-";
+
+                                // Para Hora, "Cantidad" no se guarda ni se usa al liquidar (las horas
+                                // se derivan de entrada/salida, ver Negocio.LiquidacionSueldo.CalcularHora)
+                                // -- se muestra un valor calculado en su lugar, solo informativo.
+                                decimal? horasCalculadas = esHora && r.HoraEntrada.HasValue && r.HoraSalida.HasValue && r.HoraSalida > r.HoraEntrada
+                                    ? (decimal)(r.HoraSalida.Value - r.HoraEntrada.Value).TotalHours
+                                    : (decimal?)null;
+
+                                <tr class="@(r.EsFeriado ? "table-warning" : "")">
+                                    <td>
+                                        @r.Fecha.ToString("dd/MM/yyyy")
+                                        @if (r.EsFeriado)
+                                        {
+                                            <span class="badge badge-warning ml-1">Feriado</span>
+                                        }
+                                    </td>
+                                    <td>@turnoTexto</td>
                                     <td>@(r.HoraEntrada?.ToString(@"hh\:mm") ?? "-")</td>
                                     <td>@(r.HoraSalida?.ToString(@"hh\:mm") ?? "-")</td>
-                                    <td>@(r.Cantidad?.ToString("0.##") ?? "-")</td>
+                                    <td>@(esHora ? (horasCalculadas?.ToString("0.##") ?? "-") : (r.Cantidad?.ToString("0.##") ?? "-"))</td>
                                     <td>
-                                        <form asp-controller="Jornadas" asp-action="Corregir" method="post" class="form-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="idRegistroJornada" value="@r.Id" />
-                                            <input type="hidden" name="idEmpleadoVolver" value="@Model.IdEmpleadoSeleccionado" />
-                                            <input type="time" name="horaEntrada" value="@(r.HoraEntrada?.ToString(@"hh\:mm"))" class="form-control form-control-sm mr-1" style="width:100px;" />
-                                            <input type="time" name="horaSalida" value="@(r.HoraSalida?.ToString(@"hh\:mm"))" class="form-control form-control-sm mr-1" style="width:100px;" />
-                                            <input type="number" step="0.5" name="cantidad" value="@r.Cantidad" class="form-control form-control-sm mr-1" style="width:80px;" />
-                                            <input type="text" name="motivo" class="form-control form-control-sm mr-1" placeholder="Motivo (obligatorio)" required style="width:160px;" />
-                                            <button type="submit" class="btn btn-sm btn-outline-warning">Corregir</button>
-                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-warning btn-desplegar-correccion" data-bs-toggle="collapse" data-bs-target="#corregir-@r.Id" aria-expanded="false" aria-controls="corregir-@r.Id">
+                                            Corregir <i class="fas fa-chevron-down ml-1"></i>
+                                        </button>
+                                        <div class="collapse mt-2" id="corregir-@r.Id">
+                                            <form asp-controller="Jornadas" asp-action="Corregir" method="post" class="form-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="idRegistroJornada" value="@r.Id" />
+                                                <input type="hidden" name="idEmpleadoVolver" value="@Model.IdEmpleadoSeleccionado" />
+                                                <select name="turno" class="form-control form-control-sm mr-1" style="width:100px;">
+                                                    <option value="">(sin turno)</option>
+                                                    <option value="@Entidades.Turno.Manana" selected="@(r.Turno == Entidades.Turno.Manana)">Mañana</option>
+                                                    <option value="@Entidades.Turno.Tarde" selected="@(r.Turno == Entidades.Turno.Tarde)">Tarde</option>
+                                                </select>
+                                                <input type="time" name="horaEntrada" value="@(r.HoraEntrada?.ToString(@"hh\:mm"))" class="form-control form-control-sm mr-1" style="width:100px;" />
+                                                <input type="time" name="horaSalida" value="@(r.HoraSalida?.ToString(@"hh\:mm"))" class="form-control form-control-sm mr-1" style="width:100px;" />
+                                                @if (!esHora)
+                                                {
+                                                    <input type="number" step="0.5" name="cantidad" value="@(r.Cantidad?.ToString(System.Globalization.CultureInfo.InvariantCulture))" class="form-control form-control-sm mr-1" style="width:80px;" title="Cantidad de jornadas/medias jornadas" />
+                                                }
+                                                <div class="form-check mr-1">
+                                                    <input type="checkbox" name="esFeriado" value="true" class="form-check-input" checked="@r.EsFeriado" />
+                                                    <label class="form-check-label">Feriado</label>
+                                                </div>
+                                                <input type="text" name="motivo" class="form-control form-control-sm mr-1" placeholder="Motivo (obligatorio)" required style="width:160px;" />
+                                                <button type="submit" class="btn btn-sm btn-warning">Guardar corrección</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -95,7 +183,79 @@
                 </table>
             </div>
         </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">Agregar una marcación olvidada de este empleado</div>
+            <div class="card-body">
+                <form asp-controller="Jornadas" asp-action="AgregarRegistro" method="post" class="form-row align-items-end">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="idEmpleado" value="@Model.IdEmpleadoSeleccionado" />
+                    <div class="form-group col-md-2">
+                        <label>Fecha</label>
+                        <input type="date" name="fecha" class="form-control form-control-sm" required />
+                    </div>
+                    @if (esHora)
+                    {
+                        <div class="form-group col-md-2">
+                            <label>Entrada</label>
+                            <input type="time" name="horaEntrada" class="form-control form-control-sm" />
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label>Salida</label>
+                            <input type="time" name="horaSalida" class="form-control form-control-sm" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-group col-md-2">
+                            <label>Turno</label>
+                            <select name="turno" class="form-control form-control-sm">
+                                <option value="@Entidades.Turno.Manana">Mañana</option>
+                                <option value="@Entidades.Turno.Tarde">Tarde</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label>Cantidad</label>
+                            <input type="number" step="0.5" name="cantidad" value="1" class="form-control form-control-sm" />
+                        </div>
+                    }
+                    <div class="form-group col-md-1 mb-2">
+                        <div class="form-check">
+                            <input type="checkbox" name="esFeriado" value="true" class="form-check-input" />
+                            <label class="form-check-label">Feriado</label>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Motivo (obligatorio)</label>
+                        <input type="text" name="motivo" class="form-control form-control-sm" required placeholder="¿Por qué se carga manualmente?" />
+                    </div>
+                    <div class="form-group col-md-2 mb-2">
+                        <button type="submit" class="btn btn-sm btn-warning">Agregar marcación</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     }
+</div>
+
+<div class="modal fade" id="modalInfoJornadas" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable jornadas-index-page">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Jornadas" (admin)</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Elegí un empleado: por defecto el rango arranca en su última liquidación confirmada (o los últimos 14 días si todavía no tiene ninguna). "Este mes"/"Mes anterior" son atajos rápidos; "Filtrar (otro período)" permite elegir cualquier fecha desde/hasta a mano.</p>
+                <p>El botón "Corregir ▾" de cada fila despliega el formulario de esa marcación: turno, horas, cantidad (solo para Jornada/MediaJornada — en empleados por Hora las horas se calculan solas por la diferencia entrada/salida) y feriado. El motivo es siempre obligatorio para corregir.</p>
+                <p>Los días marcados como feriado se resaltan en amarillo con la etiqueta "Feriado" junto a la fecha — hace que esa marcación use la tarifa de feriado del empleado (si existe una configurada) en vez de la del día real, al liquidar.</p>
+                <p>El resumen arriba de la tabla ("Total del período") incluye un estimado de sueldo cuando el empleado tiene alguna tarifa configurada — es solo una cuenta aproximada (no agrupa feriados por separado ni suma vacaciones/líneas manuales): la liquidación real se calcula en la pantalla de Liquidaciones.</p>
+                <p>"Agregar una marcación olvidada" carga una marcación nueva para el empleado seleccionado (por ejemplo, si nunca fichó ese día) — acá sí podés marcarla como feriado, a diferencia de cuando el propio empleado carga un día olvidado desde "Mi jornada" (ahí nunca puede quedar como feriado).</p>
+                <p>"Correcciones pendientes de revisar" es el historial completo: cada corrección o alta manual queda con una foto de cómo estaba antes, quién la hizo y por qué — si la misma marcación se corrigió varias veces, se ven todas, no solo la última. Revisalo antes de liquidar a un empleado.</p>
+                <p>Desde la pantalla de Liquidación hay un link directo a esta pantalla, ya filtrado por empleado y período.</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -121,6 +281,14 @@
 
     .jornadas-index-page .table {
         font-size: .84rem;
+    }
+
+    .jornadas-index-page .btn-desplegar-correccion .fa-chevron-down {
+        transition: transform .15s ease;
+    }
+
+    .jornadas-index-page .btn-desplegar-correccion[aria-expanded="true"] .fa-chevron-down {
+        transform: rotate(180deg);
     }
 
     .jornadas-index-page .table th,

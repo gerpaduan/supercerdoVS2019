@@ -4,7 +4,12 @@
 }
 
 <div class="container-fluid fichaje-page">
-    <h4 class="mb-3 text-center">Fichaje de entrada / salida</h4>
+    <h4 class="mb-3 text-center">
+        Fichaje
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoFichaje" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
 
     @if (!Model.DispositivoHabilitado)
     {
@@ -15,11 +20,11 @@
     }
     else if (Model.Empleados == null || Model.Empleados.Count == 0)
     {
-        <div class="alert alert-secondary text-center">No hay empleados por hora activos para fichar.</div>
+        <div class="alert alert-secondary text-center">No hay empleados activos que registren jornada.</div>
     }
     else
     {
-        <p class="text-center text-muted">Tocá dos veces tu nombre para registrar tu entrada o salida.</p>
+        <p class="text-center text-muted">Tocá tu nombre para registrar tu entrada/salida o cargar tu jornada de hoy.</p>
         <div class="row">
             @foreach (var e in Model.Empleados)
             {
@@ -29,13 +34,31 @@
                         <div class="card-body">
                             <i class="fas fa-user-circle fa-3x mb-2 text-gray-500"></i>
                             <div class="font-weight-bold">@e.Nombre</div>
-                            <div class="small text-muted">@e.Legajo</div>
+                            @if (!string.IsNullOrWhiteSpace(e.Identificacion) && !string.Equals(e.Identificacion.Trim(), e.Nombre.Trim(), StringComparison.OrdinalIgnoreCase))
+                            {
+                                <div class="small text-muted">@e.Identificacion</div>
+                            }
                         </div>
                     </a>
                 </div>
             }
         </div>
     }
+</div>
+
+<div class="modal fade" id="modalInfoFichaje" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Fichaje"</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Esta pantalla es para un dispositivo compartido (tablet/mostrador) habilitado por un administrador. Tocá tu nombre para ir a confirmar tu marcación: si cobrás por hora, tu ingreso o egreso; si cobrás por jornada o media jornada, el turno de hoy.</p>
+                <p>Si el dispositivo no está habilitado, pedile a un administrador que lo active desde Configuración &gt; Dispositivos seguros.</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>

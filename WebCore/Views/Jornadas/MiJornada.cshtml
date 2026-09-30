@@ -4,7 +4,12 @@
 }
 
 <div class="container-fluid mi-jornada-page">
-    <h4 class="mb-3">Mi jornada — @Model.EmpleadoNombre</h4>
+    <h4 class="mb-3">
+        Mi jornada — @Model.EmpleadoNombre
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoMiJornada" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
 
     @if (!string.IsNullOrEmpty(Model.VacacionAvisoHasta))
     {
@@ -51,45 +56,14 @@
         </div>
 
         <div class="card shadow-sm mb-3">
-            <div class="card-header">Jornada activa (desde @Model.JornadaActivaDesde.ToString("dd/MM/yyyy") hasta hoy, estimado — no es una liquidación confirmada)</div>
+            <div class="card-header">@Model.MarcacionesTitulo</div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">
-                    <thead class="thead-light"><tr><th>Concepto</th><th>Cantidad</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
-                    <tbody>
-                        @if (Model.JornadaActivaDetalle == null || Model.JornadaActivaDetalle.Count == 0)
-                        {
-                            <tr><td colspan="4" class="text-center text-muted py-3">Todavía no hay marcaciones en este período.</td></tr>
-                        }
-                        else
-                        {
-                            foreach (var d in Model.JornadaActivaDetalle)
-                            {
-                                <tr>
-                                    <td>@d.Concepto</td>
-                                    <td>@d.Cantidad.ToString("0.##")</td>
-                                    <td>$@d.ValorUnitario.ToString("N2")</td>
-                                    <td>$@d.Subtotal.ToString("N2")</td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                    @if (Model.JornadaActivaDetalle != null && Model.JornadaActivaDetalle.Count > 0)
-                    {
-                        <tfoot><tr class="font-weight-bold"><td colspan="3" class="text-right">Total estimado</td><td>$@Model.JornadaActivaTotalEstimado.ToString("N2")</td></tr></tfoot>
-                    }
-                </table>
-            </div>
-        </div>
-
-        <div class="card shadow-sm">
-            <div class="card-header">Marcaciones recientes (últimos 14 días)</div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <thead class="thead-light"><tr><th>Fecha</th><th>Turno</th><th>Entrada</th><th>Salida</th><th>Cantidad</th></tr></thead>
+                    <thead class="thead-light"><tr><th>Fecha</th><th>Turno</th><th>Entrada</th><th>Salida</th><th>Cantidad</th><th>Observación</th></tr></thead>
                     <tbody>
                         @if (Model.MarcacionesRecientes == null || Model.MarcacionesRecientes.Count == 0)
                         {
-                            <tr><td colspan="5" class="text-center text-muted py-3">No hay marcaciones recientes.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-3">No hay marcaciones recientes.</td></tr>
                         }
                         else
                         {
@@ -101,6 +75,7 @@
                                     <td>@(m.HoraEntrada?.ToString(@"hh\:mm") ?? "-")</td>
                                     <td>@(m.HoraSalida?.ToString(@"hh\:mm") ?? "-")</td>
                                     <td>@(m.Cantidad?.ToString("0.##") ?? "-")</td>
+                                    <td>@(string.IsNullOrEmpty(m.Observaciones) ? "-" : m.Observaciones)</td>
                                 </tr>
                             }
                         }
@@ -108,7 +83,72 @@
                 </table>
             </div>
         </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#colAgregarPropio">
+                    ¿Te olvidaste de fichar un día anterior? Cargalo acá
+                </button>
+            </div>
+            <div class="collapse" id="colAgregarPropio">
+                <div class="card-body">
+                    <form asp-controller="Jornadas" asp-action="AgregarPropio" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="form-row">
+                            <div class="form-group col-md-3">
+                                <label>Fecha</label>
+                                <input type="date" name="fecha" class="form-control form-control-sm" required max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            </div>
+                            @if (Model.FormaLiquidacion == Entidades.Empleado.formaLiquidacion.Hora)
+                            {
+                                <div class="form-group col-md-2">
+                                    <label>Entrada</label>
+                                    <input type="time" name="horaEntrada" class="form-control form-control-sm" />
+                                </div>
+                                <div class="form-group col-md-2">
+                                    <label>Salida</label>
+                                    <input type="time" name="horaSalida" class="form-control form-control-sm" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="form-group col-md-3">
+                                    <label>Turno</label>
+                                    <select name="turno" class="form-control form-control-sm">
+                                        <option value="@Entidades.Turno.Manana">Mañana</option>
+                                        <option value="@Entidades.Turno.Tarde">Tarde</option>
+                                    </select>
+                                </div>
+                            }
+                            <div class="form-group col-md-5">
+                                <label>Motivo (obligatorio)</label>
+                                <input type="text" name="motivo" class="form-control form-control-sm" required placeholder="¿Por qué lo cargás fuera de hora?" />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-warning">Cargar marcación</button>
+                        <small class="text-muted d-block mt-1">Esta carga queda marcada como autoreportada — la revisa un administrador antes de liquidar.</small>
+                    </form>
+                </div>
+            </div>
+        </div>
     }
+</div>
+
+<div class="modal fade" id="modalInfoMiJornada" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable mi-jornada-page">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Mi jornada"</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Acá marcás tu propia jornada de hoy: si cobrás por hora, "Marcar entrada"/"Marcar salida"; si cobrás por jornada o media jornada, elegís el turno (Mañana o Tarde) que trabajaste.</p>
+                <p>Esa tabla muestra tus marcaciones desde tu última liquidación confirmada (o los últimos 14 días si todavía no tenés ninguna), sin mostrar ningún monto de sueldo.</p>
+                <p>Si te olvidaste de fichar un día anterior, usá "¿Te olvidaste de fichar...?" más abajo: pedí la fecha real y un motivo (siempre obligatorio ahí). Esa carga queda identificada como cargada por vos mismo, y no podés marcarla como feriado — eso lo decide un administrador.</p>
+                <p>Si tu dispositivo (tablet/mostrador) está habilitado para fichar sin loguearte cada vez, también podés usar la pantalla "Fichaje" para marcar tu jornada ahí.</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>

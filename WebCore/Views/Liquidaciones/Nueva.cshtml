@@ -4,7 +4,12 @@
 }
 
 <div class="container-fluid liquidaciones-nueva-page">
-    <h4 class="mb-3">Nueva liquidación</h4>
+    <h4 class="mb-3">
+        Nueva liquidación
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoLiquidacionNueva" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
 
     <div class="card shadow-sm">
         <div class="card-body">
@@ -17,7 +22,7 @@
                             <option value="">-- Elegir --</option>
                             @foreach (var e in Model.Empleados)
                             {
-                                <option value="@e.Id" selected="@(Model.IdEmpleado == e.Id)">@e.RazonSocial (@e.Legajo)</option>
+                                <option value="@e.Id" selected="@(Model.IdEmpleado == e.Id)">@WebCore.Helpers.EmpleadoDisplay.NombreConIdentificacion(e.RazonSocial, e.Identificacion)</option>
                             }
                         </select>
                     </div>
@@ -38,6 +43,21 @@
                     La hora sirve para cuando hace falta cortar un período a mitad de jornada.
                 </small>
             </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalInfoLiquidacionNueva" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable liquidaciones-nueva-page">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Nueva liquidación" (admin)</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Elegí el empleado y el período a liquidar. No puede superponerse con un período ya confirmado para ese mismo empleado.</p>
+                <p>Al calcular, el sistema arma el detalle a partir de sus marcaciones de asistencia (si su forma de pago las requiere) o de su sueldo fijo por período — la pantalla siguiente permite revisar y ajustar ese detalle antes de confirmar.</p>
+            </div>
         </div>
     </div>
 </div>

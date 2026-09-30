@@ -16,7 +16,6 @@ namespace Contratos
         void Editar(Entidades.Empleado empleado);
         void SetActivo(int idEmpleado, int idEmpresa, bool activo);
 
-        bool ExisteLegajo(string legajo, int idEmpresa, int idExcluir);
         bool ExistePersonaVinculada(int idPersona, int idEmpresa, int idExcluir);
         bool ExisteUsuarioVinculado(int idUsuario, int idEmpresa, int idExcluir);
 

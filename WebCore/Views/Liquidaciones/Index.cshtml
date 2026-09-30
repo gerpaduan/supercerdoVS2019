@@ -5,7 +5,12 @@
 
 <div class="container-fluid liquidaciones-index-page">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-        <h4 class="mb-0">Liquidación de sueldos</h4>
+        <h4 class="mb-0">
+            Liquidación de sueldos
+            <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoLiquidacionesIndex" title="Cómo usar esta pantalla">
+                <i class="fas fa-info-circle"></i>
+            </button>
+        </h4>
         @if (Model.PuedeAdministrar)
         {
             <a class="btn btn-primary" href="@Url.Action("Nueva", "Liquidaciones", new { idEmpleado = Model.IdEmpleadoSeleccionado })">
@@ -22,7 +27,7 @@
                     <option value="">-- Elegir --</option>
                     @foreach (var e in Model.Empleados)
                     {
-                        <option value="@e.Id" selected="@(Model.IdEmpleadoSeleccionado == e.Id)">@e.RazonSocial (@e.Legajo)</option>
+                        <option value="@e.Id" selected="@(Model.IdEmpleadoSeleccionado == e.Id)">@WebCore.Helpers.EmpleadoDisplay.NombreConIdentificacion(e.RazonSocial, e.Identificacion)</option>
                     }
                 </select>
             </form>
@@ -74,6 +79,21 @@
             </div>
         </div>
     }
+</div>
+
+<div class="modal fade" id="modalInfoLiquidacionesIndex" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable liquidaciones-index-page">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Liquidación de sueldos" (admin)</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Elegí un empleado para ver sus liquidaciones ya generadas. "Nueva liquidación" arma el cálculo de un período nuevo a partir de sus marcaciones de asistencia y/o su sueldo fijo, según su forma de pago.</p>
+                <p>"Eliminar" solo está disponible para liquidaciones confirmadas: genera el asiento contrario en la cuenta corriente del empleado y libera el período para poder recalcularlo (por ejemplo, si después se corrige una marcación de esos días en Jornadas).</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>

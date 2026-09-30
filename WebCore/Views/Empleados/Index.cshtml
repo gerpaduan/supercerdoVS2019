@@ -4,9 +4,15 @@
 }
 
 <div class="container-fluid empleados-index-page">
+    <h4 class="mb-2">
+        Empleados
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoEmpleadosIndex" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <form asp-controller="Empleados" asp-action="Index" method="get" class="form-inline mr-2">
-            <input type="text" name="texto" value="@Model.Texto" class="form-control mr-2" placeholder="Buscar por legajo o nombre" />
+            <input type="text" name="texto" value="@Model.Texto" class="form-control mr-2" placeholder="Buscar por nombre, identificación o CUIT" />
             <button type="submit" class="btn btn-outline-secondary">Buscar</button>
         </form>
         @if (Model.PuedeAdministrar)
@@ -23,8 +29,7 @@
                 <table class="table table-hover table-bordered mb-0">
                     <thead class="thead-light">
                         <tr>
-                            <th style="width:100px;">Legajo</th>
-                            <th>Nombre</th>
+                            <th>Empleado</th>
                             <th>Usuario</th>
                             <th style="width:140px;">Forma de pago</th>
                             <th style="width:90px;">Activo</th>
@@ -35,7 +40,7 @@
                         @if (Model.Items == null || Model.Items.Count == 0)
                         {
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">No hay empleados para mostrar.</td>
+                                <td colspan="5" class="text-center text-muted py-4">No hay empleados para mostrar.</td>
                             </tr>
                         }
                         else
@@ -43,8 +48,7 @@
                             foreach (var item in Model.Items)
                             {
                                 <tr>
-                                    <td>@item.Legajo</td>
-                                    <td>@item.RazonSocial</td>
+                                    <td>@WebCore.Helpers.EmpleadoDisplay.NombreConIdentificacion(item.RazonSocial, item.Identificacion)</td>
                                     <td>@item.UsuarioLogin</td>
                                     <td>@item.FormaLiquidacion</td>
                                     <td class="text-center">
@@ -72,6 +76,22 @@
                         }
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalInfoEmpleadosIndex" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable empleados-index-page">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Empleados" (admin)</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Listado de empleados, con búsqueda por nombre, identificación o CUIT. "Modificar" edita sus datos, tarifas y forma de pago; "Vacaciones" carga sus períodos de vacaciones; "Historial" muestra sus liquidaciones ya confirmadas.</p>
+                <p>"Dar de baja" desactiva al empleado y a su usuario asociado (no fichará más ni podrá liquidarse); "Reactivar" lo vuelve a habilitar.</p>
+                <p>Para ver o corregir sus marcaciones de asistencia día a día, usá la pantalla Jornadas; para calcularle un sueldo, usá Liquidaciones.</p>
             </div>
         </div>
     </div>

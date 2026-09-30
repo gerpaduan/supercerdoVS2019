@@ -4,18 +4,30 @@
 }
 
 <div class="container-fluid empleados-historial-page">
-    <h4 class="mb-3">Historial — @Model.EmpleadoNombre</h4>
+    <h4 class="mb-3">
+        Historial — @Model.EmpleadoNombre
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoHistorial" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
 
+    @{
+        var primerDiaEsteMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var primerDiaMesAnterior = primerDiaEsteMes.AddMonths(-1);
+        var ultimoDiaMesAnterior = primerDiaEsteMes.AddDays(-1);
+    }
     <div class="card shadow-sm mb-3">
         <div class="card-body">
-            <form asp-controller="Empleados" asp-action="Historial" method="get" class="form-inline">
+            <form asp-controller="Empleados" asp-action="Historial" method="get" class="form-inline mb-2">
                 <input type="hidden" name="id" value="@Model.IdEmpleado" />
                 <label class="mr-2">Desde</label>
                 <input type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" class="form-control mr-3" />
                 <label class="mr-2">Hasta</label>
                 <input type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" class="form-control mr-3" />
-                <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+                <button type="submit" class="btn btn-outline-secondary">Filtrar (otro período)</button>
             </form>
+            <a class="btn btn-sm btn-outline-secondary mr-1" href="@Url.Action("Historial", new { id = Model.IdEmpleado, desde = primerDiaEsteMes.ToString("yyyy-MM-dd"), hasta = DateTime.Today.ToString("yyyy-MM-dd") })">Este mes</a>
+            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Historial", new { id = Model.IdEmpleado, desde = primerDiaMesAnterior.ToString("yyyy-MM-dd"), hasta = ultimoDiaMesAnterior.ToString("yyyy-MM-dd") })">Mes anterior</a>
         </div>
     </div>
 
@@ -79,6 +91,22 @@
     </div>
 
     <a href="@Url.Action("Index", "Empleados")" class="btn btn-outline-secondary mt-3">Volver</a>
+</div>
+
+<div class="modal fade" id="modalInfoHistorial" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable empleados-historial-page">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Historial" (admin)</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>"Este mes"/"Mes anterior" son atajos rápidos para el rango de fechas; "Filtrar (otro período)" permite elegir cualquier fecha desde/hasta a mano.</p>
+                <p>"Tarifas" muestra todo el historial de tarifas cargadas al empleado (nunca se borran, cada cambio agrega una nueva vigente desde una fecha) — la fila que aplica en un momento dado es la más reciente con "Vigente desde" anterior o igual a esa fecha, para el turno/día que corresponda.</p>
+                <p>"Liquidaciones en el período" muestra los sueldos ya calculados/confirmados de este empleado dentro del rango de fechas filtrado.</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>

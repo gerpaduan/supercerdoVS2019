@@ -15,7 +15,7 @@ namespace WebCore.Models
     public class EmpleadoResumenVm
     {
         public int Id { get; set; }
-        public string Legajo { get; set; } = "";
+        public string Identificacion { get; set; } = "";
         public string RazonSocial { get; set; } = "";
         public string UsuarioLogin { get; set; } = "";
         public string FormaLiquidacion { get; set; } = "";
@@ -52,9 +52,6 @@ namespace WebCore.Models
         public string UsuarioNombre { get; set; } = "";
         public string UsuarioLogin { get; set; } = "";
         public string UsuarioClave { get; set; } = "";
-
-        [Required(ErrorMessage = "El legajo es obligatorio.")]
-        public string Legajo { get; set; } = "";
 
         public Entidades.Empleado.formaLiquidacion FormaLiquidacion { get; set; }
         public DateTime FechaIngreso { get; set; } = DateTime.Today;

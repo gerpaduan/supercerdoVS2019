@@ -4,7 +4,12 @@
 }
 
 <div class="container-fluid empleados-vacaciones-page">
-    <h4 class="mb-3">Vacaciones — @Model.EmpleadoNombre</h4>
+    <h4 class="mb-3">
+        Vacaciones — @Model.EmpleadoNombre
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoVacaciones" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
     <p class="text-muted small">
         Mientras dure un período cargado acá, "Mi Jornada" no le exige al empleado marcar asistencia, y una liquidación
         que incluya esas fechas suma automáticamente una línea de "Vacaciones" pagada a la tarifa vigente del empleado
@@ -63,6 +68,21 @@
     </div>
 
     <a href="@Url.Action("Index", "Empleados")" class="btn btn-outline-secondary mt-3">Volver</a>
+</div>
+
+<div class="modal fade" id="modalInfoVacaciones" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable empleados-vacaciones-page">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Vacaciones" (admin)</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Cargá un período de vacaciones del empleado con fecha desde/hasta. Mientras dura ese período, "Mi jornada" no le exige marcar asistencia esos días.</p>
+                <p>Si una liquidación incluye fechas dentro de un período cargado acá, se suma automáticamente una línea de "Vacaciones" pagada a la tarifa vigente del empleado (cálculo simplificado, no reproduce la fórmula legal exacta).</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>

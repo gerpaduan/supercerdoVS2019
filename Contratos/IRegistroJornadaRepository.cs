@@ -16,15 +16,19 @@ namespace Contratos
         int Agregar(Entidades.RegistroJornada registro);
 
         // Completa la salida de un registro abierto con la hora real de fichaje -- flujo normal,
-        // NO cuenta como correccion (no marca Actualizado). Distinto de Editar.
-        void CompletarSalida(int id, int idEmpresa, TimeSpan horaSalida);
+        // NO cuenta como correccion (no marca Actualizado). Distinto de Editar. observaciones: nota
+        // libre opcional del empleado al fichar la salida (ver Entidades/RegistroJornada.cs).
+        void CompletarSalida(int id, int idEmpresa, TimeSpan horaSalida, string observaciones);
 
         // Corrige un registro ya cargado (valor distinto al original, o "Modificar hora" con
         // motivo): siempre marca Actualizado/ActualizadoPor/MotivoCorreccion.
         void Editar(Entidades.RegistroJornada registro);
 
-        // Registros con Actualizado o MotivoCorreccion no nulos -- "Correcciones pendientes de
-        // revisar" en la vista admin de Jornadas. idEmpleado null = todos los de la empresa.
-        List<Entidades.RegistroJornada> ListarCorreccionesPendientes(int idEmpresa, int? idEmpleado);
+        // Historial de auditoria (2026-09-30): una fila por cada correccion o alta manual, nunca se
+        // pisa una entrada anterior. RegistrarHistorial se llama ANTES de aplicar el cambio (guarda
+        // el estado "anterior"). ListarHistorial alimenta "Correcciones pendientes de revisar" en
+        // Jornadas/Index -- idEmpleado null = todos los de la empresa.
+        void RegistrarHistorial(Entidades.RegistroJornadaHistorial evento);
+        List<Entidades.RegistroJornadaHistorial> ListarHistorial(int idEmpresa, int? idEmpleado);
     }
 }

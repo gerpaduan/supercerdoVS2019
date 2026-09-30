@@ -460,7 +460,9 @@ namespace WebCore.Controllers
             Entidades.Permisos.Venta.UltimaVenta, Entidades.Permisos.Venta.GetAllLineaVenta,
             Entidades.Permisos.Finanza.VerCheques, Entidades.Permisos.Finanza.VerPagos, Entidades.Permisos.Finanza.AddOrEditPago,
             Entidades.Permisos.Finanza.VerCtasCtes, Entidades.Permisos.Finanza.VerCtaCtePersona,
-            Entidades.Permisos.Elaborado.VerFormulas, Entidades.Permisos.Elaborado.IngresoFormula
+            Entidades.Permisos.Elaborado.VerFormulas, Entidades.Permisos.Elaborado.IngresoFormula,
+            Entidades.Permisos.Empleado.VerEmpleados, Entidades.Permisos.Empleado.NuevoEmpleado,
+            Entidades.Permisos.Empleado.VerLiquidaciones, Entidades.Permisos.Empleado.NuevaLiquidacion
         };
 
         private static bool EsFormularioBloqueadoParaProduccion(Entidades.Formulario formulario)

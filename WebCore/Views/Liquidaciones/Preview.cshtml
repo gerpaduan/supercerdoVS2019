@@ -4,8 +4,18 @@
 }
 
 <div class="container-fluid liquidaciones-preview-page">
-    <h4 class="mb-3">Confirmar liquidación — @Model.EmpleadoNombre</h4>
+    <h4 class="mb-3">
+        Confirmar liquidación — @Model.EmpleadoNombre
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoLiquidacionPreview" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
     <p class="text-muted">Período: @Model.Desde.ToString("dd/MM/yyyy HH:mm") al @Model.Hasta.ToString("dd/MM/yyyy HH:mm")</p>
+    <p>
+        <a href="@Url.Action("Index", "Jornadas", new { idEmpleado = Model.IdEmpleado, desde = Model.Desde.ToString("yyyy-MM-dd"), hasta = Model.Hasta.ToString("yyyy-MM-dd") })">
+            <i class="fas fa-external-link-alt mr-1"></i>¿Falta o está mal una marcación? Corregila en Jornadas
+        </a>
+    </p>
 
     @if (Model.Detalle.Any(d => d.SinTarifaConfigurada))
     {
@@ -14,7 +24,7 @@
         </div>
     }
 
-    <form asp-controller="Liquidaciones" asp-action="Confirmar" method="post">
+    <form asp-controller="Liquidaciones" asp-action="Confirmar" method="post" id="formConfirmarLiquidacion">
         @Html.AntiForgeryToken()
         <input type="hidden" name="idEmpleado" value="@Model.IdEmpleado" />
         <input type="hidden" name="desde" value="@Model.Desde.ToString("yyyy-MM-ddTHH:mm:ss")" />
@@ -36,8 +46,8 @@
                                     <input type="hidden" name="concepto" value="@d.Concepto" />
                                     <input type="hidden" name="origen" value="@d.Origen" />
                                 </td>
-                                <td><input type="number" step="0.01" name="cantidad" value="@d.Cantidad" class="form-control form-control-sm" /></td>
-                                <td><input type="number" step="0.01" name="valorUnitario" value="@d.ValorUnitario" class="form-control form-control-sm" /></td>
+                                <td><input type="number" step="0.01" name="cantidad" value="@d.Cantidad.ToString(System.Globalization.CultureInfo.InvariantCulture)" class="form-control form-control-sm js-linea-cantidad" /></td>
+                                <td><input type="number" step="0.01" name="valorUnitario" value="@d.ValorUnitario.ToString(System.Globalization.CultureInfo.InvariantCulture)" class="form-control form-control-sm js-linea-valor" /></td>
                                 <td class="text-center small text-muted">@d.Origen</td>
                             </tr>
                         }
@@ -46,16 +56,16 @@
                             <tr>
                                 <td><input type="text" name="concepto" class="form-control form-control-sm" placeholder="Ej: Premio, Bono, Aguinaldo" />
                                     <input type="hidden" name="origen" value="Manual" /></td>
-                                <td><input type="number" step="0.01" name="cantidad" value="1" class="form-control form-control-sm" /></td>
-                                <td><input type="number" step="0.01" name="valorUnitario" class="form-control form-control-sm" placeholder="0.00" /></td>
+                                <td><input type="number" step="0.01" name="cantidad" value="1" class="form-control form-control-sm js-linea-cantidad" /></td>
+                                <td><input type="number" step="0.01" name="valorUnitario" class="form-control form-control-sm js-linea-valor" placeholder="0.00" /></td>
                                 <td class="text-center small text-muted">Manual</td>
                             </tr>
                         }
                     </tbody>
                     <tfoot>
                         <tr class="font-weight-bold">
-                            <td colspan="2" class="text-right">Total (se recalcula al confirmar)</td>
-                            <td colspan="2">$@Model.Total.ToString("N2")</td>
+                            <td colspan="2" class="text-right">Total estimado (se recalcula también al confirmar)</td>
+                            <td colspan="2">$<span id="totalEstimado">@Model.Total.ToString("N2")</span></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -70,8 +80,65 @@
         </div>
 
         <button type="submit" class="btn btn-primary">Confirmar liquidación</button>
+        <small class="text-muted ml-2">Atajo: Alt + Enter</small>
         <a href="@Url.Action("Nueva", "Liquidaciones", new { idEmpleado = Model.IdEmpleado })" class="btn btn-outline-secondary">Volver</a>
     </form>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var form = document.getElementById('formConfirmarLiquidacion');
+
+            // Enter dentro de un campo del formulario ya no confirma la liquidacion -- una
+            // liquidacion es plata acreditada en la cta cte, no queremos que se confirme por un
+            // Enter accidental mientras se edita cantidad/valor. Alt+Enter (o el boton) si confirma.
+            form.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter' && !ev.altKey) {
+                    ev.preventDefault();
+                } else if (ev.key === 'Enter' && ev.altKey) {
+                    ev.preventDefault();
+                    form.requestSubmit();
+                }
+            });
+
+            // Recalculo en vivo del total mostrado -- solo una vista previa en el navegador; el
+            // servidor sigue siendo la unica fuente de verdad del total real al confirmar
+            // (Negocio.LiquidacionSueldo.Confirmar recalcula Subtotal/TotalLiquidado siempre).
+            var totalEl = document.getElementById('totalEstimado');
+            function recalcularTotal() {
+                var cantidades = form.querySelectorAll('.js-linea-cantidad');
+                var valores = form.querySelectorAll('.js-linea-valor');
+                var total = 0;
+                for (var i = 0; i < cantidades.length; i++) {
+                    var cant = parseFloat(cantidades[i].value.replace(',', '.'));
+                    var val = parseFloat(valores[i].value.replace(',', '.'));
+                    if (!isNaN(cant) && !isNaN(val)) total += cant * val;
+                }
+                totalEl.textContent = total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            form.querySelectorAll('.js-linea-cantidad, .js-linea-valor').forEach(function (input) {
+                input.addEventListener('input', recalcularTotal);
+            });
+        })();
+    </script>
+}
+
+<div class="modal fade" id="modalInfoLiquidacionPreview" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable liquidaciones-preview-page">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Confirmar liquidación"</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Este es el detalle calculado a partir de las marcaciones del empleado en el período. Podés ajustar cantidad o valor unitario a mano antes de confirmar, y agregar líneas manuales (premio, bono, aguinaldo, etc.).</p>
+                <p>Las líneas resaltadas en amarillo no tienen una tarifa configurada para ese turno/día — hay que completar el valor a mano o cargarle una tarifa al empleado antes de confirmar.</p>
+                <p>Si falta una marcación o está mal cargada, no la corrijas acá: usá el link "Corregila en Jornadas" de arriba, arreglala ahí (te lleva directo a este empleado y período) y volvé a generar la liquidación.</p>
+                <p>Al confirmar, el total se acredita en la cuenta corriente del empleado y ya no se puede modificar la liquidación (solo eliminarla y rehacerla).</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>

@@ -105,7 +105,10 @@ namespace Negocio
             var registros = oRegistroD.ListarPorEmpleadoYRango(empleado.Id, desde.Date, hasta.Date)
                 .Where(r => r.HoraEntrada.HasValue && r.HoraSalida.HasValue);
 
-            decimal totalHoras = 0;
+            // Agrupa las horas por si el dia esta marcado feriado o no (2026-09-30, ver
+            // docs/DECISIONS.md) -- Hora no distingue turno (Turno=null en EmpleadoTarifa), pero SI
+            // puede tener una tarifa especial de DiaSemana=Feriado.
+            var horasPorFeriado = new Dictionary<bool, decimal>();
             foreach (var r in registros)
             {
                 DateTime inicio = r.Fecha.Date + r.HoraEntrada.Value;
@@ -116,22 +119,29 @@ namespace Negocio
                 DateTime finClip = fin > hasta ? hasta : fin;
                 if (finClip <= inicioClip) continue;
 
-                totalHoras += (decimal)(finClip - inicioClip).TotalHours;
+                horasPorFeriado.TryGetValue(r.EsFeriado, out var acumulado);
+                horasPorFeriado[r.EsFeriado] = acumulado + (decimal)(finClip - inicioClip).TotalHours;
+            }
+
+            decimal totalHoras = 0;
+            foreach (var grupo in horasPorFeriado.OrderBy(g => g.Key))
+            {
+                if (grupo.Value <= 0) continue;
+                totalHoras += grupo.Value;
+
+                var tarifa = Negocio.Empleado.ResolverTarifaVigente(historialTarifas, null, hasta.Date, grupo.Key);
+                string sufijo = grupo.Key ? " (feriado)" : "";
+                liquidacion.Detalle.Add(new Entidades.LiquidacionSueldoDetalle
+                {
+                    Concepto = $"{grupo.Value:0.##} horas trabajadas{sufijo}",
+                    Origen = Entidades.LiquidacionSueldoDetalle.origenDetalle.Automatico,
+                    Cantidad = grupo.Value,
+                    ValorUnitario = tarifa?.Valor ?? 0,
+                    SinTarifaConfigurada = tarifa == null
+                });
             }
 
             if (totalHoras <= 0) return "0 hs";
-
-            // Hora no distingue turno (Turno=null en EmpleadoTarifa).
-            var tarifa = Negocio.Empleado.ResolverTarifaVigente(historialTarifas, null, hasta.Date);
-            liquidacion.Detalle.Add(new Entidades.LiquidacionSueldoDetalle
-            {
-                Concepto = $"{totalHoras:0.##} horas trabajadas",
-                Origen = Entidades.LiquidacionSueldoDetalle.origenDetalle.Automatico,
-                Cantidad = totalHoras,
-                ValorUnitario = tarifa?.Valor ?? 0,
-                SinTarifaConfigurada = tarifa == null
-            });
-
             return $"{totalHoras:0.##} hs";
         }
 
@@ -152,7 +162,7 @@ namespace Negocio
 
             foreach (var r in registros)
             {
-                var tarifa = Negocio.Empleado.ResolverTarifaVigente(historialTarifas, r.Turno, r.Fecha);
+                var tarifa = Negocio.Empleado.ResolverTarifaVigente(historialTarifas, r.Turno, r.Fecha, r.EsFeriado);
                 var clave = (r.Turno.Value, tarifa?.Id);
                 grupos.TryGetValue(clave, out var acumulado);
                 acumulado.tarifa = tarifa;
@@ -288,7 +298,7 @@ namespace Negocio
 
                     oCtaCteN.crearMovCtaCte(persona, DateTime.Now, Entidades.MovCtaCte.tablas.Liquidaciones, idLiquidacion, "",
                         liquidacion.DetalleCtaCte, Entidades.MovCtaCte.tipoMov.Credito, (float)liquidacion.TotalLiquidado,
-                        null, DateTime.Now, usuarioAccion, null, null, true, null, null, null, unitOfWork);
+                        usuarioAccion?.Sucursal, DateTime.Now, usuarioAccion, null, null, true, null, null, null, unitOfWork);
 
                     unitOfWork.Completar();
                     liquidacion.Id = idLiquidacion;
@@ -321,7 +331,7 @@ namespace Negocio
                     // crearMovCtaCte=false: genera el asiento opuesto y no crea uno nuevo.
                     oCtaCteN.crearMovCtaCte(persona, DateTime.Now, Entidades.MovCtaCte.tablas.Liquidaciones, idLiquidacion, "",
                         liquidacion.DetalleCtaCte, Entidades.MovCtaCte.tipoMov.Credito, (float)liquidacion.TotalLiquidado,
-                        null, DateTime.Now, usuarioAccion, null, null, false, null, null, null, unitOfWork);
+                        usuarioAccion?.Sucursal, DateTime.Now, usuarioAccion, null, null, false, null, null, null, unitOfWork);
 
                     unitOfWork.Completar();
                 }

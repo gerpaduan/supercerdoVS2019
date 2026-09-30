@@ -18,7 +18,8 @@ namespace DatosPostgres
 
         private const string SelectBase = @"
                 SELECT idregistrojornada, idempresa, idempleado, fecha, turno, horaentrada, horasalida,
-                       cantidad, registradopor, iddispositivoseguro, motivocorreccion, creado, actualizado, actualizadopor
+                       cantidad, registradopor, iddispositivoseguro, motivocorreccion, esferiado, observaciones,
+                       creado, actualizado, actualizadopor
                 FROM registrojornada ";
 
         private static Entidades.RegistroJornada Mapear(System.Data.IDataRecord dr)
@@ -36,6 +37,8 @@ namespace DatosPostgres
                 RegistradoPor = Convert.ToInt32(dr["registradopor"]),
                 IdDispositivoSeguro = dr["iddispositivoseguro"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["iddispositivoseguro"]),
                 MotivoCorreccion = dr["motivocorreccion"] == DBNull.Value ? "" : Convert.ToString(dr["motivocorreccion"]),
+                EsFeriado = Convert.ToBoolean(dr["esferiado"]),
+                Observaciones = dr["observaciones"] == DBNull.Value ? "" : Convert.ToString(dr["observaciones"]),
                 Creado = dr["creado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["creado"]),
                 Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]),
                 ActualizadoPor = dr["actualizadopor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["actualizadopor"])
@@ -75,10 +78,10 @@ namespace DatosPostgres
             const string sql = @"
                 INSERT INTO registrojornada
                     (idempresa, idempleado, fecha, turno, horaentrada, horasalida, cantidad, registradopor,
-                     iddispositivoseguro, motivocorreccion, creado)
+                     iddispositivoseguro, motivocorreccion, esferiado, observaciones, creado)
                 VALUES
                     (@idEmpresa, @idEmpleado, @fecha, @turno, @horaEntrada, @horaSalida, @cantidad, @registradoPor,
-                     @idDispositivoSeguro, @motivoCorreccion, now())
+                     @idDispositivoSeguro, @motivoCorreccion, @esFeriado, @observaciones, now())
                 RETURNING idregistrojornada;";
 
             object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sql, p =>
@@ -93,6 +96,8 @@ namespace DatosPostgres
                 p.AddWithValue("registradoPor", registro.RegistradoPor);
                 p.AddWithValue("idDispositivoSeguro", (object)registro.IdDispositivoSeguro ?? DBNull.Value);
                 p.AddWithValue("motivoCorreccion", string.IsNullOrWhiteSpace(registro.MotivoCorreccion) ? (object)DBNull.Value : registro.MotivoCorreccion);
+                p.AddWithValue("esFeriado", registro.EsFeriado);
+                p.AddWithValue("observaciones", string.IsNullOrWhiteSpace(registro.Observaciones) ? (object)DBNull.Value : registro.Observaciones);
             });
 
             registro.Id = Convert.ToInt32(nuevoId);
@@ -100,16 +105,17 @@ namespace DatosPostgres
         }
 
         // Completa la salida de un registro abierto -- flujo normal del fichaje, no marca
-        // Actualizado (no es una correccion).
-        public void CompletarSalida(int id, int idEmpresa, TimeSpan horaSalida)
+        // Actualizado (no es una correccion). Tambien graba la observacion de salida si vino.
+        public void CompletarSalida(int id, int idEmpresa, TimeSpan horaSalida, string observaciones)
         {
             DbPg.NonQuery(_connectionString, _idEmpresa,
-                "UPDATE registrojornada SET horasalida = @horaSalida WHERE idregistrojornada = @id AND idempresa = @idEmpresa;",
+                "UPDATE registrojornada SET horasalida = @horaSalida, observaciones = @observaciones WHERE idregistrojornada = @id AND idempresa = @idEmpresa;",
                 p =>
                 {
                     p.AddWithValue("id", id);
                     p.AddWithValue("idEmpresa", idEmpresa);
                     p.AddWithValue("horaSalida", horaSalida);
+                    p.AddWithValue("observaciones", string.IsNullOrWhiteSpace(observaciones) ? (object)DBNull.Value : observaciones);
                 });
         }
 
@@ -119,7 +125,8 @@ namespace DatosPostgres
         {
             const string sql = @"
                 UPDATE registrojornada SET
-                    horaentrada = @horaEntrada, horasalida = @horaSalida, cantidad = @cantidad,
+                    turno = @turno, horaentrada = @horaEntrada, horasalida = @horaSalida, cantidad = @cantidad,
+                    esferiado = @esFeriado, observaciones = @observaciones,
                     motivocorreccion = @motivoCorreccion, actualizado = now(), actualizadopor = @actualizadoPor
                 WHERE idregistrojornada = @id AND idempresa = @idEmpresa;";
 
@@ -127,22 +134,76 @@ namespace DatosPostgres
             {
                 p.AddWithValue("id", registro.Id);
                 p.AddWithValue("idEmpresa", registro.IdEmpresa);
+                p.AddWithValue("turno", registro.Turno.HasValue ? (object)registro.Turno.Value.ToString() : DBNull.Value);
                 p.AddWithValue("horaEntrada", (object)registro.HoraEntrada ?? DBNull.Value);
                 p.AddWithValue("horaSalida", (object)registro.HoraSalida ?? DBNull.Value);
                 p.AddWithValue("cantidad", (object)registro.Cantidad ?? DBNull.Value);
+                p.AddWithValue("esFeriado", registro.EsFeriado);
+                p.AddWithValue("observaciones", string.IsNullOrWhiteSpace(registro.Observaciones) ? (object)DBNull.Value : registro.Observaciones);
                 p.AddWithValue("motivoCorreccion", string.IsNullOrWhiteSpace(registro.MotivoCorreccion) ? (object)DBNull.Value : registro.MotivoCorreccion);
                 p.AddWithValue("actualizadoPor", (object)registro.ActualizadoPor ?? DBNull.Value);
             });
         }
 
-        public List<Entidades.RegistroJornada> ListarCorreccionesPendientes(int idEmpresa, int? idEmpleado)
+        public void RegistrarHistorial(Entidades.RegistroJornadaHistorial evento)
         {
-            var where = new List<string> { "idempresa = @idEmpresa", "(actualizado IS NOT NULL OR motivocorreccion IS NOT NULL)" };
+            const string sql = @"
+                INSERT INTO registrojornadahistorial
+                    (idempresa, idregistrojornada, idempleado, fecharegistrojornada, fechaanterior, turnoanterior,
+                     horaentradaanterior, horasalidaanterior, cantidadanterior, esferiadoanterior,
+                     tipoevento, motivo, modificadopor, fechaevento)
+                VALUES
+                    (@idEmpresa, @idRegistroJornada, @idEmpleado, @fechaRegistroJornada, @fechaAnterior, @turnoAnterior,
+                     @horaEntradaAnterior, @horaSalidaAnterior, @cantidadAnterior, @esFeriadoAnterior,
+                     @tipoEvento, @motivo, @modificadoPor, @fechaEvento);";
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("idEmpresa", evento.IdEmpresa);
+                p.AddWithValue("idRegistroJornada", evento.IdRegistroJornada);
+                p.AddWithValue("idEmpleado", evento.IdEmpleado);
+                p.AddWithValue("fechaRegistroJornada", evento.FechaRegistroJornada.Date);
+                p.AddWithValue("fechaAnterior", (object)evento.FechaAnterior?.Date ?? DBNull.Value);
+                p.AddWithValue("turnoAnterior", evento.TurnoAnterior.HasValue ? (object)evento.TurnoAnterior.Value.ToString() : DBNull.Value);
+                p.AddWithValue("horaEntradaAnterior", (object)evento.HoraEntradaAnterior ?? DBNull.Value);
+                p.AddWithValue("horaSalidaAnterior", (object)evento.HoraSalidaAnterior ?? DBNull.Value);
+                p.AddWithValue("cantidadAnterior", (object)evento.CantidadAnterior ?? DBNull.Value);
+                p.AddWithValue("esFeriadoAnterior", (object)evento.EsFeriadoAnterior ?? DBNull.Value);
+                p.AddWithValue("tipoEvento", evento.TipoEvento.ToString());
+                p.AddWithValue("motivo", evento.Motivo ?? "");
+                p.AddWithValue("modificadoPor", evento.ModificadoPor);
+                p.AddWithValue("fechaEvento", evento.FechaEvento);
+            });
+        }
+
+        public List<Entidades.RegistroJornadaHistorial> ListarHistorial(int idEmpresa, int? idEmpleado)
+        {
+            var where = new List<string> { "idempresa = @idEmpresa" };
             if (idEmpleado.HasValue) where.Add("idempleado = @idEmpleado");
 
             return DbPg.Reader(_connectionString, _idEmpresa,
-                SelectBase + "WHERE " + string.Join(" AND ", where) + " ORDER BY actualizado DESC NULLS LAST, creado DESC;",
-                Mapear,
+                @"SELECT idregistrojornadahistorial, idempresa, idregistrojornada, idempleado, fecharegistrojornada,
+                         fechaanterior, turnoanterior, horaentradaanterior, horasalidaanterior, cantidadanterior, esferiadoanterior,
+                         tipoevento, motivo, modificadopor, fechaevento
+                  FROM registrojornadahistorial WHERE " + string.Join(" AND ", where) + " ORDER BY fechaevento DESC;",
+                dr => new Entidades.RegistroJornadaHistorial
+                {
+                    Id = Convert.ToInt32(dr["idregistrojornadahistorial"]),
+                    IdEmpresa = Convert.ToInt32(dr["idempresa"]),
+                    IdRegistroJornada = Convert.ToInt32(dr["idregistrojornada"]),
+                    IdEmpleado = Convert.ToInt32(dr["idempleado"]),
+                    FechaRegistroJornada = Convert.ToDateTime(dr["fecharegistrojornada"]),
+                    FechaAnterior = dr["fechaanterior"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaanterior"]),
+                    TurnoAnterior = dr["turnoanterior"] == DBNull.Value ? (Entidades.Turno?)null : (Entidades.Turno)Enum.Parse(typeof(Entidades.Turno), Convert.ToString(dr["turnoanterior"])),
+                    HoraEntradaAnterior = dr["horaentradaanterior"] == DBNull.Value ? (TimeSpan?)null : (TimeSpan)dr["horaentradaanterior"],
+                    HoraSalidaAnterior = dr["horasalidaanterior"] == DBNull.Value ? (TimeSpan?)null : (TimeSpan)dr["horasalidaanterior"],
+                    CantidadAnterior = dr["cantidadanterior"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(dr["cantidadanterior"]),
+                    EsFeriadoAnterior = dr["esferiadoanterior"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["esferiadoanterior"]),
+                    TipoEvento = (Entidades.RegistroJornadaHistorial.tipoEvento)Enum.Parse(typeof(Entidades.RegistroJornadaHistorial.tipoEvento), Convert.ToString(dr["tipoevento"])),
+                    Motivo = Convert.ToString(dr["motivo"]),
+                    ModificadoPor = Convert.ToInt32(dr["modificadopor"]),
+                    FechaEvento = Convert.ToDateTime(dr["fechaevento"])
+                },
                 p =>
                 {
                     p.AddWithValue("idEmpresa", idEmpresa);

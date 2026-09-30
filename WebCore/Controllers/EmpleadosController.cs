@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -87,7 +88,6 @@ namespace WebCore.Controllers
                 model.IdUsuarioExistente = empleado.Usuario.Id;
                 model.UsuarioNombre = usuario?.Nombre ?? empleado.Usuario.Nombre ?? "";
                 model.UsuarioLogin = usuario?.User ?? empleado.Usuario.User ?? "";
-                model.Legajo = empleado.Legajo ?? "";
                 model.FormaLiquidacion = empleado.FormaLiquidacion;
                 model.FechaIngreso = empleado.FechaIngreso;
                 model.Activo = empleado.Activo;
@@ -100,9 +100,15 @@ namespace WebCore.Controllers
             return View("~/Views/Empleados/Editar.cshtml", model);
         }
 
+        // tarifaValor llega como string, NO decimal?[]: un <input type="number"> del navegador
+        // siempre postea con punto decimal (estandar HTML5), pero el binding nativo de decimal[] de
+        // ASP.NET Core usa la cultura del proceso (es-AR) -- bajo esa cultura el punto es separador
+        // de miles y NO valida la agrupacion, asi que "1500.00" se leia como 150000 (100x). Mismo
+        // bug ya encontrado y corregido en LiquidacionesController.Confirmar (ver docs/DECISIONS.md
+        // 2026-09-30) -- acá corrompía silenciosamente la tarifa base de cada empleado.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Guardar(EmpleadoEditVm model, decimal?[] tarifaValor, string[] tarifaTurno, string[] tarifaDiaSemana, DateTime?[] tarifaVigenteDesde)
+        public IActionResult Guardar(EmpleadoEditVm model, string[] tarifaValor, string[] tarifaTurno, string[] tarifaDiaSemana, DateTime?[] tarifaVigenteDesde)
         {
             if (!PuedeAdministrar(_usuarioActual))
             {
@@ -160,7 +166,6 @@ namespace WebCore.Controllers
                 {
                     Id = model.Id,
                     IdEmpresa = _empresa.IdEmpresa,
-                    Legajo = model.Legajo,
                     FormaLiquidacion = model.FormaLiquidacion,
                     FechaIngreso = model.FechaIngreso,
                     Activo = model.Activo,
@@ -176,7 +181,8 @@ namespace WebCore.Controllers
                 {
                     for (int i = 0; i < tarifaValor.Length; i++)
                     {
-                        if (!tarifaValor[i].HasValue || tarifaValor[i].Value <= 0) continue;
+                        if (!decimal.TryParse(tarifaValor[i], NumberStyles.Float, CultureInfo.InvariantCulture, out decimal valorTarifa) || valorTarifa <= 0)
+                            continue;
 
                         Entidades.Turno? turno = (tarifaTurno != null && i < tarifaTurno.Length
                             && Enum.TryParse<Entidades.Turno>(tarifaTurno[i], out var turnoParseado)) ? turnoParseado : (Entidades.Turno?)null;
@@ -191,7 +197,7 @@ namespace WebCore.Controllers
                             IdEmpleado = idEmpleado,
                             Turno = turno,
                             DiaSemana = dia,
-                            Valor = tarifaValor[i].Value,
+                            Valor = valorTarifa,
                             VigenteDesde = vigenteDesde,
                             CreadoPor = _usuarioActual.Id
                         });
@@ -420,7 +426,7 @@ namespace WebCore.Controllers
             return new EmpleadoResumenVm
             {
                 Id = empleado.Id,
-                Legajo = empleado.Legajo ?? "",
+                Identificacion = empleado.Persona?.Identificacion ?? "",
                 RazonSocial = empleado.Persona?.razonSocial ?? "",
                 UsuarioLogin = empleado.Usuario?.User ?? "",
                 FormaLiquidacion = empleado.FormaLiquidacion.ToString(),

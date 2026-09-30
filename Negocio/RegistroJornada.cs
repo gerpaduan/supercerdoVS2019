@@ -25,13 +25,33 @@ namespace Negocio
             return oRegistroD.ObtenerAbiertoHoy(idEmpleado, DateTime.Today);
         }
 
+        // Concatena una observacion nueva a la existente con una etiqueta (Entrada/Salida) -- Hora
+        // comparte una sola fila entre entrada y salida, no se pisa lo que ya se haya dejado escrito.
+        private static string CombinarObservacion(string existente, string etiqueta, string nueva)
+        {
+            if (string.IsNullOrWhiteSpace(nueva)) return existente;
+            string parte = $"[{etiqueta}] {nueva.Trim()}";
+            return string.IsNullOrWhiteSpace(existente) ? parte : existente + " | " + parte;
+        }
+
+        // Jornada/MediaJornada asisten una sola vez por dia (a diferencia de Hora, que puede tener
+        // varios pares entrada/salida en el mismo dia -- turno mañana + turno tarde, etc.). Se usa
+        // tanto en la carga en tiempo real (CargarJornada) como en el alta manual/autoreporte
+        // (AgregarManual) para que ninguna de las dos vias termine duplicando el dia.
+        private bool YaAsistioEseDia(int idEmpleado, DateTime fecha)
+        {
+            return oRegistroD.ListarPorEmpleadoYRango(idEmpleado, fecha.Date, fecha.Date).Count > 0;
+        }
+
         // Fichaje de entrada/salida (empleados por Hora): resuelve automaticamente si corresponde
         // Ingreso o Salida segun si hay un registro de hoy abierto. horaCorregida/motivo: solo si
         // el empleado uso "Modificar hora" en el kiosco (Jornadas/Fichaje) -- en ese caso SI cuenta
         // como correccion (motivo obligatorio, queda marcado para el admin). Completar la salida
         // con la hora real (sin corregir) es el flujo normal, no cuenta como correccion.
+        // observacion: nota libre opcional (ej. "llegue tarde por trafico"), independiente de
+        // horaCorregida/motivo -- nunca genera una fila de historial por si sola.
         public (bool esIngreso, DateTime horaRegistrada, Entidades.RegistroJornada registro) Fichar(
-            Entidades.Empleado empleado, int idUsuarioAccion, int? idDispositivoSeguro, DateTime? horaCorregida, string motivo)
+            Entidades.Empleado empleado, int idUsuarioAccion, int? idDispositivoSeguro, DateTime? horaCorregida, string motivo, string observacion = null)
         {
             if (empleado == null) throw new ArgumentNullException(nameof(empleado));
             if (empleado.FormaLiquidacion != Entidades.Empleado.formaLiquidacion.Hora)
@@ -45,6 +65,8 @@ namespace Negocio
             if (abierto != null)
             {
                 abierto.HoraSalida = ahora.TimeOfDay;
+                abierto.Observaciones = CombinarObservacion(abierto.Observaciones, "Salida", observacion);
+
                 if (horaCorregida.HasValue)
                 {
                     abierto.MotivoCorreccion = motivo.Trim();
@@ -53,7 +75,7 @@ namespace Negocio
                 }
                 else
                 {
-                    oRegistroD.CompletarSalida(abierto.Id, empleado.IdEmpresa, ahora.TimeOfDay);
+                    oRegistroD.CompletarSalida(abierto.Id, empleado.IdEmpresa, ahora.TimeOfDay, abierto.Observaciones);
                 }
                 return (false, ahora, abierto);
             }
@@ -66,21 +88,26 @@ namespace Negocio
                 HoraEntrada = ahora.TimeOfDay,
                 RegistradoPor = idUsuarioAccion,
                 IdDispositivoSeguro = idDispositivoSeguro,
-                MotivoCorreccion = horaCorregida.HasValue ? motivo.Trim() : null
+                MotivoCorreccion = horaCorregida.HasValue ? motivo.Trim() : null,
+                Observaciones = CombinarObservacion(null, "Entrada", observacion)
             };
             oRegistroD.Agregar(nuevo);
             return (true, ahora, nuevo);
         }
 
         // Carga de jornada/media jornada completa (empleados por Jornada o MediaJornada), desde
-        // "Mi Jornada" -- permite mas de una carga por dia (ver Empleado.RequiereRegistroJornada).
+        // "Mi Jornada" -- una sola carga por dia (ver YaAsistioEseDia): no se puede fichar Jornada
+        // ni MediaJornada dos veces el mismo dia.
         public Entidades.RegistroJornada CargarJornada(Entidades.Empleado empleado, DateTime fecha, Entidades.Turno turno,
-            int idUsuarioAccion)
+            int idUsuarioAccion, string observacion = null)
         {
             if (empleado == null) throw new ArgumentNullException(nameof(empleado));
             if (empleado.FormaLiquidacion != Entidades.Empleado.formaLiquidacion.Jornada
                 && empleado.FormaLiquidacion != Entidades.Empleado.formaLiquidacion.MediaJornada)
                 throw new InvalidOperationException("Solo los empleados por jornada o media jornada cargan su jornada así.");
+
+            if (YaAsistioEseDia(empleado.Id, fecha))
+                throw new InvalidOperationException("Ya se registró la jornada de este empleado para ese día.");
 
             var nuevo = new Entidades.RegistroJornada
             {
@@ -89,16 +116,19 @@ namespace Negocio
                 Fecha = fecha.Date,
                 Turno = turno,
                 Cantidad = 1m,
-                RegistradoPor = idUsuarioAccion
+                RegistradoPor = idUsuarioAccion,
+                Observaciones = string.IsNullOrWhiteSpace(observacion) ? null : observacion.Trim()
             };
             oRegistroD.Agregar(nuevo);
             return nuevo;
         }
 
-        // Correccion retroactiva (admin, o el propio empleado corrigiendo un olvido) -- solo
-        // permitida mientras la fecha del registro no forme parte de una liquidacion confirmada.
+        // Correccion retroactiva de un admin (turno/horas/cantidad/feriado) -- solo permitida
+        // mientras la fecha del registro no forme parte de una liquidacion confirmada. Deja una
+        // fila en el historial con el estado ANTERIOR antes de aplicar el cambio (2026-09-30, ver
+        // docs/DECISIONS.md) -- si la misma marcacion se corrige varias veces, cada una queda.
         public void Corregir(int idRegistroJornada, int idEmpresa, TimeSpan? horaEntrada, TimeSpan? horaSalida,
-            decimal? cantidad, string motivo, int idUsuarioAccion)
+            decimal? cantidad, Entidades.Turno? turno, bool? esFeriado, string motivo, int idUsuarioAccion)
         {
             if (string.IsNullOrWhiteSpace(motivo))
                 throw new InvalidOperationException("El motivo es obligatorio para corregir una marcación.");
@@ -111,18 +141,98 @@ namespace Negocio
                 throw new InvalidOperationException(
                     "Esta marcación ya forma parte de una liquidación confirmada. Elimine esa liquidación antes de corregirla.");
 
+            oRegistroD.RegistrarHistorial(new Entidades.RegistroJornadaHistorial
+            {
+                IdEmpresa = idEmpresa,
+                IdRegistroJornada = registro.Id,
+                IdEmpleado = registro.IdEmpleado,
+                FechaRegistroJornada = registro.Fecha,
+                FechaAnterior = registro.Fecha,
+                TurnoAnterior = registro.Turno,
+                HoraEntradaAnterior = registro.HoraEntrada,
+                HoraSalidaAnterior = registro.HoraSalida,
+                CantidadAnterior = registro.Cantidad,
+                EsFeriadoAnterior = registro.EsFeriado,
+                TipoEvento = Entidades.RegistroJornadaHistorial.tipoEvento.Correccion,
+                Motivo = motivo.Trim(),
+                ModificadoPor = idUsuarioAccion,
+                FechaEvento = DateTime.Now
+            });
+
             registro.HoraEntrada = horaEntrada;
             registro.HoraSalida = horaSalida;
             registro.Cantidad = cantidad;
+            if (turno.HasValue) registro.Turno = turno;
+            if (esFeriado.HasValue) registro.EsFeriado = esFeriado.Value;
             registro.MotivoCorreccion = motivo.Trim();
             registro.ActualizadoPor = idUsuarioAccion;
 
             oRegistroD.Editar(registro);
         }
 
-        public List<Entidades.RegistroJornada> ListarCorreccionesPendientes(int idEmpresa, int? idEmpleado)
+        // Alta manual de una marcacion que no se cargo en el momento -- sirve tanto para un admin
+        // (esAutoreporte:false, Jornadas/Index) como para el propio empleado cargando un dia
+        // olvidado desde "Mi Jornada" (esAutoreporte:true). Motivo siempre obligatorio. Cuando
+        // esAutoreporte, esFeriado se ignora y queda en false -- un empleado no puede
+        // autoasignarse un feriado (ver docs/DECISIONS.md).
+        public Entidades.RegistroJornada AgregarManual(Entidades.Empleado empleado, DateTime fecha, Entidades.Turno? turno,
+            TimeSpan? horaEntrada, TimeSpan? horaSalida, decimal? cantidad, bool esFeriado, string motivo,
+            int idUsuarioAccion, bool esAutoreporte)
         {
-            return oRegistroD.ListarCorreccionesPendientes(idEmpresa, idEmpleado);
+            if (empleado == null) throw new ArgumentNullException(nameof(empleado));
+            if (string.IsNullOrWhiteSpace(motivo))
+                throw new InvalidOperationException("El motivo es obligatorio para cargar una marcación manual.");
+
+            if (oLiquidacionD.EstaCubiertaPorLiquidacionConfirmada(empleado.Id, fecha))
+                throw new InvalidOperationException(
+                    "Ese período ya tiene una liquidación confirmada. Elimínela antes de agregar una marcación ahí.");
+
+            // Jornada/MediaJornada: una sola asistencia por dia, tambien en el alta manual (admin) y
+            // en el autoreporte propio -- Hora queda afuera, puede tener varios pares entrada/salida
+            // en el mismo dia (ver YaAsistioEseDia).
+            if ((empleado.FormaLiquidacion == Entidades.Empleado.formaLiquidacion.Jornada
+                 || empleado.FormaLiquidacion == Entidades.Empleado.formaLiquidacion.MediaJornada)
+                && YaAsistioEseDia(empleado.Id, fecha))
+                throw new InvalidOperationException("Ya se registró la jornada de este empleado para ese día.");
+
+            var nuevo = new Entidades.RegistroJornada
+            {
+                IdEmpresa = empleado.IdEmpresa,
+                IdEmpleado = empleado.Id,
+                Fecha = fecha.Date,
+                Turno = turno,
+                HoraEntrada = horaEntrada,
+                HoraSalida = horaSalida,
+                Cantidad = cantidad,
+                EsFeriado = esAutoreporte ? false : esFeriado,
+                MotivoCorreccion = motivo.Trim(),
+                RegistradoPor = idUsuarioAccion
+            };
+            oRegistroD.Agregar(nuevo);
+
+            oRegistroD.RegistrarHistorial(new Entidades.RegistroJornadaHistorial
+            {
+                IdEmpresa = empleado.IdEmpresa,
+                IdRegistroJornada = nuevo.Id,
+                IdEmpleado = empleado.Id,
+                FechaRegistroJornada = nuevo.Fecha,
+                TipoEvento = esAutoreporte
+                    ? Entidades.RegistroJornadaHistorial.tipoEvento.AltaManualPropia
+                    : Entidades.RegistroJornadaHistorial.tipoEvento.AltaManualAdmin,
+                Motivo = motivo.Trim(),
+                ModificadoPor = idUsuarioAccion,
+                FechaEvento = DateTime.Now
+            });
+
+            return nuevo;
+        }
+
+        // "Correcciones pendientes de revisar" en Jornadas/Index -- historial completo (una fila por
+        // cada correccion o alta manual, no una por marcacion), para no perder el rastro si la misma
+        // marcacion se corrigio mas de una vez.
+        public List<Entidades.RegistroJornadaHistorial> ListarCorreccionesPendientes(int idEmpresa, int? idEmpleado)
+        {
+            return oRegistroD.ListarHistorial(idEmpresa, idEmpleado);
         }
 
         // Usado por Negocio.LiquidacionSueldo antes de calcular: bloquea re-liquidar un registro ya

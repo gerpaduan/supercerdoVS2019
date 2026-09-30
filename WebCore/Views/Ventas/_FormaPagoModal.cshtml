@@ -32,14 +32,26 @@
                    establecida en el proyecto (custom-control/custom-switch, 44 vistas,
                    reimplementada para BS5 en bootstrap4-compat.css), no .form-switch nativo de
                    BS5 ni nada nuevo. *@
-                <div class="custom-control custom-switch mb-4">
-                    <input type="checkbox"
-                           class="custom-control-input"
-                           id="chkPagoMixto">
-                    <label class="custom-control-label font-weight-bold"
-                           for="chkPagoMixto">
-                        Pago Mixto
-                    </label>
+                @* Atajo "+" (pedido explicito del usuario, 2026-09-30, ver docs/DECISIONS.md "Modal
+                   Forma de Pago: atajo + para Pago Mixto"): activa/desactiva el interruptor desde
+                   cualquier lado del modal. La leyenda chica (#lblAtajoPagoMixto) comparte renglon
+                   con el switch y, al activarse el mixto, pasa a guiar al cajero (forma-pago.js ->
+                   actualizarHintPagoMixto): el pago mixto es siempre Efectivo + otro medio. *@
+                <div class="d-flex align-items-center justify-content-between fp-fila-mixto">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox"
+                               class="custom-control-input"
+                               id="chkPagoMixto">
+                        <label class="custom-control-label font-weight-bold"
+                               for="chkPagoMixto">
+                            Pago Mixto
+                        </label>
+                    </div>
+                    <small class="text-muted text-end text-right ms-2"
+                           id="lblAtajoPagoMixto"
+                           style="font-size:.7rem;">
+                        Atajo: presioná "+"
+                    </small>
                 </div>
 
                 <!-- Botones -->
@@ -176,32 +188,36 @@
                      class="border-top pt-4 mt-4 text-center"
                      style="display:none;">
 
-                    <!-- EFECTIVO -->
-                    <div class="form-group">
-                        <label>Efectivo</label>
-                        <input type="number"
-                               id="montoEfectivo"
-                               class="form-control mx-auto"
-                               style="width:50%;"
-                               min="0"
-                               step="0.01"
-                               placeholder="Monto en efectivo">
-                    </div>
+                    @* Wrapper .fp-mixto-montos: en modo compacto (ver CSS abajo) Efectivo y el otro
+                       medio quedan lado a lado en vez de apilados, para no crecer en altura. *@
+                    <div class="fp-mixto-montos">
+                        <!-- EFECTIVO -->
+                        <div class="form-group">
+                            <label>Efectivo</label>
+                            <input type="number"
+                                   id="montoEfectivo"
+                                   class="form-control mx-auto"
+                                   style="width:50%;"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="Monto en efectivo">
+                        </div>
 
-                    <!-- OTRO MEDIO -->
-                    <div class="form-group">
-                        <label id="labelOtroPago">Otro Medio</label>
-                        <input type="number"
-                               id="montoOtroPago"
-                               class="form-control mx-auto"
-                               style="width:50%;"
-                               min="0"
-                               step="0.01"
-                               placeholder="Monto">
+                        <!-- OTRO MEDIO -->
+                        <div class="form-group">
+                            <label id="labelOtroPago">Otro Medio</label>
+                            <input type="number"
+                                   id="montoOtroPago"
+                                   class="form-control mx-auto"
+                                   style="width:50%;"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="Monto">
+                        </div>
                     </div>
 
                     <!-- FINALIZAR -->
-                    <div class="mt-4">
+                    <div class="mt-4 fp-mixto-finalizar">
                         <button id="btnFinalizarPagoMixto"
                                 class="btn btn-success btn-lg mx-auto"
                                 style="width:100%;">
@@ -312,10 +328,102 @@
     }
 
     #modalFormaPago.pos-modal-compacto .row.text-center > .col-4 {
-        margin-bottom: .5rem !important;
+        margin-bottom: .3rem !important;
     }
 
     #modalFormaPago.pos-modal-compacto #totalVenta {
         font-size: 1.5rem !important;
+    }
+
+    /* Compacto v2 (2026-09-30, pedido explicito del usuario -- ver docs/DECISIONS.md "Modal Forma
+       de Pago: atajo + para Pago Mixto"): ahora tambien se activa con Pago Mixto (no solo con el
+       bloque de descuento) y achica todo lo posible para que, con mixto y/o descuento abiertos, no
+       haga falta scrollear para ver los demas campos. Botones en una sola linea (numero + texto,
+       sin icono), Efectivo/otro medio lado a lado y el bloque de descuento en una fila. */
+    .fp-fila-mixto {
+        margin-bottom: 1.5rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .modal-body {
+        padding: .6rem 1rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-fila-mixto {
+        margin-bottom: .5rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .btn-forma-pago {
+        flex-direction: row;
+        gap: .4rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .btn-forma-pago > i {
+        display: none;
+    }
+
+    #modalFormaPago.pos-modal-compacto .row.text-center > .col-12.mt-3 {
+        margin-top: .25rem !important;
+    }
+
+    #modalFormaPago.pos-modal-compacto .form-group {
+        margin-bottom: .35rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .row.text-center > .col-12 .text-primary.mb-1 {
+        font-size: .9rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Bloque de descuento: input a la izquierda, monto del descuento a la derecha. */
+    #modalFormaPago.pos-modal-compacto #bloquePorcentajeTotalVenta > div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: .4rem .75rem !important;
+        margin-bottom: .25rem !important;
+    }
+
+    #modalFormaPago.pos-modal-compacto #bloquePorcentajeTotalVenta .form-group {
+        margin-bottom: 0 !important;
+    }
+
+    #modalFormaPago.pos-modal-compacto #lblTotalConDescuentoTotalVenta {
+        font-size: 1.2rem !important;
+    }
+
+    /* Bloque de pago mixto: Efectivo y el otro medio lado a lado. */
+    #modalFormaPago.pos-modal-compacto #bloquePagoMixto {
+        padding-top: .6rem !important;
+        margin-top: .4rem !important;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-mixto-montos {
+        display: flex;
+        gap: .75rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-mixto-montos .form-group {
+        flex: 1 1 0;
+        min-width: 0;
+        margin-bottom: 0;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-mixto-montos .form-control {
+        width: 100% !important;
+    }
+
+    #modalFormaPago.pos-modal-compacto #bloquePagoMixto label {
+        font-size: .85rem;
+        margin-bottom: .15rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-mixto-finalizar {
+        margin-top: .6rem !important;
+    }
+
+    #modalFormaPago.pos-modal-compacto #btnFinalizarPagoMixto {
+        padding: .35rem .75rem;
+        font-size: 1rem;
     }
 </style>

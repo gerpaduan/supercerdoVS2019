@@ -1,5 +1,71 @@
 # Bitacora de cambios
 
+## 2026-09-30 (la mas reciente) - No repetir "Nombre (Nombre)" cuando la identificación coincide con la razón social
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). `WebCore.Helpers.EmpleadoDisplay.NombreConIdentificacion` centraliza el criterio: solo razón social si coincide con la identificación, sino "Razón social (Identificación)". Aplicado en `Empleados/Index` (fusiona sus columnas Identificación+Nombre en una sola "Empleado"), los combos de `Liquidaciones/{Nueva,Index}` y `Jornadas/Index`, y las tarjetas de `Jornadas/Fichaje`.
+- Archivos: `WebCore/Helpers/EmpleadoDisplay.cs` (nuevo), `WebCore/Views/{Empleados/Index,Liquidaciones/Nueva,Liquidaciones/Index,Jornadas/Index,Jornadas/Fichaje}.cshtml`.
+- Verificado en vivo: compila (0 errores); probado con identificación igual y distinta a la razón social (caso distinto forzado transaccionalmente y revertido).
+
+## 2026-09-30 - Fix critico: confirmar una liquidacion desbordaba y ademas nunca podia confirmar nada
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). Reportado: "Error al confirmar la liquidación: 22003: desbordamiento de campo numeric". Causa: `decimal[]`/`decimal?[]` bindeados directo desde un `<input type="number">` bajo la cultura es-AR del proceso -- el binder de .NET trata el punto como separador de miles y no valida agrupamiento, asi que "1.00" se leia como 100 y "20000.00" como 2.000.000 (100x cada uno). Con montos grandes desbordaba `numeric(14,2)`; con montos chicos **guardaba el total mal, sin ningun error** (mucho peor). Afectaba `LiquidacionesController.Confirmar` (cantidad/valorUnitario) y `EmpleadosController.Guardar` (tarifaValor, la tarifa base del empleado).
+- Se encontró un SEGUNDO bug al verificar el primero: confirmar seguia fallando con "MovCtaCte.Sucursal no puede ser null" -- `Negocio.LiquidacionSueldo.Confirmar`/`Eliminar` pasaban `null` a mano en vez de la sucursal del usuario. **Esto significa que nunca se habia podido confirmar una liquidacion, en ningun ambiente**, desde que se creó el módulo.
+- Fix: cantidad/valorUnitario/tarifaValor pasan a `string[]` parseados con `CultureInfo.InvariantCulture`; Sucursal pasa a resolverse desde `usuarioAccion.Sucursal`.
+- Archivos: `WebCore/Controllers/{LiquidacionesController,EmpleadosController}.cs`, `Negocio/LiquidacionSueldo.cs`.
+- Verificado en vivo de punta a punta (primera vez que se logra): calcular y confirmar una liquidación real dio el total correcto ($50.000,00, no inflado), con el movimiento de cuenta corriente y la sucursal bien resueltos. Dato de prueba borrado después.
+
+## 2026-09-30 - Jornadas/Index: sin columna Feriado (badge), estimado de sueldo, boton Corregir con flecha
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). Se saca la columna "Feriado": ahora la fila se resalta en amarillo y aparece un badge "Feriado" junto a la fecha. El resumen del rango suma un estimado de sueldo (misma resolución de tarifa que el cálculo real) cuando el empleado tiene alguna tarifa configurada. El botón que despliega el formulario de corrección ahora dice "Corregir" con una flecha que rota al expandir; el botón de submit de adentro pasa a "Guardar corrección" para no confundirse con el de afuera.
+- Archivos: `WebCore/Controllers/JornadasController.cs`, `WebCore/Views/Jornadas/Index.cshtml`.
+- Verificado en vivo: estimado correcto con datos reales de Gisela (MediaJornada) y Pigui (Hora); badge/resaltado de feriado probado y revertido; rotación del chevron confirmada leyendo el estilo computado.
+
+## 2026-09-30 - Liquidaciones/Preview y Jornadas/Index: ajustes UX + bug critico de decimales corregido
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). **Liquidaciones/Preview**: Enter ya no confirma la liquidacion (solo el boton o Alt+Enter); el total se recalcula en vivo al editar cantidad/valor; al fallar `Calcular` ya no se pierden las fechas tipeadas. **Bug encontrado de paso**: los inputs de Cantidad/Valor unitario (y Cantidad en Jornadas/Corregir) renderizaban con coma decimal (cultura es-AR), invalido para `<input type="number">` -- el navegador los trataba como vacios, rompiendo tanto el recalculo en vivo como los valores reales posteados al confirmar una liquidacion. Corregido con formato invariante; barrido del resto de `WebCore/Views` confirma que no se repite en otro lado.
+- **Jornadas/Index**: filtro por defecto desde la ultima liquidacion confirmada del empleado; atajos "Este mes"/"Mes anterior"; resumen de horas/jornadas totales del rango; turno inferido y "Cantidad" calculada (no cruda) para empleados por Hora; columna "Corregir" ahora desplegable en vez de siempre expandida.
+- Archivos: `WebCore/Controllers/{LiquidacionesController,JornadasController}.cs`, `WebCore/Views/Liquidaciones/{Nueva,Preview}.cshtml`, `WebCore/Views/Jornadas/Index.cshtml`, `WebCore/Models/JornadasVm.cs`.
+- Verificado en vivo: compila (0 errores); recalculo en vivo con los valores reales del DOM; Enter/Alt+Enter probados con mock de `requestSubmit` (sin confirmar una liquidacion de prueba real); filtros y columnas probados con datos reales de Pigui (Hora) y Gisela (MediaJornada).
+
+## 2026-09-30 - Fix: "Nueva liquidación" tiraba 500 al calcular sin tocar las fechas
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). `Liquidaciones/Nueva` inicializaba Desde y Hasta con el mismo instante (`DateTime.Today` los dos) -- calcular sin cambiar las fechas tiraba `InvalidOperationException` sin manejar (pagina de error cruda, `Calcular` no tenia try/catch a diferencia de `Confirmar`). Fix: `Hasta` por defecto pasa a ser un dia despues de `Desde`, y `Calcular` ahora atrapa la excepcion y redirige a `Nueva` con el mensaje, igual que el resto del modulo.
+- Archivos: `WebCore/Controllers/LiquidacionesController.cs`.
+- Verificado en vivo: calcular sin tocar fechas ya no crashea; forzando `hasta=desde` a mano muestra el aviso en vez del error 500.
+
+## 2026-09-30 - "Mi Jornada": marcaciones recientes desde la ultima liquidacion
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). La tabla "Marcaciones recientes" de `Jornadas/MiJornada` ya no muestra una ventana fija de 14 dias: arranca el dia siguiente al `PeriodoHasta` de la ultima liquidacion Confirmada del empleado; sin liquidaciones previas, cae a los ultimos 14 dias como antes.
+- Archivos: `WebCore/Controllers/JornadasController.cs` (inyecta `Negocio.LiquidacionSueldo`), `WebCore/Models/JornadasVm.cs` (`MiJornadaVm.MarcacionesTitulo`), `WebCore/Views/Jornadas/MiJornada.cshtml`.
+- Verificado: compila (`dotnet build WebCore`, 0 errores). **Pendiente**: no hay liquidaciones Confirmada en la base local para probar ese camino en vivo (solo el fallback de 14 dias); tampoco se probo con login de empleado real (mismo bloqueo ya conocido).
+
+## 2026-09-30 - Jornada/MediaJornada: una sola asistencia por dia
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). `Negocio.RegistroJornada.CargarJornada` y `AgregarManual` (alta admin y autoreporte propio) rechazan una segunda marcacion de Jornada/MediaJornada del mismo empleado en la misma fecha (`YaAsistioEseDia`). `Hora` queda afuera: sigue permitiendo varios pares entrada/salida en un mismo dia.
+- Archivos: `Negocio/RegistroJornada.cs`, `docs/03-modulos/empleados-y-liquidacion-sueldos.md`.
+- Verificado: compila (`dotnet build WebCore`, 0 errores). **Pendiente**: probar en el navegador (cargar Jornada/MediaJornada dos veces el mismo dia y confirmar el rechazo).
+
+## 2026-09-30 - Empleados: se elimina el campo Legajo, busqueda por nombre/identificacion/CUIT
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). `Empleado.Legajo` era un codigo interno redundante con `Persona.Identificacion`/`Persona.Cuit`, sin uso en calculos de negocio. Se elimina la columna (migracion `20260930c-Alter_empleado_drop_legajo.sql`, corrida contra `carnisys` local) y el campo en toda la pila. La busqueda de `Empleados/Index` y los combos de Jornadas/Liquidaciones pasan a filtrar/mostrar por razon social, identificacion o CUIT.
+- Archivos: `Entidades/Empleado.cs`, `Contratos/IEmpleadoRepository.cs`, `DatosPostgres/EmpleadoPg.cs`, `Negocio/Empleado.cs`, `WebCore/Models/{EmpleadosVm,JornadasVm}.cs`, `WebCore/Controllers/{EmpleadosController,JornadasController,LiquidacionesController}.cs`, vistas `Empleados/{Index,Editar}.cshtml`, `Jornadas/{Index,Fichaje}.cshtml`, `Liquidaciones/{Index,Nueva}.cshtml`, `docs/03-modulos/empleados-y-liquidacion-sueldos.md`.
+- Verificado: compila (`dotnet build WebCore`, 0 errores); migracion corrida y verificada (`\d empleado` sin la columna ni el indice `ux_empleado_empresa_legajo`).
+
+## 2026-09-30 - POS: atajo "+" para Pago Mixto, guia del 2do medio, foco en Efectivo y modal mas compacto
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). `+` activa/desactiva el Pago Mixto desde cualquier lado del modal de forma de pago (tambien dentro de inputs); leyenda chica junto al switch que guia ("ademas de Efectivo"); al elegir el 2do medio el foco va a Efectivo; los numeros 1-6 tambien eligen el 2do medio; el modo compacto ahora tambien se activa con mixto (botones en una linea, campos lado a lado).
+- Archivos: `WebCore/Views/Ventas/_FormaPagoModal.cshtml`, `WebCore/wwwroot/Scripts/app/forma-pago.js`, `WebCore.E2ETests/FormaPagoModalLayoutTests.cs`.
+- Verificado: compila (`dotnet build WebCore`). **Pendiente**: probar en el POS (el login de dev `ger` de los tests ya no entra, no se corrieron los E2E); la vista requiere recompilar el servidor en 5270.
+
+## 2026-09-30 - Empleados: fichaje universal, feriados persistentes, historial de auditoria, usuario de produccion en "Mi Jornada"
+
+- Ronda de ajustes sobre el modulo de Empleados (2026-09-29): usuario de produccion (`EsUsuarioProduccion`) entra a "Mi jornada" y elige quien esta fichando de una lista (`_ModalSeleccionUsuario`, sin contraseña) en la vista nueva `Jornadas/MiJornadaProduccion.cshtml`; el fichaje (`Jornadas/Fichaje`/`FichajeConfirmar`) deja de ser exclusivo de Hora y sirve para Jornada/MediaJornada tambien (turno estimado por la hora del reloj, corregible); `RegistroJornada.EsFeriado` (bool nuevo, persistente) solo lo marca un admin, nunca el fichaje ni el autoreporte propio; la liquidacion ya no duplica una pantalla de correccion, linkea a `Jornadas/Index`. Detalle completo y alternativas descartadas (tarifa por porcentaje, detalle editable en liquidacion, copiar sueldo) en `docs/DECISIONS.md` (2026-09-30) y `docs/03-modulos/empleados-y-liquidacion-sueldos.md`.
+- Auditoria nueva (pedido explicito, "no perder informacion si hubo un error"): tabla `registrojornadahistorial` (RLS, migracion `20260930b`) con una foto completa del estado anterior en cada correccion/alta manual, no solo el ultimo cambio. Autoreporte de un dia anterior desde "Mi Jornada" (`AgregarPropio`, motivo obligatorio, nunca feriado) y observacion opcional al fichar (no es correccion) tambien nuevos.
+- Iconos de ayuda "i" en las 12 pantallas del modulo, con texto especifico por pantalla y audiencia (admin/empleado).
+- Archivos: `Entidades/{RegistroJornada,Turno,RegistroJornadaHistorial(nueva)}.cs`, `Contratos/IRegistroJornadaRepository.cs`, `DatosPostgres/RegistroJornadaPg.cs`, `Negocio/{RegistroJornada,Empleado,LiquidacionSueldo}.cs`, `WebCore/Controllers/{JornadasController,UsuariosController}.cs`, `WebCore/Models/JornadasVm.cs`, vistas de `Jornadas`/`Empleados`/`Liquidaciones`, `WebCore/Views/Shared/_Layout.cshtml`, migraciones `20260930-Alter_registrojornada_add_esferiado_observaciones.sql` y `20260930b-Create_registrojornadahistorial.sql`.
+- Verificado en vivo (navegador, admin): build limpio; migraciones corridas contra `carnisys` local con RLS habilitado; alta manual + 2 correcciones sucesivas sobre la misma marcacion (3 filas de historial, ninguna pisada); liquidacion agrupando la linea feriada a su propia tarifa; link Liquidacion → Jornadas ida y vuelta; modal de ayuda visible (sin el bug de stacking context ya conocido). Datos de prueba borrados después de verificar.
+- **Pendiente**: probar con una sesion de empleado real (no admin) el fichaje de kiosco, "Mi Jornada" individual/produccion y el autoreporte — no se tenia a mano la contraseña de un usuario-empleado de prueba en esta sesion.
+
 ## 2026-09-30 - Tickets térmicos: ítem con descripción arriba y detalle + importe abajo
 
 - Detalle en `docs/DECISIONS.md` (2026-09-30). Archivos: `WebCore/Controllers/VentasController.cs`, `WebCore/Views/Ventas/_TicketHTML.cshtml`, `WebCore/Controllers/PuntosExpendioController.cs`. Verificado: compila; **pendiente** probar impreso (venta común, Factura A y expendio).
@@ -38,7 +104,7 @@
 - Archivos: `WebCore/wwwroot/Scripts/app/pos-product.js` (detección en keyup, guard anti-doble carga, excepción del modal), `WebCore/wwwroot/Scripts/app/ventas-expendios-pos.js` (`cargarExpendio` devuelve la promesa), docs.
 - PENDIENTE: prueba manual con pistola real y con un expendio existente.
 
-## 2026-09-30 (la mas reciente) - Punto de Expendio: modal post-expendio con 5 opciones, ticket térmico y PDF de precios compacto
+## 2026-09-30 - Punto de Expendio: modal post-expendio con 5 opciones, ticket térmico y PDF de precios compacto
 
 - Modal post-expendio numerado 1-5 (Nuevo, Ticket, PDF, Email, PDF lista de precios); Escape pregunta si se quiere modificar el expendio ya generado (Finalizar lo actualiza, sin duplicar). Ver `DECISIONS.md` 2026-09-30.
 - Nuevo ticket térmico de expendio (`ImprimirTicketHtml`/`ImprimirTicketPayload`).

@@ -3,6 +3,7 @@
 // CalcularPreview) -> Confirmar (persiste + acredita en cta cte) -> Index/Eliminar (reversa).
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
@@ -54,7 +55,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult Nueva(int? idEmpleado)
+        public IActionResult Nueva(int? idEmpleado, DateTime? desde, DateTime? hasta)
         {
             if (!PuedeAdministrar()) return SinPermiso();
 
@@ -62,8 +63,13 @@ namespace WebCore.Controllers
             {
                 Empleados = ListarEmpleadosResumen(),
                 IdEmpleado = idEmpleado ?? 0,
-                Desde = DateTime.Today,
-                Hasta = DateTime.Today
+                // Si Calcular redirige para acá por un error (ej. rango invalido), desde/hasta
+                // vienen con lo que el usuario ya habia tipeado -- no se pisa con el default. Sin
+                // eso, ver Desde/Hasta mas abajo: un dia despues de "Desde", no el mismo dia, porque
+                // si el usuario no toca las fechas, Calcular fallaba con "hasta debe ser posterior a
+                // desde" al quedar ambas iguales.
+                Desde = desde ?? DateTime.Today,
+                Hasta = hasta ?? DateTime.Today.AddDays(1)
             };
 
             ViewBag.Title = "Nueva liquidación";
@@ -80,7 +86,18 @@ namespace WebCore.Controllers
             var empleado = _oEmpleadoN.ObtenerPorId(idEmpleado, _empresa.IdEmpresa);
             if (empleado == null) return SinEmpleado();
 
-            var resultado = _oLiquidacionN.CalcularPreview(empleado, desde, hasta);
+            Negocio.LiquidacionSueldo.ResultadoPreview resultado;
+            try
+            {
+                resultado = _oLiquidacionN.CalcularPreview(empleado, desde, hasta);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["AlertType"] = "error";
+                TempData["AlertTitle"] = "Liquidaciones";
+                TempData["AlertMsg"] = ex.Message;
+                return RedirectToAction("Nueva", new { idEmpleado, desde, hasta });
+            }
 
             if (resultado.TieneConflicto)
             {
@@ -89,7 +106,7 @@ namespace WebCore.Controllers
                 TempData["AlertTitle"] = "Período superpuesto";
                 TempData["AlertMsg"] = $"El período se superpone con la liquidación #{conflicto.Id} "
                     + $"({conflicto.PeriodoDesde:dd/MM/yyyy HH:mm} al {conflicto.PeriodoHasta:dd/MM/yyyy HH:mm}).";
-                return RedirectToAction("Nueva", new { idEmpleado });
+                return RedirectToAction("Nueva", new { idEmpleado, desde, hasta });
             }
 
             var liquidacion = resultado.Liquidacion;
@@ -117,10 +134,17 @@ namespace WebCore.Controllers
             return View("~/Views/Liquidaciones/Preview.cshtml", model);
         }
 
+        // cantidad/valorUnitario llegan como string, NO decimal[]: un <input type="number"> del
+        // navegador siempre postea con punto decimal (estandar HTML5), pero el binding nativo de
+        // decimal[] de ASP.NET Core usa la cultura del proceso (es-AR) -- bajo esa cultura el punto
+        // es separador de miles y NO valida la agrupacion, asi que "1.00" se leia como 100 y
+        // "20000.00" como 2.000.000 (100x cada uno, error visto en produccion: desbordamiento de
+        // numeric(14,2) al confirmar). Se parsea a mano con CultureInfo.InvariantCulture, que
+        // coincide con lo que el navegador realmente envia.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Confirmar(int idEmpleado, DateTime desde, DateTime hasta, string detalleCtaCte,
-            string[] concepto, string[] origen, decimal[] cantidad, decimal[] valorUnitario)
+            string[] concepto, string[] origen, string[] cantidad, string[] valorUnitario)
         {
             if (!PuedeAdministrar()) return SinPermiso();
 
@@ -150,8 +174,15 @@ namespace WebCore.Controllers
                 {
                     if (string.IsNullOrWhiteSpace(concepto[i])) continue;
 
-                    decimal cant = (cantidad != null && i < cantidad.Length && cantidad[i] != 0) ? cantidad[i] : 1;
-                    decimal valor = (valorUnitario != null && i < valorUnitario.Length) ? valorUnitario[i] : 0;
+                    decimal cantParseada = 0;
+                    bool cantOk = cantidad != null && i < cantidad.Length
+                        && decimal.TryParse(cantidad[i], NumberStyles.Float, CultureInfo.InvariantCulture, out cantParseada);
+                    decimal cant = cantOk && cantParseada != 0 ? cantParseada : 1;
+
+                    decimal valorParseada = 0;
+                    bool valorOk = valorUnitario != null && i < valorUnitario.Length
+                        && decimal.TryParse(valorUnitario[i], NumberStyles.Float, CultureInfo.InvariantCulture, out valorParseada);
+                    decimal valor = valorOk ? valorParseada : 0;
                     var origenLinea = (origen != null && i < origen.Length
                         && Enum.TryParse<Entidades.LiquidacionSueldoDetalle.origenDetalle>(origen[i], out var origenParseado))
                         ? origenParseado
@@ -222,7 +253,7 @@ namespace WebCore.Controllers
         private List<EmpleadoResumenVm> ListarEmpleadosResumen()
         {
             return _oEmpleadoN.Listar(_empresa.IdEmpresa, null, null, true)
-                .Select(e => new EmpleadoResumenVm { Id = e.Id, RazonSocial = e.Persona?.razonSocial ?? "", Legajo = e.Legajo ?? "" })
+                .Select(e => new EmpleadoResumenVm { Id = e.Id, RazonSocial = e.Persona?.razonSocial ?? "", Identificacion = e.Persona?.Identificacion ?? "" })
                 .ToList();
         }
 

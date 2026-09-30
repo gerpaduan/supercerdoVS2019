@@ -21,6 +21,10 @@ let ventaEnProceso = false;
 // entre original y actual), no el total resultante.
 let totalVentaOriginal = 0;
 let porcentajeTotalVentaActivo = 0;
+// true mientras el bloque de descuento/recargo % esta desplegado (2026-09-30). Flag y no
+// is(':visible'): durante el slideUp/slideDown el bloque sigue "visible" y daria el estado viejo.
+// Lo usa actualizarModoCompactoModal. Declarado aca arriba para no caer en la TDZ de let.
+let bloqueDescuentoAbierto = false;
 
 function getPOSStateFormaPago() {
     return window.POSState || null;
@@ -321,6 +325,8 @@ function configurarModalFormaPagoSegunModo() {
     $('#montoEfectivo, #montoOtroPago').val('');
     $('#labelOtroPago').text('Otro Medio');
     otroTipoPagoSeleccionado = null;
+    actualizarHintPagoMixto();
+    actualizarModoCompactoModal();
 
     $('.form-group.form-check.mb-4').toggle(modo === 'finalizacion');
     $('#totalVenta').val(modo === 'preseleccion' ? '-' : formatearImporteFormaPago(totalVentaOriginal));
@@ -331,6 +337,8 @@ function configurarModalFormaPagoSegunModo() {
     // recalcule precios ANTES de tener productos cargados) no hay un total real que bonificar.
     $('#btnTogglePorcentajeTotalVenta').toggle(modo === 'finalizacion');
     $('#lblAtajoDescuentoTotalVenta').toggle(modo === 'finalizacion');
+    // El interruptor de Pago Mixto (y su leyenda/atajo "+") solo existe al finalizar una venta.
+    $('#lblAtajoPagoMixto').toggle(modo === 'finalizacion');
     if (modo !== 'finalizacion' && $('#bloquePorcentajeTotalVenta').is(':visible')) {
         cerrarBloquePorcentajeTotalVenta();
     }
@@ -368,6 +376,7 @@ window.preCargarFormaPagoActual = function () {
     $('#modalFormaPago').removeClass('pos-descuento-input-activo');
     actualizarHintDescuentoInput(true);
     $('#bloquePorcentajeTotalVenta').hide();
+    bloqueDescuentoAbierto = false;
     limpiarSeleccionFormaPago();
     actualizarLeyendaFormaPagoActual();
     configurarModalFormaPagoSegunModo();
@@ -387,6 +396,9 @@ window.preCargarFormaPagoActual = function () {
             const tipo = normalizarTipoFormaPago($(this).data('tipo'));
             $(this).prop('disabled', ventaEnProceso || tipo !== formaPago);
         });
+        // Mixto precargado (modificar venta): este camino no dispara el evento change del switch.
+        actualizarHintPagoMixto();
+        actualizarModoCompactoModal();
     }
 };
 
@@ -495,6 +507,7 @@ $('#modalFormaPago').on('shown.bs.modal', function () {
     $('#modalFormaPago').removeClass('pos-descuento-input-activo');
     actualizarHintDescuentoInput(true);
     $('#bloquePorcentajeTotalVenta').hide();
+    bloqueDescuentoAbierto = false;
     resetPagoMixto();
     window.preCargarFormaPagoActual?.();
 });
@@ -535,10 +548,18 @@ $('#chkPagoMixto').on('change', function () {
 
     } else {
 
+        // Si el foco estaba en un input del bloque que se esconde (el atajo "+" funciona desde
+        // cualquier lado), se suelta: sino los atajos 1-6 quedarian bloqueados por el foco.
+        const enfocado = document.activeElement;
+        if (enfocado && $('#bloquePagoMixto').has(enfocado).length) enfocado.blur();
+
         $('#bloquePagoMixto').slideUp();
         resetPagoMixto();
         bloquearFormasPagoNoPreseleccionadas();
     }
+
+    actualizarHintPagoMixto();
+    actualizarModoCompactoModal();
 });
 
 // ===============================
@@ -619,6 +640,15 @@ $('.btn-forma-pago').on('click', function () {
     otroTipoPagoSeleccionado = tipo;
     $('#labelOtroPago').text(normalizarNombreFormaPago(tipo));
     marcarFormaPagoSeleccionada(tipo);
+    actualizarHintPagoMixto();
+
+    // Elegido el 2do medio, el foco pasa a Efectivo: el cajero tipea lo que recibe en efectivo y
+    // el resto se completa solo en el otro medio (handlers "input" de abajo); con Tab pasa al
+    // input del 2do medio si prefiere cargar ese importe. El timeout deja terminar el slideDown
+    // del bloque (si recien se activo el mixto) antes de enfocar.
+    setTimeout(function () {
+        $('#montoEfectivo').trigger('focus').select();
+    }, 60);
 
     // Sin forma preseleccionada (carrito a precio de lista), el "otro medio" define los precios:
     // se recalcula el carrito con esa forma y se resincroniza el total y el split del mixto.
@@ -955,12 +985,50 @@ function resetPagoMixto() {
     $('#montoEfectivo').val('');
     $('#montoOtroPago').val('');
     $('#labelOtroPago').text('Otro Medio');
+    actualizarHintPagoMixto();
+    actualizarModoCompactoModal();
 
     if (!ventaEnProceso) {
         bloquearFormasPagoNoPreseleccionadas();
         $('#chkPagoMixto').prop('disabled', getModoFormaPagoActual() !== 'finalizacion');
         $('#btnFinalizarPagoMixto').prop('disabled', false);
     }
+}
+
+// ===============================
+// LEYENDA DEL PAGO MIXTO Y MODO COMPACTO (2026-09-30, pedido explicito del usuario -- ver
+// docs/DECISIONS.md "Modal Forma de Pago: atajo + para Pago Mixto")
+// ===============================
+// Texto chico junto al interruptor: sin mixto muestra el atajo; con mixto guia al cajero (el mixto
+// SIEMPRE es Efectivo + otro medio, asi que lo unico que se elige es el "otro").
+function actualizarHintPagoMixto() {
+    const $lbl = $('#lblAtajoPagoMixto');
+    if (!$lbl.length) return;
+
+    const explicacion = 'El pago mixto siempre incluye Efectivo: elegí la otra forma de pago.';
+    let texto;
+    let guia = true;
+    if (!$('#chkPagoMixto').is(':checked')) {
+        texto = 'Atajo: presioná "+"';
+        guia = false;
+    } else if (!otroTipoPagoSeleccionado) {
+        texto = 'Elegí la forma de pago además de Efectivo (el pago mixto siempre incluye Efectivo)';
+    } else {
+        texto = 'Ingresá el efectivo recibido: el resto se completa en ' +
+            normalizarNombreFormaPago(otroTipoPagoSeleccionado);
+    }
+
+    $lbl.text(texto)
+        .toggleClass('text-muted', !guia)
+        .toggleClass('text-primary', guia)
+        .attr('title', guia ? explicacion : 'Activa o desactiva el pago mixto (Efectivo + otra forma de pago)');
+}
+
+// Modo compacto del modal (botones en una linea, campos lado a lado): activo si hay descuento
+// desplegado O pago mixto activo, para que no haga falta scrollear para ver los demas campos.
+function actualizarModoCompactoModal() {
+    const compacto = bloqueDescuentoAbierto || $('#chkPagoMixto').is(':checked');
+    $('#modalFormaPago').toggleClass('pos-modal-compacto', compacto);
 }
 
 // ===============================
@@ -1011,7 +1079,10 @@ function cerrarBloquePorcentajeTotalVenta() {
     // modal Forma de Pago"): "reducir la altura de los botones para que todo quepa sin scroll... y
     // al desactivar que vuelvan al tamaño normal". A diferencia de pos-descuento-input-activo (atada
     // al foco/blur del input), esta clase queda atada a que el BLOQUE este desplegado, no al foco.
-    $('#modalFormaPago').removeClass('pos-modal-compacto');
+    // 2026-09-30: el compacto tambien lo activa el Pago Mixto, asi que ya no se quita a ciegas
+    // sino que se recalcula (si el mixto sigue activo, el modal se queda compacto).
+    bloqueDescuentoAbierto = false;
+    actualizarModoCompactoModal();
     $('#bloquePorcentajeTotalVenta').slideUp(120);
     totalVentaActual = totalVentaOriginal;
     // Se quita el descuento: el azul vuelve a mostrar el total tal cual, sin el tag "(con descuento)".
@@ -1045,7 +1116,8 @@ function abrirBloquePorcentajeTotalVenta() {
         return;
     }
 
-    $('#modalFormaPago').addClass('pos-modal-compacto');
+    bloqueDescuentoAbierto = true;
+    actualizarModoCompactoModal();
     $('#bloquePorcentajeTotalVenta').slideDown(120);
     actualizarTotalConDescuento();
     habilitarYEnfocarInputDescuento();
@@ -1194,6 +1266,22 @@ $(document).ready(function () {
 
         const esPagoMixto = $('#chkPagoMixto').is(':checked');
 
+        // ---- "+" activa/desactiva el Pago Mixto (2026-09-30, pedido explicito del usuario -- ver
+        // docs/DECISIONS.md). A diferencia de "/" y de los numeros, funciona desde CUALQUIER lado
+        // del modal, incluso con el foco dentro de un input (por eso no lleva guarda de foco);
+        // preventDefault evita que el "+" se escriba en el campo. Solo se ignora si el switch esta
+        // deshabilitado (venta en proceso / modo preseleccion) o al repetirse la tecla mantenida.
+        if (e.key === '+' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const $chkMixto = $('#chkPagoMixto');
+            if (!$chkMixto.prop('disabled') && getModoFormaPagoActual() === 'finalizacion') {
+                e.preventDefault();
+                if (!e.repeat) {
+                    $chkMixto.prop('checked', !esPagoMixto).trigger('change');
+                }
+            }
+            return;
+        }
+
         // ---- Enter: mantener la forma de pago actual al modificar una venta (2026-09-07,
         // pedido explicito del usuario -- ver docs/DECISIONS.md). Solo aplica en edicion de venta
         // real (esEdicionVenta) con una forma de pago actual conocida, y con el foco fuera de
@@ -1230,11 +1318,12 @@ $(document).ready(function () {
         }
 
         // ---- MIXTO ----
-        if (esPagoMixto) {
-            if (e.key === 'End') {
-                e.preventDefault();
-                $('#btnFinalizarPagoMixto').click();
-            }
+        // End confirma "Finalizar Pago". Los numeros 1-6 tambien sirven para elegir el 2do medio
+        // (2026-09-30): siguen el mismo camino que el pago normal -- abajo --, y
+        // seleccionarFormaPago respeta los botones deshabilitados (Efectivo/CtaCte en mixto).
+        if (esPagoMixto && e.key === 'End') {
+            e.preventDefault();
+            $('#btnFinalizarPagoMixto').click();
             return;
         }
 

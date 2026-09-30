@@ -776,12 +776,16 @@
                                         <i class="fas fa-laptop fa-sm fa-fw mr-2 text-gray-400"></i>
                                         Número de serie
                                     </a>
-                                    @* "Mi jornada" (2026-09-29, ver docs/DECISIONS.md): visible para cualquier
+                                    @* "Mi jornada" (2026-09-29/30, ver docs/DECISIONS.md): visible para cualquier
                                        usuario logueado que tenga un Empleado asociado, independiente de permisos
-                                       de administracion -- mismo criterio que "Numero de serie" arriba. Solo
-                                       Postgres (el modulo no tiene rama SQL Server). *@
+                                       de administracion -- mismo criterio que "Numero de serie" arriba. Tambien
+                                       visible para el usuario de produccion compartido (EsUsuarioProduccion), que
+                                       no tiene un Empleado propio -- ahi elige quien es de una lista antes de
+                                       fichar (ver JornadasController.MiJornada). Solo Postgres (el modulo no
+                                       tiene rama SQL Server). *@
                                     @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres
-                                        && WebCore.Infrastructure.NegocioFactory.CrearEmpleado(Sesion.Empresa).ObtenerPorIdUsuario(usuarioActual.Id, usuarioActual.IdEmpresa) != null)
+                                        && (usuarioActual.EsUsuarioProduccion
+                                            || WebCore.Infrastructure.NegocioFactory.CrearEmpleado(Sesion.Empresa).ObtenerPorIdUsuario(usuarioActual.Id, usuarioActual.IdEmpresa) != null))
                                     {
                                         <a class="dropdown-item" href="@Url.Action("MiJornada", "Jornadas")">
                                             <i class="fas fa-clock fa-sm fa-fw mr-2 text-gray-400"></i>

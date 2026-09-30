@@ -23,7 +23,7 @@ namespace DatosPostgres
         // login, activo) -- si hace falta el detalle completo de Persona/Usuario para editar, el
         // caller (Negocio.Empleado) los resuelve aparte con PersonaPg/UsuarioPg.
         private const string SelectBase = @"
-                SELECT e.idempleado, e.idempresa, e.idpersona, e.idusuario, e.legajo, e.formaliquidacion,
+                SELECT e.idempleado, e.idempresa, e.idpersona, e.idusuario, e.formaliquidacion,
                        e.fechaingreso, e.fechabaja, e.activo, e.creado, e.creadopor, e.actualizado, e.actualizadopor,
                        p.razonsocial AS personarazonsocial, p.identificacion AS personaidentificacion,
                        u.nombre AS usuarionombre, u.usuario AS usuariologin, u.activo AS usuarioactivo
@@ -50,7 +50,6 @@ namespace DatosPostgres
                     User = Convert.ToString(dr["usuariologin"]),
                     Activo = dr["usuarioactivo"] != DBNull.Value && Convert.ToBoolean(dr["usuarioactivo"])
                 },
-                Legajo = Convert.ToString(dr["legajo"]),
                 FormaLiquidacion = (Entidades.Empleado.formaLiquidacion)Enum.Parse(typeof(Entidades.Empleado.formaLiquidacion), Convert.ToString(dr["formaliquidacion"])),
                 FechaIngreso = Convert.ToDateTime(dr["fechaingreso"]),
                 FechaBaja = dr["fechabaja"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechabaja"]),
@@ -65,7 +64,7 @@ namespace DatosPostgres
         public List<Entidades.Empleado> Listar(int idEmpresa, string texto, Entidades.Empleado.formaLiquidacion? forma, bool? soloActivos)
         {
             var where = new List<string> { "e.idempresa = @idEmpresa" };
-            if (!string.IsNullOrWhiteSpace(texto)) where.Add("(p.razonsocial ILIKE @texto OR e.legajo ILIKE @texto)");
+            if (!string.IsNullOrWhiteSpace(texto)) where.Add("(p.razonsocial ILIKE @texto OR p.identificacion ILIKE @texto OR p.cuit ILIKE @texto)");
             if (forma.HasValue) where.Add("e.formaliquidacion = @forma");
             if (soloActivos.HasValue) where.Add("e.activo = @activo");
 
@@ -102,8 +101,8 @@ namespace DatosPostgres
         public int Agregar(Entidades.Empleado empleado)
         {
             const string sql = @"
-                INSERT INTO empleado (idempresa, idpersona, idusuario, legajo, formaliquidacion, fechaingreso, activo, creado, creadopor)
-                VALUES (@idEmpresa, @idPersona, @idUsuario, @legajo, @forma, @fechaIngreso, @activo, now(), @creadoPor)
+                INSERT INTO empleado (idempresa, idpersona, idusuario, formaliquidacion, fechaingreso, activo, creado, creadopor)
+                VALUES (@idEmpresa, @idPersona, @idUsuario, @forma, @fechaIngreso, @activo, now(), @creadoPor)
                 RETURNING idempleado;";
 
             object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sql, p =>
@@ -111,7 +110,6 @@ namespace DatosPostgres
                 p.AddWithValue("idEmpresa", empleado.IdEmpresa);
                 p.AddWithValue("idPersona", empleado.Persona.idPersona);
                 p.AddWithValue("idUsuario", empleado.Usuario.Id);
-                p.AddWithValue("legajo", empleado.Legajo ?? "");
                 p.AddWithValue("forma", empleado.FormaLiquidacion.ToString());
                 p.AddWithValue("fechaIngreso", empleado.FechaIngreso);
                 p.AddWithValue("activo", empleado.Activo);
@@ -126,7 +124,7 @@ namespace DatosPostgres
         {
             const string sql = @"
                 UPDATE empleado SET
-                    legajo = @legajo, formaliquidacion = @forma, fechaingreso = @fechaIngreso,
+                    formaliquidacion = @forma, fechaingreso = @fechaIngreso,
                     fechabaja = @fechaBaja, activo = @activo, actualizado = now(), actualizadopor = @actualizadoPor
                 WHERE idempleado = @id AND idempresa = @idEmpresa;";
 
@@ -134,7 +132,6 @@ namespace DatosPostgres
             {
                 p.AddWithValue("id", empleado.Id);
                 p.AddWithValue("idEmpresa", empleado.IdEmpresa);
-                p.AddWithValue("legajo", empleado.Legajo ?? "");
                 p.AddWithValue("forma", empleado.FormaLiquidacion.ToString());
                 p.AddWithValue("fechaIngreso", empleado.FechaIngreso);
                 p.AddWithValue("fechaBaja", (object)empleado.FechaBaja ?? DBNull.Value);
@@ -155,19 +152,6 @@ namespace DatosPostgres
                     p.AddWithValue("activo", activo);
                     p.AddWithValue("fechaBaja", activo ? (object)DBNull.Value : DateTime.Today);
                 });
-        }
-
-        public bool ExisteLegajo(string legajo, int idEmpresa, int idExcluir)
-        {
-            object resultado = DbPg.Scalar(_connectionString, _idEmpresa,
-                "SELECT 1 FROM empleado WHERE idempresa = @idEmpresa AND LOWER(legajo) = LOWER(@legajo) AND idempleado <> @idExcluir LIMIT 1;",
-                p =>
-                {
-                    p.AddWithValue("idEmpresa", idEmpresa);
-                    p.AddWithValue("legajo", legajo ?? "");
-                    p.AddWithValue("idExcluir", idExcluir);
-                });
-            return resultado != null;
         }
 
         public bool ExistePersonaVinculada(int idPersona, int idEmpresa, int idExcluir)

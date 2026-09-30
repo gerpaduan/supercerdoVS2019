@@ -1,0 +1,64 @@
+@{
+    // "Mi jornada" cuando el usuario logueado es el de produccion compartido
+    // (Usuario.EsUsuarioProduccion) -- no tiene un Empleado propio: elige quien es de una lista
+    // (mismo mecanismo que _ModalSeleccionUsuario en Compras/Movimientos/Stock, sin contraseña) y
+    // va directo a confirmar su fichaje. Ver docs/03-modulos/empleados-y-liquidacion-sueldos.md.
+    ViewBag.Title = "Mi jornada";
+}
+
+<div class="container-fluid mi-jornada-produccion-page">
+    <h4 class="mb-3 text-center">
+        Mi jornada
+        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-bs-toggle="modal" data-bs-target="#modalInfoMiJornadaProduccion" title="Cómo usar esta pantalla">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </h4>
+    <div class="text-center py-4">
+        <button type="button" id="btnMarcarJornada" class="btn btn-lg btn-success px-5">
+            <i class="fas fa-user-clock mr-2"></i> Marcar mi jornada
+        </button>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+<div class="modal fade" id="modalInfoMiJornadaProduccion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cómo usar "Mi jornada" (usuario de producción)</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Esta es la cuenta compartida del sector de producción: tocá "Marcar mi jornada", elegí tu nombre de la lista (sin contraseña) y confirmá tu ingreso, egreso o jornada del día.</p>
+                <p>No vas a ver la asistencia ni el sueldo de otros compañeros desde acá — cada quien solo confirma su propia marcación.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var usuariosJornada = @Html.Raw(ViewBag.UsuariosJornada ?? "[]");
+            var urlConfirmar = '@Url.Action("FichajeConfirmar", "Jornadas")';
+
+            document.getElementById('btnMarcarJornada').addEventListener('click', function () {
+                window.SeleccionUsuario.abrir({
+                    titulo: 'Marcar mi jornada — ¿quién sos?',
+                    usuarios: usuariosJornada,
+                    requierePassword: false
+                }).then(function (usuario) {
+                    window.location.href = urlConfirmar + '?idUsuario=' + encodeURIComponent(usuario.id);
+                }).catch(function () { });
+            });
+        })();
+    </script>
+}
+
+<style>
+    .mi-jornada-produccion-page {
+        font-size: .9rem;
+    }
+</style>

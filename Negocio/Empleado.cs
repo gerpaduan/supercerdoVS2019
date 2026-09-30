@@ -70,13 +70,6 @@ namespace Negocio
             if (oPersonaE == null) throw new ArgumentNullException(nameof(oPersonaE));
             if (oUsuarioE == null) throw new ArgumentNullException(nameof(oUsuarioE));
 
-            if (string.IsNullOrWhiteSpace(empleado.Legajo))
-                throw new InvalidOperationException("El legajo es obligatorio.");
-            empleado.Legajo = empleado.Legajo.Trim();
-
-            if (oEmpleadoD.ExisteLegajo(empleado.Legajo, empleado.IdEmpresa, empleado.Id))
-                throw new InvalidOperationException($"Ya existe un empleado con el legajo \"{empleado.Legajo}\".");
-
             if (empleado.Id > 0)
             {
                 var actual = oEmpleadoD.ObtenerPorId(empleado.Id, empleado.IdEmpresa);
@@ -212,17 +205,26 @@ namespace Negocio
             return oTarifaGeneralD.ListarVigentes(idEmpresa, forma);
         }
 
-        // Resolucion de tarifa vigente (turno+dia exacto > turno general), compartida entre la
-        // grilla de Empleados/Historial y el calculo de Negocio.LiquidacionSueldo. Devuelve null si
-        // no hay ninguna fila configurada para ese turno (ver "que pasa si no hay tarifa" en
-        // docs/03-modulos/empleados-y-liquidacion-sueldos.md -- no se inventa un valor).
-        public static Entidades.EmpleadoTarifa ResolverTarifaVigente(List<Entidades.EmpleadoTarifa> historial, Entidades.Turno? turno, DateTime fecha)
+        // Resolucion de tarifa vigente (feriado si corresponde > dia exacto > turno general),
+        // compartida entre la grilla de Empleados/Historial y el calculo de Negocio.LiquidacionSueldo.
+        // Devuelve null si no hay ninguna fila configurada para ese turno (ver "que pasa si no hay
+        // tarifa" en docs/03-modulos/empleados-y-liquidacion-sueldos.md -- no se inventa un valor).
+        // esFeriado (2026-09-30, ver docs/DECISIONS.md): si la marcacion esta marcada feriado,
+        // intenta primero DiaSemana.Feriado antes de caer al dia real -- nunca se pierde el nivel
+        // de dia real ni el general si no hay tarifa de feriado configurada.
+        public static Entidades.EmpleadoTarifa ResolverTarifaVigente(List<Entidades.EmpleadoTarifa> historial, Entidades.Turno? turno, DateTime fecha, bool esFeriado = false)
         {
             if (historial == null) return null;
-            var diaSemana = ConvertirDiaSemana(fecha.DayOfWeek);
 
             var candidatas = historial.Where(t => t.Turno == turno && t.VigenteDesde.Date <= fecha.Date);
 
+            if (esFeriado)
+            {
+                var feriado = candidatas.Where(t => t.DiaSemana == Entidades.DiaSemana.Feriado).OrderByDescending(t => t.VigenteDesde).FirstOrDefault();
+                if (feriado != null) return feriado;
+            }
+
+            var diaSemana = ConvertirDiaSemana(fecha.DayOfWeek);
             var conDia = candidatas.Where(t => t.DiaSemana == diaSemana).OrderByDescending(t => t.VigenteDesde).FirstOrDefault();
             if (conDia != null) return conDia;
 

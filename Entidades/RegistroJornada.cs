@@ -35,6 +35,17 @@ namespace Entidades
         // Motivo cuando se ficha con "Modificar hora" o se corrige un registro ya cargado.
         public string MotivoCorreccion { get; set; }
 
+        // Marca administrativa (nunca autoasignable por el propio empleado al fichar -- ver
+        // Negocio/RegistroJornada.cs) para que esta fecha pague la EmpleadoTarifa de
+        // DiaSemana=Feriado si existe, antes que la del dia real.
+        public bool EsFeriado { get; set; }
+
+        // Nota libre que el empleado puede dejar al fichar (ej. "llegue tarde por trafico") --
+        // NO implica una correccion de hora, distinta de MotivoCorreccion. Si Hora ficha entrada y
+        // salida por separado sobre el mismo registro, se concatenan con etiqueta (ver
+        // Negocio.RegistroJornada.Fichar).
+        public string Observaciones { get; set; }
+
         public DateTime? Creado { get; set; }
 
         // Si tienen valor, el registro fue corregido despues de cargado originalmente (no es la
