@@ -12,6 +12,8 @@
         let ultimoCodigoPedido = null;
         let reqProducto = null;
         let enterDesdeTecladoVirtual = false;
+        // Id del expendio cuya carga esta en vuelo (0 = ninguna). Ver cargarExpendioPorCodigo.
+        let expendioEnCargaId = 0;
         const soloFormaPago = options.soloFormaPago === true;
 
         // Alta rapida de producto desde el POS (codigo no encontrado, ver docs/DECISIONS.md
@@ -115,6 +117,10 @@
             if (soloFormaPago) return false;
             if (!codigo) return false;
             if (!/^[0-9]$/.test(String(tecla ?? ''))) return false;
+            // "PE123..." es el prefijo de un codigo de expendio: el digito no arranca un codigo de
+            // producto, y abrir el modal robaba el foco antes de llegar a la F final (el expendio
+            // se carga solo, ver bindLiveSearch).
+            if (/^PE\d*$/.test(String(codigo))) return false;
             if (window.POSState?.getRequierePreseleccionFormaPago?.() !== true) return false;
             if (window.POSState?.getFormaPagoPreseleccionada?.()?.tipo) return false;
             // El cajero ya cerro el modal inicial con Escape: trabaja a precio de lista (forma-pago.js).
@@ -376,6 +382,24 @@
             return false;
         }
 
+        // Dispara la carga del expendio "idExpendio" a la venta (cargarExpendio de
+        // ventas-expendios-pos.js). Guard de "ya en curso": con pistola el codigo se carga solo al
+        // detectar la F final (bindLiveSearch) y la pistola manda ADEMAS un Enter que llega a
+        // handleEnter -> processExpendioBarcode mientras el request sigue en vuelo (el input recien
+        // se limpia al volver la respuesta). Sin este guard el mismo expendio se pedia dos veces y
+        // podia agregarse duplicado al carrito.
+        function cargarExpendioPorCodigo(idExpendio) {
+            if (expendioEnCargaId === idExpendio) return;
+
+            abortPendingProductRequest();
+            const carga = window.POSExpendiosCurrent?.cargarExpendio?.(idExpendio);
+            if (!carga || typeof carga.then !== 'function') return;
+
+            expendioEnCargaId = idExpendio;
+            const liberar = function () { expendioEnCargaId = 0; };
+            carga.then(liberar, liberar);
+        }
+
         function processExpendioBarcode() {
             if (soloFormaPago) return false;
 
@@ -383,8 +407,7 @@
             const parsed = parseExpendioBarcode(entrada);
             if (!parsed) return false;
 
-            abortPendingProductRequest();
-            window.POSExpendiosCurrent?.cargarExpendio?.(parsed.idExpendio);
+            cargarExpendioPorCodigo(parsed.idExpendio);
             return true;
         }
 
@@ -692,6 +715,19 @@
 
                 if (e.key === 'Enter') {
                     clearTimeout(typingTimer);
+                    return;
+                }
+
+                // Codigo de expendio completo (PE123F, la F marca el final): se carga solo, sin
+                // esperar Enter -- una pistola sin sufijo Enter (o tipeo manual) tambien lo dispara.
+                // Solo si esta vista tiene el modulo de expendios (Ventas/POS) y no hay un modal
+                // abierto (mismo criterio que handleEnter); si no, sigue el flujo normal.
+                const expendioCompleto = parseExpendioBarcode(codigo);
+                if (expendioCompleto && typeof window.POSExpendiosCurrent?.cargarExpendio === 'function') {
+                    clearTimeout(typingTimer);
+                    if (!$('.modal.show').length) {
+                        cargarExpendioPorCodigo(expendioCompleto.idExpendio);
+                    }
                     return;
                 }
 

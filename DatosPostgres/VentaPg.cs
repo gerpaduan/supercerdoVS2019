@@ -1208,6 +1208,73 @@ namespace DatosPostgres
             }
         }
 
+        // Modifica un expendio ya guardado: actualiza la cabecera y reemplaza todas las lineas en
+        // UNA transaccion (si algo falla el expendio queda como estaba). No toca sector, vendedor ni
+        // sucursal. Solo si es de la sucursal indicada y no tiene venta asociada (idventa nulo/0):
+        // un expendio ya convertido en venta no se puede cambiar. Devuelve false en ese caso.
+        public bool actualizarExpendio(Entidades.Venta oVentaE, IList<Entidades.LineaVenta> lineas)
+        {
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    int filasActualizadas;
+                    using (var cmd = new NpgsqlCommand(@"
+                        UPDATE expendios
+                        SET fechaexpendio = @fechaExpendio, identificacionexpendio = @identificacionExpendio,
+                            cantitems = @cantItems, importe = @importe, observaciones = @observaciones, nroremito = @nroRemito
+                        WHERE idexpendio = @idExpendio AND idsucursal = @idSucursal AND (idventa IS NULL OR idventa = 0);", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("fechaExpendio", oVentaE.FechaVenta);
+                        cmd.Parameters.AddWithValue("identificacionExpendio", oVentaE.IdentificacionExpendio ?? "");
+                        cmd.Parameters.AddWithValue("cantItems", int.TryParse(oVentaE.CantItems, out int cantItems) ? cantItems : 0);
+                        cmd.Parameters.AddWithValue("importe", oVentaE.TotalImporte);
+                        cmd.Parameters.AddWithValue("observaciones", oVentaE.Observaciones ?? "");
+                        cmd.Parameters.AddWithValue("nroRemito", oVentaE.NroRemito ?? "");
+                        cmd.Parameters.AddWithValue("idExpendio", oVentaE.IdExpendio);
+                        cmd.Parameters.AddWithValue("idSucursal", oVentaE.Sucursal.idSucursal);
+                        filasActualizadas = cmd.ExecuteNonQuery();
+                    }
+
+                    if (filasActualizadas == 0)
+                    {
+                        tx?.Rollback();
+                        return false;
+                    }
+
+                    using (var cmd = new NpgsqlCommand("DELETE FROM lineaexpendio WHERE idexpendio = @idExpendio;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("idExpendio", oVentaE.IdExpendio);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    foreach (var linea in lineas ?? new List<Entidades.LineaVenta>())
+                    {
+                        using (var cmd = new NpgsqlCommand(@"
+                            INSERT INTO lineaexpendio (idexpendio, idcorte, cantkg, preciokg, pesobalanza, idempresa)
+                            VALUES (@idExpendio, @idCorte, @cantKg, @precioKg, @pesoBalanza, @idEmpresa);", con, tx))
+                        {
+                            cmd.Parameters.AddWithValue("idExpendio", oVentaE.IdExpendio);
+                            cmd.Parameters.AddWithValue("idCorte", linea.Corte.idCorte);
+                            cmd.Parameters.AddWithValue("cantKg", Math.Round(linea.CantKg, 3));
+                            cmd.Parameters.AddWithValue("precioKg", Math.Round(linea.PrecioKg, 2));
+                            cmd.Parameters.AddWithValue("pesoBalanza", linea.PesoBalanza);
+                            cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    tx?.Commit();
+                    return true;
+                }
+                catch
+                {
+                    try { tx?.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
         public Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE)
         {
             object scalar = DbPg.Scalar(_connectionString, _idEmpresa, @"

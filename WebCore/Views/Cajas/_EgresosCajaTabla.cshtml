@@ -237,7 +237,7 @@
                 <th>Tipo</th>
                 <th>Descripcion</th>
                 <th class="text-right">Monto</th>
-                <th class="text-center" style="width:70px;">Detalle</th>
+                <th>Detalle</th>
                 <th>Sucursal</th>
                 <th class="text-nowrap">Acciones</th>
             </tr>
@@ -296,11 +296,15 @@
                             }
                         </td>
                         <td class="text-right text-nowrap">$ @Monto(row)</td>
-                        <td class="text-center">
-                            @{ var detalleTexto = Valor(row, "Detalle"); }
+                        <td>
+                            @* Resumen de la primera linea del detalle (el texto completo va en el tooltip y en el desplegable). *@
+                            @{
+                                var detalleTexto = Valor(row, "Detalle");
+                                var detalleResumen = detalleTexto.Replace("\r", "").Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+                            }
                             @if (!string.IsNullOrWhiteSpace(detalleTexto))
                             {
-                                <span class="badge badge-pill badge-info" title="@detalleTexto">1</span>
+                                <span class="d-inline-block text-truncate align-middle" style="max-width:220px;" title="@detalleTexto">@detalleResumen</span>
                             }
                         </td>
                         <td>@sucursalFila</td>

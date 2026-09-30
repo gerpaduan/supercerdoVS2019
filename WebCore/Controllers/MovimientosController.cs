@@ -24,6 +24,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
 using WebCore.Models;
+using WebCore.Services;
 
 namespace WebCore.Controllers
 {
@@ -473,10 +474,11 @@ namespace WebCore.Controllers
             var resultado = new List<string>();
 
             // Encabezado
-            resultado.Add(centrar("Movimiento", cantMaxChar));
+            // Movimiento, Origen y Destino en negrita (pedido del usuario 2026-09-30).
+            resultado.Add(EscPosFormato.Negrita(centrar("Movimiento", cantMaxChar)));
             resultado.Add(truncar("ID: " + movimiento.IdMovimiento, cantMaxChar));
-            resultado.Add(truncar("Origen: " + (movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre : "-"), cantMaxChar));
-            resultado.Add(truncar("Destino: " + (movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre : "-"), cantMaxChar));
+            resultado.Add(EscPosFormato.Negrita(truncar("Origen: " + (movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre : "-"), cantMaxChar)));
+            resultado.Add(EscPosFormato.Negrita(truncar("Destino: " + (movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre : "-"), cantMaxChar)));
             resultado.Add(truncar("Fecha: " + movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"), cantMaxChar));
             resultado.Add(" ");
             resultado.Add(ajustarColumna("Producto", anchoProducto, false) + " " + ajustarColumna("Cant.", anchoCant, true) + "    " + ajustarColumna("Kgs.", anchoKgs, true));
@@ -497,7 +499,8 @@ namespace WebCore.Controllers
                 totalKilos += Convert.ToDecimal(item.CantKg);
 
                 resultado.Add(ajustarColumna(nombreProducto, anchoProducto, false) + " " + ajustarColumna(cantidadTexto, anchoCant, true) + "    " + ajustarColumna(kilosTexto, anchoKgs, true));
-                resultado.Add(ajustarColumna("Cod:" + codigoProducto, anchoProducto, false));
+                // Codigo en fuente B (mas chica): la termica es monocromo, no admite gris.
+                resultado.Add(EscPosFormato.FuenteB(ajustarColumna("Cod:" + codigoProducto, anchoProducto, false)));
             }
 
             // Totales y observaciones
@@ -512,6 +515,15 @@ namespace WebCore.Controllers
                 for (int i = 0; i < observacion.Length; i += cantMaxChar)
                     resultado.Add(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
             }
+
+            // Firma de control: 3 lineas en blanco (NBSP, como el resto de los tickets) y una linea para
+            // que la persona que controlo el movimiento escriba su nombre.
+            const string blanco = "\u00A0";
+            resultado.Add(blanco);
+            resultado.Add(blanco);
+            resultado.Add(blanco);
+            const string rotuloControlado = "Controlado por: ";
+            resultado.Add(rotuloControlado + new string('_', Math.Max(4, cantMaxChar - rotuloControlado.Length)));
 
             return resultado;
         }

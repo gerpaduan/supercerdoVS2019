@@ -109,7 +109,8 @@
             </div>
 
             <div class="pos-topbar-item pos-topbar-item-fecha">
-                <div class="pos-topbar-label">Fecha y hora</div>
+                @* PRESUPUESTO: la fecha es desde cuando rigen los precios, no la del momento de carga. *@
+                <div class="pos-topbar-label">@(Negocio.SectorPuntoExpendio.EsPresupuesto(Model.Sector) ? "Vigencia de precios desde" : "Fecha y hora")</div>
                 @if (fechaEditable)
                 {
                     @* PRESUPUESTO y REMITOS: click en la fecha revela un input para cambiarla (mismo
@@ -682,6 +683,8 @@
             urlFinalizar: '@Url.Action("FinalizarPOS", "PuntosExpendio")',
             urlBuscarProductoPos: '@Url.Action("BuscarProductoPOS", "PuntosExpendio")',
             urlPdf: '@Url.Action("ImprimirPdf", "PuntosExpendio")',
+            urlTicketHtml: '@Url.Action("ImprimirTicketHtml", "PuntosExpendio")',
+            urlTicketPayload: '@Url.Action("ImprimirTicketPayload", "PuntosExpendio")',
             urlEmailConfig: '@Url.Action("ObtenerDatosEmailExpendio", "PuntosExpendio")',
             urlEmailEnviar: '@Url.Action("EnviarComprobanteEmailExpendio", "PuntosExpendio")',
             urlMisExpendios: '@Url.Action("MisExpendiosPOS", "PuntosExpendio")',

@@ -20,7 +20,7 @@ namespace DatosPostgres
 
         private const string SelectBase = @"
                 SELECT d.id, d.idempresa, d.numeroserie, d.descripcion, d.creadoutc, d.idusuariocreador,
-                       d.origen, d.emailalta, d.bloqueado,
+                       d.origen, d.emailalta, d.bloqueado, d.habilitadofichaje,
                        u.nombre AS nombreusuariocreador
                 FROM dispositivosseguros d
                 LEFT JOIN usuarios u ON u.id = d.idusuariocreador ";
@@ -38,7 +38,8 @@ namespace DatosPostgres
                 NombreUsuarioCreador = dr["nombreusuariocreador"] == DBNull.Value ? "" : Convert.ToString(dr["nombreusuariocreador"]),
                 Origen = dr["origen"] == DBNull.Value ? "Manual" : Convert.ToString(dr["origen"]),
                 EmailAlta = dr["emailalta"] == DBNull.Value ? "" : Convert.ToString(dr["emailalta"]),
-                Bloqueado = dr["bloqueado"] != DBNull.Value && Convert.ToBoolean(dr["bloqueado"])
+                Bloqueado = dr["bloqueado"] != DBNull.Value && Convert.ToBoolean(dr["bloqueado"]),
+                HabilitadoFichaje = dr["habilitadofichaje"] != DBNull.Value && Convert.ToBoolean(dr["habilitadofichaje"])
             };
         }
 
@@ -114,6 +115,26 @@ namespace DatosPostgres
         {
             var dispositivo = ObtenerPorSerie(numeroSerie, idEmpresa);
             return dispositivo != null && !dispositivo.Bloqueado;
+        }
+
+        public void SetHabilitadoFichaje(int id, int idEmpresa, bool habilitado)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "UPDATE dispositivosseguros SET habilitadofichaje = @habilitado WHERE id = @id AND idempresa = @idEmpresa;",
+                p =>
+                {
+                    p.AddWithValue("id", id);
+                    p.AddWithValue("idEmpresa", idEmpresa);
+                    p.AddWithValue("habilitado", habilitado);
+                });
+        }
+
+        // Usado en el fichaje: un dispositivo bloqueado o no habilitado para fichaje NO sirve,
+        // aunque este dado de alta como "seguro".
+        public bool EsFichajeHabilitado(string numeroSerie, int idEmpresa)
+        {
+            var dispositivo = ObtenerPorSerie(numeroSerie, idEmpresa);
+            return dispositivo != null && !dispositivo.Bloqueado && dispositivo.HabilitadoFichaje;
         }
     }
 }

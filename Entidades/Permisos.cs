@@ -22,6 +22,18 @@ namespace Entidades
             public const string ModificarCompra = "formModificarCompra";
         }
 
+        public static class Empleado
+        {
+            // ABM (alta/edicion/baja) de empleados, incluida la pestaña Vacaciones.
+            public const string VerEmpleados = "formEmpleados";
+            public const string NuevoEmpleado = "formNuevoEmpleado";
+
+            // Pantallas Liquidaciones -- editar habilita generar (confirmar) y eliminar
+            // liquidaciones, mismo esquema Ver/Editar que el resto de PermisosUsuarios.
+            public const string VerLiquidaciones = "formLiquidaciones";
+            public const string NuevaLiquidacion = "formNuevaLiquidacion";
+        }
+
         public static class EgresoCaja
         {
             public const string VerEgresosCaja = "formEgresosCaja";

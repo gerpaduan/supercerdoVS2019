@@ -14,19 +14,21 @@
     int idSucursal = Model != null && Model.Sucursal != null && Model.Sucursal.idSucursal > 0 ? Model.Sucursal.idSucursal : (ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : 0);
     bool mostrarSucursales = !desdePos && idCierreActividad == 0;
     string monto = Model != null && Model.Monto > 0 ? Model.Monto.ToString("0.##", CultureInfo.InvariantCulture) : "";
+    // Sucursal del egreso: el repo Postgres solo trae el id (Model.Sucursal.SucursalNombre viene vacio), asi que se
+    // resuelve por id contra la lista. Antes caia a la sucursal del USUARIO y mostraba otra al modificar un egreso.
     string sucursalActual = "";
-    if (Model != null && Model.Sucursal != null && !string.IsNullOrWhiteSpace(Model.Sucursal.SucursalNombre))
+    var sucursalDelEgreso = sucursales != null ? sucursales.FirstOrDefault(s => s.IdSucursal == idSucursal) : null;
+    if (sucursalDelEgreso != null && !string.IsNullOrWhiteSpace(sucursalDelEgreso.SucursalNombre))
+    {
+        sucursalActual = sucursalDelEgreso.SucursalNombre;
+    }
+    else if (Model != null && Model.Sucursal != null && !string.IsNullOrWhiteSpace(Model.Sucursal.SucursalNombre))
     {
         sucursalActual = Model.Sucursal.SucursalNombre;
     }
     else if (usuario != null && usuario.Sucursal != null && !string.IsNullOrWhiteSpace(usuario.Sucursal.SucursalNombre))
     {
         sucursalActual = usuario.Sucursal.SucursalNombre;
-    }
-    else if (sucursales != null)
-    {
-        var sucursalSeleccionada = sucursales.FirstOrDefault(s => s.IdSucursal == idSucursal);
-        sucursalActual = sucursalSeleccionada != null ? sucursalSeleccionada.SucursalNombre : "";
     }
 }
 
@@ -128,7 +130,7 @@
                                 data-cb-context="egreso"
                                 data-cb-input="#egresoMonto, [name='monto']"
                                 data-cb-detail="#egresoDetalle, [name='detalle']"
-                                title="Calcular efectivo">
+                                title="Calcular efectivo (Alt+B)">
                             <i class="fas fa-money-bill-wave"></i>
                         </button>
                     </div>
@@ -278,6 +280,19 @@
             chkUsarDetalle.addEventListener("change", syncUsarDetalle);
         }
         syncUsarDetalle();
+
+        // La calculadora de billetes escribe el conteo en #egresoDetalle por JS: con el switch "Detalle" apagado el
+        // textarea esta oculto y DESHABILITADO (no se manda al guardar), y el conteo se perdia. Si se cargo un
+        // detalle, se prende el switch para que se vea y se guarde. jQuery (no addEventListener) porque la
+        // calculadora dispara sus eventos con $.trigger.
+        if (chkUsarDetalle && inputDetalle && window.jQuery) {
+            window.jQuery(inputDetalle).on("input change", function () {
+                if (!chkUsarDetalle.checked && (inputDetalle.value || "").trim() !== "") {
+                    chkUsarDetalle.checked = true;
+                    syncUsarDetalle();
+                }
+            });
+        }
 
         // Pedido real (2026-09-15, ver docs/DECISIONS.md): solo numeros validos, puntos de miles
         // en pantalla, y "." tecleado se interpreta como la coma decimal -- mismo mecanismo ya

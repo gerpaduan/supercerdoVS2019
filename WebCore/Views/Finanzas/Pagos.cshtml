@@ -95,7 +95,17 @@
                             <tr class="@clasesFila" data-href="@urlPago" tabindex="0" style="cursor:pointer;">
                                 <td>@Convert.ToDateTime(fila["fecha"]).ToString("dd/MM/yyyy HH:mm")</td>
                                 <td class="font-weight-bold @(esCobro ? "text-success" : "text-danger")">@fila["Operacion"]</td>
-                                <td><a href="@urlPago" class="text-body">@fila["razonSocial"]</a></td>
+                                <td>
+                                    <a href="@urlPago" class="text-body">@fila["razonSocial"]</a>
+                                    @{
+                                        string identifFilaPago = fila.Table.Columns.Contains("identificacion") && fila["identificacion"] != DBNull.Value ? Convert.ToString(fila["identificacion"]) : "";
+                                        string razonSocialFilaPago = Convert.ToString(fila["razonSocial"]);
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(identifFilaPago) && !string.Equals(identifFilaPago, razonSocialFilaPago, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <small class="text-muted d-block">@identifFilaPago</small>
+                                    }
+                                </td>
                                 <td>@fila["nroRecibo"]</td>
                                 <td>@fila["formaPago"]</td>
                                 <td class="text-right font-weight-bold @(esEliminado ? "pagos-importe-eliminado" : "")">@importe.ToString("N2")</td>

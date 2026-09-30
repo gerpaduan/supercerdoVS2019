@@ -71,15 +71,6 @@
         return etiqueta + new string(' ', espacios) + derecha;
     };
 
-    Func<string, decimal, int, string> formatearArticulo = (producto, total, ancho) =>
-    {
-        string descripcion = truncar(producto, 22);
-        string importe = total.ToString("N2");
-        int espacios = ancho - (descripcion.Length + importe.Length);
-        if (espacios < 1) espacios = 1;
-        return descripcion + new string(' ', espacios) + importe;
-    };
-
     Func<int, string> obtenerTituloComprobante = cod =>
     {
         switch (cod)
@@ -108,6 +99,7 @@
 
     var lineasDetalle = new List<string>();
     var lineasPie = new List<string>();
+    var lineasFiscalesChicas = new HashSet<string>();
     var lineasEmpresa = new List<string>();
     var lineasCliente = new List<string>();
 
@@ -174,8 +166,9 @@
         if (agruparItemUnitario)
         {
             decimal totalAgrupado = esFacturaA ? factura.ImporteNetoGravado : factura.ImporteTotal;
-            lineasDetalle.Add("1,000 x " + totalAgrupado.ToString("N2"));
-            lineasDetalle.Add(formatearArticulo(factura.DescItemUnitario, totalAgrupado, cantMaxChar));
+            // Descripcion arriba (ancho completo) y debajo "cantidad x precio ... importe" (pedido del usuario 2026-09-30).
+            lineasDetalle.Add(truncar(factura.DescItemUnitario, cantMaxChar));
+            lineasDetalle.Add(formatearTotal("1,000 x " + totalAgrupado.ToString("N2"), totalAgrupado, cantMaxChar));
         }
         else
         {
@@ -193,13 +186,13 @@
                     decimal divisorIva = 1m + (Convert.ToDecimal(item.AlicuotaIva) / 100m);
                     decimal precioNeto = divisorIva != 0 ? (precio / divisorIva) : precio;
                     decimal importeNeto = cantidad * precioNeto;
-                    lineasDetalle.Add(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"));
-                    lineasDetalle.Add(formatearArticulo(producto, importeNeto, cantMaxChar));
+                    lineasDetalle.Add(truncar(producto, cantMaxChar));
+                    lineasDetalle.Add(formatearTotal(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"), importeNeto, cantMaxChar));
                 }
                 else
                 {
-                    lineasDetalle.Add(cantidad.ToString("F3") + " x " + precio.ToString("N2"));
-                    lineasDetalle.Add(formatearArticulo(producto, totalLinea, cantMaxChar));
+                    lineasDetalle.Add(truncar(producto, cantMaxChar));
+                    lineasDetalle.Add(formatearTotal(cantidad.ToString("F3") + " x " + precio.ToString("N2"), totalLinea, cantMaxChar));
                 }
             }
         }
@@ -242,11 +235,19 @@
     if (esFacturada)
     {
         lineasPie.Add("");
-        lineasPie.Add(truncar("Regimen de Transparencia Fiscal", cantMaxChar));
-        lineasPie.Add(truncar("Al Consumidor (Ley 27.743)", cantMaxChar));
-        lineasPie.Add(truncar("IVA Contenido: " + factura.Iva.ToString("N2"), cantMaxChar));
-        lineasPie.Add(truncar("CAE: " + (factura.CAE ?? ""), cantMaxChar));
-        lineasPie.Add(truncar("Vto: " + (factura.FecVtoCAE ?? ""), cantMaxChar));
+        // Texto legal y datos del CAE con fuente mas chica (igual que la fuente B del ticket del agente).
+        foreach (var lineaFiscal in new[]
+        {
+            truncar("Regimen de Transparencia Fiscal", cantMaxChar),
+            truncar("Al Consumidor (Ley 27.743)", cantMaxChar),
+            truncar("IVA Contenido: " + factura.Iva.ToString("N2"), cantMaxChar),
+            truncar("CAE: " + (factura.CAE ?? ""), cantMaxChar),
+            truncar("Vto: " + (factura.FecVtoCAE ?? ""), cantMaxChar)
+        })
+        {
+            lineasPie.Add(lineaFiscal);
+            lineasFiscalesChicas.Add(lineaFiscal);
+        }
         lineasPie.Add("");
 
         bool esTransferencia = (factura.FormaPago ?? "").Equals(Entidades.Pago.formasPago.Transferencia.ToString(), StringComparison.OrdinalIgnoreCase);
@@ -318,6 +319,10 @@
             padding: 2mm;
             box-sizing: border-box;
             text-align: left;
+        }
+
+        .ticket-line-chica {
+            font-size: 0.8em;
         }
 
         .ticket-line {
@@ -411,6 +416,10 @@
             else if (esFacturaA && linea == formatearTotal("TOTAL", factura.ImporteTotal, cantMaxChar))
             {
                 <div class="ticket-total">@renderLineaHtml(linea)</div>
+            }
+            else if (lineasFiscalesChicas.Contains(linea))
+            {
+                <div class="ticket-line ticket-line-chica">@renderLineaHtml(linea)</div>
             }
             else
             {

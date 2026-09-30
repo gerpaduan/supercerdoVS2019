@@ -1,0 +1,79 @@
+@model WebCore.Models.FichajeConfirmarVm
+@{
+    ViewBag.Title = "Fichaje";
+}
+
+<div class="container-fluid">
+    <div class="card shadow-sm mx-auto" style="max-width:480px;">
+        <div class="card-body text-center py-4">
+            <h4>Hola @Model.EmpleadoNombre</h4>
+            <p class="lead">
+                Vas a registrar tu <strong>@(Model.EsIngreso ? "Ingreso" : "Salida")</strong>
+                a las <strong id="horaMostrada">@Model.HoraPropuestaTexto</strong> hs.
+            </p>
+
+            <form asp-controller="Jornadas" asp-action="FichajeRegistrar" method="post" id="formFichaje">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="idEmpleado" value="@Model.IdEmpleado" />
+                <input type="hidden" name="horaCorregida" id="horaCorregida" value="" />
+
+                <div id="panelModificarHora" class="d-none text-left mt-3 mb-3 p-3 border rounded bg-light">
+                    <div class="form-group">
+                        <label>Motivo</label>
+                        <select id="motivoSelect" class="form-control">
+                            @foreach (var m in WebCore.Models.FichajeConfirmarVm.MotivosTipicos)
+                            {
+                                <option value="@m">@m</option>
+                            }
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="grupoMotivoOtro" style="display:none;">
+                        <label>Especificar motivo</label>
+                        <input type="text" id="motivoOtroInput" name="motivoOtro" class="form-control" />
+                    </div>
+                    <input type="hidden" name="motivo" id="motivoHidden" />
+                    <div class="form-group">
+                        <label>Hora correcta</label>
+                        <input type="time" id="horaInput" class="form-control" value="@Model.HoraPropuestaTexto" />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg btn-block mt-2">Registrar</button>
+                <a href="@Url.Action("Fichaje", "Jornadas")" class="btn btn-outline-secondary btn-block mt-2">Cancelar</a>
+                <button type="button" id="btnModificarHora" class="btn btn-link mt-2">¿Te olvidaste de fichar antes? Modificar hora</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var panel = document.getElementById('panelModificarHora');
+            var btn = document.getElementById('btnModificarHora');
+            var motivoSelect = document.getElementById('motivoSelect');
+            var grupoOtro = document.getElementById('grupoMotivoOtro');
+            var motivoOtro = document.getElementById('motivoOtroInput');
+            var motivoHidden = document.getElementById('motivoHidden');
+            var horaInput = document.getElementById('horaInput');
+            var horaCorregida = document.getElementById('horaCorregida');
+            var form = document.getElementById('formFichaje');
+
+            btn.addEventListener('click', function () {
+                panel.classList.toggle('d-none');
+            });
+
+            motivoSelect.addEventListener('change', function () {
+                grupoOtro.style.display = motivoSelect.value === 'Otro' ? 'block' : 'none';
+            });
+
+            form.addEventListener('submit', function () {
+                if (!panel.classList.contains('d-none')) {
+                    horaCorregida.value = horaInput.value;
+                    motivoHidden.value = motivoSelect.value;
+                }
+            });
+        })();
+    </script>
+}

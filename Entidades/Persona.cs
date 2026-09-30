@@ -171,5 +171,15 @@ namespace Entidades
             return (this.idIva == codIvaRRII_Afip);
 
         }
+
+        // Pedido explicito del usuario (2026-09-28, ver docs/DECISIONS.md): en las pantallas que
+        // muestran la razon social de un cliente/proveedor, mostrar tambien la identificacion
+        // (CUIT/DNI) debajo, pero solo cuando aporta un dato distinto (evita duplicar el mismo
+        // texto dos veces, ej. cuando la identificacion quedo cargada igual a la razon social).
+        public bool TieneIdentificacionDistinta()
+        {
+            return !string.IsNullOrWhiteSpace(identificacion)
+                && !string.Equals(identificacion, razonSocial, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

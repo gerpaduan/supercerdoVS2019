@@ -21,5 +21,11 @@ namespace Contratos
         Entidades.DispositivoSeguro ObtenerPorSerie(string numeroSerie, int idEmpresa);
 
         void SetBloqueado(int id, int idEmpresa, bool bloqueado);
+
+        // Fichaje de jornada (2026-09-29, ver docs/DECISIONS.md): independiente de Bloqueado.
+        void SetHabilitadoFichaje(int id, int idEmpresa, bool habilitado);
+
+        // true solo si existe, no esta bloqueado Y esta habilitado para fichaje.
+        bool EsFichajeHabilitado(string numeroSerie, int idEmpresa);
     }
 }

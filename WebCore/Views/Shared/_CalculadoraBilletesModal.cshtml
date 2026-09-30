@@ -107,55 +107,58 @@
                     ¿Qué deseas hacer ahora?
                 </p>
 
-                <button class="btn btn-secondary btn-lg btn-block mb-2" id="btnCbNoImprimir" type="button">
-                    <span class="badge badge-light mr-2">1</span>
-                    No imprimir
-                </button>
+                @* Bootstrap 5: btn-block no existe; d-grid + gap apila los botones a todo el ancho, uno debajo del otro. *@
+                <div class="d-grid gap-2">
+                    <button class="btn btn-secondary btn-lg" id="btnCbNoImprimir" type="button">
+                        <span class="badge badge-light mr-2">1</span>
+                        No imprimir
+                    </button>
 
-                <div class="d-flex mb-2">
-                    <button class="btn btn-outline-primary btn-lg flex-grow-1 mr-2" id="btnCbTicket" type="button">
+                    <button class="btn btn-outline-primary btn-lg" id="btnCbTicket" type="button">
                         <span class="badge badge-primary mr-2">2</span>
                         <span id="lblCbTicketAccion">Ticket</span>
                     </button>
 
-                    <button class="btn btn-outline-secondary btn-lg" id="btnCbCambiarTicket" type="button" title="Cambiar tamaño de ticket">
-                        Cambiar
+                    <button class="btn btn-outline-secondary btn-sm" id="btnCbCambiarTicket" type="button" title="Cambiar tamaño de ticket">
+                        Cambiar tamaño de ticket
+                    </button>
+
+                    <div class="collapse" id="bloqueCbTicketOpciones">
+                        <div class="card card-body p-2">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary btnCbTicketOpt" type="button" data-mm="58">
+                                    Ticket 58 mm
+                                </button>
+
+                                <button class="btn btn-outline-primary btnCbTicketOpt" type="button" data-mm="80">
+                                    Ticket 80 mm
+                                </button>
+                            </div>
+
+                            <small class="text-muted mt-2 d-block">
+                                Elegí un tamaño y se imprimirá automáticamente.
+                            </small>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-dark btn-lg" id="btnCbPdf" type="button">
+                        <span class="badge badge-light mr-2">3</span>
+                        Generar PDF
+                    </button>
+
+                    <button class="btn btn-success btn-lg" id="btnCbWhatsapp" type="button">
+                        <span class="badge badge-light mr-2">4</span>
+                        <i class="fab fa-whatsapp mr-2"></i>Enviar por WhatsApp
                     </button>
                 </div>
-
-                <div class="collapse mb-2" id="bloqueCbTicketOpciones">
-                    <div class="card card-body p-2">
-                        <button class="btn btn-outline-primary btn-block mb-2 btnCbTicketOpt" type="button" data-mm="58">
-                            Ticket 58 mm
-                        </button>
-
-                        <button class="btn btn-outline-primary btn-block btnCbTicketOpt" type="button" data-mm="80">
-                            Ticket 80 mm
-                        </button>
-
-                        <small class="text-muted mt-2 d-block">
-                            Elegí un tamaño y se imprimirá automáticamente.
-                        </small>
-                    </div>
-                </div>
-
-                <button class="btn btn-dark btn-lg btn-block mb-2" id="btnCbPdf" type="button">
-                    <span class="badge badge-light mr-2">3</span>
-                    Generar PDF
-                </button>
-
-                <button class="btn btn-success btn-lg btn-block" id="btnCbWhatsapp" type="button">
-                    <span class="badge badge-light mr-2">4</span>
-                    <i class="fab fa-whatsapp mr-2"></i>Enviar por WhatsApp
-                </button>
 
                 <div class="mt-3 pt-2 border-top text-left">
                     <div class="small text-muted mb-2" id="estadoAgenteCalculadoraBilletes">
                         Impresión local: usando navegador.
                     </div>
 
-                    <div class="d-flex">
-                        <button class="btn btn-outline-info btn-sm flex-grow-1 mr-2" id="btnConfigurarAgenteCalculadoraBilletes" type="button">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-info btn-sm flex-grow-1" id="btnConfigurarAgenteCalculadoraBilletes" type="button">
                             Configurar impresora
                         </button>
                         <a class="btn btn-outline-secondary btn-sm" id="btnDescargarAgenteCalculadoraBilletes" href="@Url.Action("DescargarAgenteImpresion", "Home")">
@@ -209,6 +212,12 @@
 </script>
 
 <style>
+    /* La calculadora se apila sobre otros modales (z-index dinamico en calculadora-billetes.js): los avisos
+       de SweetAlert (ej. "¿Cerrar la calculadora?") tienen que quedar por encima de todo. */
+    .swal2-container {
+        z-index: 3000 !important;
+    }
+
     .calculadora-billetes-dialog {
         max-width: 35vw;
         width: 35vw;

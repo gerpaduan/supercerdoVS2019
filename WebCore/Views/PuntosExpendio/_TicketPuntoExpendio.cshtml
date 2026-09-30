@@ -1,0 +1,71 @@
+@*
+    Ticket termico HTML de un expendio (58/80 mm). Port de Web/Views/PuntosExpendio/_TicketPuntoExpendio.cshtml:
+    el texto lo arma PuntosExpendioController.ConstruirLineasTicketPuntoExpendio (ViewBag.TicketLineas), asi el
+    HTML y el payload del agente ESC/POS salen del mismo codigo. Se imprime en un iframe oculto (ticket-print.js).
+*@
+@model Entidades.Venta
+@{
+    Layout = null;
+
+    int mm = ViewBag.TicketMm != null ? (int)ViewBag.TicketMm : 80;
+    string ticketTexto = (ViewBag.TicketLineas as string) ?? "";
+    string ticketClass = mm == 80 ? "ticket-80mm" : "ticket-58mm";
+    string barcodeValue = "PE" + Model.IdExpendio + "F";
+
+    // Codigo de barras visual simple: 7 bits ASCII por caracter (barra ancha = 1, angosta = 0) + separador.
+    var barcodeBits = new List<int>();
+    foreach (char ch in barcodeValue)
+    {
+        int ascii = (int)ch;
+        for (int bit = 6; bit >= 0; bit--)
+        {
+            barcodeBits.Add(((ascii >> bit) & 1) == 1 ? 2 : 1);
+        }
+        barcodeBits.Add(1);
+    }
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Punto de expendio @Model.IdExpendio</title>
+    <style>
+        @@page {
+            margin: 0;
+            size: @(mm == 80 ? "80mm" : "58mm") auto;
+        }
+
+        html, body { margin: 0; padding: 0; background: #fff; color: #000; font-family: Consolas, "Courier New", monospace; }
+        body.ticket-58mm { width: 58mm; }
+        body.ticket-80mm { width: 80mm; }
+
+        .ticket-text { margin: 0; padding: 3mm 2.5mm; white-space: pre-wrap; font-size: 12px; line-height: 1.22; }
+        .ticket-code { padding: 0 2.5mm 4mm; text-align: center; page-break-inside: avoid; }
+        .ticket-barcode-visual { display: inline-flex; align-items: flex-end; justify-content: center; gap: 1px; margin: 0 auto 1.5mm; padding: 2mm 1.5mm 0; }
+        .ticket-barcode-bar { display: block; width: 0; height: 18mm; border-left-style: solid; border-left-color: #000; }
+        .ticket-barcode-bar.w1 { border-left-width: 1px; }
+        .ticket-barcode-bar.w2 { border-left-width: 2px; }
+        .ticket-code-label { font-size: 11px; font-weight: 700; margin-bottom: 1mm; }
+        .ticket-code-value { font-size: 15px; font-weight: 700; }
+    </style>
+</head>
+@* Autoimprime solo si se abre como pagina propia; dentro del iframe de ticket-print.js imprime el helper. *@
+<body class="@ticketClass" onload="if (window.top === window) window.print()">
+    <pre class="ticket-text">@ticketTexto</pre>
+    <div class="ticket-code">
+        <div class="ticket-barcode-visual" aria-hidden="true">
+            @foreach (var bitWidth in barcodeBits)
+            {
+                <span class="ticket-barcode-bar w@(bitWidth > 1 ? 2 : 1)"></span>
+            }
+        </div>
+        <div class="ticket-code-label">Codigo expendio</div>
+        <div class="ticket-code-value">@barcodeValue</div>
+    </div>
+
+    @for (int i = 0; i < 10; i++)
+    {
+        <pre class="ticket-text">&nbsp;</pre>
+    }
+</body>
+</html>

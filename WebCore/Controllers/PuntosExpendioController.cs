@@ -18,11 +18,10 @@
 //
 // Las acciones restantes del original siguen sin portar en este slice:
 //  - Abrir, Guardar, BuscarProducto, BuscarProductoPorCodigo, MisExpendiosPOS.
-//  - Impresion de tickets ESC/POS (agente de impresion local, sin relacion con el bloqueante de
-//    PDF): ImprimirTicket, ImprimirTicketPayload, DescargarAgenteImpresion.
-//
-// Consecuencia visible en la vista: el boton "Imprimir" (ticket) de cada card de
-// ExpendiosGenerados sigue excluido; se agregan botones nuevos "PDF" y "Email" en su lugar.
+//  - DescargarAgenteImpresion.
+// ImprimirTicketHtml/ImprimirTicketPayload portados 2026-09-30 (opcion "Imprimir ticket" del modal
+// post-expendio). El boton "Imprimir" de cada card de ExpendiosGenerados sigue excluido; se
+// agregan botones nuevos "PDF" y "Email" en su lugar.
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06) -- ya no hay stub hardcodeado. PermisosHelper.TienePermiso(Session,
@@ -742,7 +741,21 @@ namespace WebCore.Controllers
             // REMITOS: el numero no puede repetirse en la sucursal (tambien lo garantiza un indice unico
             // en la base, por si dos usuarios toman el mismo numero a la vez). Se devuelve el siguiente
             // libre para que el POS lo cargue.
-            if (Negocio.SectorPuntoExpendio.EsRemitos(model.Sector) && _oVentaN.existeNroRemito(sucursal.idSucursal, model.NroRemito))
+            // Modificacion de un expendio ya guardado: debe existir, ser del mismo sector y (lo verifica
+            // la capa de datos) de esta sucursal y sin venta asociada.
+            int idExpendioModificar = request != null ? request.IdExpendioModificar : 0;
+            Entidades.Venta expendioActual = null;
+            if (idExpendioModificar > 0)
+            {
+                expendioActual = _oVentaN.getExpedioById(idExpendioModificar);
+                if (expendioActual == null || expendioActual.IdExpendio <= 0
+                    || !string.Equals((expendioActual.Sector ?? "").Trim(), (model.Sector ?? "").Trim(), StringComparison.OrdinalIgnoreCase))
+                    return Json(new { ok = false, mensaje = "No se encontró el expendio a modificar." });
+            }
+
+            // Al modificar, conservar el mismo numero de remito no es un duplicado.
+            bool remitoSinCambios = expendioActual != null && string.Equals((expendioActual.NroRemito ?? "").Trim(), model.NroRemito ?? "", StringComparison.Ordinal);
+            if (Negocio.SectorPuntoExpendio.EsRemitos(model.Sector) && !remitoSinCambios && _oVentaN.existeNroRemito(sucursal.idSucursal, model.NroRemito))
                 return Json(new
                 {
                     ok = false,
@@ -776,8 +789,9 @@ namespace WebCore.Controllers
 
             try
             {
-                expendio.IdVenta = expendio.IdExpendio = _oVentaN.agregarExpendio(expendio);
-
+                // Se resuelven y validan todos los productos ANTES de escribir nada: asi un producto
+                // invalido no deja un expendio a medio crear (ni uno modificado a medias).
+                var itemsExpendio = new List<Entidades.LineaVenta>();
                 foreach (var linea in model.Lineas)
                 {
                     int idEmpresaSesionLinea = user.IdEmpresa;
@@ -804,7 +818,20 @@ namespace WebCore.Controllers
                         IndexAnulado = Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado)
                     };
 
-                    _oVentaN.agregarLineaExprendio(item);
+                    itemsExpendio.Add(item);
+                }
+
+                if (idExpendioModificar > 0)
+                {
+                    expendio.IdVenta = expendio.IdExpendio = idExpendioModificar;
+                    if (!_oVentaN.actualizarExpendio(expendio, itemsExpendio))
+                        return Json(new { ok = false, mensaje = "El expendio no se puede modificar (ya tiene una venta asociada o pertenece a otra sucursal)." });
+                }
+                else
+                {
+                    expendio.IdVenta = expendio.IdExpendio = _oVentaN.agregarExpendio(expendio);
+                    foreach (var item in itemsExpendio)
+                        _oVentaN.agregarLineaExprendio(item);
                 }
 
                 return Json(new
@@ -910,6 +937,114 @@ namespace WebCore.Controllers
             byte[] bytes = GenerarPdfExpendio(expendio, EsFormatoSoloPrecios(formato));
             string prefijoArchivo = Negocio.SectorPuntoExpendio.EsPresupuesto(expendio.Sector) ? "Presupuesto_" : "PuntoExpendio_";
             return File(bytes, "application/pdf", prefijoArchivo + id + ".pdf");
+        }
+
+        // Ticket termico HTML del expendio (58/80 mm). Lo usa el modal post-expendio (opcion 2) via
+        // ticket-print.js: si hay agente local manda ImprimirTicketPayload, si no imprime este HTML en
+        // un iframe oculto. Port de Web/Controllers/PuntosExpendioController.cs (ImprimirTicket).
+        [HttpGet]
+        public IActionResult ImprimirTicketHtml(int id, int mm = 80)
+        {
+            var expendio = _oVentaN.getExpedioById(id);
+            if (expendio == null || expendio.IdExpendio <= 0)
+                return NotFound();
+
+            int ticketMm = mm == 58 ? 58 : 80;
+            ViewBag.TicketMm = ticketMm;
+            // Sin formato ESC/POS: este HTML lo imprime el navegador y mostraria los caracteres de control.
+            ViewBag.TicketLineas = string.Join("\n", ConstruirLineasTicketPuntoExpendio(expendio, ticketMm, false));
+            return View("_TicketPuntoExpendio", expendio);
+        }
+
+        // Mismo contenido del ticket en JSON para el agente de impresion ESC/POS local.
+        [HttpGet]
+        public IActionResult ImprimirTicketPayload(int id, int mm = 80)
+        {
+            var expendio = _oVentaN.getExpedioById(id);
+            if (expendio == null || expendio.IdExpendio <= 0)
+                return Json(new { ok = false, mensaje = "No se encontró el expendio." });
+
+            int ticketMm = mm == 58 ? 58 : 80;
+            return Json(new
+            {
+                ok = true,
+                ticketMm,
+                barcodeValue = "PE" + expendio.IdExpendio + "F",
+                barcodeHeader = (expendio.Sector ?? "") + "\nTOTAL $ " + expendio.TotalImporte.ToString("F2", CultureInfo.InvariantCulture),
+                ticketLines = ConstruirLineasTicketPuntoExpendio(expendio, ticketMm, true)
+            });
+        }
+
+        // Lineas de texto del ticket (32-43 caracteres segun el papel). Port literal del clasico
+        // (ConstruirLineasTicketPuntoExpendio); 30 caracteres a 58 mm, 43 a 80 mm.
+        private static List<string> ConstruirLineasTicketPuntoExpendio(Entidades.Venta expendio, int mm, bool formatoEscPos)
+        {
+            int cantMaxChar = mm == 80 ? 43 : 30;
+            var lineasTicket = new List<string>();
+
+            string Truncar(string texto)
+            {
+                string valor = texto ?? "";
+                return valor.Length <= cantMaxChar ? valor : valor.Substring(0, cantMaxChar);
+            }
+
+            string Centrar(string texto, int ancho)
+            {
+                string valor = texto ?? "";
+                if (valor.Length > ancho) valor = valor.Substring(0, ancho);
+                return new string(' ', Math.Max(0, ancho - valor.Length) / 2) + valor;
+            }
+
+            string Extremos(string izquierda, string derecha)
+            {
+                string i = izquierda ?? "";
+                string d = derecha ?? "";
+                if (i.Length > 18) i = i.Substring(0, 18);
+                if (d.Length > 18) d = d.Substring(0, 18);
+                return i + new string(' ', Math.Max(1, cantMaxChar - i.Length - d.Length)) + d;
+            }
+
+            var culturaAr = new CultureInfo("es-AR");
+            var lineasVenta = expendio.LineasVenta ?? new List<Entidades.LineaVenta>();
+
+            // Sector en doble tamaño (como el titulo del ticket de venta del WinForms); en doble
+            // tamaño entran la mitad de caracteres por linea.
+            // (formatoEscPos=false para el HTML del navegador: ahi va el sector normal, ancho completo.)
+            lineasTicket.Add(formatoEscPos
+                ? WebCore.Services.EscPosFormato.DobleTamano(Centrar(expendio.Sector, WebCore.Services.EscPosFormato.AnchoDobleTamano(cantMaxChar)))
+                : Centrar(expendio.Sector, cantMaxChar));
+            lineasTicket.Add("");
+            lineasTicket.Add(Truncar("Nro Expendio: " + expendio.IdExpendio));
+            lineasTicket.Add(Truncar("Id.Cliente: " + (expendio.IdentificacionExpendio ?? "")));
+            lineasTicket.Add(Extremos("Fecha: " + expendio.FechaVenta.ToString("dd/MM/yyyy"), "Hora: " + expendio.FechaVenta.ToString("HH:mm:ss")));
+            lineasTicket.Add(new string('-', 20));
+
+            foreach (var item in lineasVenta)
+            {
+                string nombre = item.Corte != null
+                    ? (!string.IsNullOrWhiteSpace(item.Corte.corte) ? item.Corte.corte : item.Corte.CorteDesc)
+                    : "";
+                // Solo el nombre del producto, sin codigo (pedido del usuario 2026-09-30; igual que el ticket de venta).
+                // Descripcion arriba (ancho completo) y debajo "cantidad x precio ... importe".
+                lineasTicket.Add(Truncar(nombre.Trim()));
+
+                string detalleLinea = item.CantKg.ToString("F3", culturaAr) + " x " + item.PrecioKg.ToString("N2", culturaAr);
+                string totalLinea = (item.CantKg * item.PrecioKg).ToString("N2", culturaAr);
+                lineasTicket.Add(detalleLinea + new string(' ', Math.Max(1, cantMaxChar - detalleLinea.Length - totalLinea.Length)) + totalLinea);
+            }
+
+            string totalTexto = expendio.TotalImporte.ToString("N2", culturaAr);
+            lineasTicket.Add("-------".PadLeft(cantMaxChar));
+            string lineaTotal = "Total" + new string(' ', Math.Max(1, cantMaxChar - "Total".Length - totalTexto.Length)) + totalTexto;
+            lineasTicket.Add(formatoEscPos ? WebCore.Services.EscPosFormato.Negrita(lineaTotal) : lineaTotal);
+            lineasTicket.Add("");
+            lineasTicket.Add(Truncar("Articulos: " + lineasVenta.Count));
+            lineasTicket.Add(Truncar("Cajero: " + (expendio.Vendedor != null ? expendio.Vendedor.Id.ToString() : "")));
+            lineasTicket.Add(Centrar("Gracias por su visita", cantMaxChar));
+            lineasTicket.Add(" ");
+            lineasTicket.Add(" ");
+            lineasTicket.Add(" ");
+            return lineasTicket;
         }
 
         private static bool EsFormatoSoloPrecios(string formato)
@@ -1199,17 +1334,28 @@ namespace WebCore.Controllers
 
                         // ===== TEXTO DE PRESENTACION (solo lista de precios) =====
                         if (soloPrecios)
-                            col.Item().PaddingVertical(4).Text(TextoPresentacionPresupuesto(expendio, nombreEmpresa)).FontSize(10);
+                            col.Item().PaddingTop(12).PaddingBottom(10).Text(TextoPresentacionPresupuesto(expendio, nombreEmpresa)).FontSize(10);
 
                         // ===== PRODUCTOS =====
-                        col.Item().Table(table =>
+                        // Lista de precios: tabla angosta (Producto [codigo] + Precio) en vez de ocupar toda la hoja.
+                        var contenedorProductos = col.Item();
+                        if (soloPrecios)
+                            contenedorProductos = contenedorProductos.MaxWidth(360);
+
+                        contenedorProductos.Table(table =>
                         {
                             table.ColumnsDefinition(c =>
                             {
-                                c.RelativeColumn(1.5f);
-                                c.RelativeColumn(6f);
-                                if (!soloPrecios)
+                                if (soloPrecios)
+                                {
+                                    c.RelativeColumn(6f);
+                                }
+                                else
+                                {
+                                    c.RelativeColumn(1.5f);
+                                    c.RelativeColumn(6f);
                                     c.RelativeColumn(2f);
+                                }
                                 c.RelativeColumn(2.2f);
                                 if (!soloPrecios)
                                     c.RelativeColumn(2.2f);
@@ -1217,8 +1363,15 @@ namespace WebCore.Controllers
 
                             table.Header(h =>
                             {
-                                h.Cell().Background(ColorEncabezadoTabla).Padding(4).Text("Código").Bold();
-                                h.Cell().Background(ColorEncabezadoTabla).Padding(4).Text("Descripción").Bold();
+                                if (soloPrecios)
+                                {
+                                    h.Cell().Background(ColorEncabezadoTabla).Padding(4).Text("Producto").Bold();
+                                }
+                                else
+                                {
+                                    h.Cell().Background(ColorEncabezadoTabla).Padding(4).Text("Código").Bold();
+                                    h.Cell().Background(ColorEncabezadoTabla).Padding(4).Text("Descripción").Bold();
+                                }
                                 if (!soloPrecios)
                                     h.Cell().Background(ColorEncabezadoTabla).Padding(4).AlignRight().Text("Cantidad").Bold();
                                 h.Cell().Background(ColorEncabezadoTabla).Padding(4).AlignRight().Text("Precio").Bold();
@@ -1233,8 +1386,23 @@ namespace WebCore.Controllers
                                     : "";
 
                                 // Filita gris fina entre productos para que la lista de precios se lea de corrido.
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(linea.Corte != null ? linea.Corte.Codigo.ToString() : "");
-                                table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(nombreProducto);
+                                string codigoProducto = linea.Corte != null ? linea.Corte.Codigo.ToString() : "";
+                                if (soloPrecios)
+                                {
+                                    // "Nombre [cod: N]" en una sola columna.
+                                    // El codigo va un punto mas chico y en gris para que destaque el nombre.
+                                    table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(t =>
+                                    {
+                                        t.Span(nombreProducto);
+                                        if (codigoProducto.Length > 0)
+                                            t.Span(" [cod: " + codigoProducto + "]").FontSize(8).FontColor(Colors.Grey.Darken1);
+                                    });
+                                }
+                                else
+                                {
+                                    table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(codigoProducto);
+                                    table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(nombreProducto);
+                                }
                                 if (!soloPrecios)
                                     table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(linea.CantKg.ToString("F3"));
                                 table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(linea.PrecioKg.ToString("$ #,##0.00", culturaAr));

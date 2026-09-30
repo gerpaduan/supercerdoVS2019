@@ -530,8 +530,10 @@
             });
         }
 
+        // Devuelve la promesa de la carga (la usa pos-product.js para no disparar dos veces el
+        // mismo expendio cuando el codigo se carga solo al detectar la F y la pistola manda Enter).
         function cargarExpendio(idExpendio) {
-            cargarExpendioInterno(idExpendio, false).then(function (resultado) {
+            return cargarExpendioInterno(idExpendio, false).then(function (resultado) {
                 if (!resultado || !resultado.ok) return;
 
                 $('#inputCodigo').val('');

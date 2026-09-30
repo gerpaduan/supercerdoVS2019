@@ -68,6 +68,10 @@ namespace Contratos
 
         int agregarExpendio(Entidades.Venta oVentaE);
         Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE);
+        // Modifica un expendio ya guardado (cabecera + reemplazo completo de lineas) en una sola
+        // transaccion. Devuelve false, sin cambios, si no existe, es de otra sucursal o ya tiene
+        // una venta asociada (idventa > 0). Pedido del usuario 2026-09-30 (modal post-expendio).
+        bool actualizarExpendio(Entidades.Venta oVentaE, System.Collections.Generic.IList<Entidades.LineaVenta> lineas);
         void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null);
         DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal);
         DataTable obtenerExpendiosAvanzado(DateTime fechaDesde, DateTime? fechaHasta, int idSucursal);

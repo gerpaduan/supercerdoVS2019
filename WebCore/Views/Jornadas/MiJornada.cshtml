@@ -1,0 +1,141 @@
+@model WebCore.Models.MiJornadaVm
+@{
+    ViewBag.Title = "Mi jornada";
+}
+
+<div class="container-fluid mi-jornada-page">
+    <h4 class="mb-3">Mi jornada — @Model.EmpleadoNombre</h4>
+
+    @if (!string.IsNullOrEmpty(Model.VacacionAvisoHasta))
+    {
+        <div class="alert alert-info">Estás de vacaciones hasta el @Model.VacacionAvisoHasta. No hace falta que marques tu jornada estos días.</div>
+    }
+
+    @if (!Model.RequiereRegistro)
+    {
+        <div class="alert alert-secondary">
+            Tu forma de liquidación (@Model.FormaLiquidacion) es de sueldo fijo por período: no necesitás marcar tu jornada.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-body text-center py-4">
+                @if (Model.FormaLiquidacion == Entidades.Empleado.formaLiquidacion.Hora)
+                {
+                    <form asp-controller="Jornadas" asp-action="MarcarHora" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-lg @(Model.EstaAbierto ? "btn-danger" : "btn-success") px-5">
+                            @(Model.EstaAbierto ? "Marcar salida" : "Marcar entrada")
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form asp-controller="Jornadas" asp-action="MarcarJornada" method="post" class="d-inline mr-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="turno" value="@Entidades.Turno.Manana" />
+                        <button type="submit" class="btn btn-lg btn-success px-4">
+                            Cargar @(Model.FormaLiquidacion == Entidades.Empleado.formaLiquidacion.MediaJornada ? "media jornada" : "jornada") — Mañana
+                        </button>
+                    </form>
+                    <form asp-controller="Jornadas" asp-action="MarcarJornada" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="turno" value="@Entidades.Turno.Tarde" />
+                        <button type="submit" class="btn btn-lg btn-primary px-4">
+                            Cargar @(Model.FormaLiquidacion == Entidades.Empleado.formaLiquidacion.MediaJornada ? "media jornada" : "jornada") — Tarde
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Jornada activa (desde @Model.JornadaActivaDesde.ToString("dd/MM/yyyy") hasta hoy, estimado — no es una liquidación confirmada)</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="thead-light"><tr><th>Concepto</th><th>Cantidad</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
+                    <tbody>
+                        @if (Model.JornadaActivaDetalle == null || Model.JornadaActivaDetalle.Count == 0)
+                        {
+                            <tr><td colspan="4" class="text-center text-muted py-3">Todavía no hay marcaciones en este período.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var d in Model.JornadaActivaDetalle)
+                            {
+                                <tr>
+                                    <td>@d.Concepto</td>
+                                    <td>@d.Cantidad.ToString("0.##")</td>
+                                    <td>$@d.ValorUnitario.ToString("N2")</td>
+                                    <td>$@d.Subtotal.ToString("N2")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                    @if (Model.JornadaActivaDetalle != null && Model.JornadaActivaDetalle.Count > 0)
+                    {
+                        <tfoot><tr class="font-weight-bold"><td colspan="3" class="text-right">Total estimado</td><td>$@Model.JornadaActivaTotalEstimado.ToString("N2")</td></tr></tfoot>
+                    }
+                </table>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">Marcaciones recientes (últimos 14 días)</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="thead-light"><tr><th>Fecha</th><th>Turno</th><th>Entrada</th><th>Salida</th><th>Cantidad</th></tr></thead>
+                    <tbody>
+                        @if (Model.MarcacionesRecientes == null || Model.MarcacionesRecientes.Count == 0)
+                        {
+                            <tr><td colspan="5" class="text-center text-muted py-3">No hay marcaciones recientes.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var m in Model.MarcacionesRecientes.OrderByDescending(m => m.Fecha).ThenByDescending(m => m.HoraEntrada))
+                            {
+                                <tr>
+                                    <td>@m.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td>@(m.Turno == Entidades.Turno.Manana ? "Mañana" : m.Turno == Entidades.Turno.Tarde ? "Tarde" : "-")</td>
+                                    <td>@(m.HoraEntrada?.ToString(@"hh\:mm") ?? "-")</td>
+                                    <td>@(m.HoraSalida?.ToString(@"hh\:mm") ?? "-")</td>
+                                    <td>@(m.Cantidad?.ToString("0.##") ?? "-")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .mi-jornada-page {
+        font-size: .9rem;
+    }
+
+    .mi-jornada-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    /* Los botones grandes de marcar entrada/salida/jornada son btn-lg a proposito (accion
+       tactil principal de la pantalla) -- no se achican, solo el resto (tablas, texto). */
+    .mi-jornada-page .table {
+        font-size: .84rem;
+    }
+
+    .mi-jornada-page .table th,
+    .mi-jornada-page .table td {
+        padding: .42rem .58rem;
+        vertical-align: middle;
+    }
+
+    .mi-jornada-page .table thead th {
+        font-size: .72rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+</style>

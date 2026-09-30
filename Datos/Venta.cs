@@ -852,6 +852,72 @@ namespace Datos
             return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
         }
 
+        // Modifica un expendio ya guardado (cabecera + reemplazo de lineas) en una transaccion.
+        // Mismo contrato que DatosPostgres.VentaPg.actualizarExpendio; SQL Server no tiene
+        // nroRemito (solo Postgres). Las lineas se insertan con el SP agregarLineaExpendio original.
+        public bool actualizarExpendio(Entidades.Venta oVentaE, IList<Entidades.LineaVenta> lineas)
+        {
+            using (SqlConnection con = Db.Open(_empresa))
+            using (SqlTransaction tx = con.BeginTransaction())
+            {
+                try
+                {
+                    int filasActualizadas;
+                    using (SqlCommand cmd = new SqlCommand(@"
+                        UPDATE Expendios
+                        SET fechaExpendio = @fechaExpendio, identificacionExpendio = @identificacionExpendio,
+                            cantItems = @cantItems, importe = @importe, observaciones = @observaciones
+                        WHERE idExpendio = @idExpendio AND idSucursal = @idSucursal AND (idVenta IS NULL OR idVenta = 0);", con, tx))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.AddWithValue("@fechaExpendio", oVentaE.FechaVenta);
+                        cmd.Parameters.AddWithValue("@identificacionExpendio", oVentaE.IdentificacionExpendio ?? "");
+                        cmd.Parameters.AddWithValue("@cantItems", oVentaE.CantItems ?? "");
+                        cmd.Parameters.AddWithValue("@importe", oVentaE.TotalImporte);
+                        cmd.Parameters.AddWithValue("@observaciones", oVentaE.Observaciones ?? "");
+                        cmd.Parameters.AddWithValue("@idExpendio", oVentaE.IdExpendio);
+                        cmd.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
+                        filasActualizadas = cmd.ExecuteNonQuery();
+                    }
+
+                    if (filasActualizadas == 0)
+                    {
+                        tx.Rollback();
+                        return false;
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand("DELETE FROM LineaExpendio WHERE idExpendio = @idExpendio;", con, tx))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.AddWithValue("@idExpendio", oVentaE.IdExpendio);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    foreach (var linea in lineas ?? new List<Entidades.LineaVenta>())
+                    {
+                        using (SqlCommand cmd = new SqlCommand("agregarLineaExpendio", con, tx))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@idExpendio", oVentaE.IdExpendio);
+                            cmd.Parameters.AddWithValue("@idCorte", linea.Corte.idCorte);
+                            cmd.Parameters.AddWithValue("@pesoBalanza", linea.PesoBalanza);
+                            cmd.Parameters.AddWithValue("@cantKg", Math.Round(linea.CantKg, 3));
+                            cmd.Parameters.AddWithValue("@precioKg", Math.Round(linea.PrecioKg, 2));
+                            cmd.ExecuteScalar();
+                        }
+                    }
+
+                    tx.Commit();
+                    return true;
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
+        }
+
         public Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE)
         {
             object scalar = Db.Scalar(

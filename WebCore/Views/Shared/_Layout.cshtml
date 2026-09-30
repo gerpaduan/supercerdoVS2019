@@ -36,6 +36,7 @@
     WebCore.Helpers.PermisosHelper.LimpiarBypassCajaSiSalioDePOS(Context.Session, controller, action, Sesion.UsuarioActual?.Id ?? 0);
 
     bool enStock = controller == "Stock";
+    bool enEmpleados = controller == "Empleados" || controller == "Jornadas" || controller == "Liquidaciones";
     bool enPuntosExpendio = controller == "PuntosExpendio";
     bool enFinanzas = controller == "Finanzas";
     // "Pagos" queda activo tambien al abrir un pago desde ese listado (AddOrEditPago con returnUrl a /Finanzas/Pagos).
@@ -519,6 +520,25 @@
                     </div>
                 </div>
             </li>
+            @* Empleados y Liquidacion de Sueldos (2026-09-29, ver docs/DECISIONS.md). Solo Postgres
+               -- oculto si el motor activo es SQL Server (el modulo no tiene rama SQL Server). *@
+            @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres)
+            {
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseEmpleados" role="button" aria-expanded="@(enEmpleados ? "true" : "false")" aria-controls="collapseEmpleados">
+                        <i class="fas fa-fw fa-id-badge"></i>
+                        <span>Empleados</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </a>
+                    <div id="collapseEmpleados" class="collapse @(enEmpleados ? "show" : "")">
+                        <div class="collapse-inner rounded">
+                            <a class="collapse-item @(controller == "Empleados" ? "active" : "")" href="@Url.Action("Index", "Empleados")">Empleados</a>
+                            <a class="collapse-item @(controller == "Jornadas" && action == "Index" ? "active" : "")" href="@Url.Action("Index", "Jornadas")">Jornadas</a>
+                            <a class="collapse-item @(controller == "Liquidaciones" ? "active" : "")" href="@Url.Action("Index", "Liquidaciones")">Liquidación de sueldos</a>
+                        </div>
+                    </div>
+                </li>
+            }
             <li class="nav-item">
                 <a class="nav-link @(controller == "Cajas" && action == "EgresosCaja" ? "active" : "")" href="@Url.Action("EgresosCaja", "Cajas")">
                     <i class="fas fa-fw fa-money-bill-wave"></i>
@@ -756,6 +776,18 @@
                                         <i class="fas fa-laptop fa-sm fa-fw mr-2 text-gray-400"></i>
                                         Número de serie
                                     </a>
+                                    @* "Mi jornada" (2026-09-29, ver docs/DECISIONS.md): visible para cualquier
+                                       usuario logueado que tenga un Empleado asociado, independiente de permisos
+                                       de administracion -- mismo criterio que "Numero de serie" arriba. Solo
+                                       Postgres (el modulo no tiene rama SQL Server). *@
+                                    @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres
+                                        && WebCore.Infrastructure.NegocioFactory.CrearEmpleado(Sesion.Empresa).ObtenerPorIdUsuario(usuarioActual.Id, usuarioActual.IdEmpresa) != null)
+                                    {
+                                        <a class="dropdown-item" href="@Url.Action("MiJornada", "Jornadas")">
+                                            <i class="fas fa-clock fa-sm fa-fw mr-2 text-gray-400"></i>
+                                            Mi jornada
+                                        </a>
+                                    }
                                     @if (WebCore.Helpers.PasskeySettings.Habilitado)
                                     {
                                         <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalMiHuella" title="Registrar la huella para ingresar sin contraseña">

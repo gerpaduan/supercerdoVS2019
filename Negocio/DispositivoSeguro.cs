@@ -70,6 +70,17 @@ namespace Negocio
             oDispositivoD.SetBloqueado(id, idEmpresa, bloqueado);
         }
 
+        public void SetHabilitadoFichaje(int id, int idEmpresa, bool habilitado)
+        {
+            oDispositivoD.SetHabilitadoFichaje(id, idEmpresa, habilitado);
+        }
+
+        // true solo si existe, no esta bloqueado Y esta habilitado para fichaje.
+        public bool EsFichajeHabilitado(string numeroSerie, int idEmpresa)
+        {
+            return oDispositivoD.EsFichajeHabilitado(numeroSerie, idEmpresa);
+        }
+
         // true solo si existe y NO esta bloqueado.
         public bool ExisteSerieSegura(string numeroSerie, int idEmpresa)
         {

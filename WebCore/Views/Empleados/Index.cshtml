@@ -1,0 +1,137 @@
+@model WebCore.Models.EmpleadoIndexVm
+@{
+    ViewBag.Title = "Empleados";
+}
+
+<div class="container-fluid empleados-index-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <form asp-controller="Empleados" asp-action="Index" method="get" class="form-inline mr-2">
+            <input type="text" name="texto" value="@Model.Texto" class="form-control mr-2" placeholder="Buscar por legajo o nombre" />
+            <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+        </form>
+        @if (Model.PuedeAdministrar)
+        {
+            <a class="btn btn-primary mt-2 mt-md-0" href="@Url.Action("Editar", "Empleados")">
+                <i class="fas fa-plus mr-1"></i> Nuevo empleado
+            </a>
+        }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:100px;">Legajo</th>
+                            <th>Nombre</th>
+                            <th>Usuario</th>
+                            <th style="width:140px;">Forma de pago</th>
+                            <th style="width:90px;">Activo</th>
+                            <th style="width:260px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No hay empleados para mostrar.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>@item.Legajo</td>
+                                    <td>@item.RazonSocial</td>
+                                    <td>@item.UsuarioLogin</td>
+                                    <td>@item.FormaLiquidacion</td>
+                                    <td class="text-center">
+                                        <span class="badge @(item.Activo ? "badge-success" : "badge-secondary")">@(item.Activo ? "Sí" : "No")</span>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-primary mr-1 mb-1" href="@Url.Action("Editar", "Empleados", new { id = item.Id })">Modificar</a>
+                                        <a class="btn btn-sm btn-outline-secondary mr-1 mb-1" href="@Url.Action("Vacaciones", "Empleados", new { id = item.Id })">Vacaciones</a>
+                                        <a class="btn btn-sm btn-outline-secondary mb-1" href="@Url.Action("Historial", "Empleados", new { id = item.Id })">Historial</a>
+                                        @if (Model.PuedeAdministrar)
+                                        {
+                                            <form asp-controller="Empleados" asp-action="SetActivo" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <input type="hidden" name="activo" value="@(item.Activo ? "false" : "true")" />
+                                                <button type="submit" class="btn btn-sm @(item.Activo ? "btn-outline-danger" : "btn-outline-success") mb-1"
+                                                        onclick="return confirm('@(item.Activo ? "¿Dar de baja a este empleado? Su usuario también quedará inactivo." : "¿Reactivar a este empleado?")');">
+                                                    @(item.Activo ? "Dar de baja" : "Reactivar")
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .empleados-index-page {
+        font-size: .9rem;
+    }
+
+    .empleados-index-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .empleados-index-page .form-control {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+    }
+
+    .empleados-index-page .table {
+        font-size: .84rem;
+    }
+
+    .empleados-index-page .table th,
+    .empleados-index-page .table td {
+        padding: .42rem .58rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .empleados-index-page .table thead th {
+        font-size: .72rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .empleados-index-page .btn {
+        font-size: .78rem;
+        padding: .23rem .5rem;
+    }
+
+    .empleados-index-page .badge {
+        font-size: .7rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .empleados-index-page .form-control {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+
+        .empleados-index-page .table {
+            font-size: .8rem;
+        }
+
+        .empleados-index-page .table thead th {
+            font-size: .69rem !important;
+        }
+    }
+</style>

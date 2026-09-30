@@ -1,0 +1,421 @@
+@model WebCore.Models.EmpleadoEditVm
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewBag.Title = Model.EsEdicion ? "Modificar empleado" : "Nuevo empleado";
+    var formasLiquidacion = ViewBag.FormasLiquidacion as List<SelectListItem>;
+    var turnos = ViewBag.Turnos as List<SelectListItem>;
+    var diasSemana = ViewBag.DiasSemana as List<SelectListItem>;
+}
+
+<div class="container-fluid empleados-editar-page">
+    <h4 class="mb-3">@ViewBag.Title</h4>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <form asp-controller="Empleados" asp-action="Guardar" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" name="IdEmpresa" value="@Model.IdEmpresa" />
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Persona</div>
+            <div class="card-body">
+                @if (!Model.EsEdicion)
+                {
+                    <input type="hidden" name="IdPersonaExistente" id="IdPersonaExistente" value="@(Model.IdPersonaExistente == 0 ? "" : Model.IdPersonaExistente.ToString())" />
+
+                    <div id="personaSeleccionadaBloque" class="alert alert-secondary d-flex justify-content-between align-items-center @(Model.IdPersonaExistente > 0 ? "" : "d-none")">
+                        <span id="personaSeleccionadaTexto">@(Model.IdPersonaExistente > 0 ? "Persona ID " + Model.IdPersonaExistente + " (vinculada)" : "")</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="btnQuitarPersona">Quitar</button>
+                    </div>
+
+                    <div id="personaBuscarBloque" class="form-group @(Model.IdPersonaExistente > 0 ? "d-none" : "")">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalBuscarPersonaEmpleado">
+                            <i class="fas fa-search mr-1"></i> Buscar persona existente
+                        </button>
+                        <small class="form-text text-muted d-block">O completá los datos de abajo para crear una persona nueva.</small>
+                    </div>
+                }
+                <div id="personaCamposNuevo" class="@(Model.IdPersonaExistente > 0 ? "d-none" : "")">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Razón social / Nombre completo</label>
+                            <input type="text" name="PersonaRazonSocial" value="@Model.PersonaRazonSocial" class="form-control" />
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>CUIT / DNI</label>
+                            <input type="text" name="PersonaIdentificacion" value="@Model.PersonaIdentificacion" class="form-control" />
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Teléfono</label>
+                            <input type="text" name="PersonaTelefono" value="@Model.PersonaTelefono" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Domicilio</label>
+                        <input type="text" name="PersonaDomicilio" value="@Model.PersonaDomicilio" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Usuario (para loguearse y registrar su jornada)</div>
+            <div class="card-body">
+                @if (!Model.EsEdicion)
+                {
+                    <input type="hidden" name="IdUsuarioExistente" id="IdUsuarioExistente" value="@(Model.IdUsuarioExistente == 0 ? "" : Model.IdUsuarioExistente.ToString())" />
+
+                    <div id="usuarioSeleccionadoBloque" class="alert alert-secondary d-flex justify-content-between align-items-center @(Model.IdUsuarioExistente > 0 ? "" : "d-none")">
+                        <span id="usuarioSeleccionadoTexto">@(Model.IdUsuarioExistente > 0 ? "Usuario ID " + Model.IdUsuarioExistente + " (vinculado)" : "")</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="btnQuitarUsuario">Quitar</button>
+                    </div>
+
+                    <div id="usuarioBuscarBloque" class="form-group @(Model.IdUsuarioExistente > 0 ? "d-none" : "")">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalBuscarUsuarioEmpleado">
+                            <i class="fas fa-search mr-1"></i> Buscar usuario existente
+                        </button>
+                        <small class="form-text text-muted d-block">O completá los datos de abajo para crear un usuario nuevo.</small>
+                    </div>
+                }
+                <div id="usuarioCamposNuevo" class="@(Model.IdUsuarioExistente > 0 ? "d-none" : "")">
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>Nombre</label>
+                            <input type="text" name="UsuarioNombre" value="@Model.UsuarioNombre" class="form-control" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Usuario (login)</label>
+                            <input type="text" name="UsuarioLogin" value="@Model.UsuarioLogin" class="form-control" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Clave @(Model.EsEdicion ? "(dejar en blanco para no cambiarla)" : "")</label>
+                            <input type="password" name="UsuarioClave" class="form-control" autocomplete="new-password" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Datos del empleado</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>Legajo</label>
+                        <input type="text" name="Legajo" value="@Model.Legajo" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Forma de liquidación</label>
+                        <select name="FormaLiquidacion" class="form-control">
+                            @if (formasLiquidacion != null)
+                            {
+                                foreach (var f in formasLiquidacion)
+                                {
+                                    <option value="@f.Value" selected="@(f.Value == Model.FormaLiquidacion.ToString())">@f.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Fecha de ingreso</label>
+                        <input type="date" name="FechaIngreso" value="@Model.FechaIngreso.ToString("yyyy-MM-dd")" class="form-control" />
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Activo</label>
+                        <select name="Activo" class="form-control">
+                            <option value="true" selected="@Model.Activo">Sí</option>
+                            <option value="false" selected="@(!Model.Activo)">No</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Tarifa</div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Cada fila se agrega como una tarifa nueva a partir de la fecha de vigencia (no se pisan las tarifas anteriores).
+                    Para Jornada o Media Jornada, cargá al menos un turno. El turno/día en blanco se usa para Hora/Semana/Quincena/Mes,
+                    o como valor "general" de un turno cuando no hace falta distinguir por día (ej. sábado con valor especial).
+                </p>
+                @if (Model.EsEdicion && Model.TarifasActuales.Any())
+                {
+                    <table class="table table-sm table-bordered mb-3">
+                        <thead class="thead-light">
+                            <tr><th>Turno</th><th>Día</th><th>Valor</th><th>Vigente desde</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in Model.TarifasActuales.OrderByDescending(t => t.VigenteDesde))
+                            {
+                                <tr>
+                                    <td>@t.TurnoTexto</td>
+                                    <td>@(string.IsNullOrEmpty(t.DiaSemana) ? "Todos" : t.DiaSemana)</td>
+                                    <td>@t.Valor.ToString("N2")</td>
+                                    <td>@t.VigenteDesde.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <p class="small"><a href="@Url.Action("Historial", "Empleados", new { id = Model.Id })">Ver historial completo de tarifas →</a></p>
+                }
+
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr><th>Turno</th><th>Día</th><th>Valor</th><th>Vigente desde</th></tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < 4; i++)
+                        {
+                            <tr>
+                                <td>
+                                    <select name="tarifaTurno" class="form-control form-control-sm">
+                                        @if (turnos != null)
+                                        {
+                                            foreach (var t in turnos)
+                                            {
+                                                <option value="@t.Value">@t.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="tarifaDiaSemana" class="form-control form-control-sm">
+                                        @if (diasSemana != null)
+                                        {
+                                            foreach (var d in diasSemana)
+                                            {
+                                                <option value="@d.Value">@d.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td><input type="number" step="0.01" name="tarifaValor" class="form-control form-control-sm" placeholder="0.00" /></td>
+                                <td><input type="date" name="tarifaVigenteDesde" value="@DateTime.Today.ToString("yyyy-MM-dd")" class="form-control form-control-sm" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="@Url.Action("Index", "Empleados")" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+</div>
+
+@* Los modales van FUERA de .container-fluid (mismo criterio que #modalInfoNumeroSerie en
+   DispositivosSeguros/Index.cshtml): un modal con position:fixed anidado dentro del wrapper de
+   contenido del layout queda atrapado por su stacking context y no se ve. Cargan igual la clase
+   "empleados-editar-page" para heredar el mismo tamaño compacto del resto de la vista. *@
+@if (!Model.EsEdicion)
+{
+    <div class="modal fade empleados-editar-page" id="modalBuscarPersonaEmpleado" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-search mr-2"></i>Buscar persona</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-2" id="filtroPersonaEmpleado" placeholder="Buscar por razón social, CUIT o identificación..." autocomplete="off" />
+                    <div class="table-responsive" style="max-height:320px; overflow:auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="thead-light"><tr><th>Razón social</th><th>Identificación</th><th>CUIT</th></tr></thead>
+                            <tbody id="tablaPersonasEmpleado"></tbody>
+                        </table>
+                    </div>
+                    <small class="text-muted d-block mt-2">No aparecen las personas que ya son empleados de otro usuario.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade empleados-editar-page" id="modalBuscarUsuarioEmpleado" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-search mr-2"></i>Buscar usuario</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-2" id="filtroUsuarioEmpleado" placeholder="Buscar por nombre o login..." autocomplete="off" />
+                    <div class="table-responsive" style="max-height:320px; overflow:auto;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="thead-light"><tr><th>Nombre</th><th>Usuario (login)</th></tr></thead>
+                            <tbody id="tablaUsuariosEmpleado"></tbody>
+                        </table>
+                    </div>
+                    <small class="text-muted d-block mt-2">No aparecen los usuarios ya activos que ya son empleados de otra persona.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @if (!Model.EsEdicion)
+    {
+        <script>
+            (function () {
+                var urlBuscarPersonas = '@Url.Action("BuscarPersonas", "Empleados")';
+                var urlBuscarUsuarios = '@Url.Action("BuscarUsuarios", "Empleados")';
+                var temporizadorPersona, temporizadorUsuario;
+
+                function cargarPersonas() {
+                    var filtro = ($('#filtroPersonaEmpleado').val() || '').trim();
+                    $.getJSON(urlBuscarPersonas, { filtro: filtro }).done(function (lista) {
+                        var $tbody = $('#tablaPersonasEmpleado').empty();
+                        if (!lista || !lista.length) {
+                            $tbody.append('<tr><td colspan="3" class="text-center text-muted">Sin resultados</td></tr>');
+                            return;
+                        }
+                        lista.forEach(function (p) {
+                            $('<tr style="cursor:pointer;"></tr>')
+                                .append($('<td></td>').text(p.razonSocial))
+                                .append($('<td></td>').text(p.identificacion))
+                                .append($('<td></td>').text(p.cuit))
+                                .on('click', function () { seleccionarPersona(p); })
+                                .appendTo($tbody);
+                        });
+                    });
+                }
+
+                function seleccionarPersona(p) {
+                    $('#IdPersonaExistente').val(p.idPersona);
+                    $('#personaSeleccionadaTexto').text(p.razonSocial + (p.identificacion ? ' — ' + p.identificacion : ''));
+                    $('#personaSeleccionadaBloque').removeClass('d-none');
+                    $('#personaBuscarBloque').addClass('d-none');
+                    $('#personaCamposNuevo').addClass('d-none');
+                    $('#modalBuscarPersonaEmpleado').modal('hide');
+                }
+
+                function cargarUsuarios() {
+                    var filtro = ($('#filtroUsuarioEmpleado').val() || '').trim();
+                    $.getJSON(urlBuscarUsuarios, { filtro: filtro }).done(function (lista) {
+                        var $tbody = $('#tablaUsuariosEmpleado').empty();
+                        if (!lista || !lista.length) {
+                            $tbody.append('<tr><td colspan="2" class="text-center text-muted">Sin resultados</td></tr>');
+                            return;
+                        }
+                        lista.forEach(function (u) {
+                            $('<tr style="cursor:pointer;"></tr>')
+                                .append($('<td></td>').text(u.nombre))
+                                .append($('<td></td>').text(u.usuarioLogin))
+                                .on('click', function () { seleccionarUsuario(u); })
+                                .appendTo($tbody);
+                        });
+                    });
+                }
+
+                function seleccionarUsuario(u) {
+                    $('#IdUsuarioExistente').val(u.id);
+                    $('#usuarioSeleccionadoTexto').text(u.nombre + ' (' + u.usuarioLogin + ')');
+                    $('#usuarioSeleccionadoBloque').removeClass('d-none');
+                    $('#usuarioBuscarBloque').addClass('d-none');
+                    $('#usuarioCamposNuevo').addClass('d-none');
+                    $('#modalBuscarUsuarioEmpleado').modal('hide');
+                }
+
+                $('#btnQuitarPersona').on('click', function () {
+                    $('#IdPersonaExistente').val('');
+                    $('#personaSeleccionadaBloque').addClass('d-none');
+                    $('#personaBuscarBloque').removeClass('d-none');
+                    $('#personaCamposNuevo').removeClass('d-none');
+                });
+
+                $('#btnQuitarUsuario').on('click', function () {
+                    $('#IdUsuarioExistente').val('');
+                    $('#usuarioSeleccionadoBloque').addClass('d-none');
+                    $('#usuarioBuscarBloque').removeClass('d-none');
+                    $('#usuarioCamposNuevo').removeClass('d-none');
+                });
+
+                $('#filtroPersonaEmpleado').on('input', function () {
+                    window.clearTimeout(temporizadorPersona);
+                    temporizadorPersona = window.setTimeout(cargarPersonas, 250);
+                });
+                $('#modalBuscarPersonaEmpleado').on('shown.bs.modal', function () {
+                    $('#filtroPersonaEmpleado').val('').trigger('focus');
+                    cargarPersonas();
+                });
+
+                $('#filtroUsuarioEmpleado').on('input', function () {
+                    window.clearTimeout(temporizadorUsuario);
+                    temporizadorUsuario = window.setTimeout(cargarUsuarios, 250);
+                });
+                $('#modalBuscarUsuarioEmpleado').on('shown.bs.modal', function () {
+                    $('#filtroUsuarioEmpleado').val('').trigger('focus');
+                    cargarUsuarios();
+                });
+            })();
+        </script>
+    }
+}
+
+<style>
+    .empleados-editar-page {
+        font-size: .9rem;
+    }
+
+    .empleados-editar-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .empleados-editar-page .form-control,
+    .empleados-editar-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    .empleados-editar-page .form-control-sm {
+        font-size: .8rem !important;
+        min-height: 1.9rem !important;
+        padding: .22rem .45rem !important;
+    }
+
+    .empleados-editar-page label,
+    .empleados-editar-page .col-form-label {
+        font-size: .8rem;
+    }
+
+    .empleados-editar-page .alert,
+    .empleados-editar-page .small,
+    .empleados-editar-page .text-muted,
+    .empleados-editar-page .form-text {
+        font-size: .8rem !important;
+    }
+
+    .empleados-editar-page .table {
+        font-size: .84rem;
+    }
+
+    .empleados-editar-page .table thead th {
+        font-size: .72rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    @@media (min-width: 1200px) {
+        .empleados-editar-page .form-control,
+        .empleados-editar-page .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+    }
+</style>

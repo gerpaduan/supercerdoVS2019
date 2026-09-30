@@ -73,9 +73,10 @@
                             <th style="width:140px;">Creado</th>
                             <th style="width:130px;">Creado por</th>
                             <th style="width:90px;">Estado</th>
+                            <th style="width:110px;">Fichaje</th>
                             @if (Model.PuedeAdministrar)
                             {
-                                <th style="width:190px;">Acciones</th>
+                                <th style="width:280px;">Acciones</th>
                             }
                         </tr>
                     </thead>
@@ -83,7 +84,7 @@
                         @if (Model.Items == null || Model.Items.Count == 0)
                         {
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-4">No hay dispositivos seguros registrados.</td>
+                                <td colspan="10" class="text-center text-muted py-4">No hay dispositivos seguros registrados.</td>
                             </tr>
                         }
                         else
@@ -114,6 +115,16 @@
                                             <span class="badge badge-success bg-success">Activo</span>
                                         }
                                     </td>
+                                    <td>
+                                        @if (item.HabilitadoFichaje)
+                                        {
+                                            <span class="badge badge-success bg-success">Habilitado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary bg-secondary">No</span>
+                                        }
+                                    </td>
                                     @if (Model.PuedeAdministrar)
                                     {
                                         <td>
@@ -123,6 +134,18 @@
                                                 @Html.Hidden("bloquear", item.Bloqueado ? "false" : "true")
                                                 <button type="submit" class="btn btn-sm @(item.Bloqueado ? "btn-outline-success" : "btn-outline-warning")">
                                                     @(item.Bloqueado ? "Desbloquear" : "Bloquear")
+                                                </button>
+                                            </form>
+                                            @* Fichaje de jornada (2026-09-29, ver docs/DECISIONS.md): un dispositivo
+                                               habilitado para fichaje permite a cualquier empleado marcar su entrada/
+                                               salida sin contraseña (Jornadas/Fichaje) -- solo dispositivos de confianza
+                                               fisica (tablet en la puerta del local). *@
+                                            <form asp-controller="DispositivosSeguros" asp-action="CambiarHabilitadoFichaje" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                @Html.Hidden("id", item.Id)
+                                                @Html.Hidden("habilitar", item.HabilitadoFichaje ? "false" : "true")
+                                                <button type="submit" class="btn btn-sm @(item.HabilitadoFichaje ? "btn-outline-secondary" : "btn-outline-primary")">
+                                                    @(item.HabilitadoFichaje ? "Deshabilitar fichaje" : "Habilitar fichaje")
                                                 </button>
                                             </form>
                                             <form asp-controller="DispositivosSeguros" asp-action="Eliminar" method="post" class="d-inline">

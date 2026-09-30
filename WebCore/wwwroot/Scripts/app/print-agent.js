@@ -12,12 +12,23 @@
 
     var BASE_URL = 'http://127.0.0.1:18777';
 
+    // El agente (PrintAgent/LocalPrintServer.cs) lee el cuerpo contando CARACTERES contra un
+    // Content-Length en BYTES: con un solo caracter no ASCII (acento, ñ, NBSP = 2 bytes en UTF-8) queda
+    // esperando bytes que no llegan hasta el timeout, y el ticket cae al dialogo del navegador. Se
+    // escapa todo lo no ASCII a \uXXXX (JSON valido; el agente lo decodifica) asi bytes == caracteres
+    // y no hace falta reinstalar el agente.
+    function toAsciiJson(data) {
+        return JSON.stringify(data).replace(/[\u0080-￿]/g, function (c) {
+            return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4);
+        });
+    }
+
     function ajax(path, options) {
         options = options || {};
         return $.ajax({
             url: BASE_URL + path,
             method: options.method || 'GET',
-            data: options.data ? JSON.stringify(options.data) : null,
+            data: options.data ? toAsciiJson(options.data) : null,
             dataType: 'json',
             contentType: options.data ? 'application/json; charset=utf-8' : undefined,
             timeout: options.timeout || 2000

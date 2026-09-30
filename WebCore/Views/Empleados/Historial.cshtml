@@ -1,0 +1,120 @@
+@model WebCore.Models.EmpleadoHistorialVm
+@{
+    ViewBag.Title = "Historial de " + Model.EmpleadoNombre;
+}
+
+<div class="container-fluid empleados-historial-page">
+    <h4 class="mb-3">Historial — @Model.EmpleadoNombre</h4>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form asp-controller="Empleados" asp-action="Historial" method="get" class="form-inline">
+                <input type="hidden" name="id" value="@Model.IdEmpleado" />
+                <label class="mr-2">Desde</label>
+                <input type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" class="form-control mr-3" />
+                <label class="mr-2">Hasta</label>
+                <input type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" class="form-control mr-3" />
+                <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header">Tarifas (todo el historial, vigentes a la fecha "Hasta")</div>
+        <div class="card-body p-0">
+            <table class="table table-bordered mb-0">
+                <thead class="thead-light">
+                    <tr><th>Turno</th><th>Día</th><th>Valor</th><th>Vigente desde</th></tr>
+                </thead>
+                <tbody>
+                    @if (Model.Tarifas == null || Model.Tarifas.Count == 0)
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-4">No hay tarifas cargadas.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var t in Model.Tarifas.OrderByDescending(t => t.VigenteDesde))
+                        {
+                            <tr>
+                                <td>@(t.Turno == Entidades.Turno.Manana ? "Mañana" : t.Turno == Entidades.Turno.Tarde ? "Tarde" : "General")</td>
+                                <td>@(t.DiaSemana?.ToString() ?? "Todos")</td>
+                                <td>@t.Valor.ToString("N2")</td>
+                                <td>@t.VigenteDesde.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">Liquidaciones en el período</div>
+        <div class="card-body p-0">
+            <table class="table table-bordered mb-0">
+                <thead class="thead-light">
+                    <tr><th>Período</th><th>Total</th><th>Estado</th></tr>
+                </thead>
+                <tbody>
+                    @if (Model.Liquidaciones == null || Model.Liquidaciones.Count == 0)
+                    {
+                        <tr><td colspan="3" class="text-center text-muted py-4">No hay liquidaciones en este rango.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var l in Model.Liquidaciones.OrderByDescending(l => l.PeriodoDesde))
+                        {
+                            <tr>
+                                <td>@l.PeriodoDesde.ToString("dd/MM/yyyy HH:mm") al @l.PeriodoHasta.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>$@l.TotalLiquidado.ToString("N2")</td>
+                                <td>
+                                    <span class="badge @(l.Estado == Entidades.LiquidacionSueldo.estadoLiquidacion.Confirmada ? "badge-success" : "badge-secondary")">@l.Estado</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <a href="@Url.Action("Index", "Empleados")" class="btn btn-outline-secondary mt-3">Volver</a>
+</div>
+
+<style>
+    .empleados-historial-page {
+        font-size: .9rem;
+    }
+
+    .empleados-historial-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .empleados-historial-page .form-control,
+    .empleados-historial-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+    }
+
+    .empleados-historial-page .table {
+        font-size: .84rem;
+    }
+
+    .empleados-historial-page .table th,
+    .empleados-historial-page .table td {
+        padding: .42rem .58rem;
+        vertical-align: middle;
+    }
+
+    .empleados-historial-page .table thead th {
+        font-size: .72rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .empleados-historial-page .badge {
+        font-size: .7rem;
+    }
+</style>

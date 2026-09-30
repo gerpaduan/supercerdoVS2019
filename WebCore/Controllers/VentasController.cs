@@ -74,6 +74,7 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Utilidades;
 using WebCore.Models;
 using WebCore.Models.DTO;
+using WebCore.Services;
 
 namespace WebCore.Controllers
 {
@@ -1911,15 +1912,6 @@ namespace WebCore.Controllers
                 return etiqueta + new string(' ', espacios) + derecha;
             };
 
-            Func<string, decimal, int, string> formatearArticulo = (producto, total, ancho) =>
-            {
-                string descripcion = truncar(producto, 22);
-                string importe = total.ToString("N2");
-                int espacios = ancho - (descripcion.Length + importe.Length);
-                if (espacios < 1) espacios = 1;
-                return descripcion + new string(' ', espacios) + importe;
-            };
-
             Func<int, string> obtenerTituloComprobante = cod =>
             {
                 switch (cod)
@@ -1940,11 +1932,14 @@ namespace WebCore.Controllers
                 ? (venta.FormaPago ?? "") + "|Efvo"
                 : (venta.FormaPago ?? "");
 
-            // Encabezado: titulo del comprobante y datos del negocio
-            lineas.Add(centrar(esFacturada ? obtenerTituloComprobante(factura.CodTipoCbteAfip) : "X", cantMaxChar));
+            // Encabezado: titulo del comprobante y datos del negocio. El titulo va en doble tamaño y el
+            // nombre del negocio en doble tamaño + fuente B, igual que el WinForms (Ticket_X.cs,
+            // formFacturaElectronica.cs); en doble tamaño entran menos caracteres por linea, por eso
+            // se centra con el ancho reducido (EscPosFormato.AnchoDoble*).
+            lineas.Add(EscPosFormato.DobleTamano(centrar(esFacturada ? obtenerTituloComprobante(factura.CodTipoCbteAfip) : "X", EscPosFormato.AnchoDobleTamano(cantMaxChar))));
             lineas.Add(centrar(esFacturada ? ("COD." + factura.CodTipoCbteAfip.ToString("00")) : "-No valido como Factura-", cantMaxChar));
             lineas.Add("");
-            if (!string.IsNullOrWhiteSpace(negocio)) lineas.Add(centrar(negocio, cantMaxChar));
+            if (!string.IsNullOrWhiteSpace(negocio)) lineas.Add(EscPosFormato.DobleTamanoFuenteB(centrar(negocio, EscPosFormato.AnchoDobleTamanoFuenteB(cantMaxChar))));
             if (!string.IsNullOrWhiteSpace(negocioAgregado1)) lineas.Add(centrar(negocioAgregado1, cantMaxChar));
             if (!string.IsNullOrWhiteSpace(negocioAgregado2)) lineas.Add(centrar(negocioAgregado2, cantMaxChar));
             if (!string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-") lineas.Add(centrar(negocioAgregado3, cantMaxChar));
@@ -1991,12 +1986,13 @@ namespace WebCore.Controllers
                 lineas.Add(new string('-', cantMaxChar));
             }
 
-            // Items: una linea "cantidad x precio" y otra "producto ... importe"
+            // Items (2026-09-30, pedido del usuario): una linea con la descripcion (ancho completo) y debajo
+            // "cantidad x precio ... importe" con el total alineado a la derecha.
             if (agruparItemUnitario)
             {
                 decimal totalAgrupado = esFacturaA ? factura.ImporteNetoGravado : factura.ImporteTotal;
-                lineas.Add("1,000 x " + totalAgrupado.ToString("N2"));
-                lineas.Add(formatearArticulo(factura.DescItemUnitario, totalAgrupado, cantMaxChar));
+                lineas.Add(truncar(factura.DescItemUnitario, cantMaxChar));
+                lineas.Add(formatearTotal("1,000 x " + totalAgrupado.ToString("N2"), totalAgrupado, cantMaxChar));
             }
             else
             {
@@ -2013,13 +2009,13 @@ namespace WebCore.Controllers
                         // Factura A: se detalla a precio neto (sin IVA)
                         decimal divisorIva = 1m + (Convert.ToDecimal(item.AlicuotaIva) / 100m);
                         decimal precioNeto = divisorIva != 0 ? (precio / divisorIva) : precio;
-                        lineas.Add(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"));
-                        lineas.Add(formatearArticulo(producto, cantidad * precioNeto, cantMaxChar));
+                        lineas.Add(truncar(producto, cantMaxChar));
+                        lineas.Add(formatearTotal(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"), cantidad * precioNeto, cantMaxChar));
                     }
                     else
                     {
-                        lineas.Add(cantidad.ToString("F3") + " x " + precio.ToString("N2"));
-                        lineas.Add(formatearArticulo(producto, cantidad * precio, cantMaxChar));
+                        lineas.Add(truncar(producto, cantMaxChar));
+                        lineas.Add(formatearTotal(cantidad.ToString("F3") + " x " + precio.ToString("N2"), cantidad * precio, cantMaxChar));
                     }
                 }
             }
@@ -2028,7 +2024,7 @@ namespace WebCore.Controllers
             lineas.Add("-------".PadLeft(cantMaxChar));
             if (!esFacturaA)
             {
-                lineas.Add(formatearTotal(esFacturada ? "TOTAL" : "Total", esFacturada ? factura.ImporteTotal : Convert.ToDecimal(venta.TotalImporte), cantMaxChar));
+                lineas.Add(EscPosFormato.Negrita(formatearTotal(esFacturada ? "TOTAL" : "Total", esFacturada ? factura.ImporteTotal : Convert.ToDecimal(venta.TotalImporte), cantMaxChar)));
             }
             else
             {
@@ -2048,7 +2044,7 @@ namespace WebCore.Controllers
                 foreach (var item in alicuotas)
                     lineas.Add(formatearTotal("IVA " + Convert.ToDecimal(item.Alicuota).ToString("N2") + "%", item.Importe, cantMaxChar));
 
-                lineas.Add(formatearTotal("TOTAL", factura.ImporteTotal, cantMaxChar));
+                lineas.Add(EscPosFormato.Negrita(formatearTotal("TOTAL", factura.ImporteTotal, cantMaxChar)));
             }
 
             if (!esFacturada && venta.Abona > 0)
@@ -2061,11 +2057,12 @@ namespace WebCore.Controllers
             if (esFacturada)
             {
                 lineas.Add("");
-                lineas.Add(truncar("Regimen de Transparencia Fiscal", cantMaxChar));
-                lineas.Add(truncar("Al Consumidor (Ley 27.743)", cantMaxChar));
-                lineas.Add(truncar("IVA Contenido: " + factura.Iva.ToString("N2"), cantMaxChar));
-                lineas.Add(truncar("CAE: " + (factura.CAE ?? ""), cantMaxChar));
-                lineas.Add(truncar("Vto: " + (factura.FecVtoCAE ?? ""), cantMaxChar));
+                // Texto legal y datos del CAE en fuente B (mas chica), pedido del usuario 2026-09-30.
+                lineas.Add(EscPosFormato.FuenteB(truncar("Regimen de Transparencia Fiscal", cantMaxChar)));
+                lineas.Add(EscPosFormato.FuenteB(truncar("Al Consumidor (Ley 27.743)", cantMaxChar)));
+                lineas.Add(EscPosFormato.FuenteB(truncar("IVA Contenido: " + factura.Iva.ToString("N2"), cantMaxChar)));
+                lineas.Add(EscPosFormato.FuenteB(truncar("CAE: " + (factura.CAE ?? ""), cantMaxChar)));
+                lineas.Add(EscPosFormato.FuenteB(truncar("Vto: " + (factura.FecVtoCAE ?? ""), cantMaxChar)));
                 lineas.Add("");
 
                 // Datos a completar a mano en pagos por transferencia (igual que _TicketHTML.cshtml)

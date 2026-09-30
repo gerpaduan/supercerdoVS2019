@@ -799,7 +799,7 @@ namespace Datos
         {
             const string sql = @"
                 SELECT 
-                    p.id, p.fecha, p.idPersona, p.idSucursal, per.razonSocial, p.eliminado,
+                    p.id, p.fecha, p.idPersona, p.idSucursal, per.razonSocial, per.identificacion, p.eliminado,
                     p.nroRecibo, p.importe, p.aProveedor,
                     CASE p.aProveedor WHEN 0 THEN 'Cobro' WHEN 1 THEN 'Pago' END AS Operacion,
                     p.formaPago, p.efectivo, p.observaciones, p.creado, CreadoPor.nombre AS CreadoPor,

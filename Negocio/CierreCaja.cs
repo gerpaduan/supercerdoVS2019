@@ -42,13 +42,18 @@ namespace Negocio
         // usa, asi que NegocioFactory arma un Venta minimo (solo su propio repo, sin
         // ctaCteN/cierreCajaN/personaN) en vez de llamar CrearVenta -- evita el ciclo
         // CrearVenta->CrearCierreCaja->CrearVenta ya documentado en Negocio/Venta.cs.
-        public CierreCaja(Contratos.ICierreCajaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null, Negocio.Venta ventaN = null, Contratos.ISucursalRepository sucursalRepositorio = null)
+        public CierreCaja(Contratos.ICierreCajaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null, Negocio.Venta ventaN = null, Contratos.ISucursalRepository sucursalRepositorio = null, Negocio.Usuario usuarioN = null)
         {
             _empresa = empresa; _param = param;
             oCierreD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
             oVentaN = ventaN ?? new Negocio.Venta(empresa, param);
             _sucursalRepo = sucursalRepositorio;
+            _usuarioN = usuarioN;
         }
+
+        // Usuario para enriquecer CreadoPor/ActualizadoPor en getEgresoCajaById. Optativo: sin inyectar cae a
+        // SQL Server (Datos.Usuario), y con Postgres eso rompia "Modificar egreso" (timeout contra SQL Server).
+        private readonly Negocio.Usuario _usuarioN;
 
         private Contratos.ISucursalRepository ObtenerSucursalRepo()
         {
@@ -210,7 +215,7 @@ namespace Negocio
 
             if (oEgresoCaja != null)
             {
-                Negocio.Usuario oUserN = new Usuario(_empresa);
+                Negocio.Usuario oUserN = _usuarioN ?? new Usuario(_empresa);
 
                 oEgresoCaja.CreadoPorUser = oUserN.getUserById(oEgresoCaja.CreadoPor);
                 oEgresoCaja.ActualizadoPorUser = oUserN.getUserById(oEgresoCaja.ActualizadoPor);

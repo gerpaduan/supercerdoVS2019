@@ -7,9 +7,12 @@
 
     var KEY_TICKET_MM = 'calculadora_billetes_ticket_mm';
     var DENOMINACIONES = [20000, 10000, 2000, 1000, 500, 200, 100, 50, 20, 10];
-    var DETALLE_START = '[INICIO_DETALLE_BILLETES]';
-    var DETALLE_END = '[FIN_DETALLE_BILLETES]';
-    var DETALLE_REGEX = /\[INICIO_DETALLE_BILLETES\][\s\S]*?\[FIN_DETALLE_BILLETES\]/g;
+    // Delimitadores del bloque que se agrega al texto (Observaciones/Detalle): sirven para reemplazar el bloque
+    // si se vuelve a usar la calculadora. El regex tambien reconoce los delimitadores viejos
+    // ([INICIO_DETALLE_BILLETES]) para no duplicar el bloque en registros ya guardados con ese formato.
+    var DETALLE_START = '--- Conteo de efectivo ---';
+    var DETALLE_END = '--- Fin del conteo ---';
+    var DETALLE_REGEX = /\[INICIO_DETALLE_BILLETES\][\s\S]*?\[FIN_DETALLE_BILLETES\]|--- Conteo de efectivo ---[\s\S]*?--- Fin del conteo ---/g;
     var agenteDisponible = false;
     var agenteVerificado = false;
     var agenteNombre = '';
@@ -230,7 +233,10 @@
     }
 
     function buildDetalleTexto(denominaciones, monedas) {
-        var partes = (denominaciones || []).map(function (item) {
+        // Solo las denominaciones con cantidad (mismo criterio que buildDetalleLineas).
+        var partes = (denominaciones || []).filter(function (item) {
+            return Number(item && item.cantidad ? item.cantidad : 0) > 0;
+        }).map(function (item) {
             return (item.cantidad || 0) + ' x ' + Number(item.denominacion || 0).toLocaleString('es-AR');
         });
 
@@ -250,22 +256,20 @@
         (denominaciones || []).forEach(function (item) {
             var cantidad = Number(item && item.cantidad ? item.cantidad : 0);
             var denominacion = Number(item && item.denominacion ? item.denominacion : 0);
-            var subtotal = cantidad * denominacion;
+            // Solo las denominaciones con cantidad: las de cero no aportan y gastan el limite del campo.
+            if (cantidad <= 0) return;
 
             lineas.push(
                 cantidad + ' x $' + denominacion.toLocaleString('es-AR')
-                + ' = $' + subtotal.toLocaleString('es-AR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })
+                + ' = ' + formatMoney(cantidad * denominacion)
             );
         });
 
         if ((monedas || 0) > 0) {
-            lineas.push('Monedas = ' + formatMoney(monedas));
+            lineas.push('Monedas: ' + formatMoney(monedas));
         }
 
-        lineas.push('Total = ' + formatMoney(total));
+        lineas.push('TOTAL EFECTIVO: ' + formatMoney(total));
         return lineas;
     }
 
@@ -412,6 +416,12 @@
     }
 
     function imprimirEnNavegador(lineas) {
+        // Las lineas pueden traer comandos ESC/POS de formato (EscPosFormato.cs: ESC E n, ESC M n,
+        // GS ! n) pensados para el agente; el navegador no los interpreta y mostraria la letra suelta.
+        lineas = (lineas || []).map(function (linea) {
+            return String(linea).replace(/\x1B[EM][\x00\x01]|\x1D![\x00-\xFF]/g, '');
+        });
+
         var popup = window.open('', '_blank', 'width=420,height=700');
         if (!popup) {
             showMessage('warning', 'Impresion', 'El navegador bloqueo la ventana de impresion.');
@@ -662,7 +672,216 @@
         window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(texto), '_blank');
     }
 
+    // ===== Apilado sobre otros modales + atajos de teclado (2026-09-26, ver docs/DECISIONS.md) =====
+    var MODALES_PROPIOS = '#modalCalculadoraBilletes, #modalPostCalculadoraBilletes, #modalConfigAgenteCalculadoraBilletes';
+
+    // La calculadora se abre tambien desde adentro de otros modales (ej. Pago en el POS): sin subir el z-index
+    // quedaba DETRAS. Se pone 10 por encima del modal abierto con mayor z-index (no una cuenta fija: el z-index
+    // base de Bootstrap ya es 1050 y otros modales del POS ya vienen elevados a mano).
+    function elevarSobreModalesAbiertos(modalEl) {
+        modalEl.style.removeProperty('z-index');
+
+        var abiertos = document.querySelectorAll('.modal.show');
+        if (abiertos.length < 1) return;
+
+        var maxZ = 0;
+        Array.prototype.forEach.call(abiertos, function (el) {
+            maxZ = Math.max(maxZ, parseInt(window.getComputedStyle(el).zIndex, 10) || 0);
+        });
+
+        var zIndex = maxZ + 10;
+        modalEl.style.setProperty('z-index', zIndex, 'important');
+
+        $(modalEl).one('shown.bs.modal.cbZ', function () {
+            var $backdrop = $('.modal-backdrop').not('.modal-stack').last();
+            if ($backdrop.length) {
+                $backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
+                $backdrop.addClass('modal-stack');
+            }
+        });
+    }
+
+    // Bootstrap 5 deja un FocusTrap activo por modal: el del modal de abajo le robaria el foco al de arriba.
+    // Se deja activo solo el del modal con mayor z-index.
+    function reajustarFocusTraps() {
+        if (!window.bootstrap || !window.bootstrap.Modal) return;
+
+        var modales = Array.prototype.slice.call(document.querySelectorAll('.modal.show'));
+        var maxZ = -1;
+        var superior = null;
+        modales.forEach(function (el) {
+            var z = parseInt(window.getComputedStyle(el).zIndex, 10) || 0;
+            if (z >= maxZ) { maxZ = z; superior = el; }
+        });
+
+        modales.forEach(function (el) {
+            var inst = window.bootstrap.Modal.getInstance(el);
+            var trap = inst && inst._focustrap;
+            if (!trap) return;
+            if (el === superior && typeof trap.activate === 'function') trap.activate();
+            else if (el !== superior && typeof trap.deactivate === 'function') trap.deactivate();
+        });
+    }
+
+    function calculadoraAbierta() {
+        return $('#modalCalculadoraBilletes').hasClass('show');
+    }
+
+    function hayCampoEscrito() {
+        if (opcionesActuales && opcionesActuales.usarDetalleExterno) return false;
+
+        var escrito = false;
+        $('.js-calculadora-billetes-cantidad, #txtCalculadoraBilletesMonedas').each(function () {
+            if (($(this).val() || '').toString().trim() !== '') escrito = true;
+        });
+        return escrito;
+    }
+
+    // Esc / Alt+C: sin nada escrito cierra directo; con datos pregunta (Enter = cerrar igual, Esc = seguir).
+    function intentarCerrarCalculadora() {
+        if (!hayCampoEscrito()) {
+            cerrarCalculadoraSinPost();
+            return;
+        }
+
+        if (!window.Swal || typeof window.Swal.fire !== 'function') {
+            if (window.confirm('Hay importes cargados. ¿Cerrar la calculadora igual?')) cerrarCalculadoraSinPost();
+            return;
+        }
+
+        // Campo de la calculadora con el foco al abrir el aviso: es adonde se vuelve si se elige "seguir".
+        var activo = document.activeElement;
+        var campoConFoco = activo && $(activo).closest('#modalCalculadoraBilletes').length && $(activo).is('input, textarea')
+            ? activo
+            : null;
+        var cerrando = false;
+
+        // El foco SIEMPRE vuelve a la calculadora, nunca al modal de atras (Pago, etc.).
+        function devolverFocoALaCalculadora() {
+            if (cerrando) return;
+            reajustarFocusTraps();
+
+            if (campoConFoco && document.body.contains(campoConFoco)) {
+                campoConFoco.focus();
+                try { campoConFoco.select(); } catch (err) { }
+            } else {
+                focusPrimerCampo();
+            }
+        }
+
+        window.Swal.fire({
+            icon: 'warning',
+            title: '¿Cerrar la calculadora?',
+            text: 'Hay importes cargados que se van a perder.',
+            showCancelButton: true,
+            confirmButtonText: 'Cerrar igual (Enter)',
+            cancelButtonText: 'Seguir en la calculadora (Esc)',
+            confirmButtonColor: '#d33',
+            reverseButtons: true,
+            // El parche de swal-single-confirm.js reactiva los focus-trap de TODOS los modales al cerrar, y el
+            // trap del modal de atras (Bootstrap 5, autofocus) se lleva el foco. Se desactiva de nuevo en
+            // willClose (justo despues del parche) y se devuelve el foco al campo; didClose repite por si el
+            // foco se movio durante la animacion de cierre.
+            willClose: devolverFocoALaCalculadora,
+            didClose: devolverFocoALaCalculadora
+        }).then(function (r) {
+            if (r.isConfirmed) {
+                cerrando = true;
+                cerrarCalculadoraSinPost();
+            }
+        });
+    }
+
+    var ATAJOS_MODAL_POST = {
+        '1': '#btnCbNoImprimir',
+        '2': '#btnCbTicket',
+        '3': '#btnCbPdf',
+        '4': '#btnCbWhatsapp',
+        'enter': '#btnCbNoImprimir'
+    };
+
+    function swalVisible() {
+        return !!(window.Swal && typeof window.Swal.isVisible === 'function' && window.Swal.isVisible());
+    }
+
+    // Alt+B: abre la calculadora desde la pantalla actual. Prioridad: boton de calculadora visible del modal de
+    // arriba (o de la pagina); si no hay ninguno y el POS no tiene modales abiertos, el mismo F3 del POS.
+    function abrirCalculadoraPorAtajo() {
+        var $tope = $('.modal.show:visible').last();
+        var $ambito = $tope.length ? $tope : $(document);
+        var $boton = $ambito.find('.js-calculadora-billetes-launch:visible:not(:disabled)').first();
+
+        if ($boton.length) {
+            $boton.trigger('click');
+            return true;
+        }
+
+        if (!$tope.length && window.posHotkeysHooks && typeof window.posHotkeysHooks.F3 === 'function') {
+            window.posHotkeysHooks.F3();
+            return true;
+        }
+
+        return false;
+    }
+
+    function onKeydownAtajos(e) {
+        if (e.ctrlKey || e.metaKey || e.repeat || swalVisible()) return;
+        var key = String(e.key || '').toLowerCase();
+
+        // Atajos del modal "que deseas hacer" (1 No imprimir, 2 Ticket, 3 PDF, 4 WhatsApp, Enter = No imprimir).
+        // Van en captura de window (antes que los atajos del POS/pantalla de origen, que se comian los digitos
+        // y no llegaban al modal). Con el modal de configurar impresora arriba no se interceptan.
+        if ($('#modalPostCalculadoraBilletes').hasClass('show')
+            && !$('#modalConfigAgenteCalculadoraBilletes').hasClass('show')
+            && !e.altKey && !e.shiftKey) {
+            var botonAtajo = ATAJOS_MODAL_POST[key];
+            if (botonAtajo) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                $(botonAtajo).trigger('click');
+            }
+            return;
+        }
+
+        if (calculadoraAbierta()) {
+            if (mostrandoPost || $('#modalPostCalculadoraBilletes').hasClass('show')
+                || $('#modalConfigAgenteCalculadoraBilletes').hasClass('show')) return;
+
+            var esEscape = key === 'escape' && !e.altKey && !e.shiftKey;
+            var esAltC = key === 'c' && e.altKey && !e.shiftKey;
+            var esAltEnter = key === 'enter' && e.altKey && !e.shiftKey;
+            if (!esEscape && !esAltC && !esAltEnter) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            if (esAltEnter) $('#btnAceptarCalculadoraBilletes').trigger('click');
+            else intentarCerrarCalculadora();
+            return;
+        }
+
+        if (key === 'b' && e.altKey && !e.shiftKey) {
+            if (abrirCalculadoraPorAtajo()) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }
+        }
+    }
+
     function bindEvents() {
+        // En window (captura) y no en document: corre ANTES que los atajos de la pantalla que abrio la calculadora
+        // (Pago, POS, Egresos), que escuchan en document/captura y se creen "el modal de arriba".
+        window.addEventListener('keydown', onKeydownAtajos, true);
+
+        $(MODALES_PROPIOS).on('show.bs.modal', function () {
+            elevarSobreModalesAbiertos(this);
+        }).on('shown.bs.modal hidden.bs.modal', function () {
+            reajustarFocusTraps();
+        });
+
         $(document).on('input', '.js-calculadora-billetes-cantidad', function () {
             sanitizeIntegerInput($(this));
             recalcular();
@@ -677,37 +896,6 @@
             if (e.key === 'Enter') {
                 e.preventDefault();
                 focusNextByOrder(parseInt($(this).data('order'), 10) || 0);
-            }
-        });
-
-        $(document).on('keydown', '#modalPostCalculadoraBilletes', function (e) {
-            if (e.key === '1') {
-                e.preventDefault();
-                $('#btnCbNoImprimir').trigger('click');
-                return;
-            }
-
-            if (e.key === '2') {
-                e.preventDefault();
-                $('#btnCbTicket').trigger('click');
-                return;
-            }
-
-            if (e.key === '3') {
-                e.preventDefault();
-                $('#btnCbPdf').trigger('click');
-                return;
-            }
-
-            if (e.key === '4') {
-                e.preventDefault();
-                $('#btnCbWhatsapp').trigger('click');
-                return;
-            }
-
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                $('#btnCbNoImprimir').trigger('click');
             }
         });
 
@@ -826,8 +1014,11 @@
 
     window.CalculadoraBilletes = {
         open: function (options) {
-            opcionesActuales = $.extend({}, options || {});
+            // resetModal() vacia opcionesActuales: tiene que ir ANTES de asignarlas. Al reves (como estaba) se
+            // perdian selectorInputTotal/selectorInputDetalle/callbackOnAceptar y Aceptar no cargaba el importe
+            // en la pantalla que llamo a la calculadora.
             resetModal();
+            opcionesActuales = $.extend({}, options || {});
 
             if (opcionesActuales.usarDetalleExterno) {
                 $('#calculadoraBilletesTitulo').text(opcionesActuales.tituloPantalla || 'Calculadora Billetes');
@@ -848,7 +1039,7 @@
         },
         buildDetalleBlock: function (resultado) {
             var data = buildResultado(resultado || {});
-            return DETALLE_START + '\nDetalle de efectivo:\n' + data.detalleMultilinea + '\n' + DETALLE_END;
+            return DETALLE_START + '\n' + data.detalleMultilinea + '\n' + DETALLE_END;
         },
         mergeDetalleBlock: function (textoActual, resultado) {
             return mergeDetalle(textoActual, resultado);

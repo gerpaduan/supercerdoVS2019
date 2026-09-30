@@ -73,6 +73,7 @@ namespace NegocioTests.Fakes
         public string getUltimoSectorSelect(string serialCPU) => throw new NotImplementedException();
         public int agregarExpendio(Venta oVentaE) => throw new NotImplementedException();
         public LineaVenta agregarLineaExprendio(LineaVenta oLineaE) => throw new NotImplementedException();
+        public bool actualizarExpendio(Venta oVentaE, System.Collections.Generic.IList<LineaVenta> lineas) => throw new NotImplementedException();
         public void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null) { }  // no-op: los tests de remitos solo miran las observaciones
         public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal) => throw new NotImplementedException();
         public DataTable obtenerExpendiosAvanzado(DateTime fechaDesde, DateTime? fechaHasta, int idSucursal) => throw new NotImplementedException();

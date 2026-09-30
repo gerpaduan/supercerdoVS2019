@@ -16,6 +16,8 @@ namespace WebCore.Models.DTO
         // Solo sector REMITOS (Negocio.NroRemito): numero sugerido por el POS, editable.
         public string NroRemito { get; set; }
         public List<LineaVentaDto> LineasVenta { get; set; }
+        // > 0: en vez de crear, modifica ese expendio ya guardado (modal post-expendio, "Si, modificar").
+        public int IdExpendioModificar { get; set; }
         public string PosInstanceId { get; set; }
     }
 }

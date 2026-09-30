@@ -1,0 +1,70 @@
+@model WebCore.Models.LiquidacionNuevaVm
+@{
+    ViewBag.Title = "Nueva liquidación";
+}
+
+<div class="container-fluid liquidaciones-nueva-page">
+    <h4 class="mb-3">Nueva liquidación</h4>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-controller="Liquidaciones" asp-action="Calcular" method="post">
+                @Html.AntiForgeryToken()
+                <div class="form-row align-items-end">
+                    <div class="form-group col-md-5">
+                        <label>Empleado</label>
+                        <select name="idEmpleado" class="form-control" required>
+                            <option value="">-- Elegir --</option>
+                            @foreach (var e in Model.Empleados)
+                            {
+                                <option value="@e.Id" selected="@(Model.IdEmpleado == e.Id)">@e.RazonSocial (@e.Legajo)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Desde (fecha y hora)</label>
+                        <input type="datetime-local" name="desde" value="@Model.Desde.ToString("yyyy-MM-ddTHH:mm")" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Hasta (fecha y hora)</label>
+                        <input type="datetime-local" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-ddTHH:mm")" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-1">
+                        <button type="submit" class="btn btn-primary btn-block">Calcular</button>
+                    </div>
+                </div>
+                <small class="form-text text-muted">
+                    Por defecto la hora es 00:00 — alcanza con elegir las fechas para la mayoría de los casos.
+                    La hora sirve para cuando hace falta cortar un período a mitad de jornada.
+                </small>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .liquidaciones-nueva-page {
+        font-size: .9rem;
+    }
+
+    .liquidaciones-nueva-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .liquidaciones-nueva-page .form-control,
+    .liquidaciones-nueva-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+    }
+
+    .liquidaciones-nueva-page label {
+        font-size: .8rem;
+    }
+
+    .liquidaciones-nueva-page .small,
+    .liquidaciones-nueva-page .text-muted,
+    .liquidaciones-nueva-page .form-text {
+        font-size: .8rem !important;
+    }
+</style>

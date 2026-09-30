@@ -3,9 +3,9 @@
 
     if (!window || !$) return;
 
-    var DETALLE_START = '[INICIO_DETALLE_BILLETES]';
-    var DETALLE_END = '[FIN_DETALLE_BILLETES]';
-    var DETALLE_REGEX = /\[INICIO_DETALLE_BILLETES\][\s\S]*?\[FIN_DETALLE_BILLETES\]/g;
+    var DETALLE_START = '--- Conteo de efectivo ---';
+    var DETALLE_END = '--- Fin del conteo ---';
+    var DETALLE_REGEX = /\[INICIO_DETALLE_BILLETES\][\s\S]*?\[FIN_DETALLE_BILLETES\]|--- Conteo de efectivo ---[\s\S]*?--- Fin del conteo ---/g;
 
     function formatInputValue(total) {
         if (window.CalculadoraBilletes && typeof window.CalculadoraBilletes.formatInputValue === 'function') {
@@ -20,7 +20,7 @@
             return window.CalculadoraBilletes.buildDetalleBlock(resultado);
         }
 
-        return DETALLE_START + '\nDetalle de efectivo:\nTotal = $ ' + Number(resultado && resultado.total ? resultado.total : 0).toFixed(2) + '\n' + DETALLE_END;
+        return DETALLE_START + '\nTOTAL EFECTIVO: $ ' + Number(resultado && resultado.total ? resultado.total : 0).toFixed(2) + '\n' + DETALLE_END;
     }
 
     function limpiarDetalleExistente(texto) {

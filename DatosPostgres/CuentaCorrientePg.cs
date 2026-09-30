@@ -705,7 +705,7 @@ namespace DatosPostgres
             const string sql = @"
                 SELECT
                     p.id, p.fecha, p.idpersona AS ""idPersona"", p.idsucursal AS ""idSucursal"",
-                    per.razonsocial AS ""razonSocial"", p.eliminado AS ""eliminado"",
+                    per.razonsocial AS ""razonSocial"", per.identificacion AS ""identificacion"", p.eliminado AS ""eliminado"",
                     p.nrorecibo AS ""nroRecibo"", p.importe, p.aproveedor AS ""aProveedor"",
                     CASE p.aproveedor WHEN false THEN 'Cobro' ELSE 'Pago' END AS ""Operacion"",
                     p.formapago AS ""formaPago"", p.efectivo, p.observaciones, p.creado, creadopor.nombre AS ""CreadoPor"",

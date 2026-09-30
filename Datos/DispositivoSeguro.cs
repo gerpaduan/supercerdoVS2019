@@ -17,7 +17,7 @@ namespace Datos
 
         private const string SelectBase = @"
                 SELECT d.Id, d.IdEmpresa, d.NumeroSerie, d.Descripcion, d.CreadoUtc, d.IdUsuarioCreador,
-                       d.Origen, d.EmailAlta, d.Bloqueado,
+                       d.Origen, d.EmailAlta, d.Bloqueado, d.HabilitadoFichaje,
                        u.nombre AS NombreUsuarioCreador
                 FROM DispositivosSeguros d
                 LEFT JOIN Usuarios u ON u.id = d.IdUsuarioCreador ";
@@ -35,7 +35,8 @@ namespace Datos
                 NombreUsuarioCreador = dr["NombreUsuarioCreador"] == DBNull.Value ? "" : Convert.ToString(dr["NombreUsuarioCreador"]),
                 Origen = dr["Origen"] == DBNull.Value ? "Manual" : Convert.ToString(dr["Origen"]),
                 EmailAlta = dr["EmailAlta"] == DBNull.Value ? "" : Convert.ToString(dr["EmailAlta"]),
-                Bloqueado = dr["Bloqueado"] != DBNull.Value && Convert.ToBoolean(dr["Bloqueado"])
+                Bloqueado = dr["Bloqueado"] != DBNull.Value && Convert.ToBoolean(dr["Bloqueado"]),
+                HabilitadoFichaje = dr["HabilitadoFichaje"] != DBNull.Value && Convert.ToBoolean(dr["HabilitadoFichaje"])
             };
         }
 
@@ -133,6 +134,31 @@ namespace Datos
         {
             var dispositivo = ObtenerPorSerie(numeroSerie, idEmpresa);
             return dispositivo != null && !dispositivo.Bloqueado;
+        }
+
+        public void SetHabilitadoFichaje(int id, int idEmpresa, bool habilitado)
+        {
+            const string sql = "UPDATE DispositivosSeguros SET HabilitadoFichaje = @habilitado WHERE Id = @id AND IdEmpresa = @idEmpresa;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@id", SqlDbType.Int).Value = id;
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
+                    p.Add("@habilitado", SqlDbType.Bit).Value = habilitado;
+                }
+            );
+        }
+
+        // Usado en el fichaje: un dispositivo bloqueado o no habilitado para fichaje NO sirve,
+        // aunque este dado de alta como "seguro".
+        public bool EsFichajeHabilitado(string numeroSerie, int idEmpresa)
+        {
+            var dispositivo = ObtenerPorSerie(numeroSerie, idEmpresa);
+            return dispositivo != null && !dispositivo.Bloqueado && dispositivo.HabilitadoFichaje;
         }
     }
 }

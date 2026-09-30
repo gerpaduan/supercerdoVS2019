@@ -499,6 +499,10 @@ namespace Negocio
         {
             return oVentaD.agregarLineaExprendio(oLineaE);
         }
+        public bool actualizarExpendio(Entidades.Venta oVentaE, IList<Entidades.LineaVenta> lineas)
+        {
+            return oVentaD.actualizarExpendio(oVentaE, lineas);
+        }
         public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal)
         {
             return oVentaD.obtenerUltimosExpendios(ultimosMinutos, idSucursal);

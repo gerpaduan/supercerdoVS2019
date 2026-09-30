@@ -1,0 +1,47 @@
+@model WebCore.Models.FichajeListaVm
+@{
+    ViewBag.Title = "Fichaje";
+}
+
+<div class="container-fluid fichaje-page">
+    <h4 class="mb-3 text-center">Fichaje de entrada / salida</h4>
+
+    @if (!Model.DispositivoHabilitado)
+    {
+        <div class="alert alert-warning text-center">
+            Este dispositivo no está habilitado para fichar.<br />
+            Pedile a un administrador que lo habilite desde <strong>Configuración &gt; Dispositivos seguros</strong>.
+        </div>
+    }
+    else if (Model.Empleados == null || Model.Empleados.Count == 0)
+    {
+        <div class="alert alert-secondary text-center">No hay empleados por hora activos para fichar.</div>
+    }
+    else
+    {
+        <p class="text-center text-muted">Tocá dos veces tu nombre para registrar tu entrada o salida.</p>
+        <div class="row">
+            @foreach (var e in Model.Empleados)
+            {
+                <div class="col-6 col-md-4 col-lg-3 mb-3">
+                    <a href="@Url.Action("FichajeConfirmar", "Jornadas", new { idEmpleado = e.IdEmpleado })"
+                       class="card shadow-sm text-center py-4 text-decoration-none fichaje-card" style="cursor:pointer;">
+                        <div class="card-body">
+                            <i class="fas fa-user-circle fa-3x mb-2 text-gray-500"></i>
+                            <div class="font-weight-bold">@e.Nombre</div>
+                            <div class="small text-muted">@e.Legajo</div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    /* Pantalla de kiosco tactil: texto/tarjetas grandes a proposito, no sigue el tamaño
+       compacto del resto del sistema (pensada para tocar rapido en una tablet). */
+    .fichaje-page { font-size: .95rem; }
+    .fichaje-card { transition: transform .1s ease; color: inherit; }
+    .fichaje-card:hover { transform: scale(1.03); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important; }
+</style>

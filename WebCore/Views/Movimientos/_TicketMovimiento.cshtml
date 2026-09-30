@@ -50,12 +50,16 @@
     };
 
     var sb = new StringBuilder();
-    Action<string> linea = texto => sb.AppendLine(texto ?? "");
+    // El texto se escapa a mano porque el <pre> se emite con Html.Raw (para poder usar <b> y el span del codigo).
+    Action<string> linea = texto => sb.AppendLine(System.Net.WebUtility.HtmlEncode(texto ?? ""));
+    Action<string> lineaNegrita = texto => sb.AppendLine("<b>" + System.Net.WebUtility.HtmlEncode(texto ?? "") + "</b>");
+    Action<string> lineaCodigo = texto => sb.AppendLine("<span class=\"ticket-cod\">" + System.Net.WebUtility.HtmlEncode(texto ?? "") + "</span>");
 
-    linea(centrar("Movimiento", cantMaxChar));
+    // Movimiento, Origen y Destino en negrita (pedido del usuario 2026-09-30; igual que el ticket del agente).
+    lineaNegrita(centrar("Movimiento", cantMaxChar));
     linea(truncar("ID: " + Model.IdMovimiento, cantMaxChar));
-    linea(truncar("Origen: " + (Model.SucursalOrigen != null ? Model.SucursalOrigen.SucursalNombre : "-"), cantMaxChar));
-    linea(truncar("Destino: " + (Model.SucursalDestino != null ? Model.SucursalDestino.SucursalNombre : "-"), cantMaxChar));
+    lineaNegrita(truncar("Origen: " + (Model.SucursalOrigen != null ? Model.SucursalOrigen.SucursalNombre : "-"), cantMaxChar));
+    lineaNegrita(truncar("Destino: " + (Model.SucursalDestino != null ? Model.SucursalDestino.SucursalNombre : "-"), cantMaxChar));
     linea(truncar("Fecha: " + Model.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"), cantMaxChar));
     linea(" ");
     linea(ajustarColumna("Producto", anchoProducto, false) + " " + ajustarColumna("Cant.", anchoCant, true) + "    " + ajustarColumna("Kgs.", anchoKgs, true));
@@ -79,7 +83,7 @@
             totalKilos += Convert.ToDecimal(item.CantKg);
 
             linea(ajustarColumna(nombreProducto, anchoProducto, false) + " " + ajustarColumna(cantidadTexto, anchoCant, true) + "    " + ajustarColumna(kilosTexto, anchoKgs, true));
-            linea(ajustarColumna("Cod:" + codigoProducto, anchoProducto, false));
+            lineaCodigo(ajustarColumna("Cod:" + codigoProducto, anchoProducto, false));
         }
     }
 
@@ -96,6 +100,13 @@
             linea(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
         }
     }
+
+    // Firma de control: 3 lineas en blanco y una linea para escribir el nombre de quien controlo el movimiento.
+    linea(" ");
+    linea(" ");
+    linea(" ");
+    const string rotuloControlado = "Controlado por: ";
+    linea(rotuloControlado + new string('_', Math.Max(4, cantMaxChar - rotuloControlado.Length)));
 
     string ticketTexto = sb.ToString();
 }
@@ -126,6 +137,12 @@
             font-size: 11px;
         }
 
+        /* Codigo de producto: mas chico y gris claro (en la termica va en fuente B, sin color). */
+        .ticket-cod {
+            font-size: 0.8em;
+            color: #9a9a9a;
+        }
+
         pre.ticket-text {
             margin: 0;
             padding: 2mm;
@@ -137,7 +154,7 @@
     </style>
 </head>
 <body class="@ticketClass" onload="if (window.top === window) window.print()">
-    <pre class="ticket-text">@ticketTexto</pre>
+    <pre class="ticket-text">@Html.Raw(ticketTexto)</pre>
 
     @for (int i = 0; i < 10; i++)
     {

@@ -83,6 +83,10 @@
                                 <div class="venta-tipo-persona font-weight-bold">
                                     a @venta.Persona.razonSocial
                                 </div>
+                                @if (venta.Persona != null && venta.Persona.TieneIdentificacionDistinta())
+                                {
+                                    <div class="venta-id">@venta.Persona.Identificacion</div>
+                                }
                             }
                             <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
                             <div class="venta-id">idVenta @venta.IdVenta</div>

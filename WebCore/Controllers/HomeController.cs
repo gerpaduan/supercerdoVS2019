@@ -540,11 +540,6 @@ public class HomeController : Controller
         int cantMaxChar = ticketMm == 58 ? 32 : 43;
         string titulo = string.IsNullOrWhiteSpace(request.Titulo) ? "Detalle billetes" : request.Titulo.Trim();
 
-        var empresa = _usuarioActual.Sucursal?.Empresa;
-        string empresaNombre = empresa != null
-            ? (!string.IsNullOrWhiteSpace(empresa.NombreFantasia) ? empresa.NombreFantasia : empresa.RazonSocialAfip) ?? "CarniSys"
-            : "CarniSys";
-
         string Truncar(string texto, int maximo)
         {
             texto ??= "";
@@ -559,25 +554,49 @@ public class HomeController : Controller
             return new string(' ', espaciosIzquierda) + texto;
         }
 
+        // Sin nombre del negocio ni rotulo "Detalles:" (pedido del usuario 2026-09-30): solo titulo,
+        // fecha, total y las denominaciones con cantidad. Las lineas en blanco usan NBSP ( ), como antes.
+        const string blanco = "\u00A0";
         var lineas = new System.Collections.Generic.List<string>
         {
             Centrar(titulo, cantMaxChar),
-            Centrar(empresaNombre, cantMaxChar),
             Truncar("Fecha: " + System.DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"), cantMaxChar),
             new string('-', cantMaxChar),
-            "Total $: " + request.Total.ToString("N2"),
-            " ",
-            " ",
-            "Detalles:",
-            NormalizarDetalleCalculadoraBilletes(request),
-            " ",
-            " ",
-            " ",
-            ".",
-            " "
+            // Negrita solo en el total, igual que formIngresoBilletes.cs del WinForms.
+            WebCore.Services.EscPosFormato.Negrita("Total $: " + request.Total.ToString("N2")),
+            blanco
         };
 
+        // Una linea por denominacion con cantidad (ej. "1 x 20.000", "3 x 1.000"); las de cero se omiten.
+        lineas.AddRange(ObtenerPartesDetalleCalculadoraBilletes(request));
+        if (request.Denominaciones == null || request.Denominaciones.Count == 0)
+            lineas.Add(request.DetalleTexto ?? "");
+
+        lineas.Add(blanco);
+        lineas.Add(blanco);
+        lineas.Add(blanco);
+        lineas.Add(".");
+        lineas.Add(blanco);
+
         return lineas;
+    }
+
+    // Denominaciones con cantidad > 0 (y monedas si hay) como "cant x denominacion"; sin las de cero,
+    // igual que el detalle de la calculadora (calculadora-billetes.js buildDetalleLineas).
+    private static System.Collections.Generic.List<string> ObtenerPartesDetalleCalculadoraBilletes(CalculadoraBilletesPrintVm request)
+    {
+        var partes = new System.Collections.Generic.List<string>();
+        if (request?.Denominaciones == null || request.Denominaciones.Count == 0)
+            return partes;
+
+        partes.AddRange(request.Denominaciones
+            .Where(x => x != null && x.Denominacion > 0 && x.Cantidad > 0)
+            .Select(x => x.Cantidad.ToString() + " x " + x.Denominacion.ToString("N0")));
+
+        if (request.Monedas > 0)
+            partes.Add("Monedas " + request.Monedas.ToString("N2"));
+
+        return partes;
     }
 
     private string NormalizarDetalleCalculadoraBilletes(CalculadoraBilletesPrintVm request)
@@ -588,7 +607,7 @@ public class HomeController : Controller
         if (request.Denominaciones != null && request.Denominaciones.Count > 0)
         {
             var partes = request.Denominaciones
-                .Where(x => x != null && x.Denominacion > 0)
+                .Where(x => x != null && x.Denominacion > 0 && x.Cantidad > 0)
                 .Select(x => x.Cantidad.ToString() + " x " + x.Denominacion.ToString("N0"))
                 .ToList();
 

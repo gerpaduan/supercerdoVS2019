@@ -502,13 +502,102 @@
         }
 
         // ===== Post-guardado basico (PDF + email, ver _ModalPostPuntoExpendioBasico.cshtml) =====
-        function mostrarModalPostExpendio(resp) {
+        // Expendio ya guardado en esta pantalla ({ resp, firma }) mientras la vista sigue cargada
+        // (el usuario cerro el modal con Escape). Finalizar de nuevo reabre el modal en vez de
+        // guardar otra vez (evita duplicados) -- ver docs/DECISIONS.md 2026-09-30.
+        // { resp, firma, modificando }: modificando=true tras confirmar "Si, modificar" -> el
+        // proximo Finalizar actualiza ese mismo expendio (IdExpendioModificar) en vez de crear otro.
+        var expendioGuardado = null;
+        // true cuando el usuario eligio una opcion del modal (cierra el flujo); si el modal se
+        // cierra sin eso (Escape) se pregunta si quiere modificar el expendio ya generado.
+        var ppebOpcionElegida = false;
+        // true si el modal se abrio desde "Mis expendios" (solo reimpresion): ahi las opciones no
+        // limpian la vista actual, que puede tener un expendio en curso.
+        var modalPostDesdeHistorial = false;
+
+        // Tamaño de ticket recordado: misma clave que el post-venta de Ventas (Ventas/POS.cshtml,
+        // pvbObtenerMedidaTicket) -- es la misma impresora termica del puesto.
+        var KEY_TICKET_MM = 'postventa_ticket_mm';
+        function ppebObtenerMedidaTicket() {
+            var guardado = parseInt(localStorage.getItem(KEY_TICKET_MM), 10);
+            return (guardado === 58 || guardado === 80) ? guardado : null;
+        }
+        function ppebActualizarTextoMedida() {
+            $('#ppebTicketMedidaTexto').text((ppebObtenerMedidaTicket() || 80) + 'mm');
+        }
+        function ppebElegirMedidaTicket() {
+            return Swal.fire({
+                title: 'Tamaño de ticket',
+                input: 'select',
+                inputOptions: { 80: '80 mm', 58: '58 mm' },
+                inputValue: ppebObtenerMedidaTicket() || 80,
+                showCancelButton: true,
+                confirmButtonText: 'Usar este tamaño',
+                cancelButtonText: 'Cancelar'
+            }).then(function (result) {
+                if (!result.isConfirmed) return null;
+                var mm = parseInt(result.value, 10);
+                try { localStorage.setItem(KEY_TICKET_MM, String(mm)); } catch (e) { /* localStorage no disponible: se vuelve a preguntar */ }
+                ppebActualizarTextoMedida();
+                return mm;
+            });
+        }
+
+        // Vuelve a un expendio en blanco. PosNavegandoInternoPOS evita que el pagehide mande el
+        // sendBeacon de CerrarOperadorPOS (es navegacion interna, mismo criterio que Ventas).
+        function ppebNuevoExpendio() {
+            ppebOpcionElegida = true;
+            $('#modalPostPuntoExpendioBasico').modal('hide');
+            window.PosNavegandoInternoPOS = true;
+            window.location.href = urlPosConSector($('#sectorPuntoExpendio').val());
+        }
+
+        // Fin de una opcion (ticket / PDF / email): desde el guardado limpia la vista; desde
+        // "Mis expendios" solo cierra el modal.
+        function ppebTerminarOpcion() {
+            if (modalPostDesdeHistorial) {
+                $('#modalPostPuntoExpendioBasico').modal('hide');
+                return;
+            }
+            ppebNuevoExpendio();
+        }
+
+        // Escape (o cualquier cierre sin elegir opcion) del modal recien guardado: el expendio ya
+        // existe, asi que antes de dejar la pantalla editable se pide confirmacion. "No" vuelve al
+        // modal con las opciones de impresion; "Si, modificar" deja editar y el proximo Finalizar
+        // actualiza el mismo expendio.
+        $('#modalPostPuntoExpendioBasico').on('hidden.bs.modal', function () {
+            if (ppebOpcionElegida || modalPostDesdeHistorial || !expendioGuardado) return;
+            // Un modal hijo abierto (email) no cuenta: este evento solo sale del modal principal.
+            Swal.fire({
+                icon: 'warning',
+                title: 'Modificar expendio',
+                text: '¿Está seguro que quiere modificar el expendio #' + expendioGuardado.resp.idExpendio + ' ya generado?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, modificar',
+                cancelButtonText: 'No',
+                allowEscapeKey: false,
+                allowOutsideClick: false
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    expendioGuardado.modificando = true;
+                    posKeyboard.focusCodigo();
+                } else {
+                    mostrarModalPostExpendio(expendioGuardado.resp);
+                }
+            });
+        });
+
+        function mostrarModalPostExpendio(resp, desdeHistorial) {
             // Sin beep al finalizar (2026-09-06, pedido explicito del usuario -- ver
             // docs/DECISIONS.md): se confundia con el beep de "producto agregado al carrito",
             // que sigue sonando igual que siempre. Se saca SOLO este beep puntual.
+            modalPostDesdeHistorial = desdeHistorial === true;
+            ppebOpcionElegida = false;
+            ppebActualizarTextoMedida();
             $('#ppebResumen').text('Expendio #' + resp.idExpendio + ' registrado correctamente.');
             $('#btnPpebPdf').attr('href', resp.pdfUrl);
-            $('#btnPpebPdf, #btnPpebEmail').data('id-expendio', resp.idExpendio);
+            $('#btnPpebPdf, #btnPpebEmail, #btnPpebTicket').data('id-expendio', resp.idExpendio);
 
             // Presupuesto: ademas del PDF completo se ofrece la lista de precios (sin cantidades
             // ni totales) y, en el email, elegir cual se adjunta. Otros sectores no cambian.
@@ -522,31 +611,69 @@
             $('#modalPostPuntoExpendioBasico').modal('show');
         }
 
-        $('#btnPpebContinuar').on('click', function () {
-            $('#modalPostPuntoExpendioBasico').modal('hide');
-            window.location.href = urlPosConSector($('#sectorPuntoExpendio').val());
+        // 1 = Nuevo expendio.
+        $('#btnPpebContinuar').on('click', ppebNuevoExpendio);
+
+        // 2 = Ticket termico. Agente local si esta instalado; si no, dialogo del navegador via
+        // iframe oculto (ticket-print.js, el mismo helper que usa el post-venta de Ventas).
+        $('#btnPpebTicket').on('click', function () {
+            var idExpendio = $(this).data('id-expendio');
+
+            function abrirTicket(mm) {
+                window.TicketPrint.imprimir({
+                    ticketUrl: config.urlTicketHtml + '?id=' + idExpendio + '&mm=' + mm,
+                    payloadUrl: config.urlTicketPayload + '?id=' + idExpendio + '&mm=' + mm,
+                    // El retraso deja que el spool del navegador/agente termine antes de recargar.
+                    onDone: function () { setTimeout(ppebTerminarOpcion, 400); }
+                });
+            }
+
+            var mmRecordado = ppebObtenerMedidaTicket();
+            if (mmRecordado) {
+                abrirTicket(mmRecordado);
+            } else {
+                ppebElegirMedidaTicket().then(function (mm) {
+                    if (mm) abrirTicket(mm);
+                });
+            }
         });
 
-        // Atajos numericos 1/2/3 en el modal de "Expendio guardado", 2026-09-12 (pedido explicito
-        // del usuario -- ver docs/DECISIONS.md), mismo patron que el modal de post-venta de POS
-        // (Ventas/POS.cshtml, atajos 1-5): 1 = Nuevo expendio (#btnPpebContinuar, primero pedido
-        // explicitamente aunque no sea el primer boton en el DOM), 2 = PDF (#btnPpebPdf), 3 =
-        // Email (#btnPpebEmail). Sin factura electronica -- no aplica a Puntos de Expendio.
+        $('#ppebTicketCambiarMedida').on('click', function (e) {
+            e.preventDefault();
+            ppebElegirMedidaTicket();
+        });
+
+        // 3 y 5 = PDF (completo / lista de precios): son enlaces target=_blank, el navegador abre
+        // la pestaña y aca solo se cierra el flujo.
+        $('#btnPpebPdf, #btnPpebPdfPrecios').on('click', function () {
+            setTimeout(ppebTerminarOpcion, 400);
+        });
+
+        // Atajos numericos en el modal de "Expendio guardado" (pedido del usuario 2026-09-12 y
+        // ampliado 2026-09-30, mismo patron que el post-venta de Ventas): 1 Nuevo expendio,
+        // 2 Ticket, 3 PDF, 4 Email, 5 PDF lista de precios (solo PRESUPUESTO, boton oculto en el
+        // resto). Escape no tiene atajo propio: cierra el modal y deja la vista como esta.
         $(document).on('keydown', function (e) {
             if (!$('#modalPostPuntoExpendioBasico').hasClass('show')) return;
+            // Con el modal de email encima, los numeros son para escribir, no atajos.
+            if ($('#modalEmailPostPuntoExpendio').hasClass('show')) return;
             var tag = (e.target.tagName || '').toUpperCase();
             if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
             var mapaAtajos = {
                 '1': '#btnPpebContinuar',
-                '2': '#btnPpebPdf',
-                '3': '#btnPpebEmail'
+                '2': '#btnPpebTicket',
+                '3': '#btnPpebPdf',
+                '4': '#btnPpebEmail',
+                '5': '#btnPpebPdfPrecios'
             };
             var selector = mapaAtajos[e.key];
             if (!selector) return;
 
             e.preventDefault();
-            $(selector).trigger('click');
+            var boton = $(selector).not('.d-none')[0];
+            // click nativo: para los <a target=_blank> jQuery.trigger no abre el enlace.
+            if (boton) boton.click();
         });
 
         $('#btnPpebEmail').on('click', function () {
@@ -597,7 +724,9 @@
                 }
 
                 $('#modalEmailPostPuntoExpendio').modal('hide');
-                Swal.fire({ icon: 'success', title: 'Email enviado', text: 'El comprobante se envió correctamente.' });
+                // Email enviado: cierra el flujo (limpia la vista salvo desde "Mis expendios").
+                Swal.fire({ icon: 'success', title: 'Email enviado', text: 'El comprobante se envió correctamente.', timer: 1500, showConfirmButton: false })
+                    .then(ppebTerminarOpcion);
             }).fail(function (xhr) {
                 $btn.prop('disabled', false);
                 $('#ppebEmailError').removeClass('d-none').text((xhr.responseJSON && xhr.responseJSON.msg) || 'No se pudo enviar el email.');
@@ -610,6 +739,16 @@
             if (guardando) return;
 
             var payload = construirPayload();
+
+            // Expendio ya guardado en esta pantalla: nunca se crea otro. Sin cambios, o sin haber
+            // confirmado "Si, modificar", solo se reabre el modal de opciones; con la modificacion
+            // confirmada y cambios reales, mas abajo se manda IdExpendioModificar para actualizarlo.
+            if (expendioGuardado && (!expendioGuardado.modificando || JSON.stringify(payload) === expendioGuardado.firma)) {
+                mostrarModalPostExpendio(expendioGuardado.resp);
+                return;
+            }
+            if (expendioGuardado) payload.IdExpendioModificar = expendioGuardado.resp.idExpendio;
+
             if (!payload.Sector) {
                 firePosAlert({ icon: 'warning', title: 'Sector', text: 'Debe seleccionar un sector.' });
                 openSectorModal();
@@ -651,6 +790,10 @@
                         return;
                     }
 
+                    // La firma se calcula sin IdExpendioModificar: compara solo el contenido de la pantalla.
+                    var payloadFirma = $.extend({}, payload);
+                    delete payloadFirma.IdExpendioModificar;
+                    expendioGuardado = { resp: resp, firma: JSON.stringify(payloadFirma), modificando: false };
                     mostrarModalPostExpendio(resp);
                 })
                 .fail(function () {
@@ -682,6 +825,7 @@
                 cancelButtonText: 'No'
             }).then(function (result) {
                 if (!result.isConfirmed) return;
+                expendioGuardado = null;   // pantalla en blanco: el proximo Finalizar guarda un expendio nuevo
                 POSState.clear();
                 posCart.renderTable(POSState.getLineas());
                 posCart.recalculateTotal();
@@ -954,7 +1098,7 @@
             }
 
             $('#modalMisExpendiosPuntoExpendio').modal('hide');
-            mostrarModalPostExpendio({ idExpendio: item.idExpendio || idExpendio, pdfUrl: item.pdfUrl || '' });
+            mostrarModalPostExpendio({ idExpendio: item.idExpendio || idExpendio, pdfUrl: item.pdfUrl || '' }, true);
         });
 
         window.posHotkeysHooks = window.posHotkeysHooks || {};

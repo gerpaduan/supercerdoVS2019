@@ -1,6 +1,61 @@
 # Bitacora de cambios
 
-## 2026-09-28 (la mas reciente) - Cierre de Stock: persiste el flag "no contado"
+## 2026-09-30 - Tickets térmicos: ítem con descripción arriba y detalle + importe abajo
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). Archivos: `WebCore/Controllers/VentasController.cs`, `WebCore/Views/Ventas/_TicketHTML.cshtml`, `WebCore/Controllers/PuntosExpendioController.cs`. Verificado: compila; **pendiente** probar impreso (venta común, Factura A y expendio).
+
+## 2026-09-30 - Ticket de factura: pie fiscal en fuente chica
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). Archivos: `WebCore/Controllers/VentasController.cs`, `WebCore/Views/Ventas/_TicketHTML.cshtml`. Verificado: compila; **pendiente** probar impreso con una venta facturada.
+
+## 2026-09-30 - Ticket de movimiento: negrita, código chico y "Controlado por"
+
+- Detalle en `docs/DECISIONS.md` (2026-09-30). Archivos: `WebCore/Controllers/MovimientosController.cs`, `WebCore/Views/Movimientos/_TicketMovimiento.cshtml`, `WebCore/Services/EscPosFormato.cs` (`FuenteB`). Verificado: compila; **pendiente** probar impreso.
+
+## 2026-09-30 - Calculadora de billetes (F3): impresión directa, atajos y ticket más corto
+
+- Detalle y causa en `docs/DECISIONS.md` (2026-09-30). Archivos: `WebCore/wwwroot/Scripts/app/print-agent.js` (escape ASCII del JSON), `calculadora-billetes.js` (atajos en captura, filtro de ceros en `buildDetalleTexto`), `Views/Shared/_CalculadoraBilletesModal.cshtml` (Cambiar debajo de Ticket), `Controllers/HomeController.cs` (ticket sin negocio/"Detalles:", solo denominaciones con cantidad).
+- Verificado: el agente real acepta el JSON escapado (20 ms) y se cuelga con NBSP crudo; compila; WebCore reiniciado sirve el JS nuevo. **Pendiente**: probar en pantalla (atajos 1-4, impresión directa sin diálogo, ticket impreso); requiere sesión e impresora.
+
+## 2026-09-30 - Tickets térmicos por agente: negrita, doble tamaño y fuente B como en el WinForms
+
+- Cambio: el payload `ticketLines` de `Ventas/ImprimirTicketPayload` y de la calculadora de billetes ahora lleva comandos ESC/POS incrustados (helper nuevo `WebCore/Services/EscPosFormato.cs`). Causa y decisión en `docs/DECISIONS.md` (2026-09-30).
+- Archivos: `WebCore/Services/EscPosFormato.cs` (nuevo), `WebCore/Controllers/VentasController.cs` (`ConstruirLineasTicketVenta`: título en doble tamaño, negocio en doble tamaño + fuente B, Total en negrita), `WebCore/Controllers/HomeController.cs` (`ConstruirLineasCalculadoraBilletes`: Total en negrita). `PrintAgent` y el Web clásico no se tocaron.
+- Ampliación (mismo día, pedido del usuario): ticket de punto de expendio sin código de producto + sector en doble tamaño + Total en negrita (`PuntosExpendioController.cs`, parámetro `formatoEscPos`); `calculadora-billetes.js` limpia los comandos en el fallback por navegador.
+- Verificado: compila sin errores (a directorio temporal, WebCore estaba corriendo); los bytes de cada helper coinciden con `CrearTicket.cs`, sobreviven al JSON (`\u001B`) y a la codificación CP850 del agente.
+- **Pendiente**: probar en la impresora térmica real (58 y 80 mm) comparando lado a lado con el WinForms; no había impresora disponible. Sin test automatizado: no existe proyecto de tests unitarios de WebCore (los builders son privados de cada controller); queda como deuda.
+
+## 2026-09-30 - Alta de Empleado: modal de búsqueda para Persona/Usuario existente
+
+- Cambio: a pedido del usuario, `Empleados/Editar.cshtml` reemplaza los inputs numéricos de ID por un modal de búsqueda (mismo patrón que `Finanzas/AddOrEditPago.cshtml`), con dos endpoints nuevos (`Empleados/BuscarPersonas`, `Empleados/BuscarUsuarios`) que excluyen preventivamente a quien ya es empleado de otro. Detalle completo en `docs/DECISIONS.md` (2026-09-30) y `docs/03-modulos/empleados-y-liquidacion-sueldos.md`.
+- Archivos: `WebCore/Views/Empleados/Editar.cshtml`, `WebCore/Controllers/EmpleadosController.cs`, `WebCore/Models/EmpleadosVm.cs` (`IdPersonaExistente`/`IdUsuarioExistente` pasan a `int?`), `Negocio/Empleado.cs` (wrappers `ExistePersonaVinculada`/`ExisteUsuarioVinculado`).
+- Bug real encontrado y corregido en la verificación (bloqueaba el guardado desde el alta original): binding de campos numéricos vacíos (`int`/`decimal`/`DateTime` no-nullable) tiraba `"The value '' is invalid."` — se pasaron a nullable donde corresponde.
+- Verificado en vivo contra `carnisys` local (build limpio + prueba manual en el navegador con usuario real): alta de empleado vinculando Persona y Usuario existentes por el modal, fila correcta en `empleado`, y la misma Persona ya no aparece en una búsqueda posterior. Registro de prueba borrado después de verificar.
+
+## 2026-09-30 - POS: el código de expendio `PE<n>F` se carga solo
+
+- Al escribir/escanear `PE<n>F` en el código del POS de Ventas, el expendio se agrega sin Enter (antes solo con Enter). Con prefijo `PE<dígitos>` ya no se abre el modal de forma de pago. Ver `DECISIONS.md` 2026-09-30.
+- Archivos: `WebCore/wwwroot/Scripts/app/pos-product.js` (detección en keyup, guard anti-doble carga, excepción del modal), `WebCore/wwwroot/Scripts/app/ventas-expendios-pos.js` (`cargarExpendio` devuelve la promesa), docs.
+- PENDIENTE: prueba manual con pistola real y con un expendio existente.
+
+## 2026-09-30 (la mas reciente) - Punto de Expendio: modal post-expendio con 5 opciones, ticket térmico y PDF de precios compacto
+
+- Modal post-expendio numerado 1-5 (Nuevo, Ticket, PDF, Email, PDF lista de precios); Escape pregunta si se quiere modificar el expendio ya generado (Finalizar lo actualiza, sin duplicar). Ver `DECISIONS.md` 2026-09-30.
+- Nuevo ticket térmico de expendio (`ImprimirTicketHtml`/`ImprimirTicketPayload`).
+- PRESUPUESTO: etiqueta "Vigencia de precios desde" en el POS; PDF lista de precios con tabla angosta `Producto [cod: N]`.
+- PENDIENTE: prueba manual con impresora/agente real.
+
+## 2026-09-29 - Módulo nuevo: Empleados y Liquidación de Sueldos
+
+- **Cambio**: a pedido del usuario, módulo completo de empleados y liquidación de sueldos (por hora/media jornada/jornada/semana/quincena/mes), con marcación de jornada propia (self-service "Mi Jornada" + fichaje en dispositivos habilitados, sin contraseña), tarifas versionadas por turno/día, vacaciones, y liquidación con acreditación automática en la cuenta corriente de la Persona del empleado. Decisiones de diseño completas en `docs/DECISIONS.md` (2026-09-29) y modelo/pantallas en `docs/03-modulos/empleados-y-liquidacion-sueldos.md` (nuevo).
+- **Archivos nuevos — capa de datos (solo Postgres)**: `Entidades/{Empleado,EmpleadoTarifa,TarifaGeneral,RegistroJornada,LiquidacionSueldo,LiquidacionSueldoDetalle,EmpleadoVacacion,Turno}.cs`; `Contratos/{IEmpleadoRepository,ITarifaGeneralRepository,IRegistroJornadaRepository,ILiquidacionSueldoRepository}.cs`; `DatosPostgres/{EmpleadoPg,TarifaGeneralPg,RegistroJornadaPg,LiquidacionSueldoPg}.cs`; migraciones `DatosPostgres/DB-Migrations/20260929*.sql` (empleado, empleadotarifa, tarifageneral, registrojornada, liquidacionsueldo, liquidacionsueldodetalle, empleadovacacion, alter de dispositivosseguros, seed de formularios).
+- **Archivos nuevos — negocio y web**: `Negocio/{Empleado,RegistroJornada,LiquidacionSueldo}.cs`; `WebCore/Controllers/{Empleados,Jornadas,Liquidaciones}Controller.cs`; `WebCore/Models/{Empleados,Jornadas,Liquidaciones}Vm.cs`; vistas en `WebCore/Views/{Empleados,Jornadas,Liquidaciones}/*.cshtml`.
+- **Archivos modificados**: `Entidades/MovCtaCte.cs` (nuevo valor `tablas.Liquidaciones`), `Negocio/CuentaCorriente.cs` (case del switch de reversa), `Entidades/Permisos.cs` (`Permisos.Empleado.*`), `WebCore/Infrastructure/NegocioFactory.cs` (`CrearEmpleado/CrearRegistroJornada/CrearLiquidacionSueldo`), `WebCore/Views/Shared/_Layout.cshtml` (menú "Empleados" + link "Mi jornada" en el dropdown de usuario). Fichaje reutiliza Dispositivos Seguros: `Entidades/DispositivoSeguro.cs` + `Datos/DispositivoSeguro.cs` + `DatosPostgres/DispositivoSeguroPg.cs` + `Contratos/IDispositivoSeguroRepository.cs` + `Negocio/DispositivoSeguro.cs` (flag `HabilitadoFichaje`), `WebCore/Controllers/DispositivosSegurosController.cs` + `WebCore/Views/DispositivosSeguros/Index.cshtml` (acción y botón para habilitarlo), más `Datos/DB-Procedures/20260929-Alter_DispositivosSeguros_add_HabilitadoFichaje.sql` (rama SQL Server, para no romper esa implementación ya existente y compartida).
+- **Verificado**: build completo de `WebCore.csproj` (que arrastra Entidades/Contratos/Datos/DatosPostgres/Negocio/AFIP) sin errores de compilación propios, con el proceso `WebCore.exe` que tenía los DLL bloqueados detenido antes (confirmado con el usuario) para poder correr la copia final.
+- **Migraciones corridas y verificadas** contra la base local `carnisys` (`~/hosts/postgres-local.env`, rol `carnisys_admin`): las 9 migraciones `20260929*.sql` aplicaron sin errores, las 7 tablas nuevas quedaron con `relrowsecurity=t`, `dispositivosseguros.habilitadofichaje` se agregó, y los `formulario` 9001/9002 se insertaron sin chocar (`MAX(idform)` real era 34, muy por debajo). Pendiente correrlas en los demás ambientes Postgres antes de desplegar ahí.
+- **No verificado**: no se probó el flujo end-to-end en el navegador (alta de empleado, fichaje, liquidación con acreditación real en cta cte). Sin tests automatizados para `Negocio.LiquidacionSueldo.CalcularPreview` (deuda explícita, lógica de negocio crítica según CLAUDE.md §2.3). Pantalla de administración de `TarifaGeneral` y el botón "Copiar tarifa estándar" en `Empleados/Editar.cshtml` quedaron con el backend listo (`Negocio.Empleado.ListarTarifaGeneral/AgregarTarifaGeneral/ObtenerTarifaGeneralVigente`, `TarifaGeneralPg`, migración) pero sin pantalla propia en WebCore. Sugerencia automática de aguinaldo (50% del mejor sueldo del semestre) explícitamente no implementada, pendiente de confirmar la fórmula con el usuario.
+
+## 2026-09-28 - Cierre de Stock: persiste el flag "no contado"
 
 - Cambio: a pedido del usuario, el badge amarillo "No contado" que ya se mostraba en la grilla de Cierre de Stock (`WebCore/Views/Stock/Editar.cshtml`) para las lineas agregadas en bloque desde el modal "Productos no cargados" ahora se guarda en la base, en ambos motores.
 - **Causa raiz del gap**: el flag `noContado` ya se calculaba correctamente en el cliente (`WebCore/wwwroot/Scripts/app/stock.js`, funcion `agregarProductosNoCargados`), pero `rebuildHiddenInputs` nunca lo serializaba a un hidden input -- se perdia antes de salir del navegador. Ni `StockLineaVm` ni `Entidades.CortePorCompra` ni las tablas `dbo.CortePorCompra`/`corteporcompra` tenian donde guardarlo.

@@ -127,6 +127,29 @@ namespace WebCore.Controllers
             return RedirectToAction("Index");
         }
 
+        // Fichaje de jornada (2026-09-29, ver docs/DECISIONS.md): independiente de CambiarBloqueo.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarHabilitadoFichaje(int id, bool habilitar)
+        {
+            if (!PuedeAdministrar(_usuarioActual))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sin permiso";
+                TempData["AlertMsg"] = "No tiene permisos para habilitar dispositivos para fichaje.";
+                return RedirectToAction("Index");
+            }
+
+            _oDispositivoN.SetHabilitadoFichaje(id, _empresa.IdEmpresa, habilitar);
+
+            TempData["AlertType"] = "success";
+            TempData["AlertTitle"] = "Dispositivos seguros";
+            TempData["AlertMsg"] = habilitar
+                ? "El dispositivo quedó habilitado para fichar entrada/salida."
+                : "El dispositivo ya no está habilitado para fichar.";
+            return RedirectToAction("Index");
+        }
+
         private bool PuedeAdministrar(Entidades.Usuario usuario)
         {
             return usuario != null && usuario.IdEmpresa == _empresa.IdEmpresa && usuario.Admin;

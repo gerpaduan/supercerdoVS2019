@@ -71,7 +71,10 @@
                class="btn btn-sm btn-outline-secondary mr-2" id="btnVolverAddOrEditPago">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <h5 class="mb-0"><strong id="lblPersonaPago">@persona</strong></h5>
+            <div>
+                <h5 class="mb-0"><strong id="lblPersonaPago">@persona</strong></h5>
+                <small class="text-muted d-block @(personaObj != null && personaObj.TieneIdentificacionDistinta() ? "" : "d-none")" id="lblPersonaPagoIdentificacion">@(personaObj != null ? personaObj.Identificacion : "")</small>
+            </div>
             @if (puedeReasignarOEliminar)
             {
                 <button type="button" class="btn btn-sm btn-outline-primary ml-2 d-none" id="btnCambiarPersonaPago" data-pago-fijo="true"
@@ -195,7 +198,7 @@
                                     data-cb-context="pago-importe"
                                     data-cb-input="#txtImporte"
                                     data-cb-detail="#Observaciones"
-                                    title="Calcular efectivo">
+                                    title="Calcular efectivo (Alt+B)">
                                 <i class="fas fa-money-bill-wave"></i>
                             </button>
                         </div>
@@ -1081,6 +1084,7 @@
                     var $fila = $('<tr style="cursor:pointer;"></tr>')
                         .attr('data-id', persona.idPersona)
                         .data('razon', persona.razonSocial)
+                        .data('identificacion', persona.identificacion || '')
                         .append($('<td></td>').text(persona.cuit || ''))
                         .append($('<td></td>').text(persona.razonSocial || ''))
                         .append($('<td></td>').text(persona.identificacion || ''));
@@ -1092,10 +1096,17 @@
             });
         }
 
-        function seleccionarPersonaPago(id, razonSocial) {
+        function seleccionarPersonaPago(id, razonSocial, identificacion) {
             idPersona = parseInt(id, 10);
             $('#hddIdPersona').val(idPersona);
             $('#lblPersonaPago').text(razonSocial);
+            // Misma regla que Persona.TieneIdentificacionDistinta() (Entidades/Persona.cs): solo se
+            // muestra si aporta un dato distinto de la razon social.
+            var identifDistinta = !!identificacion
+                && identificacion.trim().toLowerCase() !== (razonSocial || '').trim().toLowerCase();
+            $('#lblPersonaPagoIdentificacion')
+                .text(identificacion || '')
+                .toggleClass('d-none', !identifDistinta);
             var cambio = idPersona !== idPersonaOriginal;
             $('#avisoCambioPersonaPago')
                 .toggleClass('d-none', !cambio)
@@ -1121,10 +1132,10 @@
             if (e.key !== 'Enter') return;
             e.preventDefault();
             var $primera = $('#tablaPersonasPago tr').first();
-            if ($primera.length) seleccionarPersonaPago($primera.attr('data-id'), $primera.data('razon'));
+            if ($primera.length) seleccionarPersonaPago($primera.attr('data-id'), $primera.data('razon'), $primera.data('identificacion'));
         });
         $('#tablaPersonasPago').on('click', 'tr', function () {
-            seleccionarPersonaPago($(this).attr('data-id'), $(this).data('razon'));
+            seleccionarPersonaPago($(this).attr('data-id'), $(this).data('razon'), $(this).data('identificacion'));
         });
 
         // ----- Eliminar (asiento opuesto, queda visible como ELIMINADO) -----

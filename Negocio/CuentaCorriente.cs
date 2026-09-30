@@ -113,6 +113,8 @@ namespace Negocio
                             break;
                         case Entidades.MovCtaCte.tablas.MovCtaCte:
                             break;
+                        case Entidades.MovCtaCte.tablas.Liquidaciones:
+                            break;
                         default:
                             break;
                     }

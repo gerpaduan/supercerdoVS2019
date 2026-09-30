@@ -19,6 +19,10 @@ namespace Entidades
             Ventas,
             Pagos,
             MovCtaCte,
+            // Liquidacion de sueldo de un Empleado (Negocio.LiquidacionSueldo.Confirmar), acreditada
+            // como Credito -- mismo signo que usa Compra para acreditar a un proveedor (a favor de
+            // la Persona). Ver docs/DECISIONS.md 2026-09-29.
+            Liquidaciones,
         }
 
         public tablas getTablaEnum(string tabla)
@@ -37,6 +41,9 @@ namespace Entidades
                     break;
                 case "MovCtaCte":
                     tablaEnum = tablas.MovCtaCte;
+                    break;
+                case "Liquidaciones":
+                    tablaEnum = tablas.Liquidaciones;
                     break;
             }
             return tablaEnum;

@@ -65,7 +65,7 @@ namespace WebCore.Infrastructure
             var corteRepo = new DatosPostgres.CortePg(PgConnString, empresa.IdEmpresa, personaRepo);
             var ventaRepo = new DatosPostgres.VentaPg(PgConnString, empresa.IdEmpresa, personaRepo, sucursalRepo, corteRepo);
             var ventaN = new Negocio.Venta(ventaRepo, empresa, param);
-            return new Negocio.CierreCaja(repo, empresa, param, ventaN: ventaN, sucursalRepositorio: sucursalRepo);
+            return new Negocio.CierreCaja(repo, empresa, param, ventaN: ventaN, sucursalRepositorio: sucursalRepo, usuarioN: CrearUsuario(empresa, param));
         }
 
         public static Negocio.Compra CrearCompra(IEmpresaContext empresa, IParametrosContext param = null)
@@ -139,6 +139,40 @@ namespace WebCore.Infrastructure
 
             var repo = new DatosPostgres.FormatoCodigoBarrasPg(PgConnString, empresa.IdEmpresa);
             return new Negocio.FormatoCodigoBarras(repo);
+        }
+
+        // Modulo Empleados y Liquidacion de Sueldos (2026-09-29, ver docs/DECISIONS.md): nace
+        // Postgres-only, no hay rama SQL Server (a diferencia del resto de esta factory) porque no
+        // hay nada legado que portar -- decision explicita del usuario.
+        public static Negocio.Empleado CrearEmpleado(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            if (!UsarPostgres)
+                throw new InvalidOperationException("El módulo de Empleados solo está disponible con DataEngine=Postgres.");
+
+            var repo = new DatosPostgres.EmpleadoPg(PgConnString, empresa.IdEmpresa);
+            var tarifaGeneralRepo = new DatosPostgres.TarifaGeneralPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.Empleado(repo, tarifaGeneralRepo, CrearPersona(empresa, param), CrearUsuario(empresa, param));
+        }
+
+        public static Negocio.RegistroJornada CrearRegistroJornada(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres)
+                throw new InvalidOperationException("El módulo de Empleados solo está disponible con DataEngine=Postgres.");
+
+            var repo = new DatosPostgres.RegistroJornadaPg(PgConnString, empresa.IdEmpresa);
+            var liquidacionRepo = new DatosPostgres.LiquidacionSueldoPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.RegistroJornada(repo, liquidacionRepo);
+        }
+
+        public static Negocio.LiquidacionSueldo CrearLiquidacionSueldo(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            if (!UsarPostgres)
+                throw new InvalidOperationException("El módulo de Empleados solo está disponible con DataEngine=Postgres.");
+
+            var repo = new DatosPostgres.LiquidacionSueldoPg(PgConnString, empresa.IdEmpresa);
+            var registroRepo = new DatosPostgres.RegistroJornadaPg(PgConnString, empresa.IdEmpresa);
+            var empleadoRepo = new DatosPostgres.EmpleadoPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.LiquidacionSueldo(repo, registroRepo, empleadoRepo, CrearCuentaCorriente(empresa, param));
         }
 
         public static Negocio.DispositivoSeguro CrearDispositivoSeguro(IEmpresaContext empresa)

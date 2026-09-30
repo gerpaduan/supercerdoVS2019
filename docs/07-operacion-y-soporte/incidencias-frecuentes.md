@@ -13,6 +13,20 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-09-30 - Se abre el dialogo de impresion del navegador aunque el agente este activo
+
+- **Sintoma**: con el agente corriendo, el ticket (sobre todo el de la calculadora de billetes) abre el dialogo del navegador en vez de imprimir directo.
+- **Causa**: el agente se cuelga con cualquier caracter no ASCII en el cuerpo (cuenta caracteres contra Content-Length en bytes); `printExpendio` vence a los 5 s y se cae al navegador.
+- **Verificaciones**: `curl -X POST --data-binary @archivo http://127.0.0.1:18777/printers` con un NBSP/acento crudo tarda hasta el timeout; con la secuencia ` ` escapada responde al instante.
+- **Resolucion**: `print-agent.js` escapa lo no ASCII antes de enviar (2026-09-30). Deuda: corregir la lectura del cuerpo en `LocalPrintServer.cs`.
+
+## 2026-09-30 - Ticket termico desde la web sale sin negrita ni doble tamaño (desde el WinForms si)
+
+- **Sintoma**: la misma impresora termica imprime con negrita/doble tamaño/fuente B desde el WinForms y todo en una sola fuente desde WebCore con impresion directa (agente).
+- **Causa**: el WinForms incrusta `ESC E`, `GS !`, `ESC M` en el texto; las `ticketLines` que devolvia WebCore eran texto plano y el agente no agrega formato.
+- **Verificaciones**: que salga directo (agente) y no por el dialogo del navegador (ese camino imprime el HTML por el driver y no usa `ticketLines`); `GET /Ventas/ImprimirTicketPayload?id=X&mm=58` debe traer `\u001B`/`\u001D` en `ticketLines`.
+- **Resolucion**: `WebCore/Services/EscPosFormato.cs` aplicado en los builders de lineas (ver `docs/DECISIONS.md`, 2026-09-30). Formato nuevo en un ticket: envolver la linea con esos helpers y respetar el ancho reducido en doble tamaño.
+
 ## 2026-09-28 - Modo oscuro: auditoria completa de toda la app (segunda pasada)
 
 - **Sintoma**: a pedido del usuario ("modo oscuro en todos los campos, analiza cada pantalla"), se audito el resto de la app (no solo POS): dropdowns de filtros, modal Cuentas Corrientes del POS, modal de apertura de caja, modal de seleccion de usuario, filas de stock/cuenta corriente, tarjeta de Pago/Cobro.
@@ -327,3 +341,8 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 **Síntoma**: en `GenerarDocsCore.GenerarFacturaPDF` (A4) los totales, leyendas fiscales, QR y CAE aparecían inmediatamente después del último renglón, a mitad de hoja.
 **Causa**: todo el comprobante iba dentro de `page.Content()`, que fluye de arriba hacia abajo sin anclar nada al fondo.
 **Fix**: se mantiene el formato original (el de iTextSharp: sin recuadros; el comprobante X sigue igual). Solo el bloque de la factura electrónica (importe en letras, totales, Ley 27.743, QR, CAE) pasó a `col.Item().ExtendVertical().AlignBottom().Column(...)` en `GenerarFacturaPDF`: queda al borde inferior de la última hoja, como el `PdfStamper` del original. Verificado con facturas B/A de 1 y 2 hojas: el pie aparece solo en la última, a la misma altura.
+
+## Egresos de caja: sin Sucursal, "Modificar" no abre el egreso y sucursal equivocada en el formulario (2026-09-26)
+- **Síntoma**: en `/Cajas/EgresosCaja` la columna Sucursal (y la del desplegable) salía vacía; "Modificar" dejaba el modal en "Cargando..." (HTTP 500, `SqlException` timeout contra SQL Server); el encabezado del formulario mostraba la sucursal del usuario y no la del egreso.
+- **Causa**: (1) las consultas de `DatosPostgres/CierreCajaPg.cs` no traían la columna `Sucursal`; (2) `Negocio.CierreCaja.getEgresoCajaById` armaba `new Usuario(_empresa)` (SQL Server) aunque el motor fuera Postgres; (3) `_AddOrEditEgresoCaja.cshtml` priorizaba la sucursal del usuario sobre la del egreso.
+- **Fix**: `LEFT JOIN sucursal` en las 3 consultas de egresos; `CierreCaja` recibe `usuarioN` inyectado (`NegocioFactory.CrearCierreCaja`); el formulario resuelve la sucursal por id del egreso. La columna Detalle del listado ahora muestra la primera línea del texto (antes solo un "1").

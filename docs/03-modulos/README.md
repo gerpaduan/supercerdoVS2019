@@ -12,6 +12,7 @@
 - [Clientes y proveedores](./clientes-y-proveedores.md)
 - [Reportes y administracion](./reportes-y-administracion.md)
 - [Administracion de sistema (super-admin de plataforma)](./administracion-sistema.md)
+- [Empleados y liquidación de sueldos](./empleados-y-liquidacion-sueldos.md)
 
 ## Objetivo
 

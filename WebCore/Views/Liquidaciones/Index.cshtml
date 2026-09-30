@@ -1,0 +1,119 @@
+@model WebCore.Models.LiquidacionIndexVm
+@{
+    ViewBag.Title = "Liquidación de sueldos";
+}
+
+<div class="container-fluid liquidaciones-index-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <h4 class="mb-0">Liquidación de sueldos</h4>
+        @if (Model.PuedeAdministrar)
+        {
+            <a class="btn btn-primary" href="@Url.Action("Nueva", "Liquidaciones", new { idEmpleado = Model.IdEmpleadoSeleccionado })">
+                <i class="fas fa-plus mr-1"></i> Nueva liquidación
+            </a>
+        }
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form asp-controller="Liquidaciones" asp-action="Index" method="get" class="form-inline">
+                <label class="mr-2">Empleado</label>
+                <select name="idEmpleado" class="form-control" onchange="this.form.submit()">
+                    <option value="">-- Elegir --</option>
+                    @foreach (var e in Model.Empleados)
+                    {
+                        <option value="@e.Id" selected="@(Model.IdEmpleadoSeleccionado == e.Id)">@e.RazonSocial (@e.Legajo)</option>
+                    }
+                </select>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.IdEmpleadoSeleccionado.HasValue)
+    {
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-bordered mb-0">
+                    <thead class="thead-light">
+                        <tr><th>Período</th><th>Total</th><th>Estado</th><th style="width:150px;">Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr><td colspan="4" class="text-center text-muted py-4">No hay liquidaciones para este empleado.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var l in Model.Items)
+                            {
+                                <tr>
+                                    <td>@l.PeriodoDesde.ToString("dd/MM/yyyy HH:mm") al @l.PeriodoHasta.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>$@l.TotalLiquidado.ToString("N2")</td>
+                                    <td>
+                                        <span class="badge @(l.Estado == Entidades.LiquidacionSueldo.estadoLiquidacion.Confirmada ? "badge-success" : "badge-secondary")">@l.Estado</span>
+                                    </td>
+                                    <td>
+                                        @if (Model.PuedeAdministrar && l.Estado == Entidades.LiquidacionSueldo.estadoLiquidacion.Confirmada)
+                                        {
+                                            <form asp-controller="Liquidaciones" asp-action="Eliminar" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@l.Id" />
+                                                <input type="hidden" name="idEmpleado" value="@Model.IdEmpleadoSeleccionado" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('¿Eliminar esta liquidación? Se generará el asiento opuesto en la cuenta corriente y el período quedará libre para volver a liquidarse.');">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .liquidaciones-index-page {
+        font-size: .9rem;
+    }
+
+    .liquidaciones-index-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .liquidaciones-index-page .form-control {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+    }
+
+    .liquidaciones-index-page .table {
+        font-size: .84rem;
+    }
+
+    .liquidaciones-index-page .table th,
+    .liquidaciones-index-page .table td {
+        padding: .42rem .58rem;
+        vertical-align: middle;
+    }
+
+    .liquidaciones-index-page .table thead th {
+        font-size: .72rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .liquidaciones-index-page .btn {
+        font-size: .78rem;
+        padding: .23rem .5rem;
+    }
+
+    .liquidaciones-index-page .badge {
+        font-size: .7rem;
+    }
+</style>

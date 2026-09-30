@@ -21,5 +21,10 @@ namespace Entidades
         public string Origen { get; set; } = "Manual";
         public string EmailAlta { get; set; }
         public bool Bloqueado { get; set; }
+
+        // Habilitado para el fichaje de jornada (Jornadas/Fichaje, 2026-09-29 -- ver
+        // docs/DECISIONS.md). Independiente de "seguro"/Bloqueado: un dispositivo puede saltar el
+        // rate-limit de login sin estar habilitado para fichar, y viceversa.
+        public bool HabilitadoFichaje { get; set; }
     }
 }

@@ -85,7 +85,13 @@
                     <i class="fas fa-arrow-left"></i>
                 </a>
             }
-            <h5 class="mb-0"><strong>@persona</strong></h5>
+            <div>
+                <h5 class="mb-0"><strong>@persona</strong></h5>
+                @if (personaObj != null && personaObj.TieneIdentificacionDistinta())
+                {
+                    <small class="text-muted d-block">@personaObj.Identificacion</small>
+                }
+            </div>
         </div>
         <div>
             @if (!ocultarSaldo)

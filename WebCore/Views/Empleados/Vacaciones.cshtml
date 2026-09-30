@@ -1,0 +1,109 @@
+@model WebCore.Models.EmpleadoVacacionesVm
+@{
+    ViewBag.Title = "Vacaciones de " + Model.EmpleadoNombre;
+}
+
+<div class="container-fluid empleados-vacaciones-page">
+    <h4 class="mb-3">Vacaciones — @Model.EmpleadoNombre</h4>
+    <p class="text-muted small">
+        Mientras dure un período cargado acá, "Mi Jornada" no le exige al empleado marcar asistencia, y una liquidación
+        que incluya esas fechas suma automáticamente una línea de "Vacaciones" pagada a la tarifa vigente del empleado
+        (cálculo simplificado, no reproduce la fórmula legal exacta de la LCT).
+    </p>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form asp-controller="Empleados" asp-action="AgregarVacacion" method="post" class="form-row align-items-end">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="idEmpleado" value="@Model.IdEmpleado" />
+                <div class="form-group col-md-3">
+                    <label>Fecha desde</label>
+                    <input type="date" name="fechaDesde" value="@Model.NuevaFechaDesde.ToString("yyyy-MM-dd")" class="form-control" required />
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Fecha hasta</label>
+                    <input type="date" name="fechaHasta" value="@Model.NuevaFechaHasta.ToString("yyyy-MM-dd")" class="form-control" required />
+                </div>
+                <div class="form-group col-md-4">
+                    <label>Observaciones</label>
+                    <input type="text" name="observaciones" class="form-control" />
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block">Cargar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-bordered mb-0">
+                <thead class="thead-light">
+                    <tr><th>Desde</th><th>Hasta</th><th>Observaciones</th></tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items == null || Model.Items.Count == 0)
+                    {
+                        <tr><td colspan="3" class="text-center text-muted py-4">No hay períodos de vacaciones cargados.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var v in Model.Items)
+                        {
+                            <tr>
+                                <td>@v.FechaDesde.ToString("dd/MM/yyyy")</td>
+                                <td>@v.FechaHasta.ToString("dd/MM/yyyy")</td>
+                                <td>@v.Observaciones</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <a href="@Url.Action("Index", "Empleados")" class="btn btn-outline-secondary mt-3">Volver</a>
+</div>
+
+<style>
+    .empleados-vacaciones-page {
+        font-size: .9rem;
+    }
+
+    .empleados-vacaciones-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .empleados-vacaciones-page .form-control,
+    .empleados-vacaciones-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+    }
+
+    .empleados-vacaciones-page label {
+        font-size: .8rem;
+    }
+
+    .empleados-vacaciones-page .small,
+    .empleados-vacaciones-page .text-muted {
+        font-size: .8rem !important;
+    }
+
+    .empleados-vacaciones-page .table {
+        font-size: .84rem;
+    }
+
+    .empleados-vacaciones-page .table th,
+    .empleados-vacaciones-page .table td {
+        padding: .42rem .58rem;
+        vertical-align: middle;
+    }
+
+    .empleados-vacaciones-page .table thead th {
+        font-size: .72rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+</style>
