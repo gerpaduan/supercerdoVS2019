@@ -1,0 +1,14 @@
+@* Aviso en el extracto y en la pantalla de cobro/pago de UNA persona (Model = idPersona).
+   - Usuario restringido sobre una persona reservada: alerta que explica por que ve movimientos
+     parciales y no ve el saldo.
+   - Usuario autorizado: no renderiza nada (usa _EtiquetaCuentaReservada junto al nombre).
+   Ver docs/DECISIONS.md, 2026-10-01. *@
+@model int
+@inject WebCore.Services.ICtaCteReservadaService CtaCteReservada
+@if (CtaCteReservada.SaldoOculto(Model))
+{
+    <div class="alert alert-warning py-2 px-3 mb-2 small aviso-cuenta-reservada" role="note">
+        <i class="fas fa-lock mr-1"></i>
+        <strong>Cuenta reservada.</strong> Solo ves los movimientos que cargaste vos desde la apertura de tu caja; el saldo no se muestra.
+    </div>
+}

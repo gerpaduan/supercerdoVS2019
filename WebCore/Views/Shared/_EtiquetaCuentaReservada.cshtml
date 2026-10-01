@@ -1,0 +1,12 @@
+@* Etiqueta "Reservada" junto al nombre de una persona (Model = idPersona). Se muestra solo si la
+   persona es de cuenta corriente reservada: al usuario autorizado le recuerda la restriccion, al
+   restringido le avisa que esta limitado. Ver docs/DECISIONS.md, 2026-10-01. *@
+@model int
+@inject WebCore.Services.ICtaCteReservadaService CtaCteReservada
+@if (CtaCteReservada.PersonaReservada(Model))
+{
+    <span class="badge badge-secondary align-middle ml-1 etiqueta-cuenta-reservada"
+          title="Cuenta corriente reservada: sus movimientos solo los ve un administrador o quien tenga permiso de cuentas corrientes; el resto ve lo que cargó desde la apertura de su caja.">
+        <i class="fas fa-lock mr-1"></i>Reservada
+    </span>
+}

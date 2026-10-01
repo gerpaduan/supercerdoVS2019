@@ -56,6 +56,24 @@ namespace Negocio
             oPersonaD.eliminarPersona(oPersonaE);
         }
 
+        // ===== Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01) =====
+
+        // Ids de las personas marcadas como "cuenta corriente reservada".
+        public System.Collections.Generic.HashSet<int> idsPersonasReservadas()
+        {
+            return oPersonaD.idsPersonasReservadas();
+        }
+
+        // Ids de los registros de `tabla` (RestriccionCtaCteReservada.Tabla*) que el usuario
+        // restringido NO puede ver: pertenecen a una persona reservada y no los cargo el mismo
+        // desde la apertura de su caja. Con restriccion == null (usuario autorizado) no hay nada
+        // oculto y no se consulta la base.
+        public System.Collections.Generic.HashSet<int> idsRegistrosOcultos(string tabla, Entidades.RestriccionCtaCteReservada restriccion)
+        {
+            if (restriccion == null) return new System.Collections.Generic.HashSet<int>();
+            return oPersonaD.idsRegistrosOcultos(tabla, restriccion.IdUsuario, restriccion.Desde);
+        }
+
         public Entidades.Persona findById(int id)
         {
             

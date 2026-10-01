@@ -24,6 +24,8 @@ namespace WebCore.Models
         public string Ciudad { get; set; } = "";
         public string OtrosDatos { get; set; } = "";
         public bool CtaCte { get; set; }
+        // Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01): se muestra como etiqueta.
+        public bool CtaCteReservada { get; set; }
         public float Bonificacion { get; set; }
         public bool PuedeModificar { get; set; }
     }
@@ -47,7 +49,9 @@ namespace WebCore.Models
         public string Domicilio { get; set; } = "";
         public string Ciudad { get; set; } = "";
         public string OtrosDatos { get; set; } = "";
-        public bool CtaCte { get; set; }
+        // Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01). Reemplaza al viejo switch
+        // "Cuenta corriente" (Persona.CtaCte), que ya no se edita desde la UI.
+        public bool CtaCteReservada { get; set; }
         public string BonificacionTexto { get; set; } = "0";
         public List<SelectListItem> Ivas { get; set; } = new List<SelectListItem>();
     }

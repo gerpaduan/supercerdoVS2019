@@ -679,17 +679,18 @@ namespace Negocio
         public List<Entidades.FacturaElectronica> BuscarFacturasPagina(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            int pagina, int cantidad, int cantidadExtra, string entorno = null)
+            int pagina, int cantidad, int cantidadExtra, string entorno = null,
+            Entidades.RestriccionCtaCteReservada restriccion = null)
         {
-            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra, entorno);
+            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra, entorno, restriccion);
         }
 
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            string entorno = null)
+            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null)
         {
-            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, entorno);
+            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, entorno, restriccion);
         }
 
         public bool ExistenFacturasPrueba()

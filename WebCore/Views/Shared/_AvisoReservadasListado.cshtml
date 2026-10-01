@@ -1,0 +1,12 @@
+@* Aviso en los listados (Ventas, Facturas, Compras, Stock, Pagos) para el usuario restringido:
+   explica que algunas cuentas estan reservadas y por eso puede faltar informacion. Sin cantidad (no
+   revela cuantos movimientos hay) y sin importar el filtro actual. Para un usuario autorizado, o si no
+   hay ninguna persona reservada, no renderiza nada. Ver docs/DECISIONS.md, 2026-10-01. *@
+@inject WebCore.Services.ICtaCteReservadaService CtaCteReservada
+@if (CtaCteReservada.MostrarAvisoEnListados)
+{
+    <div class="alert alert-secondary py-2 px-3 mb-2 small aviso-cuenta-reservada" role="note">
+        <i class="fas fa-lock mr-1"></i>
+        Hay cuentas <strong>reservadas</strong>: de esas personas solo ves lo que cargaste vos desde la apertura de tu caja.
+    </div>
+}

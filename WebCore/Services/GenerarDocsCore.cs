@@ -25,7 +25,9 @@ namespace WebCore.Services
     {
         // Port de Utilidades/GenerarDocs.cs GenerarPdfCtaCtePersona -- mismo contenido/orden,
         // sintaxis QuestPDF en vez de iTextSharp.
-        public static byte[] GenerarPdfCtaCtePersona(DataTable dt, DateTime fechaDesde)
+        // ocultarSaldo: persona de cuenta corriente reservada vista por un usuario restringido
+        // (docs/DECISIONS.md, 2026-10-01): el saldo acumulado se calculo sobre todo el libro, no se muestra.
+        public static byte[] GenerarPdfCtaCtePersona(DataTable dt, DateTime fechaDesde, bool ocultarSaldo = false)
         {
             var culturaAr = new CultureInfo("es-AR");
             string persona = "";
@@ -55,8 +57,8 @@ namespace WebCore.Services
                             row.RelativeItem().AlignRight().Text(text =>
                             {
                                 text.Span("Saldo: ").FontSize(12).Bold().FontColor(Colors.Grey.Medium);
-                                text.Span("$ " + saldo.ToString("N2", culturaAr)).FontSize(12).Bold()
-                                    .FontColor(saldo >= 0 ? Colors.Green.Darken2 : Colors.Red.Darken2);
+                                text.Span(ocultarSaldo ? "***" : "$ " + saldo.ToString("N2", culturaAr)).FontSize(12).Bold()
+                                    .FontColor(ocultarSaldo || saldo >= 0 ? Colors.Green.Darken2 : Colors.Red.Darken2);
                             });
                         });
 
@@ -95,7 +97,7 @@ namespace WebCore.Services
                                 table.Cell().Padding(5).Text(row["detalle"].ToString());
                                 table.Cell().Padding(5).AlignRight().Text(importe.ToString("N2", culturaAr))
                                     .FontColor(importe >= 0 ? Colors.Green.Darken2 : Colors.Red.Darken2);
-                                table.Cell().Padding(5).AlignRight().Text(Convert.ToDecimal(row["Saldo"]).ToString("N2", culturaAr));
+                                table.Cell().Padding(5).AlignRight().Text(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2", culturaAr));
                                 table.Cell().Padding(5).Text(row["Sucursal"].ToString());
                             }
                         });

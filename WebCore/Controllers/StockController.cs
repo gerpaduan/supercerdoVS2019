@@ -58,6 +58,7 @@ namespace WebCore.Controllers
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Usuario _oUsuarioN;
+        private readonly WebCore.Services.ICtaCteReservadaService _ctaCteReservada;
 
         // Id real del usuario logueado (no un stub) -- OBLIGATORIO que sea correcto, no cosmetico:
         // a diferencia de Index/Detalle (donde Id nunca se persiste), Guardar/GenerarAjustePesaje
@@ -66,9 +67,30 @@ namespace WebCore.Controllers
         // vez de 2), ver docs/DECISIONS.md -- motivo por el cual esta nota se preserva.
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public StockController(WebCore.Services.IUsuarioSesionService sesion)
+        // Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01): saca del listado las compras de
+        // proveedores reservados que el usuario restringido no puede ver. Solo se usa en los listados
+        // de movimientos; los calculos de stock/inventario siguen sobre todo el universo (filtrarlos
+        // falsearia el stock). Modifica y devuelve el mismo DataTable.
+        private DataTable QuitarComprasOcultas(DataTable dt)
+        {
+            if (dt == null || !dt.Columns.Contains("idCompra")) return dt;
+
+            var ocultas = _ctaCteReservada.IdsOcultos(Entidades.RestriccionCtaCteReservada.TablaCompras);
+            if (ocultas.Count == 0) return dt;
+
+            for (int i = dt.Rows.Count - 1; i >= 0; i--)
+            {
+                object valor = dt.Rows[i]["idCompra"];
+                if (valor != DBNull.Value && ocultas.Contains(Convert.ToInt32(valor)))
+                    dt.Rows.RemoveAt(i);
+            }
+            return dt;
+        }
+
+        public StockController(WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.ICtaCteReservadaService ctaCteReservada)
         {
             _sesion = sesion;
+            _ctaCteReservada = ctaCteReservada;
             _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
@@ -99,7 +121,7 @@ namespace WebCore.Controllers
             int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (usuarioIndice != null && usuarioIndice.IdSucursal > 0 ? usuarioIndice.IdSucursal : 0);
             string tipoNormalizado = NormalizarTipoFiltro(tipoCompra);
 
-            DataTable dt = _oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde, hasta, null) ?? new DataTable();
+            DataTable dt = QuitarComprasOcultas(_oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde, hasta, null) ?? new DataTable());
             dt = FiltrarSoloStock(dt);
 
             var model = new CompraIndexVm
@@ -134,7 +156,7 @@ namespace WebCore.Controllers
             int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (user.IdSucursal > 0 ? user.IdSucursal : 0);
             string tipoNormalizado = NormalizarTipoFiltro(tipoCompra);
 
-            DataTable dt = _oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde.Date, hasta.Date, null) ?? new DataTable();
+            DataTable dt = QuitarComprasOcultas(_oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde.Date, hasta.Date, null) ?? new DataTable());
             dt = FiltrarSoloStock(dt);
 
             var model = new StockLineasIndexVm
@@ -202,6 +224,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaCompras, "idCompra")]
         public IActionResult Detalle(int idCompra)
         {
             Entidades.Compra compra = _oCompraN.findById_convertToCompra(idCompra);
@@ -234,6 +257,7 @@ namespace WebCore.Controllers
             return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado, idUsuarioCreador });
         }
 
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaCompras, "id")]
         public IActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0)
         {
             Entidades.Usuario user = _usuarioActual;
@@ -327,6 +351,14 @@ namespace WebCore.Controllers
             if (model.IdCompra > 0)
             {
                 compraActual = _oCompraN.findById_convertToCompra(model.IdCompra);
+                if (compraActual != null && _ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaCompras, model.IdCompra))
+                {
+                    TempData["AlertType"] = "error";
+                    TempData["AlertTitle"] = "Acceso denegado";
+                    TempData["AlertMsg"] = WebCore.Helpers.ProtegerRegistroReservadoFilter.MensajeDenegado;
+                    return RedirectToAction("Index");
+                }
+
                 if (compraActual == null || compraActual.IdCompra == 0)
                 {
                     TempData["AlertType"] = "error";

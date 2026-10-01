@@ -8,6 +8,7 @@
 }
 
 <div class="container-fluid px-2 px-md-3" data-lineas-agrupadas-page="compras">
+    <partial name="_AvisoReservadasListado" />
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
         <h4 class="mb-2 mb-md-0">Lineas de compra</h4>
         <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Compras", new { idSucursal = Model.IdSucursal, tipoCompra = Model.TipoCompra, texto = Model.Texto, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") })">

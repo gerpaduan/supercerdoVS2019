@@ -1848,7 +1848,7 @@ namespace DatosPostgres
         // compartido entre BuscarFacturasPagina y ObtenerFacturasResumen para que las dos
         // consultas filtren exactamente igual. Placeholders numerados para los IN(...), nunca
         // concatenados directo.
-        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante, string entorno = null)
+        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante, string entorno = null, RestriccionCtaCteReservada restriccion = null)
         {
             string whereFormaPago = "1 = 1";
             if (formasPago != null && formasPago.Count > 0)
@@ -1881,9 +1881,16 @@ namespace DatosPostgres
             else if (string.Equals(entorno, FacturaElectronica.FiltroEntornoPrueba, StringComparison.OrdinalIgnoreCase))
                 whereEntorno = "f.esprueba = true";
 
+            // Cuenta corriente reservada: un usuario restringido no ve las facturas de ventas de
+            // personas reservadas, salvo las que cargo el mismo desde la apertura de su caja.
+            string whereReservada = restriccion == null
+                ? "1 = 1"
+                : "(COALESCE(p.ctactereservada, false) = false OR (COALESCE(v.idvendedor, 0) = @rIdUsuario AND CASE WHEN v.creado >= @rDesde THEN true ELSE false END))";
+
             return $@"
                 COALESCE(f.cae, '') <> ''
                 AND ({whereEntorno})
+                AND ({whereReservada})
                 AND f.fechaemisionafip >= @fechaDesde
                 AND f.fechaemisionafip < @fechaHastaMas1
                 AND (@idSucursal = -1 OR v.idsucursal = @idSucursal)
@@ -1897,8 +1904,15 @@ namespace DatosPostgres
             NpgsqlParameterCollection p,
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor,
-            List<string> formasPago, List<int> codigosComprobante)
+            List<string> formasPago, List<int> codigosComprobante,
+            RestriccionCtaCteReservada restriccion = null)
         {
+            if (restriccion != null)
+            {
+                p.AddWithValue("rIdUsuario", restriccion.IdUsuario);
+                p.AddWithValue("rDesde", restriccion.Desde);
+            }
+
             string clienteLimpio = (cliente ?? "").Trim();
             string vendedorLimpio = (vendedor ?? "").Trim();
 
@@ -1929,7 +1943,8 @@ namespace DatosPostgres
         public List<FacturaElectronica> BuscarFacturasPagina(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            int pagina, int cantidad, int cantidadExtra, string entorno = null)
+            int pagina, int cantidad, int cantidadExtra, string entorno = null,
+            RestriccionCtaCteReservada restriccion = null)
         {
             pagina = pagina < 1 ? 1 : pagina;
             cantidad = cantidad < 1 ? 1 : cantidad;
@@ -1937,7 +1952,7 @@ namespace DatosPostgres
             int desdeFila = (int)Math.Min(((long)(pagina - 1) * cantidad) + 1, int.MaxValue);
             int hastaFila = (int)Math.Min((long)desdeFila + cantidad + cantidadExtra - 1, int.MaxValue);
 
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno, restriccion);
 
             string sql = $@"
                 WITH facturasfiltradas AS
@@ -2005,7 +2020,7 @@ namespace DatosPostgres
             return DbPg.Reader(_connectionString, _idEmpresa, sql, MapFacturaCompleta,
                 p =>
                 {
-                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
+                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion);
                     p.AddWithValue("desdeFila", desdeFila);
                     p.AddWithValue("hastaFila", hastaFila);
                 });
@@ -2063,9 +2078,9 @@ namespace DatosPostgres
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            string entorno = null)
+            string entorno = null, RestriccionCtaCteReservada restriccion = null)
         {
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno, restriccion);
 
             string sql = $@"
                 SELECT
@@ -2085,7 +2100,7 @@ namespace DatosPostgres
 
             var filas = DbPg.Reader(_connectionString, _idEmpresa, sql,
                 dr => (Cantidad: Convert.ToInt32(dr["cantidad"]), Total: Convert.ToDecimal(dr["total"])),
-                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante));
+                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion));
 
             return filas.Count > 0 ? filas[0] : (Cantidad: 0, Total: 0m);
         }

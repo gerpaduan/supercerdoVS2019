@@ -95,11 +95,12 @@ namespace Contratos
         List<Entidades.FacturaElectronica> BuscarFacturasPagina(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            int pagina, int cantidad, int cantidadExtra, string entorno = null);
+            int pagina, int cantidad, int cantidadExtra, string entorno = null,
+            Entidades.RestriccionCtaCteReservada restriccion = null);
         (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            string entorno = null);
+            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null);
         // true si la empresa tiene al menos una factura emitida en homologacion (esprueba). Sirve para
         // mostrar el filtro Produccion/Pruebas solo cuando hace falta. SQL Server: siempre false.
         bool ExistenFacturasPrueba();

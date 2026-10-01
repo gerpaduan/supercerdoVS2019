@@ -1596,7 +1596,7 @@ namespace Datos
         // Los IN(...) de formasPago/codigosComprobante se arman con placeholders numerados
         // (@fp0, @fp1, ...) igual que Datos.CatalogoGlobalProducto.ObtenerCatalogoGlobalPaginaPorIds,
         // nunca concatenando los valores directo en el SQL.
-        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante)
+        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante, Entidades.RestriccionCtaCteReservada restriccion = null)
         {
             string whereFormaPago = "1 = 1";
             if (formasPago != null && formasPago.Count > 0)
@@ -1622,8 +1622,15 @@ namespace Datos
                 whereComprobante = "f.codTipoCbteAfip IN (" + placeholders + ")";
             }
 
+            // Cuenta corriente reservada: un usuario restringido no ve las facturas de ventas de
+            // personas reservadas, salvo las que cargo el mismo desde la apertura de su caja.
+            string whereReservada = restriccion == null
+                ? "1 = 1"
+                : "(ISNULL(p.ctaCteReservada, 0) = 0 OR (ISNULL(v.idVendedor, 0) = @rIdUsuario AND CASE WHEN v.creado >= @rDesde THEN 1 ELSE 0 END = 1))";
+
             return $@"
                 ISNULL(f.CAE, '') <> ''
+                AND ({whereReservada})
                 AND f.fechaEmisionAfip >= @fechaDesde
                 AND f.fechaEmisionAfip < @fechaHastaMas1
                 AND (@idSucursal = -1 OR v.idSucursal = @idSucursal)
@@ -1637,8 +1644,15 @@ namespace Datos
             SqlParameterCollection p,
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor,
-            List<string> formasPago, List<int> codigosComprobante)
+            List<string> formasPago, List<int> codigosComprobante,
+            Entidades.RestriccionCtaCteReservada restriccion = null)
         {
+            if (restriccion != null)
+            {
+                p.Add("@rIdUsuario", SqlDbType.Int).Value = restriccion.IdUsuario;
+                p.Add("@rDesde", SqlDbType.DateTime).Value = restriccion.Desde;
+            }
+
             string clienteLimpio = (cliente ?? "").Trim();
             string vendedorLimpio = (vendedor ?? "").Trim();
 
@@ -1667,7 +1681,8 @@ namespace Datos
         public List<Entidades.FacturaElectronica> BuscarFacturasPagina(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            int pagina, int cantidad, int cantidadExtra, string entorno = null)
+            int pagina, int cantidad, int cantidadExtra, string entorno = null,
+            Entidades.RestriccionCtaCteReservada restriccion = null)
         {
             // entorno (Produccion/Pruebas) se ignora en SQL Server: no existe la columna esprueba, todas
             // las facturas son de produccion (ver docs/DECISIONS.md, 2026-09-24).
@@ -1677,7 +1692,7 @@ namespace Datos
             int desdeFila = (int)Math.Min(((long)(pagina - 1) * cantidad) + 1, int.MaxValue);
             int hastaFila = (int)Math.Min((long)desdeFila + cantidad + cantidadExtra - 1, int.MaxValue);
 
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, restriccion);
 
             string sql = $@"
                 ;WITH FacturasFiltradas AS
@@ -1759,7 +1774,7 @@ namespace Datos
                 MapFacturaCompleta,
                 p =>
                 {
-                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
+                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion);
                     p.Add("@desdeFila", SqlDbType.Int).Value = desdeFila;
                     p.Add("@hastaFila", SqlDbType.Int).Value = hastaFila;
                 }
@@ -1778,9 +1793,9 @@ namespace Datos
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            string entorno = null)
+            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null)
         {
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, restriccion);
 
             string sql = $@"
                 SELECT
@@ -1803,7 +1818,7 @@ namespace Datos
                 sql,
                 CommandType.Text,
                 dr => (Cantidad: Convert.ToInt32(dr["Cantidad"]), Total: Convert.ToDecimal(dr["Total"])),
-                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante)
+                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion)
             );
 
             return filas.Count > 0 ? filas[0] : (Cantidad: 0, Total: 0m);

@@ -30,6 +30,7 @@ namespace DatosPostgres
             p.tipo,
             p.otrosdatos,
             p.ctacte,
+            p.ctactereservada,
             p.bonificacion,
             p.cuit,
             p.telefono,
@@ -69,6 +70,7 @@ namespace DatosPostgres
                     Ciudad = dr["ciudad"] as string,
                     IdEmpresa = dr["idempresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idempresa"]),
                     CtaCte = dr["ctacte"] != DBNull.Value && Convert.ToBoolean(dr["ctacte"]),
+                    CtaCteReservada = dr["ctactereservada"] != DBNull.Value && Convert.ToBoolean(dr["ctactereservada"]),
                     Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
                     OtrosDatos = dr["otrosdatos"] as string,
                     Creado = dr["creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["creado"]),
@@ -98,10 +100,10 @@ namespace DatosPostgres
                 const string sql = @"
                     INSERT INTO personas
                         (identificacion, razonsocial, idiva, cuit, telefono, email, domicilio,
-                         ciudad, otrosdatos, tipo, ctacte, bonificacion, marca, idpropietario, idempresa)
+                         ciudad, otrosdatos, tipo, ctacte, ctactereservada, bonificacion, marca, idpropietario, idempresa)
                     VALUES
                         (@identificacion, @razonSocial, @idIva, @cuit, @telefono, @email, @domicilio,
-                         @ciudad, @otrosDatos, @tipo, @ctaCte, @bonificacion, @marca, @idPropietario, @idEmpresa)
+                         @ciudad, @otrosDatos, @tipo, @ctaCte, @ctaCteReservada, @bonificacion, @marca, @idPropietario, @idEmpresa)
                     RETURNING idpersona;";
 
                 object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sql, p =>
@@ -117,6 +119,7 @@ namespace DatosPostgres
                     p.AddWithValue("otrosDatos", oPersonaE.otrosDatos ?? "");
                     p.AddWithValue("tipo", oPersonaE.tipo ?? "");
                     p.AddWithValue("ctaCte", oPersonaE.CtaCte);
+                    p.AddWithValue("ctaCteReservada", oPersonaE.CtaCteReservada);
                     p.AddWithValue("bonificacion", oPersonaE.Bonificacion);
                     p.AddWithValue("marca", oPersonaE.Marca);
                     p.AddWithValue("idPropietario", oPersonaE.Propietario != null ? (object)oPersonaE.Propietario.idPersona : DBNull.Value);
@@ -140,6 +143,7 @@ namespace DatosPostgres
                         tipo = @tipo,
                         otrosdatos = @otrosDatos,
                         ctacte = @ctaCte,
+                        ctactereservada = @ctaCteReservada,
                         bonificacion = @bonificacion,
                         marca = @marca,
                         idpropietario = @idPropietario
@@ -158,6 +162,7 @@ namespace DatosPostgres
                     p.AddWithValue("otrosDatos", oPersonaE.otrosDatos ?? "");
                     p.AddWithValue("tipo", oPersonaE.tipo ?? "");
                     p.AddWithValue("ctaCte", oPersonaE.CtaCte);
+                    p.AddWithValue("ctaCteReservada", oPersonaE.CtaCteReservada);
                     p.AddWithValue("bonificacion", oPersonaE.Bonificacion);
                     p.AddWithValue("marca", oPersonaE.Marca);
                     p.AddWithValue("idPropietario", oPersonaE.Propietario != null ? (object)oPersonaE.Propietario.idPersona : DBNull.Value);
@@ -245,6 +250,7 @@ namespace DatosPostgres
                         p.cuit AS ""cuit"",
                         p.telefono AS ""telefono"",
                         p.ctacte AS ""ctaCte"",
+                        p.ctactereservada AS ""ctaCteReservada"",
                         p.bonificacion AS ""bonificacion"",
                         p.domicilio AS ""domicilio"",
                         p.ciudad AS ""ciudad"",
@@ -306,6 +312,56 @@ namespace DatosPostgres
                 ORDER BY p.razonsocial;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql);
+        }
+
+        public System.Collections.Generic.HashSet<int> idsPersonasReservadas()
+        {
+            var ids = DbPg.Reader(_connectionString, _idEmpresa,
+                "SELECT idpersona FROM personas WHERE ctactereservada = true;",
+                dr => Convert.ToInt32(dr["idpersona"]));
+            return new System.Collections.Generic.HashSet<int>(ids);
+        }
+
+        // Una consulta por tabla, con la misma forma: registros de personas reservadas que no son
+        // del usuario o que se crearon antes de la apertura de su caja. COALESCE/CASE para que un
+        // "creado" o un creador null cuente como NO propio (falla cerrado: se oculta).
+        public System.Collections.Generic.HashSet<int> idsRegistrosOcultos(string tabla, int idUsuario, DateTime desde)
+        {
+            string sql;
+            switch (tabla)
+            {
+                case Entidades.RestriccionCtaCteReservada.TablaVentas:
+                    sql = @"SELECT r.idventa FROM ventas r JOIN personas p ON p.idpersona = r.idpersona
+                            WHERE p.ctactereservada = true
+                              AND NOT (COALESCE(r.idvendedor, 0) = @idUsuario AND CASE WHEN r.creado >= @desde THEN true ELSE false END);";
+                    break;
+                case Entidades.RestriccionCtaCteReservada.TablaCompras:
+                    sql = @"SELECT r.idcompra FROM compras r JOIN personas p ON p.idpersona = r.idproveedor
+                            WHERE p.ctactereservada = true
+                              AND NOT (COALESCE(r.creadopor, 0) = @idUsuario AND CASE WHEN r.creado >= @desde THEN true ELSE false END);";
+                    break;
+                case Entidades.RestriccionCtaCteReservada.TablaPagos:
+                    sql = @"SELECT r.id FROM pagos r JOIN personas p ON p.idpersona = r.idpersona
+                            WHERE p.ctactereservada = true
+                              AND NOT (COALESCE(r.creadopor, 0) = @idUsuario AND CASE WHEN r.creado >= @desde THEN true ELSE false END);";
+                    break;
+                case Entidades.RestriccionCtaCteReservada.TablaMovCtaCte:
+                    sql = @"SELECT r.id FROM movctacte r JOIN personas p ON p.idpersona = r.idpersona
+                            WHERE p.ctactereservada = true
+                              AND NOT (COALESCE(r.creadopor, 0) = @idUsuario AND CASE WHEN r.creado >= @desde THEN true ELSE false END);";
+                    break;
+                default:
+                    throw new ArgumentException("Tabla no soportada: " + tabla, nameof(tabla));
+            }
+
+            var ids = DbPg.Reader(_connectionString, _idEmpresa, sql,
+                dr => Convert.ToInt32(dr[0]),
+                p =>
+                {
+                    p.AddWithValue("idUsuario", idUsuario);
+                    p.AddWithValue("desde", desde);
+                });
+            return new System.Collections.Generic.HashSet<int>(ids);
         }
 
         public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)

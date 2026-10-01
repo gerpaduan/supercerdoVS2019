@@ -66,6 +66,7 @@ namespace Datos
                     p.AddWithValue("@otrosDatos", oPersonaE.otrosDatos ?? "");
                     p.AddWithValue("@tipo", oPersonaE.tipo ?? "");
                     p.AddWithValue("@ctaCte", oPersonaE.CtaCte);
+                    p.AddWithValue("@ctaCteReservada", oPersonaE.CtaCteReservada);
                     p.AddWithValue("@bonificacion", oPersonaE.Bonificacion);
                     p.AddWithValue("@marca", oPersonaE.Marca);
 
@@ -103,6 +104,7 @@ namespace Datos
                     p.AddWithValue("@otrosDatos", oPersonaE.otrosDatos ?? "");
                     p.AddWithValue("@tipo", oPersonaE.tipo ?? "");
                     p.AddWithValue("@ctaCte", oPersonaE.CtaCte);
+                    p.AddWithValue("@ctaCteReservada", oPersonaE.CtaCteReservada);
                     p.AddWithValue("@bonificacion", oPersonaE.Bonificacion);
                     p.AddWithValue("@marca", oPersonaE.Marca);
 
@@ -142,6 +144,7 @@ namespace Datos
                     p.tipo,
                     p.otrosDatos,
                     p.ctaCte,
+                    p.ctaCteReservada,
                     p.bonificacion,
                     p.cuit,
                     p.telefono,
@@ -179,6 +182,7 @@ namespace Datos
                         Ciudad = Convert.ToString(dr["ciudad"]),
                         IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
                         CtaCte = dr["ctaCte"] != DBNull.Value && Convert.ToBoolean(dr["ctaCte"]),
+                        CtaCteReservada = dr["ctaCteReservada"] != DBNull.Value && Convert.ToBoolean(dr["ctaCteReservada"]),
                         Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
                         OtrosDatos = Convert.ToString(dr["otrosDatos"]),
                         Creado = dr["creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["creado"]),
@@ -240,6 +244,7 @@ namespace Datos
                         p.cuit,
                         p.telefono,
                         p.ctaCte,
+                        p.ctaCteReservada,
                         p.bonificacion,
                         p.domicilio,
                         p.ciudad,
@@ -338,6 +343,61 @@ namespace Datos
                 sql,
                 CommandType.Text
             );
+        }
+
+        public System.Collections.Generic.HashSet<int> idsPersonasReservadas()
+        {
+            var ids = Db.Reader(
+                _empresa,
+                "SELECT idPersona FROM dbo.Personas WHERE ctaCteReservada = 1;",
+                CommandType.Text,
+                map: dr => Convert.ToInt32(dr["idPersona"]));
+            return new System.Collections.Generic.HashSet<int>(ids);
+        }
+
+        // Mismo criterio que PersonaPg.idsRegistrosOcultos: registros de personas reservadas que no
+        // son del usuario o que se crearon antes de la apertura de su caja. ISNULL/CASE para que un
+        // "creado" o un creador null cuente como NO propio (falla cerrado: se oculta).
+        public System.Collections.Generic.HashSet<int> idsRegistrosOcultos(string tabla, int idUsuario, DateTime desde)
+        {
+            string sql;
+            switch (tabla)
+            {
+                case Entidades.RestriccionCtaCteReservada.TablaVentas:
+                    sql = @"SELECT r.idVenta FROM dbo.Ventas r JOIN dbo.Personas p ON p.idPersona = r.idPersona
+                            WHERE p.ctaCteReservada = 1
+                              AND NOT (ISNULL(r.idVendedor, 0) = @idUsuario AND CASE WHEN r.creado >= @desde THEN 1 ELSE 0 END = 1);";
+                    break;
+                case Entidades.RestriccionCtaCteReservada.TablaCompras:
+                    sql = @"SELECT r.idCompra FROM dbo.Compras r JOIN dbo.Personas p ON p.idPersona = r.idProveedor
+                            WHERE p.ctaCteReservada = 1
+                              AND NOT (ISNULL(r.creadoPor, 0) = @idUsuario AND CASE WHEN r.creado >= @desde THEN 1 ELSE 0 END = 1);";
+                    break;
+                case Entidades.RestriccionCtaCteReservada.TablaPagos:
+                    sql = @"SELECT r.id FROM dbo.Pagos r JOIN dbo.Personas p ON p.idPersona = r.idPersona
+                            WHERE p.ctaCteReservada = 1
+                              AND NOT (ISNULL(r.creadoPor, 0) = @idUsuario AND CASE WHEN r.creado >= @desde THEN 1 ELSE 0 END = 1);";
+                    break;
+                case Entidades.RestriccionCtaCteReservada.TablaMovCtaCte:
+                    sql = @"SELECT r.id FROM dbo.MovCtaCte r JOIN dbo.Personas p ON p.idPersona = r.idPersona
+                            WHERE p.ctaCteReservada = 1
+                              AND NOT (ISNULL(r.creadoPor, 0) = @idUsuario AND CASE WHEN r.creado >= @desde THEN 1 ELSE 0 END = 1);";
+                    break;
+                default:
+                    throw new ArgumentException("Tabla no soportada: " + tabla, nameof(tabla));
+            }
+
+            var ids = Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                map: dr => Convert.ToInt32(dr[0]),
+                setParams: p =>
+                {
+                    p.AddWithValue("@idUsuario", idUsuario);
+                    p.AddWithValue("@desde", desde);
+                });
+            return new System.Collections.Generic.HashSet<int>(ids);
         }
 
         public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)

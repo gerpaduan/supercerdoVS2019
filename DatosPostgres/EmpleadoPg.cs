@@ -117,6 +117,14 @@ namespace DatosPostgres
             });
 
             empleado.Id = Convert.ToInt32(nuevoId);
+
+            // Los empleados nacen con la cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01):
+            // sus liquidaciones/adelantos no deben ser visibles para cualquier usuario. El admin puede
+            // destildarlo despues desde Personas; este UPDATE solo corre al dar de alta el empleado.
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "UPDATE personas SET ctactereservada = true WHERE idpersona = @idPersona;",
+                p => p.AddWithValue("idPersona", empleado.Persona.idPersona));
+
             return empleado.Id;
         }
 

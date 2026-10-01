@@ -1,6 +1,12 @@
 # Bitacora de cambios
 
-## 2026-09-30 (la mas reciente) - No repetir "Nombre (Nombre)" cuando la identificación coincide con la razón social
+## 2026-10-01 (la mas reciente) - Cuenta corriente reservada: movimientos de ciertas personas visibles solo para admin / formCtasCtes
+
+- Detalle y decisiones en `docs/DECISIONS.md` (2026-10-01). Campo nuevo `Persona.CtaCteReservada` (el viejo `ctaCte` queda sin efecto y oculto). Un usuario sin admin ni `formCtasCtes` sigue pudiendo vender/cobrar/pagar a esa persona, pero solo ve lo que cargo el mismo desde la apertura de su caja (Ventas, Facturas, Compras, Stock, Pagos/Cobros y extracto; sin saldo). Los empleados nacen reservados. `ctaCte` deja de ocultar el historial de precios del POS. Avisos para el restringido (alerta en extracto/cobro-pago, etiqueta en el POS, nota en listados) y etiqueta "Reservada" para el autorizado.
+- **Despliegue**: correr ANTES del codigo `DatosPostgres/DB-Migrations/20261001-Alter_personas_add_ctactereservada.sql` (Postgres, `carnisys_admin`) y `Datos/DB-Procedures/20261001-Alter_Personas_add_CtaCteReservada.sql` (SQL Server, `USE` de la base de cada servidor).
+- Verificado en vivo contra Postgres local (usuarios y datos temporales borrados) y `Negocio.Tests` 177/177. **No verificado**: SQL Server, alta de empleado reservado, cuenta compartida de produccion.
+
+## 2026-09-30 - No repetir "Nombre (Nombre)" cuando la identificación coincide con la razón social
 
 - Detalle en `docs/DECISIONS.md` (2026-09-30). `WebCore.Helpers.EmpleadoDisplay.NombreConIdentificacion` centraliza el criterio: solo razón social si coincide con la identificación, sino "Razón social (Identificación)". Aplicado en `Empleados/Index` (fusiona sus columnas Identificación+Nombre en una sola "Empleado"), los combos de `Liquidaciones/{Nueva,Index}` y `Jornadas/Index`, y las tarjetas de `Jornadas/Fichaje`.
 - Archivos: `WebCore/Helpers/EmpleadoDisplay.cs` (nuevo), `WebCore/Views/{Empleados/Index,Liquidaciones/Nueva,Liquidaciones/Index,Jornadas/Index,Jornadas/Fichaje}.cshtml`.

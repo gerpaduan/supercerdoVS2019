@@ -169,7 +169,7 @@
                                 <tr class="@(item.IdEmpresa == 0 ? "persona-global" : "")">
                                     <td class="persona-id-cell">@item.IdPersona</td>
                                     <td>@(!string.IsNullOrWhiteSpace(item.Identificacion) ? item.Identificacion : "-")</td>
-                                    <td class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.RazonSocial) ? item.RazonSocial : "-")</td>
+                                    <td class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.RazonSocial) ? item.RazonSocial : "-")@if (item.CtaCteReservada) { <span class="badge badge-secondary align-middle ml-1 etiqueta-cuenta-reservada" title="Cuenta corriente reservada"><i class="fas fa-lock mr-1"></i>Reservada</span> }</td>
                                     <td>@(!string.IsNullOrWhiteSpace(item.Iva) ? item.Iva : "-")</td>
                                     <td>@(!string.IsNullOrWhiteSpace(item.Cuit) ? item.Cuit : "-")</td>
                                     <td>@(!string.IsNullOrWhiteSpace(item.Telefono) ? item.Telefono : "-")</td>
@@ -253,9 +253,9 @@
             return $("<div>").text(texto == null ? "" : texto).html();
         }
 
-        function valorCelda(texto, destacado) {
+        function valorCelda(texto, destacado, htmlExtra) {
             var limpio = $.trim(texto || "");
-            var contenido = limpio ? escapeHtml(limpio) : "-";
+            var contenido = (limpio ? escapeHtml(limpio) : "-") + (htmlExtra || "");
             return destacado ? '<td class="font-weight-bold">' + contenido + "</td>" : "<td>" + contenido + "</td>";
         }
 
@@ -271,7 +271,7 @@
                 html += '<tr' + (esGlobal ? ' class="persona-global"' : '') + ">";
                 html += '<td class="persona-id-cell">' + escapeHtml(item.idPersona) + "</td>";
                 html += valorCelda(item.identificacion, false);
-                html += valorCelda(item.razonSocial, true);
+                html += valorCelda(item.razonSocial, true, item.ctaCteReservada ? '<span class="badge badge-secondary align-middle ml-1 etiqueta-cuenta-reservada" title="Cuenta corriente reservada"><i class="fas fa-lock mr-1"></i>Reservada</span>' : "");
                 html += valorCelda(item.iva, false);
                 html += valorCelda(item.cuit, false);
                 html += valorCelda(item.telefono, false);

@@ -19,5 +19,14 @@ namespace Contratos
         DataTable obtenerProveedores();
         DataTable obtenerProveedoresConCompras();
         DataTable existenMarcasParecidas(string buscarTexto, int idMarca);
+
+        // Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01).
+        // Ids de las personas con Persona.CtaCteReservada = true.
+        System.Collections.Generic.HashSet<int> idsPersonasReservadas();
+
+        // Ids de los registros de `tabla` (RestriccionCtaCteReservada.Tabla*) que pertenecen a una
+        // persona reservada y que NO son del usuario con creado >= desde: los que un usuario
+        // restringido no debe ver.
+        System.Collections.Generic.HashSet<int> idsRegistrosOcultos(string tabla, int idUsuario, System.DateTime desde);
     }
 }

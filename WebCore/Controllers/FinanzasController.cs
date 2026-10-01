@@ -43,12 +43,14 @@ namespace WebCore.Controllers
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.Usuario _oUsuarioN;
+        private readonly ICtaCteReservadaService _ctaCteReservada;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public FinanzasController(IUsuarioSesionService sesion)
+        public FinanzasController(IUsuarioSesionService sesion, ICtaCteReservadaService ctaCteReservada)
         {
             _sesion = sesion;
+            _ctaCteReservada = ctaCteReservada;
             _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
@@ -103,6 +105,57 @@ namespace WebCore.Controllers
 
             var operador = System.Text.Json.JsonSerializer.Deserialize<Entidades.Usuario>(json);
             return operador ?? usuarioSesion;
+        }
+
+        // Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01). Para un usuario restringido y una
+        // persona reservada: saca del extracto los movimientos que no puede ver, saca la fila sintetica
+        // "Saldo Anterior" (id 0, suma TODO el historial previo, incluido lo oculto) y anula el saldo
+        // acumulado (se calculo sobre el libro completo). Devuelve true si se aplico la reserva: el
+        // llamador debe ocultar el saldo en pantalla/exportes. Modifica el DataTable recibido.
+        private bool AplicarReservaAlExtracto(DataTable dtMov, int idPersona)
+        {
+            if (dtMov == null || !_ctaCteReservada.SaldoOculto(idPersona))
+                return false;
+
+            var ocultos = _ctaCteReservada.IdsOcultos(Entidades.RestriccionCtaCteReservada.TablaMovCtaCte);
+            bool tieneId = dtMov.Columns.Contains("id");
+            bool tieneSaldo = dtMov.Columns.Contains("Saldo");
+
+            for (int i = dtMov.Rows.Count - 1; i >= 0; i--)
+            {
+                // Sin columna id no se puede saber que es propio: falla cerrado (no se muestra nada).
+                int id = tieneId && dtMov.Rows[i]["id"] != DBNull.Value ? Convert.ToInt32(dtMov.Rows[i]["id"]) : 0;
+                if (id == 0 || ocultos.Contains(id))
+                    dtMov.Rows.RemoveAt(i);
+                else if (tieneSaldo)
+                    dtMov.Rows[i]["Saldo"] = 0m;
+            }
+            return true;
+        }
+
+        // Saca de un listado (DataTable con columna de id) las filas de registros ocultos para el
+        // usuario restringido. Modifica y devuelve el mismo DataTable.
+        private DataTable QuitarFilasOcultas(DataTable dt, string tabla, string columnaId)
+        {
+            if (dt == null || !dt.Columns.Contains(columnaId)) return dt;
+
+            var ocultos = _ctaCteReservada.IdsOcultos(tabla);
+            if (ocultos.Count == 0) return dt;
+
+            for (int i = dt.Rows.Count - 1; i >= 0; i--)
+            {
+                object valor = dt.Rows[i][columnaId];
+                if (valor != DBNull.Value && ocultos.Contains(Convert.ToInt32(valor)))
+                    dt.Rows.RemoveAt(i);
+            }
+            return dt;
+        }
+
+        // Respuesta de "registro reservado" para los chequeos manuales de este controller (las
+        // acciones con id directo usan [ProtegerRegistroReservado]).
+        private IActionResult DenegarRegistroReservado()
+        {
+            return WebCore.Helpers.ProtegerRegistroReservadoFilter.Denegar(ControllerContext);
         }
 
         private bool EsPeticionAjax()
@@ -518,6 +571,7 @@ namespace WebCore.Controllers
 
             var persona = _oPersonaN.findById(idPersona);
             DataTable dtMov = _oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesde.Value);
+            bool extractoReservado = AplicarReservaAlExtracto(dtMov, idPersona);
 
             if (!mostrarAnulados)
                 dtMov = FiltrarRegistrosRepetidos(dtMov);
@@ -533,7 +587,10 @@ namespace WebCore.Controllers
             }
 
             // Observaciones del registro origen (Pagos/Ventas/Compras) para la columna "Obs." de la grilla.
-            ViewBag.ObservacionesCtaCte = _oCtaCteN.obtenerObservacionesCtaCte(idPersona);
+            // (Para una persona reservada y un usuario restringido no se mandan: son de todos los registros.)
+            ViewBag.ObservacionesCtaCte = extractoReservado
+                ? new Dictionary<string, string>()
+                : _oCtaCteN.obtenerObservacionesCtaCte(idPersona);
 
             ViewBag.IdPersona = idPersona;
             ViewBag.Persona = persona;
@@ -547,7 +604,7 @@ namespace WebCore.Controllers
             ViewBag.MostrarAnulados = mostrarAnulados;
             ViewBag.RenderSinLayout = renderParcial;
             ViewBag.DesdePOS = desdePos;
-            ViewBag.OcultarSaldo = desdePos && !puedeVerCtaCtePersona;
+            ViewBag.OcultarSaldo = (desdePos && !puedeVerCtaCtePersona) || extractoReservado;
             ViewBag.PuedeExportarCuentaCorriente = true;
             ViewBag.Title = "Cuenta Corriente";
 
@@ -725,7 +782,7 @@ namespace WebCore.Controllers
             if (!string.IsNullOrWhiteSpace(desde) && DateTime.TryParse(desde, out var desdeParseado)) fechaDesde = desdeParseado.Date;
             if (!string.IsNullOrWhiteSpace(hasta) && DateTime.TryParse(hasta, out var hastaParseado)) fechaHasta = hastaParseado.Date;
 
-            DataTable dt = _oCtaCteN.obtenerPagos(texto ?? "", fechaDesde, fechaHasta);
+            DataTable dt = QuitarFilasOcultas(_oCtaCteN.obtenerPagos(texto ?? "", fechaDesde, fechaHasta), Entidades.RestriccionCtaCteReservada.TablaPagos, "id");
 
             // filtros de operacion y eliminados sobre lo ya traido (el repositorio no los conoce)
             var filtros = new List<string>();
@@ -762,6 +819,7 @@ namespace WebCore.Controllers
         // Eliminacion logica del pago/cobro (con asiento opuesto en la cta cte). Motivo obligatorio.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "id")]
         public IActionResult EliminarPago(int id, string motivo)
         {
             Entidades.Pago pago = id > 0 ? _oCtaCteN.getPagoById(id) : null;
@@ -781,6 +839,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "idPago")]
         public IActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false, string posInstanceId = "")
         {
             bool renderParcial = desdePos || EsPeticionAjax();
@@ -817,6 +876,7 @@ namespace WebCore.Controllers
             ViewBag.RenderSinLayout = renderParcial;
 
             DataTable dtMov = _oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
+            ViewBag.OcultarSaldo = AplicarReservaAlExtracto(dtMov, idPersona);
             decimal saldo = 0;
             if (dtMov != null && dtMov.Rows.Count > 0)
             {
@@ -915,6 +975,10 @@ namespace WebCore.Controllers
 
             if (pagoAnterior != null)
             {
+                // Cuenta corriente reservada: no se edita un pago/cobro que el operador no puede ver.
+                if (_ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaPagos, pagoAnterior.Id, ResolverOperadorPOS(posInstanceId, _usuarioActual)))
+                    return Json(new { ok = false, mensaje = WebCore.Helpers.ProtegerRegistroReservadoFilter.MensajeDenegado });
+
                 if (pagoAnterior.Eliminado)
                     return Json(new { ok = false, mensaje = "El pago o cobro fue eliminado y no puede modificarse." });
 
@@ -1018,6 +1082,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "id")]
         public IActionResult ImprimirPdfPago(int id)
         {
             var model = ConstruirReciboPagoVm(id);
@@ -1030,6 +1095,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "id")]
         public IActionResult ObtenerDatosEmailPago(int id)
         {
             try
@@ -1071,6 +1137,7 @@ namespace WebCore.Controllers
         }
 
         [HttpPost]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "idPago")]
         public IActionResult EnviarComprobantePagoEmail(int idPago, string emailDestino, string asunto, string mensaje)
         {
             try
@@ -1139,6 +1206,8 @@ namespace WebCore.Controllers
                     return RedirectToAction("DetalleVenta", "Ventas", new { id = idTabla });
 
                 case Entidades.MovCtaCte.tablas.Pagos:
+                    if (_ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaPagos, idTabla))
+                        return DenegarRegistroReservado();
                     return AddOrEditPago(idPersona, decodedReturnUrl, idTabla);
 
                 default:
@@ -1160,7 +1229,10 @@ namespace WebCore.Controllers
             decimal saldo = 0m;
             bool tieneSaldo = false;
 
-            if (dtCtaCte != null && dtCtaCte.Rows.Count > 0)
+            // Persona reservada + usuario restringido: el recibo no muestra el saldo de la cuenta.
+            bool saldoReservado = _ctaCteReservada.SaldoOculto(pago.Persona.IdPersona);
+
+            if (!saldoReservado && dtCtaCte != null && dtCtaCte.Rows.Count > 0)
             {
                 DataRow ultimaFila = dtCtaCte.Rows[dtCtaCte.Rows.Count - 1];
                 if (ultimaFila["Saldo"] != DBNull.Value)
@@ -1352,6 +1424,7 @@ namespace WebCore.Controllers
         private DataTable ObtenerMovimientosCuentaCorrienteParaExportacion(int idPersona, DateTime fecha, bool mostrarAnulados)
         {
             DataTable dt = _oCtaCteN.getCtaCteByIdPersona(idPersona, fecha);
+            AplicarReservaAlExtracto(dt, idPersona);
             if (!mostrarAnulados)
                 dt = FiltrarRegistrosRepetidos(dt);
 
@@ -1362,6 +1435,7 @@ namespace WebCore.Controllers
         private byte[] GenerarExcelCuentaCorrienteBytes(int idPersona, DateTime fecha, bool mostrarAnulados, out string fileName)
         {
             DataTable dt = ObtenerMovimientosCuentaCorrienteParaExportacion(idPersona, fecha, mostrarAnulados);
+            bool ocultarSaldo = _ctaCteReservada.SaldoOculto(idPersona);
             string csv = "Fecha;Tabla;Nro.Doc;Detalle;Importe;Saldo;Sucursal\n";
 
             foreach (DataRow r in dt.Rows)
@@ -1371,7 +1445,7 @@ namespace WebCore.Controllers
                        r["NroDoc"] + ";" +
                        r["Detalle"] + ";" +
                        Convert.ToDecimal(r["Importe"]).ToString("N2") + ";" +
-                       Convert.ToDecimal(r["Saldo"]).ToString("N2") + ";" +
+                       (ocultarSaldo ? "***" : Convert.ToDecimal(r["Saldo"]).ToString("N2")) + ";" +
                        r["Sucursal"] + "\n";
             }
 
@@ -1387,7 +1461,7 @@ namespace WebCore.Controllers
 
             persona = SanitizarNombreArchivo(persona);
             fileName = "CuentaCorriente_" + persona + "_Desde_" + fecha.ToString("yyyy-MM-dd") + ".pdf";
-            return WebCore.Services.GenerarDocsCore.GenerarPdfCtaCtePersona(dtMov, fecha);
+            return WebCore.Services.GenerarDocsCore.GenerarPdfCtaCtePersona(dtMov, fecha, _ctaCteReservada.SaldoOculto(idPersona));
         }
 
         private string ObtenerNombreArchivoPersona(DataTable dt, int idPersona)

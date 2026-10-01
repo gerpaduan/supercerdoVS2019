@@ -92,8 +92,8 @@ namespace NegocioTests.Fakes
         public int existeNotaCreditoElect(int idVenta, bool ignorarPrueba = false) => throw new NotImplementedException();
         public void addOrEditFactuElec(FacturaElectronica oFacturaElectronicaE) => throw new NotImplementedException();
         public FacturaElectronica getFactuElecById(int idFactuElec) => throw new NotImplementedException();
-        public List<FacturaElectronica> BuscarFacturasPagina(DateTime fechaDesde, DateTime fechaHasta, int idSucursal, string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante, int pagina, int cantidad, int cantidadExtra, string entorno = null) => throw new NotImplementedException();
-        public (int Cantidad, decimal Total) ObtenerFacturasResumen(DateTime fechaDesde, DateTime fechaHasta, int idSucursal, string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante, string entorno = null) => throw new NotImplementedException();
+        public List<FacturaElectronica> BuscarFacturasPagina(DateTime fechaDesde, DateTime fechaHasta, int idSucursal, string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante, int pagina, int cantidad, int cantidadExtra, string entorno = null, RestriccionCtaCteReservada restriccion = null) => throw new NotImplementedException();
+        public (int Cantidad, decimal Total) ObtenerFacturasResumen(DateTime fechaDesde, DateTime fechaHasta, int idSucursal, string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante, string entorno = null, RestriccionCtaCteReservada restriccion = null) => throw new NotImplementedException();
         public bool ExistenFacturasPrueba() => throw new NotImplementedException();
     }
 }

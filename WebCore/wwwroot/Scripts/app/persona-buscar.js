@@ -235,7 +235,7 @@ function cargarPersonas() {
                     data-identificacion="${p.identificacion ?? ''}">
                     <td class="col-numero-cell d-none d-md-table-cell">${numTexto}</td>
                     <td>${p.cuit ?? ''}</td>
-                    <td>${p.razonSocial}</td>
+                    <td>${p.razonSocial}${p.ctaCteReservada ? ' <i class="fas fa-lock text-muted ml-1" title="Cuenta corriente reservada"></i>' : ''}</td>
                     <td>${p.identificacion ?? ''}</td>
                 </tr>
             `;

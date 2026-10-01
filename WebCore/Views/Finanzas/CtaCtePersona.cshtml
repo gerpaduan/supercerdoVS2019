@@ -86,7 +86,7 @@
                 </a>
             }
             <div>
-                <h5 class="mb-0"><strong>@persona</strong></h5>
+                <h5 class="mb-0"><strong>@persona</strong>@if (personaObj != null) { <partial name="_EtiquetaCuentaReservada" model="personaObj.IdPersona" /> }</h5>
                 @if (personaObj != null && personaObj.TieneIdentificacionDistinta())
                 {
                     <small class="text-muted d-block">@personaObj.Identificacion</small>
@@ -110,6 +110,11 @@
             }
         </div>
     </div>
+
+    @if (personaObj != null)
+    {
+        <partial name="_AvisoCuentaReservada" model="personaObj.IdPersona" />
+    }
 
     @if (!string.IsNullOrWhiteSpace(mensajeFechaRecortadaPorPermiso))
     {

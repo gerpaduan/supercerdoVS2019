@@ -174,9 +174,12 @@ namespace WebCore.Controllers
             personaGuardar.Domicilio = NormalizarTexto(model.Domicilio, true);
             personaGuardar.Ciudad = NormalizarTexto(model.Ciudad, true);
             personaGuardar.otrosDatos = (model.OtrosDatos ?? "").Trim();
-            personaGuardar.CtaCte = puedeGestionarCuentaCorriente
-                ? model.CtaCte
-                : (esEdicion && personaOriginal != null && personaOriginal.IdPersona > 0 && personaOriginal.CtaCte);
+            // Persona.CtaCte ya no se edita (queda en la base sin efecto funcional). Cuenta corriente
+            // reservada: solo la cambia un autorizado (admin / formCtasCtes); sin permiso se conserva
+            // el valor original, y una persona nueva sin permiso nace sin reservar.
+            personaGuardar.CtaCteReservada = puedeGestionarCuentaCorriente
+                ? model.CtaCteReservada
+                : (esEdicion && personaOriginal != null && personaOriginal.IdPersona > 0 && personaOriginal.CtaCteReservada);
             personaGuardar.Bonificacion = bonificacion;
             personaGuardar.tipo = personaGuardar.tipo ?? "";
             personaGuardar.Marca = false;
@@ -220,6 +223,7 @@ namespace WebCore.Controllers
                     domicilio = LeerString(row, "domicilio"),
                     ciudad = LeerString(row, "ciudad"),
                     otrosDatos = LeerString(row, "otrosDatos"),
+                    ctaCteReservada = LeerBool(row, "ctaCteReservada"),
                     puedeModificar = PuedeModificarPersona(LeerInt(row, "idEmpresa"))
                 })
                 .OrderBy(x => x.idEmpresa)
@@ -247,7 +251,13 @@ namespace WebCore.Controllers
                 razonSocial = persona.RazonSocial ?? "",
                 identificacion = persona.Identificacion ?? "",
                 cuit = persona.Cuit ?? "",
-                ctaCte = persona.CtaCte
+                // El POS oculta el historial de precios si el cliente es de cuenta corriente reservada
+                // y el usuario no es admin / no tiene formCtasCtes (el limite real lo aplica
+                // VentasController.HistorialPreciosCliente). No se expone el flag crudo.
+                historialPreciosOculto = persona.CtaCteReservada && !PuedeGestionarCuentaCorriente(_usuarioActual),
+                // El POS muestra la etiqueta "Reservada"; cuentaReservadaLimitada avisa que ve solo lo propio.
+                cuentaReservada = persona.CtaCteReservada,
+                cuentaReservadaLimitada = persona.CtaCteReservada && !PuedeGestionarCuentaCorriente(_usuarioActual)
             });
         }
 
@@ -306,7 +316,7 @@ namespace WebCore.Controllers
                 Domicilio = NormalizarTexto(model.Domicilio, true),
                 Ciudad = NormalizarTexto(model.Ciudad, true),
                 otrosDatos = (model.OtrosDatos ?? "").Trim(),
-                CtaCte = puedeGestionarCuentaCorriente && model.CtaCte,
+                CtaCteReservada = puedeGestionarCuentaCorriente && model.CtaCteReservada,
                 Bonificacion = bonificacion,
                 tipo = "",
                 Marca = false
@@ -485,6 +495,7 @@ namespace WebCore.Controllers
                 Ciudad = LeerString(row, "ciudad"),
                 OtrosDatos = LeerString(row, "otrosDatos"),
                 CtaCte = LeerBool(row, "ctaCte"),
+                CtaCteReservada = LeerBool(row, "ctaCteReservada"),
                 Bonificacion = LeerFloat(row, "bonificacion"),
                 PuedeModificar = PuedeModificarPersona(LeerInt(row, "idEmpresa"))
             };
@@ -528,7 +539,7 @@ namespace WebCore.Controllers
                 Domicilio = persona != null ? persona.Domicilio : "",
                 Ciudad = persona != null ? persona.Ciudad : "",
                 OtrosDatos = persona != null ? persona.OtrosDatos : "",
-                CtaCte = persona != null && persona.CtaCte,
+                CtaCteReservada = persona != null && persona.CtaCteReservada,
                 BonificacionTexto = persona != null
                     ? persona.Bonificacion.ToString("0.##", CultureInfo.InvariantCulture)
                     : "0"

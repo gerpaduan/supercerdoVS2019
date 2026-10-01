@@ -24,6 +24,7 @@ builder.Services.AddControllersWithViews(options =>
 // los pocos minutos" por el idle-timeout del App Pool matando la Session in-proc).
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<WebCore.Services.IUsuarioSesionService, WebCore.Services.UsuarioSesionService>();
+builder.Services.AddScoped<WebCore.Services.ICtaCteReservadaService, WebCore.Services.CtaCteReservadaService>();
 
 // Config de AFIP por empresa (URLs por entorno + clave cifrada del pfx del certificado ARCA). Usa
 // Data Protection (default de ASP.NET Core, ya presente por la cookie de autenticacion).

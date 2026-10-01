@@ -12,6 +12,7 @@ namespace Entidades
         public string otrosDatos;
         public string tipo;
         private bool ctaCte;
+        private bool ctaCteReservada;
 
         private int idIva;
         private int idEmpresa;
@@ -86,6 +87,15 @@ namespace Entidades
         {
             get { return ctaCte; }
             set { ctaCte = value; }
+        }
+
+        // Cuenta corriente reservada: los movimientos de esta persona (ventas, compras, cobros,
+        // pagos, cta cte) solo los ve un admin / quien tenga formCtasCtes; el resto ve unicamente
+        // lo que cargo el mismo desde la apertura de su caja (docs/DECISIONS.md, 2026-10-01).
+        public bool CtaCteReservada
+        {
+            get { return ctaCteReservada; }
+            set { ctaCteReservada = value; }
         }
         private float bonificacion;
 

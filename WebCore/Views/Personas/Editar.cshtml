@@ -151,8 +151,8 @@
                         <div class="col-12 col-md-3">
                             <div class="form-group pt-md-4 mt-md-2">
                                 <div class="custom-control custom-switch">
-                                    @Html.CheckBoxFor(m => m.CtaCte, new { @class = "custom-control-input js-persona-control", id = "CtaCte" })
-                                    <label class="custom-control-label" for="CtaCte">Cuenta corriente</label>
+                                    @Html.CheckBoxFor(m => m.CtaCteReservada, new { @class = "custom-control-input js-persona-control", id = "CtaCteReservada" })
+                                    <label class="custom-control-label" for="CtaCteReservada" title="Solo administradores y usuarios con permiso de cuentas corrientes ven los movimientos de esta persona. El resto ve únicamente lo que cargó desde la apertura de su caja.">Cuenta corriente reservada</label>
                                 </div>
                             </div>
                         </div>

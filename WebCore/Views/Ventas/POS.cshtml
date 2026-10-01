@@ -217,6 +217,12 @@
                         <span class="pos-cliente-identificacion-label">Ident.:</span>
                         <span id="clienteIdentificacionTexto">@(Model.Persona?.Identificacion ?? "")</span>
                     </div>
+                    @* Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01): arranca oculta; la muestra
+                       actualizarAccesoHistorialPreciosCliente segun el cliente elegido. *@
+                    <div id="clienteReservadaWrap" class="d-none mt-1 small text-muted">
+                        <span class="badge badge-secondary"><i class="fas fa-lock mr-1"></i>Reservada</span>
+                        <span id="clienteReservadaTexto"></span>
+                    </div>
                 </div>
             </div>
 
@@ -2412,7 +2418,6 @@ else
             // ===== Buscador de cliente real (F9), 2026-09-06 (retomado, ver docs/DECISIONS.md).
             // Port literal de Web/Views/Ventas/POS.cshtml:1829-1881 (helpers) y :2133-2196
             // (handlers de #btnBuscarPersona/#btnConsumidorFinal). =====
-            var posCtaCtePermisoCompleto = @(ViewBag.PuedeVerCtaCteCompleta != null && (bool)ViewBag.PuedeVerCtaCteCompleta ? "true" : "false");
 
             window.api = window.api || {};
             window.api.persona = {
@@ -2448,9 +2453,9 @@ else
             window.setClienteIdentificacionVisual = setClienteIdentificacionVisual;
 
             // Gate del historial de precios por cliente (F8 / boton), 2026-09-06 (retomado -- ver
-            // docs/DECISIONS.md): mismo criterio de sensibilidad que Finanzas/CtaCtePersona -- se
-            // oculta con Consumidor Final y con clientes de cuenta corriente si el usuario no tiene
-            // permiso para ver cuentas corrientes completas. Este chequeo del lado del cliente es
+            // docs/DECISIONS.md): se oculta con Consumidor Final y con clientes de cuenta corriente
+            // reservada si el usuario no tiene permiso de cuentas corrientes (2026-10-01; antes lo
+            // decidia Persona.CtaCte, que ya no oculta nada). Este chequeo del lado del cliente es
             // solo comodidad de UX; el limite real lo vuelve a aplicar el controller
             // (VentasController.HistorialPreciosCliente) antes de devolver los precios. Port literal
             // de Web/Views/Ventas/POS.cshtml:1883-1933.
@@ -2462,9 +2467,19 @@ else
                 // cliente, no tiene sentido seguir ofreciendo "Pegar" con un precio de otro cliente.
                 window.POSPrecioCopiado = null;
 
+                // Etiqueta "Reservada": limitada = el usuario solo ve lo que cargo desde la apertura de su caja.
+                function mostrarReservada(reservada, limitada) {
+                    var $wrap = $("#clienteReservadaWrap");
+                    $wrap.toggleClass("d-none", !reservada);
+                    $("#clienteReservadaTexto").text(reservada && limitada
+                        ? "Solo ves los movimientos que cargaste desde la apertura de tu caja."
+                        : "");
+                }
+
                 function deshabilitar() {
                     window.POSHistorialPreciosHabilitado = false;
                     $btn.addClass("d-none");
+                    mostrarReservada(false, false);
                 }
 
                 function habilitar() {
@@ -2489,12 +2504,15 @@ else
                             return;
                         }
 
-                        var ocultarPorCtaCte = !!resp.ctaCte && !posCtaCtePermisoCompleto;
-                        if (ocultarPorCtaCte) {
+                        // historialPreciosOculto lo calcula el servidor: cliente con cuenta corriente
+                        // reservada y usuario sin permiso de cuentas corrientes.
+                        if (resp.historialPreciosOculto) {
                             deshabilitar();
                         } else {
                             habilitar();
                         }
+                        // Despues del deshabilitar/habilitar: la etiqueta depende del cliente, no del boton.
+                        mostrarReservada(!!resp.cuentaReservada, !!resp.cuentaReservadaLimitada);
                     })
                     .fail(deshabilitar);
             }

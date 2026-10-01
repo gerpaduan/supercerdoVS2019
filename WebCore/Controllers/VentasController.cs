@@ -99,16 +99,18 @@ namespace WebCore.Controllers
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
         private readonly WebCore.Services.IAfipConfigProvider _afip;
+        private readonly WebCore.Services.ICtaCteReservadaService _ctaCteReservada;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.IAfipConfigProvider afip)
+        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.IAfipConfigProvider afip, WebCore.Services.ICtaCteReservadaService ctaCteReservada)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
             _env = env;
             _sesion = sesion;
             _afip = afip;
+            _ctaCteReservada = ctaCteReservada;
             _empresa = sesion.Empresa;
 
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
@@ -268,16 +270,12 @@ namespace WebCore.Controllers
             return venta.FechaVenta >= inicio && venta.FechaVenta <= fin;
         }
 
-        // Historial de precios de cliente (F8, 2026-09-06 -- ver docs/DECISIONS.md). Mismo criterio
-        // que FinanzasController.PuedeVerSaldosCuentaCorriente: admin pasa siempre, si no, requiere
-        // el permiso de ver cuentas corrientes completas. Port literal de
-        // Web/Controllers/VentasController.cs:967-976 (se replica el helper por controller, no se
-        // centraliza -- mismo patron ya usado en este repo).
-        private bool PuedeVerCtaCteCompleta(Entidades.Usuario usuario)
+
+        // Respuesta de "registro reservado" para los chequeos manuales de este controller (los de
+        // acciones con id de venta directo usan [ProtegerRegistroReservado]).
+        private IActionResult DenegarRegistroReservado()
         {
-            if (usuario == null) return false;
-            if (usuario.Admin) return true;
-            return _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1);
+            return WebCore.Helpers.ProtegerRegistroReservadoFilter.Denegar(ControllerContext);
         }
 
         // GET: Ventas/HistorialPreciosCliente
@@ -302,7 +300,9 @@ namespace WebCore.Controllers
                 return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", (List<WebCore.Models.HistorialPrecioProductoVm>)null);
             }
 
-            if (persona.CtaCte && !PuedeVerCtaCteCompleta(user))
+            // Los precios salen de las ventas del cliente: si es de cuenta corriente reservada, un
+            // usuario sin permiso no puede verlos (revelarian ventas que no cargo el).
+            if (_ctaCteReservada.SaldoOculto(persona.IdPersona))
             {
                 ViewBag.HistorialPreciosError = "No tenés permiso para ver el historial de precios de este cliente.";
                 return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", (List<WebCore.Models.HistorialPrecioProductoVm>)null);
@@ -645,8 +645,10 @@ namespace WebCore.Controllers
             ViewBag.IdSucursalSeleccionada = idSucursal;
 
             List<Entidades.Venta> ventas = _oVentaN.getAllVentas(desde, hasta, "", -1, -1, idSucursal, false, false) ?? new List<Entidades.Venta>();
+            var ventasOcultas = _ctaCteReservada.IdsOcultos(Entidades.RestriccionCtaCteReservada.TablaVentas);
             ventas = ventas
                 .Where(v => v != null && v.FechaVenta >= desde && v.FechaVenta <= hasta)
+                .Where(v => !ventasOcultas.Contains(v.IdVenta))
                 .ToList();
 
             ViewBag.TotalFiltrado = ventas.Sum(v => v.TotalImporte);
@@ -765,7 +767,8 @@ namespace WebCore.Controllers
             var facturas = _oVentaN.BuscarFacturasPagina(
                 model.FechaDesde, model.FechaHasta, model.IdSucursal,
                 model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante,
-                pagina, FacturasTamanoPagina, cantidadExtra: 1, entorno: EntornoParaRepositorio(model.Entorno)) ?? new List<Entidades.FacturaElectronica>();
+                pagina, FacturasTamanoPagina, cantidadExtra: 1, entorno: EntornoParaRepositorio(model.Entorno),
+                restriccion: _ctaCteReservada.ObtenerRestriccion()) ?? new List<Entidades.FacturaElectronica>();
 
             model.HayMas = facturas.Count > FacturasTamanoPagina;
             if (model.HayMas)
@@ -787,7 +790,8 @@ namespace WebCore.Controllers
             {
                 var resumen = _oVentaN.ObtenerFacturasResumen(
                     model.FechaDesde, model.FechaHasta, model.IdSucursal,
-                    model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante, EntornoParaRepositorio(model.Entorno));
+                    model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante, EntornoParaRepositorio(model.Entorno),
+                    restriccion: _ctaCteReservada.ObtenerRestriccion());
                 model.Cantidad = resumen.Cantidad;
                 model.TotalFacturado = resumen.Total;
             }
@@ -809,7 +813,8 @@ namespace WebCore.Controllers
             var formasPagoSeleccionadas = SepararValoresCsv(formasPago);
 
             List<Entidades.Venta> ventas = _oVentaN.getAllVentas(desde, hasta, "", -1, -1, idSucursal, false, true) ?? new List<Entidades.Venta>();
-            ventas = ventas.Where(v => v != null && v.FechaVenta >= desde && v.FechaVenta <= hasta).ToList();
+            var ventasOcultasLineas = _ctaCteReservada.IdsOcultos(Entidades.RestriccionCtaCteReservada.TablaVentas);
+            ventas = ventas.Where(v => v != null && v.FechaVenta >= desde && v.FechaVenta <= hasta && !ventasOcultasLineas.Contains(v.IdVenta)).ToList();
             ventas = ventas
                 .Where(v => CoincideTexto(v != null && v.Persona != null ? v.Persona.RazonSocial : "", cliente)
                     || CoincideTexto(v != null && v.Persona != null ? v.Persona.Identificacion : "", cliente)
@@ -920,6 +925,7 @@ namespace WebCore.Controllers
         }
 
         // GET: Ventas/DetalleVenta/5
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
         public IActionResult DetalleVenta(int id, bool modal = false, bool desdePos = false, int idCierre = 0, string returnUrl = "")
         {
             // Usuario de produccion: exige operador autorizado SOLO en la pantalla completa -- no
@@ -970,6 +976,9 @@ namespace WebCore.Controllers
             var venta = factura.Venta ?? _oVentaN.getVentaById(factura.IdVenta);
             if (venta == null)
                 return NotFound();
+
+            if (_ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaVentas, venta.IdVenta))
+                return DenegarRegistroReservado();
 
             var model = new FacturaDetalleVm
             {
@@ -1114,6 +1123,11 @@ namespace WebCore.Controllers
             {
                 if (dto == null)
                     return Json(new { ok = false, msg = "No se recibieron datos de la factura." });
+
+                // Cuenta corriente reservada: no se factura (ni edita una factura de) una venta que el
+                // usuario restringido no puede ver.
+                if (dto.IdVenta > 0 && _ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaVentas, dto.IdVenta))
+                    return Json(new { ok = false, msg = WebCore.Helpers.ProtegerRegistroReservadoFilter.MensajeDenegado });
 
                 var factura = MapDtoToFactura(dto);
 
@@ -1276,6 +1290,9 @@ namespace WebCore.Controllers
                 if (venta == null)
                     return Json(new { ok = false, msg = "No se encontró la venta asociada" });
 
+                if (_ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaVentas, venta.IdVenta))
+                    return Json(new { ok = false, msg = WebCore.Helpers.ProtegerRegistroReservadoFilter.MensajeDenegado });
+
                 int idNotaExistente = _oVentaN.esVentaSinFacturar(venta.IdVenta, true, IgnorarFacturasPrueba);
                 if (idNotaExistente > 0)
                 {
@@ -1369,6 +1386,7 @@ namespace WebCore.Controllers
         // POST /Ventas/LimpiarLineasVentaManual -- borra la linea temporal de una venta manual,
         // una vez que la factura ya fue emitida (tiene CAE).
         [HttpPost]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "idVenta")]
         public IActionResult LimpiarLineasVentaManual(int idVenta)
         {
             try
@@ -1400,6 +1418,7 @@ namespace WebCore.Controllers
         // FacturaElectronica marcado Error=true (mismo mecanismo que un fallo real de AFIP) para
         // que esVentaSinFacturar deje de considerar la venta pendiente de facturar.
         [HttpPost]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "idVenta")]
         public IActionResult CerrarVentaSinFacturar(int idVenta)
         {
             try
@@ -1442,6 +1461,7 @@ namespace WebCore.Controllers
         // asi el caller (curl/Postman) puede tomar estos valores tal cual y postearlos a
         // GenerarFactura, en vez de adivinar CodTipoCbteAfip/TipoDocAfip/etc a mano.
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "idVenta")]
         public IActionResult PreviewFacturaDto(int idVenta)
         {
             var venta = _oVentaN.getVentaById(idVenta);
@@ -1463,6 +1483,7 @@ namespace WebCore.Controllers
         // portado, que el JS del modal ya sabe reconocer (VentasFacturaModal.abrir hace
         // dataType:'html' + un regex-sniff de {"ok":false...}).
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
         public IActionResult ImprimirTicket(int id, int mm = 0)
         {
             var venta = _oVentaN.getVentaById(id);
@@ -1789,6 +1810,7 @@ namespace WebCore.Controllers
         // wireados todavia en WebCore/App.config -- se usa siempre el fallback de datos de Empresa
         // (mismo comportamiento que tendria el clasico si esas claves no estuvieran seteadas).
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
         public IActionResult ImprimirTicketHtml(int id, int mm = 80)
         {
             var venta = _oVentaN.getVentaById(id);
@@ -1829,6 +1851,7 @@ namespace WebCore.Controllers
         // que el ticket HTML (ConstruirLineasTicketVenta) mas el QR de AFIP como string (el agente
         // lo dibuja con ESC/POS nativo, el server no genera imagen).
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
         public IActionResult ImprimirTicketPayload(int id, int mm = 80)
         {
             try
@@ -2097,6 +2120,7 @@ namespace WebCore.Controllers
         // ===== PDF (QuestPDF, ver docs/DECISIONS.md) y email real =====
 
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
         public IActionResult Imprimir(int id, string documento = "")
         {
             Entidades.Venta venta = _oVentaN.getVentaById(id);
@@ -2130,6 +2154,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
         public IActionResult ObtenerDatosEmailComprobante(int id)
         {
             try
@@ -2176,6 +2201,7 @@ namespace WebCore.Controllers
         }
 
         [HttpPost]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "idVenta")]
         public IActionResult EnviarComprobanteEmail(int idVenta, string emailDestino, string asunto, string mensaje, bool adjuntarDetalle = false, string documento = "")
         {
             try
@@ -2493,6 +2519,7 @@ namespace WebCore.Controllers
         // mecanica de edicion de venta ya portada (misma carga de lineasEdicionPos, mismo
         // ModificarVenta) -- solo cambia el texto del banner y bloquea la UI de productos en la
         // vista (ver aplicarModoSoloFormaPago en POS.cshtml).
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "idVentaEditar")]
         public IActionResult POS(string modoPos = "original", string posInstanceId = "", int idVentaEditar = 0, bool soloFormaPago = false, string returnUrl = "")
         {
             // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): al modificar una venta desde
@@ -2584,7 +2611,6 @@ namespace WebCore.Controllers
                 ViewBag.RequierePreseleccionFormaPago = RequierePreseleccionFormaPagoPOS(formasPagoConfigEditar);
                 ViewBag.Sucursales = _oSucursalN.findAll();
                 ViewBag.IdConsumidorFinal = _oPersonaN.getConsumidorFinal().idPersona;
-                ViewBag.PuedeVerCtaCteCompleta = PuedeVerCtaCteCompleta(operador);
 
                 ViewBag.EsEdicionVenta = true;
                 ViewBag.IdVentaEditar = idVentaEditar;
@@ -2663,7 +2689,6 @@ namespace WebCore.Controllers
 
             var consumidorFinal = _oPersonaN.getConsumidorFinal();
             ViewBag.IdConsumidorFinal = consumidorFinal.idPersona;
-            ViewBag.PuedeVerCtaCteCompleta = PuedeVerCtaCteCompleta(operador);
 
             var venta = new Entidades.Venta
             {
@@ -2920,6 +2945,11 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, msg = "La venta no existe." });
 
                 var operador = ResolverOperadorPOS(request.PosInstanceId, user);
+
+                // Cuenta corriente reservada: no se modifica una venta que el operador no puede ver.
+                if (_ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaVentas, venta.IdVenta, operador))
+                    return Json(new { ok = false, msg = WebCore.Helpers.ProtegerRegistroReservadoFilter.MensajeDenegado });
+
                 // Mismo fix que POS() (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md):
                 // la caja se abre a nombre del operador real, hay que buscarla con ese mismo operador.
                 var cierreActual = ObtenerCierreCajaActual(operador);
