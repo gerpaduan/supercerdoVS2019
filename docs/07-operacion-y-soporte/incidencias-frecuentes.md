@@ -13,6 +13,11 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-10-01 - POS en blanco: nunca aparece el modal de apertura de caja
+**Sintoma**: con un usuario sin caja abierta (ej. agustina), `/Ventas/POS` muestra solo la barra superior y la pagina vacia; sin errores en consola ni en el servidor.
+**Causa**: `Views/Cajas/_AbrirCajaModal.cshtml` terminaba su bloque `<style>` con `</div>` en vez de `</style>` (commit `129a5faf`, auditoria de modo oscuro). El navegador trataba el resto del HTML como CSS: ningun `<script>` (jQuery incluido) llegaba a existir, asi que el modal no se abria.
+**Fix**: cerrar con `</style>`. Diagnostico rapido: `document.scripts.length` casi en 0 y `jQuery` indefinido en una vista que deberia cargarlos = tag raw-text (`<style>`/`<script>`/`<textarea>`) sin cerrar. Las vistas Razor se compilan en el build: hay que reiniciar el servidor para ver el cambio.
+
 ## 2026-09-30 - Se abre el dialogo de impresion del navegador aunque el agente este activo
 
 - **Sintoma**: con el agente corriendo, el ticket (sobre todo el de la calculadora de billetes) abre el dialogo del navegador en vez de imprimir directo.
