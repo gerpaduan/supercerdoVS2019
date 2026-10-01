@@ -778,6 +778,70 @@ body.app-shell .page-section-title {
     letter-spacing: 0.01em;
 }
 
+/* Topbar: los controles de la derecha (badges de aviso, campana, tema y MENU DE USUARIO) nunca se
+   encogen ni salen de la vista. Antes el titulo no podia achicarse y, con el badge "MODO PRUEBA (AFIP)"
+   o el aviso del certificado de padron, la fila se desbordaba y el menu de usuario quedaba fuera de la
+   pantalla en responsive. Ahora el que cede es el titulo (se corta con "..."). "ml-auto" no existe en
+   Bootstrap 5, por eso el margen se declara aca. */
+body.app-shell .topbar > .container-fluid {
+    /* wrap = red de seguridad: si aun asi no entran (pantalla muy angosta con el menu lateral abierto),
+       los controles bajan a una segunda linea alineada a la derecha en vez de salirse de la vista. */
+    flex-wrap: wrap;
+    row-gap: 0.15rem;
+    min-width: 0;
+}
+
+body.app-shell .topbar > .container-fluid > .page-section-title {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.app-shell .topbar > .container-fluid > .navbar-nav {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+    margin-left: auto;
+}
+
+body.app-shell .topbar > .container-fluid > .navbar-nav > li,
+body.app-shell .topbar > .container-fluid > .navbar-nav > .topbar-divider {
+    flex-shrink: 0;
+}
+
+body.app-shell .topbar .topbar-aviso-badge {
+    white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+    /* Celular: iconos mas compactos y sin separador para que entren badge + campana + tema + usuario. */
+    body.app-shell .topbar #sidebarToggleTop {
+        margin-right: 0.35rem !important;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    body.app-shell .topbar .topbar-icon-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    body.app-shell .topbar .navbar-nav > li.me-2 {
+        margin-right: 0.25rem !important;
+    }
+
+    body.app-shell .topbar .navbar-nav .nav-link {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+
+    body.app-shell .topbar .topbar-aviso-badge {
+        font-size: 0.65rem;
+    }
+}
+
 body.app-shell .dropdown-divider,
 body.app-shell hr.sidebar-divider,
 body.app-shell hr {
