@@ -3,7 +3,7 @@
 ## 2026-10-01 (la mas reciente) - Cuenta corriente reservada: movimientos de ciertas personas visibles solo para admin / formCtasCtes
 
 - Detalle y decisiones en `docs/DECISIONS.md` (2026-10-01). Campo nuevo `Persona.CtaCteReservada` (el viejo `ctaCte` queda sin efecto y oculto). Un usuario sin admin ni `formCtasCtes` sigue pudiendo vender/cobrar/pagar a esa persona, pero solo ve lo que cargo el mismo desde la apertura de su caja (Ventas, Facturas, Compras, Stock, Pagos/Cobros y extracto; sin saldo). Los empleados nacen reservados. `ctaCte` deja de ocultar el historial de precios del POS. Avisos para el restringido (alerta en extracto/cobro-pago, etiqueta en el POS, nota en listados) y etiqueta "Reservada" para el autorizado.
-- **Despliegue**: correr ANTES del codigo `DatosPostgres/DB-Migrations/20261001-Alter_personas_add_ctactereservada.sql` (Postgres, `carnisys_admin`) y `Datos/DB-Procedures/20261001-Alter_Personas_add_CtaCteReservada.sql` (SQL Server, `USE` de la base de cada servidor).
+- **Despliegue**: correr ANTES del codigo `DatosPostgres/DB-Migrations/20261001-Alter_personas_add_ctactereservada.sql` (Postgres, `carnisys_admin`) y `Datos/DB-Procedures/20261001-Alter_Personas_add_CtaCteReservada.sql` (SQL Server, solo base `CarniSys` con RLS) o `Datos/DB-Procedures/20261001b-Alter_Personas_add_CtaCteReservada_SinRLS.sql` (SM, San Lorenzo y `SuperCerdo`, SQL Server 2008). Aplicados en `CarniSys` y `SuperCerdo` del SQL Server local (2026-10-01).
 - Verificado en vivo contra Postgres local (usuarios y datos temporales borrados) y `Negocio.Tests` 177/177. **No verificado**: SQL Server, alta de empleado reservado, cuenta compartida de produccion.
 
 ## 2026-09-30 - No repetir "Nombre (Nombre)" cuando la identificación coincide con la razón social
