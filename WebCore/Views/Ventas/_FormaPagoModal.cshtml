@@ -37,8 +37,10 @@
                    cualquier lado del modal. La leyenda chica (#lblAtajoPagoMixto) comparte renglon
                    con el switch y, al activarse el mixto, pasa a guiar al cajero (forma-pago.js ->
                    actualizarHintPagoMixto): el pago mixto es siempre Efectivo + otro medio. *@
-                <div class="d-flex align-items-center justify-content-between fp-fila-mixto">
-                    <div class="custom-control custom-switch">
+                @* 2026-10-01 (pedido del usuario): la leyenda va PEGADA al switch (antes quedaba en el
+                   otro extremo del renglon y no se veia bien), con letra mas grande y wrap propio. *@
+                <div class="d-flex align-items-center flex-wrap fp-fila-mixto">
+                    <div class="custom-control custom-switch mr-3 me-3">
                         <input type="checkbox"
                                class="custom-control-input"
                                id="chkPagoMixto">
@@ -47,9 +49,8 @@
                             Pago Mixto
                         </label>
                     </div>
-                    <small class="text-muted text-end text-right ms-2"
-                           id="lblAtajoPagoMixto"
-                           style="font-size:.7rem;">
+                    <small class="text-muted fp-atajo-mixto"
+                           id="lblAtajoPagoMixto">
                         Atajo: presioná "+"
                     </small>
                 </div>
@@ -190,29 +191,40 @@
 
                     @* Wrapper .fp-mixto-montos: en modo compacto (ver CSS abajo) Efectivo y el otro
                        medio quedan lado a lado en vez de apilados, para no crecer en altura. *@
+                    @* 2026-10-01 (pedido del usuario): cada importe es una tarjeta con acento de color
+                       (Efectivo verde; el otro medio toma el color de su boton, ver forma-pago.js ->
+                       --fp-otro-color), icono y monto grande con prefijo "$". Mismos ids de inputs. *@
                     <div class="fp-mixto-montos">
                         <!-- EFECTIVO -->
-                        <div class="form-group">
-                            <label>Efectivo</label>
-                            <input type="number"
-                                   id="montoEfectivo"
-                                   class="form-control mx-auto"
-                                   style="width:50%;"
-                                   min="0"
-                                   step="0.01"
-                                   placeholder="Monto en efectivo">
+                        <div class="fp-mixto-card fp-mixto-efectivo">
+                            <label for="montoEfectivo" class="fp-mixto-titulo">
+                                <i class="fas fa-money-bill"></i> Efectivo
+                            </label>
+                            <div class="input-group fp-mixto-input">
+                                <span class="input-group-text">$</span>
+                                <input type="number"
+                                       id="montoEfectivo"
+                                       class="form-control"
+                                       min="0"
+                                       step="0.01"
+                                       placeholder="0,00">
+                            </div>
                         </div>
 
                         <!-- OTRO MEDIO -->
-                        <div class="form-group">
-                            <label id="labelOtroPago">Otro Medio</label>
-                            <input type="number"
-                                   id="montoOtroPago"
-                                   class="form-control mx-auto"
-                                   style="width:50%;"
-                                   min="0"
-                                   step="0.01"
-                                   placeholder="Monto">
+                        <div class="fp-mixto-card fp-mixto-otro">
+                            <label for="montoOtroPago" class="fp-mixto-titulo">
+                                <i class="fas fa-credit-card"></i> <span id="labelOtroPago">Otro Medio</span>
+                            </label>
+                            <div class="input-group fp-mixto-input">
+                                <span class="input-group-text">$</span>
+                                <input type="number"
+                                       id="montoOtroPago"
+                                       class="form-control"
+                                       min="0"
+                                       step="0.01"
+                                       placeholder="0,00">
+                            </div>
                         </div>
                     </div>
 
@@ -398,24 +410,137 @@
         margin-top: .4rem !important;
     }
 
-    #modalFormaPago.pos-modal-compacto .fp-mixto-montos {
+    /* Tarjetas de importe del pago mixto (2026-10-01, pedido explicito del usuario -- ver
+       docs/DECISIONS.md "Modal Forma de Pago: tarjetas del mixto..."). --fp-color: verde para
+       Efectivo; el otro medio toma el color de su boton (forma-pago.js setea --fp-otro-color en
+       #bloquePagoMixto). Fondo = ese color al 9% (sirve igual en claro y oscuro). */
+    #modalFormaPago .fp-mixto-montos {
         display: flex;
         gap: .75rem;
+        text-align: left;
     }
 
-    #modalFormaPago.pos-modal-compacto .fp-mixto-montos .form-group {
+    #modalFormaPago .fp-mixto-card {
+        --fp-color: #6c757d;
         flex: 1 1 0;
         min-width: 0;
-        margin-bottom: 0;
+        border: 2px solid var(--fp-color);
+        border-radius: .6rem;
+        padding: .4rem .6rem .55rem;
+        background: color-mix(in srgb, var(--fp-color) 9%, transparent);
+        transition: box-shadow .15s ease;
     }
 
-    #modalFormaPago.pos-modal-compacto .fp-mixto-montos .form-control {
-        width: 100% !important;
+    #modalFormaPago .fp-mixto-efectivo { --fp-color: #198754; }
+
+    #modalFormaPago .fp-mixto-otro { --fp-color: var(--fp-otro-color, #6c757d); }
+
+    #modalFormaPago .fp-mixto-card:focus-within {
+        box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--fp-color) 35%, transparent);
+    }
+
+    #modalFormaPago .fp-mixto-titulo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+        margin-bottom: .25rem;
+        font-weight: 700;
+    }
+
+    #modalFormaPago .fp-mixto-titulo > i {
+        color: var(--fp-color);
+    }
+
+    #modalFormaPago .fp-mixto-input .input-group-text {
+        background: transparent;
+        border: 2px solid var(--fp-color);
+        border-right: 0;
+        color: inherit;
+        font-size: 1.25rem;
+        font-weight: 800;
+    }
+
+    #modalFormaPago .fp-mixto-input .form-control {
+        border: 2px solid var(--fp-color);
+        border-left: 0;
+        font-size: 1.6rem;
+        font-weight: 800;
+        text-align: center;
+        box-shadow: none;
+        /* sin flechitas de spinner: roban ancho y no se usan (el monto se tipea) */
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    #modalFormaPago .fp-mixto-input .form-control::-webkit-outer-spin-button,
+    #modalFormaPago .fp-mixto-input .form-control::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Enfasis de los botones de forma de pago con Pago Mixto (2026-10-01, pedido explicito del
+       usuario): clases togglada por forma-pago.js -> actualizarHintPagoMixto. "eligiendo" = falta
+       elegir el 2do medio: los elegibles brillan con un halo pulsante y los bloqueados
+       (Efectivo/Cta. Cte., o los no preseleccionados) se apagan. "elegido" = el elegido (.active)
+       queda resaltado y el resto baja a .55 (se puede cambiar con un click). */
+    @@keyframes fp-pulso-elegible {
+        0%   { box-shadow: 0 0 0 0 rgba(13, 110, 253, .65); }
+        70%  { box-shadow: 0 0 0 .55rem rgba(13, 110, 253, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+    }
+
+    #modalFormaPago .btn-forma-pago {
+        transition: opacity .2s ease, filter .2s ease, transform .2s ease;
+    }
+
+    #modalFormaPago.pos-mixto-eligiendo .btn-forma-pago:not(:disabled) {
+        opacity: 1;
+        filter: saturate(1.2) brightness(1.05);
+        transform: scale(1.03);
+        animation: fp-pulso-elegible 1.4s ease-out infinite;
+    }
+
+    #modalFormaPago.pos-mixto-eligiendo .btn-forma-pago:disabled {
+        opacity: .3;
+        filter: grayscale(.8);
+    }
+
+    #modalFormaPago.pos-mixto-elegido .btn-forma-pago:not(.active) {
+        opacity: .55;
+    }
+
+    #modalFormaPago.pos-mixto-elegido .btn-forma-pago.active {
+        opacity: 1;
+        box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .45);
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        #modalFormaPago.pos-mixto-eligiendo .btn-forma-pago:not(:disabled) {
+            animation: none;
+            transform: none;
+            box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .45);
+        }
+    }
+
+    /* Leyenda del atajo/guia: pegada al switch de Pago Mixto. */
+    #modalFormaPago .fp-atajo-mixto {
+        font-size: .85rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-mixto-card {
+        padding: .3rem .5rem .4rem;
     }
 
     #modalFormaPago.pos-modal-compacto #bloquePagoMixto label {
-        font-size: .85rem;
-        margin-bottom: .15rem;
+        font-size: .9rem;
+        margin-bottom: .1rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-mixto-input .form-control {
+        font-size: 1.4rem;
+        padding-top: .2rem;
+        padding-bottom: .2rem;
     }
 
     #modalFormaPago.pos-modal-compacto .fp-mixto-finalizar {

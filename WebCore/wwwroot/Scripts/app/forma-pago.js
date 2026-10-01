@@ -392,6 +392,7 @@ window.preCargarFormaPagoActual = function () {
         $('#montoOtroPago').val((otroMonto > 0 ? otroMonto : 0).toFixed(2));
         $('#labelOtroPago').text(normalizarNombreFormaPago(formaPago));
         otroTipoPagoSeleccionado = formaPago;
+        $('#bloquePagoMixto').css('--fp-otro-color', getBotonFormaPago(formaPago).css('background-color'));
         $('.btn-forma-pago').each(function () {
             const tipo = normalizarTipoFormaPago($(this).data('tipo'));
             $(this).prop('disabled', ventaEnProceso || tipo !== formaPago);
@@ -639,6 +640,8 @@ $('.btn-forma-pago').on('click', function () {
     // ---------------------------
     otroTipoPagoSeleccionado = tipo;
     $('#labelOtroPago').text(normalizarNombreFormaPago(tipo));
+    // La tarjeta del otro medio toma el color de su boton (ver .fp-mixto-otro en _FormaPagoModal).
+    $('#bloquePagoMixto').css('--fp-otro-color', $(this).css('background-color'));
     marcarFormaPagoSeleccionada(tipo);
     actualizarHintPagoMixto();
 
@@ -985,6 +988,7 @@ function resetPagoMixto() {
     $('#montoEfectivo').val('');
     $('#montoOtroPago').val('');
     $('#labelOtroPago').text('Otro Medio');
+    $('#bloquePagoMixto').css('--fp-otro-color', '');
     actualizarHintPagoMixto();
     actualizarModoCompactoModal();
 
@@ -1017,6 +1021,14 @@ function actualizarHintPagoMixto() {
         texto = 'Ingresá el efectivo recibido: el resto se completa en ' +
             normalizarNombreFormaPago(otroTipoPagoSeleccionado);
     }
+
+    // Enfasis de los botones (2026-10-01): mientras falta elegir el 2do medio, los elegibles brillan
+    // y el resto se apaga; ya elegido, el elegido (.active) queda como protagonista (ver CSS en
+    // _FormaPagoModal.cshtml). Este metodo ya se llama en cada transicion del mixto.
+    const mixtoActivo = $('#chkPagoMixto').is(':checked');
+    $('#modalFormaPago')
+        .toggleClass('pos-mixto-eligiendo', mixtoActivo && !otroTipoPagoSeleccionado)
+        .toggleClass('pos-mixto-elegido', mixtoActivo && !!otroTipoPagoSeleccionado);
 
     $lbl.text(texto)
         .toggleClass('text-muted', !guia)
@@ -1064,10 +1076,17 @@ function actualizarTotalConDescuento() {
     $('#lblEtiquetaMontoDescuento').text(esRecargo ? 'Recargo aplicado' : 'Descuento aplicado');
     $('#lblTotalConDescuentoTotalVenta').text('$ ' + formatearImporteFormaPago(Math.abs(montoDescuento)));
 
-    // Pago mixto en curso: resincroniza el split contra el nuevo monto a cobrar.
-    if ($('#chkPagoMixto').is(':checked')) {
-        $('#montoEfectivo').trigger('input');
-    }
+    // Pago mixto en curso: el total cambio, asi que los importes ya cargados dejan de valer.
+    limpiarMontosPagoMixto();
+}
+
+// 2026-10-01 (pedido explicito del usuario -- ver docs/DECISIONS.md): si el total se recalcula
+// (descuento/recargo nuevo, se quita el %, cambia la forma que define los precios) los importes
+// del pago mixto se BORRAN en vez de resincronizarse -- el cajero vuelve a tipear el efectivo
+// contra el total nuevo. Solo toca los 2 inputs; el switch y el "otro medio" elegido quedan.
+function limpiarMontosPagoMixto() {
+    $('#montoEfectivo').val('');
+    $('#montoOtroPago').val('');
 }
 
 function cerrarBloquePorcentajeTotalVenta() {
@@ -1089,9 +1108,8 @@ function cerrarBloquePorcentajeTotalVenta() {
     $('#totalVenta').val(formatearImporteFormaPago(totalVentaActual));
     $('#lblTotalVentaConDescuentoTag').addClass('d-none');
 
-    if ($('#chkPagoMixto').is(':checked')) {
-        $('#montoEfectivo').trigger('input');
-    }
+    // El total volvio al original: los importes del mixto tambien se borran (ver limpiarMontosPagoMixto).
+    limpiarMontosPagoMixto();
 }
 
 function habilitarYEnfocarInputDescuento() {
@@ -1138,6 +1156,17 @@ function toggleBloquePorcentajeTotalVenta() {
         habilitarYEnfocarInputDescuento();
     } else if (bloqueVisible) {
         cerrarBloquePorcentajeTotalVenta();
+    } else {
+        abrirBloquePorcentajeTotalVenta();
+    }
+}
+
+// Lleva el foco a la edicion del descuento desde cualquier lado (atajo "/" con el foco en un input):
+// bloque cerrado -> se abre y se enfoca; bloque abierto (input editable o ya confirmado) -> se
+// rehabilita y se enfoca. A diferencia de toggleBloquePorcentajeTotalVenta, nunca lo cierra.
+function enfocarEdicionDescuento() {
+    if ($('#bloquePorcentajeTotalVenta').is(':visible')) {
+        habilitarYEnfocarInputDescuento();
     } else {
         abrirBloquePorcentajeTotalVenta();
     }
@@ -1308,9 +1337,19 @@ $(document).ready(function () {
         // Va ANTES del branch de pago mixto: el descuento/recargo global es independiente de la
         // forma de pago elegida. Se ignora si el foco esta en un input (evita interferir con el
         // tipeo normal en los campos de pago mixto o en el propio campo de porcentaje).
+        // 2026-10-01 (pedido explicito del usuario -- ver docs/DECISIONS.md): con el foco DENTRO de
+        // otro input (ej. los importes del pago mixto) "/" ya no se ignora: devuelve el foco a la
+        // edicion del descuento (abre el bloque si estaba cerrado, rehabilita el input si ya estaba
+        // confirmado). En ese caso NO cierra el bloque (el toggle de abajo es solo para foco fuera
+        // de inputs). Dentro del propio campo de % solo se evita que se escriba la barra.
         if (e.key === '/') {
             const tag = (document.activeElement && document.activeElement.tagName) || '';
-            if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                e.preventDefault();
+                if (document.activeElement.id !== 'txtPorcentajeTotalVenta') {
+                    enfocarEdicionDescuento();
+                }
+            } else {
                 e.preventDefault();
                 toggleBloquePorcentajeTotalVenta();
             }
