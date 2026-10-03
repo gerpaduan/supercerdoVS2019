@@ -136,5 +136,134 @@ namespace DatosPostgres
             var dispositivo = ObtenerPorSerie(numeroSerie, idEmpresa);
             return dispositivo != null && !dispositivo.Bloqueado && dispositivo.HabilitadoFichaje;
         }
+
+        // ---- Solicitudes de autorizacion de dispositivo (2026-10-02, Fase 1c) ----
+
+        private const string SelectSolicitud = @"
+                SELECT s.id, s.idempresa, s.idusuario, s.serie, s.nombre, s.mensaje, s.ip, s.estado,
+                       s.creadautc, s.resueltapor, s.resueltautc,
+                       u.nombre AS nombreusuario, u.usuario AS usuario
+                FROM dispositivosseguros_solicitudes s
+                LEFT JOIN usuarios u ON u.id = s.idusuario ";
+
+        private static Entidades.DispositivoSolicitud MapearSolicitud(System.Data.IDataRecord dr)
+        {
+            return new Entidades.DispositivoSolicitud
+            {
+                Id = Convert.ToInt32(dr["id"]),
+                IdEmpresa = Convert.ToInt32(dr["idempresa"]),
+                IdUsuario = Convert.ToInt32(dr["idusuario"]),
+                NombreUsuario = dr["nombreusuario"] == DBNull.Value ? "" : Convert.ToString(dr["nombreusuario"]),
+                Usuario = dr["usuario"] == DBNull.Value ? "" : Convert.ToString(dr["usuario"]),
+                Serie = Convert.ToString(dr["serie"]),
+                Nombre = Convert.ToString(dr["nombre"]),
+                Mensaje = dr["mensaje"] == DBNull.Value ? "" : Convert.ToString(dr["mensaje"]),
+                Ip = dr["ip"] == DBNull.Value ? "" : Convert.ToString(dr["ip"]),
+                Estado = Convert.ToString(dr["estado"]),
+                CreadaUtc = Convert.ToDateTime(dr["creadautc"]),
+                ResueltaPor = dr["resueltapor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["resueltapor"]),
+                ResueltaUtc = dr["resueltautc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["resueltautc"])
+            };
+        }
+
+        // Si ya hay una pendiente de la misma serie, la actualiza en vez de duplicar (el usuario puede
+        // volver a tocar el boton o corregir el nombre). Dos pasos en una conexion con tenant.
+        public int CrearSolicitud(Entidades.DispositivoSolicitud solicitud)
+        {
+            if (solicitud == null) throw new ArgumentNullException(nameof(solicitud));
+
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    int id;
+                    using (var cmd = new Npgsql.NpgsqlCommand(
+                        "SELECT id FROM dispositivosseguros_solicitudes WHERE idempresa = @idEmpresa AND serie = @serie AND estado = 'pendiente' ORDER BY id LIMIT 1;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("idEmpresa", solicitud.IdEmpresa);
+                        cmd.Parameters.AddWithValue("serie", solicitud.Serie ?? "");
+                        object existente = cmd.ExecuteScalar();
+                        id = existente == null || existente == DBNull.Value ? 0 : Convert.ToInt32(existente);
+                    }
+
+                    if (id > 0)
+                    {
+                        using (var cmd = new Npgsql.NpgsqlCommand(@"
+                            UPDATE dispositivosseguros_solicitudes
+                            SET idusuario = @idUsuario, nombre = @nombre, mensaje = @mensaje, ip = @ip, creadautc = @creadaUtc
+                            WHERE id = @id;", con, tx))
+                        {
+                            cmd.Parameters.AddWithValue("id", id);
+                            AgregarParamsSolicitud(cmd, solicitud);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    else
+                    {
+                        using (var cmd = new Npgsql.NpgsqlCommand(@"
+                            INSERT INTO dispositivosseguros_solicitudes (idempresa, idusuario, serie, nombre, mensaje, ip, estado, creadautc)
+                            VALUES (@idEmpresa, @idUsuario, @serie, @nombre, @mensaje, @ip, 'pendiente', @creadaUtc)
+                            RETURNING id;", con, tx))
+                        {
+                            cmd.Parameters.AddWithValue("idEmpresa", solicitud.IdEmpresa);
+                            cmd.Parameters.AddWithValue("serie", solicitud.Serie ?? "");
+                            AgregarParamsSolicitud(cmd, solicitud);
+                            id = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
+                    }
+
+                    tx.Commit();
+                    return id;
+                }
+                catch { tx.Rollback(); throw; }
+            }
+        }
+
+        private static void AgregarParamsSolicitud(Npgsql.NpgsqlCommand cmd, Entidades.DispositivoSolicitud s)
+        {
+            cmd.Parameters.AddWithValue("idUsuario", s.IdUsuario);
+            cmd.Parameters.AddWithValue("nombre", s.Nombre ?? "");
+            cmd.Parameters.AddWithValue("mensaje", string.IsNullOrWhiteSpace(s.Mensaje) ? (object)DBNull.Value : s.Mensaje);
+            cmd.Parameters.AddWithValue("ip", string.IsNullOrWhiteSpace(s.Ip) ? (object)DBNull.Value : s.Ip);
+            cmd.Parameters.AddWithValue("creadaUtc", s.CreadaUtc);
+        }
+
+        public List<Entidades.DispositivoSolicitud> ListarSolicitudesPendientes(int idEmpresa)
+        {
+            return DbPg.Reader(_connectionString, _idEmpresa,
+                SelectSolicitud + "WHERE s.idempresa = @idEmpresa AND s.estado = 'pendiente' ORDER BY s.creadautc DESC;",
+                MapearSolicitud,
+                p => p.AddWithValue("idEmpresa", idEmpresa));
+        }
+
+        public Entidades.DispositivoSolicitud ObtenerSolicitud(int id, int idEmpresa)
+        {
+            var lista = DbPg.Reader(_connectionString, _idEmpresa,
+                SelectSolicitud + "WHERE s.id = @id AND s.idempresa = @idEmpresa;",
+                MapearSolicitud,
+                p =>
+                {
+                    p.AddWithValue("id", id);
+                    p.AddWithValue("idEmpresa", idEmpresa);
+                });
+
+            return lista.Count > 0 ? lista[0] : null;
+        }
+
+        public void ResolverSolicitud(int id, int idEmpresa, string estado, int idUsuarioResuelve)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                UPDATE dispositivosseguros_solicitudes
+                SET estado = @estado, resueltapor = @resueltaPor, resueltautc = @resueltaUtc
+                WHERE id = @id AND idempresa = @idEmpresa AND estado = 'pendiente';",
+                p =>
+                {
+                    p.AddWithValue("id", id);
+                    p.AddWithValue("idEmpresa", idEmpresa);
+                    p.AddWithValue("estado", estado);
+                    p.AddWithValue("resueltaPor", idUsuarioResuelve);
+                    p.AddWithValue("resueltaUtc", DateTime.UtcNow);
+                });
+        }
     }
 }

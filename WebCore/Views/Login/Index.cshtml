@@ -13,6 +13,19 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <link href="@Url.Content("~/Content/css/carnisys-login.css")" rel="stylesheet" />
+    <style>
+        /* Lista de usuarios del login por CUIT (solo en dispositivo autorizado). */
+        .login-user-list { list-style: none; margin: .5rem 0 0; padding: 0; max-height: 11.5rem; overflow-y: auto; border: 1px solid #d9e2ef; border-radius: 10px; background: #fff; }
+        .login-user-list li { padding: .55rem .8rem; cursor: pointer; font-size: .95rem; color: #1f2d3d; border-bottom: 1px solid #eef2f8; }
+        .login-user-list li:last-child { border-bottom: 0; }
+        .login-user-list li:hover, .login-user-list li:focus { background: #eef4ff; outline: none; }
+        .login-user-list li.is-selected { background: #062d63; color: #fff; font-weight: 600; }
+        .login-user-list li[hidden] { display: none; }
+        .login-link-btn { background: none; border: 0; padding: 0; margin-top: .5rem; font-size: .85rem; color: #1f5fbf; cursor: pointer; text-decoration: underline; }
+        .login-unlock-form { margin-top: .75rem; }
+        .login-submit-secondary { background: transparent; border: 1px solid #062d63; color: #062d63; }
+        .login-submit-secondary:hover { background: #eef4ff; }
+    </style>
 </head>
 <body class="carnisys-login">
     <main class="login-page">
@@ -48,7 +61,14 @@
                 <div class="login-heading">
                     <span class="login-kicker">Acceso al sistema</span>
                     <h2 id="login-title">Bienvenido nuevamente</h2>
-                    <p>Ingresá con tus datos para continuar.</p>
+                    @if (!string.IsNullOrWhiteSpace(Model.EmpresaNombre))
+                    {
+                        <p>Ingresando a <strong>@Model.EmpresaNombre</strong>.</p>
+                    }
+                    else
+                    {
+                        <p>Ingresá con tus datos para continuar.</p>
+                    }
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(Model.Success))
@@ -86,31 +106,91 @@
                     </div>
                 }
 
-                <form asp-controller="Login" asp-action="Index" method="post" class="carnisys-login-form" novalidate="novalidate">
+                @* Login por CUIT (/Login/{cuit}, 2026-10-02): se postea a la misma URL para que, si hay
+                   un error, la pagina vuelva con la empresa y la lista de usuarios. *@
+                <form action="@(Model.Cuit.HasValue ? Url.Content("~/Login/" + Model.Cuit.Value) : Url.Action("Index", "Login"))" method="post" class="carnisys-login-form" novalidate="novalidate">
                     @Html.AntiForgeryToken()
                     @Html.HiddenFor(m => m.ReturnUrl)
                     @Html.HiddenFor(m => m.NumeroSerieDispositivo)
 
-                    <div class="login-field">
-                        @Html.LabelFor(m => m.Usuario)
-                        <div class="input-shell">
-                            <i class="far fa-user" aria-hidden="true"></i>
-                            @Html.TextBoxFor(m => m.Usuario, new { placeholder = "Usuario o email", autocomplete = "username", autofocus = "autofocus" })
+                    @if (Model.MostrarListaUsuarios)
+                    {
+                        @* Dispositivo ya autorizado para esta empresa: se elige el usuario de la lista (se
+                           busca por nombre) en vez de tipear el nombre de acceso. El valor real viaja en el
+                           input oculto "Usuario"; "Otro usuario" lo vuelve un campo de texto (para admin, que
+                           no figura en la lista, o para ingresar con el email). *@
+                        <div class="login-field" id="campoUsuarioLista">
+                            <label for="buscarUsuario">Usuario</label>
+                            <div class="input-shell">
+                                <i class="far fa-user" aria-hidden="true"></i>
+                                <input type="text" id="buscarUsuario" placeholder="Buscá tu nombre" autocomplete="off" autofocus="autofocus" />
+                            </div>
+                            <ul class="login-user-list" id="listaUsuarios" role="listbox" aria-label="Usuarios de la empresa">
+                                @foreach (var item in Model.UsuariosLista)
+                                {
+                                    <li role="option" tabindex="0" data-usuario="@item.Usuario" data-nombre="@item.Nombre.ToLowerInvariant()">@item.Nombre</li>
+                                }
+                            </ul>
+                            <button type="button" class="login-link-btn" id="btnOtroUsuario">Ingresar con otro usuario o email</button>
                         </div>
-                        @Html.ValidationMessageFor(m => m.Usuario, "", new { @class = "field-error" })
-                    </div>
+                        <div class="login-field" id="campoUsuarioTexto" hidden>
+                            @Html.LabelFor(m => m.Usuario)
+                            <div class="input-shell">
+                                <i class="far fa-user" aria-hidden="true"></i>
+                                @Html.TextBoxFor(m => m.Usuario, new { placeholder = "Usuario o email", autocomplete = "username", disabled = "disabled" })
+                            </div>
+                            <button type="button" class="login-link-btn" id="btnVolverLista">Elegir de la lista</button>
+                        </div>
+                        <input type="hidden" id="UsuarioElegido" name="Usuario" value="@Model.Usuario" />
+                    }
+                    else
+                    {
+                        <div class="login-field">
+                            @Html.LabelFor(m => m.Usuario)
+                            <div class="input-shell">
+                                <i class="far fa-user" aria-hidden="true"></i>
+                                @Html.TextBoxFor(m => m.Usuario, new { placeholder = "Usuario o email", autocomplete = "username", autofocus = "autofocus" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.Usuario, "", new { @class = "field-error" })
+                            @if (Model.Cuit.HasValue)
+                            {
+                                @* Solo con /Login/{cuit}: explica por que no hay lista (solo se muestra en un dispositivo
+                                   autorizado). No dice nada de la configuracion de la empresa ni de sus usuarios. *@
+                                <p class="login-hint">En un dispositivo autorizado por tu empresa podés elegir tu usuario de una lista.</p>
+                            }
+                        </div>
+                    }
 
                     <div class="login-field">
                         @Html.LabelFor(m => m.Clave)
                         <div class="input-shell">
                             <i class="fas fa-lock" aria-hidden="true"></i>
-                            @Html.PasswordFor(m => m.Clave, new { placeholder = "Contraseña", autocomplete = "current-password" })
+                            @Html.PasswordFor(m => m.Clave, new { placeholder = Model.DispositivoSeguro ? "Contraseña o clave rápida (PIN)" : "Contraseña", autocomplete = "current-password" })
                         </div>
                         @Html.ValidationMessageFor(m => m.Clave, "", new { @class = "field-error" })
+                        @if (Model.DispositivoSeguro)
+                        {
+                            <p class="login-hint">Este dispositivo está autorizado: si configuraste una clave rápida (PIN), podés usarla acá.</p>
+                        }
                     </div>
 
                     <button type="submit" class="login-submit">Ingresar <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
                 </form>
+
+                @if (Model.OfrecerDesbloqueo)
+                {
+                    @* El usuario quedo bloqueado por intentos fallidos: se ofrece desbloquearlo por mail
+                       (Fase 3 de docs/DECISIONS.md "Login por CUIT, clave rapida (PIN) y politica de clave"). *@
+                    <form asp-controller="Login" asp-action="SolicitarDesbloqueo" method="post" class="carnisys-login-form login-unlock-form" novalidate="novalidate">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="usuario" value="@Model.Usuario" />
+                        @if (Model.Cuit.HasValue)
+                        {
+                            <input type="hidden" name="cuit" value="@Model.Cuit.Value" />
+                        }
+                        <button type="submit" class="login-submit login-submit-secondary"><i class="fas fa-unlock" aria-hidden="true"></i> Desbloquear usuario por mail</button>
+                    </form>
+                }
 
                 @* Link a recuperar contraseña (2026-09-09, item 1 de los 12 pendientes -- ver
                    docs/DECISIONS.md "Batch E: recuperacion de contraseña"). Las clases
@@ -141,6 +221,77 @@
     {
         <script src="@Url.Content("~/Scripts/app/passkey.js")" asp-append-version="true"></script>
     }
+    @if (Model.MostrarListaUsuarios)
+    {
+        <script>
+            // Lista de usuarios del login por CUIT: filtro por nombre + seleccion. El valor real viaja en
+            // #UsuarioElegido (name="Usuario"); "Otro usuario" lo reemplaza por el campo de texto.
+            (function () {
+                var buscar = document.getElementById('buscarUsuario');
+                var lista = document.getElementById('listaUsuarios');
+                var elegido = document.getElementById('UsuarioElegido');
+                var campoLista = document.getElementById('campoUsuarioLista');
+                var campoTexto = document.getElementById('campoUsuarioTexto');
+                var texto = document.querySelector('#campoUsuarioTexto input');
+                var clave = document.getElementById('Clave');
+                if (!buscar || !lista || !elegido || !campoTexto || !texto) return;
+
+                var items = Array.prototype.slice.call(lista.querySelectorAll('li'));
+
+                function marcar(usuario) {
+                    elegido.value = usuario || '';
+                    items.forEach(function (li) {
+                        li.classList.toggle('is-selected', li.getAttribute('data-usuario') === usuario);
+                    });
+                }
+
+                function elegir(li) {
+                    marcar(li.getAttribute('data-usuario'));
+                    if (clave) clave.focus();
+                }
+
+                function modoTexto(activar) {
+                    campoLista.hidden = activar;
+                    campoTexto.hidden = !activar;
+                    texto.disabled = !activar;
+                    elegido.disabled = activar;
+                    if (activar) { texto.value = elegido.value; texto.focus(); }
+                }
+
+                buscar.addEventListener('input', function () {
+                    var q = buscar.value.trim().toLowerCase();
+                    items.forEach(function (li) {
+                        li.hidden = q !== '' && li.getAttribute('data-nombre').indexOf(q) === -1;
+                    });
+                });
+                // Enter en el buscador: elige el primer resultado visible (evita enviar el formulario vacio).
+                buscar.addEventListener('keydown', function (e) {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+                    var primero = items.filter(function (li) { return !li.hidden; })[0];
+                    if (primero) elegir(primero);
+                });
+                items.forEach(function (li) {
+                    li.addEventListener('click', function () { elegir(li); });
+                    li.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); elegir(li); }
+                    });
+                });
+
+                document.getElementById('btnOtroUsuario').addEventListener('click', function () { modoTexto(true); });
+                document.getElementById('btnVolverLista').addEventListener('click', function () { modoTexto(false); });
+
+                // Al volver con un error: si el usuario tipeado esta en la lista queda marcado; si no
+                // (admin / email), se abre directo el campo de texto con lo que habia escrito.
+                var previo = elegido.value;
+                if (previo) {
+                    var enLista = items.some(function (li) { return li.getAttribute('data-usuario') === previo; });
+                    if (enLista) { marcar(previo); if (clave) clave.focus(); }
+                    else { modoTexto(true); }
+                }
+            })();
+        </script>
+    }
     <script>
         (function () {
             var form = document.querySelector('form.carnisys-login-form');
@@ -158,7 +309,17 @@
 
             window.CarniSysPrintAgent.getDeviceId()
                 .done(function (resp) {
-                    if (resp && resp.ok && resp.deviceId) campo.value = resp.deviceId;
+                    if (resp && resp.ok && resp.deviceId) {
+                        campo.value = resp.deviceId;
+                        // Login por CUIT en una PC con agente: el servidor no conoce el ID de hardware hasta
+                        // ahora. Si todavia no hay lista de usuarios, se recarga UNA vez la misma pagina con el
+                        // ID para que, si el equipo esta autorizado, el servidor arme la lista.
+                        var esLoginPorCuit = @(Model.Cuit.HasValue ? "true" : "false");
+                        var hayLista = @(Model.MostrarListaUsuarios ? "true" : "false");
+                        if (esLoginPorCuit && !hayLista && location.search.indexOf('serie=') === -1 && !document.querySelector('.login-alert-error')) {
+                            location.replace(location.pathname + '?serie=' + encodeURIComponent(resp.deviceId));
+                        }
+                    }
                 })
                 .always(terminar);
 

@@ -810,6 +810,13 @@
                                             Mi huella
                                         </a>
                                     }
+                                    @if (!esAdmin)
+                                    {
+                                        <a class="dropdown-item" href="@Url.Action("ChangePin", "Login")" title="Un PIN corto para ingresar rápido desde dispositivos autorizados">
+                                            <i class="fas fa-th fa-sm fa-fw mr-2 text-gray-400"></i>
+                                            Clave rápida (PIN)
+                                        </a>
+                                    }
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="@Url.Action("ChangePassword", "Login")">
                                         <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>

@@ -106,6 +106,28 @@ namespace Entidades
         public bool Bloqueado { get; set; }
         public DateTime? FechaBloqueoUtc { get; set; }
 
+        // Bloqueo segun origen del intento (2026-10-02, ver docs/DECISIONS.md "Login por CUIT, clave
+        // rapida (PIN) y politica de clave"): los fallos desde un dispositivo NO seguro llevan su
+        // propio contador/bloqueo, asi un desconocido que adivina contrasenas desde cualquier lado
+        // solo bloquea los logins desde dispositivos no seguros de ese usuario; el dueño sigue
+        // entrando desde su dispositivo seguro. IntentosFallidosLogin/Bloqueado (arriba) pasan a
+        // contar solo los fallos desde dispositivo seguro (el propio usuario equivocandose) y,
+        // al llegar al maximo, bloquean la cuenta completa.
+        public int IntentosFallidosNoSeguro { get; set; }
+        public bool BloqueadoNoSeguro { get; set; }
+        public DateTime? FechaBloqueoNoSeguroUtc { get; set; }
+
+        // Clave rapida (PIN) de 4-6 digitos, valida SOLO desde un dispositivo seguro. Hash aparte
+        // de la clave: no es un prefijo de la clave segura ni se deriva de ella.
+        public string PinHash { get; set; }
+        public string PinSalt { get; set; }
+        public int PinHashIterations { get; set; }
+        public DateTime? PinUpdatedAtUtc { get; set; }
+        public bool TienePin
+        {
+            get { return !string.IsNullOrWhiteSpace(PinHash) && !string.IsNullOrWhiteSpace(PinSalt); }
+        }
+
         public Entidades.Sucursal Sucursal { get; set; }
         public string SucursalNombre { get; set; }
         public List<Entidades.Sucursal> ListaSucursales{ get; set; }

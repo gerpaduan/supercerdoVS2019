@@ -30,7 +30,15 @@ namespace Contratos
         void setPermitirLoginFueraSucursal(Entidades.Usuario oUsuario);
         void setEsUsuarioProduccion(Entidades.Usuario oUsuario);
         void setRequiereDispositivoSeguro(Entidades.Usuario oUsuario);
+        // Persiste ambos contadores/bloqueos (por origen: dispositivo seguro y no seguro).
         void ActualizarEstadoBloqueoLogin(Entidades.Usuario oUsuario, bool sinRestriccionDeTenant = false);
+        // Clave rapida (PIN): hash PBKDF2 aparte de la clave. hash vacio = quitar el PIN.
+        void ActualizarPin(int idUsuario, string pinHash, string pinSalt, int pinHashIterations, bool sinRestriccionDeTenant = false);
+        // Usuarios activos de una empresa (admin=false: los NO admin; admin=true: los admin de la
+        // empresa), solo datos basicos (id, nombre, usuario, email):
+        // para la lista del login por CUIT y el aviso a admins. Sin permisos ni clave (a proposito: evita el N+1 de
+        // permisos y que el hash/clave salgan de la capa de datos). Cruza RLS con el rol de login.
+        List<Entidades.Usuario> ListarActivosBasico(int idEmpresa, bool admin);
         List<Entidades.Usuario> BuscarUsuariosPorIdentificador(string identificador, bool soloActivos);
         void ActualizarPasswordSeguro(int idUsuario, string claveLegacy, string passwordHash, string passwordSalt, int passwordHashIterations);
         void ActualizarPasswordWebSeguro(int idUsuario, string passwordHash, string passwordSalt, int passwordHashIterations, bool sinRestriccionDeTenant = false);

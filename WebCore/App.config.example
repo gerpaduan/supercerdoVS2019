@@ -29,6 +29,15 @@
          SQL Server queda solo como legado -- el switch (WebCore/Infrastructure/NegocioFactory.cs)
          se mantiene por compatibilidad, pero el default real es "Postgres". -->
     <add key="DataEngine" value="Postgres" />
+    <!-- Seguridad del login (2026-10-02, ver docs/DECISIONS.md "Login por CUIT, clave rapida (PIN) y
+         politica de clave"). TrustedProxies: IPs o redes (ip o ip/prefijo, separadas por coma) de
+         proxies de confianza ADEMAS de loopback y redes privadas, que ya se confian solos. Solo
+         hace falta si el reverse proxy (Caddy / IIS+ARR / balanceador) esta en una IP publica
+         distinta de la app. Sin esto bien configurado, el limite por IP ve la IP del proxy para
+         todos los usuarios. Vacio = solo loopback y redes privadas (lo normal en Docker/misma maquina). -->
+    <add key="Security:TrustedProxies" value="" />
+    <!-- Intentos fallidos de contraseña por usuario antes del bloqueo (default 7) y del limite por IP
+         (Security:LoginMaxAttempts, default 7). -->
     <!-- Login por huella (passkeys WebAuthn, 2026-09-21, ver docs/DECISIONS.md). Solo Postgres.
          Requiere HTTPS con un dominio real (no una IP) o localhost. ServerDomain = dominio sin
          esquema ni puerto; Origins = origenes completos separados por coma. Con Enabled=false (o

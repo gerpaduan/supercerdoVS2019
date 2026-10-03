@@ -119,6 +119,10 @@
                                 @Html.PasswordFor(m => m.Clave, new { @class = "form-control", autocomplete = "new-password", placeholder = Model.EsEdicion ? "Dejar vacia para mantener la actual" : "" })
                             }
                             @Html.ValidationMessageFor(m => m.Clave, "", new { @class = "text-danger small" })
+                            @if (!Model.SoloLectura)
+                            {
+                                <small class="form-text text-muted">Mínimo 8 caracteres, con letra, número y un carácter especial. Sin espacios.</small>
+                            }
                         </div>
                     </div>
                     <div class="col-12 col-md-4">

@@ -395,12 +395,71 @@ namespace WebCore.Controllers
                 return RedirectToAction("Index");
             }
 
+            // Limpia ambos bloqueos/contadores (seguro y no seguro) y deja constancia en la
+            // auditoria de accesos de quien lo hizo (2026-10-02, ver docs/DECISIONS.md "Login por CUIT,
+            // clave rapida (PIN) y politica de clave").
             _oUsuarioN.DesbloquearUsuario(usuario.Id);
+            RegistrarEventoAuditoria(usuario, "Usuario desbloqueado por administrador (" + (_usuarioActual.User ?? "") + ")");
 
             TempData["AlertType"] = "success";
             TempData["AlertTitle"] = "Usuarios";
             TempData["AlertMsg"] = "La cuenta se desbloqueó correctamente.";
             return RedirectToAction("Index");
+        }
+
+        // Quita la clave rapida (PIN) de un usuario (por ejemplo si la olvido o se sospecha que otro la
+        // conoce): el usuario sigue entrando con su contraseña y puede configurar un PIN nuevo.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult QuitarPin(int id)
+        {
+            if (!PuedeAdministrarUsuarios(_usuarioActual))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sin permiso";
+                TempData["AlertMsg"] = "No tiene permisos para modificar usuarios.";
+                return RedirectToAction("Index");
+            }
+
+            var usuario = ObtenerUsuarioSeguro(id);
+            if (usuario == null)
+            {
+                TempData["AlertType"] = "error";
+                TempData["AlertTitle"] = "No encontrado";
+                TempData["AlertMsg"] = "No se encontró el usuario seleccionado.";
+                return RedirectToAction("Index");
+            }
+
+            _oUsuarioN.QuitarPin(usuario.Id);
+            RegistrarEventoAuditoria(usuario, "Clave rápida (PIN) eliminada por administrador (" + (_usuarioActual.User ?? "") + ")");
+
+            TempData["AlertType"] = "success";
+            TempData["AlertTitle"] = "Usuarios";
+            TempData["AlertMsg"] = "Se quitó la clave rápida del usuario.";
+            return RedirectToAction("Index");
+        }
+
+        // Deja constancia en la auditoria de accesos (loginubicacionlog). Nunca debe impedir la
+        // accion del admin: si falla, solo se deja la excepcion en el log.
+        private void RegistrarEventoAuditoria(Entidades.Usuario usuario, string motivo)
+        {
+            try
+            {
+                _oUsuarioN.RegistrarLoginUbicacion(new Entidades.LoginUbicacionLog
+                {
+                    IdUsuario = usuario.Id,
+                    IdSucursal = usuario.IdSucursal,
+                    FechaHora = DateTime.Now,
+                    Permitido = true,
+                    Motivo = motivo.Length > 300 ? motivo.Substring(0, 300) : motivo,
+                    Ip = WebCore.Helpers.ClientIp.Obtener(HttpContext)
+                });
+            }
+            catch (Exception ex)
+            {
+                HttpContext.RequestServices.GetRequiredService<ILogger<UsuariosController>>()
+                    .LogWarning(ex, "No se pudo registrar el evento de auditoria del usuario {IdUsuario}.", usuario.Id);
+            }
         }
 
         private bool PuedeVerUsuarios(Entidades.Usuario usuarioActual)
@@ -521,13 +580,13 @@ namespace WebCore.Controllers
             if (model.Id == 0 && string.IsNullOrWhiteSpace(model.Clave))
                 ModelState.AddModelError("Clave", "La clave es obligatoria para un usuario nuevo.");
 
-            if (model.Clave.Contains(" "))
-                ModelState.AddModelError("Clave", "La clave no puede contener espacios en blanco.");
-
+            // Politica de clave segura (ver Negocio.PoliticaClave): aplica a claves nuevas o
+            // cambiadas; en una edicion sin clave nueva no se toca la existente.
             if (!string.IsNullOrWhiteSpace(model.Clave))
             {
-                if (model.Clave.Length < 1)
-                    ModelState.AddModelError("Clave", "La clave debe tener al menos 1 caracter.");
+                string? errorClave = Negocio.PoliticaClave.ValidarClave(model.Clave, model.Usuario);
+                if (errorClave != null)
+                    ModelState.AddModelError("Clave", errorClave);
             }
 
             if (!string.IsNullOrWhiteSpace(model.Email))
@@ -584,7 +643,9 @@ namespace WebCore.Controllers
                 IdSucursalUser = usuario.IdSucursal,
                 SucursalNombre = usuario.Sucursal != null ? (usuario.Sucursal.SucursalNombre ?? "") : (usuario.SucursalNombre ?? ""),
                 IdEmpresa = usuario.IdEmpresa,
-                Bloqueado = usuario.Bloqueado
+                Bloqueado = usuario.Bloqueado,
+                BloqueadoNoSeguro = usuario.BloqueadoNoSeguro,
+                TienePin = usuario.TienePin
             };
         }
 

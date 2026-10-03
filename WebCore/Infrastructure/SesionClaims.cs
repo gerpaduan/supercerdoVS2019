@@ -12,5 +12,8 @@ namespace WebCore.Infrastructure
         public const string EsUsuarioProduccion = "EsUsuarioProduccion";
         public const string PermitirLoginFueraSucursal = "PermitirLoginFueraSucursal";
         public const string NombreCompleto = "NombreCompleto";
+        // Como se autentico en esta sesion: "clave", "pin" (clave rapida, solo dispositivo seguro) o
+        // "huella" (passkey). Las acciones sensibles piden clave completa si fue "pin".
+        public const string AuthMethod = "AuthMethod";
     }
 }

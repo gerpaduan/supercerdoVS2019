@@ -124,7 +124,7 @@ namespace WebCore.Helpers
 
         private static int GetMaxAttempts()
         {
-            return GetInt("Security:LoginMaxAttempts", 5, 3, 20);
+            return GetInt("Security:LoginMaxAttempts", 7, 3, 20);
         }
 
         private static TimeSpan GetWindow()

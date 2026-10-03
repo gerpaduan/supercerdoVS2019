@@ -25,7 +25,7 @@
                 </ul>
 
                 <h6 class="mt-3">Qué ve el empleado y cómo autoriza su dispositivo</h6>
-                <p class="mb-1">Cuando pone bien su contraseña desde un dispositivo no autorizado, aparece la pantalla <em>“Este dispositivo no está autorizado”</em> con dos caminos:</p>
+                <p class="mb-1">Cuando pone bien su contraseña desde un dispositivo no autorizado, aparece la pantalla <em>“Este dispositivo no está autorizado”</em> con tres caminos:</p>
                 <ul>
                     <li>
                         <strong>Desde una PC con el agente de impresión CarniSys:</strong> la pantalla le muestra el <em>código de ese equipo</em> (ID de hardware). Se lo pasa a un administrador, que lo carga en
@@ -34,6 +34,9 @@
                     <li>
                         <strong>Desde un celular, o una PC sin agente:</strong> el sistema le envía un <em>código de 6 dígitos a su mail</em>. Lo escribe en la misma pantalla, le pone un nombre al dispositivo (por ejemplo “Celular de Juan”) y queda autorizado <strong>sin que intervenga un administrador</strong>.
                         Requiere que el usuario tenga su <strong>mail cargado</strong> y que el envío de mails esté configurado en el servidor.
+                    </li>
+                    <li>
+                        <strong>Pedirle autorización al administrador (sirve en cualquier dispositivo, tenga o no mail):</strong> el empleado le pone un nombre al dispositivo y envía la solicitud. Te llega un aviso por mail (si hay envío de mails configurado) y la ves en <em>Dispositivos seguros</em> como <em>solicitud pendiente</em>: podés <strong>aprobarla</strong> (editando el nombre si querés) o <strong>rechazarla</strong>. Al aprobar, el dispositivo queda dado de alta con origen <em>Solicitud</em> y el empleado ya puede ingresar.
                     </li>
                 </ul>
 
@@ -51,6 +54,14 @@
                     <li>La autorización es <strong>por navegador</strong>: Chrome y Edge de la misma PC son dos dispositivos distintos. Si el empleado borra los datos del navegador o usa una ventana de incógnito, tiene que autorizarlo de nuevo.</li>
                     <li>Esto frena a personas externas; un equipo ya autorizado sigue permitiendo el acceso a quien lo use. Si perdés un equipo o un empleado se va, bloqueá sus dispositivos.</li>
                     <li>Para apagarlo en cualquier momento, desactivá el switch o el tilde: es inmediato y nadie queda sin acceso.</li>
+                </ul>
+
+                <h6 class="mt-3">Login por CUIT y clave rápida (PIN)</h6>
+                <ul>
+                    <li>Cada empresa tiene su propia dirección de ingreso: <code>/Login/&lt;CUIT&gt;</code>. Desde un <strong>dispositivo autorizado</strong>, el empleado elige su nombre de una lista (en vez de tipear su usuario) y puede ingresar con una <strong>clave rápida (PIN)</strong> de 4 a 6 dígitos que configura él mismo desde su menú de usuario.</li>
+                    <li>Desde un dispositivo <strong>no autorizado</strong> no se muestra ninguna lista (la dirección con el CUIT es pública) y el PIN no sirve: solo la contraseña completa.</li>
+                    <li>Los administradores no usan PIN. Si un empleado olvida el suyo, podés quitárselo desde <em>Usuarios</em>.</li>
+                    <li>Tras <strong>7 intentos fallidos</strong> el usuario se bloquea. Si los intentos fueron desde un dispositivo no autorizado, solo se bloquea el ingreso desde ese tipo de dispositivos (el empleado sigue entrando desde el suyo). El empleado puede desbloquearse solo con un mail de desbloqueo; vos también podés hacerlo desde <em>Usuarios</em>. Todo queda en <em>Auditoría de accesos</em>.</li>
                 </ul>
             </div>
             <div class="modal-footer">

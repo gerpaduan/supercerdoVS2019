@@ -334,6 +334,12 @@
                         <span class="dropdown-item disabled" title="Para cambiar de sucursal, cerrá el punto de venta y hacelo desde el menú principal.">
                             <i class="fas fa-store fa-sm fa-fw mr-2"></i>@sucursalActualNombrePOS
                         </span>
+                        @if (usuarioActualPOS != null && !usuarioActualPOS.Admin)
+                        {
+                            <a class="dropdown-item" href="@Url.Action("ChangePin", "Login")">
+                                <i class="fas fa-th fa-sm fa-fw mr-2"></i>Clave rápida (PIN)
+                            </a>
+                        }
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="@Url.Action("ChangePassword", "Login")">
                             <i class="fas fa-key fa-sm fa-fw mr-2"></i>Cambiar clave

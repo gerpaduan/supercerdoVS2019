@@ -242,6 +242,90 @@ namespace Datos
                     p.Add("@fechaBloqueoUtc", SqlDbType.DateTime2).Value = (object)oUsuario.FechaBloqueoUtc ?? DBNull.Value;
                 }
             );
+
+            // Contadores por origen (dispositivo no seguro): columnas agregadas por el script
+            // 20261002-Alter_Usuarios_LoginPorCuit_Pin.sql. Si todavia no estan aplicadas se omite
+            // (el bloqueo por cuenta de arriba sigue funcionando como antes).
+            if (!ExisteColumnaUsuarios("intentosFallidosNoSeguro"))
+                return;
+
+            const string sqlNoSeguro = @"
+                UPDATE Usuarios
+                SET intentosFallidosNoSeguro = @intentosFallidosNoSeguro,
+                    bloqueadoNoSeguro = @bloqueadoNoSeguro,
+                    fechaBloqueoNoSeguroUtc = @fechaBloqueoNoSeguroUtc
+                WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sqlNoSeguro,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = oUsuario.Id;
+                    p.Add("@intentosFallidosNoSeguro", SqlDbType.Int).Value = oUsuario.IntentosFallidosNoSeguro;
+                    p.Add("@bloqueadoNoSeguro", SqlDbType.Bit).Value = oUsuario.BloqueadoNoSeguro;
+                    p.Add("@fechaBloqueoNoSeguroUtc", SqlDbType.DateTime2).Value = (object)oUsuario.FechaBloqueoNoSeguroUtc ?? DBNull.Value;
+                }
+            );
+        }
+
+        // Clave rapida (PIN): pinHash vacio = quitar el PIN. sinRestriccionDeTenant: ignorado
+        // (una sola empresa por base, ver getUsuarioById).
+        public void ActualizarPin(int idUsuario, string pinHash, string pinSalt, int pinHashIterations, bool sinRestriccionDeTenant = false)
+        {
+            if (!ExisteColumnaUsuarios("pinHash"))
+                throw new InvalidOperationException("La base no tiene las columnas de clave rapida (PIN). Aplicar Datos/DB-Procedures/20261002-Alter_Usuarios_LoginPorCuit_Pin.sql.");
+
+            const string sql = @"
+                UPDATE Usuarios
+                SET pinHash = @pinHash,
+                    pinSalt = @pinSalt,
+                    pinHashIterations = @pinHashIterations,
+                    pinUpdatedAtUtc = CASE WHEN @pinHash = '' THEN NULL ELSE SYSUTCDATETIME() END
+                WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+                    p.Add("@pinHash", SqlDbType.NVarChar, 256).Value = pinHash ?? string.Empty;
+                    p.Add("@pinSalt", SqlDbType.NVarChar, 256).Value = pinSalt ?? string.Empty;
+                    p.Add("@pinHashIterations", SqlDbType.Int).Value = pinHashIterations;
+                }
+            );
+        }
+
+        // Lista liviana para el login por CUIT (ver Contratos.IUsuarioRepository).
+        public List<Entidades.Usuario> ListarActivosBasico(int idEmpresa, bool admin)
+        {
+            const string sql = @"
+                SELECT id, nombre, usuario, email, idEmpresa
+                FROM Usuarios
+                WHERE idEmpresa = @idEmpresa AND activo = 1 AND admin = @admin
+                ORDER BY nombre;";
+
+            return Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr => new Entidades.Usuario
+                {
+                    Id = Convert.ToInt32(dr["id"]),
+                    Nombre = dr["nombre"] == DBNull.Value ? "" : Convert.ToString(dr["nombre"]),
+                    User = dr["usuario"] == DBNull.Value ? "" : Convert.ToString(dr["usuario"]),
+                    Email = dr["email"] == DBNull.Value ? "" : Convert.ToString(dr["email"]),
+                    IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"])
+                },
+                setParams: p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
+                    p.Add("@admin", SqlDbType.Bit).Value = admin;
+                }
+            );
         }
 
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
@@ -695,7 +779,14 @@ namespace Datos
                 RequiereDispositivoSeguro = GetOptionalBool(dr, "RequiereDispositivoSeguro"),
                 IntentosFallidosLogin = GetOptionalInt(dr, "intentosFallidosLogin"),
                 Bloqueado = GetOptionalBool(dr, "bloqueado"),
-                FechaBloqueoUtc = GetOptionalDateTime(dr, "fechaBloqueoUtc")
+                FechaBloqueoUtc = GetOptionalDateTime(dr, "fechaBloqueoUtc"),
+                IntentosFallidosNoSeguro = GetOptionalInt(dr, "intentosFallidosNoSeguro"),
+                BloqueadoNoSeguro = GetOptionalBool(dr, "bloqueadoNoSeguro"),
+                FechaBloqueoNoSeguroUtc = GetOptionalDateTime(dr, "fechaBloqueoNoSeguroUtc"),
+                PinHash = GetOptionalString(dr, "pinHash"),
+                PinSalt = GetOptionalString(dr, "pinSalt"),
+                PinHashIterations = GetOptionalInt(dr, "pinHashIterations"),
+                PinUpdatedAtUtc = GetOptionalDateTime(dr, "pinUpdatedAtUtc")
             };
         }
 

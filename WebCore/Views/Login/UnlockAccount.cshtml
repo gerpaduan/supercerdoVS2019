@@ -1,0 +1,68 @@
+@model WebCore.Models.UnlockAccountVm
+@{
+    Layout = null;
+}
+@* Desbloqueo de usuario por mail (2026-10-02, ver docs/DECISIONS.md "Login por CUIT, clave rapida
+   (PIN) y politica de clave"). Port de Web/Views/Login/UnlockAccount.cshtml al diseño de
+   carnisys-login.css. El link del mail solo MUESTRA esta pantalla; el desbloqueo ocurre con el
+   boton (POST), asi una previsualizacion del cliente de correo no desbloquea sola. *@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#062d63">
+    <title>Desbloquear usuario - CARNISYS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link href="@Url.Content("~/Content/css/carnisys-login.css")" rel="stylesheet" />
+</head>
+<body class="carnisys-login">
+    <main class="login-page">
+        <section class="login-brand-panel" aria-label="Acerca de CARNISYS">
+            <a href="@Url.Action("Index", "Landing")" class="login-brand" aria-label="Volver al inicio de CARNISYS">
+                <img src="@Url.Content("~/Content/img/CarniSys_Login.png")" alt="CARNISYS" />
+            </a>
+
+            <div class="brand-content">
+                <span class="brand-eyebrow"><i class="fas fa-shield-alt" aria-hidden="true"></i> Acceso seguro</span>
+                <h1>Volvé a<br /><strong>ingresar.</strong></h1>
+                <p>Este enlace es de un solo uso y vence a los pocos minutos, por tu seguridad.</p>
+            </div>
+
+            <div class="brand-footer">
+                <i class="fas fa-store" aria-hidden="true"></i>
+                <span>Creado desde la experiencia real de comercio.</span>
+            </div>
+        </section>
+
+        <section class="login-form-panel" aria-labelledby="unlock-title">
+            <div class="login-form-wrap">
+                <a href="@Url.Action("Index", "Login")" class="back-home"><i class="fas fa-arrow-left" aria-hidden="true"></i> Volver al login</a>
+
+                <div class="login-heading">
+                    <span class="login-kicker">Acceso al sistema</span>
+                    <h2 id="unlock-title">Desbloquear usuario</h2>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
+                {
+                    <div class="login-alert login-alert-error" role="alert"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> @Model.Mensaje</div>
+                }
+
+                @if (Model.TokenValido)
+                {
+                    <p class="login-hint">Tu usuario se bloqueó por varios intentos fallidos de contraseña. Tocá el botón para desbloquearlo.</p>
+
+                    <form asp-controller="Login" asp-action="UnlockAccount" method="post" class="carnisys-login-form" novalidate="novalidate">
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(m => m.Token)
+                        <button type="submit" class="login-submit">Desbloquear mi usuario <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+                    </form>
+                }
+            </div>
+        </section>
+    </main>
+</body>
+</html>

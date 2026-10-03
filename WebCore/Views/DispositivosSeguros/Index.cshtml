@@ -9,7 +9,7 @@
             <p class="text-muted mb-0">
                 Son los dispositivos desde los que se puede ingresar cuando la empresa (o el usuario) exige <strong>dispositivo seguro</strong>
                 (<em>Mi Empresa</em> / edición de usuario). Además, no quedan bloqueados por intentos fallidos de login desde su IP;
-                el bloqueo por cuenta (5 errores de contraseña) sigue aplicando igual.
+                el bloqueo por usuario (7 errores de contraseña) sigue aplicando igual.
                 Los celulares y navegadores los autoriza cada empleado con un código enviado a su mail (origen <em>Autoservicio</em>);
                 desde acá podés bloquear cualquiera.
             </p>
@@ -56,6 +56,64 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    }
+
+    @* Solicitudes de autorizacion de dispositivo (2026-10-02, Fase 1c): las crean los usuarios desde la
+       pantalla "dispositivo no autorizado" del login (ya pusieron bien su clave). Aprobar da de alta el
+       dispositivo; el nombre se puede editar antes. *@
+    @if (Model.PuedeAdministrar && Model.Solicitudes.Count > 0)
+    {
+        <div class="card shadow-sm mb-3 border-warning">
+            <div class="card-header bg-light py-2">
+                <strong><i class="fas fa-user-clock mr-1"></i> Solicitudes de autorización pendientes</strong>
+                <span class="badge badge-warning ml-1">@Model.Solicitudes.Count</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Dispositivo / mensaje</th>
+                                <th style="width:120px;">IP</th>
+                                <th style="width:140px;">Pedida</th>
+                                <th style="width:360px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var solicitud in Model.Solicitudes)
+                            {
+                                <tr>
+                                    <td>@solicitud.NombreUsuario <span class="text-muted small">(@solicitud.Usuario)</span></td>
+                                    <td>
+                                        @solicitud.Nombre
+                                        @if (!string.IsNullOrWhiteSpace(solicitud.Mensaje))
+                                        {
+                                            <div class="small text-muted">@solicitud.Mensaje</div>
+                                        }
+                                    </td>
+                                    <td>@solicitud.Ip</td>
+                                    <td>@DateTime.SpecifyKind(solicitud.CreadaUtc, DateTimeKind.Utc).ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <form asp-controller="DispositivosSeguros" asp-action="AprobarSolicitud" method="post" class="form-inline d-inline-flex mb-1">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@solicitud.Id" />
+                                            <input type="text" name="descripcion" class="form-control form-control-sm mr-1" maxlength="100" value="@solicitud.Nombre" title="Nombre con el que queda el dispositivo (podés editarlo)" />
+                                            <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check mr-1"></i> Aprobar</button>
+                                        </form>
+                                        <form asp-controller="DispositivosSeguros" asp-action="RechazarSolicitud" method="post" class="d-inline mb-1">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@solicitud.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Rechazar esta solicitud?');"><i class="fas fa-times mr-1"></i> Rechazar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     }

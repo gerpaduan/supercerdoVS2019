@@ -27,5 +27,14 @@ namespace Contratos
 
         // true solo si existe, no esta bloqueado Y esta habilitado para fichaje.
         bool EsFichajeHabilitado(string numeroSerie, int idEmpresa);
+
+        // Solicitudes de autorizacion de dispositivo al administrador (2026-10-02, Fase 1c).
+        // CrearSolicitud devuelve el Id; si ya hay una PENDIENTE de la misma serie para esa empresa
+        // no crea otra (actualiza nombre/mensaje/usuario de la existente y devuelve su Id).
+        int CrearSolicitud(Entidades.DispositivoSolicitud solicitud);
+        List<Entidades.DispositivoSolicitud> ListarSolicitudesPendientes(int idEmpresa);
+        Entidades.DispositivoSolicitud ObtenerSolicitud(int id, int idEmpresa);
+        // estado: aprobada | rechazada. Solo resuelve una solicitud todavia pendiente.
+        void ResolverSolicitud(int id, int idEmpresa, string estado, int idUsuarioResuelve);
     }
 }

@@ -408,6 +408,14 @@ namespace WebCore.Controllers
             if (!string.IsNullOrWhiteSpace(model.Clave) && !string.Equals(model.Clave, model.ConfirmarClave, StringComparison.Ordinal))
                 ModelState.AddModelError("ConfirmarClave", "La confirmacion de clave no coincide.");
 
+            // Politica de clave segura (ver Negocio.PoliticaClave).
+            if (!string.IsNullOrWhiteSpace(model.Clave))
+            {
+                string? errorClave = Negocio.PoliticaClave.ValidarClave(model.Clave, model.Usuario);
+                if (errorClave != null)
+                    ModelState.AddModelError("Clave", errorClave);
+            }
+
             if (_repo.ExisteUsuario(model.Usuario, model.Id))
                 ModelState.AddModelError("Usuario", "Ya existe un usuario con ese nombre de acceso.");
 

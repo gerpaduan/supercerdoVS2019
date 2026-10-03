@@ -168,7 +168,7 @@
                     <label class="custom-control-label" for="ExigirDispositivoSeguro">@Html.DisplayNameFor(m => m.ExigirDispositivoSeguro)</label>
                 </div>
                 <p class="text-muted small mb-0 mt-1">
-                    Si está activado, los empleados (no administradores) solo pueden iniciar sesión desde un dispositivo autorizado: una PC cargada en <em>Dispositivos seguros</em> o un celular/navegador que el propio empleado autoriza con un código enviado a su mail. Los administradores siempre pueden ingresar. <strong>Antes de activarlo, verificá que cada empleado tenga su mail cargado</strong> (sin mail no puede autorizar un celular). También podés exigirlo solo a usuarios puntuales desde la edición de cada usuario.
+                    Activado: los empleados (no administradores) solo pueden iniciar sesión desde un dispositivo autorizado: una PC cargada en <em>Dispositivos seguros</em>, un celular/navegador que el propio empleado autoriza con un código enviado a su mail, o uno que vos aprobás cuando el empleado te lo pide (aparece en <em>Dispositivos seguros</em> como solicitud pendiente). Desactivado: los empleados pueden ingresar desde cualquier dispositivo con su contraseña. En ambos casos los administradores siempre pueden ingresar, y la lista de usuarios y la clave rápida (PIN) del login por CUIT (<code>/Login/&lt;CUIT&gt;</code>) solo se habilitan en dispositivos autorizados. <strong>Antes de activarlo, verificá que cada empleado tenga su mail cargado o avisales que te pidan la autorización</strong>. También podés exigirlo solo a usuarios puntuales desde la edición de cada usuario.
                 </p>
 
                 <div class="mt-3 d-flex flex-wrap align-items-center">

@@ -34,6 +34,21 @@ namespace WebCore.Controllers
                 Items = _oDispositivoN.Listar(_empresa.IdEmpresa)
             };
 
+            // Solicitudes pendientes (Fase 1c). Solo las ve quien puede administrar. Si la tabla todavia no
+            // existe en este servidor (script pendiente), la pantalla sigue funcionando sin la seccion.
+            if (model.PuedeAdministrar)
+            {
+                try
+                {
+                    model.Solicitudes = _oDispositivoN.ListarSolicitudesPendientes(_empresa.IdEmpresa);
+                }
+                catch (Exception ex)
+                {
+                    HttpContext.RequestServices.GetRequiredService<ILogger<DispositivosSegurosController>>()
+                        .LogWarning(ex, "No se pudieron listar las solicitudes de dispositivo pendientes.");
+                }
+            }
+
             ViewBag.Title = "Dispositivos seguros";
             ViewBag.Seccion = "Dispositivos seguros";
             return View("~/Views/DispositivosSeguros/Index.cshtml", model);
@@ -125,6 +140,81 @@ namespace WebCore.Controllers
             TempData["AlertTitle"] = "Dispositivos seguros";
             TempData["AlertMsg"] = bloquear ? "El dispositivo se bloqueó: ya no puede usarse para ingresar." : "El dispositivo se desbloqueó.";
             return RedirectToAction("Index");
+        }
+
+        // Solicitudes de autorizacion de dispositivo (2026-10-02, Fase 1c, ver docs/DECISIONS.md "Login
+        // por CUIT, clave rapida (PIN) y politica de clave"). Aprobar da de alta el dispositivo
+        // (Origen="Solicitud"); la descripcion se puede editar antes de aprobar. Ambas acciones dejan
+        // constancia en la auditoria de accesos.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AprobarSolicitud(int id, string? descripcion)
+        {
+            if (!PuedeAdministrar(_usuarioActual))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sin permiso";
+                TempData["AlertMsg"] = "No tiene permisos para autorizar dispositivos.";
+                return RedirectToAction("Index");
+            }
+
+            var solicitud = _oDispositivoN.ObtenerSolicitud(id, _empresa.IdEmpresa);
+            bool aprobada = _oDispositivoN.AprobarSolicitud(id, _empresa.IdEmpresa, _usuarioActual.Id, descripcion ?? "");
+            if (aprobada && solicitud != null)
+                RegistrarEventoSolicitud(solicitud, "Dispositivo autorizado por administrador (" + (_usuarioActual.User ?? "") + "): " + solicitud.Nombre);
+
+            TempData["AlertType"] = aprobada ? "success" : "warning";
+            TempData["AlertTitle"] = "Dispositivos seguros";
+            TempData["AlertMsg"] = aprobada
+                ? "Dispositivo autorizado. El usuario ya puede ingresar desde ahí."
+                : "No se pudo aprobar: la solicitud ya fue resuelta o el dispositivo está bloqueado (desbloquealo primero desde el listado).";
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RechazarSolicitud(int id)
+        {
+            if (!PuedeAdministrar(_usuarioActual))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sin permiso";
+                TempData["AlertMsg"] = "No tiene permisos para rechazar solicitudes.";
+                return RedirectToAction("Index");
+            }
+
+            var solicitud = _oDispositivoN.ObtenerSolicitud(id, _empresa.IdEmpresa);
+            bool rechazada = _oDispositivoN.RechazarSolicitud(id, _empresa.IdEmpresa, _usuarioActual.Id);
+            if (rechazada && solicitud != null)
+                RegistrarEventoSolicitud(solicitud, "Solicitud de dispositivo rechazada por administrador (" + (_usuarioActual.User ?? "") + "): " + solicitud.Nombre);
+
+            TempData["AlertType"] = rechazada ? "success" : "warning";
+            TempData["AlertTitle"] = "Dispositivos seguros";
+            TempData["AlertMsg"] = rechazada ? "Solicitud rechazada." : "La solicitud ya fue resuelta.";
+            return RedirectToAction("Index");
+        }
+
+        // Auditoria de accesos (loginubicacionlog), a nombre del usuario que hizo la solicitud: asi el
+        // listado de "Auditoria de accesos" muestra quien pidio y quien resolvio. Nunca debe impedir la
+        // accion del admin: si falla, solo se deja en el log.
+        private void RegistrarEventoSolicitud(Entidades.DispositivoSolicitud solicitud, string motivo)
+        {
+            try
+            {
+                WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa).RegistrarLoginUbicacion(new Entidades.LoginUbicacionLog
+                {
+                    IdUsuario = solicitud.IdUsuario,
+                    FechaHora = DateTime.Now,
+                    Permitido = true,
+                    Motivo = motivo.Length > 300 ? motivo.Substring(0, 300) : motivo,
+                    Ip = WebCore.Helpers.ClientIp.Obtener(HttpContext)
+                });
+            }
+            catch (Exception ex)
+            {
+                HttpContext.RequestServices.GetRequiredService<ILogger<DispositivosSegurosController>>()
+                    .LogWarning(ex, "No se pudo registrar el evento de auditoria de la solicitud {IdSolicitud}.", solicitud.Id);
+            }
         }
 
         // Fichaje de jornada (2026-09-29, ver docs/DECISIONS.md): independiente de CambiarBloqueo.

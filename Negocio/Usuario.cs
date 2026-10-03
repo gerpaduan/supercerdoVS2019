@@ -118,6 +118,13 @@ namespace Negocio
                     user.IntentosFallidosLogin = GetOptionalInt(drUsuario, "intentosFallidosLogin");
                     user.Bloqueado = GetOptionalBool(drUsuario, "bloqueado");
                     user.FechaBloqueoUtc = GetOptionalDateTime(drUsuario, "fechaBloqueoUtc");
+                    user.IntentosFallidosNoSeguro = GetOptionalInt(drUsuario, "intentosFallidosNoSeguro");
+                    user.BloqueadoNoSeguro = GetOptionalBool(drUsuario, "bloqueadoNoSeguro");
+                    user.FechaBloqueoNoSeguroUtc = GetOptionalDateTime(drUsuario, "fechaBloqueoNoSeguroUtc");
+                    user.PinHash = GetOptionalString(drUsuario, "pinHash");
+                    user.PinSalt = GetOptionalString(drUsuario, "pinSalt");
+                    user.PinHashIterations = GetOptionalInt(drUsuario, "pinHashIterations");
+                    user.PinUpdatedAtUtc = GetOptionalDateTime(drUsuario, "pinUpdatedAtUtc");
 
                     user.Permisos = oUsuarioD.getPermisosUsuario(user.Id);
 
@@ -275,34 +282,110 @@ namespace Negocio
         // Contratos/IUsuarioRepository.cs).
         public bool RegistrarIntentoFallido(Entidades.Usuario usuario, int maxIntentos, bool sinRestriccionDeTenant = false)
         {
-            if (usuario == null) return false;
+            return RegistrarIntentoFallido(usuario, maxIntentos, dispositivoSeguro: true, sinRestriccionDeTenant: sinRestriccionDeTenant).SeAcabaDeBloquear;
+        }
 
-            usuario.IntentosFallidosLogin++;
-            bool seAcabaDeBoquear = usuario.IntentosFallidosLogin >= maxIntentos;
+        // Resultado de registrar un intento fallido, ya con el conteo segun el origen del intento.
+        public sealed class ResultadoIntentoFallido
+        {
+            // Fallos acumulados en el contador del origen (seguro / no seguro).
+            public int IntentosFallidos { get; set; }
+            // Intentos que le quedan antes del bloqueo (0 si ya quedo bloqueado).
+            public int IntentosRestantes { get; set; }
+            // true solo en el intento exacto que dispara el bloqueo.
+            public bool SeAcabaDeBloquear { get; set; }
+            // true si el bloqueo es de la cuenta completa (origen seguro); false si solo bloquea los
+            // logins desde dispositivos no seguros.
+            public bool BloqueoCuentaCompleta { get; set; }
+        }
 
-            if (seAcabaDeBoquear)
+        // Cuenta un intento fallido en el contador del ORIGEN del intento (2026-10-02, ver
+        // docs/DECISIONS.md "Login por CUIT, clave rapida (PIN) y politica de clave"):
+        //  - dispositivoSeguro=true  -> el propio usuario equivocandose: a los maxIntentos se
+        //    bloquea la cuenta completa (Bloqueado), con desbloqueo por mail o por un admin.
+        //  - dispositivoSeguro=false -> puede ser cualquiera adivinando: a los maxIntentos solo se
+        //    bloquean los logins desde dispositivos NO seguros (BloqueadoNoSeguro); el dueño sigue
+        //    entrando desde su dispositivo seguro. Asi un desconocido no puede dejar afuera a nadie.
+        // sinRestriccionDeTenant: ver arriba (LoginController todavia sin re-escopear a la empresa).
+        public ResultadoIntentoFallido RegistrarIntentoFallido(Entidades.Usuario usuario, int maxIntentos, bool dispositivoSeguro, bool sinRestriccionDeTenant = false)
+        {
+            if (usuario == null) return new ResultadoIntentoFallido();
+
+            var resultado = new ResultadoIntentoFallido { BloqueoCuentaCompleta = dispositivoSeguro };
+
+            if (dispositivoSeguro)
             {
-                usuario.Bloqueado = true;
-                usuario.FechaBloqueoUtc = DateTime.UtcNow;
+                usuario.IntentosFallidosLogin++;
+                resultado.IntentosFallidos = usuario.IntentosFallidosLogin;
+                resultado.SeAcabaDeBloquear = usuario.IntentosFallidosLogin >= maxIntentos;
+
+                if (resultado.SeAcabaDeBloquear)
+                {
+                    usuario.Bloqueado = true;
+                    usuario.FechaBloqueoUtc = DateTime.UtcNow;
+                }
+            }
+            else
+            {
+                usuario.IntentosFallidosNoSeguro++;
+                resultado.IntentosFallidos = usuario.IntentosFallidosNoSeguro;
+                resultado.SeAcabaDeBloquear = usuario.IntentosFallidosNoSeguro >= maxIntentos;
+
+                if (resultado.SeAcabaDeBloquear)
+                {
+                    usuario.BloqueadoNoSeguro = true;
+                    usuario.FechaBloqueoNoSeguroUtc = DateTime.UtcNow;
+                }
             }
 
+            resultado.IntentosRestantes = Math.Max(0, maxIntentos - resultado.IntentosFallidos);
             oUsuarioD.ActualizarEstadoBloqueoLogin(usuario, sinRestriccionDeTenant);
-            return seAcabaDeBoquear;
+            return resultado;
+        }
+
+        // Aviso de "te quedan N intentos": recien a partir del 3.er error (pedido del usuario);
+        // antes de eso no se muestra para no alarmar por un tipeo. Devuelve null si no corresponde.
+        public const int FalloDesdeElQueSeAvisaIntentosRestantes = 3;
+
+        public static int? IntentosRestantesParaAvisar(ResultadoIntentoFallido resultado)
+        {
+            if (resultado == null || resultado.SeAcabaDeBloquear) return null;
+            return resultado.IntentosFallidos >= FalloDesdeElQueSeAvisaIntentosRestantes ? resultado.IntentosRestantes : (int?)null;
         }
 
         // Resetea el contador tras un login exitoso -- higiene, no se acarrean intentos viejos.
         // Sin sinRestriccionDeTenant: se llama despues de re-escopear oUsuarioN a la empresa real.
+        // Compat: sin origen resetea el contador del dispositivo seguro (comportamiento anterior).
         public void RegistrarLoginExitoso(Entidades.Usuario usuario)
         {
-            if (usuario == null || usuario.IntentosFallidosLogin == 0) return;
+            RegistrarLoginExitoso(usuario, dispositivoSeguro: true);
+        }
 
-            usuario.IntentosFallidosLogin = 0;
+        // Resetea el contador del origen desde el que se logueo (un login exitoso desde un
+        // dispositivo seguro NO borra los intentos fallidos acumulados desde dispositivos no
+        // seguros: si alguien esta adivinando la clave, el dueño entrar bien no lo detiene).
+        public void RegistrarLoginExitoso(Entidades.Usuario usuario, bool dispositivoSeguro)
+        {
+            if (usuario == null) return;
+
+            if (dispositivoSeguro)
+            {
+                if (usuario.IntentosFallidosLogin == 0) return;
+                usuario.IntentosFallidosLogin = 0;
+            }
+            else
+            {
+                if (usuario.IntentosFallidosNoSeguro == 0) return;
+                usuario.IntentosFallidosNoSeguro = 0;
+            }
+
             oUsuarioD.ActualizarEstadoBloqueoLogin(usuario);
         }
 
         // Desbloquea una cuenta -- usado tanto por el link de email (LoginController.UnlockAccount,
         // sinRestriccionDeTenant=true: tenant desconocido hasta resolver el token) como por un
-        // admin (UsuariosController.DesbloquearUsuario, empresa ya conocida).
+        // admin (UsuariosController.DesbloquearUsuario, empresa ya conocida). Limpia AMBOS
+        // contadores/bloqueos (seguro y no seguro).
         public void DesbloquearUsuario(int idUsuario, bool sinRestriccionDeTenant = false)
         {
             oUsuarioD.ActualizarEstadoBloqueoLogin(new Entidades.Usuario
@@ -310,8 +393,62 @@ namespace Negocio
                 Id = idUsuario,
                 IntentosFallidosLogin = 0,
                 Bloqueado = false,
-                FechaBloqueoUtc = null
+                FechaBloqueoUtc = null,
+                IntentosFallidosNoSeguro = 0,
+                BloqueadoNoSeguro = false,
+                FechaBloqueoNoSeguroUtc = null
             }, sinRestriccionDeTenant);
+        }
+
+        // ---------------------------------------------------------------------------------
+        // Clave rapida (PIN): 4-6 digitos, valida SOLO desde un dispositivo seguro (esa condicion la
+        // aplica el LoginController, no esta capa). Hash PBKDF2 aparte de la clave.
+        // ---------------------------------------------------------------------------------
+
+        // true si el PIN tipeado coincide con el hash guardado. Sin PIN configurado -> false.
+        public bool VerificarPin(Entidades.Usuario usuario, string pin)
+        {
+            if (usuario == null || !usuario.TienePin || string.IsNullOrEmpty(pin))
+                return false;
+
+            return PasswordSecurity.VerifyPassword(pin, usuario.PinHash, usuario.PinSalt, usuario.PinHashIterations);
+        }
+
+        // Alta/cambio de PIN. Valida formato y reglas (PoliticaClave.ValidarPin) y lanza
+        // ArgumentException con el mensaje para el usuario si no cumple.
+        public void ActualizarPin(int idUsuario, string pin, bool sinRestriccionDeTenant = false)
+        {
+            if (idUsuario <= 0)
+                throw new ArgumentException("Usuario inválido.", nameof(idUsuario));
+
+            string error = PoliticaClave.ValidarPin(pin, idUsuario);
+            if (error != null)
+                throw new ArgumentException(error); // sin paramName: el mensaje se le muestra tal cual al usuario
+
+            var hash = PasswordSecurity.HashPassword(pin);
+            oUsuarioD.ActualizarPin(idUsuario, hash.Hash, hash.Salt, hash.Iterations, sinRestriccionDeTenant);
+        }
+
+        public void QuitarPin(int idUsuario, bool sinRestriccionDeTenant = false)
+        {
+            if (idUsuario <= 0)
+                throw new ArgumentException("Usuario inválido.", nameof(idUsuario));
+
+            oUsuarioD.ActualizarPin(idUsuario, string.Empty, string.Empty, 0, sinRestriccionDeTenant);
+        }
+
+        // Lista liviana (id, nombre, usuario) de activos NO admin de una empresa, para el login por
+        // CUIT en dispositivo seguro. Sin clave, hash ni permisos.
+        public List<Entidades.Usuario> ListarUsuariosParaLogin(int idEmpresa)
+        {
+            return oUsuarioD.ListarActivosBasico(idEmpresa, false);
+        }
+
+        // Administradores activos de una empresa (con su mail): para avisarles de solicitudes de
+        // autorizacion de dispositivo. Solo datos basicos, igual que ListarUsuariosParaLogin.
+        public List<Entidades.Usuario> ListarAdministradoresActivos(int idEmpresa)
+        {
+            return oUsuarioD.ListarActivosBasico(idEmpresa, true);
         }
 
         public Entidades.Usuario getUser(string usuario)

@@ -37,7 +37,7 @@ public sealed class ChangePasswordTests
         var page = await LoginComoAsync(_fixture.Browser, "a", "a");
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Login/ChangePassword", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
 
-        // Clave nueva corta (<6 caracteres) -- debe rechazarse por validacion, sin cambiar nada.
+        // Clave nueva corta (<8 caracteres) -- debe rechazarse por validacion, sin cambiar nada.
         await page.FillAsync("#ClaveActual", "a");
         await page.FillAsync("#NuevaClave", "abc");
         await page.FillAsync("#ConfirmarClave", "abc");
@@ -45,12 +45,12 @@ public sealed class ChangePasswordTests
         await page.WaitForTimeoutAsync(500);
         Assert.Contains("/Login/ChangePassword", page.Url);
         var textoError = await page.InnerTextAsync("body");
-        Assert.Contains("entre 6 y 128", textoError);
+        Assert.Contains("entre 8 y 128", textoError);
 
         // Clave actual incorrecta -- debe rechazarse.
         await page.FillAsync("#ClaveActual", "clave_incorrecta_xyz");
-        await page.FillAsync("#NuevaClave", "ClaveNueva123");
-        await page.FillAsync("#ConfirmarClave", "ClaveNueva123");
+        await page.FillAsync("#NuevaClave", "ClaveNueva#123");
+        await page.FillAsync("#ConfirmarClave", "ClaveNueva#123");
         await page.ClickAsync("button[type='submit']");
         await page.WaitForTimeoutAsync(500);
         var textoErrorClave = await page.InnerTextAsync("body");
@@ -58,8 +58,8 @@ public sealed class ChangePasswordTests
 
         // Clave valida real -- debe aceptarse.
         await page.FillAsync("#ClaveActual", "a");
-        await page.FillAsync("#NuevaClave", "ClaveNueva123");
-        await page.FillAsync("#ConfirmarClave", "ClaveNueva123");
+        await page.FillAsync("#NuevaClave", "ClaveNueva#123");
+        await page.FillAsync("#ConfirmarClave", "ClaveNueva#123");
         await page.ClickAsync("button[type='submit']");
         await page.WaitForTimeoutAsync(800);
         var textoExito = await page.InnerTextAsync("body");
@@ -67,17 +67,17 @@ public sealed class ChangePasswordTests
 
         // Confirmar que la clave nueva realmente funciona para loguear.
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Login/Logout", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-        var page2 = await LoginComoAsync(_fixture.Browser, "a", "ClaveNueva123");
+        var page2 = await LoginComoAsync(_fixture.Browser, "a", "ClaveNueva#123");
         Assert.DoesNotContain("/Login", page2.Url);
 
         // Round-trip: volver la clave a "a" para no romper otros tests que dependan de ella.
         await page2.GotoAsync($"{WebCoreFixture.BaseUrl}/Login/ChangePassword", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page2.FillAsync("#ClaveActual", "ClaveNueva123");
-        await page2.FillAsync("#NuevaClave", "a1234a");
-        await page2.FillAsync("#ConfirmarClave", "a1234a");
+        await page2.FillAsync("#ClaveActual", "ClaveNueva#123");
+        await page2.FillAsync("#NuevaClave", "a1234a#x");
+        await page2.FillAsync("#ConfirmarClave", "a1234a#x");
         // Nota: la clave original era literalmente "a" (1 caracter) -- ya no cumple el minimo de
-        // 6 que este mismo fix introdujo, asi que el round-trip exacto no es posible. Se deja en
-        // "a1234a" (que empieza con "a", suficiente para no romper ningun otro test -- ninguno
+        // 8 (con letra, numero y caracter especial) de la politica de clave segura (2026-10-02), asi que el round-trip exacto no es posible. Se deja en
+        // "a1234a#x" (que empieza con "a", suficiente para no romper ningun otro test -- ninguno
         // depende de la clave EXACTA "a" del usuario "a", solo de poder loguearse con esa cuenta,
         // que no se usa en otro lado de la suite).
         await page2.ClickAsync("button[type='submit']");

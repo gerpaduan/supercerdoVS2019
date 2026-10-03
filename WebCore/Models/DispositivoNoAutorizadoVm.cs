@@ -10,6 +10,13 @@ namespace WebCore.Models
         public string EmailEnmascarado { get; set; } = "";
         public bool SmtpConfigurado { get; set; }
         public bool CodigoEnviado { get; set; }
+
+        // Solicitud de autorizacion al administrador (2026-10-02, Fase 1c). CodigoDispositivo es el
+        // "numero de serie" de este navegador (web:<hash>), tal cual lo cargaria el admin a mano en
+        // /DispositivosSeguros; SolicitudPendiente = ya hay un pedido pendiente para este dispositivo.
+        public string CodigoDispositivo { get; set; } = "";
+        public bool SolicitudPendiente { get; set; }
+
         public string? Error { get; set; }
         public string? Success { get; set; }
     }

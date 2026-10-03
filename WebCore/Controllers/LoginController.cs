@@ -3,13 +3,20 @@
 // WebCore"). Alcance v1 (decidido con el usuario): login + rate limiting por IP + bloqueo de
 // cuenta por intentos fallidos + dispositivo seguro + horario laboral. Fuera de alcance v1
 // (documentado como gap para v2): geo-validacion de ubicacion de login (ValidarUbicacion,
-// LoginUbicacionLog), mail automatico de desbloqueo de cuenta (EnviarMailDesbloqueo) -- el
-// desbloqueo en v1 lo hace un admin a mano via UsuariosController.DesbloquearUsuario, que ya
-// existe. Recuperacion de contraseña por email (ForgotPassword/ResetPassword) se agrego 2026-09-09
+// LoginUbicacionLog). (El mail de desbloqueo de cuenta que en v1 quedaba fuera se agrego
+// 2026-10-02: SolicitarDesbloqueo/UnlockAccount abajo; un admin tambien puede desbloquear via
+// UsuariosController.DesbloquearUsuario.) Recuperacion de contraseña por email (ForgotPassword/ResetPassword) se agrego 2026-09-09
 // (item 1 de los 12 pendientes, Batch E, ver docs/DECISIONS.md "Batch E: recuperacion de
 // contraseña"), con mejoras de seguridad deliberadas sobre el clasico (confirmadas con el
 // usuario): rate limiting propio por IP (PasswordResetRateLimiter, nuevo) y clave minima de 6
-// caracteres (el clasico aceptaba 1).
+// caracteres (el clasico aceptaba 1) -- desde 2026-10-02 la politica es Negocio.PoliticaClave (8+,
+// letra, numero y caracter especial).
+//
+// 2026-10-02 (ver docs/DECISIONS.md "Login por CUIT, clave rapida (PIN), politica de clave segura,
+// bloqueo por origen y desbloqueo por mail"): /Login/{cuit} con lista de usuarios (solo en
+// dispositivo autorizado), PIN (solo dispositivo seguro, no admin), 7 intentos por usuario con
+// bloqueo segun el origen del intento, aviso de intentos restantes desde el 3.er error, desbloqueo por
+// mail, solicitud de autorizacion de dispositivo al admin e IP real solo tras proxies de confianza.
 using System.Globalization;
 using System.Security.Claims;
 using Fido2NetLib;
@@ -62,26 +69,74 @@ namespace WebCore.Controllers
                 Success = TempData["Success"] as string
             };
 
-            return View(model);
+            return VistaLogin(model, cuit: null);
+        }
+
+        // Login por CUIT (2026-10-02, ver docs/DECISIONS.md "Login por CUIT, clave rapida (PIN) y
+        // politica de clave"): /Login/20306210786. Identifica la empresa desde la URL. Si el
+        // dispositivo ya esta autorizado para esa empresa, el input de usuario pasa a ser una lista
+        // de sus usuarios activos (no admin) y la clave acepta el PIN; si no (o si el CUIT no existe),
+        // se muestra el formulario normal, sin listar a nadie ni revelar si el CUIT existe.
+        [HttpGet("Login/{cuit:long}")]
+        public IActionResult IndexPorCuit(long cuit, string returnUrl = "", string? serie = "")
+        {
+            DispositivoNavegador.AsegurarToken(HttpContext);
+
+            var model = new LoginIndexVm
+            {
+                ReturnUrl = returnUrl ?? "",
+                // ID de hardware que el JS de la pagina obtiene del agente de impresion y reenvia aca para
+                // que una PC autorizada por hardware (no por cookie) tambien vea la lista de usuarios.
+                NumeroSerieDispositivo = LimitarSerie(serie),
+                Error = TempData["Error"] as string,
+                Success = TempData["Success"] as string
+            };
+
+            return VistaLogin(model, cuit);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index(LoginIndexVm model)
+        public Task<IActionResult> Index(LoginIndexVm model)
+        {
+            return ProcesarLoginAsync(model, cuit: null);
+        }
+
+        [HttpPost("Login/{cuit:long}")]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> IndexPorCuit(long cuit, LoginIndexVm model)
+        {
+            return ProcesarLoginAsync(model, cuit);
+        }
+
+        // Mensajes del login (el maximo de intentos por usuario, hoy 7, sale de GetAccountLockoutMaxAttempts).
+        private const string MensajeCuentaBloqueada = "Tu usuario está bloqueado por intentos fallidos. Podés desbloquearlo con el botón de abajo (te mandamos un mail) o pedirle a un administrador que lo desbloquee.";
+        private const string MensajeBloqueadoDesdeNoSeguro = "Se bloqueó el ingreso a este usuario desde dispositivos no autorizados por demasiados intentos fallidos. Podés ingresar desde tu dispositivo habitual o desbloquearlo con el botón de abajo (te mandamos un mail).";
+        private const string MensajeCredencialesInvalidas = "No fue posible iniciar sesión con los datos ingresados.";
+
+        private async Task<IActionResult> ProcesarLoginAsync(LoginIndexVm model, long? cuit)
         {
             model.Usuario = (model.Usuario ?? "").Trim();
             model.Clave = model.Clave ?? "";
             model.ReturnUrl = model.ReturnUrl ?? "";
+            // El CUIT sale solo de la URL (nunca de un campo del formulario).
+            model.Cuit = cuit;
 
             if (!ModelState.IsValid)
-                return View(model);
+                return VistaLogin(model, cuit);
 
             string ip = ObtenerDireccionIp();
+            var empresaCuit = cuit.HasValue ? BuscarEmpresaActivaPorCuit(cuit.Value) : null;
 
             // Resuelto ANTES del rate limiter por IP: (a) decide si este login viene de un
             // dispositivo seguro y saltea el bloqueo por IP -- NO el bloqueo por cuenta, que sigue
             // igual mas abajo sin excepcion; (b) lo reusa el chequeo de cuenta bloqueada.
             var candidato = _oUsuarioN.ObtenerUsuarioPorIdentificador(model.Usuario);
+
+            // Con un CUIT valido en la URL el usuario tiene que ser de esa empresa; si no, se trata
+            // como inexistente (mismo mensaje generico y sin contar intentos contra otra empresa).
+            if (candidato != null && empresaCuit != null && candidato.IdEmpresa != empresaCuit.IdEmpresa)
+                candidato = null;
 
             // Un dispositivo es "seguro" por (a) el ID de hardware que informa el agente de impresion
             // (PC) o (b) la cookie del navegador ya autorizada (celular / PC sin agente). Un
@@ -102,21 +157,47 @@ namespace WebCore.Controllers
                     CultureInfo.CurrentCulture,
                     "Se supero el maximo de intentos. Espera {0} minuto(s) y volve a intentar.",
                     Math.Max(1, (int)Math.Ceiling(retryAfter.TotalMinutes)));
-                return View(model);
+                return VistaLogin(model, cuit);
             }
 
             // Cuenta bloqueada por intentos fallidos (distinto del rate limiter por IP de arriba):
             // se chequea antes de validar la contraseña, para no seguir contando intentos contra
-            // una cuenta ya bloqueada. Sin mail automatico de desbloqueo en v1 (ver cabecera).
-            if (candidato != null && candidato.Activo && candidato.Bloqueado)
+            // una cuenta ya bloqueada. Dos bloqueos segun el origen de los fallos (ver
+            // Entidades.Usuario.BloqueadoNoSeguro): el de cuenta completa (fallos desde dispositivo
+            // seguro) bloquea todo; el "no seguro" solo bloquea los logins desde dispositivos no
+            // seguros, asi un desconocido no puede dejar afuera al dueño de la cuenta.
+            bool cuentaBloqueada = candidato != null && candidato.Activo && candidato.Bloqueado;
+            bool bloqueadoDesdeNoSeguro = candidato != null && candidato.Activo && !esDispositivoSeguro && candidato.BloqueadoNoSeguro;
+            if (cuentaBloqueada || bloqueadoDesdeNoSeguro)
             {
-                LoginRateLimiter.RegisterFailure(ip, model.Usuario);
+                // En dispositivo seguro no se suma contra la IP (misma regla que el resto del login).
+                if (!esDispositivoSeguro)
+                    LoginRateLimiter.RegisterFailure(ip, model.Usuario);
                 model.Clave = "";
-                model.Error = "Tu cuenta está bloqueada por intentos fallidos. Pedile a un administrador que la desbloquee.";
-                return View(model);
+                model.Error = cuentaBloqueada ? MensajeCuentaBloqueada : MensajeBloqueadoDesdeNoSeguro;
+                model.OfrecerDesbloqueo = true;
+                return VistaLogin(model, cuit);
             }
 
-            var user = _oUsuarioN.ValidarUsuarioWeb(model.Usuario, model.Clave);
+            // Credencial: en dispositivo seguro, un usuario no admin con PIN configurado puede entrar
+            // con el PIN (clave rapida, 4-6 digitos); si no coincide (o no aplica) se prueba como
+            // clave completa. El PIN NUNCA vale desde un dispositivo no seguro ni para admins.
+            Entidades.Usuario? user = null;
+            string metodoAuth = MetodoAuthClave;
+            if (candidato != null && candidato.Activo && esDispositivoSeguro && !candidato.Admin
+                && Negocio.PoliticaClave.TieneFormaDePin(model.Clave) && _oUsuarioN.VerificarPin(candidato, model.Clave))
+            {
+                user = candidato;
+                metodoAuth = MetodoAuthPin;
+            }
+            else
+            {
+                user = _oUsuarioN.ValidarUsuarioWeb(model.Usuario, model.Clave);
+            }
+
+            // Misma regla que el candidato: con un CUIT valido en la URL, la credencial tiene que ser de esa empresa.
+            if (user != null && empresaCuit != null && user.IdEmpresa != empresaCuit.IdEmpresa)
+                user = null;
 
             if (user != null && user.Activo)
             {
@@ -128,15 +209,16 @@ namespace WebCore.Controllers
                 if (user == null)
                 {
                     model.Clave = "";
-                    model.Error = "No fue posible iniciar sesión con los datos ingresados.";
-                    return View(model);
+                    model.Error = MensajeCredencialesInvalidas;
+                    return VistaLogin(model, cuit);
                 }
 
                 user.Sucursal = user.IdSucursal > 0 ? oSucursalN.findById(user.IdSucursal) : null;
                 user.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
                 user.Permisos = oUsuarioN.getPermisosUsuario(user.Id);
 
-                oUsuarioN.RegistrarLoginExitoso(user);
+                // Resetea el contador del origen desde el que entro (seguro / no seguro).
+                oUsuarioN.RegistrarLoginExitoso(user, esDispositivoSeguro);
 
                 // Horario laboral (a nivel empresa): un empleado no-admin que intenta loguearse
                 // fuera de las 2 jornadas configuradas queda bloqueado aca, ANTES de crear sesion
@@ -146,28 +228,160 @@ namespace WebCore.Controllers
                     case ReglaPostCredencial.FueraDeHorario:
                         model.Clave = "";
                         model.Error = MensajeFueraDeHorario;
-                        return View(model);
+                        return VistaLogin(model, cuit);
                     case ReglaPostCredencial.DispositivoNoAutorizado:
                         return DispositivoNoAutorizadoTrasClaveValida(user, ip, model, serieToken, dispositivoBloqueado);
                 }
 
+                string motivoLogin = metodoAuth == MetodoAuthPin
+                    ? "Login con clave rápida (PIN) desde dispositivo seguro"
+                    : (dispositivoAutorizado != null ? "Login desde dispositivo seguro" : "Login correcto");
                 return await CompletarLoginAsync(
-                    user, model.ReturnUrl, ip, model.Usuario, dispositivoAutorizado,
-                    dispositivoAutorizado != null ? "Login desde dispositivo seguro" : "Login correcto");
+                    user, model.ReturnUrl, ip, model.Usuario, dispositivoAutorizado, motivoLogin, metodoAuth);
             }
 
             // Solo cuenta contra el bloqueo persistente si el usuario/email existe y esta activo --
             // no tiene sentido bloquear por intentos contra una cuenta que no existe o inactiva.
-            if (candidato != null && candidato.Activo && !candidato.Bloqueado)
+            string mensajeError = MensajeCredencialesInvalidas;
+            if (candidato != null && candidato.Activo)
             {
-                _oUsuarioN.RegistrarIntentoFallido(candidato, GetAccountLockoutMaxAttempts(), sinRestriccionDeTenant: true);
+                int maxIntentos = GetAccountLockoutMaxAttempts();
+                var resultado = _oUsuarioN.RegistrarIntentoFallido(candidato, maxIntentos, esDispositivoSeguro, sinRestriccionDeTenant: true);
+
+                string origen = esDispositivoSeguro ? "dispositivo seguro" : "dispositivo no seguro";
+                RegistrarAcceso(candidato, false,
+                    string.Format(CultureInfo.InvariantCulture, "Credencial incorrecta ({0}/{1}, {2})", resultado.IntentosFallidos, maxIntentos, origen),
+                    ip, null);
+
+                if (resultado.SeAcabaDeBloquear)
+                {
+                    RegistrarAcceso(candidato, false,
+                        resultado.BloqueoCuentaCompleta
+                            ? "Usuario bloqueado por intentos fallidos"
+                            : "Usuario bloqueado para ingresos desde dispositivos no seguros por intentos fallidos",
+                        ip, null);
+                    mensajeError = resultado.BloqueoCuentaCompleta ? MensajeCuentaBloqueada : MensajeBloqueadoDesdeNoSeguro;
+                    model.OfrecerDesbloqueo = true;
+                }
+                else
+                {
+                    // "Te quedan N intentos" recien desde el 3.er error (ver Negocio.Usuario).
+                    int? restantes = Negocio.Usuario.IntentosRestantesParaAvisar(resultado);
+                    if (restantes.HasValue)
+                    {
+                        mensajeError = string.Format(
+                            CultureInfo.CurrentCulture,
+                            "{0} Te quedan {1} intento(s) antes de que se bloquee {2}.",
+                            MensajeCredencialesInvalidas,
+                            restantes.Value,
+                            esDispositivoSeguro ? "tu usuario" : "el ingreso desde dispositivos no autorizados");
+                    }
+                }
             }
 
-            LoginRateLimiter.RegisterFailure(ip, model.Usuario);
+            // En dispositivo seguro no se suma contra la IP: una oficina entera detras de la misma IP
+            // no debe quedar afuera porque alguien se equivoca en un equipo autorizado.
+            if (!esDispositivoSeguro)
+                LoginRateLimiter.RegisterFailure(ip, model.Usuario);
             model.Clave = "";
-            model.Error = "No fue posible iniciar sesión con los datos ingresados.";
-            return View(model);
+            model.Error = mensajeError;
+            return VistaLogin(model, cuit);
         }
+
+        // El ID de hardware viaja por query string: se acota el largo y los caracteres (nunca se refleja
+        // crudo) antes de usarlo.
+        private static string LimitarSerie(string? serie)
+        {
+            serie = (serie ?? "").Trim();
+            if (serie.Length == 0 || serie.Length > 100 || serie.Any(c => !(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == ':')))
+                return "";
+            return serie;
+        }
+
+        // Busca la empresa del CUIT de la URL. null si no existe o esta inactiva: el formulario se
+        // comporta como el login generico, sin revelar si el CUIT existe.
+        private Entidades.Empresa? BuscarEmpresaActivaPorCuit(long cuit)
+        {
+            try
+            {
+                var empresa = _oSucursalN.findEmpresaByCuit(cuit);
+                return empresa != null && empresa.Activa != 0 ? empresa : null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo resolver la empresa por CUIT para el login.");
+                return null;
+            }
+        }
+
+        private IActionResult VistaLogin(LoginIndexVm model, long? cuit)
+        {
+            return View("Index", ArmarVistaLogin(model, cuit));
+        }
+
+        // Completa lo que el formulario no manda: empresa del CUIT y, SOLO si este dispositivo ya
+        // esta autorizado para esa empresa, la lista de usuarios. La URL con CUIT es publica (el CUIT
+        // de una empresa se averigua facil): listar nombres de empleados a cualquiera filtraria
+        // informacion y serviria para enumerar y bloquear cuentas ajenas.
+        private LoginIndexVm ArmarVistaLogin(LoginIndexVm model, long? cuit)
+        {
+            model.Cuit = null;
+            model.EmpresaNombre = "";
+            model.UsuariosLista = new List<LoginUsuarioItem>();
+            model.DispositivoSeguro = false;
+
+            if (!cuit.HasValue)
+                return model;
+
+            var empresa = BuscarEmpresaActivaPorCuit(cuit.Value);
+            if (empresa == null)
+                return model;
+
+            model.Cuit = cuit;
+            model.EmpresaNombre = !string.IsNullOrWhiteSpace(empresa.NombreFantasia) ? empresa.NombreFantasia : (empresa.RazonSocialAfip ?? "");
+
+            string serieToken = Negocio.DispositivoSeguro.SerieDeToken(DispositivoNavegador.AsegurarToken(HttpContext));
+
+            // Un ID de hardware recibido por la URL solo se usa si esta IP no viene probando muchos
+            // (evita adivinar IDs de equipos autorizados para ver la lista de usuarios).
+            string ip = ObtenerDireccionIp();
+            string? serieHardware = model.NumeroSerieDispositivo;
+            if (!string.IsNullOrEmpty(serieHardware) && SerieProbeThrottle.EstaBloqueada(ip))
+                serieHardware = null;
+
+            var (autorizado, _) = ResolverDispositivo(empresa.IdEmpresa, serieHardware, serieToken);
+            if (autorizado == null)
+            {
+                if (!string.IsNullOrEmpty(serieHardware))
+                    SerieProbeThrottle.RegistrarIntentoFallido(ip);
+                return model;
+            }
+
+            model.DispositivoSeguro = true;
+            try
+            {
+                model.UsuariosLista = (_oUsuarioN.ListarUsuariosParaLogin(empresa.IdEmpresa) ?? new List<Entidades.Usuario>())
+                    .Where(u => u != null && !string.IsNullOrWhiteSpace(u.User))
+                    .Select(u => new LoginUsuarioItem
+                    {
+                        Usuario = u.User,
+                        Nombre = string.IsNullOrWhiteSpace(u.Nombre) ? u.User : u.Nombre
+                    })
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                // Si no se puede armar la lista, el login sigue con el input de texto normal.
+                _logger.LogWarning(ex, "No se pudo listar los usuarios de la empresa {IdEmpresa} para el login por CUIT.", empresa.IdEmpresa);
+            }
+
+            return model;
+        }
+
+        // Valores del claim SesionClaims.AuthMethod.
+        private const string MetodoAuthClave = "clave";
+        private const string MetodoAuthPin = "pin";
+        private const string MetodoAuthHuella = "huella";
 
         // Mensaje generico deliberado (2026-09-09, port de Web/Controllers/LoginController.cs:22):
         // nunca revela si el usuario/email ingresado existe -- evita que este endpoint sirva para
@@ -275,8 +489,15 @@ namespace WebCore.Controllers
             model.Token = model.Token ?? "";
             model.TokenValido = TokenEsValido(model.Token, "reset");
 
-            if (!string.IsNullOrEmpty(model.NuevaClave) && model.NuevaClave.Contains(' '))
-                ModelState.AddModelError(nameof(model.NuevaClave), "La contraseña no puede contener espacios en blanco.");
+            // Politica de clave segura (min. 8, letra + numero + caracter especial, sin espacios).
+            // Un reset por mail no sabe el usuario hasta resolver el token: se valida sin comparar
+            // contra el nombre de usuario (esa comparacion se hace abajo, ya con el usuario cargado).
+            if (!string.IsNullOrEmpty(model.NuevaClave))
+            {
+                string? errorClave = Negocio.PoliticaClave.ValidarClave(model.NuevaClave);
+                if (errorClave != null)
+                    ModelState.AddModelError(nameof(model.NuevaClave), errorClave);
+            }
 
             if (!model.TokenValido)
                 ModelState.AddModelError("", "El enlace de recuperación no es válido o ya venció.");
@@ -302,12 +523,269 @@ namespace WebCore.Controllers
                 return View(model);
             }
 
+            // Ahora que se conoce el usuario: la clave no puede ser igual a su nombre de acceso.
+            string? errorClaveUsuario = Negocio.PoliticaClave.ValidarClave(model.NuevaClave, usuario.User);
+            if (errorClaveUsuario != null)
+            {
+                ModelState.AddModelError(nameof(model.NuevaClave), errorClaveUsuario);
+                return View(model);
+            }
+
             _oUsuarioN.ActualizarPasswordWebSeguro(usuario.Id, model.NuevaClave, sinRestriccionDeTenant: true);
             _oUsuarioN.MarcarTokenRecuperacionComoUsado(token.Id);
             _oUsuarioN.InvalidarTokensPendientesUsuario(usuario.Id, "reset");
 
             TempData["Success"] = "Tu contraseña fue actualizada correctamente. Ya podés iniciar sesión.";
             return RedirectToAction("Index");
+        }
+
+        // ---------------------------------------------------------------------------------
+        // Desbloqueo de usuario por mail (2026-10-02, ver docs/DECISIONS.md "Login por CUIT, clave
+        // rapida (PIN) y politica de clave"). Cierra el gap "mail de desbloqueo no portado a
+        // WebCore" (cabecera de este archivo): al bloquearse un usuario (por intentos fallidos) el
+        // login ofrece "Desbloquear usuario", que manda un link de un solo uso al mail registrado
+        // del usuario. Reusa el mecanismo de tokens de recuperacion de contraseña (mismo token de 32
+        // bytes, hash SHA-256, un solo uso) con proposito "unlock". El desbloqueo y el pedido quedan
+        // en la auditoria de accesos. Limpia ambos bloqueos (seguro y no seguro).
+        // ---------------------------------------------------------------------------------
+
+        // Respuesta unica del pedido: no revela si el usuario existe, esta bloqueado o tiene mail.
+        private const string MensajeSolicitudDesbloqueo = "Si el usuario existe, está bloqueado y tiene un mail cargado, te enviamos un enlace para desbloquearlo. Revisá tu correo (también la carpeta de spam). Si no te llega, comunicate con el administrador de tu empresa.";
+
+        private const string MensajeEnlaceDesbloqueoInvalido = "El enlace de desbloqueo no es válido o ya venció.";
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SolicitarDesbloqueo(string? usuario, long? cuit)
+        {
+            usuario = (usuario ?? "").Trim();
+            string ip = ObtenerDireccionIp();
+
+            IActionResult Volver() => cuit.HasValue
+                ? RedirectToAction(nameof(IndexPorCuit), new { cuit = cuit.Value })
+                : RedirectToAction(nameof(Index));
+
+            if (usuario.Length == 0)
+            {
+                TempData["Error"] = "Ingresá tu usuario o email para desbloquearlo.";
+                return Volver();
+            }
+
+            // Rate limit propio por IP (el mismo de "olvidé mi contraseña"): evita usar este boton
+            // para llenar de mails la casilla de alguien.
+            if (PasswordResetRateLimiter.IsBlocked(ip, out var retryAfter))
+            {
+                Response.StatusCode = 429;
+                TempData["Error"] = string.Format(
+                    CultureInfo.CurrentCulture,
+                    "Se superó el máximo de solicitudes. Esperá {0} minuto(s) y volvé a intentar.",
+                    Math.Max(1, (int)Math.Ceiling(retryAfter.TotalMinutes)));
+                return Volver();
+            }
+
+            PasswordResetRateLimiter.RegisterRequest(ip);
+
+            try
+            {
+                var bloqueados = _oUsuarioN.BuscarUsuariosPorIdentificador(usuario, true)
+                    .Where(u => u != null && u.Activo && (u.Bloqueado || u.BloqueadoNoSeguro))
+                    .ToList();
+
+                foreach (var bloqueado in bloqueados)
+                {
+                    RegistrarAcceso(bloqueado, false, "Desbloqueo solicitado por mail", ip, null);
+                    EnviarMailDesbloqueo(bloqueado);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Se responde igual (no filtrar si la cuenta existe); el fallo queda en el log.
+                _logger.LogError(ex, "No se pudo procesar la solicitud de desbloqueo.");
+            }
+
+            TempData["Success"] = MensajeSolicitudDesbloqueo;
+            return Volver();
+        }
+
+        // Token de desbloqueo + mail, solo si SMTP esta configurado y el usuario tiene un mail valido.
+        // Nunca propaga una excepcion: un fallo de envio no debe romper el login.
+        private void EnviarMailDesbloqueo(Entidades.Usuario usuario)
+        {
+            if (usuario == null || !SmtpMailHelper.IsValidEmail(usuario.Email) || !SmtpMailHelper.IsConfigured())
+                return;
+
+            try
+            {
+                string rawToken = PasswordSecurity.GenerateToken();
+                string tokenHash = PasswordSecurity.ComputeSha256Base64(rawToken);
+                int expirationMinutes = GetPasswordResetExpirationMinutes();
+                DateTime nowUtc = DateTime.UtcNow;
+
+                // Un solo enlace vigente por usuario: se invalidan los anteriores.
+                _oUsuarioN.InvalidarTokensPendientesUsuario(usuario.Id, "unlock");
+                _oUsuarioN.CrearTokenRecuperacion(new Entidades.UsuarioPasswordResetToken
+                {
+                    IdUsuario = usuario.Id,
+                    IdEmpresa = usuario.IdEmpresa,
+                    TokenHash = tokenHash,
+                    FechaCreacionUtc = nowUtc,
+                    FechaExpiracionUtc = nowUtc.AddMinutes(expirationMinutes),
+                    Usado = false,
+                    IdentificadorSolicitado = usuario.User ?? "",
+                    EmailDestino = usuario.Email ?? "",
+                    Proposito = "unlock"
+                });
+
+                string unlockUrl = Url.Action("UnlockAccount", "Login", new { token = rawToken }, Request.Scheme) ?? "";
+                SmtpMailHelper.SendAccountUnlock(usuario.Email, usuario.Nombre, unlockUrl, expirationMinutes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "No se pudo enviar el mail de desbloqueo al usuario {IdUsuario}.", usuario.Id);
+            }
+        }
+
+        // Mismo patron de 2 pasos que ResetPassword (GET muestra, POST actua): evita que un link
+        // cargado pasivamente (ej. previsualizacion de un cliente de correo) dispare el
+        // desbloqueo solo -- hace falta un click explicito en el boton del POST.
+        [HttpGet]
+        public IActionResult UnlockAccount(string token = "")
+        {
+            var model = new UnlockAccountVm
+            {
+                Token = token ?? "",
+                TokenValido = TokenEsValido(token, "unlock")
+            };
+
+            if (!model.TokenValido)
+                model.Mensaje = MensajeEnlaceDesbloqueoInvalido;
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UnlockAccount(UnlockAccountVm model)
+        {
+            model ??= new UnlockAccountVm();
+            model.Token = model.Token ?? "";
+            model.TokenValido = TokenEsValido(model.Token, "unlock");
+
+            if (!model.TokenValido)
+            {
+                model.Mensaje = MensajeEnlaceDesbloqueoInvalido;
+                return View(model);
+            }
+
+            string tokenHash = PasswordSecurity.ComputeSha256Base64(model.Token);
+            var token = _oUsuarioN.ObtenerTokenRecuperacion(tokenHash);
+            if (token == null || token.Usado || token.Proposito != "unlock" || token.FechaExpiracionUtc < DateTime.UtcNow)
+            {
+                model.TokenValido = false;
+                model.Mensaje = MensajeEnlaceDesbloqueoInvalido;
+                return View(model);
+            }
+
+            var usuario = _oUsuarioN.getUsuarioById(token.IdUsuario, sinRestriccionDeTenant: true);
+            if (usuario == null || !usuario.Activo)
+            {
+                model.TokenValido = false;
+                model.Mensaje = MensajeEnlaceDesbloqueoInvalido;
+                return View(model);
+            }
+
+            _oUsuarioN.DesbloquearUsuario(token.IdUsuario, sinRestriccionDeTenant: true);
+            _oUsuarioN.MarcarTokenRecuperacionComoUsado(token.Id);
+            _oUsuarioN.InvalidarTokensPendientesUsuario(token.IdUsuario, "unlock");
+            RegistrarAcceso(usuario, true, "Usuario desbloqueado por mail", ObtenerDireccionIp(), null);
+
+            TempData["Success"] = "Tu usuario fue desbloqueado correctamente. Ya podés iniciar sesión.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // ---------------------------------------------------------------------------------
+        // Clave rapida (PIN) -- alta/cambio/baja por el propio usuario, con sesion iniciada
+        // (2026-10-02, ver docs/DECISIONS.md "Login por CUIT, clave rapida (PIN) y politica de
+        // clave"). Siempre pide la clave actual (un PIN nuevo es una credencial nueva: no debe poder
+        // crearla quien deja la sesion abierta). No hay PIN para admin. El PIN solo sirve desde un
+        // dispositivo seguro: eso lo aplica el login, no esta pantalla.
+        // ---------------------------------------------------------------------------------
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult ChangePin()
+        {
+            // [Authorize] a nivel accion no pisa el [AllowAnonymous] de la clase: sin sesion UsuarioActual lanza,
+            // asi que se chequea antes y se manda al ingreso.
+            if (!_sesion.EstaAutenticado || _sesion.UsuarioActual == null)
+                return RedirectToAction("Index");
+
+            return View(ArmarChangePinVm(new ChangePinVm
+            {
+                Error = TempData["Error"] as string,
+                Success = TempData["Success"] as string
+            }));
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ChangePin(ChangePinVm model, string? accion)
+        {
+            if (!_sesion.EstaAutenticado || _sesion.UsuarioActual == null)
+                return RedirectToAction("Index");
+
+            model ??= new ChangePinVm();
+            bool quitar = string.Equals(accion, "quitar", StringComparison.OrdinalIgnoreCase);
+
+            var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_sesion.Empresa, _sesion.Parametros);
+            var usuarioActual = oUsuarioN.getUsuarioById(_sesion.UsuarioActual.Id);
+
+            if (usuarioActual == null || !usuarioActual.Activo)
+                ModelState.AddModelError("", "No fue posible actualizar la clave rápida.");
+            else if (usuarioActual.Admin)
+                ModelState.AddModelError("", "Los administradores no usan clave rápida: ingresan siempre con su contraseña.");
+            else if (string.IsNullOrEmpty(model.ClaveActual) || oUsuarioN.ValidarUsuarioWeb(usuarioActual.User, model.ClaveActual) == null)
+                ModelState.AddModelError(nameof(model.ClaveActual), "La contraseña actual es incorrecta.");
+
+            if (!quitar && usuarioActual != null)
+            {
+                string? errorPin = Negocio.PoliticaClave.ValidarPin(model.NuevoPin, usuarioActual.Id);
+                if (errorPin != null)
+                    ModelState.AddModelError(nameof(model.NuevoPin), errorPin);
+                else if (!string.Equals(model.NuevoPin, model.ConfirmarPin, StringComparison.Ordinal))
+                    ModelState.AddModelError(nameof(model.ConfirmarPin), "La confirmación no coincide con el PIN.");
+            }
+
+            if (!ModelState.IsValid)
+                return View(ArmarChangePinVm(model));
+
+            if (quitar)
+            {
+                oUsuarioN.QuitarPin(usuarioActual!.Id);
+                RegistrarAcceso(usuarioActual, true, "Clave rápida (PIN) eliminada", ObtenerDireccionIp(), null);
+                TempData["Success"] = "Tu clave rápida fue eliminada. Desde ahora ingresás solo con tu contraseña.";
+            }
+            else
+            {
+                oUsuarioN.ActualizarPin(usuarioActual!.Id, model.NuevoPin);
+                RegistrarAcceso(usuarioActual, true, "Clave rápida (PIN) configurada", ObtenerDireccionIp(), null);
+                TempData["Success"] = "Tu clave rápida quedó configurada. Solo funciona desde dispositivos autorizados; desde cualquier otro dispositivo seguís ingresando con tu contraseña.";
+            }
+
+            return RedirectToAction(nameof(ChangePin));
+        }
+
+        private ChangePinVm ArmarChangePinVm(ChangePinVm model)
+        {
+            var usuario = _sesion.UsuarioActual;
+            model.EsAdmin = usuario != null && usuario.Admin;
+            model.TienePin = usuario != null && usuario.TienePin;
+            // Nunca se reenvian los valores tipeados.
+            model.ClaveActual = "";
+            model.NuevoPin = "";
+            model.ConfirmarPin = "";
+            return model;
         }
 
         private bool TokenEsValido(string? tokenRaw, string proposito)
@@ -480,7 +958,7 @@ namespace WebCore.Controllers
                     return Json(new { ok = true, redirectUrl = Url.Action(nameof(DispositivoNoAutorizado)) });
             }
 
-            var destino = await CompletarLoginAsync(user, returnUrl ?? "", ip, ClaveRateLimiterHuella, dispositivoAutorizado, "Login con huella");
+            var destino = await CompletarLoginAsync(user, returnUrl ?? "", ip, ClaveRateLimiterHuella, dispositivoAutorizado, "Login con huella", MetodoAuthHuella);
             return Json(new { ok = true, redirectUrl = (destino as RedirectResult)?.Url ?? Url.Content("~/Home/Index") });
         }
 
@@ -559,6 +1037,14 @@ namespace WebCore.Controllers
                 ModelState.AddModelError("", "No fue posible actualizar la contraseña.");
             else if (oUsuarioN.ValidarUsuarioWeb(usuarioActual.User, model.ClaveActual) == null)
                 ModelState.AddModelError(nameof(model.ClaveActual), "La contraseña actual es incorrecta.");
+
+            // Politica de clave segura (ver Negocio.PoliticaClave).
+            if (usuarioActual != null && !string.IsNullOrEmpty(model.NuevaClave))
+            {
+                string? errorClave = Negocio.PoliticaClave.ValidarClave(model.NuevaClave, usuarioActual.User);
+                if (errorClave != null)
+                    ModelState.AddModelError(nameof(model.NuevaClave), errorClave);
+            }
 
             if (!ModelState.IsValid)
                 return View(model);
@@ -749,6 +1235,129 @@ namespace WebCore.Controllers
                 "Dispositivo autorizado por mail: " + nombre);
         }
 
+        // ---------------------------------------------------------------------------------
+        // Solicitud de autorizacion al administrador (2026-10-02, ver docs/DECISIONS.md "Login por
+        // CUIT, clave rapida (PIN) y politica de clave", Fase 1c): tercera via de la pantalla
+        // "dispositivo no autorizado", para cualquier dispositivo (celular, PC con o sin agente, sin
+        // mail cargado). El usuario ya puso bien su clave (hay pedido en memoria con su identidad), asi
+        // que no es un endpoint anonimo. Crea una solicitud PENDIENTE que el admin aprueba o rechaza en
+        // /DispositivosSeguros; no autoriza nada por si sola.
+        // ---------------------------------------------------------------------------------
+
+        // Tope de solicitudes pendientes por usuario (evita llenar la bandeja del admin cambiando de
+        // navegador una y otra vez).
+        private const int MaxSolicitudesPendientesPorUsuario = 5;
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SolicitarAutorizacionDispositivo(string? nombreDispositivo, string? mensaje)
+        {
+            string? nonce = DispositivoNavegador.LeerNoncePedido(HttpContext);
+            var pedido = VerificacionDispositivoStore.Instancia.Obtener(nonce);
+            if (pedido == null)
+                return VolverAlLoginConError("La autorización venció. Ingresá de nuevo tu usuario y contraseña.");
+
+            var user = CrearUsuarioNegocio(pedido.IdEmpresa).getUsuarioById(pedido.IdUsuario, sinRestriccionDeTenant: true);
+            if (user == null || !user.Activo)
+                return VolverAlLoginConError("No fue posible iniciar sesión con los datos ingresados.");
+
+            var oDispositivoN = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(new EmpresaContextFijo(pedido.IdEmpresa));
+
+            var existente = oDispositivoN.ObtenerPorSerie(pedido.SerieDispositivo, pedido.IdEmpresa);
+            if (existente != null && existente.Bloqueado)
+            {
+                VerificacionDispositivoStore.Instancia.Quitar(nonce!);
+                DispositivoNavegador.QuitarNoncePedido(HttpContext);
+                return VolverAlLoginConError("Este dispositivo fue bloqueado por el administrador.");
+            }
+
+            try
+            {
+                var pendientes = oDispositivoN.ListarSolicitudesPendientes(pedido.IdEmpresa);
+                bool yaPedidaEsteDispositivo = pendientes.Any(s => s.Serie == pedido.SerieDispositivo);
+                if (!yaPedidaEsteDispositivo && pendientes.Count(s => s.IdUsuario == user.Id) >= MaxSolicitudesPendientesPorUsuario)
+                {
+                    TempData[TempDispError] = "Ya tenés varias solicitudes pendientes. Esperá a que tu administrador las resuelva.";
+                    return RedirectToAction(nameof(DispositivoNoAutorizado));
+                }
+
+                string ip = ObtenerDireccionIp();
+                oDispositivoN.CrearSolicitud(new Entidades.DispositivoSolicitud
+                {
+                    IdEmpresa = pedido.IdEmpresa,
+                    IdUsuario = user.Id,
+                    Serie = pedido.SerieDispositivo,
+                    Nombre = nombreDispositivo ?? "",
+                    Mensaje = mensaje ?? "",
+                    Ip = ip
+                });
+
+                RegistrarAcceso(user, false, "Autorización de dispositivo solicitada al administrador", ip, null);
+                AvisarSolicitudDispositivoAAdministradores(user, (nombreDispositivo ?? "").Trim());
+            }
+            catch (ArgumentException ex)
+            {
+                // Dato invalido tipeado por el usuario (nombre vacio o demasiado largo): se le muestra.
+                TempData[TempDispError] = ex.Message;
+                return RedirectToAction(nameof(DispositivoNoAutorizado));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "No se pudo registrar la solicitud de autorizacion de dispositivo del usuario {IdUsuario}.", user.Id);
+                TempData[TempDispError] = "No pudimos enviar la solicitud. Intentá de nuevo en unos minutos o avisale a tu administrador.";
+                return RedirectToAction(nameof(DispositivoNoAutorizado));
+            }
+
+            TempData[TempDispSuccess] = "Le avisamos a tu administrador. Cuando autorice este dispositivo vas a poder ingresar con tu usuario y contraseña.";
+            return RedirectToAction(nameof(DispositivoNoAutorizado));
+        }
+
+        private bool ExisteSolicitudPendiente(VerificacionDispositivoStore.Pedido pedido)
+        {
+            try
+            {
+                var oDispositivoN = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(new EmpresaContextFijo(pedido.IdEmpresa));
+                return oDispositivoN.ListarSolicitudesPendientes(pedido.IdEmpresa).Any(s => s.Serie == pedido.SerieDispositivo);
+            }
+            catch (Exception ex)
+            {
+                // Sin la tabla (script pendiente en algun servidor) la pantalla sigue funcionando.
+                _logger.LogWarning(ex, "No se pudo consultar las solicitudes pendientes de dispositivo.");
+                return false;
+            }
+        }
+
+        // Mail (si hay SMTP) a los administradores de la empresa que tengan mail cargado. Nunca debe
+        // impedir la solicitud: la bandeja de /DispositivosSeguros es la via principal.
+        private void AvisarSolicitudDispositivoAAdministradores(Entidades.Usuario solicitante, string nombreDispositivo)
+        {
+            if (!SmtpMailHelper.IsConfigured())
+                return;
+
+            try
+            {
+                string url = Url.Action("Index", "DispositivosSeguros", null, Request.Scheme) ?? "";
+                var admins = CrearUsuarioNegocio(solicitante.IdEmpresa).ListarAdministradoresActivos(solicitante.IdEmpresa)
+                    .Where(a => SmtpMailHelper.IsValidEmail(a.Email))
+                    .ToList();
+
+                foreach (var admin in admins)
+                {
+                    string cuerpo =
+                        "<p>Hola " + System.Net.WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(admin.Nombre) ? "administrador" : admin.Nombre) + ".</p>" +
+                        "<p><strong>" + System.Net.WebUtility.HtmlEncode(solicitante.Nombre ?? solicitante.User ?? "Un usuario") + "</strong> pidió autorizar un dispositivo" +
+                        (nombreDispositivo.Length > 0 ? " (<em>" + System.Net.WebUtility.HtmlEncode(nombreDispositivo) + "</em>)" : "") + " para poder ingresar a CarniSys.</p>" +
+                        "<p><a href=\"" + System.Net.WebUtility.HtmlEncode(url) + "\">Revisá y aprobá o rechazá la solicitud en Dispositivos seguros</a></p>" +
+                        "<p>Si no reconocés el pedido, rechazalo.</p>";
+                    SmtpMailHelper.SendMail(admin.Email, admin.Nombre, "Solicitud de autorización de dispositivo - CarniSys", cuerpo);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo avisar por mail a los administradores de la solicitud de dispositivo del usuario {IdUsuario}.", solicitante.Id);
+            }
+        }
+
         private IActionResult DispositivoNoAutorizadoTrasClaveValida(
             Entidades.Usuario user, string ip, LoginIndexVm model, string serieToken, Entidades.DispositivoSeguro? dispositivoBloqueado)
         {
@@ -757,7 +1366,7 @@ namespace WebCore.Controllers
                 RegistrarAcceso(user, false, "Dispositivo bloqueado por el administrador", ip, dispositivoBloqueado);
                 model.Clave = "";
                 model.Error = "Este dispositivo fue bloqueado por el administrador. Pedile que lo habilite o ingresá desde otro dispositivo autorizado.";
-                return View("Index", model);
+                return VistaLogin(model, model.Cuit);
             }
 
             string nonce = VerificacionDispositivoStore.Instancia.CrearPedido(user.Id, user.IdEmpresa, serieToken, model.ReturnUrl);
@@ -778,6 +1387,8 @@ namespace WebCore.Controllers
                 EmailEnmascarado = tieneEmail ? EnmascararEmail(user!.Email) : "",
                 SmtpConfigurado = SmtpMailHelper.IsConfigured(),
                 CodigoEnviado = pedido.CodigoExpiraUtc.HasValue && pedido.CodigoExpiraUtc.Value > DateTime.UtcNow,
+                CodigoDispositivo = pedido.SerieDispositivo ?? "",
+                SolicitudPendiente = ExisteSolicitudPendiente(pedido),
                 Error = TempData[TempDispError] as string,
                 Success = TempData[TempDispSuccess] as string
             };
@@ -806,10 +1417,10 @@ namespace WebCore.Controllers
 
         private async Task<IActionResult> CompletarLoginAsync(
             Entidades.Usuario user, string returnUrl, string ip, string usuarioTipeado,
-            Entidades.DispositivoSeguro? dispositivo, string motivo)
+            Entidades.DispositivoSeguro? dispositivo, string motivo, string metodoAuth = MetodoAuthClave)
         {
             RegistrarAcceso(user, true, motivo, ip, dispositivo);
-            await FirmarCookieAsync(user);
+            await FirmarCookieAsync(user, metodoAuth);
             LoginRateLimiter.Reset(ip, usuarioTipeado);
 
             // Modal de sucursal post-login (item 3 de la cuarta ronda de pedidos, 2026-09-10 --
@@ -888,7 +1499,7 @@ namespace WebCore.Controllers
             return email.Substring(0, 1) + "***" + email.Substring(arroba);
         }
 
-        private async Task FirmarCookieAsync(Entidades.Usuario user)
+        private async Task FirmarCookieAsync(Entidades.Usuario user, string metodoAuth = MetodoAuthClave)
         {
             var claims = new List<Claim>
             {
@@ -900,6 +1511,7 @@ namespace WebCore.Controllers
                 new Claim(SesionClaims.Admin, user.Admin ? "true" : "false"),
                 new Claim(SesionClaims.EsUsuarioProduccion, user.EsUsuarioProduccion ? "true" : "false"),
                 new Claim(SesionClaims.PermitirLoginFueraSucursal, user.PermitirLoginFueraSucursal ? "true" : "false"),
+                new Claim(SesionClaims.AuthMethod, metodoAuth),
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -989,20 +1601,15 @@ namespace WebCore.Controllers
             if (int.TryParse(System.Configuration.ConfigurationManager.AppSettings["Security:AccountLockoutMaxAttempts"], out var intentos) && intentos > 0)
                 return intentos;
 
-            return 5;
+            // 7 intentos por usuario (pedido del usuario, 2026-10-02; antes 5).
+            return 7;
         }
 
+        // IP real del cliente: X-Forwarded-For solo cuenta si la conexion viene de un proxy de confianza
+        // (ver Helpers/ClientIp.cs y Negocio/ClientIpResolver.cs, Fase 4 de docs/DECISIONS.md).
         private string ObtenerDireccionIp()
         {
-            var forwardedFor = Request.Headers["X-Forwarded-For"].ToString();
-            if (!string.IsNullOrWhiteSpace(forwardedFor))
-            {
-                var primero = forwardedFor.Split(',').Select(x => x.Trim()).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
-                if (!string.IsNullOrWhiteSpace(primero))
-                    return primero;
-            }
-
-            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            return ClientIp.Obtener(HttpContext);
         }
 
         // IEmpresaContext fijo (no depende de HttpContext) -- usado durante el POST de login, antes

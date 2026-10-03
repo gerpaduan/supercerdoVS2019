@@ -162,7 +162,16 @@ namespace DatosPostgres
                 RequiereDispositivoSeguro = GetBool(dr, "requieredispositivoseguro"),
                 IntentosFallidosLogin = GetInt(dr, "intentosfallidoslogin"),
                 Bloqueado = GetBool(dr, "bloqueado"),
-                FechaBloqueoUtc = dr["fechabloqueoutc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechabloqueoutc"])
+                FechaBloqueoUtc = dr["fechabloqueoutc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechabloqueoutc"]),
+                IntentosFallidosNoSeguro = GetInt(dr, "intentosfallidosnoseguro"),
+                BloqueadoNoSeguro = GetBool(dr, "bloqueadonoseguro"),
+                FechaBloqueoNoSeguroUtc = ColumnaExiste(dr, "fechabloqueonosegurautc") && dr["fechabloqueonosegurautc"] != DBNull.Value
+                    ? Convert.ToDateTime(dr["fechabloqueonosegurautc"]) : (DateTime?)null,
+                PinHash = GetString(dr, "pinhash"),
+                PinSalt = GetString(dr, "pinsalt"),
+                PinHashIterations = GetInt(dr, "pinhashiterations"),
+                PinUpdatedAtUtc = ColumnaExiste(dr, "pinupdatedatutc") && dr["pinupdatedatutc"] != DBNull.Value
+                    ? Convert.ToDateTime(dr["pinupdatedatutc"]) : (DateTime?)null
             };
         }
 
@@ -387,7 +396,10 @@ namespace DatosPostgres
                 UPDATE usuarios SET
                     intentosfallidoslogin = @intentosFallidosLogin,
                     bloqueado = @bloqueado,
-                    fechabloqueoutc = @fechaBloqueoUtc
+                    fechabloqueoutc = @fechaBloqueoUtc,
+                    intentosfallidosnoseguro = @intentosFallidosNoSeguro,
+                    bloqueadonoseguro = @bloqueadoNoSeguro,
+                    fechabloqueonosegurautc = @fechaBloqueoNoSeguroUtc
                 WHERE id = @idUsuario;";
             Action<NpgsqlParameterCollection> setParams = p =>
             {
@@ -395,12 +407,65 @@ namespace DatosPostgres
                 p.AddWithValue("intentosFallidosLogin", oUsuario.IntentosFallidosLogin);
                 p.AddWithValue("bloqueado", oUsuario.Bloqueado);
                 p.AddWithValue("fechaBloqueoUtc", (object)oUsuario.FechaBloqueoUtc ?? DBNull.Value);
+                p.AddWithValue("intentosFallidosNoSeguro", oUsuario.IntentosFallidosNoSeguro);
+                p.AddWithValue("bloqueadoNoSeguro", oUsuario.BloqueadoNoSeguro);
+                p.AddWithValue("fechaBloqueoNoSeguroUtc", (object)oUsuario.FechaBloqueoNoSeguroUtc ?? DBNull.Value);
             };
 
             if (sinRestriccionDeTenant)
                 NonQuerySinRLS(sql, setParams);
             else
                 DbPg.NonQuery(_connectionString, _idEmpresa, sql, setParams);
+        }
+
+        // Clave rapida (PIN): pinHash vacio = quitar el PIN. Mismo patron de tenant que
+        // ActualizarPasswordWebSeguro (el login corre sin tenant conocido todavia).
+        public void ActualizarPin(int idUsuario, string pinHash, string pinSalt, int pinHashIterations, bool sinRestriccionDeTenant = false)
+        {
+            const string sql = @"
+                UPDATE usuarios SET
+                    pinhash = @pinHash,
+                    pinsalt = @pinSalt,
+                    pinhashiterations = @pinHashIterations,
+                    pinupdatedatutc = CASE WHEN @pinHash = '' THEN NULL ELSE now() END
+                WHERE id = @idUsuario;";
+            Action<NpgsqlParameterCollection> setParams = p =>
+            {
+                p.AddWithValue("idUsuario", idUsuario);
+                p.AddWithValue("pinHash", pinHash ?? string.Empty);
+                p.AddWithValue("pinSalt", pinSalt ?? string.Empty);
+                p.AddWithValue("pinHashIterations", pinHashIterations);
+            };
+
+            if (sinRestriccionDeTenant)
+                NonQuerySinRLS(sql, setParams);
+            else
+                DbPg.NonQuery(_connectionString, _idEmpresa, sql, setParams);
+        }
+
+        // Lista liviana para el login por CUIT: sin clave, sin hash, sin permisos. Con el rol de
+        // login (bypass RLS) porque corre antes de que haya sesion/tenant; el filtro por empresa es
+        // explicito.
+        public List<Entidades.Usuario> ListarActivosBasico(int idEmpresa, bool admin)
+        {
+            return ReaderSinRLS(@"
+                SELECT id, nombre, usuario, email, idempresa
+                FROM usuarios
+                WHERE idempresa = @idEmpresa AND activo = true AND admin = @admin
+                ORDER BY nombre;",
+                dr => new Entidades.Usuario
+                {
+                    Id = Convert.ToInt32(dr["id"]),
+                    Nombre = GetString(dr, "nombre"),
+                    User = GetString(dr, "usuario"),
+                    Email = GetString(dr, "email"),
+                    IdEmpresa = Convert.ToInt32(dr["idempresa"])
+                },
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", idEmpresa);
+                    p.AddWithValue("admin", admin);
+                });
         }
 
         // Cruza todas las empresas a proposito -- unico caller es "Olvide mi contraseña"

@@ -80,6 +80,10 @@
                                         {
                                             <span class="badge badge-danger">Sí</span>
                                         }
+                                        else if (item.BloqueadoNoSeguro)
+                                        {
+                                            <span class="badge badge-warning" title="Bloqueado solo para ingresos desde dispositivos no autorizados">Parcial</span>
+                                        }
                                         else
                                         {
                                             <span class="badge badge-secondary">No</span>
@@ -103,13 +107,23 @@
                                             <a class="btn btn-sm btn-outline-secondary mb-1" href="@Url.Action("Permisos", "Usuarios", new { id = item.Id })">
                                                 Ver permisos
                                             </a>
-                                            if (item.Bloqueado)
+                                            if (item.Bloqueado || item.BloqueadoNoSeguro)
                                             {
                                                 <form asp-controller="Usuarios" asp-action="DesbloquearUsuario" method="post" class="d-inline">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="id" value="@item.Id" />
                                                     <button type="submit" class="btn btn-sm btn-outline-danger mb-1" onclick="return confirm('¿Desbloquear esta cuenta?');">
                                                         Desbloquear
+                                                    </button>
+                                                </form>
+                                            }
+                                            if (item.TienePin)
+                                            {
+                                                <form asp-controller="Usuarios" asp-action="QuitarPin" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning mb-1" title="Elimina la clave rápida (PIN) de este usuario" onclick="return confirm('¿Quitar la clave rápida de este usuario? Seguirá ingresando con su contraseña.');">
+                                                        Quitar PIN
                                                     </button>
                                                 </form>
                                             }

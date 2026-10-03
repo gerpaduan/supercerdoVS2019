@@ -22,6 +22,9 @@ namespace WebCore.Models
         public string SucursalNombre { get; set; } = "";
         public int IdEmpresa { get; set; }
         public bool Bloqueado { get; set; }
+        // Bloqueado solo para ingresos desde dispositivos no seguros (ver Entidades.Usuario).
+        public bool BloqueadoNoSeguro { get; set; }
+        public bool TienePin { get; set; }
     }
 
     public class UsuarioEditVm
