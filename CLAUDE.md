@@ -261,6 +261,7 @@ La documentación se actualiza **en el mismo commit** que el cambio de código. 
 - Resolvés un bug no trivial → agregá entrada en `docs/TROUBLESHOOTING.md` (fecha + síntoma → causa → fix, máximo 5 líneas).
 - Tomás una decisión de arquitectura o descartás una alternativa → entrada en `docs/DECISIONS.md`: **qué se decidió + por qué + alternativa descartada + fecha**. 2–4 líneas alcanzan para lo simple; riesgos aceptados y divergencias deliberadas se extienden lo necesario.
 - Cambia la estructura general (módulo nuevo, flujo de datos nuevo) → actualizá `docs/ARCHITECTURE.md`.
+- **WebCore (manual de uso, 2026-10-03)**: toda vista o comportamiento nuevo o modificado actualiza su `.md` de pantalla en `docs/11-manual-de-uso/pantallas/<Controller>.<Action>.md` (y la fecha `revisada` del encabezado) y, si agrega o cambia una configuración, el mapa `docs/11-manual-de-uso/referencia/configuraciones.md` (o `configuraciones-plataforma.md` si es de plataforma), en el mismo commit. Antes de cada deploy correr `scripts/check-ayuda.ps1`. Lo no verificado contra el código va como `PENDIENTE`. Ver `docs/DECISIONS.md` (2026-10-03).
 
 ### 8.3 Lectura y conflictos
 
