@@ -529,7 +529,9 @@ namespace WebCore.Controllers
         [HttpGet]
         public IActionResult ChangePassword()
         {
-            if (_sesion.UsuarioActual == null)
+            // [Authorize] a nivel accion no pisa el [AllowAnonymous] de la clase: sin sesion UsuarioActual lanza (500),
+            // asi que se chequea la autenticacion antes y se manda al ingreso.
+            if (!_sesion.EstaAutenticado || _sesion.UsuarioActual == null)
                 return RedirectToAction("Index");
 
             var model = new ChangePasswordVm
@@ -545,7 +547,7 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ChangePassword(ChangePasswordVm model)
         {
-            if (_sesion.UsuarioActual == null)
+            if (!_sesion.EstaAutenticado || _sesion.UsuarioActual == null)
                 return RedirectToAction("Index");
 
             model ??= new ChangePasswordVm();
