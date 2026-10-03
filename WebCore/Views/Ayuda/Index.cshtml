@@ -1,0 +1,20 @@
+@model WebCore.Models.AyudaContenidoVm
+@{
+    // Pagina completa del manual de uso (pestaña nueva / imprimir). El uso normal es el panel de ayuda
+    // del boton "Ayuda" de la barra superior, que NO saca al usuario de su pantalla.
+    ViewBag.Title = "Manual de uso";
+}
+
+<div class="container-fluid ayuda-page">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    @await Html.PartialAsync("_AyudaContenido", Model)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AyudaEstiloPagina")

@@ -1,0 +1,84 @@
+@model WebCore.Models.AyudaContenidoVm
+@using WebCore.Models
+@* Contenido de la ayuda (2026-10-03, ver docs/DECISIONS.md "Manuales por rol y ayuda en cada pantalla").
+   Lo usan el panel lateral (se carga por AJAX y se muestra ENCIMA de la pantalla actual) y las paginas
+   completas. Los enlaces con data-ayuda="tipo/clave" los abre ayuda.js adentro del panel: no navegan. *@
+<div class="ayuda-contenido" data-pagina-url="@Model.UrlPagina" data-titulo="@Model.Titulo">
+    @switch (Model.Modo)
+    {
+        case ModoAyuda.Documento:
+            <h1 class="ayuda-titulo">@Model.Titulo</h1>
+            <p class="ayuda-meta">
+                @Model.NombreRol
+                @if (!string.IsNullOrWhiteSpace(Model.Revisada))
+                {
+                    <span> &middot; revisada el @Model.Revisada</span>
+                }
+            </p>
+            <div class="ayuda-md">@Html.Raw(Model.Html)</div>
+            break;
+
+        case ModoAyuda.SinAyuda:
+            <h1 class="ayuda-titulo">No hay ayuda para esta pantalla</h1>
+            <p>Esta pantalla (<code>@Model.Pantalla</code>) todavía no tiene manual, o no hay uno para tu perfil. Mientras tanto podés consultar los manuales:</p>
+            @await Html.PartialAsync("_AyudaManuales", Model)
+            break;
+
+        case ModoAyuda.Busqueda:
+            <h1 class="ayuda-titulo">Resultados para “@Model.Consulta”</h1>
+            @if (Model.Items.Count == 0)
+            {
+                <p class="ayuda-meta">No se encontró nada. Probá con otra palabra (mínimo 2 letras).</p>
+            }
+            else
+            {
+                <div class="list-group ayuda-lista">
+                    @foreach (var item in Model.Items)
+                    {
+                        <a href="#" class="list-group-item list-group-item-action" data-ayuda="@item.Destino">
+                            <div class="d-flex justify-content-between">
+                                <strong>@item.Titulo</strong>
+                                <span class="badge badge-secondary bg-secondary">@item.TipoTexto</span>
+                            </div>
+                            <div class="ayuda-meta">@item.Modulo</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Fragmento))
+                            {
+                                <div class="ayuda-fragmento">@item.Fragmento</div>
+                            }
+                        </a>
+                    }
+                </div>
+            }
+            break;
+
+        case ModoAyuda.Indice:
+            if (string.IsNullOrEmpty(Model.Rol))
+            {
+                <h1 class="ayuda-titulo">Manuales</h1>
+                @await Html.PartialAsync("_AyudaManuales", Model)
+            }
+            else
+            {
+                <h1 class="ayuda-titulo">@Model.Titulo</h1>
+                @foreach (var grupo in Model.Items.GroupBy(i => i.Modulo))
+                {
+                    <h2 class="ayuda-grupo">@grupo.Key</h2>
+                    <div class="list-group ayuda-lista">
+                        @foreach (var item in grupo)
+                        {
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between" data-ayuda="@item.Destino">
+                                <span>@item.Titulo</span>
+                                <span class="ayuda-meta">@item.TipoTexto</span>
+                            </a>
+                        }
+                    </div>
+                }
+                @if (Model.ManualesDisponibles.Any(m => m.Rol != Model.Rol))
+                {
+                    <p class="ayuda-meta mt-3">Otros manuales:</p>
+                    @await Html.PartialAsync("_AyudaManuales", Model)
+                }
+            }
+            break;
+    }
+</div>

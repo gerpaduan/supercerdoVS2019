@@ -1,0 +1,10 @@
+@model WebCore.Models.AyudaContenidoVm
+@* Botones de los manuales a los que el usuario tiene acceso (segun su nivel). *@
+<div class="list-group ayuda-lista">
+    @foreach (var manual in Model.ManualesDisponibles.Where(m => m.Rol != Model.Rol))
+    {
+        <a href="#" class="list-group-item list-group-item-action" data-ayuda="indice/@manual.Rol">
+            <i class="fas fa-book mr-1 me-1"></i> @manual.Nombre
+        </a>
+    }
+</div>

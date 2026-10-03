@@ -24,6 +24,8 @@ builder.Services.AddControllersWithViews(options =>
 // los pocos minutos" por el idle-timeout del App Pool matando la Session in-proc).
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<WebCore.Services.IUsuarioSesionService, WebCore.Services.UsuarioSesionService>();
+// Manual de uso / ayuda por pantalla (2026-10-03): lee los .md embebidos una sola vez, por eso singleton.
+builder.Services.AddSingleton<WebCore.Helpers.IAyudaService, WebCore.Helpers.AyudaService>();
 builder.Services.AddScoped<WebCore.Services.ICtaCteReservadaService, WebCore.Services.CtaCteReservadaService>();
 
 // Config de AFIP por empresa (URLs por entorno + clave cifrada del pfx del certificado ARCA). Usa

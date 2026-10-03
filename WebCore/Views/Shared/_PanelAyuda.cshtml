@@ -1,0 +1,29 @@
+@* Panel lateral de ayuda (2026-10-03, ver docs/DECISIONS.md "Manuales por rol y ayuda en cada pantalla").
+   Se muestra ENCIMA de la pantalla actual (offcanvas de Bootstrap 5): pedir ayuda nunca saca al usuario de
+   su pantalla -- sin navegar ni recargar, asi un formulario a medias o una venta en curso quedan como
+   estaban. El contenido se carga por AJAX al abrirlo (ayuda.js) desde AyudaController. La unica salida de
+   la pantalla es el boton "Abrir en pestaña nueva" (target=_blank). Se incluye desde _Layout y _LayoutPOS. *@
+@{
+    var ayudaController = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+    var ayudaAction = (ViewContext.RouteData.Values["action"] as string) ?? "";
+}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="panelAyuda" aria-labelledby="panelAyudaTitulo"
+     data-base="@Url.Content("~/Ayuda")" data-c="@ayudaController" data-a="@ayudaAction">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="panelAyudaTitulo"><i class="far fa-question-circle me-1 mr-1"></i> Ayuda</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="ayuda-barra">
+        <button type="button" class="btn btn-outline-secondary" id="btnAyudaVolver" hidden title="Volver a lo anterior"><i class="fas fa-arrow-left"></i></button>
+        <button type="button" class="btn btn-outline-secondary" id="btnAyudaPantalla" title="Ayuda de esta pantalla"><i class="fas fa-window-maximize"></i> Esta pantalla</button>
+        <button type="button" class="btn btn-outline-secondary" id="btnAyudaManuales" title="Manuales completos"><i class="fas fa-book"></i> Manuales</button>
+        <form class="ayuda-buscar" id="formAyudaBuscar" autocomplete="off">
+            <input type="search" class="form-control" id="txtAyudaBuscar" placeholder="Buscar en la ayuda" aria-label="Buscar en la ayuda" />
+            <button type="submit" class="btn btn-outline-primary" title="Buscar"><i class="fas fa-search"></i></button>
+        </form>
+        <a class="btn btn-outline-secondary" id="lnkAyudaPagina" href="@Url.Content("~/Ayuda")" target="_blank" rel="noopener" title="Abrir en pestaña nueva (para leer o imprimir sin perder tu trabajo)"><i class="fas fa-external-link-alt"></i></a>
+    </div>
+    <div class="offcanvas-body" id="panelAyudaCuerpo">
+        <div class="text-muted small">Cargando…</div>
+    </div>
+</div>

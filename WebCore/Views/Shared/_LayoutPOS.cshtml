@@ -83,6 +83,7 @@
     @* Shim de compatibilidad Bootstrap 4 -> 5, ver docs/DECISIONS.md (2026-09-04) y
        WebCore/wwwroot/Content/css/bootstrap4-compat.css para el detalle. *@
     <link rel="stylesheet" href="~/Content/css/bootstrap4-compat.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Content/css/ayuda.css" asp-append-version="true" />
     @* Bug real (2026-09-07, ver docs/DECISIONS.md "Mis actividades: tabla duplicada sin
        estructura"): los modales de Egresos/Mis actividades/Mis ventas que se cargan por AJAX
        dentro del POS (_MisEgresosCaja.cshtml, _EgresosCajaTabla.cshtml, _MisVentas.cshtml) usan
@@ -307,6 +308,12 @@
                     </div>
                 }
 
+                @* Manual de uso (2026-10-03): panel lateral con la ayuda de esta pantalla, encima del POS (no
+                   navega ni recarga: la venta en curso no se toca). El F1 del POS (atajos) sigue igual. *@
+                <button type="button" class="nav-link topbar-icon-btn border-0 bg-transparent" data-ayuda-abrir="pantalla" title="Manual de uso de esta pantalla" aria-label="Manual de uso">
+                    <i class="far fa-question-circle text-light"></i>
+                </button>
+
                 <a href="#" id="btnToggleTheme" class="nav-link topbar-icon-btn" title="Cambiar tema">
                     <i id="icoTheme" class="fas fa-moon text-light"></i>
                 </a>
@@ -358,8 +365,10 @@
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @await Html.PartialAsync("_PanelAyuda")
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/Scripts/app/bootstrap4-compat.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/ayuda.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/Scripts/app/swal-single-confirm.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-guard.js" asp-append-version="true"></script>

@@ -1,0 +1,46 @@
+@model WebCore.Models.AyudaManualVm
+@{
+    // Manual completo de un rol, de corrido (pestaña nueva / imprimir o guardar como PDF). Se arma solo a
+    // partir de los .md de docs/11-manual-de-uso cuyo rol coincide: no hay un texto aparte que mantener.
+}
+
+<div class="container-fluid ayuda-page">
+    <div class="d-flex justify-content-between align-items-center mb-2 ayuda-no-imprimir">
+        <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("Index", "Ayuda")"><i class="fas fa-book mr-1 me-1"></i> Manuales</a>
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.print()"><i class="fas fa-print mr-1 me-1"></i> Imprimir / guardar PDF</button>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-body ayuda-contenido">
+                    <h1 class="ayuda-titulo">@Model.Nombre</h1>
+
+                    @if (Model.Secciones.Count == 0)
+                    {
+                        <p class="ayuda-meta">Este manual todavía no tiene contenido.</p>
+                    }
+                    else
+                    {
+                        <h2 class="ayuda-grupo">Contenido</h2>
+                        <ul class="ayuda-toc">
+                            @foreach (var seccion in Model.Secciones)
+                            {
+                                <li><a href="#@seccion.Anchor">@seccion.Titulo</a> <span class="ayuda-meta">&middot; @seccion.Modulo (@seccion.TipoTexto)</span></li>
+                            }
+                        </ul>
+
+                        @foreach (var seccion in Model.Secciones)
+                        {
+                            <section class="ayuda-seccion" id="@seccion.Anchor">
+                                <h2 class="ayuda-seccion-titulo">@seccion.Titulo <span class="ayuda-meta">&middot; @seccion.Modulo</span></h2>
+                                <div class="ayuda-md">@Html.Raw(seccion.Html)</div>
+                            </section>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AyudaEstiloPagina")

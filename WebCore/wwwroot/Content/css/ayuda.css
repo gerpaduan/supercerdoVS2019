@@ -1,0 +1,29 @@
+/* Ayuda / manual de uso (2026-10-03, ver docs/DECISIONS.md "Manuales por rol y ayuda en cada pantalla").
+   Estilos del panel lateral y del contenido de los .md renderizados. Compacto (~.8-.9rem) como el resto
+   de las pantallas de WebCore. Usa las variables de Bootstrap 5 para respetar el modo oscuro. */
+#panelAyuda { width: min(540px, 100vw); }
+#panelAyuda .offcanvas-header { padding: .6rem .9rem; border-bottom: 1px solid var(--bs-border-color, #dee2e6); }
+#panelAyuda .offcanvas-title { font-size: .95rem; font-weight: 700; }
+#panelAyuda .offcanvas-body { padding: .8rem .95rem; font-size: .86rem; }
+#panelAyuda .ayuda-barra { display: flex; gap: .35rem; align-items: center; padding: .45rem .9rem; border-bottom: 1px solid var(--bs-border-color, #dee2e6); font-size: .78rem; }
+#panelAyuda .ayuda-barra .btn { font-size: .75rem; padding: .18rem .45rem; }
+#panelAyuda .ayuda-buscar { display: flex; gap: .3rem; flex: 1; }
+#panelAyuda .ayuda-buscar input { font-size: .8rem; padding: .2rem .5rem; min-height: 1.9rem; }
+.ayuda-contenido .ayuda-titulo { font-size: 1.15rem; font-weight: 700; margin: 0 0 .15rem; }
+.ayuda-contenido .ayuda-meta { font-size: .76rem; color: var(--bs-secondary-color, #6c757d); margin-bottom: .6rem; }
+.ayuda-contenido .ayuda-grupo { font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--bs-secondary-color, #6c757d); margin: .9rem 0 .35rem; }
+.ayuda-contenido .ayuda-fragmento { font-size: .76rem; color: var(--bs-secondary-color, #6c757d); margin-top: .15rem; }
+.ayuda-contenido .ayuda-lista .list-group-item { font-size: .84rem; padding: .45rem .65rem; }
+.ayuda-contenido .ayuda-seccion { margin-top: 1.4rem; padding-top: .8rem; border-top: 1px solid var(--bs-border-color, #dee2e6); }
+.ayuda-contenido .ayuda-seccion-titulo { font-size: 1.05rem; font-weight: 700; }
+.ayuda-contenido .ayuda-toc { font-size: .84rem; padding-left: 1.1rem; }
+.ayuda-md h2 { font-size: .98rem; font-weight: 700; margin: 1rem 0 .35rem; }
+.ayuda-md h3 { font-size: .9rem; font-weight: 700; margin: .8rem 0 .3rem; }
+.ayuda-md p, .ayuda-md li { line-height: 1.45; }
+.ayuda-md ul, .ayuda-md ol { padding-left: 1.2rem; margin-bottom: .6rem; }
+.ayuda-md code { font-size: .8rem; background: rgba(127, 127, 127, .15); padding: .05rem .3rem; border-radius: .25rem; }
+.ayuda-md blockquote { border-left: 3px solid var(--bs-warning, #f6c23e); padding: .3rem .7rem; margin: .6rem 0; background: rgba(246, 194, 62, .1); }
+.ayuda-md table { width: 100%; font-size: .78rem; border-collapse: collapse; margin: .6rem 0; display: block; overflow-x: auto; }
+.ayuda-md th, .ayuda-md td { border: 1px solid var(--bs-border-color, #dee2e6); padding: .3rem .45rem; vertical-align: top; }
+.ayuda-md th { background: rgba(127, 127, 127, .12); font-weight: 700; }
+.ayuda-md a[data-ayuda] { cursor: pointer; }

@@ -1,0 +1,13 @@
+@* Estilo compacto de las paginas completas de ayuda (regla de vistas WebCore: letra ~.8-.9rem, nunca el
+   1rem default de Bootstrap) y reglas de impresion: al imprimir / guardar PDF se oculta el menu. *@
+<style>
+    .ayuda-page { font-size: .9rem; }
+    .ayuda-page .card-body { padding: .82rem 1rem; }
+    .ayuda-page .btn { font-size: .78rem; padding: .23rem .5rem; }
+    @@media print {
+        #accordionSidebar, .topbar, footer, .sticky-footer, .ayuda-no-imprimir { display: none !important; }
+        #content-wrapper { margin: 0 !important; }
+        .ayuda-page .card { border: 0 !important; box-shadow: none !important; }
+        .ayuda-seccion { page-break-inside: avoid; }
+    }
+</style>

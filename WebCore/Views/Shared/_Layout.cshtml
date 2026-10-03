@@ -127,6 +127,7 @@
        de Bootstrap 4 (badge-warning, custom-switch, etc.) que no existen en Bootstrap 5 -- shim
        de compatibilidad, no reescritura de las 30+ vistas afectadas. *@
     <link rel="stylesheet" href="~/Content/css/bootstrap4-compat.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Content/css/ayuda.css" asp-append-version="true" />
     @* Identidad visual real del clasico (2026-09-05) -- CSS propio y aditivo, sin Bootstrap
        empaquetado adentro (confirmado leyendo los 2 archivos completos), seguro de cargar sobre
        Bootstrap 5. custom.css antes que ui-refresh.css: ui-refresh define las variables --ui-*
@@ -748,6 +749,14 @@
                                     <i id="icoTheme" class="fas fa-moon"></i>
                                 </a>
                             </li>
+                            @* Ayuda (2026-10-03): abre el panel lateral con el manual de ESTA pantalla, encima de la pagina
+                               (no navega ni recarga: ver ayuda.js y docs/DECISIONS.md "Manuales por rol y ayuda en cada
+                               pantalla"). Es un button, no un link: no dispara el aviso de "salir sin guardar". *@
+                            <li class="nav-item no-arrow d-flex align-items-center">
+                                <button type="button" class="nav-link topbar-icon-btn border-0 bg-transparent" data-ayuda-abrir="pantalla" title="Ayuda de esta pantalla" aria-label="Ayuda">
+                                    <i class="far fa-question-circle"></i>
+                                </button>
+                            </li>
                             <div class="topbar-divider d-none d-sm-block"></div>
                             @* Menu de usuario (dropdown) + sucursal actual, 2026-09-07 (pedido
                                explicito del usuario -- ver docs/DECISIONS.md). Port de
@@ -817,6 +826,10 @@
                                             Clave rápida (PIN)
                                         </a>
                                     }
+                                    <a class="dropdown-item" href="#" data-ayuda-abrir="indice">
+                                        <i class="far fa-question-circle fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Manual de uso
+                                    </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="@Url.Action("ChangePassword", "Login")">
                                         <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -855,6 +868,7 @@
     @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
 
     @* Selector de sucursal (menu de usuario), 2026-09-07 -- ver docs/DECISIONS.md. *@
+    @await Html.PartialAsync("_PanelAyuda")
     @Html.Partial("~/Views/Shared/_ModalSucursales.cshtml")
 
     @* Autoservicio de numero de serie (menu de usuario), 2026-09-10 -- ver docs/DECISIONS.md
@@ -870,6 +884,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/Scripts/app/bootstrap4-compat.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/ayuda.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @if (esAdmin && WebCore.Helpers.PosBorradorSettings.Habilitado)
     {

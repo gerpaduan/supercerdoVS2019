@@ -16,6 +16,7 @@ Este directorio concentra la documentacion funcional y tecnica del sistema.
 - [07. Operacion y soporte](./07-operacion-y-soporte/README.md)
 - [08. Relevamiento funcional](./08-relevamiento/README.md)
 - [09. Cambios y pendientes](./09-cambios-y-pendientes/README.md)
+- [11. Manual de uso y ayuda por pantalla](./11-manual-de-uso/README.md) -- manuales por rol (usuario, administrador, super administrador) y ayuda de cada pantalla; es la fuente de la ayuda que muestra la app
 
 ## Criterios
 

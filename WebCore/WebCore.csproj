@@ -18,6 +18,7 @@
          built-in) para preservar exactamente la misma garantia de concurrencia ya verificada en
          produccion, sin reescribir un mecanismo de seguridad. -->
     <PackageReference Include="Fido2.AspNet" Version="4.1.0" />
+    <PackageReference Include="Markdig" Version="1.4.0" />
     <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
     <!-- Reemplazo de iTextSharp (no corre en .NET Core) para generacion de PDF: QuestPDF,
          elegido por el usuario en vez de iText7 AGPL (que exige codigo abierto para uso como
@@ -35,6 +36,16 @@
          propia documentacion, que recomienda justamente ZXing.Net via SVG). Se eligio SVG (no
          bitmap) por el mismo motivo que QRCoder/PngByteQRCode: sin System.Drawing, corre en Linux. -->
     <PackageReference Include="ZXing.Net" Version="0.16.11" />
+  </ItemGroup>
+
+  <!-- Manual de uso / ayuda por pantalla (2026-10-03, ver docs/DECISIONS.md "Manuales por rol y ayuda
+       en cada pantalla"). La fuente de verdad son los .md de docs/11-manual-de-uso (se leen igual
+       desde el repo); se EMBEBEN en el .dll para que viajen en cualquier publish (SM/SL
+       autocontenido, imagen Docker de luden) sin depender de copiar archivos sueltos. El nombre
+       logico queda "manual/<subruta>" (con \ o / segun el SO donde se compile: Helpers/AyudaService
+       lo normaliza). Markdig: parser de markdown (ver el servicio). -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\docs\11-manual-de-uso\**\*.md" LogicalName="manual/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <PropertyGroup>
