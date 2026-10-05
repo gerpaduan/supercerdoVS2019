@@ -790,11 +790,11 @@
     }
 }
 
-/* Nota: las clases pos-compact/pos-tiny/pos-footer-fit/pos-footer-tiny-fit del original dependen
-   del IIFE de "compactado adaptativo por altura de viewport" de punto-expendio-pos.js -- NO
-   portado en este MVP (ver header de ese archivo). Estas reglas quedan portadas igual (inertes
-   hasta que se agregue ese JS) por prolijidad/paridad, mismo criterio que pos.css con el resto
-   de reglas sin HTML/JS correspondiente todavia. */
+/* Nota: las clases pos-compact/pos-tiny/pos-footer-fit/pos-footer-tiny-fit las pone
+   Scripts/app/pos-compact.js segun el alto del viewport (en Expendio solo aplican pos-compact y
+   pos-tiny: pos-footer-fit necesita .pos-ventas-workbench-col, que solo existe en Ventas). El
+   bloque producto/teclado de Expendio las pisa al final de este archivo (ver "se ajusta al alto
+   disponible"): el piso de #producto-info y de las teclas ya no depende de ellas. */
 html.pos-compact .keyboard-grid {
     gap: 5px !important;
     grid-auto-rows: minmax(30px, 1fr) !important;
@@ -1275,5 +1275,246 @@ html.dark-mode body #modalSectoresPuntoExpendio .js-sector-item:focus {
 @media (max-width: 767.98px) {
     .pos-topbar-grid.pos-topbar-grid-remito {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Sector PRESUPUESTO (2026-10-04): quinta celda "Valido por (dias)" entre la fecha y las acciones.
+   Misma estructura que REMITOS pero con la celda extra mas ancha (campo de dias + "Caduca el ..."). */
+.pos-topbar-grid.pos-topbar-grid-presupuesto {
+    grid-template-columns: minmax(300px, 1.4fr) minmax(150px, .6fr) minmax(190px, .7fr) minmax(215px, .7fr) minmax(240px, .86fr);
+}
+
+@media (min-width: 1400px) {
+    .pos-topbar-grid.pos-topbar-grid-presupuesto {
+        grid-template-columns: minmax(250px, 1fr) minmax(130px, .45fr) minmax(160px, .5fr) minmax(200px, .6fr) minmax(360px, .95fr);
+    }
+}
+
+@media (max-width: 1399.98px) and (min-width: 992px) {
+    .pos-topbar-grid.pos-topbar-grid-presupuesto {
+        grid-template-columns: minmax(210px, 1fr) minmax(120px, .45fr) minmax(145px, .5fr) minmax(195px, .6fr) minmax(330px, 1fr);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .pos-topbar-grid.pos-topbar-grid-presupuesto {
+        grid-template-columns: repeat(2, minmax(160px, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .pos-topbar-grid.pos-topbar-grid-presupuesto {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cliente fijo (2026-10-04): al elegir un cliente real el campo queda de solo lectura (se suelta
+   con la X). Fondo celeste para que se note que no es texto libre. Los botones extra (X e
+   historial de precios) son compactos para no comerle ancho al nombre. */
+#razonSocial.pos-cliente-fijo {
+    background-color: #eef6ff;
+    cursor: default;
+    text-overflow: ellipsis;
+}
+
+#btnQuitarCliente,
+#btnHistorialPreciosCliente {
+    padding-left: .5rem;
+    padding-right: .5rem;
+}
+
+html.dark-mode .pos-expendio-page .pos-topbar-item-cliente #razonSocial.pos-cliente-fijo {
+    background: #1b3350 !important;
+    background-color: #1b3350 !important;
+}
+
+.pos-topbar-item-caducidad #caducaElExpendio {
+    color: #475569;
+}
+
+html.dark-mode .pos-expendio-page .pos-topbar-item-caducidad #caducaElExpendio {
+    color: #cbd5e1;
+}
+
+/* Alta rapida de producto (2026-10-05, ver docs/DECISIONS.md): en <=576px las reglas de arriba fuerzan
+   "#producto-info .row" a columna y "[class*=col-]" a 100%, lo que apilaria Precio/IVA del formulario
+   de alta rapida (partial _AltaRapidaProductoPOS). Se restaura la fila Precio (7/12) + IVA (5/12) solo
+   dentro de ".pos-alta-rapida-form" -- no toca ninguna regla existente. */
+@media (max-width: 576px) {
+    #producto-info .pos-alta-rapida-form .row {
+        flex-direction: row !important;
+    }
+
+    #producto-info .pos-alta-rapida-form .row > .col-7 {
+        flex: 0 0 auto !important;
+        width: 58.33333333% !important;
+        max-width: 58.33333333% !important;
+        padding-left: .125rem !important;
+        padding-right: .125rem !important;
+    }
+
+    #producto-info .pos-alta-rapida-form .row > .col-5 {
+        flex: 0 0 auto !important;
+        width: 41.66666667% !important;
+        max-width: 41.66666667% !important;
+        padding-left: .125rem !important;
+        padding-right: .125rem !important;
+    }
+}
+
+/* =========================================================
+   Bloque buscador + producto + teclado: se ajusta al alto disponible, SIN scroll (2026-10-05,
+   pedido del usuario; ver docs/DECISIONS.md). Solo desktop (>=992px): en menos de eso la pagina
+   entera scrollea por diseno (ver bloque max-width:991.98px mas arriba).
+
+   Problema: pos.css deja .pos-workbench-scroll con overflow-y:auto y pone PISOS de altura en
+   todo lo de adentro (#producto-info, teclas, #inputCantidad, boton Agregar, metricas), asi que
+   cuando la ventana es baja (portatil, zoom 125%/150%, ventana no maximizada) el bloque no puede
+   achicarse, el contenido desborda, aparece el scroll y el input de codigo queda tapado.
+
+   Solucion: el bloque pasa a ser flex que LLENA el espacio entre el buscador y "Finalizar" y se
+   achica con el, y cada hijo reparte ese alto con flex/grid (sin minimos propios). Los selectores
+   llevan ".pos-page.pos-expendio-page" para ganarle en especificidad a las reglas con !important
+   de pos.css y de html.pos-compact / html.pos-tiny (que ademas fijaban minimos en las teclas).
+   No toca Ventas/POS (comparte pos.css, pero estas reglas son solo de Expendio).
+   ========================================================= */
+@media (min-width: 992px) {
+    .pos-page.pos-expendio-page .pos-workbench-scroll {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        /* HACK: red de seguridad. Con el piso de #producto-info (140px) solo aparece scroll si la
+           ventana es extremadamente baja; en cualquier tamano normal el bloque se achica y no hay. */
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    /* Camara y buscador de codigo: alto natural, nunca se achican ni se tapan. */
+    .pos-page.pos-expendio-page .pos-workbench-scroll > #scannerContainer,
+    .pos-page.pos-expendio-page .pos-workbench-scroll > .row {
+        flex: 0 0 auto;
+    }
+
+    /* Bloque de producto: llena el alto sobrante y se achica hasta 140px (piso unico, pisa los de
+       pos.css y los de html.pos-tiny); tope de 520px para que en monitores muy altos las teclas
+       no queden desproporcionadas. */
+    .pos-page.pos-expendio-page #producto-info {
+        flex: 1 1 0;
+        min-height: 140px !important;
+        max-height: 520px;
+        display: flex;
+        flex-direction: column;
+        padding: .4rem !important;
+    }
+
+    .pos-page.pos-expendio-page #producto-info > .row {
+        flex: 1 1 0;
+        min-height: 0;
+        height: auto;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        margin: 0;
+    }
+
+    .pos-page.pos-expendio-page #producto-info > .row > [class*="col-"] {
+        min-height: 0;
+    }
+
+    /* ---- Columna izquierda: nombre + Precio / Cantidad / Subtotal + Agregar, repartidos parejo ---- */
+    .pos-page.pos-expendio-page .producto-resumen {
+        display: flex;
+        flex-direction: column;
+        gap: .2rem;
+        overflow: hidden;
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen #prodNombre {
+        flex: 0 0 auto;
+        min-height: 0;
+        height: auto;
+        margin: 0 !important;
+        font-size: clamp(.95rem, 2.2vh, 1.6rem) !important;
+    }
+
+    /* min-height 1.35rem: con el bloque en su piso cada fila sigue legible (no se aplasta a 0). */
+    .pos-page.pos-expendio-page .producto-resumen > .pos-product-metric,
+    .pos-page.pos-expendio-page .producto-resumen > .btn-agregar-pos {
+        flex: 1 1 0;
+        min-height: 1.35rem;
+        margin: 0 !important;
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen > .pos-product-metric {
+        display: flex;
+        padding: .1rem .6rem !important;
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen > .pos-product-metric > .d-flex {
+        width: 100%;
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen .lbl-precio,
+    .pos-page.pos-expendio-page .producto-resumen .lbl-cantidad,
+    .pos-page.pos-expendio-page .producto-resumen .lbl-subtotal {
+        font-size: clamp(.75rem, 1.6vh, 1.1rem);
+        margin: 0;
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen #prodPrecio {
+        font-size: clamp(.95rem, 2vh, 1.6rem);
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen #prodSubtotal {
+        font-size: clamp(1rem, 2.2vh, 1.8rem) !important;
+    }
+
+    /* El input de cantidad ocupa el alto de su tarjeta (sin minimo propio) pero con tope, para que
+       en pantallas altas no quede gigante. */
+    .pos-page.pos-expendio-page .producto-resumen #inputCantidad {
+        align-self: center;
+        min-height: 0 !important;
+        height: min(100%, 4.25rem);
+        padding-top: 0;
+        padding-bottom: 0;
+        font-size: clamp(1.05rem, 2.4vh, 2rem) !important;
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen > .btn-agregar-pos {
+        max-height: 4.5rem;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    /* Alta rapida de producto (codigo no encontrado): su formulario es mas alto que el panel normal.
+       El formulario toma el alto de la columna y scrollea SOLO la zona de campos
+       (.pos-alta-rapida-campos); Guardar/Cancelar quedan siempre visibles abajo, como pide pos.css. */
+    .pos-page.pos-expendio-page .producto-resumen > .pos-alta-rapida-bloque {
+        flex: 0 0 auto;
+        margin-bottom: .3rem;
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen > .pos-alta-rapida-form {
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+    .pos-page.pos-expendio-page .producto-resumen > .pos-alta-rapida-form .pos-alta-rapida-campos {
+        flex: 1 1 0;
+        min-height: 0;
+        max-height: none;
+    }
+
+    /* ---- Teclado: 4 filas que se reparten el alto, sin minimos por tecla ---- */
+    .pos-page.pos-expendio-page .keyboard-grid {
+        flex: 1 1 0;
+        min-height: 0;
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        grid-auto-rows: minmax(0, 1fr) !important;
+    }
+
+    .pos-page.pos-expendio-page .keyboard-grid .btn-key {
+        min-height: 0 !important;
+        padding: 0 !important;
+        font-size: clamp(.8rem, 2.2vh, 1.5rem) !important;
     }
 }
