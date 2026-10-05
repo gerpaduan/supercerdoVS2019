@@ -113,6 +113,16 @@
                                 <input type="checkbox" class="custom-control-input" id="chkIngresoRapidoElaborado" checked="@(Model.EsIngresoRapidoElaborado ? "checked" : null)" />
                                 <label class="custom-control-label" for="chkIngresoRapidoElaborado">Ingreso Rapido</label>
                             </div>
+
+                            @* Formula secreta (2026-10-04, ver docs/DECISIONS.md): checkbox nativo (name="Secreta"),
+                               no pasa por rebuildHidden(). Se deshabilita junto con el resto en setReadOnly(). *@
+                            <div class="custom-control custom-switch mt-2">
+                                <input type="checkbox" class="custom-control-input" id="chkFormulaSecreta" name="Secreta" value="true" checked="@(Model.Secreta ? "checked" : null)" />
+                                <label class="custom-control-label" for="chkFormulaSecreta"><i class="fas fa-lock mr-1"></i>Fórmula secreta</label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Si está activada, los ingredientes y la receta de esta fórmula no se muestran en Ingreso rápido, Carga ni en el historial de elaborados: para verlos hay que ingresar usuario y contraseña de alguien con permiso sobre fórmulas.
+                            </small>
                         </div>
 
                         <div class="border rounded p-3 mb-3 elaborados-section-box">
@@ -501,7 +511,7 @@
                 state.soloLectura = readOnly;
                 $('#txtCodigoElaboradoFormula, #txtCodigoIngredienteFormula, #txtPorcentajeFormula').prop('readonly', readOnly);
                 $('#btnBuscarElaboradoFormula, #btnBuscarIngredienteFormula, #btnAgregarLineaFormula, .js-remove-linea-formula').prop('disabled', readOnly);
-                $('#chkAgregarAutoFormula, #chkTieneAjusteFormula, #chkAjustarUnidad, #chkIngresoRapidoElaborado, #chkEscalaUnidadFormula, .js-no-suma-peso').prop('disabled', readOnly);
+                $('#chkAgregarAutoFormula, #chkTieneAjusteFormula, #chkAjustarUnidad, #chkIngresoRapidoElaborado, #chkFormulaSecreta, #chkEscalaUnidadFormula, .js-no-suma-peso').prop('disabled', readOnly);
                 $('#btnAgregarPasoReceta, .js-remove-paso').prop('disabled', readOnly);
                 $pasosContainer.find('.formula-paso-texto').prop('readonly', readOnly);
                 $('#txtMargenFormula').prop('readonly', readOnly);

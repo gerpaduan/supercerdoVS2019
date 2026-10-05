@@ -145,6 +145,13 @@
             $modify.off('click.editReadonly').on('click.editReadonly', function () {
                 $form.data('editReadonlyJustUnlocked', true);
                 setReadOnly(false);
+                // Al habilitar la edicion se toma una nueva "foto" limpia del formulario: los campos que
+                // estaban deshabilitados en modo vista (no se serializaban) y los cambios hechos por la
+                // pantalla al cargar no cuentan como cambios del usuario.
+                var guardApi = $form.data('editPageGuardApi');
+                if (guardApi && typeof guardApi.markClean === 'function') {
+                    guardApi.markClean();
+                }
                 window.setTimeout(function () {
                     $form.removeData('editReadonlyJustUnlocked');
                 }, 0);

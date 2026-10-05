@@ -14,7 +14,11 @@
 
 <div class="container-fluid px-2 px-md-3 elaborados-page"
      data-elaborados-page="index"
-     data-detalle-url="@Url.Action("Detalle", "Elaborados")">
+     data-detalle-url="@Url.Action("Detalle", "Elaborados")"
+     data-formula-autorizar-url="@Url.Action("AutorizarVerFormula", "Elaborados")"
+     data-formula-ocultar-url="@Url.Action("OcultarFormula", "Elaborados")">
+    @* Token antiforgery para "Ver fórmula" (formula-secreta.js lo lee del DOM; esta pagina no tiene un POST propio). *@
+    @Html.AntiForgeryToken()
     @if (!string.IsNullOrWhiteSpace(successMessage))
     {
         <div id="elaboradosSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
@@ -112,6 +116,8 @@
 </div>
 
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@* Selector de usuario de "Ver fórmula" (mismo modal que Cierre de Caja; ver formula-secreta.js). *@
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 @section Scripts {
     <script>
@@ -278,5 +284,10 @@
             }
         })();
     </script>
+    <script>
+        window.UsuariosConPermisoFormula = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosConPermisoFormula ?? new List<object>()));
+    </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados.js")" asp-append-version="true"></script>
 }

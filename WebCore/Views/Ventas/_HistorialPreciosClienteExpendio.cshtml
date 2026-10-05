@@ -1,0 +1,204 @@
+@model WebCore.Models.HistorialPreciosClienteVm
+@using System.Globalization
+@using Negocio
+
+@* Historial de precios (F8) del POS de EXPENDIO (2026-10-04, ver docs/DECISIONS.md). Mismas
+   solapas Compras | Presupuestos que el de Ventas, pero aca el precio no se "copia": cada fila
+   lleva un precio nuevo (arranca con el anterior) y una cantidad, y "Agregar" mete el producto
+   en el carrito del expendio (handler en Scripts/app/punto-expendio-pos.js, clase
+   .js-hp-agregar). Es una lista de REFERENCIA para armar un expendio/presupuesto nuevo: los
+   estados (vigente / caducado / reemplazado) informan pero NO bloquean, porque el precio se
+   puede cambiar antes de agregar. La solapa Compras solo se ofrece a quien tiene permiso de
+   ver las compras del cliente (ver VentasController.HistorialPreciosCliente). *@
+
+@{
+    var cultura = new CultureInfo("es-AR");
+    int cantidad = Model.Presupuestos.Count;
+    // Sin permiso para ver compras, la unica solapa es Presupuestos (y siempre abre ahi).
+    bool abrirEnPresupuestos = !Model.MostrarCompras || Model.AbrirEnPresupuestos;
+}
+
+@if (Model.MostrarCompras)
+{
+    <ul class="nav nav-tabs hpc-tabs mb-2" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(abrirEnPresupuestos ? "" : "active")" id="hpcTabCompras" data-bs-toggle="tab" data-bs-target="#hpcPaneCompras" type="button" role="tab" aria-controls="hpcPaneCompras" aria-selected="@(abrirEnPresupuestos ? "false" : "true")">
+                <i class="fas fa-shopping-bag mr-1"></i>Compras <span class="badge badge-secondary">@Model.Compras.Count</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(abrirEnPresupuestos ? "active" : "")" id="hpcTabPresupuestos" data-bs-toggle="tab" data-bs-target="#hpcPanePresupuestos" type="button" role="tab" aria-controls="hpcPanePresupuestos" aria-selected="@(abrirEnPresupuestos ? "true" : "false")">
+                <i class="fas fa-file-invoice-dollar mr-1"></i>Presupuestos <span class="badge badge-secondary">@cantidad</span>
+            </button>
+        </li>
+    </ul>
+}
+
+<div class="tab-content">
+    @if (Model.MostrarCompras)
+    {
+        <div class="tab-pane fade @(abrirEnPresupuestos ? "" : "show active")" id="hpcPaneCompras" role="tabpanel" aria-labelledby="hpcTabCompras">
+            @if (Model.Compras.Count == 0)
+            {
+                <div class="alert alert-info mb-0 py-2">Este cliente todavía no tiene compras registradas.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover mb-0 hpe-tabla">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:90px;">Código</th>
+                                <th>Producto</th>
+                                <th class="text-right" style="width:110px;">Último precio</th>
+                                <th class="text-nowrap" style="width:95px;">Fecha</th>
+                                <th style="width:110px;">Precio nuevo</th>
+                                <th style="width:90px;">Cantidad</th>
+                                <th style="width:50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var compra in Model.Compras)
+                            {
+                                <tr>
+                                    <td>@compra.Codigo</td>
+                                    <td>@compra.Producto</td>
+                                    <td class="text-right font-weight-bold">$ @compra.PrecioKg.ToString("N2", cultura)</td>
+                                    <td class="text-nowrap">@(compra.FechaVenta.HasValue ? compra.FechaVenta.Value.ToString("dd/MM/yyyy") : "-")</td>
+                                    <td><input type="text" inputmode="decimal" class="form-control form-control-sm js-hp-precio" value="@compra.PrecioKg.ToString("0.00", cultura)" aria-label="Precio nuevo" /></td>
+                                    <td><input type="text" inputmode="decimal" class="form-control form-control-sm js-hp-cant" value="1" aria-label="Cantidad" /></td>
+                                    <td class="text-center">
+                                        @* Sin IdCorte: el historial de compras no lo trae; el servidor resuelve el producto por codigo al guardar. *@
+                                        <button type="button" class="btn btn-sm btn-primary js-hp-agregar"
+                                                data-idcorte="0"
+                                                data-codigo="@compra.Codigo"
+                                                data-producto="@compra.Producto"
+                                                title="Agregar al expendio">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="tab-pane fade @(abrirEnPresupuestos ? "show active" : "")" id="hpcPanePresupuestos" role="tabpanel" aria-labelledby="hpcTabPresupuestos">
+        <div class="alert alert-info py-2 mb-2 hpc-aviso">
+            <i class="fas fa-info-circle mr-1"></i>
+            Lista de referencia: podés agregar cualquier producto de un presupuesto anterior cambiando su precio.
+            Cada presupuesto caduca según los días que se eligieron al cargarlo (por defecto, 90 desde que rige).
+        </div>
+
+        @if (cantidad == 0)
+        {
+            <div class="alert alert-info mb-0 py-2">Este cliente no tiene presupuestos guardados.</div>
+        }
+
+        @for (int i = 0; i < cantidad; i++)
+        {
+            var presupuesto = Model.Presupuestos[i];
+            string idBloque = "hpcPresupuesto" + presupuesto.IdExpendio;
+            bool abierto = i == 0 || presupuesto.Estado == EstadoPresupuestoCliente.Vigente;
+            string claseBadge = presupuesto.Estado == EstadoPresupuestoCliente.Vigente ? "badge-success"
+                : presupuesto.Estado == EstadoPresupuestoCliente.Futuro ? "badge-info" : "badge-danger";
+            string textoEstadoCabecera = presupuesto.Estado == EstadoPresupuestoCliente.Vigente ? "Vigente"
+                : presupuesto.Estado == EstadoPresupuestoCliente.Futuro ? "Futuro" : "Caducado";
+
+            <div class="hpc-presupuesto border rounded mb-2">
+                <button type="button" class="hpc-presupuesto-cabecera btn btn-light d-flex align-items-center flex-wrap"
+                        data-bs-toggle="collapse" data-bs-target="#@idBloque" aria-expanded="@(abierto ? "true" : "false")" aria-controls="@idBloque">
+                    <i class="fas fa-chevron-down mr-2 hpc-chevron"></i>
+                    <strong class="mr-2">Presupuesto N° @presupuesto.IdExpendio</strong>
+                    <span class="badge @claseBadge mr-2">@textoEstadoCabecera</span>
+                    <span class="text-muted small mr-3">Rige desde el @presupuesto.Vigencia.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span class="small hpc-estado-texto">@WebCore.Models.HistorialPreciosClienteVm.TextoEstado(presupuesto)</span>
+                </button>
+
+                <div id="@idBloque" class="collapse @(abierto ? "show" : "")">
+                    @if (presupuesto.Lineas.Count == 0)
+                    {
+                        <div class="text-muted small p-2">Este presupuesto no tiene productos disponibles.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-hover mb-0 hpe-tabla">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width:90px;">Código</th>
+                                        <th>Producto</th>
+                                        <th class="text-right" style="width:110px;">Precio anterior</th>
+                                        <th style="width:150px;">Estado</th>
+                                        <th style="width:110px;">Precio nuevo</th>
+                                        <th style="width:90px;">Cantidad</th>
+                                        <th style="width:50px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var linea in presupuesto.Lineas)
+                                    {
+                                        <tr>
+                                            <td>@linea.Codigo</td>
+                                            <td>@linea.Producto</td>
+                                            <td class="text-right font-weight-bold">$ @linea.PrecioKg.ToString("N2", cultura)</td>
+                                            <td class="small">
+                                                @switch (linea.Estado)
+                                                {
+                                                    case EstadoLineaPresupuestoCliente.Aplicable:
+                                                        <span class="badge badge-success">Vigente</span>
+                                                        break;
+                                                    case EstadoLineaPresupuestoCliente.Reemplazado:
+                                                        <span class="badge badge-secondary">Reemplazado</span>
+                                                        <span class="text-muted">por N° @linea.ReemplazadoPor</span>
+                                                        break;
+                                                    case EstadoLineaPresupuestoCliente.Caducado:
+                                                        <span class="badge badge-danger">Caducado</span>
+                                                        <span class="text-muted">el @presupuesto.CaducaEl.ToString("dd/MM/yyyy")</span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge badge-info">Futuro</span>
+                                                        <span class="text-muted">desde @presupuesto.Vigencia.ToString("dd/MM/yyyy")</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td><input type="text" inputmode="decimal" class="form-control form-control-sm js-hp-precio" value="@linea.PrecioKg.ToString("0.00", cultura)" aria-label="Precio nuevo" /></td>
+                                            <td><input type="text" inputmode="decimal" class="form-control form-control-sm js-hp-cant" value="1" aria-label="Cantidad" /></td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-primary js-hp-agregar"
+                                                        data-idcorte="@linea.IdCorte"
+                                                        data-codigo="@linea.Codigo"
+                                                        data-producto="@linea.Producto"
+                                                        title="Agregar al expendio">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@* Estilo compacto (tamaños ~0.85-0.9rem, como el resto de las vistas nuevas de WebCore). *@
+<style>
+    #modalHistorialPreciosExpendio .hpc-tabs .nav-link { padding: .35rem .8rem; font-size: .9rem; }
+    #modalHistorialPreciosExpendio .hpc-aviso { font-size: .82rem; }
+    /* Encabezado de cada presupuesto: ocupa todo el ancho (Bootstrap 5 no trae btn-block) y el estado va a la derecha. */
+    #modalHistorialPreciosExpendio .hpc-presupuesto-cabecera { width: 100%; text-align: left; font-size: .88rem; padding: .4rem .65rem; border-radius: 0; }
+    #modalHistorialPreciosExpendio .hpc-estado-texto { margin-left: auto; padding-left: .75rem; }
+    #modalHistorialPreciosExpendio .hpc-presupuesto-cabecera[aria-expanded="false"] .hpc-chevron { transform: rotate(-90deg); }
+    #modalHistorialPreciosExpendio .hpc-chevron { transition: transform .15s ease; }
+    #modalHistorialPreciosExpendio .hpe-tabla td,
+    #modalHistorialPreciosExpendio .hpe-tabla th { padding: .35rem .5rem; font-size: .88rem; line-height: 1.25; vertical-align: middle; }
+    #modalHistorialPreciosExpendio .hpe-tabla .form-control-sm { font-size: .85rem; padding: .15rem .4rem; height: calc(1.5em + .4rem); text-align: right; }
+    #modalHistorialPreciosExpendio .hpe-tabla tr.hpe-agregado > td { background-color: rgba(40, 167, 69, .12); }
+</style>

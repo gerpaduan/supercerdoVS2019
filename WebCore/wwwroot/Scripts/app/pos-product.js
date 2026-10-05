@@ -18,8 +18,9 @@
 
         // Alta rapida de producto desde el POS (codigo no encontrado, ver docs/DECISIONS.md
         // 2026-09-12). Scoped a la vista via window.POS_ALTA_RAPIDA_HABILITADA (declarado solo en
-        // Ventas/POS.cshtml, no en el _LayoutPOS.cshtml compartido) para no activarse en
-        // PuntosExpendio/POS.cshtml, que tiene su propio scanner/panel no verificado para esto.
+        // Ventas/POS.cshtml y PuntosExpendio/POS.cshtml -- esta ultima desde 2026-10-05 --, no en el
+        // _LayoutPOS.cshtml compartido) para no activarse en vistas que no tengan el partial
+        // _AltaRapidaProductoPOS.cshtml.
         let modoAltaProductoActivo = false;
         let codigoParaAltaRapida = null;
         let timestampCongeladoAlta = 0;
@@ -246,6 +247,10 @@
             if (soloFormaPago) return;
             const codigoTrim = normalizeInput(codigo);
 
+            // Cualquier busqueda de un codigo distinto al sugerido (tipeo, backspace, camara,
+            // buscador) descarta la sugerencia de alta, igual que el boton "No".
+            descartarSugerenciaSiCambioCodigo(codigoTrim);
+
             if (!codigoTrim) {
                 showWaiting();
                 return;
@@ -453,8 +458,23 @@
         function showSugerenciaAltaRapida(codigo) {
             mostrarPanelNormal(false);
             $('#prodAltaRapidaForm').addClass('d-none');
-            $('#prodAltaRapidaSugerenciaMsg').text('Código ' + codigo + ' no encontrado. ¿Desea darlo de alta?');
+            $('#prodAltaRapidaSugerenciaMsg').text('Código ' + codigo + ' no encontrado. ¿Desea darlo de alta? (Enter = Sí)');
             $('#prodAltaRapidaSugerencia').removeClass('d-none');
+        }
+
+        function sugerenciaAltaVisible() {
+            return !$('#prodAltaRapidaSugerencia').hasClass('d-none');
+        }
+
+        // Si la sugerencia de alta esta a la vista y el codigo del input ya no es el sugerido, el
+        // usuario cambio de codigo: se interpreta como un "No" (se descarta la sugerencia sin
+        // tocar el foco -- sigue escribiendo/escaneando en #inputCodigo). Devuelve true si descarto.
+        function descartarSugerenciaSiCambioCodigo(codigoActual) {
+            if (!sugerenciaAltaVisible()) return false;
+            if (normalizeInput(codigoActual) === codigoParaAltaRapida) return false;
+
+            ocultarBloquesAltaRapida();
+            return true;
         }
 
         function ocultarBloquesAltaRapida() {
@@ -464,6 +484,15 @@
         }
 
         function showFormularioAltaRapida(codigo) {
+            // Sin permiso para crear productos: se avisa ahora, antes de que el cajero complete el
+            // formulario (el server igual lo rechazaria al guardar). Se cierra la sugerencia como un "No".
+            if (window.POS_ALTA_RAPIDA_PERMITIDA === false) {
+                ocultarBloquesAltaRapida();
+                showMessage('warning', 'Alta rápida', 'No tenés permisos para dar de alta productos.');
+                focusCodigo();
+                return;
+            }
+
             modoAltaProductoActivo = true;
             mostrarPanelNormal(false);
             $('#prodAltaRapidaSugerencia').addClass('d-none');
@@ -649,6 +678,25 @@
             }
         }
 
+        // Enter del usuario (teclado fisico o virtual) sobre #inputCodigo. Con la sugerencia de alta
+        // visible, Enter sobre el MISMO codigo equivale a "Sí, dar de alta"; si el codigo cambio,
+        // se descarta la sugerencia ("No") y sigue el flujo normal. No se aplica a la camara
+        // (window.manejarEnter apunta a handleEnter directo): releer el mismo codigo en frames
+        // consecutivos abriria el formulario sin que el cajero lo pida.
+        function handleEnterUsuario() {
+            if (!$(".modal.show").length && !soloFormaPago && sugerenciaAltaVisible()) {
+                const codigoActual = normalizeInput($('#inputCodigo').val());
+                if (codigoActual === codigoParaAltaRapida) {
+                    showFormularioAltaRapida(codigoParaAltaRapida);
+                    enterDesdeTecladoVirtual = false;
+                    return;
+                }
+                descartarSugerenciaSiCambioCodigo(codigoActual);
+            }
+
+            handleEnter();
+        }
+
         // Abre el modal global de productos y, cuando el usuario elige uno,
         // reusa el mismo flujo de busqueda que usa el input de codigo.
         function openSearchModal() {
@@ -710,6 +758,11 @@
         // El Enter no se procesa aca para no duplicar logica.
         function bindLiveSearch() {
             if (soloFormaPago) return;
+            // Cambiar de codigo mientras se ofrece el alta = "No" inmediato (sin esperar al debounce).
+            $('#inputCodigo').on('input', function () {
+                descartarSugerenciaSiCambioCodigo(this.value);
+            });
+
             $('#inputCodigo').on('keyup', function (e) {
                 const codigo = String(this.value ?? '').trim().toUpperCase();
 
@@ -814,7 +867,7 @@
             showSearching: showSearching,
             showNoMatch: showNoMatch,
             showProduct: showProduct,
-            handleEnter: handleEnter,
+            handleEnter: handleEnterUsuario,
             finishTyping: finishTyping,
             openSearchModal: openSearchModal,
             normalizeInput: normalizeInput,

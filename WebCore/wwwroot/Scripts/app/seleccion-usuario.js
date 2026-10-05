@@ -49,6 +49,8 @@
         var usuariosActuales = [];
         var requierePassword = false;
         var validarUrl = null;
+        var datosExtra = null;
+        var alCancelar = null;
         var resolverPromesa = null;
         var usuarioMarcado = null;
         var countdownInterval = null;
@@ -168,11 +170,12 @@
             $.ajax({
                 url: validarUrl,
                 type: 'POST',
-                data: {
+                // datosExtra: parametros adicionales que necesite el endpoint (ej. idCorte en "Ver fórmula").
+                data: $.extend({}, datosExtra, {
                     idUsuario: usuarioMarcado.id,
                     clave: clave,
                     __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
-                },
+                }),
                 success: function (resp) {
                     $('#btnConfirmarSeleccionUsuario').prop('disabled', false);
 
@@ -224,6 +227,10 @@
             usuariosActuales = Array.isArray(opciones.usuarios) ? opciones.usuarios : [];
             requierePassword = !!opciones.requierePassword;
             validarUrl = opciones.validarUrl || null;
+            datosExtra = opciones.datosExtra || null;
+            // alCancelar (opcional): se invoca si el modal se cierra sin resolver (Cancelar/backdrop/Esc).
+            // La promesa de abrir() NO se resuelve en ese caso (ver hidden.bs.modal), por eso existe.
+            alCancelar = typeof opciones.alCancelar === 'function' ? opciones.alCancelar : null;
 
             // opciones.obligatorio (2026-09-10, reporte real: "en ventas al dar acceso, no se
             // termina al cliquear afuera"): cuando la autorizacion es obligatoria para poder
@@ -284,8 +291,13 @@
                 .on('hidden.bs.modal.seleccionUsuario', '#modalSeleccionUsuario', function () {
                     // Si se cerro sin resolver (Cancelar/backdrop/Esc) no queda ninguna
                     // promesa pendiente colgada -- se limpia sin invocar el callback.
+                    // resolver() ya dejo resolverPromesa en null: si sigue seteada, fue una cancelacion.
+                    var cancelado = resolverPromesa !== null;
+                    var cbCancelar = alCancelar;
                     resolverPromesa = null;
+                    alCancelar = null;
                     reset();
+                    if (cancelado && cbCancelar) cbCancelar();
                 })
                 .off('input.seleccionUsuario', '#txtSeleccionUsuario')
                 .on('input.seleccionUsuario', '#txtSeleccionUsuario', function () {

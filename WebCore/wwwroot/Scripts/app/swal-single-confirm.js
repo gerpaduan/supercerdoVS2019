@@ -39,12 +39,61 @@
         return true;
     }
 
+    // Desactiva el FocusTrap de cada modal de Bootstrap 5 abierto (API real del bundle:
+    // bootstrap.Modal.getInstance(el)._focustrap.deactivate()) y devuelve las instancias afectadas
+    // para reactivarlas despues. Sin esto, el trap le devuelve el foco al modal de fondo cada vez
+    // que el usuario hace clic en un input del Swal, que queda "dibujado" pero sin poder escribirse.
+    function suspenderFocusTrap() {
+        var afectadas = [];
+        var modales = document.querySelectorAll('.modal.show');
+        for (var i = 0; i < modales.length; i++) {
+            var instancia = window.bootstrap && window.bootstrap.Modal ? window.bootstrap.Modal.getInstance(modales[i]) : null;
+            if (instancia && instancia._focustrap && typeof instancia._focustrap.deactivate === 'function') {
+                instancia._focustrap.deactivate();
+                afectadas.push(instancia);
+            }
+        }
+        return afectadas;
+    }
+
+    function reactivarFocusTrap(afectadas) {
+        for (var i = 0; i < afectadas.length; i++) {
+            var instancia = afectadas[i];
+            if (instancia && instancia._focustrap && typeof instancia._focustrap.activate === 'function') {
+                instancia._focustrap.activate();
+            }
+        }
+    }
+
     window.Swal.fire = function () {
         var args = Array.prototype.slice.call(arguments);
         var options = normalizeArgs(args);
 
         if (!isSingleConfirmAlert(options)) {
-            return originalFire.apply(null, args);
+            // Fix real (2026-10-05, ver docs/DECISIONS.md): los Swals que NO son de confirmacion simple
+            // (prompts con input, html con focusConfirm:false como el de supervisor, 3 botones) tambien
+            // se abren sobre modales Bootstrap con su focus trap activo -- el input del motivo de
+            // "Descartar borrador" no recibia foco. Solo se suspende el trap: se conserva el resto del
+            // comportamiento (sin atajo Enter, sin forzar foco al boton confirmar). Toasts no toman foco.
+            if (options.toast === true) {
+                return originalFire.apply(null, args);
+            }
+
+            var trapsSuspendidos = [];
+            var willOpenOriginal = options.willOpen;
+            var willCloseOriginal = options.willClose;
+
+            return originalFire(Object.assign({}, options, {
+                willOpen: function (popup) {
+                    trapsSuspendidos = suspenderFocusTrap();
+                    if (typeof willOpenOriginal === 'function') willOpenOriginal.call(this, popup);
+                },
+                willClose: function (popup) {
+                    reactivarFocusTrap(trapsSuspendidos);
+                    trapsSuspendidos = [];
+                    if (typeof willCloseOriginal === 'function') willCloseOriginal.call(this, popup);
+                }
+            }));
         }
 
         var keydownHandler = null;

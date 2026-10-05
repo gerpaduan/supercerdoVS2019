@@ -93,25 +93,53 @@ namespace Datos.BorradoresTests
             Assert.True(string.IsNullOrEmpty(cerrada.Payload));
         }
 
+        // Simula el pagehide del navegador: Negocio solo registra el evento CIERRE_PESTANA (no toca ultimolatido).
+        // La pausa asegura un evento estrictamente posterior al ultimo latido (SQL Server tiene resolucion de ms).
+        private static void CerrarPestana(IVentaBorradorRepository repo, Entidades.VentaBorrador v)
+        {
+            Thread.Sleep(30);
+            repo.AgregarEvento(new VentaBorradorEvento { IdBorrador = v.Id, Tipo = VentaBorradorEvento.TipoCierrePestana, IdUsuario = Operador });
+            Thread.Sleep(30);
+        }
+
         [SkippableFact]
-        public void EnvejecerLatidoPorCierre_deja_la_venta_interrumpida_de_inmediato_y_el_latido_la_reactiva()
+        public void CierrePestana_deja_la_venta_interrumpida_de_inmediato_con_la_senal_real_y_el_latido_la_reactiva()
         {
             var (repo, _) = Nuevo();
             var v = Venta(); repo.Guardar(v);
-            Assert.False(repo.ObtenerPorId(v.Id).EstaInterrumpida(5));
+            var enUso = repo.ObtenerPorId(v.Id);
+            Assert.False(enUso.EstaInterrumpida(5));
+            Assert.False(enUso.CerradaPestana);
 
-            Assert.True(repo.EnvejecerLatidoPorCierre(v.Id));
+            CerrarPestana(repo, v);
             var leida = repo.ObtenerPorId(v.Id);
+            Assert.True(leida.CerradaPestana);
             Assert.True(leida.EstaInterrumpida(5), "SegundosSinLatido=" + leida.SegundosSinLatido);
             Assert.Equal(Entidades.VentaBorrador.EstadoActiva, leida.Estado);
+            // La senal es la real (la hora del cierre, de hace instantes), no un "hace 1 dia" simulado.
+            Assert.True(leida.SegundosSinLatido < 60, "SegundosSinLatido=" + leida.SegundosSinLatido);
+            Assert.True(leida.UltimoLatido > enUso.UltimoLatido);
+            // Subir el umbral despues no la "revive": sigue cerrada por pestana.
+            Assert.True(leida.EstaInterrumpida(240));
 
             // Si la pestaña vuelve (F5, bfcache), el latido la deja "en uso" otra vez.
             Assert.True(repo.RegistrarLatido(v.ClientId, Operador, Sucursal));
-            Assert.False(repo.ObtenerPorId(v.Id).EstaInterrumpida(5));
+            var viva = repo.ObtenerPorId(v.Id);
+            Assert.False(viva.CerradaPestana);
+            Assert.False(viva.EstaInterrumpida(5));
+        }
 
-            // Una venta ya cerrada no se toca.
-            Assert.True(repo.MarcarDescartada(v.Id));
-            Assert.False(repo.EnvejecerLatidoPorCierre(v.Id));
+        [SkippableFact]
+        public void ListarInterrumpidasPorRango_incluye_las_cerradas_por_pestana_con_la_senal_real()
+        {
+            var (repo, _) = Nuevo();
+            var cerrada = Venta(); repo.Guardar(cerrada);
+            var abierta = Venta(); repo.Guardar(abierta);
+            CerrarPestana(repo, cerrada);
+
+            var lista = repo.ListarInterrumpidasPorRango(DateTime.Now.AddDays(-2), DateTime.Now.AddDays(1), 5);
+            Assert.Contains(lista, x => x.Id == cerrada.Id);
+            Assert.DoesNotContain(lista, x => x.Id == abierta.Id);
         }
 
         [SkippableFact]
@@ -137,6 +165,25 @@ namespace Datos.BorradoresTests
             Assert.True(repo.MarcarDescartada(v.Id));
             Assert.False(repo.MarcarDescartada(v.Id));
             Assert.False(repo.TomarBorrador(v.Id, OtroOperador, 1));
+        }
+
+        [SkippableFact]
+        public void RotarClientId_cambia_el_clientId_solo_de_una_venta_ACTIVA()
+        {
+            var (repo, _) = Nuevo();
+            var v = Venta(); repo.Guardar(v);
+            var nuevo = Guid.NewGuid();
+
+            Assert.True(repo.RotarClientId(v.Id, nuevo));
+            Assert.Null(repo.ObtenerPorClientId(v.ClientId));
+            Assert.Equal(v.Id, repo.ObtenerPorClientId(nuevo).Id);
+
+            // Con el clientId viejo ya no coincide: el latido del carrito viejo pide guardar de nuevo.
+            Assert.False(repo.RegistrarLatido(v.ClientId, Operador, Sucursal));
+            Assert.True(repo.RegistrarLatido(nuevo, Operador, Sucursal));
+
+            repo.MarcarDescartada(v.Id);
+            Assert.False(repo.RotarClientId(v.Id, Guid.NewGuid()));
         }
 
         [SkippableFact]

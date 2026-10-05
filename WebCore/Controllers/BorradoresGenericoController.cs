@@ -54,6 +54,35 @@ namespace WebCore.Controllers
             return operador;
         }
 
+        // Formula secreta (2026-10-04, ver docs/DECISIONS.md "Formula secreta con re-login"): el payload de
+        // un borrador de Embutidos puede traer la formula (ingredientes y %) y la receta. Si el producto
+        // elaborado tiene formula secreta se vacian ANTES de guardar y tambien al devolver el borrador
+        // (cubre borradores viejos y navegadores con JS en cache): el servidor es quien garantiza que la
+        // formula nunca quede en borradorgenerico.payload ni llegue a un operador sin re-login.
+        // EMBUTIDO_RAPIDO manda idElaborado; EMBUTIDO_CARGA manda elaborado.id. Si no se puede identificar
+        // el producto, el payload queda como vino.
+        private string QuitarFormulaSecretaDelPayload(string modulo, string crudo)
+        {
+            bool esRapido = string.Equals(modulo, "EMBUTIDO_RAPIDO", StringComparison.Ordinal);
+            bool esCarga = string.Equals(modulo, "EMBUTIDO_CARGA", StringComparison.Ordinal);
+            if ((!esRapido && !esCarga) || string.IsNullOrWhiteSpace(crudo)) return crudo;
+
+            var raiz = System.Text.Json.Nodes.JsonNode.Parse(crudo) as System.Text.Json.Nodes.JsonObject;
+            if (raiz == null) return crudo;
+
+            var elaborado = raiz["elaborado"] as System.Text.Json.Nodes.JsonObject;
+            var nodoId = esRapido ? raiz["idElaborado"] : (elaborado != null ? elaborado["id"] : null);
+            if (nodoId == null || !int.TryParse(nodoId.ToString(), out int idCorte) || idCorte <= 0) return crudo;
+
+            var corteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_sesion.Empresa, _sesion.Parametros);
+            if (!corteN.esFormulaSecreta(idCorte)) return crudo;
+
+            raiz["formula"] = new System.Text.Json.Nodes.JsonArray();
+            raiz["formulaSecreta"] = true;
+            if (elaborado != null) elaborado["receta"] = "";
+            return raiz.ToJsonString();
+        }
+
         private static bool ModuloValido(string modulo)
         {
             foreach (string valido in Entidades.BorradorGenerico.ModulosValidos)
@@ -102,6 +131,8 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, motivo = "payload_grande" });
                 if (request.CantLineas > WebCore.Helpers.BorradorGenericoSettings.MaxLineas)
                     return Json(new { ok = false, motivo = "muchas_lineas" });
+
+                crudo = QuitarFormulaSecretaDelPayload(request.Modulo, crudo);
 
                 var borrador = new Entidades.BorradorGenerico
                 {
@@ -233,7 +264,12 @@ namespace WebCore.Controllers
                         esMio = borrador.IdOperador == operador.Id,
                         estado = enUso ? "En uso" : "Interrumpido",
                         puedeCargar = !enUso,
+                        // Propio y "en uso": se puede cargar igual con confirmacion (corte de luz/cuelgue, sin esperar el umbral).
+                        puedeForzar = enUso && borrador.IdOperador == operador.Id,
                         inicio = borrador.Creado.ToString("dd/MM/yyyy HH:mm:ss", System.Globalization.CultureInfo.GetCultureInfo("es-AR")),
+                        // Ultima senal REAL (hora del ultimo latido o del cierre de pestana), no un "hace N d":
+                        // el repositorio ya devuelve UltimoLatido como senal efectiva (docs/DECISIONS.md 2026-10-05).
+                        ultimaSenal = borrador.UltimoLatido.ToString("dd/MM/yyyy HH:mm:ss", System.Globalization.CultureInfo.GetCultureInfo("es-AR")),
                         sinLatido = TextoSinLatido(borrador.SegundosSinLatido),
                         resumen = string.IsNullOrWhiteSpace(borrador.Resumen) ? ("(" + borrador.CantLineas + " línea(s))") : borrador.Resumen,
                         cantLineas = borrador.CantLineas,
@@ -241,7 +277,7 @@ namespace WebCore.Controllers
                         // el modal lo usa solo para desplegar el detalle de lineas al pedido del
                         // usuario (icono/doble clic), interpretado del lado del cliente por el JS de
                         // cada modulo (cfg.renderizarLineas) -- el servidor no lo interpreta.
-                        payload = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(borrador.Payload ?? "{}")
+                        payload = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(QuitarFormulaSecretaDelPayload(request.Modulo, borrador.Payload ?? "{}"))
                     });
                 }
 
@@ -290,7 +326,8 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, requiereSupervisor = autorizacion.RequiereSupervisor, bloqueado = autorizacion.Bloqueado, msg = autorizacion.Mensaje });
 
                 var borrador = negocio.Recuperar(request.Id, request.Modulo, operador.Id, _sesion.UsuarioActual.Id, operador.Id,
-                    autorizacion.NombreSupervisor, WebCore.Helpers.BorradorGenericoSettings.MinutosSinLatidoInterrumpida, out string error);
+                    autorizacion.NombreSupervisor, WebCore.Helpers.BorradorGenericoSettings.MinutosSinLatidoInterrumpida,
+                    request.ConfirmarEnUso, out string error);
                 if (borrador == null) return Json(new { ok = false, msg = error });
 
                 return Json(new
@@ -298,7 +335,7 @@ namespace WebCore.Controllers
                     ok = true,
                     clientId = borrador.ClientId,
                     idRegistro = borrador.IdRegistro,
-                    payload = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(borrador.Payload ?? "{}")
+                    payload = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(QuitarFormulaSecretaDelPayload(request.Modulo, borrador.Payload ?? "{}"))
                 });
             }
             catch (Exception ex)

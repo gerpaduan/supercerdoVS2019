@@ -68,6 +68,52 @@
         });
     }
 
+    // Formula secreta (2026-10-04): "Ver fórmula" / "Ocultar fórmula" dentro del detalle de un elaborado.
+    // El detalle (_DetalleElaborado) viene del servidor SIN ingredientes mientras no haya elevacion; tras
+    // el re-login se vuelve a pedir el detalle del mismo registro (ahora con ingredientes).
+    function recargarDetalleElaborado($boton) {
+        var contenedor = $boton.closest('.js-elaborado-detalle-container').get(0);
+        var detalle = contenedor ? contenedor.closest('.elaborado-detalle-collapse') : null;
+        if (!contenedor || !detalle) return;
+
+        contenedor.setAttribute('data-loaded', 'false');
+        ensureDetalleElaboradoLoaded(detalle);
+    }
+
+    function configFormulaSecreta() {
+        var root = document.querySelector('[data-elaborados-page="index"]');
+        if (!root) return null;
+        return {
+            autorizarUrl: root.getAttribute('data-formula-autorizar-url'),
+            ocultarUrl: root.getAttribute('data-formula-ocultar-url')
+        };
+    }
+
+    function bindFormulaSecretaDetalle() {
+        $(document).on('click', '.js-ver-formula-detalle', function () {
+            var cfg = configFormulaSecreta();
+            var idEmbutido = parseInt($(this).attr('data-id-embutido'), 10) || 0;
+            if (!cfg || !idEmbutido || !window.FormulaSecreta) return;
+
+            var $boton = $(this);
+            window.FormulaSecreta.ver(cfg, { idEmbutido: idEmbutido }).then(function (autorizado) {
+                if (autorizado) recargarDetalleElaborado($boton);
+            });
+        });
+
+        $(document).on('click', '.js-ocultar-formula-detalle', function () {
+            var cfg = configFormulaSecreta();
+            var idCorte = parseInt($(this).attr('data-id-corte'), 10) || 0;
+            if (!cfg || !idCorte || !window.FormulaSecreta) return;
+
+            var $boton = $(this);
+            window.FormulaSecreta.ocultar(cfg, idCorte).then(function () {
+                // Otros detalles abiertos del mismo producto siguen mostrando la formula hasta recargarse.
+                recargarDetalleElaborado($boton);
+            });
+        });
+    }
+
     function filtrarElaborados() {
         var $page = $('[data-elaborados-page="index"]');
         if (!$page.length) return;
@@ -206,6 +252,7 @@
     $(function () {
         bindFiltrosPendientes();
         bindDetallesElaborados();
+        bindFormulaSecretaDetalle();
 
         $('.js-filtro-vivo-elaborados').on('input', filtrarElaborados);
         $('.js-filtro-vivo-lineas').on('input', filtrarLineas);

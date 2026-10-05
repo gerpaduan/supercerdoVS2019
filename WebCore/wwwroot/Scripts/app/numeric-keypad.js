@@ -114,6 +114,10 @@
         $teclado.on('click.numericKeypad', '.btn-key, .btn-enter', function () {
             if (!esInputValido($inputActivo)) return;
 
+            // Un campo de solo lectura/deshabilitado (ej. cantidad con balanza activa, pantalla en modo
+            // vista) no se edita ni dispara Enter desde el teclado: asignar .value por JS lo saltearia.
+            if ($inputActivo.prop('readonly') || $inputActivo.prop('disabled')) return;
+
             var key = $(this).data('key');
             if (key === 'BACKSPACE') {
                 borrarCaracter($inputActivo);

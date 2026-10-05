@@ -68,7 +68,7 @@
         <input type="hidden" id="permiteEditarPrecioPuntoExpendio" value="@(permiteEditarPrecio ? "1" : "0")" />
         <input type="hidden" id="fechaExpendio" value="@Model.FechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss")" />
 
-        <div class="pos-topbar-grid@(Negocio.SectorPuntoExpendio.EsRemitos(Model.Sector) ? " pos-topbar-grid-remito" : "")">
+        <div class="pos-topbar-grid@(Negocio.SectorPuntoExpendio.EsRemitos(Model.Sector) ? " pos-topbar-grid-remito" : "")@(Negocio.SectorPuntoExpendio.EsPresupuesto(Model.Sector) ? " pos-topbar-grid-presupuesto" : "")">
             <div class="pos-topbar-item pos-topbar-item-cliente">
                 <div class="pos-topbar-label">Cliente / Identificación</div>
                 <input type="hidden" id="clienteRazonSocialValor" value="" />
@@ -82,6 +82,15 @@
                            placeholder="Cliente / identificación libre" />
 
                     <div class="input-group-append">
+                        @* Cliente fijo (2026-10-04): al elegir un cliente real con F9 el campo queda de solo
+                           lectura y aparece la X para soltarlo y volver a identificacion manual. *@
+                        <button type="button"
+                                class="btn btn-outline-danger d-none"
+                                id="btnQuitarCliente"
+                                title="Quitar cliente (vuelve a identificación manual)">
+                            <i class="fas fa-times"></i>
+                        </button>
+
                         <button type="button"
                                 class="btn btn-primary"
                                 id="btnBuscarPersona"
@@ -94,6 +103,14 @@
                                 id="btnConsumidorFinal"
                                 title="Consumidor Final">
                             CF
+                        </button>
+
+                        @* Historial de precios del cliente fijo (compras + presupuestos), mismo modal que el F8 de Ventas. *@
+                        <button type="button"
+                                class="btn btn-outline-primary d-none"
+                                id="btnHistorialPreciosCliente"
+                                title="Historial de precios (F8)">
+                            <i class="fas fa-history"></i>
                         </button>
                     </div>
                 </div>
@@ -133,6 +150,28 @@
                     <div class="pos-topbar-value" id="fechaHoraPOSExpendio"></div>
                 }
             </div>
+
+            @if (Negocio.SectorPuntoExpendio.EsPresupuesto(Model.Sector))
+            {
+                @* Sector PRESUPUESTO: dias de validez desde la vigencia (default 90). El servidor calcula y
+                   guarda la fecha de caducidad (Negocio.SectorPuntoExpendio.ResolverCaducidad); aca solo se
+                   muestra "Caduca el ..." a modo informativo. *@
+                <div class="pos-topbar-item pos-topbar-item-caducidad">
+                    <div class="pos-topbar-label">Válido por (días)</div>
+                    <div class="d-flex align-items-center">
+                        <input type="number"
+                               id="diasCaducidadExpendio"
+                               class="form-control form-control-sm"
+                               style="width:78px;"
+                               min="1"
+                               max="@Negocio.SectorPuntoExpendio.DiasMaximosCaducidadPresupuesto"
+                               value="@Negocio.SectorPuntoExpendio.DiasCaducidadPresupuestoPorDefecto"
+                               data-dias-defecto="@Negocio.SectorPuntoExpendio.DiasCaducidadPresupuestoPorDefecto"
+                               title="Días durante los que se pueden aplicar los precios de este presupuesto, contados desde que rige" />
+                        <span id="caducaElExpendio" class="small ml-2 text-nowrap"></span>
+                    </div>
+                </div>
+            }
 
             @if (Negocio.SectorPuntoExpendio.EsRemitos(Model.Sector))
             {
@@ -310,6 +349,10 @@
                                                 <small>al expendio</small>
                                             </span>
                                         </button>
+
+                                        @* Alta rapida de producto (codigo no encontrado): mismo partial que Ventas/POS,
+                                           oculto por default; lo muestra pos-product.js. *@
+                                        <partial name="_AltaRapidaProductoPOS" />
                                     </div>
 
                                     <div class="col-6">
@@ -568,6 +611,28 @@
    de Ventas) ya la resuelve setClienteIdentificacionVisual definida en punto-expendio-pos.js. *@
 <div id="contenedorModalPersona"></div>
 
+@* Historial de precios del cliente fijo (F8), 2026-10-04: compras + presupuestos, con "Agregar" al
+   carrito del expendio. El contenido lo devuelve Ventas/HistorialPreciosCliente con modo=expendio
+   (ver Views/Ventas/_HistorialPreciosClienteExpendio.cshtml) y lo cablea punto-expendio-pos.js. *@
+<div class="modal fade" id="modalHistorialPreciosExpendio" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header py-2">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-history mr-2"></i>Historial de precios
+                    <small id="hpeClienteNombre" class="text-muted ml-2"></small>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenedorHistorialPreciosExpendio">
+                <div class="text-center text-muted py-4">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modalPersonaCrearVenta" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -596,6 +661,16 @@
     <script src="~/Scripts/carnisys.balanza.js?v=1"></script>
     <script src="~/Scripts/app/pos-state.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-keyboard.js" asp-append-version="true"></script>
+    @* Alta rapida de producto (docs/DECISIONS.md 2026-10-05): habilita la feature de pos-product.js en
+       esta vista, igual que Ventas/POS. Mismos endpoints de ProductosController. *@
+    <script>
+        window.POS_ALTA_RAPIDA_HABILITADA = true;
+        // Permiso Producto.NuevoCorte del usuario de sesion (calculado en PuntosExpendioController.POS).
+        window.POS_ALTA_RAPIDA_PERMITIDA = @(ViewBag.PuedeAltaRapidaProducto == true ? "true" : "false");
+        window.guardarRapidoPOSUrl = '@Url.Action("GuardarRapidoPOS", "Productos")';
+        window.obtenerAlicuotasIvaUrl = '@Url.Action("ObtenerAlicuotasIva", "Productos")';
+        window.buscarProductoGlobalParaAltaUrl = '@Url.Action("BuscarProductoGlobalParaAlta", "Productos")';
+    </script>
     <script src="~/Scripts/app/pos-product.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-cart.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-balanza.js" asp-append-version="true"></script>
@@ -693,6 +768,7 @@
             urlPersonaObtener: '@Url.Action("Obtener", "Personas")',
             urlPersonaCrear: '@Url.Action("PersonaModal", "Personas")',
             urlPersonaGuardarCrear: '@Url.Action("GuardarPersonaModal", "Personas")',
+            urlHistorialPrecios: '@Url.Action("HistorialPreciosCliente", "Ventas")',
             idConsumidorFinal: @idConsumidorFinal,
             puedeBonificar: @(ViewBag.PuedeBonificarPuntoExpendio != null && (bool)ViewBag.PuedeBonificarPuntoExpendio ? "true" : "false"),
             mensajeSinPermisoBonificar: 'No tiene permisos para bonificar.',

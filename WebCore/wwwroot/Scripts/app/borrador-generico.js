@@ -369,7 +369,8 @@
                 if (p.esMio) tdUsuario.appendChild(el('span', 'badge badge-info ml-1', 'mío'));
                 tr.appendChild(tdUsuario);
                 tr.appendChild(el('td', 'text-nowrap', p.inicio));
-                tr.appendChild(el('td', 'text-nowrap', p.sinLatido));
+                // Fecha y hora reales de la ultima senal (no "hace N d": ver docs/DECISIONS.md 2026-10-05).
+                tr.appendChild(el('td', 'text-nowrap', p.ultimaSenal || p.sinLatido));
 
                 var tdEstado = el('td');
                 tdEstado.appendChild(el('span', 'badge ' + (p.puedeCargar ? 'badge-warning' : 'badge-secondary'), p.estado));
@@ -381,8 +382,10 @@
 
                 var btnCargar = el('button', 'btn btn-sm btn-success mr-1', 'Cargar');
                 btnCargar.type = 'button';
-                btnCargar.disabled = !p.puedeCargar;
-                if (!p.puedeCargar) btnCargar.title = 'Está en uso en otra terminal';
+                // Propio y "en uso": se habilita igual y pide confirmacion (corte de luz/cuelgue, sin esperar el umbral).
+                btnCargar.disabled = !(p.puedeCargar || p.puedeForzar);
+                if (p.puedeForzar && !p.puedeCargar) btnCargar.title = 'Figura en uso, pero es tuyo: podés cargarlo confirmando';
+                else if (!p.puedeCargar) btnCargar.title = 'Está en uso en otra terminal';
                 btnCargar.addEventListener('click', function (e) { e.stopPropagation(); cargar(p, null); });
                 tdAcciones.appendChild(btnCargar);
 
@@ -456,7 +459,8 @@
             cargarLista();
         }
 
-        function cargar(item, supervisor) {
+        // confirmadoEnUso: el operador ya confirmo cargar un borrador propio que figura "en uso".
+        function cargar(item, supervisor, confirmadoEnUso) {
             if (typeof cfg.hayFormularioCargado === 'function' && cfg.hayFormularioCargado()) {
                 Swal.fire({
                     icon: 'warning',
@@ -466,15 +470,29 @@
                 return;
             }
 
+            if (item.puedeForzar && !item.puedeCargar && !confirmadoEnUso) {
+                Swal.fire({
+                    icon: 'question',
+                    title: 'Figura en uso',
+                    text: 'Última señal ' + (item.ultimaSenal || item.sinLatido) + '. Si se cortó la luz o se colgó la PC, cargalo sin problema. ' +
+                        'Si todavía está abierto en otra pestaña o terminal, esa pantalla va a seguir con una copia aparte y vas a ver dos borradores.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Cargar igual',
+                    cancelButtonText: 'Cancelar'
+                }).then(function (r) { if (r.isConfirmed) cargar(item, supervisor, true); });
+                return;
+            }
+
             post(urls.recuperar, {
                 modulo: modulo,
                 id: item.id,
                 idSucursal: idSucursal(),
                 idOperador: idOperador(),
-                supervisor: supervisor
+                supervisor: supervisor,
+                confirmarEnUso: confirmadoEnUso === true
             }).then(function (resp) {
                 if (resp.requiereSupervisor) {
-                    pedirSupervisor(resp.msg).then(function (sup) { if (sup) cargar(item, sup); });
+                    pedirSupervisor(resp.msg).then(function (sup) { if (sup) cargar(item, sup, confirmadoEnUso); });
                     return;
                 }
 

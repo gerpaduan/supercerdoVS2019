@@ -273,6 +273,70 @@ namespace Negocio
             return null;
         }
 
+        // ===== Formula secreta (2026-10-04, ver docs/DECISIONS.md "Formula secreta con re-login") =====
+
+        // Resultado de pedir que un usuario se autentique para ver una formula secreta. Motivo es SOLO
+        // para auditoria (distingue "clave incorrecta" de "sin permiso"): al usuario final se le muestra
+        // siempre el mismo mensaje generico, para no revelar que usuarios existen ni cuales tienen permiso.
+        public sealed class ResultadoAutorizacionFormula
+        {
+            public bool Autorizado { get; set; }
+            public Entidades.Usuario Autorizador { get; set; }
+            // Id del usuario tipeado cuando existe (aunque la clave haya sido incorrecta); null si no existe.
+            public int? IdUsuarioCandidato { get; set; }
+            public string Motivo { get; set; }
+        }
+
+        // Quien puede ver una formula secreta: el que tiene el permiso de ver formulas (consulta) o el de
+        // ingresar/editar formulas (Admin pasa siempre, via tienePermiso), y ademas esta activo y sin
+        // bloqueo de cuenta.
+        public bool PuedeVerFormulaSecreta(Entidades.Usuario candidato)
+        {
+            if (candidato == null || !candidato.Activo) return false;
+            if (candidato.Bloqueado || candidato.BloqueadoNoSeguro) return false;
+
+            return tienePermiso(candidato, Entidades.Permisos.Elaborado.VerFormulas, DateTime.Today, -1)
+                || tienePermiso(candidato, Entidades.Permisos.Elaborado.IngresoFormula, DateTime.Today, candidato.Id);
+        }
+
+        // Usuarios activos de la empresa que pueden autorizar "Ver formula" (alimenta el selector de usuario).
+        // convertDatatableToList ya carga los permisos de cada usuario, por eso se puede evaluar aca sin
+        // consultas extra. Es solo comodidad de UI: la autorizacion real se vuelve a validar en
+        // AutorizarVerFormulaSecreta.
+        public List<Entidades.Usuario> ObtenerUsuariosConPermisoVerFormula()
+        {
+            obtenerUsuarios(true);
+            return (listUsuarios ?? new List<Entidades.Usuario>())
+                .Where(PuedeVerFormulaSecreta)
+                .OrderBy(u => u.Nombre, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        // Step-up de "Ver formula": valida usuario + clave tipeados y que tenga permiso. No cuenta intentos
+        // fallidos sobre la cuenta (eso lo hace el rate limit por sesion del controller): un operador no
+        // debe poder bloquear la cuenta de quien tiene el permiso adivinandole la clave.
+        public ResultadoAutorizacionFormula AutorizarVerFormulaSecreta(string usuario, string clave)
+        {
+            if (string.IsNullOrWhiteSpace(usuario) || string.IsNullOrEmpty(clave))
+                return new ResultadoAutorizacionFormula { Motivo = "Datos incompletos" };
+
+            var candidato = ObtenerUsuarioPorIdentificador(usuario);
+            if (candidato == null)
+                return new ResultadoAutorizacionFormula { Motivo = "Usuario inexistente" };
+
+            var resultado = new ResultadoAutorizacionFormula { IdUsuarioCandidato = candidato.Id };
+            if (!candidato.Activo) { resultado.Motivo = "Cuenta inactiva"; return resultado; }
+            if (candidato.Bloqueado || candidato.BloqueadoNoSeguro) { resultado.Motivo = "Cuenta bloqueada"; return resultado; }
+
+            var validado = ValidarUsuarioWeb(usuario, clave);
+            if (validado == null) { resultado.Motivo = "Clave incorrecta"; return resultado; }
+            if (!PuedeVerFormulaSecreta(validado)) { resultado.Motivo = "Sin permiso para ver formulas"; return resultado; }
+
+            resultado.Autorizado = true;
+            resultado.Autorizador = validado;
+            return resultado;
+        }
+
         // Incrementa el contador de intentos fallidos y, si llega a maxIntentos, bloquea la
         // cuenta (Bloqueado=true + FechaBloqueoUtc). Devuelve true solo en el momento exacto de
         // la transicion a bloqueado -- el caller usa eso para mandar el mail de desbloqueo UNA
@@ -437,11 +501,15 @@ namespace Negocio
             oUsuarioD.ActualizarPin(idUsuario, string.Empty, string.Empty, 0, sinRestriccionDeTenant);
         }
 
-        // Lista liviana (id, nombre, usuario) de activos NO admin de una empresa, para el login por
-        // CUIT en dispositivo seguro. Sin clave, hash ni permisos.
+        // Lista liviana (id, nombre, usuario) de activos de una empresa, para el login por CUIT en
+        // dispositivo seguro: primero los no admin y despues los administradores (2026-10-04, a pedido
+        // del usuario: los admin tambien aparecen). Sin clave, hash ni permisos. El PIN sigue sin valer
+        // para admin (ver LoginController.ProcesarLoginAsync): ellos ingresan con su contraseña.
         public List<Entidades.Usuario> ListarUsuariosParaLogin(int idEmpresa)
         {
-            return oUsuarioD.ListarActivosBasico(idEmpresa, false);
+            var lista = new List<Entidades.Usuario>(oUsuarioD.ListarActivosBasico(idEmpresa, false) ?? new List<Entidades.Usuario>());
+            lista.AddRange(oUsuarioD.ListarActivosBasico(idEmpresa, true) ?? new List<Entidades.Usuario>());
+            return lista;
         }
 
         // Administradores activos de una empresa (con su mail): para avisarles de solicitudes de

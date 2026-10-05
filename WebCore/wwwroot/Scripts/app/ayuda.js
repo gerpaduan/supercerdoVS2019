@@ -40,6 +40,12 @@
         return base + '/Ver?tipo=' + encodeURIComponent(d.tipo) + '&clave=' + encodeURIComponent(d.clave);
     }
 
+    // Las capturas del manual se ven chicas dentro del panel: un clic las abre a tamaño completo en pestaña nueva.
+    document.addEventListener('click', function (e) {
+        var img = e.target.closest ? e.target.closest('.ayuda-md img.ayuda-media') : null;
+        if (img) window.open(img.src, '_blank', 'noopener');
+    });
+
     // ---- Paginas completas (sin panel): los enlaces internos navegan a la pagina de ese documento ----
     if (!panel) {
         document.addEventListener('click', function (e) {

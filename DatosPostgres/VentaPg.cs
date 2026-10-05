@@ -1172,9 +1172,12 @@ namespace DatosPostgres
                     }
 
                     using (var cmd = new NpgsqlCommand(@"
-                        INSERT INTO expendios (idvendedor, fechaexpendio, idsucursal, identificacionexpendio, sector, cantitems, importe, creado, observaciones, nroremito, idempresa)
-                        VALUES (@idVendedor, @fechaExpendio, @idSucursal, @identificacionExpendio, @sector, @cantItems, @importe, now(), @observaciones, @nroRemito, @idEmpresa);", con, tx))
+                        INSERT INTO expendios (idvendedor, fechaexpendio, idsucursal, identificacionexpendio, sector, cantitems, importe, creado, observaciones, nroremito, idempresa, idpersona, fechacaducidad)
+                        VALUES (@idVendedor, @fechaExpendio, @idSucursal, @identificacionExpendio, @sector, @cantItems, @importe, now(), @observaciones, @nroRemito, @idEmpresa, @idPersona, @fechaCaducidad);", con, tx))
                     {
+                        // Cliente real y caducidad (2026-10-04): NULL cuando no aplican.
+                        cmd.Parameters.AddWithValue("idPersona", NpgsqlTypes.NpgsqlDbType.Integer, (object)oVentaE.IdPersonaExpendio ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("fechaCaducidad", NpgsqlTypes.NpgsqlDbType.Date, oVentaE.FechaCaducidad.HasValue ? (object)oVentaE.FechaCaducidad.Value.Date : DBNull.Value);
                         cmd.Parameters.AddWithValue("idVendedor", oVentaE.Vendedor.Id);
                         cmd.Parameters.AddWithValue("fechaExpendio", oVentaE.FechaVenta);
                         cmd.Parameters.AddWithValue("idSucursal", oVentaE.Sucursal.idSucursal);
@@ -1222,9 +1225,13 @@ namespace DatosPostgres
                     using (var cmd = new NpgsqlCommand(@"
                         UPDATE expendios
                         SET fechaexpendio = @fechaExpendio, identificacionexpendio = @identificacionExpendio,
-                            cantitems = @cantItems, importe = @importe, observaciones = @observaciones, nroremito = @nroRemito
+                            cantitems = @cantItems, importe = @importe, observaciones = @observaciones, nroremito = @nroRemito,
+                            idpersona = @idPersona, fechacaducidad = @fechaCaducidad
                         WHERE idexpendio = @idExpendio AND idsucursal = @idSucursal AND (idventa IS NULL OR idventa = 0);", con, tx))
                     {
+                        // Cliente real y caducidad (2026-10-04): se reemplazan junto con el resto de la cabecera.
+                        cmd.Parameters.AddWithValue("idPersona", NpgsqlTypes.NpgsqlDbType.Integer, (object)oVentaE.IdPersonaExpendio ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("fechaCaducidad", NpgsqlTypes.NpgsqlDbType.Date, oVentaE.FechaCaducidad.HasValue ? (object)oVentaE.FechaCaducidad.Value.Date : DBNull.Value);
                         cmd.Parameters.AddWithValue("fechaExpendio", oVentaE.FechaVenta);
                         cmd.Parameters.AddWithValue("identificacionExpendio", oVentaE.IdentificacionExpendio ?? "");
                         cmd.Parameters.AddWithValue("cantItems", int.TryParse(oVentaE.CantItems, out int cantItems) ? cantItems : 0);
@@ -1539,6 +1546,8 @@ namespace DatosPostgres
                         TotalImporte = GetFloat(dr, "importe"),
                         Observaciones = GetString(dr, "observaciones"),
                         NroRemito = ColumnaExiste(dr, "nroremito") ? GetString(dr, "nroremito") : "",
+                        IdPersonaExpendio = ColumnaExiste(dr, "idpersona") && dr["idpersona"] != DBNull.Value ? Convert.ToInt32(dr["idpersona"]) : (int?)null,
+                        FechaCaducidad = ColumnaExiste(dr, "fechacaducidad") && dr["fechacaducidad"] != DBNull.Value ? Convert.ToDateTime(dr["fechacaducidad"]).Date : (DateTime?)null,
                         Vendedor = GetUsuarioLiviano(Convert.ToInt32(dr["idvendedor"])),
                         Sucursal = _sucursalRepo.findById(Convert.ToInt32(dr["idsucursal"]))
                     };

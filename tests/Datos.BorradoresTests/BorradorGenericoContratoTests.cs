@@ -171,26 +171,68 @@ namespace Datos.BorradoresTests
             Assert.False(repo.RegistrarLatido(Guid.NewGuid(), Operador, Sucursal, b.Modulo));
         }
 
+        // Simula el pagehide del navegador: Negocio solo registra el evento CIERRE_PESTANA (no toca ultimolatido).
+        // La pausa asegura un evento estrictamente posterior al ultimo latido (SQL Server tiene resolucion de ms).
+        private static void CerrarPestana(IBorradorGenericoRepository repo, Entidades.BorradorGenerico b)
+        {
+            Thread.Sleep(30);
+            repo.AgregarEvento(new BorradorGenericoEvento { IdBorrador = b.Id, Tipo = BorradorGenericoEvento.TipoCierrePestana, IdUsuario = Operador });
+            Thread.Sleep(30);
+        }
+
         [SkippableFact]
-        public void EnvejecerLatidoPorCierre_deja_el_borrador_interrumpido_de_inmediato()
+        public void CierrePestana_deja_el_borrador_interrumpido_de_inmediato_con_la_senal_real()
         {
             var (repo, _) = Nuevo();
             var b = Borrador();
             repo.Guardar(b);
-            Assert.False(repo.ObtenerPorId(b.Id).EstaInterrumpida(5));
+            var enUso = repo.ObtenerPorId(b.Id);
+            Assert.False(enUso.EstaInterrumpida(5));
+            Assert.False(enUso.CerradaPestana);
 
-            Assert.True(repo.EnvejecerLatidoPorCierre(b.Id));
+            CerrarPestana(repo, b);
             var leido = repo.ObtenerPorId(b.Id);
+            Assert.True(leido.CerradaPestana);
             Assert.True(leido.EstaInterrumpida(5));
-            Assert.True(leido.SegundosSinLatido >= 23 * 3600, "SegundosSinLatido=" + leido.SegundosSinLatido);
+            Assert.Equal(Entidades.BorradorGenerico.EstadoActiva, leido.Estado);
+            // La senal es la real (la hora del cierre, de hace instantes), no un "hace 1 dia" simulado.
+            Assert.True(leido.SegundosSinLatido < 60, "SegundosSinLatido=" + leido.SegundosSinLatido);
+            Assert.True(leido.UltimoLatido > enUso.UltimoLatido);
+            // Subir el umbral despues no lo "revive": sigue cerrado por pestana.
+            Assert.True(leido.EstaInterrumpida(240));
 
-            // Un latido nuevo lo "revive".
+            // Un latido nuevo (F5, bfcache) lo deja en uso otra vez y la senal vuelve a ser la del latido.
             Assert.True(repo.RegistrarLatido(b.ClientId, Operador, Sucursal, b.Modulo));
-            Assert.False(repo.ObtenerPorId(b.Id).EstaInterrumpida(5));
+            var vivo = repo.ObtenerPorId(b.Id);
+            Assert.False(vivo.CerradaPestana);
+            Assert.False(vivo.EstaInterrumpida(5));
+        }
 
-            // Sobre uno cerrado no hace nada.
-            repo.MarcarFinalizada(b.ClientId, b.Modulo, 1);
-            Assert.False(repo.EnvejecerLatidoPorCierre(b.Id));
+        [SkippableFact]
+        public void CierrePestana_se_ve_tambien_en_el_listado_por_sucursal()
+        {
+            var (repo, _) = Nuevo();
+            var cerrado = Borrador(); repo.Guardar(cerrado);
+            var abierto = Borrador(); repo.Guardar(abierto);
+            CerrarPestana(repo, cerrado);
+            repo.RegistrarLatido(abierto.ClientId, Operador, Sucursal, abierto.Modulo);
+
+            var lista = repo.ListarActivasPorSucursal(Sucursal, Entidades.BorradorGenerico.ModuloCompra);
+            Assert.True(lista.Single(x => x.Id == cerrado.Id).CerradaPestana);
+            Assert.False(lista.Single(x => x.Id == abierto.Id).CerradaPestana);
+        }
+
+        [SkippableFact]
+        public void Un_cierre_viejo_anterior_al_ultimo_latido_no_cuenta()
+        {
+            var (repo, _) = Nuevo();
+            var b = Borrador(); repo.Guardar(b);
+            CerrarPestana(repo, b);
+            // La pestana vuelve y guarda de nuevo: el cierre queda en el pasado y ya no interrumpe.
+            Assert.Equal(ResultadoGuardarBorradorGenerico.Guardado, repo.Guardar(Borrador(b.ClientId)));
+            var leido = repo.ObtenerPorId(b.Id);
+            Assert.False(leido.CerradaPestana);
+            Assert.False(leido.EstaInterrumpida(5));
         }
 
         [SkippableFact]
@@ -227,7 +269,7 @@ namespace Datos.BorradoresTests
         {
             var (repo, _) = Nuevo();
             var b = Borrador(); repo.Guardar(b);
-            repo.EnvejecerLatidoPorCierre(b.Id);
+            CerrarPestana(repo, b);
 
             Assert.True(repo.TomarBorrador(b.Id, OtroOperador, 99));
             var leido = repo.ObtenerPorId(b.Id);
@@ -237,6 +279,25 @@ namespace Datos.BorradoresTests
 
             repo.MarcarDescartada(b.Id);
             Assert.False(repo.TomarBorrador(b.Id, Operador, 1));
+        }
+
+        [SkippableFact]
+        public void RotarClientId_cambia_el_clientId_solo_de_un_borrador_ACTIVO()
+        {
+            var (repo, _) = Nuevo();
+            var b = Borrador(); repo.Guardar(b);
+            var nuevo = Guid.NewGuid();
+
+            Assert.True(repo.RotarClientId(b.Id, nuevo));
+            Assert.Null(repo.ObtenerPorClientId(b.ClientId, b.Modulo));
+            Assert.Equal(b.Id, repo.ObtenerPorClientId(nuevo, b.Modulo).Id);
+
+            // Con el clientId viejo ya no coincide: el latido de la pestana vieja pide guardar de nuevo.
+            Assert.False(repo.RegistrarLatido(b.ClientId, Operador, Sucursal, b.Modulo));
+            Assert.True(repo.RegistrarLatido(nuevo, Operador, Sucursal, b.Modulo));
+
+            repo.MarcarDescartada(b.Id);
+            Assert.False(repo.RotarClientId(b.Id, Guid.NewGuid()));
         }
 
         [SkippableFact]
@@ -331,7 +392,7 @@ namespace Datos.BorradoresTests
         {
             // En Postgres crean filas; en SQL Server (etapa 2) son no-op: lo comun es que nunca fallen.
             var (repo, _) = Nuevo();
-            var b = Borrador(); repo.Guardar(b); repo.EnvejecerLatidoPorCierre(b.Id);
+            var b = Borrador(); repo.Guardar(b); CerrarPestana(repo, b);
 
             repo.UpsertNotificacion(new Notificacion
             {

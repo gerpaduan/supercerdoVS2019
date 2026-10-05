@@ -14,15 +14,28 @@ namespace DatosPostgres
     // reloj del navegador ni del servidor web (mismo criterio que VentaBorradorPg).
     public class BorradorGenericoPg : Contratos.IBorradorGenericoRepository
     {
+        // "Cerrado por pestana": el navegador aviso un pagehide (evento CIERRE_PESTANA) DESPUES del ultimo latido.
+        // En ese caso la senal real del borrador es la hora de ese evento (cp.fecha) y queda interrumpido de
+        // inmediato, sin tocar ultimolatido (antes se lo corria 1 dia atras y la "ultima senal" mostraba dias
+        // falsos; ver docs/DECISIONS.md 2026-10-05). Un latido o guardado posterior (ultimolatido > evento) lo
+        // reactiva solo. El indice (idempresa, idborrador, fecha) cubre la subconsulta.
+        private const string JoinCierrePestana =
+            "LEFT JOIN LATERAL (SELECT MAX(e.fecha) AS fecha FROM borradorgenericoevento e " +
+            "WHERE e.idempresa = b.idempresa AND e.idborrador = b.id AND e.tipo = 'CIERRE_PESTANA' " +
+            "AND e.fecha >= b.ultimolatido) cp ON true ";
+
+        // ultimolatido y segundossinlatido se devuelven ya como "senal efectiva" (cp.fecha si hubo cierre).
         private const string ColumnasBorradorSinPayload =
             "b.id, b.idempresa, b.idsucursal, b.modulo, b.idregistro, b.idoperador, u.nombre AS nombreoperador, b.idusuariosesion, " +
             "b.clientid, b.resumen, b.cantlineas, NULL::text AS payload, b.estado, b.idresultado, " +
-            "b.creado, b.ultimolatido, b.actualizado, b.finalizado, EXTRACT(EPOCH FROM (now() - b.ultimolatido))::int AS segundossinlatido";
+            "b.creado, COALESCE(cp.fecha, b.ultimolatido) AS ultimolatido, b.actualizado, b.finalizado, " +
+            "EXTRACT(EPOCH FROM (now() - COALESCE(cp.fecha, b.ultimolatido)))::int AS segundossinlatido, (cp.fecha IS NOT NULL) AS cerradapestana";
 
         private const string ColumnasBorradorConPayload =
             "b.id, b.idempresa, b.idsucursal, b.modulo, b.idregistro, b.idoperador, u.nombre AS nombreoperador, b.idusuariosesion, " +
             "b.clientid, b.resumen, b.cantlineas, b.payload::text AS payload, b.estado, b.idresultado, " +
-            "b.creado, b.ultimolatido, b.actualizado, b.finalizado, EXTRACT(EPOCH FROM (now() - b.ultimolatido))::int AS segundossinlatido";
+            "b.creado, COALESCE(cp.fecha, b.ultimolatido) AS ultimolatido, b.actualizado, b.finalizado, " +
+            "EXTRACT(EPOCH FROM (now() - COALESCE(cp.fecha, b.ultimolatido)))::int AS segundossinlatido, (cp.fecha IS NOT NULL) AS cerradapestana";
 
         private const string ColumnasEvento =
             "e.id, e.idempresa, e.idborrador, e.fecha, e.tipo, e.idusuario, u.nombre AS nombreusuario, e.detalle, " +
@@ -82,7 +95,8 @@ namespace DatosPostgres
                 UltimoLatido = Convert.ToDateTime(dr["ultimolatido"]),
                 Actualizado = FechaNula(dr, "actualizado"),
                 Finalizado = FechaNula(dr, "finalizado"),
-                SegundosSinLatido = Convert.ToInt32(dr["segundossinlatido"])
+                SegundosSinLatido = Convert.ToInt32(dr["segundossinlatido"]),
+                CerradaPestana = Convert.ToBoolean(dr["cerradapestana"])
             };
         }
 
@@ -184,25 +198,10 @@ namespace DatosPostgres
             return filas > 0;
         }
 
-        public bool EnvejecerLatidoPorCierre(int idBorrador)
-        {
-            // 1 dia alcanza y sobra para superar cualquier umbral configurado (maximo 240 min = 4 h):
-            // queda "interrumpido" de inmediato en vez de esperar el latido, sin tocar el estado.
-            int filas = DbPg.NonQuery(_connectionString, _idEmpresa, @"
-                UPDATE borradorgenerico SET ultimolatido = now() - interval '1 day'
-                WHERE idempresa = @idEmpresa AND id = @id AND estado = 'ACTIVA';",
-                p =>
-                {
-                    p.AddWithValue("idEmpresa", _idEmpresa);
-                    p.AddWithValue("id", idBorrador);
-                });
-            return filas > 0;
-        }
-
         public Entidades.BorradorGenerico ObtenerPorClientId(Guid clientId, string modulo)
         {
             var lista = DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM borradorgenerico b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM borradorgenerico b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.clientid = @clientId AND b.modulo = @modulo;",
                 MapearBorrador,
                 p =>
@@ -217,7 +216,7 @@ namespace DatosPostgres
         public Entidades.BorradorGenerico ObtenerPorId(int id)
         {
             var lista = DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM borradorgenerico b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM borradorgenerico b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.id = @id;",
                 MapearBorrador,
                 p =>
@@ -231,7 +230,7 @@ namespace DatosPostgres
         public List<Entidades.BorradorGenerico> ListarActivasPorSucursal(int idSucursal, string modulo)
         {
             return DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM borradorgenerico b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM borradorgenerico b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.idsucursal = @idSucursal AND b.modulo = @modulo AND b.estado = 'ACTIVA' ORDER BY b.creado;",
                 MapearBorrador,
                 p =>
@@ -245,7 +244,7 @@ namespace DatosPostgres
         public List<Entidades.BorradorGenerico> ListarActivasPorUsuarioSesion(int idUsuarioSesion)
         {
             return DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorSinPayload + " FROM borradorgenerico b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorSinPayload + " FROM borradorgenerico b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.idusuariosesion = @idUsuarioSesion AND b.estado = 'ACTIVA' ORDER BY b.creado;",
                 MapearBorrador,
                 p =>
@@ -267,6 +266,20 @@ namespace DatosPostgres
                     p.AddWithValue("id", id);
                     p.AddWithValue("idOperador", idOperador);
                     p.AddWithValue("idUsuarioSesion", idUsuarioSesion);
+                });
+            return filas > 0;
+        }
+
+        public bool RotarClientId(int id, Guid nuevoClientId)
+        {
+            int filas = DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                UPDATE borradorgenerico SET clientid = @nuevoClientId
+                WHERE idempresa = @idEmpresa AND id = @id AND estado = 'ACTIVA';",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("id", id);
+                    p.AddWithValue("nuevoClientId", nuevoClientId);
                 });
             return filas > 0;
         }
@@ -370,15 +383,18 @@ namespace DatosPostgres
                        END || ')',
                        COALESCE(u.nombre, 'Un operador') || ' dejó un formulario sin guardar'
                            || CASE WHEN b.resumen IS NOT NULL AND b.resumen <> '' THEN ' (' || b.resumen || ')' ELSE '' END
-                           || ', última señal ' || to_char(b.ultimolatido, 'DD/MM/YYYY HH24:MI:SS') || '.',
-                       b.id, now(), b.ultimolatido
+                           || ', última señal ' || to_char(COALESCE(cp.fecha, b.ultimolatido), 'DD/MM/YYYY HH24:MI:SS') || '.',
+                       b.id, now(), COALESCE(cp.fecha, b.ultimolatido)
                 FROM borradorgenerico b
                 LEFT JOIN usuarios u ON u.id = b.idoperador
+                LEFT JOIN LATERAL (SELECT MAX(e.fecha) AS fecha FROM borradorgenericoevento e
+                                   WHERE e.idempresa = b.idempresa AND e.idborrador = b.id AND e.tipo = 'CIERRE_PESTANA'
+                                     AND e.fecha >= b.ultimolatido) cp ON true
                 WHERE b.idempresa = @idEmpresa
                   AND b.modulo = @modulo
                   AND b.estado = 'ACTIVA'
                   AND b.cantlineas > 0
-                  AND b.ultimolatido < now() - (@minutos * interval '1 minute')
+                  AND (cp.fecha IS NOT NULL OR b.ultimolatido < now() - (@minutos * interval '1 minute'))
                   AND NOT EXISTS (
                         SELECT 1 FROM notificaciones n
                         WHERE n.idempresa = b.idempresa AND n.refid = b.id

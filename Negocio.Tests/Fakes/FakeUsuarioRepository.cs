@@ -41,11 +41,11 @@ namespace NegocioTests.Fakes
         }
 
         public List<Entidades.Usuario> ListaBasica = new List<Entidades.Usuario>();
-        public bool? UltimoPedidoAdmin;
+        public List<bool> PedidosAdmin = new List<bool>();
 
         public List<Entidades.Usuario> ListarActivosBasico(int idEmpresa, bool admin)
         {
-            UltimoPedidoAdmin = admin;
+            PedidosAdmin.Add(admin);
             return ListaBasica;
         }
 

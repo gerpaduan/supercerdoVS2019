@@ -23,6 +23,17 @@ namespace Negocio
         // hora local del cliente, que puede adelantar unos minutos respecto del servidor.
         public const int ToleranciaRelojMinutos = 5;
 
+        // Caducidad de un presupuesto (solo sector PRESUPUESTO): cantidad de dias, contados desde
+        // el dia de vigencia, durante los que sus precios se pueden copiar a una venta. Si el
+        // usuario no elige, rige el valor por defecto; el tope evita typos (ej. 9999 dias).
+        public const int DiasCaducidadPresupuestoPorDefecto = 90;
+        public const int DiasMaximosCaducidadPresupuesto = 365;
+
+        // Un cliente con algun presupuesto con vigencia dentro de este lapso (hacia atras) abre el
+        // historial de precios en la solapa Presupuestos aunque ya hayan caducado. No es la
+        // caducidad (que es por presupuesto), solo decide la solapa inicial del modal.
+        public const int MesesPresupuestoRecienteSolapaInicial = 6;
+
         public static bool EsPresupuesto(string sector)
         {
             return string.Equals((sector ?? "").Trim(), Presupuesto, StringComparison.OrdinalIgnoreCase);
@@ -78,6 +89,29 @@ namespace Negocio
             }
 
             return fecha;
+        }
+
+        // Fecha de caducidad con la que se guarda el expendio. La UI pide DIAS y el servidor
+        // calcula la fecha (nunca se confia en una fecha enviada por el cliente): ultimo dia
+        // inclusive = dia de vigencia + dias.
+        //  - Sector distinto de PRESUPUESTO: no aplica, devuelve null y sin error.
+        //  - Sin dias (null): se usan DiasCaducidadPresupuestoPorDefecto.
+        //  - Dias fuera de 1..DiasMaximosCaducidadPresupuesto: devuelve null y `error`.
+        public static DateTime? ResolverCaducidad(string sector, DateTime vigencia, int? dias, out string error)
+        {
+            error = null;
+
+            if (!EsPresupuesto(sector))
+                return null;
+
+            int diasEfectivos = dias ?? DiasCaducidadPresupuestoPorDefecto;
+            if (diasEfectivos < 1 || diasEfectivos > DiasMaximosCaducidadPresupuesto)
+            {
+                error = "Los días de validez del presupuesto deben estar entre 1 y " + DiasMaximosCaducidadPresupuesto + ".";
+                return null;
+            }
+
+            return vigencia.Date.AddDays(diasEfectivos);
         }
     }
 }

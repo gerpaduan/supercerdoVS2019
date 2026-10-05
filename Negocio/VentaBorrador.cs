@@ -67,9 +67,9 @@ namespace Negocio
                 Detalle = "El navegador se cerró o abandonó el POS con la venta sin finalizar."
             });
 
-            // Un pagehide real es una señal mas confiable que "no hubo latido": en vez de esperar el
-            // umbral configurado (5 min por defecto), la venta queda interrumpida (recuperable) de inmediato.
-            oBorradorD.EnvejecerLatidoPorCierre(borrador.Id);
+            // Un pagehide real es una señal mas confiable que "no hubo latido": el evento de arriba, al ser
+            // posterior al ultimo latido, deja la venta interrumpida (recuperable) de inmediato -- sin
+            // esperar el umbral y sin falsear el ultimo latido (lo resuelve la lectura del repositorio).
             return true;
         }
 
@@ -110,10 +110,15 @@ namespace Negocio
         //  - debe existir, estar ACTIVA y estar interrumpida (no "en uso" en otra terminal);
         //  - si es de otro operador, hace falta autorizacion de un supervisor/admin.
         // Al recuperarla pasa al operador actual y queda "en uso" (su carrito sigue latiendo con el mismo
-        // clientId). Devuelve null y el motivo en "error" si no se puede.
+        // clientId). Excepcion: si figuraba "en uso" y es del propio operador, puede tomarla igual con
+        // tomarSiEstaEnUso=true (lo confirmo en pantalla: tipicamente un corte de luz o un cuelgue donde
+        // todavia no vencio el umbral de latido). En ese caso se le cambia el clientId, asi el carrito viejo
+        // (si siguiera vivo) no pisa lo cargado: queda con un borrador propio aparte. Una venta en uso de
+        // OTRO usuario nunca se toma: espera el umbral aunque haya supervisor.
+        // Devuelve null y el motivo en "error" si no se puede.
         // nombreSupervisor: nombre de quien autorizo con su clave (null/vacio = sin autorizacion).
         public Entidades.VentaBorrador Recuperar(int idBorrador, int idOperadorActual, int idUsuarioSesionActual,
-            int idUsuarioActor, string nombreSupervisor, int minutosSinLatido, out string error)
+            int idUsuarioActor, string nombreSupervisor, int minutosSinLatido, bool tomarSiEstaEnUso, out string error)
         {
             error = null;
             bool autorizadoPorSupervisor = !string.IsNullOrWhiteSpace(nombreSupervisor);
@@ -124,13 +129,15 @@ namespace Negocio
                 return null;
             }
 
-            if (EstaEnUso(borrador, minutosSinLatido))
+            bool esDelOperador = borrador.IdOperador == idOperadorActual;
+            bool enUso = EstaEnUso(borrador, minutosSinLatido);
+            bool tomaEnUso = enUso && esDelOperador && tomarSiEstaEnUso;
+            if (enUso && !tomaEnUso)
             {
                 error = "Esa venta está en uso en otra terminal. Solo se pueden cargar las que quedaron interrumpidas.";
                 return null;
             }
 
-            bool esDelOperador = borrador.IdOperador == idOperadorActual;
             if (!esDelOperador && !autorizadoPorSupervisor)
             {
                 error = "Esa venta es de otro usuario: hace falta la autorización de un supervisor.";
@@ -146,13 +153,28 @@ namespace Negocio
                 return null;
             }
 
+            // Tomada "en uso": clientId nuevo (ver cabecera). Si falla la rotacion no se sigue: cargarla con el
+            // clientId viejo dejaria dos carritos escribiendo sobre el mismo borrador.
+            if (tomaEnUso)
+            {
+                var nuevoClientId = Guid.NewGuid();
+                if (!oBorradorD.RotarClientId(idBorrador, nuevoClientId))
+                {
+                    error = "Esa venta ya no está disponible.";
+                    return null;
+                }
+                borrador.ClientId = nuevoClientId;
+            }
+
             oBorradorD.AgregarEvento(new Entidades.VentaBorradorEvento
             {
                 IdBorrador = idBorrador,
                 Tipo = Entidades.VentaBorradorEvento.TipoRecuperada,
                 IdUsuario = idUsuarioActor,
                 Detalle = esDelOperador
-                    ? "Recuperada por su dueño."
+                    ? (tomaEnUso
+                        ? "Recuperada por su dueño estando en uso (última señal hace " + borrador.SegundosSinLatido.ToString(CultureInfo.InvariantCulture) + " s); lo confirmó en pantalla."
+                        : "Recuperada por su dueño.")
                     : "Tomada por otro usuario con autorización de " + nombreSupervisor + ". Dueño original: " + (nombreDueno ?? ("#" + duenoOriginal.ToString(CultureInfo.InvariantCulture))) + "."
             });
 

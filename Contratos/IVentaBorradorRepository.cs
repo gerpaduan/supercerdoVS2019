@@ -18,10 +18,10 @@ namespace Contratos
         // Solo actualiza ultimolatido (el carrito no cambio). false si no existe, esta cerrada o es ajena.
         bool RegistrarLatido(Guid clientId, int idOperador, int idSucursal);
 
-        // Cierre de pestana informado por el navegador: retrocede ultimolatido para que la venta quede
-        // "interrumpida" (recuperable) de inmediato, sin esperar el umbral. No cambia el estado.
-        // false si no existe o ya no esta ACTIVA.
-        bool EnvejecerLatidoPorCierre(int idBorrador);
+        // Cierre de pestana (pagehide): NO hay metodo que toque ultimolatido. Alcanza con AgregarEvento
+        // (CIERRE_PESTANA): al leer, un evento posterior al ultimo latido hace que la venta figure
+        // interrumpida de inmediato (Entidades.VentaBorrador.CerradaPestana) y que UltimoLatido /
+        // SegundosSinLatido sean los de la hora real del cierre. Ver docs/DECISIONS.md 2026-10-05.
 
         // Con Payload incluido. null si no existe.
         Entidades.VentaBorrador ObtenerPorClientId(Guid clientId);
@@ -39,6 +39,11 @@ namespace Contratos
         // Traspasa una venta ACTIVA a un operador (recuperarla en su POS): actualiza operador, cuenta de
         // sesion y ultimo latido (queda "en uso"). false si no estaba ACTIVA.
         bool TomarBorrador(int id, int idOperador, int idUsuarioSesion);
+
+        // Cambia el clientId de una venta ACTIVA. Se usa al tomar una que figuraba "en uso": el carrito
+        // que la tenia abierta (si seguia vivo) deja de coincidir y no pisa lo que cargo el nuevo dueno;
+        // en su proximo latido crea un borrador propio aparte. false si no estaba ACTIVA.
+        bool RotarClientId(int id, Guid nuevoClientId);
 
         // ACTIVA -> FINALIZADA con el id de la venta real; vacia el payload. false si no estaba ACTIVA.
         bool MarcarFinalizada(Guid clientId, int idVenta);

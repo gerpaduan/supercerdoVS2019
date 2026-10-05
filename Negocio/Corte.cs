@@ -480,6 +480,22 @@ namespace Negocio
             return oCorteD.getFormulaEmbutido(idEmbutido);
         }
 
+        // Formula secreta: idCorte = producto elaborado. Ver Entidades.Formula.Secreta.
+        public bool esFormulaSecreta(int idCorte)
+        {
+            return idCorte > 0 && oCorteD.esFormulaSecreta(idCorte);
+        }
+
+        public Dictionary<int, int> ObtenerCortesDeEmbutidosConFormulaSecreta(IEnumerable<int> idsEmbutidos)
+        {
+            return oCorteD.ObtenerCortesDeEmbutidosConFormulaSecreta(idsEmbutidos);
+        }
+
+        public void registrarAuditoriaFormula(Entidades.AuditoriaFormula auditoria)
+        {
+            oCorteD.registrarAuditoriaFormula(auditoria);
+        }
+
         // Usado solo para calcular el valor por defecto del interruptor manual Unidad/Porcentaje
         // en EditarFormula.cshtml al inicializar la pantalla (Web/Models/ElaboradosVm.cs,
         // ElaboradoFormulaEditVm.EscalaUnidad). Los calculos de conversion en si (metodos de abajo)

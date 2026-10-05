@@ -327,9 +327,9 @@
             $item.append($('<div class="d-flex justify-content-between align-items-center"></div>')
                 .append($('<span></span>').text(p.cliente + ' — ' + p.total))
                 .append($('<span class="badge ' + (p.puedeCargar ? 'badge-warning' : 'badge-secondary') + '"></span>').text(p.estado)));
-            $item.append($('<div class="text-muted"></div>').text(p.cantLineas + ' ítem(s) · ' + p.sinLatido));
+            $item.append($('<div class="text-muted"></div>').text(p.cantLineas + ' ítem(s) · última señal ' + p.ultimoLatido));
 
-            if (p.puedeCargar) {
+            if (p.puedeCargar || p.puedeForzar) {
                 var $btn = $('<button type="button" class="btn btn-sm btn-success mt-1 w-100">Cargar al carrito</button>');
                 $btn.on('click', function () { cargar(p, null); });
                 $item.append($btn);
@@ -368,7 +368,8 @@
             if (p.esMia) tdUsuario.appendChild(el('span', 'badge badge-info ml-1', 'mía'));
             tr.appendChild(tdUsuario);
             tr.appendChild(el('td', 'text-nowrap', p.inicio));
-            tr.appendChild(el('td', 'text-nowrap', p.ultimoLatido + ' (' + p.sinLatido + ')'));
+            // Fecha y hora reales de la ultima senal (ya incluye el cierre de pestana); sin "hace N d".
+            tr.appendChild(el('td', 'text-nowrap', p.ultimoLatido));
 
             var tdEstado = el('td');
             tdEstado.appendChild(el('span', 'badge ' + (p.puedeCargar ? 'badge-warning' : 'badge-secondary'), p.estado));
@@ -385,8 +386,10 @@
 
             var btnCargar = el('button', 'btn btn-sm btn-success mr-1', 'Cargar al carrito');
             btnCargar.type = 'button';
-            btnCargar.disabled = !p.puedeCargar;
-            if (!p.puedeCargar) btnCargar.title = 'Está en uso en otra terminal';
+            // Propia y "en uso": se habilita igual y pide confirmacion (corte de luz/cuelgue, sin esperar el umbral).
+            btnCargar.disabled = !(p.puedeCargar || p.puedeForzar);
+            if (p.puedeForzar && !p.puedeCargar) btnCargar.title = 'Figura en uso, pero es tuya: podés cargarla confirmando';
+            else if (!p.puedeCargar) btnCargar.title = 'Está en uso en otra terminal';
             btnCargar.addEventListener('click', function () { cargar(p, null); });
             tdAcciones.appendChild(btnCargar);
 
@@ -463,7 +466,8 @@
         cargarLista();
     }
 
-    function cargar(item, supervisor) {
+    // confirmadoEnUso: el cajero ya confirmo cargar una venta propia que figura "en uso".
+    function cargar(item, supervisor, confirmadoEnUso) {
         if (hayCarritoCargado()) {
             Swal.fire({
                 icon: 'warning',
@@ -473,14 +477,28 @@
             return;
         }
 
+        if (item.puedeForzar && !item.puedeCargar && !confirmadoEnUso) {
+            Swal.fire({
+                icon: 'question',
+                title: 'Figura en uso',
+                text: 'Última señal ' + item.ultimoLatido + '. Si se cortó la luz o se colgó la PC, cargala sin problema. ' +
+                    'Si todavía está abierta en otra pestaña o terminal, esa pantalla va a seguir con una copia aparte y vas a ver dos ventas sin guardar.',
+                showCancelButton: true,
+                confirmButtonText: 'Cargar igual',
+                cancelButtonText: 'Cancelar'
+            }).then(function (r) { if (r.isConfirmed) cargar(item, supervisor, true); });
+            return;
+        }
+
         post(cfg.urls.recuperar, {
             id: item.id,
             posInstanceId: posInstanceId(),
             idSucursalPOS: idSucursalPOS(),
-            supervisor: supervisor
+            supervisor: supervisor,
+            confirmarEnUso: confirmadoEnUso === true
         }).then(function (resp) {
             if (resp.requiereSupervisor) {
-                pedirSupervisor(resp.msg).then(function (sup) { if (sup) cargar(item, sup); });
+                pedirSupervisor(resp.msg).then(function (sup) { if (sup) cargar(item, sup, confirmadoEnUso); });
                 return;
             }
 

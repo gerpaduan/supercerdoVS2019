@@ -21,6 +21,7 @@ Con `BorradorGenerico:Habilitado` (Postgres: prendido por defecto; SQL Server: o
 - **Stock** guarda con un POST tradicional (`StockController.Guardar`, `RedirectToAction`, no AJAX): el `clientId` del borrador viaja en un campo hidden (`BorradorGenericoClientId`) y el servidor marca el borrador `FINALIZADA` (`MarcarBorradorGenericoFinalizado`, mejor esfuerzo) al guardar, porque no hay respuesta JSON donde el navegador pueda hacerlo. Botón "Stock sin cerrar" junto a "Volver".
 - **Movimientos** guarda por AJAX (`MovimientosController.Guardar` devuelve JSON): el propio JS (`movimientos.js`) marca el borrador finalizado tras la respuesta exitosa. Botón "Movimientos sin cerrar" junto a "Imprimir".
 - En ambos, cualquier operador de la sucursal ve los borradores sin cerrar del módulo y puede recuperar/descartar los propios; uno ajeno exige autorización de supervisor.
+- Un borrador **propio** que figura "En uso" (corte de luz/cuelgue, todavía dentro de `BorradorGenerico:MinutosSinLatidoInterrumpida`) se puede cargar igual confirmando "Cargar igual" (desde 2026-10-04; rota el `clientId`, ver `docs/DECISIONS.md` 2026-10-04). Descartar sigue esperando el umbral.
 
 ## Cierre de Stock: productos "no contado"
 

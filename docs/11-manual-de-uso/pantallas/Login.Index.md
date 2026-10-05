@@ -4,7 +4,7 @@ titulo: Ingreso al sistema
 rol: usuario
 modulo: Acceso y seguridad
 orden: 1
-revisada: 2026-10-03
+revisada: 2026-10-04
 ---
 ## Para qué sirve
 Es la pantalla para entrar al sistema. Funciona igual desde la dirección general (`/Login`) y desde la dirección de tu empresa (`/Login/<CUIT>`, ver [ingresar con la dirección de tu empresa](ayuda:concepto/login-por-cuit)).
@@ -13,7 +13,7 @@ Es la pantalla para entrar al sistema. Funciona igual desde la dirección genera
 1. **Elegí tu usuario**:
    - En un **dispositivo autorizado** con la dirección de tu empresa ves una **lista de nombres**: escribí unas letras en *"Buscá tu nombre"* y tocá el tuyo.
    - En cualquier otro caso escribí tu **usuario o tu email**. Con la dirección de tu empresa, debajo del campo aparece el aviso *"En un dispositivo autorizado por tu empresa podés elegir tu usuario de una lista"* (con `/Login` a secas no aparece).
-   - Si no figurás en la lista (por ejemplo sos administrador) tocá **"Ingresar con otro usuario o email"**.
+   - La lista incluye a los administradores. Si no figurás en ella tocá **"Ingresar con otro usuario o email"**.
 2. Escribí tu **contraseña**. En un dispositivo autorizado también podés usar tu [clave rápida (PIN)](ayuda:concepto/clave-rapida-pin).
 3. Tocá **Ingresar**.
 4. Si tu equipo lo permite, el botón **"Ingresar con huella"** (arriba) entra sin escribir nada.

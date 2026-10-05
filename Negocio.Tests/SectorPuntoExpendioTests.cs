@@ -112,5 +112,63 @@ namespace NegocioTests
 
             Assert.NotNull(error);
         }
+
+        // --- Caducidad del presupuesto ---
+
+        [Fact]
+        public void ResolverCaducidad_presupuesto_sin_dias_usa_el_valor_por_defecto()
+        {
+            var caducidad = SectorPuntoExpendio.ResolverCaducidad("PRESUPUESTO", Ahora, null, out string error);
+
+            Assert.Null(error);
+            Assert.Equal(Ahora.Date.AddDays(SectorPuntoExpendio.DiasCaducidadPresupuestoPorDefecto), caducidad);
+        }
+
+        [Fact]
+        public void ResolverCaducidad_cuenta_los_dias_desde_la_vigencia_no_desde_hoy()
+        {
+            // Vigencia a futuro: la caducidad se mueve con ella.
+            var vigencia = Ahora.AddDays(20);
+
+            var caducidad = SectorPuntoExpendio.ResolverCaducidad("Presupuesto", vigencia, 30, out string error);
+
+            Assert.Null(error);
+            Assert.Equal(vigencia.Date.AddDays(30), caducidad);
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(365)]
+        public void ResolverCaducidad_acepta_los_limites_del_rango(int dias)
+        {
+            var caducidad = SectorPuntoExpendio.ResolverCaducidad("PRESUPUESTO", Ahora, dias, out string error);
+
+            Assert.Null(error);
+            Assert.Equal(Ahora.Date.AddDays(dias), caducidad);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-5)]
+        [InlineData(366)]
+        public void ResolverCaducidad_rechaza_dias_fuera_de_rango(int dias)
+        {
+            var caducidad = SectorPuntoExpendio.ResolverCaducidad("PRESUPUESTO", Ahora, dias, out string error);
+
+            Assert.NotNull(error);
+            Assert.Null(caducidad);
+        }
+
+        [Theory]
+        [InlineData("REMITOS")]
+        [InlineData("Carnicería")]
+        [InlineData("")]
+        public void ResolverCaducidad_otros_sectores_no_guardan_caducidad_ni_validan_dias(string sector)
+        {
+            var caducidad = SectorPuntoExpendio.ResolverCaducidad(sector, Ahora, 9999, out string error);
+
+            Assert.Null(error);
+            Assert.Null(caducidad);
+        }
     }
 }

@@ -3,7 +3,7 @@ titulo: Ingresar con la dirección de tu empresa (CUIT)
 rol: usuario
 modulo: Acceso y seguridad
 orden: 5
-revisada: 2026-10-03
+revisada: 2026-10-04
 ---
 # Ingresar con la dirección de tu empresa
 
@@ -18,7 +18,7 @@ Cada empresa tiene su propia dirección de ingreso: la dirección del sistema se
 La lista no se muestra a cualquiera a propósito: la dirección con el CUIT es pública y no queremos que un desconocido vea los nombres de tus compañeros.
 
 ## Detalles
-- Los **administradores no aparecen en la lista**: usan *"Ingresar con otro usuario o email"* y escriben su usuario.
+- Los **administradores también aparecen en la lista** (desde 2026-10-04). Ellos entran siempre con su **contraseña**: la clave rápida (PIN) no vale para administradores.
 - Si el CUIT de la dirección no existe, la pantalla es la de ingreso normal (no se avisa si el CUIT existe o no).
 - Con la dirección de una empresa **solo podés entrar con usuarios de esa empresa**.
 - La dirección sin CUIT (`…/Login`) sigue funcionando como siempre.

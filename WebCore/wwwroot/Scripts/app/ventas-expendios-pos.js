@@ -15,6 +15,26 @@
         let visibleItems = [];
         let remoteFiltersDirty = false;
 
+        // Filtro por persona (2026-10-04, ver docs/DECISIONS.md): { idPersona, nombre } o null.
+        // Viaja al servidor (la busqueda filtra por expendios.idpersona en SQL); estado/texto/sector
+        // se siguen filtrando en el navegador.
+        let personaFiltro = null;
+        // true si "Fecha desde" la ampliamos nosotros al elegir la persona (y no el usuario a mano):
+        // solo en ese caso al quitar la persona se restaura el inicio del dia de hoy.
+        let fechaAutoAmpliada = false;
+        // true si el usuario escribio "Fecha desde" a mano: al elegir una persona se respeta su fecha
+        // en vez de ampliarla (se resetea junto con los filtros).
+        let fechaEditadaManual = false;
+        // Un presupuesto o expendio de un cliente suele ser de semanas atras: al elegir persona se
+        // busca desde hace este tiempo en vez de desde hoy.
+        const MESES_FECHA_DESDE_CON_PERSONA = 6;
+        const MIN_CARACTERES_BUSQUEDA_PERSONA = 2;
+        const MAX_PERSONAS_EN_LISTA = 15;
+        let tokenBusquedaPersona = 0;
+        let timerBusquedaPersona = null;
+        let personasEnLista = [];
+        let indicePersonaActiva = -1;
+
         // Observaciones acumuladas de los expendios cargados en ESTA venta (mas
         // antiguo primero). Vive en memoria mientras dura la venta actual, igual
         // que POSState -- se resetea con cada venta nueva porque la instancia de
@@ -124,6 +144,10 @@
             $('#chkCargarTodosExpendiosPOS').prop('checked', false);
             $('#panelFiltrosAvanzadosExpendiosPOS').addClass('d-none');
             $('#expSwitchFiltrosAvanzados').prop('checked', false);
+            $('#expFiltroSector').val('');
+            // Persona: se suelta sin restaurar la fecha ni buscar (la fecha ya se acaba de resetear arriba).
+            limpiarPersonaFiltro(false);
+            fechaEditadaManual = false;
 
             actualizarColumnaSucursal();
         }
@@ -308,17 +332,24 @@
                 idSucursal: parseInt($('#expFiltroSucursal').val(), 10),
                 estado: 'Todos',
                 texto: '',
-                idsActuales: getIdsActuales().join(',')
+                idsActuales: getIdsActuales().join(','),
+                // 0 = sin filtro de persona (el servidor usa la consulta de siempre).
+                idPersona: personaFiltro ? personaFiltro.idPersona : 0
             };
         }
 
         function applyLocalFilters() {
             const estado = ($('#expFiltroEstado').val() || 'Pendientes').trim();
             const texto = normalizeText(($('#expFiltroTexto').val() || '').trim());
+            const sector = ($('#expFiltroSector').val() || '').trim();
 
             const filtered = (allItems || []).filter(function (item) {
                 const cargadoEnVentaActual = item.cargadoEnVentaActual === true;
                 const asignado = item.asignado === true;
+
+                if (sector && String(item.sector || '').trim() !== sector) {
+                    return false;
+                }
 
                 if (estado === 'Pendientes' && (cargadoEnVentaActual || asignado)) {
                     return false;
@@ -368,6 +399,198 @@
             remoteFiltersDirty = false;
         }
 
+        // ===== Filtro por sector (2026-10-04) =====
+        // Las opciones salen de los sectores que realmente trajo la busqueda (sin depender de un
+        // catalogo del servidor); se conserva la seleccion si ese sector sigue en los resultados.
+        function actualizarOpcionesSector() {
+            const $select = $('#expFiltroSector');
+            if (!$select.length) return;
+
+            const seleccionado = ($select.val() || '').trim();
+            const sectores = Array.from(new Set(
+                (allItems || [])
+                    .map(function (item) { return String(item.sector || '').trim(); })
+                    .filter(function (sector) { return !!sector; })
+            )).sort(function (a, b) { return a.localeCompare(b, 'es'); });
+
+            $select.empty().append($('<option>').val('').text('Todos los sectores'));
+            sectores.forEach(function (sector) {
+                $select.append($('<option>').val(sector).text(sector));
+            });
+
+            $select.val(sectores.indexOf(seleccionado) >= 0 ? seleccionado : '');
+        }
+
+        // ===== Filtro por persona (2026-10-04, ver docs/DECISIONS.md) =====
+        // Buscador incrustado en el propio modal (sin apilar otro modal ni tocar el cliente de la
+        // venta) sobre Personas/Listar. Elegir una persona la deja fija y busca en el servidor los
+        // expendios guardados con ese cliente; la X la quita y vuelve a buscar sin ese filtro.
+        function inicioDelDia(fecha) {
+            return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 0, 0, 0, 0);
+        }
+
+        function cerrarListaPersonas() {
+            personasEnLista = [];
+            indicePersonaActiva = -1;
+            $('#expPersonaLista').addClass('d-none').empty();
+        }
+
+        function marcarPersonaActiva(indice) {
+            const $items = $('#expPersonaLista .exp-persona-item');
+            if (!$items.length) return;
+
+            indicePersonaActiva = Math.max(0, Math.min(indice, $items.length - 1));
+            const $activo = $items.removeClass('active').eq(indicePersonaActiva).addClass('active');
+            if ($activo[0] && $activo[0].scrollIntoView) $activo[0].scrollIntoView({ block: 'nearest' });
+        }
+
+        function renderListaPersonas(personas, mensajeSinResultados, hayMas) {
+            const $lista = $('#expPersonaLista');
+            personasEnLista = personas;
+            indicePersonaActiva = -1;
+            $lista.empty();
+
+            if (!personas.length) {
+                $lista.append('<div class="list-group-item text-muted">' + escapeHtml(mensajeSinResultados || 'Sin resultados.') + '</div>').removeClass('d-none');
+                return;
+            }
+
+            personas.forEach(function (persona, indice) {
+                const identificacion = persona.identificacion && persona.identificacion !== persona.razonSocial ? persona.identificacion : '';
+                const detalle = [persona.cuit, identificacion].filter(function (valor) { return !!valor; }).join(' · ');
+
+                $lista.append(
+                    '<button type="button" class="list-group-item list-group-item-action exp-persona-item" role="option" data-indice="' + indice + '">' +
+                    '<strong>' + escapeHtml(persona.razonSocial || persona.identificacion || '') + '</strong>' +
+                    (detalle ? ' <span class="text-muted">' + escapeHtml(detalle) + '</span>' : '') +
+                    '</button>'
+                );
+            });
+
+            if (hayMas) {
+                $lista.append('<div class="list-group-item text-muted">Hay más resultados: escribí más letras para afinar la búsqueda.</div>');
+            }
+
+            $lista.removeClass('d-none');
+            marcarPersonaActiva(0);
+        }
+
+        function buscarPersonasParaFiltro(texto) {
+            const urlListar = window.api && window.api.persona && window.api.persona.listar;
+            if (!urlListar) return;
+
+            const token = ++tokenBusquedaPersona;
+
+            $.ajax({ url: urlListar, type: 'GET', dataType: 'json', cache: false, data: { filtro: texto } })
+                .done(function (data) {
+                    // Respuesta vieja (el usuario siguio escribiendo) o persona ya elegida: se descarta.
+                    if (token !== tokenBusquedaPersona || personaFiltro) return;
+
+                    const todas = Array.isArray(data) ? data : [];
+                    renderListaPersonas(todas.slice(0, MAX_PERSONAS_EN_LISTA), 'No se encontraron personas.', todas.length > MAX_PERSONAS_EN_LISTA);
+                })
+                .fail(function () {
+                    if (token !== tokenBusquedaPersona || personaFiltro) return;
+                    renderListaPersonas([], 'No se pudo buscar personas.', false);
+                });
+        }
+
+        function onInputPersonaFiltro() {
+            if (personaFiltro) return;   // con persona elegida el campo es de solo lectura
+
+            const texto = ($('#expFiltroPersona').val() || '').trim();
+            clearTimeout(timerBusquedaPersona);
+            tokenBusquedaPersona++;      // invalida respuestas en vuelo
+
+            if (texto.length < MIN_CARACTERES_BUSQUEDA_PERSONA) {
+                cerrarListaPersonas();
+                return;
+            }
+
+            timerBusquedaPersona = setTimeout(function () { buscarPersonasParaFiltro(texto); }, 250);
+        }
+
+        function elegirPersonaFiltro(persona) {
+            const idPersona = persona ? parseInt(persona.idPersona, 10) : 0;
+            if (!(idPersona > 0)) return;
+
+            clearTimeout(timerBusquedaPersona);
+            tokenBusquedaPersona++;
+            personaFiltro = {
+                idPersona: idPersona,
+                nombre: persona.razonSocial || persona.identificacion || ('Persona ' + idPersona)
+            };
+
+            cerrarListaPersonas();
+            $('#expFiltroPersona').val(personaFiltro.nombre).prop('readonly', true).addClass('exp-persona-fija');
+            $('#btnQuitarPersonaExpendiosPOS').removeClass('d-none');
+
+            // "Fecha desde" pasa a hace 6 meses, salvo que el usuario ya haya puesto una fecha mas vieja.
+            const ampliada = inicioDelDia(new Date());
+            ampliada.setMonth(ampliada.getMonth() - MESES_FECHA_DESDE_CON_PERSONA);
+            const fechaActual = parseFecha('#expFiltroFechaDesde');
+            if (!fechaEditadaManual && (!fechaActual || fechaActual > ampliada)) {
+                $('#expFiltroFechaDesde').val(toDateTimeLocalValue(ampliada));
+                fechaAutoAmpliada = true;
+            }
+
+            buscar();
+        }
+
+        // buscarDespues=false: lo usa resetFiltros (la fecha ya se resetea ahi y buscar() lo decide el
+        // llamador). buscarDespues=true: es la X del usuario -> restaura la fecha de hoy solo si la
+        // ampliamos nosotros y vuelve a buscar sin el filtro de persona.
+        function limpiarPersonaFiltro(buscarDespues) {
+            const habiaPersona = !!personaFiltro;
+
+            personaFiltro = null;
+            clearTimeout(timerBusquedaPersona);
+            tokenBusquedaPersona++;
+            cerrarListaPersonas();
+            $('#expFiltroPersona').val('').prop('readonly', false).removeClass('exp-persona-fija');
+            $('#btnQuitarPersonaExpendiosPOS').addClass('d-none');
+
+            if (buscarDespues && fechaAutoAmpliada) {
+                $('#expFiltroFechaDesde').val(toDateTimeLocalValue(inicioDelDia(new Date())));
+            }
+            fechaAutoAmpliada = false;
+
+            if (buscarDespues && habiaPersona) buscar();
+        }
+
+        // Teclado del campo de persona. Va enlazado directo al input (no delegado desde document) para
+        // que Esc con la lista abierta cierre SOLO la lista: el modal cierra con Esc (data-keyboard) y
+        // su listener esta en un ancestro, asi que stopPropagation aca llega a tiempo.
+        function manejarTeclasPersonaFiltro(e) {
+            if (personaFiltro) {
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    limpiarPersonaFiltro(true);
+                    $('#expFiltroPersona').trigger('focus');
+                }
+                return;
+            }
+
+            const abierta = !$('#expPersonaLista').hasClass('d-none');
+            if (!abierta) return;
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                cerrarListaPersonas();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                marcarPersonaActiva(indicePersonaActiva + 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                marcarPersonaActiva(indicePersonaActiva - 1);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                elegirPersonaFiltro(personasEnLista[indicePersonaActiva]);
+            }
+        }
+
         function getFirstVisibleExpendioId() {
             if (visibleItems && visibleItems.length) {
                 const firstAvailable = visibleItems.find(function (item) {
@@ -405,6 +628,7 @@
                     }
 
                     allItems = Array.isArray(resp.items) ? resp.items : [];
+                    actualizarOpcionesSector();
                     applyLocalFilters();
                     if (!allItems.length) {
                         showMessage('info', 'No hay expendios para los filtros seleccionados.');
@@ -786,6 +1010,28 @@
                 })
                 .off('change.posExpendiosFecha', '#expFiltroFechaDesde')
                 .on('change.posExpendiosFecha', '#expFiltroFechaDesde', markRemoteFiltersDirty)
+                // Si el usuario edita "Fecha desde" a mano, ya no es una fecha ampliada por nosotros:
+                // al elegir o quitar una persona se respeta lo que puso.
+                .off('change.posExpendiosFechaManual', '#expFiltroFechaDesde')
+                .on('change.posExpendiosFechaManual', '#expFiltroFechaDesde', function () {
+                    fechaAutoAmpliada = false;
+                    fechaEditadaManual = true;
+                })
+                .off('change.posExpendiosSector', '#expFiltroSector')
+                .on('change.posExpendiosSector', '#expFiltroSector', applyLocalFilters)
+                .off('mousedown.posExpendiosPersonaItem', '#expPersonaLista .exp-persona-item')
+                .on('mousedown.posExpendiosPersonaItem', '#expPersonaLista .exp-persona-item', function (e) {
+                    // mousedown (no click) para elegir antes de que el input pierda el foco y cierre la lista.
+                    e.preventDefault();
+                    elegirPersonaFiltro(personasEnLista[parseInt($(this).data('indice'), 10)]);
+                })
+                .off('click.posExpendiosPersonaQuitar', '#btnQuitarPersonaExpendiosPOS')
+                .on('click.posExpendiosPersonaQuitar', '#btnQuitarPersonaExpendiosPOS', function () {
+                    limpiarPersonaFiltro(true);
+                    $('#expFiltroPersona').trigger('focus');
+                })
+                .off('hidden.bs.modal.posExpendiosPersona', '#modalExpendiosPOS')
+                .on('hidden.bs.modal.posExpendiosPersona', '#modalExpendiosPOS', cerrarListaPersonas)
                 .off('change.posExpendiosFechaHasta', '#expFiltroFechaHasta')
                 .on('change.posExpendiosFechaHasta', '#expFiltroFechaHasta', markRemoteFiltersDirty)
                 .off('change.posExpendiosSucursal', '#expFiltroSucursal')
@@ -858,6 +1104,15 @@
                         cancelar();
                     }
                 });
+
+            // Campo de persona: enlazado directo al input (no delegado) para poder cortar la
+            // propagacion de Esc antes de que llegue al listener de cierre del modal.
+            $('#expFiltroPersona')
+                .off('.posExpendiosPersona')
+                .on('input.posExpendiosPersona', onInputPersonaFiltro)
+                .on('keydown.posExpendiosPersona', manejarTeclasPersonaFiltro)
+                // Pequeña espera: si el blur viene de elegir un item con el mouse, mousedown ya lo resolvio.
+                .on('blur.posExpendiosPersona', function () { setTimeout(cerrarListaPersonas, 150); });
         }
 
         const api = {

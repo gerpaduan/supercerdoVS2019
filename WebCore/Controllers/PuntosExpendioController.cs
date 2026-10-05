@@ -329,6 +329,10 @@ namespace WebCore.Controllers
             // que es lo unico que WebCore referencia; se usa el literal directo.
             ViewBag.PuedeBonificarPuntoExpendio = !requiereOperadorPOS &&
                 _oUsuarioN.tienePermiso(operador, Entidades.Permisos.Venta.Bonificar, DateTime.Today, -1);
+            // Alta rapida de producto desde el POS: GuardarRapidoPOS exige Producto.NuevoCorte sobre el
+            // usuario de sesion. Se calcula aca (mismo permiso, mismo usuario) para avisar al cajero al
+            // apretar "Si, dar de alta" y no recien al guardar. El server igual revalida al guardar.
+            ViewBag.PuedeAltaRapidaProducto = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
             ViewBag.IdSucursalPOS = user.IdSucursal;
             ViewBag.IdUsuarioPOS = user.Id;
             ViewBag.PosModoInstancia = modoPosNormalizado;
@@ -689,6 +693,13 @@ namespace WebCore.Controllers
             if (!string.IsNullOrEmpty(errorFecha))
                 return Json(new { ok = false, mensaje = errorFecha });
 
+            // Caducidad del presupuesto (2026-10-04): el POS manda DIAS y aca se calcula la fecha
+            // (vigencia + dias, 90 por defecto). Solo PRESUPUESTO; en otros sectores es null.
+            DateTime? fechaCaducidad = Negocio.SectorPuntoExpendio.ResolverCaducidad(
+                sectorSolicitado, fecha, request != null ? request.DiasCaducidad : null, out string errorCaducidad);
+            if (!string.IsNullOrEmpty(errorCaducidad))
+                return Json(new { ok = false, mensaje = errorCaducidad });
+
             var operador = ResolverOperadorPOS(request?.PosInstanceId, user);
 
             // Port de Web/Controllers/PuntosExpendioController.cs:198-204 (accion "Guardar" del
@@ -734,6 +745,21 @@ namespace WebCore.Controllers
                 return Json(new { ok = false, mensaje = error });
 
             var consumidorFinal = _oPersonaN.getConsumidorFinal() ?? new Entidades.Persona();
+
+            // Cliente real fijado en el POS (2026-10-04, cualquier sector). Se valida contra la base
+            // (findById respeta la empresa por RLS): el id del request no se acepta a ciegas.
+            // Consumidor Final y 0 (cliente manual) no se guardan: quedan como cliente NULL.
+            int idPersonaSolicitada = request != null ? request.IdPersona : 0;
+            int? idPersonaExpendio = null;
+            if (idPersonaSolicitada > 0 && idPersonaSolicitada != consumidorFinal.IdPersona)
+            {
+                var personaElegida = _oPersonaN.findById(idPersonaSolicitada);
+                if (personaElegida == null || personaElegida.IdPersona <= 0)
+                    return Json(new { ok = false, mensaje = "No se encontró el cliente seleccionado." });
+
+                idPersonaExpendio = personaElegida.IdPersona;
+            }
+
             var sucursal = user.Sucursal ?? _oSucursalN.findById(user.IdSucursal);
             if (sucursal == null)
                 return Json(new { ok = false, mensaje = "No se encontró la sucursal activa del usuario." });
@@ -783,6 +809,8 @@ namespace WebCore.Controllers
                 CantItems = model.Lineas.Count.ToString(CultureInfo.InvariantCulture),
                 Observaciones = model.Observaciones ?? "",
                 NroRemito = model.NroRemito,
+                IdPersonaExpendio = idPersonaExpendio,
+                FechaCaducidad = fechaCaducidad,
                 SerialCPU = "",
                 Vendedor = operador
             };

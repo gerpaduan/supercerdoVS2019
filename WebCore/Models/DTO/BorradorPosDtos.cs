@@ -65,6 +65,8 @@ namespace WebCore.Models.DTO
         public int IdSucursalPOS { get; set; }
         public string Motivo { get; set; } = "";
         public SupervisorAutorizacionDto? Supervisor { get; set; }
+        // Solo RecuperarBorradorPOS: el cajero confirmo cargar una venta PROPIA que figura "en uso".
+        public bool ConfirmarEnUso { get; set; }
     }
 
     public class RevisionProductoSinAgregarRequest

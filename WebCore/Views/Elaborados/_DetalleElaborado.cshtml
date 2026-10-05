@@ -24,6 +24,15 @@ else
 
     <div class="row elaborado-detalle-layout">
         <div class="col-12 col-xl-8 order-2 order-xl-1">
+            @* Formula secreta (2026-10-04): con la formula visible (hay elevacion) se ofrece "Ocultar". *@
+            @if (Model.FormulaSecreta && !Model.FormulaOculta)
+            {
+                <div class="text-right mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary js-ocultar-formula-detalle" data-id-corte="@Model.IdCorte">
+                        <i class="fas fa-eye-slash mr-1"></i> Ocultar fórmula
+                    </button>
+                </div>
+            }
             <div class="table-responsive mt-3 mt-xl-0">
                 <table class="table table-sm table-bordered mb-0 elaborado-detalle-tabla">
                     <thead class="thead-light">
@@ -35,13 +44,9 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model.IngredientesUtilizados == null || Model.IngredientesUtilizados.Count == 0)
-                        {
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">No se encontraron ingredientes utilizados.</td>
-                            </tr>
-                        }
-                        else
+                        @* Con la fórmula oculta se listan solo los ingredientes cargados a mano; los de la
+                           fórmula secreta quedan resumidos en la fila del candado (ver ConstruirDetalleElaborado). *@
+                        @if (Model.IngredientesUtilizados != null)
                         {
                             foreach (var linea in Model.IngredientesUtilizados)
                             {
@@ -52,6 +57,24 @@ else
                                     <td class="text-center">@(linea.PesoBalanza ? "Si" : "No")</td>
                                 </tr>
                             }
+                        }
+
+                        @if (Model.FormulaOculta)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    <i class="fas fa-lock mr-1"></i> Ingredientes de la fórmula secreta ocultos.
+                                    <button type="button" class="btn btn-sm btn-outline-primary ml-2 js-ver-formula-detalle" data-id-embutido="@Model.Id">
+                                        <i class="fas fa-key mr-1"></i> Ver fórmula
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                        else if (Model.IngredientesUtilizados == null || Model.IngredientesUtilizados.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">No se encontraron ingredientes utilizados.</td>
+                            </tr>
                         }
                     </tbody>
                 </table>

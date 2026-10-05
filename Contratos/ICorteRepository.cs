@@ -55,6 +55,14 @@ namespace Contratos
         void eliminarFormula(int idFormula);
         DataTable getFormulaEmbutido(int idEmbutido);
 
+        // Formula secreta (2026-10-04): idCorte = producto elaborado (formulas.idembutido).
+        bool esFormulaSecreta(int idCorte);
+        // De los embutidos (registros producidos) pedidos, devuelve idEmbutido -> idCorte del elaborado
+        // solo para los que tienen formula secreta. Mismo patron que ObtenerIdsEmbutidosIngresoRapido.
+        Dictionary<int, int> ObtenerCortesDeEmbutidosConFormulaSecreta(IEnumerable<int> idsEmbutidos);
+        // Auditoria append-only de accesos y cambios sobre formulas secretas (auditoriaformulas).
+        void registrarAuditoriaFormula(Entidades.AuditoriaFormula auditoria);
+
         DataTable obtenerAlicuotasIva(bool mostrarTodos);
         Entidades.AlicuotaIva findAlicuotaIvaById(int idIva);
 

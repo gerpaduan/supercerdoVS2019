@@ -12,6 +12,11 @@ namespace WebCore.Models.DTO
         public DateTime? FechaExpendio { get; set; }
         public string Sector { get; set; }
         public string IdentificacionCliente { get; set; }
+        // Cliente real fijado en el POS (cualquier sector). 0 = cliente manual (solo texto libre).
+        // Opcional: un navegador con JS viejo en cache no lo manda y el expendio se guarda igual.
+        public int IdPersona { get; set; }
+        // Solo sector PRESUPUESTO: dias de validez desde la vigencia. null = por defecto (90).
+        public int? DiasCaducidad { get; set; }
         public string Observaciones { get; set; }
         // Solo sector REMITOS (Negocio.NroRemito): numero sugerido por el POS, editable.
         public string NroRemito { get; set; }

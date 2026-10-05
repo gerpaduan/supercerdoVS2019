@@ -4,7 +4,7 @@
 
 @{
     var cultura = CultureInfo.GetCultureInfo("es-AR");
-    int totalColumnas = 7;
+    int totalColumnas = 8;
 }
 
 <div class="table-responsive tabla-full">
@@ -14,7 +14,9 @@
                 <th style="width:160px;">Fecha</th>
                 <th>Sucursal</th>
                 <th>Elaborado</th>
-                <th class="text-right" style="width:120px;">Kgs</th>
+                @* "Cantidad" y no "Kgs": el elaborado puede ser unitario. *@
+                <th class="text-right" style="width:120px;">Cantidad</th>
+                <th style="width:170px;">Creado</th>
                 <th class="text-center" style="width:70px;">Obs.</th>
                 <th style="width:120px;">Estado</th>
                 <th style="width:220px;">Acciones</th>
@@ -56,7 +58,34 @@
                             <div class="font-weight-bold">@descripcion</div>
                             <div class="elaborados-codigo-inline">cod: @(codigo > 0 ? codigo.ToString() : "-")</div>
                         </td>
-                        <td class="text-right">@item.Kgs.ToString("N3", cultura)</td>
+                        <td class="text-right">
+                            <div>@item.Kgs.ToString("N3", cultura)</div>
+                            @if (item.IngredientesOcultos)
+                            {
+                                @* Fórmula secreta sin elevar: la cantidad no incluye los ingredientes de la fórmula. *@
+                                <div class="elaborados-codigo-inline" title="La cantidad no incluye los ingredientes de la fórmula secreta.">+ ingredientes</div>
+                            }
+                        </td>
+                        <td>
+                            @* Creado: fecha y hora, y debajo (gris, chico) el usuario. Si el registro se modificó,
+                               se marca con una etiqueta y se muestra la fecha y el usuario de la última modificación. *@
+                            <div class="font-weight-bold elaborados-fecha-creado">@(!string.IsNullOrWhiteSpace(item.Creado) ? item.Creado : "-")</div>
+                            @if (!string.IsNullOrWhiteSpace(item.CreadoPor))
+                            {
+                                <div class="elaborados-codigo-inline">@item.CreadoPor</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Actualizado))
+                            {
+                                <div class="mt-1">
+                                    <span class="badge badge-warning">Modificado</span>
+                                    <span class="font-weight-bold elaborados-fecha-creado">@item.Actualizado</span>
+                                </div>
+                                if (!string.IsNullOrWhiteSpace(item.ActualizadoPor))
+                                {
+                                    <div class="elaborados-codigo-inline">@item.ActualizadoPor</div>
+                                }
+                            }
+                        </td>
                         <td class="text-center">
                             @if (!string.IsNullOrWhiteSpace(observaciones))
                             {
@@ -137,6 +166,11 @@
         color: #6c757d;
         line-height: 1.1;
         margin-top: .12rem;
+    }
+
+    /* Fechas de la columna Creado: un punto (1pt) menos que el resto de la tabla. */
+    .elaborados-page .elaborados-fecha-creado {
+        font-size: calc(1em - 1pt);
     }
 
     .elaborados-page .elaborados-row-anulado > td {

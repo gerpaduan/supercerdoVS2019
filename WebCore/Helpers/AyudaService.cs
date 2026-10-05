@@ -68,6 +68,13 @@ namespace WebCore.Helpers
     {
         private const string PrefijoRecurso = "manual/";
 
+        // Imagenes y videos del manual (2026-10-03): viven en WebCore/wwwroot/ayuda/media/ (NO embebidos en
+        // el .dll: un video pesaria en cada build) y se sirven con UseStaticFiles. En el .md se escriben
+        // como ![texto](media:Usuarios.Index/buscar.png); los videos (.mp4/.webm) los convierte en <video>
+        // la extension MediaLinks de Markdig (incluida en UseAdvancedExtensions).
+        private const string PrefijoMedia = "media:";
+        private const string RutaBaseMedia = "/ayuda/media/";
+
         private readonly ILogger<AyudaService> _logger;
         private readonly Lazy<IReadOnlyList<DocAyuda>> _docs;
         private readonly MarkdownPipeline _pipeline;
@@ -158,7 +165,23 @@ namespace WebCore.Helpers
                 foreach (var link in documento.Descendants<LinkInline>().ToList())
                 {
                     string url = link.Url ?? "";
-                    if (url.StartsWith("ayuda:", StringComparison.OrdinalIgnoreCase))
+                    if (url.StartsWith(PrefijoMedia, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string subruta = url.Substring(PrefijoMedia.Length).Replace('\\', '/').TrimStart('/');
+                        // El .md es del repo (confiable), pero igual se corta cualquier intento de salir de la carpeta.
+                        if (subruta.Length == 0 || subruta.Contains("..", StringComparison.Ordinal))
+                        {
+                            link.Url = "#";
+                            _logger.LogWarning("Ruta de media invalida '{Url}' en {Recurso}.", url, doc.Recurso);
+                        }
+                        else
+                        {
+                            link.Url = RutaBaseMedia + Uri.EscapeDataString(subruta).Replace("%2F", "/");
+                            if (link.IsImage)
+                                link.GetAttributes().AddClass("ayuda-media");
+                        }
+                    }
+                    else if (url.StartsWith("ayuda:", StringComparison.OrdinalIgnoreCase))
                     {
                         link.Url = "#";
                         link.GetAttributes().AddProperty("data-ayuda", url.Substring("ayuda:".Length));

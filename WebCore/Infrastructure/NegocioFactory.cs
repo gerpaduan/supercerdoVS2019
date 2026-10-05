@@ -294,6 +294,26 @@ namespace WebCore.Infrastructure
                 personaN: CrearPersona(empresa, param));
         }
 
+        // Presupuestos de un cliente para el historial de precios (2026-10-04, ver
+        // docs/DECISIONS.md). Solo Postgres: en SQL Server devuelve null y quien lo usa lo trata
+        // como "sin presupuestos" (el historial sigue mostrando solo Compras).
+        public static Contratos.IPresupuestoClienteRepository CrearPresupuestoClienteRepository(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return null;
+
+            return new DatosPostgres.PresupuestoClientePg(PgConnString, empresa.IdEmpresa);
+        }
+
+        // Busqueda de expendios por cliente real para el filtro "Persona" del modal de expendios de
+        // Ventas/POS (2026-10-04, ver docs/DECISIONS.md). Solo Postgres: en SQL Server devuelve null
+        // y el filtro responde con un mensaje claro en vez de ignorarse en silencio.
+        public static Contratos.IExpendioClienteRepository CrearExpendioClienteRepository(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return null;
+
+            return new DatosPostgres.ExpendioClientePg(PgConnString, empresa.IdEmpresa);
+        }
+
         // Modulo "Actividades" (solo admin, 2026-09-07, pedido explicito del usuario -- ver
         // docs/DECISIONS.md). Portado a SQL Server el 2026-09-16 (ver docs/DECISIONS.md) -- de las
         // 6 fuentes, "Cambios de precio" queda excluida en SQL Server por falta de historial real

@@ -27,3 +27,7 @@
 .ayuda-md th, .ayuda-md td { border: 1px solid var(--bs-border-color, #dee2e6); padding: .3rem .45rem; vertical-align: top; }
 .ayuda-md th { background: rgba(127, 127, 127, .12); font-weight: 700; }
 .ayuda-md a[data-ayuda] { cursor: pointer; }
+
+/* Imagenes y videos del manual (2026-10-03): se achican al ancho del panel y no se salen nunca. */
+.ayuda-md img.ayuda-media { max-width: 100%; height: auto; border: 1px solid var(--bs-border-color, #dee2e6); border-radius: .35rem; margin: .4rem 0; cursor: zoom-in; display: block; }
+.ayuda-md video { max-width: 100%; height: auto; border: 1px solid var(--bs-border-color, #dee2e6); border-radius: .35rem; margin: .4rem 0; display: block; }

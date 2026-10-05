@@ -56,19 +56,25 @@ namespace Entidades
         public int? IdResultado { get; set; }
 
         public DateTime Creado { get; set; }
+        // Ultima senal REAL del formulario: el ultimo latido o, si el navegador aviso un cierre de pestana
+        // posterior, la hora de ese cierre (el repositorio ya la resuelve; ver CerradaPestana).
         public DateTime UltimoLatido { get; set; }
         public DateTime? Actualizado { get; set; }
         public DateTime? Finalizado { get; set; }
 
-        // Segundos desde el ultimo latido segun el reloj de la BASE (now() - ultimolatido). Se calcula en
-        // la consulta para no depender de que el reloj del servidor web coincida con el de la base.
+        // Segundos desde la ultima senal (UltimoLatido) segun el reloj de la BASE (now() - senal). Se calcula
+        // en la consulta para no depender de que el reloj del servidor web coincida con el de la base.
         public int SegundosSinLatido { get; set; }
 
-        // "Interrumpido" no se guarda: es un borrador ACTIVO cuyo ultimo latido es mas viejo que el
-        // umbral (minutos). Asi no hace falta un proceso en segundo plano que lo marque.
+        // true si hay un evento CIERRE_PESTANA (pagehide) posterior al ultimo latido: el navegador se cerro,
+        // asi que el borrador figura interrumpido de inmediato sin esperar el umbral.
+        public bool CerradaPestana { get; set; }
+
+        // "Interrumpido" no se guarda: es un borrador ACTIVO cuya pestana se cerro, o cuya ultima senal es
+        // mas vieja que el umbral (minutos). Asi no hace falta un proceso en segundo plano que lo marque.
         public bool EstaInterrumpida(int minutosSinLatido)
         {
-            return Estado == EstadoActiva && SegundosSinLatido >= minutosSinLatido * 60;
+            return Estado == EstadoActiva && (CerradaPestana || SegundosSinLatido >= minutosSinLatido * 60);
         }
     }
 

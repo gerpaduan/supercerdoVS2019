@@ -48,6 +48,27 @@
                     </div>
                 </div>
 
+                @* Filtro por persona (2026-10-04, ver docs/DECISIONS.md): buscador incrustado (sin apilar
+                   otro modal) sobre Personas/Listar. Al elegir una persona queda fija y se buscan los
+                   expendios guardados con ese cliente (expendios.idpersona); la X la quita y vuelve a la
+                   busqueda sin ese filtro. *@
+                <div class="row">
+                    <div class="col-12 col-md-6 mb-2">
+                        <label class="small mb-1" for="expFiltroPersona">Persona (cliente del expendio)</label>
+                        <div class="position-relative exp-persona-filtro">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="expFiltroPersona" autocomplete="off"
+                                       placeholder="Buscar por razón social, CUIT o identificación" />
+                                <button type="button" class="btn btn-outline-danger d-none" id="btnQuitarPersonaExpendiosPOS" title="Quitar persona">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="list-group exp-persona-lista d-none" id="expPersonaLista" role="listbox"></div>
+                        </div>
+                        <div class="small text-muted mt-1">Solo expendios guardados con cliente. Al elegir una persona se busca desde hace 6 meses.</div>
+                    </div>
+                </div>
+
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-2 exp-filtros-toolbar">
                     <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" id="expSwitchFiltrosAvanzados">
@@ -72,6 +93,15 @@
                             {
                                 <option value="@s.idSucursal">@s.sucursal</option>
                             }
+                        </select>
+                    </div>
+
+                    @* Sector (2026-10-04): las opciones las llena ventas-expendios-pos.js con los sectores
+                       de los resultados de cada busqueda; filtra en el navegador, sin volver al servidor. *@
+                    <div class="col-12 col-md-4 mb-2">
+                        <label class="small mb-1" for="expFiltroSector">Sector</label>
+                        <select class="form-control" id="expFiltroSector">
+                            <option value="">Todos los sectores</option>
                         </select>
                     </div>
                 </div>
@@ -194,6 +224,52 @@
 
     .exp-filtros-toolbar {
         margin-top: -.25rem;
+    }
+
+    /* Filtro por persona: lista de resultados debajo del campo y persona elegida (campo fijo, de
+       solo lectura, mismo celeste que el cliente fijo del POS de Expendio). */
+    .modal-expendios-compact .exp-persona-lista {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        z-index: 1060;
+        max-height: 14rem;
+        overflow-y: auto;
+        box-shadow: 0 .4rem 1rem rgba(0, 0, 0, .18);
+    }
+
+    .modal-expendios-compact .exp-persona-lista .list-group-item {
+        padding: .3rem .6rem;
+        font-size: .8rem;
+    }
+
+    .modal-expendios-compact .exp-persona-lista .list-group-item.active {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
+
+    .modal-expendios-compact #expFiltroPersona.exp-persona-fija {
+        background-color: #eef6ff;
+        cursor: default;
+        font-weight: 600;
+    }
+
+    html.dark-mode .modal-expendios-compact .exp-persona-lista .list-group-item {
+        background-color: #132032;
+        border-color: #2f4d69;
+        color: #ecf2ff;
+    }
+
+    html.dark-mode .modal-expendios-compact .exp-persona-lista .list-group-item.active {
+        background-color: #2f5f93;
+        border-color: #2f5f93;
+    }
+
+    html.dark-mode .modal-expendios-compact #expFiltroPersona.exp-persona-fija {
+        background-color: #1b3350;
+        color: #ecf2ff;
     }
 
     /* Agrupado por expendio (2026-09-06, ver docs/DECISIONS.md): la fila de encabezado (fecha,

@@ -243,15 +243,17 @@ namespace NegocioTests
         // ---- listas livianas ----
 
         [Fact]
-        public void ListarUsuariosParaLogin_PideLosNoAdmin_YListarAdministradoresActivos_LosAdmin()
+        public void ListarUsuariosParaLogin_PideNoAdminYAdmin_YListarAdministradoresActivos_SoloAdmin()
         {
             var (negocio, repo) = CrearSut();
 
             negocio.ListarUsuariosParaLogin(1);
-            Assert.Equal(false, repo.UltimoPedidoAdmin);
+            // Pide ambos grupos (no admin y admin); el ultimo pedido es el de admin.
+            Assert.Equal(new[] { false, true }, repo.PedidosAdmin);
 
+            repo.PedidosAdmin.Clear();
             negocio.ListarAdministradoresActivos(1);
-            Assert.Equal(true, repo.UltimoPedidoAdmin);
+            Assert.Equal(new[] { true }, repo.PedidosAdmin);
         }
     }
 }

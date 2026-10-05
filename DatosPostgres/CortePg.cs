@@ -679,7 +679,8 @@ namespace DatosPostgres
                     Receta = dr["receta"] == DBNull.Value ? "" : Convert.ToString(dr["receta"]),
                     Creado = dr["creado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["creado"]),
                     Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]),
-                    AjustarUnidad = dr["ajustarunidad"] != DBNull.Value && Convert.ToBoolean(dr["ajustarunidad"])
+                    AjustarUnidad = dr["ajustarunidad"] != DBNull.Value && Convert.ToBoolean(dr["ajustarunidad"]),
+                    Secreta = dr["secreta"] != DBNull.Value && Convert.ToBoolean(dr["secreta"])
                 };
 
                 int idCreadoPor = dr["creadopor"] == DBNull.Value ? 0 : Convert.ToInt32(dr["creadopor"]);
@@ -738,8 +739,8 @@ namespace DatosPostgres
             if (idFormula == 0)
             {
                 const string sqlInsert = @"
-                    INSERT INTO formulas (idembutido, receta, creado, creadopor, idempresa, ajustarunidad)
-                    VALUES (@idEmbutido, @receta, now(), @creadoPor, @idEmpresa, @ajustarUnidad)
+                    INSERT INTO formulas (idembutido, receta, creado, creadopor, idempresa, ajustarunidad, secreta)
+                    VALUES (@idEmbutido, @receta, now(), @creadoPor, @idEmpresa, @ajustarUnidad, @secreta)
                     RETURNING idformula;";
 
                 object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sqlInsert, p =>
@@ -749,13 +750,14 @@ namespace DatosPostgres
                     p.AddWithValue("creadoPor", oFormula.CreadoPor.Id);
                     p.AddWithValue("idEmpresa", _idEmpresa);
                     p.AddWithValue("ajustarUnidad", oFormula.AjustarUnidad);
+                    p.AddWithValue("secreta", oFormula.Secreta);
                 });
                 idFormula = Convert.ToInt32(nuevoId);
             }
             else
             {
                 const string sqlUpdate = @"
-                    UPDATE formulas SET idembutido = @idEmbutido, receta = @receta, actualizado = now(), actualizadopor = @actualizadoPor, ajustarunidad = @ajustarUnidad
+                    UPDATE formulas SET idembutido = @idEmbutido, receta = @receta, actualizado = now(), actualizadopor = @actualizadoPor, ajustarunidad = @ajustarUnidad, secreta = @secreta
                     WHERE idformula = @idFormula;";
 
                 DbPg.NonQuery(_connectionString, _idEmpresa, sqlUpdate, p =>
@@ -764,6 +766,7 @@ namespace DatosPostgres
                     p.AddWithValue("receta", oFormula.Receta ?? "");
                     p.AddWithValue("actualizadoPor", oFormula.ActualizadoPor != null ? oFormula.ActualizadoPor.Id : 0);
                     p.AddWithValue("ajustarUnidad", oFormula.AjustarUnidad);
+                    p.AddWithValue("secreta", oFormula.Secreta);
                     p.AddWithValue("idFormula", idFormula);
                 });
 
@@ -816,6 +819,55 @@ namespace DatosPostgres
                 ORDER BY cpf.agregarauto DESC;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idEmbutido", idEmbutido));
+        }
+
+        // true si el producto elaborado tiene una formula marcada como secreta. Sin formula -> false.
+        public bool esFormulaSecreta(int idCorte)
+        {
+            object obj = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT secreta FROM formulas WHERE idembutido = @idCorte LIMIT 1;",
+                p => p.AddWithValue("idCorte", idCorte));
+
+            return obj != null && obj != DBNull.Value && Convert.ToBoolean(obj);
+        }
+
+        // idEmbutido -> idCorte del elaborado, solo para los embutidos (registros producidos) pedidos cuyo
+        // elaborado tiene formula secreta. Sirve para decidir en una consulta que filas de un listado
+        // hay que ocultar. Arrays nativos de Postgres, igual que ObtenerIdsEmbutidosIngresoRapido.
+        public Dictionary<int, int> ObtenerCortesDeEmbutidosConFormulaSecreta(IEnumerable<int> idsEmbutidos)
+        {
+            var resultado = new Dictionary<int, int>();
+            var ids = (idsEmbutidos ?? Enumerable.Empty<int>()).Where(x => x > 0).Distinct().ToArray();
+            if (ids.Length == 0) return resultado;
+
+            var filas = DbPg.Reader(_connectionString, _idEmpresa,
+                "SELECT e.idembutido, e.idcorte FROM embutidos e " +
+                "INNER JOIN formulas f ON f.idembutido = e.idcorte " +
+                "WHERE f.secreta = true AND e.idembutido = ANY(@ids);",
+                dr => new KeyValuePair<int, int>(Convert.ToInt32(dr["idembutido"]), Convert.ToInt32(dr["idcorte"])),
+                p => p.AddWithValue("ids", ids));
+
+            foreach (var fila in filas) resultado[fila.Key] = fila.Value;
+            return resultado;
+        }
+
+        public void registrarAuditoriaFormula(AuditoriaFormula auditoria)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO auditoriaformulas (idempresa, tipo, idusuario, idusuariosesion, idcorte, ip, fecha, detalle)
+                VALUES (@idEmpresa, @tipo, @idUsuario, @idUsuarioSesion, @idCorte, @ip, now(), @detalle);",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("tipo", auditoria.Tipo);
+                    p.AddWithValue("idUsuario", (object)auditoria.IdUsuario ?? DBNull.Value);
+                    p.AddWithValue("idUsuarioSesion", (object)auditoria.IdUsuarioSesion ?? DBNull.Value);
+                    p.AddWithValue("idCorte", (object)auditoria.IdCorte ?? DBNull.Value);
+                    p.AddWithValue("ip", (object)auditoria.Ip ?? DBNull.Value);
+                    p.AddWithValue("detalle", (object)auditoria.Detalle ?? DBNull.Value);
+                });
         }
 
         #endregion

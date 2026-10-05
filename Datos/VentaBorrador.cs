@@ -17,15 +17,29 @@ namespace Datos
     // segura; el codigo web tampoco los invoca en SQL Server (ver WebCore/Helpers/PosBorradorSettings.cs).
     public class VentaBorrador : Contratos.IVentaBorradorRepository
     {
+        // "Cerrada por pestana": el navegador aviso un pagehide (evento CIERRE_PESTANA) DESPUES del ultimo latido.
+        // La senal real es entonces la hora de ese evento (cp.fecha) y la venta queda interrumpida de inmediato,
+        // sin tocar ultimoLatido (antes se lo corria 1 dia atras y la "ultima senal" mostraba dias falsos; ver
+        // docs/DECISIONS.md 2026-10-05). Un latido o guardado posterior la reactiva sola.
+        private const string JoinCierrePestana =
+            "OUTER APPLY (SELECT MAX(e.fecha) AS fecha FROM VentaBorradorEvento e " +
+            "WHERE e.idEmpresa = b.idEmpresa AND e.idBorrador = b.id AND e.tipo = 'CIERRE_PESTANA' " +
+            "AND e.fecha >= b.ultimoLatido) cp ";
+
+        // ultimoLatido y segundosSinLatido se devuelven ya como "senal efectiva" (cp.fecha si hubo cierre).
         private const string ColumnasBorradorSinPayload =
             "b.id, b.idEmpresa, b.idSucursal, b.idOperador, u.nombre AS nombreOperador, b.idUsuarioSesion, b.clientId, b.posInstanceId, " +
             "b.idCierreCaja, b.idPersona, b.razonSocial, b.cantLineas, b.total, CAST(NULL AS NVARCHAR(MAX)) AS payload, b.estado, b.idVenta, " +
-            "b.creado, b.ultimoLatido, b.actualizado, b.finalizado, DATEDIFF(SECOND, b.ultimoLatido, SYSDATETIME()) AS segundosSinLatido";
+            "b.creado, COALESCE(cp.fecha, b.ultimoLatido) AS ultimoLatido, b.actualizado, b.finalizado, " +
+            "DATEDIFF(SECOND, COALESCE(cp.fecha, b.ultimoLatido), SYSDATETIME()) AS segundosSinLatido, " +
+            "CAST(CASE WHEN cp.fecha IS NOT NULL THEN 1 ELSE 0 END AS BIT) AS cerradaPestana";
 
         private const string ColumnasBorradorConPayload =
             "b.id, b.idEmpresa, b.idSucursal, b.idOperador, u.nombre AS nombreOperador, b.idUsuarioSesion, b.clientId, b.posInstanceId, " +
             "b.idCierreCaja, b.idPersona, b.razonSocial, b.cantLineas, b.total, b.payload AS payload, b.estado, b.idVenta, " +
-            "b.creado, b.ultimoLatido, b.actualizado, b.finalizado, DATEDIFF(SECOND, b.ultimoLatido, SYSDATETIME()) AS segundosSinLatido";
+            "b.creado, COALESCE(cp.fecha, b.ultimoLatido) AS ultimoLatido, b.actualizado, b.finalizado, " +
+            "DATEDIFF(SECOND, COALESCE(cp.fecha, b.ultimoLatido), SYSDATETIME()) AS segundosSinLatido, " +
+            "CAST(CASE WHEN cp.fecha IS NOT NULL THEN 1 ELSE 0 END AS BIT) AS cerradaPestana";
 
         private const string ColumnasEvento =
             "e.id, e.idEmpresa, e.idBorrador, e.fecha, e.tipo, e.idUsuario, u.nombre AS nombreUsuario, e.detalle, " +
@@ -66,7 +80,8 @@ namespace Datos
                 UltimoLatido = Convert.ToDateTime(dr["ultimoLatido"]),
                 Actualizado = BorradoresSql.FechaNula(dr, "actualizado"),
                 Finalizado = BorradoresSql.FechaNula(dr, "finalizado"),
-                SegundosSinLatido = Convert.ToInt32(dr["segundosSinLatido"])
+                SegundosSinLatido = Convert.ToInt32(dr["segundosSinLatido"]),
+                CerradaPestana = Convert.ToBoolean(dr["cerradaPestana"])
             };
         }
 
@@ -175,28 +190,11 @@ namespace Datos
             return filas > 0;
         }
 
-        public bool EnvejecerLatidoPorCierre(int idBorrador)
-        {
-            // 1 dia alcanza y sobra para superar cualquier umbral configurado (maximo 240 min = 4 h):
-            // queda "interrumpida" de inmediato en vez de esperar el latido, sin tocar el estado.
-            int filas = Db.NonQuery(
-                _empresa,
-                @"UPDATE VentaBorrador SET ultimoLatido = DATEADD(DAY, -1, SYSDATETIME())
-                  WHERE idEmpresa = @idEmpresa AND id = @id AND estado = 'ACTIVA';",
-                CommandType.Text,
-                setParams: p =>
-                {
-                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
-                    p.Add("@id", SqlDbType.Int).Value = idBorrador;
-                });
-            return filas > 0;
-        }
-
         public Entidades.VentaBorrador ObtenerPorClientId(Guid clientId)
         {
             var lista = Db.Reader(
                 _empresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " + JoinCierrePestana +
                 "WHERE b.idEmpresa = @idEmpresa AND b.clientId = @clientId;",
                 CommandType.Text,
                 MapearBorrador,
@@ -212,7 +210,7 @@ namespace Datos
         {
             var lista = Db.Reader(
                 _empresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " + JoinCierrePestana +
                 "WHERE b.idEmpresa = @idEmpresa AND b.id = @id;",
                 CommandType.Text,
                 MapearBorrador,
@@ -228,7 +226,7 @@ namespace Datos
         {
             return Db.Reader(
                 _empresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " + JoinCierrePestana +
                 "WHERE b.idEmpresa = @idEmpresa AND b.idSucursal = @idSucursal AND b.estado = 'ACTIVA' ORDER BY b.creado;",
                 CommandType.Text,
                 MapearBorrador,
@@ -243,7 +241,7 @@ namespace Datos
         {
             return Db.Reader(
                 _empresa,
-                "SELECT " + ColumnasBorradorSinPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " +
+                "SELECT " + ColumnasBorradorSinPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " + JoinCierrePestana +
                 "WHERE b.idEmpresa = @idEmpresa AND b.idOperador = @idOperador AND b.idSucursal = @idSucursal AND b.estado = 'ACTIVA' ORDER BY b.creado;",
                 CommandType.Text,
                 MapearBorrador,
@@ -259,7 +257,7 @@ namespace Datos
         {
             return Db.Reader(
                 _empresa,
-                "SELECT " + ColumnasBorradorSinPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " +
+                "SELECT " + ColumnasBorradorSinPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " + JoinCierrePestana +
                 "WHERE b.idEmpresa = @idEmpresa AND b.idUsuarioSesion = @idUsuarioSesion AND b.estado = 'ACTIVA' ORDER BY b.creado;",
                 CommandType.Text,
                 MapearBorrador,
@@ -284,6 +282,22 @@ namespace Datos
                     p.Add("@id", SqlDbType.Int).Value = id;
                     p.Add("@idOperador", SqlDbType.Int).Value = idOperador;
                     p.Add("@idUsuarioSesion", SqlDbType.Int).Value = idUsuarioSesion;
+                });
+            return filas > 0;
+        }
+
+        public bool RotarClientId(int id, Guid nuevoClientId)
+        {
+            int filas = Db.NonQuery(
+                _empresa,
+                @"UPDATE VentaBorrador SET clientId = @nuevoClientId
+                  WHERE idEmpresa = @idEmpresa AND id = @id AND estado = 'ACTIVA';",
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    p.Add("@id", SqlDbType.Int).Value = id;
+                    p.Add("@nuevoClientId", SqlDbType.UniqueIdentifier).Value = nuevoClientId;
                 });
             return filas > 0;
         }
@@ -339,11 +353,11 @@ namespace Datos
         {
             return Db.Reader(
                 _empresa,
-                "SELECT " + ColumnasBorradorSinPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " +
+                "SELECT " + ColumnasBorradorSinPayload + " FROM VentaBorrador b LEFT JOIN Usuarios u ON u.id = b.idOperador " + JoinCierrePestana +
                 "WHERE b.idEmpresa = @idEmpresa AND b.estado = 'ACTIVA' " +
-                "AND b.ultimoLatido BETWEEN @desde AND @hasta " +
-                "AND b.ultimoLatido < DATEADD(MINUTE, -@minutos, SYSDATETIME()) " +
-                "ORDER BY b.ultimoLatido DESC;",
+                "AND COALESCE(cp.fecha, b.ultimoLatido) BETWEEN @desde AND @hasta " +
+                "AND (cp.fecha IS NOT NULL OR b.ultimoLatido < DATEADD(MINUTE, -@minutos, SYSDATETIME())) " +
+                "ORDER BY COALESCE(cp.fecha, b.ultimoLatido) DESC;",
                 CommandType.Text,
                 MapearBorrador,
                 p =>

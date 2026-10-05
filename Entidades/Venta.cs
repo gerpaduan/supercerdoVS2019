@@ -367,6 +367,13 @@ namespace Entidades
         public float PagoMixtoEfectivo { get => pagoMixtoEfectivo; set => pagoMixtoEfectivo = value; }
         public int IdExpendio { get => idExpendio; set => idExpendio = value; }
 
+        // Solo expendios (2026-10-04, ver docs/DECISIONS.md). Cliente real elegido en el POS de
+        // Expendio (null = cliente manual o Consumidor Final) y ultimo dia en que rigen los
+        // precios de un PRESUPUESTO (null = no aplica / presupuesto anterior a la caducidad).
+        // Los lee/escribe solo DatosPostgres.VentaPg; el resto de las implementaciones los ignora.
+        public int? IdPersonaExpendio { get; set; }
+        public DateTime? FechaCaducidad { get; set; }
+
         int idVendedor;
         int idpersona;
         int idSucursal;

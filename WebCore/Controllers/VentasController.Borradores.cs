@@ -263,6 +263,8 @@ namespace WebCore.Controllers
                         esMia = borrador.IdOperador == operador.Id,
                         estado = enUso ? "En uso" : "Interrumpida",
                         puedeCargar = !enUso,
+                        // Propia y "en uso": se puede cargar igual con confirmacion (corte de luz/cuelgue, sin esperar el umbral).
+                        puedeForzar = enUso && borrador.IdOperador == operador.Id,
                         inicio = borrador.Creado.ToString("dd/MM/yyyy HH:mm:ss", CulturaAr),
                         ultimoLatido = borrador.UltimoLatido.ToString("dd/MM/yyyy HH:mm:ss", CulturaAr),
                         sinLatido = TextoSinLatido(borrador.SegundosSinLatido),
@@ -323,7 +325,7 @@ namespace WebCore.Controllers
                     return respuesta!;
 
                 var borrador = negocio.Recuperar(request.Id, operador.Id, user.Id, operador.Id, nombreSupervisor,
-                    WebCore.Helpers.PosBorradorSettings.MinutosSinLatidoInterrumpida, out string? error);
+                    WebCore.Helpers.PosBorradorSettings.MinutosSinLatidoInterrumpida, request.ConfirmarEnUso, out string? error);
                 if (borrador == null) return Json(new { ok = false, msg = error });
 
                 return Json(new

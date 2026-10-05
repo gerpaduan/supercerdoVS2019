@@ -784,6 +784,7 @@ namespace Datos
                     oFormula.Embutido = findCorteById(Convert.ToInt32(dr["idEmbutido"]), false);
                     oFormula.Receta = dr["receta"].ToString();
                     oFormula.AjustarUnidad = dr["AjustarUnidad"] != DBNull.Value && Convert.ToBoolean(dr["AjustarUnidad"]);
+                    oFormula.Secreta = dr["Secreta"] != DBNull.Value && Convert.ToBoolean(dr["Secreta"]);
 
                     oFormula.Creado = Convert.ToDateTime(dr["creado"]);
                     oFormula.Actualizado = dr["actualizado"] == DBNull.Value ? null : (DateTime?)dr["actualizado"];
@@ -867,6 +868,7 @@ namespace Datos
                     p.AddWithValue("@creadoPor", oFormula.CreadoPor.Id);
                     p.AddWithValue("@actualizadoPor", oFormula.ActualizadoPor != null ? oFormula.ActualizadoPor.Id : 0);
                     p.AddWithValue("@ajustarUnidad", oFormula.AjustarUnidad);
+                    p.AddWithValue("@secreta", oFormula.Secreta);
                 }
             );
 
@@ -927,6 +929,75 @@ namespace Datos
                 sql,
                 CommandType.Text,
                 p => p.AddWithValue("@idEmbutido", idEmbutido)
+            );
+        }
+
+        // Formula secreta (2026-10-04): true si el producto elaborado tiene una formula marcada como
+        // secreta. Requiere dbo.Formulas.Secreta (20261004b-Alter_Formulas_add_Secreta_AuditoriaFormulas.sql).
+        public bool esFormulaSecreta(int idCorte)
+        {
+            object obj = Db.Scalar(
+                _empresa,
+                "SELECT TOP 1 Secreta FROM dbo.Formulas WHERE idEmbutido = @idCorte",
+                CommandType.Text,
+                p => p.Add("@idCorte", SqlDbType.Int).Value = idCorte
+            );
+
+            return obj != null && obj != DBNull.Value && Convert.ToBoolean(obj);
+        }
+
+        // idEmbutido -> idCorte del elaborado, solo para los embutidos pedidos con formula secreta.
+        // Troceado en lotes de 500 igual que ObtenerIdsEmbutidosIngresoRapido (IN con lista literal de enteros).
+        public Dictionary<int, int> ObtenerCortesDeEmbutidosConFormulaSecreta(IEnumerable<int> idsEmbutidos)
+        {
+            var resultado = new Dictionary<int, int>();
+            var ids = (idsEmbutidos ?? Enumerable.Empty<int>())
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+
+            const int tamanoLote = 500;
+            for (int i = 0; i < ids.Count; i += tamanoLote)
+            {
+                var lote = ids.Skip(i).Take(tamanoLote).ToList();
+                string sql = @"
+                    SELECT E.idEmbutido, E.idCorte
+                    FROM dbo.Embutidos E
+                    INNER JOIN dbo.Formulas F ON F.idEmbutido = E.idCorte
+                    WHERE F.Secreta = 1
+                      AND E.idEmbutido IN (" + string.Join(",", lote) + ")";
+
+                foreach (var fila in Db.Reader(
+                    _empresa,
+                    sql,
+                    CommandType.Text,
+                    dr => new KeyValuePair<int, int>(Convert.ToInt32(dr["idEmbutido"]), Convert.ToInt32(dr["idCorte"]))))
+                {
+                    resultado[fila.Key] = fila.Value;
+                }
+            }
+
+            return resultado;
+        }
+
+        public void registrarAuditoriaFormula(Entidades.AuditoriaFormula auditoria)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            Db.NonQuery(
+                _empresa,
+                @"INSERT INTO dbo.AuditoriaFormulas (Tipo, IdUsuario, IdUsuarioSesion, IdCorte, Ip, Fecha, Detalle)
+                  VALUES (@tipo, @idUsuario, @idUsuarioSesion, @idCorte, @ip, SYSDATETIME(), @detalle)",
+                CommandType.Text,
+                p =>
+                {
+                    p.AddWithValue("@tipo", auditoria.Tipo);
+                    p.AddWithValue("@idUsuario", (object)auditoria.IdUsuario ?? DBNull.Value);
+                    p.AddWithValue("@idUsuarioSesion", (object)auditoria.IdUsuarioSesion ?? DBNull.Value);
+                    p.AddWithValue("@idCorte", (object)auditoria.IdCorte ?? DBNull.Value);
+                    p.AddWithValue("@ip", (object)auditoria.Ip ?? DBNull.Value);
+                    p.AddWithValue("@detalle", (object)auditoria.Detalle ?? DBNull.Value);
+                }
             );
         }
 

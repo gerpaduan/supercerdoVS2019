@@ -100,10 +100,15 @@ namespace WebCore.Controllers
         private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
         private readonly WebCore.Services.IAfipConfigProvider _afip;
         private readonly WebCore.Services.ICtaCteReservadaService _ctaCteReservada;
+        // Presupuestos del cliente para el historial de precios (null en SQL Server: sin presupuestos).
+        private readonly Contratos.IPresupuestoClienteRepository _presupuestoClienteRepo;
+        // Expendios por cliente real, para el filtro "Persona" del modal de expendios (null en SQL Server).
+        private readonly Contratos.IExpendioClienteRepository _expendioClienteRepo;
+        private readonly Microsoft.Extensions.Logging.ILogger<VentasController> _logger;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.IAfipConfigProvider afip, WebCore.Services.ICtaCteReservadaService ctaCteReservada)
+        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.IAfipConfigProvider afip, WebCore.Services.ICtaCteReservadaService ctaCteReservada, Microsoft.Extensions.Logging.ILogger<VentasController> logger)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
@@ -111,7 +116,10 @@ namespace WebCore.Controllers
             _sesion = sesion;
             _afip = afip;
             _ctaCteReservada = ctaCteReservada;
+            _logger = logger;
             _empresa = sesion.Empresa;
+            _presupuestoClienteRepo = WebCore.Infrastructure.NegocioFactory.CrearPresupuestoClienteRepository(_empresa);
+            _expendioClienteRepo = WebCore.Infrastructure.NegocioFactory.CrearExpendioClienteRepository(_empresa);
 
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
@@ -283,8 +291,12 @@ namespace WebCore.Controllers
         // para el boton/atajo F8 del POS (2026-09-06, retomado -- ver docs/DECISIONS.md). Port
         // literal de Web/Controllers/VentasController.cs:978-1023. obtenerUltimosPreciosPorCliente
         // ya existe en Negocio/Venta.cs (compartido), no hubo que tocar la capa de negocio.
+        // 2026-10-04 (ver docs/DECISIONS.md): ademas de las compras, el historial muestra los
+        // presupuestos del cliente en solapas. `modo` = "venta" (default, POS de Ventas: copiar
+        // precio) o "expendio" (POS de Expendio: agregar con precio nuevo). Un cliente SIN
+        // presupuestos en modo venta recibe exactamente el partial de siempre, sin solapas.
         [HttpGet]
-        public PartialViewResult HistorialPreciosCliente(int idPersona, int topVentas = 10)
+        public PartialViewResult HistorialPreciosCliente(int idPersona, int topVentas = 10, string modo = null)
         {
             var user = _usuarioActual;
             if (user == null)
@@ -308,23 +320,75 @@ namespace WebCore.Controllers
                 return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", (List<WebCore.Models.HistorialPrecioProductoVm>)null);
             }
 
-            DataTable dt = _oVentaN.obtenerUltimosPreciosPorCliente(idPersona, topVentas);
+            bool esExpendio = string.Equals(modo, WebCore.Models.HistorialPreciosClienteVm.ModoExpendio, StringComparison.OrdinalIgnoreCase);
+
+            // En Expendio lo usan tambien operadores de produccion SIN permiso de Ventas: las
+            // compras reales del cliente solo se les muestran a quien podria verlas en Ventas
+            // (admin o permiso NuevaVenta). Sin permiso, solo la solapa Presupuestos.
+            bool mostrarCompras = !esExpendio
+                || user.Admin
+                || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.NuevaVenta, DateTime.Now, user.Id);
+
             var model = new List<WebCore.Models.HistorialPrecioProductoVm>();
-            if (dt != null)
+            if (mostrarCompras)
             {
-                foreach (DataRow row in dt.Rows)
+                DataTable dt = _oVentaN.obtenerUltimosPreciosPorCliente(idPersona, topVentas);
+                if (dt != null)
                 {
-                    model.Add(new WebCore.Models.HistorialPrecioProductoVm
+                    foreach (DataRow row in dt.Rows)
                     {
-                        Codigo = row["codigo"] == DBNull.Value ? "" : Convert.ToString(row["codigo"]),
-                        Producto = row["producto"] == DBNull.Value ? "" : Convert.ToString(row["producto"]),
-                        PrecioKg = row["precioKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["precioKg"]),
-                        FechaVenta = row["fechaVenta"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechaVenta"])
-                    });
+                        model.Add(new WebCore.Models.HistorialPrecioProductoVm
+                        {
+                            Codigo = row["codigo"] == DBNull.Value ? "" : Convert.ToString(row["codigo"]),
+                            Producto = row["producto"] == DBNull.Value ? "" : Convert.ToString(row["producto"]),
+                            PrecioKg = row["precioKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["precioKg"]),
+                            FechaVenta = row["fechaVenta"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechaVenta"])
+                        });
+                    }
                 }
             }
 
-            return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", model);
+            DateTime ahora = DateTime.Now;
+            List<Negocio.PresupuestoCliente> presupuestos = ObtenerPresupuestosEvaluados(idPersona, ahora);
+
+            // Camino de siempre: POS de Ventas y cliente sin presupuestos -> mismo partial y modelo de antes.
+            if (!esExpendio && presupuestos.Count == 0)
+                return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", model);
+
+            var vm = new WebCore.Models.HistorialPreciosClienteVm
+            {
+                Modo = esExpendio ? WebCore.Models.HistorialPreciosClienteVm.ModoExpendio : WebCore.Models.HistorialPreciosClienteVm.ModoVenta,
+                Compras = model,
+                MostrarCompras = mostrarCompras,
+                Presupuestos = presupuestos,
+                AbrirEnPresupuestos = Negocio.PresupuestosCliente.AbrirEnPresupuestos(presupuestos, ahora)
+            };
+
+            return PartialView(esExpendio
+                ? "~/Views/Ventas/_HistorialPreciosClienteExpendio.cshtml"
+                : "~/Views/Ventas/_HistorialPreciosClienteConPresupuestos.cshtml", vm);
+        }
+
+        // Presupuestos del cliente ya evaluados (vigente / futuro / caducado / reemplazado) con la
+        // hora del servidor. Si la consulta falla (p. ej. migracion de expendios.idpersona sin
+        // aplicar) se loguea y se devuelve vacio: el historial sigue mostrando las compras en vez
+        // de romperse -- el cliente solo no ve sus presupuestos hasta que se corrija.
+        private List<Negocio.PresupuestoCliente> ObtenerPresupuestosEvaluados(int idPersona, DateTime ahora)
+        {
+            var vacio = new List<Negocio.PresupuestoCliente>();
+            if (_presupuestoClienteRepo == null) return vacio;
+
+            try
+            {
+                List<Negocio.PresupuestoCliente> lista = Negocio.PresupuestosCliente.Armar(_presupuestoClienteRepo.obtenerPresupuestosPorCliente(idPersona));
+                Negocio.PresupuestosCliente.Evaluar(lista, ahora);
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogError(_logger, ex, "No se pudieron leer los presupuestos del cliente {IdPersona} para el historial de precios.", idPersona);
+                return vacio;
+            }
         }
 
         private string ObtenerMotivoNoPuedeCambiarFormaPago(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
@@ -2545,6 +2609,12 @@ namespace WebCore.Controllers
             // window.POSFacturaElectronicaConfig igual que el clasico.
             ViewBag.EmpresaTieneCertificadoAfip = EmpresaTieneCertificadoFacturaElectronica(user);
 
+            // Alta rapida de producto desde el POS: GuardarRapidoPOS exige Producto.NuevoCorte sobre
+            // el usuario de sesion. Se calcula aca (mismo permiso, mismo usuario) para avisarle al
+            // cajero al apretar "Si, dar de alta" y no recien al guardar, despues de cargar el
+            // formulario. El server igual revalida al guardar.
+            ViewBag.PuedeAltaRapidaProducto = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+
             // Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md): el operador real
             // se resuelve por posInstanceId, no por modulo (cada pestaña de POS es independiente).
             // Port literal de Web/Controllers/VentasController.cs:789-808.
@@ -3150,8 +3220,10 @@ namespace WebCore.Controllers
         // el comportamiento original. Cambio de query: obtenerUltimosExpendios (ultimosMinutos)
         // -> obtenerExpendiosAvanzado (fechaDesde/fechaHasta reales), metodo nuevo y aditivo en
         // Datos/DatosPostgres -- no se toco el original, que sigue usando la version del original.
+        // 2026-10-04 (ver docs/DECISIONS.md): idPersona > 0 filtra por el cliente real guardado en el
+        // expendio (expendios.idpersona), en SQL; 0 = sin filtro y el camino es exactamente el de siempre.
         [HttpGet]
-        public IActionResult BuscarExpendiosPOS(DateTime? fechaDesde = null, DateTime? fechaHasta = null, int idSucursal = 0, string estado = "Pendientes", string texto = "", string idsActuales = "")
+        public IActionResult BuscarExpendiosPOS(DateTime? fechaDesde = null, DateTime? fechaHasta = null, int idSucursal = 0, string estado = "Pendientes", string texto = "", string idsActuales = "", int idPersona = 0)
         {
             try
             {
@@ -3162,7 +3234,19 @@ namespace WebCore.Controllers
                 DateTime fechaDesdeReal = fechaDesde ?? DateTime.Today;
                 int idSucursalConsulta = idSucursal == -1 ? 0 : (idSucursal > 0 ? idSucursal : user.IdSucursal);
 
-                DataTable dt = _oVentaN.obtenerExpendiosAvanzado(fechaDesdeReal, fechaHasta, idSucursalConsulta);
+                DataTable dt;
+                if (idPersona > 0)
+                {
+                    // Sin implementacion (SQL Server) se avisa en vez de ignorar el filtro en silencio.
+                    if (_expendioClienteRepo == null)
+                        return Json(new { ok = false, msg = "El filtro por persona no está disponible en esta base de datos." });
+
+                    dt = _expendioClienteRepo.obtenerExpendiosPorPersona(idPersona, fechaDesdeReal, fechaHasta, idSucursalConsulta);
+                }
+                else
+                {
+                    dt = _oVentaN.obtenerExpendiosAvanzado(fechaDesdeReal, fechaHasta, idSucursalConsulta);
+                }
                 List<int> idsEnVentaActual = ParseIdsExpendio(idsActuales);
                 string estadoNormalizado = (estado ?? "Pendientes").Trim().ToUpperInvariant();
                 string textoNormalizado = (texto ?? "").Trim();

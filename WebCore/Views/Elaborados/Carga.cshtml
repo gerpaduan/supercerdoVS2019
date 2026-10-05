@@ -273,7 +273,9 @@
                     </div>
 
                     <div class="col-12 col-xl-4">
-                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                        @* Formula secreta (2026-10-04): receta y formula van ocultas hasta el re-login (elaborados-carga.js).
+                           En una carga nueva el JS las muestra/oculta segun lo que devuelva ObtenerFormula. *@
+                        <div class="border rounded p-3 mb-3 elaborados-section-box @(Model.FormulaOculta ? "d-none" : "")" id="bloqueRecetaCarga">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Receta</h6>
                             </div>
@@ -285,7 +287,25 @@
 
                         <div class="card bg-light mb-3 elaborados-panel-card elaborados-summary-card">
                             <div class="card-body">
-                                <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title" title="Auto activado: el ingrediente se agrega solo al guardar el Elaborado, calculado como % de lo cargado a mano. Auto desactivado: hay que cargarlo a mano en el Elaborado.">Formula</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title" title="Auto activado: el ingrediente se agrega solo al guardar el Elaborado, calculado como % de lo cargado a mano. Auto desactivado: hay que cargarlo a mano en el Elaborado.">
+                                        Formula
+                                        <i class="fas fa-lock ml-1 @(Model.FormulaSecreta ? "" : "d-none")" id="iconoFormulaSecretaCarga" title="Fórmula secreta"></i>
+                                    </h6>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mb-2 @(Model.FormulaSecreta && !Model.FormulaOculta ? "" : "d-none")" id="btnOcultarFormulaCarga" data-edit-readonly-ignore="true">
+                                        <i class="fas fa-eye-slash mr-1"></i> Ocultar
+                                    </button>
+                                </div>
+
+                                <div id="panelFormulaSecretaCarga" class="text-center py-4 @(Model.FormulaOculta ? "" : "d-none")">
+                                    <i class="fas fa-lock fa-2x text-muted mb-2"></i>
+                                    <div class="mb-2">La fórmula de este elaborado es secreta. Los ingredientes automáticos se calculan y se agregan solos al guardar.</div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnVerFormulaCarga" data-edit-readonly-ignore="true">
+                                        <i class="fas fa-key mr-1"></i> Ver fórmula
+                                    </button>
+                                </div>
+
+                                <div id="bloqueFormulaCarga" class="@(Model.FormulaOculta ? "d-none" : "")">
                                 <div class="table-responsive formula-elaborado-wrap">
                                     <table class="table table-sm table-bordered mb-0 elaborados-table-compact" id="tablaFormulaElaborado">
                                         <thead>
@@ -302,18 +322,20 @@
                                         <tbody></tbody>
                                     </table>
                                 </div>
+                                </div>@* fin #bloqueFormulaCarga *@
                                 <hr />
                                 <div class="d-flex justify-content-between">
                                     <span>Total manual</span>
                                     <strong id="lblTotalManual">0.000</strong>
                                 </div>
-                                <div class="d-flex justify-content-between mt-2">
+                                <div class="d-flex justify-content-between mt-2 @(Model.FormulaOculta ? "d-none" : "")" id="filaTotalProducirCarga">
                                     <span>Total a producir</span>
                                     <strong id="lblTotalProducir">0.000</strong>
                                 </div>
 
                                 @if (Model.EsAdmin)
                                 {
+                                    <div id="adminCosteoCargaWrap" class="@(Model.FormulaOculta ? "d-none" : "")">
                                     <hr />
                                     <div class="custom-control custom-switch mb-2">
                                         <input type="checkbox" class="custom-control-input" id="chkMostrarCosteoCarga" />
@@ -349,6 +371,7 @@
                                         <i class="fas fa-tag mr-1"></i> Actualizar precio del producto
                                     </button>
                                     </div>
+                                    </div>@* fin #adminCosteoCargaWrap *@
                                 }
                             </div>
                         </div>
@@ -465,6 +488,14 @@
             puedeAnular: @(Model.PuedeAnular ? "true" : "false"),
             initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas ?? new List<WebCore.Models.ElaboradoCargaLineaVm>())),
             initialFormula: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Formula ?? new List<WebCore.Models.ElaboradoFormulaLineaVm>())),
+            // Formula secreta (2026-10-04): si formulaOculta, initialFormula viene vacia a proposito.
+            // En una carga nueva el JS actualiza estos flags cuando elige el elaborado (ObtenerFormula).
+            formulaSecreta: @(Model.FormulaSecreta ? "true" : "false"),
+            formulaOculta: @(Model.FormulaOculta ? "true" : "false"),
+            formulaUrls: {
+                autorizar: '@Url.Action("AutorizarVerFormula", "Elaborados")',
+                ocultar: '@Url.Action("OcultarFormula", "Elaborados")'
+            },
             // Costeo (efimero, solo Usuario.Admin) -- pedido 2026-09-21.
             esAdmin: @(Model.EsAdmin ? "true" : "false"),
             precioActualElaborado: @Model.PrecioActualElaborado.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -490,11 +521,14 @@
         };
         window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
+        // Selector de "Ver fórmula": solo quienes tienen permiso sobre fórmulas (ver formula-secreta.js).
+        window.UsuariosConPermisoFormula = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosConPermisoFormula ?? new List<object>()));
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-carga.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>

@@ -10,6 +10,8 @@
 }
 
 <div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="lineas">
+    @* Token antiforgery para "Ver fórmula" (formula-secreta.js lo lee del DOM; esta pagina no tiene un POST propio). *@
+    @Html.AntiForgeryToken()
     @if (!string.IsNullOrWhiteSpace(alertaPermisoFecha))
     {
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -124,12 +126,34 @@
                                     <td>@item.Sucursal</td>
                                     <td>@item.CodigoElaborado</td>
                                     <td>@item.Elaborado</td>
-                                    <td>@item.CodigoIngrediente</td>
-                                    <td>@item.Ingrediente</td>
+                                    @if (item.FormulaOculta)
+                                    {
+                                        @* Formula secreta sin elevacion: una sola fila por registro, sin ingrediente (el
+                                           servidor ya colapso las lineas); Kgs es el total del registro. *@
+                                        <td></td>
+                                        <td class="text-muted"><i class="fas fa-lock mr-1"></i>Fórmula secreta</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@item.CodigoIngrediente</td>
+                                        <td>@item.Ingrediente</td>
+                                    }
                                     <td class="text-right">@item.Kgs.ToString("N3")</td>
                                     <td>@item.Estado</td>
                                     <td class="text-left elaborados-table-actions">
                                         <a class="btn btn-sm btn-outline-primary" href="@urlSeleccion">Seleccionar</a>
+                                        @if (item.FormulaOculta)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary js-ver-formula-historial" data-id-corte="@item.IdCorteElaborado" title="Ver fórmula (pide usuario y contraseña)">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                        }
+                                        else if (item.IdCorteElaborado > 0)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary js-ocultar-formula-historial" data-id-corte="@item.IdCorteElaborado" title="Ocultar fórmula">
+                                                <i class="fas fa-eye-slash"></i>
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -142,6 +166,8 @@
 </div>
 
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@* Selector de usuario de "Ver fórmula" (mismo modal que Cierre de Caja; ver formula-secreta.js). *@
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 @section Scripts {
     <script>
@@ -264,6 +290,35 @@
 
                 event.preventDefault();
                 navegarConLoader(link.href, false);
+            });
+        })();
+    </script>
+    <script>
+        window.UsuariosConPermisoFormula = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosConPermisoFormula ?? new List<object>()));
+    </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
+    <script>
+        // Formula secreta (2026-10-04): "Ver fórmula" pide usuario y contraseña y, si valida, recarga la
+        // pagina para que el servidor devuelva las lineas reales; "Ocultar" revoca y recarga.
+        (function () {
+            var formulaCfg = {
+                autorizarUrl: '@Url.Action("AutorizarVerFormula", "Elaborados")',
+                ocultarUrl: '@Url.Action("OcultarFormula", "Elaborados")'
+            };
+
+            $(document).on('click', '.js-ver-formula-historial', function () {
+                var idCorte = parseInt($(this).attr('data-id-corte'), 10) || 0;
+                if (!idCorte || !window.FormulaSecreta) return;
+                window.FormulaSecreta.ver(formulaCfg, { idCorte: idCorte }).then(function (autorizado) {
+                    if (autorizado) window.location.reload();
+                });
+            });
+
+            $(document).on('click', '.js-ocultar-formula-historial', function () {
+                var idCorte = parseInt($(this).attr('data-id-corte'), 10) || 0;
+                if (!idCorte || !window.FormulaSecreta) return;
+                window.FormulaSecreta.ocultar(formulaCfg, idCorte).then(function () { window.location.reload(); });
             });
         })();
     </script>

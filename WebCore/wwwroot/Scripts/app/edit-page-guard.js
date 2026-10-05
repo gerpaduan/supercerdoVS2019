@@ -156,6 +156,10 @@
 
         guard.isDirty = function () {
             if (guard.allowExit) return false;
+            // Modo vista (edit-readonly.js, antes de tocar "Modificar"): el usuario no puede haber cambiado
+            // nada, asi que salir nunca pierde datos. Sin esto, cambios hechos por la propia pantalla al
+            // cargar (recalculos, lectura de balanza, etc.) disparaban el aviso de "salir sin guardar".
+            if (guard.$form.hasClass('edit-readonly-active')) return false;
             return buildSnapshot(guard.$form) !== guard.initialSnapshot;
         };
 

@@ -3,7 +3,7 @@ titulo: Mapa de configuraciones de la empresa
 rol: admin
 modulo: Referencia
 orden: 1
-revisada: 2026-10-03
+revisada: 2026-10-04
 ---
 # Mapa de configuraciones de la empresa
 
@@ -19,6 +19,9 @@ Cada fila es **un interruptor o valor que cambia el comportamiento del sistema**
 | **Clave rápida (PIN)** | El propio usuario, menú → [Clave rápida](ayuda:pantalla/Login.ChangePin) | Cada usuario (no admin) | Sin PIN | Permite ingresar con 4-6 dígitos **solo en dispositivo autorizado**. Un admin puede quitárselo desde [Usuarios](ayuda:pantalla/Usuarios.Index). |
 | **Intentos de contraseña antes del bloqueo** | Configuración del servidor (`Security:AccountLockoutMaxAttempts`) | Quien administra el servidor | **7** por usuario | Al llegar al máximo se bloquea: desde dispositivo autorizado, todo el usuario; desde otro, solo el ingreso desde dispositivos no autorizados. Ver [bloqueo de usuarios](ayuda:concepto/bloqueo-de-usuarios). |
 | **Aviso de intentos restantes** | Fijo en el sistema | — | Desde el 3.er error | Muestra "Te quedan N intentos". |
+| **Fórmula secreta** (por fórmula) | [Editar fórmula](ayuda:pantalla/Elaborados.EditarFormula) → casilla *Fórmula secreta* | Quien tiene permiso de ingresar fórmulas | Apagada | **Encendida:** los ingredientes, porcentajes y la receta no se ven en Ingreso rápido, Carga, detalle ni líneas hasta que una persona con permiso sobre fórmulas ingrese usuario y contraseña. Ver [fórmula secreta](ayuda:concepto/formula-secreta). |
+| **Duración de "Ver fórmula"** | Configuración del servidor (`Security:FormulaElevacionMinutos`) | Quien administra el servidor | **5 minutos** (tope 60) | Pasado ese tiempo, o al tocar *Ocultar* o salir de la pantalla, la fórmula vuelve a ocultarse y hay que ingresar de nuevo usuario y contraseña. |
+| **Intentos de "Ver fórmula"** | Configuración del servidor (`Security:FormulaStepUpMaxAttempts`, `...WindowMinutes`, `...LockoutMinutes`) | Quien administra el servidor | **3** intentos en 5 min, bloqueo de 5 min | Pasados los intentos, esa sesión no puede probar más usuarios y claves durante el bloqueo. |
 | **Política de contraseña** | Fija en el sistema | — | 8+ caracteres, letra + número + carácter especial | Aplica a contraseñas nuevas o cambiadas. Las anteriores siguen valiendo hasta cambiarlas. |
 | **Permitir login fuera de sucursal** | [Editar usuario](ayuda:pantalla/Usuarios.Editar) | Admin | Apagado | Exceptúa a ese no-admin de la validación de ubicación (GPS) que tienen algunas sucursales. |
 | **Dirección de ingreso de la empresa** | Automática: `/Login/<CUIT>` | — | — | Con un dispositivo autorizado muestra la lista de usuarios y acepta PIN. Ver [ingresar con el CUIT](ayuda:concepto/login-por-cuit). |

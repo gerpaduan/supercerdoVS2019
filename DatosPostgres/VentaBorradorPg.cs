@@ -14,15 +14,27 @@ namespace DatosPostgres
     // navegador ni del servidor web, para que un cajero no pueda falsear horas cambiando la de su PC.
     public class VentaBorradorPg : Contratos.IVentaBorradorRepository
     {
+        // "Cerrada por pestana": el navegador aviso un pagehide (evento CIERRE_PESTANA) DESPUES del ultimo latido.
+        // La senal real es entonces la hora de ese evento (cp.fecha) y la venta queda interrumpida de inmediato,
+        // sin tocar ultimolatido (antes se lo corria 1 dia atras y la "ultima senal" mostraba dias falsos; ver
+        // docs/DECISIONS.md 2026-10-05). Un latido o guardado posterior (ultimolatido > evento) la reactiva sola.
+        private const string JoinCierrePestana =
+            "LEFT JOIN LATERAL (SELECT MAX(e.fecha) AS fecha FROM ventaborradorevento e " +
+            "WHERE e.idempresa = b.idempresa AND e.idborrador = b.id AND e.tipo = 'CIERRE_PESTANA' " +
+            "AND e.fecha >= b.ultimolatido) cp ON true ";
+
+        // ultimolatido y segundossinlatido se devuelven ya como "senal efectiva" (cp.fecha si hubo cierre).
         private const string ColumnasBorradorSinPayload =
             "b.id, b.idempresa, b.idsucursal, b.idoperador, u.nombre AS nombreoperador, b.idusuariosesion, b.clientid, b.posinstanceid, " +
             "b.idcierrecaja, b.idpersona, b.razonsocial, b.cantlineas, b.total, NULL::text AS payload, b.estado, b.idventa, " +
-            "b.creado, b.ultimolatido, b.actualizado, b.finalizado, EXTRACT(EPOCH FROM (now() - b.ultimolatido))::int AS segundossinlatido";
+            "b.creado, COALESCE(cp.fecha, b.ultimolatido) AS ultimolatido, b.actualizado, b.finalizado, " +
+            "EXTRACT(EPOCH FROM (now() - COALESCE(cp.fecha, b.ultimolatido)))::int AS segundossinlatido, (cp.fecha IS NOT NULL) AS cerradapestana";
 
         private const string ColumnasBorradorConPayload =
             "b.id, b.idempresa, b.idsucursal, b.idoperador, u.nombre AS nombreoperador, b.idusuariosesion, b.clientid, b.posinstanceid, " +
             "b.idcierrecaja, b.idpersona, b.razonsocial, b.cantlineas, b.total, b.payload::text AS payload, b.estado, b.idventa, " +
-            "b.creado, b.ultimolatido, b.actualizado, b.finalizado, EXTRACT(EPOCH FROM (now() - b.ultimolatido))::int AS segundossinlatido";
+            "b.creado, COALESCE(cp.fecha, b.ultimolatido) AS ultimolatido, b.actualizado, b.finalizado, " +
+            "EXTRACT(EPOCH FROM (now() - COALESCE(cp.fecha, b.ultimolatido)))::int AS segundossinlatido, (cp.fecha IS NOT NULL) AS cerradapestana";
 
         private const string ColumnasEvento =
             "e.id, e.idempresa, e.idborrador, e.fecha, e.tipo, e.idusuario, u.nombre AS nombreusuario, e.detalle, " +
@@ -93,7 +105,8 @@ namespace DatosPostgres
                 UltimoLatido = Convert.ToDateTime(dr["ultimolatido"]),
                 Actualizado = FechaNula(dr, "actualizado"),
                 Finalizado = FechaNula(dr, "finalizado"),
-                SegundosSinLatido = Convert.ToInt32(dr["segundossinlatido"])
+                SegundosSinLatido = Convert.ToInt32(dr["segundossinlatido"]),
+                CerradaPestana = Convert.ToBoolean(dr["cerradapestana"])
             };
         }
 
@@ -256,25 +269,10 @@ namespace DatosPostgres
             return filas > 0;
         }
 
-        public bool EnvejecerLatidoPorCierre(int idBorrador)
-        {
-            // 1 dia alcanza y sobra para superar cualquier umbral configurado (maximo 240 min = 4 h):
-            // queda "interrumpida" de inmediato en vez de esperar el latido, sin tocar el estado.
-            int filas = DbPg.NonQuery(_connectionString, _idEmpresa, @"
-                UPDATE ventaborrador SET ultimolatido = now() - interval '1 day'
-                WHERE idempresa = @idEmpresa AND id = @id AND estado = 'ACTIVA';",
-                p =>
-                {
-                    p.AddWithValue("idEmpresa", _idEmpresa);
-                    p.AddWithValue("id", idBorrador);
-                });
-            return filas > 0;
-        }
-
         public Entidades.VentaBorrador ObtenerPorClientId(Guid clientId)
         {
             var lista = DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.clientid = @clientId;",
                 MapearBorrador,
                 p =>
@@ -288,7 +286,7 @@ namespace DatosPostgres
         public Entidades.VentaBorrador ObtenerPorId(int id)
         {
             var lista = DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.id = @id;",
                 MapearBorrador,
                 p =>
@@ -302,7 +300,7 @@ namespace DatosPostgres
         public List<Entidades.VentaBorrador> ListarActivasPorSucursal(int idSucursal)
         {
             return DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorConPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorConPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.idsucursal = @idSucursal AND b.estado = 'ACTIVA' ORDER BY b.creado;",
                 MapearBorrador,
                 p =>
@@ -315,7 +313,7 @@ namespace DatosPostgres
         public List<Entidades.VentaBorrador> ListarActivasPorOperador(int idOperador, int idSucursal)
         {
             return DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorSinPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorSinPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.idoperador = @idOperador AND b.idsucursal = @idSucursal AND b.estado = 'ACTIVA' ORDER BY b.creado;",
                 MapearBorrador,
                 p =>
@@ -329,7 +327,7 @@ namespace DatosPostgres
         public List<Entidades.VentaBorrador> ListarActivasPorUsuarioSesion(int idUsuarioSesion)
         {
             return DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorSinPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorSinPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.idusuariosesion = @idUsuarioSesion AND b.estado = 'ACTIVA' ORDER BY b.creado;",
                 MapearBorrador,
                 p =>
@@ -351,6 +349,20 @@ namespace DatosPostgres
                     p.AddWithValue("id", id);
                     p.AddWithValue("idOperador", idOperador);
                     p.AddWithValue("idUsuarioSesion", idUsuarioSesion);
+                });
+            return filas > 0;
+        }
+
+        public bool RotarClientId(int id, Guid nuevoClientId)
+        {
+            int filas = DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                UPDATE ventaborrador SET clientid = @nuevoClientId
+                WHERE idempresa = @idEmpresa AND id = @id AND estado = 'ACTIVA';",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("id", id);
+                    p.AddWithValue("nuevoClientId", nuevoClientId);
                 });
             return filas > 0;
         }
@@ -399,11 +411,11 @@ namespace DatosPostgres
         public List<Entidades.VentaBorrador> ListarInterrumpidasPorRango(DateTime desde, DateTime hasta, int minutosSinLatido)
         {
             return DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT " + ColumnasBorradorSinPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " +
+                "SELECT " + ColumnasBorradorSinPayload + " FROM ventaborrador b LEFT JOIN usuarios u ON u.id = b.idoperador " + JoinCierrePestana +
                 "WHERE b.idempresa = @idEmpresa AND b.estado = 'ACTIVA' " +
-                "AND b.ultimolatido BETWEEN @desde AND @hasta " +
-                "AND b.ultimolatido < now() - (@minutos * interval '1 minute') " +
-                "ORDER BY b.ultimolatido DESC;",
+                "AND COALESCE(cp.fecha, b.ultimolatido) BETWEEN @desde AND @hasta " +
+                "AND (cp.fecha IS NOT NULL OR b.ultimolatido < now() - (@minutos * interval '1 minute')) " +
+                "ORDER BY COALESCE(cp.fecha, b.ultimolatido) DESC;",
                 MapearBorrador,
                 p =>
                 {
@@ -683,14 +695,17 @@ namespace DatosPostgres
                 SELECT b.idempresa, b.idsucursal, 'VENTA_INTERRUMPIDA', 'ADVERTENCIA',
                        'Venta en curso interrumpida',
                        COALESCE(u.nombre, 'Un cajero') || ' dejó una venta sin cerrar de $ ' || to_char(b.total, 'FM999G999G990D00')
-                           || ' (' || b.cantlineas || ' ítem(s)), última señal ' || to_char(b.ultimolatido, 'DD/MM/YYYY HH24:MI:SS') || '.',
-                       b.id, now(), b.ultimolatido
+                           || ' (' || b.cantlineas || ' ítem(s)), última señal ' || to_char(COALESCE(cp.fecha, b.ultimolatido), 'DD/MM/YYYY HH24:MI:SS') || '.',
+                       b.id, now(), COALESCE(cp.fecha, b.ultimolatido)
                 FROM ventaborrador b
                 LEFT JOIN usuarios u ON u.id = b.idoperador
+                LEFT JOIN LATERAL (SELECT MAX(e.fecha) AS fecha FROM ventaborradorevento e
+                                   WHERE e.idempresa = b.idempresa AND e.idborrador = b.id AND e.tipo = 'CIERRE_PESTANA'
+                                     AND e.fecha >= b.ultimolatido) cp ON true
                 WHERE b.idempresa = @idEmpresa
                   AND b.estado = 'ACTIVA'
                   AND b.cantlineas > 0
-                  AND b.ultimolatido < now() - (@minutos * interval '1 minute')
+                  AND (cp.fecha IS NOT NULL OR b.ultimolatido < now() - (@minutos * interval '1 minute'))
                   AND NOT EXISTS (
                         SELECT 1 FROM notificaciones n
                         WHERE n.idempresa = b.idempresa AND n.refid = b.id

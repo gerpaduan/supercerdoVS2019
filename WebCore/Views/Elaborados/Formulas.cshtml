@@ -91,7 +91,13 @@
                                 <tr>
                                     <td>@item.IdFormula</td>
                                     <td>@item.Codigo</td>
-                                    <td>@item.Elaborado</td>
+                                    <td>
+                                        @item.Elaborado
+                                        @if (item.Secreta)
+                                        {
+                                            <i class="fas fa-lock text-muted ml-1" title="Fórmula secreta: no se muestra en Ingreso rápido, Carga ni historial sin usuario y contraseña de alguien con permiso."></i>
+                                        }
+                                    </td>
                                     <td>@item.Creado</td>
                                     <td>@item.Actualizado</td>
                                     <td class="text-left text-nowrap elaborados-table-actions">

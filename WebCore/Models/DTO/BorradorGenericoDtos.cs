@@ -53,6 +53,8 @@ namespace WebCore.Models.DTO
         public int IdOperador { get; set; }
         public string Motivo { get; set; } = "";
         public SupervisorAutorizacionDto? Supervisor { get; set; }
+        // Solo RecuperarBorrador: el operador confirmo cargar un borrador PROPIO que figura "en uso".
+        public bool ConfirmarEnUso { get; set; }
     }
 
     // El registro real ya se guardo (Compras/Movimientos/Embutidos, flujo AJAX): marca el borrador

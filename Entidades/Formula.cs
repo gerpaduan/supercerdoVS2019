@@ -29,5 +29,10 @@ namespace Entidades
         // comportamiento preexistente), la fila de ajuste se calcula para que la formula sume
         // exactamente 1 unidad. Ver Negocio/Corte.cs, NormalizarFormulaElaborado.
         public bool AjustarUnidad { get => ajustarUnidad; set => ajustarUnidad = value; }
+
+        // Formula secreta (2026-10-04, ver docs/DECISIONS.md): sus ingredientes y porcentajes solo se
+        // muestran tras un re-login de un usuario con Permisos.Elaborado.VerFormulas. Ver
+        // Helpers/FormulaSecretaHelper.cs (WebCore).
+        public bool Secreta { get; set; }
     }
 }

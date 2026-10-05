@@ -76,12 +76,16 @@ namespace WebCore.Controllers
                 Tabs = BuildTabs("Index")
             };
 
+            AplicarSecretoCantidadElaborados(model.Items);
+
             model.TotalKg = model.Items
                 .Where(x => string.IsNullOrWhiteSpace(x.Estado))
                 .Sum(x => x.Kgs);
 
             ViewBag.Title = "Elaborados";
             ViewBag.Sucursales = ConstruirSucursalesConTodas(_oSucursalN.findAll() ?? new List<Entidades.Sucursal>());
+            // Lista para el selector de usuario de "Ver fórmula" (formula-secreta.js).
+            ViewBag.UsuariosConPermisoFormula = ObtenerUsuariosConPermisoFormulaParaCombo();
 
             return View(model);
         }
@@ -125,6 +129,8 @@ namespace WebCore.Controllers
 
             ViewBag.Title = "Lineas de elaborado";
             ViewBag.Sucursales = ConstruirSucursalesConTodas(_oSucursalN.findAll() ?? new List<Entidades.Sucursal>());
+            // Lista para el selector de usuario de "Ver fórmula" (formula-secreta.js).
+            ViewBag.UsuariosConPermisoFormula = ObtenerUsuariosConPermisoFormulaParaCombo();
 
             return View(model);
         }
@@ -153,6 +159,15 @@ namespace WebCore.Controllers
                 PuedeEliminar = puedeEditar,
                 Tabs = BuildTabs("Formulas")
             };
+
+            // Formula secreta: el listado marca con candado las secretas. Esta pantalla ya exige
+            // VerFormulas, por eso el detalle se muestra sin re-login (el re-login aplica a las
+            // pantallas operativas: Ingreso Rapido, Carga, Detalle y Lineas).
+            foreach (var item in model.Items)
+            {
+                if (model.Detalles.TryGetValue(item.IdFormula, out var detalleFormula))
+                    item.Secreta = detalleFormula.Secreta;
+            }
 
             ViewBag.Title = "Formulas";
 
@@ -268,6 +283,9 @@ namespace WebCore.Controllers
                 if (modelEdicion == null)
                     return NotFound("No se encontró el elaborado.");
 
+                // Formula secreta: la Cantidad ya se calculo con la formula; recien ahora se oculta.
+                AplicarSecretoFormulaRapida(modelEdicion);
+
                 modelEdicion.SoloLecturaInicial = !string.Equals(modelEdicion.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
                 modelEdicion.PuedeHabilitarEdicion = puedeModificar;
                 // Costeo (solo Usuario.Admin), ver docs/DECISIONS.md pedido 2026-09-21.
@@ -282,6 +300,7 @@ namespace WebCore.Controllers
                 ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
                 ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
                 ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+                ViewBag.UsuariosConPermisoFormula = ObtenerUsuariosConPermisoFormulaParaCombo();
                 ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
                 return View(modelEdicion);
             }
@@ -320,11 +339,13 @@ namespace WebCore.Controllers
             };
 
             RecalcularFormulaRapida(model);
+            AplicarSecretoFormulaRapida(model);
 
             ViewBag.Title = esDesarme ? "Desarme de elaborado" : "Ingreso rápido";
             ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.UsuariosConPermisoFormula = ObtenerUsuariosConPermisoFormulaParaCombo();
             ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
             return View(model);
         }
@@ -363,6 +384,9 @@ namespace WebCore.Controllers
 
                 idCreadorPermiso = idCreador;
                 model = CrearViewModelEdicion(embutido, user);
+                // Formula secreta: CrearViewModelEdicion ya excluyo de Lineas los ingredientes automaticos
+                // usando la formula; recien ahora se vacian Formula y Receta si esta oculta.
+                AplicarSecretoFormulaCarga(model);
                 model.SoloLecturaInicial = !string.Equals(model.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
                 model.PuedeHabilitarEdicion = puedeModificar;
                 model.PermiteGuardarEdicion = puedeModificar;
@@ -402,6 +426,7 @@ namespace WebCore.Controllers
             ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.UsuariosConPermisoFormula = ObtenerUsuariosConPermisoFormulaParaCombo();
             ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
 
             return View(model);
@@ -477,6 +502,21 @@ namespace WebCore.Controllers
         {
             try
             {
+                // Formula secreta: sin una elevacion vigente de esta sesion NO viajan ingredientes, %
+                // ni receta. Solo se informa que existe (secreta=true) para que la pantalla muestre
+                // "Ver formula". Con elevacion (o si no es secreta) devuelve todo como siempre.
+                if (FormulaOculta(idCorte))
+                {
+                    return Json(new
+                    {
+                        ok = true,
+                        secreta = true,
+                        receta = "",
+                        tieneFormula = true,
+                        formula = new List<ElaboradoFormulaLineaVm>()
+                    }, PascalCaseJsonOptions);
+                }
+
                 var formula = _oCorteN.findFormulaByID(0, idCorte);
                 var dtFormula = _oCorteN.getFormulaEmbutido(idCorte) ?? new DataTable();
 
@@ -497,6 +537,7 @@ namespace WebCore.Controllers
                 return Json(new
                 {
                     ok = true,
+                    secreta = formula != null && formula.Secreta,
                     receta = formula != null ? (formula.Receta ?? "") : "",
                     tieneFormula = items.Count > 0,
                     formula = items
@@ -506,6 +547,170 @@ namespace WebCore.Controllers
             {
                 return Json(new { ok = false, mensaje = ex.Message });
             }
+        }
+
+        // ===== Formula secreta (2026-10-04, ver docs/DECISIONS.md "Formula secreta con re-login") =====
+
+        // true si la formula del producto elaborado es secreta y esta sesion NO tiene una elevacion
+        // vigente: en ese caso ninguna pantalla debe mostrar ingredientes, % ni receta.
+        private bool FormulaOculta(int idCorte)
+        {
+            return idCorte > 0
+                && _oCorteN.esFormulaSecreta(idCorte)
+                && !WebCore.Helpers.FormulaSecretaHelper.TieneElevacion(HttpContext.Session, idCorte);
+        }
+
+        // Aplica el ocultamiento a un modelo de Ingreso Rapido ya armado: marca FormulaSecreta/FormulaOculta
+        // y, si esta oculta, vacia Formula y Receta (la vista no debe renderizarlas ni como hidden).
+        // Se llama DESPUES de calcular lo que dependa de la formula (ej. Cantidad en la edicion).
+        private void AplicarSecretoFormulaRapida(ElaboradoRapidoEditVm model)
+        {
+            if (model == null) return;
+
+            model.FormulaSecreta = _oCorteN.esFormulaSecreta(model.IdElaborado);
+            model.FormulaOculta = model.FormulaSecreta
+                && !WebCore.Helpers.FormulaSecretaHelper.TieneElevacion(HttpContext.Session, model.IdElaborado);
+
+            if (model.FormulaOculta)
+            {
+                model.Formula = new List<ElaboradoFormulaLineaVm>();
+                model.Receta = "";
+            }
+        }
+
+        // Idem AplicarSecretoFormulaRapida para la pantalla de Carga.
+        private void AplicarSecretoFormulaCarga(ElaboradoCargaVm model)
+        {
+            if (model == null) return;
+
+            model.FormulaSecreta = model.IdElaborado > 0 && _oCorteN.esFormulaSecreta(model.IdElaborado);
+            model.FormulaOculta = model.FormulaSecreta
+                && !WebCore.Helpers.FormulaSecretaHelper.TieneElevacion(HttpContext.Session, model.IdElaborado);
+
+            if (model.FormulaOculta)
+            {
+                model.Formula = new List<ElaboradoFormulaLineaVm>();
+                model.Receta = "";
+            }
+        }
+
+        // Mismo criterio que CajasController.ObtenerSessionIdEstable: ASP.NET Core Session no manda el
+        // Set-Cookie hasta el primer write, asi que sin esto el rate limit por sesion nunca acumula.
+        private string ObtenerSessionIdEstable()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_estable")))
+                HttpContext.Session.SetString("_estable", "1");
+            return HttpContext.Session.Id;
+        }
+
+        // Escribe un evento en auditoriaformulas. Puede lanzar: quien lo llama decide si falla cerrado
+        // (VER: sin auditoria no se muestra la formula) o solo lo loguea (AuditarFormulaSinFallar).
+        private void AuditarFormula(string tipo, int? idUsuario, int? idCorte, string detalle)
+        {
+            _oCorteN.registrarAuditoriaFormula(new Entidades.AuditoriaFormula
+            {
+                Tipo = tipo,
+                IdUsuario = idUsuario,
+                IdUsuarioSesion = _usuarioActual != null ? _usuarioActual.Id : (int?)null,
+                IdCorte = idCorte,
+                Ip = WebCore.Helpers.ClientIp.Obtener(HttpContext),
+                Detalle = detalle
+            });
+        }
+
+        private void AuditarFormulaSinFallar(string tipo, int? idUsuario, int? idCorte, string detalle)
+        {
+            try
+            {
+                AuditarFormula(tipo, idUsuario, idCorte, detalle);
+            }
+            catch (Exception ex)
+            {
+                // El evento ya ocurrio (fallo o "ocultar"): no se corta el flujo, pero queda en el log.
+                HttpContext.RequestServices.GetRequiredService<ILogger<ElaboradosController>>()
+                    .LogWarning(ex, "No se pudo registrar el evento {Tipo} de auditoria de formula (corte {IdCorte}).", tipo, idCorte);
+            }
+        }
+
+        // Re-login para "Ver formula": usuario (elegido de la lista, igual que en Cierre de Caja) + clave de
+        // alguien con permiso de ver/editar formulas.
+        // Se pide SIEMPRE, aunque el usuario logueado ya tenga el permiso (decision 2026-10-04: la formula
+        // secreta no se muestra por defecto en las pantallas operativas). idCorte = producto elaborado;
+        // en el historial se manda idEmbutido (el registro producido) y el servidor resuelve el idCorte.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AutorizarVerFormula(int idUsuario, string clave, int idCorte = 0, int idEmbutido = 0)
+        {
+            if (idCorte <= 0 && idEmbutido > 0)
+            {
+                var embutido = _oCorteN.findEmbutidoById(idEmbutido);
+                idCorte = embutido != null && embutido.Corte != null ? embutido.Corte.IdCorte : 0;
+            }
+
+            if (idCorte <= 0)
+                return Json(new { ok = false, msg = "Producto inválido." });
+
+            // Si la formula no es secreta no hace falta re-login: la pantalla simplemente la pide.
+            if (!_oCorteN.esFormulaSecreta(idCorte))
+                return Json(new { ok = true, secreta = false });
+
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.FormulaStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            // Mensaje unico para cualquier falla: no revela si el usuario existe ni si tiene permiso.
+            const string mensajeGenerico = "Usuario o contraseña incorrectos, o sin permiso para ver fórmulas.";
+
+            // El selector manda el id; se resuelve a su identificador de login (getUsuarioById ya limita a la
+            // empresa de la sesion). Si no existe, el identificador vacio cae en "Datos incompletos" (falla igual).
+            var candidatoElegido = idUsuario > 0 ? _oUsuarioN.getUsuarioById(idUsuario) : null;
+            var resultado = _oUsuarioN.AutorizarVerFormulaSecreta(candidatoElegido?.User ?? "", clave);
+            if (!resultado.Autorizado)
+            {
+                WebCore.Helpers.FormulaStepUpRateLimiter.RegisterFailure(sessionId);
+                AuditarFormulaSinFallar(Entidades.AuditoriaFormula.TipoFallo, resultado.IdUsuarioCandidato, idCorte, resultado.Motivo);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            // Falla cerrado: si no se puede dejar constancia de quien vio la formula, no se muestra.
+            try
+            {
+                AuditarFormula(Entidades.AuditoriaFormula.TipoVer, resultado.Autorizador.Id, idCorte, null);
+            }
+            catch (Exception ex)
+            {
+                HttpContext.RequestServices.GetRequiredService<ILogger<ElaboradosController>>()
+                    .LogError(ex, "No se pudo auditar el acceso a la formula secreta (corte {IdCorte}); se deniega.", idCorte);
+                return Json(new { ok = false, msg = "No se pudo registrar el acceso. Intentá de nuevo o avisá al administrador." });
+            }
+
+            WebCore.Helpers.FormulaStepUpRateLimiter.Reset(sessionId);
+            WebCore.Helpers.FormulaSecretaHelper.Registrar(HttpContext.Session, idCorte, resultado.Autorizador.Id);
+            return Json(new
+            {
+                ok = true,
+                secreta = true,
+                idCorte,
+                nombre = resultado.Autorizador.Nombre,
+                segundos = (int)WebCore.Helpers.FormulaSecretaHelper.DuracionElevacion().TotalSeconds
+            });
+        }
+
+        // "Ocultar": quita la elevacion de un producto (idCorte > 0) o de todos (idCorte = 0, al salir de
+        // la pantalla). SIN [ValidateAntiForgeryToken] a proposito: se llama con navigator.sendBeacon() al
+        // salir de la pagina, que no puede adjuntar el token (mismo criterio que RevocarAutorizacionCierre).
+        // Es inocuo ante CSRF: solo oculta, nunca muestra.
+        [HttpPost]
+        public IActionResult OcultarFormula(int idCorte = 0)
+        {
+            var ocultadas = idCorte > 0
+                ? (WebCore.Helpers.FormulaSecretaHelper.Revocar(HttpContext.Session, idCorte) ? new[] { idCorte } : Array.Empty<int>())
+                : WebCore.Helpers.FormulaSecretaHelper.RevocarTodas(HttpContext.Session).ToArray();
+
+            foreach (int id in ocultadas)
+                AuditarFormulaSinFallar(Entidades.AuditoriaFormula.TipoOcultar, null, id, null);
+
+            return Json(new { ok = true });
         }
 
         // Costeo de formula/carga/ingreso rapido (solo Usuario.Admin, ver docs del pedido
@@ -638,6 +843,10 @@ namespace WebCore.Controllers
                 formula.CreadoPor = formulaActual != null ? formulaActual.CreadoPor : user;
                 formula.ActualizadoPor = formulaActual != null ? user : null;
                 formula.AjustarUnidad = model.AjustarUnidad;
+                // Formula secreta: capturar el valor previo ANTES de pisarlo (formula puede ser la misma
+                // instancia que formulaActual) para auditar solo cuando cambia.
+                bool eraSecreta = formulaActual != null && formulaActual.Secreta;
+                formula.Secreta = model.Secreta;
 
                 var lineasVisuales = new List<Entidades.CortePorFormula>();
                 foreach (var linea in model.Lineas ?? new List<ElaboradoFormulaEditLineaVm>())
@@ -666,6 +875,14 @@ namespace WebCore.Controllers
 
                 var lineas = _oCorteN.NormalizarFormulaElaborado(embutido, formula, lineasVisuales, model.EscalaUnidad);
                 formula.IdFormula = _oCorteN.addOrEditFormula(formula, lineas);
+
+                if (formula.Secreta != eraSecreta)
+                {
+                    AuditarFormulaSinFallar(
+                        formula.Secreta ? Entidades.AuditoriaFormula.TipoMarcarSecreta : Entidades.AuditoriaFormula.TipoQuitarSecreta,
+                        user.Id, embutido.IdCorte, null);
+                }
+
                 var mensaje = model.IdFormula > 0 ? "La fórmula se guardó correctamente." : "La fórmula se registró correctamente.";
                 TempData["AlertType"] = "success";
                 TempData["AlertTitle"] = "Elaborados";
@@ -1037,7 +1254,8 @@ namespace WebCore.Controllers
                 Producto = !string.IsNullOrWhiteSpace(corte.CorteDesc) ? corte.CorteDesc : corte.corte,
                 IngresoRapido = corte.IngresoRapidoEmbutido,
                 TieneFormula = true,
-                Receta = formula.Receta ?? ""
+                // Formula secreta: el listado nunca muestra la receta (no hay re-login en esta pantalla).
+                Receta = formula.Secreta ? "" : (formula.Receta ?? "")
             };
         }
 
@@ -1062,7 +1280,9 @@ namespace WebCore.Controllers
                     Observaciones = observaciones,
                     Estado = ToString(row, "Estado", "estado"),
                     Creado = ToDateString(row, "Creado", "creado"),
+                    CreadoPor = ToString(row, "Creado Por", "CreadoPor", "creadoPor"),
                     Actualizado = ToDateString(row, "Actualizado", "actualizado"),
+                    ActualizadoPor = ToString(row, "Actualizado Por", "ActualizadoPor", "actualizadoPor"),
                     EsIngresoRapido = false,
                     EsDesarme = !string.IsNullOrWhiteSpace(observaciones)
                         && observaciones.ToLowerInvariant().Contains("desarme")
@@ -1099,7 +1319,50 @@ namespace WebCore.Controllers
             }
 
             MarcarTiposLineas(lista);
+            lista = ColapsarLineasConFormulaOculta(lista);
             return lista.OrderByDescending(x => x.Fecha).ToList();
+        }
+
+        // Formula secreta: de cada registro producido (embutido) cuyo elaborado tiene formula secreta y
+        // sin elevacion vigente, las lineas por ingrediente se reemplazan por UNA sola fila sin
+        // ingrediente con el total de kg (asi no se reconstruye la formula y el total del listado no
+        // cambia). Con elevacion vigente las lineas se muestran normal.
+        private List<ElaboradoLineaResumenVm> ColapsarLineasConFormulaOculta(List<ElaboradoLineaResumenVm> lista)
+        {
+            if (lista == null || lista.Count == 0) return lista;
+
+            var secretos = _oCorteN.ObtenerCortesDeEmbutidosConFormulaSecreta(lista.Select(x => x.Id));
+            if (secretos.Count == 0) return lista;
+
+            var resultado = new List<ElaboradoLineaResumenVm>();
+            var yaColapsados = new HashSet<int>();
+
+            foreach (var linea in lista)
+            {
+                if (!secretos.TryGetValue(linea.Id, out int idCorteElaborado))
+                {
+                    resultado.Add(linea);
+                    continue;
+                }
+
+                linea.IdCorteElaborado = idCorteElaborado;
+                if (WebCore.Helpers.FormulaSecretaHelper.TieneElevacion(HttpContext.Session, idCorteElaborado))
+                {
+                    resultado.Add(linea);
+                    continue;
+                }
+
+                if (!yaColapsados.Add(linea.Id))
+                    continue;
+
+                linea.FormulaOculta = true;
+                linea.CodigoIngrediente = 0;
+                linea.Ingrediente = "";
+                linea.Kgs = lista.Where(x => x.Id == linea.Id).Sum(x => x.Kgs);
+                resultado.Add(linea);
+            }
+
+            return resultado;
         }
 
         private List<ElaboradoFormulaResumenVm> MapFormulas(DataTable dt)
@@ -1120,6 +1383,58 @@ namespace WebCore.Controllers
             }
 
             return lista.OrderBy(x => x.Codigo).ToList();
+        }
+
+        // Formula secreta: ids de producto (corte) de los ingredientes de un registro que NO se pueden mostrar
+        // sin elevacion: los que el sistema agrega solo (AgregarAuto), todos los de la formula si es un
+        // ingreso rapido, y el producto generico "Ajuste Formula". Los cargados a mano no entran.
+        // Lo usan el detalle y el listado de Index, para que ambos oculten exactamente lo mismo.
+        private HashSet<int> ObtenerIdsCorteIngredientesOcultos(Entidades.Embutido embutido)
+        {
+            int idCorteElaborado = embutido != null && embutido.Corte != null ? embutido.Corte.IdCorte : 0;
+            bool ocultarTodaLaFormula = embutido != null && embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido;
+
+            var formulaItems = MapFormula(_oCorteN.getFormulaEmbutido(idCorteElaborado) ?? new DataTable());
+            var ids = new HashSet<int>(formulaItems
+                .Where(x => ocultarTodaLaFormula || x.AgregarAuto)
+                .Select(x => x.IdCorte));
+
+            var productoAjuste = _oCorteN.ObtenerProductoAjusteFormula();
+            if (productoAjuste != null && productoAjuste.IdCorte > 0)
+                ids.Add(productoAjuste.IdCorte);
+
+            return ids;
+        }
+
+        // Formula secreta en el listado de Index: de los registros cuyo elaborado tiene formula secreta y sin
+        // elevacion vigente, la Cantidad pasa a ser solo la de los ingredientes visibles (marca
+        // IngredientesOcultos para rotular "+ ingredientes"). Si no, el total filtrado a un solo registro
+        // delataria cuanto pesan los ingredientes ocultos. Va ANTES de sumar TotalKg.
+        private void AplicarSecretoCantidadElaborados(List<ElaboradoResumenVm> items)
+        {
+            if (items == null || items.Count == 0) return;
+
+            var secretos = _oCorteN.ObtenerCortesDeEmbutidosConFormulaSecreta(items.Select(x => x.Id));
+            if (secretos.Count == 0) return;
+
+            foreach (var item in items)
+            {
+                if (!secretos.TryGetValue(item.Id, out int idCorteElaborado))
+                    continue;
+
+                if (WebCore.Helpers.FormulaSecretaHelper.TieneElevacion(HttpContext.Session, idCorteElaborado))
+                    continue;
+
+                var embutido = _oCorteN.findEmbutidoById(item.Id);
+                if (embutido == null || embutido.IdEmbutido <= 0)
+                    continue;
+
+                var idsOcultos = ObtenerIdsCorteIngredientesOcultos(embutido);
+                item.Kgs = (embutido.CortesEnEmbutido ?? new List<Entidades.CortePorEmbutido>())
+                    .Where(x => x != null && x.Corte != null && !idsOcultos.Contains(x.Corte.IdCorte))
+                    .Sum(x => x.KgUtilizado);
+                item.IngredientesOcultos = true;
+            }
         }
 
         private ElaboradoDetalleVm ConstruirDetalleElaborado(int idEmbutido)
@@ -1144,12 +1459,31 @@ namespace WebCore.Controllers
                 FechaCreacion = embutido.Creado,
                 UsuarioActualizacion = embutido.ActualizadoPor != null ? embutido.ActualizadoPor.Nombre : "",
                 FechaActualizacion = embutido.Actualizado,
-                EsIngresoRapido = embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido
+                EsIngresoRapido = embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido,
+                IdCorte = embutido.Corte != null ? embutido.Corte.IdCorte : 0
             };
+
+            // Formula secreta: sin elevacion vigente no se devuelve la receta y se ocultan SOLO los
+            // ingredientes que salen de la formula (los que el sistema agrega solo; en un ingreso rapido,
+            // todos los de la formula; mas el producto "Ajuste Formula"). Los ingredientes que el operador
+            // cargo a mano siguen visibles, igual que en Carga. Una fila (sin cantidades, para no dar
+            // pistas de la formula) avisa que hay ingredientes ocultos y ofrece el boton "Ver formula".
+            detalle.FormulaSecreta = detalle.IdCorte > 0 && _oCorteN.esFormulaSecreta(detalle.IdCorte);
+            HashSet<int> idsCorteOcultos = null;
+            if (detalle.FormulaSecreta && !WebCore.Helpers.FormulaSecretaHelper.TieneElevacion(HttpContext.Session, detalle.IdCorte))
+            {
+                detalle.FormulaOculta = true;
+                detalle.Receta = "";
+
+                idsCorteOcultos = ObtenerIdsCorteIngredientesOcultos(embutido);
+            }
 
             foreach (var linea in embutido.CortesEnEmbutido ?? new List<Entidades.CortePorEmbutido>())
             {
                 if (linea == null || linea.Corte == null)
+                    continue;
+
+                if (idsCorteOcultos != null && idsCorteOcultos.Contains(linea.Corte.IdCorte))
                     continue;
 
                 var corteLinea = linea.Corte;
@@ -1210,6 +1544,7 @@ namespace WebCore.Controllers
                     EsIngresoRapidoElaborado = formula.Embutido != null && formula.Embutido.IngresoRapidoEmbutido,
                     EtiquetaValorFormula = formula.Embutido != null && !formula.Embutido.Pesable ? "Unidad" : "Porcentaje",
                     Receta = formula.Receta ?? "",
+                    Secreta = formula.Secreta,
                     Creado = FormatearFechaHora(formula.Creado),
                     CreadoPor = formula.CreadoPor != null ? formula.CreadoPor.Nombre : "-",
                     Actualizado = FormatearFechaHora(formula.Actualizado),
@@ -1290,6 +1625,7 @@ namespace WebCore.Controllers
                 EtiquetaValorFormula = escalaUnidad ? "Unidad" : "Porcentaje",
                 EscalaUnidad = escalaUnidad,
                 AjustarUnidad = formula.AjustarUnidad,
+                Secreta = formula.Secreta,
                 Receta = formula.Receta ?? "",
                 UsuarioNombre = user != null ? (user.Nombre ?? "") : "",
                 Creado = FormatearFechaHora(formula.Creado),
@@ -1584,8 +1920,8 @@ namespace WebCore.Controllers
                 if (linea.IdCorte <= 0)
                     return "La línea " + (i + 1) + " no tiene un ingrediente válido.";
 
-                if (linea.Porcentaje < 0)
-                    return "La línea " + (i + 1) + " tiene un porcentaje inválido.";
+                // Porcentaje negativo permitido a propósito: las fórmulas llevan líneas de ajuste con el
+                // producto en negativo (resta del total). No se bloquea el guardado por eso.
             }
 
             return "";
@@ -1842,6 +2178,18 @@ namespace WebCore.Controllers
                 .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
                 .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
                 .Cast<object>()
+                .ToList();
+        }
+
+        // Lista del selector de "Ver fórmula": solo usuarios activos con permiso sobre fórmulas (mismo
+        // criterio que AutorizarVerFormulaSecreta). Distinta de ObtenerUsuariosActivosEmpresaParaCombo,
+        // que alimenta tambien el selector del operador de produccion y debe traer a todos.
+        private List<object> ObtenerUsuariosConPermisoFormulaParaCombo()
+        {
+            var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            return oUsuarioN.ObtenerUsuariosConPermisoVerFormula()
+                .Where(u => u.Id > 0 && !string.IsNullOrWhiteSpace(u.Nombre))
+                .Select(u => (object)new { id = u.Id, nombre = u.Nombre })
                 .ToList();
         }
 

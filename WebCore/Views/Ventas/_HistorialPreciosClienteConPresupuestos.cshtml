@@ -1,0 +1,177 @@
+@model WebCore.Models.HistorialPreciosClienteVm
+@using System.Globalization
+@using Negocio
+
+@* Historial de precios (F8) del POS de VENTAS cuando el cliente tiene presupuestos (2026-10-04,
+   ver docs/DECISIONS.md). Solapas Compras | Presupuestos. La solapa Compras es EXACTAMENTE el
+   partial de siempre (_HistorialPreciosClientePOS.cshtml, sin tocar): un cliente sin presupuestos
+   ni siquiera pasa por esta vista. En Presupuestos, solo el producto "Aplicable" (presupuesto
+   vigente mas reciente de ese producto, no caducado) se puede copiar al carrito, con el mismo
+   boton y el mismo handler que Compras (.js-copiar-precio-historial en Ventas/POS.cshtml). El
+   resto muestra el precio con el boton bloqueado: al tocarlo se informa el motivo
+   (.js-precio-bloqueado, handler en Ventas/POS.cshtml). *@
+
+@{
+    var cultura = new CultureInfo("es-AR");
+    int cantidad = Model.Presupuestos.Count;
+}
+
+<ul class="nav nav-tabs hpc-tabs mb-2" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(Model.AbrirEnPresupuestos ? "" : "active")" id="hpcTabCompras" data-bs-toggle="tab" data-bs-target="#hpcPaneCompras" type="button" role="tab" aria-controls="hpcPaneCompras" aria-selected="@(Model.AbrirEnPresupuestos ? "false" : "true")">
+            <i class="fas fa-shopping-bag mr-1"></i>Compras
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(Model.AbrirEnPresupuestos ? "active" : "")" id="hpcTabPresupuestos" data-bs-toggle="tab" data-bs-target="#hpcPanePresupuestos" type="button" role="tab" aria-controls="hpcPanePresupuestos" aria-selected="@(Model.AbrirEnPresupuestos ? "true" : "false")">
+            <i class="fas fa-file-invoice-dollar mr-1"></i>Presupuestos <span class="badge badge-secondary">@cantidad</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade @(Model.AbrirEnPresupuestos ? "" : "show active")" id="hpcPaneCompras" role="tabpanel" aria-labelledby="hpcTabCompras">
+        @await Html.PartialAsync("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", Model.Compras)
+    </div>
+
+    <div class="tab-pane fade @(Model.AbrirEnPresupuestos ? "show active" : "")" id="hpcPanePresupuestos" role="tabpanel" aria-labelledby="hpcTabPresupuestos">
+        <div class="alert alert-info py-2 mb-2 hpc-aviso">
+            <i class="fas fa-info-circle mr-1"></i>
+            Los precios de un presupuesto se pueden copiar al carrito mientras no haya caducado
+            (la fecha de caducidad se elige al cargarlo; por defecto, 90 días desde que rige).
+            Solo el presupuesto vigente más reciente de cada producto permite copiar su precio.
+        </div>
+
+        @for (int i = 0; i < cantidad; i++)
+        {
+            var presupuesto = Model.Presupuestos[i];
+            string idBloque = "hpcPresupuesto" + presupuesto.IdExpendio;
+            // Se abre el mas reciente y los que todavia tienen algun precio aplicable.
+            bool abierto = i == 0 || presupuesto.Lineas.Any(l => l.Estado == EstadoLineaPresupuestoCliente.Aplicable);
+            string claseBadge = presupuesto.Estado == EstadoPresupuestoCliente.Vigente ? "badge-success"
+                : presupuesto.Estado == EstadoPresupuestoCliente.Futuro ? "badge-info" : "badge-danger";
+            string textoEstadoCabecera = presupuesto.Estado == EstadoPresupuestoCliente.Vigente ? "Vigente"
+                : presupuesto.Estado == EstadoPresupuestoCliente.Futuro ? "Futuro" : "Caducado";
+
+            <div class="hpc-presupuesto border rounded mb-2">
+                <button type="button" class="hpc-presupuesto-cabecera btn btn-light d-flex align-items-center flex-wrap"
+                        data-bs-toggle="collapse" data-bs-target="#@idBloque" aria-expanded="@(abierto ? "true" : "false")" aria-controls="@idBloque">
+                    <i class="fas fa-chevron-down mr-2 hpc-chevron"></i>
+                    <strong class="mr-2">Presupuesto N° @presupuesto.IdExpendio</strong>
+                    <span class="badge @claseBadge mr-2">@textoEstadoCabecera</span>
+                    <span class="text-muted small mr-3">Rige desde el @presupuesto.Vigencia.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span class="small hpc-estado-texto">@WebCore.Models.HistorialPreciosClienteVm.TextoEstado(presupuesto)</span>
+                </button>
+
+                <div id="@idBloque" class="collapse @(abierto ? "show" : "")">
+                    @if (presupuesto.Estado == EstadoPresupuestoCliente.Caducado)
+                    {
+                        <div class="alert alert-warning py-2 mb-0 rounded-0 hpc-alerta-caducado">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            Este presupuesto caducó el @presupuesto.CaducaEl.ToString("dd/MM/yyyy"): sus precios no se pueden copiar al carrito.
+                        </div>
+                    }
+                    else if (presupuesto.Estado == EstadoPresupuestoCliente.Futuro)
+                    {
+                        <div class="alert alert-secondary py-2 mb-0 rounded-0 hpc-alerta-caducado">
+                            <i class="far fa-clock mr-1"></i>
+                            Este presupuesto rige desde el @presupuesto.Vigencia.ToString("dd/MM/yyyy HH:mm"): sus precios no se pueden copiar todavía.
+                        </div>
+                    }
+
+                    @if (presupuesto.Lineas.Count == 0)
+                    {
+                        <div class="text-muted small p-2">Este presupuesto no tiene productos disponibles.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-hover mb-0 historial-precios-tabla">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width:100px;">Código</th>
+                                        <th>Producto</th>
+                                        <th class="text-right" style="width:130px;">Precio</th>
+                                        <th style="width:210px;">Estado</th>
+                                        <th class="text-center" style="width:75px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var linea in presupuesto.Lineas)
+                                    {
+                                        bool aplicable = linea.Estado == EstadoLineaPresupuestoCliente.Aplicable;
+                                        string motivo = WebCore.Models.HistorialPreciosClienteVm.MotivoNoAplicable(presupuesto, linea);
+                                        <tr>
+                                            <td>@linea.Codigo</td>
+                                            <td>@linea.Producto</td>
+                                            <td class="text-right font-weight-bold">$ @linea.PrecioKg.ToString("N2", cultura)</td>
+                                            <td class="small">
+                                                @switch (linea.Estado)
+                                                {
+                                                    case EstadoLineaPresupuestoCliente.Aplicable:
+                                                        <span class="badge badge-success">Aplicable</span>
+                                                        break;
+                                                    case EstadoLineaPresupuestoCliente.Reemplazado:
+                                                        <span class="badge badge-secondary">Reemplazado</span>
+                                                        <span class="text-muted">por N° @linea.ReemplazadoPor</span>
+                                                        break;
+                                                    case EstadoLineaPresupuestoCliente.Caducado:
+                                                        <span class="badge badge-danger">Caducado</span>
+                                                        <span class="text-muted">el @presupuesto.CaducaEl.ToString("dd/MM/yyyy")</span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge badge-info">Futuro</span>
+                                                        <span class="text-muted">desde @presupuesto.Vigencia.ToString("dd/MM/yyyy")</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                @if (aplicable)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary js-copiar-precio-historial"
+                                                            data-precio="@(linea.PrecioKg.ToString(CultureInfo.InvariantCulture))"
+                                                            data-codigo="@linea.Codigo"
+                                                            data-producto="@linea.Producto"
+                                                            title="Copiar precio">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    @* Sin clase js-copiar-precio-historial: no copia ni se resalta "En carrito". *@
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary hpc-bloqueado js-precio-bloqueado"
+                                                            data-motivo="@motivo"
+                                                            aria-disabled="true"
+                                                            title="@motivo">
+                                                        <i class="fas fa-ban"></i>
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@* Estilo compacto de la solapa Presupuestos. Mismos tamaños que la tabla de Compras
+   (_HistorialPreciosClientePOS.cshtml) para que las dos solapas se vean iguales. *@
+<style>
+    #modalFinanzasPOS .hpc-tabs .nav-link { padding: .35rem .8rem; font-size: .9rem; }
+    #modalFinanzasPOS .hpc-aviso { font-size: .82rem; }
+    /* Encabezado de cada presupuesto: ocupa todo el ancho (Bootstrap 5 no trae btn-block) y el estado va a la derecha. */
+    #modalFinanzasPOS .hpc-presupuesto-cabecera { width: 100%; text-align: left; font-size: .88rem; padding: .4rem .65rem; border-radius: 0; }
+    #modalFinanzasPOS .hpc-estado-texto { margin-left: auto; padding-left: .75rem; }
+    #modalFinanzasPOS .hpc-presupuesto-cabecera[aria-expanded="false"] .hpc-chevron { transform: rotate(-90deg); }
+    #modalFinanzasPOS .hpc-chevron { transition: transform .15s ease; }
+    #modalFinanzasPOS .hpc-alerta-caducado { font-size: .85rem; }
+    #modalFinanzasPOS .hpc-presupuesto .historial-precios-tabla td,
+    #modalFinanzasPOS .hpc-presupuesto .historial-precios-tabla th { padding: .45rem .65rem; font-size: .9rem; line-height: 1.3; }
+    /* Boton de precio que no se puede copiar: se ve apagado pero sigue siendo clickeable (informa el motivo). */
+    #modalFinanzasPOS .hpc-bloqueado { opacity: .5; cursor: not-allowed; }
+</style>

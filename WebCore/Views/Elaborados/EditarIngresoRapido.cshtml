@@ -124,7 +124,9 @@
                                 <input type="text" class="form-control app-product-highlight" value="@Model.Elaborado" readonly />
                             </div>
                         </div>
-                        <div class="col-12 col-lg-4">
+                        @* Formula secreta: si esta oculta, el controller dejo Receta vacia y todo el bloque va
+                           escondido hasta que el re-login lo muestre (elaborados-rapido.js). *@
+                        <div class="col-12 col-lg-4 @(Model.FormulaOculta ? "d-none" : "")" id="wrapRecetaRapida">
                             <div class="form-group mb-0">
                                 <label for="RecetaRapido">Receta</label>
                                 <textarea id="RecetaRapido" class="form-control js-auto-receta" rows="2" readonly>@Model.Receta</textarea>
@@ -133,8 +135,10 @@
                     </div>
                 </div>
 
+                @* Tres bloques: cantidad | teclado numerico (siempre desplegado, solo desktop) | formula.
+                   En lg el teclado acompaña a la cantidad y la formula baja a su propia fila. *@
                 <div class="row">
-                    <div class="col-12 col-xl-4">
+                    <div class="col-12 col-lg-6 col-xl-3">
                         <div class="card border-left-@(Model.EsDesarme ? "info" : "primary") shadow-sm mb-3 elaborados-panel-card elaborados-summary-card">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -174,14 +178,44 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-xl-8">
+                    @* Teclado digital (mismo componente que Carga). El Enter del teclado dispara el guardado:
+                       simula Enter sobre #CantidadRapida, que ya envia el formulario (elaborados-rapido.js). *@
+                    <div class="col-12 col-lg-6 col-xl-3">
+                        @Html.Partial("~/Views/Shared/_NumericKeypad.cshtml")
+                    </div>
+
+                    <div class="col-12 col-xl-6">
                         <div class="card bg-light mb-3 elaborados-panel-card elaborados-summary-card">
                             <div class="card-body">
                                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                                    <h6 class="font-weight-bold text-uppercase text-muted mb-0">Formula calculada</h6>
-                                    <div class="small text-muted">Se guardan todos los ingredientes de la formula</div>
+                                    <h6 class="font-weight-bold text-uppercase text-muted mb-0">
+                                        Formula calculada
+                                        @if (Model.FormulaSecreta)
+                                        {
+                                            <i class="fas fa-lock ml-1" title="Fórmula secreta"></i>
+                                        }
+                                    </h6>
+                                    <div class="d-flex align-items-center">
+                                        <div class="small text-muted mr-2">Se guardan todos los ingredientes de la formula</div>
+                                        @* Formula secreta: visible solo tras el re-login; "Ocultar" la vuelve a esconder. *@
+                                        <button type="button" class="btn btn-outline-secondary btn-sm @(Model.FormulaSecreta && !Model.FormulaOculta ? "" : "d-none")" id="btnOcultarFormulaRapida" data-edit-readonly-ignore="true">
+                                            <i class="fas fa-eye-slash mr-1"></i> Ocultar
+                                        </button>
+                                    </div>
                                 </div>
 
+                                @if (Model.FormulaSecreta)
+                                {
+                                    <div id="panelFormulaSecretaRapida" class="text-center py-4 @(Model.FormulaOculta ? "" : "d-none")">
+                                        <i class="fas fa-lock fa-2x text-muted mb-2"></i>
+                                        <div class="mb-2">La fórmula de este elaborado es secreta. Los ingredientes se calculan y se descuentan automáticamente al guardar.</div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnVerFormulaRapida" data-edit-readonly-ignore="true">
+                                            <i class="fas fa-key mr-1"></i> Ver fórmula
+                                        </button>
+                                    </div>
+                                }
+
+                                <div id="bloqueFormulaRapida" class="@(Model.FormulaOculta ? "d-none" : "")">
                                 <div class="table-responsive formula-elaborado-wrap">
                                     <table class="table table-sm table-bordered mb-0 elaborados-table-compact" id="tablaFormulaRapida">
                                         <thead>
@@ -243,6 +277,7 @@
                                         </button>
                                     </div>
                                 }
+                                </div>@* fin #bloqueFormulaRapida *@
                             </div>
                         </div>
                     </div>
@@ -314,6 +349,16 @@
             esAnulado: @(esAnulado ? "true" : "false"),
             puedeAnular: @(Model.PuedeAnular ? "true" : "false"),
             initialFormula: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Formula ?? new List<WebCore.Models.ElaboradoFormulaLineaVm>())),
+            // Formula secreta (2026-10-04): si formulaOculta, initialFormula viene vacia a proposito y la
+            // pantalla muestra "Ver fórmula" (re-login). Ver formula-secreta.js.
+            formulaSecreta: @(Model.FormulaSecreta ? "true" : "false"),
+            formulaOculta: @(Model.FormulaOculta ? "true" : "false"),
+            idCorte: @Model.IdElaborado,
+            formulaUrls: {
+                autorizar: '@Url.Action("AutorizarVerFormula", "Elaborados")',
+                ocultar: '@Url.Action("OcultarFormula", "Elaborados")',
+                obtener: '@Url.Action("ObtenerFormula", "Elaborados")'
+            },
             borradorGenerico: {
                 habilitado: @(borradorGenericoHabilitado ? "true" : "false"),
                 modulo: 'EMBUTIDO_RAPIDO',
@@ -340,21 +385,33 @@
         };
         window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
+        // Selector de "Ver fórmula": solo quienes tienen permiso sobre fórmulas (ver formula-secreta.js).
+        window.UsuariosConPermisoFormula = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosConPermisoFormula ?? new List<object>()));
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
+    <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script>
         // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en la cantidad a elaborar/desarmar.
         // Los selectores de costeo (margen, precio por linea) se agregan aca porque las celdas de
         // precio se crean dinamicamente en renderFormula().
         window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#CantidadRapida, #txtMargenRapido, .js-precio-costo-produccion');
+
+        // Teclado digital sobre la cantidad. Con la balanza activa (o en modo vista) el campo es de solo
+        // lectura y numeric-keypad.js no escribe en campos readonly.
+        window.NumericKeypad && window.NumericKeypad.create({
+            selectorTeclado: '#numericKeypad',
+            selectorInputsValidos: '#CantidadRapida'
+        });
     </script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

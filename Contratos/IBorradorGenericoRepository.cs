@@ -20,10 +20,10 @@ namespace Contratos
         // Solo actualiza ultimolatido (el formulario no cambio). false si no existe, esta cerrado o es ajeno.
         bool RegistrarLatido(Guid clientId, int idOperador, int idSucursal, string modulo);
 
-        // El navegador avisa (pagehide) que cierra la pestana: en vez de esperar el umbral de latido,
-        // se envejece ultimolatido para que el borrador quede "interrumpido" (recuperable/notificable)
-        // de inmediato. false si no existe o no esta ACTIVA.
-        bool EnvejecerLatidoPorCierre(int idBorrador);
+        // Cierre de pestana (pagehide): NO hay metodo que toque ultimolatido. Alcanza con AgregarEvento
+        // (CIERRE_PESTANA): al leer, un evento posterior al ultimo latido hace que el borrador figure
+        // interrumpido de inmediato (Entidades.BorradorGenerico.CerradaPestana) y que UltimoLatido /
+        // SegundosSinLatido sean los de la hora real del cierre. Ver docs/DECISIONS.md 2026-10-05.
 
         // Con Payload incluido. null si no existe.
         Entidades.BorradorGenerico ObtenerPorClientId(Guid clientId, string modulo);
@@ -38,6 +38,11 @@ namespace Contratos
         // Traspasa un borrador ACTIVO a un operador (recuperarlo): actualiza operador, cuenta de sesion
         // y ultimo latido (queda "en uso"). false si no estaba ACTIVO.
         bool TomarBorrador(int id, int idOperador, int idUsuarioSesion);
+
+        // Cambia el clientId de un borrador ACTIVO. Se usa al tomar uno que figuraba "en uso": la pestana
+        // que lo tenia abierta (si seguia viva) deja de coincidir y no pisa lo que cargo el nuevo dueno;
+        // en su proximo latido crea un borrador propio aparte. false si no estaba ACTIVO.
+        bool RotarClientId(int id, Guid nuevoClientId);
 
         // ACTIVO -> FINALIZADA con el id de lo creado; vacia el payload. false si no estaba ACTIVO.
         bool MarcarFinalizada(Guid clientId, string modulo, int idResultado);

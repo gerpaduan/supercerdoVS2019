@@ -109,6 +109,7 @@
 
             if (fechaInput) fechaInput.value = formatFechaSql(ahora);
             if (fechaLabel) fechaLabel.textContent = formatFechaVisible(ahora);
+            actualizarCaducaEl();   // la caducidad cuenta desde la vigencia: si cambia la fecha, se recalcula
         }
 
         function beep() {
@@ -129,10 +130,27 @@
             });
         }, { once: true });
 
+        // Alta rapida de producto (mismo criterio que Ventas/POS): con el formulario abierto se ignoran
+        // las lecturas, y el alta solo se ofrece en la segunda lectura IGUAL consecutiva (la busqueda
+        // en si se dispara en cada lectura, como siempre). posProduct se resuelve en runtime: se
+        // crea mas abajo, antes de que la camara pueda detectar algo.
+        var ultimoCodigoLeidoCamara = null;
+
         var scanner = new BarcodeScanner({
             videoSelector: '#videoScanner',
             containerSelector: '#scannerContainer',
             onCodeDetected: function (codigo) {
+                if (posProduct && typeof posProduct.isModoAltaProductoActivo === 'function' && posProduct.isModoAltaProductoActivo()) {
+                    return;
+                }
+
+                var confirmadoPorDobleLectura = (ultimoCodigoLeidoCamara === codigo);
+                ultimoCodigoLeidoCamara = codigo;
+
+                if (posProduct && typeof posProduct.registrarOrigenLecturaCamara === 'function') {
+                    posProduct.registrarOrigenLecturaCamara(codigo, confirmadoPorDobleLectura);
+                }
+
                 document.querySelector('#inputCodigo').value = codigo;
                 document.querySelector('#inputCodigo').focus();
                 window.manejarEnter();
@@ -328,6 +346,7 @@
                 POSState.setFechaVenta(seleccionada);
                 if (fechaInput) fechaInput.value = formatFechaSql(seleccionada);
                 if (fechaLabel) fechaLabel.textContent = formatFechaVisible(seleccionada);
+                actualizarCaducaEl();   // vigencia nueva -> "Caduca el ..." nuevo
             });
         }
 
@@ -339,6 +358,8 @@
             $('#idPersona').val(config.idConsumidorFinal || 0);
             $('#razonSocial').val('Consumidor Final');
             setClienteIdentificacionVisual('', 'Consumidor Final');
+            // Si habia un cliente real fijo, Consumidor Final lo reemplaza y el campo vuelve a ser editable.
+            actualizarEstadoClienteFijo(config.idConsumidorFinal || 0);
         });
 
         // Buscador de cliente real (F9), 2026-09-06 (retomado -- ver docs/DECISIONS.md). Port
@@ -414,6 +435,256 @@
             $wrap.toggleClass('d-none', !mostrar);
         }
         window.setClienteIdentificacionVisual = setClienteIdentificacionVisual;
+
+        // ===== Cliente fijo + historial de precios (2026-10-04, ver docs/DECISIONS.md) =====
+        // Al elegir un cliente real (F9) el campo "Cliente" queda de solo lectura y su id viaja al
+        // guardar (IdPersona); la X lo suelta y se vuelve a identificacion manual (texto libre).
+        // Consumidor Final NO se fija: sigue siendo texto editable y sin id. Tras guardar, la
+        // pantalla se recarga y vuelve a estar vacia y en modo manual, como siempre.
+
+        // Id del cliente real fijado, o 0 si el cliente es manual / Consumidor Final.
+        function idClienteFijo() {
+            var id = parseInt($('#idPersona').val(), 10) || 0;
+            return (id > 0 && id !== (config.idConsumidorFinal || 0)) ? id : 0;
+        }
+
+        // PageDown / AvPag: con cliente fijo no hay nada para tipear, asi que el foco va a la X.
+        function enfocarCliente() {
+            if (idClienteFijo()) $('#btnQuitarCliente').trigger('focus');
+            else $('#razonSocial').trigger('focus');
+        }
+
+        // Cada cambio de cliente invalida las respuestas de "Personas/Obtener" que sigan en vuelo.
+        var tokenAccesoHistorial = 0;
+
+        // Aplica el estado de "cliente fijo" a la pantalla: campo de solo lectura, X visible y boton
+        // de historial. persona-buscar.js (compartido con Ventas/Compras) lo invoca al elegir una
+        // persona a traves de window.actualizarAccesoHistorialPreciosCliente -- por eso se llama asi.
+        function actualizarEstadoClienteFijo(idPersona) {
+            idPersona = parseInt(idPersona, 10) || 0;
+            var fijo = idPersona > 0 && idPersona !== (config.idConsumidorFinal || 0);
+            var token = ++tokenAccesoHistorial;
+
+            $('#razonSocial').prop('readonly', fijo).toggleClass('pos-cliente-fijo', fijo);
+            $('#btnQuitarCliente').toggleClass('d-none', !fijo);
+
+            // El historial arranca oculto; solo se ofrece con cliente fijo y si el servidor lo permite.
+            var $btnHistorial = $('#btnHistorialPreciosCliente').addClass('d-none');
+            if (!fijo || !window.api || !window.api.persona || !window.api.persona.obtener) return;
+
+            $.get(window.api.persona.obtener, { id: idPersona })
+                .done(function (resp) {
+                    if (token !== tokenAccesoHistorial) return;
+                    // historialPreciosOculto: cliente de cuenta corriente reservada y usuario sin permiso
+                    // (el servidor lo vuelve a aplicar en Ventas/HistorialPreciosCliente).
+                    if (resp && resp.ok && !resp.historialPreciosOculto) $btnHistorial.removeClass('d-none');
+                });
+        }
+        window.actualizarAccesoHistorialPreciosCliente = actualizarEstadoClienteFijo;
+
+        $('#btnQuitarCliente').on('click', function () {
+            $('#idPersona').val('0');
+            $('#razonSocial').val('');
+            setClienteIdentificacionVisual('', '');
+            actualizarEstadoClienteFijo(0);
+            $('#razonSocial').trigger('focus');
+        });
+
+        // Historial de precios del cliente fijo (F8): el mismo modal de Ventas, con solapas
+        // Compras | Presupuestos y un "Agregar" por producto (modo=expendio).
+        var tokenHistorial = 0;
+
+        function abrirHistorialPrecios() {
+            var idPersona = idClienteFijo();
+            if (!idPersona || $('#btnHistorialPreciosCliente').hasClass('d-none') || !config.urlHistorialPrecios) return;
+
+            var token = ++tokenHistorial;
+            var nombre = ($('#clienteRazonSocialValor').val() || $('#razonSocial').val() || '').toString().trim();
+            $('#hpeClienteNombre').text(nombre);
+            $('#contenedorHistorialPreciosExpendio').html('<div class="text-center text-muted py-4">Cargando...</div>');
+            $('#modalHistorialPreciosExpendio').modal('show');
+
+            $.get(config.urlHistorialPrecios, { idPersona: idPersona, modo: 'expendio' })
+                .done(function (html) {
+                    if (token === tokenHistorial) $('#contenedorHistorialPreciosExpendio').html(html);
+                })
+                .fail(function () {
+                    if (token !== tokenHistorial) return;
+                    $('#contenedorHistorialPreciosExpendio').html('<div class="alert alert-danger mb-0">No se pudo cargar el historial de precios.</div>');
+                });
+        }
+
+        $('#btnHistorialPreciosCliente').on('click', abrirHistorialPrecios);
+        // pos-help.js captura F8 y ejecuta este hook (solo si no hay otro modal abierto).
+        window.posHotkeysHooks = window.posHotkeysHooks || {};
+        window.posHotkeysHooks.F8 = abrirHistorialPrecios;
+
+        // Al cerrar el modal el foco vuelve al codigo de producto, como con el buscador de clientes.
+        $(document).on('hidden.bs.modal', '#modalHistorialPreciosExpendio', function () {
+            $(document).trigger('pos:foco-codigo');
+        });
+
+        // "Agregar" de una fila del historial: mete el producto en el carrito con el precio nuevo y
+        // la cantidad indicados. El servidor revalida producto, precio y cantidad al guardar
+        // (FinalizarPOS); aca solo se evita agregar lineas obviamente invalidas.
+        var CANT_MINIMA_HISTORIAL = 0.01;
+
+        function agregarLineaDesdeHistorial($boton) {
+            var $fila = $boton.closest('tr');
+            var precio = parseMoney($fila.find('.js-hp-precio').val());
+            var cantidad = parseDecimal($fila.find('.js-hp-cant').val());
+            var producto = String($boton.data('producto') || '');
+            var codigo = String($boton.data('codigo') || '').trim();
+
+            if (!(precio > 0)) {
+                firePosAlert({ icon: 'warning', title: 'Precio', text: 'Ingresá un precio mayor a cero.' });
+                $fila.find('.js-hp-precio').trigger('focus').trigger('select');
+                return;
+            }
+            if (!(cantidad >= CANT_MINIMA_HISTORIAL)) {
+                firePosAlert({ icon: 'warning', title: 'Cantidad', text: 'La cantidad mínima es 0,010 kg.' });
+                $fila.find('.js-hp-cant').trigger('focus').trigger('select');
+                return;
+            }
+
+            var idCorte = parseInt($boton.data('idcorte'), 10) || 0;
+            if (idCorte > 0) {
+                insertarLineaHistorial($boton, $fila, idCorte, producto, codigo, cantidad, precio);
+                return;
+            }
+
+            // Las filas de Compras no traen el id interno del producto (el servidor lo exige al
+            // guardar): se resuelve por codigo con el mismo endpoint del buscador del POS, que de
+            // paso confirma que el producto sigue existiendo. El boton se bloquea mientras tanto.
+            $boton.prop('disabled', true);
+            $.getJSON(config.urlBuscarProductoPos, { codigo: codigo })
+                .done(function (encontrado) {
+                    if (!encontrado || !(parseInt(encontrado.id, 10) > 0)) {
+                        firePosAlert({ icon: 'warning', title: 'Producto', text: (encontrado && encontrado.message) || 'No se encontró el producto.' });
+                        return;
+                    }
+                    insertarLineaHistorial($boton, $fila, parseInt(encontrado.id, 10), producto, codigo, cantidad, precio);
+                })
+                .fail(function () {
+                    firePosAlert({ icon: 'error', title: 'Producto', text: 'No se pudo verificar el producto. Intentá de nuevo.' });
+                })
+                .always(function () {
+                    $boton.prop('disabled', false);
+                });
+        }
+
+        // Mete la linea ya validada en el carrito y marca la fila del historial como agregada.
+        function insertarLineaHistorial($boton, $fila, idCorte, producto, codigo, cantidad, precio) {
+            var subtotal = cantidad * precio;
+            POSState.addLinea({
+                index: POSState.nextIndex(),
+                idCorte: idCorte,
+                producto: producto,
+                descripcion: producto,
+                codigo: codigo,
+                cant: cantidad.toFixed(3),
+                precio: '$ ' + precio.toFixed(2),
+                precioOriginal: '$ ' + precio.toFixed(2),
+                subtotal: '$ ' + subtotal.toFixed(2),
+                bonificacion: 0,
+                anulado: false,
+                indexAnulado: -1,
+                balanza: false,
+                // Los expendios siempre se cargan por peso (igual que al cargar un expendio en Ventas).
+                pesable: true,
+                esHistorica: false,
+                formaPagoAplicada: ''
+            });
+
+            posCart.renderTable(POSState.getLineas());
+            posCart.recalculateTotal();
+            posCart.updateSaleState();
+            beep();
+
+            // Feedback en la fila: queda marcada y el boton muestra un tilde un instante.
+            $fila.addClass('hpe-agregado');
+            var $icono = $boton.find('i').removeClass('fa-plus').addClass('fa-check');
+            setTimeout(function () { $icono.removeClass('fa-check').addClass('fa-plus'); }, 1200);
+        }
+
+        $(document).on('click', '#modalHistorialPreciosExpendio .js-hp-agregar', function () {
+            var $boton = $(this);
+            var codigo = String($boton.data('codigo') || '').trim();
+            var yaEnCarrito = codigo && POSState.getLineas().some(function (linea) {
+                return linea && !linea.anulado && String(linea.codigo == null ? '' : linea.codigo).trim() === codigo;
+            });
+
+            if (!yaEnCarrito) {
+                agregarLineaDesdeHistorial($boton);
+                return;
+            }
+
+            // Ya esta cargado: se avisa en vez de duplicar en silencio.
+            Swal.fire({
+                icon: 'question',
+                title: 'Producto ya cargado',
+                text: String($boton.data('producto') || 'Este producto') + ' ya está en el carrito. ¿Agregarlo otra vez?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, agregar',
+                cancelButtonText: 'No'
+            }).then(function (resultado) {
+                if (resultado.isConfirmed) agregarLineaDesdeHistorial($boton);
+            });
+        });
+
+        // Enter en precio o cantidad = Agregar esa fila.
+        $(document).on('keydown', '#modalHistorialPreciosExpendio .js-hp-precio, #modalHistorialPreciosExpendio .js-hp-cant', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            $(this).closest('tr').find('.js-hp-agregar').trigger('click');
+        });
+
+        // ===== Dias de validez del presupuesto (solo sector PRESUPUESTO, 2026-10-04) =====
+        // El usuario elige DIAS (vacio = por defecto, 90); el servidor calcula la fecha de caducidad
+        // = dia de vigencia + dias. Aca "Caduca el ..." es solo informativo.
+        function diasCaducidadValidos() {
+            var $dias = $('#diasCaducidadExpendio');
+            if (!$dias.length) return true;
+
+            var texto = String($dias.val() || '').trim();
+            if (!texto) return true;            // vacio = por defecto
+            if (!/^\d+$/.test(texto)) return false;
+
+            var dias = parseInt(texto, 10);
+            var maximo = parseInt($dias.attr('max'), 10) || 365;
+            return dias >= 1 && dias <= maximo;
+        }
+
+        // null = no aplica (otro sector) o vacio (el servidor usa el valor por defecto).
+        function diasCaducidadParaPayload() {
+            var $dias = $('#diasCaducidadExpendio');
+            if (!esSectorPresupuesto() || !$dias.length) return null;
+
+            var texto = String($dias.val() || '').trim();
+            return texto ? (parseInt(texto, 10) || null) : null;
+        }
+
+        function actualizarCaducaEl() {
+            var $dias = $('#diasCaducidadExpendio');
+            var $texto = $('#caducaElExpendio');
+            if (!$dias.length || !$texto.length) return;
+
+            if (!diasCaducidadValidos()) {
+                $texto.addClass('text-danger').text('Entre 1 y ' + ($dias.attr('max') || 365));
+                return;
+            }
+
+            var texto = String($dias.val() || '').trim();
+            var dias = texto ? parseInt(texto, 10) : (parseInt($dias.data('dias-defecto'), 10) || 90);
+            var vigencia = new Date($('#fechaExpendio').val() || new Date());
+            var caduca = new Date(vigencia.getFullYear(), vigencia.getMonth(), vigencia.getDate() + dias);
+
+            $texto.removeClass('text-danger')
+                .text('Caduca el ' + pad(caduca.getDate()) + '/' + pad(caduca.getMonth() + 1) + '/' + caduca.getFullYear());
+        }
+
+        $('#diasCaducidadExpendio').on('input change', actualizarCaducaEl);
+        actualizarCaducaEl();
 
         function actualizarSectorUI(sector) {
             var texto = sector || 'Sin seleccionar';
@@ -493,6 +764,10 @@
                 FechaExpendio: $('#fechaExpendio').val(),
                 Sector: $('#sectorPuntoExpendio').val(),
                 IdentificacionCliente: ($('#razonSocial').val() || '').trim(),
+                // Cliente real fijado (0 = manual) y dias de validez del presupuesto (null = por defecto).
+                // El servidor valida ambos (PuntosExpendioController.FinalizarPOS).
+                IdPersona: idClienteFijo(),
+                DiasCaducidad: diasCaducidadParaPayload(),
                 Observaciones: POSState.getObservaciones(),
                 // Solo sector REMITOS (existe #nroRemito); en los demas sectores no se envia nada.
                 NroRemito: ($('#nroRemito').val() || '').trim(),
@@ -765,6 +1040,13 @@
             if (esSectorRemitos() && !payload.NroRemito) {
                 firePosAlert({ icon: 'warning', title: 'Remito', text: 'Debe indicar el número de remito.' });
                 $('#nroRemito').trigger('focus');
+                return;
+            }
+
+            // PRESUPUESTO: dias de validez entre 1 y el maximo (vacio = por defecto). El servidor lo valida igual.
+            if (esSectorPresupuesto() && !diasCaducidadValidos()) {
+                firePosAlert({ icon: 'warning', title: 'Presupuesto', text: 'Los días de validez deben estar entre 1 y ' + ($('#diasCaducidadExpendio').attr('max') || 365) + '.' });
+                $('#diasCaducidadExpendio').trigger('focus');
                 return;
             }
 
@@ -1133,7 +1415,7 @@
 
             if (e.key === 'PageDown') {
                 e.preventDefault();
-                $('#razonSocial').trigger('focus');
+                enfocarCliente();
                 return;
             }
 
@@ -1159,7 +1441,7 @@
 
         window.posHotkeysHooks = window.posHotkeysHooks || {};
         window.posHotkeysHooks.AvPag = function () {
-            $('#razonSocial').trigger('focus');
+            enfocarCliente();
         };
         // F6 (Mis expendios) NO se registra a proposito -- no portado en este MVP, ver header.
         window.posHotkeysHooks.F4 = function () {

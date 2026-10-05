@@ -93,6 +93,9 @@ namespace WebCore.Models
         // Interruptor 2 (Modo A, "ajustar a formula unitaria") -- ver Negocio/Corte.cs,
         // NormalizarFormulaElaborado.
         public bool AjustarUnidad { get; set; }
+        // Formula secreta (2026-10-04): al cargar la vista refleja Formula.Secreta; al guardar es lo que
+        // el usuario dejo en la casilla "Formula secreta" de EditarFormula.cshtml.
+        public bool Secreta { get; set; }
         public string Receta { get; set; }
         public string UsuarioNombre { get; set; }
         public string Creado { get; set; }
@@ -187,6 +190,11 @@ namespace WebCore.Models
         public string Receta { get; set; }
         public float Cantidad { get; set; }
         public bool EsPesableElaborado { get; set; }
+        // Formula secreta (2026-10-04): FormulaSecreta = el elaborado tiene una formula marcada como
+        // secreta; FormulaOculta = ademas esta sesion NO tiene una elevacion vigente, asi que el
+        // controller dejo Formula/Receta vacias y la vista no debe renderizarlas (ni como hidden).
+        public bool FormulaSecreta { get; set; }
+        public bool FormulaOculta { get; set; }
         // Costeo (efimero, no se persiste): visible solo para Usuario.Admin, ver EditarIngresoRapido.cshtml.
         public bool EsAdmin { get; set; }
         public float PrecioActualElaborado { get; set; }
@@ -226,6 +234,9 @@ namespace WebCore.Models
         public string Elaborado { get; set; }
         public string Receta { get; set; }
         public bool IngresoRapidoSugerido { get; set; }
+        // Formula secreta (2026-10-04): ver ElaboradoRapidoEditVm.FormulaSecreta/FormulaOculta.
+        public bool FormulaSecreta { get; set; }
+        public bool FormulaOculta { get; set; }
         // Costeo (efimero, no se persiste): visible solo para Usuario.Admin, ver Carga.cshtml.
         public bool EsAdmin { get; set; }
         public float PrecioActualElaborado { get; set; }
@@ -266,9 +277,15 @@ namespace WebCore.Models
         public string Observaciones { get; set; }
         public string Estado { get; set; }
         public string Creado { get; set; }
+        public string CreadoPor { get; set; }
+        // Vacios si el registro nunca se modifico (la columna Creado de Index muestra la modificacion si existe).
         public string Actualizado { get; set; }
+        public string ActualizadoPor { get; set; }
         public bool EsDesarme { get; set; }
         public bool EsIngresoRapido { get; set; }
+        // Formula secreta sin elevacion: Kgs es solo la cantidad de los ingredientes visibles y la vista
+        // rotula "+ ingredientes" (ver ElaboradosController.AplicarSecretoCantidadElaborados).
+        public bool IngredientesOcultos { get; set; }
     }
 
     public class ElaboradoDetalleVm
@@ -292,6 +309,13 @@ namespace WebCore.Models
         public string UsuarioActualizacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
         public bool EsIngresoRapido { get; set; }
+        // Formula secreta (2026-10-04): si es true y no hay elevacion, la Receta va vacia y en
+        // IngredientesUtilizados faltan los ingredientes de la formula (quedan solo los cargados a mano);
+        // la vista avisa que hay ingredientes ocultos (sin cantidades) y muestra el boton "Ver formula".
+        // IdCorte es el producto elaborado (clave de la elevacion).
+        public bool FormulaSecreta { get; set; }
+        public bool FormulaOculta { get; set; }
+        public int IdCorte { get; set; }
         public List<ElaboradoDetalleLineaVm> IngredientesUtilizados { get; set; }
     }
 
@@ -317,6 +341,11 @@ namespace WebCore.Models
         public string Observaciones { get; set; }
         public bool EsDesarme { get; set; }
         public bool EsIngresoRapido { get; set; }
+        // Formula secreta (2026-10-04): la linea pertenece a un elaborado con formula secreta y la
+        // sesion no tiene elevacion -> Ingrediente/Kgs/CodigoIngrediente vienen vacios y la vista
+        // muestra "Ver formula" (IdCorteElaborado es la clave de la elevacion).
+        public bool FormulaOculta { get; set; }
+        public int IdCorteElaborado { get; set; }
     }
 
     public class ElaboradoFormulaResumenVm
@@ -326,6 +355,9 @@ namespace WebCore.Models
         public string Elaborado { get; set; }
         public string Creado { get; set; }
         public string Actualizado { get; set; }
+        // Formula secreta (2026-10-04): solo informativo en el listado (candado). La pantalla ya exige
+        // Permisos.Elaborado.VerFormulas, por eso el detalle se muestra sin re-login aca.
+        public bool Secreta { get; set; }
     }
 
     public class ElaboradoFormulaDetalleVm
@@ -337,6 +369,7 @@ namespace WebCore.Models
         public bool EsIngresoRapidoElaborado { get; set; }
         public string EtiquetaValorFormula { get; set; }
         public string Receta { get; set; }
+        public bool Secreta { get; set; }
         public string Creado { get; set; }
         public string CreadoPor { get; set; }
         public string Actualizado { get; set; }

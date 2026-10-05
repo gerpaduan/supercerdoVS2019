@@ -115,6 +115,12 @@
         var state = {
             lineas: $.isArray(config.initialLines) ? config.initialLines.slice() : [],
             formula: $.isArray(config.initialFormula) ? config.initialFormula.slice() : [],
+            // Formula secreta (2026-10-04): formulaSecreta = el elaborado elegido tiene formula secreta;
+            // formulaOculta = ahora no se muestra (hasta el re-login). Con formulaOculta la formula NO esta
+            // en state.formula: el servidor agrega los ingredientes automaticos al guardar.
+            formulaSecreta: config.formulaSecreta === true,
+            formulaOculta: config.formulaOculta === true,
+            formulaBeaconRegistrado: false,
             balanzaDisponible: false,
             balanzaDesactivadaManual: false,
             balanzaClientStarted: false,
@@ -244,13 +250,16 @@
                 idSucursal: $('#IdSucursal').val(),
                 fechaEmbutido: $('#FechaEmbutido').val(),
                 observaciones: $('#Observaciones').val(),
+                // Formula secreta: ni la receta ni la formula se guardan en el borrador (localStorage o
+                // servidor); al recuperarlo se vuelven a pedir con ObtenerFormula segun la elevacion vigente.
+                formulaSecreta: state.formulaSecreta,
                 elaborado: {
                     id: $elaboradoId.val(),
                     codigo: $elaboradoCodigo.val(),
                     nombre: $elaboradoNombre.val(),
                     tipo: $elaboradoTipo.val(),
                     promedio: $elaboradoPromedio.val(),
-                    receta: $receta.val()
+                    receta: state.formulaSecreta ? '' : $receta.val()
                 },
                 ingredienteActual: {
                     id: $ingredienteId.val(),
@@ -262,7 +271,7 @@
                     pesoBalanza: $balanza.is(':checked')
                 },
                 lineas: state.lineas,
-                formula: state.formula
+                formula: state.formulaSecreta ? [] : state.formula
             };
         }
 
@@ -365,6 +374,15 @@
             renderLineas();
             renderFormula();
             autoResizeTextarea($receta);
+
+            // Formula secreta: el borrador no trae la formula; se pide de nuevo (el servidor decide si
+            // sigue oculta o si hay una elevacion vigente) y recien ahi se pinta.
+            if (draft.formulaSecreta === true && draft.elaborado && toInt(draft.elaborado.id) > 0) {
+                state.formulaSecreta = true;
+                state.formulaOculta = true;
+                aplicarVisibilidadFormula();
+                obtenerFormula(toInt(draft.elaborado.id));
+            }
             scheduleDraft();
         }
 
@@ -432,8 +450,11 @@
             $elaboradoPromedio.val('');
             $receta.val('');
             state.formula = [];
+            state.formulaSecreta = false;
+            state.formulaOculta = false;
             config.precioActualElaborado = 0;
             renderFormula();
+            aplicarVisibilidadFormula();
             $elaboradoWarning.addClass('d-none').text('');
             autoResizeTextarea($receta);
             if (preserveCodigo) {
@@ -610,7 +631,10 @@
         function renderFormula() {
             var html = '';
             var totalAuto = 0;
-            if (!state.formula.length) {
+            if (state.formulaOculta) {
+                // Formula secreta oculta: no se pinta ninguna fila (ni el mensaje de "sin formula").
+                html = '';
+            } else if (!state.formula.length) {
                 html = '<tr><td colspan="' + (config.esAdmin ? 4 : 3) + '" class="text-center text-muted">El elaborado no tiene formula cargada.</td></tr>';
             } else {
                 state.formula.forEach(function (item, index) {
@@ -658,37 +682,93 @@
             renderFormula();
         }
 
+        // Formula secreta: muestra u oculta receta, tabla de formula, "Total a producir" y costeo segun
+        // state.formulaOculta, y el candado / panel "Ver fórmula" / boton "Ocultar" segun el estado.
+        function aplicarVisibilidadFormula() {
+            var oculta = state.formulaOculta;
+            $('#bloqueRecetaCarga').toggleClass('d-none', oculta);
+            $('#bloqueFormulaCarga').toggleClass('d-none', oculta);
+            $('#filaTotalProducirCarga').toggleClass('d-none', oculta);
+            $('#adminCosteoCargaWrap').toggleClass('d-none', oculta);
+            $('#panelFormulaSecretaCarga').toggleClass('d-none', !oculta);
+            $('#iconoFormulaSecretaCarga').toggleClass('d-none', !state.formulaSecreta);
+            $('#btnOcultarFormulaCarga').toggleClass('d-none', !(state.formulaSecreta && !oculta));
+
+            // El aviso de salir sin guardar / el servidor se encargan de revocar la elevacion al salir.
+            if (state.formulaSecreta && !state.formulaBeaconRegistrado && window.FormulaSecreta) {
+                state.formulaBeaconRegistrado = true;
+                window.FormulaSecreta.ocultarAlSalir(formulaCfg());
+            }
+        }
+
+        function formulaCfg() {
+            var urls = config.formulaUrls || {};
+            return { autorizarUrl: urls.autorizar, ocultarUrl: urls.ocultar };
+        }
+
+        function resetFormula() {
+            state.formula = [];
+            state.formulaSecreta = false;
+            state.formulaOculta = false;
+            $receta.val('');
+            renderFormula();
+            aplicarVisibilidadFormula();
+            autoResizeTextarea($receta);
+        }
+
         function obtenerFormula(idCorte) {
             if (!idCorte || !config.obtenerFormulaUrl) {
-                state.formula = [];
-                $receta.val('');
-                renderFormula();
-                autoResizeTextarea($receta);
+                resetFormula();
                 return;
             }
 
             $.get(config.obtenerFormulaUrl, { idCorte: idCorte })
                 .done(function (resp) {
                     if (!resp || !resp.ok) {
-                        state.formula = [];
-                        $receta.val('');
-                        renderFormula();
-                        autoResizeTextarea($receta);
+                        resetFormula();
                         return;
                     }
 
-                    $receta.val(resp.receta || '');
-                    state.formula = $.isArray(resp.formula) ? resp.formula.slice() : [];
+                    var lineas = $.isArray(resp.formula) ? resp.formula.slice() : [];
+                    state.formulaSecreta = resp.secreta === true;
+                    // Secreta y sin lineas = el servidor la esta ocultando (no hay elevacion vigente).
+                    state.formulaOculta = state.formulaSecreta && lineas.length === 0;
+
+                    $receta.val(state.formulaOculta ? '' : (resp.receta || ''));
+                    state.formula = state.formulaOculta ? [] : lineas;
                     recalcularFormula();
+                    aplicarVisibilidadFormula();
                     autoResizeTextarea($receta);
                 })
                 .fail(function () {
-                    state.formula = [];
-                    $receta.val('');
-                    renderFormula();
-                    autoResizeTextarea($receta);
+                    resetFormula();
                 });
         }
+
+        // "Ver fórmula": re-login de alguien con permiso y recien despues se pide la formula.
+        $('#btnVerFormulaCarga').on('click', function () {
+            var idCorte = toInt($elaboradoId.val());
+            if (!idCorte || !window.FormulaSecreta) return;
+
+            window.FormulaSecreta.ver(formulaCfg(), { idCorte: idCorte }).then(function (autorizado) {
+                if (autorizado) obtenerFormula(idCorte);
+            });
+        });
+
+        // "Ocultar": quita la elevacion en el servidor y vacia la formula del cliente (y el costeo
+        // derivado, que se recalcula en cero) antes de marcarla oculta.
+        $('#btnOcultarFormulaCarga').on('click', function () {
+            var idCorte = toInt($elaboradoId.val());
+            if (!window.FormulaSecreta) return;
+
+            window.FormulaSecreta.ocultar(formulaCfg(), idCorte).then(function () {
+                state.formula = [];
+                state.formulaOculta = true;
+                $receta.val('');
+                renderFormula();
+                aplicarVisibilidadFormula();
+            });
+        });
 
         function normalizarBalanzaPayload(data) {
             if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.normalize === 'function') {
@@ -1327,6 +1407,7 @@
 
         renderLineas();
         renderFormula();
+        aplicarVisibilidadFormula();
         autoResizeTextarea($receta);
         if (toInt($elaboradoId.val()) > 0 && $.trim($receta.val())) {
             $elaboradoWarning.addClass('d-none').text('');

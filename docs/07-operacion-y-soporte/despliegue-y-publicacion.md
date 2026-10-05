@@ -495,3 +495,31 @@ Agrega columnas a `pagos` (`eliminado`, `eliminadopor`, `fechaeliminacion`, `mot
 **`Security:TrustedProxies` y el cambio de servidor (Fase 4)**: el login ya no confía en `X-Forwarded-For` venga de donde venga. Solo lo mira si la conexión directa viene de loopback o de una red privada (10/8, 172.16/12, 192.168/16, fc00::/7, etc.) o de una IP/red listada en `Security:TrustedProxies` (lista separada por coma, `ip` o `ip/prefijo`). Caddy en la misma máquina (VM CarniSys), IIS+ARR en SM/SL y el contenedor `web` detrás de Caddy en la VPS están en loopback/red privada: **funcionan sin tocar nada**. Si se migra a un servidor cuyo proxy llega desde una **IP pública** (balanceador, CDN), hay que cargar esa IP en `Security:TrustedProxies` del host nuevo; si no, la app ve la IP del proxy para todos y el límite por IP (7 fallos) bloquea a todos juntos. Falla segura: sin proxy de confianza se usa la IP de la conexión. **Verificar en cada host después de desplegar** que `loginubicacionlog.ip` guarda la IP real del cliente y no la del proxy. Topología de proxy de cada entorno: PENDIENTE de verificar contra el servidor real antes del deploy.
 
 **Rollback**: todas las columnas/tablas son aditivas con default neutro; el código anterior las ignora. Basta con volver al build anterior. El dato nuevo (PIN, solicitudes) queda inerte.
+
+## Cliente fijo y caducidad de presupuestos en el Punto de Expendio (2026-10-04) -- PENDIENTE de desplegar
+
+**Estado**: implementado en local; migración aplicada solo en `carnisys` local (Postgres de dev, con respaldo previo de `expendios`). **No aplicado ni desplegado** en VPS luden ni en la VM Postgres. Solo Postgres: SQL Server (SM, San Lorenzo) no necesita nada, pero el código nuevo sigue siendo compatible. Diseño en `docs/DECISIONS.md` "Punto de Expendio: cliente real fijo, caducidad de presupuestos...".
+
+**Orden (migración ANTES que el código)**: `FinalizarPOS` → `VentaPg.agregarExpendio`/`actualizarExpendio` escriben `idpersona` y `fechacaducidad` en **cada** guardado de expendio; si el código sale antes que la migración, **todo guardado de expendios falla** (columna inexistente) y el historial de precios muestra solo Compras (la consulta de presupuestos está aislada en try/catch).
+
+1. Respaldo: `pg_dump -t expendios` (o el `pg_dump -Fc` completo de siempre).
+2. Migración como `carnisys_admin`: `DatosPostgres/DB-Migrations/20261004-Alter_expendios_add_idpersona_fechacaducidad.sql` (`docker exec -i carnisys-db-1 psql -U carnisys_admin -d carnisys -v ON_ERROR_STOP=1 --single-transaction < <archivo>`, con `tr -d '\r'` si viene de Windows). Aditiva e idempotente (`ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`). Los GRANT de la tabla ya cubren las columnas nuevas; no hay policy RLS nueva.
+3. Código: publish + deploy como en las secciones de cada servidor. Restore point recomendado: `git tag pre-expendio-cliente-<YYYYMMDD>`.
+
+**Reloj**: la caducidad y la solapa inicial usan `DateTime.Now` del servidor (igual que `SectorPuntoExpendio.ResolverFecha`); el repo no fija `TZ`, así que depende del huso del host (desfase posible solo cerca de medianoche).
+
+**Rollback**: volver al build anterior; las columnas quedan sobrantes y el código viejo las ignora. Los expendios guardados con cliente/caducidad no se pierden.
+
+## Fórmula secreta con re-login (2026-10-04) -- PENDIENTE de desplegar
+
+**Estado**: implementado y probado en local (`carnisys` Postgres de dev, datos de prueba borrados). **No aplicado ni desplegado** en VPS luden, VM Postgres, SM ni San Lorenzo. Diseño en `docs/DECISIONS.md` "Fórmula secreta con re-login".
+
+**Orden (migración ANTES que el código)**: el código nuevo lee `formulas.secreta` en cada pantalla de Elaborados y escribe `auditoriaformulas` en cada "Ver fórmula"; sin la migración **fallan Ingreso Rápido, Carga, Detalle y Líneas**.
+
+1. Respaldo: `pg_dump -Fc` completo de siempre (la migración solo agrega, pero toca `formulas`).
+2. **Postgres (VPS luden, VM Postgres)**, como `carnisys_admin` (`docker exec -i carnisys-db-1 psql -U carnisys_admin -d carnisys -v ON_ERROR_STOP=1 --single-transaction < <archivo>`, con `tr -d '\r'` si viene de Windows): `DatosPostgres/DB-Migrations/20261004b-Alter_formulas_add_secreta_create_auditoriaformulas.sql`. Aditiva e idempotente (`ADD COLUMN IF NOT EXISTS`, `CREATE TABLE IF NOT EXISTS`, `DROP POLICY IF EXISTS`). Crea `formulas.secreta boolean NOT NULL DEFAULT false` (ninguna fórmula existente cambia) y la tabla append-only `auditoriaformulas` (RLS por empresa, GRANT solo SELECT/INSERT).
+3. **SQL Server (SM, San Lorenzo, base `SuperCerdo`)**: `Datos/DB-Procedures/20261004b-Alter_Formulas_add_Secreta_AuditoriaFormulas.sql` (columna `Formulas.Secreta`, tabla `AuditoriaFormulas`, `ALTER PROCEDURE addOrEditFormula` con parámetro `@secreta bit = 0`). El script trae `USE [carnisys]`: **cambiarlo por la base real antes de correrlo**. El cuerpo del SP se tomó del último script versionado (`20260822-...AjusteDeFormula.sql`): **verificar con `sp_helptext addOrEditFormula` contra la base real** antes de aplicarlo, por si fue tocado a mano. PENDIENTE: no se probó contra SQL Server (solo compila).
+4. Config opcional (`WebCore.dll.config` del host, nunca se pisa en un deploy): `Security:FormulaStepUpMaxAttempts` (3), `Security:FormulaStepUpWindowMinutes` (5), `Security:FormulaStepUpLockoutMinutes` (5), `Security:FormulaElevacionMinutos` (5, tope 60). Los defaults no requieren config.
+5. Código: publish + deploy como en las secciones de cada servidor. Restore point recomendado: `git tag pre-formula-secreta-<YYYYMMDD>`.
+
+**Rollback**: volver al build anterior; la columna y la tabla quedan sobrantes y el código viejo las ignora. **Ojo**: con el build anterior las fórmulas marcadas como secretas vuelven a mostrarse a cualquiera (el código viejo no sabe de la marca). Si ya hay fórmulas marcadas, avisar antes de hacer rollback.
