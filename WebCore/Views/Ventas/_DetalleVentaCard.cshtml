@@ -409,18 +409,8 @@
             if (evt.target.parentNode !== document.body) {
                 document.body.appendChild(evt.target);
             }
-
-            var zIndex = 1040 + (10 * modalesAbiertos);
-            evt.target.style.setProperty("z-index", zIndex, "important");
-
-            setTimeout(function () {
-                var backdrops = document.querySelectorAll(".modal-backdrop:not(.modal-stack)");
-                var backdrop = backdrops.length ? backdrops[backdrops.length - 1] : null;
-                if (backdrop) {
-                    backdrop.style.setProperty("z-index", zIndex - 1, "important");
-                    backdrop.classList.add("modal-stack");
-                }
-            }, 0);
+            // El z-index y el backdrop propio sobre los modales abiertos los pone modal-stack.js (2026-10-06, ver docs/DECISIONS.md);
+            // aca solo queda el re-parentado a <body> de arriba.
         });
 
         if (document.readyState === "loading") {

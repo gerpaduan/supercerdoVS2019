@@ -1906,34 +1906,14 @@ else
                 window.POSFinanzas.cargarPago(href, $(this).attr("data-pos-title") || "Pago / Cobro");
             });
 
-            // Modal sobre modal: mismo mecanismo ya establecido en Cajas/CajasAbiertas.cshtml
-            // (Batch 6, 2026-09-10) -- custom.css fija el mismo z-index fijo para TODOS los
-            // modales (".modal { z-index: var(--z-modal) !important; }"), asi que hace falta
-            // setProperty(...,'important') para que el calculo dinamico realmente le gane.
+            // Modal sobre modal: el apilado (z-index, backdrop propio, saneo, modal-open) lo resuelve de forma global
+            // Scripts/app/modal-stack.js (ModalStack) para todos los modales de la app; aca antes habia una copia
+            // propia (posPagoStack) con "el ultimo backdrop sin modal-stack", que a veces le caia al backdrop del modal
+            // de atras (2026-10-06, ver docs/DECISIONS.md). Solo queda vaciar el contenedor al cerrar.
             $(document)
-                .off('show.bs.modal.posPagoStack', '#modalPagoPOS')
-                .on('show.bs.modal.posPagoStack', '#modalPagoPOS', function () {
-                    var zIndex = 1040 + (10 * $('.modal.show').length);
-                    this.style.setProperty('z-index', zIndex, 'important');
-
-                    setTimeout(function () {
-                        var backdrop = $('.modal-backdrop').not('.modal-stack').last();
-                        if (backdrop.length) {
-                            backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
-                            backdrop.addClass('modal-stack');
-                        }
-                    }, 0);
-                })
                 .off('hidden.bs.modal.posPagoStack', '#modalPagoPOS')
                 .on('hidden.bs.modal.posPagoStack', '#modalPagoPOS', function () {
                     $("#contenedorPagoPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
-                    var $restantes = $('.modal.show');
-                    if ($restantes.length > 0) {
-                        $('body').addClass('modal-open');
-                        if ($('.modal-backdrop').length === 0) {
-                            $('<div class="modal-backdrop fade show"></div>').appendTo('body');
-                        }
-                    }
                 });
 
             window.POSCompras = {
@@ -3253,16 +3233,8 @@ else
                 if (!$modal || !$modal.length) return;
                 if (!$modal.parent().is('body')) $modal.appendTo('body');
 
-                var zBase = 1040;
-                $('.modal.show').not($modal).each(function () {
-                    var zActual = parseInt($(this).css('z-index'), 10) || 1040;
-                    if (zActual > zBase) zBase = zActual;
-                });
-
-                $modal.css('z-index', zBase + 20);
-                window.setTimeout(function () {
-                    $('.modal-backdrop').last().css('z-index', zBase + 10);
-                }, 0);
+                // El apilado sobre los modales ya abiertos (z-index y backdrop) lo resuelve modal-stack.js al mostrarse el modal.
+                // Antes: .css('z-index') sin !important, que custom.css (z-index fijo !important) ignoraba (2026-10-06).
             }
 
             var facturaOkPOS = false;

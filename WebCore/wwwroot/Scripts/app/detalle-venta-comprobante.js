@@ -215,16 +215,8 @@
             if (!$modal || !$modal.length) return;
             if (!$modal.parent().is('body')) $modal.appendTo('body');
 
-            var zBase = 1040;
-            $('.modal.show').not($modal).each(function () {
-                var zActual = parseInt($(this).css('z-index'), 10) || 1040;
-                if (zActual > zBase) zBase = zActual;
-            });
-
-            $modal.css('z-index', zBase + 20);
-            window.setTimeout(function () {
-                $('.modal-backdrop').last().css('z-index', zBase + 10);
-            }, 0);
+            // El apilado sobre los modales ya abiertos (z-index y backdrop) lo resuelve modal-stack.js al mostrarse el modal.
+            // Antes: .css('z-index') sin !important, que custom.css (z-index fijo !important) ignoraba (2026-10-06).
         }
 
         var facturaOkCv = false;

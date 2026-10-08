@@ -595,24 +595,10 @@
 
             var $modal = $(modalEl);
             var elFondo = document.getElementById('modalFinanzasPOS');
-            var abiertos = document.querySelectorAll('.modal.show').length;
 
             $modal.off('.ctacteCompra');
-            if (abiertos > 0) {
-                // Con la Cta. Cte. embebida en POS ya hay un modal abierto: se sube el z-index (mismo
-                // criterio que compras.js/elevarZIndexSobreModalAbierto) y se pausa el focus-trap del de fondo.
-                var zIndex = 1040 + (10 * abiertos);
-                modalEl.style.setProperty('z-index', zIndex, 'important');
-                $modal.on('shown.bs.modal.ctacteCompra', function () {
-                    var $backdrop = $('.modal-backdrop').not('.modal-stack').last();
-                    if ($backdrop.length) {
-                        $backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
-                        $backdrop.addClass('modal-stack');
-                    }
-                });
-            } else {
-                modalEl.style.removeProperty('z-index');
-            }
+            // El apilado sobre el modal de POS ya abierto (z-index, backdrop propio) lo resuelve modal-stack.js al mostrarse
+            // el modal (2026-10-06, ver docs/DECISIONS.md); aca solo se pausa el focus-trap del modal de fondo.
             if (elFondo && window.bootstrap && window.bootstrap.Modal) {
                 $modal.on('show.bs.modal.ctacteCompra', function () {
                     var inst = window.bootstrap.Modal.getInstance(elFondo);

@@ -683,42 +683,10 @@
         });
         $(document).on('change', '#fechaDesde', function () { filtrar(); });
 
-        $(document)
-            .off('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja')
-            .on('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja', function () {
-                // Bug real encontrado 2026-09-10 verificando el Batch 6 (boton Actividades dentro
-                // de Cerrar Caja, ver docs/DECISIONS.md): este handler ya existia pero nunca
-                // funciono de verdad -- custom.css fija ".modal { z-index: var(--z-modal)
-                // !important; }", y un !important de una hoja de estilos le gana a un estilo
-                // inline sin !important (jQuery.css() setea inline, sin !important), asi que TODOS
-                // los modales terminaban con el mismo z-index pese a este calculo. Se usa
-                // setProperty(...,'important') para que el z-index calculado realmente gane.
-                var zIndex = 1040 + (10 * $('.modal.show').length);
-                this.style.setProperty('z-index', zIndex, 'important');
-
-                setTimeout(function () {
-                    var backdrop = $('.modal-backdrop').not('.modal-stack').last();
-                    if (backdrop.length) {
-                        backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
-                        backdrop.addClass('modal-stack');
-                    }
-                }, 0);
-            })
-            // Boton "Actividades" dentro de Cerrar Caja (2026-09-10, ver docs/DECISIONS.md "Batch
-            // 6"): Bootstrap 4 no soporta oficialmente modales anidados -- al cerrar el modal de
-            // arriba (Actividades), su propio "hide" puede sacar la clase modal-open del <body> y
-            // el backdrop de mas, aunque el modal de abajo (Cerrar Caja) siga abierto. Si despues
-            // de cerrar uno sigue habiendo un .modal.show, se restaura el estado a mano.
-            .off('hidden.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja')
-            .on('hidden.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja', function () {
-                var $restantes = $('.modal.show');
-                if (!$restantes.length) return;
-
-                $('body').addClass('modal-open');
-                if (!$('.modal-backdrop').length) {
-                    $('<div class="modal-backdrop fade show"></div>').appendTo('body');
-                }
-            });
+        // Apilado de los modales de Cajas (Actividades sobre Cerrar caja, Egreso, Cambio de sucursal): lo resuelve de forma
+        // global Scripts/app/modal-stack.js (ModalStack): z-index sobre el modal abierto mas alto, backdrop propio, saneo y
+        // modal-open al cerrar. Antes habia aca un handler "cajasStack" con "el ultimo backdrop sin modal-stack", que a veces
+        // le caia al backdrop del modal de atras y lo dejaba bloqueado (2026-10-06, ver docs/DECISIONS.md).
 
         function abrirModalActividades(idCierre, filtroActividad) {
             window.CajasAbiertas = window.CajasAbiertas || {};

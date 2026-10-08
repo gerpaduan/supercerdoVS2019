@@ -675,31 +675,9 @@
     // ===== Apilado sobre otros modales + atajos de teclado (2026-09-26, ver docs/DECISIONS.md) =====
     var MODALES_PROPIOS = '#modalCalculadoraBilletes, #modalPostCalculadoraBilletes, #modalConfigAgenteCalculadoraBilletes';
 
-    // La calculadora se abre tambien desde adentro de otros modales (ej. Pago en el POS): sin subir el z-index
-    // quedaba DETRAS. Se pone 10 por encima del modal abierto con mayor z-index (no una cuenta fija: el z-index
-    // base de Bootstrap ya es 1050 y otros modales del POS ya vienen elevados a mano).
-    function elevarSobreModalesAbiertos(modalEl) {
-        modalEl.style.removeProperty('z-index');
-
-        var abiertos = document.querySelectorAll('.modal.show');
-        if (abiertos.length < 1) return;
-
-        var maxZ = 0;
-        Array.prototype.forEach.call(abiertos, function (el) {
-            maxZ = Math.max(maxZ, parseInt(window.getComputedStyle(el).zIndex, 10) || 0);
-        });
-
-        var zIndex = maxZ + 10;
-        modalEl.style.setProperty('z-index', zIndex, 'important');
-
-        $(modalEl).one('shown.bs.modal.cbZ', function () {
-            var $backdrop = $('.modal-backdrop').not('.modal-stack').last();
-            if ($backdrop.length) {
-                $backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
-                $backdrop.addClass('modal-stack');
-            }
-        });
-    }
+    // El apilado sobre otros modales abiertos (z-index, backdrop propio, saneo de backdrops colgados) lo resuelve de forma
+    // global modal-stack.js (ModalStack): la calculadora se abre desde adentro de Pago, Egreso, etc. y queda arriba sola.
+    // Antes habia aca una copia propia que podia dejar el backdrop del modal de ATRAS por encima de su modal (2026-10-06).
 
     // Bootstrap 5 deja un FocusTrap activo por modal: el del modal de abajo le robaria el foco al de arriba.
     // Se deja activo solo el del modal con mayor z-index.
@@ -876,9 +854,7 @@
         // (Pago, POS, Egresos), que escuchan en document/captura y se creen "el modal de arriba".
         window.addEventListener('keydown', onKeydownAtajos, true);
 
-        $(MODALES_PROPIOS).on('show.bs.modal', function () {
-            elevarSobreModalesAbiertos(this);
-        }).on('shown.bs.modal hidden.bs.modal', function () {
+        $(MODALES_PROPIOS).on('shown.bs.modal hidden.bs.modal', function () {
             reajustarFocusTraps();
         });
 

@@ -705,30 +705,10 @@
             });
     }
 
-    // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): F9/F10 en Compras embebida en POS
-    // abren su modal (#modalBuscarPersona/#modalBuscarProducto) por encima de #modalFinanzasPOS,
-    // ya abierto -- pero custom.css fija el mismo z-index fijo para TODOS los .modal, asi que con
-    // z-index identico gana el elemento que esta despues en el DOM (#modalFinanzasPOS, ver
-    // Ventas/POS.cshtml:744 vs :1078), y el buscador queda invisible/no clickeable detras. Mismo
-    // mecanismo ya usado 3 veces en el proyecto (posPagoStack en Ventas/POS.cshtml, cajasStack en
-    // Cajas/CajasAbiertas.cshtml, traerModalFacturaAlFrente en Ventas/POS.cshtml): subir el
-    // z-index a mano con setProperty(...,'important') al mostrarse. Solo se llama cuando la
-    // Compra esta embebida en POS (el unico caso con otro modal ya abierto detras) -- en pantalla
-    // completa no hay nada que apilar.
-    function elevarZIndexSobreModalAbierto($modal) {
-        if (!$modal || !$modal.length) return;
-        var zIndex = 1040 + (10 * $('.modal.show').length);
-        $modal[0].style.setProperty('z-index', zIndex, 'important');
-
-        setTimeout(function () {
-            var backdrop = $('.modal-backdrop').not('.modal-stack').last();
-            if (backdrop.length) {
-                backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
-                backdrop.addClass('modal-stack');
-            }
-        }, 0);
-    }
-
+    // Apilado de #modalBuscarPersona/#modalBuscarProducto/alta de producto sobre #modalFinanzasPOS (Compra embebida en POS):
+    // lo resuelve de forma global modal-stack.js al mostrarse cada modal (z-index = el del modal abierto mas alto + 10,
+    // backdrop propio, saneo). Antes habia aca elevarZIndexSobreModalAbierto, que IGUALABA el z-index (empate) y marcaba
+    // "el ultimo backdrop sin modal-stack" (2026-10-06, ver docs/DECISIONS.md).
     // Item 3b (2026-09-12, ver docs/DECISIONS.md): el z-index solo no alcanzo -- #modalFinanzasPOS
     // (el modal de fondo, siempre presente cuando la Compra esta embebida en POS) tiene su propio
     // FocusTrap de Bootstrap 5 (bootstrap.bundle.js, clase FocusTrap) que reafirma el foco DENTRO
@@ -793,7 +773,6 @@
         // de POS venta) sepa que la creacion de personas no aplica aca.
         if (esEmbebido(state)) {
             $('#modalBuscarPersona').data('origen-persona-buscar', 'compra-embebida');
-            elevarZIndexSobreModalAbierto($('#modalBuscarPersona'));
             gestionarFocusTrapModalAbierto($('#modalBuscarPersona'), getHostModalSelector(state));
         } else {
             $('#modalBuscarPersona').removeData('origen-persona-buscar');
@@ -910,7 +889,7 @@
             // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 3b"): a diferencia de
             // #modalBuscarPersona (autocurado, se re-parenta al inyectarse), #modalBuscarProducto
             // es un sibling real desde el arranque de la pagina -- pero declarado ANTES que
-            // #modalFinanzasPOS en el DOM (Ventas/POS.cshtml). elevarZIndexSobreModalAbierto solo
+            // #modalFinanzasPOS en el DOM (Ventas/POS.cshtml). (la elevacion de z-index de entonces, hoy en modal-stack.js) solo
             // IGUALA el z-index al de #modalFinanzasPOS (mismo valor, no mayor) -- con z-index
             // empatado, Bootstrap/el navegador desempata por orden en el DOM, y gana el que esta
             // DESPUES (#modalFinanzasPOS). Re-parentarlo a body (como ultimo hijo) antes de
@@ -920,7 +899,6 @@
             if ($modal[0].parentNode !== document.body) {
                 $modal.appendTo(document.body);
             }
-            elevarZIndexSobreModalAbierto($modal);
             gestionarFocusTrapModalAbierto($modal, getHostModalSelector(state));
 
             // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 3b"): #modalBuscarProducto
@@ -1042,7 +1020,6 @@
         if (esEmbebido(state)) {
             // Mismo apilado que los buscadores: por encima del modal contenedor y sin robarle el foco.
             $modal.appendTo(document.body);
-            elevarZIndexSobreModalAbierto($modal);
             gestionarFocusTrapModalAbierto($modal, getHostModalSelector(state));
         }
 
