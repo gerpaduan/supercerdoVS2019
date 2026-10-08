@@ -316,10 +316,14 @@
 </div>
 
 <!-- Modal Actividades -->
-<div class="modal fade" id="modalActividadesCaja" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document">
+@* Mismo aspecto que "Mis actividades" del POS (Ventas/POS.cshtml, #modalFinanzasPOS.modal-mis-actividades-pos-
+   compacto): ancho 920px, header azul, body blanco. El estilo vive abajo, en el <style> de esta vista
+   (.modal-actividades-caja-compacto) -- pedido del usuario 2026-10-05: el modal de Cajas abiertas se veia
+   feo (header cyan, 60% del ancho, columna Acciones cortada). *@
+<div class="modal fade modal-actividades-caja-compacto" id="modalActividadesCaja" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-info text-white">
+            <div class="modal-header">
                 <h5 class="modal-title">Actividades</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -404,7 +408,15 @@
 
                         <div class="col-md-6">
                             <label>Fecha Cierre</label>
-                            <input type="text" id="FechaCierre" class="form-control" readonly />
+                            @* Si la caja sigue abierta muestra la fecha/hora de ahora; el boton recarga ventas y egresos
+                               hasta este momento y recalcula la diferencia con el "Caja Cierre" ya tipeado. *@
+                            <div class="input-group">
+                                <input type="text" id="FechaCierre" class="form-control" readonly />
+                                <button type="button" class="btn btn-outline-secondary" id="btnActualizarDatosCierre"
+                                        title="Actualizar datos (ventas, egresos y fecha) y recalcular" aria-label="Actualizar datos del cierre">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -494,12 +506,66 @@
     #btnActualizarDatosCierre.conteo-cambio-pulso { animation: conteoCambioPulso 1.2s ease-in-out infinite; }
     @@keyframes conteoCambioPulso { 0%, 100% { box-shadow: 0 0 0 0 rgba(246, 194, 62, .7); } 50% { box-shadow: 0 0 0 6px rgba(246, 194, 62, 0); } }
 
+    /* Copia de #modalFinanzasPOS.modal-mis-actividades-pos-compacto (Ventas/POS.cshtml). */
+    #modalActividadesCaja.modal-actividades-caja-compacto .modal-dialog {
+        max-width: 920px;
+        width: calc(100% - 1rem);
+        margin: 1.25rem auto;
+    }
+
     @@media (min-width: 992px) {
-        #modalActividadesCaja .modal-dialog {
-            width: 60%;
-            max-width: none;
+        #modalActividadesCaja.modal-actividades-caja-compacto .modal-dialog {
+            width: min(920px, calc(100% - 1rem));
+        }
+    }
+
+    #modalActividadesCaja.modal-actividades-caja-compacto .modal-body {
+        padding: 0 !important;
+        background-color: #fff;
+    }
+
+    #modalActividadesCaja.modal-actividades-caja-compacto .modal-header {
+        background: #4e73df !important;
+        border-bottom: none;
+        padding: .9rem 1.1rem;
+    }
+
+    #modalActividadesCaja.modal-actividades-caja-compacto .modal-title,
+    #modalActividadesCaja.modal-actividades-caja-compacto .close {
+        color: #fff !important;
+        text-shadow: none !important;
+        font-weight: 700;
+    }
+
+    #modalActividadesCaja.modal-actividades-caja-compacto .close {
+        opacity: .85;
+    }
+
+    html.dark-mode #modalActividadesCaja.modal-actividades-caja-compacto .modal-body {
+        background-color: #182232;
+    }
+
+    html.dark-mode #modalActividadesCaja.modal-actividades-caja-compacto .modal-header,
+    body.dark-mode #modalActividadesCaja.modal-actividades-caja-compacto .modal-header {
+        background: #2b4a86 !important;
+    }
+
+    @@media (max-width: 767.98px) {
+        #modalActividadesCaja.modal-actividades-caja-compacto .modal-dialog {
+            width: calc(100% - .5rem);
+            margin: .25rem auto;
         }
 
+        #modalActividadesCaja.modal-actividades-caja-compacto .modal-header {
+            padding: .75rem .9rem;
+        }
+
+        #modalActividadesCaja.modal-actividades-caja-compacto .modal-title {
+            font-size: 1rem;
+        }
+    }
+
+    @@media (min-width: 992px) {
         #modalCerrarCaja .modal-dialog {
             max-width: 620px;
             margin: 0.75rem auto;
@@ -1386,6 +1452,49 @@
         $(document).on('click', '#btnVerConteoCajero', function (e) {
             e.preventDefault();
             $("#conteoCajeroDetalle").toggleClass("d-none");
+        });
+
+        // Boton "actualizar" junto a Fecha Cierre: vuelve a pedir los datos de la caja (ventas y egresos hasta ahora)
+        // y recalcula con lo que el cajero ya tipeo. Trae tambien el conteo del cajero (por si lo cargo o corrigio
+        // mientras este modal estaba abierto): pisa Caja Cierre solo si el encargado no lo habia tipeado a mano.
+        // NO pisa Importe Retirado (es input del usuario).
+        $(document).on('click', '#btnActualizarDatosCierre', function () {
+            let $btn = $(this);
+            let id = $("#Id").val();
+            if (!id || $btn.prop("disabled")) {
+                return;
+            }
+
+            $btn.prop("disabled", true).find("i").addClass("fa-spin");
+            $("#cerrarCajaError").addClass("d-none").text("");
+
+            $.ajax({
+                url: '@Url.Action("ObtenerDatosCierre", "Cajas")',
+                type: 'GET',
+                cache: false,
+                data: {
+                    id: id,
+                    modoModificacion: $("#ModoModificacion").val() === "true"
+                },
+                success: function (data) {
+                    $("#FechaCierre").val(data.fechaCierre || "");
+                    setFormattedValue("#Ventas", data.ventas);
+                    setFormattedValue("#EgresosCaja", data.egresosCaja);
+                    precargarConteoCajero(data);
+                    renderConteoCajero(data);
+                    recalcularCierre();
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudieron actualizar los datos del cierre.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    $("#cerrarCajaError").removeClass("d-none").text(mensaje);
+                },
+                complete: function () {
+                    $btn.prop("disabled", false).find("i").removeClass("fa-spin");
+                }
+            });
         });
 
         $('#modalCerrarCaja').on('shown.bs.modal', function () {

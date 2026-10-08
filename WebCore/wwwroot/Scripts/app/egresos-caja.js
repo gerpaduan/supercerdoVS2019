@@ -1112,6 +1112,25 @@
 
                 abrirModificar($(this).data("id"));
             })
+            // Imprimir un egreso ya guardado: abre el mismo modal que al guardar (cerrar / ticket 58-80 / PDF / mail).
+            // Las URLs vienen en data-* del boton (las arma el servidor con Url.Action en _EgresosCajaTabla).
+            .off("click.egresosImprimir", ".btn-imprimir-egreso")
+            .on("click.egresosImprimir", ".btn-imprimir-egreso", function () {
+                var $btn = $(this);
+                if (!window.PostComprobanteModal) return;
+
+                window.PostComprobanteModal.open({
+                    titulo: "Egreso de caja N° " + $btn.data("id"),
+                    mensaje: "¿Qué querés hacer con el comprobante?",
+                    ticketUrl: $btn.data("ticket-url"),
+                    ticketPayloadUrl: $btn.data("ticket-payload-url"),
+                    pdfUrl: $btn.data("pdf-url"),
+                    emailDatosUrl: $btn.data("email-datos-url"),
+                    emailEnviarUrl: $btn.data("email-enviar-url"),
+                    emailIdCampo: "idEgreso",
+                    id: $btn.data("id")
+                });
+            })
             .off("change.egresosVistaCompleta", "#switchVistaCompletaEgresos")
             .on("change.egresosVistaCompleta", "#switchVistaCompletaEgresos", function () {
                 aplicarVistaCompleta();

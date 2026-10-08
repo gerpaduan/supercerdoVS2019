@@ -189,6 +189,9 @@
     var descripcionesAnuladas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     string sucursalActividad = ViewBag.SucursalActividad as string ?? "";
     var tiposEgresoCajaLookup = ViewBag.TiposEgresoCaja as DataTable;
+    // En Mis actividades / Actividades (modoActividades) la columna Detalle se oculta: la fila avisa con una etiqueta
+    // "Con detalle" y el texto se ve al desplegar la fila (2026-10-06, ver docs/DECISIONS.md). En el listado completo se mantiene.
+    int columnasTabla = modoActividades ? 6 : 7;
 
     if (Model != null && Model.Columns.Contains("Monto"))
     {
@@ -237,7 +240,10 @@
                 <th>Tipo</th>
                 <th>Descripcion</th>
                 <th class="text-right">Monto</th>
-                <th>Detalle</th>
+                @if (!modoActividades)
+                {
+                    <th>Detalle</th>
+                }
                 <th>Sucursal</th>
                 <th class="text-nowrap">Acciones</th>
             </tr>
@@ -246,7 +252,7 @@
             @if (Model == null || Model.Rows.Count == 0)
             {
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">No se encontraron egresos.</td>
+                    <td colspan="@columnasTabla" class="text-center text-muted py-4">No se encontraron egresos.</td>
                 </tr>
             }
             else
@@ -274,6 +280,9 @@
                         ? Url.Action("ModificarCompra", "Compras", new { id = idCompraRelacionado, origen = desdePos ? "pos" : "layout" })
                         : "";
                     string tipoModificacion = puedeModificarCompra ? "compra" : "egreso";
+                    string detalleTexto = Valor(row, "Detalle");
+                    // El conteo de billetes tambien se ve al desplegar la fila: cuenta como "tiene detalle" para la etiqueta.
+                    bool tieneDetalle = !string.IsNullOrWhiteSpace(detalleTexto) || !string.IsNullOrWhiteSpace(Valor(row, "ConteoBilletes"));
 
                     <tr class="egreso-row @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-id="@id" data-esgasto="@(EsGasto(row, tiposEgresoCajaLookup) ? "1" : "0")">
                         <td class="text-nowrap">@Fecha(row, "Fecha")</td>
@@ -294,12 +303,17 @@
                             {
                                 <div class="small text-muted mt-1">Registro modificado. Verificar cambios.</div>
                             }
+                            @if (modoActividades && tieneDetalle)
+                            {
+                                <div class="mt-1"><span class="badge badge-info egreso-tag-detalle" title="Desplegá la fila (flecha) para ver el detalle"><i class="fas fa-info-circle mr-1"></i>Con detalle</span></div>
+                            }
                         </td>
                         <td class="text-right text-nowrap">$ @Monto(row)</td>
+                        @if (!modoActividades)
+                        {
                         <td>
                             @* Resumen de la primera linea del detalle (el texto completo va en el tooltip y en el desplegable). *@
                             @{
-                                var detalleTexto = Valor(row, "Detalle");
                                 var detalleResumen = detalleTexto.Replace("\r", "").Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
                             }
                             @if (!string.IsNullOrWhiteSpace(detalleTexto))
@@ -307,6 +321,7 @@
                                 <span class="d-inline-block text-truncate align-middle" style="max-width:220px;" title="@detalleTexto">@detalleResumen</span>
                             }
                         </td>
+                        }
                         <td>@sucursalFila</td>
                         <td class="text-nowrap">
                             <button type="button"
@@ -319,6 +334,22 @@
                                     aria-label="Detalles">
                                 <i class="fas fa-chevron-down"></i>
                             </button>
+                            @* Imprimir: abre el mismo modal que al guardar el egreso (cerrar / ticket 58-80 / PDF / mail). *@
+                            @if (!string.IsNullOrWhiteSpace(id))
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-imprimir-egreso"
+                                        data-id="@id"
+                                        data-ticket-url="@Url.Action("ImprimirTicketEgreso", "Cajas", new { id })"
+                                        data-ticket-payload-url="@Url.Action("ImprimirTicketEgresoPayload", "Cajas", new { id })"
+                                        data-pdf-url="@Url.Action("ImprimirPdfEgreso", "Cajas", new { id })"
+                                        data-email-datos-url="@Url.Action("ObtenerDatosEmailEgreso", "Cajas", new { id })"
+                                        data-email-enviar-url="@Url.Action("EnviarEgresoEmail", "Cajas")"
+                                        title="Imprimir"
+                                        aria-label="Imprimir">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            }
                             @if (mostrarBotonModificar)
                             {
                                 <button type="button"
@@ -335,7 +366,7 @@
                         </td>
                     </tr>
                     <tr class="egreso-detalle-row">
-                        <td colspan="7" class="p-0">
+                        <td colspan="@columnasTabla" class="p-0">
                             <div id="@detalleId" class="collapse egreso-detalle-collapse">
                                 <div class="p-3 border-top egreso-detalle-wrap">
                                     <div class="egreso-detalle-meta-card">
@@ -453,6 +484,21 @@
                             aria-label="Detalles">
                         <i class="fas fa-chevron-down"></i>
                     </button>
+                    @if (!string.IsNullOrWhiteSpace(id))
+                    {
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary mr-1 btn-imprimir-egreso"
+                                data-id="@id"
+                                data-ticket-url="@Url.Action("ImprimirTicketEgreso", "Cajas", new { id })"
+                                data-ticket-payload-url="@Url.Action("ImprimirTicketEgresoPayload", "Cajas", new { id })"
+                                data-pdf-url="@Url.Action("ImprimirPdfEgreso", "Cajas", new { id })"
+                                data-email-datos-url="@Url.Action("ObtenerDatosEmailEgreso", "Cajas", new { id })"
+                                data-email-enviar-url="@Url.Action("EnviarEgresoEmail", "Cajas")"
+                                title="Imprimir"
+                                aria-label="Imprimir">
+                            <i class="fas fa-print"></i>
+                        </button>
+                    }
                     @if (mostrarBotonModificar)
                     {
                         <button type="button"

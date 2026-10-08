@@ -251,7 +251,10 @@ namespace WebCore.Controllers
                 vendedor = caja.UsuarioInicio.Nombre,
                 cajaInicial = caja.CajaInicio,
                 fechaApertura = caja.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm"),
-                fechaCierre = caja.FechaHoraCierre.HasValue ? caja.FechaHoraCierre.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                // Caja ya cerrada: su fecha real. Caja abierta: "ahora", el mismo corte hasta el que se suman
+                // las ventas (fechaHastaVentas), para que lo que se ve en pantalla sea coherente. Solo informativa:
+                // CerrarCaja no la recibe, la fecha real se asigna al guardar.
+                fechaCierre = (caja.FechaHoraCierre ?? fechaHastaVentas).ToString("dd/MM/yyyy HH:mm"),
                 usuario = (caja.UsuarioCierre != null && caja.UsuarioCierre.Id > 0)
                     ? caja.UsuarioCierre.Nombre
                     : usuarioAutorizado.Nombre,
@@ -477,6 +480,9 @@ namespace WebCore.Controllers
             // sin el chequeo de permiso -- mismo batch de Egresos de Caja, 2026-09-10).
             ViewBag.MostrarResumenMisActividades = _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.VerEgresosCaja, DateTime.Today, -1);
             ViewBag.ModoActividades = true;
+            // Actividades de Cajas abiertas / Cerrar caja (layout comun, letra mas grande que la del POS): se usa el mismo
+            // formato compacto de "Mis actividades" del POS para que la tabla entre sin dejar columnas fuera de la vista.
+            ViewBag.ActividadesCompacta = true;
             ViewBag.PermitirNuevo = CajaSigueAbierta(cierre) &&
                 user != null &&
                 _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditEgresoCaja, DateTime.Today, user.Id);

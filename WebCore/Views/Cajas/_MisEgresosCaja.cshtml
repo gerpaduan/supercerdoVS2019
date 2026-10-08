@@ -12,12 +12,14 @@
     string vendedorActividad = ViewBag.VendedorActividad as string;
     string sucursalActividadEncabezado = ViewBag.SucursalActividad as string;
     bool mostrarResumenMisActividades = ViewBag.MostrarResumenMisActividades == null || (bool)ViewBag.MostrarResumenMisActividades;
+    // Formato compacto (el del POS): desde el POS, o en las Actividades de Cajas abiertas (ver CajasController.ActividadesCaja).
     bool permitirMiCierre = ViewBag.PermitirMiCierre != null && (bool)ViewBag.PermitirMiCierre;
     string urlMiCierre = ViewBag.UrlMiCierre as string ?? "";
     bool miCierreYaCargado = ViewBag.MiCierreYaCargado != null && (bool)ViewBag.MiCierreYaCargado;
+    bool formatoCompacto = desdePos || (ViewBag.ActividadesCompacta != null && (bool)ViewBag.ActividadesCompacta);
 }
 
-<div class="egresos-pos mis-actividades-modal @(desdePos ? "mis-actividades-pos-compacta" : "")">
+<div class="egresos-pos mis-actividades-modal @(formatoCompacto ? "mis-actividades-pos-compacta" : "")">
     @if (!string.IsNullOrWhiteSpace(mensaje))
     {
         <div class="alert alert-warning m-3">@mensaje</div>
@@ -344,6 +346,7 @@
     }
 
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-detalle-egreso,
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-imprimir-egreso,
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-modificar-egreso {
         padding: .06rem .22rem;
         line-height: 1;

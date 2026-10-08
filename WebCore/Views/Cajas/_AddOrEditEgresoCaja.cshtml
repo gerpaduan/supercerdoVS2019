@@ -40,13 +40,16 @@
 
         <div id="egresoCajaError" class="alert alert-danger d-none"></div>
 
+        @* Encabezado en UNA linea (vendedor y sucursal juntos): ocupaba tres renglones y empujaba el formulario fuera
+           de la pantalla (2026-10-06, ver docs/DECISIONS.md). *@
         <div class="egreso-form-head">
-            <div>
-                <span class="text-muted d-block">@(esEdicion ? "Modificacion" : "Vendedor")</span>
+            <div class="egreso-form-head-linea">
+                <span class="text-muted">@(esEdicion ? "Modificacion" : "Vendedor"):</span>
                 <strong>@(usuario != null ? usuario.Nombre : "-")</strong>
                 @if (!string.IsNullOrWhiteSpace(sucursalActual))
                 {
-                    <small class="text-muted d-block mt-1">Sucursal: <strong>@sucursalActual</strong></small>
+                    <span class="egreso-form-head-sep" aria-hidden="true">&middot;</span>
+                    <span class="text-muted">Sucursal:</span> <strong>@sucursalActual</strong>
                 }
             </div>
             @if (desdePos)
@@ -57,7 +60,7 @@
             }
         </div>
 
-        <div class="egreso-form-grid">
+        <div class="egreso-form-grid @(mostrarSucursales ? "egreso-con-sucursal" : "")">
             @if (mostrarSucursales)
             {
                 <div class="form-group egreso-field egreso-field-sucursal">
@@ -153,7 +156,7 @@
                     <label class="custom-control-label" for="egresoUsarDetalle">Detalle</label>
                 </div>
                 <div id="egresoDetalleWrap">
-                    <textarea class="form-control" id="egresoDetalle" name="detalle" rows="3">@detalleActual</textarea>
+                    <textarea class="form-control" id="egresoDetalle" name="detalle" rows="2">@detalleActual</textarea>
                 </div>
             </div>
 
@@ -175,12 +178,28 @@
         <div class="egreso-form-actions">
             @if (esEdicion)
             {
-                <button type="button"
-                        class="btn btn-primary btn-block mb-2"
-                        id="btnHabilitarEdicionEgresoCaja"
-                        data-edit-readonly-ignore="true">
-                    <i class="fas fa-edit mr-1"></i> Modificar
-                </button>
+                @* Modo vista: Imprimir (abre el modal de comprobante: cerrar / ticket / PDF / mail) junto a Modificar.
+                   Al activar la modificacion ambos se ocultan (ver setSoloLectura). *@
+                <div class="egreso-acciones-vista">
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            id="btnImprimirEgresoCaja"
+                            data-edit-readonly-ignore="true"
+                            data-id="@(Model != null ? Model.Id : 0)"
+                            data-ticket-url="@Url.Action("ImprimirTicketEgreso", "Cajas", new { id = Model != null ? Model.Id : 0 })"
+                            data-ticket-payload-url="@Url.Action("ImprimirTicketEgresoPayload", "Cajas", new { id = Model != null ? Model.Id : 0 })"
+                            data-pdf-url="@Url.Action("ImprimirPdfEgreso", "Cajas", new { id = Model != null ? Model.Id : 0 })"
+                            data-email-datos-url="@Url.Action("ObtenerDatosEmailEgreso", "Cajas", new { id = Model != null ? Model.Id : 0 })"
+                            data-email-enviar-url="@Url.Action("EnviarEgresoEmail", "Cajas")">
+                        <i class="fas fa-print mr-1"></i> Imprimir
+                    </button>
+                    <button type="button"
+                            class="btn btn-primary"
+                            id="btnHabilitarEdicionEgresoCaja"
+                            data-edit-readonly-ignore="true">
+                        <i class="fas fa-edit mr-1"></i> Modificar
+                    </button>
+                </div>
             }
             <button type="submit" class="btn btn-success btn-block @(esEdicion ? "d-none" : "")" id="btnGuardarEgresoCaja">
                 <i class="fas fa-save mr-1"></i> Guardar egreso
@@ -220,7 +239,35 @@
     }
 
     .egreso-form-grid .form-group {
-        margin-bottom: .65rem;
+        margin-bottom: .5rem;
+    }
+
+    /* Que el formulario entre entero en el modal sin scroll: menos aire en el contenedor y en el encabezado (que ahora
+       es una sola linea). Los selectores llevan body.app-shell para ganarle a ui-refresh.css / custom.css. */
+    body.app-shell .egreso-form-wrap {
+        padding: .65rem .9rem;
+        margin-bottom: 0;
+    }
+
+    body.app-shell .egreso-form-head {
+        padding: .35rem .75rem;
+        margin-bottom: .55rem;
+    }
+
+    .egreso-form-head-linea { line-height: 1.3; }
+    .egreso-form-head-sep { margin: 0 .4rem; opacity: .6; }
+
+    /* El conteo de billetes es de solo lectura: sin handle de redimensionar (su alto se ajusta al contenido). */
+    .egreso-form-grid .egreso-field-conteo textarea {
+        min-height: 4.4rem;
+        resize: none;
+        line-height: 1.25;
+        font-size: calc(1rem - 2pt); /* 2 pt mas chico que el resto de los campos */
+    }
+
+    .egreso-form-grid .egreso-field-detalle textarea {
+        min-height: 4.4rem;
+        resize: vertical;
     }
 
     @@media (min-width: 992px) {
@@ -251,14 +298,23 @@
         .egreso-form-grid .egreso-field-conteo { grid-column: span 6; }
 
         .egreso-form-actions {
-            margin-top: .5rem;
+            margin-top: .25rem;
         }
 
-        .egreso-form-actions .btn {
+        .egreso-form-actions > .btn {
             max-width: 18rem;
             margin-left: auto;
         }
+
+        .egreso-form-actions .egreso-acciones-vista {
+            max-width: 22rem;
+            margin-left: auto;
+        }
     }
+
+    /* Modo vista: Imprimir y Modificar lado a lado, cada uno a mitad de ancho (se ocultan solos con d-none). */
+    .egreso-acciones-vista { display: flex; gap: .5rem; margin-bottom: .5rem; }
+    .egreso-acciones-vista .btn { flex: 1 1 0; }
 </style>
 
 <script>
@@ -612,6 +668,13 @@
                 btnModificar.classList.toggle("d-none", !readOnly);
             }
 
+            // Imprimir solo existe en modo vista: al activar la modificacion desaparece junto con Modificar
+            // (se oculta el contenedor para no dejar un hueco de margen).
+            var acciones = document.querySelector("#formEgresoCaja .egreso-acciones-vista");
+            if (acciones) {
+                acciones.classList.toggle("d-none", !readOnly);
+            }
+
             if (btnGuardar) {
                 btnGuardar.classList.toggle("d-none", readOnly);
                 btnGuardar.disabled = readOnly;
@@ -624,6 +687,27 @@
                     evt.preventDefault();
                     return false;
                 }
+            });
+        }
+
+        // Imprimir (modo vista): abre el mismo modal de comprobante que al guardar. Sin onClose: el formulario sigue abierto.
+        var btnImprimir = document.getElementById("btnImprimirEgresoCaja");
+        if (btnImprimir) {
+            btnImprimir.addEventListener("click", function () {
+                if (!window.PostComprobanteModal) {
+                    return;
+                }
+                window.PostComprobanteModal.open({
+                    titulo: "Egreso de caja N° " + btnImprimir.dataset.id,
+                    mensaje: "¿Qué querés hacer con el comprobante?",
+                    ticketUrl: btnImprimir.dataset.ticketUrl,
+                    ticketPayloadUrl: btnImprimir.dataset.ticketPayloadUrl,
+                    pdfUrl: btnImprimir.dataset.pdfUrl,
+                    emailDatosUrl: btnImprimir.dataset.emailDatosUrl,
+                    emailEnviarUrl: btnImprimir.dataset.emailEnviarUrl,
+                    emailIdCampo: "idEgreso",
+                    id: btnImprimir.dataset.id
+                });
             });
         }
 
