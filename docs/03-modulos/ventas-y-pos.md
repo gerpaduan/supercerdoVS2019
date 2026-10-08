@@ -13,6 +13,10 @@ Documentar el flujo de ventas, caja, articulos, pesaje y uso del POS.
 - Dependencias con balanza o perifericos
 - Riesgos
 
+## Modificar una venta de una caja ya cerrada y validación de caja al finalizar — 2026-10-06
+
+- **Modificar una venta** (`ModificarVenta`): si la venta pertenece a una caja **ya cerrada** (vendedor + sucursal + fecha original), el POS en modo edición muestra el banner `#alertaVentaDeCajaCerrada`; si el cambio altera **monto, forma de pago, fecha o sucursal**, el servidor responde `requiereConfirmacion` y `forma-pago.js` pide confirmar (reenvía con `confirmarCajaCerrada`). Siempre que sea caja cerrada queda un aviso en el cierre (`auditoriacierrecaja`, origen `VENTA`). Detalle: `docs/03-modulos/caja-y-tesoreria.md` y `docs/DECISIONS.md` (2026-10-06).
+
 ## Ventas en curso (borrador en servidor) y advertencias del POS
 
 Ver decisión completa, verificación y lista de archivos en `docs/DECISIONS.md` ("Ventas en curso:

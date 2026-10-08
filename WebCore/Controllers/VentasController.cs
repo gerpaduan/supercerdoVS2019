@@ -2687,6 +2687,28 @@ namespace WebCore.Controllers
                 ViewBag.SoloFormaPago = soloFormaPago;
                 ViewBag.IdCierreActividadPOS = cierreEditar?.Id ?? 0;
 
+                // Aviso fijo si la venta pertenece a una caja YA CERRADA (2026-10-06, ver docs/DECISIONS.md "Cambios en
+                // cajas cerradas y reapertura"): por vendedor + sucursal + fecha de la venta. Informativo; la confirmacion
+                // al guardar la pide ModificarVenta. Si falla la consulta no se bloquea la edicion (solo se pierde el aviso).
+                try
+                {
+                    var cajaCerradaDeLaVenta = new Negocio.CajaCerradaServicio(_oCierreN).Evaluar(
+                        new Negocio.CajaCerradaConsulta(
+                            ventaEditar.Vendedor != null ? ventaEditar.Vendedor.Id : 0,
+                            ventaEditar.Sucursal != null ? ventaEditar.Sucursal.idSucursal : 0,
+                            ventaEditar.FechaVenta)).FirstOrDefault();
+                    if (cajaCerradaDeLaVenta != null)
+                    {
+                        ViewBag.VentaDeCajaCerrada = true;
+                        ViewBag.CajaCerradaId = cajaCerradaDeLaVenta.Id;
+                        ViewBag.CajaCerradaFecha = cajaCerradaDeLaVenta.FechaHoraCierre?.ToString("dd/MM/yyyy HH:mm") ?? "";
+                    }
+                }
+                catch (Exception exCaja)
+                {
+                    System.Diagnostics.Trace.TraceWarning("No se pudo evaluar si la venta " + idVentaEditar + " pertenece a una caja cerrada: " + exCaja.Message);
+                }
+
                 return View(ventaEditar);
             }
 
@@ -3014,6 +3036,17 @@ namespace WebCore.Controllers
                 if (venta == null)
                     return Json(new { ok = false, msg = "La venta no existe." });
 
+                // Estado ORIGINAL de la venta, capturado antes de que ModificarVenta lo pise (cambia sucursal, fecha, forma
+                // de pago y reemplaza las lineas): se usa para saber a que caja pertenecia y que cambio realmente.
+                // Cambios en cajas cerradas (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas cerradas y reapertura").
+                int duenoVentaOriginal = venta.Vendedor != null ? venta.Vendedor.Id : 0;
+                int sucursalVentaOriginal = venta.Sucursal != null ? venta.Sucursal.idSucursal : 0;
+                DateTime fechaVentaOriginal = venta.FechaVenta;
+                string formaPagoOriginal = venta.FormaPago;
+                double importeVentaOriginal = venta.LineasVenta != null && venta.LineasVenta.Count > 0
+                    ? venta.getImporteVenta(venta)
+                    : venta.TotalImporte;
+
                 var operador = ResolverOperadorPOS(request.PosInstanceId, user);
 
                 // Cuenta corriente reservada: no se modifica una venta que el operador no puede ver.
@@ -3108,7 +3141,47 @@ namespace WebCore.Controllers
                     .ToList();
                 CompletarAnulacionesVenta(venta.LineasVenta);
 
+                // ---- Cajas YA CERRADAS afectadas (2026-10-06, ver docs/DECISIONS.md) ----
+                // La venta pertenecia a una caja por (vendedor, sucursal, fecha): se evalua la caja de la fecha/sucursal
+                // ORIGINAL y, si cambiaron, tambien la de destino. Si alguna esta cerrada y el cambio altera monto,
+                // forma de pago, fecha o sucursal, se pide confirmacion (el servidor decide, no el cliente).
+                double importeVentaNuevo = venta.getImporteVenta(venta);
+                var cajaCerradaN = new Negocio.CajaCerradaServicio(_oCierreN);
+                var consultasCaja = new List<Negocio.CajaCerradaConsulta>
+                {
+                    new Negocio.CajaCerradaConsulta(duenoVentaOriginal, sucursalVentaOriginal, fechaVentaOriginal)
+                };
+                if (Negocio.CambioCajaCerrada.CambioFecha(fechaVentaOriginal, venta.FechaVenta) || venta.Sucursal.idSucursal != sucursalVentaOriginal)
+                    consultasCaja.Add(new Negocio.CajaCerradaConsulta(duenoVentaOriginal, venta.Sucursal.idSucursal, venta.FechaVenta));
+                var cajasCerradasVenta = cajaCerradaN.Evaluar(consultasCaja.ToArray());
+
+                if (cajasCerradasVenta.Count > 0 && !request.ConfirmarCajaCerrada
+                    && Negocio.CambioCajaCerrada.HuboCambioQueAfectaCierre(
+                        importeVentaOriginal, importeVentaNuevo, formaPagoOriginal, venta.FormaPago,
+                        fechaVentaOriginal, venta.FechaVenta, sucursalVentaOriginal, venta.Sucursal.idSucursal))
+                {
+                    var cambioVenta = new List<string>();
+                    if (Math.Abs(importeVentaOriginal - importeVentaNuevo) >= Negocio.CambioCajaCerrada.ToleranciaImporte)
+                        cambioVenta.Add(WebCore.Helpers.CajaCerradaRespuesta.LineaImporte("Monto de la venta", importeVentaOriginal, importeVentaNuevo));
+                    if (!string.Equals((formaPagoOriginal ?? "").Trim(), (venta.FormaPago ?? "").Trim(), StringComparison.OrdinalIgnoreCase))
+                        cambioVenta.Add(WebCore.Helpers.CajaCerradaRespuesta.LineaTexto("Forma de pago", formaPagoOriginal, venta.FormaPago));
+                    if (Negocio.CambioCajaCerrada.CambioFecha(fechaVentaOriginal, venta.FechaVenta))
+                        cambioVenta.Add(WebCore.Helpers.CajaCerradaRespuesta.LineaFecha("Fecha de la venta", fechaVentaOriginal, venta.FechaVenta));
+                    if (venta.Sucursal.idSucursal != sucursalVentaOriginal)
+                        cambioVenta.Add("Sucursal de la venta: " + sucursalVentaOriginal + " → " + venta.Sucursal.idSucursal);
+
+                    return Json(WebCore.Helpers.CajaCerradaRespuesta.Confirmacion(cajasCerradasVenta, cambioVenta, "modificar"));
+                }
+
                 _oVentaN.modificarVenta(venta, venta.Sucursal.idSucursal, !soloFormaPago, null);
+
+                // Aviso en el cierre de cada caja afectada (cualquier modificacion, aunque no haya pedido confirmacion:
+                // p. ej. solo observaciones). Fuera de la transaccion de la venta: si falla solo se loguea.
+                cajaCerradaN.Registrar(
+                    Entidades.AuditoriaCierreCaja.OrigenVenta, venta.IdVenta, Entidades.AuditoriaCierreCaja.AccionModificacion,
+                    cajasCerradasVenta, operador.Id, operador.Nombre,
+                    importeVentaOriginal, importeVentaNuevo, formaPagoOriginal, venta.FormaPago,
+                    soloFormaPago ? "Cambio de forma de pago desde el detalle de la venta." : "Venta modificada desde el POS.");
 
                 return Json(new { ok = true, ventaId = venta.IdVenta });
             }

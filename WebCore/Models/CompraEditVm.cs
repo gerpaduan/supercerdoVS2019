@@ -15,6 +15,11 @@ namespace WebCore.Models
 
         public string Origen { get; set; } = "layout";
 
+        // Confirmacion del usuario para modificar una compra cuyo egreso de caja cae en una caja YA CERRADA (2026-10-06, ver
+        // docs/DECISIONS.md "Cambios en cajas cerradas y reapertura"): Guardar responde requiereConfirmacion y compras.js
+        // reenvia el formulario con ConfirmarCajaCerrada=true.
+        public bool ConfirmarCajaCerrada { get; set; }
+
         public bool DesdePos { get; set; }
 
         // Origen "modal": embebida en un modal fuera del POS (Cta. Cte. de proveedor). Sin logica de caja.

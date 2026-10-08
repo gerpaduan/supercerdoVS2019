@@ -321,6 +321,19 @@
             </div>
         }
 
+        @* Venta de una caja YA CERRADA (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas cerradas y reapertura"):
+           aviso fijo al modificarla. La confirmacion al guardar (si cambia monto o forma de pago) la pide el servidor. *@
+        @if (esEdicionVenta && ViewBag.VentaDeCajaCerrada != null && (bool)ViewBag.VentaDeCajaCerrada)
+        {
+            <div class="alert alert-danger py-2 px-3 mb-2 small mx-2" id="alertaVentaDeCajaCerrada" role="alert">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                <strong>Esta venta pertenece a una caja que ya fue cerrada</strong>
+                (caja #@ViewBag.CajaCerradaId@(string.IsNullOrEmpty((string)ViewBag.CajaCerradaFecha) ? "" : ", cerrada el " + (string)ViewBag.CajaCerradaFecha)).
+                Si modificás el monto o la forma de pago, el cierre de esa caja va a quedar inconsistente.
+                Los cambios quedan registrados como aviso en el cierre.
+            </div>
+        }
+
         <!-- Vista: Punto de Venta -->
         <div class="container-fluid p-1" id="pos-app">
 

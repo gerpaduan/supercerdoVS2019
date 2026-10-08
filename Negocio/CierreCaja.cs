@@ -133,6 +133,49 @@ namespace Negocio
         {
             oCierreD.addOrEditCierreCaja(oCierreE);
         }
+        // ===== Auditoria de cierres y reapertura (2026-10-06, ver docs/DECISIONS.md) -- solo Postgres =====
+
+        // false en SQL Server: los llamadores ni consultan ni registran (comportamiento de siempre).
+        public bool SoportaAuditoriaCierre => oCierreD.SoportaAuditoriaCierre;
+
+        // Caja YA CERRADA del dueno/sucursal que contiene la fecha, o null. Es la relacion por rango (no hay FK):
+        // dueno + sucursal + fecha entre apertura y cierre. Con SQL Server siempre null.
+        public Entidades.CierreCaja BuscarCajaCerradaQueContiene(int idDueno, int idSucursal, DateTime fecha)
+        {
+            if (!oCierreD.SoportaAuditoriaCierre || idDueno <= 0 || idSucursal <= 0) return null;
+
+            DataTable dt = oCierreD.findCierreCerradoQueContiene(idDueno, idSucursal, fecha);
+            List<Entidades.CierreCaja> lista = convertDatatableToList(dt);
+            return lista.Count > 0 ? lista[0] : null;
+        }
+
+        public void registrarAuditoriaCierre(Entidades.AuditoriaCierreCaja auditoria)
+        {
+            oCierreD.registrarAuditoriaCierre(auditoria);
+        }
+
+        public DataTable obtenerAuditoriaCierre(int idCierre)
+        {
+            return oCierreD.obtenerAuditoriaCierre(idCierre);
+        }
+
+        // Egreso de caja de una compra (solo las de POS lo tienen) o EgresoCaja con Id 0. Con SQL Server siempre vacio.
+        public Entidades.EgresoCaja findEgresoCajaPorCompra(int idCompra)
+        {
+            if (!oCierreD.SoportaAuditoriaCierre) return new Entidades.EgresoCaja();
+            return oCierreD.findEgresoCajaPorCompra(idCompra);
+        }
+
+        public Contratos.PreviewReapertura obtenerPreviewReapertura(int idCierre)
+        {
+            return oCierreD.obtenerPreviewReapertura(idCierre);
+        }
+
+        public Contratos.ResultadoReapertura reabrirCierreCaja(int idCierre, int idUsuarioEjecutor, string usuarioEjecutor, string motivo)
+        {
+            return oCierreD.reabrirCierreCaja(idCierre, idUsuarioEjecutor, usuarioEjecutor, motivo);
+        }
+
         public Entidades.CierreCaja.ResultadoOperacion addOrEditCierreCaja_Result(Entidades.CierreCaja oCierreE)
         {
 

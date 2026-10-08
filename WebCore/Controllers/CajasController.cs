@@ -52,6 +52,8 @@ namespace WebCore.Controllers
             public bool Ok { get; set; }
             public int Id { get; set; }
             public string Mensaje { get; set; } = "";
+            // No nulo = el egreso cae en una caja YA CERRADA y hay que confirmar (CajaCerradaRespuesta.Confirmacion).
+            public object Confirmacion { get; set; }
         }
 
         public sealed class CambioSucursalCajaPostVm
@@ -260,7 +262,10 @@ namespace WebCore.Controllers
                 diferencia = caja.Diferencia,
                 importeRetirado = caja.ImporteRetirado,
                 cajaInicioSiguiente = caja.CajaInicioSiguiente,
-                modoModificacion = modoModificacion
+                modoModificacion = modoModificacion,
+                // Avisos del cierre (cambios posteriores al cierre y reaperturas, 2026-10-06): vacio en SQL Server.
+                soportaAuditoriaCierre = _oCierreN.SoportaAuditoriaCierre,
+                cambiosPosteriores = ObtenerCambiosPosterioresCierre(caja.Id)
             });
         }
 
@@ -539,6 +544,139 @@ namespace WebCore.Controllers
             return PartialView("~/Views/Cajas/_MisEgresosCaja.cshtml", dt);
         }
 
+        // Registros de auditoria de un cierre (alta/modificacion/eliminacion de ventas, compras, pagos y egresos que cayeron
+        // en la caja ya cerrada, y reaperturas) para el aviso del modal "Cerrar caja". Lista vacia si no hay soporte
+        // (SQL Server) o si falla la lectura: el aviso es informativo y no debe romper el modal.
+        private List<object> ObtenerCambiosPosterioresCierre(int idCierre)
+        {
+            var lista = new List<object>();
+            if (!_oCierreN.SoportaAuditoriaCierre || idCierre <= 0) return lista;
+
+            // Solo quien puede cerrar cajas (permiso directo o step-up) ve el detalle de los cambios: ObtenerDatosCierre
+            // en si no exige permiso, pero el detalle de la auditoria no se le entrega a cualquier usuario logueado.
+            if (ObtenerUsuarioAutorizadoCierre() == null) return lista;
+
+            try
+            {
+                DataTable dt = _oCierreN.obtenerAuditoriaCierre(idCierre);
+                string Texto(DataRow r, string col) => r[col] == DBNull.Value ? "" : Convert.ToString(r[col]);
+                double? Numero(DataRow r, string col) => r[col] == DBNull.Value ? (double?)null : Convert.ToDouble(r[col]);
+
+                foreach (DataRow r in dt.Rows)
+                {
+                    lista.Add(new
+                    {
+                        tipo = Texto(r, "tipo"),
+                        origen = Texto(r, "origen"),
+                        idOrigen = r["idorigen"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["idorigen"]),
+                        accion = Texto(r, "accion"),
+                        fecha = Convert.ToDateTime(r["fecha"]).ToString("dd/MM/yyyy HH:mm"),
+                        usuario = Texto(r, "usuario"),
+                        importeAnterior = Numero(r, "importeanterior"),
+                        importeNuevo = Numero(r, "importenuevo"),
+                        formaPagoAnterior = Texto(r, "formapagoanterior"),
+                        formaPagoNueva = Texto(r, "formapagonueva"),
+                        detalle = Texto(r, "detalle")
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("No se pudieron leer los avisos del cierre " + idCierre + ": " + ex.Message);
+            }
+
+            return lista;
+        }
+
+        // ===== Reabrir la ultima caja cerrada de un usuario (2026-10-06, ver docs/DECISIONS.md) =====
+        // Solo desde el historial, solo la ULTIMA caja del usuario en esa sucursal, con permiso Caja.CierresDeCaja (el
+        // mismo que "Modificar" un cierre) y motivo obligatorio. El repositorio vuelve a validar todo en el UPDATE.
+
+        [HttpGet]
+        public IActionResult PreviewReaperturaCaja(int idCierre)
+        {
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Caja.CierresDeCaja, DateTime.Today, -1))
+                return StatusCode(403, "No tiene permisos para reabrir cajas.");
+
+            if (!_oCierreN.SoportaAuditoriaCierre)
+                return Json(new { ok = false, mensaje = "La reapertura de cajas no está disponible en esta base de datos." });
+
+            try
+            {
+                var p = _oCierreN.obtenerPreviewReapertura(idCierre);
+                var culturaAr = new CultureInfo("es-AR");
+                string Fecha(DateTime? d) => d.HasValue ? d.Value.ToString("dd/MM/yyyy HH:mm", culturaAr) : "";
+                string Monto(double? v) => v.HasValue ? "$ " + v.Value.ToString("N2", culturaAr) : "(vacío)";
+
+                string haceCuanto = "";
+                if (p.FechaCierre.HasValue)
+                {
+                    TimeSpan t = DateTime.Now - p.FechaCierre.Value;
+                    haceCuanto = t.TotalDays >= 1 ? Math.Floor(t.TotalDays) + " día(s)" : t.TotalHours >= 1 ? Math.Floor(t.TotalHours) + " hora(s)" : Math.Max(0, Math.Floor(t.TotalMinutes)) + " minuto(s)";
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    puedeReabrir = p.PuedeReabrir,
+                    mensaje = p.Mensaje,
+                    idCierre = p.IdCierreCaja,
+                    usuario = p.UsuarioCaja,
+                    sucursal = p.SucursalNombre,
+                    apertura = Fecha(p.FechaApertura),
+                    cierre = Fecha(p.FechaCierre),
+                    cerradaPor = p.CerradaPor,
+                    haceCuanto,
+                    cajaCierre = Monto(p.CajaCierre),
+                    importeRetirado = Monto(p.ImporteRetirado),
+                    cajaInicioSiguiente = Monto(p.CajaInicioSiguiente),
+                    ventasDelHueco = p.VentasDelHueco,
+                    importeVentasDelHueco = Monto(p.ImporteVentasDelHueco),
+                    egresosDelHueco = p.EgresosDelHueco,
+                    importeEgresosDelHueco = Monto(p.ImporteEgresosDelHueco),
+                    pagosDelHueco = p.PagosDelHueco,
+                    cajaAbiertaEnOtraSucursal = p.TieneCajaAbiertaEnOtraSucursal
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("No se pudo calcular la reapertura de la caja " + idCierre + ": " + ex.Message);
+                return Json(new { ok = false, mensaje = "No se pudo calcular la reapertura. Intentá nuevamente." });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ReabrirCaja(int idCierre, string motivo)
+        {
+            var user = _usuarioActual;
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Caja.CierresDeCaja, DateTime.Today, -1))
+                return StatusCode(403, "No tiene permisos para reabrir cajas.");
+
+            if (!_oCierreN.SoportaAuditoriaCierre)
+                return Json(new { ok = false, mensaje = "La reapertura de cajas no está disponible en esta base de datos." });
+
+            if (idCierre <= 0)
+                return Json(new { ok = false, mensaje = "Caja inválida." });
+
+            motivo = (motivo ?? "").Trim();
+            if (motivo.Length == 0)
+                return Json(new { ok = false, mensaje = "Ingresá el motivo de la reapertura." });
+            if (motivo.Length > 500)
+                return Json(new { ok = false, mensaje = "El motivo es demasiado largo (máximo 500 caracteres)." });
+
+            try
+            {
+                var resultado = _oCierreN.reabrirCierreCaja(idCierre, user.Id, user.Nombre ?? user.User ?? "", motivo);
+                return Json(new { ok = resultado.Ok, mensaje = resultado.Mensaje });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("No se pudo reabrir la caja " + idCierre + ": " + ex.Message);
+                return Json(new { ok = false, mensaje = "No se pudo reabrir la caja. Intentá nuevamente." });
+            }
+        }
+
         [HttpGet]
         public IActionResult NuevoEgresoCaja(int id = 0, bool desdePos = false, int idCierre = 0)
         {
@@ -606,11 +744,15 @@ namespace WebCore.Controllers
         }
 
         [HttpPost]
-        public IActionResult GuardarEgresoCaja(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos = false, int idCierre = 0, string conteoBilletes = "")
+        public IActionResult GuardarEgresoCaja(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos = false, int idCierre = 0, string conteoBilletes = "", bool confirmarCajaCerrada = false)
         {
             try
             {
-                var resultado = GuardarEgresoCajaCore(id, fecha, idTipoEgresoCaja, descripcion, monto, detalle, idSucursal, desdePos, idCierre, conteoBilletes);
+                var resultado = GuardarEgresoCajaCore(id, fecha, idTipoEgresoCaja, descripcion, monto, detalle, idSucursal, desdePos, idCierre, conteoBilletes, confirmarCajaCerrada);
+
+                // El egreso cae en una caja YA CERRADA: no se guardo nada, el cliente pide confirmar y reenvia.
+                if (resultado.Confirmacion != null)
+                    return Json(resultado.Confirmacion);
 
                 if (!resultado.Ok)
                     return Json(new { ok = false, id = resultado.Id, mensaje = resultado.Mensaje });
@@ -670,7 +812,11 @@ namespace WebCore.Controllers
                     ""
                 );
 
-                if (cierre != null && cierre.UsuarioCierre == null)
+                // Antes: "cierre.UsuarioCierre == null" -- nunca era true (Negocio.convertDatatableToList siempre arma
+                // UsuarioCierre, con Id 0 si la caja sigue abierta), asi que este bloqueo no funcionaba y un POST
+                // desactualizado podia abrir una segunda caja. Corregido junto con la reapertura (2026-10-06): con una
+                // caja reabierta, un modal "Abrir caja" viejo del cajero no puede crear otra.
+                if (cierre != null && CajaSigueAbierta(cierre))
                     return Json(new { ok = false, mensaje = "Ya existe una caja abierta" });
 
                 _oCierreN.addOrEditCierreCaja(nuevoCierre);
@@ -1007,7 +1153,10 @@ namespace WebCore.Controllers
                     detalleBuilder.ToString(),
                     idSucursalGuardar,
                     desdePos,
-                    idCierre);
+                    idCierre,
+                    // Esta pantalla no tiene el paso de confirmacion: si la fecha elegida cae en una caja ya cerrada
+                    // el egreso se guarda igual (como siempre) pero queda el aviso en el cierre (auditoria).
+                    confirmarCajaCerrada: true);
 
                 return Json(new { ok = resultado.Ok, id = resultado.Id, mensaje = resultado.Mensaje });
             }
@@ -1564,7 +1713,7 @@ namespace WebCore.Controllers
             return fecha >= inicio && fecha <= fin;
         }
 
-        private GuardarEgresoCajaResultado GuardarEgresoCajaCore(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos, int idCierre, string conteoBilletes = "")
+        private GuardarEgresoCajaResultado GuardarEgresoCajaCore(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos, int idCierre, string conteoBilletes = "", bool confirmarCajaCerrada = false)
         {
             var user = _usuarioActual;
 
@@ -1650,7 +1799,67 @@ namespace WebCore.Controllers
                 ActualizadoPor = id > 0 ? user.Id : 0
             };
 
+            // ---- Cajas YA CERRADAS afectadas (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas cerradas y reapertura") ----
+            // Un egreso pertenece a la caja de (creadopor, sucursal, fecha). Se evalua la caja de la fecha NUEVA y, si se
+            // edita uno existente, tambien la de su fecha/dueno/sucursal ORIGINALES (puede moverlo de caja). Alta o
+            // cambio de monto/tipo/fecha/sucursal en una caja cerrada pide confirmacion; el resto solo se registra.
+            var cajaCerradaN = new Negocio.CajaCerradaServicio(_oCierreN);
+            var consultasCajaEgreso = new List<Negocio.CajaCerradaConsulta>
+            {
+                new Negocio.CajaCerradaConsulta(egreso.CreadoPor, sucursal.idSucursal, fecha)
+            };
+            int sucursalEgresoOriginal = 0;
+            if (egresoAnterior != null)
+            {
+                sucursalEgresoOriginal = egresoAnterior.Sucursal != null ? egresoAnterior.Sucursal.idSucursal : 0;
+                consultasCajaEgreso.Add(new Negocio.CajaCerradaConsulta(egresoAnterior.CreadoPor, sucursalEgresoOriginal, egresoAnterior.Fecha));
+            }
+            var cajasCerradasEgreso = cajaCerradaN.Evaluar(consultasCajaEgreso.ToArray());
+
+            if (cajasCerradasEgreso.Count > 0 && !confirmarCajaCerrada)
+            {
+                bool esAlta = egresoAnterior == null;
+                bool afecta = esAlta || Negocio.CambioCajaCerrada.HuboCambioQueAfectaCierre(
+                    egresoAnterior.Monto, importe, egresoAnterior.IdTipoEgresoCaja.ToString(), idTipoEgresoCaja.ToString(),
+                    egresoAnterior.Fecha, fecha, sucursalEgresoOriginal, sucursal.idSucursal);
+
+                if (afecta)
+                {
+                    var cambioEgreso = new List<string>();
+                    if (esAlta)
+                    {
+                        cambioEgreso.Add("Egreso nuevo de $ " + importe.ToString("N2", new CultureInfo("es-AR")) + " fechado el " + fecha.ToString("dd/MM/yyyy HH:mm"));
+                    }
+                    else
+                    {
+                        if (Math.Abs(egresoAnterior.Monto - importe) >= Negocio.CambioCajaCerrada.ToleranciaImporte)
+                            cambioEgreso.Add(WebCore.Helpers.CajaCerradaRespuesta.LineaImporte("Monto del egreso", egresoAnterior.Monto, importe));
+                        if (egresoAnterior.IdTipoEgresoCaja != idTipoEgresoCaja)
+                            cambioEgreso.Add("Tipo de egreso modificado");
+                        if (Negocio.CambioCajaCerrada.CambioFecha(egresoAnterior.Fecha, fecha))
+                            cambioEgreso.Add(WebCore.Helpers.CajaCerradaRespuesta.LineaFecha("Fecha del egreso", egresoAnterior.Fecha, fecha));
+                        if (sucursalEgresoOriginal != sucursal.idSucursal)
+                            cambioEgreso.Add("Sucursal del egreso: " + sucursalEgresoOriginal + " → " + sucursal.idSucursal);
+                    }
+
+                    return new GuardarEgresoCajaResultado
+                    {
+                        Ok = false,
+                        Mensaje = "El egreso cae en una caja ya cerrada.",
+                        Confirmacion = WebCore.Helpers.CajaCerradaRespuesta.Confirmacion(cajasCerradasEgreso, cambioEgreso, esAlta ? "cargar" : "modificar")
+                    };
+                }
+            }
+
             egreso = _oCierreN.addOrEditEgresoCaja(egreso);
+
+            // Aviso en el cierre de cada caja afectada (tambien si no pidio confirmacion), fuera de la transaccion del egreso.
+            cajaCerradaN.Registrar(
+                Entidades.AuditoriaCierreCaja.OrigenEgreso, egreso.Id,
+                egresoAnterior == null ? Entidades.AuditoriaCierreCaja.AccionAlta : Entidades.AuditoriaCierreCaja.AccionModificacion,
+                cajasCerradasEgreso, user.Id, user.Nombre,
+                egresoAnterior != null ? (double?)egresoAnterior.Monto : null, importe, null, null,
+                "Egreso de caja: " + (descripcion ?? ""));
 
             return new GuardarEgresoCajaResultado
             {

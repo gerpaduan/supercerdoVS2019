@@ -348,6 +348,15 @@
 
                 <div id="cerrarCajaError" class="alert alert-danger d-none"></div>
 
+                @* Aviso al encargado: despues de cerrar esta caja se modificaron datos (ventas, compras, pagos, egresos) o se
+                   la reabrio (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas cerradas y reapertura"). Lo llena
+                   renderCambiosPosteriores con data.cambiosPosteriores de ObtenerDatosCierre (solo Postgres). *@
+                <div id="avisoCambiosCaja" class="alert alert-danger d-none py-2 mb-2" role="alert">
+                    <div id="avisoCambiosCajaResumen"></div>
+                    <a href="#" id="btnVerCambiosCaja" class="small">ver detalle</a>
+                    <ul id="avisoCambiosCajaDetalle" class="small mb-0 mt-1 pl-3 d-none"></ul>
+                </div>
+
                 <form id="formCerrarCaja">
 
                     <input type="hidden" id="Id" name="Id" />
@@ -985,6 +994,7 @@
                     if (data.modoModificacion) {
                         recalcularCierre();
                     }
+                    renderCambiosPosteriores(data);
                     $("#modalCerrarCaja").modal("show");
                 },
                 error: function (xhr) {
@@ -997,6 +1007,169 @@
                 }
             });
         }
+
+        // ===== Avisos del cierre: cambios posteriores al cierre y reaperturas (2026-10-06, ver docs/DECISIONS.md) =====
+        const NOMBRES_ORIGEN_CAMBIO = {
+            VENTA: ['venta', 'ventas'], COMPRA: ['compra', 'compras'], PAGO: ['pago/cobro', 'pagos/cobros'], EGRESO: ['egreso de caja', 'egresos de caja']
+        };
+        const VERBOS_ACCION_CAMBIO = { ALTA: 'cargó', MODIFICACION: 'modificó', ELIMINACION: 'eliminó' };
+
+        function ocultarCambiosPosteriores() {
+            $("#avisoCambiosCaja").addClass("d-none");
+            $("#avisoCambiosCajaResumen").empty();
+            $("#avisoCambiosCajaDetalle").addClass("d-none").empty();
+            $("#btnVerCambiosCaja").text("ver detalle");
+        }
+
+        // Una linea de detalle por registro de auditoria. Todo con .text() (nada de HTML del servidor).
+        function lineaCambioPosterior(c) {
+            const montoTxt = function (v) { return "$ " + formatNumberEsAr(v, false); };
+            let texto = c.fecha + " – " + (c.usuario || "usuario") + ": ";
+
+            if (c.tipo === "REAPERTURA") {
+                const motivo = (String(c.detalle || "").split("\n").filter(function (l) { return l.indexOf("Motivo: ") === 0; })[0] || "").replace("Motivo: ", "");
+                return texto + "reabrió la caja" + (motivo ? " (motivo: " + motivo + ")" : "");
+            }
+
+            const nombre = (NOMBRES_ORIGEN_CAMBIO[c.origen] || [c.origen || "registro"])[0];
+            // Articulo segun el genero del registro: la venta / la compra, el pago/cobro / el egreso de caja.
+            const femenino = c.origen === "VENTA" || c.origen === "COMPRA";
+            const articulo = c.accion === "ALTA" ? (femenino ? "una " : "un ") : (femenino ? "la " : "el ");
+            texto += (VERBOS_ACCION_CAMBIO[c.accion] || "modificó") + " " + articulo + nombre + (c.idOrigen ? " #" + c.idOrigen : "");
+            const partes = [];
+            if (c.importeAnterior !== null && c.importeAnterior !== undefined && c.importeNuevo !== null && c.importeNuevo !== undefined
+                && Math.abs(Number(c.importeAnterior) - Number(c.importeNuevo)) >= 0.005) {
+                partes.push("monto " + montoTxt(c.importeAnterior) + " → " + montoTxt(c.importeNuevo));
+            }
+            if ((c.formaPagoAnterior || c.formaPagoNueva) && c.formaPagoAnterior !== c.formaPagoNueva) {
+                partes.push("forma de pago " + (c.formaPagoAnterior || "-") + " → " + (c.formaPagoNueva || "-"));
+            }
+            return texto + (partes.length ? " (" + partes.join("; ") + ")" : "");
+        }
+
+        function renderCambiosPosteriores(data) {
+            ocultarCambiosPosteriores();
+            const cambios = (data && data.soportaAuditoriaCierre && data.cambiosPosteriores) ? data.cambiosPosteriores : [];
+            if (!cambios.length) return;
+
+            // Resumen: cuantos registros de cada tipo se tocaron (REAPERTURA aparte).
+            const cuenta = {};
+            let reaperturas = 0;
+            cambios.forEach(function (c) {
+                if (c.tipo === "REAPERTURA") { reaperturas++; return; }
+                cuenta[c.origen] = (cuenta[c.origen] || 0) + 1;
+            });
+            const piezas = Object.keys(cuenta).map(function (origen) {
+                const nombres = NOMBRES_ORIGEN_CAMBIO[origen] || [origen.toLowerCase(), origen.toLowerCase()];
+                return cuenta[origen] + " " + (cuenta[origen] === 1 ? nombres[0] : nombres[1]);
+            });
+
+            const $resumen = $("#avisoCambiosCajaResumen");
+            $resumen.append($("<i>").addClass("fas fa-exclamation-triangle mr-2"));
+            if (piezas.length) {
+                $resumen.append($("<strong>").text("Después de cerrar esta caja se modificaron datos: " + piezas.join(", ") + "."))
+                    .append(document.createTextNode(" El cierre guardado (ventas, egresos y diferencia) puede estar desactualizado."));
+            }
+            if (reaperturas) {
+                $resumen.append($("<div>").addClass("small").text("Esta caja fue reabierta " + reaperturas + " vez/veces."));
+            }
+
+            const $detalle = $("#avisoCambiosCajaDetalle");
+            cambios.forEach(function (c) { $detalle.append($("<li>").text(lineaCambioPosterior(c))); });
+            $("#avisoCambiosCaja").removeClass("d-none");
+        }
+
+        $(document).on('click', '#btnVerCambiosCaja', function (e) {
+            e.preventDefault();
+            const $detalle = $("#avisoCambiosCajaDetalle").toggleClass("d-none");
+            $(this).text($detalle.hasClass("d-none") ? "ver detalle" : "ocultar detalle");
+        });
+
+        // ----- Reabrir la ultima caja cerrada de un usuario (boton "Reabrir" del historial) -----
+        // Pide el preview al servidor (que valida que sea la ultima y calcula lo que queda adentro), muestra el
+        // resumen con campo de motivo obligatorio y, si se confirma, reabre. La caja pasa a "Cajas abiertas".
+        function reabrirCaja(idCierre) {
+            $.ajax({
+                url: '@Url.Action("PreviewReaperturaCaja", "Cajas")',
+                type: 'GET',
+                cache: false,
+                data: { idCierre: idCierre },
+                success: function (p) {
+                    if (!p || !p.ok) {
+                        Swal.fire({ icon: 'error', title: 'No se pudo reabrir', text: (p && p.mensaje) || 'Error desconocido.' });
+                        return;
+                    }
+                    if (!p.puedeReabrir) {
+                        Swal.fire({ icon: 'info', title: 'No se puede reabrir esta caja', text: p.mensaje });
+                        return;
+                    }
+
+                    const escapar = function (t) { return $("<div>").text(t == null ? "" : String(t)).html(); };
+                    let html = '<div class="text-left" style="font-size:.9rem">' +
+                        '<p class="mb-2">Caja de <b>' + escapar(p.usuario) + '</b> (' + escapar(p.sucursal) + '), abierta el ' + escapar(p.apertura) +
+                        ' y cerrada el ' + escapar(p.cierre) + (p.cerradaPor ? ' por ' + escapar(p.cerradaPor) : '') + ' (hace ' + escapar(p.haceCuanto) + ').</p>' +
+                        '<p class="mb-2"><b>Se deshace el cierre:</b> Caja cierre ' + escapar(p.cajaCierre) + ', importe retirado ' + escapar(p.importeRetirado) +
+                        ', queda en caja ' + escapar(p.cajaInicioSiguiente) + '. Se borran también el conteo del cajero y la diferencia (queda todo en la auditoría).</p>';
+
+                    if (p.ventasDelHueco || p.egresosDelHueco || p.pagosDelHueco) {
+                        html += '<p class="mb-2 text-danger"><b>Atención:</b> desde el cierre original hay ' + p.ventasDelHueco + ' venta(s) (' + escapar(p.importeVentasDelHueco) +
+                            '), ' + p.egresosDelHueco + ' egreso(s) (' + escapar(p.importeEgresosDelHueco) + ') y ' + p.pagosDelHueco +
+                            ' pago(s) de este usuario. Al reabrir la caja quedan <b>dentro de la caja</b> y se suman al próximo cierre.</p>';
+                    }
+                    if (p.cajaAbiertaEnOtraSucursal) {
+                        html += '<p class="mb-2 text-danger">Este usuario tiene otra caja abierta en otra sucursal.</p>';
+                    }
+                    html += '<p class="mb-0">Si el encargado ya retiró efectivo, al volver a cerrar la diferencia no lo tendrá en cuenta. El vendedor puede seguir vendiendo al recargar el POS.</p></div>';
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Reabrir caja',
+                        html: html,
+                        input: 'textarea',
+                        inputLabel: 'Motivo de la reapertura (obligatorio)',
+                        inputAttributes: { maxlength: 500 },
+                        inputValidator: function (valor) { return (valor || '').trim() ? undefined : 'Ingresá el motivo de la reapertura.'; },
+                        showCancelButton: true,
+                        confirmButtonText: 'Reabrir caja',
+                        cancelButtonText: 'Volver',
+                        confirmButtonColor: '#e74a3b'
+                    }).then(function (r) {
+                        if (!r.isConfirmed) return;
+
+                        $.ajax({
+                            url: '@Url.Action("ReabrirCaja", "Cajas")',
+                            type: 'POST',
+                            data: {
+                                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val(),
+                                idCierre: idCierre,
+                                motivo: r.value
+                            },
+                            success: function (resp) {
+                                if (!resp || !resp.ok) {
+                                    Swal.fire({ icon: 'error', title: 'No se pudo reabrir', text: (resp && resp.mensaje) || 'Error desconocido.' });
+                                    return;
+                                }
+                                Swal.fire({ icon: 'success', title: 'Caja reabierta', text: resp.mensaje }).then(function () { filtrar(); });
+                            },
+                            error: function (xhr) {
+                                let mensaje = 'No se pudo reabrir la caja.';
+                                if (xhr && xhr.responseText) mensaje = xhr.responseText.replace(/<[^>]+>/g, '').trim() || mensaje;
+                                Swal.fire({ icon: 'error', title: 'No se pudo reabrir', text: mensaje });
+                            }
+                        });
+                    });
+                },
+                error: function (xhr) {
+                    let mensaje = 'No se pudo calcular la reapertura.';
+                    if (xhr && xhr.responseText) mensaje = xhr.responseText.replace(/<[^>]+>/g, '').trim() || mensaje;
+                    Swal.fire({ icon: 'error', title: 'No se pudo reabrir', text: mensaje });
+                }
+            });
+        }
+
+        $(document).on('click', '.btn-reabrir-caja', function () {
+            reabrirCaja($(this).data('id'));
+        });
 
         $('#modalCerrarCaja').on('shown.bs.modal', function () {
             window.setTimeout(function () {
@@ -1012,6 +1185,7 @@
             $("#ModoModificacion").val("false");
             $("#modalCerrarCajaTitulo").text("Cerrar Caja");
             $("#btnGuardarCierreCaja").text("Cerrar Caja");
+            ocultarCambiosPosteriores();
         });
 
         $(document).on('keydown', '#CajaCierre, #ImporteRetirado', function (e) {

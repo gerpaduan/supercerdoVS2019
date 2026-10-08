@@ -178,6 +178,40 @@ namespace Datos
             );
         }
 
+        // Auditoria de cierres y reapertura (2026-10-06): solo Postgres. Con SoportaAuditoriaCierre = false los
+        // llamadores ni consultan ni registran, asi que SQL Server se comporta exactamente como siempre.
+        public bool SoportaAuditoriaCierre => false;
+
+        public DataTable findCierreCerradoQueContiene(int idDueno, int idSucursal, DateTime fecha)
+        {
+            throw new NotSupportedException("La auditoria de cierres no esta disponible en SQL Server.");
+        }
+
+        public void registrarAuditoriaCierre(Entidades.AuditoriaCierreCaja auditoria)
+        {
+            throw new NotSupportedException("La auditoria de cierres no esta disponible en SQL Server.");
+        }
+
+        public DataTable obtenerAuditoriaCierre(int idCierre)
+        {
+            throw new NotSupportedException("La auditoria de cierres no esta disponible en SQL Server.");
+        }
+
+        public Entidades.EgresoCaja findEgresoCajaPorCompra(int idCompra)
+        {
+            throw new NotSupportedException("La auditoria de cierres no esta disponible en SQL Server.");
+        }
+
+        public Contratos.PreviewReapertura obtenerPreviewReapertura(int idCierre)
+        {
+            throw new NotSupportedException("La reapertura de cajas no esta disponible en SQL Server.");
+        }
+
+        public Contratos.ResultadoReapertura reabrirCierreCaja(int idCierre, int idUsuarioEjecutor, string usuarioEjecutor, string motivo)
+        {
+            throw new NotSupportedException("La reapertura de cajas no esta disponible en SQL Server.");
+        }
+
         public DataTable findCierreCajaMultiples(List<Entidades.CierreCaja> listaCierreCaja)
         {
             var dt = new DataTable();

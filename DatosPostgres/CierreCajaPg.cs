@@ -84,7 +84,11 @@ namespace DatosPostgres
                             ROUND(CAST(cajainicio AS numeric), 2) AS ""Caja_Inicial"", ROUND(CAST(ventas AS numeric), 2) AS ""Ventas"",
                             ROUND(CAST(gastos AS numeric), 2) AS ""EgresosCaja"", ROUND(CAST(cajacierre AS numeric), 2) AS ""Caja_Cierre"",
                             ROUND(CAST(diferencia AS numeric), 2) AS ""Diferencia"", ROUND(CAST(cajainiciosiguiente AS numeric), 2) AS ""Caja_Ini_Sig"",
-                            ROUND(CAST(importeretirado AS numeric), 2) AS ""Retirado"", uc.nombre AS ""Cerrada_Por""
+                            ROUND(CAST(importeretirado AS numeric), 2) AS ""Retirado"", uc.nombre AS ""Cerrada_Por"",
+                            (SELECT COUNT(*) FROM auditoriacierrecaja a WHERE a.idcierrecaja = cc.id AND a.tipo = 'MODIFICACION') AS ""Cambios_Posteriores"",
+                            (SELECT MAX(a.fecha) FROM auditoriacierrecaja a WHERE a.idcierrecaja = cc.id AND a.tipo = 'MODIFICACION') AS ""Cambios_Posteriores_Fecha"",
+                            (SELECT COUNT(*) FROM auditoriacierrecaja a WHERE a.idcierrecaja = cc.id AND a.tipo = 'REAPERTURA') AS ""Reaperturas"",
+                            (" + CondicionEsUltimaCaja("cc") + @") AS ""Puede_Reabrir""
                         FROM cierrecaja cc
                         INNER JOIN usuarios u ON cc.usuarioinicio = CAST(u.id AS text)
                         INNER JOIN usuarios uc ON cc.usuariocierre = CAST(uc.id AS text)
@@ -212,6 +216,299 @@ namespace DatosPostgres
                 p.AddWithValue("usuarioCierre", oCierreCajaE.UsuarioCierre != null ? oCierreCajaE.UsuarioCierre.Id.ToString() : "0");
             });
         }
+
+        #region Auditoria de cierres y reapertura (2026-10-06, ver docs/DECISIONS.md)
+
+        public bool SoportaAuditoriaCierre => true;
+
+        // Cierre YA CERRADO del dueno/sucursal cuyo rango [apertura, cierre] contiene la fecha (o tabla vacia). No hay FK
+        // registro->caja: es el mismo criterio por rango que usan obtenerTotalVentas / getMontoEgresosCajaVendedor.
+        // Devuelve las columnas que Negocio.convertDatatableToList espera (vendedor, Cerrada_Por, ...).
+        public DataTable findCierreCerradoQueContiene(int idDueno, int idSucursal, DateTime fecha)
+        {
+            const string sql = @"
+                SELECT cc.*, u.nombre AS vendedor, u.usuario AS vendedorusuario, s.sucursal, uc.nombre AS ""Cerrada_Por""
+                FROM cierrecaja cc
+                INNER JOIN usuarios u ON cc.usuarioinicio = CAST(u.id AS text)
+                INNER JOIN sucursal s ON cc.idsucursal = s.idsucursal
+                LEFT JOIN usuarios uc ON cc.usuariocierre = CAST(uc.id AS text)
+                WHERE cc.usuarioinicio = @dueno AND cc.idsucursal = @sucursal
+                  AND cc.usuariocierre <> '0' AND cc.fechahoracierre IS NOT NULL
+                  AND @fecha BETWEEN cc.fechahorainicio AND cc.fechahoracierre
+                ORDER BY cc.id DESC
+                LIMIT 1;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("dueno", idDueno.ToString());
+                p.AddWithValue("sucursal", idSucursal);
+                p.AddWithValue("fecha", fecha);
+            });
+        }
+
+        // Append-only: un INSERT por hecho. Lo llama CajaCerradaService DESPUES de guardar el origen (fuera de su
+        // transaccion), asi que si falla no deshace el cambio ya hecho (el servicio lo registra en Trace).
+        public void registrarAuditoriaCierre(AuditoriaCierreCaja auditoria)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            const string sql = @"
+                INSERT INTO auditoriacierrecaja (idempresa, idcierrecaja, tipo, origen, idorigen, accion, idusuario, usuario,
+                    importeanterior, importenuevo, formapagoanterior, formapagonueva, detalle)
+                VALUES (@idEmpresa, @idCierre, @tipo, @origen, @idOrigen, @accion, @idUsuario, @usuario,
+                    @importeAnterior, @importeNuevo, @formaAnterior, @formaNueva, @detalle);";
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, sql, p => AgregarParametrosAuditoriaCierre(p, auditoria));
+        }
+
+        private void AgregarParametrosAuditoriaCierre(NpgsqlParameterCollection p, AuditoriaCierreCaja a)
+        {
+            p.AddWithValue("idEmpresa", _idEmpresa);
+            p.AddWithValue("idCierre", a.IdCierreCaja);
+            p.AddWithValue("tipo", a.Tipo ?? AuditoriaCierreCaja.TipoModificacion);
+            p.AddWithValue("origen", (object)a.Origen ?? DBNull.Value);
+            p.AddWithValue("idOrigen", (object)a.IdOrigen ?? DBNull.Value);
+            p.AddWithValue("accion", (object)a.Accion ?? DBNull.Value);
+            p.AddWithValue("idUsuario", a.IdUsuario);
+            p.AddWithValue("usuario", (object)a.Usuario ?? DBNull.Value);
+            p.AddWithValue("importeAnterior", (object)a.ImporteAnterior ?? DBNull.Value);
+            p.AddWithValue("importeNuevo", (object)a.ImporteNuevo ?? DBNull.Value);
+            p.AddWithValue("formaAnterior", (object)a.FormaPagoAnterior ?? DBNull.Value);
+            p.AddWithValue("formaNueva", (object)a.FormaPagoNueva ?? DBNull.Value);
+            p.AddWithValue("detalle", (object)a.Detalle ?? DBNull.Value);
+        }
+
+        // Egreso de caja de una compra (egresoscaja.idcompra), o EgresoCaja vacio. Las compras no setean tabla/idtabla en
+        // su egreso (ver Negocio.Compra), asi que findEgresoCajaByTablaYId('Compras', id) no lo encuentra: se busca por idcompra.
+        public EgresoCaja findEgresoCajaPorCompra(int idCompra)
+        {
+            if (idCompra <= 0) return new EgresoCaja();
+
+            object id = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT id FROM egresoscaja WHERE idcompra = @idCompra ORDER BY id DESC LIMIT 1;",
+                p => p.AddWithValue("idCompra", idCompra));
+
+            return id == null || id == DBNull.Value ? new EgresoCaja() : getEgresoCajaById(Convert.ToInt32(id));
+        }
+
+        // Registros de auditoria de un cierre, el mas reciente primero (modal "Modificar cierre" del encargado).
+        public DataTable obtenerAuditoriaCierre(int idCierre)
+        {
+            const string sql = @"
+                SELECT a.id, a.tipo, a.origen, a.idorigen, a.accion, a.idusuario, a.usuario, a.fecha,
+                       a.importeanterior, a.importenuevo, a.formapagoanterior, a.formapagonueva, a.detalle
+                FROM auditoriacierrecaja a
+                WHERE a.idcierrecaja = @idCierre
+                ORDER BY a.fecha DESC, a.id DESC;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idCierre", idCierre));
+        }
+
+        // Condicion SQL "esta es la ULTIMA caja de ese usuario en esa sucursal y no hay otra abierta": no existe otro
+        // cierre del mismo dueno/sucursal con id mayor, apertura posterior o abierto. Compara por id Y por fecha de
+        // apertura porque los ids migrados desde SQL Server estan namespaced (10_000_000 * idSucursal + N) y el orden
+        // por id solo podria mezclarlos (ver cabecera del archivo). El alias de la tabla externa es parametro.
+        private static string CondicionEsUltimaCaja(string alias)
+        {
+            return "NOT EXISTS (SELECT 1 FROM cierrecaja n WHERE n.idempresa = " + alias + ".idempresa" +
+                   " AND n.usuarioinicio = " + alias + ".usuarioinicio AND n.idsucursal = " + alias + ".idsucursal" +
+                   " AND n.id <> " + alias + ".id" +
+                   " AND (n.id > " + alias + ".id OR n.fechahorainicio > " + alias + ".fechahorainicio OR n.usuariocierre = '0'))";
+        }
+
+        // Que pasaria si se reabre esta caja: si se puede, y lo que se deshace / lo que queda adentro. Solo lectura.
+        public Contratos.PreviewReapertura obtenerPreviewReapertura(int idCierre)
+        {
+            var preview = new Contratos.PreviewReapertura { IdCierreCaja = idCierre, PuedeReabrir = false, Mensaje = "" };
+
+            const string sqlCierre = @"
+                SELECT cc.usuarioinicio, cc.idsucursal, cc.fechahorainicio, cc.fechahoracierre, cc.usuariocierre,
+                       cc.cajacierre, cc.importeretirado, cc.cajainiciosiguiente,
+                       u.nombre AS nombreusuario, s.sucursal AS nombresucursal, uc.nombre AS cerradapor
+                FROM cierrecaja cc
+                INNER JOIN usuarios u ON cc.usuarioinicio = CAST(u.id AS text)
+                INNER JOIN sucursal s ON cc.idsucursal = s.idsucursal
+                LEFT JOIN usuarios uc ON cc.usuariocierre = CAST(uc.id AS text)
+                WHERE cc.id = @id;";
+
+            DataTable dtCierre = DbPg.DataTable(_connectionString, _idEmpresa, sqlCierre, p => p.AddWithValue("id", idCierre));
+            if (dtCierre.Rows.Count == 0)
+            {
+                preview.Mensaje = "No se encontró la caja seleccionada.";
+                return preview;
+            }
+
+            DataRow row = dtCierre.Rows[0];
+            string usuarioInicioTexto = Convert.ToString(row["usuarioinicio"]);
+            int idUsuarioCaja = int.TryParse(usuarioInicioTexto, out int idU) ? idU : 0;
+            int idSucursal = Convert.ToInt32(row["idsucursal"]);
+            DateTime? fechaCierre = row["fechahoracierre"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechahoracierre"]);
+
+            preview.IdUsuarioCaja = idUsuarioCaja;
+            preview.UsuarioCaja = Convert.ToString(row["nombreusuario"]);
+            preview.IdSucursal = idSucursal;
+            preview.SucursalNombre = Convert.ToString(row["nombresucursal"]);
+            preview.FechaApertura = row["fechahorainicio"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechahorainicio"]);
+            preview.FechaCierre = fechaCierre;
+            preview.CerradaPor = row["cerradapor"] == DBNull.Value ? "" : Convert.ToString(row["cerradapor"]);
+            preview.CajaCierre = row["cajacierre"] == DBNull.Value ? (double?)null : Convert.ToDouble(row["cajacierre"]);
+            preview.ImporteRetirado = row["importeretirado"] == DBNull.Value ? (double?)null : Convert.ToDouble(row["importeretirado"]);
+            preview.CajaInicioSiguiente = row["cajainiciosiguiente"] == DBNull.Value ? (double?)null : Convert.ToDouble(row["cajainiciosiguiente"]);
+
+            if (Convert.ToString(row["usuariocierre"]) == "0" || !fechaCierre.HasValue)
+            {
+                preview.Mensaje = "La caja seleccionada ya está abierta.";
+                return preview;
+            }
+
+            // Otra caja del mismo usuario y sucursal posterior o abierta: no es la ultima (o ya hay una abierta).
+            object hayOtraAbiertaMisma = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT COUNT(1) FROM cierrecaja WHERE usuarioinicio = @u AND idsucursal = @s AND usuariocierre = '0' AND id <> @id;",
+                p => { p.AddWithValue("u", usuarioInicioTexto); p.AddWithValue("s", idSucursal); p.AddWithValue("id", idCierre); });
+            if (Convert.ToInt32(hayOtraAbiertaMisma) > 0)
+            {
+                preview.Mensaje = "El usuario ya tiene una caja abierta en esta sucursal: no se puede reabrir otra.";
+                return preview;
+            }
+
+            object esUltima = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT COUNT(1) FROM cierrecaja cc WHERE cc.id = @id AND " + CondicionEsUltimaCaja("cc") + ";",
+                p => p.AddWithValue("id", idCierre));
+            if (Convert.ToInt32(esUltima) == 0)
+            {
+                preview.Mensaje = "Solo se puede reabrir la última caja de este usuario en esta sucursal: ya hay una caja posterior.";
+                return preview;
+            }
+
+            // Advertencia (no bloquea): caja abierta del mismo usuario en OTRA sucursal (el POS solo mira la sucursal activa).
+            object abiertaOtraSucursal = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT COUNT(1) FROM cierrecaja WHERE usuarioinicio = @u AND idsucursal <> @s AND usuariocierre = '0';",
+                p => { p.AddWithValue("u", usuarioInicioTexto); p.AddWithValue("s", idSucursal); });
+            preview.TieneCajaAbiertaEnOtraSucursal = Convert.ToInt32(abiertaOtraSucursal) > 0;
+
+            // Movimientos del hueco: fechados DESPUES del cierre original. Al reabrir la caja pasa a [apertura, ahora]
+            // y todo esto queda adentro (se suma al proximo cierre).
+            DataTable dtVentas = DbPg.DataTable(_connectionString, _idEmpresa, @"
+                SELECT COUNT(DISTINCT v.idventa) AS cantidad, COALESCE(SUM(l.cantkg * l.preciokg), 0) AS importe
+                FROM ventas v LEFT JOIN lineaventa l ON l.idventa = v.idventa
+                WHERE v.idvendedor = @idUsuario AND v.idsucursal = @s AND v.fechaventa > @fechaCierre;",
+                p => { p.AddWithValue("idUsuario", idUsuarioCaja); p.AddWithValue("s", idSucursal); p.AddWithValue("fechaCierre", fechaCierre.Value); });
+            preview.VentasDelHueco = Convert.ToInt32(dtVentas.Rows[0]["cantidad"]);
+            preview.ImporteVentasDelHueco = Convert.ToDouble(dtVentas.Rows[0]["importe"]);
+
+            DataTable dtEgresos = DbPg.DataTable(_connectionString, _idEmpresa, @"
+                SELECT COUNT(1) AS cantidad, COALESCE(SUM(monto), 0) AS importe
+                FROM egresoscaja WHERE creadopor = @idUsuario AND idsucursal = @s AND fechahora > @fechaCierre;",
+                p => { p.AddWithValue("idUsuario", idUsuarioCaja); p.AddWithValue("s", idSucursal); p.AddWithValue("fechaCierre", fechaCierre.Value); });
+            preview.EgresosDelHueco = Convert.ToInt32(dtEgresos.Rows[0]["cantidad"]);
+            preview.ImporteEgresosDelHueco = Convert.ToDouble(dtEgresos.Rows[0]["importe"]);
+
+            object pagos = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT COUNT(1) FROM pagos WHERE creadopor = @idUsuario AND idsucursal = @s AND fecha > @fechaCierre AND eliminado = false;",
+                p => { p.AddWithValue("idUsuario", idUsuarioCaja); p.AddWithValue("s", idSucursal); p.AddWithValue("fechaCierre", fechaCierre.Value); });
+            preview.PagosDelHueco = Convert.ToInt32(pagos);
+
+            preview.PuedeReabrir = true;
+            return preview;
+        }
+
+        // Reabre la caja: deja la fila como la dejo AbrirCaja (usuariocierre='0', fechahoracierre y todos los importes
+        // del cierre en NULL, tambien el conteo que declaro el cajero) y registra la REAPERTURA con el snapshot de lo que
+        // se deshizo. UPDATE + INSERT en UNA transaccion; el UPDATE vuelve a exigir "cerrada y ultima y sin otra abierta"
+        // (carrera con AbrirCaja / otra reapertura): 0 filas = no se reabre. No toca idsucursal, usuarioinicio,
+        // fechahorainicio, cajainicio, creado ni idempresa.
+        public Contratos.ResultadoReapertura reabrirCierreCaja(int idCierre, int idUsuarioEjecutor, string usuarioEjecutor, string motivo)
+        {
+            if (string.IsNullOrWhiteSpace(motivo))
+                return new Contratos.ResultadoReapertura { Ok = false, Mensaje = "Ingresá el motivo de la reapertura." };
+
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    // 1) Snapshot de lo que se va a deshacer (con lock: nadie la modifica entre la lectura y el UPDATE).
+                    string snapshot;
+                    using (var cmd = new NpgsqlCommand(@"
+                        SELECT usuariocierre, fechahoracierre, cajacierre, diferencia, importeretirado, cajainiciosiguiente,
+                               ventas, gastos, cajacierrecajero, conteobilletescajero, fechaconteocajero
+                        FROM cierrecaja WHERE id = @id AND idempresa = @idEmpresa FOR UPDATE;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("id", idCierre);
+                        cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                        using (var dr = cmd.ExecuteReader())
+                        {
+                            if (!dr.Read())
+                            {
+                                tx?.Rollback();
+                                return new Contratos.ResultadoReapertura { Ok = false, Mensaje = "No se encontró la caja seleccionada." };
+                            }
+
+                            string Valor(string columna) => dr[columna] == DBNull.Value ? "(vacío)" : Convert.ToString(dr[columna]);
+                            snapshot =
+                                "Se reabrió la caja " + idCierre + ". Datos del cierre que se deshicieron:" + Environment.NewLine +
+                                "Cerrada por (id): " + Valor("usuariocierre") + Environment.NewLine +
+                                "Fecha de cierre: " + Valor("fechahoracierre") + Environment.NewLine +
+                                "Caja cierre: " + Valor("cajacierre") + Environment.NewLine +
+                                "Diferencia: " + Valor("diferencia") + Environment.NewLine +
+                                "Importe retirado: " + Valor("importeretirado") + Environment.NewLine +
+                                "Caja inicio siguiente: " + Valor("cajainiciosiguiente") + Environment.NewLine +
+                                "Ventas: " + Valor("ventas") + Environment.NewLine +
+                                "Egresos de caja: " + Valor("gastos") + Environment.NewLine +
+                                "Conteo del cajero: " + Valor("cajacierrecajero") + " (" + Valor("fechaconteocajero") + ")" + Environment.NewLine +
+                                "Detalle de billetes del cajero: " + Valor("conteobilletescajero") + Environment.NewLine +
+                                "Motivo: " + motivo.Trim();
+                        }
+                    }
+
+                    // 2) El UPDATE: solo si sigue cerrada y es la ultima del usuario/sucursal (misma condicion que el preview).
+                    int filas;
+                    using (var cmd = new NpgsqlCommand(@"
+                        UPDATE cierrecaja SET usuariocierre = '0', fechahoracierre = NULL, cajacierre = NULL, diferencia = NULL,
+                            importeretirado = NULL, cajainiciosiguiente = NULL, ventas = NULL, gastos = NULL,
+                            cajacierrecajero = NULL, conteobilletescajero = NULL, fechaconteocajero = NULL, actualizado = now()
+                        WHERE id = @id AND idempresa = @idEmpresa AND usuariocierre <> '0'
+                          AND " + CondicionEsUltimaCaja("cierrecaja") + ";", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("id", idCierre);
+                        cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                        filas = cmd.ExecuteNonQuery();
+                    }
+
+                    if (filas == 0)
+                    {
+                        tx?.Rollback();
+                        return new Contratos.ResultadoReapertura
+                        {
+                            Ok = false,
+                            Mensaje = "No se pudo reabrir: la caja ya no es la última de este usuario, ya fue reabierta o hay otra caja abierta."
+                        };
+                    }
+
+                    // 3) Auditoria en la misma transaccion.
+                    using (var cmd = new NpgsqlCommand(@"
+                        INSERT INTO auditoriacierrecaja (idempresa, idcierrecaja, tipo, origen, idorigen, accion, idusuario, usuario, detalle)
+                        VALUES (@idEmpresa, @idCierre, 'REAPERTURA', NULL, NULL, NULL, @idUsuario, @usuario, @detalle);", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                        cmd.Parameters.AddWithValue("idCierre", idCierre);
+                        cmd.Parameters.AddWithValue("idUsuario", idUsuarioEjecutor);
+                        cmd.Parameters.AddWithValue("usuario", usuarioEjecutor ?? "");
+                        cmd.Parameters.AddWithValue("detalle", snapshot);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    tx?.Commit();
+                    return new Contratos.ResultadoReapertura { Ok = true, Mensaje = "La caja se reabrió correctamente: el vendedor ya puede seguir vendiendo." };
+                }
+                catch (Exception ex)
+                {
+                    try { tx?.Rollback(); } catch { }
+                    return new Contratos.ResultadoReapertura { Ok = false, Mensaje = ex.Message };
+                }
+            }
+        }
+
+        #endregion
 
         public DataTable findCierreCajaMultiples(List<CierreCaja> listaCierreCaja)
         {

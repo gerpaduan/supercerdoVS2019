@@ -918,13 +918,23 @@
             var $btn = $(this);
             $btn.prop('disabled', true);
 
+            // Envia el pago; si el servidor avisa que cae en una caja YA CERRADA (2026-10-06, ver docs/DECISIONS.md) se
+            // pide confirmacion y, si se acepta, se reenvia con confirmarCajaCerrada=true.
+            function enviarPago(datos) {
             $.ajax({
                 url: urlPost,
                 type: 'POST',
-                data: params,
+                data: datos,
                 headers: { RequestVerificationToken: tokenAntiForgery() }
             }).done(function (resp) {
                 $btn.prop('disabled', false);
+
+                if (window.CajaCerradaConfirm && window.CajaCerradaConfirm.manejar(resp, function () {
+                    $btn.prop('disabled', true);
+                    enviarPago(params + '&confirmarCajaCerrada=true');
+                })) {
+                    return;
+                }
 
                 if (!resp || !resp.ok) {
                     $('#msgErrorPago').removeClass('d-none').text((resp && resp.mensaje) || 'No se pudo guardar el pago.');
@@ -991,6 +1001,9 @@
                 $btn.prop('disabled', false);
                 $('#msgErrorPago').removeClass('d-none').text((xhr.responseJSON && xhr.responseJSON.mensaje) || 'No se pudo guardar el pago.');
             });
+            }
+
+            enviarPago(params);
         });
 
         // ===== Solo lectura / Modificar / Cancelar / cambio de persona / Eliminar (2026-09-24) =====
@@ -1245,22 +1258,31 @@
             }).then(function (resultado) {
                 if (!resultado.isConfirmed) return;
 
-                $.ajax({
-                    url: urlEliminarPago,
-                    type: 'POST',
-                    data: { id: idPago, motivo: resultado.value },
-                    headers: { RequestVerificationToken: tokenAntiForgery() }
-                }).done(function (resp) {
-                    if (!resp || !resp.ok) {
-                        Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: (resp && resp.mensaje) || 'Error desconocido.' });
-                        return;
-                    }
-                    Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false }).then(function () {
-                        window.location.href = $('#hddReturnUrl').val() || resp.redirectUrl;
+                // Si el pago pertenece a una caja YA CERRADA el servidor pide confirmar (2026-10-06, ver docs/DECISIONS.md)
+                // y se reenvia con confirmarCajaCerrada=true.
+                function eliminar(confirmarCajaCerrada) {
+                    $.ajax({
+                        url: urlEliminarPago,
+                        type: 'POST',
+                        data: { id: idPago, motivo: resultado.value, confirmarCajaCerrada: !!confirmarCajaCerrada },
+                        headers: { RequestVerificationToken: tokenAntiForgery() }
+                    }).done(function (resp) {
+                        if (window.CajaCerradaConfirm && window.CajaCerradaConfirm.manejar(resp, function () { eliminar(true); }, { textoConfirmar: 'Eliminar igual' })) {
+                            return;
+                        }
+                        if (!resp || !resp.ok) {
+                            Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: (resp && resp.mensaje) || 'Error desconocido.' });
+                            return;
+                        }
+                        Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false }).then(function () {
+                            window.location.href = $('#hddReturnUrl').val() || resp.redirectUrl;
+                        });
+                    }).fail(function (xhr) {
+                        Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: (xhr.responseJSON && xhr.responseJSON.mensaje) || 'Error de conexión.' });
                     });
-                }).fail(function (xhr) {
-                    Swal.fire({ icon: 'error', title: 'No se pudo eliminar', text: (xhr.responseJSON && xhr.responseJSON.mensaje) || 'Error de conexión.' });
-                });
+                }
+
+                eliminar(false);
             });
         });
 

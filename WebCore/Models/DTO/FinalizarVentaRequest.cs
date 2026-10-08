@@ -28,5 +28,10 @@ namespace WebCore.Models.DTO
         // viejos no lo mandan. Con el, FinalizarVenta es idempotente (un reintento no duplica la venta) y
         // marca la venta en curso como FINALIZADA.
         public Guid? ClientId { get; set; }
+
+        // Confirmacion del usuario para modificar una venta que cae en una caja YA CERRADA (2026-10-06, ver
+        // docs/DECISIONS.md "Cambios en cajas cerradas y reapertura"). ModificarVenta responde requiereConfirmacion
+        // si hace falta y el cliente reenvia el mismo request con esto en true (caja-cerrada-confirm.js).
+        public bool ConfirmarCajaCerrada { get; set; }
     }
 }

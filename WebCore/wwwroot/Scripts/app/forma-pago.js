@@ -841,7 +841,9 @@ function finalizarVenta(data) {
         posInstanceId: window.POSModo?.instanceId || '',
         // Token del carrito (ventas en curso): hace la finalizacion idempotente y marca la venta en curso
         // como FINALIZADA. null si la funcion esta apagada.
-        clientId: window.POSBorrador?.getClientId?.() || null
+        clientId: window.POSBorrador?.getClientId?.() || null,
+        // Segunda vuelta de "esta venta es de una caja ya cerrada": el usuario ya confirmo (caja-cerrada-confirm.js).
+        confirmarCajaCerrada: !!data.confirmarCajaCerrada
     };
 
     // El filtro global de antiforgery (Web/Filters/ValidateAppAntiForgeryTokenAttribute.cs) exige el token
@@ -861,6 +863,29 @@ function finalizarVenta(data) {
         data: JSON.stringify(payload),
 
         success: function (resp) {
+
+            // La venta pertenece a una caja YA CERRADA y el cambio la deja inconsistente: el servidor pide confirmar
+            // (no guardo nada). Se libera el estado "en proceso" y, si el usuario confirma, se reenvia con el flag.
+            if (window.CajaCerradaConfirm && window.CajaCerradaConfirm.esConfirmacion(resp)) {
+                window.POSFinalizandoVenta = false;
+                window.POSVentaFinalizada = false;
+                setEstadoVentaEnProceso(false);
+                window.POSGuard?.endAction('venta:finalizar');
+
+                window.CajaCerradaConfirm.manejar(
+                    resp,
+                    function () { finalizarVenta(Object.assign({}, data, { confirmarCajaCerrada: true })); },
+                    {
+                        onCancelar: function () {
+                            if (data.omitirPostVenta) {
+                                window.POSCancelacionEnCurso = false;
+                                $(document).trigger('ventaCancelacion:error');
+                            }
+                        }
+                    }
+                );
+                return;
+            }
 
             if (!resp.ok) {
                 Swal.fire({

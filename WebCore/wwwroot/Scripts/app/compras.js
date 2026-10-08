@@ -1253,11 +1253,24 @@
         state.saving = true;
         $btn.prop('disabled', true);
 
+        // Si el egreso de caja de la compra esta en una caja YA CERRADA el servidor pide confirmar (2026-10-06, ver
+        // docs/DECISIONS.md "Cambios en cajas cerradas y reapertura") y se reenvia el mismo formulario con
+        // ConfirmarCajaCerrada=true (el servidor ya libero el lock anti doble-submit).
+        var datosCompra = $form.serialize();
+        function enviarCompra(datos) {
         $.ajax({
             url: $form.attr('action'),
             type: 'POST',
-            data: $form.serialize(),
+            data: datos,
             success: function (res) {
+                if (window.CajaCerradaConfirm && window.CajaCerradaConfirm.manejar(res, function () {
+                    state.saving = true;
+                    $btn.prop('disabled', true);
+                    enviarCompra(datosCompra + '&ConfirmarCajaCerrada=true');
+                })) {
+                    return;
+                }
+
                 if (!res || res.ok !== true) {
                     alert(res && res.mensaje ? res.mensaje : 'No se pudo guardar la compra.');
                     return;
@@ -1326,6 +1339,9 @@
                 $btn.prop('disabled', false);
             }
         });
+        }
+
+        enviarCompra(datosCompra);
     }
 
     function bindEvents($form) {

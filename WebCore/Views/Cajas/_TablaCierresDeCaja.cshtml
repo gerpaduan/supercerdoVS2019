@@ -27,6 +27,22 @@
 
         return valor;
     }
+
+    // Avisos del cierre (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas cerradas y reapertura"): cantidad de
+    // cambios (altas/modificaciones/eliminaciones de ventas, compras, pagos, egresos) hechos DESPUES del cierre y de
+    // reaperturas. Las columnas solo vienen en Postgres: sin ellas (SQL Server) devuelve 0 y no se muestra nada.
+    int Entero(DataRow row, string columna)
+    {
+        return int.TryParse(Valor(row, columna), out int n) ? n : 0;
+    }
+
+    // true solo si la consulta marco esta fila como "ultima caja del usuario" (Puede_Reabrir, solo Postgres).
+    bool PuedeReabrirFila(DataRow row)
+    {
+        string v = Valor(row, "Puede_Reabrir");
+        return v.Equals("True", StringComparison.OrdinalIgnoreCase) || v == "1" || v.Equals("t", StringComparison.OrdinalIgnoreCase);
+    }
+
 }
 
 @{
@@ -55,6 +71,7 @@
                 <th class="text-right">Caja ini sig</th>
                 <th class="text-right">Retirado</th>
                 <th>Cerrada por</th>
+                <th title="Cambios hechos en ventas, compras, pagos o egresos de esta caja después de cerrarla, y reaperturas">Avisos</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -76,12 +93,39 @@
                         <td class="text-right">@FormatearMonto(row, "Caja_Ini_Sig")</td>
                         <td class="text-right">@FormatearMonto(row, "Retirado")</td>
                         <td>@Valor(row, "Cerrada_Por")</td>
+                        @{
+                            int cambiosPosteriores = Entero(row, "Cambios_Posteriores");
+                            int reaperturas = Entero(row, "Reaperturas");
+                            string cambiosFecha = FormatearFecha(row, "Cambios_Posteriores_Fecha");
+                        }
+                        <td class="text-nowrap">
+                            @if (cambiosPosteriores > 0)
+                            {
+                                <span class="badge badge-danger" title="Se modificaron datos de esta caja después de cerrarla (última vez: @cambiosFecha). El cierre guardado puede estar desactualizado: abrí Modificar para ver el detalle.">
+                                    <i class="fas fa-exclamation-triangle"></i> Modificada (@cambiosPosteriores)
+                                </span>
+                            }
+                            @if (reaperturas > 0)
+                            {
+                                <span class="badge badge-info" title="Esta caja fue reabierta y vuelta a cerrar @reaperturas vez/veces.">
+                                    <i class="fas fa-lock-open"></i> Reabierta (@reaperturas)
+                                </span>
+                            }
+                        </td>
                         <td class="text-nowrap">
                             @if (puedeModificarCierres)
                             {
                                 <button type="button" class="btn btn-warning btn-sm" onclick="abrirModalCerrarCaja(@Valor(row, "id"), true)">
                                     <i class="fas fa-edit"></i> Modificar
                                 </button>
+                                @if (PuedeReabrirFila(row))
+                                {
+                                    @* Solo la ULTIMA caja de ese usuario en esa sucursal (la consulta marca Puede_Reabrir). *@
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-reabrir-caja" data-id="@Valor(row, "id")"
+                                            title="Reabrir esta caja para que el vendedor pueda seguir vendiendo">
+                                        <i class="fas fa-lock-open"></i> Reabrir
+                                    </button>
+                                }
                             }
                             else
                             {
@@ -94,7 +138,7 @@
             else
             {
                 <tr>
-                    <td colspan="13" class="text-center text-muted py-4">No se encontraron cierres de caja para los filtros seleccionados.</td>
+                    <td colspan="14" class="text-center text-muted py-4">No se encontraron cierres de caja para los filtros seleccionados.</td>
                 </tr>
             }
         </tbody>

@@ -734,12 +734,21 @@
                     $monto.val(montoMostrado);
                 }
 
+                // Envia el egreso; si el servidor avisa que cae en una caja YA CERRADA (2026-10-06, ver docs/DECISIONS.md)
+                // se pide confirmacion y, si se acepta, se reenvia el mismo formulario con confirmarCajaCerrada=true.
+                function enviarEgreso(datos) {
                 $.ajax({
                     url: cfg.guardar,
                     type: "POST",
-                    data: datosEnvio,
+                    data: datos,
                     dataType: "json"
                 }).done(function (resp) {
+                    if (window.CajaCerradaConfirm && window.CajaCerradaConfirm.manejar(resp, function () {
+                        enviarEgreso(datosEnvio + "&confirmarCajaCerrada=true");
+                    })) {
+                        return;
+                    }
+
                     if (!resp || !resp.ok) {
                         if (resp && resp.mensaje && resp.mensaje.toLowerCase().indexOf("permiso") >= 0) {
                             mostrarPermisoPopup(resp.mensaje);
@@ -812,6 +821,9 @@
                 }).fail(function () {
                     mostrarError($error, "No se pudo guardar el egreso de caja.");
                 });
+                }
+
+                enviarEgreso(datosEnvio);
             });
 
         prepararProteccionSalida(selector);

@@ -12,6 +12,10 @@ Registrar el proceso de compras, recepcion, ordenes y abastecimiento interno.
 - Impacto en stock
 - Observaciones
 
+## Modificar una compra cuyo egreso está en una caja ya cerrada — 2026-10-06
+
+Solo las compras hechas desde el POS generan egreso de caja (tipo 19, `egresoscaja.idcompra`) y por lo tanto mueven una caja. `ComprasController.Guardar` busca ese egreso (`findEgresoCajaPorCompra`); si está en una caja **ya cerrada** responde `requiereConfirmacion` (libera antes el lock anti doble-submit) y `compras.js` reenvía el formulario con `ConfirmarCajaCerrada=true`. Desde el POS el egreso se actualiza con los datos nuevos; desde otra pantalla **no se toca** y compra y egreso pueden quedar distintos (el aviso lo dice). Queda un aviso en el cierre (`auditoriacierrecaja`, origen `COMPRA`). Solo Postgres. Ver `docs/03-modulos/caja-y-tesoreria.md`.
+
 ## Recuperación de borrador sin cerrar
 
 Ver `docs/DECISIONS.md` "Borradores en servidor de Compras/Stock/Movimientos/Embutidos" (2026-09-22).

@@ -14,6 +14,21 @@ namespace Contratos
         void addOrEditCierreCaja(Entidades.CierreCaja oCierreCajaE);
         DataTable findCierreCajaMultiples(List<Entidades.CierreCaja> listaCierreCaja);
 
+        // Auditoria de cierres y reapertura de la ultima caja (2026-10-06, ver docs/DECISIONS.md). Solo Postgres:
+        // SoportaAuditoriaCierre es false en SQL Server y entonces ni se avisa ni se registra nada.
+        bool SoportaAuditoriaCierre { get; }
+        // Cierre YA CERRADO (usuariocierre <> '0') del dueno/sucursal cuyo rango contiene la fecha, o tabla vacia.
+        // La relacion registro->caja es por rango (no hay FK): dueno + sucursal + fecha entre apertura y cierre.
+        DataTable findCierreCerradoQueContiene(int idDueno, int idSucursal, DateTime fecha);
+        void registrarAuditoriaCierre(Entidades.AuditoriaCierreCaja auditoria);
+        // Egreso de caja (tipo compra) de una compra por egresoscaja.idcompra, o egreso vacio (Id 0) si no tiene: solo las
+        // compras hechas desde el POS generan egreso y por lo tanto mueven una caja.
+        Entidades.EgresoCaja findEgresoCajaPorCompra(int idCompra);
+        // Registros de auditoria de un cierre (mas reciente primero), con el nombre del usuario.
+        DataTable obtenerAuditoriaCierre(int idCierre);
+        PreviewReapertura obtenerPreviewReapertura(int idCierre);
+        ResultadoReapertura reabrirCierreCaja(int idCierre, int idUsuarioEjecutor, string usuarioEjecutor, string motivo);
+
         DataTable obtenerTiposEgresoCaja(string buscarText, int idTipoEgreso);
         void addOrEditTipoEgreso(int id, string tipoEgresoCaja, bool esGasto);
         void eliminarTipoEgreso(int id);

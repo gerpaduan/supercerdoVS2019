@@ -816,11 +816,31 @@ namespace WebCore.Controllers
             return _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.AddOrEditPago, pago.Fecha, idCreador);
         }
 
+        // Donde buscar la caja de un pago ya guardado. Solo cuenta lo que mueve una caja: el EGRESO de caja del pago
+        // (los pagos hechos desde el POS, tipo 300). Un pago cargado desde Finanzas no genera egreso, no entra en ningun
+        // cierre y por eso no se avisa (si no, cada cobro con fecha pasada pediria confirmar sin que el cierre cambie).
+        // El egreso queda a nombre del OPERADOR (puede no ser el creador del pago en una cuenta de produccion).
+        // Cambios en cajas cerradas (2026-10-06, ver docs/DECISIONS.md).
+        private List<Negocio.CajaCerradaConsulta> ConsultasCajaDelPago(Entidades.Pago pago)
+        {
+            var consultas = new List<Negocio.CajaCerradaConsulta>();
+            if (pago == null || pago.Id <= 0) return consultas;
+
+            var egreso = _oCierreN.findEgresoCajaByTablaYId(Entidades.EgresoCaja.tablas.Pagos.ToString(), pago.Id);
+            if (egreso != null && egreso.Id > 0)
+            {
+                int idSucursalEgreso = egreso.Sucursal != null ? egreso.Sucursal.idSucursal : (pago.Sucursal != null ? pago.Sucursal.idSucursal : 0);
+                consultas.Add(new Negocio.CajaCerradaConsulta(egreso.CreadoPor, idSucursalEgreso, egreso.Fecha));
+            }
+
+            return consultas;
+        }
+
         // Eliminacion logica del pago/cobro (con asiento opuesto en la cta cte). Motivo obligatorio.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "id")]
-        public IActionResult EliminarPago(int id, string motivo)
+        public IActionResult EliminarPago(int id, string motivo, bool confirmarCajaCerrada = false)
         {
             Entidades.Pago pago = id > 0 ? _oCtaCteN.getPagoById(id) : null;
             if (pago == null)
@@ -829,7 +849,31 @@ namespace WebCore.Controllers
             if (!PuedeReasignarOEliminarPago(pago))
                 return Json(new { ok = false, mensaje = "No tiene permiso para eliminar pagos o cobros." });
 
+            // Cajas YA CERRADAS a las que pertenecia el pago (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas
+            // cerradas y reapertura"): eliminarlo deja el egreso opuesto fechado HOY (cae en la caja actual de quien
+            // elimina) y la caja original queda sin ese reverso -> inconsistente. Se avisa y se pide confirmar.
+            var cajaCerradaN = new Negocio.CajaCerradaServicio(_oCierreN);
+            var cajasCerradasPago = cajaCerradaN.Evaluar(ConsultasCajaDelPago(pago).ToArray());
+            if (cajasCerradasPago.Count > 0 && !confirmarCajaCerrada)
+            {
+                return Json(WebCore.Helpers.CajaCerradaRespuesta.Confirmacion(
+                    cajasCerradasPago,
+                    new List<string> { WebCore.Helpers.CajaCerradaRespuesta.LineaImporte("Se elimina el " + (pago.AProveedor ? "pago" : "cobro"), pago.Importe, 0) },
+                    "eliminar",
+                    "El egreso opuesto se registra con la fecha de hoy, en la caja actual de quien elimina: la caja cerrada queda sin ese reverso."));
+            }
+
             var (ok, mensaje) = _oCtaCteN.eliminarPagoConContraasiento(id, motivo, _usuarioActual);
+
+            if (ok)
+            {
+                cajaCerradaN.Registrar(
+                    Entidades.AuditoriaCierreCaja.OrigenPago, id, Entidades.AuditoriaCierreCaja.AccionEliminacion,
+                    cajasCerradasPago, _usuarioActual.Id, _usuarioActual.Nombre,
+                    pago.Importe, 0, pago.FormaPago, null,
+                    "Se eliminó el " + (pago.AProveedor ? "pago" : "cobro") + ". Motivo: " + (motivo ?? ""));
+            }
+
             return Json(new
             {
                 ok,
@@ -937,7 +981,8 @@ namespace WebCore.Controllers
             string Efectivo = "",
             string ChequesJson = "",
             bool desdePos = false,
-            string posInstanceId = "")
+            string posInstanceId = "",
+            bool confirmarCajaCerrada = false)
         {
             returnUrl = DecodeReturnUrlIfNeeded(returnUrl);
 
@@ -1040,11 +1085,76 @@ namespace WebCore.Controllers
                 }
             }
 
+            // ---- Cajas YA CERRADAS afectadas (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas cerradas y reapertura") ----
+            // Un pago pertenece a la caja de (creadopor, sucursal, fecha); si es del POS tambien por su egreso. Se evalua
+            // la caja ORIGINAL (si se edita) y la de la fecha/sucursal NUEVA. Alta en una caja cerrada, o cambio de
+            // importe/forma de pago/fecha/sucursal/persona sobre un pago de caja cerrada, pide confirmacion; el resto
+            // (observaciones...) solo se registra.
+            var cajaCerradaN = new Negocio.CajaCerradaServicio(_oCierreN);
+            // Solo importa lo que mueve una caja: pagos del POS (con egreso de caja). Un pago de Finanzas sin egreso no
+            // entra en ningun cierre, asi que no genera aviso (ver ConsultasCajaDelPago).
+            var consultasCajaPago = ConsultasCajaDelPago(pagoAnterior);
+            if (consultasCajaPago.Count > 0 || desdePos)
+            {
+                consultasCajaPago.Add(new Negocio.CajaCerradaConsulta(
+                    consultasCajaPago.Count > 0 ? consultasCajaPago[0].IdDueno : ResolverOperadorPOS(posInstanceId, _usuarioActual).Id,
+                    oPagoE.Sucursal != null ? oPagoE.Sucursal.idSucursal : 0,
+                    oPagoE.Fecha));
+            }
+            var cajasCerradasPago = cajaCerradaN.Evaluar(consultasCajaPago.ToArray());
+
+            if (cajasCerradasPago.Count > 0 && !confirmarCajaCerrada)
+            {
+                int sucursalPagoOriginal = pagoAnterior != null && pagoAnterior.Sucursal != null ? pagoAnterior.Sucursal.idSucursal : 0;
+                int sucursalPagoNueva = oPagoE.Sucursal != null ? oPagoE.Sucursal.idSucursal : 0;
+                bool esAltaPago = pagoAnterior == null;
+                bool cambioPersona = pagoAnterior != null && idPersona != pagoAnterior.IdPersona;
+                bool afectaPago = esAltaPago || cambioPersona || Negocio.CambioCajaCerrada.HuboCambioQueAfectaCierre(
+                    pagoAnterior.Importe, oPagoE.Importe, pagoAnterior.FormaPago, oPagoE.FormaPago,
+                    pagoAnterior.Fecha, oPagoE.Fecha, sucursalPagoOriginal, sucursalPagoNueva);
+
+                if (afectaPago)
+                {
+                    string tipoPago = oPagoE.AProveedor ? "pago" : "cobro";
+                    var cambioPago = new List<string>();
+                    if (esAltaPago)
+                    {
+                        cambioPago.Add("Nuevo " + tipoPago + " de $ " + oPagoE.Importe.ToString("N2", new System.Globalization.CultureInfo("es-AR")) + " fechado el " + oPagoE.Fecha.ToString("dd/MM/yyyy HH:mm"));
+                    }
+                    else
+                    {
+                        if (Math.Abs(pagoAnterior.Importe - oPagoE.Importe) >= Negocio.CambioCajaCerrada.ToleranciaImporte)
+                            cambioPago.Add(WebCore.Helpers.CajaCerradaRespuesta.LineaImporte("Importe del " + tipoPago, pagoAnterior.Importe, oPagoE.Importe));
+                        if (!string.Equals((pagoAnterior.FormaPago ?? "").Trim(), (oPagoE.FormaPago ?? "").Trim(), StringComparison.OrdinalIgnoreCase))
+                            cambioPago.Add(WebCore.Helpers.CajaCerradaRespuesta.LineaTexto("Forma de pago", pagoAnterior.FormaPago, oPagoE.FormaPago));
+                        if (Negocio.CambioCajaCerrada.CambioFecha(pagoAnterior.Fecha, oPagoE.Fecha))
+                            cambioPago.Add(WebCore.Helpers.CajaCerradaRespuesta.LineaFecha("Fecha", pagoAnterior.Fecha, oPagoE.Fecha));
+                        if (sucursalPagoOriginal != sucursalPagoNueva)
+                            cambioPago.Add("Sucursal: " + sucursalPagoOriginal + " → " + sucursalPagoNueva);
+                        if (cambioPersona)
+                            cambioPago.Add("Se cambia la persona del " + tipoPago);
+                    }
+
+                    return Json(WebCore.Helpers.CajaCerradaRespuesta.Confirmacion(
+                        cajasCerradasPago, cambioPago, esAltaPago ? "cargar" : "modificar",
+                        !esAltaPago && desdePos ? "Si cambia el importe o la forma de pago, el reverso del egreso se registra en la caja original (ya cerrada)." : null));
+                }
+            }
+
             // Un fallo inesperado del guardado (base, egreso de caja, etc.) se responde como JSON controlado con el
             // motivo, en vez de un 500 sin cuerpo que la pantalla mostraba como "No se pudo guardar el pago." a secas.
             try
             {
                 _ = _oCtaCteN.addOrEditPago(oPagoE, cierreCajaActual, pagoAnterior);
+
+                // Aviso en el cierre de cada caja afectada (tambien si no pidio confirmacion), fuera de la transaccion del pago.
+                cajaCerradaN.Registrar(
+                    Entidades.AuditoriaCierreCaja.OrigenPago, oPagoE.Id,
+                    pagoAnterior == null ? Entidades.AuditoriaCierreCaja.AccionAlta : Entidades.AuditoriaCierreCaja.AccionModificacion,
+                    cajasCerradasPago, _usuarioActual.Id, _usuarioActual.Nombre,
+                    pagoAnterior != null ? (double?)pagoAnterior.Importe : null, oPagoE.Importe,
+                    pagoAnterior != null ? pagoAnterior.FormaPago : null, oPagoE.FormaPago,
+                    (oPagoE.AProveedor ? "Pago" : "Cobro") + (pagoAnterior == null ? " nuevo." : " modificado."));
             }
             catch (Exception ex)
             {

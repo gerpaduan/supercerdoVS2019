@@ -632,6 +632,10 @@ namespace WebCore.Controllers
                         return Fallo(WebCore.Helpers.ProtegerRegistroReservadoFilter.MensajeDenegado);
                 }
 
+                // Egreso de caja ORIGINAL de la compra (solo las de POS lo tienen), leido antes de modificar nada: es lo
+                // que une la compra con una caja. Cambios en cajas cerradas (2026-10-06, ver docs/DECISIONS.md).
+                Entidades.EgresoCaja egresoOriginalCompra = compraActual != null ? _oCierreN.findEgresoCajaPorCompra(model.IdCompra) : null;
+
                 // Port de Web/Controllers/ComprasController.cs:426-430.
                 string permisoGuardar = model.IdCompra > 0 ? Entidades.Permisos.Compra.ModificarCompra : Entidades.Permisos.Compra.NuevaCompra;
                 DateTime fechaPermisoGuardar = model.FechaCompra;
@@ -730,6 +734,42 @@ namespace WebCore.Controllers
                     }
                 }
 
+                // ---- Cajas YA CERRADAS afectadas (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas cerradas y reapertura") ----
+                // Una compra mueve una caja solo por su egreso (compras de POS). Si el egreso original esta en una caja
+                // cerrada se pide confirmar antes de guardar. Desde POS ese egreso se actualiza (cambia la caja cerrada);
+                // fuera del POS NO se toca y compra y egreso pueden quedar distintos. Un alta desde POS valida caja abierta
+                // arriba, asi que no cae en una cerrada.
+                var cajaCerradaN = new Negocio.CajaCerradaServicio(_oCierreN);
+                var consultasCajaCompra = new List<Negocio.CajaCerradaConsulta>();
+                if (egresoOriginalCompra != null && egresoOriginalCompra.Id > 0)
+                {
+                    consultasCajaCompra.Add(new Negocio.CajaCerradaConsulta(
+                        egresoOriginalCompra.CreadoPor,
+                        egresoOriginalCompra.Sucursal != null ? egresoOriginalCompra.Sucursal.idSucursal : sucursal.IdSucursal,
+                        egresoOriginalCompra.Fecha));
+                    if (desdePos)
+                        consultasCajaCompra.Add(new Negocio.CajaCerradaConsulta(
+                            compra.CreadoPor != null ? compra.CreadoPor.Id : operador.Id, sucursal.IdSucursal, compra.FechaCompra));
+                }
+                var cajasCerradasCompra = cajaCerradaN.Evaluar(consultasCajaCompra.ToArray());
+
+                if (cajasCerradasCompra.Count > 0 && !model.ConfirmarCajaCerrada)
+                {
+                    // Igual que Fallo(): libera el lock anti doble-submit, si no el reenvio con el mismo SubmissionToken queda bloqueado.
+                    MemoryCache.Default.Remove(claveLock);
+                    return Json(WebCore.Helpers.CajaCerradaRespuesta.Confirmacion(
+                        cajasCerradasCompra,
+                        new List<string>
+                        {
+                            "Se modifica la compra #" + model.IdCompra + " (proveedor, fecha, líneas o forma de pago pueden cambiar).",
+                            "Egreso de caja de la compra en la caja cerrada: $ " + egresoOriginalCompra.Monto.ToString("N2", new System.Globalization.CultureInfo("es-AR"))
+                        },
+                        "modificar",
+                        desdePos
+                            ? "Desde el POS el egreso de caja de la compra se actualiza con los datos nuevos."
+                            : "Desde esta pantalla el egreso de caja de la compra NO se modifica: el monto de la compra y el del egreso pueden quedar distintos."));
+                }
+
                 int idCompra = _oCompraN.AddOrEditCompra(
                     compra,
                     compra.TipoCompra,
@@ -737,6 +777,13 @@ namespace WebCore.Controllers
                     lineasCortes,
                     desdePos,
                     egresoCaja);
+
+                // Aviso en el cierre de cada caja afectada, fuera de la transaccion de la compra (si falla solo se loguea).
+                cajaCerradaN.Registrar(
+                    Entidades.AuditoriaCierreCaja.OrigenCompra, idCompra, Entidades.AuditoriaCierreCaja.AccionModificacion,
+                    cajasCerradasCompra, operador.Id, operador.Nombre,
+                    egresoOriginalCompra != null ? (double?)egresoOriginalCompra.Monto : null, null, null, null,
+                    desdePos ? "Compra modificada desde el POS (el egreso de caja se actualizó)." : "Compra modificada fuera del POS (el egreso de caja no se tocó).");
 
                 if (!desdePos && !enModal)
                     TempData["ComprasSuccessMessage"] = model.IdCompra > 0

@@ -23,6 +23,17 @@ namespace NegocioTests.Fakes
         public DataTable findCierreCaja(CierreCaja oCierreParam, CierreCaja.tipoBusqueda tipoBusquedaParam, string texto, DateTime? fechaDesde) => throw new NotImplementedException();
         public void addOrEditCierreCaja(CierreCaja oCierreCajaE) => throw new NotImplementedException();
         public DataTable findCierreCajaMultiples(List<CierreCaja> listaCierreCaja) => throw new NotImplementedException();
+        // Auditoria de cierres / reapertura (2026-10-06). El fake deja configurar el cierre "cerrado que contiene la
+        // fecha" (CierreCerradoQueContiene) y anota las auditorias registradas, para testear CajaCerradaService.
+        public bool SoportaAuditoriaCierre { get; set; } = true;
+        public DataTable CierreCerradoQueContiene { get; set; }
+        public System.Collections.Generic.List<AuditoriaCierreCaja> AuditoriasRegistradas { get; } = new System.Collections.Generic.List<AuditoriaCierreCaja>();
+        public DataTable findCierreCerradoQueContiene(int idDueno, int idSucursal, DateTime fecha) => CierreCerradoQueContiene ?? new DataTable();
+        public void registrarAuditoriaCierre(AuditoriaCierreCaja auditoria) => AuditoriasRegistradas.Add(auditoria);
+        public DataTable obtenerAuditoriaCierre(int idCierre) => throw new NotImplementedException();
+        public EgresoCaja findEgresoCajaPorCompra(int idCompra) => throw new NotImplementedException();
+        public Contratos.PreviewReapertura obtenerPreviewReapertura(int idCierre) => throw new NotImplementedException();
+        public Contratos.ResultadoReapertura reabrirCierreCaja(int idCierre, int idUsuarioEjecutor, string usuarioEjecutor, string motivo) => throw new NotImplementedException();
         public DataTable obtenerTiposEgresoCaja(string buscarText, int idTipoEgreso) => throw new NotImplementedException();
         public void addOrEditTipoEgreso(int id, string tipoEgresoCaja, bool esGasto) => throw new NotImplementedException();
         public void eliminarTipoEgreso(int id) => throw new NotImplementedException();
