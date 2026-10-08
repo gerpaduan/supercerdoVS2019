@@ -20,14 +20,15 @@ body.carnisys-login {
     -webkit-font-smoothing: antialiased;
 }
 
-.login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr); }
+.login-page { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr); }
 
 .login-brand-panel {
     position: relative;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    padding: 42px clamp(44px, 8vw, 130px) 36px;
+    min-height: 100dvh;
+    padding: clamp(18px, 4.5vh, 42px) clamp(44px, 8vw, 130px) clamp(16px, 3.5vh, 36px);
     color: #fff;
     overflow: hidden;
     background: radial-gradient(circle at 88% 12%, rgba(255, 124, 42, .35), transparent 23%), linear-gradient(138deg, var(--login-navy-dark) 0%, var(--login-navy) 62%, #0d4b89 100%);
@@ -41,49 +42,49 @@ body.carnisys-login {
 .login-brand { position: relative; z-index: 1; display: inline-block; width: min(290px, 80%); padding: 11px 15px; background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.14); }
 .login-brand img { display: block; width: 100%; height: auto; }
 
-.brand-content { position: relative; z-index: 1; max-width: 520px; margin: auto 0; padding: 48px 0; }
+.brand-content { position: relative; z-index: 1; max-width: 520px; margin: auto 0; padding: clamp(16px, 4.5vh, 48px) 0; }
 .brand-eyebrow,
 .login-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .brand-eyebrow { padding: 8px 12px; color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; }
-.brand-content h1 { margin: 24px 0 18px; color: #fff; font-size: clamp(36px, 4vw, 58px); line-height: 1.08; letter-spacing: -.04em; }
+.brand-content h1 { margin: clamp(12px, 2.5vh, 24px) 0 clamp(8px, 1.8vh, 18px); color: #fff; font-size: clamp(30px, min(4vw, 6.5vh), 58px); line-height: 1.08; letter-spacing: -.04em; }
 .brand-content h1 strong { color: #ff8b42; }
-.brand-content p { max-width: 490px; margin: 0; color: rgba(255,255,255,.82); font-size: 17px; line-height: 1.7; }
+.brand-content p { max-width: 490px; margin: 0; color: rgba(255,255,255,.82); font-size: clamp(14px, 2vh, 17px); line-height: 1.6; }
 
-.brand-points { display: grid; gap: 13px; margin-top: 34px; }
+.brand-points { display: grid; gap: clamp(8px, 1.4vh, 13px); margin-top: clamp(14px, 3.2vh, 34px); }
 .brand-points div { display: flex; gap: 12px; align-items: flex-start; color: #fff; font-size: 14px; font-weight: 600; line-height: 1.45; }
 .brand-points i { margin-top: 2px; color: #ff8b42; }
 .brand-footer { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.72); font-size: 13px; }
 .brand-footer i { color: #ff8b42; }
 
-.login-form-panel { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 42px 32px; background: #fff; }
+.login-form-panel { display: flex; align-items: center; justify-content: center; min-height: 100vh; min-height: 100dvh; padding: clamp(14px, 3.5vh, 42px) 32px; background: #fff; }
 .login-form-wrap { width: min(100%, 410px); }
-.back-home { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 54px; color: var(--login-muted); font-size: 14px; font-weight: 700; text-decoration: none; transition: color .2s ease; }
+.back-home { display: inline-flex; align-items: center; gap: 9px; margin-bottom: clamp(12px, 5vh, 54px); color: var(--login-muted); font-size: 14px; font-weight: 700; text-decoration: none; transition: color .2s ease; }
 .back-home:hover { color: var(--login-orange); text-decoration: none; }
-.login-heading { margin-bottom: 30px; }
+.login-heading { margin-bottom: clamp(14px, 3vh, 30px); }
 .login-kicker { color: var(--login-orange); }
-.login-heading h2 { margin: 10px 0 8px; color: var(--login-navy-dark); font-size: 31px; letter-spacing: -.03em; }
+.login-heading h2 { margin: 10px 0 8px; color: var(--login-navy-dark); font-size: clamp(24px, 3.6vh, 31px); letter-spacing: -.03em; }
 .login-heading p { margin: 0; color: var(--login-muted); font-size: 15px; }
 
-.carnisys-login-form { display: grid; gap: 19px; }
-.login-field label { display: block; margin: 0 0 8px; color: #2c3b53; font-size: 13px; font-weight: 800; }
+.carnisys-login-form { display: grid; gap: clamp(10px, 2.1vh, 19px); }
+.login-field label { display: block; margin: 0 0 clamp(4px, .9vh, 8px); color: #2c3b53; font-size: 13px; font-weight: 800; }
 .input-shell { position: relative; }
 .input-shell > i { position: absolute; top: 50%; left: 16px; z-index: 1; color: #8090a6; transform: translateY(-50%); }
-.input-shell input { display: block; width: 100%; height: 54px; padding: 0 16px 0 44px; color: var(--login-ink); font: inherit; font-size: 15px; outline: 0; background: #fff; border: 1px solid var(--login-line); border-radius: 12px; box-shadow: none; transition: border-color .2s ease, box-shadow .2s ease; }
+.input-shell input { display: block; width: 100%; height: clamp(44px, 6vh, 54px); padding: 0 16px 0 44px; color: var(--login-ink); font: inherit; font-size: 15px; outline: 0; background: #fff; border: 1px solid var(--login-line); border-radius: 12px; box-shadow: none; transition: border-color .2s ease, box-shadow .2s ease; }
 .input-shell input::placeholder { color: #a2adbd; }
 .input-shell input:focus { border-color: #4b81be; box-shadow: 0 0 0 4px rgba(18,79,150,.11); }
 .field-error { display: block; margin-top: 6px; color: #bd2c2c; font-size: 12px; }
-.login-submit { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; height: 54px; margin-top: 4px; color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; background: linear-gradient(95deg, var(--login-orange), var(--login-orange-light)); border: 0; border-radius: 12px; box-shadow: 0 12px 20px rgba(238,92,11,.22); transition: transform .2s ease, box-shadow .2s ease; }
+.login-submit { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; height: clamp(44px, 6vh, 54px); margin-top: 4px; color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; background: linear-gradient(95deg, var(--login-orange), var(--login-orange-light)); border: 0; border-radius: 12px; box-shadow: 0 12px 20px rgba(238,92,11,.22); transition: transform .2s ease, box-shadow .2s ease; }
 .login-submit:hover, .login-submit:focus { transform: translateY(-1px); box-shadow: 0 15px 24px rgba(238,92,11,.3); }
-.login-hint { margin: 4px 0 18px; color: var(--login-muted); font-size: 12.5px; line-height: 1.5; }
+.login-hint { margin: 4px 0 clamp(8px, 1.8vh, 18px); color: var(--login-muted); font-size: 12.5px; line-height: 1.5; }
 
 .login-alert { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 18px; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.45; }
 .login-alert ul { margin: 0; padding-left: 16px; }
 .login-alert-error { color: #941e1e; background: #fff1f1; border: 1px solid #ffd4d4; }
 .login-alert-success { color: #12633b; background: #edfcf4; border: 1px solid #c9f1da; }
-.login-forgot-wrap { margin-top: 18px; text-align: center; }
+.login-forgot-wrap { margin-top: clamp(10px, 1.8vh, 18px); text-align: center; }
 .login-forgot { color: var(--login-muted); font-size: 13px; font-weight: 700; text-decoration: none; transition: color .2s ease; }
 .login-forgot:hover, .login-forgot:focus { color: var(--login-orange); text-decoration: underline; }
-.login-support { display: flex; justify-content: center; gap: 8px; margin-top: 28px; color: var(--login-muted); font-size: 13px; text-align: center; }
+.login-support { display: flex; justify-content: center; gap: 8px; margin-top: clamp(10px, 2.6vh, 28px); color: var(--login-muted); font-size: 13px; text-align: center; }
 .login-support > i { color: #1d9c56; font-size: 17px; }
 .login-support a { color: var(--login-navy); font-weight: 800; text-decoration: none; }
 .login-support a:hover { color: var(--login-orange); text-decoration: underline; }
@@ -110,11 +111,17 @@ body.carnisys-login {
 /* Login por huella (passkeys, 2026-09-21): boton principal arriba del formulario clasico. `hidden`
    no alcanza con estos display:flex/block, por eso el [hidden] explicito. */
 .passkey-login[hidden], .passkey-login [hidden] { display: none !important; }
-.passkey-login { margin-bottom: 22px; }
-.passkey-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 58px; color: #fff; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; background: linear-gradient(95deg, var(--login-navy-dark), var(--login-navy)); border: 0; border-radius: 12px; box-shadow: 0 12px 20px rgba(6,45,99,.22); transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; }
+.passkey-login { margin-bottom: clamp(10px, 2.2vh, 22px); }
+.passkey-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: clamp(46px, 6.5vh, 58px); color: #fff; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; background: linear-gradient(95deg, var(--login-navy-dark), var(--login-navy)); border: 0; border-radius: 12px; box-shadow: 0 12px 20px rgba(6,45,99,.22); transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; }
 .passkey-btn i { font-size: 22px; }
 .passkey-btn:hover, .passkey-btn:focus { transform: translateY(-1px); box-shadow: 0 15px 24px rgba(6,45,99,.3); }
 .passkey-btn:disabled { cursor: progress; opacity: .7; transform: none; }
 .passkey-login .login-alert { margin: 14px 0 0; }
-.passkey-divider { display: flex; align-items: center; gap: 12px; margin-top: 22px; color: var(--login-muted); font-size: 13px; }
+.passkey-divider { display: flex; align-items: center; gap: 12px; margin-top: clamp(10px, 2.2vh, 22px); color: var(--login-muted); font-size: 13px; }
 .passkey-divider::before, .passkey-divider::after { flex: 1; height: 1px; content: ""; background: var(--login-line); }
+
+/* Pantallas muy bajas (ventana reducida, zoom alto): se oculta solo la bajada del panel de marca para que
+   todo quepa sin scroll. Los puntos y el pie se mantienen siempre. Solo en el layout de dos columnas (>900px). */
+@media (min-width: 901px) and (max-height: 600px) {
+    .brand-content p { display: none; }
+}

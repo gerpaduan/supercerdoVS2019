@@ -15,7 +15,7 @@
     <link href="@Url.Content("~/Content/css/carnisys-login.css")" rel="stylesheet" />
     <style>
         /* Lista de usuarios del login por CUIT (solo en dispositivo autorizado). */
-        .login-user-list { list-style: none; margin: .5rem 0 0; padding: 0; max-height: 11.5rem; overflow-y: auto; border: 1px solid #d9e2ef; border-radius: 10px; background: #fff; }
+        .login-user-list { list-style: none; margin: .5rem 0 0; padding: 0; max-height: clamp(6rem, 22vh, 11.5rem); overflow-y: auto; border: 1px solid #d9e2ef; border-radius: 10px; background: #fff; }
         .login-user-list li { padding: .55rem .8rem; cursor: pointer; font-size: .95rem; color: #1f2d3d; border-bottom: 1px solid #eef2f8; }
         .login-user-list li:last-child { border-bottom: 0; }
         .login-user-list li:hover, .login-user-list li:focus { background: #eef4ff; outline: none; }
