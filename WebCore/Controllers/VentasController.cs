@@ -2930,6 +2930,12 @@ namespace WebCore.Controllers
                 if (sucursal == null)
                     return Json(new { ok = false, msg = "Sucursal inválida." });
 
+                // Momento de CREACION del registro (2026-10-06, ver docs/DECISIONS.md): la validacion de que hay una
+                // caja valida al finalizar la venta se hace SIEMPRE contra este instante, nunca contra
+                // request.FechaVenta / venta.FechaVenta (la fecha de la venta se puede editar en el POS, la de
+                // creacion no). Se toma una sola vez para que validacion y fecha por defecto coincidan.
+                DateTime fechaCreacion = DateTime.Now;
+
                 // Item 5b (2026-09-12, ver docs/DECISIONS.md): piso adicional por caja real
                 // abierta -- se resuelve aca (antes de validar la fecha) para poder pasarselo a
                 // FechaVentaDentroDeVentanaPermitida como primera validacion.
@@ -2945,7 +2951,7 @@ namespace WebCore.Controllers
                 DateTime fechaVentaFinal = request.FechaVenta.HasValue
                     && FechaVentaDentroDeVentanaPermitida(request.FechaVenta.Value, cierreParaFecha?.FechaHoraInicio)
                     ? request.FechaVenta.Value
-                    : DateTime.Now;
+                    : fechaCreacion;
 
                 // Bypass de caja cerrada (item 5 original, 2026-09-07 -- ver docs/DECISIONS.md):
                 // sigue gateado por PuedeOperarSinCajaYEditarFecha, sin cambios -- el rediseño de
@@ -2979,7 +2985,9 @@ namespace WebCore.Controllers
                 // Bug real encontrado leyendo el clasico (Web/Controllers/VentasController.cs:596):
                 // ahi ya usaba "operador", no "user" -- WebCore se habia desviado (tercera ronda
                 // de pedidos, 2026-09-10, ver docs/DECISIONS.md).
-                bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, operador);
+                // Siempre con la fecha de CREACION (fechaCreacion), NO con venta.FechaVenta: una venta con fecha
+                // editada no puede "colarse" en una caja que ya no esta abierta ahora.
+                bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(fechaCreacion, venta.Sucursal, operador);
                 if (!cajaAbierta && !puedeOperarSinCajaEnCurso)
                     return Json(new { ok = false, msg = "La caja ha sido cerrada." });
 

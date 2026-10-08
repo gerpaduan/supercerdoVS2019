@@ -15,6 +15,7 @@ Documentar el flujo de ventas, caja, articulos, pesaje y uso del POS.
 
 ## Modificar una venta de una caja ya cerrada y validación de caja al finalizar — 2026-10-06
 
+- **Finalizar venta** (`VentasController.FinalizarVenta`): la caja se valida siempre con la fecha de **creación** (`fechaCreacion`, ahora), nunca con la fecha de la venta (editable). El salteo de caja para Admin / permiso `Venta.UltimaVenta` se mantiene (decisión 2026-09-07).
 - **Modificar una venta** (`ModificarVenta`): si la venta pertenece a una caja **ya cerrada** (vendedor + sucursal + fecha original), el POS en modo edición muestra el banner `#alertaVentaDeCajaCerrada`; si el cambio altera **monto, forma de pago, fecha o sucursal**, el servidor responde `requiereConfirmacion` y `forma-pago.js` pide confirmar (reenvía con `confirmarCajaCerrada`). Siempre que sea caja cerrada queda un aviso en el cierre (`auditoriacierrecaja`, origen `VENTA`). Detalle: `docs/03-modulos/caja-y-tesoreria.md` y `docs/DECISIONS.md` (2026-10-06).
 
 ## Ventas en curso (borrador en servidor) y advertencias del POS
