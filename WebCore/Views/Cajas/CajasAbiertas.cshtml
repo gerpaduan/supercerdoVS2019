@@ -348,6 +348,10 @@
 
                 <div id="cerrarCajaError" class="alert alert-danger d-none"></div>
 
+                @* Aviso al encargado: el cajero cargo o cambio su conteo de cierre mientras este modal estaba abierto
+                   (sondeo de EstadoConteoCierreCajero, ver conteoSondeo mas abajo). Se limpia con "Actualizar importes". *@
+                <div id="avisoConteoCambio" class="alert alert-warning d-none py-2 mb-2" role="alert"></div>
+
                 @* Aviso al encargado: despues de cerrar esta caja se modificaron datos (ventas, compras, pagos, egresos) o se
                    la reabrio (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas cerradas y reapertura"). Lo llena
                    renderCambiosPosteriores con data.cambiosPosteriores de ObtenerDatosCierre (solo Postgres). *@
@@ -422,6 +426,13 @@
                         <div class="col-md-6">
                             <label>Caja Cierre</label>
                             <input type="text" step="0.01" id="CajaCierre" name="CajaCierre" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
+                            @* Conteo de cierre del cajero (pre-cierre, 2026-10-06, ver docs/DECISIONS.md): lo que declaro el cajero desde
+                               "Mi cierre" del POS, o la etiqueta "no cargo su cierre". En un cierre ya hecho muestra el ORIGEN del importe
+                               (cajero / modificado por el encargado / cargado por el encargado). Oculto en SQL Server (no soportado). *@
+                            <div id="bloqueConteoCajero" class="conteo-cajero d-none mt-1">
+                                <div id="conteoCajeroEstado" class="conteo-cajero-estado"></div>
+                                <pre id="conteoCajeroDetalle" class="conteo-cajero-detalle d-none"></pre>
+                            </div>
                         </div>
 
                         <div class="col-md-6">
@@ -471,6 +482,18 @@
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 <style>
+    /* Conteo de cierre del cajero bajo Caja Cierre (modal Cerrar caja): fuente compacta, detalle de billetes en monoespaciada. */
+    #bloqueConteoCajero .conteo-cajero-estado { font-size: 0.8rem; line-height: 1.6; }
+    #bloqueConteoCajero .conteo-cajero-estado .badge { font-size: 0.75rem; font-weight: 600; }
+    #bloqueConteoCajero .conteo-cajero-detalle {
+        margin: .35rem 0 0; padding: .4rem .5rem; font-size: 0.75rem; max-height: 10rem; overflow: auto;
+        background: #f8f9fc; border: 1px solid #e3e6f0; border-radius: .35rem; white-space: pre-wrap;
+    }
+    html.dark-mode #bloqueConteoCajero .conteo-cajero-detalle { background: #132032; border-color: #2a3b52; color: #e5edf7; }
+    /* "Actualizar importes" resaltado cuando el cajero cambio su cierre con el modal abierto. */
+    #btnActualizarDatosCierre.conteo-cambio-pulso { animation: conteoCambioPulso 1.2s ease-in-out infinite; }
+    @@keyframes conteoCambioPulso { 0%, 100% { box-shadow: 0 0 0 0 rgba(246, 194, 62, .7); } 50% { box-shadow: 0 0 0 6px rgba(246, 194, 62, 0); } }
+
     @@media (min-width: 992px) {
         #modalActividadesCaja .modal-dialog {
             width: 60%;
@@ -991,10 +1014,16 @@
                     setFormattedValue("#CajaInicioSiguiente", data.modoModificacion ? data.cajaInicioSiguiente : null, true);
                     $("#modalCerrarCajaTitulo").text(data.modoModificacion ? "Modificar Cierre de Caja" : "Cerrar Caja");
                     $("#btnGuardarCierreCaja").text(data.modoModificacion ? "Actualizar datos" : "Cerrar Caja");
+                    $("#CajaCierre").data("manual", false);
                     if (data.modoModificacion) {
                         recalcularCierre();
                     }
+                    // Conteo del cajero: se muestra y, en una caja abierta, se precarga como Caja Cierre.
                     renderCambiosPosteriores(data);
+                    renderConteoCajero(data);
+                    precargarConteoCajero(data);
+                    // Caja abierta: se vigila si el cajero cambia su cierre mientras este modal siga abierto.
+                    if (!data.modoModificacion) iniciarSondeoConteo(data.id); else detenerSondeoConteo();
                     $("#modalCerrarCaja").modal("show");
                 },
                 error: function (xhr) {
@@ -1171,6 +1200,194 @@
             reabrirCaja($(this).data('id'));
         });
 
+        // ===== Conteo de cierre del cajero (pre-cierre, 2026-10-06, ver docs/DECISIONS.md) =====
+        // Ultimo conteo traido del servidor (null = sin soporte o sin datos); lo usa el boton "Usar".
+        let conteoCajeroActual = null;
+
+        // El encargado "toco" Caja Cierre a mano: ya no se lo pisa con el importe del cajero al actualizar
+        // (solo se muestra el valor del cajero con el boton "Usar"). Los .val() por codigo no disparan 'input'.
+        $(document).on('input', '#CajaCierre', function () {
+            $(this).data("manual", true);
+            actualizarAvisoConteoDistinto();
+        });
+
+        function importesIguales(a, b) {
+            return Math.abs(Number(a) - Number(b)) < 0.005;
+        }
+
+        // Dibuja el bloque bajo Caja Cierre con "Declarado por el cajero" / "no cargo su cierre", o el origen del
+        // importe si el cierre ya estaba hecho (modo modificacion). Texto siempre via .text() (sin HTML del servidor).
+        function renderConteoCajero(data) {
+            const $bloque = $("#bloqueConteoCajero");
+            const $estado = $("#conteoCajeroEstado").empty();
+            $("#conteoCajeroDetalle").addClass("d-none").text("");
+
+            // Lo que se esta mostrando es lo ultimo que se trajo: el sondeo compara contra esta clave y el aviso de
+            // "el cajero lo cambio" se limpia (se llega aca al abrir el modal y al tocar Actualizar importes).
+            conteoVistoKey = (data && data.soportaConteoCajero) ? (data.fechaConteoCajeroKey || "") : null;
+            ocultarAvisoConteoCambio();
+
+            if (!data || !data.soportaConteoCajero) {
+                conteoCajeroActual = null;
+                $bloque.addClass("d-none");
+                return;
+            }
+
+            const tieneConteo = data.cajaCierreCajero !== null && data.cajaCierreCajero !== undefined;
+            conteoCajeroActual = tieneConteo
+                ? { importe: Number(data.cajaCierreCajero), detalle: data.conteoBilletesCajero || "", fecha: data.fechaConteoCajero || "" }
+                : null;
+            const modoModificacion = !!data.modoModificacion;
+            const montoTxt = tieneConteo ? "$ " + formatNumberEsAr(data.cajaCierreCajero, false) : "";
+            const badge = function (clase, icono, texto) {
+                return $("<span>").addClass("badge " + clase).append($("<i>").addClass("fas " + icono + " mr-1")).append(document.createTextNode(texto));
+            };
+
+            if (!tieneConteo) {
+                if (modoModificacion) {
+                    $estado.append(badge("badge-secondary", "fa-user-edit", "Cargado por el encargado"))
+                           .append($("<small>").addClass("text-muted ml-2").text("El cajero no cargó su cierre."));
+                } else {
+                    $estado.append(badge("badge-warning", "fa-exclamation-triangle", "El cajero no cargó su cierre"));
+                }
+                $bloque.removeClass("d-none");
+                return;
+            }
+
+            if (modoModificacion) {
+                // Origen del importe de un cierre ya hecho: se compara lo que declaro el cajero contra el cierre oficial.
+                const iguales = data.cajaCierre !== null && data.cajaCierre !== undefined && importesIguales(data.cajaCierre, data.cajaCierreCajero);
+                if (iguales) {
+                    $estado.append(badge("badge-success", "fa-user-check", "Ingresado por el cajero"))
+                           .append($("<small>").addClass("text-muted ml-2").text(montoTxt + (conteoCajeroActual.fecha ? " (" + conteoCajeroActual.fecha + ")" : "")));
+                } else {
+                    $estado.append(badge("badge-warning", "fa-user-edit", "Modificado por el encargado"))
+                           .append($("<small>").addClass("text-muted ml-2").text("El cajero declaró " + montoTxt + (conteoCajeroActual.fecha ? " (" + conteoCajeroActual.fecha + ")" : "")));
+                }
+            } else {
+                $estado.append(badge("badge-info", "fa-user-check", "Declarado por el cajero"))
+                       .append($("<strong>").addClass("ml-2").text(montoTxt))
+                       .append($("<small>").addClass("text-muted ml-1").text(conteoCajeroActual.fecha ? "(" + conteoCajeroActual.fecha + ")" : ""));
+            }
+
+            // "Usar": lleva el importe del cajero a Caja Cierre (tambien al corregir un cierre ya hecho).
+            $estado.append($("<button>").attr({ type: "button", id: "btnUsarConteoCajero" })
+                .addClass("btn btn-sm btn-outline-primary py-0 ml-2").text("Usar"));
+            if (conteoCajeroActual.detalle) {
+                $estado.append($("<a>").attr({ href: "#", id: "btnVerConteoCajero" }).addClass("ml-2 small").text("ver billetes"));
+                $("#conteoCajeroDetalle").text(conteoCajeroActual.detalle);
+            }
+            $estado.append($("<div>").attr("id", "conteoCajeroDistinto").addClass("small text-danger d-none"));
+            $bloque.removeClass("d-none");
+            actualizarAvisoConteoDistinto();
+        }
+
+        // ----- Sondeo: avisar al encargado si el cajero cargo o cambio su cierre con el modal abierto -----
+        // Cada CONTEO_SONDEO_MS se pregunta por el estado del conteo (endpoint liviano, solo lee la fila de la caja).
+        // Solo mientras el modal esta abierto sobre una caja ABIERTA (en un cierre ya hecho no tiene sentido).
+        const CONTEO_SONDEO_MS = 10000;
+        let conteoVistoKey = null;       // clave (ticks de la fecha del conteo) de lo que muestra el modal; "" = sin conteo
+        let conteoSondeoTimer = null;
+
+        function ocultarAvisoConteoCambio() {
+            $("#avisoConteoCambio").addClass("d-none").empty();
+            $("#btnActualizarDatosCierre").removeClass("btn-warning conteo-cambio-pulso").addClass("btn-outline-secondary");
+        }
+
+        function mostrarAvisoConteoCambio(estado) {
+            const habiaConteo = conteoVistoKey !== "";
+            const monto = estado.cajaCierreCajero !== null && estado.cajaCierreCajero !== undefined
+                ? "$ " + formatNumberEsAr(estado.cajaCierreCajero, false) : "";
+            const cuando = estado.fechaConteoCajero ? " (" + estado.fechaConteoCajero + ")" : "";
+
+            $("#avisoConteoCambio").empty()
+                .append($("<i>").addClass("fas fa-exclamation-triangle mr-2"))
+                .append($("<strong>").text(habiaConteo
+                    ? "El cajero modificó su cierre de caja mientras tenías este modal abierto."
+                    : "El cajero cargó su cierre de caja mientras tenías este modal abierto."))
+                .append(document.createTextNode(" Ahora declaró " + monto + cuando + ". Tocá Actualizar importes (las flechas junto a Fecha Cierre) para traerlo."))
+                .removeClass("d-none");
+            $("#btnActualizarDatosCierre").removeClass("btn-outline-secondary").addClass("btn-warning conteo-cambio-pulso");
+        }
+
+        function detenerSondeoConteo() {
+            if (conteoSondeoTimer) {
+                window.clearInterval(conteoSondeoTimer);
+                conteoSondeoTimer = null;
+            }
+        }
+
+        function iniciarSondeoConteo(idCierre) {
+            detenerSondeoConteo();
+            if (conteoVistoKey === null || !idCierre) return;
+
+            conteoSondeoTimer = window.setInterval(function () {
+                if (document.hidden || !$("#modalCerrarCaja").hasClass("show")) return;
+
+                $.ajax({
+                    url: '@Url.Action("EstadoConteoCierreCajero", "Cajas")',
+                    type: 'GET',
+                    cache: false,
+                    data: { id: idCierre },
+                    success: function (estado) {
+                        if (!estado || !estado.ok || conteoVistoKey === null) return;
+
+                        if (estado.cerrada) {
+                            // Otro encargado ya cerro esta caja: no tiene sentido seguir sondeando ni cerrar de nuevo.
+                            detenerSondeoConteo();
+                            $("#avisoConteoCambio").empty()
+                                .append($("<i>").addClass("fas fa-info-circle mr-2"))
+                                .append($("<strong>").text("Esta caja ya fue cerrada por otro usuario."))
+                                .removeClass("d-none");
+                            return;
+                        }
+
+                        if ((estado.fechaConteoCajeroKey || "") !== conteoVistoKey) {
+                            mostrarAvisoConteoCambio(estado);
+                        }
+                    }
+                    // Un error de red en el sondeo se ignora a proposito: se reintenta en el proximo ciclo.
+                });
+            }, CONTEO_SONDEO_MS);
+        }
+
+        // Aviso "distinto al Caja Cierre actual" cuando el encargado ya tiene otro importe cargado (solo caja abierta).
+        function actualizarAvisoConteoDistinto() {
+            const $aviso = $("#conteoCajeroDistinto");
+            if (!$aviso.length) return;
+
+            const hayValor = ($("#CajaCierre").val() || "").toString().trim() !== "";
+            const distinto = conteoCajeroActual && hayValor && $("#ModoModificacion").val() !== "true"
+                && !importesIguales(toFloat($("#CajaCierre").val()), conteoCajeroActual.importe);
+            $aviso.toggleClass("d-none", !distinto);
+            if (distinto) $aviso.text("El importe de Caja Cierre es distinto al que declaró el cajero.");
+        }
+
+        // Caja abierta: si el cajero ya conto, su importe entra solo en Caja Cierre, salvo que el encargado ya haya
+        // tipeado uno a mano (en ese caso queda el valor del encargado y el del cajero se ofrece con "Usar").
+        function precargarConteoCajero(data) {
+            if (!data || !data.soportaConteoCajero || data.modoModificacion) return;
+            if (data.cajaCierreCajero === null || data.cajaCierreCajero === undefined) return;
+            if ($("#CajaCierre").data("manual")) return;
+
+            setFormattedValue("#CajaCierre", data.cajaCierreCajero, true);
+            recalcularCierre();
+            actualizarAvisoConteoDistinto();
+        }
+
+        $(document).on('click', '#btnUsarConteoCajero', function () {
+            if (!conteoCajeroActual) return;
+            setFormattedValue("#CajaCierre", conteoCajeroActual.importe, true);
+            $("#CajaCierre").data("manual", false);
+            recalcularCierre();
+            actualizarAvisoConteoDistinto();
+        });
+
+        $(document).on('click', '#btnVerConteoCajero', function (e) {
+            e.preventDefault();
+            $("#conteoCajeroDetalle").toggleClass("d-none");
+        });
+
         $('#modalCerrarCaja').on('shown.bs.modal', function () {
             window.setTimeout(function () {
                 $("#CajaCierre").trigger("focus").trigger("select");
@@ -1185,7 +1402,15 @@
             $("#ModoModificacion").val("false");
             $("#modalCerrarCajaTitulo").text("Cerrar Caja");
             $("#btnGuardarCierreCaja").text("Cerrar Caja");
+            conteoCajeroActual = null;
+            conteoVistoKey = null;
+            detenerSondeoConteo();
+            ocultarAvisoConteoCambio();
             ocultarCambiosPosteriores();
+            $("#CajaCierre").data("manual", false);
+            $("#conteoCajeroEstado").empty();
+            $("#conteoCajeroDetalle").addClass("d-none").text("");
+            $("#bloqueConteoCajero").addClass("d-none");
         });
 
         $(document).on('keydown', '#CajaCierre, #ImporteRetirado', function (e) {

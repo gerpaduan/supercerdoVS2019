@@ -263,6 +263,13 @@ namespace WebCore.Controllers
                 importeRetirado = caja.ImporteRetirado,
                 cajaInicioSiguiente = caja.CajaInicioSiguiente,
                 modoModificacion = modoModificacion,
+                // Conteo de cierre del cajero (pre-cierre): soportaConteoCajero=false en SQL Server (no se muestra nada).
+                soportaConteoCajero = _oCierreN.SoportaConteoCajero,
+                cajaCierreCajero = caja.CajaCierreCajero,
+                conteoBilletesCajero = caja.ConteoBilletesCajero,
+                fechaConteoCajero = caja.FechaConteoCajero?.ToString("dd/MM/yyyy HH:mm"),
+                // Clave exacta (ticks) para detectar un cambio del conteo aunque se guarde dos veces en el mismo minuto.
+                fechaConteoCajeroKey = caja.FechaConteoCajero?.Ticks.ToString(),
                 // Avisos del cierre (cambios posteriores al cierre y reaperturas, 2026-10-06): vacio en SQL Server.
                 soportaAuditoriaCierre = _oCierreN.SoportaAuditoriaCierre,
                 cambiosPosteriores = ObtenerCambiosPosterioresCierre(caja.Id)
@@ -539,9 +546,110 @@ namespace WebCore.Controllers
             ViewBag.SucursalActividad = nombreSucursal;
             ViewBag.TituloActividades = "Actividades";
             ViewBag.VendedorActividad = nombreVendedor;
+            // Boton "Mi cierre" (conteo de cierre del cajero): solo en la propia caja, abierta, y si el motor lo soporta.
+            ViewBag.PermitirMiCierre = _oCierreN.SoportaConteoCajero && CajaSigueAbierta(cierre);
+            ViewBag.UrlMiCierre = Url.Action("MiCierreCaja", "Cajas", new { idCierre });
+            // Si ya cargo su conteo el boton dice "Actualizar mi cierre" (modo actualizar).
+            ViewBag.MiCierreYaCargado = cierre.CajaCierreCajero.HasValue;
             CargarPermisosEdicionEgresos(dt, false, cierre);
 
             return PartialView("~/Views/Cajas/_MisEgresosCaja.cshtml", dt);
+        }
+
+        // ===== Conteo de cierre del cajero (pre-cierre, 2026-10-06, ver docs/DECISIONS.md) =====
+        // El cajero cuenta su caja (con el contador de billetes) y deja su importe registrado en la propia fila
+        // de cierrecaja. NO es un egreso (no entra en EgresosCaja ni en la diferencia): el encargado lo ve en el
+        // modal "Cerrar caja" y el cierre oficial (CajaCierre) lo sigue confirmando el encargado.
+
+        // Mismo criterio que MisActividadesCaja: solo la propia caja (las cuentas de produccion, usuario compartido,
+        // no se pueden validar por Id y quedan confiadas al mismo criterio que el resto del flujo de POS).
+        private bool EsCajaPropiaDelUsuario(CierreCaja cierre)
+        {
+            var user = _usuarioActual;
+            if (user == null || cierre == null || cierre.UsuarioInicio == null) return false;
+            return cierre.UsuarioInicio.Id == user.Id || user.EsUsuarioProduccion;
+        }
+
+        [HttpGet]
+        public IActionResult MiCierreCaja(int idCierre)
+        {
+            if (idCierre <= 0)
+                return BadRequest("Caja inválida.");
+
+            if (!_oCierreN.SoportaConteoCajero)
+                return BadRequest("El conteo de cierre del cajero no está disponible en esta base de datos.");
+
+            var cierre = _oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "");
+            if (cierre == null || cierre.Id == 0)
+                return NotFound("No se encontró la caja seleccionada.");
+
+            if (!EsCajaPropiaDelUsuario(cierre))
+                return StatusCode(403, "No tiene permisos para cargar el cierre de esta caja.");
+
+            if (!CajaSigueAbierta(cierre))
+                return BadRequest("La caja seleccionada ya no se encuentra abierta.");
+
+            return PartialView("~/Views/Cajas/_MiCierreCaja.cshtml", cierre);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GuardarConteoCierreCajero(int idCierre, string importe, string conteoBilletes = "")
+        {
+            if (idCierre <= 0)
+                return Json(new { ok = false, mensaje = "Caja inválida." });
+
+            if (!_oCierreN.SoportaConteoCajero)
+                return Json(new { ok = false, mensaje = "El conteo de cierre del cajero no está disponible en esta base de datos." });
+
+            if (string.IsNullOrWhiteSpace(importe))
+                return Json(new { ok = false, mensaje = "Ingresá el importe que contaste." });
+
+            // Mismo criterio que CerrarCaja/Egreso (ParseFloat): el input manda "1234.50" (lo escribe la calculadora o
+            // el cajero) y la coma se toma como decimal. NO usar ParseDecimalFlexible: con es-AR leería "1234.50" como 123450.
+            if (!decimal.TryParse(importe.Trim().Replace(",", "."), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal importeDecimal)
+                || importeDecimal < 0 || importeDecimal > 100000000000m)
+                return Json(new { ok = false, mensaje = "El importe ingresado no es válido." });
+
+            var cierre = _oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "");
+            if (cierre == null || cierre.Id == 0)
+                return Json(new { ok = false, mensaje = "No se encontró la caja seleccionada." });
+
+            if (!EsCajaPropiaDelUsuario(cierre))
+                return StatusCode(403, "No tiene permisos para cargar el cierre de esta caja.");
+
+            if (!CajaSigueAbierta(cierre))
+                return Json(new { ok = false, mensaje = "La caja ya fue cerrada: no se puede modificar el conteo." });
+
+            // Si ya habia un conteo cargado, esto es una actualizacion (cambia el titulo del aviso al guardar).
+            bool esActualizacion = cierre.CajaCierreCajero.HasValue;
+
+            try
+            {
+                // El UPDATE vuelve a exigir caja abierta (carrera con el cierre del encargado): false = ya se cerro.
+                if (!_oCierreN.GuardarConteoCajero(idCierre, (float)importeDecimal, conteoBilletes ?? ""))
+                    return Json(new { ok = false, mensaje = "La caja ya fue cerrada: no se puede modificar el conteo." });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("No se pudo guardar el conteo de cierre del cajero (caja " + idCierre + "): " + ex.Message);
+                return Json(new { ok = false, mensaje = "No se pudo guardar el conteo. Intentá nuevamente." });
+            }
+
+            // URLs para el modal post-guardado (cerrar / ticket / PDF / mail), ver post-comprobante.js.
+            return Json(new
+            {
+                ok = true,
+                esActualizacion,
+                mensaje = esActualizacion ? "Se actualizó correctamente el conteo de tu cierre de caja." : "Se guardó correctamente el conteo de tu cierre de caja.",
+                importe = importeDecimal,
+                fecha = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
+                ticketUrl = Url.Action("ImprimirTicketConteoCierre", "Cajas", new { idCierre }),
+                ticketPayloadUrl = Url.Action("ImprimirTicketConteoCierrePayload", "Cajas", new { idCierre }),
+                pdfUrl = Url.Action("ImprimirPdfConteoCierre", "Cajas", new { idCierre }),
+                emailDatosUrl = Url.Action("ObtenerDatosEmailConteoCierre", "Cajas", new { idCierre }),
+                emailEnviarUrl = Url.Action("EnviarConteoCierreEmail", "Cajas")
+            });
         }
 
         // Registros de auditoria de un cierre (alta/modificacion/eliminacion de ventas, compras, pagos y egresos que cayeron
@@ -674,6 +782,190 @@ namespace WebCore.Controllers
             {
                 System.Diagnostics.Trace.TraceError("No se pudo reabrir la caja " + idCierre + ": " + ex.Message);
                 return Json(new { ok = false, mensaje = "No se pudo reabrir la caja. Intentá nuevamente." });
+            }
+        }
+
+        // Estado liviano del conteo del cajero para que el modal "Cerrar caja" del encargado se entere, mientras esta
+        // abierto, de que el cajero cargo o corrigio su cierre (sondeo periodico, ver CajasAbiertas.cshtml). Solo lee
+        // la fila de la caja: no recalcula ventas ni egresos (eso lo hace ObtenerDatosCierre).
+        [HttpGet]
+        public IActionResult EstadoConteoCierreCajero(int id)
+        {
+            if (ObtenerUsuarioAutorizadoCierre() == null)
+                return StatusCode(403, "No tiene permisos para cerrar caja.");
+
+            var cierre = id > 0
+                ? _oCierreN.findByIdOrLast(new CierreCaja { Id = id }, CierreCaja.tipoBusqueda.FindById, "")
+                : null;
+            if (cierre == null || cierre.Id == 0)
+                return NotFound("No se encontró la caja seleccionada.");
+
+            return Json(new
+            {
+                ok = true,
+                soportaConteoCajero = _oCierreN.SoportaConteoCajero,
+                cerrada = !CajaSigueAbierta(cierre),
+                cajaCierreCajero = cierre.CajaCierreCajero,
+                fechaConteoCajero = cierre.FechaConteoCajero?.ToString("dd/MM/yyyy HH:mm"),
+                fechaConteoCajeroKey = cierre.FechaConteoCajero?.Ticks.ToString()
+            });
+        }
+
+        // ===== Comprobante del conteo de cierre del cajero: ticket 58/80, PDF y mail (mismo modal que egresos/pagos). =====
+
+        // Arma los datos del comprobante o devuelve null si no hay conteo cargado / el usuario no puede verlo.
+        // Puede verlo el cajero dueno de la caja (recien guardado desde el POS) o quien tiene permiso de cerrar caja.
+        private ReciboConteoCierreVm ConstruirReciboConteoCierreVm(int idCierre)
+        {
+            var user = _usuarioActual;
+            if (user == null || idCierre <= 0) return null;
+
+            var cierre = _oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "");
+            if (cierre == null || cierre.Id == 0 || !cierre.CajaCierreCajero.HasValue) return null;
+
+            bool puede = EsCajaPropiaDelUsuario(cierre)
+                || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1);
+            if (!puede) return null;
+
+            var sucursal = cierre.Sucursal;
+            var empresa = user.Empresa;
+            if (empresa == null && sucursal != null && sucursal.IdEmpresa > 0)
+                empresa = _oSucursalN.findEmpresaById(sucursal.IdEmpresa);
+
+            return new ReciboConteoCierreVm
+            {
+                Cierre = cierre,
+                Empresa = empresa,
+                SucursalNombre = sucursal != null ? (sucursal.SucursalNombre ?? "") : "",
+                CajeroNombre = cierre.UsuarioInicio != null ? (cierre.UsuarioInicio.Nombre ?? "") : ""
+            };
+        }
+
+        private static string NombreEmpresaConteo(ReciboConteoCierreVm vm)
+        {
+            string nombre = vm.Empresa != null
+                ? (!string.IsNullOrWhiteSpace(vm.Empresa.NombreFantasia) ? vm.Empresa.NombreFantasia : vm.Empresa.RazonSocialAfip)
+                : "";
+            return string.IsNullOrWhiteSpace(nombre) ? "CarniSys" : nombre;
+        }
+
+        // HTML del ticket: fallback por navegador (iframe oculto de ticket-print.js). Mismo texto que el payload.
+        [HttpGet]
+        public IActionResult ImprimirTicketConteoCierre(int idCierre, int mm = 80)
+        {
+            var vm = ConstruirReciboConteoCierreVm(idCierre);
+            if (vm == null) return NotFound();
+
+            int ticketMm = WebCore.Services.ComprobanteTickets.NormalizarMm(mm);
+            ViewBag.TicketMm = ticketMm;
+            ViewBag.TicketTitulo = "Conteo de cierre de caja " + vm.Cierre.Id;
+            // Sin formato ESC/POS: este HTML lo imprime el navegador y mostraria los caracteres de control.
+            ViewBag.TicketLineas = string.Join("\n", WebCore.Services.ComprobanteTickets.ConstruirLineasConteoCierre(vm, ticketMm, false));
+            return View("~/Views/Shared/_TicketTexto.cshtml");
+        }
+
+        // Payload JSON para el agente de impresion ESC/POS local.
+        [HttpGet]
+        public IActionResult ImprimirTicketConteoCierrePayload(int idCierre, int mm = 80)
+        {
+            var vm = ConstruirReciboConteoCierreVm(idCierre);
+            if (vm == null) return Json(new { ok = false, mensaje = "No se encontró el conteo de cierre." });
+
+            int ticketMm = WebCore.Services.ComprobanteTickets.NormalizarMm(mm);
+            return Json(new
+            {
+                ok = true,
+                ticketMm,
+                ticketLines = WebCore.Services.ComprobanteTickets.ConstruirLineasConteoCierre(vm, ticketMm, true)
+            });
+        }
+
+        [HttpGet]
+        public IActionResult ImprimirPdfConteoCierre(int idCierre)
+        {
+            var vm = ConstruirReciboConteoCierreVm(idCierre);
+            if (vm == null) return NotFound();
+
+            byte[] bytes = WebCore.Services.GenerarDocsCore.GenerarPdfConteoCierre(vm);
+            return File(bytes, "application/pdf", "Conteo_cierre_caja_" + vm.Cierre.Id + ".pdf");
+        }
+
+        // Datos para precargar el modal de mail. No hay persona/email asociados: el destino arranca vacio y se tipea.
+        [HttpGet]
+        public IActionResult ObtenerDatosEmailConteoCierre(int idCierre)
+        {
+            try
+            {
+                var vm = ConstruirReciboConteoCierreVm(idCierre);
+                if (vm == null) return Json(new { ok = false, msg = "Conteo de cierre no encontrado." });
+
+                string empresa = NombreEmpresaConteo(vm);
+                var culturaAr = new CultureInfo("es-AR");
+                string cuerpo =
+                    "Hola,\n\n" +
+                    "Te enviamos adjunto el comprobante del conteo de cierre de la caja N° " + vm.Cierre.Id + ".\n\n" +
+                    "Cajero: " + vm.CajeroNombre + "\n" +
+                    "Efectivo contado: $" + Convert.ToDecimal(vm.Cierre.CajaCierreCajero ?? 0f).ToString("N2", culturaAr) + "\n\n" +
+                    "Saludos,\n" + empresa;
+
+                return Json(new
+                {
+                    ok = true,
+                    email = "",
+                    asunto = "Conteo de cierre de caja N° " + vm.Cierre.Id + " - " + empresa,
+                    mensaje = cuerpo,
+                    empresa,
+                    replyTo = vm.Empresa != null ? (vm.Empresa.Email ?? "") : ""
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult EnviarConteoCierreEmail(int idCierre, string emailDestino, string asunto, string mensaje)
+        {
+            try
+            {
+                var vm = ConstruirReciboConteoCierreVm(idCierre);
+                if (vm == null) return Json(new { ok = false, msg = "Conteo de cierre no encontrado." });
+
+                emailDestino = (emailDestino ?? "").Trim();
+                asunto = (asunto ?? "").Trim();
+                mensaje = (mensaje ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email destino." });
+                if (!SmtpMailHelper.IsValidEmail(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email válido." });
+                if (string.IsNullOrWhiteSpace(asunto))
+                    return Json(new { ok = false, msg = "Ingrese un asunto." });
+
+                byte[] pdfBytes = WebCore.Services.GenerarDocsCore.GenerarPdfConteoCierre(vm);
+                string empresa = NombreEmpresaConteo(vm);
+                string replyToEmail = vm.Empresa != null ? (vm.Empresa.Email ?? "").Trim() : "";
+
+                SmtpMailHelper.SendMail(
+                    toEmail: emailDestino,
+                    toName: "",
+                    subject: asunto,
+                    bodyHtml: WebCore.Services.MailCuerpoHtml.DesdeTexto(mensaje),
+                    attachmentFileName: "Conteo_cierre_caja_" + vm.Cierre.Id + ".pdf",
+                    attachmentBytes: pdfBytes,
+                    attachmentContentType: "application/pdf",
+                    fromNameOverride: SmtpMailHelper.BuildTenantFromName(empresa),
+                    replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
+                    replyToName: empresa
+                );
+
+                return Json(new { ok = true, msg = "El comprobante se envió correctamente." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
             }
         }
 

@@ -162,6 +162,47 @@ namespace WebCore.Services
             return lineas;
         }
 
+        // ---------- conteo de cierre del cajero ----------
+
+        // Comprobante que el cajero se lleva / entrega junto con el efectivo. Es informativo: el cierre oficial lo
+        // confirma el encargado al cerrar la caja (por eso lo aclara el pie del ticket).
+        public static List<string> ConstruirLineasConteoCierre(ReciboConteoCierreVm vm, int mm, bool formatoEscPos)
+        {
+            int ancho = CaracteresPorLinea(mm);
+            var cierre = vm.Cierre;
+            var lineas = new List<string>();
+
+            string Neg(string linea) => formatoEscPos ? EscPosFormato.Negrita(linea) : linea;
+
+            string empresa = vm.Empresa != null
+                ? (!string.IsNullOrWhiteSpace(vm.Empresa.NombreFantasia) ? vm.Empresa.NombreFantasia : vm.Empresa.RazonSocialAfip)
+                : "";
+            if (!string.IsNullOrWhiteSpace(empresa)) lineas.Add(Neg(Centrar(empresa, ancho)));
+
+            lineas.Add(Neg(Centrar("CONTEO DE CIERRE DE CAJA", ancho)));
+            lineas.Add(Truncar("Doc. no valido como factura", ancho));
+            lineas.Add("");
+            lineas.Add(Truncar("Caja Nro: " + cierre.Id, ancho));
+            lineas.Add(Truncar("Sucursal: " + (vm.SucursalNombre ?? ""), ancho));
+            lineas.Add(Truncar("Cajero: " + (vm.CajeroNombre ?? ""), ancho));
+            if (cierre.FechaHoraInicio.HasValue)
+                lineas.Add(Truncar("Apertura: " + cierre.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm", CulturaAr), ancho));
+            if (cierre.FechaConteoCajero.HasValue)
+                lineas.Add(Truncar("Conteo: " + cierre.FechaConteoCajero.Value.ToString("dd/MM/yyyy HH:mm", CulturaAr), ancho));
+            lineas.Add(new string('-', ancho));
+
+            decimal importe = Convert.ToDecimal(cierre.CajaCierreCajero ?? 0f);
+            lineas.Add(Neg(Extremos("EFECTIVO CONTADO", "$ " + importe.ToString("N2", CulturaAr), ancho)));
+
+            AgregarBloque(lineas, "Conteo de efectivo:", cierre.ConteoBilletesCajero, ancho);
+
+            lineas.Add("");
+            lineas.AddRange(Envolver("Conteo informativo: el cierre oficial lo confirma el encargado.", ancho));
+
+            AgregarFirma(lineas, ancho, "Firma cajero: ");
+            return lineas;
+        }
+
         // ---------- bloques comunes ----------
 
         // "Titulo:" y debajo el texto multilinea (observaciones, conteo). Sin texto no agrega nada.

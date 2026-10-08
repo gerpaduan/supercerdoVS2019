@@ -1,0 +1,245 @@
+@model Entidades.CierreCaja
+
+@*
+    Conteo de cierre del cajero (pre-cierre, 2026-10-06, ver docs/DECISIONS.md y docs/03-modulos/caja-y-tesoreria.md).
+    El cajero cuenta su caja con el contador de billetes y deja su importe registrado; el encargado lo ve en el
+    modal "Cerrar caja" (Cajas > Cajas abiertas). NO es un egreso: no entra en EgresosCaja ni en la diferencia.
+    Se puede corregir tantas veces como quiera mientras su caja siga abierta (GuardarConteoCierreCajero lo exige).
+    Se carga en #modalFinanzasPOS desde el boton "Mi cierre" de "Mis actividades" (_MisEgresosCaja.cshtml).
+    - Modo actualizar: si ya habia un conteo, la ventana lo dice (titulo, aviso y boton "Actualizar mi cierre").
+    - Si el importe se cambia a mano y ya hay conteo de billetes que no coincide, se avisa que el conteo se borra
+      (hace falta un segundo click para confirmarlo).
+    - Al guardar se abre el modal de comprobante (cerrar / ticket / PDF / mail) y despues se cierra esta ventana.
+*@
+@{
+    bool yaCargo = Model.CajaCierreCajero.HasValue;
+    string importeInicial = yaCargo ? Model.CajaCierreCajero.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "";
+    string importeAnteriorTxt = yaCargo ? Model.CajaCierreCajero.Value.ToString("N2", new System.Globalization.CultureInfo("es-AR")) : "";
+    string fechaCarga = Model.FechaConteoCajero.HasValue ? Model.FechaConteoCajero.Value.ToString("dd/MM/yyyy HH:mm") : "";
+    string tituloVentana = yaCargo ? "Actualizar mi cierre de caja" : "Mi cierre de caja";
+}
+
+<div class="mi-cierre-caja" data-ya-cargo="@(yaCargo ? "1" : "0")">
+    <form id="formMiCierreCaja" autocomplete="off" onsubmit="return false;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="idCierre" value="@Model.Id" />
+
+        @if (yaCargo)
+        {
+            <div id="miCierreModoActualizar" class="alert alert-warning mi-cierre-modo-actualizar mb-2" role="status">
+                <div class="font-weight-bold"><i class="fas fa-edit mr-1"></i>Modo actualizar</div>
+                <div>Ya cargaste tu cierre el @fechaCarga por <strong>$ @importeAnteriorTxt</strong>. Lo que guardes ahora lo reemplaza.</div>
+            </div>
+        }
+        else
+        {
+            <p class="mi-cierre-ayuda text-muted mb-2">
+                Contá el efectivo que hay en tu caja (billetes y monedas) y guardalo. El encargado lo va a ver al cerrar tu caja.
+                Podés corregirlo las veces que haga falta hasta que se cierre.
+            </p>
+            <div id="miCierreEstado" class="mi-cierre-estado mb-2 text-warning">
+                <i class="fas fa-exclamation-circle mr-1"></i><span>Todavía no cargaste tu cierre.</span>
+            </div>
+        }
+
+        <div class="form-group mb-2">
+            <label for="miCierreImporte" class="mb-1">Efectivo contado en caja</label>
+            <div class="input-group">
+                <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                <input type="text"
+                       class="form-control solo-decimal"
+                       id="miCierreImporte"
+                       name="importe"
+                       inputmode="decimal"
+                       autocomplete="off"
+                       value="@importeInicial" />
+                <div class="input-group-append">
+                    <button type="button"
+                            id="btnCalculadoraBilletesMiCierre"
+                            class="btn btn-outline-secondary js-calculadora-billetes-launch"
+                            data-cb-context="micierre"
+                            data-cb-input="#miCierreImporte"
+                            data-cb-conteo="#miCierreConteoBilletes"
+                            data-cb-sin-post="true"
+                            title="Contador de billetes">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mb-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <label for="miCierreConteoBilletes" class="mb-1">Conteo de billetes</label>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnLimpiarMiCierreConteo"
+                        title="Dejar vacío el conteo de billetes">
+                    <i class="fas fa-eraser mr-1"></i>Limpiar contador
+                </button>
+            </div>
+            @* Solo lectura: lo llena el contador (Aceptar lo reemplaza entero), igual que en Egresos de caja. *@
+            <textarea class="form-control" id="miCierreConteoBilletes" name="conteoBilletes" rows="5" readonly tabindex="-1">@(Model.ConteoBilletesCajero ?? "")</textarea>
+        </div>
+
+        @* Importe cambiado a mano que ya no coincide con el conteo de billetes: el conteo se borra al guardar. *@
+        <div id="miCierreAvisoConteo" class="alert alert-danger d-none mb-2 py-1 px-2" role="alert"></div>
+
+        <div id="miCierreMensaje" class="alert d-none mb-2 py-1 px-2" role="alert"></div>
+
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn @(yaCargo ? "btn-warning" : "btn-success")" id="btnGuardarMiCierre">
+                <i class="fas @(yaCargo ? "fa-edit" : "fa-save") mr-1"></i><span id="btnGuardarMiCierreTxt">@(yaCargo ? "Actualizar mi cierre" : "Guardar mi cierre")</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        var urlGuardar = '@Url.Action("GuardarConteoCierreCajero", "Cajas")';
+        var idCierre = @Model.Id;
+        var yaCargo = @(yaCargo ? "true" : "false");
+        var textoBoton = yaCargo ? "Actualizar mi cierre" : "Guardar mi cierre";
+
+        // El titulo de la ventana (la comparte con otros formularios del POS) lo fija esta vista: cargar o actualizar.
+        $("#modalFinanzasPOSTitle").text('@tituloVentana');
+
+        // Importe con el que se armo el conteo de billetes que hay en pantalla (null = no hay conteo). Al abrir, si
+        // ya hay conteo guardado, es el importe guardado; despues lo fija el contador cada vez que se acepta.
+        var importeDelConteo = ($.trim($("#miCierreConteoBilletes").val()) !== "") ? aNumero($("#miCierreImporte").val()) : null;
+        // Segundo click: el cajero ya vio el aviso de que el conteo se borra y lo confirma.
+        var borradoConfirmado = false;
+
+        function aNumero(texto) {
+            var n = parseFloat(String(texto == null ? "" : texto).replace(",", "."));
+            return isNaN(n) ? null : n;
+        }
+
+        function formato(n) {
+            return Number(n).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function mostrarMensaje(texto, ok) {
+            $("#miCierreMensaje")
+                .removeClass("d-none alert-success alert-danger")
+                .addClass(ok ? "alert-success" : "alert-danger")
+                .text(texto);
+        }
+
+        // Hay conteo de billetes y el importe escrito ya no coincide con el: guardar borraria el conteo.
+        function conteoNoCoincide() {
+            if (importeDelConteo === null || $.trim($("#miCierreConteoBilletes").val()) === "") return false;
+            var importe = aNumero($("#miCierreImporte").val());
+            return importe === null || Math.abs(importe - importeDelConteo) >= 0.005;
+        }
+
+        function evaluarConteo() {
+            borradoConfirmado = false;
+            $("#btnGuardarMiCierreTxt").text(textoBoton);
+            $("#btnGuardarMiCierre").removeClass("btn-danger").addClass(yaCargo ? "btn-warning" : "btn-success");
+
+            var $aviso = $("#miCierreAvisoConteo");
+            if (!conteoNoCoincide()) {
+                $aviso.addClass("d-none").text("");
+                return;
+            }
+
+            $aviso.removeClass("d-none").text(
+                "El importe no coincide con el conteo de billetes ($ " + formato(importeDelConteo) + "). " +
+                "Si guardás así, el conteo de billetes se va a borrar.");
+        }
+
+        $(document)
+            // Importe tipeado a mano.
+            .off("input.miCierre", "#miCierreImporte")
+            .on("input.miCierre", "#miCierreImporte", evaluarConteo)
+            // El contador (o "Limpiar contador") cambio el conteo: ese conteo corresponde al importe actual.
+            .off("change.miCierre", "#miCierreConteoBilletes")
+            .on("change.miCierre", "#miCierreConteoBilletes", function () {
+                importeDelConteo = ($.trim($(this).val()) !== "") ? aNumero($("#miCierreImporte").val()) : null;
+                evaluarConteo();
+            })
+            .off("click.miCierre", "#btnLimpiarMiCierreConteo")
+            .on("click.miCierre", "#btnLimpiarMiCierreConteo", function () {
+                $("#miCierreConteoBilletes").val("").trigger("change");
+            })
+            .off("click.miCierre", "#btnGuardarMiCierre")
+            .on("click.miCierre", "#btnGuardarMiCierre", function () {
+                var $btn = $(this);
+                var importe = ($("#miCierreImporte").val() || "").toString().trim();
+                if (!importe) {
+                    mostrarMensaje("Ingresá el efectivo que contaste (o usá el contador de billetes).", false);
+                    return;
+                }
+
+                // Importe cambiado a mano que no coincide con el conteo: primero se avisa (aviso rojo de arriba) y el
+                // boton pide confirmar; con el segundo click se borra el conteo y se guarda solo el importe.
+                if (conteoNoCoincide()) {
+                    if (!borradoConfirmado) {
+                        borradoConfirmado = true;
+                        $("#btnGuardarMiCierreTxt").text("Confirmar: guardar y borrar el conteo");
+                        $btn.removeClass("btn-success btn-warning").addClass("btn-danger");
+                        return;
+                    }
+                    $("#miCierreConteoBilletes").val("");
+                    importeDelConteo = null;
+                }
+
+                $btn.prop("disabled", true);
+                $.ajax({
+                    url: urlGuardar,
+                    type: "POST",
+                    data: $("#formMiCierreCaja").serialize(),
+                    success: function (resp) {
+                        if (!resp || !resp.ok) {
+                            mostrarMensaje((resp && resp.mensaje) || "No se pudo guardar el conteo.", false);
+                            return;
+                        }
+
+                        function cerrarVentana() {
+                            $("#modalFinanzasPOS").modal("hide");
+                        }
+
+                        // Modal de opciones de comprobante (cerrar / ticket / PDF / mail) con el aviso de que se guardo.
+                        // Al terminar el flujo se cierra esta ventana. Sin el modal (no deberia pasar) se cierra directo.
+                        if (window.PostComprobanteModal && typeof window.PostComprobanteModal.open === "function") {
+                            window.PostComprobanteModal.open({
+                                titulo: resp.mensaje,
+                                mensaje: "¿Qué querés hacer con el comprobante del conteo?",
+                                ticketUrl: resp.ticketUrl,
+                                ticketPayloadUrl: resp.ticketPayloadUrl,
+                                pdfUrl: resp.pdfUrl,
+                                emailDatosUrl: resp.emailDatosUrl,
+                                emailEnviarUrl: resp.emailEnviarUrl,
+                                emailIdCampo: "idCierre",
+                                id: idCierre,
+                                onClose: cerrarVentana
+                            });
+                        } else {
+                            cerrarVentana();
+                        }
+                    },
+                    error: function () {
+                        mostrarMensaje("No se pudo guardar el conteo. Intentá nuevamente.", false);
+                    },
+                    complete: function () {
+                        $btn.prop("disabled", false);
+                    }
+                });
+            });
+    })();
+</script>
+
+<style>
+    /* Tamaño de fuente compacto (convención de vistas WebCore, ver memoria feedback-tamano-fuente-vistas-webcore). */
+    .mi-cierre-caja { font-size: 0.85rem; padding: .25rem .5rem .5rem; }
+    .mi-cierre-caja .mi-cierre-ayuda { font-size: 0.8rem; }
+    .mi-cierre-caja .mi-cierre-estado { font-weight: 600; font-size: 0.85rem; }
+    .mi-cierre-caja .mi-cierre-modo-actualizar { font-size: 0.82rem; padding: .45rem .65rem; }
+    .mi-cierre-caja label { font-size: 0.82rem; font-weight: 600; }
+    .mi-cierre-caja .form-control,
+    .mi-cierre-caja .input-group-text,
+    .mi-cierre-caja .btn,
+    .mi-cierre-caja .alert { font-size: 0.85rem; }
+    .mi-cierre-caja textarea { font-family: Consolas, "Courier New", monospace; font-size: 0.8rem; background: #f8f9fc; }
+    html.dark-mode .mi-cierre-caja textarea { background: #132032; color: #e5edf7; border-color: #2a3b52; }
+</style>

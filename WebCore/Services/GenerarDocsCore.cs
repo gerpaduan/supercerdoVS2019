@@ -334,6 +334,86 @@ namespace WebCore.Services
             return documento.GeneratePdf();
         }
 
+        // Comprobante del conteo de cierre que declara el cajero (pre-cierre, 2026-10-06, ver docs/DECISIONS.md).
+        // Misma cabecera de empresa que el comprobante de egreso; es informativo (el cierre oficial lo confirma el encargado).
+        public static byte[] GenerarPdfConteoCierre(WebCore.Models.ReciboConteoCierreVm model)
+        {
+            var culturaAr = new CultureInfo("es-AR");
+            var cierre = model.Cierre;
+            string negocio = model.Empresa != null
+                ? (model.Empresa.NombreFantasia ?? model.Empresa.RazonSocialAfip ?? "CarniSys")
+                : "CarniSys";
+            decimal importe = Convert.ToDecimal(cierre.CajaCierreCajero ?? 0f);
+
+            var documento = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(24, Unit.Point);
+                    page.DefaultTextStyle(x => x.FontSize(9));
+
+                    page.Content().Column(col =>
+                    {
+                        col.Spacing(6);
+
+                        // ===== CABECERA =====
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem().Column(izq =>
+                            {
+                                izq.Item().Text(negocio).FontSize(20).FontColor("#AE0000");
+                                izq.Item().PaddingTop(4).Text("Razón Social: " + (model.Empresa?.RazonSocialAfip ?? "")).FontSize(8);
+                                izq.Item().Text(((model.Empresa?.Domicilio ?? "")) + " - " + (model.Empresa?.Ciudad ?? "")).FontSize(8);
+                                izq.Item().Text("CUIT: " + (model.Empresa != null ? model.Empresa.Cuit.ToString() : "")).FontSize(8);
+                            });
+
+                            row.RelativeItem().AlignRight().Column(der =>
+                            {
+                                der.Item().AlignRight().Text("Caja N° " + cierre.Id).Bold();
+                                der.Item().AlignRight().Text("Sucursal: " + (model.SucursalNombre ?? ""));
+                                der.Item().AlignRight().Text("Cajero: " + (model.CajeroNombre ?? ""));
+                                if (cierre.FechaHoraInicio.HasValue)
+                                    der.Item().AlignRight().Text("Apertura: " + cierre.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm", culturaAr));
+                                if (cierre.FechaConteoCajero.HasValue)
+                                    der.Item().AlignRight().Text("Conteo: " + cierre.FechaConteoCajero.Value.ToString("dd/MM/yyyy HH:mm", culturaAr));
+                            });
+                        });
+
+                        col.Item().LineHorizontal(1.5f).LineColor(Colors.Grey.Medium);
+
+                        col.Item().AlignCenter().Text("CONTEO DE CIERRE DE CAJA").FontSize(13).Bold();
+                        col.Item().AlignCenter().Text("- Documento no válido como factura -").FontSize(7);
+
+                        // ===== IMPORTE Y DETALLE DE BILLETES =====
+                        col.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn(1.5f);
+                                c.RelativeColumn(6f);
+                            });
+
+                            table.Cell().Text("Efectivo contado:").Bold();
+                            table.Cell().Text("$ " + importe.ToString("#,##0.00", culturaAr)).Bold();
+
+                            if (!string.IsNullOrWhiteSpace(cierre.ConteoBilletesCajero))
+                            {
+                                table.Cell().Text("Conteo de efectivo:").Bold();
+                                table.Cell().Text(cierre.ConteoBilletesCajero.Replace("\r\n", "\n"));
+                            }
+                        });
+
+                        col.Item().LineHorizontal(1.5f).LineColor(Colors.Grey.Medium);
+
+                        col.Item().Text("Conteo informativo: el cierre oficial de la caja lo confirma el encargado.").FontSize(8);
+                    });
+                });
+            });
+
+            return documento.GeneratePdf();
+        }
+
         // Port de Web/Controllers/HomeController.cs GenerarPdfCalculadoraBilletes -- mismo
         // contenido/orden, sintaxis QuestPDF en vez de iTextSharp (batch 7 POS, ver
         // docs/10-migracion-aspnet-core/PLAN-POS-UI.md). El armado del titulo/detalle

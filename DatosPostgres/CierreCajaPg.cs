@@ -85,6 +85,8 @@ namespace DatosPostgres
                             ROUND(CAST(gastos AS numeric), 2) AS ""EgresosCaja"", ROUND(CAST(cajacierre AS numeric), 2) AS ""Caja_Cierre"",
                             ROUND(CAST(diferencia AS numeric), 2) AS ""Diferencia"", ROUND(CAST(cajainiciosiguiente AS numeric), 2) AS ""Caja_Ini_Sig"",
                             ROUND(CAST(importeretirado AS numeric), 2) AS ""Retirado"", uc.nombre AS ""Cerrada_Por"",
+                            ROUND(CAST(cajacierrecajero AS numeric), 2) AS ""Conteo_Cajero"", fechaconteocajero AS ""Conteo_Cajero_Fecha"",
+                            conteobilletescajero AS ""Conteo_Cajero_Detalle"",
                             (SELECT COUNT(*) FROM auditoriacierrecaja a WHERE a.idcierrecaja = cc.id AND a.tipo = 'MODIFICACION') AS ""Cambios_Posteriores"",
                             (SELECT MAX(a.fecha) FROM auditoriacierrecaja a WHERE a.idcierrecaja = cc.id AND a.tipo = 'MODIFICACION') AS ""Cambios_Posteriores_Fecha"",
                             (SELECT COUNT(*) FROM auditoriacierrecaja a WHERE a.idcierrecaja = cc.id AND a.tipo = 'REAPERTURA') AS ""Reaperturas"",
@@ -215,6 +217,28 @@ namespace DatosPostgres
                 p.AddWithValue("usuarioInicio", oCierreCajaE.UsuarioInicio.Id.ToString());
                 p.AddWithValue("usuarioCierre", oCierreCajaE.UsuarioCierre != null ? oCierreCajaE.UsuarioCierre.Id.ToString() : "0");
             });
+        }
+
+        public bool SoportaConteoCajero => true;
+
+        // Guarda SOLO las 3 columnas del conteo del cajero. Se actualiza unicamente si la caja sigue abierta
+        // (usuariocierre = '0'): una vez cerrada, lo que declaro el cajero queda congelado para el historial.
+        // Devuelve false si no se actualizo ninguna fila (caja inexistente o ya cerrada).
+        public bool GuardarConteoCajero(int idCierre, float importe, string conteoBilletes)
+        {
+            const string sql = @"
+                UPDATE cierrecaja
+                SET cajacierrecajero = @importe, conteobilletescajero = @conteo, fechaconteocajero = now()
+                WHERE id = @id AND usuariocierre = '0';";
+
+            int filas = DbPg.NonQuery(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("id", idCierre);
+                p.AddWithValue("importe", (double)importe);
+                // '' / null -> NULL: sin detalle de billetes (el importe pudo tipearse a mano).
+                p.AddWithValue("conteo", string.IsNullOrWhiteSpace(conteoBilletes) ? (object)DBNull.Value : conteoBilletes);
+            });
+            return filas > 0;
         }
 
         #region Auditoria de cierres y reapertura (2026-10-06, ver docs/DECISIONS.md)

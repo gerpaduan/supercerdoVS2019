@@ -102,6 +102,14 @@ namespace Negocio
                     oCierreE.CajaInicioSiguiente = string.IsNullOrEmpty(drCierreCaja["cajaInicioSiguiente"].ToString()) ? (float?)null : float.Parse(drCierreCaja["cajaInicioSiguiente"].ToString());
                     oCierreE.ImporteRetirado = string.IsNullOrEmpty(drCierreCaja["importeRetirado"].ToString()) ? (float?)null : float.Parse(drCierreCaja["importeRetirado"].ToString());
 
+                    // Conteo de cierre del cajero: solo existe en Postgres (con SQL Server la columna no viene -> queda en null).
+                    string conteoCajero = ObtenerValorString(drCierreCaja, "cajaCierreCajero");
+                    oCierreE.CajaCierreCajero = string.IsNullOrEmpty(conteoCajero) ? (float?)null : float.Parse(conteoCajero);
+                    string conteoDetalle = ObtenerValorString(drCierreCaja, "conteoBilletesCajero");
+                    oCierreE.ConteoBilletesCajero = string.IsNullOrEmpty(conteoDetalle) ? null : conteoDetalle;
+                    string conteoFecha = ObtenerValorString(drCierreCaja, "fechaConteoCajero");
+                    oCierreE.FechaConteoCajero = string.IsNullOrEmpty(conteoFecha) ? (DateTime?)null : Convert.ToDateTime(conteoFecha);
+
                     listCierreCaja.Add(oCierreE);
                 }
             }
@@ -133,6 +141,15 @@ namespace Negocio
         {
             oCierreD.addOrEditCierreCaja(oCierreE);
         }
+        // Conteo de cierre del cajero (pre-cierre, 2026-10-06): false en SQL Server (la UI oculta la funcion).
+        public bool SoportaConteoCajero => oCierreD.SoportaConteoCajero;
+
+        // Guarda lo que conto el cajero. Devuelve false si la caja ya no esta abierta. No toca el cierre oficial.
+        public bool GuardarConteoCajero(int idCierre, float importe, string conteoBilletes)
+        {
+            return oCierreD.GuardarConteoCajero(idCierre, importe, conteoBilletes);
+        }
+
         // ===== Auditoria de cierres y reapertura (2026-10-06, ver docs/DECISIONS.md) -- solo Postgres =====
 
         // false en SQL Server: los llamadores ni consultan ni registran (comportamiento de siempre).

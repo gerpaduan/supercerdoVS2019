@@ -178,6 +178,15 @@ namespace Datos
             );
         }
 
+        // El conteo de cierre del cajero (pre-cierre) solo existe en Postgres (2026-10-06, ver docs/DECISIONS.md).
+        // En SQL Server la UI oculta la funcion al ver SoportaConteoCajero = false.
+        public bool SoportaConteoCajero => false;
+
+        public bool GuardarConteoCajero(int idCierre, float importe, string conteoBilletes)
+        {
+            throw new NotSupportedException("El conteo de cierre del cajero no esta disponible en SQL Server.");
+        }
+
         // Auditoria de cierres y reapertura (2026-10-06): solo Postgres. Con SoportaAuditoriaCierre = false los
         // llamadores ni consultan ni registran, asi que SQL Server se comporta exactamente como siempre.
         public bool SoportaAuditoriaCierre => false;

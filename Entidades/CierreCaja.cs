@@ -92,6 +92,14 @@ namespace Entidades
             set { importeRetirado = value; }
         }
 
+
+        // Conteo de cierre que declaro el cajero antes de entregar la caja (pre-cierre). NULL = no cargo.
+        // El importe oficial sigue siendo CajaCierre (lo confirma el encargado); ver docs/DECISIONS.md 2026-10-06.
+        public float? CajaCierreCajero { get; set; }
+        // Detalle multilinea del contador de billetes del cajero.
+        public string ConteoBilletesCajero { get; set; }
+        public DateTime? FechaConteoCajero { get; set; }
+
         Entidades.Usuario usuarioInicio;
 
         public Entidades.Usuario UsuarioInicio

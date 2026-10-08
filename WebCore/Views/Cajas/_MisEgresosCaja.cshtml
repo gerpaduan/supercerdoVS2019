@@ -12,6 +12,9 @@
     string vendedorActividad = ViewBag.VendedorActividad as string;
     string sucursalActividadEncabezado = ViewBag.SucursalActividad as string;
     bool mostrarResumenMisActividades = ViewBag.MostrarResumenMisActividades == null || (bool)ViewBag.MostrarResumenMisActividades;
+    bool permitirMiCierre = ViewBag.PermitirMiCierre != null && (bool)ViewBag.PermitirMiCierre;
+    string urlMiCierre = ViewBag.UrlMiCierre as string ?? "";
+    bool miCierreYaCargado = ViewBag.MiCierreYaCargado != null && (bool)ViewBag.MiCierreYaCargado;
 }
 
 <div class="egresos-pos mis-actividades-modal @(desdePos ? "mis-actividades-pos-compacta" : "")">
@@ -41,6 +44,14 @@
                 </span>
             </div>
             <div class="egresos-pos-toolbar-actions">
+                @if (permitirMiCierre)
+                {
+                    @* Conteo de cierre del cajero (2026-10-06, ver docs/DECISIONS.md): solo en "Mis actividades" del POS. *@
+                    <button type="button" class="btn @(miCierreYaCargado ? "btn-warning" : "btn-outline-success")" id="btnMiCierreCaja" data-url="@urlMiCierre"
+                            title="@(miCierreYaCargado ? "Ya cargaste tu cierre: podés actualizarlo hasta que el encargado cierre la caja" : "Contá tu caja y dejá tu cierre cargado para el encargado")">
+                        <i class="fas @(miCierreYaCargado ? "fa-edit" : "fa-cash-register") mr-1"></i> @(miCierreYaCargado ? "Actualizar mi cierre" : "Mi cierre")
+                    </button>
+                }
                 <button type="button" class="btn btn-outline-primary" id="btnAbrirMisVentasDesdeActividades">
                     <i class="fas fa-shopping-cart mr-1"></i> Mis ventas
                 </button>
@@ -125,6 +136,14 @@
                 if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirActividades === "function") {
                     window.CajasAbiertas.idCierreActividadActual = @idCierreActividad;
                     window.CajasAbiertas.abrirActividades(@idCierreActividad, filtro);
+                }
+            })
+            .off("click.miCierreCaja", "#btnMiCierreCaja")
+            .on("click.miCierreCaja", "#btnMiCierreCaja", function () {
+                var url = $(this).data("url");
+                if (url && window.POSEgresos && typeof window.POSEgresos.cargarEnModal === "function") {
+                    // El titulo definitivo (cargar / actualizar) lo fija la propia ventana (_MiCierreCaja.cshtml).
+                    window.POSEgresos.cargarEnModal(url, "Mi cierre de caja", true);
                 }
             })
             .off("click.misVentasDesdeActividades", "#btnAbrirMisVentasDesdeActividades")

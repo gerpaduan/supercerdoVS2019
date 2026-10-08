@@ -14,6 +14,11 @@ namespace Contratos
         void addOrEditCierreCaja(Entidades.CierreCaja oCierreCajaE);
         DataTable findCierreCajaMultiples(List<Entidades.CierreCaja> listaCierreCaja);
 
+        // Conteo de cierre del cajero (pre-cierre, 2026-10-06). Solo Postgres lo soporta; SQL Server devuelve
+        // false y la UI oculta la funcion. GuardarConteoCajero devuelve false si la caja ya no esta abierta.
+        bool SoportaConteoCajero { get; }
+        bool GuardarConteoCajero(int idCierre, float importe, string conteoBilletes);
+
         // Auditoria de cierres y reapertura de la ultima caja (2026-10-06, ver docs/DECISIONS.md). Solo Postgres:
         // SoportaAuditoriaCierre es false en SQL Server y entonces ni se avisa ni se registra nada.
         bool SoportaAuditoriaCierre { get; }

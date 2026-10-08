@@ -43,6 +43,33 @@
         return v.Equals("True", StringComparison.OrdinalIgnoreCase) || v == "1" || v.Equals("t", StringComparison.OrdinalIgnoreCase);
     }
 
+    // Origen del importe de cierre (conteo del cajero, 2026-10-06, ver docs/DECISIONS.md): se compara lo que declaro
+    // el cajero (Conteo_Cajero) contra el cierre oficial (Caja_Cierre). La columna solo viene en Postgres; sin ella
+    // (SQL Server) no se muestra nada. Devuelve (texto, clase del badge, detalle para el tooltip).
+    (string Texto, string Clase, string Detalle) OrigenCierre(DataRow row)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains("Conteo_Cajero"))
+            return ("", "", "");
+
+        string detalle = Valor(row, "Conteo_Cajero_Detalle");
+        string fecha = Valor(row, "Conteo_Cajero_Fecha");
+        string cuando = DateTime.TryParse(fecha, out DateTime f) ? f.ToString("dd/MM/yyyy HH:mm") : "";
+
+        if (!decimal.TryParse(Valor(row, "Conteo_Cajero"), NumberStyles.Any, CultureInfo.CurrentCulture, out decimal conteo)
+            && !decimal.TryParse(Valor(row, "Conteo_Cajero"), NumberStyles.Any, CultureInfo.InvariantCulture, out conteo))
+            return ("Cargado por el encargado", "badge-secondary", "El cajero no cargó su cierre.");
+
+        string conteoTxt = conteo.ToString("N2");
+        string encabezado = "El cajero declaró $ " + conteoTxt + (cuando != "" ? " (" + cuando + ")" : "");
+        string detalleTooltip = string.IsNullOrWhiteSpace(detalle) ? encabezado : encabezado + "\n" + detalle;
+
+        bool hayCierre = decimal.TryParse(Valor(row, "Caja_Cierre"), NumberStyles.Any, CultureInfo.CurrentCulture, out decimal cierre)
+            || decimal.TryParse(Valor(row, "Caja_Cierre"), NumberStyles.Any, CultureInfo.InvariantCulture, out cierre);
+
+        return hayCierre && Math.Abs(cierre - conteo) < 0.005m
+            ? ("Ingresado por el cajero", "badge-success", detalleTooltip)
+            : ("Modificado por el encargado", "badge-warning", detalleTooltip);
+    }
 }
 
 @{
@@ -71,6 +98,7 @@
                 <th class="text-right">Caja ini sig</th>
                 <th class="text-right">Retirado</th>
                 <th>Cerrada por</th>
+                <th title="Quién cargó el importe de Caja cierre: el cajero (desde Mi cierre) o el encargado">Origen del cierre</th>
                 <th title="Cambios hechos en ventas, compras, pagos o egresos de esta caja después de cerrarla, y reaperturas">Avisos</th>
                 <th>Acciones</th>
             </tr>
@@ -93,6 +121,13 @@
                         <td class="text-right">@FormatearMonto(row, "Caja_Ini_Sig")</td>
                         <td class="text-right">@FormatearMonto(row, "Retirado")</td>
                         <td>@Valor(row, "Cerrada_Por")</td>
+                        @{ var origen = OrigenCierre(row); }
+                        <td class="text-nowrap">
+                            @if (origen.Texto != "")
+                            {
+                                <span class="badge @origen.Clase" title="@origen.Detalle">@origen.Texto</span>
+                            }
+                        </td>
                         @{
                             int cambiosPosteriores = Entero(row, "Cambios_Posteriores");
                             int reaperturas = Entero(row, "Reaperturas");
@@ -138,7 +173,7 @@
             else
             {
                 <tr>
-                    <td colspan="14" class="text-center text-muted py-4">No se encontraron cierres de caja para los filtros seleccionados.</td>
+                    <td colspan="15" class="text-center text-muted py-4">No se encontraron cierres de caja para los filtros seleccionados.</td>
                 </tr>
             }
         </tbody>
