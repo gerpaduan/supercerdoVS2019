@@ -43,6 +43,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-10-04 |
 | pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-05 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-05 |
+| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-07 |
 
 ## Manual del administrador
 
@@ -77,7 +78,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **Compras**: AutorizarModulo, Editar, Index, Lineas
 - **Elaborados**: IngresoRapido
 - **Empleados**: Editar, Historial, Index, Vacaciones
-- **Finanzas**: AddOrEditPago, Cheques, CtaCtePersona, CtasCtes, Pagos
+- **Finanzas**: Cheques, CtaCtePersona, CtasCtes, Pagos
 - **Home**: Index, Utilidades
 - **Jornadas**: Fichaje, FichajeConfirmar, Index, MiJornada, MiJornadaProduccion
 - **Liquidaciones**: Index, Nueva, Preview

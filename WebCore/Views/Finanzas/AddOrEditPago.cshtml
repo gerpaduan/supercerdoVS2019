@@ -60,11 +60,19 @@
         ("Otro", "Otro")
     };
 
+    // En POS la sucursal es SIEMPRE la de la caja del cajero (el POST la fuerza y valida que sea la activa del POS):
+    // no se elige. Se muestra como texto en el encabezado y viaja en un hidden, en vez de ocupar una fila con un
+    // selector que no se puede cambiar (2026-10-05, ver docs/DECISIONS.md).
+    int idSucursalPago = Model.Sucursal != null ? Model.Sucursal.idSucursal : 0;
+    string nombreSucursalPago = Model.Sucursal != null ? (Model.Sucursal.SucursalNombre ?? "") : "";
+    var sucursalActualPago = sucursales.FirstOrDefault(s => s.idSucursal == idSucursalPago);
+    if (sucursalActualPago != null && !string.IsNullOrWhiteSpace(sucursalActualPago.sucursal)) nombreSucursalPago = sucursalActualPago.sucursal;
+
     var chequeBusquedaViewData = new ViewDataDictionary(ViewData);
     chequeBusquedaViewData["ChequeBusquedaEnPago"] = true;
 }
 
-<div id="addOrEditPagoContainer" class="container-fluid px-2 px-md-3 pago-form-compact @(desdePos ? "" : "pago-form-pagina")">
+<div id="addOrEditPagoContainer" class="container-fluid px-2 px-md-3 pago-form-compact pago-form-ajustado @(desdePos ? "" : "pago-form-pagina")">
     <div class="alert alert-primary d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
             <a href="@(string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("CtaCtePersona", "Finanzas", new { idPersona }) : returnUrl)"
@@ -74,6 +82,10 @@
             <div>
                 <h5 class="mb-0"><strong id="lblPersonaPago">@persona</strong>@if (personaObj != null) { <partial name="_EtiquetaCuentaReservada" model="personaObj.IdPersona" /> }</h5>
                 <small class="text-muted d-block @(personaObj != null && personaObj.TieneIdentificacionDistinta() ? "" : "d-none")" id="lblPersonaPagoIdentificacion">@(personaObj != null ? personaObj.Identificacion : "")</small>
+                @if (desdePos)
+                {
+                    <small class="text-muted d-block" id="lblSucursalPago"><i class="fas fa-store mr-1"></i>Sucursal: @nombreSucursalPago</small>
+                }
             </div>
             @if (puedeReasignarOEliminar)
             {
@@ -327,17 +339,25 @@
 
             @* Sucursal: se muestra ARRIBA de todo (order:-1) pero va al FINAL del DOM, asi el Tab solo llega hasta
                aca si da toda la vuelta. Por defecto es la sucursal del usuario logueado (FinanzasController). *@
-            <div class="form-row pago-sucursal-fila">
-                <div class="col-md-6 mb-3 pago-requiere-operacion">
-                    <label for="SucursalId">Sucursal</label>
-                    <select id="SucursalId" name="SucursalId" class="form-control">
-                        @foreach (var sucursal in sucursales)
-                        {
-                            <option value="@sucursal.idSucursal" selected="@((Model.Sucursal != null && Model.Sucursal.idSucursal == sucursal.idSucursal) ? "selected" : null)">@sucursal.sucursal</option>
-                        }
-                    </select>
+            @if (desdePos)
+            {
+                @* POS: la sucursal es la de la caja del cajero y no se cambia (se ve en el encabezado). *@
+                <input type="hidden" id="SucursalId" name="SucursalId" value="@idSucursalPago" />
+            }
+            else
+            {
+                <div class="form-row pago-sucursal-fila">
+                    <div class="col-md-6 mb-3 pago-requiere-operacion">
+                        <label for="SucursalId">Sucursal</label>
+                        <select id="SucursalId" name="SucursalId" class="form-control">
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.idSucursal" selected="@((Model.Sucursal != null && Model.Sucursal.idSucursal == sucursal.idSucursal) ? "selected" : null)">@sucursal.sucursal</option>
+                            }
+                        </select>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
 </div>
@@ -1316,26 +1336,26 @@
     #addOrEditPagoContainer .ml-2 { margin-left: .5rem; }
     #addOrEditPagoContainer .mr-auto { margin-right: auto; }
     /* Encabezado y tarjeta mas juntos: menos aire entre bloques para no recorrer la pantalla con la vista */
-    .pago-form-pagina .alert { margin-bottom: .75rem; }
-    .pago-form-pagina .card-body { padding: 1rem 1.15rem; }
-    .pago-form-pagina .form-row { margin-left: -.4rem; margin-right: -.4rem; }
-    .pago-form-pagina .form-row > [class*="col-"] { padding-left: .4rem; padding-right: .4rem; }
+    .pago-form-ajustado .alert { margin-bottom: .75rem; }
+    .pago-form-ajustado .card-body { padding: 1rem 1.15rem; }
+    .pago-form-ajustado .form-row { margin-left: -.4rem; margin-right: -.4rem; }
+    .pago-form-ajustado .form-row > [class*="col-"] { padding-left: .4rem; padding-right: .4rem; }
     /* Tamaño de letra y controles como en el modal de pagos del POS: en el layout completo el tamaño base es mas
        grande y la pantalla se veia "inflada". Con el id para ganarle a los estilos del tema. */
-    #addOrEditPagoContainer.pago-form-pagina { font-size: .82rem; }
-    #addOrEditPagoContainer.pago-form-pagina h5 { font-size: 1rem; }
-    #addOrEditPagoContainer.pago-form-pagina label { font-size: .76rem; margin-bottom: .15rem; }
-    #addOrEditPagoContainer.pago-form-pagina .form-control,
-    #addOrEditPagoContainer.pago-form-pagina .form-select {
+    #addOrEditPagoContainer.pago-form-ajustado { font-size: .82rem; }
+    #addOrEditPagoContainer.pago-form-ajustado h5 { font-size: 1rem; }
+    #addOrEditPagoContainer.pago-form-ajustado label { font-size: .76rem; margin-bottom: .15rem; }
+    #addOrEditPagoContainer.pago-form-ajustado .form-control,
+    #addOrEditPagoContainer.pago-form-ajustado .form-select {
         font-size: .82rem;
         padding: .28rem .55rem;
         height: calc(1.5em + .56rem);
         min-height: 0;
         border-radius: .3rem;
     }
-    #addOrEditPagoContainer.pago-form-pagina textarea.form-control { height: auto; }
-    #addOrEditPagoContainer.pago-form-pagina .btn { font-size: .82rem; padding: .32rem .75rem; }
-    #addOrEditPagoContainer.pago-form-pagina .btn-sm { font-size: .76rem; padding: .2rem .5rem; }
+    #addOrEditPagoContainer.pago-form-ajustado textarea.form-control { height: auto; }
+    #addOrEditPagoContainer.pago-form-ajustado .btn { font-size: .82rem; padding: .32rem .75rem; }
+    #addOrEditPagoContainer.pago-form-ajustado .btn-sm { font-size: .76rem; padding: .2rem .5rem; }
     /* La sucursal esta al final del DOM (el Tab llega ultimo) pero se ve arriba de todo: la tarjeta es una columna
        flex y esa fila lleva order:-1. */
     #addOrEditPagoContainer .card-body { display: flex; flex-direction: column; }
@@ -1381,7 +1401,18 @@
     #addOrEditPagoContainer .pago-atajo { margin-left: .4rem; opacity: .75; font-size: .68rem; font-weight: 500; }
 
     /* Botones de accion juntos y alineados a la derecha, bajo el ultimo campo */
-    .pago-form-pagina #btnGuardarPago { min-width: 8.5rem; }
+    .pago-form-ajustado #btnGuardarPago { min-width: 8.5rem; }
+
+    /* Que el modal de pago del POS entre entero en pantalla sin scroll: encabezado y tarjeta con menos aire, y el
+       conteo de billetes de solo lectura sin handle de redimensionar (su altura se ajusta al contenido). */
+    .pago-form-ajustado > .alert { padding: .55rem .9rem; margin-bottom: .5rem; }
+    .pago-form-ajustado .card { margin-bottom: .5rem !important; }
+    .pago-form-ajustado .card-body { padding: .75rem 1rem; }
+    .pago-form-ajustado .form-row > [class*="col-"].mb-3 { margin-bottom: .6rem !important; }
+    .pago-form-ajustado #ConteoBilletes { resize: none; line-height: 1.25; }
+    /* Letra del conteo 2 pt mas chica que el resto del formulario (.82rem); height:auto para que mande el atributo rows
+       (la regla .form-control del formulario compacto fija una sola linea de alto). */
+    #addOrEditPagoContainer.pago-form-ajustado #ConteoBilletes { font-size: calc(.82rem - 2pt); height: auto; }
     .pago-form-compact label {
         font-size: .82rem;
         font-weight: 600;
