@@ -49,6 +49,7 @@ namespace DatosPostgres
                 TipoEgresoCaja = GetString(dr, "tipoegresocaja"),
                 Descripcion = GetString(dr, "descripcion"),
                 Detalle = GetString(dr, "detalle"),
+                ConteoBilletes = GetString(dr, "conteobilletes"),
                 Monto = dr["monto"] == DBNull.Value ? 0f : Convert.ToSingle(dr["monto"]),
                 IdCompra = dr["idcompra"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["idcompra"]),
                 Sucursal = new Sucursal { idSucursal = Convert.ToInt32(dr["idsucursal"]) },
@@ -327,7 +328,7 @@ namespace DatosPostgres
 
             const string sqlPorTipo = @"
                 SELECT ec.id, ec.fechahora AS ""Fecha"", te.tipoegresocaja AS ""TipoEgresoCaja"",
-                    ec.descripcion AS ""Descripcion"", ec.detalle AS ""Detalle"", ROUND(CAST(ec.monto AS numeric), 2) AS ""Monto"",
+                    ec.descripcion AS ""Descripcion"", ec.detalle AS ""Detalle"", ec.conteobilletes AS ""ConteoBilletes"", ROUND(CAST(ec.monto AS numeric), 2) AS ""Monto"",
                     te.esgasto AS ""Gasto"", s.sucursal AS ""Sucursal"", ec.creado AS ""Creado"", cp.nombre AS ""Creado Por"",
                     ec.actualizado AS ""Actualizado"", ap.nombre AS ""Actualizado Por""
                 FROM egresoscaja ec
@@ -343,7 +344,7 @@ namespace DatosPostgres
 
             const string sqlGeneral = @"
                 SELECT ec.id, ec.fechahora AS ""Fecha"", te.tipoegresocaja AS ""TipoEgresoCaja"",
-                    ec.descripcion AS ""Descripcion"", ec.detalle AS ""Detalle"", ROUND(CAST(ec.monto AS numeric), 2) AS ""Monto"",
+                    ec.descripcion AS ""Descripcion"", ec.detalle AS ""Detalle"", ec.conteobilletes AS ""ConteoBilletes"", ROUND(CAST(ec.monto AS numeric), 2) AS ""Monto"",
                     te.esgasto AS ""Gasto"", s.sucursal AS ""Sucursal"", ec.creado AS ""Creado"", cp.nombre AS ""Creado Por"",
                     ec.actualizado AS ""Actualizado"", ap.nombre AS ""Actualizado Por""
                 FROM egresoscaja ec
@@ -436,8 +437,8 @@ namespace DatosPostgres
                 bool esGasto = esGastoObj != null && esGastoObj != DBNull.Value && Convert.ToBoolean(esGastoObj);
 
                 const string sqlInsert = @"
-                    INSERT INTO egresoscaja (fechahora, idtipoegresocaja, descripcion, detalle, monto, idcompra, tabla, idtabla, esgasto, idsucursal, creado, creadopor, idempresa)
-                    VALUES (@fecha, @idTipoEgresoCaja, @descripcion, @detalle, @monto, @idCompra, @tabla, @idTabla, @esGasto, @idSucursal, now(), @creadoPor, @idEmpresa)
+                    INSERT INTO egresoscaja (fechahora, idtipoegresocaja, descripcion, detalle, conteobilletes, monto, idcompra, tabla, idtabla, esgasto, idsucursal, creado, creadopor, idempresa)
+                    VALUES (@fecha, @idTipoEgresoCaja, @descripcion, @detalle, @conteoBilletes, @monto, @idCompra, @tabla, @idTabla, @esGasto, @idSucursal, now(), @creadoPor, @idEmpresa)
                     RETURNING id;";
 
                 object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sqlInsert, p =>
@@ -446,6 +447,7 @@ namespace DatosPostgres
                     p.AddWithValue("idTipoEgresoCaja", oEgresoCaja.IdTipoEgresoCaja);
                     p.AddWithValue("descripcion", oEgresoCaja.Descripcion ?? "");
                     p.AddWithValue("detalle", oEgresoCaja.Detalle ?? "");
+                    p.AddWithValue("conteoBilletes", oEgresoCaja.ConteoBilletes ?? "");
                     p.AddWithValue("monto", oEgresoCaja.Monto);
                     p.AddWithValue("idCompra", (object)oEgresoCaja.IdCompra ?? DBNull.Value);
                     p.AddWithValue("tabla", oEgresoCaja.Tabla ?? "");
@@ -471,7 +473,7 @@ namespace DatosPostgres
 
                 const string sqlUpdate = @"
                     UPDATE egresoscaja SET fechahora=@fecha, idtipoegresocaja=@idTipoEgresoCaja, descripcion=@descripcion,
-                        detalle=@detalle, monto=@monto, idcompra=@idCompra, tabla=@tabla, idtabla=@idTabla, esgasto=@esGasto,
+                        detalle=@detalle, conteobilletes=@conteoBilletes, monto=@monto, idcompra=@idCompra, tabla=@tabla, idtabla=@idTabla, esgasto=@esGasto,
                         idsucursal=@idSucursal, actualizado=now(), actualizadopor=@actualizadoPor
                     WHERE id=@id;";
 
@@ -481,6 +483,7 @@ namespace DatosPostgres
                     p.AddWithValue("idTipoEgresoCaja", oEgresoCaja.IdTipoEgresoCaja);
                     p.AddWithValue("descripcion", oEgresoCaja.Descripcion ?? "");
                     p.AddWithValue("detalle", oEgresoCaja.Detalle ?? "");
+                    p.AddWithValue("conteoBilletes", oEgresoCaja.ConteoBilletes ?? "");
                     p.AddWithValue("monto", oEgresoCaja.Monto);
                     p.AddWithValue("idCompra", (object)oEgresoCaja.IdCompra ?? DBNull.Value);
                     p.AddWithValue("tabla", oEgresoCaja.Tabla ?? "");
@@ -498,7 +501,7 @@ namespace DatosPostgres
         public EgresoCaja getEgresoCajaById(int idEgresoCaja)
         {
             const string sql = @"
-                SELECT ec.id, ec.fechahora, ec.idtipoegresocaja, te.tipoegresocaja, ec.descripcion, ec.detalle,
+                SELECT ec.id, ec.fechahora, ec.idtipoegresocaja, te.tipoegresocaja, ec.descripcion, ec.detalle, ec.conteobilletes,
                     ROUND(CAST(ec.monto AS numeric), 2) AS monto, ec.idcompra, ec.idsucursal, ec.creado, ec.creadopor, ec.actualizado, ec.actualizadopor
                 FROM egresoscaja ec INNER JOIN tiposegresocaja te ON ec.idtipoegresocaja = te.id
                 WHERE ec.id = @id;";
@@ -516,7 +519,7 @@ namespace DatosPostgres
             if (idsValidos.Count == 0) return resultado;
 
             const string sql = @"
-                SELECT id, fechahora, idtipoegresocaja, descripcion, detalle, monto, idcompra, idsucursal, creado, creadopor, actualizado, actualizadopor, tabla, idtabla
+                SELECT id, fechahora, idtipoegresocaja, descripcion, detalle, conteobilletes, monto, idcompra, idsucursal, creado, creadopor, actualizado, actualizadopor, tabla, idtabla
                 FROM egresoscaja WHERE id = ANY(@ids);";
 
             return DbPg.Reader(_connectionString, _idEmpresa, sql, dr =>
@@ -577,7 +580,7 @@ namespace DatosPostgres
         {
             const string sql = @"
                 SELECT ec.id, ec.fechahora AS ""Fecha"", te.tipoegresocaja AS ""TipoEgresoCaja"",
-                    ec.descripcion AS ""Descripcion"", ec.detalle AS ""Detalle"", ROUND(CAST(ec.monto AS numeric), 2) AS ""Monto"",
+                    ec.descripcion AS ""Descripcion"", ec.detalle AS ""Detalle"", ec.conteobilletes AS ""ConteoBilletes"", ROUND(CAST(ec.monto AS numeric), 2) AS ""Monto"",
                     te.esgasto AS ""Gasto"", s.sucursal AS ""Sucursal"", ec.creado AS ""Creado"", cp.nombre AS ""Creado Por"",
                     ec.actualizado AS ""Actualizado"", ap.nombre AS ""Actualizado Por""
                 FROM egresoscaja ec

@@ -97,6 +97,10 @@
             titulo: 'Detalle de billetes',
             selectorInputTotal: $btn.data('cbInput') || '',
             selectorInputDetalle: $btn.data('cbDetail') || '',
+            // Campo propio de solo lectura donde se guarda el conteo (data-cb-conteo) y, si el botón lo pide
+            // (data-cb-sin-post), Aceptar no abre el modal de impresión de la calculadora.
+            selectorInputConteo: $btn.data('cbConteo') || '',
+            sinModalImpresion: $btn.data('cbSinPost') === true || $btn.data('cbSinPost') === 'true',
             callbackOnAceptar: function (resultado) {
                 if (contexto === 'pago') {
                     applyPago($btn, resultado);

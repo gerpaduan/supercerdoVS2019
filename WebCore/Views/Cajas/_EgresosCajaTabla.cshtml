@@ -343,6 +343,14 @@
                                             <span class="text-muted d-block">Detalle</span>
                                             <span class="egreso-detalle-valor-principal">@(string.IsNullOrWhiteSpace(Valor(row, "Detalle")) ? "-" : Valor(row, "Detalle"))</span>
                                         </div>
+                                        @* Conteo de billetes (solo lectura): campo propio, aparte del detalle. *@
+                                        @if (!string.IsNullOrWhiteSpace(Valor(row, "ConteoBilletes")))
+                                        {
+                                            <div class="egreso-detalle-meta-row mt-2">
+                                                <span class="text-muted d-block">Conteo de billetes</span>
+                                                <span class="egreso-detalle-valor-principal" style="white-space:pre-line;font-size:calc(1rem - 2pt);">@Valor(row, "ConteoBilletes")</span>
+                                            </div>
+                                        }
                                         <div class="row mt-2">
                                             <div class="col-md-3 mb-2">
                                                 <span class="text-muted d-block">Sucursal</span>
@@ -463,6 +471,10 @@
                     @if (!string.IsNullOrWhiteSpace(Valor(row, "Detalle")))
                     {
                         <div class="egreso-card-detail">@Valor(row, "Detalle")</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Valor(row, "ConteoBilletes")))
+                    {
+                        <div class="egreso-card-detail" style="white-space:pre-line;font-size:calc(1em - 2pt);"><strong>Conteo de billetes</strong>@("\n" + Valor(row, "ConteoBilletes"))</div>
                     }
                     <div class="egreso-card-line">Sucursal: @sucursalFila</div>
                     <div class="egreso-card-line">Creado: @Fecha(row, "Creado")</div>

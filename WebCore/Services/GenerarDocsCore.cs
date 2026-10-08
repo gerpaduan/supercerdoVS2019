@@ -165,7 +165,11 @@ namespace WebCore.Services
 
                         col.Item().LineHorizontal(1.5f).LineColor(Colors.Grey.Medium);
 
+                        // Titulo segun la operacion: el mismo formulario sirve para pagos y para cobros.
+                        col.Item().AlignCenter().Text(model.Pago.AProveedor ? "RECIBO DE PAGO" : "RECIBO DE COBRO").FontSize(13).Bold();
+
                         // ===== PERSONA =====
+                        // Pago: la persona RECIBIO el dinero. Cobro: la persona lo ENTREGO.
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(c =>
@@ -176,7 +180,7 @@ namespace WebCore.Services
                                 c.RelativeColumn(2f);
                             });
 
-                            table.Cell().Text(model.PersonaEtiqueta + ":").Bold();
+                            table.Cell().Text((model.Pago.AProveedor ? "Recibió" : "Entregó") + " (" + model.PersonaEtiqueta + "):").Bold();
                             table.Cell().Text((model.Pago.Persona?.RazonSocial ?? "").ToUpperInvariant());
                             table.Cell().Text("Cond. IVA:").Bold();
                             table.Cell().Text(model.Pago.Persona?.Iva ?? "");
@@ -210,6 +214,16 @@ namespace WebCore.Services
                             table.Cell().Padding(4).AlignRight().Text(model.Pago.Importe.ToString("F2", CultureInfo.InvariantCulture));
                         });
 
+                        // Conteo de billetes: va DESPUES de las observaciones (columna Detalle de la tabla de arriba).
+                        if (!string.IsNullOrWhiteSpace(model.Pago.ConteoBilletes))
+                        {
+                            col.Item().PaddingTop(4).Column(conteo =>
+                            {
+                                conteo.Item().Text("Conteo de efectivo").Bold();
+                                conteo.Item().Text(model.Pago.ConteoBilletes.Replace("\r\n", "\n"));
+                            });
+                        }
+
                         col.Item().AlignRight().PaddingTop(4).Text("Total: $ " + model.Pago.Importe.ToString("#,##0.00", culturaAr)).Bold();
 
                         if (model.TieneSaldo)
@@ -223,6 +237,96 @@ namespace WebCore.Services
                             col.Item().Text("Sucursal: " + (model.Pago.Sucursal.SucursalNombre ?? ""));
                         if (model.Pago.CreadoPor != null)
                             col.Item().Text("Usuario: " + (model.Pago.CreadoPor.Nombre ?? ""));
+                    });
+                });
+            });
+
+            return documento.GeneratePdf();
+        }
+
+        // Comprobante de egreso de caja (2026-10-05, ver docs/DECISIONS.md). Mismos datos que el ticket del WinForms
+        // (formAddOrEditEgresoCaja.imprimirTicket: sucursal, vendedor, id, fecha, tipo, descripcion, monto, detalle,
+        // creado/modificado) + el conteo de efectivo DESPUES del detalle, con la cabecera de empresa del recibo de pago.
+        public static byte[] GenerarPdfEgreso(WebCore.Models.ReciboEgresoVm model)
+        {
+            var culturaAr = new CultureInfo("es-AR");
+            var egreso = model.Egreso;
+            string negocio = model.Empresa != null
+                ? (model.Empresa.NombreFantasia ?? model.Empresa.RazonSocialAfip ?? "CarniSys")
+                : "CarniSys";
+
+            var documento = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(24, Unit.Point);
+                    page.DefaultTextStyle(x => x.FontSize(9));
+
+                    page.Content().Column(col =>
+                    {
+                        col.Spacing(6);
+
+                        // ===== CABECERA =====
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem().Column(izq =>
+                            {
+                                izq.Item().Text(negocio).FontSize(20).FontColor("#AE0000");
+                                izq.Item().PaddingTop(4).Text("Razón Social: " + (model.Empresa?.RazonSocialAfip ?? "")).FontSize(8);
+                                izq.Item().Text(((model.Empresa?.Domicilio ?? "")) + " - " + (model.Empresa?.Ciudad ?? "")).FontSize(8);
+                                izq.Item().Text("CUIT: " + (model.Empresa != null ? model.Empresa.Cuit.ToString() : "")).FontSize(8);
+                            });
+
+                            row.RelativeItem().AlignRight().Column(der =>
+                            {
+                                der.Item().AlignRight().Text("Egreso de caja N° " + egreso.Id).Bold();
+                                der.Item().AlignRight().Text("Fecha: " + egreso.Fecha.ToString("dd/MM/yyyy HH:mm:ss", culturaAr));
+                                der.Item().AlignRight().Text("Sucursal: " + (model.SucursalNombre ?? ""));
+                                der.Item().AlignRight().Text("Vendedor: " + (model.VendedorNombre ?? ""));
+                            });
+                        });
+
+                        col.Item().LineHorizontal(1.5f).LineColor(Colors.Grey.Medium);
+
+                        col.Item().AlignCenter().Text("EGRESO DE CAJA").FontSize(13).Bold();
+
+                        // ===== DATOS DEL EGRESO =====
+                        col.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn(1.5f);
+                                c.RelativeColumn(6f);
+                            });
+
+                            table.Cell().Text("Tipo:").Bold();
+                            table.Cell().Text(egreso.TipoEgresoCaja ?? "").Bold();
+                            table.Cell().Text("Descripción:").Bold();
+                            table.Cell().Text(egreso.Descripcion ?? "");
+                            table.Cell().Text("Monto:").Bold();
+                            table.Cell().Text("$ " + egreso.Monto.ToString("#,##0.00", culturaAr)).Bold();
+
+                            if (!string.IsNullOrWhiteSpace(egreso.Detalle))
+                            {
+                                table.Cell().Text("Detalle:").Bold();
+                                table.Cell().Text(egreso.Detalle.Replace("\r\n", "\n"));
+                            }
+
+                            // Conteo de billetes: va DESPUES del detalle.
+                            if (!string.IsNullOrWhiteSpace(egreso.ConteoBilletes))
+                            {
+                                table.Cell().Text("Conteo de efectivo:").Bold();
+                                table.Cell().Text(egreso.ConteoBilletes.Replace("\r\n", "\n"));
+                            }
+                        });
+
+                        col.Item().LineHorizontal(1.5f).LineColor(Colors.Grey.Medium);
+
+                        col.Item().Text("Creado: " + (egreso.Creado ?? egreso.Fecha).ToString("dd/MM/yyyy HH:mm:ss", culturaAr)).FontSize(8);
+                        if (egreso.Actualizado.HasValue)
+                            col.Item().Text("Modificado: " + egreso.Actualizado.Value.ToString("dd/MM/yyyy HH:mm:ss", culturaAr)
+                                + (string.IsNullOrWhiteSpace(model.ActualizadoPorNombre) ? "" : " por " + model.ActualizadoPorNombre)).FontSize(8);
                     });
                 });
             });

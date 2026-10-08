@@ -393,6 +393,10 @@ namespace Datos
                     p.AddWithValue("@idSucursal", oEgresoCaja.Sucursal.idSucursal);
                     p.AddWithValue("@creadoPor", oEgresoCaja.CreadoPor);
                     p.AddWithValue("@actualizadoPor", oEgresoCaja.ActualizadoPor);
+                    // Solo se manda si hay valor: WinForms/Web clasico no lo setean (null) y el SP viejo no
+                    // conoce el parametro; con el SP nuevo '' borra el conteo y null lo conserva.
+                    if (oEgresoCaja.ConteoBilletes != null)
+                        p.AddWithValue("@conteoBilletes", oEgresoCaja.ConteoBilletes);
                 }
             );
 
@@ -473,6 +477,11 @@ namespace Datos
                 : "";
             oEgresoCaja.Descripcion = dr["descripcion"] != DBNull.Value ? dr["descripcion"].ToString() : "";
             oEgresoCaja.Detalle = dr["detalle"] != DBNull.Value ? dr["detalle"].ToString() : "";
+            // ConteoBilletes: solo si el SP que alimenta el reader ya devuelve la columna (PENDIENTE: el SP
+            // de lectura de egresos en SQL Server no esta versionado; ver 20261005-Alter_Pagos_EgresosCaja_add_ConteoBilletes.sql).
+            oEgresoCaja.ConteoBilletes = ColumnaExiste(dr, "conteoBilletes") && dr["conteoBilletes"] != DBNull.Value
+                ? dr["conteoBilletes"].ToString()
+                : "";
             oEgresoCaja.Monto = dr["monto"] == DBNull.Value ? 0f : float.Parse(dr["monto"].ToString());
             oEgresoCaja.IdCompra = dr["idCompra"] != DBNull.Value ? Convert.ToInt32(dr["idCompra"].ToString()) : (int?)null;
 

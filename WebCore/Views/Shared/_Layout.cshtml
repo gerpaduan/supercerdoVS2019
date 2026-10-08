@@ -898,6 +898,9 @@
        pero #modalCalculadoraBilletes no existia). Este mismo port lo arregla de paso. *@
     @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
 
+    @* Modal post-guardado de comprobantes (pago/cobro, egreso de caja): cerrar / ticket / PDF / mail. *@
+    @Html.Partial("~/Views/Shared/_ModalPostComprobante.cshtml")
+
     @* Selector de sucursal (menu de usuario), 2026-09-07 -- ver docs/DECISIONS.md. *@
     @await Html.PartialAsync("_PanelAyuda")
     @Html.Partial("~/Views/Shared/_ModalSucursales.cshtml")
@@ -982,6 +985,7 @@
        2 scripts. *@
     <script src="~/Scripts/app/calculadora-billetes.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes-targets.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/post-comprobante.js" asp-append-version="true"></script>
     @* SweetAlert2 -- gap real preexistente encontrado en Modulo 7 (Cajas), pero afecta a varias
        vistas de Modulos 1-3 ya portadas que tambien llaman Swal.fire(...) sin que este script
        estuviera cargado en ningun lado de WebCore (ver docs/DECISIONS.md 2026-09-01). Mismas 2

@@ -630,6 +630,8 @@ namespace Negocio
                 oEgresoCajaE.Descripcion = descripcionEgreso;
                 oEgresoCajaE.Monto = montoEgreso;
                 oEgresoCajaE.Detalle = oPagoE.Observaciones;
+                // El conteo de billetes del pago viaja a su propio campo del egreso (no al Detalle).
+                oEgresoCajaE.ConteoBilletes = oPagoE.ConteoBilletes;
                 oEgresoCajaE.Sucursal = oPagoE.Sucursal;
                 oEgresoCajaE.IdCompra = 0;
                 oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Pagos.ToString();

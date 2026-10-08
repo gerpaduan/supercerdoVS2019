@@ -129,7 +129,8 @@
                                 class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-egreso"
                                 data-cb-context="egreso"
                                 data-cb-input="#egresoMonto, [name='monto']"
-                                data-cb-detail="#egresoDetalle, [name='detalle']"
+                                data-cb-conteo="#egresoConteoBilletes"
+                                data-cb-sin-post="true"
                                 title="Calcular efectivo (Alt+B)">
                             <i class="fas fa-money-bill-wave"></i>
                         </button>
@@ -154,6 +155,20 @@
                 <div id="egresoDetalleWrap">
                     <textarea class="form-control" id="egresoDetalle" name="detalle" rows="3">@detalleActual</textarea>
                 </div>
+            </div>
+
+            @* Conteo de billetes (2026-10-05, ver docs/DECISIONS.md): solo lectura; lo llena el contador (boton de
+               billetes del Monto) en vez de volcarse al Detalle, y se imprime despues del detalle en el comprobante.
+               "Limpiar contador" lo deja vacio. Siempre visible: se ve de un vistazo que hay un conteo cargado. *@
+            <div class="form-group egreso-field egreso-field-conteo">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label for="egresoConteoBilletes" class="mb-1">Conteo de billetes</label>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnLimpiarConteoBilletesEgreso"
+                            title="Dejar vacío el conteo de billetes">
+                        <i class="fas fa-eraser mr-1"></i>Limpiar contador
+                    </button>
+                </div>
+                <textarea class="form-control" id="egresoConteoBilletes" name="conteoBilletes" rows="3" readonly tabindex="-1">@(Model != null ? Model.ConteoBilletes : "")</textarea>
             </div>
         </div>
 
@@ -213,9 +228,10 @@
             max-width: 100%;
         }
 
+        /* 12 columnas: Fecha | Tipo (o Sucursal | Fecha | Tipo), Descripcion | Monto, Detalle | Conteo. */
         .egreso-form-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+            grid-template-columns: repeat(12, minmax(0, 1fr));
             gap: 0 1rem;
             align-items: start;
         }
@@ -224,14 +240,15 @@
             min-width: 0;
         }
 
-        .egreso-form-grid .egreso-field-detalle {
-            grid-column: 1 / -1;
-        }
-
-        .egreso-form-grid .egreso-field-detalle textarea {
-            min-height: 7.5rem;
-            resize: vertical;
-        }
+        .egreso-form-grid .egreso-field-sucursal { grid-column: span 4; }
+        .egreso-form-grid .egreso-field-fecha,
+        .egreso-form-grid .egreso-field-tipo { grid-column: span 6; }
+        .egreso-form-grid.egreso-con-sucursal .egreso-field-fecha,
+        .egreso-form-grid.egreso-con-sucursal .egreso-field-tipo { grid-column: span 4; }
+        .egreso-form-grid .egreso-field-descripcion { grid-column: span 8; }
+        .egreso-form-grid .egreso-field-monto { grid-column: span 4; }
+        .egreso-form-grid .egreso-field-detalle,
+        .egreso-form-grid .egreso-field-conteo { grid-column: span 6; }
 
         .egreso-form-actions {
             margin-top: .5rem;
@@ -255,7 +272,6 @@
         var form = document.getElementById("formEgresoCaja");
         var btnModificar = document.getElementById("btnHabilitarEdicionEgresoCaja");
         var btnGuardar = document.getElementById("btnGuardarEgresoCaja");
-        var btnCalculadora = document.getElementById("btnCalculadoraBilletesEgreso");
         var selectSucursal = document.getElementById("egresoSucursal") || (form ? form.querySelector("[name='idSucursal']") : null);
         var inputFecha = document.getElementById("egresoFecha") || (form ? form.querySelector("[name='fecha']") : null);
         var selectTipo = document.getElementById("idTipoEgresoCaja") || (form ? form.querySelector("[name='idTipoEgresoCaja']") : null);
@@ -322,28 +338,6 @@
             });
         }
 
-        function parseMontoCalculadora(texto) {
-            var valor = (texto || "").toString().replace(/\$/g, "").replace(/\s+/g, "").trim();
-            if (!valor) {
-                return "0.00";
-            }
-
-            var ultimaComa = valor.lastIndexOf(",");
-            var ultimoPunto = valor.lastIndexOf(".");
-            if (ultimaComa >= 0 && ultimoPunto >= 0) {
-                if (ultimaComa > ultimoPunto) {
-                    valor = valor.replace(/\./g, "").replace(",", ".");
-                } else {
-                    valor = valor.replace(/,/g, "");
-                }
-            } else {
-                valor = valor.replace(",", ".");
-            }
-
-            var numero = parseFloat(valor);
-            return isNaN(numero) ? "0.00" : numero.toFixed(2);
-        }
-
         function dispararEventos(control, eventos) {
             if (!control || !eventos || !eventos.length) {
                 return;
@@ -360,14 +354,6 @@
 
                 control.dispatchEvent(evt);
             });
-        }
-
-        function mergeDetalleEfectivo(textoActual, resultado) {
-            if (window.CalculadoraBilletes && typeof window.CalculadoraBilletes.mergeDetalleBlock === "function") {
-                return window.CalculadoraBilletes.mergeDetalleBlock(textoActual, resultado);
-            }
-
-            return textoActual || "";
         }
 
         function focusAndSelect(control) {
@@ -594,6 +580,11 @@
                     return;
                 }
 
+                // El conteo de billetes es SIEMPRE de solo lectura (lo llena el contador, no se tipea).
+                if (control.id === "egresoConteoBilletes") {
+                    return;
+                }
+
                 if (readOnly) {
                     if (control.tagName === "SELECT") {
                         control.disabled = true;
@@ -612,6 +603,10 @@
             Array.prototype.forEach.call(calcButtons, function (button) {
                 button.disabled = !!readOnly;
             });
+
+            if (btnLimpiarConteo) {
+                btnLimpiarConteo.disabled = !!readOnly;
+            }
 
             if (btnModificar) {
                 btnModificar.classList.toggle("d-none", !readOnly);
@@ -639,43 +634,39 @@
             });
         }
 
-        if (btnCalculadora) {
-            btnCalculadora.addEventListener("click", function (evt) {
-                evt.preventDefault();
+        // Calculadora de billetes: la abre el delegado de calculadora-billetes-targets.js a partir de los data-cb-*
+        // del boton (monto -> #egresoMonto, conteo -> #egresoConteoBilletes, sin modal de impresion). Antes habia
+        // aca un handler propio ademas del delegado (abria la calculadora dos veces y volcaba el conteo al Detalle):
+        // se quito para que haya UNA sola fuente. "Limpiar contador" deja vacio el conteo.
+        // El conteo ajusta su alto al contenido (entre 3 y 7 renglones) para verse completo sin scroll en el modal.
+        // jQuery (no addEventListener) porque la calculadora dispara sus eventos con $.trigger.
+        function ajustarAlturaConteo() {
+            var campo = document.getElementById("egresoConteoBilletes");
+            if (!campo) {
+                return;
+            }
 
-                if (!window.CalculadoraBilletes || typeof window.CalculadoraBilletes.open !== "function") {
-                    return;
-                }
-
-                window.CalculadoraBilletes.open({
-                    tituloPantalla: "Calculadora Billetes",
-                    titulo: "Detalle de billetes",
-                    callbackOnAceptar: function (resultado) {
-                        if (inputMonto) {
-                            inputMonto.value = Number(resultado && resultado.total ? resultado.total : 0).toFixed(2);
-                            dispararEventos(inputMonto, ["input", "change", "keyup"]);
-                        }
-
-                        if (inputDetalle) {
-                            inputDetalle.value = mergeDetalleEfectivo(inputDetalle.value, resultado);
-                            dispararEventos(inputDetalle, ["input", "change"]);
-                        }
-                    }
-                });
-            });
+            var renglones = (campo.value || "").split("\n").length;
+            campo.rows = Math.min(7, Math.max(3, renglones));
         }
 
-        $(document)
-            .off("click.egresoMontoCalculadora", "#btnAceptarCalculadoraBilletes")
-            .on("click.egresoMontoCalculadora", "#btnAceptarCalculadoraBilletes", function () {
-                if (!inputMonto) {
+        if (window.jQuery) {
+            window.jQuery("#egresoConteoBilletes").on("input change", ajustarAlturaConteo);
+        }
+        ajustarAlturaConteo();
+
+        var btnLimpiarConteo = document.getElementById("btnLimpiarConteoBilletesEgreso");
+        if (btnLimpiarConteo) {
+            btnLimpiarConteo.addEventListener("click", function () {
+                var inputConteo = document.getElementById("egresoConteoBilletes");
+                if (!inputConteo) {
                     return;
                 }
 
-                var lblTotal = document.getElementById("lblCalculadoraBilletesTotal");
-                inputMonto.value = parseMontoCalculadora(lblTotal ? lblTotal.textContent : "");
-                dispararEventos(inputMonto, ["input", "change", "keyup"]);
+                inputConteo.value = "";
+                dispararEventos(inputConteo, ["input", "change"]);
             });
+        }
 
         bindBusquedaTipoSelect(selectTipo);
         bindEnterFlow(selectSucursal);

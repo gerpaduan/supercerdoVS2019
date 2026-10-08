@@ -741,6 +741,8 @@
     @Html.Partial("~/Views/Ventas/_ModalComentarioVenta.cshtml")
     @Html.Partial("~/Views/Ventas/_ModalAyudaPOS.cshtml")
     @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
+    @* Modal post-guardado de comprobantes (pago/cobro y egreso de caja abiertos desde el POS). *@
+    @Html.Partial("~/Views/Shared/_ModalPostComprobante.cshtml")
 
     @* Buscador de cliente real (F9), 2026-09-06 (retomado, ver docs/DECISIONS.md). El backend
        (PersonasController.Buscar/Listar/Obtener/PersonaModal/GuardarPersonaModal) y la vista
@@ -1269,6 +1271,7 @@ else
     <script src="~/Scripts/app/pos-producto-pendiente.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes-targets.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/post-comprobante.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/money-input-mask.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/egresos-caja.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-multi-instance.js" asp-append-version="true"></script>

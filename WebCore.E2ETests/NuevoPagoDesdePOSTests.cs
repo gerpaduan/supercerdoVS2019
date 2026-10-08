@@ -99,6 +99,9 @@ public sealed class NuevoPagoDesdePOSTests
 
         await page.FillAsync("#txtImporte", "10");
         await page.ClickAsync("#modalPagoPOS #btnGuardarPago");
+        // Al guardar se ofrece el comprobante (2026-10-05): "1" = cerrar sin imprimir; recien ahi se cierra el pago.
+        await page.Locator("#modalPostComprobante.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
+        await page.ClickAsync("#btnPcCerrar");
         await page.Locator("#modalPagoPOS.show").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 15000 });
 
         // Sigue en POS, el modal de Finanzas sigue abierto (recargado con la cuenta corriente), y
@@ -158,6 +161,9 @@ public sealed class NuevoPagoDesdePOSTests
 
         await page.FillAsync("#txtImporte", "5");
         await page.ClickAsync("#btnGuardarPago");
+        // Al guardar se ofrece el comprobante (2026-10-05): "1" = cerrar sin imprimir; recien ahi se navega.
+        await page.Locator("#modalPostComprobante.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
+        await page.ClickAsync("#btnPcCerrar");
         await page.WaitForURLAsync(u => u.Contains("/Finanzas/CtaCtePersona"), new PageWaitForURLOptions { Timeout = 15000 });
 
         await page.CloseAsync();

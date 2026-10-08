@@ -963,6 +963,10 @@ namespace WebCore.Controllers
                 }
             }
 
+            // El binder convierte "" en null; WebCore siempre manda el campo, asi que null = "sin conteo" (vacio).
+            // Con '' el SP de SQL Server pisa el conteo anterior (null lo conservaria, pensado para WinForms).
+            oPagoE.ConteoBilletes ??= string.Empty;
+
             oPagoE.Importe = ParseFloat(importe);
             oPagoE.Efectivo = string.IsNullOrEmpty(Efectivo) ? 0 : ParseFloat(Efectivo);
             oPagoE.Banco = "";
@@ -1065,6 +1069,8 @@ namespace WebCore.Controllers
                     cerrarModalPago = true,
                     pagoId = oPagoE.Id,
                     pdfUrl = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id }),
+                    ticketUrl = Url.Action("ImprimirTicketPago", "Finanzas", new { id = oPagoE.Id }),
+                    ticketPayloadUrl = Url.Action("ImprimirTicketPagoPayload", "Finanzas", new { id = oPagoE.Id }),
                     emailConfigUrl = Url.Action("ObtenerDatosEmailPago", "Finanzas"),
                     emailSendUrl = Url.Action("EnviarComprobantePagoEmail", "Finanzas")
                 });
@@ -1076,6 +1082,8 @@ namespace WebCore.Controllers
                 redirectUrl = urlRetornoDefault,
                 pagoId = oPagoE.Id,
                 pdfUrl = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id }),
+                ticketUrl = Url.Action("ImprimirTicketPago", "Finanzas", new { id = oPagoE.Id }),
+                ticketPayloadUrl = Url.Action("ImprimirTicketPagoPayload", "Finanzas", new { id = oPagoE.Id }),
                 emailConfigUrl = Url.Action("ObtenerDatosEmailPago", "Finanzas"),
                 emailSendUrl = Url.Action("EnviarComprobantePagoEmail", "Finanzas")
             });
@@ -1092,6 +1100,42 @@ namespace WebCore.Controllers
             byte[] bytes = GenerarDocsCore.GenerarPdfPago(model);
             string nroRecibo = string.IsNullOrWhiteSpace(model.Pago.NroRecibo) ? ("Pago_" + model.Pago.Id) : model.Pago.NroRecibo.Replace("/", "-");
             return File(bytes, "application/pdf", "Recibo_" + nroRecibo + ".pdf");
+        }
+
+        // Ticket termico (58/80 mm) del recibo de pago/cobro. HTML = fallback por navegador (iframe oculto de
+        // ticket-print.js); el payload es para el agente ESC/POS. Las dos salen de ComprobanteTickets (misma
+        // fuente de texto, ver docs/DECISIONS.md 2026-10-05).
+        [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "id")]
+        public IActionResult ImprimirTicketPago(int id, int mm = 80)
+        {
+            var model = ConstruirReciboPagoVm(id);
+            if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                return NotFound();
+
+            int ticketMm = ComprobanteTickets.NormalizarMm(mm);
+            ViewBag.TicketMm = ticketMm;
+            ViewBag.TicketTitulo = "Recibo " + (model.Pago.NroRecibo ?? model.Pago.Id.ToString());
+            // Sin formato ESC/POS: este HTML lo imprime el navegador y mostraria los caracteres de control.
+            ViewBag.TicketLineas = string.Join("\n", ComprobanteTickets.ConstruirLineasPago(model, ticketMm, false));
+            return View("~/Views/Shared/_TicketTexto.cshtml");
+        }
+
+        [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "id")]
+        public IActionResult ImprimirTicketPagoPayload(int id, int mm = 80)
+        {
+            var model = ConstruirReciboPagoVm(id);
+            if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                return Json(new { ok = false, mensaje = "No se encontró el pago o cobro." });
+
+            int ticketMm = ComprobanteTickets.NormalizarMm(mm);
+            return Json(new
+            {
+                ok = true,
+                ticketMm,
+                ticketLines = ComprobanteTickets.ConstruirLineasPago(model, ticketMm, true)
+            });
         }
 
         [HttpGet]

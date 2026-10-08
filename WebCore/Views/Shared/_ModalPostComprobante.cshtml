@@ -1,0 +1,118 @@
+@*
+    Modal "Que deseas hacer ahora?" que se muestra DESPUES de guardar un comprobante (hoy: pago/cobro y egreso de
+    caja): 1 cerrar sin imprimir, 2 ticket termico (58 / 80 mm), 3 PDF, 4 enviar por mail (con el PDF adjunto).
+    Generico a proposito: el texto y las URLs las pasa quien lo abre (post-comprobante.js, PostComprobanteModal.open),
+    asi no se suma una copia mas de los modales post-venta / post-movimiento. Mismo look que _ModalPostVentaBasico.
+    Incluido en _Layout y _LayoutPOS. Ver docs/DECISIONS.md (2026-10-05).
+*@
+@* No se cierra con Escape ni con click afuera: solo eligiendo una opcion (como el modal de post-venta). Bootstrap 5
+   ignora data-backdrop/data-keyboard de Bootstrap 4, por eso se agregan tambien data-bs-backdrop/data-bs-keyboard. *@
+<div class="modal fade" id="modalPostComprobante" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postcomprobante-compact">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-check-circle mr-2"></i><span id="pcTitulo">Guardado</span>
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3" id="pcMensaje">¿Qué querés hacer ahora?</p>
+
+                <div class="d-flex flex-column" style="gap:.5rem;">
+                    <button type="button" class="btn btn-success" id="btnPcCerrar">
+                        <span class="badge badge-light mr-1">1</span>
+                        <i class="fas fa-times mr-1"></i>Cerrar sin imprimir
+                    </button>
+
+                    <div class="d-flex" style="gap:.5rem;">
+                        <button type="button" class="btn btn-outline-secondary flex-grow-1" id="btnPcTicket">
+                            <span class="badge badge-light mr-1">2</span>
+                            <i class="fas fa-receipt mr-1"></i>Imprimir ticket térmico
+                        </button>
+                        <div class="btn-group" role="group" aria-label="Ancho del ticket">
+                            <button type="button" class="btn btn-outline-secondary btnPcMm" data-mm="58" title="Ticket de 58 mm">58 mm</button>
+                            <button type="button" class="btn btn-outline-secondary btnPcMm" data-mm="80" title="Ticket de 80 mm">80 mm</button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-primary" id="btnPcPdf">
+                        <span class="badge badge-light mr-1">3</span>
+                        <i class="fas fa-file-pdf mr-1"></i>Generar PDF
+                    </button>
+
+                    <button type="button" class="btn btn-outline-success" id="btnPcEmail">
+                        <span class="badge badge-light mr-1">4</span>
+                        <i class="fas fa-envelope mr-1"></i>Enviar por mail (PDF adjunto)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEmailPostComprobante" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postcomprobante-compact">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Enviar comprobante por mail</h5>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="pcEmailDestino">Email destino</label>
+                    <input type="email" class="form-control" id="pcEmailDestino" maxlength="200" placeholder="persona@dominio.com" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="pcEmailAsunto">Asunto</label>
+                    <input type="text" class="form-control" id="pcEmailAsunto" maxlength="200">
+                </div>
+                <div class="form-group mb-0">
+                    <label for="pcEmailMensaje">Mensaje</label>
+                    <textarea class="form-control" id="pcEmailMensaje" rows="5"></textarea>
+                </div>
+                <div class="alert alert-danger d-none mb-0 mt-2" id="pcEmailError"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" id="btnPcEmailCancelar">Cancelar</button>
+                <button class="btn btn-success" type="button" id="btnPcEmailEnviar">
+                    <i class="fas fa-paper-plane mr-1"></i>Enviar mail
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-postcomprobante-compact {
+        font-size: .86rem;
+    }
+
+    .modal-postcomprobante-compact .modal-title {
+        font-size: 1rem;
+    }
+
+    .modal-postcomprobante-compact label {
+        font-size: .78rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    html.dark-mode .modal-postcomprobante-compact label {
+        color: #cbd8ea;
+    }
+
+    .modal-postcomprobante-compact .form-control,
+    .modal-postcomprobante-compact .btn {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .5rem;
+    }
+
+    /* Ancho de ticket elegido (el que se usa al tocar "Imprimir ticket térmico"). */
+    .modal-postcomprobante-compact .btnPcMm.active {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
+</style>

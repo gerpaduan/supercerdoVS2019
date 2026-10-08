@@ -637,16 +637,16 @@ namespace DatosPostgres
             // 1) Guardar Pago (siempre alta en este piloto -- ver nota mas abajo)
             const string sqlInsert = @"
                 INSERT INTO pagos (nrorecibo, fecha, idpersona, aproveedor, formapago, banco, nrocheque,
-                    titularcheque, importe, efectivo, observaciones, idsucursal, creado, creadopor, idempresa)
+                    titularcheque, importe, efectivo, observaciones, conteobilletes, idsucursal, creado, creadopor, idempresa)
                 VALUES (@nroRecibo, @fecha, @idPersona, @aProveedor, @formaPago, @banco, @nroCheque,
-                    @titularCheque, @importe, @efectivo, @observaciones, @idSucursal, now(), @creadoPor, @idEmpresa)
+                    @titularCheque, @importe, @efectivo, @observaciones, @conteoBilletes, @idSucursal, now(), @creadoPor, @idEmpresa)
                 RETURNING id;";
 
             const string sqlUpdate = @"
                 UPDATE pagos SET nrorecibo=@nroRecibo, fecha=@fecha, idpersona=@idPersona, aproveedor=@aProveedor,
                     formapago=@formaPago, banco=@banco, nrocheque=@nroCheque, titularcheque=@titularCheque,
-                    importe=@importe, efectivo=@efectivo, observaciones=@observaciones, idsucursal=@idSucursal,
-                    actualizado=now(), actualizadopor=@actualizadoPor
+                    importe=@importe, efectivo=@efectivo, observaciones=@observaciones, conteobilletes=@conteoBilletes,
+                    idsucursal=@idSucursal, actualizado=now(), actualizadopor=@actualizadoPor
                 WHERE id=@id;";
 
             using (var cmd = new NpgsqlCommand(oPagoE.Id == 0 ? sqlInsert : sqlUpdate, con, tx))
@@ -662,6 +662,7 @@ namespace DatosPostgres
                 cmd.Parameters.AddWithValue("importe", oPagoE.Importe);
                 cmd.Parameters.AddWithValue("efectivo", oPagoE.Efectivo);
                 cmd.Parameters.AddWithValue("observaciones", oPagoE.Observaciones ?? "");
+                cmd.Parameters.AddWithValue("conteoBilletes", oPagoE.ConteoBilletes ?? "");
                 cmd.Parameters.AddWithValue("idSucursal", oPagoE.Sucursal.idSucursal);
 
                 if (oPagoE.Id == 0)
@@ -821,6 +822,7 @@ namespace DatosPostgres
                 Importe = Convert.ToSingle(dr["importe"]),
                 Efectivo = Convert.ToSingle(dr["efectivo"]),
                 Observaciones = GetString(dr, "observaciones"),
+                ConteoBilletes = GetString(dr, "conteobilletes"),
                 IdSucursal = Convert.ToInt32(dr["idsucursal"]),
                 // Creado sin guard de NULL, igual que el original (ver nota en getMovCtaCteBy).
                 Creado = Convert.ToDateTime(dr["creado"]),

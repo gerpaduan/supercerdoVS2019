@@ -127,6 +127,12 @@ namespace Entidades
             get { return observaciones; }
             set { observaciones = value; }
         }
+
+        // Conteo de efectivo hecho con el contador de billetes (lineas "N x $D = $ subtotal", Monedas, TOTAL
+        // EFECTIVO). Campo propio y de solo lectura en la UI: ya no se mezcla dentro de Observaciones.
+        // Opcional: WinForms/Web clasico no lo conocen (null = sin conteo / no tocar).
+        public string ConteoBilletes { get; set; }
+
         Sucursal sucursal;
 
         public Sucursal Sucursal

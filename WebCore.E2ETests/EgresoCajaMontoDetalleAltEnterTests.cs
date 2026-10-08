@@ -96,13 +96,37 @@ public sealed class EgresoCajaMontoDetalleAltEnterTests
         await page.CloseAsync();
     }
 
-    // Pedido real (2026-09-15, ver docs/DECISIONS.md): al guardar, un SweetAlert de exito de 2
-    // segundos (auto-cierra solo), cerrable antes con Enter o Escape -- mismo patron ya
-    // establecido en el proyecto (elaborados-carga.js/elaborados-rapido.js) y habilitado
-    // automaticamente por el patch global swal-single-confirm.js (exige showConfirmButton:true,
-    // no false, para engancharse).
+    // Pedido real (2026-10-05, ver docs/DECISIONS.md): el contador de billetes llena el campo propio de solo
+    // lectura (#egresoConteoBilletes), NO el Detalle, y desde esta pantalla no abre el modal de impresion de la
+    // calculadora. "Limpiar contador" lo deja vacio.
     [Fact]
-    public async Task Guardar_MuestraSweetAlertDeExitoQueSePuedeCerrarConEscape()
+    public async Task ContadorDeBilletes_LlenaElConteoPropio_SinTocarElDetalleNiAbrirElModalDeImpresion()
+    {
+        var page = await AbrirNuevoEgresoAsync(_fixture);
+
+        Assert.True(await page.EvaluateAsync<bool>("() => document.getElementById('egresoConteoBilletes').readOnly"), "el conteo debe ser de solo lectura");
+
+        await page.ClickAsync("#btnCalculadoraBilletesEgreso");
+        await page.Locator("#modalCalculadoraBilletes.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
+        await page.FillAsync(".js-calculadora-billetes-cantidad[data-denominacion='1000']", "3");
+        await page.ClickAsync("#btnAceptarCalculadoraBilletes");
+        await page.Locator("#modalCalculadoraBilletes.show").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 5000 });
+
+        Assert.Contains("3 x $1.000", await page.Locator("#egresoConteoBilletes").InputValueAsync());
+        Assert.Equal("", await page.Locator("#egresoDetalle").InputValueAsync());
+        Assert.Equal(0, await page.Locator("#modalPostCalculadoraBilletes.show").CountAsync());
+
+        await page.ClickAsync("#btnLimpiarConteoBilletesEgreso");
+        Assert.Equal("", await page.Locator("#egresoConteoBilletes").InputValueAsync());
+
+        await page.CloseAsync();
+    }
+
+    // Pedido real (2026-10-05, ver docs/DECISIONS.md): al guardar ya no hay un SweetAlert de 2 s (era del
+    // 2026-09-15) sino el modal de comprobante (1 cerrar / 2 ticket / 3 PDF / 4 mail). No se cierra con Escape
+    // (solo eligiendo una opcion) y la opcion 1 lo cierra.
+    [Fact]
+    public async Task Guardar_MuestraModalDeComprobanteQueSoloSeCierraEligiendoUnaOpcion()
     {
         var page = await AbrirNuevoEgresoAsync(_fixture);
 
@@ -115,14 +139,17 @@ public sealed class EgresoCajaMontoDetalleAltEnterTests
 
         await page.ClickAsync("#btnGuardarEgresoCaja");
 
-        var swal = page.Locator(".swal2-popup.swal2-icon-success");
-        await swal.WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
-        Assert.Contains("Egreso guardado", await swal.Locator(".swal2-title").InnerTextAsync());
+        var modal = page.Locator("#modalPostComprobante.show");
+        await modal.WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
+        Assert.Contains("Egreso guardado", await modal.Locator("#pcTitulo").InnerTextAsync());
 
-        // El bug real: sin showConfirmButton:true, swal-single-confirm.js no engancha el atajo, y
-        // Escape no cerraba nada antes de los 2 segundos del timer.
+        // Escape NO lo cierra (modal estatico): solo se sale eligiendo una opcion.
         await page.Keyboard.PressAsync("Escape");
-        await swal.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 1000 });
+        await page.WaitForTimeoutAsync(400);
+        Assert.True(await modal.IsVisibleAsync(), "Escape no deberia cerrar el modal de comprobante");
+
+        await page.ClickAsync("#btnPcCerrar");
+        await modal.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 3000 });
 
         await page.CloseAsync();
     }

@@ -750,6 +750,10 @@ namespace Datos
                         cmd.Parameters.Add("@idSucursal", SqlDbType.Int).Value = oPagoE.Sucursal.idSucursal;
                         cmd.Parameters.Add("@creadoPor", SqlDbType.Int).Value = oPagoE.CreadoPor.Id;
                         cmd.Parameters.Add("@actualizadoPor", SqlDbType.Int).Value = oPagoE.ActualizadoPor != null ? oPagoE.ActualizadoPor.Id : 0;
+                        // Solo se manda si hay valor: WinForms/Web clasico no lo setean (null) y el SP viejo no
+                        // conoce el parametro; con el SP nuevo '' borra el conteo y null lo conserva.
+                        if (oPagoE.ConteoBilletes != null)
+                            cmd.Parameters.Add("@conteoBilletes", SqlDbType.NVarChar, -1).Value = oPagoE.ConteoBilletes;
 
                         oPagoE.Id = Convert.ToInt32(cmd.ExecuteScalar());
                     }
@@ -976,6 +980,9 @@ namespace Datos
                             Importe = float.Parse(dr["importe"].ToString()),
                             Efectivo = float.Parse(dr["efectivo"].ToString()),
                             Observaciones = Convert.ToString(dr["observaciones"]),
+                            ConteoBilletes = ColumnaExiste(dr, "conteoBilletes") && dr["conteoBilletes"] != DBNull.Value
+                                ? Convert.ToString(dr["conteoBilletes"])
+                                : "",
                             IdSucursal = Convert.ToInt32(dr["idSucursal"]),
                             Creado = Convert.ToDateTime(dr["creado"]),
                             Actualizado = dr["actualizado"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(dr["actualizado"]),

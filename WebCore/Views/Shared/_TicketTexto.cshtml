@@ -1,0 +1,42 @@
+@*
+    Ticket termico HTML (58/80 mm) de un comprobante cuyo texto ya viene armado: ViewBag.TicketLineas con las
+    lineas de WebCore.Services.ComprobanteTickets (la MISMA fuente que el payload del agente ESC/POS, pero sin
+    codigos de formato). Lo usan el recibo de pago/cobro y el egreso de caja. Se imprime en un iframe oculto
+    (ticket-print.js), que es el fallback cuando el agente local de impresion no esta disponible.
+*@
+@{
+    Layout = null;
+
+    int mm = ViewBag.TicketMm != null ? (int)ViewBag.TicketMm : 80;
+    string ticketTexto = (ViewBag.TicketLineas as string) ?? "";
+    string ticketTitulo = (ViewBag.TicketTitulo as string) ?? "Comprobante";
+    string ticketClass = mm == 80 ? "ticket-80mm" : "ticket-58mm";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ticketTitulo</title>
+    <style>
+        @@page {
+            margin: 0;
+            size: @(mm == 80 ? "80mm" : "58mm") auto;
+        }
+
+        html, body { margin: 0; padding: 0; background: #fff; color: #000; font-family: Consolas, "Courier New", monospace; }
+        body.ticket-58mm { width: 58mm; }
+        body.ticket-80mm { width: 80mm; }
+
+        .ticket-text { margin: 0; padding: 3mm 2.5mm; white-space: pre-wrap; font-size: 12px; line-height: 1.22; }
+    </style>
+</head>
+@* Autoimprime solo si se abre como pagina propia; dentro del iframe de ticket-print.js imprime el helper. *@
+<body class="@ticketClass" onload="if (window.top === window) window.print()">
+    <pre class="ticket-text">@ticketTexto</pre>
+
+    @for (int i = 0; i < 10; i++)
+    {
+        <pre class="ticket-text">&nbsp;</pre>
+    }
+</body>
+</html>

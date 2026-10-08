@@ -199,14 +199,17 @@
                         <input type="text" id="txtImporte" class="form-control text-right" inputmode="decimal" autocomplete="off"
                                value="@(Model.Importe > 0 ? Model.Importe.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")" />
                         @* Calculadora de billetes (mismo boton que Egresos de caja): carga el total en el importe y el
-                           detalle del conteo en Observaciones. Se oculta con cheques (el importe sale de los cheques). *@
+                           conteo en su propio campo de solo lectura (#ConteoBilletes, NO en Observaciones); al aceptar
+                           no muestra el modal de impresion (el comprobante se ofrece al guardar el pago). Se oculta con
+                           cheques (el importe sale de los cheques). *@
                         <div class="input-group-append" id="btnCalculadoraBilletesPagoWrap">
                             <button type="button"
                                     id="btnCalculadoraBilletesPago"
                                     class="btn btn-outline-secondary js-calculadora-billetes-launch"
                                     data-cb-context="pago-importe"
                                     data-cb-input="#txtImporte"
-                                    data-cb-detail="#Observaciones"
+                                    data-cb-conteo="#ConteoBilletes"
+                                    data-cb-sin-post="true"
                                     title="Calcular efectivo (Alt+B)">
                                 <i class="fas fa-money-bill-wave"></i>
                             </button>
@@ -259,13 +262,31 @@
                 </div>
             </div>
 
-            <div class="form-group pago-requiere-operacion">
-                <div class="custom-control custom-switch">
-                    <input type="checkbox" class="custom-control-input" id="chkObservaciones" @(observacionesConContenido ? "checked" : "") />
-                    <label class="custom-control-label" for="chkObservaciones">Observaciones</label>
+            @* Observaciones y conteo de billetes lado a lado (en pantallas angostas se apilan): asi el formulario entero
+               entra en el modal sin scroll. *@
+            <div class="form-row">
+                <div class="col-md-6 mb-2 pago-requiere-operacion">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="chkObservaciones" @(observacionesConContenido ? "checked" : "") />
+                        <label class="custom-control-label" for="chkObservaciones">Observaciones</label>
+                    </div>
+                    <div id="bloqueObservaciones" class="mt-2 @(observacionesConContenido ? "" : "d-none")">
+                        <textarea id="Observaciones" class="form-control" rows="3" maxlength="500">@Model.Observaciones</textarea>
+                    </div>
                 </div>
-                <div id="bloqueObservaciones" class="mt-2 @(observacionesConContenido ? "" : "d-none")">
-                    <textarea id="Observaciones" class="form-control" rows="3" maxlength="500">@Model.Observaciones</textarea>
+
+                @* Conteo de billetes: solo lectura; lo llena el contador (boton de billetes del Importe) y se imprime
+                   despues de las observaciones en el comprobante. "Limpiar contador" lo deja vacio. La altura se ajusta
+                   sola al contenido (ver ajustarAlturaConteo). *@
+                <div class="col-md-6 mb-2 pago-requiere-operacion" id="bloqueConteoBilletes">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="ConteoBilletes" class="mb-0">Conteo de billetes</label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnLimpiarConteoBilletes"
+                                title="Dejar vacío el conteo de billetes">
+                            <i class="fas fa-eraser mr-1"></i>Limpiar contador
+                        </button>
+                    </div>
+                    <textarea id="ConteoBilletes" class="form-control" rows="3" readonly tabindex="-1">@Model.ConteoBilletes</textarea>
                 </div>
             </div>
 
@@ -825,6 +846,22 @@
 
         inicializarPagoChequesCuandoListo();
 
+        // El conteo de billetes ajusta su alto al contenido (entre 3 y 7 renglones) para que se vea completo sin que
+        // el modal tenga que scrollear. Se recalcula cuando el contador lo llena o lo limpian (eventos input/change).
+        function ajustarAlturaConteo() {
+            var $conteo = $('#ConteoBilletes');
+            if (!$conteo.length) return;
+            var renglones = (($conteo.val() || '').toString().split('\n').length);
+            $conteo.attr('rows', Math.min(7, Math.max(3, renglones)));
+        }
+        $('#ConteoBilletes').on('input change', ajustarAlturaConteo);
+        ajustarAlturaConteo();
+
+        // "Limpiar contador": deja vacío el conteo de billetes (el importe no se toca).
+        $('#btnLimpiarConteoBilletes').on('click', function () {
+            $('#ConteoBilletes').val('').trigger('input').trigger('change');
+        });
+
         $('#btnGuardarPago').on('click', function () {
             if (soloLecturaPago) {
                 habilitarEdicionPago();
@@ -840,6 +877,7 @@
                 FormaPago_: $('#FormaPago_').val(),
                 AProveedor: $('#AProveedor').val() === 'true',
                 Observaciones: $('#Observaciones').val() || '',
+                ConteoBilletes: $('#ConteoBilletes').val() || '',
                 NroRecibo: $('#NroRecibo').val() || ''
             };
 
@@ -897,10 +935,31 @@
                     window.location.href = resp.redirectUrl;
                 }
 
+                var etiquetaOperacion = $('#AProveedor').val() === 'true' ? 'pago' : 'cobro';
+
+                // Tras guardar se ofrece el comprobante (cerrar / ticket 58-80 / PDF / mail). Lo que antes hacia el
+                // aviso de 2 s (cerrar el modal POS / navegar) pasa a ser el onClose del modal, asi corre recien
+                // cuando la persona terminó de elegir. Sin el modal cargado (no deberia pasar) queda el aviso viejo.
+                if (window.PostComprobanteModal && resp.pagoId) {
+                    window.PostComprobanteModal.open({
+                        titulo: esNuevoPago ? ((etiquetaOperacion === 'cobro' ? 'Cobro' : 'Pago') + ' guardado') : 'Cambios guardados',
+                        mensaje: 'El ' + etiquetaOperacion + ' se registró correctamente. ¿Qué querés hacer con el recibo?',
+                        ticketUrl: resp.ticketUrl,
+                        ticketPayloadUrl: resp.ticketPayloadUrl,
+                        pdfUrl: resp.pdfUrl,
+                        emailDatosUrl: resp.emailConfigUrl + '?id=' + encodeURIComponent(resp.pagoId),
+                        emailEnviarUrl: resp.emailSendUrl,
+                        emailIdCampo: 'idPago',
+                        id: resp.pagoId,
+                        onClose: continuarTrasGuardarPago
+                    });
+                    return;
+                }
+
                 Swal.fire({
                     icon: 'success',
                     title: esNuevoPago ? 'Pago guardado' : 'Cambios guardados',
-                    text: 'El ' + ($('#AProveedor').val() === 'true' ? 'pago' : 'cobro') + ' se registró correctamente.',
+                    text: 'El ' + etiquetaOperacion + ' se registró correctamente.',
                     timer: 2000,
                     timerProgressBar: true,
                     showConfirmButton: true,
@@ -921,7 +980,9 @@
         function controlesDeDatosPago() {
             return $('#addOrEditPagoContainer .card-body')
                 .find('input:not([type="hidden"]), select, textarea, button')
-                .not('[data-pago-fijo]');
+                .not('[data-pago-fijo]')
+                // El conteo de billetes es SIEMPRE de solo lectura (lo llena el contador, no se tipea).
+                .not('#ConteoBilletes');
         }
 
         // Texto y numeros -> readonly (se ven como campo normal, sin editar); select/checkbox/boton -> disabled.

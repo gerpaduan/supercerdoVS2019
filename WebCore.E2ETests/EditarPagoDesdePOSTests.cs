@@ -53,6 +53,9 @@ public sealed class EditarPagoDesdePOSTests
         await page.WaitForTimeoutAsync(300);
         await page.FillAsync("#txtImporte", "7");
         await page.ClickAsync("#modalPagoPOS #btnGuardarPago");
+        // Al guardar se ofrece el comprobante (2026-10-05): "1" = cerrar sin imprimir; recien ahi se cierra el pago.
+        await page.Locator("#modalPostComprobante.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
+        await page.ClickAsync("#btnPcCerrar");
         await page.Locator("#modalPagoPOS.show").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 15000 });
         await page.WaitForTimeoutAsync(600);
 

@@ -350,6 +350,7 @@
         var resultado = buildResultado(getPrintData());
         var selectorInputTotal = opcionesActuales.selectorInputTotal || opcionesActuales.targetTotalSelector;
         var selectorInputDetalle = opcionesActuales.selectorInputDetalle || opcionesActuales.targetDetailSelector;
+        var selectorInputConteo = opcionesActuales.selectorInputConteo || opcionesActuales.targetConteoSelector;
         var selectorFocus = opcionesActuales.selectorFocus || opcionesActuales.targetFocusSelector || selectorInputTotal;
         var callback = opcionesActuales.callbackOnAceptar || opcionesActuales.onAccept;
 
@@ -370,6 +371,19 @@
                         ? window.CalculadoraBilletes.buildDetalleBlock(resultado)
                         : mergeDetalle($detalle.val(), resultado),
                     opcionesActuales.eventosInputDetalle || ['input', 'change']
+                );
+            }
+        }
+
+        // Campo de conteo propio (pago/cobro y egreso de caja): se REEMPLAZA con las lineas del conteo en cada
+        // Aceptar (no se mergea con nada) y queda vacio si no se contó nada (total 0).
+        if (selectorInputConteo) {
+            var $conteo = resolveFieldTarget(selectorInputConteo);
+            if ($conteo.length) {
+                setFieldValue(
+                    $conteo,
+                    resultado.total > 0 ? resultado.detalleMultilinea : '',
+                    ['input', 'change']
                 );
             }
         }
@@ -876,6 +890,13 @@
         });
 
         $(document).on('click', '#btnAceptarCalculadoraBilletes', function () {
+            // Pantallas que guardan el conteo en un campo propio (pago/cobro, egreso de caja): Aceptar solo
+            // vuelca el resultado y cierra; el comprobante se ofrece recien al guardar el registro.
+            if (opcionesActuales.sinModalImpresion) {
+                aplicarCapturaYCerrar();
+                return;
+            }
+
             devolverResultado();
 
             if (!hayMontoParaImprimir()) {
@@ -887,7 +908,8 @@
         });
 
         $(document).on('click', '#btnCancelarCalculadoraBilletes, #btnCerrarCalculadoraBilletes', function () {
-            if (!hayMontoParaImprimir()) {
+            // Sin modal de impresion: cancelar/cerrar descarta lo contado y deja el campo como estaba.
+            if (opcionesActuales.sinModalImpresion || !hayMontoParaImprimir()) {
                 cerrarCalculadoraSinPost();
                 return;
             }
@@ -966,7 +988,7 @@
         });
 
         $('#modalCalculadoraBilletes').on('hide.bs.modal', function (e) {
-            if (permitiendoCerrar) {
+            if (permitiendoCerrar || opcionesActuales.sinModalImpresion) {
                 return;
             }
 

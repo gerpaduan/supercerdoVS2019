@@ -606,12 +606,27 @@ namespace WebCore.Controllers
         }
 
         [HttpPost]
-        public IActionResult GuardarEgresoCaja(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos = false, int idCierre = 0)
+        public IActionResult GuardarEgresoCaja(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos = false, int idCierre = 0, string conteoBilletes = "")
         {
             try
             {
-                var resultado = GuardarEgresoCajaCore(id, fecha, idTipoEgresoCaja, descripcion, monto, detalle, idSucursal, desdePos, idCierre);
-                return Json(new { ok = resultado.Ok, id = resultado.Id, mensaje = resultado.Mensaje });
+                var resultado = GuardarEgresoCajaCore(id, fecha, idTipoEgresoCaja, descripcion, monto, detalle, idSucursal, desdePos, idCierre, conteoBilletes);
+
+                if (!resultado.Ok)
+                    return Json(new { ok = false, id = resultado.Id, mensaje = resultado.Mensaje });
+
+                // URLs para el modal post-guardado (cerrar / ticket / PDF / mail), ver post-comprobante.js.
+                return Json(new
+                {
+                    ok = true,
+                    id = resultado.Id,
+                    mensaje = resultado.Mensaje,
+                    ticketUrl = Url.Action("ImprimirTicketEgreso", "Cajas", new { id = resultado.Id }),
+                    ticketPayloadUrl = Url.Action("ImprimirTicketEgresoPayload", "Cajas", new { id = resultado.Id }),
+                    pdfUrl = Url.Action("ImprimirPdfEgreso", "Cajas", new { id = resultado.Id }),
+                    emailDatosUrl = Url.Action("ObtenerDatosEmailEgreso", "Cajas", new { id = resultado.Id }),
+                    emailEnviarUrl = Url.Action("EnviarEgresoEmail", "Cajas")
+                });
             }
             catch (Exception ex)
             {
@@ -1367,6 +1382,178 @@ namespace WebCore.Controllers
                    (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
         }
 
+        // ===== Comprobante del egreso de caja (2026-10-05, ver docs/DECISIONS.md): ticket 58/80, PDF y mail. =====
+        // Se ofrece al guardar el egreso (modal post-comprobante.js). El layout del ticket replica el del WinForms.
+
+        // Arma los datos del comprobante o devuelve null si el egreso no existe / el usuario no puede verlo.
+        // Puede verlo quien tiene permiso de ver o de cargar egresos, o quien lo cargo (recien guardado desde el POS).
+        private ReciboEgresoVm ConstruirReciboEgresoVm(int id)
+        {
+            var user = _usuarioActual;
+            var egreso = id > 0 ? _oCierreN.getEgresoCajaById(id) : null;
+            if (egreso == null || egreso.Id <= 0) return null;
+
+            bool puede = egreso.CreadoPor == user.Id
+                || _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.VerEgresosCaja, DateTime.Today, -1)
+                || _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditEgresoCaja, DateTime.Today, user.Id);
+            if (!puede) return null;
+
+            var sucursal = egreso.Sucursal != null && egreso.Sucursal.idSucursal > 0
+                ? _oSucursalN.findById(egreso.Sucursal.idSucursal)
+                : null;
+
+            var empresa = user.Empresa;
+            if (empresa == null && sucursal != null && sucursal.IdEmpresa > 0)
+                empresa = _oSucursalN.findEmpresaById(sucursal.IdEmpresa);
+
+            return new ReciboEgresoVm
+            {
+                Egreso = egreso,
+                Empresa = empresa,
+                SucursalNombre = sucursal != null ? sucursal.SucursalNombre : "",
+                VendedorNombre = NombreUsuario(egreso.CreadoPor),
+                ActualizadoPorNombre = egreso.Actualizado.HasValue ? NombreUsuario(egreso.ActualizadoPor) : ""
+            };
+        }
+
+        private string NombreUsuario(int idUsuario)
+        {
+            if (idUsuario <= 0) return "";
+            if (_usuarioActual != null && _usuarioActual.Id == idUsuario) return _usuarioActual.Nombre ?? "";
+
+            var usuario = _oUsuarioN.getUsuarioById(idUsuario);
+            return usuario != null ? (usuario.Nombre ?? "") : "";
+        }
+
+        private static string NombreEmpresaEgreso(ReciboEgresoVm vm)
+        {
+            string nombre = vm.Empresa != null
+                ? (!string.IsNullOrWhiteSpace(vm.Empresa.NombreFantasia) ? vm.Empresa.NombreFantasia : vm.Empresa.RazonSocialAfip)
+                : "";
+            return string.IsNullOrWhiteSpace(nombre) ? "CarniSys" : nombre;
+        }
+
+        // HTML del ticket: fallback por navegador (iframe oculto de ticket-print.js). Mismo texto que el payload.
+        [HttpGet]
+        public IActionResult ImprimirTicketEgreso(int id, int mm = 80)
+        {
+            var vm = ConstruirReciboEgresoVm(id);
+            if (vm == null) return NotFound();
+
+            int ticketMm = WebCore.Services.ComprobanteTickets.NormalizarMm(mm);
+            ViewBag.TicketMm = ticketMm;
+            ViewBag.TicketTitulo = "Egreso de caja " + vm.Egreso.Id;
+            // Sin formato ESC/POS: este HTML lo imprime el navegador y mostraria los caracteres de control.
+            ViewBag.TicketLineas = string.Join("\n", WebCore.Services.ComprobanteTickets.ConstruirLineasEgreso(vm, ticketMm, false));
+            return View("~/Views/Shared/_TicketTexto.cshtml");
+        }
+
+        // Payload JSON para el agente de impresion ESC/POS local.
+        [HttpGet]
+        public IActionResult ImprimirTicketEgresoPayload(int id, int mm = 80)
+        {
+            var vm = ConstruirReciboEgresoVm(id);
+            if (vm == null) return Json(new { ok = false, mensaje = "No se encontró el egreso de caja." });
+
+            int ticketMm = WebCore.Services.ComprobanteTickets.NormalizarMm(mm);
+            return Json(new
+            {
+                ok = true,
+                ticketMm,
+                ticketLines = WebCore.Services.ComprobanteTickets.ConstruirLineasEgreso(vm, ticketMm, true)
+            });
+        }
+
+        [HttpGet]
+        public IActionResult ImprimirPdfEgreso(int id)
+        {
+            var vm = ConstruirReciboEgresoVm(id);
+            if (vm == null) return NotFound();
+
+            byte[] bytes = WebCore.Services.GenerarDocsCore.GenerarPdfEgreso(vm);
+            return File(bytes, "application/pdf", "Egreso_caja_" + vm.Egreso.Id + ".pdf");
+        }
+
+        // Datos para precargar el modal de mail. El egreso no tiene persona/email: el destino arranca vacio y se tipea.
+        [HttpGet]
+        public IActionResult ObtenerDatosEmailEgreso(int id)
+        {
+            try
+            {
+                var vm = ConstruirReciboEgresoVm(id);
+                if (vm == null) return Json(new { ok = false, msg = "Egreso de caja no encontrado." });
+
+                string empresa = NombreEmpresaEgreso(vm);
+                var culturaAr = new CultureInfo("es-AR");
+                string cuerpo =
+                    "Hola,\n\n" +
+                    "Te enviamos adjunto el comprobante del egreso de caja N° " + vm.Egreso.Id + ".\n\n" +
+                    "Fecha: " + vm.Egreso.Fecha.ToString("dd/MM/yyyy HH:mm", culturaAr) + "\n" +
+                    "Tipo: " + (vm.Egreso.TipoEgresoCaja ?? "") + "\n" +
+                    "Monto: $" + Convert.ToDecimal(vm.Egreso.Monto).ToString("N2", culturaAr) + "\n\n" +
+                    "Saludos,\n" + empresa;
+
+                return Json(new
+                {
+                    ok = true,
+                    email = "",
+                    asunto = "Egreso de caja N° " + vm.Egreso.Id + " - " + empresa,
+                    mensaje = cuerpo,
+                    empresa,
+                    replyTo = vm.Empresa != null ? (vm.Empresa.Email ?? "") : ""
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult EnviarEgresoEmail(int idEgreso, string emailDestino, string asunto, string mensaje)
+        {
+            try
+            {
+                var vm = ConstruirReciboEgresoVm(idEgreso);
+                if (vm == null) return Json(new { ok = false, msg = "Egreso de caja no encontrado." });
+
+                emailDestino = (emailDestino ?? "").Trim();
+                asunto = (asunto ?? "").Trim();
+                mensaje = (mensaje ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email destino." });
+                if (!SmtpMailHelper.IsValidEmail(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email válido." });
+                if (string.IsNullOrWhiteSpace(asunto))
+                    return Json(new { ok = false, msg = "Ingrese un asunto." });
+
+                byte[] pdfBytes = WebCore.Services.GenerarDocsCore.GenerarPdfEgreso(vm);
+                string empresa = NombreEmpresaEgreso(vm);
+                string replyToEmail = vm.Empresa != null ? (vm.Empresa.Email ?? "").Trim() : "";
+
+                SmtpMailHelper.SendMail(
+                    toEmail: emailDestino,
+                    toName: "",
+                    subject: asunto,
+                    bodyHtml: WebCore.Services.MailCuerpoHtml.DesdeTexto(mensaje),
+                    attachmentFileName: "Egreso_caja_" + vm.Egreso.Id + ".pdf",
+                    attachmentBytes: pdfBytes,
+                    attachmentContentType: "application/pdf",
+                    fromNameOverride: SmtpMailHelper.BuildTenantFromName(empresa),
+                    replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
+                    replyToName: empresa
+                );
+
+                return Json(new { ok = true, msg = "El comprobante se envió correctamente." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
+            }
+        }
+
         private bool FechaDentroDeCaja(DateTime fecha, CierreCaja cierre)
         {
             if (cierre == null || cierre.FechaHoraInicio == null)
@@ -1377,7 +1564,7 @@ namespace WebCore.Controllers
             return fecha >= inicio && fecha <= fin;
         }
 
-        private GuardarEgresoCajaResultado GuardarEgresoCajaCore(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos, int idCierre)
+        private GuardarEgresoCajaResultado GuardarEgresoCajaCore(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos, int idCierre, string conteoBilletes = "")
         {
             var user = _usuarioActual;
 
@@ -1450,6 +1637,8 @@ namespace WebCore.Controllers
                 IdTipoEgresoCaja = idTipoEgresoCaja,
                 Descripcion = descripcion ?? "",
                 Detalle = detalle ?? "",
+                // '' (no null) para que, al editar, el SP de SQL Server pise el conteo anterior cuando se limpia.
+                ConteoBilletes = conteoBilletes ?? "",
                 Monto = importe,
                 Sucursal = sucursal,
                 IdCompra = egresoAnterior != null ? egresoAnterior.IdCompra : null,

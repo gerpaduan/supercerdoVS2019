@@ -758,6 +758,42 @@
                     // swal-single-confirm.js (patch global de Swal.fire) le agregue el
                     // atajo de Enter/Escape -- un toast con showConfirmButton:false queda afuera de
                     // ese patch a proposito (ver isSingleConfirmAlert).
+                    // Lo que sigue al guardado (volver al listado de la caja / cerrar el modal y refrescar).
+                    function continuarTrasGuardar() {
+                        if (desdePos && window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
+                            window.POSEgresos.abrirMis();
+                            return;
+                        }
+
+                        if (idCierreActual > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirActividades === "function") {
+                            $("#modalEgresoCaja").modal("hide");
+                            window.CajasAbiertas.abrirActividades(idCierreActual);
+                            return;
+                        }
+
+                        $("#modalEgresoCaja").modal("hide");
+                        filtrar();
+                    }
+
+                    // Tras guardar se ofrece el comprobante (cerrar sin imprimir / ticket 58-80 / PDF / mail) en vez del
+                    // aviso de 2 s: continuarTrasGuardar corre recien cuando la persona termina de elegir
+                    // (2026-10-05, ver docs/DECISIONS.md). Sin el modal cargado queda el aviso de antes.
+                    if (window.PostComprobanteModal && resp.id) {
+                        window.PostComprobanteModal.open({
+                            titulo: "Egreso guardado",
+                            mensaje: (resp.mensaje || "El egreso de caja se guardó correctamente.") + " ¿Qué querés hacer con el comprobante?",
+                            ticketUrl: resp.ticketUrl,
+                            ticketPayloadUrl: resp.ticketPayloadUrl,
+                            pdfUrl: resp.pdfUrl,
+                            emailDatosUrl: resp.emailDatosUrl,
+                            emailEnviarUrl: resp.emailEnviarUrl,
+                            emailIdCampo: "idEgreso",
+                            id: resp.id,
+                            onClose: continuarTrasGuardar
+                        });
+                        return;
+                    }
+
                     if (window.Swal && typeof window.Swal.fire === "function") {
                         window.Swal.fire({
                             icon: "success",
@@ -772,19 +808,7 @@
                         });
                     }
 
-                    if (desdePos && window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
-                        window.POSEgresos.abrirMis();
-                        return;
-                    }
-
-                    if (idCierreActual > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirActividades === "function") {
-                        $("#modalEgresoCaja").modal("hide");
-                        window.CajasAbiertas.abrirActividades(idCierreActual);
-                        return;
-                    }
-
-                    $("#modalEgresoCaja").modal("hide");
-                    filtrar();
+                    continuarTrasGuardar();
                 }).fail(function () {
                     mostrarError($error, "No se pudo guardar el egreso de caja.");
                 });

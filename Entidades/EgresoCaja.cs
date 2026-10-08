@@ -92,6 +92,12 @@ namespace Entidades
             get { return detalle; }
             set { detalle = value; }
         }
+
+        // Conteo de efectivo hecho con el contador de billetes (lineas "N x $D = $ subtotal", Monedas, TOTAL
+        // EFECTIVO). Campo propio y de solo lectura en la UI: ya no se mezcla dentro de Detalle.
+        // Opcional: WinForms/Web clasico no lo conocen (null = sin conteo / no tocar).
+        public string ConteoBilletes { get; set; }
+
         float monto;
 
         public float Monto
