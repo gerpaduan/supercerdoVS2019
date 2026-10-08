@@ -518,8 +518,46 @@ Agrega columnas a `pagos` (`eliminado`, `eliminadopor`, `fechaeliminacion`, `mot
 
 1. Respaldo: `pg_dump -Fc` completo de siempre (la migración solo agrega, pero toca `formulas`).
 2. **Postgres (VPS luden, VM Postgres)**, como `carnisys_admin` (`docker exec -i carnisys-db-1 psql -U carnisys_admin -d carnisys -v ON_ERROR_STOP=1 --single-transaction < <archivo>`, con `tr -d '\r'` si viene de Windows): `DatosPostgres/DB-Migrations/20261004b-Alter_formulas_add_secreta_create_auditoriaformulas.sql`. Aditiva e idempotente (`ADD COLUMN IF NOT EXISTS`, `CREATE TABLE IF NOT EXISTS`, `DROP POLICY IF EXISTS`). Crea `formulas.secreta boolean NOT NULL DEFAULT false` (ninguna fórmula existente cambia) y la tabla append-only `auditoriaformulas` (RLS por empresa, GRANT solo SELECT/INSERT).
-3. **SQL Server (SM, San Lorenzo, base `SuperCerdo`)**: `Datos/DB-Procedures/20261004b-Alter_Formulas_add_Secreta_AuditoriaFormulas.sql` (columna `Formulas.Secreta`, tabla `AuditoriaFormulas`, `ALTER PROCEDURE addOrEditFormula` con parámetro `@secreta bit = 0`). El script trae `USE [carnisys]`: **cambiarlo por la base real antes de correrlo**. El cuerpo del SP se tomó del último script versionado (`20260822-...AjusteDeFormula.sql`): **verificar con `sp_helptext addOrEditFormula` contra la base real** antes de aplicarlo, por si fue tocado a mano. PENDIENTE: no se probó contra SQL Server (solo compila).
+3. **SQL Server (SM, San Lorenzo, base `SuperCerdo`)**: `Datos/DB-Procedures/20261004b-Alter_Formulas_add_Secreta_AuditoriaFormulas.sql` (columna `Formulas.Secreta`, tabla `AuditoriaFormulas`, `ALTER PROCEDURE addOrEditFormula` con parámetro `@secreta bit = NULL`: NULL = conservar la marca, así el WinForm que no lo manda no la borra; 2026-10-05). El script **ya no trae `USE`** (corrección 2026-10-08: con `USE [carnisys]` en SM/SL se aplicaba en otra base o fallaba): corre sobre la base activa, así que `sqlcmd -S <servidor> -d SuperCerdo -b -i <archivo>`. Trae una guarda que aborta sin tocar nada (`SET NOEXEC ON`) si la base no tiene `Formulas` o el `addOrEditFormula` no es el conocido (`@ajustarUnidad` + `CortePorFormula`); es re-ejecutable. El cuerpo del SP se tomó del último script versionado (`20260822-...AjusteDeFormula.sql`): **verificar con `sp_helptext addOrEditFormula` contra la base real** antes de aplicarlo, por si fue tocado a mano. Aplicado y probado el 2026-10-05 solo en la base local `SuperCerdo` (SQL Server 2022, compat. 100; backup `SuperCerdo_PRE_formula_secreta_20261005.bak` en el directorio de backups de la instancia); **PENDIENTE en SM y SL**.
 4. Config opcional (`WebCore.dll.config` del host, nunca se pisa en un deploy): `Security:FormulaStepUpMaxAttempts` (3), `Security:FormulaStepUpWindowMinutes` (5), `Security:FormulaStepUpLockoutMinutes` (5), `Security:FormulaElevacionMinutos` (5, tope 60). Los defaults no requieren config.
 5. Código: publish + deploy como en las secciones de cada servidor. Restore point recomendado: `git tag pre-formula-secreta-<YYYYMMDD>`.
 
 **Rollback**: volver al build anterior; la columna y la tabla quedan sobrantes y el código viejo las ignora. **Ojo**: con el build anterior las fórmulas marcadas como secretas vuelven a mostrarse a cualquiera (el código viejo no sabe de la marca). Si ya hay fórmulas marcadas, avisar antes de hacer rollback.
+
+## Conteo de billetes como campo propio + comprobante de pago/egreso (2026-10-05) -- PENDIENTE de desplegar
+
+**Estado**: implementado y compilado; migración Postgres aplicada solo en la base local de desarrollo (`carnisys`). **No aplicado ni desplegado** en VPS luden, VM Postgres, SM ni San Lorenzo.
+
+**Orden (migración ANTES que el código)**: el código nuevo lee y escribe `pagos.conteobilletes` y `egresoscaja.conteobilletes` en cada guardado y lectura de un pago/egreso; sin las columnas, esas pantallas fallan.
+
+1. Respaldo: `pg_dump -Fc` completo de siempre (la migración solo agrega columnas). Restore point: `git tag pre-conteo-billetes-20261005` (ya creado en local).
+2. **Postgres (VPS luden, VM Postgres)**, como `carnisys_admin` (`docker exec -i carnisys-db-1 psql -U carnisys_admin -d carnisys -v ON_ERROR_STOP=1 --single-transaction < <archivo>`, con `tr -d '\r'` si viene de Windows): `DatosPostgres/DB-Migrations/20261005-Alter_pagos_egresoscaja_add_conteobilletes.sql`. Aditiva e idempotente (`ADD COLUMN IF NOT EXISTS`, `text NULL`).
+3. **SQL Server (SM, San Lorenzo)**: `Datos/DB-Procedures/20261005-Alter_Pagos_EgresosCaja_add_ConteoBilletes.sql` (columna `ConteoBilletes` en `Pagos` y `EgresosCaja` + `ALTER PROCEDURE addOrEditPago` / `addOrEditEgresoCaja` con `@conteoBilletes nvarchar(MAX) = NULL`). El script **ya no trae `USE`** (corrección 2026-10-08): corre sobre la base activa, `sqlcmd -S <servidor> -d SuperCerdo -b -i <archivo>`. Trae una guarda que aborta sin tocar nada (`SET NOEXEC ON`) si falta alguna tabla/SP o si los SP no son los conocidos (`INSERT/UPDATE dbo.Pagos`, `insert into dbo.EgresosCaja`, sin `SESSION_CONTEXT`); es re-ejecutable. El cuerpo de los SP sale del snapshot `docs/08-relevamiento/snapshot-2026-08-18/stored-procedures.sql`. **Verificado el 2026-10-08 en una copia descartable de la `SuperCerdo` local**: el cuerpo es idéntico al SP actual salvo el parámetro nuevo; el script corre dos veces sin error; una llamada tipo WinForm (sin `@conteoBilletes`) al editar conserva el conteo y al insertar deja NULL; guarda probada en `master` (aborta). **PENDIENTE verificar con `sp_helptext addOrEditPago` y `sp_helptext addOrEditEgresoCaja` contra la base real de SM y SL** antes de aplicar (la guarda detecta una base o SP distinto, pero no diferencias menores del cuerpo). El código de `Datos/` solo manda `@conteoBilletes` si tiene valor, así que WinForms/clásico andan igual con o sin el script. El SP de lectura de egresos (`obtenerEgresosCaja`) no está versionado y no devuelve `ConteoBilletes`: en SQL Server el campo se lee vacío.
+4. Código: publish + deploy como en las secciones de cada servidor.
+
+**Rollback**: volver al build anterior; las columnas quedan sobrantes y el código viejo las ignora. Los conteos ya guardados en el campo nuevo no se ven con el build anterior (no estaban en Observaciones/Detalle).
+
+## Cambios en cajas cerradas y reapertura (2026-10-06) -- PENDIENTE de desplegar
+
+**Estado**: implementado y compilado (WebCore, Negocio.Tests 335 verdes); migración aplicada solo en la base local de desarrollo (`carnisys`) y probado en el navegador con un usuario admin de prueba (ventas, egresos, historial, reapertura; ver bitácora 2026-10-06). **No aplicado ni desplegado** en VPS luden ni VM Postgres. Solo Postgres: los SQL Server legacy **no requieren script** (`SoportaAuditoriaCierre` = false, sin avisos ni botón Reabrir).
+
+**Orden (migración ANTES que el código)**: el código nuevo consulta `auditoriacierrecaja` en el historial de cierres (`FindAll`) y en `ObtenerDatosCierre`; sin la tabla **fallan Cajas abiertas (historial) y el modal de cierre**.
+
+1. Respaldo: `pg_dump -Fc` completo de siempre (la migración solo agrega una tabla). Restore point recomendado: `git tag pre-cajas-cerradas-<YYYYMMDD>`.
+2. **Postgres (VPS luden, VM Postgres)**, como `carnisys_admin`: `DatosPostgres/DB-Migrations/20261006b-Create_auditoriacierrecaja.sql` (mismo modo que las demás: `docker exec -i carnisys-db-1 psql -U carnisys_admin -d carnisys -v ON_ERROR_STOP=1 --single-transaction < <archivo>`, con `tr -d '\r'` si viene de Windows). Aditiva e idempotente (`CREATE TABLE IF NOT EXISTS`, `DROP POLICY IF EXISTS`); append-only (`GRANT SELECT, INSERT`). Una sola corrida cubre a todas las empresas (RLS por `idempresa`).
+3. Código: publish + deploy como en las secciones de cada servidor.
+4. Antes de usar **Reabrir** en producción: revisar si hay cajas abiertas duplicadas/abandonadas por usuario y sucursal (el bloqueo de doble caja abierta de `AbrirCaja` recién funciona desde este cambio).
+
+**Rollback**: volver al build anterior; la tabla queda sobrante y el código viejo la ignora (los avisos ya registrados dejan de verse). Una caja reabierta sigue siendo una caja abierta normal.
+
+## Conteo de cierre del cajero (pre-cierre) (2026-10-06) -- PENDIENTE de desplegar
+
+**Estado**: implementado y compilado (WebCore); **no aplicado ni desplegado** en VPS luden ni VM Postgres. Solo Postgres: los SQL Server legacy (SM, San Lorenzo, `SuperCerdo`) **no requieren script** (`SoportaConteoCajero` = false, la UI oculta la función).
+
+**Orden (migración ANTES que el código)**: el código nuevo lee `cierrecaja.cajacierrecajero / conteobilletescajero / fechaconteocajero` en el historial de cierres (`FindAll`) y en cada cierre de caja; sin las columnas **fallan Cajas abiertas (historial) y Cerrar caja**.
+
+1. Respaldo: `pg_dump -Fc` completo de siempre (la migración solo agrega columnas). Restore point recomendado: `git tag pre-conteo-cierre-cajero-<YYYYMMDD>`.
+2. **Postgres (VPS luden, VM Postgres)**, como `carnisys_admin` (`docker exec -i carnisys-db-1 psql -U carnisys_admin -d carnisys -v ON_ERROR_STOP=1 --single-transaction < <archivo>`, con `tr -d '\r'` si viene de Windows): `DatosPostgres/DB-Migrations/20261006-Alter_cierrecaja_add_conteo_cajero.sql`. Aditiva e idempotente (`ADD COLUMN IF NOT EXISTS`, nullable). Una sola corrida cubre a todas las empresas (base única con RLS).
+3. Código: publish + deploy como en las secciones de cada servidor.
+
+**Rollback**: volver al build anterior; las columnas quedan sobrantes y el código viejo las ignora (los conteos ya cargados dejan de verse).

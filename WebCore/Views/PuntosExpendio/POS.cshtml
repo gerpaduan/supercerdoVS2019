@@ -59,6 +59,10 @@
     int idConsumidorFinal = ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0;
     bool esUsuarioProduccionPOS = ViewBag.EsUsuarioProduccion != null && (bool)ViewBag.EsUsuarioProduccion;
     bool requiereOperadorPOS = ViewBag.RequiereOperadorPOS != null && (bool)ViewBag.RequiereOperadorPOS;
+    // Con DataEngine=SqlServer (SM / San Lorenzo, WinForms en produccion) el expendio no guarda el vinculo
+    // con la persona, la caducidad del presupuesto ni el nro de remito (Datos/Venta.cs no tiene esas
+    // columnas). Los campos se muestran igual y se marcan con una etiqueta (docs/DECISIONS.md, 2026-10-08).
+    bool sinSqlServer = !WebCore.Infrastructure.NegocioFactory.UsarPostgres;
 }
 
 <div class="pos-page pos-expendio-page">
@@ -70,7 +74,12 @@
 
         <div class="pos-topbar-grid@(Negocio.SectorPuntoExpendio.EsRemitos(Model.Sector) ? " pos-topbar-grid-remito" : "")@(Negocio.SectorPuntoExpendio.EsPresupuesto(Model.Sector) ? " pos-topbar-grid-presupuesto" : "")">
             <div class="pos-topbar-item pos-topbar-item-cliente">
-                <div class="pos-topbar-label">Cliente / Identificación</div>
+                <div class="pos-topbar-label">Cliente / Identificación
+                    @if (sinSqlServer)
+                    {
+                        <span class="pos-badge-sin-sqlserver" title="Con la base SQL Server el cliente elegido con F9 se guarda solo como texto: no queda vinculado a la persona (no aparece en su historial de presupuestos ni en el filtro de expendios por persona).">sin vínculo SQL Server</span>
+                    }
+                </div>
                 <input type="hidden" id="clienteRazonSocialValor" value="" />
                 <div class="input-group input-group-sm">
                     <input type="text"
@@ -157,7 +166,12 @@
                    guarda la fecha de caducidad (Negocio.SectorPuntoExpendio.ResolverCaducidad); aca solo se
                    muestra "Caduca el ..." a modo informativo. *@
                 <div class="pos-topbar-item pos-topbar-item-caducidad">
-                    <div class="pos-topbar-label">Válido por (días)</div>
+                    <div class="pos-topbar-label">Válido por (días)
+                        @if (sinSqlServer)
+                        {
+                            <span class="pos-badge-sin-sqlserver" title="Con la base SQL Server la caducidad del presupuesto no se guarda: este dato no se usa.">sin uso SQL Server</span>
+                        }
+                    </div>
                     <div class="d-flex align-items-center">
                         <input type="number"
                                id="diasCaducidadExpendio"
@@ -178,7 +192,12 @@
                 @* Sector REMITOS: numero de remito sugerido por sucursal (PPPP-NNNNNNNN), editable.
                    Va entre la fecha y el bloque de acciones (Duplicar POS / Salir). *@
                 <div class="pos-topbar-item pos-topbar-item-remito">
-                    <div class="pos-topbar-label">Nro de remito</div>
+                    <div class="pos-topbar-label">Nro de remito
+                        @if (sinSqlServer)
+                        {
+                            <span class="pos-badge-sin-sqlserver" title="Con la base SQL Server el número de remito no se guarda ni se sugiere automáticamente: este dato no se usa.">sin uso SQL Server</span>
+                        }
+                    </div>
                     <input type="text"
                            id="nroRemito"
                            class="form-control form-control-sm"

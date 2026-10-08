@@ -142,6 +142,28 @@
     color: #64748b;
 }
 
+/* Etiqueta chica junto a un campo que la base SQL Server no guarda (solo se renderiza con DataEngine=SqlServer). */
+.pos-badge-sin-sqlserver {
+    display: inline-block;
+    margin-left: .35rem;
+    padding: .05rem .35rem;
+    border-radius: .6rem;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: .56rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: help;
+}
+
+html.dark-mode .pos-expendio-page .pos-badge-sin-sqlserver {
+    background: #334155;
+    color: #cbd5e1;
+}
+
 .pos-topbar-value {
     font-size: .86rem;
     font-weight: 700;

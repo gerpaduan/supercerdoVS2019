@@ -1,6 +1,11 @@
 # Bitacora de cambios
 
-## 2026-10-04 (la mas reciente) - Fórmula secreta con re-login en Elaborados
+## 2026-10-08 (la mas reciente) - Scripts SQL Server sin USE y etiqueta "sin uso SQL Server" en el POS Expendio
+
+- **Scripts `Datos/DB-Procedures/20261004b-...` y `20261005-...`**: se quitó `USE [carnisys]` (en SM/SL, base `SuperCerdo`, se aplicaban en otra base o fallaban). Ahora corren sobre la base activa (`sqlcmd -d SuperCerdo -b -i <archivo>`) y traen una guarda que aborta sin tocar nada (`SET NOEXEC ON`) si la base o los SP no son los esperados; son re-ejecutables y terminan con `SET NOEXEC OFF`. Probados en `master` (aborta) y en una copia descartable de la `SuperCerdo` local (corren dos veces; una llamada tipo WinForm a `addOrEditPago` sin `@conteoBilletes` conserva el conteo al editar y deja NULL al insertar). **PENDIENTE**: `sp_helptext` de los SP reales en SM y SL. Ver `docs/07-operacion-y-soporte/despliegue-y-publicacion.md`.
+- **POS Expendio (`WebCore/Views/PuntosExpendio/POS.cshtml`)**: con `DataEngine=SqlServer`, etiquetas chicas "sin vínculo SQL Server" (Cliente) y "sin uso SQL Server" (Válido por (días), Nro de remito), porque `Datos/Venta.cs` no guarda `idpersona`, `fechacaducidad` ni `nroremito`. Detalle y alternativa descartada en `docs/DECISIONS.md` (2026-10-08).
+
+## 2026-10-04 - Fórmula secreta con re-login en Elaborados
 
 - Detalle en `docs/DECISIONS.md` (2026-10-04). Casilla "Fórmula secreta" por fórmula (`formulas.secreta`); en Ingreso rápido, Carga, detalle y líneas de elaborados los ingredientes/receta se ocultan hasta que alguien con permiso sobre fórmulas ingrese usuario y contraseña ("Ver fórmula" / "Ocultar", vence a los 5 min). Auditoría append-only en `auditoriaformulas`. **Migración ANTES que el código** (`DatosPostgres/DB-Migrations/20261004b-...sql` y espejo SQL Server, ver `docs/07-operacion-y-soporte/despliegue-y-publicacion.md`). Manual: concepto `formula-secreta` y 6 pantallas de Elaborados (resto de cada pantalla PENDIENTE). Detectado y no tocado: `EliminarFormula` no valida permiso.
 
