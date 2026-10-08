@@ -444,13 +444,44 @@
             }
         }
 
+        /* Boton contraer/expandir (2026-10-05): antes era un circulo vacio de ~1rem que costaba
+           acertar con el mouse. Ahora es un circulo de 2.75rem con flecha doble (fa-angle-double-left)
+           que se da vuelta cuando el menu esta contraido (.sidebar.toggled), asi indica la accion. */
         #sidebarToggle {
             display: none;
         }
 
+        #sidebarToggle i {
+            transition: transform .2s ease;
+        }
+
+        .sidebar.toggled #sidebarToggle i {
+            transform: rotate(180deg);
+        }
+
         @@media (min-width: 768px) {
             #sidebarToggle {
-                display: inline-block;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 2.75rem;
+                height: 2.75rem;
+                margin: .25rem 0 .75rem;
+                font-size: 1.35rem;
+                line-height: 1;
+                color: #fff;
+                background: rgba(255, 255, 255, .2);
+                cursor: pointer;
+                transition: background-color .15s ease;
+            }
+
+            #sidebarToggle:hover {
+                background: rgba(255, 255, 255, .35);
+            }
+
+            #sidebarToggle:focus-visible {
+                outline: 2px solid #fff;
+                outline-offset: 2px;
             }
         }
     </style>
@@ -681,7 +712,7 @@
                 <hr class="sidebar-divider">
             </li>
             <li class="nav-item text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle" title="Contraer/expandir menu"></button>
+                <button type="button" class="rounded-circle border-0" id="sidebarToggle" title="Contraer/expandir menú" aria-label="Contraer o expandir el menú"><i class="fas fa-angle-double-left" aria-hidden="true"></i></button>
             </li>
         </ul>
 
