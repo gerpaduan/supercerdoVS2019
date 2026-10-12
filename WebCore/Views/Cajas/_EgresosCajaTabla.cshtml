@@ -79,6 +79,13 @@
         return DateTime.TryParse(Valor(row, columna), out fecha) ? fecha.ToString("dd/MM/yyyy HH:mm") : Valor(row, columna);
     }
 
+    // Fecha con segundos (dd/MM/yyyy HH:mm:ss) para la columna Creado, igual que en Elaborados.
+    string FechaHora(DataRow row, string columna)
+    {
+        DateTime fecha;
+        return DateTime.TryParse(Valor(row, columna), out fecha) ? fecha.ToString("dd/MM/yyyy HH:mm:ss") : "";
+    }
+
     string Monto(DataRow row)
     {
         decimal monto;
@@ -191,7 +198,8 @@
     var tiposEgresoCajaLookup = ViewBag.TiposEgresoCaja as DataTable;
     // En Mis actividades / Actividades (modoActividades) la columna Detalle se oculta: la fila avisa con una etiqueta
     // "Con detalle" y el texto se ve al desplegar la fila (2026-10-06, ver docs/DECISIONS.md). En el listado completo se mantiene.
-    int columnasTabla = modoActividades ? 6 : 7;
+    // + la columna Creado (antes de Acciones).
+    int columnasTabla = modoActividades ? 7 : 8;
 
     if (Model != null && Model.Columns.Contains("Monto"))
     {
@@ -245,6 +253,7 @@
                     <th>Detalle</th>
                 }
                 <th>Sucursal</th>
+                <th class="text-nowrap">Creado</th>
                 <th class="text-nowrap">Acciones</th>
             </tr>
         </thead>
@@ -323,6 +332,18 @@
                         </td>
                         }
                         <td>@sucursalFila</td>
+                        <td class="text-nowrap">
+                            @* "Modificado" solo si el egreso se modifico de verdad (esEgresoModificado excluye los tipos
+                               que se actualizan solos y los registros reemplazados por una anulacion). *@
+                            @await Html.PartialAsync("~/Views/Shared/_CeldaCreadoModificado.cshtml", new WebCore.Models.CeldaCreadoModificadoVm
+                            {
+                                Creado = FechaHora(row, "Creado"),
+                                CreadoPor = Valor(row, "Creado Por"),
+                                Actualizado = FechaHora(row, "Actualizado"),
+                                ActualizadoPor = Valor(row, "Actualizado Por"),
+                                MostrarModificado = esEgresoModificado
+                            })
+                        </td>
                         <td class="text-nowrap">
                             <button type="button"
                                     class="btn btn-sm btn-link text-decoration-none btn-detalle-egreso"

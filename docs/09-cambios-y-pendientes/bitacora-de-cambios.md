@@ -1,6 +1,24 @@
 # Bitacora de cambios
 
-## 2026-10-08 (la mas reciente) - Deploy de WebCore en SM y San Lorenzo
+## 2026-10-09 (la mas reciente) - Columna "Creado" (creado / modificado) en Egresos de caja, Movimientos y Stock
+
+- **Egresos de caja, Movimientos y Stock (index)**: columna nueva **Creado** antes de **Acciones**, con el formato de Elaborados: fecha y hora, debajo el usuario creador y, si el registro se modifico, la etiqueta **Modificado** con fecha/hora y usuario de la modificacion. La tabla de Egresos de caja es la misma de **Mis actividades** (POS) y **Actividades**, por eso la columna tambien aparece ahi.
+- Celda compartida `Views/Shared/_CeldaCreadoModificado.cshtml` (+ `Models/CeldaCreadoModificadoVm.cs`, estilos en `wwwroot/css/site.css`). Detalle y decisiones en `docs/DECISIONS.md` (2026-10-09). Compila (0 errores); **PENDIENTE**: verificarlo en el navegador con sesion. No hay migraciones ni cambios de consultas.
+
+## 2026-10-09 - Un codigo sin agregar a la tabla bloquea el guardado
+
+- **Stock, Movimientos, Elaborados > Carga y Elaborados > Formulas**: si queda un codigo escrito en el buscador de productos/ingredientes que no se agrego a la tabla, no se deja guardar (aviso "Validacion", beep y foco en Codigo); hay que agregarlo (Enter / +) o borrarlo. Igual que Compras, que ya lo hacia. La Cantidad no cuenta (la completa la balanza). Los atajos de teclado no cambian.
+- Detalle y decisiones en `docs/DECISIONS.md` (2026-10-09). Helper nuevo `WebCore/wwwroot/Scripts/app/producto-pendiente-guard.js`. POS y Elaborado de carga rapida no se tocan (ver DECISIONS). No hay migraciones ni cambios de backend.
+
+## 2026-10-08 - Deploy en VPS luden (Docker) y base `carnisys` reemplazada por la local (commit `3204e0f5`)
+
+- Imagen `carnisys-web:20261008-2023` y base reemplazada por la local (72 tablas identicas, rollback por rename `carnisys_old_20261008`, backup `carnisys-pre-reemplazo-20261008.dump`). Se conservaron las tablas de ARCA y `usuariopasskeys` de la VPS. Se perdio de la base viva el usuario 38 (Javi) y sus permisos; ventas sin perdida. Detalle y rollback en `docs/07-operacion-y-soporte/despliegue-y-publicacion.md`.
+
+## 2026-10-08 - 2.º deploy de WebCore en SM y San Lorenzo (commit `3204e0f5`)
+
+- Publicado lo commiteado desde `c1d5d85c` (conteo de billetes y comprobantes, cajas cerradas / "Mi cierre" -- solo Postgres, modal-stack, inputs sin rueda, ajustes de menu y login). Sin migraciones SQL Server. Tag local `pre-deploy-sm-sl-20261008b`, backups `...20261008b` en ambos. Verificado por HTTPS, config y `AFIP\` intactas, 0 errores en el Event Log. Detalle y rollback en `docs/07-operacion-y-soporte/despliegue-y-publicacion.md`.
+
+## 2026-10-08 - Deploy de WebCore en SM y San Lorenzo
 
 - **Deploy a SM y San Lorenzo (2026-10-08, commit `c1d5d85c`, tag `pre-deploy-sm-sl-20261008`)**: scripts SQL Server `20261004b`, `20261005`, `20261002`, `20261002b` aplicados con backup previo en ambos, y WebCore publicado (solo lo commiteado; el conteo de billetes, cajas cerradas y "Mi cierre" siguen sin desplegar). Verificado: sitios 200, login nuevo por CUIT presente, config y `AFIP` intactas, 0 errores en el Event Log. Detalle y rollback en `docs/07-operacion-y-soporte/despliegue-y-publicacion.md`. **PENDIENTE (usuario)**: login real en ambos.
 

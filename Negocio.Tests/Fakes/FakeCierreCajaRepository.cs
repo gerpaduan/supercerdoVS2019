@@ -12,11 +12,15 @@ namespace NegocioTests.Fakes
     {
         public bool AddOrEditEgresoCajaFueLlamado { get; private set; }
         public EgresoCaja UltimoEgresoCajaRecibido { get; private set; }
+        // TODAS las llamadas a addOrEditEgresoCaja, en orden (UltimoEgresoCajaRecibido solo guarda la ultima): una edicion
+        // de pago escribe la reversa y el egreso nuevo en la misma operacion.
+        public List<EgresoCaja> EgresosRecibidos { get; } = new List<EgresoCaja>();
 
         public EgresoCaja addOrEditEgresoCaja(EgresoCaja oEgresoCaja, Contratos.IUnitOfWork unitOfWork = null)
         {
             AddOrEditEgresoCajaFueLlamado = true;
             UltimoEgresoCajaRecibido = oEgresoCaja;
+            EgresosRecibidos.Add(oEgresoCaja);
             return oEgresoCaja;
         }
 

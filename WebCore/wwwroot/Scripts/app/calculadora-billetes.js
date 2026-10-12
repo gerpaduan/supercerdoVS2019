@@ -796,10 +796,27 @@
         return !!(window.Swal && typeof window.Swal.isVisible === 'function' && window.Swal.isVisible());
     }
 
+    // Modal visible que realmente esta arriba: el de mayor z-index (modal-stack.js eleva el que se abre sobre otro).
+    // No sirve el ultimo del DOM: el egreso abierto desde las actividades de una caja (CajasAbiertas) queda ANTES en el
+    // DOM que el modal de actividades, que sigue abierto detras, y Alt+B buscaba el boton en el modal equivocado.
+    // En empate de z-index gana el ultimo del DOM (comportamiento anterior).
+    function modalVisibleDeArriba() {
+        var tope = null;
+        var zTope = -1;
+        $('.modal.show:visible').each(function () {
+            var z = parseInt(window.getComputedStyle(this).zIndex, 10) || 0;
+            if (z >= zTope) {
+                tope = this;
+                zTope = z;
+            }
+        });
+        return tope ? $(tope) : $();
+    }
+
     // Alt+B: abre la calculadora desde la pantalla actual. Prioridad: boton de calculadora visible del modal de
     // arriba (o de la pagina); si no hay ninguno y el POS no tiene modales abiertos, el mismo F3 del POS.
     function abrirCalculadoraPorAtajo() {
-        var $tope = $('.modal.show:visible').last();
+        var $tope = modalVisibleDeArriba();
         var $ambito = $tope.length ? $tope : $(document);
         var $boton = $ambito.find('.js-calculadora-billetes-launch:visible:not(:disabled)').first();
 

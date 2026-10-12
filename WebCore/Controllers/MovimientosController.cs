@@ -653,7 +653,12 @@ namespace WebCore.Controllers
                     TotalUnidad = totalUnidad,
                     TotalKilos = totalKilos,
                     Observaciones = observaciones,
-                    TieneObservaciones = !string.IsNullOrWhiteSpace(observaciones)
+                    TieneObservaciones = !string.IsNullOrWhiteSpace(observaciones),
+                    // obtenerMovimientos (CortePg) devuelve creado / "creado por" / actualizado / "actualizado por".
+                    Creado = ToDateTimeTexto(row, "creado", "Creado"),
+                    CreadoPor = ToString(row, "creado por", "Creado Por", "creadoPor"),
+                    Actualizado = ToDateTimeTexto(row, "actualizado", "Actualizado"),
+                    ActualizadoPor = ToString(row, "actualizado por", "Actualizado Por", "actualizadoPor")
                 });
             }
 
@@ -891,6 +896,13 @@ namespace WebCore.Controllers
             }
 
             return DateTime.MinValue;
+        }
+
+        // Fecha y hora con segundos (formato de la columna Creado de los listados); "" si no hay dato o no parsea.
+        private string ToDateTimeTexto(DataRow row, params string[] names)
+        {
+            DateTime valor = ToDateTime(row, names);
+            return valor == DateTime.MinValue ? "" : valor.ToString("dd/MM/yyyy HH:mm:ss");
         }
 
         private string ToString(DataRow row, params string[] names)

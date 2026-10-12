@@ -784,7 +784,18 @@
             // Mismo criterio que form-hotkeys.js (getTopVisibleModal): si hay un modal visible, el
             // atajo solo actua si este formulario esta dentro de ese modal (o es el modal mismo) --
             // evita disparar el guardado/habilitar si este form quedo abierto detras de otro modal.
-            var $topModal = $(".modal.show:visible").last();
+            // El "modal de arriba" es el de mayor z-index, no el ultimo del DOM: el egreso abierto desde las actividades
+            // de una caja (CajasAbiertas) queda ANTES en el DOM que el modal de actividades, que sigue abierto detras, y
+            // con .last() el atajo se descartaba. En empate gana el ultimo del DOM.
+            var $topModal = $();
+            var zTope = -1;
+            $(".modal.show:visible").each(function () {
+                var z = parseInt(window.getComputedStyle(this).zIndex, 10) || 0;
+                if (z >= zTope) {
+                    $topModal = $(this);
+                    zTope = z;
+                }
+            });
             if ($topModal.length && !$.contains($topModal[0], form) && $topModal[0] !== form) return;
 
             evt.preventDefault();

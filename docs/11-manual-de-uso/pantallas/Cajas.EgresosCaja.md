@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-10-07
+revisada: 2026-10-09
 ---
 
 ## Para qué sirve
@@ -15,6 +15,10 @@ Registrar la **salida de dinero de la caja** (gastos, retiros, etc.) y consultar
 1. Tocá para crear un egreso nuevo (o **Modificar** en uno existente: se abre en solo lectura).
 2. Completá **Sucursal, Fecha, Tipo, Descripción y Monto**. **Detalle** es opcional (se activa con el interruptor).
 3. Guardá con **Guardar egreso** (Alt+Enter). Al guardar se abre una ventana para el comprobante (ver abajo).
+
+## Columna Creado
+- Antes de **Acciones** (en el listado, en **Mis actividades** y en **Actividades**) hay una columna **Creado**: fecha y hora en que se cargó el egreso y, debajo en gris, quién lo cargó.
+- Si el egreso se **modificó**, aparece la etiqueta amarilla **Modificado** con la fecha y hora de la modificación y debajo el usuario que lo modificó. No se marca en los movimientos que el sistema actualiza solo (Pago | Cobro, Cta Cte, Pago electrónico) ni en las anulaciones.
 
 ## Mis actividades y Actividades (POS y Cerrar caja)
 - La tabla **no muestra la columna Detalle**: si el registro tiene detalle (o conteo de billetes) aparece la etiqueta **Con detalle** bajo la descripción y el texto se ve **desplegando la fila** (flecha o doble clic). El listado completo de Egresos de caja sí conserva la columna.

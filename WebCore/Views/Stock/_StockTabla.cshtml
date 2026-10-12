@@ -6,7 +6,7 @@
 @{
     var dt = Model != null ? Model.Compras : null;
     var detalles = Model != null ? Model.Detalles : new Dictionary<int, WebCore.Models.CompraIndexDetalleVm>();
-    int totalColumnas = 8;
+    int totalColumnas = 9; // incluye la columna Creado (antes de Acciones)
 }
 
 @functions {
@@ -23,6 +23,13 @@
             return "";
 
         return Convert.ToString(row[columna]);
+    }
+
+    // Fecha y hora con segundos (dd/MM/yyyy HH:mm:ss) para la columna Creado; "" si no hay dato.
+    public static string LeerFechaHora(DataRow row, string columna)
+    {
+        DateTime fecha;
+        return DateTime.TryParse(LeerTexto(row, columna), out fecha) ? fecha.ToString("dd/MM/yyyy HH:mm:ss") : "";
     }
 
     public static int? LeerEnteroNullable(DataRow row, string columna)
@@ -53,6 +60,7 @@
                 <th class="text-right">Cantidad</th>
                 <th class="text-center" style="width: 70px;">Obs.</th>
                 <th>Ajuste</th>
+                <th style="width: 170px;">Creado</th>
                 <th style="width: 220px;">Acciones</th>
             </tr>
         </thead>
@@ -179,6 +187,17 @@
                             {
                                 <span class="text-muted">-</span>
                             }
+                        </td>
+                        <td>
+                            @* Creado: fecha/hora + usuario; si se modifico, etiqueta "Modificado" con fecha y usuario.
+                               obtenerCompras (CompraPg) devuelve creado / creadopor / actualizado / actualizadopor. *@
+                            @await Html.PartialAsync("~/Views/Shared/_CeldaCreadoModificado.cshtml", new WebCore.Models.CeldaCreadoModificadoVm
+                            {
+                                Creado = LeerFechaHora(row, "creado"),
+                                CreadoPor = LeerTexto(row, "creadopor"),
+                                Actualizado = LeerFechaHora(row, "actualizado"),
+                                ActualizadoPor = LeerTexto(row, "actualizadopor")
+                            })
                         </td>
                         <td class="text-center text-nowrap">
                             <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Stock", new { id = idCompra })" title="Ver stock">

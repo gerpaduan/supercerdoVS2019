@@ -962,6 +962,9 @@
                         return;
                     }
 
+                    // Embebido en el POS sin desdePos (fila de la Cuenta Corriente): no navegar de pagina completa.
+                    if (volverAlPosSiEmbebido()) return;
+
                     window.location.href = resp.redirectUrl;
                 }
 
@@ -1005,6 +1008,28 @@
 
             enviarPago(params);
         });
+
+        // Embebido en el POS (se abrio desde la fila de la Cuenta Corriente, dentro de #modalPagoPOS, sin desdePos):
+        // navegar de pagina completa (guardar / eliminar) disparaba el cartel "¿Desea abandonar el sitio?" de
+        // pos-cart.js (hay un modal abierto) y, al aceptar, sacaba al usuario del POS. En su lugar se cierra el modal del
+        // pago y se recarga la Cuenta Corriente dentro de #modalFinanzasPOS, igual que el guardado con desdePos.
+        // Usa la persona ORIGINAL: es la Cuenta Corriente que estaba abierta (el pago pudo reasignarse a otra).
+        // Devuelve true si resolvio la salida; false si no corresponde (pantalla normal) y hay que navegar como siempre.
+        function volverAlPosSiEmbebido() {
+            if ($('#addOrEditPagoContainer').closest('#modalPagoPOS').length === 0) return false;
+
+            if (window.POSFinanzas
+                && typeof window.POSFinanzas.cerrarModalPago === 'function'
+                && typeof window.POSFinanzas.abrirCtaCtePersona === 'function') {
+                window.POSFinanzas.cerrarModalPago();
+                window.POSFinanzas.abrirCtaCtePersona(idPersonaOriginal);
+                return true;
+            }
+
+            // Sin POSFinanzas pero con un POS detras: se apaga su aviso de salida, la navegacion es intencional.
+            if (typeof window.desactivarAvisoSalidaPOS === 'function') window.desactivarAvisoSalidaPOS();
+            return false;
+        }
 
         // ===== Solo lectura / Modificar / Cancelar / cambio de persona / Eliminar (2026-09-24) =====
 
@@ -1275,6 +1300,11 @@
                             return;
                         }
                         Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1400, showConfirmButton: false }).then(function () {
+                            // Embebido en el POS (se abrio desde la fila de la Cuenta Corriente, dentro de #modalPagoPOS):
+                            // navegar de pagina completa disparaba el cartel "¿Desea abandonar el sitio?" de pos-cart.js
+                            // (hay un modal abierto) y, al aceptar, sacaba al usuario del POS. Se cierra el modal del pago
+                            // y se recarga la Cuenta Corriente dentro de #modalFinanzasPOS, igual que al guardar (cerrarModalPago).
+                            if (volverAlPosSiEmbebido()) return;
                             window.location.href = $('#hddReturnUrl').val() || resp.redirectUrl;
                         });
                     }).fail(function (xhr) {

@@ -184,7 +184,14 @@ namespace NegocioTests
         {
             var (ctaCte, _, cierreRepo) = CrearSut();
             ctaCte.addOrEditPago(CrearPagoDeHoy(71, PersonaAna, 100, aProveedor: false), null, null);
-            cierreRepo.EgresoCajaExistente = new EgresoCaja { Id = 9, Monto = -100, Descripcion = "Cobro a Ana - ID:71 | Efectivo $100,00" };
+            // El egreso lleva la misma fecha y sucursal que el pago (asi lo crea el POS): si no cambia nada de la caja
+            // (monto/fecha/sucursal), la edicion actualiza ese mismo egreso en vez de reversarlo y crear otro.
+            string importeTexto = (100f).ToString("N2");
+            cierreRepo.EgresoCajaExistente = new EgresoCaja
+            {
+                Id = 9, Monto = -100, Descripcion = "Cobro a Ana - ID:71 | Efectivo $" + importeTexto,
+                Fecha = DateTime.Today.AddHours(10), Sucursal = SucursalTest, CreadoPor = UsuarioTest.Id
+            };
 
             ctaCte.addOrEditPago(CrearPagoDeHoy(71, PersonaBeto, 100, aProveedor: false), null,
                 CrearPagoDeHoy(71, PersonaAna, 100, aProveedor: false));
@@ -192,7 +199,7 @@ namespace NegocioTests
             var egreso = cierreRepo.UltimoEgresoCajaRecibido;
             Assert.NotNull(egreso);
             Assert.Equal(9, egreso.Id); // se edita el mismo egreso, no se crea otro
-            Assert.Equal("Cobro a Beto - ID:71 | Efectivo $100,00", egreso.Descripcion);
+            Assert.Equal("Cobro a Beto - ID:71 | Efectivo $" + importeTexto, egreso.Descripcion);
             Assert.Equal(-100, egreso.Monto);
         }
 

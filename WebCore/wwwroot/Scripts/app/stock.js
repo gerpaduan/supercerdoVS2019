@@ -2341,6 +2341,18 @@
         // $form.trigger('submit')) no vuelve a disparar este mismo handler, asi que no hace
         // falta ningun guard contra loop infinito.
         $form.on('submit.stock', function (e) {
+            // Un codigo escrito en el buscador que no se agrego a la tabla se perderia al guardar:
+            // se corta TODO el submit (stopImmediatePropagation evita que el handler siguiente
+            // arme los hidden inputs) y se obliga a agregarlo o borrarlo.
+            if (window.ProductoPendienteGuard && window.ProductoPendienteGuard.bloqueaGuardado({
+                codigoSelector: '#txtCodigoProducto',
+                destino: 'el movimiento de stock'
+            })) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+            }
+
             if (!window.SeleccionUsuarioProduccion || !window.EsUsuarioProduccion) return;
 
             e.preventDefault();

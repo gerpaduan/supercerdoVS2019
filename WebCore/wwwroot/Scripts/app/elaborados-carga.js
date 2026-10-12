@@ -1360,6 +1360,15 @@
             e.preventDefault();
             if (state.guardando) return;
 
+            // Codigo de ingrediente escrito en el buscador sin agregar a la tabla: no se guarda
+            // hasta agregarlo o borrarlo.
+            if (window.ProductoPendienteGuard && window.ProductoPendienteGuard.bloqueaGuardado({
+                codigoSelector: '#txtCodigoIngrediente',
+                destino: 'el elaborado'
+            })) {
+                return;
+            }
+
             clearWarning();
             var error = validarFormulario();
             if (error) {

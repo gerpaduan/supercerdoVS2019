@@ -35,6 +35,12 @@ namespace WebCore.Models
         public decimal TotalKilos { get; set; }
         public string Observaciones { get; set; }
         public bool TieneObservaciones { get; set; }
+
+        // Columna "Creado" del listado: textos ya formateados (dd/MM/yyyy HH:mm:ss), vacios si no hay dato.
+        public string Creado { get; set; } = "";
+        public string CreadoPor { get; set; } = "";
+        public string Actualizado { get; set; } = "";
+        public string ActualizadoPor { get; set; } = "";
     }
 
     public class MovimientoDetalleVm

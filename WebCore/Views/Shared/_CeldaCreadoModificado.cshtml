@@ -1,0 +1,20 @@
+@model WebCore.Models.CeldaCreadoModificadoVm
+@* Celda "Creado" compartida por los listados: fecha y hora de creacion y, debajo (gris, chico), el usuario.
+   Si el registro se modifico, etiqueta "Modificado" + fecha/hora y usuario de la ultima modificacion.
+   Mismo formato que la columna Creado de Elaborados (_TablaElaborados.cshtml). Estilos en wwwroot/css/site.css. *@
+<div class="font-weight-bold celda-creado-fecha">@(!string.IsNullOrWhiteSpace(Model.Creado) ? Model.Creado : "-")</div>
+@if (!string.IsNullOrWhiteSpace(Model.CreadoPor))
+{
+    <div class="celda-creado-usuario">@Model.CreadoPor</div>
+}
+@if (Model.MostrarModificado && !string.IsNullOrWhiteSpace(Model.Actualizado))
+{
+    <div class="mt-1">
+        <span class="badge badge-warning">Modificado</span>
+        <span class="font-weight-bold celda-creado-fecha">@Model.Actualizado</span>
+    </div>
+    if (!string.IsNullOrWhiteSpace(Model.ActualizadoPor))
+    {
+        <div class="celda-creado-usuario">@Model.ActualizadoPor</div>
+    }
+}

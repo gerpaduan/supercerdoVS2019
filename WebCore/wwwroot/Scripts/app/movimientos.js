@@ -1237,6 +1237,13 @@
 
         $('#formMovimiento').on('submit', function (e) {
             e.preventDefault();
+            // Codigo escrito en el buscador sin agregar a la tabla: no se guarda hasta agregarlo o borrarlo.
+            if (window.ProductoPendienteGuard && window.ProductoPendienteGuard.bloqueaGuardado({
+                codigoSelector: '#txtCodigoProducto',
+                destino: 'el movimiento'
+            })) {
+                return;
+            }
             renderLines();
             clearWarning();
 

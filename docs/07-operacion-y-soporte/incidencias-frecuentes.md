@@ -13,6 +13,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-10-12 - Al modificar un pago/cobro desde la Cuenta Corriente el egreso de caja no se actualiza
+- **Sintoma**: se cambia el importe (o la forma de pago) de un pago/cobro desde Cta. Cte. en el POS; la cuenta corriente queda bien pero en la caja del vendedor sigue el egreso original: sin anulación ni egreso con el valor nuevo, y la caja no cierra.
+- **Causa**: el link de edición de `CtaCtePersona.cshtml` no manda `desdePos=true`, por lo que no había caja POS y `CargarEgresoCajaPorPago` salía sin tocar nada; además la reversa solo se disparaba si cambiaba Tipo/Importe del movimiento de cta cte.
+- **Verificaciones**: `SELECT id, fechahora, monto, descripcion FROM egresoscaja WHERE tabla='Pagos' AND idtabla=<id> ORDER BY id;` debe mostrar el original, `ANULACION: ...` (monto opuesto) y el egreso nuevo.
+- **Resolucion**: ver `docs/DECISIONS.md` (2026-10-12): el egreso se reversa y regenera según si el pago ya tiene egreso, no según la pantalla. Pagos editados antes del fix pueden tener egresos desbalanceados (PENDIENTE relevarlos).
+
 ## 2026-10-01 - POS en blanco: nunca aparece el modal de apertura de caja
 **Sintoma**: con un usuario sin caja abierta (ej. agustina), `/Ventas/POS` muestra solo la barra superior y la pagina vacia; sin errores en consola ni en el servidor.
 **Causa**: `Views/Cajas/_AbrirCajaModal.cshtml` terminaba su bloque `<style>` con `</div>` en vez de `</style>` (commit `129a5faf`, auditoria de modo oscuro). El navegador trataba el resto del HTML como CSS: ningun `<script>` (jQuery incluido) llegaba a existir, asi que el modal no se abria.

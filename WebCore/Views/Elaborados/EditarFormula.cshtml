@@ -328,6 +328,7 @@
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>
         // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en el valor de la formula.
@@ -1036,7 +1037,17 @@
                 $pasosContainer.find('.formula-paso-row').last().find('.formula-paso-texto').focus();
             });
 
-            $form.on('submit', function () {
+            $form.on('submit', function (e) {
+                // Codigo de ingrediente escrito en el buscador sin agregar a la tabla: no se guarda
+                // hasta agregarlo o borrarlo.
+                if (window.ProductoPendienteGuard && window.ProductoPendienteGuard.bloqueaGuardado({
+                    codigoSelector: '#txtCodigoIngredienteFormula',
+                    destino: 'la fórmula'
+                })) {
+                    e.preventDefault();
+                    return;
+                }
+
                 $recetaHidden.val(construirRecetaFinal());
             });
 

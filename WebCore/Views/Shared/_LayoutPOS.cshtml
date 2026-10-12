@@ -66,6 +66,9 @@
         html, body {
             height: 100%;
             margin: 0;
+            /* Anula el "deslizar hacia abajo para recargar" (pull-to-refresh) y el rebote en celulares:
+               recargaba el POS sin querer a mitad de una venta (docs/DECISIONS.md, 2026-10-12). */
+            overscroll-behavior-y: none;
         }
 
         html.dark-mode, html.dark-mode body {
@@ -375,6 +378,8 @@
     <script src="~/Scripts/app/swal-single-confirm.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/caja-cerrada-confirm.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-guard.js" asp-append-version="true"></script>
+    @* Atras del dispositivo ignorado en el POS + aviso de usar "Salir" (docs/DECISIONS.md, 2026-10-12). *@
+    <script src="~/Scripts/app/pos-back-guard.js" asp-append-version="true"></script>
 
     @* scanner.js/ZXing/modal-productos.js -- port de Web/Views/Shared/_LayoutPOS.cshtml:470-473
        (2026-09-09, ver docs/DECISIONS.md "Batch D: scanner + buscador de productos"). Este layout

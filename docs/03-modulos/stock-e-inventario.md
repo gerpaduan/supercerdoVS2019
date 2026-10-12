@@ -23,6 +23,14 @@ Con `BorradorGenerico:Habilitado` (Postgres: prendido por defecto; SQL Server: o
 - En ambos, cualquier operador de la sucursal ve los borradores sin cerrar del módulo y puede recuperar/descartar los propios; uno ajeno exige autorización de supervisor.
 - Un borrador **propio** que figura "En uso" (corte de luz/cuelgue, todavía dentro de `BorradorGenerico:MinutosSinLatidoInterrumpida`) se puede cargar igual confirmando "Cargar igual" (desde 2026-10-04; rota el `clientId`, ver `docs/DECISIONS.md` 2026-10-04). Descartar sigue esperando el umbral.
 
+## Columna "Creado" en los index (2026-10-09)
+
+Los listados `Stock/Index` (`_StockTabla.cshtml`) y `Movimientos/Index` tienen una columna **Creado** antes de **Acciones**: fecha y hora de creación, debajo el usuario creador y, si el registro se modificó (`actualizado` con valor), la etiqueta **Modificado** con su fecha/hora y usuario. Celda compartida `Views/Shared/_CeldaCreadoModificado.cshtml`; datos de `CompraPg.obtenerCompras` y `CortePg.obtenerMovimientos` (Movimientos los vuelca en `MovimientoResumenVm` desde `ConstruirResumenes`). En Stock, `actualizado` también se toca al vincular un pesaje con su ajuste u observaciones (`actualizarIdPesajeAjustado`, `actualizarObservacionesCompra`). Ver `docs/DECISIONS.md` (2026-10-09).
+
+## Código sin agregar bloquea el guardado (2026-10-09)
+
+En `Stock/Editar` y `Movimientos/Editar` no se puede guardar mientras el campo **Código** del buscador tenga un valor que no se agregó a la tabla (se olvidó Enter / "+"): aviso "Validacion", beep y foco en Código; hay que agregarlo o borrarlo. La Cantidad no cuenta (la balanza la completa sola). Implementado en `WebCore/wwwroot/Scripts/app/producto-pendiente-guard.js`, llamado desde el `submit` de `stock.js` y `movimientos.js`. Los atajos de teclado no cambian. Ver `docs/DECISIONS.md` (2026-10-09).
+
 ## Cierre de Stock: productos "no contado"
 
 En `Stock/Editar`, el modal "Productos no cargados" completa en bloque los productos con `Corte.EnCierreStock=true` que el operador nunca escaneó/tipeó durante el conteo (con el stock actual, o en 0). Esas líneas quedan marcadas `NoContado=true` (columna `noContado`/`nocontado` en `dbo.CortePorCompra`/`corteporcompra`, ver bitácora 2026-09-28) y se muestran con un badge "No contado" en la grilla, tanto al cargar como al reabrir el registro guardado. Las líneas cargadas a mano (escaneo/código+Enter, o vinculación de pesajes) siempre quedan en `false`.

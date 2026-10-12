@@ -66,9 +66,9 @@ namespace Negocio
 
         // unitOfWork opcional: ver Contratos/IUnitOfWork.cs. Solo se propaga a los llamados a
         // oCtaCteD -- CargarEgresoCajaPorPago (mas abajo) sigue sin compartir la transaccion,
-        // pero para el camino de Venta es un no-op real (oCierreCajaE siempre llega null desde
-        // crearMovCtaCteVenta), asi que no bloquea el fix de Venta. Pendiente si algun dia se
-        // necesita atomicidad completa tambien para el flujo de Pagos/Cheques.
+        // pero para el camino de Venta ni se invoca (solo corre para la tabla Pagos), asi que no
+        // bloquea el fix de Venta. Pendiente si algun dia se necesita atomicidad completa tambien
+        // para el flujo de Pagos/Cheques.
         public void crearMovCtaCte(Entidades.Persona oPersonaE, DateTime fecha,
             Entidades.MovCtaCte.tablas tabla, int idTabla, string nroDoc, string detalle, Entidades.MovCtaCte.tipoMov tipoMov, float importe,
             Entidades.Sucursal oSucursalE, DateTime? creado, Entidades.Usuario creadoPor, DateTime? actualizado,
@@ -109,7 +109,9 @@ namespace Negocio
                                 return;
                             break;
                         case Entidades.MovCtaCte.tablas.Pagos:
-                            CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoAnterior, true);
+                            // El egreso de caja del pago ya NO se reversa aca: depende de lo que cambia en la
+                            // CAJA (monto, fecha, sucursal), no de lo que cambia en la cta cte (tipo/importe).
+                            // Lo resuelve una sola vez, al final del metodo, CargarEgresoCajaPorPago.
                             break;
                         case Entidades.MovCtaCte.tablas.MovCtaCte:
                             break;
@@ -137,7 +139,6 @@ namespace Negocio
                     oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     //se registra el registro opuesto
                     oCtaCteD.addOrEditMovCtaCte(oMovCtaCte, unitOfWork);
-                    CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, false);
 
                     //se crea la nueva instancia para el nuevo registro
                     oMovCtaCte = new Entidades.MovCtaCte();
@@ -162,7 +163,11 @@ namespace Negocio
             oMovCtaCte.ActualizadoPor = actualizadoPor;
 
             oCtaCteD.addOrEditMovCtaCte(oMovCtaCte, unitOfWork);
-            CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, false);
+
+            // Egreso de caja del pago/cobro: solo aplica a la tabla Pagos (Ventas/Compras/Liquidaciones
+            // llegan con oPagoE null y no mueven caja por esta via).
+            if (tabla == Entidades.MovCtaCte.tablas.Pagos && oPagoE != null)
+                CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, oPagoAnterior);
         }
 
         #region Cheques
@@ -565,82 +570,150 @@ namespace Negocio
                 oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE, oPagoAnterior, unitOfWork);
         }
 
-        private void CargarEgresoCajaPorPago(Entidades.MovCtaCte oMovCtaCte, Entidades.CierreCaja oCierreCajaE, 
-            Entidades.Pago oPagoE, bool esRegistroAnulacion)//Pago oPagoE, Entidades.CierreCaja oCierreCajaE)
+        // Prefijos con los que se marcan los egresos que REVERSAN a otro (anulacion en edicion / eliminacion de un pago).
+        // "ANULACION: " tiene que mantenerse exacto: la vista de egresos (_EgresosCajaTabla.cshtml) detecta la pareja
+        // original/anulacion por ese texto.
+        private const string PrefijoEgresoAnulacion = "ANULACION: ";
+        private const string PrefijoEgresoEliminado = "ELIMINADO: ";
+
+        // Mantiene el egreso de caja de un pago/cobro sincronizado con el pago guardado.
+        // - Alta desde POS (hay caja abierta y no habia egreso): inserta el egreso.
+        // - Edicion de un pago que YA tiene egreso (nacio en POS): lo decide el egreso, no la pantalla desde la que se
+        //   edita (antes solo se tocaba la caja si la edicion llegaba con desdePos=true y la cta cte abre los pagos sin
+        //   ese flag: el egreso quedaba con el monto viejo). Si cambia lo que afecta la caja (monto, fecha, sucursal) se
+        //   inserta el egreso OPUESTO ("ANULACION: ...") y luego uno nuevo con el valor nuevo; ambos con el dueño y la fecha
+        //   del egreso original, para que caigan en la misma caja. Si solo cambia texto (observaciones, conteo) se actualiza
+        //   en el lugar.
+        // - Edicion de un pago sin egreso (cargado en Finanzas) y sin caja POS: no mueve caja.
+        // Efecto secundario: escribe en egresoscaja fuera del IUnitOfWork (limitacion preexistente).
+        private void CargarEgresoCajaPorPago(Entidades.MovCtaCte oMovCtaCte, Entidades.CierreCaja oCierreCajaE,
+            Entidades.Pago oPagoE, Entidades.Pago oPagoAnterior)
         {
-            ///Si se llama desde POS, generar el egreso de caja de pago/cobro
-            ///
-            if ((oCierreCajaE == null || oCierreCajaE.Id == 0))
+            bool hayCajaPos = oCierreCajaE != null && oCierreCajaE.Id != 0;
+            bool esEdicion = oPagoAnterior != null && oPagoAnterior.Id > 0;
+
+            // Pago nuevo sin caja POS (o sin forma de saber si tenia egreso): nada que hacer ni que consultar.
+            if (!hayCajaPos && !esEdicion)
                 return;
 
-            ///si es ANULACION recupera se carga el pago del importe en efectivo correspondiente al pago de esta caja abierta
-            ///
             // ObtenerCierreCajaN (y no new CierreCaja(_empresa), que siempre es el repositorio SQL Server): con
             // DataEngine=Postgres el egreso de caja de un pago hecho desde POS se buscaba/guardaba contra
             // SQL Server y el guardado fallaba (2026-09-24). Sin factory inyectada (tests) cae al de antes.
             Negocio.CierreCaja oCierreN = ObtenerCierreCajaN();
-            ///consulto si existe un egreso de caja para la tabla y id
-            ///si no existe, creo nuevo objeto
-            ///
-            Entidades.EgresoCaja oEgresoCajaE = oCierreN.findEgresoCajaByTablaYId(Entidades.EgresoCaja.tablas.Pagos.ToString(), oPagoE.Id);
-            ///(Si es anulación ó no existe un registro anterior ó existe registro anterior y son 
-            if (oEgresoCajaE == null || oEgresoCajaE.Id == 0)
-                oEgresoCajaE = new Entidades.EgresoCaja();
 
-            //si es anulacion al registro recuperado se lo setea con ID = 0 y se genera el opuesto
-            if (esRegistroAnulacion)
+            // Ultimo egreso del pago (ORDER BY id DESC): es el vigente, o la reversa si quedo una de datos viejos.
+            Entidades.EgresoCaja egresoActual = oCierreN.findEgresoCajaByTablaYId(Entidades.EgresoCaja.tablas.Pagos.ToString(), oPagoE.Id);
+            bool hayEgresoPrevio = egresoActual != null && egresoActual.Id > 0;
+
+            // Pago de Finanzas (sin egreso) editado fuera de POS: no genera egreso (decision previa, ver ConsultasCajaDelPago).
+            if (!hayEgresoPrevio && !hayCajaPos)
+                return;
+
+            // ---- Monto y textos que el egreso debe tener segun el pago guardado ----
+            string descripcionEgreso = (oPagoE.AProveedor ? "Pago a " : "Cobro a ");
+            string detalleEgreso = string.Empty;
+            float montoEgreso;
+
+            switch (oPagoE.FormaPago.ToUpper())
             {
-                oEgresoCajaE.Id = 0;
-                oEgresoCajaE.Descripcion = "ANULACION: " + oEgresoCajaE.Descripcion;
-                oEgresoCajaE.Monto = oEgresoCajaE.Monto * -1;
+                case "EFECTIVO":
+                    montoEgreso = oPagoE.AProveedor ? oPagoE.Importe : (-1 * oPagoE.Importe);//se multiplica *-1 para que sume a la caja
+                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oPagoE.Importe.ToString("N2");
+                    break;
+
+                case "EFTVOCHEQUE":
+                    montoEgreso = oPagoE.AProveedor ? oPagoE.Efectivo : (-1 * oPagoE.Efectivo);//se multiplica *-1 para que sume a la caja
+                    detalleEgreso = " | Cheques $" + (oPagoE.Importe - oPagoE.Efectivo).ToString("N2") + " | EF $" + oPagoE.Efectivo;
+                    break;
+
+                default:
+                    montoEgreso = 0;
+                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oMovCtaCte.Importe.ToString("N2");
+                    break;
             }
-            else
-            {
-                string descripcionEgreso = (oPagoE.AProveedor ? "Pago a " : "Cobro a ");
-                string detalleEgreso = string.Empty;
-                float montoEgreso;
 
-                switch (oPagoE.FormaPago.ToUpper())
+            descripcionEgreso += oPagoE.Persona.razonSocial + " - ID:" + oPagoE.Id.ToString() + detalleEgreso;
+
+            // ---- Alta: no habia egreso, hay caja POS -> se inserta ----
+            if (!hayEgresoPrevio)
+            {
+                oCierreN.addOrEditEgresoCaja(ArmarEgresoDePago(oPagoE, descripcionEgreso, montoEgreso, oCierreCajaE.UsuarioInicio.Id));
+                return;
+            }
+
+            // ---- Edicion de un pago con egreso ----
+            // Un ultimo egreso que ya es una reversa (ANULACION/ELIMINADO) no es el vigente: no se reversa de nuevo ni se pisa.
+            bool ultimoEsReversa = !string.IsNullOrEmpty(egresoActual.Descripcion)
+                && (egresoActual.Descripcion.StartsWith(PrefijoEgresoAnulacion, StringComparison.Ordinal)
+                    || egresoActual.Descripcion.StartsWith(PrefijoEgresoEliminado, StringComparison.Ordinal));
+
+            int sucursalEgreso = egresoActual.Sucursal != null ? egresoActual.Sucursal.idSucursal : 0;
+            int sucursalPago = oPagoE.Sucursal != null ? oPagoE.Sucursal.idSucursal : 0;
+
+            bool cambiaLaCaja = ultimoEsReversa
+                || Math.Abs(egresoActual.Monto - montoEgreso) >= CambioCajaCerrada.ToleranciaImporte
+                || CambioCajaCerrada.CambioFecha(egresoActual.Fecha, oPagoE.Fecha)
+                || sucursalEgreso != sucursalPago;
+
+            // Dueño del egreso: el del original (cae en la misma caja que el original). Si el dato viene vacio, el operador de la caja actual.
+            int idDuenoEgreso = egresoActual.CreadoPor > 0 ? egresoActual.CreadoPor : (hayCajaPos ? oCierreCajaE.UsuarioInicio.Id : 0);
+            int idUsuarioActualiza = oPagoE.ActualizadoPor != null ? oPagoE.ActualizadoPor.Id : (hayCajaPos ? oCierreCajaE.UsuarioInicio.Id : 0);
+
+            if (!cambiaLaCaja)
+            {
+                // Solo cambia texto/conteo: se actualiza el mismo registro, sin tocar monto, fecha ni sucursal.
+                egresoActual.Descripcion = descripcionEgreso;
+                egresoActual.Detalle = oPagoE.Observaciones;
+                egresoActual.ConteoBilletes = oPagoE.ConteoBilletes;
+                egresoActual.ActualizadoPor = idUsuarioActualiza;
+                oCierreN.addOrEditEgresoCaja(egresoActual);
+                return;
+            }
+
+            // 1) Reversa del egreso vigente (solo si movia plata: reversar un 0 es ruido en la caja).
+            if (!ultimoEsReversa && Math.Abs(egresoActual.Monto) >= CambioCajaCerrada.ToleranciaImporte)
+            {
+                oCierreN.addOrEditEgresoCaja(new Entidades.EgresoCaja
                 {
-                    case "EFECTIVO":
-                        montoEgreso = oPagoE.AProveedor ? oPagoE.Importe : (-1 * oPagoE.Importe);//se multiplica *-1 para que sume a la caja
-                        detalleEgreso = " | " + oPagoE.FormaPago + " $" + oPagoE.Importe.ToString("N2");
-                        break;
-
-                    case "EFTVOCHEQUE":
-                        montoEgreso = oPagoE.AProveedor ? oPagoE.Efectivo : (-1 * oPagoE.Efectivo);//se multiplica *-1 para que sume a la caja
-                        detalleEgreso = " | Cheques $" + (oPagoE.Importe - oPagoE.Efectivo).ToString("N2") + " | EF $" + oPagoE.Efectivo;
-                        break;
-
-                    default:
-                        montoEgreso = 0;
-                        detalleEgreso = " | " + oPagoE.FormaPago + " $" + oMovCtaCte.Importe.ToString("N2");
-                        break;
-                }
-
-                descripcionEgreso += oPagoE.Persona.razonSocial + " - ID:" + oPagoE.Id.ToString() + detalleEgreso;
-
-                ///si el monto del pago es diferente al monto del Egreso de caja -> crear nuevo registro
-                ///
-                if (montoEgreso != oEgresoCajaE.Monto)
-                    oEgresoCajaE.Id = 0;
-
-                oEgresoCajaE.Fecha = oPagoE.Fecha;
-                oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoCobroEgresoCaja;
-                oEgresoCajaE.Descripcion = descripcionEgreso;
-                oEgresoCajaE.Monto = montoEgreso;
-                oEgresoCajaE.Detalle = oPagoE.Observaciones;
-                // El conteo de billetes del pago viaja a su propio campo del egreso (no al Detalle).
-                oEgresoCajaE.ConteoBilletes = oPagoE.ConteoBilletes;
-                oEgresoCajaE.Sucursal = oPagoE.Sucursal;
-                oEgresoCajaE.IdCompra = 0;
-                oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Pagos.ToString();
-                oEgresoCajaE.IdTabla = oPagoE.Id;
-                oEgresoCajaE.CreadoPor = oEgresoCajaE.Id > 0 ? oPagoE.CreadoPor.Id : oCierreCajaE.UsuarioInicio.Id;
-                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oCierreCajaE.UsuarioInicio.Id : 0;
+                    Id = 0,
+                    Fecha = egresoActual.Fecha,
+                    IdTipoEgresoCaja = egresoActual.IdTipoEgresoCaja,
+                    Descripcion = PrefijoEgresoAnulacion + egresoActual.Descripcion,
+                    Detalle = egresoActual.Detalle,
+                    ConteoBilletes = egresoActual.ConteoBilletes,
+                    Monto = egresoActual.Monto * -1,
+                    IdCompra = egresoActual.IdCompra,
+                    Sucursal = egresoActual.Sucursal,
+                    Tabla = Entidades.EgresoCaja.tablas.Pagos.ToString(),
+                    IdTabla = oPagoE.Id,
+                    CreadoPor = idDuenoEgreso
+                });
             }
-            
-            oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+
+            // 2) Egreso nuevo con el valor actual del pago.
+            oCierreN.addOrEditEgresoCaja(ArmarEgresoDePago(oPagoE, descripcionEgreso, montoEgreso, idDuenoEgreso));
+        }
+
+        // Egreso (Id=0, para insertar) de un pago/cobro: tipo "Pago/Cobro", vinculado por Tabla='Pagos' + IdTabla.
+        private static Entidades.EgresoCaja ArmarEgresoDePago(Entidades.Pago oPagoE, string descripcion, float monto, int idDueno)
+        {
+            return new Entidades.EgresoCaja
+            {
+                Id = 0,
+                Fecha = oPagoE.Fecha,
+                IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoCobroEgresoCaja,
+                Descripcion = descripcion,
+                Monto = monto,
+                Detalle = oPagoE.Observaciones,
+                // El conteo de billetes del pago viaja a su propio campo del egreso (no al Detalle).
+                ConteoBilletes = oPagoE.ConteoBilletes,
+                Sucursal = oPagoE.Sucursal,
+                IdCompra = 0,
+                Tabla = Entidades.EgresoCaja.tablas.Pagos.ToString(),
+                IdTabla = oPagoE.Id,
+                CreadoPor = idDueno,
+                ActualizadoPor = 0
+            };
         }
 
 

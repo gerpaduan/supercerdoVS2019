@@ -42,3 +42,16 @@ input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Celda "Creado" de los listados (Views/Shared/_CeldaCreadoModificado.cshtml): fecha un punto menos
+   que el resto de la tabla y usuario en gris chico, igual que la columna Creado de Elaborados. */
+.celda-creado-fecha {
+  font-size: calc(1em - 1pt);
+}
+
+.celda-creado-usuario {
+  font-size: .72rem;
+  color: #6c757d;
+  line-height: 1.1;
+  margin-top: .12rem;
+}

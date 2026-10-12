@@ -22,6 +22,10 @@ En ambas, cualquier operador de la sucursal ve los borradores sin cerrar del mó
 
 Un borrador **propio** que figura "En uso" (corte de luz/cuelgue, todavía dentro de `BorradorGenerico:MinutosSinLatidoInterrumpida`) se puede cargar igual confirmando "Cargar igual" (desde 2026-10-04; rota el `clientId`, ver `docs/DECISIONS.md` 2026-10-04). Descartar sigue esperando el umbral.
 
+## Código de ingrediente sin agregar bloquea el guardado (2026-10-09)
+
+En `Elaborados/Carga` y `Elaborados/EditarFormula` no se puede guardar mientras el campo **Código** del ingrediente tenga un valor que no se agregó a la tabla: aviso "Validacion", beep y foco en Código. Implementado con `WebCore/wwwroot/Scripts/app/producto-pendiente-guard.js` (llamado desde `elaborados-carga.js` y el JS inline de `EditarFormula.cshtml`). El código del elaborado (cabecera) no cuenta. El Ingreso rápido no aplica (no tiene buscador de ingredientes). Ver `docs/DECISIONS.md` (2026-10-09).
+
 ## Fórmula secreta (2026-10-04)
 
 Una fórmula se puede marcar como **secreta** (casilla en `Elaborados/EditarFormula`, columna `formulas.secreta`; requiere `Permisos.Elaborado.IngresoFormula`). Mientras la sesión no tenga una *elevación* vigente para ese producto elaborado, ninguna pantalla operativa muestra sus ingredientes, porcentajes ni receta. Detalle de diseño y alternativas: `docs/DECISIONS.md` "Fórmula secreta con re-login". Guía de uso: `docs/11-manual-de-uso/conceptos/formula-secreta.md`.

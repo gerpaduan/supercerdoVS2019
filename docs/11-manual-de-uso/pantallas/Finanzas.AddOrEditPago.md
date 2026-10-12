@@ -5,7 +5,7 @@ rol: usuario
 modulo: Finanzas
 orden: 1
 permiso: Sin permiso propio en el formulario; cambiar la persona o eliminar requiere permiso de edición de pagos
-revisada: 2026-10-07
+revisada: 2026-10-12
 ---
 ## Para qué sirve
 Registrar un **pago** (entregás dinero a una persona) o un **cobro** (recibís dinero de una persona) y dejar el movimiento en su cuenta corriente. Se abre desde la cuenta corriente de la persona (**Agregar Pago / Cobro**), desde el listado de Pagos o desde el POS.
@@ -39,6 +39,7 @@ El comprobante dice **Recibo de pago** o **Recibo de cobro** según la operació
 
 ## Reglas y efectos
 - El pago genera su asiento en la cuenta corriente y, desde el POS, el egreso de caja correspondiente. El conteo de billetes se copia también a ese egreso.
+- **Al modificar un pago o cobro que tiene egreso de caja** (el que se hizo desde el POS) y cambiar el importe, la forma de pago, la fecha o la sucursal, la caja registra un movimiento **ANULACION** (el egreso original con signo contrario) y un egreso nuevo con el valor actual, los dos en la caja original. Si solo cambiás observaciones o el conteo, se actualiza el mismo egreso. Vale tanto si lo abrís desde la cuenta corriente en el POS como desde Finanzas. Los pagos cargados desde Finanzas (sin egreso) no mueven caja.
 - Los pagos guardados **antes** de este cambio conservan el texto del conteo dentro de Observaciones; no se migra.
 - El ticket se imprime directo si el agente de impresión está instalado; si no, se abre el diálogo de impresión del navegador.
 - **Pago de una caja ya cerrada:** si el pago o cobro se hizo desde el POS y su egreso de caja está en una caja que **ya fue cerrada**, al modificarlo (importe, forma de pago, fecha, sucursal o persona) o **eliminarlo** aparece el aviso *"Esta caja ya fue cerrada"* con el detalle y hay que confirmar. Esa caja queda marcada con un aviso de que se modificaron datos (ver [Cajas abiertas](ayuda:pantalla/Cajas.CajasAbiertas)). Al eliminar, el egreso opuesto se registra con la fecha de hoy en la caja actual de quien elimina, no en la caja original. Los pagos cargados desde Finanzas (sin egreso de caja) no entran en ningún cierre y no avisan.

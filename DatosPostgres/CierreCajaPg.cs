@@ -855,7 +855,7 @@ namespace DatosPostgres
         public EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID)
         {
             const string sql = @"
-                SELECT id, fechahora, idtipoegresocaja, descripcion, detalle, monto, idcompra, idsucursal, creado, creadopor, actualizado, actualizadopor, tabla, idtabla
+                SELECT id, fechahora, idtipoegresocaja, descripcion, detalle, conteobilletes, monto, idcompra, idsucursal, creado, creadopor, actualizado, actualizadopor, tabla, idtabla
                 FROM egresoscaja WHERE tabla = @tabla AND idtabla = @idTabla ORDER BY id DESC LIMIT 1;";
 
             var lista = DbPg.Reader(_connectionString, _idEmpresa, sql, dr =>

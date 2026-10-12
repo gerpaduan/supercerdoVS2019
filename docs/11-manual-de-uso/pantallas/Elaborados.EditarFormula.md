@@ -6,7 +6,7 @@ modulo: Elaborados
 orden: 5
 alias: Elaborados.GuardarFormula
 permiso: Elaborado.IngresoFormula (editar)
-revisada: 2026-10-05
+revisada: 2026-10-09
 ---
 ## Para qué sirve
 Crear o modificar la **fórmula** de un elaborado: sus ingredientes, la proporción de cada uno y la receta. Se llega desde *Elaborados → Fórmulas*.
@@ -20,6 +20,9 @@ La casilla **Fórmula secreta** (junto a *Ingreso rápido*) marca la fórmula co
 
 ## Ingredientes con valor negativo
 Un ingrediente puede cargarse con porcentaje (o unidades) **negativo**, por ejemplo una línea de ajuste que resta del total. Al guardar, la fórmula **no se rechaza** por tener valores negativos. Solo se exige que cada línea tenga un ingrediente válido.
+
+## Código de ingrediente sin agregar
+Si escribiste un código de ingrediente y no lo agregaste a la tabla (botón +), **no se puede guardar la fórmula**: aparece el aviso *"El campo Código tiene un valor sin agregar..."*. Agregá el ingrediente o borrá el código y volvé a guardar.
 
 ## Resto de la pantalla
 PENDIENTE: documentar ingredientes, porcentaje/unidad, ajuste de fórmula, ingreso rápido, pasos de receta y costeo (no verificado contra el código en esta revisión).

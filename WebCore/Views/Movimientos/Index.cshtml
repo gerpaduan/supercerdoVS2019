@@ -100,6 +100,7 @@
                             <th class="text-right" style="width:120px;">Total unidad</th>
                             <th class="text-right" style="width:120px;">Total kilos</th>
                             <th class="text-center" style="width:70px;">Obs.</th>
+                            <th style="width:170px;">Creado</th>
                             <th style="width:150px;">Acciones</th>
                         </tr>
                     </thead>
@@ -107,7 +108,7 @@
                         @if (Model.Movimientos == null || Model.Movimientos.Count == 0)
                         {
                             <tr>
-                                <td colspan="@(Model.MostrarColumnasInternas ? 9 : 7)" class="text-center text-muted py-4">
+                                <td colspan="@(Model.MostrarColumnasInternas ? 10 : 8)" class="text-center text-muted py-4">
                                     No se encontraron movimientos para los filtros seleccionados.
                                 </td>
                             </tr>
@@ -132,6 +133,16 @@
                                         {
                                             <span class="badge badge-pill badge-info" title="@movimiento.Observaciones">1</span>
                                         }
+                                    </td>
+                                    <td>
+                                        @* Creado: fecha/hora + usuario; si se modifico, etiqueta "Modificado" con fecha y usuario. *@
+                                        @await Html.PartialAsync("~/Views/Shared/_CeldaCreadoModificado.cshtml", new WebCore.Models.CeldaCreadoModificadoVm
+                                        {
+                                            Creado = movimiento.Creado,
+                                            CreadoPor = movimiento.CreadoPor,
+                                            Actualizado = movimiento.Actualizado,
+                                            ActualizadoPor = movimiento.ActualizadoPor
+                                        })
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
@@ -160,7 +171,7 @@
                                     </td>
                                 </tr>
                                 <tr id="movDetalle_@movimiento.IdMovimiento" class="d-none bg-light" data-detalle-row="@movimiento.IdMovimiento" data-loaded="false">
-                                    <td colspan="@(Model.MostrarColumnasInternas ? 9 : 7)">
+                                    <td colspan="@(Model.MostrarColumnasInternas ? 10 : 8)">
                                         <div class="p-3 js-detalle-container text-muted">Cargando detalle...</div>
                                     </td>
                                 </tr>
