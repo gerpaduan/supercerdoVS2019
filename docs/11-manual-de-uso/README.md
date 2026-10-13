@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (27 de 87 pantallas)
+## Cobertura (31 de 89 pantallas)
 
 ## Manual del usuario
 
@@ -44,7 +44,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-10-04 |
 | pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-05 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-05 |
-| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-12 |
+| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-13 |
 
 ## Manual del administrador
 
@@ -54,27 +54,30 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Auditoría de accesos | Acceso y seguridad | `pantallas/AuditoriaLogin.Index.md` | 2026-10-03 |
 | pantallas | Dispositivos seguros | Acceso y seguridad | `pantallas/DispositivosSeguros.Index.md` | 2026-10-03 |
 | pantallas | Cajas abiertas y cierre de caja | Caja | `pantallas/Cajas.CajasAbiertas.md` | 2026-10-07 |
+| pantallas | Certificado ARCA | Facturación | `pantallas/CertificadoArca.Index.md` | 2026-10-12 |
+| pantallas | Titulares de facturación | Facturación | `pantallas/TitularesFiscales.Index.md` | 2026-10-12 |
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
+| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-10-13 |
 | pantallas | Nuevo / Modificar usuario | Usuarios | `pantallas/Usuarios.Editar.md` | 2026-10-03 |
 | pantallas | Permisos del usuario | Usuarios | `pantallas/Usuarios.Permisos.md` | 2026-10-03 |
 | pantallas | Usuarios | Usuarios | `pantallas/Usuarios.Index.md` | 2026-10-03 |
-| referencia | Mapa de configuraciones de la empresa | Referencia | `referencia/configuraciones.md` | 2026-10-04 |
+| referencia | Mapa de configuraciones de la empresa | Referencia | `referencia/configuraciones.md` | 2026-10-12 |
 
 ## Manual del super administrador
 
 | Tipo | Titulo | Modulo | Archivo | Revisada |
 |---|---|---|---|---|
+| conceptos | Titular compartido entre empresas (mismo CUIT en varias empresas) | Administración de la plataforma | `conceptos/titular-compartido-entre-empresas.md` | 2026-10-12 |
 | pantallas | Alta rápida de empresa | Administración de la plataforma | `pantallas/SystemAdministration.AltaRapidaEmpresa.md` | 2026-10-03 |
-| pantallas | Empresas (administración del sistema) | Administración de la plataforma | `pantallas/SystemAdministration.Empresas.md` | 2026-10-03 |
-| pantallas | Nueva / Modificar empresa | Administración de la plataforma | `pantallas/SystemAdministration.EditarEmpresa.md` | 2026-10-03 |
+| pantallas | Empresas (administración del sistema) | Administración de la plataforma | `pantallas/SystemAdministration.Empresas.md` | 2026-10-12 |
+| pantallas | Nueva / Modificar empresa | Administración de la plataforma | `pantallas/SystemAdministration.EditarEmpresa.md` | 2026-10-12 |
 | pantallas | Nuevo / Modificar usuario (administración del sistema) | Administración de la plataforma | `pantallas/SystemAdministration.EditarUsuario.md` | 2026-10-03 |
 | pantallas | Usuarios (administración del sistema) | Administración de la plataforma | `pantallas/SystemAdministration.Usuarios.md` | 2026-10-03 |
-| referencia | Mapa de configuraciones de la plataforma | Referencia | `referencia/configuraciones-plataforma.md` | 2026-10-03 |
+| referencia | Mapa de configuraciones de la plataforma | Referencia | `referencia/configuraciones-plataforma.md` | 2026-10-12 |
 
 ## Pantallas sin ayuda todavia
 
 - **Actividades**: Index
-- **CertificadoArca**: Index
 - **CodigosBarra**: Editar, Index
 - **Compras**: AutorizarModulo, Editar, Index, Lineas
 - **Elaborados**: IngresoRapido
@@ -91,7 +94,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **PuntosExpendio**: ExpendiosGenerados, POS, Sectores
 - **Reportes**: Index
 - **SeleccionUsuario**: Index
-- **Stock**: Editar, ExistenciaPorSucursales, Index, Lineas
+- **Stock**: Editar, Index, Lineas
 - **Sucursal**: Editar, Index
 - **SucursalesSpike**: Index
 - **SystemAdministration**: EditarSucursal, Sucursales

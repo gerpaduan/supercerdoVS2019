@@ -27,6 +27,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Verificaciones**: `SELECT idcorte, codigo FROM corte WHERE codigo BETWEEN 100000000000 AND 999999999999;` lista los productos cargados de 12 digitos. En la consola del navegador (POS): `esCodigoLeidoValido('<12 o 13 digitos>')` debe dar `true` si el digito de control es correcto.
 - **Resolucion**: ver `docs/DECISIONS.md` (2026-10-12): 12 digitos validos (UPC-A) y EAN-13 con 0 se tratan como el mismo producto. Si el codigo no se auto-agrega, revisar el digito de control (un codigo con control invalido se busca solo con Enter).
 
+## 2026-10-12 - Titulares de facturación: "Crear titular" no se habilita, o "Ya existe una empresa o un titular con ese CUIT"
+- **Sintoma**: en *Nuevo titular* el botón **Crear titular** queda gris aunque se buscó la persona; o (antes del 2026-10-12) al crear el titular de una empresa con el CUIT de otra: *"Ya existe una empresa o un titular con ese CUIT."*
+- **Causa**: (1) **Buscar** solo lista resultados: la persona se elige **tocando la fila** (recién ahí aparecen "Condición IVA cargada…" y *Validar en ARCA* y se habilita el botón). (2) Hasta el 2026-10-11 un CUIT solo podía estar en una empresa de toda la base (la carpeta del certificado es por CUIT).
+- **Verificaciones**: la fila elegida muestra la condición IVA; con un CUIT que ya es titular en otra empresa aparece el aviso amarillo y hay que tildar *"Confirmo que esta empresa podrá facturar con el certificado de ese CUIT"*. Si el botón sigue gris por esa causa, el casillero no está tildado.
+- **Resolucion**: ver `docs/DECISIONS.md` (2026-10-12) y el manual del superadmin `titular-compartido-entre-empresas`. Si el mensaje es *"Esta empresa ya tiene a ese CUIT como titular…"*, la empresa ya lo tiene (incluso cancelado): reponer la titularidad en lugar de crear otra.
+
 ## 2026-10-12 - Al modificar un pago/cobro desde la Cuenta Corriente el egreso de caja no se actualiza
 - **Sintoma**: se cambia el importe (o la forma de pago) de un pago/cobro desde Cta. Cte. en el POS; la cuenta corriente queda bien pero en la caja del vendedor sigue el egreso original: sin anulación ni egreso con el valor nuevo, y la caja no cierra.
 - **Causa**: el link de edición de `CtaCtePersona.cshtml` no manda `desdePos=true`, por lo que no había caja POS y `CargarEgresoCajaPorPago` salía sin tocar nada; además la reversa solo se disparaba si cambiaba Tipo/Importe del movimiento de cta cte.

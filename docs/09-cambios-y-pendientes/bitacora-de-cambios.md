@@ -54,6 +54,11 @@
 - **Migraciones nuevas (NO aplicadas a ninguna base)**: `20261009-Create_titulares_fiscales.sql`, `20261009b-Alter_sucursal_add_titular_facturacion.sql`, `20261009c-Alter_facturaelectronica_add_emisor.sql`. SQL Server no cambia.
 - **Estado**: compila (WebCore, AFIP net10 y net472, DatosPostgres); Negocio.Tests 377 OK y AFIP.Tests 81 OK. **Verificado en una copia descartable de la base local (ya borrada)**: las 3 migraciones corren (y son idempotentes), alta de empresa con el rol de super-admin crea el titular principal, RLS aisla empresas, repositorio y reglas de titulares, y en el navegador las pantallas Titulares, Certificado ARCA con selector de titular, Mis Sucursales, y el modal de factura (sugerencia de titular RI, "Cambiar titular", Escape = seguir con el de la sucursal, factura vieja sin selector). **No probado**: emitir contra ARCA (homologacion con dos CUIT), POS, "Traer de ARCA", Data Protection en la VM.
 
+## 2026-10-09 - Columna "Creado" (creado / modificado) en Egresos de caja, Movimientos y Stock
+
+- **Egresos de caja, Movimientos y Stock (index)**: columna nueva **Creado** antes de **Acciones**, con el formato de Elaborados: fecha y hora, debajo el usuario creador y, si el registro se modifico, la etiqueta **Modificado** con fecha/hora y usuario de la modificacion. La tabla de Egresos de caja es la misma de **Mis actividades** (POS) y **Actividades**, por eso la columna tambien aparece ahi.
+- Celda compartida `Views/Shared/_CeldaCreadoModificado.cshtml` (+ `Models/CeldaCreadoModificadoVm.cs`, estilos en `wwwroot/css/site.css`). Detalle y decisiones en `docs/DECISIONS.md` (2026-10-09). Compila (0 errores); **PENDIENTE**: verificarlo en el navegador con sesion. No hay migraciones ni cambios de consultas.
+
 ## 2026-10-09 - Un codigo sin agregar a la tabla bloquea el guardado
 
 - **Stock, Movimientos, Elaborados > Carga y Elaborados > Formulas**: si queda un codigo escrito en el buscador de productos/ingredientes que no se agrego a la tabla, no se deja guardar (aviso "Validacion", beep y foco en Codigo); hay que agregarlo (Enter / +) o borrarlo. Igual que Compras, que ya lo hacia. La Cantidad no cuenta (la completa la balanza). Los atajos de teclado no cambian.
