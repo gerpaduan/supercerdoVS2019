@@ -31,6 +31,10 @@ Los listados `Stock/Index` (`_StockTabla.cshtml`) y `Movimientos/Index` tienen u
 
 En `Stock/Editar` y `Movimientos/Editar` no se puede guardar mientras el campo **Código** del buscador tenga un valor que no se agregó a la tabla (se olvidó Enter / "+"): aviso "Validacion", beep y foco en Código; hay que agregarlo o borrarlo. La Cantidad no cuenta (la balanza la completa sola). Implementado en `WebCore/wwwroot/Scripts/app/producto-pendiente-guard.js`, llamado desde el `submit` de `stock.js` y `movimientos.js`. Los atajos de teclado no cambian. Ver `docs/DECISIONS.md` (2026-10-09).
 
+## Existencia por sucursales: ventana independiente (2026-10-13)
+
+`Stock/ExistenciaPorSucursales?popup=true` renderiza la vista con `Views/Shared/_LayoutEmbed.cshtml` (sin sidebar/topbar; mismo patron que `Productos/AddOrEdit?embed=true`). El boton "Abrir en ventana" de la vista normal llama al helper compartido `wwwroot/Scripts/app/ventana-independiente.js` (`window.open` con nombre fijo `existenciaPorSucursales`: un segundo click recarga esa ventana). `_LayoutEmbed` carga `table-scroll-sync.js` para que la tabla conserve la barra de scroll horizontal flotante. Las acciones de busqueda (`BuscarExistenciaPorSucursales`, `ObtenerFechaMinimaExistencia`) no cambian. Ver `docs/DECISIONS.md` (2026-10-13).
+
 ## Cierre de Stock: productos "no contado"
 
 En `Stock/Editar`, el modal "Productos no cargados" completa en bloque los productos con `Corte.EnCierreStock=true` que el operador nunca escaneó/tipeó durante el conteo (con el stock actual, o en 0). Esas líneas quedan marcadas `NoContado=true` (columna `noContado`/`nocontado` en `dbo.CortePorCompra`/`corteporcompra`, ver bitácora 2026-09-28) y se muestran con un badge "No contado" en la grilla, tanto al cargar como al reabrir el registro guardado. Las líneas cargadas a mano (escaneo/código+Enter, o vinculación de pesajes) siempre quedan en `false`.

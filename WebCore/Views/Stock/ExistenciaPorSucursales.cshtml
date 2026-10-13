@@ -14,9 +14,22 @@
     // ese CUIT SI coincide -- se hardcodea directamente a 15 en vez de reproducir el chequeo
     // (mismo resultado observable para el usuario de prueba de todo el juez de paridad).
     int intervaloAutoMinutos = 15;
+
+    // Modo ventana independiente (?popup=true): layout minimo sin sidebar/topbar, el mismo patron que
+    // Productos/AddOrEdit?embed=true. Se abre desde el boton "Abrir en ventana" de la vista normal.
+    bool popup = ViewBag.Popup is bool esPopup && esPopup;
+    if (popup)
+    {
+        Layout = "~/Views/Shared/_LayoutEmbed.cshtml";
+    }
 }
 
 <div class="container-fluid existencia-sucursales-page">
+    @if (popup)
+    {
+        // _LayoutEmbed no tiene barra superior: el titulo de la pantalla se muestra aca.
+        <h5 class="existencia-popup-titulo mb-2">Existencia por sucursales</h5>
+    }
     <div class="card shadow-sm mb-3 stock-filtros-card">
         <div class="card-body">
             <form id="formExistenciaSucursales" autocomplete="off">
@@ -72,6 +85,13 @@
                                 <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzadosExistencia">
                                 <label class="custom-control-label" for="switchFiltrosAvanzadosExistencia">Filtros avanzados</label>
                             </div>
+                            @if (!popup)
+                            {
+                                <button type="button" class="btn btn-outline-secondary ml-3 ms-3" id="btnAbrirVentanaExistencia"
+                                        title="Abrir esta pantalla en una ventana independiente, sin menús">
+                                    <i class="fas fa-external-link-alt mr-1"></i>Abrir en ventana
+                                </button>
+                            }
                         </div>
                     </div>
 
@@ -186,6 +206,11 @@
 
     .existencia-check {
         padding-bottom: .38rem;
+    }
+
+    .existencia-popup-titulo {
+        font-weight: 700;
+        font-size: 1rem;
     }
 
     .existencia-estado-card {
@@ -326,8 +351,17 @@
 </style>
 
 @section Scripts {
+    <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
     <script>
         (function () {
+            // Ventana independiente (helper compartido ventana-independiente.js): un nombre fijo por pantalla,
+            // asi un segundo click reutiliza la ventana ya abierta (la recarga y la trae al frente).
+            var VENTANA_URL = '@Url.Action("ExistenciaPorSucursales", "Stock", new { popup = true })';
+            var VENTANA_NOMBRE = 'existenciaPorSucursales';
+            $("#btnAbrirVentanaExistencia").on("click", function () {
+                window.abrirVentanaIndependiente(VENTANA_URL, VENTANA_NOMBRE);
+            });
+
             var buscarUrl = '@Url.Action("BuscarExistenciaPorSucursales", "Stock")';
             var fechaMinimaUrl = '@Url.Action("ObtenerFechaMinimaExistencia", "Stock")';
             var $form = $("#formExistenciaSucursales");

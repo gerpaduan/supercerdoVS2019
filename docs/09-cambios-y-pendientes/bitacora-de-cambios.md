@@ -1,6 +1,23 @@
 # Bitacora de cambios
 
-## 2026-10-13 (la mas reciente) - Reportes / Cierre Stock: Stock Cierre y Faltante se distinguen a simple vista; Estado y totales corregidos; modal de detalle alineado
+## 2026-10-13 (la mas reciente) - Reportes: boton "Abrir en ventana" (sin menus), con los filtros actuales
+
+- **Pedido**: lo mismo que en Existencia por sucursales, tambien para Reportes.
+- **Cambio** (solo WebCore): `Reportes?popup=true` usa `_LayoutEmbed`; boton "Abrir en ventana" a la derecha de la fila de "Mostrar totales". La ventana abre con los mismos filtros que la pantalla (tipo de reporte, fechas o cierres, sucursales, filtros avanzados, periodos comparativos) y consulta de entrada solo si la pantalla ya mostraba un resultado. Buscar dentro de la ventana la mantiene (campo oculto `popup=true` en el formulario). Helper compartido `ventana-independiente.js`, que ahora usa tambien Existencia.
+- **Correccion en Existencia por sucursales** (entrega anterior del mismo dia): su ventana no tenia la barra de scroll horizontal flotante de las tablas anchas porque `_LayoutEmbed` no cargaba `table-scroll-sync.js`; ahora si. Tambien se corrige la doc: un segundo click recarga la ventana con la pantalla inicial (no solo la trae al frente).
+- **Verificado** (instancia propia, login real, base local, panel con viewport 1100x800): WebCore compila (0 errores); la URL que arma el boton coincide con los parametros del formulario nativo (Stock Actual y Cierre Stock con selectores de cierre) mas `popup=true`, y lleva `buscar=false` si no hubo consulta; en la ventana no hay sidebar ni topbar, sale el titulo, y funcionan Stock Actual (1 y 2 sucursales), Ventas por Producto (2 sucursales, Chart.js), Balance Economico (7 graficos), el detalle de producto (doble clic), el panel flotante anclado arriba al scrollear y Buscar (mantiene `popup=true`); consola sin errores nuevos. Existencia: la ventana ahora crea los contenedores de scroll de sus tablas. El alta de producto embebida (`Productos/AddOrEdit?embed=true`) carga igual (el script nuevo es inerte ahi).
+- **Sin verificar**: el navegador integrado de la app no abre ventanas aparte (navega la misma pestana), asi que el tamano 1100x800, la recarga de una ventana ya abierta con filtros nuevos y el aviso de popup bloqueado se probaron solo por lectura de codigo; tampoco modo oscuro, Proyeccion Ventas vs Stock ni "Acceso denegado" dentro de la ventana.
+- Decision y alternativas descartadas: `docs/DECISIONS.md` (2026-10-13, Ventana independiente).
+
+## 2026-10-13 - Existencia por sucursales: boton "Abrir en ventana" (sin menus)
+
+- **Pedido**: poder abrir la pantalla como ventana independiente, sin el menu lateral ni la barra superior, para verla mejor.
+- **Cambio** (solo WebCore): `Stock/ExistenciaPorSucursales?popup=true` usa `_LayoutEmbed`; boton "Abrir en ventana" junto a *Filtros avanzados* (`window.open` popup 1100x800, ventana reutilizable; avisa si el navegador la bloquea).
+- **Verificado** (instancia propia en otro puerto, login real, base local): WebCore compila (0 errores); la pantalla normal muestra el boton y el click abre `?popup=True`; en el popup no hay sidebar ni topbar, aparece el titulo y no el boton; Buscar (1 sucursal, mismos datos que la pantalla normal), selector de casillas, filtros avanzados, 2 sucursales (columna Total) y "Expandir todos" funcionan; consola sin errores.
+- **Sin verificar**: el navegador integrado de la app no abre ventanas emergentes aparte (navega la misma pestana), asi que el tamano 1100x800, la reutilizacion de la ventana y el aviso de popup bloqueado se probaron solo por lectura de codigo; modo oscuro y autoactualizar en el popup tampoco.
+- Decision y alternativas descartadas: `docs/DECISIONS.md` (2026-10-13, Existencia por sucursales).
+
+## 2026-10-13 - Reportes / Cierre Stock: Stock Cierre y Faltante se distinguen a simple vista; Estado y totales corregidos; modal de detalle alineado
 
 - **Pedido**: mejorar la visión del usuario en las columnas *Stock Cierre* y *Faltante* (positivo = faltó mercadería, negativo = se vendió de más); luego corregir lo propuesto (Estado y totales) y alinear *Tot. ingresos* con *Tot. egresos* en el modal de detalle.
 - **Cambio** (solo WebCore, solo Cierre Stock salvo el modal): leyenda sobre la tabla; *Stock Cierre* con banda azul; *Faltante* con signo y color/ícono/texto; *Estado* calculado contra el Stock Cierre; tarjetas *Faltó mercadería* / *Vendido de más* en lugar del total neteado; en el modal, Egresos en el mismo orden que Ingresos y un renglón vacío en lugar de Ajustes. Stock Actual y Retroactivo no cambian (el modal sí cambia de orden en los tres).

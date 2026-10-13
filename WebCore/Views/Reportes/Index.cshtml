@@ -5,6 +5,14 @@
 
 @{
     ViewBag.Title = "Reportes";
+    // Modo ventana independiente (?popup=true): layout minimo sin sidebar/topbar, el mismo patron que
+    // Stock/ExistenciaPorSucursales?popup=true y Productos/AddOrEdit?embed=true. Se abre desde el boton
+    // "Abrir en ventana" de la vista normal (reportes.js arma la URL con los filtros actuales).
+    bool popup = ViewBag.Popup is bool esPopup && esPopup;
+    if (popup)
+    {
+        Layout = "~/Views/Shared/_LayoutEmbed.cshtml";
+    }
     var esReporteStockDetalle =
         string.Equals(Model.TipoReporteSeleccionado, "Stock Actual", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(Model.TipoReporteSeleccionado, "Cierre Stock", StringComparison.OrdinalIgnoreCase) ||
@@ -78,10 +86,21 @@
 
 <div class="container-fluid reportes-page">
 
+    @if (popup)
+    {
+        // _LayoutEmbed no tiene barra superior: el titulo de la pantalla se muestra aca.
+        <h5 class="reportes-popup-titulo mb-2">Reportes</h5>
+    }
+
     <div class="card shadow-sm mb-3 reportes-filtros-card">
         <div class="card-body">
             <form id="formReportes" method="get" action="@Url.Action("Index", "Reportes")" autocomplete="off">
                 <input type="hidden" name="buscar" id="buscarReportes" value="true" />
+                @if (popup)
+                {
+                    @* Buscar recarga la pagina (GET): sin este campo la ventana volveria al layout con menus. *@
+                    <input type="hidden" name="popup" value="true" />
+                }
 
                 <div class="reportes-filtros-grid">
                     <div class="form-group mb-0">
@@ -166,6 +185,13 @@
             <label class="custom-control-label" for="switchMostrarTotalesReporte">Mostrar totales</label>
         </div>
         <span class="text-muted" id="lblTotalRegistrosCompacto">@cantidadRegistrosVisibles registros visibles</span>
+        @if (!popup)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm ms-auto ml-auto" id="btnAbrirVentanaReportes"
+                    title="Abrir esta pantalla en una ventana independiente, sin menús, con los filtros actuales">
+                <i class="fas fa-external-link-alt mr-1"></i>Abrir en ventana
+            </button>
+        }
     </div>
 
     @if (esReporteBalance)
@@ -1049,6 +1075,11 @@
 <style>
     .reportes-page .card-body {
         padding: .85rem 1rem;
+    }
+
+    .reportes-popup-titulo {
+        font-weight: 700;
+        font-size: 1rem;
     }
 
     /* Stock con 2+ sucursales: filas agrupadas por producto (color alternado + linea de corte). */
@@ -2076,6 +2107,7 @@
             sucursalActual: "@Model.SucursalId",
             sucursalesIds: [@string.Join(",", Model.SucursalesIds)],
             usaCierresPorSucursal: @Model.UsaCierresPorSucursal.ToString().ToLowerInvariant(),
+            consultaRealizada: @Model.ConsultaRealizada.ToString().ToLowerInvariant(),
             tipoReporteActual: "@Model.TipoReporteSeleccionado",
             agrupacionTemporalActual: "@Model.AgrupacionTemporal",
             periodosComparativos: @Html.Raw(periodosComparativosJson),
@@ -2085,5 +2117,6 @@
             filtrosSecundariosUrl: "@Url.Action("FiltrosSecundarios", "Reportes")"
         };
     </script>
+    <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/reportes.js")" asp-append-version="true"></script>
 }

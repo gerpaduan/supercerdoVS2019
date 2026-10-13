@@ -46,6 +46,12 @@ Consultar **stock, ventas y balance** de una, varias o todas las sucursales. Se 
 - El **detalle de producto** (doble clic en la fila) usa el mismo código de colores en *Stock Cierre* y *Faltante*. En *Stock Actual* y *Stock Retroactivo* no hay colores: allí el mismo dato es el stock disponible, no un faltante.
 - En ese detalle, *Solo ingresos* y *Egresos* quedan enfrentados renglón a renglón: **Compra | Ventas**, **Elaborado | Elaborado**, **Stock | Stock**, **Movimiento | Movimiento** y **Ajustes** solo del lado de ingresos (del otro hay un renglón vacío), así *Tot. ingresos* y *Tot. egresos* quedan a la misma altura. En el celular las tarjetas van una debajo de la otra y el renglón vacío no se muestra.
 
+## Abrir en una ventana independiente
+En la fila de **Mostrar totales**, a la derecha, está el botón **Abrir en ventana**: abre Reportes en una ventana aparte (≈1100×800, se puede mover y redimensionar) **sin menú lateral ni barra superior**, para dejarlo en otro monitor o tener más lugar para las tablas.
+- La ventana se abre con **los mismos filtros** que tenés en pantalla (tipo de reporte, fechas o cierres, sucursales, filtros avanzados y períodos comparativos). Si ya habías tocado **Buscar**, el reporte se carga solo; si no, queda listo para buscar.
+- Funciona igual que la pantalla normal (Buscar, ordenar, filtros en vivo, detalle de producto, gráficos) y **sigue siendo ventana independiente al buscar**.
+- Es la misma sesión (si vence, la ventana pide ingresar de nuevo). Si volvés a tocar el botón con la ventana abierta, **la recarga con los filtros de ese momento** y la trae al frente, sin abrir otra. Si el navegador bloquea la ventana emergente, avisa y hay que permitirla para el sitio. En la ventana no aparece el botón.
+
 ## Filtros en vivo
 Producto, tipo, marca y estado de stock se aplican sobre lo ya cargado, sin volver a consultar. Los totales se recalculan con las filas visibles.
 

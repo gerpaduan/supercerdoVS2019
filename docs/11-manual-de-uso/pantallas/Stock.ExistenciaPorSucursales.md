@@ -19,6 +19,9 @@ Ver el **stock actual de cada producto, una sucursal por columna**, para compara
 4. **Filtros avanzados**: Tipo, Proveedor, Marca y Estado de stock.
 5. Cada producto se puede expandir para ver el detalle por sucursal (stock inicial, ingresos, egresos, ventas).
 
+## Abrir en una ventana independiente
+Al lado de **Filtros avanzados** está el botón **Abrir en ventana**: abre esta misma pantalla en una ventana aparte (≈1100×800, se puede mover y redimensionar) **sin menú lateral ni barra superior**, para dejarla en otro monitor o tener más lugar para la tabla. Es la misma pantalla y la misma sesión (si la sesión vence, la ventana pide ingresar de nuevo). Si ya está abierta, el botón la reutiliza: la recarga con la pantalla inicial (se pierde lo que tuviera buscado) y la trae al frente, sin abrir otra. Si el navegador bloquea la ventana emergente, avisa y hay que permitirla para el sitio. En la ventana independiente no aparece el botón.
+
 ## Fecha de cálculo
 El cálculo parte del **último cierre de stock** de cada sucursal. Con varias sucursales tildadas, la fecha mínima que se puede consultar es la del cierre **más reciente entre las tildadas**; la pantalla muestra *Cálculo desde dd/mm/aaaa* y, al pasar el mouse, la fecha de cada sucursal.
 

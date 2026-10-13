@@ -582,7 +582,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult ExistenciaPorSucursales()
+        public IActionResult ExistenciaPorSucursales(bool popup = false)
         {
             Entidades.Usuario user = _usuarioActual;
 
@@ -609,6 +609,8 @@ namespace WebCore.Controllers
 
             ViewBag.Title = "Existencia por sucursales";
             ViewBag.Seccion = "Stock";
+            // popup=true: la vista se muestra en una ventana independiente (sin menus, con _LayoutEmbed).
+            ViewBag.Popup = popup;
 
             return View("~/Views/Stock/ExistenciaPorSucursales.cshtml", model);
         }

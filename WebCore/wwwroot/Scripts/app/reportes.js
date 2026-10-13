@@ -1584,6 +1584,31 @@
             $("#btnBuscarReporte").prop("disabled", true).find(".btn-buscar-texto").text("Cargando...");
         });
 
+        // Boton "Abrir en ventana": abre esta misma pantalla en una ventana independiente (sin menus) con los
+        // filtros que hay ahora en pantalla. Los parametros son los mismos que enviaria el formulario al tocar
+        // Buscar: serializeArray solo toma los campos con "name", y syncClosureNames deja con name el campo de
+        // fecha activo (fecha libre o cierre). El formulario de la ventana reenvia popup=true al buscar.
+        $("#btnAbrirVentanaReportes").on("click", function () {
+            var params = new URLSearchParams();
+            $.each($form.serializeArray(), function (_, campo) {
+                if (campo.name !== "buscar" && campo.name !== "popup") {
+                    params.append(campo.name, campo.value);
+                }
+            });
+
+            // Stock Actual siempre reporta "a este momento" (igual que el submit del formulario).
+            if (reportType() === "Stock Actual") {
+                params.set("fechaHasta", nowLocalValue());
+            }
+
+            // Solo se consulta de entrada si esta pantalla ya muestra un resultado: no se dispara una consulta
+            // (a veces pesada, una por sucursal) que nadie pidio.
+            params.set("buscar", config.consultaRealizada ? "true" : "false");
+            params.set("popup", "true");
+
+            window.abrirVentanaIndependiente($form.attr("action") + "?" + params.toString(), "reportes");
+        });
+
         syncBranchSelection(null);
         applyReportMode(false);
         applyDetailsMode();

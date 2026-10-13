@@ -1,9 +1,11 @@
-@* Layout minimo para vistas que se muestran dentro de un <iframe> de otra pantalla (sin menu, barra
-   superior ni pie). Hoy lo usa Productos/AddOrEdit?embed=true (alta completa de producto desde
-   Compras/Editar). Carga los mismos assets base que _Layout.cshtml (Bootstrap 5 + shim BS4, Font
-   Awesome, custom.css/ui-refresh.css, jQuery, SweetAlert2, scanner y buscador de productos) y expone
-   la seccion "Scripts". Todo lo demas de _Layout (sidebar, modales de sucursal/dispositivo,
-   calculadora de billetes, tema, proteccion de salida) NO se carga a proposito. *@
+@* Layout minimo para vistas que se muestran dentro de un <iframe> de otra pantalla o en una ventana
+   independiente (sin menu, barra superior ni pie). Lo usan Productos/AddOrEdit?embed=true (alta
+   completa de producto desde Compras/Editar) y las ventanas independientes "?popup=true" de
+   Stock/ExistenciaPorSucursales y Reportes. Carga los mismos assets base que _Layout.cshtml
+   (Bootstrap 5 + shim BS4, Font Awesome, custom.css/ui-refresh.css, jQuery, SweetAlert2, scanner,
+   buscador de productos y la barra de scroll flotante de tablas anchas) y expone la seccion
+   "Scripts". Todo lo demas de _Layout (sidebar, modales de sucursal/dispositivo, calculadora de
+   billetes, tema, proteccion de salida) NO se carga a proposito. *@
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -42,6 +44,10 @@
     <script src="~/Scripts/app/modal-stack.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/bootstrap4-compat.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @* Barra de scroll flotante de tablas anchas (.js-sync-scroll-body): sin ella el panel flotante de
+       Reportes y la tabla de Existencia por sucursales pierden esa funcion en la ventana independiente.
+       Es inerte en las pantallas que no tienen ese markup (ej. Productos/AddOrEdit?embed=true). *@
+    <script src="~/Scripts/app/table-scroll-sync.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/sin-rueda-numerica.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/Scripts/app/swal-single-confirm.js" asp-append-version="true"></script>

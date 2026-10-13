@@ -83,7 +83,8 @@ namespace WebCore.Controllers
             string estadoStock = "Todos",
             string[] periodoComparativoDesde = null,
             bool incluirVentasCuentaCorrienteBalance = false,
-            bool buscar = false)
+            bool buscar = false,
+            bool popup = false)
         {
             var user = _usuarioActual;
 
@@ -156,6 +157,9 @@ namespace WebCore.Controllers
 
             ViewBag.Title = "Reportes";
             ViewBag.Seccion = "Reportes";
+            // popup=true: la vista se muestra en una ventana independiente (sin menus, con _LayoutEmbed).
+            // El formulario de la vista reenvia popup=true al buscar, para no volver al layout completo.
+            ViewBag.Popup = popup;
 
             return View("~/Views/Reportes/Index.cshtml", model);
         }
