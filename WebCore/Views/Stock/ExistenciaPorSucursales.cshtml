@@ -29,15 +29,15 @@
                             @{
                                 bool todasTildadas = filtro.IdsSucursales == null || filtro.IdsSucursales.Count == 0;
                             }
-                            <div class="dropdown existencia-sucursales-dropdown">
-                                <button type="button" id="btnSucursalesExistencia" class="btn btn-outline-secondary btn-block text-left dropdown-toggle"
+                            <div class="dropdown ui-multiselect">
+                                <button type="button" id="btnSucursalesExistencia" class="btn dropdown-toggle ui-multiselect-toggle"
                                         data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
                                     <span id="lblSucursalesExistencia">Todas</span>
                                 </button>
-                                <div class="dropdown-menu p-2" id="menuSucursalesExistencia">
-                                    <div class="custom-control custom-checkbox">
+                                <div class="dropdown-menu" id="menuSucursalesExistencia">
+                                    <div class="custom-control custom-checkbox ui-multiselect-todas">
                                         <input type="checkbox" class="custom-control-input" id="chkSucursalTodasExistencia" @(todasTildadas ? "checked" : null)>
-                                        <label class="custom-control-label font-weight-bold" for="chkSucursalTodasExistencia">Todas</label>
+                                        <label class="custom-control-label" for="chkSucursalTodasExistencia">Todas</label>
                                     </div>
                                     <div class="dropdown-divider"></div>
                                     @foreach (var sucursal in filtro.SucursalesDisponibles)
@@ -221,29 +221,6 @@
         padding: .32rem .62rem;
     }
 
-    /* Dropdown de sucursales: ancho minimo del boton y menu con scroll si hay muchas. */
-    .existencia-sucursales-page .existencia-sucursales-dropdown .btn {
-        min-width: 12rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    /* Abierto: BS5 pone texto blanco y el fondo queda transparente (se leia vacio). Se fuerza contraste. */
-    .existencia-sucursales-page .existencia-sucursales-dropdown .btn.show,
-    .existencia-sucursales-page .existencia-sucursales-dropdown .btn:active {
-        color: var(--bs-body-color, #212529);
-        background-color: rgba(108, 117, 125, .15);
-        border-color: #6c757d;
-    }
-
-    .existencia-sucursales-page #menuSucursalesExistencia {
-        min-width: 14rem;
-        max-height: 18rem;
-        overflow-y: auto;
-        font-size: .87rem;
-    }
-
     .existencia-sucursales-page .stock-filtro-label,
     .existencia-sucursales-page .custom-control-label {
         font-size: .76rem;
@@ -394,6 +371,8 @@
                 else if (tildadas.length === 1) texto = tildadas.first().data("nombre");
                 else texto = tildadas.length + " sucursales";
                 $lblSucursales.text(texto);
+                // Tooltip con los nombres de las tildadas (el texto del boton puede quedar cortado).
+                $("#btnSucursalesExistencia").attr("title", tildadas.map(function () { return $(this).data("nombre"); }).get().join(", "));
             }
 
             // Mantiene el checkbox "Todas" coherente con los individuales y evita dejar 0 tildadas.

@@ -216,6 +216,10 @@
                 texto = ids.length + " sucursales";
             }
             $lblSucursales.text(texto);
+            // Tooltip con los nombres de las tildadas: el texto del boton puede quedar cortado ("N sucursales", nombres largos).
+            $("#btnSucursalesReporte").attr("title", $chkSucursales.filter(":checked").map(function () {
+                return $(this).attr("data-nombre");
+            }).get().join(", "));
         }
 
         // Reportes de stock con varias sucursales: las fechas dejan de elegirse (cada sucursal usa sus cierres) y se

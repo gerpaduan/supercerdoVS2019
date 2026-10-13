@@ -117,15 +117,15 @@
                            El campo oculto #sucursalReporte conserva el contrato de siempre ("id de la sucursal si hay UNA sola,
                            0 si son varias o todas"): reportes.js lo lee con $("#sucursalReporte").val() en varios lugares. *@
                         <input type="hidden" name="idSucursal" id="sucursalReporte" value="@Model.SucursalId" />
-                        <div class="dropdown reportes-sucursales-dropdown">
-                            <button type="button" id="btnSucursalesReporte" class="btn btn-outline-secondary btn-block text-left dropdown-toggle"
+                        <div class="dropdown ui-multiselect">
+                            <button type="button" id="btnSucursalesReporte" class="btn dropdown-toggle ui-multiselect-toggle"
                                     data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
                                 <span id="lblSucursalesReporte">Todas</span>
                             </button>
-                            <div class="dropdown-menu p-2" id="menuSucursalesReporte">
-                                <div class="custom-control custom-checkbox">
+                            <div class="dropdown-menu" id="menuSucursalesReporte">
+                                <div class="custom-control custom-checkbox ui-multiselect-todas">
                                     <input type="checkbox" class="custom-control-input filtro-principal" id="chkSucursalTodasReporte" @(Model.EsTodasLasSucursales ? "checked" : null)>
-                                    <label class="custom-control-label font-weight-bold" for="chkSucursalTodasReporte">Todas</label>
+                                    <label class="custom-control-label" for="chkSucursalTodasReporte">Todas</label>
                                 </div>
                                 <div class="dropdown-divider"></div>
                                 @foreach (var itemSucursal in Model.Sucursales.Where(x => x.Value != "0"))
@@ -993,27 +993,6 @@
 <style>
     .reportes-page .card-body {
         padding: .85rem 1rem;
-    }
-
-    /* Selector de sucursales (casillas): mismo criterio que Existencia por sucursales. */
-    .reportes-sucursales-dropdown .btn {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .reportes-sucursales-dropdown .btn.show,
-    .reportes-sucursales-dropdown .btn:active {
-        color: var(--bs-body-color, #212529);
-        background-color: rgba(108, 117, 125, .15);
-        border-color: #6c757d;
-    }
-
-    #menuSucursalesReporte {
-        min-width: 14rem;
-        max-height: 18rem;
-        overflow-y: auto;
-        font-size: .87rem;
     }
 
     /* Stock con 2+ sucursales: filas agrupadas por producto (color alternado + linea de corte). */
