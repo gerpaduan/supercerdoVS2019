@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (32 de 89 pantallas)
+## Cobertura (33 de 89 pantallas)
 
 ## Manual del usuario
 
@@ -45,6 +45,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-05 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-05 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-13 |
+| pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-13 |
 
 ## Manual del administrador
 
@@ -98,4 +99,4 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **Sucursal**: Editar, Index
 - **SucursalesSpike**: Index
 - **SystemAdministration**: EditarSucursal, Sucursales
-- **Ventas**: AutorizarModulo, DetalleFactura, DetalleVenta, Facturas, Index, Lineas, POS
+- **Ventas**: AutorizarModulo, DetalleFactura, DetalleVenta, Facturas, Index, POS

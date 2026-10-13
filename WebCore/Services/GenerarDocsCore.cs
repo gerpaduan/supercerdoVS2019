@@ -1248,5 +1248,142 @@ namespace WebCore.Services
 
             return documento.GeneratePdf();
         }
+
+        // PDF de Ventas > Lineas (2026-10-13, ver docs/DECISIONS.md "Exportar Lineas de venta a PDF y Excel").
+        // Mismo corte por venta que la pantalla: una banda con fecha + Venta ID + total, una linea gris con los
+        // datos de la venta (cliente, vendedor, forma de pago...) y la tabla de sus lineas. Cierra con los
+        // mismos totales que las tarjetas de la pantalla. Textos y formatos: LineasVentaExportHelper (compartido
+        // con el Excel, GenerarExcelCore). Limite conocido: sin tope de filas, igual que la pantalla (que no pagina).
+        public static byte[] GenerarPdfLineasVenta(WebCore.Models.VentaLineasIndexVm model, string sucursalNombre)
+        {
+            string filtros = LineasVentaExportHelper.Filtros(model);
+            var totales = LineasVentaExportHelper.Totales(model);
+
+            var documento = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(24, Unit.Point);
+                    page.DefaultTextStyle(x => x.FontSize(9));
+
+                    page.Content().Column(col =>
+                    {
+                        col.Spacing(8);
+
+                        // Encabezado del reporte: titulo, periodo/sucursal y filtros activos (si hay).
+                        col.Item().Column(cabecera =>
+                        {
+                            cabecera.Spacing(2);
+                            cabecera.Item().Text(LineasVentaExportHelper.Titulo).FontSize(16).Bold();
+                            cabecera.Item().Text(LineasVentaExportHelper.Periodo(model, sucursalNombre)).FontColor(Colors.Grey.Darken2);
+                            if (filtros.Length > 0)
+                                cabecera.Item().Text(filtros).FontColor(Colors.Grey.Darken2);
+                        });
+
+                        if (model.Ventas.Count == 0)
+                            col.Item().Text(LineasVentaExportHelper.MensajeSinVentas).Italic().FontColor(Colors.Grey.Darken1);
+
+                        // Una tabla por venta (el "corte" de la pantalla). Se asume al menos una linea por venta:
+                        // ConstruirModeloLineas omite las ventas sin lineas.
+                        foreach (var venta in model.Ventas)
+                        {
+                            col.Item().Table(tabla =>
+                            {
+                                tabla.ColumnsDefinition(c =>
+                                {
+                                    c.RelativeColumn(2.6f);
+                                    c.RelativeColumn(5.6f);
+                                    c.RelativeColumn(2.2f);
+                                    c.RelativeColumn(2.2f);
+                                    c.RelativeColumn(2.6f);
+                                });
+
+                                // La banda de la venta y sus datos van DENTRO del encabezado de la tabla (no como elementos
+                                // sueltos encima): asi (1) la banda no puede quedar sola al pie de una hoja, separada de sus
+                                // lineas (si no entra el encabezado con al menos una linea, la tabla pasa entera a la hoja
+                                // siguiente; EnsureSpace no sirve para esto) y (2) si la venta sigue en otra hoja, el encabezado
+                                // se repite con la banda y se sabe a que venta pertenecen las filas.
+                                tabla.Header(h =>
+                                {
+                                    // Banda: fecha y Venta ID a la izquierda, total (de toda la venta) a la derecha.
+                                    h.Cell().ColumnSpan(5).Background("#F0F0F0").Padding(5).Row(fila =>
+                                    {
+                                        fila.RelativeItem().Column(izquierda =>
+                                        {
+                                            izquierda.Item().Text(venta.ResumenCompacto ?? "").Bold().FontSize(10);
+                                            izquierda.Item().Text(venta.ResumenSecundario ?? "").FontColor(Colors.Grey.Darken1);
+                                        });
+
+                                        fila.AutoItem().AlignMiddle().Background(Colors.Green.Darken2)
+                                            .PaddingVertical(2).PaddingHorizontal(8)
+                                            .Text(LineasVentaExportHelper.Moneda(venta.TotalImporte)).FontColor(Colors.White).Bold();
+                                    });
+
+                                    // Datos de la venta (los que la pantalla oculta tras "Ver detalles").
+                                    h.Cell().ColumnSpan(5).PaddingHorizontal(5).PaddingVertical(2)
+                                        .Text(LineasVentaExportHelper.DatosVenta(venta)).FontSize(8).FontColor(Colors.Grey.Darken2);
+
+                                    // Titulos de columna (las 3 ultimas son numericas: alineadas a la derecha).
+                                    string[] titulos = LineasVentaExportHelper.EncabezadosColumnas;
+                                    for (int i = 0; i < titulos.Length; i++)
+                                    {
+                                        var celda = h.Cell().Background("#E9ECEF").Padding(3);
+                                        if (i >= 2)
+                                            celda = celda.AlignRight();
+                                        celda.Text(titulos[i]).Bold().FontSize(8);
+                                    }
+                                });
+
+                                foreach (var linea in venta.Lineas)
+                                {
+                                    tabla.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(linea.Codigo ?? "");
+                                    tabla.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(linea.Producto ?? "");
+                                    tabla.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignRight().Text(LineasVentaExportHelper.Kg(linea.CantidadKg));
+                                    tabla.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignRight().Text(LineasVentaExportHelper.Importe(linea.Precio));
+                                    tabla.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignRight().Text(LineasVentaExportHelper.Importe(linea.Total));
+                                }
+                            });
+                        }
+
+                        // Totales generales (mismos que las tarjetas de la pantalla). ShowEntire: bloque chico que no debe
+                        // partirse entre dos hojas (Total Kg arriba y la cantidad de lineas en la siguiente).
+                        if (model.Ventas.Count > 0)
+                        {
+                            col.Item().ShowEntire().Background("#E9ECEF").Padding(6).Column(resumen =>
+                            {
+                                resumen.Spacing(2);
+                                resumen.Item().Row(fila =>
+                                {
+                                    fila.RelativeItem().Text(texto =>
+                                    {
+                                        texto.Span("Total Kg: ").Bold();
+                                        texto.Span(LineasVentaExportHelper.Kg(totales.TotalKg));
+                                    });
+                                    fila.RelativeItem().AlignRight().Text(texto =>
+                                    {
+                                        texto.Span("Total pesos: ").Bold();
+                                        texto.Span(LineasVentaExportHelper.Moneda(totales.TotalPesos));
+                                    });
+                                });
+                                resumen.Item().Text(LineasVentaExportHelper.ResumenCantidades(totales.CantidadLineas, totales.CantidadRegistros))
+                                    .FontColor(Colors.Grey.Darken2);
+                            });
+                        }
+                    });
+
+                    page.Footer().AlignCenter().Text(texto =>
+                    {
+                        texto.DefaultTextStyle(x => x.FontSize(8).FontColor(Colors.Grey.Darken1));
+                        texto.Span("Página ");
+                        texto.CurrentPageNumber();
+                        texto.Span(" de ");
+                        texto.TotalPages();
+                    });
+                });
+            });
+
+            return documento.GeneratePdf();
+        }
     }
 }

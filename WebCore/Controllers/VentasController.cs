@@ -872,13 +872,75 @@ namespace WebCore.Controllers
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
                 return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
 
+            var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto);
+
+            ViewBag.Title = "Lineas de venta";
+            ViewBag.Sucursales = sucursales;
+
+            return View("~/Views/Ventas/Lineas.cshtml", model);
+        }
+
+        // Exporta a PDF el mismo detalle que muestra Lineas (un corte por venta). Recibe los mismos filtros
+        // que Lineas -- la pantalla agrega por querystring los filtros "en vivo" (producto, cliente, vendedor,
+        // formasPago) que no viajan en su formulario -- y reutiliza ConstruirModeloLineas, asi el archivo no
+        // puede divergir de lo que se ve (ventas reservadas ocultas incluidas). Ver docs/DECISIONS.md
+        // 2026-10-13 "Exportar Lineas de venta a PDF y Excel".
+        [HttpGet]
+        public IActionResult LineasPdf(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
+        {
+            // Mismo gate de usuario de produccion que Lineas.
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto);
+            byte[] pdfBytes = GenerarDocsCore.GenerarPdfLineasVenta(model, ObtenerNombreSucursalLineas(idSucursal));
+
+            return File(pdfBytes, "application/pdf", ConstruirNombreArchivoLineas("pdf"));
+        }
+
+        // Idem LineasPdf pero a .xlsx real (ClosedXML, GenerarExcelCore).
+        [HttpGet]
+        public IActionResult LineasExcel(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
+        {
+            // Mismo gate de usuario de produccion que Lineas.
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto);
+            byte[] excelBytes = GenerarExcelCore.GenerarExcelLineasVenta(model, ObtenerNombreSucursalLineas(idSucursal));
+
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ConstruirNombreArchivoLineas("xlsx"));
+        }
+
+        // Nombre de la sucursal filtrada para el encabezado de los archivos exportados ("Todas" si no hay filtro).
+        private string ObtenerNombreSucursalLineas(int idSucursal)
+        {
+            if (idSucursal == -1)
+                return "Todas";
+
+            var sucursal = (_oSucursalN.findAll() ?? new List<Entidades.Sucursal>()).FirstOrDefault(x => x.IdSucursal == idSucursal);
+            return sucursal != null ? sucursal.SucursalNombre : "-";
+        }
+
+        // Nombre del archivo exportado: Lineas_de_venta_yyyyMMdd_HHmm.<extension> (sin datos personales).
+        private static string ConstruirNombreArchivoLineas(string extension)
+        {
+            return "Lineas_de_venta_" + DateTime.Now.ToString("yyyyMMdd_HHmm", CultureInfo.InvariantCulture) + "." + extension;
+        }
+
+        // Arma el modelo de Lineas de venta (tarjetas por venta con sus lineas). Lo comparten la pantalla (Lineas)
+        // y sus exports (LineasPdf / LineasExcel): trae todo el rango sin paginar, oculta las ventas reservadas
+        // (_ctaCteReservada) y aplica los filtros de cliente / vendedor / forma de pago / producto.
+        // No toca ViewBag ni el gate de usuario: eso queda en cada accion.
+        private VentaLineasIndexVm ConstruirModeloLineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal, string cliente, string vendedor, string formasPago, string producto)
+        {
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
             if (hasta < desde)
                 hasta = desde;
 
-            var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             var formasPagoSeleccionadas = SepararValoresCsv(formasPago);
 
             List<Entidades.Venta> ventas = _oVentaN.getAllVentas(desde, hasta, "", -1, -1, idSucursal, false, true) ?? new List<Entidades.Venta>();
@@ -959,10 +1021,7 @@ namespace WebCore.Controllers
                 model.Ventas.Add(grupo);
             }
 
-            ViewBag.Title = "Lineas de venta";
-            ViewBag.Sucursales = sucursales;
-
-            return View("~/Views/Ventas/Lineas.cshtml", model);
+            return model;
         }
 
         public IActionResult MisVentas(bool desdePos = false, int idCierre = 0)

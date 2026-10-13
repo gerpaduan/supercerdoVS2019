@@ -10,9 +10,25 @@
     <partial name="_AvisoReservadasListado" />
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
         <h4 class="mb-2 mb-md-0">Lineas de venta</h4>
-        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
-            <i class="fas fa-arrow-left mr-1"></i> Volver al indice
-        </a>
+        <div class="d-flex flex-wrap gap-2">
+            @* Exportar PDF / Excel: el href inicial (con los filtros del servidor) es solo un respaldo; el script del final
+               lo reconstruye con los filtros "en vivo" y las fechas aplicadas (ver "Exportar a PDF / Excel" en Scripts). *@
+            <a class="btn btn-outline-danger js-exportar-lineas"
+               href="@Url.Action("LineasPdf", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss"), idSucursal = Model.IdSucursal, cliente = Model.Cliente, vendedor = Model.Vendedor, producto = Model.Producto, formasPago = Model.FormasPagoCsv })"
+               data-export-url="@Url.Action("LineasPdf", "Ventas")"
+               title="Exportar a PDF lo que se ve en pantalla">
+                <i class="fas fa-file-pdf mr-1"></i> PDF
+            </a>
+            <a class="btn btn-outline-success js-exportar-lineas"
+               href="@Url.Action("LineasExcel", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss"), idSucursal = Model.IdSucursal, cliente = Model.Cliente, vendedor = Model.Vendedor, producto = Model.Producto, formasPago = Model.FormasPagoCsv })"
+               data-export-url="@Url.Action("LineasExcel", "Ventas")"
+               title="Exportar a Excel lo que se ve en pantalla">
+                <i class="fas fa-file-excel mr-1"></i> Excel
+            </a>
+            <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
+                <i class="fas fa-arrow-left mr-1"></i> Volver al indice
+            </a>
+        </div>
     </div>
 
     <div class="card shadow-sm mb-3 elaborados-filtros-card">
@@ -424,6 +440,70 @@
             if (inputFechaDesde) inputFechaDesde.addEventListener('change', actualizarAviso);
             if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAviso);
             if (inputSucursal) inputSucursal.addEventListener('change', enviarEnVivo);
+
+            // ---- Exportar a PDF / Excel ----
+            // El archivo respeta lo que se ve en pantalla: sucursal, fechas YA aplicadas (fechasAplicadas, no las que
+            // estan a medio editar) y los filtros "en vivo" (producto, cliente, vendedor, formas de pago), que no viajan
+            // en el formulario porque se aplican en el navegador (lineas-agrupadas.js). El servidor los recibe por
+            // querystring con los mismos nombres que acepta la accion Lineas.
+            var botonesExportar = document.querySelectorAll('.js-exportar-lineas');
+
+            function valorFiltroVivo(clave) {
+                var input = document.querySelector('[data-live-filter="' + clave + '"]');
+                return input ? input.value.trim() : '';
+            }
+
+            function formasPagoTildadas() {
+                var tildadas = document.querySelectorAll('[data-live-filter="formaPago"]:checked');
+                return Array.prototype.map.call(tildadas, function (item) { return item.value; }).join(',');
+            }
+
+            function urlExportar(urlBase) {
+                var params = new URLSearchParams();
+                params.set('idSucursal', inputSucursal ? inputSucursal.value : '-1');
+                params.set('fechaDesde', fechasAplicadas.fechaDesde);
+                params.set('fechaHasta', fechasAplicadas.fechaHasta);
+                params.set('producto', valorFiltroVivo('producto'));
+                params.set('cliente', valorFiltroVivo('cliente'));
+                params.set('vendedor', valorFiltroVivo('vendedor'));
+                params.set('formasPago', formasPagoTildadas());
+                return urlBase + '?' + params.toString();
+            }
+
+            function actualizarEnlacesExportar() {
+                Array.prototype.forEach.call(botonesExportar, function (boton) {
+                    boton.href = urlExportar(boton.getAttribute('data-export-url'));
+                });
+            }
+
+            // Se actualizan al tipear/tildar (asi tambien sirven "abrir en otra pestaña" y "copiar enlace") y de nuevo
+            // justo antes de descargar.
+            Array.prototype.forEach.call(document.querySelectorAll('.js-filtro-vivo'), function (input) {
+                input.addEventListener(input.type === 'checkbox' ? 'change' : 'input', actualizarEnlacesExportar);
+            });
+
+            Array.prototype.forEach.call(botonesExportar, function (boton) {
+                boton.addEventListener('click', function (event) {
+                    // Sin ninguna venta visible no hay nada que exportar: se avisa y no se descarga.
+                    if (!document.querySelector('.js-registro-card:not(.d-none)')) {
+                        event.preventDefault();
+                        if (window.Swal && typeof window.Swal.fire === 'function') {
+                            window.Swal.fire({
+                                icon: 'info',
+                                title: 'No hay ventas para exportar',
+                                text: 'Ajustá los filtros para que la pantalla muestre al menos una venta.'
+                            });
+                        } else {
+                            window.alert('No hay ventas para exportar.');
+                        }
+                        return;
+                    }
+
+                    actualizarEnlacesExportar();
+                });
+            });
+
+            actualizarEnlacesExportar();
 
             form.addEventListener('submit', function (event) {
                 if (form.dataset.loadingSubmitPending === 'true') {

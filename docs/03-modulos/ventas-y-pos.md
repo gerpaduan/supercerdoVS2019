@@ -13,6 +13,17 @@ Documentar el flujo de ventas, caja, articulos, pesaje y uso del POS.
 - Dependencias con balanza o perifericos
 - Riesgos
 
+## Líneas de venta: exportar a PDF y Excel — 2026-10-13
+
+Pantalla `Ventas/Lineas` (`WebCore/Views/Ventas/Lineas.cshtml`; manual: `docs/11-manual-de-uso/pantallas/Ventas.Lineas.md`). Botones **PDF** y **Excel** en la cabecera → `VentasController.LineasPdf` / `LineasExcel` (GET, misma firma que `Lineas`, mismo gate de usuario de producción).
+
+- **Modelo compartido**: `VentasController.ConstruirModeloLineas` arma las tarjetas por venta (rango sin paginar, ventas reservadas ocultas por `_ctaCteReservada`, filtros de cliente / vendedor / forma de pago / producto). `Lineas` y los dos exports lo usan, así el archivo no puede divergir de la pantalla.
+- **Filtros**: producto, cliente, vendedor y formas de pago son filtros "en vivo" del navegador (sin `name`, los aplica `lineas-agrupadas.js`). El script inline de la vista arma el `href` de cada botón con `idSucursal`, `fechaDesde`/`fechaHasta` **aplicadas** (`fechasAplicadas`) y esos filtros (`formasPago` en CSV); sin ventas visibles el click se cancela con un aviso.
+- **PDF**: `GenerarDocsCore.GenerarPdfLineasVenta` (QuestPDF, A4). Una tabla por venta; la banda (fecha, Venta ID, total), la línea de datos (cliente, vendedor, forma de pago, sucursal, nro/comprobante) y los títulos de columna van en el `Header` de la tabla, así la banda no queda sola al pie de una hoja y se repite al continuar la venta.
+- **Excel**: `GenerarExcelCore.GenerarExcelLineasVenta` (ClosedXML 0.105.1, .xlsx real): misma estructura, cantidades e importes numéricos con formato, anchos fijos.
+- **Textos y totales compartidos** (período, filtros, datos de la venta, totales = suma de las líneas listadas): `WebCore/Services/LineasVentaExportHelper.cs`. El total de cada venta es el de **toda** la venta (igual que la pantalla).
+- **Límites conocidos**: sin tope de filas (la pantalla tampoco pagina); sin permiso propio (igual que la vista). Licencia de las dependencias, alternativas descartadas y riesgos: `docs/DECISIONS.md` (2026-10-13). Tests E2E: `WebCore.E2ETests/ExportarLineasVentaTests.cs`.
+
 ## Modificar una venta de una caja ya cerrada y validación de caja al finalizar — 2026-10-06
 
 - **Finalizar venta** (`VentasController.FinalizarVenta`): la caja se valida siempre con la fecha de **creación** (`fechaCreacion`, ahora), nunca con la fecha de la venta (editable). El salteo de caja para Admin / permiso `Venta.UltimaVenta` se mantiene (decisión 2026-09-07).

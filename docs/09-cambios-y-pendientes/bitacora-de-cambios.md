@@ -1,6 +1,14 @@
 # Bitacora de cambios
 
-## 2026-10-13 (la mas reciente) - Reportes: boton "Abrir en ventana" (sin menus), con los filtros actuales
+## 2026-10-13 (la mas reciente) - Ventas > Lineas: botones para exportar a PDF y Excel (corte por venta)
+
+- **Pedido**: en `/ventas/lineas`, exportar a PDF y a Excel el detalle de las lineas, con formato parecido a la vista y un corte por venta.
+- **Cambio** (solo WebCore): botones PDF y Excel en la cabecera de la pantalla; acciones `LineasPdf` / `LineasExcel` que reutilizan el mismo armado del modelo que la pantalla (extraido a `ConstruirModeloLineas`, sin cambios de comportamiento) y respetan lo que se ve (fechas aplicadas + filtros en vivo). Cada venta sale con una banda (fecha, Venta ID, total), una linea gris con cliente / vendedor / forma de pago / sucursal / comprobante y su tabla de lineas; al final, los mismos totales que las tarjetas. Excel real (.xlsx) con ClosedXML (paquete nuevo, MIT). Se crea el manual `Ventas.Lineas`.
+- **Verificado**: WebCore compila (0 errores, sin advertencias nuevas). Los dos generadores se corrieron con datos sinteticos que imitan la captura (linea con cantidad negativa, textos largos, sin ventas, una venta de 120 lineas + 60 ventas, 4.000 ventas x 6 lineas): el PDF se reviso renderizado a imagen (corte por venta, encabezado repetido al cambiar de hoja, la banda no queda sola al pie, totales) y el xlsx se releyo con ClosedXML (celdas combinadas, numeros con formato); 4.000 ventas: PDF ~6 s / 5 MB, Excel ~3 s / 1,2 MB. El script de la vista se corrio contra una replica del DOM con el `lineas-agrupadas.js` real (URL con sucursal, fechas aplicadas y filtros en vivo; el click sin ventas visibles se cancela con aviso). `SixLabors.Fonts` resuelve a 1.0.0 (Apache-2.0).
+- **Sin verificar**: la pantalla real con sesion y datos (el login de dev del fixture esta roto): la descarga de punta a punta con la base, el gate de usuario de produccion y el filtro de reservadas no se probaron en el navegador; el xlsx no se abrio en Excel (solo releido con ClosedXML); los 4 tests E2E nuevos (`ExportarLineasVentaTests`) compilan pero no se pudieron correr (mismo login). **NO desplegado.**
+- Decision y alternativas descartadas: `docs/DECISIONS.md` (2026-10-13, Exportar Lineas de venta a PDF y Excel).
+
+## 2026-10-13 - Reportes: boton "Abrir en ventana" (sin menus), con los filtros actuales
 
 - **Pedido**: lo mismo que en Existencia por sucursales, tambien para Reportes.
 - **Cambio** (solo WebCore): `Reportes?popup=true` usa `_LayoutEmbed`; boton "Abrir en ventana" a la derecha de la fila de "Mostrar totales". La ventana abre con los mismos filtros que la pantalla (tipo de reporte, fechas o cierres, sucursales, filtros avanzados, periodos comparativos) y consulta de entrada solo si la pantalla ya mostraba un resultado. Buscar dentro de la ventana la mantiene (campo oculto `popup=true` en el formulario). Helper compartido `ventana-independiente.js`, que ahora usa tambien Existencia.

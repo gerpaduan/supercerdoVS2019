@@ -36,6 +36,14 @@
          propia documentacion, que recomienda justamente ZXing.Net via SVG). Se eligio SVG (no
          bitmap) por el mismo motivo que QRCoder/PngByteQRCode: sin System.Drawing, corre en Linux. -->
     <PackageReference Include="ZXing.Net" Version="0.16.11" />
+    <!-- Excel (.xlsx real) para exportar Ventas > Lineas (2026-10-13, ver docs/DECISIONS.md "Exportar
+         Lineas de venta a PDF y Excel"): WebCore no tenia ninguna libreria de Excel (el "Excel" de
+         Finanzas es un CSV). ClosedXML es MIT (gratis para uso comercial); se descarto EPPlus 7
+         (Polyform Noncommercial: exige licencia paga para uso comercial) y escribir el xlsx a mano.
+         Arrastra DocumentFormat.OpenXml (MIT) y SixLabors.Fonts [1.0.0, 3.0.0): NuGet resuelve la 1.0.0
+         (Apache-2.0); la 2.x usa la Six Labors Split License (comercial segun el caso) -> no subir
+         SixLabors.Fonts a 2.x sin revisar su licencia. -->
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
   </ItemGroup>
 
   <!-- Manual de uso / ayuda por pantalla (2026-10-03, ver docs/DECISIONS.md "Manuales por rol y ayuda
