@@ -4,8 +4,8 @@ titulo: Pago / Cobro
 rol: usuario
 modulo: Finanzas
 orden: 1
-permiso: Sin permiso propio en el formulario; cambiar la persona o eliminar requiere permiso de edición de pagos
-revisada: 2026-10-12
+permiso: Sin permiso propio en el formulario; cambiar la persona requiere permiso de edición de pagos; eliminar requiere ese permiso o que el pago lo hayas cargado vos en tu caja abierta
+revisada: 2026-10-13
 ---
 ## Para qué sirve
 Registrar un **pago** (entregás dinero a una persona) o un **cobro** (recibís dinero de una persona) y dejar el movimiento en su cuenta corriente. Se abre desde la cuenta corriente de la persona (**Agregar Pago / Cobro**), desde el listado de Pagos o desde el POS.
@@ -43,6 +43,7 @@ El comprobante dice **Recibo de pago** o **Recibo de cobro** según la operació
 - Los pagos guardados **antes** de este cambio conservan el texto del conteo dentro de Observaciones; no se migra.
 - El ticket se imprime directo si el agente de impresión está instalado; si no, se abre el diálogo de impresión del navegador.
 - **Pago de una caja ya cerrada:** si el pago o cobro se hizo desde el POS y su egreso de caja está en una caja que **ya fue cerrada**, al modificarlo (importe, forma de pago, fecha, sucursal o persona) o **eliminarlo** aparece el aviso *"Esta caja ya fue cerrada"* con el detalle y hay que confirmar. Esa caja queda marcada con un aviso de que se modificaron datos (ver [Cajas abiertas](ayuda:pantalla/Cajas.CajasAbiertas)). Al eliminar, el egreso opuesto se registra con la fecha de hoy en la caja actual de quien elimina, no en la caja original. Los pagos cargados desde Finanzas (sin egreso de caja) no entran en ningún cierre y no avisan.
+- **Eliminar un pago o cobro:** aparece el botón **Eliminar** si tenés el permiso de edición de pagos **o** si el pago/cobro lo cargaste vos desde que abriste tu caja actual (misma sucursal, caja todavía abierta). Pide un motivo, genera el asiento opuesto en la cuenta corriente y queda visible como ELIMINADO. Para pagos de otros cajeros, de cajas anteriores o sin que tengas caja abierta hace falta el permiso. **Cambiar la persona** sigue exigiendo el permiso.
 - **PENDIENTE:** impresión física en la térmica y envío real de mail no verificados.
 
 Ver también: [mapa de configuraciones](ayuda:referencia/configuraciones)

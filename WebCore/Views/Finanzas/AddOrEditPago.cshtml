@@ -40,6 +40,8 @@
     // "Modificar"; el boton pasa a "Guardar". En alta y en POS no cambia nada (2026-09-24, ver docs/DECISIONS.md).
     bool pagoEliminado = ViewBag.PagoEliminado != null && (bool)ViewBag.PagoEliminado;
     bool puedeReasignarOEliminar = ViewBag.PuedeReasignarOEliminar != null && (bool)ViewBag.PuedeReasignarOEliminar;
+    // Eliminar: permiso de edicion de pagos O pago/cobro cargado por el operador en su caja abierta (2026-10-13).
+    bool puedeEliminar = ViewBag.PuedeEliminar != null && (bool)ViewBag.PuedeEliminar;
     bool soloLecturaInicial = !esNuevo && !desdePos;
     // Advertencia: la fecha del pago no es el dia en que se cargo el registro. En alta, "carga" = hoy.
     DateTime fechaDeCarga = Model.Creado ?? DateTime.Now;
@@ -308,7 +310,7 @@
             <div class="alert alert-danger d-none" id="msgErrorPago"></div>
 
             <div class="d-flex justify-content-end flex-wrap" style="gap:.5rem;">
-                @if (puedeReasignarOEliminar)
+                @if (puedeEliminar)
                 {
                     <button type="button" class="btn btn-outline-danger mr-auto" id="btnEliminarPago" data-pago-fijo="true"
                             title="Eliminar: genera el asiento opuesto y queda visible como ELIMINADO">
@@ -1289,7 +1291,7 @@
                     $.ajax({
                         url: urlEliminarPago,
                         type: 'POST',
-                        data: { id: idPago, motivo: resultado.value, confirmarCajaCerrada: !!confirmarCajaCerrada },
+                        data: { id: idPago, motivo: resultado.value, confirmarCajaCerrada: !!confirmarCajaCerrada, posInstanceId: posInstanceIdPago || '' },
                         headers: { RequestVerificationToken: tokenAntiForgery() }
                     }).done(function (resp) {
                         if (window.CajaCerradaConfirm && window.CajaCerradaConfirm.manejar(resp, function () { eliminar(true); }, { textoConfirmar: 'Eliminar igual' })) {

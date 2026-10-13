@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-10-13 (la mas reciente) - Eliminar pagos y cobros de la propia caja abierta (sin el permiso de edicion de pagos)
+
+- **Problema**: un cajero podia modificar un pago/cobro desde el POS pero el boton Eliminar no le aparecia sin el permiso de edicion de pagos (caso real en Servidor SM).
+- **Cambio**: ademas del permiso, se puede eliminar un pago/cobro cargado por el propio operador desde la apertura de su caja abierta (misma sucursal). Regla en `Negocio.PagoEnCajaAbierta`; el servidor la vuelve a aplicar en `EliminarPago`. Cambiar la persona sigue exigiendo el permiso. Decision y riesgos: `docs/DECISIONS.md` (2026-10-13).
+- **Verificado**: WebCore compila (0 errores); `Negocio.Tests` 438 verdes (13 tests nuevos de la regla). **NO probado en pantalla ni desplegado** (SM y San Lorenzo siguen con el codigo del 2026-10-12): PENDIENTE probar con un cajero sin permiso (cobro propio de su caja -> aparece Eliminar y funciona; cobro de otro cajero o de una caja anterior -> no aparece; POST directo -> rechazado) y con una cuenta de produccion compartida.
+
 ## 2026-10-12 - "Cond. IVA" del emisor impresa: Responsable Inscripto / Responsable Monotributo derivado de la condicion real
 
 - **Problema**: en el PDF/ticket de un monotributista "Cond. IVA:" salia vacia y en la empresa RI salia "RRII" (se imprimia un texto libre cargado a mano).

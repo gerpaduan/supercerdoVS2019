@@ -816,6 +816,36 @@ namespace WebCore.Controllers
             return _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.AddOrEditPago, pago.Fecha, idCreador);
         }
 
+        // Eliminar un pago o cobro: ademas del permiso de edicion de pagos, quien tiene una caja abierta puede
+        // eliminar los pagos/cobros que cargo el mismo en ESA caja (2026-10-13, ver docs/DECISIONS.md "Eliminar pagos
+        // y cobros de la propia caja abierta"). Cambiar la persona sigue exigiendo solo el permiso.
+        private bool PuedeEliminarPago(Entidades.Pago pago, string posInstanceId)
+        {
+            if (pago == null) return false;
+            return PuedeReasignarOEliminarPago(pago) || EsPagoDeMiCajaAbierta(pago, posInstanceId);
+        }
+
+        // Pago/cobro cargado por el operador desde que abrio su caja actual (regla pura en Negocio.PagoEnCajaAbierta).
+        // El operador sale de posInstanceId (cuenta de produccion compartida) o es el usuario de sesion; el dueno del
+        // egreso de caja del pago (si lo tiene) es el que dice quien lo cargo realmente.
+        private bool EsPagoDeMiCajaAbierta(Entidades.Pago pago, string posInstanceId)
+        {
+            if (pago == null || pago.Id <= 0 || pago.Eliminado) return false;
+
+            var operador = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+            var caja = ObtenerCajaAbiertaUsuario(operador);
+            if (operador == null || caja == null || caja.Sucursal == null) return false;
+
+            var egreso = _oCierreN.findEgresoCajaByTablaYId(Entidades.EgresoCaja.tablas.Pagos.ToString(), pago.Id);
+            int? idCreadorEgreso = egreso != null && egreso.Id > 0 ? (int?)egreso.CreadoPor : null;
+            int idSucursalPago = pago.Sucursal != null && pago.Sucursal.idSucursal > 0 ? pago.Sucursal.idSucursal : pago.IdSucursal;
+
+            return Negocio.PagoEnCajaAbierta.Evaluar(
+                pago.Creado, pago.IdCreadoPor, idSucursalPago,
+                idCreadorEgreso, operador.Id,
+                caja.FechaHoraInicio, caja.FechaHoraCierre, caja.Sucursal.IdSucursal);
+        }
+
         // Donde buscar la caja de un pago ya guardado. Solo cuenta lo que mueve una caja: el EGRESO de caja del pago
         // (los pagos hechos desde el POS, tipo 300). Un pago cargado desde Finanzas no genera egreso, no entra en ningun
         // cierre y por eso no se avisa (si no, cada cobro con fecha pasada pediria confirmar sin que el cierre cambie).
@@ -840,14 +870,14 @@ namespace WebCore.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "id")]
-        public IActionResult EliminarPago(int id, string motivo, bool confirmarCajaCerrada = false)
+        public IActionResult EliminarPago(int id, string motivo, bool confirmarCajaCerrada = false, string posInstanceId = "")
         {
             Entidades.Pago pago = id > 0 ? _oCtaCteN.getPagoById(id) : null;
             if (pago == null)
                 return Json(new { ok = false, mensaje = "No se encontró el pago o cobro." });
 
-            if (!PuedeReasignarOEliminarPago(pago))
-                return Json(new { ok = false, mensaje = "No tiene permiso para eliminar pagos o cobros." });
+            if (!PuedeEliminarPago(pago, posInstanceId))
+                return Json(new { ok = false, mensaje = "No tiene permiso para eliminar pagos o cobros. Sin ese permiso solo puede eliminar los que cargó usted desde que abrió su caja actual." });
 
             // Cajas YA CERRADAS a las que pertenecia el pago (2026-10-06, ver docs/DECISIONS.md "Cambios en cajas
             // cerradas y reapertura"): eliminarlo deja el egreso opuesto fechado HOY (cae en la caja actual de quien
@@ -943,6 +973,7 @@ namespace WebCore.Controllers
             bool pagoEliminado = pagoExistente != null && pagoExistente.Eliminado;
             ViewBag.PagoEliminado = pagoEliminado;
             ViewBag.PuedeReasignarOEliminar = pagoExistente != null && !desdePos && !pagoEliminado && PuedeReasignarOEliminarPago(pagoExistente);
+            ViewBag.PuedeEliminar = pagoExistente != null && !desdePos && !pagoEliminado && PuedeEliminarPago(pagoExistente, posInstanceId);
             ViewBag.UrlPagosListado = Url.Action("Pagos", "Finanzas");
             ViewBag.UrlEliminarPago = Url.Action("EliminarPago", "Finanzas");
             ViewBag.UrlListarPersonas = Url.Action("Listar", "Personas");
