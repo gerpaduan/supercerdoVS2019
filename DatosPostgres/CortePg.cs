@@ -506,13 +506,17 @@ namespace DatosPostgres
                     corteP.desvioestandar, corteP.independiente, corteP.promedio, corteP.ingresorapidoembutido
                 FROM personas RIGHT OUTER JOIN corte AS corteP ON personas.idpersona = corteP.idmarca
                 LEFT OUTER JOIN corte AS corteM ON corteP.idcortemaestro = corteM.idcorte
-                WHERE corteP.corte ILIKE @texto OR CAST(corteP.codigo AS text) = @textoExacto OR corteM.corte ILIKE @texto
+                WHERE corteP.corte ILIKE @texto OR CAST(corteP.codigo AS text) = @textoExacto
+                   OR CAST(corteP.codigo AS text) = @textoSinCeros OR corteM.corte ILIKE @texto
                 ORDER BY corteP.codigo;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
             {
                 p.AddWithValue("texto", "%" + (txtBusqueda ?? "") + "%");
                 p.AddWithValue("textoExacto", txtBusqueda ?? "");
+                // corte.codigo es bigint: un EAN-13 con 0 inicial esta guardado sin ese 0. Se busca
+                // tambien por el texto sin ceros a la izquierda (aditivo: lo que ya coincidia sigue igual).
+                p.AddWithValue("textoSinCeros", Contratos.CodigoProducto.SinCerosIzquierda(txtBusqueda));
             });
         }
 

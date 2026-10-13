@@ -13,6 +13,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-10-12 - POS: un producto con EAN-13 que empieza con 0 no se encuentra ni se agrega al escanearlo
+- **Sintoma**: al escanear un EAN-13 que empieza con 0 el POS no busca solo, no agrega el producto al carrito, o muestra "no coincide".
+- **Causa**: `corte.codigo` es `bigint`: el alta guarda `0123456789012` como `123456789012` (12 digitos). Muchas pistolas (modo UPC-A) y la camara entregan 12 digitos, y la auto-busqueda solo aceptaba 8 o 13 digitos validos; ademas el POS comparaba el codigo del servidor (sin 0) con el del campo (con 0).
+- **Verificaciones**: `SELECT idcorte, codigo FROM corte WHERE codigo BETWEEN 100000000000 AND 999999999999;` lista los productos cargados de 12 digitos. En la consola del navegador (POS): `esCodigoLeidoValido('<12 o 13 digitos>')` debe dar `true` si el digito de control es correcto.
+- **Resolucion**: ver `docs/DECISIONS.md` (2026-10-12): 12 digitos validos (UPC-A) y EAN-13 con 0 se tratan como el mismo producto. Si el codigo no se auto-agrega, revisar el digito de control (un codigo con control invalido se busca solo con Enter).
+
 ## 2026-10-12 - Al modificar un pago/cobro desde la Cuenta Corriente el egreso de caja no se actualiza
 - **Sintoma**: se cambia el importe (o la forma de pago) de un pago/cobro desde Cta. Cte. en el POS; la cuenta corriente queda bien pero en la caja del vendedor sigue el egreso original: sin anulación ni egreso con el valor nuevo, y la caja no cierra.
 - **Causa**: el link de edición de `CtaCtePersona.cshtml` no manda `desdePos=true`, por lo que no había caja POS y `CargarEgresoCajaPorPago` salía sin tocar nada; además la reversa solo se disparaba si cambiaba Tipo/Importe del movimiento de cta cte.

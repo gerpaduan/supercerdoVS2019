@@ -1184,10 +1184,14 @@ namespace WebCore.Controllers
                 if (!string.IsNullOrWhiteSpace(q))
                 {
                     q = q.Trim();
+                    // El codigo es bigint: un EAN-13 con 0 inicial esta guardado sin ese 0, asi que
+                    // tambien se busca por el texto sin ceros a la izquierda (aditivo).
+                    string qSinCeros = Contratos.CodigoProducto.SinCerosIzquierda(q);
                     productos = productos
                         .Where(p =>
                             (!string.IsNullOrEmpty(p.corte) && p.corte.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                            p.codigo.ToString().IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)
+                            p.codigo.ToString().IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            p.codigo.ToString().IndexOf(qSinCeros, StringComparison.OrdinalIgnoreCase) >= 0)
                         .ToList();
                 }
 

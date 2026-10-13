@@ -1559,12 +1559,16 @@
 
     buscador.addEventListener("keyup", function () {
         const valor = (this.value || "").toLowerCase().trim();
+        // El codigo es bigint: un EAN-13 con 0 inicial esta guardado sin ese 0 (aditivo: tambien se
+        // busca por el texto sin ceros a la izquierda).
+        // (Esta vista no carga barcode-code-input.js, por eso no usa window.codigoSinCeros.)
+        const valorSinCeros = /^\d+$/.test(valor) ? valor.replace(/^0+(?=\d)/, "") : valor;
         let visibles = 0;
 
         getFilasProductos().forEach(fila => {
             const codigo = (fila.dataset.codigo || "").toLowerCase();
             const nombre = (fila.dataset.nombre || "").toLowerCase();
-            const coincide = codigo.includes(valor) || nombre.includes(valor);
+            const coincide = codigo.includes(valor) || codigo.includes(valorSinCeros) || nombre.includes(valor);
 
             fila.style.display = coincide ? "" : "none";
 

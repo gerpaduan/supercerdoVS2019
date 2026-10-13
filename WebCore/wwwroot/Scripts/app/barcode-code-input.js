@@ -43,6 +43,28 @@
         return false;
     }
 
+    // UPC-A (12 digitos) = EAN-13 con un 0 adelante, con el mismo digito de control. El codigo de
+    // producto se guarda como bigint, asi que un EAN-13 que empieza con 0 queda guardado (y
+    // muchos lectores/camaras lo entregan) con 12 digitos. Se valida el control sobre '0' + code.
+    // Es ADITIVO: isValidEAN (8/13 estricto) no cambia porque lo usan otras pantallas.
+    function isValidUPCA(code12) {
+        return /^\d{12}$/.test(code12) && isValidEAN13('0' + code12);
+    }
+
+    // EAN-8, EAN-13 o UPC-A. Usado solo por el POS para decidir la busqueda/auto-agregado.
+    function isValidCodigoLeido(code) {
+        code = onlyDigits(code);
+        return isValidEAN(code) || isValidUPCA(code);
+    }
+
+    // Quita ceros a la izquierda solo si es todo digitos (conserva al menos uno):
+    // "0123" -> "123", "000" -> "0", "0A1" queda igual. Sirve para comparar el codigo tipeado
+    // (con 0) contra el que devuelve el servidor (bigint, sin 0).
+    function codigoSinCeros(valor) {
+        var texto = (valor == null ? '' : String(valor)).trim();
+        return /^\d+$/.test(texto) ? texto.replace(/^0+(?=\d)/, '') : texto;
+    }
+
     // options: { videoSelector, containerSelector, buttonSelector, closeButtonSelector,
     //            clearButtonSelector, flashButtonSelector, msgSelector, codigoInputSelector,
     //            beepSelector, onCodigoAceptado(codigo) }
@@ -231,4 +253,9 @@
     // rama nunca se ejecutaba. La validacion YA existe en este archivo (isValidEAN, usada por
     // el scanner de camara) -- se expone tal cual, sin reimplementarla.
     window.esEANValido = isValidEAN;
+
+    // 2026-10-12: EAN-13 con 0 inicial (se guarda de 12 digitos, ver docs/DECISIONS.md). El POS usa
+    // esCodigoLeidoValido (EAN-8/EAN-13/UPC-A) para auto-buscar y codigoSinCeros para comparar.
+    window.esCodigoLeidoValido = isValidCodigoLeido;
+    window.codigoSinCeros = codigoSinCeros;
 })(window, window.jQuery);

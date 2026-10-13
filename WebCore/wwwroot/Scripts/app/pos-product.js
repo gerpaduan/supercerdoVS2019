@@ -40,6 +40,23 @@
                 .replace(/\u00D7/g, 'X');
         }
 
+        // ¿El texto es un codigo de barras leido (EAN-8, EAN-13 o UPC-A de 12 digitos)?
+        // El codigo de producto es bigint: un EAN-13 que empieza con 0 se guarda y muchos lectores
+        // lo entregan con 12 digitos (UPC-A). esCodigoLeidoValido lo acepta; si no esta cargado
+        // (script viejo en cache) se cae al validador historico esEANValido (8/13).
+        function esCodigoLeido(codigo) {
+            if (typeof window.esCodigoLeidoValido === 'function') return window.esCodigoLeidoValido(codigo);
+            return typeof window.esEANValido === 'function' && window.esEANValido(codigo);
+        }
+
+        // ¿Es el mismo codigo? Igual como texto, o igual ignorando ceros a la izquierda
+        // (el servidor devuelve el bigint sin el 0 que el usuario/lector si mando).
+        function mismoCodigo(a, b) {
+            if (a === b) return true;
+            if (typeof window.codigoSinCeros !== 'function') return false;
+            return window.codigoSinCeros(a) === window.codigoSinCeros(b);
+        }
+
         // Convierte un numero escrito con formato local a float.
         // Acepta "1,25" o "1.25".
         function parseFloatAR(value) {
@@ -303,7 +320,7 @@
                     // servidor haya interpretado el codigo como interno de balanza con
                     // TipoValor=Cantidad (data.cantidadSugerida) -- ahi el peso viene
                     // embebido en el codigo, no es "1 unidad" (ver BarcodeInterpreter).
-                    if (!omitirAutoContinuar && typeof window.esEANValido === 'function' && window.esEANValido(codigoTrim)) {
+                    if (!omitirAutoContinuar && esCodigoLeido(codigoTrim)) {
                         var cantidadDesdeServidor = Number(data && data.cantidadSugerida);
                         $('#inputCantidad').val(cantidadDesdeServidor > 0 ? String(cantidadDesdeServidor) : '1');
                         document.querySelector('#inputCantidad')?.focus();
@@ -363,7 +380,7 @@
                 return true;
             }
 
-            if (typeof window.esEANValido === 'function' && window.esEANValido(entrada)) {
+            if (esCodigoLeido(entrada)) {
                 $('#inputCantidad').val('1');
                 $('#inputCodigo').val(entrada);
 
@@ -663,7 +680,7 @@
                     const codigoActual = normalizeInput($('#inputCodigo').val());
                     const codigoProducto = normalizeInput(productoSeleccionado?.codigo);
 
-                    if (!codigoProducto || codigoProducto !== codigoActual) {
+                    if (!codigoProducto || !mismoCodigo(codigoProducto, codigoActual)) {
                         showNoMatch();
                         productoSeleccionado = null;
                         return;
@@ -724,6 +741,11 @@
                     // omitirSugerenciaAlta=true: es una seleccion desde el buscador de productos
                     // existentes, no un escaneo/tipeo de codigo nuevo -- si no matchea es una
                     // carrera rara (el producto se borro entre listar y elegir), no un caso de alta.
+                    // omitirAutoContinuar solo para codigos de 12 digitos (UPC-A / EAN-13 con 0 inicial):
+                    // elegir del buscador un producto asi sigue yendo a "cantidad", como siempre.
+                    // Los EAN-8/EAN-13 conservan su comportamiento (auto-continuar).
+                    const omitirAutoContinuarModal = esCodigoLeido(codigo)
+                        && !(typeof window.esEANValido === 'function' && window.esEANValido(codigo));
                     finishTyping(codigo, function (ok) {
                         if (ok === false) {
                             focusCodigo();
@@ -733,7 +755,7 @@
                         const codigoActual = normalizeInput($('#inputCodigo').val());
                         const codigoProducto = normalizeInput(productoSeleccionado?.codigo);
 
-                        if (!codigoProducto || codigoProducto !== codigoActual) {
+                        if (!codigoProducto || !mismoCodigo(codigoProducto, codigoActual)) {
                             showNoMatch();
                             productoSeleccionado = null;
                             focusCodigo();
@@ -749,7 +771,7 @@
                         }
 
                         focusCantidad();
-                    }, undefined, undefined, true);
+                    }, undefined, omitirAutoContinuarModal || undefined, true);
                 }
             });
         }
