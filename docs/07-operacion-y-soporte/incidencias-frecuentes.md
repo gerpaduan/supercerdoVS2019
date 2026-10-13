@@ -385,3 +385,8 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Síntoma**: en `/Cajas/EgresosCaja` la columna Sucursal (y la del desplegable) salía vacía; "Modificar" dejaba el modal en "Cargando..." (HTTP 500, `SqlException` timeout contra SQL Server); el encabezado del formulario mostraba la sucursal del usuario y no la del egreso.
 - **Causa**: (1) las consultas de `DatosPostgres/CierreCajaPg.cs` no traían la columna `Sucursal`; (2) `Negocio.CierreCaja.getEgresoCajaById` armaba `new Usuario(_empresa)` (SQL Server) aunque el motor fuera Postgres; (3) `_AddOrEditEgresoCaja.cshtml` priorizaba la sucursal del usuario sobre la del egreso.
 - **Fix**: `LEFT JOIN sucursal` en las 3 consultas de egresos; `CierreCaja` recibe `usuarioN` inyectado (`NegocioFactory.CrearCierreCaja`); el formulario resuelve la sucursal por id del egreso. La columna Detalle del listado ahora muestra la primera línea del texto (antes solo un "1").
+
+## Guardar un pago en San Lorenzo / Servidor SM da 404 de IIS (2026-10-13)
+- **Sintoma**: al guardar un pago/cobro aparece "404 - File or directory not found / The resource you are looking for might have been removed...". El pago SI queda guardado.
+- **Causa**: el `returnUrl` del formulario se armaba con `Request.Path` (sin PathBase `/CarniSysWeb`); tras guardar, `window.location.href = redirectUrl` iba a `/Finanzas/...` sin prefijo. En la VPS (sin PathBase) no pasa.
+- **Fix**: `Request.PathBase + Request.Path + Request.QueryString` en `Views/Finanzas/CtaCtePersona.cshtml` y `Pagos.cshtml`. Detalle y otros lugares con el mismo defecto en `docs/DECISIONS.md` (2026-10-13).

@@ -42,7 +42,7 @@
     // "Pagos" queda activo tambien al abrir un pago desde ese listado (AddOrEditPago con returnUrl a /Finanzas/Pagos).
     string returnUrlActual = Context.Request.Query["returnUrl"].ToString();
     bool enPagos = enFinanzas && (action == "Pagos"
-        || (action == "AddOrEditPago" && returnUrlActual.StartsWith("/Finanzas/Pagos", StringComparison.OrdinalIgnoreCase)));
+        || (action == "AddOrEditPago" && returnUrlActual.StartsWith(Context.Request.PathBase + "/Finanzas/Pagos", StringComparison.OrdinalIgnoreCase)));
     bool enConfiguracion = controller == "Usuarios" || controller == "AuditoriaLogin" || controller == "Parametros"
         || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros" || controller == "CertificadoArca" || controller == "TitularesFiscales";
     bool enAdministracionSistema = controller == "SystemAdministration" || controller == "PadronPlataforma";

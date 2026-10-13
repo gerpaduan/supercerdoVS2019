@@ -177,7 +177,7 @@
                            Fix: pasar el valor CRUDO (sin escapar a mano) -- Url.Action lo escapa una
                            sola vez, mismo patron ya usado en VentasController/_TablaVentas.cshtml
                            (Batch 4 de esta misma ronda). *@
-                        <a href="@Url.Action("AddOrEditPago", "Finanzas", new { idPersona = ViewBag.IdPersona, returnUrl = Context.Request.Path + Context.Request.QueryString, desdePos, posInstanceId = posInstanceIdCtaCte })"
+                        <a href="@Url.Action("AddOrEditPago", "Finanzas", new { idPersona = ViewBag.IdPersona, returnUrl = Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString, desdePos, posInstanceId = posInstanceIdCtaCte })"
                            class="btn btn-success mr-2"
                            id="btnAgregarPagoCtaCte"
                            data-pos-ajax="@(desdePos ? "true" : "false")"

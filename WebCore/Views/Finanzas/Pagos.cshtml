@@ -16,7 +16,9 @@
     bool verEliminados = ViewBag.VerEliminados != null && (bool)ViewBag.VerEliminados;
 
     // Al abrir un pago, "Volver" regresa a este mismo listado con los filtros que estaban aplicados.
-    string urlActual = Context.Request.Path + Context.Request.QueryString;
+    // PathBase incluido: Request.Path solo trae la ruta sin el prefijo de la app ("/CarniSysWeb" en SM/San Lorenzo) y el
+    // returnUrl terminaba en "/Finanzas/..." sin prefijo -> 404 de IIS al guardar (2026-10-13, ver docs/DECISIONS.md).
+    string urlActual = Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString;
 }
 
 <div class="container-fluid px-2 px-md-3" id="pagosListadoContainer">
