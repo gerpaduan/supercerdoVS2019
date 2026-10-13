@@ -6,6 +6,12 @@
 - **Cambio**: ademas del permiso, se puede eliminar un pago/cobro cargado por el propio operador desde la apertura de su caja abierta (misma sucursal). Regla en `Negocio.PagoEnCajaAbierta`; el servidor la vuelve a aplicar en `EliminarPago`. Cambiar la persona sigue exigiendo el permiso. Decision y riesgos: `docs/DECISIONS.md` (2026-10-13).
 - **Verificado**: WebCore compila (0 errores); `Negocio.Tests` 438 verdes (13 tests nuevos de la regla). **NO probado en pantalla ni desplegado** (SM y San Lorenzo siguen con el codigo del 2026-10-12): PENDIENTE probar con un cajero sin permiso (cobro propio de su caja -> aparece Eliminar y funciona; cobro de otro cajero o de una caja anterior -> no aparece; POST directo -> rechazado) y con una cuenta de produccion compartida.
 
+## 2026-10-12 - Ventas sin guardar: al cerrar la pestana se manda el carrito completo; listado del mas reciente al mas antiguo
+
+- **Problema**: si se cerraba la pestana dentro del debounce (1,5 s) del ultimo cambio, o si el primer guardado nunca habia llegado, el servidor quedaba sin ese cambio (o sin rastro); solo estaba en el localStorage de esa PC.
+- **Cambio**: `pos-borrador.js` (`alCerrarPestana`) manda el carrito completo con `cierrePestana=true` cuando hay algo sin mandar; `GuardarBorradorRequest.CierrePestana` + `GuardarBorradorPOS` registran el evento `CIERRE_PESTANA` en la misma llamada. `ListarBorradoresPOS` ordena por `Creado` descendente. Detalle en `docs/03-modulos/ventas-y-pos.md`.
+- **Verificado**: JS con sintaxis OK, WebCore compila (0 errores de codigo). Desplegado en la VPS luden el 2026-10-12 junto con la base local (ver `despliegue-y-publicacion.md`); **NO probado en pantalla**: armar un carrito, cerrar la pestana enseguida y ver el ultimo item en "Ver ventas sin guardar".
+
 ## 2026-10-12 - "Cond. IVA" del emisor impresa: Responsable Inscripto / Responsable Monotributo derivado de la condicion real
 
 - **Problema**: en el PDF/ticket de un monotributista "Cond. IVA:" salia vacia y en la empresa RI salia "RRII" (se imprimia un texto libre cargado a mano).

@@ -116,6 +116,10 @@ namespace WebCore.Controllers
                 switch (resultado)
                 {
                     case Entidades.ResultadoGuardarBorrador.Guardado:
+                        // Cierre de pestana junto con el guardado: el evento va DESPUES del upsert (que fija
+                        // ultimolatido = now()), asi la venta queda interrumpida de inmediato.
+                        if (request.CierrePestana)
+                            negocio.RegistrarCierrePestana(request.ClientId, operador.Id, user.IdSucursal, operador.Id);
                         return Json(new { ok = true });
                     case Entidades.ResultadoGuardarBorrador.YaCerrado:
                         // Ya se finalizo o se descarto: el navegador debe abandonar ese carrito.
@@ -247,7 +251,9 @@ namespace WebCore.Controllers
 
                 var pendientes = new List<object>();
                 int interrumpidas = 0;
-                foreach (var borrador in lista)
+                // Del mas reciente al mas antiguo (por hora de inicio). Se ordena aca y no en el repositorio:
+                // el orden del contrato (creado ASC) lo usan otros consumidores y sus tests.
+                foreach (var borrador in lista.OrderByDescending(b => b.Creado))
                 {
                     // El carrito de esta misma pestana no se ofrece a si mismo; los vacios tampoco.
                     if (request?.ClientIdLocal != null && borrador.ClientId == request.ClientIdLocal.Value) continue;

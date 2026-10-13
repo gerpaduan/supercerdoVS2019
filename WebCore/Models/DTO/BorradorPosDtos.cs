@@ -16,6 +16,12 @@ namespace WebCore.Models.DTO
         // true = solo "sigo vivo" (el carrito no cambio desde el ultimo guardado).
         public bool SoloLatido { get; set; }
 
+        // true = ademas de guardar el carrito, la pestana se esta cerrando (pagehide): se registra el evento
+        // CIERRE_PESTANA en la misma llamada. Evita que el cierre llegue antes que el guardado (dos fetch
+        // keepalive pueden cruzarse) y deja el carrito completo en el servidor aunque el ultimo cambio
+        // todavia estuviera dentro del debounce.
+        public bool CierrePestana { get; set; }
+
         public JsonElement Payload { get; set; }
     }
 

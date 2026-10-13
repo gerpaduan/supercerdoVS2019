@@ -20,6 +20,9 @@
     // Espera antes de mandar el carrito tras un cambio (agrupa ediciones seguidas). El primer guardado va sin demora.
     var DEBOUNCE_GUARDADO_MS = 1500;
 
+    // Tope de fetch con keepalive (64 KB por navegador, compartido entre pedidos en vuelo): se deja margen.
+    var MAX_BYTES_KEEPALIVE = 56000;
+
     var cfg = window.POSBorradorConfig || {};
     var habilitado = false;
 
@@ -240,9 +243,32 @@
     // Aviso de cierre de pestana con la venta sin finalizar. Un corte de luz no dispara nada: se distingue
     // en el servidor por la falta de latido.
     function alCerrarPestana() {
-        if (!habilitado || !estado.creadoEnServidor) return;
+        if (!habilitado) return;
         if (window.PosNavegandoInternoPOS || window.POSFinalizandoVenta || window.POSVentaFinalizada) return;
-        if (!hayLineasActivas(snapshotActual())) return;
+
+        var snap = snapshotActual();
+        if (!hayLineasActivas(snap)) return;
+
+        // Hay algo que el servidor todavia no tiene (ultimo cambio dentro del debounce, guardado en vuelo o
+        // primer guardado que nunca llego): se manda el carrito completo junto con el aviso de cierre, en UNA
+        // llamada keepalive. Dos llamadas separadas podrian cruzarse y el cierre llegaria antes que el guardado.
+        if (!estado.creadoEnServidor || estado.pendiente || estado.enviando) {
+            var cuerpo = {
+                clientId: getClientId(),
+                posInstanceId: posInstanceId(),
+                idSucursalPOS: idSucursalPOS(),
+                soloLatido: false,
+                cierrePestana: true,
+                payload: snap
+            };
+            // fetch keepalive admite ~64 KB: si el carrito no entra, se cae al aviso solo (si el servidor ya lo conoce).
+            if (JSON.stringify(cuerpo).length < MAX_BYTES_KEEPALIVE) {
+                post(cfg.urls.guardar, cuerpo, true);
+                return;
+            }
+        }
+
+        if (!estado.creadoEnServidor) return;
 
         post(cfg.urls.evento, {
             clientId: getClientId(),

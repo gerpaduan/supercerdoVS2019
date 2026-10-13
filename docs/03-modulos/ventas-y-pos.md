@@ -42,6 +42,11 @@ borrador en servidor y advertencias del POS", 2026-09-21). Resumen operativo:
   posterior al último latido, la venta queda "Interrumpida" y cargable **al instante**
   (`Entidades.VentaBorrador.CerradaPestana`; el repositorio lee la señal efectiva = hora del cierre,
   sin tocar `ultimolatido`). Solo un corte sin aviso (luz, crash del navegador) espera el umbral.
+  Si al cerrar queda algo sin mandar (último cambio dentro del debounce de 1,5 s, guardado en vuelo o
+  primer guardado que nunca llegó), el `pagehide` manda el carrito completo con `cierrePestana=true`
+  a `GuardarBorradorPOS` (una sola llamada keepalive; el evento se registra después del upsert). Si el
+  carrito supera ~56 KB se cae al aviso solo (`EventoBorradorPOS`). El listado ("Ver ventas sin
+  guardar" y campana) va del más reciente al más antiguo por hora de inicio.
   La "Última señal" que se muestra es la fecha y hora reales (latido o cierre), no "hace N d".
   (Corregido 2026-10-05: antes se retrocedía `ultimolatido` 1 día con `EnvejecerLatidoPorCierre`,
   método eliminado, y la señal salía siempre ≥ "1 d"; ver `docs/DECISIONS.md` 2026-10-05.) Desde 2026-10-04, una venta **propia** que figura "En uso"
