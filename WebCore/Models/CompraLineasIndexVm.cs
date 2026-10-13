@@ -15,6 +15,11 @@ namespace WebCore.Models
         public int IdSucursal { get; set; }
         public string TipoCompra { get; set; } = "";
         public string Texto { get; set; } = "";
+        // Filtro de Proveedor: texto escrito (solo sin seleccion) y/o seleccion exacta del selector
+        // multi-seleccion (CSV de IDs ya validados + nombres para pintar el input).
+        public string Proveedor { get; set; } = "";
+        public string IdsProveedor { get; set; } = "";
+        public List<WebCore.Services.FiltroPickerItem> ProveedoresSeleccionados { get; set; } = new List<WebCore.Services.FiltroPickerItem>();
         public string Producto { get; set; } = "";
         public DateTime FechaDesde { get; set; }
         public DateTime FechaHasta { get; set; }
@@ -31,6 +36,9 @@ namespace WebCore.Models
         }
 
         public int IdCompra { get; set; }
+        // ID exacto del proveedor de la compra: el filtro en vivo del selector multi-seleccion lo
+        // compara contra data-id-proveedor de la tarjeta.
+        public int IdProveedor { get; set; }
         public string CollapseId { get; set; } = "";
         public string Titulo { get; set; } = "";
         public string Subtitulo { get; set; } = "";

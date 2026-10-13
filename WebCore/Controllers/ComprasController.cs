@@ -65,6 +65,8 @@ namespace WebCore.Controllers
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly WebCore.Services.ICtaCteReservadaService _ctaCteReservada;
+        // Selector multi-seleccion de Proveedor (parseo de IDs y nombres resueltos para pintar el input).
+        private readonly WebCore.Services.FiltroPickerService _filtroPicker;
 
         private const long CuitHabilitaMediaRes = 20306210786;
 
@@ -84,6 +86,51 @@ namespace WebCore.Controllers
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            _filtroPicker = new WebCore.Services.FiltroPickerService(_oPersonaN, _oUsuarioN);
+        }
+
+        // Normaliza el CSV de IDs de proveedor del selector multi-seleccion (querystring = input externo:
+        // solo enteros > 0, sin repetidos, con tope) y resuelve los nombres para pintar el input.
+        private (List<int> Ids, List<WebCore.Services.FiltroPickerItem> Items) ResolverProveedoresFiltro(string idsCsv)
+        {
+            List<int> ids = WebCore.Services.FiltroPickerService.ParsearIds(idsCsv);
+            var items = ids.Count == 0 ? new List<WebCore.Services.FiltroPickerItem>() : _filtroPicker.ResolverPersonas(ids);
+            return (ids, items);
+        }
+
+        // Filtro por proveedor del listado de compras, aplicado sobre el DataTable que devuelve obtenerCompras
+        // (que no tiene parametro de proveedor; mismo patron que QuitarComprasOcultas, asi no se toca el SP
+        // de SQL Server ni ICompraRepository). Con IDs: coincidencia EXACTA por idProveedor. Sin IDs y con
+        // texto: la razon social contiene el texto (comportamiento de siempre). Modifica y devuelve el mismo DataTable.
+        // TODO(claude): confirmar que el SP obtenerCompras de SQL Server (legacy) devuelve idProveedor y razonSocial;
+        // WebCore usa Postgres (CompraPg.obtenerCompras los devuelve). Si falta la columna, el filtro no se aplica.
+        private static DataTable FiltrarPorProveedor(DataTable dt, List<int> idsProveedor, string textoProveedor)
+        {
+            if (dt == null) return dt;
+
+            bool porIds = idsProveedor != null && idsProveedor.Count > 0;
+            string texto = (textoProveedor ?? "").Trim();
+            if (!porIds && texto.Length == 0) return dt;
+
+            string columna = porIds ? "idProveedor" : "razonSocial";
+            if (!dt.Columns.Contains(columna)) return dt;
+
+            var ids = porIds ? new HashSet<int>(idsProveedor) : null;
+            for (int i = dt.Rows.Count - 1; i >= 0; i--)
+            {
+                object valor = dt.Rows[i][columna];
+                bool coincide;
+                if (valor == DBNull.Value)
+                    coincide = false;
+                else if (porIds)
+                    coincide = ids.Contains(Convert.ToInt32(valor));
+                else
+                    coincide = Convert.ToString(valor).IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (!coincide)
+                    dt.Rows.RemoveAt(i);
+            }
+            return dt;
         }
 
         // ===== "Usuario de produccion" para el modulo Compras (Batch 5, 2026-09-06, ver
@@ -217,7 +264,7 @@ namespace WebCore.Controllers
             return Convert.ToString(row[columna]) ?? "";
         }
 
-        public IActionResult Index(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        public IActionResult Index(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, string proveedor = "", string idsProveedor = "")
         {
             // Usuario de produccion: exige operador autorizado antes de entrar (Batch 5, ver
             // docs/DECISIONS.md "Login de operador para el modulo Compras"). Port literal de
@@ -246,7 +293,12 @@ namespace WebCore.Controllers
                 tipoFiltrado = "Todos";
             }
 
+            // Filtro de Proveedor (selector multi-seleccion): con IDs es exacto y el texto escrito se ignora.
+            var seleccionProveedor = ResolverProveedoresFiltro(idsProveedor);
+            string proveedorTexto = seleccionProveedor.Ids.Count > 0 ? "" : (proveedor ?? "").Trim();
+
             DataTable dt = QuitarComprasOcultas(_oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde, hasta, null) ?? new DataTable());
+            dt = FiltrarPorProveedor(dt, seleccionProveedor.Ids, proveedorTexto);
             var model = new CompraIndexVm
             {
                 Compras = dt
@@ -258,6 +310,9 @@ namespace WebCore.Controllers
             ViewBag.IdSucursal = idSucursal;
             ViewBag.TipoCompra = tipoFiltrado;
             ViewBag.Texto = texto ?? "";
+            ViewBag.Proveedor = proveedorTexto;
+            ViewBag.IdsProveedor = string.Join(",", seleccionProveedor.Ids);
+            ViewBag.ProveedoresSeleccionados = seleccionProveedor.Items;
             ViewBag.FechaDesde = desde;
             ViewBag.FechaHasta = hasta;
             ViewBag.PermiteMediaRes = permiteMediaRes;
@@ -269,7 +324,7 @@ namespace WebCore.Controllers
             return View("~/Views/Compras/Index.cshtml", model);
         }
 
-        public IActionResult Lineas(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", string producto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        public IActionResult Lineas(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", string producto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, string proveedor = "", string idsProveedor = "")
         {
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
@@ -289,12 +344,21 @@ namespace WebCore.Controllers
                 tipoFiltrado = "Todos";
             }
 
+            // Filtro de Proveedor (selector multi-seleccion): con IDs es exacto y el texto escrito se ignora.
+            // Se aplica ANTES del bucle de abajo, que carga cada compra completa (findById_convertToCompra).
+            var seleccionProveedor = ResolverProveedoresFiltro(idsProveedor);
+            string proveedorTexto = seleccionProveedor.Ids.Count > 0 ? "" : (proveedor ?? "").Trim();
+
             DataTable dt = QuitarComprasOcultas(_oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde.Date, hasta.Date, null) ?? new DataTable());
+            dt = FiltrarPorProveedor(dt, seleccionProveedor.Ids, proveedorTexto);
             var model = new CompraLineasIndexVm
             {
                 IdSucursal = idSucursal,
                 TipoCompra = tipoFiltrado,
                 Texto = texto ?? "",
+                Proveedor = proveedorTexto,
+                IdsProveedor = string.Join(",", seleccionProveedor.Ids),
+                ProveedoresSeleccionados = seleccionProveedor.Items,
                 Producto = producto ?? "",
                 FechaDesde = desde,
                 FechaHasta = hasta,
@@ -325,6 +389,7 @@ namespace WebCore.Controllers
                 var grupo = new CompraLineasGrupoVm
                 {
                     IdCompra = compra.IdCompra,
+                    IdProveedor = compra.Proveedor != null ? compra.Proveedor.IdPersona : 0,
                     CollapseId = "compraLineas_" + compra.IdCompra,
                     Titulo = "COMPRA ID: " + compra.IdCompra,
                     Subtitulo = compra.FechaCompra.ToString("dd/MM/yyyy HH:mm"),

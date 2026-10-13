@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (33 de 89 pantallas)
+## Cobertura (37 de 89 pantallas)
 
 ## Manual del usuario
 
@@ -27,6 +27,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Bloqueo de usuarios por intentos fallidos | Acceso y seguridad | `conceptos/bloqueo-de-usuarios.md` | 2026-10-03 |
 | conceptos | Clave rápida (PIN) | Acceso y seguridad | `conceptos/clave-rapida-pin.md` | 2026-10-03 |
 | conceptos | Ingresar con la dirección de tu empresa (CUIT) | Acceso y seguridad | `conceptos/login-por-cuit.md` | 2026-10-04 |
+| conceptos | Buscar cliente, vendedor o proveedor en los filtros (F9 / F10) | Conceptos generales | `conceptos/selector-cliente-vendedor-proveedor.md` | 2026-10-13 |
 | conceptos | Menú de usuario (arriba a la derecha) | Conceptos generales | `conceptos/menu-de-usuario.md` | 2026-10-03 |
 | conceptos | Roles y permisos (quién puede hacer qué) | Conceptos generales | `conceptos/roles-y-permisos.md` | 2026-10-03 |
 | conceptos | Fórmula secreta | Elaborados | `conceptos/formula-secreta.md` | 2026-10-04 |
@@ -38,6 +39,8 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
 | pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-10-09 |
+| pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-13 |
+| pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-13 |
 | pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-10-09 |
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-10-09 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-05 |
@@ -45,7 +48,9 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-05 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-05 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-13 |
+| pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-13 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-13 |
+| pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-10-13 |
 
 ## Manual del administrador
 
@@ -81,7 +86,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 - **Actividades**: Index
 - **CodigosBarra**: Editar, Index
-- **Compras**: AutorizarModulo, Editar, Index, Lineas
+- **Compras**: AutorizarModulo, Editar
 - **Elaborados**: IngresoRapido
 - **Empleados**: Editar, Historial, Index, Vacaciones
 - **Finanzas**: Cheques, CtaCtePersona, CtasCtes, Pagos
@@ -99,4 +104,4 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **Sucursal**: Editar, Index
 - **SucursalesSpike**: Index
 - **SystemAdministration**: EditarSucursal, Sucursales
-- **Ventas**: AutorizarModulo, DetalleFactura, DetalleVenta, Facturas, Index, POS
+- **Ventas**: AutorizarModulo, DetalleFactura, DetalleVenta, POS

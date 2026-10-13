@@ -96,11 +96,15 @@ namespace Contratos
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
             int pagina, int cantidad, int cantidadExtra, string entorno = null,
-            Entidades.RestriccionCtaCteReservada restriccion = null);
+            Entidades.RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null);
+        // idsCliente / idsVendedor: filtro EXACTO por ID (selector multi-seleccion de la pantalla Facturas).
+        // Null o vacio = sin filtro; conviven con el filtro por texto (cliente/vendedor).
         (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null);
+            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null);
         // true si la empresa tiene al menos una factura emitida en homologacion (esprueba). Sirve para
         // mostrar el filtro Produccion/Pruebas solo cuando hace falta. SQL Server: siempre false.
         bool ExistenFacturasPrueba();

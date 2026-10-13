@@ -1,0 +1,61 @@
+@* Modal unico del selector multi-seleccion de filtros Cliente / Vendedor / Proveedor.
+   Lo maneja wwwroot/Scripts/app/filtro-picker.js (que tiene que cargarse DESPUES de este partial: lee las URLs
+   de aca). Las URLs de los endpoints (FiltroPickerController) viajan en data-url-* para no hardcodearlas en el JS.
+   Estilos: ui-refresh.css (#modalFiltroPicker, .fp-*). Detalle: docs/DECISIONS.md (2026-10-13). *@
+<div class="modal fade" id="modalFiltroPicker" tabindex="-1" aria-hidden="true"
+     data-url-personas="@Url.Action("Personas", "FiltroPicker")"
+     data-url-vendedores="@Url.Action("Vendedores", "FiltroPicker")"
+     data-url-resolver="@Url.Action("Resolver", "FiltroPicker")">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-search mr-1"></i> <span class="js-fp-titulo">Buscar</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="text" class="form-control mb-2 js-fp-buscar" autocomplete="off"
+                       placeholder="Escribí para buscar por nombre, identificación o CUIT" />
+
+                @* Todo lo tildado (incluye lo que ya no aparece en la busqueda actual). *@
+                <div class="fp-chips mb-2 d-none js-fp-chips"></div>
+
+                <div class="table-responsive" style="max-height: max(11rem, calc(100vh - 340px)); overflow-y: auto;">
+                    <table class="table table-hover table-sm">
+                        <thead class="thead-light">
+                            <tr>
+                                <th></th>
+                                <th class="text-center d-none d-md-table-cell">#</th>
+                                <th class="js-fp-col-nombre">Nombre</th>
+                                <th class="js-fp-col-sub">Identificación</th>
+                                <th class="js-fp-col-extra">CUIT</th>
+                            </tr>
+                        </thead>
+                        <tbody class="js-fp-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-warning py-1 px-2 mt-2 mb-0 small d-none js-fp-aviso">
+                    Hay más resultados de los que se muestran: escribí más letras para afinar la búsqueda.
+                </div>
+
+                <small class="text-muted d-block mt-2 fp-ayuda">
+                    Clic en la fila o Enter tilda / destilda. ↑ ↓ mueven la fila activa.
+                    <span class="d-none d-md-inline">Alt+número tilda esa fila.</span>
+                    Alt+Enter aplica. Esc cierra sin cambiar nada.
+                </small>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <div>
+                    <span class="text-muted small js-fp-contador">Ninguno seleccionado</span>
+                    <button type="button" class="btn btn-link btn-sm js-fp-limpiar-sel">Limpiar selección</button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary js-fp-aplicar">Aplicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

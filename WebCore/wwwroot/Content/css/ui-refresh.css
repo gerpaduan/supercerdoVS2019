@@ -1397,3 +1397,158 @@ body.app-shell .persona-global .btn.disabled {
         margin: 0.65rem;
     }
 }
+
+/* Selector multi-seleccion de filtros Cliente / Vendedor / Proveedor (filtro-picker.js + _FiltroPickerModal.cshtml).
+   El script envuelve el input del filtro en .filtro-picker > .input-group con [limpiar][lupa] y una etiqueta chica
+   debajo (.filtro-picker-sub). El input conserva su .form-control, asi cada pantalla le sigue dando su alto y tamano.
+   Con seleccion hecha el input queda de solo lectura (.filtro-picker-seleccionado): fondo azul suave para que se
+   note que filtra por IDs exactos y no por texto. */
+body.app-shell .filtro-picker {
+    width: 100%;
+    min-width: 0;
+}
+
+body.app-shell .filtro-picker-group {
+    flex-wrap: nowrap;
+}
+
+body.app-shell .filtro-picker-group > .form-control {
+    min-width: 0;
+    text-overflow: ellipsis;
+}
+
+body.app-shell .filtro-picker-group > .form-control.filtro-picker-seleccionado {
+    background: var(--ui-primary-soft);
+    border-color: var(--ui-primary);
+    color: var(--ui-text);
+    font-weight: 600;
+    cursor: default;
+}
+
+body.app-shell .filtro-picker-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.7rem;
+    background: var(--ui-input-bg);
+    color: var(--ui-text-soft);
+    border: 1px solid var(--ui-border);
+    box-shadow: none;
+}
+
+body.app-shell .filtro-picker-btn:hover,
+body.app-shell .filtro-picker-btn:focus {
+    background: var(--ui-surface-strong);
+    color: var(--ui-text);
+    border-color: var(--ui-border-strong);
+    box-shadow: none;
+}
+
+/* Identificacion (o nombres, si hay varios) bajo el input: mas chica que el texto del input. */
+body.app-shell .filtro-picker-sub {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    color: var(--ui-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Modal de seleccion (tamano compacto, ~0.85rem, como el resto de las vistas WebCore). */
+#modalFiltroPicker .modal-dialog {
+    max-width: 880px;
+}
+
+#modalFiltroPicker .modal-body {
+    padding: 0.8rem 0.9rem 0.6rem;
+    font-size: 0.86rem;
+}
+
+#modalFiltroPicker .modal-title {
+    font-size: 0.95rem;
+}
+
+#modalFiltroPicker .form-control {
+    min-height: 2.4rem;
+    font-size: 0.85rem;
+}
+
+#modalFiltroPicker .table {
+    font-size: 0.82rem;
+    margin-bottom: 0;
+}
+
+#modalFiltroPicker .table th,
+#modalFiltroPicker .table td {
+    padding: 0.38rem 0.5rem;
+    line-height: 1.1;
+    vertical-align: middle;
+}
+
+#modalFiltroPicker .table thead th {
+    font-size: 0.72rem;
+}
+
+#modalFiltroPicker .fp-fila {
+    cursor: pointer;
+}
+
+#modalFiltroPicker .fp-fila.fp-tildada > td {
+    background: var(--ui-primary-soft);
+}
+
+/* Fila activa del teclado (flechas): borde izquierdo, sin pisar el fondo de "tildada". */
+#modalFiltroPicker .fp-fila.is-selected > td:first-child {
+    box-shadow: inset 3px 0 0 var(--ui-primary);
+}
+
+#modalFiltroPicker .fp-col-check {
+    width: 1%;
+    text-align: center;
+}
+
+#modalFiltroPicker .fp-col-num {
+    width: 1%;
+    text-align: center;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.72rem;
+    color: var(--ui-text-muted);
+}
+
+#modalFiltroPicker .fp-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    max-height: 5.2rem;
+    overflow-y: auto;
+}
+
+#modalFiltroPicker .fp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.2rem 0.1rem 0.55rem;
+    border-radius: 999px;
+    background: var(--ui-primary-soft);
+    border: 1px solid var(--ui-primary);
+    color: var(--ui-text);
+    font-size: 0.75rem;
+}
+
+#modalFiltroPicker .fp-chip button {
+    border: 0;
+    background: transparent;
+    color: var(--ui-text-soft);
+    line-height: 1;
+    padding: 0 0.3rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+#modalFiltroPicker .fp-ayuda {
+    font-size: 0.73rem;
+    line-height: 1.15;
+}

@@ -62,6 +62,63 @@ public sealed class ExportarLineasVentaTests
         // Un .xlsx es un zip: empieza con "PK".
         Assert.Equal("PK", System.Text.Encoding.ASCII.GetString(bytesExcel, 0, 2));
 
+        // Excel compacto: mismo contenido que el anterior en forma de impresion; "datos" son los opcionales elegidos.
+        var compacto = await page.Context.APIRequest.GetAsync($"{WebCoreFixture.BaseUrl}/Ventas/LineasExcelCompacto?{QueryHoy()}&datos=vendedor%2Csucursal%2Ccliente");
+        Assert.True(compacto.Ok, "LineasExcelCompacto respondio " + compacto.Status);
+        Assert.Equal(TipoXlsx, compacto.Headers["content-type"]);
+        Assert.Matches(@"filename=""?Lineas_de_venta_\d{8}_\d{4}_compacto\.xlsx", compacto.Headers["content-disposition"]);
+        var bytesCompacto = await compacto.BodyAsync();
+        Assert.True(bytesCompacto.Length > 1000, "El xlsx compacto es sospechosamente chico.");
+        Assert.Equal("PK", System.Text.Encoding.ASCII.GetString(bytesCompacto, 0, 2));
+
+        // Un valor de "datos" desconocido se ignora (input externo): no rompe ni cambia el resultado.
+        var compactoRaro = await page.Context.APIRequest.GetAsync($"{WebCoreFixture.BaseUrl}/Ventas/LineasExcelCompacto?{QueryHoy()}&datos=zzz%2C%3Cscript%3E");
+        Assert.True(compactoRaro.Ok, "LineasExcelCompacto con datos desconocidos respondio " + compactoRaro.Status);
+
+        await page.CloseAsync();
+    }
+
+    [Fact]
+    public async Task ExcelCompacto_PideLosDatosYDescargaCuandoHayVentas()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        await page.GotoAsync(UrlLineasUltimos30Dias(), new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 20000 });
+
+        var botonCompacto = page.Locator("button.js-exportar-compacto");
+        Assert.Equal(1, await botonCompacto.CountAsync());
+
+        // Sin ninguna venta visible no hay ventana de datos: solo el aviso.
+        await page.Locator("[data-live-filter='producto']").FillAsync("zzz-producto-que-no-existe-zzz");
+        await botonCompacto.ClickAsync();
+        await page.Locator(".swal2-popup").WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
+        Assert.Equal(0, await page.Locator(".swal-dato-compacto").CountAsync());
+        await page.Locator(".swal2-confirm").ClickAsync();
+        await page.Locator("[data-live-filter='producto']").FillAsync("");
+
+        if (await page.Locator(".js-registro-card:not(.d-none)").CountAsync() == 0)
+        {
+            // Sin ventas en los ultimos 30 dias de la base de dev: nada que descargar hoy.
+            await page.CloseAsync();
+            return;
+        }
+
+        // Con ventas: la ventana ofrece las 6 casillas (vendedor y cliente tildados de entrada).
+        await botonCompacto.ClickAsync();
+        await page.Locator(".swal-dato-compacto").First.WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
+        Assert.Equal(6, await page.Locator(".swal-dato-compacto").CountAsync());
+
+        var descarga = await page.RunAndWaitForDownloadAsync(async () =>
+        {
+            await page.Locator(".swal2-confirm").ClickAsync();
+        }, new PageRunAndWaitForDownloadOptions { Timeout = 60000 });
+        Assert.Matches(@"^Lineas_de_venta_\d{8}_\d{4}_compacto\.xlsx$", descarga.SuggestedFilename);
+        var ruta = Path.Combine(Path.GetTempPath(), "webcore-e2e-lineas-venta-compacto.xlsx");
+        await descarga.SaveAsAsync(ruta);
+        var bytes = await File.ReadAllBytesAsync(ruta);
+        Assert.True(bytes.Length > 1000, "El xlsx compacto descargado es sospechosamente chico.");
+        Assert.Equal("PK", System.Text.Encoding.ASCII.GetString(bytes, 0, 2));
+        File.Delete(ruta);
+
         await page.CloseAsync();
     }
 

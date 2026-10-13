@@ -108,6 +108,8 @@ namespace WebCore.Controllers
         // Expendios por cliente real, para el filtro "Persona" del modal de expendios (null en SQL Server).
         private readonly Contratos.IExpendioClienteRepository _expendioClienteRepo;
         private readonly Microsoft.Extensions.Logging.ILogger<VentasController> _logger;
+        // Selector multi-seleccion de Cliente / Vendedor (parseo de IDs y nombres resueltos para pintar los inputs).
+        private readonly FiltroPickerService _filtroPicker;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
@@ -136,6 +138,20 @@ namespace WebCore.Controllers
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
             _oBarcodeInterpreter = WebCore.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(_empresa, _param);
+            _filtroPicker = new FiltroPickerService(_oPersonaN, _oUsuarioN);
+        }
+
+        // Normaliza el CSV de IDs del selector multi-seleccion (querystring = input externo: solo enteros > 0,
+        // sin repetidos, con tope) y resuelve los nombres para pintar el input. IDs inexistentes se omiten
+        // de la lista de nombres, pero el CSV conserva todos los validos: el filtro sigue siendo exacto.
+        private (string Csv, List<FiltroPickerItem> Items) ResolverSeleccionFiltro(string idsCsv, bool esVendedor)
+        {
+            List<int> ids = FiltroPickerService.ParsearIds(idsCsv);
+            if (ids.Count == 0)
+                return ("", new List<FiltroPickerItem>());
+
+            var items = esVendedor ? _filtroPicker.ResolverVendedores(ids) : _filtroPicker.ResolverPersonas(ids);
+            return (string.Join(",", ids), items);
         }
 
         // ===== Permisos reales de Venta + "usuario de produccion" (Batch 5 del plan de login/
@@ -726,7 +742,8 @@ namespace WebCore.Controllers
 
         public IActionResult Facturas(
             DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1,
-            string cliente = "", string vendedor = "", string formasPago = "", string tiposComprobante = "", string entorno = "")
+            string cliente = "", string vendedor = "", string formasPago = "", string tiposComprobante = "", string entorno = "",
+            string idsCliente = "", string idsVendedor = "")
         {
             // Mismo gate que Index() (ver docs/DECISIONS.md, 2026-09-12) -- el listado de facturas
             // usa el mismo permiso Permisos.Venta.VerVentas en el clasico (Web/Controllers/
@@ -751,13 +768,21 @@ namespace WebCore.Controllers
             var formasPagoSeleccionadas = SepararValoresCsv(formasPago);
             var codigosComprobante = TipoComprobanteFacturas.ObtenerCodigos(SepararValoresCsv(tiposComprobante));
 
+            // Seleccion exacta del selector multi-seleccion: con IDs el texto escrito no se usa (el input queda de solo lectura).
+            var seleccionCliente = ResolverSeleccionFiltro(idsCliente, esVendedor: false);
+            var seleccionVendedor = ResolverSeleccionFiltro(idsVendedor, esVendedor: true);
+
             var model = new FacturasIndexVm
             {
                 FechaDesde = desde,
                 FechaHasta = hasta,
                 IdSucursal = idSucursal,
-                Cliente = cliente ?? "",
-                Vendedor = vendedor ?? "",
+                Cliente = seleccionCliente.Csv.Length > 0 ? "" : cliente ?? "",
+                Vendedor = seleccionVendedor.Csv.Length > 0 ? "" : vendedor ?? "",
+                IdsCliente = seleccionCliente.Csv,
+                IdsVendedor = seleccionVendedor.Csv,
+                ClientesSeleccionados = seleccionCliente.Items,
+                VendedoresSeleccionados = seleccionVendedor.Items,
                 FormasPagoCsv = formasPago ?? "",
                 TiposComprobanteCsv = tiposComprobante ?? "",
                 MostrarFiltroEntorno = _oVentaN.ExistenFacturasPrueba()
@@ -777,7 +802,7 @@ namespace WebCore.Controllers
         public async System.Threading.Tasks.Task<IActionResult> BuscarFacturas(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, string formasPago, string tiposComprobante, string entorno = "",
-            int pagina = 1)
+            int pagina = 1, string idsCliente = "", string idsVendedor = "")
         {
             // Mismo gate que Index()/Facturas() -- port de Web/Controllers/VentasController.cs:186.
             var operadorBuscarFacturas = ResolverOperadorModulo("Ventas", _usuarioActual);
@@ -793,7 +818,10 @@ namespace WebCore.Controllers
                 FechaHasta = fechaHasta,
                 IdSucursal = idSucursal,
                 Cliente = cliente ?? "",
-                Vendedor = vendedor ?? ""
+                Vendedor = vendedor ?? "",
+                // Solo los IDs validados: esta accion es AJAX, no hace falta resolver nombres.
+                IdsCliente = string.Join(",", FiltroPickerService.ParsearIds(idsCliente)),
+                IdsVendedor = string.Join(",", FiltroPickerService.ParsearIds(idsVendedor))
             };
 
             // El JS manda el valor del select (o vacio si el filtro no se muestra = no filtrar).
@@ -833,11 +861,16 @@ namespace WebCore.Controllers
             FacturasIndexVm model, List<string> formasPagoSeleccionadas, List<int> codigosComprobante,
             int pagina, bool incluirResumen)
         {
+            // Filtro exacto por ID (selector multi-seleccion): model.IdsCliente/IdsVendedor ya vienen validados.
+            var idsCliente = FiltroPickerService.ParsearIds(model.IdsCliente);
+            var idsVendedor = FiltroPickerService.ParsearIds(model.IdsVendedor);
+
             var facturas = _oVentaN.BuscarFacturasPagina(
                 model.FechaDesde, model.FechaHasta, model.IdSucursal,
                 model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante,
                 pagina, FacturasTamanoPagina, cantidadExtra: 1, entorno: EntornoParaRepositorio(model.Entorno),
-                restriccion: _ctaCteReservada.ObtenerRestriccion()) ?? new List<Entidades.FacturaElectronica>();
+                restriccion: _ctaCteReservada.ObtenerRestriccion(),
+                idsCliente: idsCliente, idsVendedor: idsVendedor) ?? new List<Entidades.FacturaElectronica>();
 
             model.HayMas = facturas.Count > FacturasTamanoPagina;
             if (model.HayMas)
@@ -860,20 +893,21 @@ namespace WebCore.Controllers
                 var resumen = _oVentaN.ObtenerFacturasResumen(
                     model.FechaDesde, model.FechaHasta, model.IdSucursal,
                     model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante, EntornoParaRepositorio(model.Entorno),
-                    restriccion: _ctaCteReservada.ObtenerRestriccion());
+                    restriccion: _ctaCteReservada.ObtenerRestriccion(),
+                    idsCliente: idsCliente, idsVendedor: idsVendedor);
                 model.Cantidad = resumen.Cantidad;
                 model.TotalFacturado = resumen.Total;
             }
         }
 
-        public IActionResult Lineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
+        public IActionResult Lineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "")
         {
             // Usuario de produccion: mismo gate que Index (Batch 5, ver docs/DECISIONS.md).
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
                 return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
 
             var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
-            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto);
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
 
             ViewBag.Title = "Lineas de venta";
             ViewBag.Sucursales = sucursales;
@@ -887,13 +921,13 @@ namespace WebCore.Controllers
         // puede divergir de lo que se ve (ventas reservadas ocultas incluidas). Ver docs/DECISIONS.md
         // 2026-10-13 "Exportar Lineas de venta a PDF y Excel".
         [HttpGet]
-        public IActionResult LineasPdf(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
+        public IActionResult LineasPdf(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "")
         {
             // Mismo gate de usuario de produccion que Lineas.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
                 return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
 
-            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto);
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
             byte[] pdfBytes = GenerarDocsCore.GenerarPdfLineasVenta(model, ObtenerNombreSucursalLineas(idSucursal));
 
             return File(pdfBytes, "application/pdf", ConstruirNombreArchivoLineas("pdf"));
@@ -901,16 +935,35 @@ namespace WebCore.Controllers
 
         // Idem LineasPdf pero a .xlsx real (ClosedXML, GenerarExcelCore).
         [HttpGet]
-        public IActionResult LineasExcel(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
+        public IActionResult LineasExcel(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "")
         {
             // Mismo gate de usuario de produccion que Lineas.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
                 return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
 
-            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto);
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
             byte[] excelBytes = GenerarExcelCore.GenerarExcelLineasVenta(model, ObtenerNombreSucursalLineas(idSucursal));
 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ConstruirNombreArchivoLineas("xlsx"));
+        }
+
+        // Excel "compacto para imprimir": sin colores, letra 8, ordenado por fecha y hora, un renglon por venta
+        // y las lineas en dos bloques lado a lado (ExcelLineasVentaCompacto.Generar). Mismos filtros
+        // que Lineas; "datos" es un CSV con los datos opcionales que eligio el usuario en la ventana previa
+        // (vendedor, sucursal, cliente, formaPago, ventaId, comprobante). Ver docs/DECISIONS.md 2026-10-13
+        // "Excel compacto de Lineas de venta".
+        [HttpGet]
+        public IActionResult LineasExcelCompacto(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "", string datos = "")
+        {
+            // Mismo gate de usuario de produccion que Lineas.
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
+            var opciones = OpcionesExcelLineasCompacto.DesdeCsv(datos);
+            byte[] excelBytes = ExcelLineasVentaCompacto.Generar(model, ObtenerNombreSucursalLineas(idSucursal), opciones);
+
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ConstruirNombreArchivoLineas("xlsx", "_compacto"));
         }
 
         // Nombre de la sucursal filtrada para el encabezado de los archivos exportados ("Todas" si no hay filtro).
@@ -923,17 +976,17 @@ namespace WebCore.Controllers
             return sucursal != null ? sucursal.SucursalNombre : "-";
         }
 
-        // Nombre del archivo exportado: Lineas_de_venta_yyyyMMdd_HHmm.<extension> (sin datos personales).
-        private static string ConstruirNombreArchivoLineas(string extension)
+        // Nombre del archivo exportado: Lineas_de_venta_yyyyMMdd_HHmm[sufijo].<extension> (sin datos personales).
+        private static string ConstruirNombreArchivoLineas(string extension, string sufijo = "")
         {
-            return "Lineas_de_venta_" + DateTime.Now.ToString("yyyyMMdd_HHmm", CultureInfo.InvariantCulture) + "." + extension;
+            return "Lineas_de_venta_" + DateTime.Now.ToString("yyyyMMdd_HHmm", CultureInfo.InvariantCulture) + sufijo + "." + extension;
         }
 
         // Arma el modelo de Lineas de venta (tarjetas por venta con sus lineas). Lo comparten la pantalla (Lineas)
         // y sus exports (LineasPdf / LineasExcel): trae todo el rango sin paginar, oculta las ventas reservadas
         // (_ctaCteReservada) y aplica los filtros de cliente / vendedor / forma de pago / producto.
         // No toca ViewBag ni el gate de usuario: eso queda en cada accion.
-        private VentaLineasIndexVm ConstruirModeloLineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal, string cliente, string vendedor, string formasPago, string producto)
+        private VentaLineasIndexVm ConstruirModeloLineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal, string cliente, string vendedor, string formasPago, string producto, string idsCliente = "", string idsVendedor = "")
         {
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
@@ -946,11 +999,23 @@ namespace WebCore.Controllers
             List<Entidades.Venta> ventas = _oVentaN.getAllVentas(desde, hasta, "", -1, -1, idSucursal, false, true) ?? new List<Entidades.Venta>();
             var ventasOcultasLineas = _ctaCteReservada.IdsOcultos(Entidades.RestriccionCtaCteReservada.TablaVentas);
             ventas = ventas.Where(v => v != null && v.FechaVenta >= desde && v.FechaVenta <= hasta && !ventasOcultasLineas.Contains(v.IdVenta)).ToList();
+
+            // Selector multi-seleccion: con IDs el filtro es EXACTO por ID de persona / vendedor y el texto
+            // escrito se ignora (en pantalla el input queda de solo lectura). Sin IDs, coincidencia de palabras como siempre.
+            var seleccionCliente = ResolverSeleccionFiltro(idsCliente, esVendedor: false);
+            var seleccionVendedor = ResolverSeleccionFiltro(idsVendedor, esVendedor: true);
+            var idsClienteSet = new HashSet<int>(FiltroPickerService.ParsearIds(seleccionCliente.Csv));
+            var idsVendedorSet = new HashSet<int>(FiltroPickerService.ParsearIds(seleccionVendedor.Csv));
+
             ventas = ventas
-                .Where(v => CoincideTexto(v != null && v.Persona != null ? v.Persona.RazonSocial : "", cliente)
-                    || CoincideTexto(v != null && v.Persona != null ? v.Persona.Identificacion : "", cliente)
-                    || string.IsNullOrWhiteSpace(cliente))
-                .Where(v => CoincideTexto(v != null && v.Vendedor != null ? v.Vendedor.Nombre : "", vendedor) || string.IsNullOrWhiteSpace(vendedor))
+                .Where(v => idsClienteSet.Count > 0
+                    ? (v != null && idsClienteSet.Contains(v.IdPersona))
+                    : (CoincideTexto(v != null && v.Persona != null ? v.Persona.RazonSocial : "", cliente)
+                        || CoincideTexto(v != null && v.Persona != null ? v.Persona.Identificacion : "", cliente)
+                        || string.IsNullOrWhiteSpace(cliente)))
+                .Where(v => idsVendedorSet.Count > 0
+                    ? (v != null && idsVendedorSet.Contains(v.IdVendedor))
+                    : (CoincideTexto(v != null && v.Vendedor != null ? v.Vendedor.Nombre : "", vendedor) || string.IsNullOrWhiteSpace(vendedor)))
                 .Where(v => formasPagoSeleccionadas.Count == 0
                     || formasPagoSeleccionadas.Contains((v != null ? (v.FormaPago ?? "") : "").Trim(), StringComparer.OrdinalIgnoreCase))
                 .ToList();
@@ -960,8 +1025,12 @@ namespace WebCore.Controllers
                 FechaDesde = desde,
                 FechaHasta = hasta,
                 IdSucursal = idSucursal,
-                Cliente = cliente ?? "",
-                Vendedor = vendedor ?? "",
+                Cliente = idsClienteSet.Count > 0 ? "" : cliente ?? "",
+                Vendedor = idsVendedorSet.Count > 0 ? "" : vendedor ?? "",
+                IdsCliente = seleccionCliente.Csv,
+                IdsVendedor = seleccionVendedor.Csv,
+                ClientesSeleccionados = seleccionCliente.Items,
+                VendedoresSeleccionados = seleccionVendedor.Items,
                 Producto = producto ?? "",
                 FormasPagoCsv = formasPago ?? "",
                 FormasPagoSeleccionadas = formasPagoSeleccionadas
@@ -979,6 +1048,9 @@ namespace WebCore.Controllers
                 var grupo = new VentaLineasGrupoVm
                 {
                     IdVenta = venta.IdVenta,
+                    FechaVenta = venta.FechaVenta,
+                    IdCliente = venta.IdPersona,
+                    IdVendedor = venta.IdVendedor,
                     CollapseId = "ventaLineas_" + venta.IdVenta,
                     Titulo = "VENTA ID: " + venta.IdVenta,
                     Subtitulo = venta.FechaVenta.ToString("dd/MM/yyyy HH:mm"),

@@ -680,17 +680,19 @@ namespace Negocio
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
             int pagina, int cantidad, int cantidadExtra, string entorno = null,
-            Entidades.RestriccionCtaCteReservada restriccion = null)
+            Entidades.RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null)
         {
-            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra, entorno, restriccion);
+            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra, entorno, restriccion, idsCliente, idsVendedor);
         }
 
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null)
+            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null)
         {
-            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, entorno, restriccion);
+            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, entorno, restriccion, idsCliente, idsVendedor);
         }
 
         public bool ExistenFacturasPrueba()

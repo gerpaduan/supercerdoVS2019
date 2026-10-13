@@ -8,6 +8,11 @@
     var esVentas = modo == "ventas";
 }
 
+@* Selector multi-seleccion de Cliente (F10) y Vendedor (F9): modal + script del componente. El modal va ANTES del
+   script (lee de el las URLs de los endpoints) y el script antes del IIFE de abajo, que usa window.FiltroPicker. *@
+<partial name="~/Views/Shared/_FiltroPickerModal.cshtml" />
+<script src="~/Scripts/app/filtro-picker.js" asp-append-version="true"></script>
+
 <script>
         (function () {
             const form = document.getElementById('@(esVentas ? "formFiltroFechas" : "formFiltroFacturas")');
@@ -84,10 +89,27 @@
                 window.sessionStorage.setItem(storageKey, JSON.stringify(current));
             }
 
+            // Selector multi-seleccion (filtro-picker.js): con seleccion el filtro es EXACTO por ID y el input solo
+            // muestra un resumen; sin seleccion es texto libre como siempre. Si el componente no cargo, se degrada a texto.
+            const picker = window.FiltroPicker || {
+                getIds: function () { return ""; },
+                getTexto: function (input) { return input ? input.value : ""; },
+                getItems: function () { return []; },
+                setItems: function () { }
+            };
+
+            // IDs seleccionados como arreglo de strings ([] si el filtro esta en modo texto).
+            function idsSeleccionados(input) {
+                return picker.getIds(input).split(",").filter(Boolean);
+            }
+
             function getClientState() {
                 return {
-                    cliente: buscadorCliente ? buscadorCliente.value : "",
-                    vendedor: buscadorVendedor ? buscadorVendedor.value : "",
+                    cliente: buscadorCliente ? picker.getTexto(buscadorCliente) : "",
+                    vendedor: buscadorVendedor ? picker.getTexto(buscadorVendedor) : "",
+                    // Seleccion exacta (con nombres, para repintar el input sin pedirlos al servidor al volver).
+                    itemsCliente: buscadorCliente ? picker.getItems(buscadorCliente) : [],
+                    itemsVendedor: buscadorVendedor ? picker.getItems(buscadorVendedor) : [],
                     formasPago: getSeleccionados(filtroFormaPagoChecks),
                     tiposComprobante: getSeleccionados(filtroTipoComprobanteChecks)
                 };
@@ -370,8 +392,11 @@
             params.set("fechaHasta", fechaHasta ? fechaHasta.value : "");
             params.set("idSucursal", (idSucursal && idSucursal.value) || "-1");
             params.set("entorno", (document.getElementById("filtroEntorno") || {}).value || "");
-            params.set("cliente", buscadorCliente ? buscadorCliente.value : "");
-            params.set("vendedor", buscadorVendedor ? buscadorVendedor.value : "");
+            // Con seleccion exacta viajan los IDs y el texto va vacio (el input solo muestra un resumen).
+            params.set("cliente", buscadorCliente ? picker.getTexto(buscadorCliente) : "");
+            params.set("vendedor", buscadorVendedor ? picker.getTexto(buscadorVendedor) : "");
+            params.set("idsCliente", buscadorCliente ? picker.getIds(buscadorCliente) : "");
+            params.set("idsVendedor", buscadorVendedor ? picker.getIds(buscadorVendedor) : "");
             params.set("formasPago", csvSeleccionados(filtroFormaPagoChecks));
             params.set("tiposComprobante", csvSeleccionados(filtroTipoComprobanteChecks));
             params.set("pagina", pagina.toString());
@@ -462,8 +487,12 @@
         }
 
         function aplicarFiltros() {
-            const textoCliente = (buscadorCliente?.value || "").toLowerCase();
-            const textoVendedor = (buscadorVendedor?.value || "").toLowerCase();
+            // Con seleccion exacta (IDs) se compara contra data-id-cliente / data-id-vendedor de cada venta;
+            // sin ella, coincidencia de palabras como siempre (el input del resumen no se usa como texto).
+            const idsCliente = idsSeleccionados(buscadorCliente);
+            const idsVendedor = idsSeleccionados(buscadorVendedor);
+            const textoCliente = (picker.getTexto(buscadorCliente) || "").toLowerCase();
+            const textoVendedor = (picker.getTexto(buscadorVendedor) || "").toLowerCase();
             const formasPagoSeleccionadas = getSeleccionados(filtroFormaPagoChecks);
             const tiposSeleccionados = getSeleccionados(filtroTipoComprobanteChecks);
 
@@ -477,8 +506,12 @@
                 const formaPago = (item.dataset.formaPago || "").toLowerCase();
                 const tipoComprobante = (item.dataset.tipoComprobante || "").toLowerCase();
 
-                const coincideCliente = !textoCliente || cliente.includes(textoCliente) || identificacion.includes(textoCliente);
-                const coincideVendedor = !textoVendedor || vendedor.includes(textoVendedor);
+                const coincideCliente = idsCliente.length > 0
+                    ? idsCliente.includes(item.dataset.idCliente || "")
+                    : (!textoCliente || cliente.includes(textoCliente) || identificacion.includes(textoCliente));
+                const coincideVendedor = idsVendedor.length > 0
+                    ? idsVendedor.includes(item.dataset.idVendedor || "")
+                    : (!textoVendedor || vendedor.includes(textoVendedor));
                 const coincideFormaPago = formasPagoSeleccionadas.length === 0 || formasPagoSeleccionadas.includes(formaPago);
                 const coincideTipo = tiposSeleccionados.length === 0 || tiposSeleccionados.includes(tipoComprobante);
                 const mostrar = coincideCliente && coincideVendedor && coincideFormaPago && coincideTipo;
@@ -527,8 +560,17 @@
             const state = getStoredState();
             if (!state.client) return;
 
-            if (buscadorCliente) buscadorCliente.value = state.client.cliente || "";
-            if (buscadorVendedor) buscadorVendedor.value = state.client.vendedor || "";
+            // Seleccion exacta guardada -> se repinta el selector (con nombres); si no habia, texto libre como siempre.
+            // Si el servidor ya trajo una seleccion por URL (data-ids) y el storage no tiene una, se respeta la del servidor
+            // y no se pisa el resumen del input con texto.
+            if (buscadorCliente) {
+                if ((state.client.itemsCliente || []).length > 0) picker.setItems(buscadorCliente, state.client.itemsCliente);
+                else if (!picker.getIds(buscadorCliente)) buscadorCliente.value = state.client.cliente || "";
+            }
+            if (buscadorVendedor) {
+                if ((state.client.itemsVendedor || []).length > 0) picker.setItems(buscadorVendedor, state.client.itemsVendedor);
+                else if (!picker.getIds(buscadorVendedor)) buscadorVendedor.value = state.client.vendedor || "";
+            }
 
             filtroFormaPagoChecks.forEach(function (chk) {
                 chk.checked = (state.client.formasPago || []).indexOf((chk.value || "").toLowerCase()) >= 0;
@@ -646,8 +688,12 @@
             params.set("fechaDesde", document.getElementById("fechaDesde")?.value || "");
             params.set("fechaHasta", document.getElementById("fechaHasta")?.value || "");
             params.set("idSucursal", document.getElementById("idSucursal")?.value || "-1");
-            params.set("cliente", buscadorCliente?.value || "");
-            params.set("vendedor", buscadorVendedor?.value || "");
+            // Cliente / Vendedor: con seleccion exacta viajan los IDs (Lineas filtra por ID y repinta los inputs);
+            // sin ella, el texto escrito. Nunca los dos.
+            params.set("cliente", picker.getTexto(buscadorCliente));
+            params.set("vendedor", picker.getTexto(buscadorVendedor));
+            params.set("idsCliente", picker.getIds(buscadorCliente));
+            params.set("idsVendedor", picker.getIds(buscadorVendedor));
             params.set("formasPago", getSeleccionados(filtroFormaPagoChecks).join(","));
 
             navegarConLoader(baseUrl + "?" + params.toString(), false);

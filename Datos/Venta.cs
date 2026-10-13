@@ -1596,8 +1596,13 @@ namespace Datos
         // Los IN(...) de formasPago/codigosComprobante se arman con placeholders numerados
         // (@fp0, @fp1, ...) igual que Datos.CatalogoGlobalProducto.ObtenerCatalogoGlobalPaginaPorIds,
         // nunca concatenando los valores directo en el SQL.
-        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante, Entidades.RestriccionCtaCteReservada restriccion = null)
+        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante, Entidades.RestriccionCtaCteReservada restriccion = null, List<int> idsCliente = null, List<int> idsVendedor = null)
         {
+            // Filtro EXACTO por ID (selector multi-seleccion de Cliente / Vendedor), mismo patron de
+            // placeholders numerados (@ic0.. / @iv0..) que formas de pago y comprobantes.
+            string whereIdsCliente = ConstruirInIds("v.idPersona", "ic", idsCliente);
+            string whereIdsVendedor = ConstruirInIds("v.idVendedor", "iv", idsVendedor);
+
             string whereFormaPago = "1 = 1";
             if (formasPago != null && formasPago.Count > 0)
             {
@@ -1636,8 +1641,26 @@ namespace Datos
                 AND (@idSucursal = -1 OR v.idSucursal = @idSucursal)
                 AND (@cliente = '' OR p.razonSocial LIKE @clienteBuscar OR p.identificacion LIKE @clienteBuscar OR f.razonSocialAFIP LIKE @clienteBuscar OR f.nroDocAfip LIKE @clienteBuscar)
                 AND (@vendedor = '' OR u.nombre LIKE @vendedorBuscar)
+                AND ({whereIdsCliente})
+                AND ({whereIdsVendedor})
                 AND ({whereFormaPago})
                 AND ({whereComprobante})";
+        }
+
+        // "col IN (@pref0, @pref1, ...)" para una lista de IDs, o "1 = 1" si no hay (sin filtro).
+        // Los IDs viajan como parametros numerados, nunca concatenados al SQL.
+        private static string ConstruirInIds(string columna, string prefijo, List<int> ids)
+        {
+            if (ids == null || ids.Count == 0) return "1 = 1";
+
+            var placeholders = new StringBuilder();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                if (i > 0) placeholders.Append(", ");
+                placeholders.Append("@").Append(prefijo).Append(i);
+            }
+
+            return columna + " IN (" + placeholders + ")";
         }
 
         private static void AgregarParametrosFacturas(
@@ -1645,7 +1668,8 @@ namespace Datos
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor,
             List<string> formasPago, List<int> codigosComprobante,
-            Entidades.RestriccionCtaCteReservada restriccion = null)
+            Entidades.RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null)
         {
             if (restriccion != null)
             {
@@ -1671,6 +1695,14 @@ namespace Datos
             if (codigosComprobante != null)
                 for (int i = 0; i < codigosComprobante.Count; i++)
                     p.Add("@cc" + i, SqlDbType.Int).Value = codigosComprobante[i];
+
+            if (idsCliente != null)
+                for (int i = 0; i < idsCliente.Count; i++)
+                    p.Add("@ic" + i, SqlDbType.Int).Value = idsCliente[i];
+
+            if (idsVendedor != null)
+                for (int i = 0; i < idsVendedor.Count; i++)
+                    p.Add("@iv" + i, SqlDbType.Int).Value = idsVendedor[i];
         }
 
         // Trae una pagina de facturas ya filtradas por fecha/sucursal/cliente/vendedor/forma de
@@ -1682,7 +1714,8 @@ namespace Datos
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
             int pagina, int cantidad, int cantidadExtra, string entorno = null,
-            Entidades.RestriccionCtaCteReservada restriccion = null)
+            Entidades.RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null)
         {
             // entorno (Produccion/Pruebas) se ignora en SQL Server: no existe la columna esprueba, todas
             // las facturas son de produccion (ver docs/DECISIONS.md, 2026-09-24).
@@ -1692,7 +1725,7 @@ namespace Datos
             int desdeFila = (int)Math.Min(((long)(pagina - 1) * cantidad) + 1, int.MaxValue);
             int hastaFila = (int)Math.Min((long)desdeFila + cantidad + cantidadExtra - 1, int.MaxValue);
 
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, restriccion);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, restriccion, idsCliente, idsVendedor);
 
             string sql = $@"
                 ;WITH FacturasFiltradas AS
@@ -1774,7 +1807,7 @@ namespace Datos
                 MapFacturaCompleta,
                 p =>
                 {
-                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion);
+                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion, idsCliente, idsVendedor);
                     p.Add("@desdeFila", SqlDbType.Int).Value = desdeFila;
                     p.Add("@hastaFila", SqlDbType.Int).Value = hastaFila;
                 }
@@ -1793,9 +1826,10 @@ namespace Datos
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null)
+            string entorno = null, Entidades.RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null)
         {
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, restriccion);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, restriccion, idsCliente, idsVendedor);
 
             string sql = $@"
                 SELECT
@@ -1818,7 +1852,7 @@ namespace Datos
                 sql,
                 CommandType.Text,
                 dr => (Cantidad: Convert.ToInt32(dr["Cantidad"]), Total: Convert.ToDecimal(dr["Total"])),
-                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion)
+                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion, idsCliente, idsVendedor)
             );
 
             return filas.Count > 0 ? filas[0] : (Cantidad: 0, Total: 0m);

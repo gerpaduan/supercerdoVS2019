@@ -45,6 +45,8 @@
                         data-cliente="@venta.Persona.razonSocial"
                         data-identificacion="@venta.Persona.Identificacion"
                         data-vendedor="@venta.Vendedor.Nombre.ToLower()"
+                        data-id-cliente="@venta.IdPersona"
+                        data-id-vendedor="@venta.IdVendedor"
                         @Html.Raw(atributosModal)>
                         <div class="venta-icono">
                             @if (!string.IsNullOrEmpty(venta.FormaPago))

@@ -11,7 +11,7 @@
     <partial name="_AvisoReservadasListado" />
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
         <h4 class="mb-2 mb-md-0">Lineas de compra</h4>
-        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Compras", new { idSucursal = Model.IdSucursal, tipoCompra = Model.TipoCompra, texto = Model.Texto, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") })">
+        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Compras", new { idSucursal = Model.IdSucursal, tipoCompra = Model.TipoCompra, texto = Model.Texto, proveedor = Model.Proveedor, idsProveedor = Model.IdsProveedor, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") })">
             <i class="fas fa-arrow-left mr-1"></i> Volver al indice
         </a>
     </div>
@@ -61,7 +61,12 @@
                 <div class="row mt-3">
                     <div class="col-12 col-md-4 mb-3">
                         <label class="elaborados-filtro-label">Proveedor</label>
-                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="proveedor" value="@Model.Texto" placeholder="Proveedor" autocomplete="off" />
+                        @* Selector multi-seleccion (filtro-picker.js): F9 busca proveedores; con seleccion filtra por ID exacto (el hidden
+                           idsProveedor, dentro del form, conserva la seleccion al apretar Buscar). Sin seleccion, texto libre: arranca con
+                           el proveedor tipeado en el Indice o, como siempre, con la "Descripcion" del Indice (Model.Texto). *@
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="proveedor" value="@(string.IsNullOrWhiteSpace(Model.Proveedor) ? Model.Texto : Model.Proveedor)" placeholder="Proveedor" autocomplete="off"
+                               data-filtro-picker="proveedor" data-filtro-picker-tecla="F9" data-ids-name="idsProveedor"
+                               data-ids="@Model.IdsProveedor" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(Model.ProveedoresSeleccionados)" />
                     </div>
                     <div class="col-12 col-md-4 mb-3">
                         <label class="elaborados-filtro-label">Tipo de compra</label>
@@ -102,6 +107,7 @@
             var tipoCompra = compra.Campos.FirstOrDefault(x => x.Etiqueta == "Tipo de compra");
             <div class="card shadow-sm mb-3 linea-registro-card js-registro-card"
                  data-proveedor="@(proveedor != null ? proveedor.Valor : "")"
+                 data-id-proveedor="@compra.IdProveedor"
                  data-tipoCompra="@(tipoCompra != null ? tipoCompra.Valor : "")">
                 <div class="card-header bg-white">
                     <div class="d-flex justify-content-between align-items-start flex-wrap">
@@ -317,6 +323,9 @@
 @Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
 
 @section Scripts {
+    @* Selector multi-seleccion de Proveedor: el modal va ANTES del script del componente (lee de el las URLs). *@
+    <partial name="~/Views/Shared/_FiltroPickerModal.cshtml" />
+    <script src="@Url.Content("~/Scripts/app/filtro-picker.js")" asp-append-version="true"></script>
     <script>
         (function () {
             var form = document.querySelector('.js-form-filtros-lineas');

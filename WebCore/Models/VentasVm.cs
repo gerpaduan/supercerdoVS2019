@@ -68,6 +68,12 @@ namespace WebCore.Models
         public int IdSucursal { get; set; }
         public string Cliente { get; set; }
         public string Vendedor { get; set; }
+        // Filtro EXACTO por ID del selector multi-seleccion (CSV de IDs ya validados). Si hay IDs, el
+        // texto Cliente/Vendedor no se usa; las listas traen los nombres para pintar el input.
+        public string IdsCliente { get; set; } = "";
+        public string IdsVendedor { get; set; } = "";
+        public List<WebCore.Services.FiltroPickerItem> ClientesSeleccionados { get; set; } = new List<WebCore.Services.FiltroPickerItem>();
+        public List<WebCore.Services.FiltroPickerItem> VendedoresSeleccionados { get; set; } = new List<WebCore.Services.FiltroPickerItem>();
         public string FormasPagoCsv { get; set; }
         public string TiposComprobanteCsv { get; set; }
         // Filtro de entorno: "PROD" (default), "PRUEBA" o "TODAS". Solo se muestra si hay facturas de
@@ -112,6 +118,13 @@ namespace WebCore.Models
         public int IdSucursal { get; set; }
         public string Cliente { get; set; }
         public string Vendedor { get; set; }
+        // Filtro EXACTO por ID del selector multi-seleccion (CSV de IDs ya validados). Si hay IDs, el
+        // texto Cliente/Vendedor no se usa; las listas traen los nombres (pintar el input y el
+        // encabezado de los exports PDF/Excel).
+        public string IdsCliente { get; set; } = "";
+        public string IdsVendedor { get; set; } = "";
+        public List<WebCore.Services.FiltroPickerItem> ClientesSeleccionados { get; set; } = new List<WebCore.Services.FiltroPickerItem>();
+        public List<WebCore.Services.FiltroPickerItem> VendedoresSeleccionados { get; set; } = new List<WebCore.Services.FiltroPickerItem>();
         public string Producto { get; set; }
         public string FormasPagoCsv { get; set; }
         public List<string> FormasPagoSeleccionadas { get; set; }
@@ -127,6 +140,12 @@ namespace WebCore.Models
         }
 
         public int IdVenta { get; set; }
+        // Fecha y hora reales de la venta (ResumenCompacto es solo el texto): la usa el Excel compacto para ordenar.
+        public DateTime FechaVenta { get; set; }
+        // IDs exactos de la persona y del vendedor de la venta: el filtro en vivo del selector
+        // multi-seleccion los compara contra data-id-cliente / data-id-vendedor de la tarjeta.
+        public int IdCliente { get; set; }
+        public int IdVendedor { get; set; }
         public string CollapseId { get; set; }
         public string Titulo { get; set; }
         public string Subtitulo { get; set; }

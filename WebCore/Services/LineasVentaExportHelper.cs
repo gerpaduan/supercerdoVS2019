@@ -40,9 +40,17 @@ namespace WebCore.Services
 
             if (!string.IsNullOrWhiteSpace(model.Producto))
                 partes.Add("Producto: " + model.Producto.Trim());
-            if (!string.IsNullOrWhiteSpace(model.Cliente))
+            // Con seleccion exacta (selector multi-seleccion) se listan los nombres elegidos; sin ella, el texto escrito.
+            string clientes = FiltroPickerService.UnirNombres(model.ClientesSeleccionados);
+            if (clientes.Length > 0)
+                partes.Add("Cliente: " + clientes);
+            else if (!string.IsNullOrWhiteSpace(model.Cliente))
                 partes.Add("Cliente: " + model.Cliente.Trim());
-            if (!string.IsNullOrWhiteSpace(model.Vendedor))
+
+            string vendedores = FiltroPickerService.UnirNombres(model.VendedoresSeleccionados);
+            if (vendedores.Length > 0)
+                partes.Add("Vendedor: " + vendedores);
+            else if (!string.IsNullOrWhiteSpace(model.Vendedor))
                 partes.Add("Vendedor: " + model.Vendedor.Trim());
             if (model.FormasPagoSeleccionadas.Count > 0)
                 partes.Add("Forma de pago: " + string.Join(", ", model.FormasPagoSeleccionadas));

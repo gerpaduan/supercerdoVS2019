@@ -51,10 +51,26 @@
         return Array.prototype.map.call(items, function (item) { return normalizarTexto(item.value); });
     }
 
+    // IDs elegidos en el selector multi-seleccion (filtro-picker.js) para un filtro; [] si esta en modo texto libre.
+    // El selector deja el CSV en data-ids del input y, con seleccion, el valor del input es solo un resumen.
+    function getSelectedIds(page, key) {
+        var input = page.querySelector('[data-live-filter="' + key + '"]');
+        var csv = input && input.dataset ? input.dataset.ids : '';
+        return csv ? csv.split(',').filter(Boolean) : [];
+    }
+
     function cardMatchesGroupFilters(card, page) {
         var groupFilters = ['cliente', 'vendedor', 'proveedor', 'tipoCompra', 'tipoOperacion', 'estado', 'formaPago'];
         for (var i = 0; i < groupFilters.length; i++) {
             var key = groupFilters[i];
+
+            // Seleccion exacta (cliente / vendedor / proveedor): la card tiene que traer su ID en data-id-<filtro>.
+            var ids = getSelectedIds(page, key);
+            if (ids.length > 0) {
+                if (ids.indexOf(card.getAttribute('data-id-' + key) || '') < 0) return false;
+                continue;
+            }
+
             if (key === 'formaPago') {
                 var pagos = getCheckedValues(page, key);
                 if (pagos.length > 0) {

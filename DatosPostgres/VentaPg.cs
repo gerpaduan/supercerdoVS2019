@@ -1881,8 +1881,14 @@ namespace DatosPostgres
         // compartido entre BuscarFacturasPagina y ObtenerFacturasResumen para que las dos
         // consultas filtren exactamente igual. Placeholders numerados para los IN(...), nunca
         // concatenados directo.
-        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante, string entorno = null, RestriccionCtaCteReservada restriccion = null)
+        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante, string entorno = null, RestriccionCtaCteReservada restriccion = null, List<int> idsCliente = null, List<int> idsVendedor = null)
         {
+            // Filtro EXACTO por ID (selector multi-seleccion de Cliente / Vendedor): placeholders numerados
+            // @ic0.. / @iv0.. (nunca se concatena el valor). Si hay IDs, el filtro por texto (cliente/vendedor)
+            // no se manda desde la pantalla; igual conviven en el WHERE por si algun llamador manda ambos.
+            string whereIdsCliente = ConstruirInIds("v.idpersona", "ic", idsCliente);
+            string whereIdsVendedor = ConstruirInIds("v.idvendedor", "iv", idsVendedor);
+
             string whereFormaPago = "1 = 1";
             if (formasPago != null && formasPago.Count > 0)
             {
@@ -1929,8 +1935,23 @@ namespace DatosPostgres
                 AND (@idSucursal = -1 OR v.idsucursal = @idSucursal)
                 AND (@cliente = '' OR p.razonsocial ILIKE @clienteBuscar OR p.identificacion ILIKE @clienteBuscar OR f.razonsocialafip ILIKE @clienteBuscar OR f.nrodocafip ILIKE @clienteBuscar)
                 AND (@vendedor = '' OR u.nombre ILIKE @vendedorBuscar)
+                AND ({whereIdsCliente})
+                AND ({whereIdsVendedor})
                 AND ({whereFormaPago})
                 AND ({whereComprobante})";
+        }
+
+        // "col IN (@pref0, @pref1, ...)" para una lista de IDs, o "1 = 1" si no hay (sin filtro).
+        // Los IDs viajan como parametros numerados, nunca concatenados al SQL.
+        private static string ConstruirInIds(string columna, string prefijo, List<int> ids)
+        {
+            if (ids == null || ids.Count == 0) return "1 = 1";
+
+            var placeholders = new List<string>();
+            for (int i = 0; i < ids.Count; i++)
+                placeholders.Add("@" + prefijo + i);
+
+            return columna + " IN (" + string.Join(", ", placeholders) + ")";
         }
 
         private static void AgregarParametrosFacturas(
@@ -1938,7 +1959,8 @@ namespace DatosPostgres
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor,
             List<string> formasPago, List<int> codigosComprobante,
-            RestriccionCtaCteReservada restriccion = null)
+            RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null)
         {
             if (restriccion != null)
             {
@@ -1964,6 +1986,14 @@ namespace DatosPostgres
             if (codigosComprobante != null)
                 for (int i = 0; i < codigosComprobante.Count; i++)
                     p.AddWithValue("cc" + i, codigosComprobante[i]);
+
+            if (idsCliente != null)
+                for (int i = 0; i < idsCliente.Count; i++)
+                    p.AddWithValue("ic" + i, idsCliente[i]);
+
+            if (idsVendedor != null)
+                for (int i = 0; i < idsVendedor.Count; i++)
+                    p.AddWithValue("iv" + i, idsVendedor[i]);
         }
 
         // Mismo patron de paginacion CTE+ROW_NUMBER() que Datos.CatalogoGlobalProducto.
@@ -1977,7 +2007,8 @@ namespace DatosPostgres
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
             int pagina, int cantidad, int cantidadExtra, string entorno = null,
-            RestriccionCtaCteReservada restriccion = null)
+            RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null)
         {
             pagina = pagina < 1 ? 1 : pagina;
             cantidad = cantidad < 1 ? 1 : cantidad;
@@ -1985,7 +2016,7 @@ namespace DatosPostgres
             int desdeFila = (int)Math.Min(((long)(pagina - 1) * cantidad) + 1, int.MaxValue);
             int hastaFila = (int)Math.Min((long)desdeFila + cantidad + cantidadExtra - 1, int.MaxValue);
 
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno, restriccion);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno, restriccion, idsCliente, idsVendedor);
 
             string sql = $@"
                 WITH facturasfiltradas AS
@@ -2053,7 +2084,7 @@ namespace DatosPostgres
             return DbPg.Reader(_connectionString, _idEmpresa, sql, MapFacturaCompleta,
                 p =>
                 {
-                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion);
+                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion, idsCliente, idsVendedor);
                     p.AddWithValue("desdeFila", desdeFila);
                     p.AddWithValue("hastaFila", hastaFila);
                 });
@@ -2111,9 +2142,10 @@ namespace DatosPostgres
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
-            string entorno = null, RestriccionCtaCteReservada restriccion = null)
+            string entorno = null, RestriccionCtaCteReservada restriccion = null,
+            List<int> idsCliente = null, List<int> idsVendedor = null)
         {
-            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno, restriccion);
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante, entorno, restriccion, idsCliente, idsVendedor);
 
             string sql = $@"
                 SELECT
@@ -2133,7 +2165,7 @@ namespace DatosPostgres
 
             var filas = DbPg.Reader(_connectionString, _idEmpresa, sql,
                 dr => (Cantidad: Convert.ToInt32(dr["cantidad"]), Total: Convert.ToDecimal(dr["total"])),
-                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion));
+                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, restriccion, idsCliente, idsVendedor));
 
             return filas.Count > 0 ? filas[0] : (Cantidad: 0, Total: 0m);
         }

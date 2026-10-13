@@ -98,12 +98,18 @@
                 <div class="filtros-fila filtros-fila-busqueda">
                     <div class="form-group mb-0">
                         <label for="buscadorVendedor" class="filtro-label">Vendedor</label>
-                        <input type="text" id="buscadorVendedor" name="vendedor" class="form-control" placeholder="Nombre del vendedor" value="@Model.Vendedor" />
+                        @* Selector multi-seleccion (filtro-picker.js): F9 vendedores / F10 clientes. Con seleccion filtra por ID
+                           exacto (el script quita el name del texto y manda los IDs en el hidden idsVendedor / idsCliente). *@
+                        <input type="text" id="buscadorVendedor" name="vendedor" class="form-control" placeholder="Nombre del vendedor" value="@Model.Vendedor" autocomplete="off"
+                               data-filtro-picker="vendedor" data-filtro-picker-tecla="F9" data-ids-name="idsVendedor"
+                               data-ids="@Model.IdsVendedor" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(Model.VendedoresSeleccionados)" />
                     </div>
 
                     <div class="form-group mb-0">
                         <label for="buscadorCliente" class="filtro-label">Cliente</label>
-                        <input type="text" id="buscadorCliente" name="cliente" class="form-control" placeholder="Nombre o identificación" value="@Model.Cliente" />
+                        <input type="text" id="buscadorCliente" name="cliente" class="form-control" placeholder="Nombre o identificación" value="@Model.Cliente" autocomplete="off"
+                               data-filtro-picker="cliente" data-filtro-picker-tecla="F10" data-ids-name="idsCliente"
+                               data-ids="@Model.IdsCliente" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(Model.ClientesSeleccionados)" />
                     </div>
 
                     <div class="form-group mb-0">

@@ -14,17 +14,24 @@
             @* Exportar PDF / Excel: el href inicial (con los filtros del servidor) es solo un respaldo; el script del final
                lo reconstruye con los filtros "en vivo" y las fechas aplicadas (ver "Exportar a PDF / Excel" en Scripts). *@
             <a class="btn btn-outline-danger js-exportar-lineas"
-               href="@Url.Action("LineasPdf", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss"), idSucursal = Model.IdSucursal, cliente = Model.Cliente, vendedor = Model.Vendedor, producto = Model.Producto, formasPago = Model.FormasPagoCsv })"
+               href="@Url.Action("LineasPdf", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss"), idSucursal = Model.IdSucursal, cliente = Model.Cliente, vendedor = Model.Vendedor, idsCliente = Model.IdsCliente, idsVendedor = Model.IdsVendedor, producto = Model.Producto, formasPago = Model.FormasPagoCsv })"
                data-export-url="@Url.Action("LineasPdf", "Ventas")"
                title="Exportar a PDF lo que se ve en pantalla">
                 <i class="fas fa-file-pdf mr-1"></i> PDF
             </a>
             <a class="btn btn-outline-success js-exportar-lineas"
-               href="@Url.Action("LineasExcel", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss"), idSucursal = Model.IdSucursal, cliente = Model.Cliente, vendedor = Model.Vendedor, producto = Model.Producto, formasPago = Model.FormasPagoCsv })"
+               href="@Url.Action("LineasExcel", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss"), idSucursal = Model.IdSucursal, cliente = Model.Cliente, vendedor = Model.Vendedor, idsCliente = Model.IdsCliente, idsVendedor = Model.IdsVendedor, producto = Model.Producto, formasPago = Model.FormasPagoCsv })"
                data-export-url="@Url.Action("LineasExcel", "Ventas")"
                title="Exportar a Excel lo que se ve en pantalla">
                 <i class="fas fa-file-excel mr-1"></i> Excel
             </a>
+            @* Excel compacto para imprimir (sin colores, letra 8, dos columnas por hoja): antes de descargar pregunta que
+               datos de la venta incluir (ver "Excel compacto" en Scripts). *@
+            <button type="button" class="btn btn-outline-success js-exportar-compacto"
+                    data-export-url="@Url.Action("LineasExcelCompacto", "Ventas")"
+                    title="Excel sin colores y en dos columnas por hoja, para imprimir">
+                <i class="fas fa-print mr-1"></i> Excel compacto
+            </button>
             <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
                 <i class="fas fa-arrow-left mr-1"></i> Volver al indice
             </a>
@@ -76,11 +83,18 @@
                 <div class="row mt-3">
                     <div class="col-12 col-md-4 mb-3">
                         <label class="elaborados-filtro-label">Cliente</label>
-                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="cliente" value="@Model.Cliente" placeholder="Nombre o identificacion" autocomplete="off" />
+                        @* Selector multi-seleccion (filtro-picker.js): F10 clientes. Con seleccion filtra por ID exacto; el hidden
+                           idsCliente (dentro del form) conserva la seleccion al apretar Buscar / cambiar de sucursal. *@
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="cliente" value="@Model.Cliente" placeholder="Nombre o identificacion" autocomplete="off"
+                               data-filtro-picker="cliente" data-filtro-picker-tecla="F10" data-ids-name="idsCliente"
+                               data-ids="@Model.IdsCliente" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(Model.ClientesSeleccionados)" />
                     </div>
                     <div class="col-12 col-md-4 mb-3">
                         <label class="elaborados-filtro-label">Vendedor</label>
-                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="vendedor" value="@Model.Vendedor" placeholder="Nombre del vendedor" autocomplete="off" />
+                        @* Idem: F9 vendedores. *@
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="vendedor" value="@Model.Vendedor" placeholder="Nombre del vendedor" autocomplete="off"
+                               data-filtro-picker="vendedor" data-filtro-picker-tecla="F9" data-ids-name="idsVendedor"
+                               data-ids="@Model.IdsVendedor" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(Model.VendedoresSeleccionados)" />
                     </div>
                     <div class="col-12 col-md-4 mb-3">
                         <label class="elaborados-filtro-label d-block">Forma de pago</label>
@@ -152,6 +166,8 @@
             <div class="card shadow-sm mb-3 linea-registro-card js-registro-card"
                  data-cliente="@(cliente != null ? cliente.Valor : "")"
                  data-vendedor="@(vendedor != null ? vendedor.Valor : "")"
+                 data-id-cliente="@venta.IdCliente"
+                 data-id-vendedor="@venta.IdVendedor"
                  data-formaPago="@(formaPago != null ? formaPago.Valor : "")">
                 <div class="card-header bg-white">
                     <div class="d-flex justify-content-between align-items-start flex-wrap">
@@ -372,6 +388,9 @@
 @Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
 
 @section Scripts {
+    @* Selector multi-seleccion de Cliente / Vendedor: el modal va ANTES del script del componente (lee de el las URLs). *@
+    <partial name="~/Views/Shared/_FiltroPickerModal.cshtml" />
+    <script src="@Url.Content("~/Scripts/app/filtro-picker.js")" asp-append-version="true"></script>
     <script>
         (function () {
             var form = document.querySelector('.js-form-filtros-lineas');
@@ -453,6 +472,17 @@
                 return input ? input.value.trim() : '';
             }
 
+            // Cliente / Vendedor con seleccion exacta (filtro-picker.js): viajan los IDs (data-ids) y el texto va vacio,
+            // porque el valor del input es solo un resumen. Sin seleccion, el texto escrito como siempre.
+            function idsFiltroVivo(clave) {
+                var input = document.querySelector('[data-live-filter="' + clave + '"]');
+                return input && input.dataset.ids ? input.dataset.ids : '';
+            }
+
+            function textoFiltroVivo(clave) {
+                return idsFiltroVivo(clave) ? '' : valorFiltroVivo(clave);
+            }
+
             function formasPagoTildadas() {
                 var tildadas = document.querySelectorAll('[data-live-filter="formaPago"]:checked');
                 return Array.prototype.map.call(tildadas, function (item) { return item.value; }).join(',');
@@ -464,8 +494,10 @@
                 params.set('fechaDesde', fechasAplicadas.fechaDesde);
                 params.set('fechaHasta', fechasAplicadas.fechaHasta);
                 params.set('producto', valorFiltroVivo('producto'));
-                params.set('cliente', valorFiltroVivo('cliente'));
-                params.set('vendedor', valorFiltroVivo('vendedor'));
+                params.set('cliente', textoFiltroVivo('cliente'));
+                params.set('vendedor', textoFiltroVivo('vendedor'));
+                params.set('idsCliente', idsFiltroVivo('cliente'));
+                params.set('idsVendedor', idsFiltroVivo('vendedor'));
                 params.set('formasPago', formasPagoTildadas());
                 return urlBase + '?' + params.toString();
             }
@@ -502,6 +534,97 @@
                     actualizarEnlacesExportar();
                 });
             });
+
+            // ---- Excel compacto para imprimir ----
+            // Antes de descargar pregunta que datos de la venta incluir: vendedor y sucursal van en el renglon de la fecha;
+            // cliente, forma de pago, Venta ID y comprobante, en un renglon debajo (que no se genera si no se elige ninguno).
+            // La seleccion se recuerda en este navegador (localStorage). Los filtros y las fechas viajan igual que en PDF/Excel.
+            var botonCompacto = document.querySelector('.js-exportar-compacto');
+            var CLAVE_DATOS_COMPACTO = 'ventasLineasCompactoDatos';
+            var DATOS_COMPACTO_INICIALES = ['vendedor', 'cliente'];
+            var DATOS_COMPACTO = [
+                { clave: 'vendedor', texto: 'Vendedor', grupo: 'principal' },
+                { clave: 'sucursal', texto: 'Sucursal', grupo: 'principal' },
+                { clave: 'cliente', texto: 'Cliente', grupo: 'extra' },
+                { clave: 'formaPago', texto: 'Forma de pago', grupo: 'extra' },
+                { clave: 'ventaId', texto: 'Venta ID', grupo: 'extra' },
+                { clave: 'comprobante', texto: 'Nro/comprobante', grupo: 'extra' }
+            ];
+
+            function leerDatosCompacto() {
+                try {
+                    var guardado = window.localStorage.getItem(CLAVE_DATOS_COMPACTO);
+                    if (guardado !== null) return guardado.split(',').filter(Boolean);
+                } catch (e) {
+                    // localStorage no disponible (modo privado, datos bloqueados): se usan los datos iniciales.
+                }
+                return DATOS_COMPACTO_INICIALES;
+            }
+
+            function guardarDatosCompacto(datos) {
+                try {
+                    window.localStorage.setItem(CLAVE_DATOS_COMPACTO, datos.join(','));
+                } catch (e) {
+                    // Solo es una comodidad: si no se puede guardar, la proxima vez vuelve a los datos iniciales.
+                }
+            }
+
+            function casillasCompacto(grupo, seleccionados) {
+                return DATOS_COMPACTO.filter(function (dato) { return dato.grupo === grupo; }).map(function (dato) {
+                    return '<label style="display:block; margin:2px 0"><input type="checkbox" class="swal-dato-compacto" value="' + dato.clave + '"'
+                        + (seleccionados.indexOf(dato.clave) >= 0 ? ' checked' : '') + '> ' + dato.texto + '</label>';
+                }).join('');
+            }
+
+            function descargarCompacto(datos) {
+                // La respuesta es un archivo (attachment): el navegador lo descarga y la pantalla no se recarga.
+                window.location.href = urlExportar(botonCompacto.getAttribute('data-export-url')) + '&datos=' + encodeURIComponent(datos.join(','));
+            }
+
+            if (botonCompacto) {
+                botonCompacto.addEventListener('click', function () {
+                    if (!document.querySelector('.js-registro-card:not(.d-none)')) {
+                        if (window.Swal && typeof window.Swal.fire === 'function') {
+                            window.Swal.fire({
+                                icon: 'info',
+                                title: 'No hay ventas para exportar',
+                                text: 'Ajustá los filtros para que la pantalla muestre al menos una venta.'
+                            });
+                        } else {
+                            window.alert('No hay ventas para exportar.');
+                        }
+                        return;
+                    }
+
+                    var seleccionados = leerDatosCompacto();
+                    if (!window.Swal || typeof window.Swal.fire !== 'function') {
+                        descargarCompacto(seleccionados);
+                        return;
+                    }
+
+                    window.Swal.fire({
+                        title: 'Excel compacto para imprimir',
+                        html: '<div style="text-align:left; font-size:.95rem">'
+                            + '<p style="margin:0 0 .6rem">Sin colores, letra chica y dos columnas por hoja, ordenado por fecha y hora. '
+                            + 'Cada venta muestra su fecha, su hora y su total. ¿Qué datos querés agregar?</p>'
+                            + '<strong>En el renglón de la fecha</strong>' + casillasCompacto('principal', seleccionados)
+                            + '<strong style="display:block; margin-top:.6rem">En un renglón debajo (opcional)</strong>' + casillasCompacto('extra', seleccionados)
+                            + '</div>',
+                        showCancelButton: true,
+                        confirmButtonText: 'Descargar',
+                        cancelButtonText: 'Cancelar',
+                        focusConfirm: false,
+                        preConfirm: function () {
+                            var marcadas = window.Swal.getPopup().querySelectorAll('.swal-dato-compacto:checked');
+                            return Array.prototype.map.call(marcadas, function (casilla) { return casilla.value; });
+                        }
+                    }).then(function (resultado) {
+                        if (!resultado.isConfirmed) return;
+                        guardarDatosCompacto(resultado.value);
+                        descargarCompacto(resultado.value);
+                    });
+                });
+            }
 
             actualizarEnlacesExportar();
 

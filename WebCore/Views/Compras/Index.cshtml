@@ -7,6 +7,10 @@
     int idSucursal = ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : -1;
     string tipoCompra = ViewBag.TipoCompra as string ?? "Todos";
     string texto = ViewBag.Texto as string ?? "";
+    // Filtro de proveedor (selector multi-seleccion): texto libre (solo sin seleccion) o IDs exactos + nombres para pintar el input.
+    string proveedorTexto = ViewBag.Proveedor as string ?? "";
+    string idsProveedor = ViewBag.IdsProveedor as string ?? "";
+    var proveedoresSeleccionados = ViewBag.ProveedoresSeleccionados as List<WebCore.Services.FiltroPickerItem> ?? new List<WebCore.Services.FiltroPickerItem>();
     DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today;
     DateTime fechaHasta = ViewBag.FechaHasta != null ? (DateTime)ViewBag.FechaHasta : DateTime.Today;
     bool permiteMediaRes = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
@@ -35,7 +39,7 @@
         <a class="btn btn-success mt-2 mt-md-0 compras-btn-accion" href="@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })" id="btnNuevaCompraIndex">
             <i class="fas fa-plus mr-1"></i> Nueva compra
         </a>
-        <a class="btn btn-outline-primary mt-2 mt-md-0 ml-md-2 compras-btn-accion" href="@Url.Action("Lineas", "Compras", new { idSucursal = idSucursal, tipoCompra = tipoCompra, texto = texto, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })" id="btnVerLineasComprasIndex">
+        <a class="btn btn-outline-primary mt-2 mt-md-0 ml-md-2 compras-btn-accion" href="@Url.Action("Lineas", "Compras", new { idSucursal = idSucursal, tipoCompra = tipoCompra, texto = texto, proveedor = proveedorTexto, idsProveedor = idsProveedor, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })" id="btnVerLineasComprasIndex">
             <i class="fas fa-stream mr-1"></i> Ver lineas
         </a>
     </div>
@@ -97,6 +101,15 @@
                                 <input type="hidden" name="tipoCompra" value="Todos" />
                                 <input type="text" class="form-control" value="Productos" readonly />
                             }
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Proveedor</label>
+                            @* Selector multi-seleccion (filtro-picker.js): F9 busca proveedores; con seleccion filtra por ID exacto
+                               (el hidden idsProveedor viaja en el form); sin seleccion, coincidencia por razon social como siempre. *@
+                            <input type="text" id="proveedorCompras" name="proveedor" value="@proveedorTexto" class="form-control" autocomplete="off" placeholder="Razón social del proveedor"
+                                   data-filtro-picker="proveedor" data-filtro-picker-tecla="F9" data-ids-name="idsProveedor"
+                                   data-ids="@idsProveedor" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(proveedoresSeleccionados)" />
                         </div>
 
                         <div class="form-group mb-0">
@@ -266,7 +279,7 @@
         }
 
         .compras-filtros-row-busqueda {
-            grid-template-columns: .9fr 1.5fr;
+            grid-template-columns: .9fr 1.2fr 1.3fr;
         }
 
         .compras-filtros-card .form-control,
@@ -305,6 +318,9 @@
 </style>
 
 @section Scripts {
+    @* Selector multi-seleccion de Proveedor: el modal va ANTES del script del componente (lee de el las URLs). *@
+    <partial name="~/Views/Shared/_FiltroPickerModal.cshtml" />
+    <script src="@Url.Content("~/Scripts/app/filtro-picker.js")" asp-append-version="true"></script>
     <script>
         (function () {
             document.addEventListener("keydown", function (event) {
@@ -335,6 +351,13 @@
             var inputSucursal = form ? form.querySelector('select[name="idSucursal"]') : null;
             var inputTipoCompra = form ? form.querySelector('[name="tipoCompra"]') : null;
             var inputTexto = form ? form.querySelector('input[name="texto"]') : null;
+            // Proveedor: selector multi-seleccion (filtro-picker.js). Con seleccion hay IDs exactos (data-ids) y el
+            // input es solo un resumen; sin seleccion, texto libre.
+            var inputProveedor = document.getElementById('proveedorCompras');
+            var picker = window.FiltroPicker || {
+                getIds: function () { return ""; },
+                getTexto: function (input) { return input ? input.value : ""; }
+            };
             var alertaPendiente = document.getElementById('alertaFiltrosPendientesCompras');
             var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
                 ? window.HTMLFormElement.prototype.submit
@@ -380,7 +403,9 @@
                     fechaHasta: inputFechaHasta ? inputFechaHasta.value : "",
                     idSucursal: inputSucursal ? inputSucursal.value : "",
                     tipoCompra: inputTipoCompra ? inputTipoCompra.value : "",
-                    texto: inputTexto ? inputTexto.value : ""
+                    texto: inputTexto ? inputTexto.value : "",
+                    proveedor: picker.getTexto(inputProveedor),
+                    idsProveedor: picker.getIds(inputProveedor)
                 };
             }
 
@@ -438,6 +463,9 @@
                     if (state.idSucursal) params.set("idSucursal", state.idSucursal);
                     if (state.tipoCompra) params.set("tipoCompra", state.tipoCompra);
                     if (state.texto) params.set("texto", state.texto);
+                    // El servidor resuelve los nombres de los IDs desde la URL (no hace falta guardarlos aca).
+                    if (state.idsProveedor) params.set("idsProveedor", state.idsProveedor);
+                    else if (state.proveedor) params.set("proveedor", state.proveedor);
 
                     var query = params.toString();
                     if (query) {
