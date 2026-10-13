@@ -3,7 +3,7 @@
 @{
     bool modoModal = ViewBag.ModoModalVentas != null && (bool)ViewBag.ModoModalVentas;
     string detalleBaseUrl = ViewBag.DetalleVentaBaseUrl as string ?? "";
-    string urlActual = Context.Request.Path.ToString() + Context.Request.QueryString.ToString();
+    string urlActual = Context.Request.PathBase.ToString() + Context.Request.Path.ToString() + Context.Request.QueryString.ToString();
 }
 
 <ul id="listaVentas" class="list-group list-group-flush">

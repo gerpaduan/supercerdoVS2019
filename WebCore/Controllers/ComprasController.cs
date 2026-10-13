@@ -270,7 +270,7 @@ namespace WebCore.Controllers
             // docs/DECISIONS.md "Login de operador para el modulo Compras"). Port literal de
             // Web/Controllers/ComprasController.cs:48-53.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Compras") == null)
-                return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.Path + Request.QueryString });
+                return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
@@ -568,7 +568,7 @@ namespace WebCore.Controllers
                 if (enModal)
                     return StatusCode(403, "Para operar compras hay que autorizar el modulo Compras desde el menu.");
 
-                return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.Path + Request.QueryString });
+                return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
             }
 
             // Port de Web/Controllers/ComprasController.cs:200-206.

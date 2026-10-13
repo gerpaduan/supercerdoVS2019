@@ -267,7 +267,7 @@ namespace WebCore.Controllers
             // seleccion (sin contraseña, ver SeleccionUsuarioController). Batch B, 2026-09-09,
             // ver docs/DECISIONS.md "Batch B: permisos reales + operador de produccion".
             var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
-                this, user, idUsuarioCreador, Request.Path + Request.QueryString);
+                this, user, idUsuarioCreador, Request.PathBase + Request.Path + Request.QueryString);
             if (redirectSeleccion != null) return redirectSeleccion;
 
             Entidades.Compra compra = null;

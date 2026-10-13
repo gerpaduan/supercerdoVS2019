@@ -7,7 +7,7 @@
    detectar y descartar un encabezado duplicado cuando un dia queda partido justo en el limite de
    una pagina (ver _VentasFacturasFiltrosScripts.cshtml). *@
 @{
-    string urlActual = Context.Request.Path.ToString() + Context.Request.QueryString.ToString();
+    string urlActual = Context.Request.PathBase.ToString() + Context.Request.Path.ToString() + Context.Request.QueryString.ToString();
 }
 @if (Model != null)
 {

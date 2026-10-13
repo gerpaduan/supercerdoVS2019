@@ -389,4 +389,4 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 ## Guardar un pago en San Lorenzo / Servidor SM da 404 de IIS (2026-10-13)
 - **Sintoma**: al guardar un pago/cobro aparece "404 - File or directory not found / The resource you are looking for might have been removed...". El pago SI queda guardado.
 - **Causa**: el `returnUrl` del formulario se armaba con `Request.Path` (sin PathBase `/CarniSysWeb`); tras guardar, `window.location.href = redirectUrl` iba a `/Finanzas/...` sin prefijo. En la VPS (sin PathBase) no pasa.
-- **Fix**: `Request.PathBase + Request.Path + Request.QueryString` en `Views/Finanzas/CtaCtePersona.cshtml` y `Pagos.cshtml`. Detalle y otros lugares con el mismo defecto en `docs/DECISIONS.md` (2026-10-13).
+- **Fix**: `Request.PathBase + Request.Path + Request.QueryString` en `Views/Finanzas/CtaCtePersona.cshtml` y `Pagos.cshtml`. Corregido el mismo dia el mismo defecto en Ventas/Compras/Elaborados/Movimientos/Stock y AuditoriaLogin (`Autorizar modulo`, "Volver" de venta y factura). Regla y detalle en `docs/DECISIONS.md` (2026-10-13).

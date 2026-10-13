@@ -172,7 +172,7 @@ namespace WebCore.Controllers
             // compartida de produccion sin identificar todavia (idUsuarioCreador<=0) redirige a
             // la pantalla comun de seleccion (sin contraseña, ver SeleccionUsuarioController).
             var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
-                this, user, idUsuarioCreador, Request.Path + Request.QueryString);
+                this, user, idUsuarioCreador, Request.PathBase + Request.Path + Request.QueryString);
             if (redirectSeleccion != null) return redirectSeleccion;
 
             MovimientoEditVm model;

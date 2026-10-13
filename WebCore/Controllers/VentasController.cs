@@ -698,7 +698,7 @@ namespace WebCore.Controllers
             // docs/DECISIONS.md "Login de operador para el modulo Ventas"). Port literal de
             // Web/Controllers/VentasController.cs:63-68.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
-                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
             // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md): esta accion no validaba
             // ningun permiso -- cualquier usuario autenticado podia ver el historial completo de
@@ -904,7 +904,7 @@ namespace WebCore.Controllers
         {
             // Usuario de produccion: mismo gate que Index (Batch 5, ver docs/DECISIONS.md).
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
-                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
             var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
@@ -925,7 +925,7 @@ namespace WebCore.Controllers
         {
             // Mismo gate de usuario de produccion que Lineas.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
-                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
             var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
             byte[] pdfBytes = GenerarDocsCore.GenerarPdfLineasVenta(model, ObtenerNombreSucursalLineas(idSucursal));
@@ -939,7 +939,7 @@ namespace WebCore.Controllers
         {
             // Mismo gate de usuario de produccion que Lineas.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
-                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
             var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
             byte[] excelBytes = GenerarExcelCore.GenerarExcelLineasVenta(model, ObtenerNombreSucursalLineas(idSucursal));
@@ -957,7 +957,7 @@ namespace WebCore.Controllers
         {
             // Mismo gate de usuario de produccion que Lineas.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
-                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
             var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
             var opciones = OpcionesExcelLineasCompacto.DesdeCsv(datos);
@@ -1064,7 +1064,7 @@ namespace WebCore.Controllers
                     // antes faltaba, asi que "Volver" no aparecia al entrar a DetalleVenta desde
                     // esta pantalla. Mismo patron que _TablaVentas.cshtml (URL actual completa,
                     // con su querystring de filtros).
-                    EditUrl = Url.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta, returnUrl = Request.Path + Request.QueryString })
+                    EditUrl = Url.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta, returnUrl = Request.PathBase + Request.Path + Request.QueryString })
                 };
 
                 grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Fecha", Valor = venta.FechaVenta.ToString("dd/MM/yyyy HH:mm") });
@@ -1132,7 +1132,7 @@ namespace WebCore.Controllers
             // en modo "modal" (embebido dentro de POS, que ya tiene su propio operador de POS
             // autenticado). Port literal de Web/Controllers/VentasController.cs:402-409.
             if (!modal && _usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
-                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
             Entidades.Venta venta = _oVentaN.getVentaById(id);
             if (venta == null)

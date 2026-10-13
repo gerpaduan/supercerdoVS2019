@@ -245,7 +245,7 @@ namespace WebCore.Controllers
 
             // Port de Web/Controllers/ElaboradosController.cs:224-231.
             var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
-                this, user, idUsuarioCreador, Request.Path + Request.QueryString);
+                this, user, idUsuarioCreador, Request.PathBase + Request.Path + Request.QueryString);
             if (redirectSeleccion != null) return redirectSeleccion;
 
             // Port de Web/Controllers/ElaboradosController.cs:236.
@@ -357,7 +357,7 @@ namespace WebCore.Controllers
 
             // Port de Web/Controllers/ElaboradosController.cs:337-344.
             var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
-                this, user, idUsuarioCreador, Request.Path + Request.QueryString);
+                this, user, idUsuarioCreador, Request.PathBase + Request.Path + Request.QueryString);
             if (redirectSeleccion != null) return redirectSeleccion;
 
             // Port de Web/Controllers/ElaboradosController.cs:349.
