@@ -35,7 +35,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Clave rápida (PIN) | Acceso y seguridad | `pantallas/Login.ChangePin.md` | 2026-10-03 |
 | pantallas | Desbloquear usuario (enlace del mail) | Acceso y seguridad | `pantallas/Login.UnlockAccount.md` | 2026-10-03 |
 | pantallas | Este dispositivo no está autorizado | Acceso y seguridad | `pantallas/Login.DispositivoNoAutorizado.md` | 2026-10-03 |
-| pantallas | Ingreso al sistema | Acceso y seguridad | `pantallas/Login.Index.md` | 2026-10-04 |
+| pantallas | Ingreso al sistema | Acceso y seguridad | `pantallas/Login.Index.md` | 2026-10-13 |
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
 | pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-10-09 |

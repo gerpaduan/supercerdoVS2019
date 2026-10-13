@@ -4,7 +4,7 @@ titulo: Ingreso al sistema
 rol: usuario
 modulo: Acceso y seguridad
 orden: 1
-revisada: 2026-10-04
+revisada: 2026-10-13
 ---
 ## Para qué sirve
 Es la pantalla para entrar al sistema. Funciona igual desde la dirección general (`/Login`) y desde la dirección de tu empresa (`/Login/<CUIT>`, ver [ingresar con la dirección de tu empresa](ayuda:concepto/login-por-cuit)).
@@ -24,6 +24,9 @@ Es la pantalla para entrar al sistema. Funciona igual desde la dirección genera
 - Fuera del **horario laboral** de la empresa los empleados (no administradores) no pueden iniciar sesión.
 - Si **olvidaste la contraseña**, usá *"¿Olvidaste tu contraseña?"* ([ayuda](ayuda:pantalla/Login.ForgotPassword)).
 - Desde tu usuario ya ingresado podés [cambiar tu contraseña](ayuda:pantalla/Login.ChangePassword) o [configurar tu PIN](ayuda:pantalla/Login.ChangePin).
+
+## Instalar como app en el celular
+Desde el navegador del celular o la tablet podés instalar CarniSys como una app (ícono en la pantalla de inicio y sin barra del navegador): en Chrome/Android, menú ⋮ → *Instalar app*; en iPhone/iPad (Safari), compartir → *Agregar a pantalla de inicio*. No hace falta reinstalar cuando el sistema se actualiza: se actualiza sola al abrirla. Funciona solo con conexión. En iPhone/iPad la app instalada guarda su propia sesión, así que hay que ingresar de nuevo y el dispositivo puede pedir autorización otra vez. PENDIENTE: confirmar el texto exacto de los menús en un celular real.
 
 ## Configuraciones relacionadas
 [Dispositivo seguro](ayuda:concepto/dispositivo-seguro) · [mapa de configuraciones](ayuda:referencia/configuraciones)

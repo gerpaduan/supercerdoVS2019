@@ -1,0 +1,7 @@
+@* Etiquetas para que el navegador ofrezca "Instalar app" (PWA). Solo manifest: NO se registra ningun
+   service worker (ver docs/DECISIONS.md 2026-10-13) -- cada apertura carga de red, asi un redeploy se
+   ve de inmediato y no hay paginas cacheadas. Url.Content("~/...") resuelve contra el PathBase real
+   (SM y San Lorenzo cuelgan de "/CarniSysWeb"). El manifest usa URLs relativas: heredan ese prefijo. *@
+<link rel="manifest" href="@Url.Content("~/manifest.json")" />
+<link rel="apple-touch-icon" href="@Url.Content("~/Content/img/pwa-192.png")" />
+<meta name="theme-color" content="#062d63" />
