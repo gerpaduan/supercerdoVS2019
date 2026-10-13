@@ -6,6 +6,12 @@
 // anular" del clasico, para no ofrecer una opcion que el servidor ignoraria en silencio.
 (function () {
 
+    // Este archivo puede cargarse DOS veces (el POS lo incluye y, al embeber el detalle de venta,
+    // _ModalComprobanteVenta lo inyecta de nuevo): sin este guard los handlers delegados de document
+    // quedan duplicados y un submit podria emitir la factura dos veces (titulares fiscales, 2026-10-09).
+    if (window.__feInit) return;
+    window.__feInit = true;
+
     // El auto-inject de modal-request-loading.js (ajaxSend global) no siempre llega a tiempo en
     // los flujos de modal del POS -- mismo problema ya encontrado y resuelto en forma-pago.js
     // para FinalizarVenta/ModificarVenta (ver ese archivo). _FacturaElectronica.cshtml ademas
@@ -793,7 +799,7 @@
             (data || []).forEach(function (p, index) {
                 const numTexto = (index < 9) ? String(index + 1) : '–';
                 html += '<tr class="fila-persona" data-id="' + p.idPersona + '" data-razon="' + (p.razonSocial || '') + '" data-cuit="' + (p.cuit || '') + '"'
-                    + ' data-iva="' + (p.iva || '') + '" data-domicilio="' + (p.domicilio || '') + '" data-ciudad="' + (p.ciudad || '') + '">'
+                    + ' data-iva="' + (p.iva || '') + '" data-idiva="' + (p.idIva || 0) + '" data-domicilio="' + (p.domicilio || '') + '" data-ciudad="' + (p.ciudad || '') + '">'
                     + '<td class="col-numero-cell d-none d-md-table-cell">' + numTexto + '</td>'
                     + '<td>' + (p.cuit || '') + '</td>'
                     + '<td>' + (p.razonSocial || '') + '</td>'
@@ -820,24 +826,224 @@
 
         // El formato del domicilio replica el que arma BuildFacturaDTO (VentasController.cs) para
         // una venta real: "Domicilio - Ciudad".
-        if (iva) {
-            $('select[name="CondicionIvaAFIP"]').val(iva).trigger('change');
-        }
+        // Titulares fiscales: la condicion IVA y la letra salen de la persona (id numerico de la condicion; si el
+        // motor no lo informa se deduce de la abreviatura), no de un select editable.
+        const idIva = parseInt($fila.attr('data-idiva'), 10) || idIvaDesdeTexto(iva);
+        aplicarCondicionIvaCliente(idIva, '');
+        recalcularTipo();
+        evaluarSugerenciaInline();
         $('input[name="DomicilioAFIP"]').val(domicilio ? (domicilio + (ciudad ? ' - ' + ciudad : '')) : '');
 
         $('#modalBuscarPersona').modal('hide');
     }
 
-    // Elegir "Responsable Inscripto" fuerza Tipo de Factura = A. Corre tanto al elegir cliente
-    // (seleccionarPersonaFactura dispara "change" a mano) como si el usuario cambia el select de
-    // Cond. IVA directamente -- no interfiere con el calculo server-side
-    // (FacturaElectronica.getCodTipoCbteAFIP), que solo corre una vez al abrir el modal; esto es
-    // puramente reactividad dentro del modal ya abierto.
-    $(document).on('change', 'select[name="CondicionIvaAFIP"]', function () {
-        if ($(this).val() === 'Responsable Inscripto') {
-            $('select[name="CodTipoCbteAfip"]').val('1');
+    // =========================
+    // Titulares fiscales (2026-10-09, ver docs/DECISIONS.md "Titulares fiscales por empresa y por sucursal")
+    // =========================
+    // La letra se FUERZA segun el emisor (titular) y el cliente, con la misma regla que el servidor
+    // (FacturaElectronica.getCodTipoCbteAFIP + Persona.RequiereFacturaA): titular que no es RI -> C;
+    // titular RI + cliente RI o monotributista -> A; titular RI + otra condicion -> B. Los codigos y la lista
+    // de condiciones que reciben A llegan del servidor en data-* del form (una sola fuente). El select "Tipo" y
+    // la "Cond. IVA" son informativos (deshabilitados): lo que se envia va en los hidden.
+    // Reemplaza al viejo "elegir Responsable Inscripto fuerza Factura A", que ignoraba al emisor.
+    const COND_IVA_TEXTO = { 1: 'Consumidor Final', 2: 'Responsable Inscripto', 3: 'Monotributista', 4: 'Exento' };
+
+    function emisorEsRRII() {
+        return String($root().attr('data-emisor-rrii')) === '1';
+    }
+
+    function codigoLetra(letra, porDefecto) {
+        const v = parseInt($root().attr('data-cod-' + letra), 10);
+        return isNaN(v) ? porDefecto : v;
+    }
+
+    function reglaFacturaA() {
+        return String($root().attr('data-regla-a') || '2,3').split(',').map(function (x) { return parseInt(x, 10); });
+    }
+
+    function tipoForzado(idIvaCliente) {
+        if (!emisorEsRRII()) return codigoLetra('c', 11);
+        return reglaFacturaA().indexOf(idIvaCliente) >= 0 ? codigoLetra('a', 1) : codigoLetra('b', 6);
+    }
+
+    function aplicarTipo(cod) {
+        $('#feSelectTipo').val(String(cod));
+        $('#feHiddenTipo').val(String(cod));
+        syncResumenSticky();
+    }
+
+    // Recalcula la letra con el emisor y el cliente actuales. Una factura ya emitida conserva la suya.
+    function recalcularTipo() {
+        if (isYaEmitida()) return;
+        const idIva = parseInt($root().attr('data-cliente-idiva'), 10) || 0;
+        aplicarTipo(tipoForzado(idIva));
+    }
+
+    // Condicion IVA del cliente: viene de la persona (select informativo + hidden que se envia).
+    function aplicarCondicionIvaCliente(idIva, textoRespaldo) {
+        const texto = COND_IVA_TEXTO[idIva] || textoRespaldo || '';
+        if (texto) {
+            $('select[name="CondicionIvaAFIP"]').val(texto);
+            $('#feHiddenCondicionIva').val(texto);
         }
+        $root().attr('data-cliente-idiva', idIva || 0);
+    }
+
+    // Si el motor no informa el id numerico de la condicion (SQL Server), se deduce de la abreviatura.
+    function idIvaDesdeTexto(texto) {
+        const t = String(texto || '').toLowerCase();
+        if (t.indexOf('resp') === 0) return 2;
+        if (t.indexOf('mono') === 0) return 3;
+        if (t.indexOf('exent') === 0) return 4;
+        if (t.indexOf('cons') === 0) return 1;
+        return 0;
+    }
+
+    function datosTitulares() {
+        const el = document.getElementById('feTitularesData');
+        if (!el) return null;
+        try { return JSON.parse(el.textContent); } catch (e) { return null; }
+    }
+
+    function textoOpcionTitular(t) {
+        let s = t.nombre + ' · CUIT ' + t.cuit + ' · ' + (t.esRRII ? 'Resp. Inscripto' : 'Monotributo');
+        if (t.pto) s += ' · PV ' + t.pto;
+        if (t.vence) s += ' · cert. vence ' + t.vence;
+        if (!t.disponible && t.motivo) s += ' (' + t.motivo + ')';
+        return s;
+    }
+
+    // Completa el select "Facturar a nombre de" con los titulares del modal (los no disponibles, deshabilitados).
+    function inicializarSelectorTitular() {
+        const cfg = datosTitulares();
+        const $sel = $('#feSelectTitular');
+        if (!cfg || !$sel.length || $sel.data('fe-lleno')) return;
+
+        $sel.empty();
+        (cfg.titulares || []).forEach(function (t) {
+            const $o = $('<option></option>').val(t.id).text(textoOpcionTitular(t));
+            if (!t.disponible) $o.prop('disabled', true);
+            $sel.append($o);
+        });
+        const actual = cfg.actual || (cfg.titulares.length ? cfg.titulares[0].id : 0);
+        $sel.val(String(actual));
+        $sel.data('fe-lleno', true);
+        evaluarSugerenciaInline();
+    }
+
+    // Cambiar de titular vale SOLO para esta factura (no se recuerda ni toca la sucursal) y no recarga el modal:
+    // actualiza el bloque del emisor, el punto de venta y la letra, y conserva todo lo que el usuario ya edito.
+    function aplicarTitular(id) {
+        const cfg = datosTitulares();
+        if (!cfg) return;
+        const t = (cfg.titulares || []).filter(function (x) { return x.id === id; })[0];
+        if (!t || !t.disponible) return;
+
+        $('#feIdTitular').val(t.id);
+        $('#feEmisorNombre').text(t.nombre);
+        $('#feHeaderEmisor').text(t.nombre);
+        $('#feEmisorCuit').text(t.cuit);
+        $root().attr('data-emisor-rrii', t.esRRII ? '1' : '0');
+        $('input[name="PtoVtaAfip"]').val(t.pto);
+        $('#feSelectTitular').val(String(t.id));
+        recalcularTipo();
+        syncResumenSticky();
+        evaluarSugerenciaInline();
+    }
+
+    $(document).on('change.feTitular', '#feSelectTitular', function () {
+        aplicarTitular(parseInt($(this).val(), 10) || 0);
     });
+
+    // "Nueva factura sin venta": el cliente se elige DENTRO del modal, asi que la sugerencia "para Factura A hay
+    // que facturar con un titular RI" se evalua aca al elegir cliente (con venta ya se mostro antes de abrir).
+    function evaluarSugerenciaInline() {
+        const $aviso = $('#feSugerenciaTitular');
+        if (!$aviso.length) return;
+        $aviso.addClass('d-none').empty();
+        if (!esModoSinVenta() || isYaEmitida() || emisorEsRRII()) return;
+        if ((parseInt($root().attr('data-cliente-idiva'), 10) || 0) !== 2) return;
+
+        const cfg = datosTitulares();
+        const candidatos = ((cfg && cfg.titulares) || []).filter(function (t) { return t.esRRII && t.disponible; });
+        if (!candidatos.length) return;
+
+        const $texto = $('<span></span>').text('El cliente es Responsable Inscripto: este titular solo puede emitirle Factura C. Si quiere Factura A, facturá con ');
+        $aviso.append($texto);
+        candidatos.forEach(function (t, i) {
+            if (i > 0) $aviso.append(document.createTextNode(' o '));
+            $aviso.append($('<button type="button" class="btn btn-sm btn-outline-primary py-0 mx-1"></button>')
+                .text('Usar ' + t.nombre)
+                .attr('data-fe-usar-titular', t.id));
+        });
+        $aviso.removeClass('d-none');
+    }
+
+    $(document).on('click.feTitular', '[data-fe-usar-titular]', function () {
+        aplicarTitular(parseInt($(this).attr('data-fe-usar-titular'), 10) || 0);
+    });
+
+    // El selector se llena al mostrarse el modal (los datos viajan embebidos en el propio modal).
+    $(document).on('shown.bs.modal.feTitular', '#modalFacturaElectronica', function () {
+        inicializarSelectorTitular();
+    });
+
+    // Sugerencia ANTES de abrir el modal de una venta: si el cliente es Responsable Inscripto y el titular de la
+    // sucursal no lo es, pregunta si se quiere facturar con un titular RI (solo para esta factura). abrirFn(idTitular)
+    // abre el modal (0 = el titular de la sucursal). Cualquier cierre que no sea confirmar equivale a "No", y
+    // el modal SIEMPRE se abre (una falla de la consulta nunca bloquea la factura).
+    window.FacturaElectronica = window.FacturaElectronica || {};
+    window.FacturaElectronica.sugerirTitular = function (idVenta, abrirFn) {
+        let abierto = false;
+        function abrir(idTitular) {
+            if (abierto) return;
+            abierto = true;
+            abrirFn(idTitular || 0);
+        }
+
+        if (!idVenta || typeof Swal === 'undefined') { abrir(0); return; }
+
+        $.ajax({
+            url: (window.AppUrls && window.AppUrls.ventasSugerenciaTitular) || '/Ventas/SugerenciaTitular',
+            type: 'GET',
+            dataType: 'json',
+            data: { idVenta: idVenta },
+            timeout: 8000
+        })
+            .done(function (resp) {
+                if (!resp || !resp.ok || !resp.sugerir || !resp.opciones || !resp.opciones.length) { abrir(0); return; }
+
+                const opciones = resp.opciones;
+                const varias = opciones.length > 1;
+                const opts = {
+                    icon: 'question',
+                    title: 'Cliente Responsable Inscripto',
+                    html: '<div class="text-left">'
+                        + $('<div></div>').text((resp.actual && resp.actual.nombre ? resp.actual.nombre : 'El titular actual')
+                            + ' solo puede emitir Factura C. Para hacerle Factura A hay que facturar a nombre de un titular Responsable Inscripto.').html()
+                        + '</div>',
+                    showCancelButton: true,
+                    allowOutsideClick: false,
+                    confirmButtonText: varias ? 'Facturar con el titular elegido' : ('Sí, facturar con ' + opciones[0].nombre),
+                    cancelButtonText: 'No, seguir con Factura C'
+                };
+                if (varias) {
+                    const inputOptions = {};
+                    opciones.forEach(function (o) { inputOptions[o.id] = o.nombre + ' (CUIT ' + o.cuit + ')'; });
+                    opts.input = 'select';
+                    opts.inputOptions = inputOptions;
+                }
+
+                Swal.fire(opts).then(function (r) {
+                    if (r && r.isConfirmed) {
+                        abrir(varias ? (parseInt(r.value, 10) || 0) : opciones[0].id);
+                    } else {
+                        abrir(0);
+                    }
+                }, function () { abrir(0); });
+            })
+            .fail(function () { abrir(0); });
+    };
 
     // Bug real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "modal Factura
     // Electronica: bloque blanco"): _FacturaElectronica.cshtml (solo en el flujo "Nueva factura
@@ -987,6 +1193,11 @@
                         }
                     }
                 } else {
+                    // Titulares fiscales: si el servidor corrigio la letra (el titular o el cliente cambiaron), el modal
+                    // queda abierto con la letra correcta para reintentar.
+                    if (resp && resp.codigo === 'LETRA_CAMBIO' && resp.tipoEsperado && !isYaEmitida()) {
+                        aplicarTipo(resp.tipoEsperado);
+                    }
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
@@ -1052,11 +1263,16 @@
                 idPersona: idPersona,
                 montoTotal: toServerDec(montoTotal, 2),
                 idAlicuotaIva: idAlicuota,
-                alicuotaIva: alicuotaPct
+                alicuotaIva: alicuotaPct,
+                // Titulares fiscales: el servidor valida titular, certificado y letra ANTES de crear la venta manual
+                // (si no, cada rechazo dejaria una venta huerfana).
+                idTitular: parseInt($('#feIdTitular').val() || '0', 10) || 0,
+                cbteTipo: parseInt($('#feHiddenTipo').val() || '0', 10) || 0
             }
         })
             .done(function (resp) {
                 if (!resp || !resp.ok) {
+                    if (resp && resp.codigo === 'LETRA_CAMBIO' && resp.tipoEsperado) aplicarTipo(resp.tipoEsperado);
                     Swal.fire({ icon: 'error', title: 'Error', text: (resp && resp.msg) ? resp.msg : 'No se pudo crear la venta.' });
                     $btn.prop('disabled', false);
                     return;

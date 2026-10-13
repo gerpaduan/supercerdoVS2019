@@ -61,6 +61,22 @@ namespace AFIP.WSFEHOMO
             }
         }
 
+        // Puntos de venta del CUIT habilitados para facturar por web services (titulares fiscales, 2026-10-09). Solo
+        // lectura. Mismo patron que FECompUltimoAutorizado.
+        public AFIP.WSFECore.FEPtoVentaResponse FEParamGetPtosVenta(AFIP.WSFECore.FEAuthRequest auth)
+        {
+            var client = CrearCliente();
+            try
+            {
+                return client.FEParamGetPtosVentaAsync(auth)
+                    .GetAwaiter().GetResult().Body.FEParamGetPtosVentaResult;
+            }
+            finally
+            {
+                CerrarCliente(client);
+            }
+        }
+
         public AFIP.WSFECore.FECAEResponse FECAESolicitar(
             AFIP.WSFECore.FEAuthRequest auth, AFIP.WSFECore.FECAERequest feCaeReq)
         {

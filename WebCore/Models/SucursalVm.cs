@@ -55,5 +55,28 @@ namespace WebCore.Models
 
         [Display(Name = "Validar ubicación al iniciar sesión")]
         public bool ValidarUbicacionLogin { get; set; }
+
+        // Titular de facturación de la sucursal (titulares fiscales, 2026-10-09). null = no aplica (SQL Server).
+        public SucursalTitularBloqueVm? Titular { get; set; }
+    }
+
+    // Bloque "Titular de facturación" de Mis Sucursales: quien figura como emisor de las facturas de esta sucursal.
+    public class SucursalTitularBloqueVm
+    {
+        public int IdTitularActual { get; set; }
+        public int PuntoVentaActual { get; set; }
+        public List<SucursalTitularOpcionVm> Opciones { get; set; } = new List<SucursalTitularOpcionVm>();
+    }
+
+    public class SucursalTitularOpcionVm
+    {
+        public int IdTitular { get; set; }
+        public string Nombre { get; set; } = "";
+        public long Cuit { get; set; }
+        public bool EsPrincipal { get; set; }
+        public bool Habilitado { get; set; }
+        public bool TieneCertificado { get; set; }
+        // Puntos de venta habilitados del titular (vacio en el principal: usa el de la sucursal).
+        public List<int> PuntosVenta { get; set; } = new List<int>();
     }
 }

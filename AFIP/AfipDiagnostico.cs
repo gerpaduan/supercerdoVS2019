@@ -43,16 +43,25 @@ namespace AFIP
         // otro (la pantalla Certificado ARCA tiene una tarjeta por entorno). null = el de la empresa.
         public static ResultadoDiagnostico ProbarFacturacion(Entidades.Empresa empresa, IEnumerable<int> puntosVenta, string basePathOverride, AfipConfig config, string entornoForzado = null)
         {
+            return ProbarFacturacion(empresa.Cuit, empresa.EsRRII, empresa.NombreCertificado_pfx, empresa.Entorno_HOMO_PROD,
+                puntosVenta, basePathOverride, config, entornoForzado);
+        }
+
+        // Sobrecarga por emisor (titulares fiscales, 2026-10-09): prueba el CUIT y el certificado de UN titular (el
+        // principal o uno de los demas) en lugar de los de la empresa. entornoEmpresa es el entorno en uso por la empresa.
+        public static ResultadoDiagnostico ProbarFacturacion(long cuitEmisor, bool esRRII, string nombreCertificadoPfx, string entornoEmpresa,
+            IEnumerable<int> puntosVenta, string basePathOverride, AfipConfig config, string entornoForzado = null)
+        {
             var resultado = new ResultadoDiagnostico();
             config = config ?? AfipConfig.PorDefecto();
-            string entorno = entornoForzado ?? empresa.Entorno_HOMO_PROD;
+            string entorno = entornoForzado ?? entornoEmpresa;
             resultado.EsHomologacion = config.EsHomologacion(entorno);
             var endpoints = config.Para(entorno);
 
             // ---- 1) archivos
-            string cuit = empresa.Cuit.ToString();
+            string cuit = cuitEmisor.ToString();
             AfipRutas.UbicacionAfip ubicacion;
-            try { ubicacion = AfipRutas.Resolver(basePathOverride, cuit, resultado.EsHomologacion, empresa.NombreCertificado_pfx); }
+            try { ubicacion = AfipRutas.Resolver(basePathOverride, cuit, resultado.EsHomologacion, nombreCertificadoPfx); }
             catch (ArgumentException)
             {
                 resultado.Pasos.Add(Paso("Datos de la empresa", false, "La empresa no tiene un CUIT válido cargado."));
@@ -99,13 +108,13 @@ namespace AFIP
                 return resultado;
             }
 
-            int tipoComprobante = empresa.EsRRII ? Entidades.FacturaElectronica.codFacturaB_Afip : Entidades.FacturaElectronica.codFacturaC_Afip;
+            int tipoComprobante = esRRII ? Entidades.FacturaElectronica.codFacturaB_Afip : Entidades.FacturaElectronica.codFacturaC_Afip;
             foreach (int puntoVenta in puntos)
             {
                 string titulo = "Facturación electrónica (WSFE) - punto de venta " + puntoVenta;
                 try
                 {
-                    var auth = new FEAuthRequest { Cuit = empresa.Cuit, Token = login.Token, Sign = login.Sign };
+                    var auth = new FEAuthRequest { Cuit = cuitEmisor, Token = login.Token, Sign = login.Sign };
                     var servicio = new Service();
                     servicio.Url = endpoints.WsfeUrl + SufijoWsfe;
                     servicio.ClientCertificates.Add(login.Certificado);

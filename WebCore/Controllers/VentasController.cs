@@ -99,6 +99,9 @@ namespace WebCore.Controllers
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
         private readonly WebCore.Services.IAfipConfigProvider _afip;
+        // Titulares fiscales (null en SQL Server: se factura con los datos de la empresa como siempre).
+        private readonly Negocio.TitularFiscal _oTitularN;
+        private readonly WebCore.Services.ICertificadoArcaEstado _certificadoEstado;
         private readonly WebCore.Services.ICtaCteReservadaService _ctaCteReservada;
         // Presupuestos del cliente para el historial de precios (null en SQL Server: sin presupuestos).
         private readonly Contratos.IPresupuestoClienteRepository _presupuestoClienteRepo;
@@ -108,8 +111,9 @@ namespace WebCore.Controllers
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.IAfipConfigProvider afip, WebCore.Services.ICtaCteReservadaService ctaCteReservada, Microsoft.Extensions.Logging.ILogger<VentasController> logger)
+        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.IAfipConfigProvider afip, WebCore.Services.ICtaCteReservadaService ctaCteReservada, Microsoft.Extensions.Logging.ILogger<VentasController> logger, WebCore.Services.ICertificadoArcaEstado certificadoEstado)
         {
+            _certificadoEstado = certificadoEstado;
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
             _env = env;
@@ -120,6 +124,7 @@ namespace WebCore.Controllers
             _empresa = sesion.Empresa;
             _presupuestoClienteRepo = WebCore.Infrastructure.NegocioFactory.CrearPresupuestoClienteRepository(_empresa);
             _expendioClienteRepo = WebCore.Infrastructure.NegocioFactory.CrearExpendioClienteRepository(_empresa);
+            _oTitularN = WebCore.Infrastructure.NegocioFactory.CrearTitularFiscal(_empresa);
 
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
@@ -1063,7 +1068,21 @@ namespace WebCore.Controllers
         // _FacturaElectronica.cshtml) en vez de JSON -- gap ya cerrado, WebCore.VentasFacturaModal
         // la consume igual que el clasico (GET + inyeccion AJAX en #contenedorFacturaElectronica).
         [HttpGet]
-        public IActionResult NuevaFacturaSinVenta()
+        public IActionResult NuevaFacturaSinVenta(int idTitular = 0)
+        {
+            try
+            {
+                return NuevaFacturaSinVentaInterno(idTitular);
+            }
+            catch (Exception ex)
+            {
+                // Titulares fiscales: un titular no disponible o un error al resolverlo vuelve como JSON que el JS ya muestra.
+                _logger.LogWarning(ex, "No se pudo abrir el formulario de factura sin venta.");
+                return Json(new { ok = false, msg = ex.Message });
+            }
+        }
+
+        private IActionResult NuevaFacturaSinVentaInterno(int idTitular)
         {
             var user = _usuarioActual;
             var sucursal = _oSucursalN.findById(user.IdSucursal);
@@ -1081,7 +1100,8 @@ namespace WebCore.Controllers
                 FechaVenta = DateTime.Now
             };
 
-            var dto = BuildFacturaDTO(ventaVacia, new Entidades.FacturaElectronica());
+            var dto = BuildFacturaDTO(ventaVacia, new Entidades.FacturaElectronica(), idTitular > 0 ? idTitular : (int?)null);
+            PrepararOpcionesTitulares(ventaVacia, dto);
             dto.IdVenta = 0;
             dto.NroDocAfip = "";
             dto.RazonSocialAFIP = "";
@@ -1106,7 +1126,7 @@ namespace WebCore.Controllers
         // normal de GenerarFactura sin tocarlo. La linea se borra despues, una vez que la factura
         // ya tiene CAE (ver LimpiarLineasVentaManual).
         [HttpPost]
-        public IActionResult CrearVentaManualParaFactura(int idPersona, decimal montoTotal, int idAlicuotaIva, float alicuotaIva)
+        public IActionResult CrearVentaManualParaFactura(int idPersona, decimal montoTotal, int idAlicuotaIva, float alicuotaIva, int idTitular = 0, int cbteTipo = 0)
         {
             try
             {
@@ -1124,6 +1144,23 @@ namespace WebCore.Controllers
                 var sucursal = _oSucursalN.findById(user.IdSucursal);
                 if (sucursal == null)
                     return Json(new { ok = false, msg = "Sucursal inválida" });
+
+                // Titulares fiscales: se valida el titular, su certificado y la letra ANTES de crear la venta manual, asi un
+                // rechazo no deja una venta huerfana en Efectivo.
+                if (sucursal.Empresa != null)
+                {
+                    var emisorRes = _oTitularN != null
+                        ? _oTitularN.ResolverEmisor(sucursal.Empresa, sucursal, idTitular > 0 ? idTitular : (int?)null)
+                        : Entidades.ResultadoEmisor.Correcto(Entidades.EmisorFiscal.Legado(sucursal.Empresa, sucursal));
+                    if (!emisorRes.Ok)
+                        return Json(new { ok = false, codigo = emisorRes.Codigo, msg = emisorRes.Mensaje });
+                    if (!emisorRes.Emisor.EsPredeterminado && !emisorRes.Emisor.TieneCertificado)
+                        return Json(new { ok = false, codigo = "SIN_CERTIFICADO", msg = "El titular " + emisorRes.Emisor.RazonSocial + " no tiene certificado de ARCA cargado." });
+
+                    int tipoEsperado = new Entidades.FacturaElectronica().getCodTipoCbteAFIP(emisorRes.Emisor.EsRRII, persona.RequiereFacturaA(), false);
+                    if (cbteTipo > 0 && cbteTipo != tipoEsperado)
+                        return Json(new { ok = false, codigo = "LETRA_CAMBIO", tipoEsperado, msg = "La letra del comprobante cambió según el titular y el cliente: revisá el tipo y volvé a intentar." });
+                }
 
                 var productoPlaceholder = _oCorteN.ObtenerCortesPorEmpresa(user.IdEmpresa, false).FirstOrDefault();
                 if (productoPlaceholder == null)
@@ -1266,7 +1303,29 @@ namespace WebCore.Controllers
                 if (errorEntorno != null)
                     return Json(new { ok = false, msg = errorEntorno });
 
-                var afipSvc = new AFIP.GenerarFacturaService(factura.Venta, _env.ContentRootPath, _afip.Crear(AFIP.AfipEntorno.EsHomologacion(factura.Venta.Sucursal?.Empresa?.Entorno_HOMO_PROD)));
+                // Titulares fiscales: emisor con el que se factura (el pedido en el modal, el de la sucursal o el principal).
+                var emisorRes = ResolverEmisorParaVenta(factura.Venta, dto.IdTitular > 0 ? dto.IdTitular : (int?)null);
+                if (!emisorRes.Ok)
+                    return Json(new { ok = false, codigo = emisorRes.Codigo, msg = emisorRes.Mensaje });
+                var emisor = emisorRes.Emisor;
+
+                // La letra se FUERZA segun el emisor y el cliente (titular no RI -> C; RI + cliente RI o monotributista -> A;
+                // RI + otra condicion -> B): si el modal mando otra (modal desactualizado) se avisa y se reabre.
+                int tipoEsperado = factura.getCodTipoCbteAFIP(emisor.EsRRII, factura.Venta.Persona.RequiereFacturaA(), false);
+                if (factura.CodTipoCbteAfip != tipoEsperado)
+                    return Json(new
+                    {
+                        ok = false,
+                        codigo = "LETRA_CAMBIO",
+                        tipoEsperado,
+                        msg = "La letra del comprobante cambió según el titular y el cliente: volvé a abrir la factura."
+                    });
+
+                if (!emisor.EsPredeterminado && !emisor.TieneCertificado)
+                    return Json(new { ok = false, codigo = "SIN_CERTIFICADO", msg = "El titular " + emisor.RazonSocial + " no tiene certificado de ARCA cargado." });
+
+                var afipSvc = new AFIP.GenerarFacturaService(factura.Venta, _env.ContentRootPath,
+                    _afip.Crear(emisor, AFIP.AfipEntorno.EsHomologacion(factura.Venta.Sucursal?.Empresa?.Entorno_HOMO_PROD)), emisor);
                 var afipRes = afipSvc.GenerarFactura(factura, false);
 
                 if (!afipRes.Ok)
@@ -1281,6 +1340,7 @@ namespace WebCore.Controllers
                             MensajeError = afipRes.Mensaje,
                             FechaError = DateTime.Now
                         };
+                        emisor.CopiarA(factErr);
                         _oVentaN.addOrEditFactuElec(factErr);
                     }
                     catch
@@ -1391,7 +1451,22 @@ namespace WebCore.Controllers
                             : "La factura es de producción: la empresa está en modo prueba (homologación), no se puede emitir la nota de crédito."
                     });
 
-                var afipSvc = new AFIP.GenerarFacturaService(venta, _env.ContentRootPath, _afip.Crear(AFIP.AfipEntorno.EsHomologacion(venta.Sucursal?.Empresa?.Entorno_HOMO_PROD)));
+                // Titulares fiscales: la NC sale SIEMPRE por el titular (CUIT, punto de venta, certificado) que emitio la
+                // factura original, aunque la sucursal ya este asignada a otro o el titular este deshabilitado.
+                var empresaNc = venta.Sucursal != null ? venta.Sucursal.Empresa : null;
+                var emisor = _oTitularN != null
+                    ? _oTitularN.EmisorDeFactura(facturaOrigen, empresaNc, venta.Sucursal)
+                    : Entidades.EmisorFiscal.DesdeFactura(facturaOrigen, empresaNc, venta.Sucursal);
+                // Titular compartido (2026-10-12): si el super-admin le cancelo la titularidad a esta empresa, no puede usar ese
+                // certificado ni siquiera para anular una factura vieja; se destraba cuando el super-admin repone la titularidad.
+                if (emisor.Revocado)
+                    return Json(new { ok = false, codigo = "TITULAR_REVOCADO", msg = "La titularidad de " + emisor.RazonSocial + " fue cancelada por el administrador del sistema: no se puede emitir la nota de crédito con ese titular. Consultá con el administrador del sistema." });
+
+                if (!emisor.EsPredeterminado && !emisor.TieneCertificado)
+                    return Json(new { ok = false, codigo = "SIN_CERTIFICADO", msg = "El titular " + emisor.RazonSocial + " que emitió la factura ya no tiene certificado de ARCA cargado: no se puede emitir la nota de crédito." });
+
+                var afipSvc = new AFIP.GenerarFacturaService(venta, _env.ContentRootPath,
+                    _afip.Crear(emisor, AFIP.AfipEntorno.EsHomologacion(venta.Sucursal?.Empresa?.Entorno_HOMO_PROD)), emisor);
                 var afipRes = afipSvc.GenerarNotaCredito(notaCredito, facturaOrigen);
 
                 if (!afipRes.Ok)
@@ -1548,39 +1623,187 @@ namespace WebCore.Controllers
         // dataType:'html' + un regex-sniff de {"ok":false...}).
         [HttpGet]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
-        public IActionResult ImprimirTicket(int id, int mm = 0)
+        public IActionResult ImprimirTicket(int id, int mm = 0, int idTitular = 0)
         {
-            var venta = _oVentaN.getVentaById(id);
-            if (venta == null)
-                return Json(new { ok = false, msg = "Venta no encontrada" });
+            try
+            {
+                var venta = _oVentaN.getVentaById(id);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "Venta no encontrada" });
 
-            if (mm != 0)
-                return Json(new { ok = false, msg = "Impresión de ticket ESC/POS no disponible en este sistema." });
+                if (mm != 0)
+                    return Json(new { ok = false, msg = "Impresión de ticket ESC/POS no disponible en este sistema." });
 
-            var factuElec = ObtenerFacturaAsociadaVenta(venta.IdVenta) ?? new Entidades.FacturaElectronica();
-            var notaCreditoAsociada = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
-            ViewBag.NotaCreditoAsociadaId = notaCreditoAsociada != null ? notaCreditoAsociada.Id : 0;
+                var factuElec = ObtenerFacturaAsociadaVenta(venta.IdVenta) ?? new Entidades.FacturaElectronica();
+                var notaCreditoAsociada = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+                ViewBag.NotaCreditoAsociadaId = notaCreditoAsociada != null ? notaCreditoAsociada.Id : 0;
 
-            var dto = BuildFacturaDTO(venta, factuElec);
-            ViewBag.SucursalNombreFactura = venta.Sucursal != null
-                ? (!string.IsNullOrWhiteSpace(venta.Sucursal.SucursalNombre) ? venta.Sucursal.SucursalNombre : venta.Sucursal.sucursal)
-                : "";
+                // idTitular (titulares fiscales): titular elegido para ESTA factura; 0 = el de la sucursal. Una factura ya
+                // emitida ignora el pedido y muestra el titular que la emitio.
+                var dto = BuildFacturaDTO(venta, factuElec, idTitular > 0 ? idTitular : (int?)null);
+                PrepararOpcionesTitulares(venta, dto);
+                ViewBag.SucursalNombreFactura = venta.Sucursal != null
+                    ? (!string.IsNullOrWhiteSpace(venta.Sucursal.SucursalNombre) ? venta.Sucursal.SucursalNombre : venta.Sucursal.sucursal)
+                    : "";
 
-            ViewBag.EntornoAfipHomologacion = EmpresaEnHomologacionAfip(); // banner "MODO PRUEBA" del modal
-            return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
+                ViewBag.EntornoAfipHomologacion = EmpresaEnHomologacionAfip(); // banner "MODO PRUEBA" del modal
+                return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
+            }
+            catch (Exception ex)
+            {
+                // El JS del modal reconoce {"ok":false,...} y lo muestra; antes una excepcion era un 500 generico.
+                _logger.LogWarning(ex, "No se pudo abrir la factura electrónica de la venta {IdVenta}.", id);
+                return Json(new { ok = false, msg = ex.Message });
+            }
         }
 
-        private FacturaElectronicaDto BuildFacturaDTO(Entidades.Venta venta, Entidades.FacturaElectronica factuElec)
+        // ===== Titulares fiscales (2026-10-09, ver docs/DECISIONS.md "Titulares fiscales por empresa y por sucursal") =====
+
+        // Titular con el que se factura una venta nueva: el pedido (elegido en el modal, vale solo para esa factura), el de
+        // la sucursal de la venta, o el principal. Con SQL Server (sin titulares) devuelve los datos de la empresa de siempre.
+        private Entidades.ResultadoEmisor ResolverEmisorParaVenta(Entidades.Venta venta, int? idTitular)
+        {
+            var empresa = venta.Sucursal.Empresa;
+            if (_oTitularN == null)
+                return Entidades.ResultadoEmisor.Correcto(Entidades.EmisorFiscal.Legado(empresa, venta.Sucursal));
+
+            return _oTitularN.ResolverEmisor(empresa, venta.Sucursal, idTitular);
+        }
+
+        // Emisor para mostrar o imprimir: una factura ya emitida usa SIEMPRE el titular guardado en el comprobante; una
+        // nueva, el que corresponde a la sucursal (o el pedido). Si el titular asignado a la sucursal no se puede usar
+        // (por ejemplo quedo sin punto de venta) se muestra el principal para que el vendedor pueda elegir otro en el modal.
+        private Entidades.EmisorFiscal ResolverEmisorDto(Entidades.Venta venta, Entidades.FacturaElectronica factuElec, int? idTitular)
+        {
+            var empresa = venta.Sucursal != null ? venta.Sucursal.Empresa : null;
+            if (factuElec != null && factuElec.Id > 0)
+                return Entidades.EmisorFiscal.DesdeFactura(factuElec, empresa, venta.Sucursal);
+
+            var resultado = ResolverEmisorParaVenta(venta, idTitular);
+            if (resultado.Ok) return resultado.Emisor;
+
+            if (idTitular.HasValue && idTitular.Value > 0)
+                throw new InvalidOperationException(resultado.Mensaje);
+
+            _logger.LogWarning("El titular de facturación de la sucursal {IdSucursal} no se pudo usar ({Codigo}): se muestra el titular principal.",
+                venta.Sucursal.IdSucursal, resultado.Codigo);
+            var principal = _oTitularN.ObtenerPrincipal(empresa.IdEmpresa);
+            var alternativo = _oTitularN.ResolverEmisor(empresa, venta.Sucursal, principal == null ? (int?)null : principal.IdTitular);
+            if (!alternativo.Ok) throw new InvalidOperationException(alternativo.Mensaje);
+            return alternativo.Emisor;
+        }
+
+        // Datos para el selector "Facturar a nombre de" y la sugerencia del modal de factura (solo facturas nuevas con 2 o
+        // mas titulares habilitados): el JSON viaja embebido en el modal (id feTitularesData) y el JS actualiza el bloque del
+        // emisor, el punto de venta y la letra sin recargar el modal. Cada titular lleva su estado: sin punto de venta en esta
+        // sucursal, sin certificado, vencido. Se arma solo al abrir el modal (leer el .pfx de cada titular cuesta).
+        private void PrepararOpcionesTitulares(Entidades.Venta venta, FacturaElectronicaDto dto)
+        {
+            ViewBag.MostrarSelectorTitular = false;
+            ViewBag.TitularesJson = "";
+            if (_oTitularN == null || dto.IdFactura > 0 || venta.Sucursal == null || venta.Sucursal.Empresa == null) return;
+
+            var empresa = venta.Sucursal.Empresa;
+            var opciones = _oTitularN.OpcionesParaSucursal(empresa, venta.Sucursal);
+            if (opciones.Count < 2) return;
+
+            bool homologacion = AFIP.AfipEntorno.EsHomologacion(empresa.Entorno_HOMO_PROD);
+            var titulares = _oTitularN.Listar(empresa.IdEmpresa, true).ToDictionary(t => t.IdTitular);
+            foreach (var o in opciones.Where(x => x.TieneCertificado && titulares.ContainsKey(x.IdTitular)))
+            {
+                var info = _certificadoEstado.LeerTitular(empresa, titulares[o.IdTitular], homologacion);
+                o.VenceCertificado = info.Vence;
+                if (info.Estado == AFIP.EstadoCertificado.Vencido)
+                {
+                    o.Disponible = false;
+                    o.Motivo = "Certificado de ARCA vencido el " + (info.Vence.HasValue ? info.Vence.Value.ToString("dd/MM/yyyy") : "");
+                }
+                else if (info.Estado == AFIP.EstadoCertificado.Ilegible || info.Estado == AFIP.EstadoCertificado.SinCertificado)
+                {
+                    o.Disponible = false;
+                    o.Motivo = "No se puede leer el certificado de ARCA de este titular.";
+                }
+            }
+
+            ViewBag.MostrarSelectorTitular = true;
+            ViewBag.TitularesJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                actual = dto.IdTitular,
+                // Condiciones de IVA del cliente que reciben Factura A de un titular RI (una sola fuente: Persona.RequiereFacturaA).
+                reglaA = new[] { Entidades.Persona.codIvaRRII_Afip, Entidades.Persona.codIvaMonotributo_Afip },
+                tipos = new { A = Entidades.FacturaElectronica.codFacturaA_Afip, B = Entidades.FacturaElectronica.codFacturaB_Afip, C = Entidades.FacturaElectronica.codFacturaC_Afip },
+                titulares = opciones.Select(o => new
+                {
+                    id = o.IdTitular,
+                    nombre = o.Nombre,
+                    cuit = o.Cuit.ToString(),
+                    esRRII = o.EsRRII,
+                    principal = o.EsPredeterminado,
+                    pto = o.PuntoVenta,
+                    disponible = o.Disponible,
+                    motivo = o.Motivo,
+                    vence = o.VenceCertificado.HasValue ? o.VenceCertificado.Value.ToString("dd/MM/yyyy") : null
+                })
+            });
+        }
+
+        // GET /Ventas/SugerenciaTitular?idVenta=X -- antes de abrir el modal de factura: si el cliente es Responsable
+        // Inscripto, el titular de la sucursal NO lo es (solo puede emitir C) y la empresa tiene un titular RI disponible, se
+        // sugiere facturar con ese titular (solo para esa factura). Es una sugerencia: cualquier falla o falta de datos
+        // responde "sin sugerencia" y el modal se abre igual.
+        [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "idVenta")]
+        public IActionResult SugerenciaTitular(int idVenta)
+        {
+            try
+            {
+                if (_oTitularN == null) return Json(new { ok = true, sugerir = false });
+
+                var venta = _oVentaN.getVentaById(idVenta);
+                if (venta == null || venta.Persona == null || venta.Sucursal == null || venta.Sucursal.Empresa == null)
+                    return Json(new { ok = true, sugerir = false });
+
+                var facturaExistente = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                if (facturaExistente != null && facturaExistente.Id > 0)
+                    return Json(new { ok = true, sugerir = false });
+
+                var emisor = ResolverEmisorDto(venta, new Entidades.FacturaElectronica(), null);
+                var candidatos = _oTitularN.TitularesRIParaCliente(venta.Sucursal.Empresa, venta.Sucursal, emisor, venta.Persona.IdIva);
+                if (candidatos.Count == 0) return Json(new { ok = true, sugerir = false });
+
+                return Json(new
+                {
+                    ok = true,
+                    sugerir = true,
+                    cliente = venta.Persona.razonSocial,
+                    actual = new { id = emisor.IdTitular ?? 0, nombre = emisor.RazonSocial },
+                    opciones = candidatos.Select(c => new { id = c.IdTitular, nombre = c.Nombre, cuit = c.Cuit.ToString() })
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo evaluar la sugerencia de titular para la venta {IdVenta}.", idVenta);
+                return Json(new { ok = true, sugerir = false });
+            }
+        }
+
+        private FacturaElectronicaDto BuildFacturaDTO(Entidades.Venta venta, Entidades.FacturaElectronica factuElec, int? idTitular = null)
         {
             var dto = new FacturaElectronicaDto();
             bool facturaYaGenerada = factuElec != null && factuElec.Id > 0;
+            var emisor = ResolverEmisorDto(venta, factuElec, idTitular);
 
             dto.IdVenta = venta.IdVenta;
             dto.IdFactura = factuElec.Id;
             dto.EsPrueba = factuElec.EsPrueba;
+            dto.IdTitular = emisor.IdTitular ?? 0;
+            dto.EmisorEsRRII = emisor.EsRRII;
+            dto.ClienteIdIva = venta.Persona != null ? venta.Persona.IdIva : 0;
 
+            // El tipo se FUERZA segun el emisor y el cliente: titular no RI -> C; RI + cliente RI o monotributista -> A;
+            // RI + otra condicion -> B. Una factura ya emitida conserva el suyo.
             dto.CodTipoCbteAfip = factuElec.CodTipoCbteAfip == 0 ?
-                factuElec.getCodTipoCbteAFIP(venta.Sucursal.Empresa.EsRRII, venta.Persona.EsRRII(venta.Persona.IdIva), false) :
+                factuElec.getCodTipoCbteAFIP(emisor.EsRRII, venta.Persona.RequiereFacturaA(), false) :
                 factuElec.CodTipoCbteAfip;
             dto.DescTipoCbteAfip = factuElec.DescTipoCbteAfip;
             dto.LetraCbte = factuElec.getLetraId_TipoCbte(dto.CodTipoCbteAfip).ToString();
@@ -1589,13 +1812,15 @@ namespace WebCore.Controllers
                 ? factuElec.FechaEmisionAfip
                 : venta.FechaVenta;
 
-            dto.PtoVtaAfip = venta.Sucursal.CodPuntoVentaAfip.ToString();
-            dto.EmisorRazonSocial = venta.Sucursal.Empresa.RazonSocialAfip;
-            dto.EmisorCUIT = venta.Sucursal.Empresa.Cuit.ToString();
-            dto.EmisorCondicionIVA = venta.Sucursal.Empresa.CondicionIVA;
-            dto.EmisorDomicilio = venta.Sucursal.Direccion;
-            dto.EmisorIngresosBrutos = venta.Sucursal.Empresa.Iibb.ToString();
-            dto.EmisorInicioActividad = venta.Sucursal.Empresa.InicioActividad.ToString("dd/MM/yyyy");
+            // Datos del emisor: los del titular con el que se factura (o los guardados en la factura ya emitida).
+            dto.PtoVtaAfip = emisor.PuntoVenta.ToString();
+            dto.EmisorRazonSocial = emisor.RazonSocial;
+            dto.EmisorCUIT = emisor.Cuit.ToString();
+            dto.EmisorCondicionIVA = emisor.CondicionIVA;
+            dto.EmisorDomicilio = emisor.DomicilioModal;
+            dto.EmisorDomicilioTicket = emisor.Domicilio;
+            dto.EmisorIngresosBrutos = emisor.Iibb.ToString();
+            dto.EmisorInicioActividad = (emisor.InicioActividad ?? DateTime.MinValue).ToString("dd/MM/yyyy");
 
             dto.TipoDocAfip = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.TipoDocAfip)
                 ? factuElec.TipoDocAfip
@@ -2032,16 +2257,17 @@ namespace WebCore.Controllers
             if (!string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-") lineas.Add(centrar(negocioAgregado3, cantMaxChar));
 
             // Datos fiscales de la empresa (solo comprobantes con CAE); se omiten los vacios
-            if (esFacturada && empresa != null)
+            // Titulares fiscales: datos del emisor del COMPROBANTE (titular que facturo), que ya vienen en el DTO.
+            if (esFacturada)
             {
                 var lineasEmpresa = new List<string>
                 {
-                    "CUIT: " + empresa.Cuit,
-                    "IIBB: " + empresa.Iibb,
-                    empresa.RazonSocialAfip,
-                    (empresa.Domicilio ?? "") + (string.IsNullOrWhiteSpace(empresa.Ciudad) ? "" : " - " + empresa.Ciudad),
-                    "Inicio Activ.: " + empresa.InicioActividad.ToString("dd/MM/yyyy"),
-                    empresa.CondicionIVA
+                    "CUIT: " + factura.EmisorCUIT,
+                    "IIBB: " + factura.EmisorIngresosBrutos,
+                    factura.EmisorRazonSocial,
+                    factura.EmisorDomicilioTicket,
+                    "Inicio Activ.: " + factura.EmisorInicioActividad,
+                    factura.EmisorCondicionIVA
                 };
                 foreach (var l in lineasEmpresa.Where(x => !string.IsNullOrWhiteSpace(x)))
                     lineas.Add(truncar(l, cantMaxChar));

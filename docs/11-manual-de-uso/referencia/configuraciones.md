@@ -3,7 +3,7 @@ titulo: Mapa de configuraciones de la empresa
 rol: admin
 modulo: Referencia
 orden: 1
-revisada: 2026-10-04
+revisada: 2026-10-12
 ---
 # Mapa de configuraciones de la empresa
 
@@ -41,3 +41,13 @@ Cada fila es **un interruptor o valor que cambia el comportamiento del sistema**
 |---|---|---|---|
 | Nombre de fantasía, teléfono, email, domicilio, ciudad, país, slogans | [Mi Empresa](ayuda:pantalla/Empresa.Index) | Admin | Datos que se muestran en comprobantes y pantallas. |
 | Razón social (AFIP) y CUIT | [Editar empresa](ayuda:pantalla/SystemAdministration.EditarEmpresa) | **Super admin** | No se editan desde Mi Empresa. |
+
+## Facturación electrónica y titulares
+| Configuración | Dónde se cambia | Quién | Por defecto | Efecto |
+|---|---|---|---|---|
+| **Titulares de facturación** (alta, habilitado, inicio de actividades, IIBB) | [Titulares de facturación](ayuda:pantalla/TitularesFiscales.Index) | Superadmin (alta y edición); Admin de la empresa solo habilita / deshabilita | Solo el titular principal (la empresa) | Cada titular es un CUIT que puede figurar como emisor de las facturas. Un titular no habilitado no se asigna ni se elige al facturar. Solo con base Postgres. |
+| **Topes mensual y anual** (y si el anual es 12 meses o año calendario; con CUIT compartido se comparan con el total de todas las empresas) | [Titulares de facturación](ayuda:pantalla/TitularesFiscales.Index) | Superadmin (alta y edición); Admin de la empresa solo habilita / deshabilita | Sin tope | Solo informativos: se comparan con lo facturado en el listado; no avisan ni bloquean. |
+| **Puntos de venta de ARCA del titular** | [Titulares de facturación](ayuda:pantalla/TitularesFiscales.Index) → ficha del titular | Superadmin (alta y edición); Admin de la empresa solo habilita / deshabilita | Ninguno | Lista de puntos de venta (traídos de ARCA o a mano) y cuál usa en cada sucursal. El titular principal usa el punto de venta que el administrador del sistema define en cada sucursal. |
+| **Titular de la sucursal** | *Mis Sucursales → Editar → Titular de facturación* | Admin | El titular principal | Con qué titular se factura en esa sucursal. En el modal de la factura se puede elegir otro solo para esa factura. |
+| **Certificado de ARCA de cada titular** (por entorno) | [Certificado ARCA](ayuda:pantalla/CertificadoArca.Index) | Admin | Sin certificado | Un certificado por titular y por entorno; sin él no se puede facturar con ese titular. |
+| **Certificado compartido con otras empresas** (cuando el CUIT del titular también es titular en otra empresa) | [Certificado ARCA](ayuda:pantalla/CertificadoArca.Index) | Admin (la empresa administradora) | La empresa donde el CUIT es el principal | Todas las empresas con ese CUIT usan el mismo certificado. Solo la empresa administradora lo pide, instala o renueva; las demás ven su estado y lo toman solas. Si la titularidad es cancelada por el administrador del sistema, la empresa deja de poder facturar y emitir notas de crédito con ese titular. |

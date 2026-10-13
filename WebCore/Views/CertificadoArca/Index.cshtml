@@ -30,6 +30,40 @@
     }
     else
     {
+        @* ============ Titular fiscal (titulares fiscales, 2026-10-09) ============
+           Cada titular tiene su propio certificado (carpeta AFIP/<su CUIT>/). El entorno en uso para facturar es uno solo,
+           el de la empresa: esta pantalla no lo cambia (lo cambia el super-admin en Administracion del sistema). *@
+        <div class="card shadow-sm mb-3">
+            <div class="card-body py-2">
+                @if (Model.Titulares.Count > 1)
+                {
+                    <form method="get" asp-action="Index" class="row g-2 align-items-center mb-2">
+                        <input type="hidden" name="entorno" value="@abierto" />
+                        <div class="col-auto"><label for="selTitularCert" class="col-form-label fw-bold">Titular</label></div>
+                        <div class="col-12 col-md-6">
+                            <select id="selTitularCert" name="idTitular" class="form-select form-select-sm" onchange="this.form.submit()">
+                                @foreach (var t in Model.Titulares)
+                                {
+                                    <option value="@t.IdTitular" selected="@(t.IdTitular == Model.IdTitular ? "selected" : null)">
+                                        @t.Nombre · CUIT @t.Cuit@(t.EsPrincipal ? " · principal" : "")@(t.Habilitado ? "" : " · no habilitado")
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="fw-bold">Titular: @Model.RazonSocial · CUIT @Model.Cuit</div>
+                }
+                <div class="small text-muted">
+                    Entorno en uso por la empresa:
+                    <strong>@(Model.EsHomologacion ? "Pruebas (homologación)" : "Producción")</strong>.
+                    Todos los titulares de la empresa emiten por el mismo entorno; acá podés cargar y probar el certificado de cualquiera de los dos.
+                </div>
+            </div>
+        </div>
+
         @* ============ Un entorno por pestana ============ *@
         <ul class="nav nav-pills mb-3" role="tablist">
             @foreach (var entorno in Model.Entornos)

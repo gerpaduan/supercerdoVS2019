@@ -221,7 +221,20 @@
 
         var facturaOkCv = false;
 
+        // Titulares fiscales (2026-10-09): antes de abrir, sugerir facturar con un titular RI si el cliente es RI y el
+        // titular de la sucursal no lo es. Se resuelve al hacer click porque factura-electronica.js se inyecta de forma
+        // asincrona; si todavia no esta, se abre directo como siempre.
         function abrirFacturaVentaModal() {
+            if (window.FacturaElectronica && typeof window.FacturaElectronica.sugerirTitular === 'function') {
+                window.FacturaElectronica.sugerirTitular(ventaId, function (idTitular) {
+                    abrirFacturaVentaModalDirecto(idTitular);
+                });
+                return;
+            }
+            abrirFacturaVentaModalDirecto(0);
+        }
+
+        function abrirFacturaVentaModalDirecto(idTitular) {
             facturaOkCv = false;
 
             // dataType:'html' fuerza a jQuery a NO auto-parsear la respuesta como JSON aunque el
@@ -230,7 +243,7 @@
             $.ajax({
                 url: window.AppUrls.ventasImprimir,
                 type: 'GET',
-                data: { id: ventaId, mm: 0 },
+                data: { id: ventaId, mm: 0, idTitular: idTitular || 0 },
                 dataType: 'html'
             })
                 .fail(function () {

@@ -1,0 +1,426 @@
+@model WebCore.Models.TitularEditVm
+@{
+    ViewBag.Title = Model.EsAlta ? "Nuevo titular de facturación" : "Titular de facturación";
+    bool soloTopes = Model.EsPrincipal;
+    var habilitados = Model.PuntosVenta.Where(p => p.Habilitado).ToList();
+}
+
+@* Alta y edicion de un titular fiscal (ver TitularesFiscalesController). Alta: se elige una persona (su CUIT y condicion IVA
+   se copian al titular y despues el CUIT no cambia). El titular PRINCIPAL es la empresa: aca solo se editan sus topes. *@
+<div class="container-fluid titulares-page">
+
+    @if (TempData["TitularMensaje"] is string mensajeOk)
+    {
+        <div class="alert alert-success" role="alert">@mensajeOk</div>
+    }
+    @if (TempData["TitularError"] is string mensajeError)
+    {
+        <div class="alert alert-danger" role="alert">@mensajeError</div>
+    }
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+        <h4 class="mb-0">
+            @(Model.EsAlta ? "Nuevo titular de facturación" : Model.RazonSocial)
+            @if (Model.EsPrincipal) { <span class="badge bg-dark ms-1">principal</span> }
+            @if (!Model.EsAlta && !Model.Habilitado) { <span class="badge bg-secondary ms-1">no habilitado</span> }
+        </h4>
+        <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-idEmpresa="@Model.IdEmpresaRuta"><i class="fas fa-arrow-left me-1"></i> Volver</a>
+    </div>
+
+    @if (Model.IdEmpresaRuta.HasValue)
+    {
+        <div class="alert alert-warning py-2 small">Administración del sistema: estás trabajando sobre la empresa <strong>@Model.EmpresaNombre</strong> (id @Model.IdEmpresaRuta).</div>
+    }
+
+    @if (Model.Revocado)
+    {
+        <div class="alert alert-danger py-2 small">La titularidad de este titular está <strong>cancelada</strong>: no se puede editar ni usar para facturar o emitir notas de crédito. Para volver a usarlo, repónelo desde el listado de titulares.</div>
+    }
+
+    <form asp-action="Guardar" asp-route-idEmpresa="@Model.IdEmpresaRuta" method="post" id="formTitular" class="card shadow-sm mb-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="idTitular" value="@Model.IdTitular" />
+        <input type="hidden" name="idPersona" id="idPersona" value="@Model.IdPersona" />
+        <div class="card-body">
+
+            @* ============ Persona ============ *@
+            @if (Model.EsAlta)
+            {
+                <h6>1. Elegí la persona titular</h6>
+                <p class="text-muted small">Tiene que estar cargada en Personas con un CUIT válido y condición IVA Responsable Inscripto o Monotributo. Si no está, cargala primero en <a asp-controller="Personas" asp-action="Index">Personas</a>.</p>
+                <div class="row g-2 mb-2">
+                    <div class="col-12 col-md-6">
+                        <input type="text" id="filtroPersona" class="form-control" placeholder="Buscar por nombre o CUIT" autocomplete="off" />
+                    </div>
+                    <div class="col-auto"><button type="button" id="btnBuscarPersona" class="btn btn-outline-secondary">Buscar</button></div>
+                </div>
+                <div id="resultadoPersonas" class="list-group mb-2" style="max-height:220px;overflow:auto;"></div>
+                <div id="personaElegida" class="alert alert-light border d-none"></div>
+                @* Titular compartido entre empresas: si el CUIT ya es titular en otras, se pide confirmar que esta empresa usara el mismo certificado. *@
+                <div id="avisoCompartido" class="alert alert-warning d-none">
+                    <div id="textoCompartido"></div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="confirmaCompartido" id="confirmaCompartido" value="true" />
+                        <label class="form-check-label" for="confirmaCompartido">Confirmo que esta empresa podrá facturar con el certificado de ese CUIT.</label>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <dl class="row mb-2">
+                    <dt class="col-sm-3">CUIT</dt><dd class="col-sm-9">@Model.Cuit</dd>
+                    <dt class="col-sm-3">Condición IVA</dt><dd class="col-sm-9">@Model.CondicionIva</dd>
+                    <dt class="col-sm-3">Certificado</dt>
+                    <dd class="col-sm-9">
+                        @(Model.TieneCertificado ? "Cargado" : "Todavía no cargado")
+                        @if (Model.CertificadoDisponible)
+                        {
+                            <text>· <a asp-controller="CertificadoArca" asp-action="Index" asp-route-idTitular="@Model.IdTitular">@(Model.TieneCertificado ? "Ver / renovar" : "Cargar el certificado")</a></text>
+                        }
+                        else
+                        {
+                            <text>· el administrador de la empresa lo carga en Certificado ARCA</text>
+                        }
+                        <span class="text-muted small">(entorno en uso: @Model.EntornoEnUso)</span>
+                    </dd>
+                </dl>
+                @if (soloTopes)
+                {
+                    <div class="alert alert-info py-2 small">Este es el titular principal: sus datos fiscales (razón social, condición IVA, inicio de actividades, IIBB) son los de la empresa y los edita el administrador del sistema. Acá solo se cargan los topes.</div>
+                }
+            }
+
+            @* ============ Datos fiscales ============ *@
+            @if (!soloTopes)
+            {
+                <h6 class="mt-2">@(Model.EsAlta ? "2. " : "")Datos fiscales</h6>
+                <div class="row g-2 mb-2">
+                    <div class="col-12 col-md-4">
+                        <label for="inicioActividad" class="form-label mb-0">Inicio de actividades</label>
+                        <input type="date" id="inicioActividad" name="inicioActividad" class="form-control" value="@Model.InicioActividad" required />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="iibb" class="form-label mb-0">Ingresos Brutos (nº)</label>
+                        <input type="text" id="iibb" name="iibb" class="form-control" value="@Model.Iibb" inputmode="numeric" maxlength="20" required />
+                    </div>
+                </div>
+            }
+
+            @* ============ Topes ============ *@
+            <h6 class="mt-2">@(Model.EsAlta ? "3. " : "")Topes (informativos)</h6>
+            <p class="text-muted small mb-1">Solo para comparar lo facturado en Titulares; no avisan ni bloquean nada. Dejalos vacíos si no querés controlarlos.</p>
+            @* Titular compartido: el aviso solo aparece si el CUIT ya es titular en otras empresas (en el alta lo muestra el JS al elegir la persona). *@
+            <div id="avisoTopesCompartido" class="alert alert-warning py-2 small @(Model.OtrasEmpresasConCuit.Count > 0 ? "" : "d-none")">
+                Este CUIT también es titular en otras empresas (<span id="empresasTopesCompartido">@string.Join(", ", Model.OtrasEmpresasConCuit)</span>).
+                El límite real es de la persona, así que el tope se compara con el <strong>total que el CUIT factura en todas las empresas</strong>
+                (en el listado se ve ese total y, para el administrador del sistema, el desglose por empresa).
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-12 col-md-4">
+                    <label for="limiteMensual" class="form-label mb-0">Tope mensual ($)</label>
+                    <input type="text" id="limiteMensual" name="limiteMensual" class="form-control" value="@Model.LimiteMensual" inputmode="decimal" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="limiteAnual" class="form-label mb-0">Tope anual ($)</label>
+                    <input type="text" id="limiteAnual" name="limiteAnual" class="form-control" value="@Model.LimiteAnual" inputmode="decimal" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="ventanaAnual" class="form-label mb-0">El tope anual se mide sobre</label>
+                    <select id="ventanaAnual" name="ventanaAnual" class="form-select">
+                        <option value="@Entidades.TitularFiscal.VentanaMovil12Meses" selected="@(Model.VentanaAnual == Entidades.TitularFiscal.VentanaMovil12Meses ? "selected" : null)">Los últimos 12 meses</option>
+                        <option value="@Entidades.TitularFiscal.VentanaCalendario" selected="@(Model.VentanaAnual == Entidades.TitularFiscal.VentanaCalendario ? "selected" : null)">El año calendario</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <button type="submit" class="btn btn-primary" id="btnGuardarTitular" @(Model.EsAlta || Model.Revocado ? "disabled" : "")><i class="fas fa-save me-1"></i> @(Model.EsAlta ? "Crear titular" : "Guardar")</button>
+        </div>
+    </form>
+
+    @if (!Model.EsAlta && !Model.EsPrincipal)
+    {
+        @* ============ Actualizar desde la persona ============ *@
+        <div class="card shadow-sm mb-3">
+            <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between">
+                <div class="small text-muted">
+                    La razón social y la condición IVA se copiaron de la persona al crear el titular: si después cambian en Personas, las facturas nuevas siguen con lo copiado hasta que lo actualices acá.
+                </div>
+                <form asp-action="ActualizarDesdePersona" asp-route-idEmpresa="@Model.IdEmpresaRuta" method="post" class="mt-2 mt-md-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="idTitular" value="@Model.IdTitular" />
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">Actualizar desde la persona</button>
+                </form>
+            </div>
+        </div>
+
+        @* ============ Puntos de venta de ARCA ============ *@
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
+                    <h6 class="mb-0">Puntos de venta de ARCA de este titular</h6>
+                    <button type="button" id="btnTraerPv" class="btn btn-outline-primary btn-sm" @(Model.TieneCertificado && Model.CertificadoDisponible ? "" : "disabled") title="@(!Model.CertificadoDisponible ? "Solo anda en la empresa de tu sesión" : (Model.TieneCertificado ? "" : "Primero cargá el certificado del titular"))">
+                        <i class="fas fa-cloud-download-alt me-1"></i> Traer de ARCA
+                    </button>
+                </div>
+                <p class="text-muted small">Son los puntos de venta de tipo "web service" que el titular dio de alta en ARCA. Podés traerlos de ARCA (necesita el certificado cargado) o cargarlos a mano.</p>
+                <div id="resultadoPv" class="small mb-2" aria-live="polite"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-2">
+                        <thead class="table-light"><tr><th style="width:110px;">Número</th><th>Descripción</th><th style="width:90px;">Origen</th><th style="width:110px;">Habilitado</th><th style="width:140px;"></th></tr></thead>
+                        <tbody>
+                            @if (Model.PuntosVenta.Count == 0)
+                            {
+                                <tr><td colspan="5" class="text-muted text-center">Todavía no hay puntos de venta cargados.</td></tr>
+                            }
+                            @foreach (var p in Model.PuntosVenta)
+                            {
+                                <tr data-codigo="@p.Codigo">
+                                    <td>@p.Codigo.ToString("00000")</td>
+                                    <td><input type="text" class="form-control form-control-sm pv-descripcion" value="@p.Descripcion" maxlength="80" /></td>
+                                    <td>@p.Origen</td>
+                                    <td><div class="form-check form-switch"><input class="form-check-input pv-habilitado" type="checkbox" checked="@p.Habilitado" /></div></td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-pv-guardar">Guardar</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-pv-eliminar" title="Quitar de la lista">&times;</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row g-2 align-items-end">
+                    <div class="col-5 col-md-2">
+                        <label for="pvNuevoCodigo" class="form-label mb-0">Nuevo número</label>
+                        <input type="number" id="pvNuevoCodigo" class="form-control form-control-sm" min="1" max="99999" />
+                    </div>
+                    <div class="col-7 col-md-5">
+                        <label for="pvNuevoDescripcion" class="form-label mb-0">Descripción</label>
+                        <input type="text" id="pvNuevoDescripcion" class="form-control form-control-sm" maxlength="80" />
+                    </div>
+                    <div class="col-auto"><button type="button" id="btnAgregarPv" class="btn btn-outline-secondary btn-sm">Agregar a mano</button></div>
+                </div>
+            </div>
+        </div>
+
+        @* ============ Punto de venta por sucursal ============ *@
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h6 class="mb-1">Punto de venta que usa este titular en cada sucursal</h6>
+                <p class="text-muted small">Hace falta para facturar con este titular en esa sucursal (como titular asignado o eligiéndolo en una factura). Si el titular tiene un único punto de venta habilitado, se usa ese sin elegir. El titular de cada sucursal se asigna en Mis Sucursales.</p>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light"><tr><th>Sucursal</th><th style="width:240px;">Punto de venta</th><th style="width:100px;"></th></tr></thead>
+                        <tbody>
+                            @foreach (var s in Model.Sucursales)
+                            {
+                                <tr data-sucursal="@s.IdSucursal">
+                                    <td>@s.Nombre @if (s.EsTitularDeLaSucursal) { <span class="badge bg-primary">titular asignado</span> }</td>
+                                    <td>
+                                        <select class="form-select form-select-sm sel-pv-sucursal">
+                                            <option value="">(el único habilitado / ninguno)</option>
+                                            @foreach (var p in habilitados)
+                                            {
+                                                <option value="@p.Codigo" selected="@(s.PuntoVentaAsignado == p.Codigo ? "selected" : null)">@p.Codigo.ToString("00000")@(string.IsNullOrWhiteSpace(p.Descripcion) ? "" : " · " + p.Descripcion)</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary btn-pv-sucursal">Guardar</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .titulares-page { font-size: .88rem; }
+    .titulares-page h4 { font-size: 1.15rem; }
+    .titulares-page h6 { font-size: .95rem; }
+    .titulares-page .table { font-size: .84rem; }
+    .titulares-page .btn-sm { font-size: .78rem; }
+    .titulares-page .form-label, .titulares-page .form-control, .titulares-page .form-select { font-size: .84rem; }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var token = document.querySelector('#formTitular input[name="__RequestVerificationToken"]').value;
+            var idTitular = @Model.IdTitular;
+
+            function escapar(texto) {
+                var d = document.createElement('div');
+                d.textContent = texto == null ? '' : String(texto);
+                return d.innerHTML;
+            }
+
+            // POST con antiforgery que devuelve { ok, mensaje }.
+            function enviar(url, datos) {
+                var cuerpo = new URLSearchParams();
+                Object.keys(datos).forEach(function (k) { if (datos[k] !== null && datos[k] !== undefined) cuerpo.append(k, datos[k]); });
+                return fetch(url, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: cuerpo,
+                    credentials: 'same-origin'
+                }).then(function (r) { return r.json(); });
+            }
+
+            function avisar(resp, recargar) {
+                var salida = document.getElementById('resultadoPv');
+                salida.innerHTML = '<div class="alert alert-' + (resp.ok ? 'success' : 'danger') + ' py-1 mb-0">' + escapar(resp.mensaje) + '</div>';
+                if (resp.ok && recargar) setTimeout(function () { window.location.reload(); }, 900);
+            }
+
+            @if (Model.EsAlta)
+            {
+                <text>
+                // ---- alta: buscar y elegir la persona
+                var urlBuscar = '@Url.Action("BuscarPersonas", "TitularesFiscales", new { idEmpresa = Model.IdEmpresaRuta })';
+                var urlPadron = '@Url.Action("BuscarPadronAfipAjax", "Personas")';
+                var urlCompartido = '@Url.Action("CuitCompartido", "TitularesFiscales", new { idEmpresa = Model.IdEmpresaRuta })';
+                var lista = document.getElementById('resultadoPersonas');
+                var elegida = document.getElementById('personaElegida');
+
+                function buscar() {
+                    var filtro = document.getElementById('filtroPersona').value;
+                    lista.innerHTML = '<div class="list-group-item text-muted">Buscando...</div>';
+                    fetch(urlBuscar + (urlBuscar.indexOf('?') >= 0 ? '&' : '?') + 'filtro=' + encodeURIComponent(filtro), { credentials: 'same-origin' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (personas) {
+                            if (!personas.length) { lista.innerHTML = '<div class="list-group-item text-muted">No hay personas disponibles con ese criterio (se excluyen las que ya son titulares y las que no tienen un CUIT válido ni condición Responsable Inscripto o Monotributo).</div>'; return; }
+                            lista.innerHTML = '';
+                            personas.forEach(function (p) {
+                                var b = document.createElement('button');
+                                b.type = 'button';
+                                b.className = 'list-group-item list-group-item-action py-1';
+                                b.innerHTML = '<strong>' + escapar(p.razonSocial) + '</strong> <span class="text-muted">CUIT ' + escapar(p.cuit) + '</span>';
+                                b.addEventListener('click', function () { elegir(p); });
+                                lista.appendChild(b);
+                            });
+                        })
+                        .catch(function () { lista.innerHTML = '<div class="list-group-item text-danger">No se pudo buscar. Reintentá.</div>'; });
+                }
+
+                // Titular compartido: si el CUIT ya es titular en otras empresas se muestra el aviso (y el de topes) y hay que confirmar.
+                function revisarCompartido(p) {
+                    var aviso = document.getElementById('avisoCompartido');
+                    var confirma = document.getElementById('confirmaCompartido');
+                    var boton = document.getElementById('btnGuardarTitular');
+                    aviso.classList.add('d-none');
+                    confirma.checked = false;
+                    boton.disabled = true;   // hasta saber si el CUIT esta en otras empresas (y, si esta, hasta que se confirme)
+                    document.getElementById('avisoTopesCompartido').classList.add('d-none');
+                    fetch(urlCompartido + (urlCompartido.indexOf('?') >= 0 ? '&' : '?') + 'cuit=' + encodeURIComponent(p.cuit), { credentials: 'same-origin' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                            var empresas = d.empresas || [];
+                            if (!empresas.length) { boton.disabled = false; return; }
+                            var nombres = empresas.map(escapar).join(', ');
+                            document.getElementById('textoCompartido').innerHTML = 'Este CUIT <strong>ya es titular en otras empresas</strong>: ' + nombres
+                                + '. Esta empresa va a usar <strong>el mismo certificado de ARCA</strong> (no hace falta cargarlo ni pedirlo de nuevo; lo administra la empresa dueña del CUIT).';
+                            aviso.classList.remove('d-none');
+                            document.getElementById('empresasTopesCompartido').textContent = empresas.join(', ');
+                            document.getElementById('avisoTopesCompartido').classList.remove('d-none');
+                            boton.disabled = !confirma.checked;
+                        })
+                        .catch(function () { /* si falla la consulta, el servidor igual exige la confirmacion */ boton.disabled = false; });
+                }
+                document.getElementById('confirmaCompartido').addEventListener('change', function () {
+                    document.getElementById('btnGuardarTitular').disabled = !this.checked;
+                });
+
+                function elegir(p) {
+                    document.getElementById('idPersona').value = p.idPersona;
+                    document.getElementById('btnGuardarTitular').disabled = false;
+                    lista.innerHTML = '';
+                    elegida.classList.remove('d-none');
+                    elegida.innerHTML = '<div><strong>' + escapar(p.razonSocial) + '</strong> · CUIT ' + escapar(p.cuit) + '</div>'
+                        + '<div class="small text-muted">Condición IVA cargada en Personas: ' + (p.idIva === 2 ? 'Responsable Inscripto' : (p.idIva === 3 ? 'Monotributo' : 'otra (no sirve como titular: corregila en Personas)')) + '</div>'
+                        + '<button type="button" class="btn btn-outline-secondary btn-sm mt-1" id="btnValidarArca">Validar en ARCA</button>'
+                        + '<div id="resultadoArca" class="small mt-1"></div>';
+                    document.getElementById('btnValidarArca').addEventListener('click', function () { validar(p); });
+                    revisarCompartido(p);
+                }
+
+                // Consulta el padron de ARCA por el CUIT (misma consulta que Personas); es una ayuda, el alta no depende de ella.
+                function validar(p) {
+                    var salida = document.getElementById('resultadoArca');
+                    salida.innerHTML = '<span class="text-muted">Consultando a ARCA...</span>';
+                    fetch(urlPadron + '?cuit=' + encodeURIComponent(p.cuit), { credentials: 'same-origin' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                            if (!d.ok) { salida.innerHTML = '<span class="text-danger">' + escapar(d.msg) + '</span>'; return; }
+                            salida.innerHTML = '<div class="text-success">ARCA: ' + escapar(d.razonSocial) + ' · ' + escapar(d.condicionIva) + (d.estadoClave ? ' · clave ' + escapar(d.estadoClave) : '') + '</div>';
+                            if (d.idIva && d.idIva !== p.idIva)
+                                salida.innerHTML += '<div class="text-warning">La condición IVA en ARCA no coincide con la de Personas. Corregila en Personas antes de crear el titular.</div>';
+                        })
+                        .catch(function () { salida.innerHTML = '<span class="text-danger">No se pudo consultar a ARCA.</span>'; });
+                }
+
+                document.getElementById('btnBuscarPersona').addEventListener('click', buscar);
+                document.getElementById('filtroPersona').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+                </text>
+            }
+            else if (!Model.EsPrincipal)
+            {
+                <text>
+                // ---- puntos de venta del titular
+                var urlGuardarPv = '@Url.Action("GuardarPuntoVenta", "TitularesFiscales", new { idEmpresa = Model.IdEmpresaRuta })';
+                var urlEliminarPv = '@Url.Action("EliminarPuntoVenta", "TitularesFiscales", new { idEmpresa = Model.IdEmpresaRuta })';
+                var urlTraerPv = '@Url.Action("TraerPuntosVentaArca", "TitularesFiscales", new { idEmpresa = Model.IdEmpresaRuta })';
+                var urlPvSucursal = '@Url.Action("GuardarPuntoVentaSucursal", "TitularesFiscales", new { idEmpresa = Model.IdEmpresaRuta })';
+
+                document.querySelectorAll('.btn-pv-guardar').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        var fila = b.closest('tr');
+                        enviar(urlGuardarPv, {
+                            idTitular: idTitular,
+                            codigo: fila.getAttribute('data-codigo'),
+                            descripcion: fila.querySelector('.pv-descripcion').value,
+                            habilitado: fila.querySelector('.pv-habilitado').checked
+                        }).then(function (r) { avisar(r, true); });
+                    });
+                });
+                document.querySelectorAll('.btn-pv-eliminar').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        var fila = b.closest('tr');
+                        if (!confirm('¿Quitar el punto de venta ' + fila.getAttribute('data-codigo') + ' de la lista?')) return;
+                        enviar(urlEliminarPv, { idTitular: idTitular, codigo: fila.getAttribute('data-codigo') }).then(function (r) { avisar(r, true); });
+                    });
+                });
+                document.getElementById('btnAgregarPv').addEventListener('click', function () {
+                    var codigo = document.getElementById('pvNuevoCodigo').value;
+                    if (!codigo) { avisar({ ok: false, mensaje: 'Ingresá el número del punto de venta.' }, false); return; }
+                    enviar(urlGuardarPv, { idTitular: idTitular, codigo: codigo, descripcion: document.getElementById('pvNuevoDescripcion').value, habilitado: true })
+                        .then(function (r) { avisar(r, true); });
+                });
+                document.getElementById('btnTraerPv').addEventListener('click', function () {
+                    var boton = this;
+                    boton.disabled = true;
+                    document.getElementById('resultadoPv').innerHTML = '<span class="text-muted">Consultando a ARCA...</span>';
+                    enviar(urlTraerPv, { idTitular: idTitular })
+                        .then(function (r) { avisar(r, true); })
+                        .catch(function () { avisar({ ok: false, mensaje: 'No se pudo consultar a ARCA. Reintentá en un momento.' }, false); })
+                        .finally(function () { boton.disabled = false; });
+                });
+                document.querySelectorAll('.btn-pv-sucursal').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        var fila = b.closest('tr');
+                        enviar(urlPvSucursal, {
+                            idTitular: idTitular,
+                            idSucursal: fila.getAttribute('data-sucursal'),
+                            codigo: fila.querySelector('.sel-pv-sucursal').value
+                        }).then(function (r) { avisar(r, false); });
+                    });
+                });
+                </text>
+            }
+        })();
+    </script>
+}

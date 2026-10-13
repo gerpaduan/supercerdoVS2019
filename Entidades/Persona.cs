@@ -182,6 +182,20 @@ namespace Entidades
 
         }
 
+        // Cond.Iva 3 = Monotributo. Un titular Responsable Inscripto le factura A a un cliente RI o monotributista
+        // (titulares fiscales, 2026-10-09, ver docs/DECISIONS.md); a cualquier otra condicion, B. Un titular
+        // monotributo siempre emite C (ver FacturaElectronica.getCodTipoCbteAFIP).
+        public static int codIvaMonotributo_Afip = 3;
+        public bool RequiereFacturaA()
+        {
+            return RequiereFacturaA(this.idIva);
+        }
+
+        public static bool RequiereFacturaA(int idIva)
+        {
+            return idIva == codIvaRRII_Afip || idIva == codIvaMonotributo_Afip;
+        }
+
         // Pedido explicito del usuario (2026-09-28, ver docs/DECISIONS.md): en las pantallas que
         // muestran la razon social de un cliente/proveedor, mostrar tambien la identificacion
         // (CUIT/DNI) debajo, pero solo cuando aporta un dato distinto (evita duplicar el mismo

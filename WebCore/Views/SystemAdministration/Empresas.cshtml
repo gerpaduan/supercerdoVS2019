@@ -68,6 +68,10 @@
                                     <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditarEmpresa", "SystemAdministration", new { id = item.IdEmpresa })">
                                         Editar
                                     </a>
+                                    @* Alta y edicion de los titulares de facturacion de la empresa: solo el super-admin. *@
+                                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", "TitularesFiscales", new { idEmpresa = item.IdEmpresa })">
+                                        Titulares
+                                    </a>
                                 </td>
                             </tr>
                         }

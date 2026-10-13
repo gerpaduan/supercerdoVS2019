@@ -247,6 +247,7 @@ namespace DatosPostgres
                         p.identificacion AS ""nombreIdentif"",
                         p.razonsocial AS ""razonSocial"",
                         i.abrev AS ""iva"",
+                        p.idiva AS ""idIva"",
                         p.cuit AS ""cuit"",
                         p.telefono AS ""telefono"",
                         p.ctacte AS ""ctaCte"",

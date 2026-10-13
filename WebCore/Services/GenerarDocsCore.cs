@@ -144,7 +144,8 @@ namespace WebCore.Services
                                 izq.Item().Text(negocio).FontSize(20).FontColor("#AE0000");
                                 izq.Item().PaddingTop(4).Text("Razón Social: " + (model.Empresa?.RazonSocialAfip ?? "")).FontSize(8);
                                 izq.Item().Text(((model.Empresa?.Domicilio ?? "")) + " - " + (model.Empresa?.Ciudad ?? "")).FontSize(8);
-                                izq.Item().Text("Cond.IVA: " + (model.Empresa?.CondicionIVA ?? "")).FontSize(8);
+                                // Condicion derivada del flag esRRII de la empresa, no del texto libre (queda vacio o "RRII").
+                                izq.Item().Text("Cond.IVA: " + (model.Empresa == null ? "" : Entidades.EmisorFiscal.TextoCondicionIva(model.Empresa.EsRRII))).FontSize(8);
                             });
 
                             row.RelativeItem().AlignCenter().Column(centro =>
@@ -452,6 +453,9 @@ namespace WebCore.Services
             bool esFacturaA = venta.TipoComprobante == 'A';
             bool agruparItemUnitario = factura != null && !string.IsNullOrWhiteSpace(factura.DescItemUnitario);
             var empresaFactura = ObtenerEmpresaFactura(venta, factura);
+            // Titulares fiscales: los datos fiscales del emisor son los del comprobante (titular que facturo), no los de
+            // la empresa de hoy; sin emisor guardado (factura anterior) salen de la empresa como siempre.
+            var emisorFactura = ObtenerEmisorFactura(venta, factura, empresaFactura);
             byte[] qrBytes = factura != null ? GenerateQRCode(factura, venta) : null;
 
             var documento = Document.Create(container =>
@@ -480,10 +484,9 @@ namespace WebCore.Services
 
                                 if (venta.TipoComprobante != 'X')
                                 {
-                                    izq.Item().PaddingTop(6).Text("Razón Social: " + (empresaFactura != null ? empresaFactura.RazonSocialAfip : ""));
-                                    izq.Item().Text(((empresaFactura != null ? empresaFactura.Domicilio : "") ?? "")
-                                        + (string.IsNullOrWhiteSpace(empresaFactura != null ? empresaFactura.Ciudad : "") ? "" : " - " + empresaFactura.Ciudad));
-                                    izq.Item().Text("Cond. IVA: " + (empresaFactura != null ? empresaFactura.CondicionIVA : ""));
+                                    izq.Item().PaddingTop(6).Text("Razón Social: " + (emisorFactura.RazonSocial ?? ""));
+                                    izq.Item().Text(emisorFactura.Domicilio ?? "");
+                                    izq.Item().Text("Cond. IVA: " + (emisorFactura.CondicionIVA ?? ""));
                                 }
                             });
 
@@ -515,9 +518,9 @@ namespace WebCore.Services
                                     der.Item().AlignRight().Text(descComprobante.ToUpper()).Bold();
                                     der.Item().AlignRight().Text("Nro.Comp.: " + (factura != null ? factura.PtoVtaAfip : "") + "-" + (factura != null ? factura.NroCbteAfip : ""));
                                     der.Item().AlignRight().Text("Fecha de Emisión: " + ((factura != null && factura.FechaEmisionAfip.HasValue) ? factura.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") : venta.FechaVenta.ToString("dd/MM/yyyy")));
-                                    der.Item().AlignRight().Text("IIBB: " + (empresaFactura != null ? empresaFactura.Iibb.ToString() : ""));
-                                    der.Item().AlignRight().Text("CUIT: " + (empresaFactura != null ? empresaFactura.Cuit.ToString() : ""));
-                                    der.Item().AlignRight().Text("Inicio Act.: " + ((empresaFactura != null && empresaFactura.InicioActividad != DateTime.MinValue) ? empresaFactura.InicioActividad.Date.ToString("dd/MM/yyyy") : ""));
+                                    der.Item().AlignRight().Text("IIBB: " + emisorFactura.Iibb.ToString());
+                                    der.Item().AlignRight().Text("CUIT: " + emisorFactura.Cuit.ToString());
+                                    der.Item().AlignRight().Text("Inicio Act.: " + ((emisorFactura.InicioActividad.HasValue && emisorFactura.InicioActividad.Value != DateTime.MinValue) ? emisorFactura.InicioActividad.Value.Date.ToString("dd/MM/yyyy") : ""));
                                 }
                             });
                         });
@@ -734,7 +737,8 @@ namespace WebCore.Services
             string fechaEmision = factura.FechaEmisionAfip?.ToString("yyyy-MM-dd");
             var empresaFactura = ObtenerEmpresaFactura(venta, factura);
 
-            long cuitEmisor = ParseLongSeguro(empresaFactura != null ? empresaFactura.Cuit.ToString() : "");
+            // El QR lleva el CUIT del titular que emitio el comprobante (el guardado en la factura).
+            long cuitEmisor = ParseLongSeguro(ObtenerEmisorFactura(venta, factura, empresaFactura).Cuit.ToString());
             long nroCmp = ParseLongSeguro(factura.NroCbteAfip);
             long nroDocRec = ParseLongSeguro(factura.NroDocAfip);
             long codAut = ParseLongSeguro(factura.CAE1);
@@ -770,6 +774,14 @@ namespace WebCore.Services
 
             string jsonData = JsonSerializer.Serialize(qrData);
             return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(jsonData));
+        }
+
+        // Emisor del comprobante: el guardado en la factura (titulares fiscales); sin el, los datos de la empresa.
+        private static Entidades.EmisorFiscal ObtenerEmisorFactura(Entidades.Venta venta, Entidades.FacturaElectronica factura, Entidades.Empresa empresa)
+        {
+            var sucursal = venta != null && venta.Sucursal != null ? venta.Sucursal
+                : (factura != null && factura.Venta != null ? factura.Venta.Sucursal : null);
+            return Entidades.EmisorFiscal.DesdeFactura(factura, empresa, sucursal);
         }
 
         private static Entidades.Empresa ObtenerEmpresaFactura(Entidades.Venta venta, Entidades.FacturaElectronica factura)

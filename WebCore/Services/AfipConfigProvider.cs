@@ -16,6 +16,15 @@ namespace WebCore.Services
         // (mensaje mostrable) si la clave guardada no se puede descifrar.
         AfipConfig Crear(bool homologacion);
 
+        // Igual, para el titular fiscal que emite (titulares fiscales, 2026-10-09): el principal usa la clave de la
+        // empresa (certificado_arca_clave, como siempre); un titular no principal, la del CUIT (certificados_arca_cuit,
+        // 2026-10-12: la misma clave y el mismo .pfx los comparten todas las empresas que tienen ese CUIT como titular).
+        AfipConfig Crear(Entidades.EmisorFiscal emisor, bool homologacion);
+
+        // Guarda (cifrada) la clave del pfx de un CUIT en el registro compartido entre empresas (certificados_arca_cuit).
+        // Lo usan los titulares no principales y, ademas de su tabla de siempre, el principal.
+        void GuardarClaveCuit(long cuit, bool homologacion, string claveEnClaro);
+
         // Persiste (cifrada) la clave del pfx recien generado para ese entorno. Solo Postgres.
         void GuardarClave(bool homologacion, string claveEnClaro);
 
@@ -60,6 +69,44 @@ namespace WebCore.Services
                 throw new InvalidOperationException(
                     "No se pudo descifrar la clave del certificado de AFIP. Cargá el certificado de nuevo en Configuración > Certificado ARCA.", ex);
             }
+        }
+
+        private static bool EsPrincipal(Entidades.EmisorFiscal emisor)
+        {
+            return emisor == null || emisor.EsPredeterminado || !emisor.IdTitular.HasValue;
+        }
+
+        public AfipConfig Crear(Entidades.EmisorFiscal emisor, bool homologacion)
+        {
+            if (EsPrincipal(emisor)) return Crear(homologacion);
+
+            var config = AfipSettings.ConfigBase();
+            if (!SoportaCertificados) return config;
+
+            // Titular no principal: la clave sale del registro por CUIT, cifrada igual que la del principal (mismo protector).
+            var titulares = NegocioFactory.CrearTitularFiscal(_sesion.Empresa);
+            string protegida = titulares == null ? null : titulares.ObtenerClaveCuit(emisor.Cuit, homologacion);
+            if (string.IsNullOrEmpty(protegida)) return config;
+
+            try
+            {
+                return config.ConClave(_protector.Unprotect(protegida));
+            }
+            catch (System.Security.Cryptography.CryptographicException ex)
+            {
+                _log.LogError(ex, "No se pudo descifrar la clave del certificado ARCA del titular {IdTitular} de la empresa {IdEmpresa} ({Entorno}).",
+                    emisor.IdTitular, _sesion.Empresa.IdEmpresa, homologacion ? "HOMO" : "PROD");
+                throw new InvalidOperationException(
+                    "No se pudo descifrar la clave del certificado de AFIP del titular " + emisor.RazonSocial + ". Cargá el certificado de nuevo en Configuración > Certificado ARCA.", ex);
+            }
+        }
+
+        public void GuardarClaveCuit(long cuit, bool homologacion, string claveEnClaro)
+        {
+            if (!SoportaCertificados) throw new InvalidOperationException("La gestión de certificados requiere Postgres.");
+            var titulares = NegocioFactory.CrearTitularFiscal(_sesion.Empresa);
+            if (titulares == null) throw new InvalidOperationException("Los titulares fiscales requieren Postgres.");
+            titulares.GuardarClaveCuit(cuit, homologacion, AfipRutas.NombreCertificadoFijo, _protector.Protect(claveEnClaro));
         }
 
         public void GuardarClave(bool homologacion, string claveEnClaro)

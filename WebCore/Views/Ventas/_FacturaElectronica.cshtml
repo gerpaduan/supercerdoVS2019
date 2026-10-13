@@ -33,6 +33,10 @@
         : (ViewBag.EmpresaCUIT as string) ?? "";
     var sucursalNombreFactura = (ViewBag.SucursalNombreFactura as string) ?? "";
 
+    // Titulares fiscales: selector "Facturar a nombre de" (solo facturas nuevas y con 2+ titulares habilitados).
+    bool mostrarSelectorTitular = !yaEmitida && (ViewBag.MostrarSelectorTitular as bool? ?? false);
+    string titularesJson = (ViewBag.TitularesJson as string) ?? "";
+
     decimal totalOrig = yaEmitida
         ? (Model?.ImporteTotal ?? 0m)
         : 0m;
@@ -434,10 +438,12 @@
 
 <!-- HEADER -->
 <div class="modal-header @(mostrarBannerPrueba ? "bg-warning text-dark" : "bg-success text-white") py-2">
-    <h6 class="modal-title mb-0">
-        @(yaEmitida ? "Factura Electrónica (emitida)" : "Generar Factura Electrónica")
-    </h6>
-    <small class="d-block" style="opacity:.85;">@empresaNombre</small>
+    <div>
+        <h6 class="modal-title mb-0">
+            @(yaEmitida ? "Factura Electrónica (emitida)" : "Generar Factura Electrónica")
+        </h6>
+        <small class="d-block" id="feHeaderEmisor" style="opacity:.85;">@empresaNombre</small>
+    </div>
     <button type="button" class="close @(mostrarBannerPrueba ? "text-dark" : "text-white")" id="btnCerrarXFacturaElectronica">
         <span>&times;</span>
     </button>
@@ -456,7 +462,11 @@
       data-neto-orig="@Model.ImporteNetoGravado.ToString(CultureInfo.InvariantCulture)"
       data-iva-orig="@Model.Iva.ToString(CultureInfo.InvariantCulture)"
       data-agrupar-item="@(Model.AgruparItemUnitario ? "1" : "0")"
-      data-sin-venta="@(esSinVenta ? "1" : "0")">
+      data-sin-venta="@(esSinVenta ? "1" : "0")"
+      data-emisor-rrii="@(Model.EmisorEsRRII ? "1" : "0")"
+      data-cliente-idiva="@Model.ClienteIdIva"
+      data-regla-a="@Entidades.Persona.codIvaRRII_Afip,@Entidades.Persona.codIvaMonotributo_Afip"
+      data-cod-a="@Entidades.FacturaElectronica.codFacturaA_Afip" data-cod-b="@Entidades.FacturaElectronica.codFacturaB_Afip" data-cod-c="@Entidades.FacturaElectronica.codFacturaC_Afip">
 
     @* @Html.AntiForgeryToken() *@
 
@@ -466,6 +476,8 @@
     <input type="hidden" name="NroCbteAfip" value="@Model.NroCbteAfip" />
     <input type="hidden" name="CAE" value="@Model.CAE" />
     <input type="hidden" name="FecVtoCAE" value="@Model.FecVtoCAE" />
+    @* Titulares fiscales: titular con el que se factura ESTA factura (0 = el de la sucursal; lo resuelve el servidor). *@
+    <input type="hidden" id="feIdTitular" name="IdTitular" value="@(yaEmitida ? 0 : Model.IdTitular)" />
 
     <div class="modal-body fe-body">
         <div class="fe-sticky-resumen" id="feStickyResumen">
@@ -492,9 +504,21 @@
                  name="PtoVtaAfip") de la card Comprobante. Ningun campo se saco, solo se
                  reorganizo la presentacion. -->
             <div class="fe-card-compact">
+                @if (mostrarSelectorTitular)
+                {
+                    @* Titulares fiscales: "Facturar a nombre de". Solo en facturas nuevas con 2 o mas titulares habilitados. El
+                       select lo completa factura-electronica.js desde feTitularesData; cambiar de titular vale solo para esta
+                       factura y actualiza el emisor, el punto de venta y la letra SIN recargar el modal. *@
+                    <div class="d-flex align-items-center flex-wrap mb-2" id="feTitularWrap">
+                        <label class="mb-0 mr-2 small font-weight-bold" for="feSelectTitular">Facturar a nombre de</label>
+                        <select id="feSelectTitular" class="form-control form-control-sm" style="max-width:420px;"></select>
+                    </div>
+                    <div id="feSugerenciaTitular" class="alert alert-info py-1 px-2 small d-none" role="status"></div>
+                    <script type="application/json" id="feTitularesData">@Html.Raw(titularesJson)</script>
+                }
                 <div class="d-flex justify-content-between align-items-start gap-2">
                     <div>
-                        <div class="fe-issuer-name">@empresaNombre</div>
+                        <div class="fe-issuer-name" id="feEmisorNombre">@empresaNombre</div>
                         <div class="fe-issuer-meta fe-muted mt-1">
                             @if (!string.IsNullOrWhiteSpace(Model?.EmisorDomicilio))
                             {
@@ -508,7 +532,7 @@
                     </div>
                     <div class="text-right">
                         <div class="fe-muted" style="font-size:.78rem;">CUIT</div>
-                        <div class="font-weight-bold">@empresaCuit</div>
+                        <div class="font-weight-bold" id="feEmisorCuit">@empresaCuit</div>
                     </div>
                 </div>
 
@@ -524,7 +548,10 @@
 
                     <div class="form-group col-6 col-md-3">
                         <label class="mb-1">Tipo</label>
-                        <select name="CodTipoCbteAfip" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                        @* La letra se FUERZA segun el titular y el cliente (titular monotributo: C; RI + cliente RI o monotributista:
+                           A; RI + otra condicion: B): el select es solo informativo (siempre deshabilitado) y el valor que se
+                           envia va en el hidden. factura-electronica.js lo recalcula al cambiar de titular o de cliente. *@
+                        <select name="CodTipoCbteAfip" id="feSelectTipo" class="form-control form-control-sm" disabled>
                             <option value="1" selected="@(Model.CodTipoCbteAfip == 1 ? "selected" : null)">
                                 Factura A
                             </option>
@@ -535,10 +562,7 @@
                                 Factura C
                             </option>
                         </select>
-                        @if (yaEmitida)
-                        {
-                            <input type="hidden" name="CodTipoCbteAfip" value="@Model.CodTipoCbteAfip" />
-                        }
+                        <input type="hidden" id="feHiddenTipo" name="CodTipoCbteAfip" value="@Model.CodTipoCbteAfip" />
                     </div>
 
                     <div class="form-group col-12 col-md-3">
@@ -620,16 +644,15 @@
             //4 = IVA Sujeto Exento
             //5 = Consumidor Final
             //6 = Responsable Monotributo*@
-                        <select name="CondicionIvaAFIP" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                        @* Solo informativa: la condicion del cliente es la de la persona (la que viaja a ARCA y decide la letra),
+                           asi que no se edita a mano. Siempre deshabilitada; el valor que se envia va en el hidden. *@
+                        <select name="CondicionIvaAFIP" class="form-control form-control-sm" disabled>
                             <option value="Consumidor Final" selected="@(Model.CondicionIvaAFIP == "Consumidor Final" ? "selected" : null)">Consumidor Final</option>
                             <option value="Responsable Inscripto" selected="@(Model.CondicionIvaAFIP == "Responsable Inscripto" ? "selected" : null)">Responsable Inscripto</option>
                             <option value="Monotributista" selected="@(Model.CondicionIvaAFIP == "Monotributista" ? "selected" : null)">Monotributista</option>
                             <option value="Exento" selected="@(Model.CondicionIvaAFIP == "Exento" ? "selected" : null)">Exento</option>
                         </select>
-                        @if (yaEmitida)
-                        {
-                            <input type="hidden" name="CondicionIvaAFIP" value="@Model.CondicionIvaAFIP" />
-                        }
+                        <input type="hidden" id="feHiddenCondicionIva" name="CondicionIvaAFIP" value="@Model.CondicionIvaAFIP" />
                     </div>
 
                     <div class="form-group col-12 col-md-9 mt-md-0 mt-n1">

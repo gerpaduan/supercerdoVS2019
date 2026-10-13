@@ -1283,8 +1283,9 @@ namespace WebCore.Controllers
                                     izq.Item().Text(domicilio);
                                 if (!string.IsNullOrWhiteSpace(contacto))
                                     izq.Item().Text(contacto);
-                                if (soloPrecios && empresa != null && !string.IsNullOrWhiteSpace(empresa.CondicionIVA))
-                                    izq.Item().Text("Cond. IVA: " + empresa.CondicionIVA);
+                                // Condicion derivada del flag esRRII de la empresa, no del texto libre (puede estar vacio).
+                                if (soloPrecios && empresa != null)
+                                    izq.Item().Text("Cond. IVA: " + Entidades.EmisorFiscal.TextoCondicionIva(empresa.EsRRII));
                             });
 
                             row.RelativeItem().AlignCenter().Column(centro =>

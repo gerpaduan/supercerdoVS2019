@@ -38,6 +38,7 @@ namespace AFIP
         private readonly bool esRRII;
         private readonly string cuit;
         private readonly int ptoVtaAfip;
+        private readonly Entidades.EmisorFiscal _emisor;
 
         // basePathOverride: opcional, solo lo usa WebCore (ver VentasController.GenerarFactura).
         // AppDomain.CurrentDomain.BaseDirectory es el root del sitio para el Web clasico (asi
@@ -46,7 +47,11 @@ namespace AFIP
         // Sin override, comportamiento identico al original (net472 no cambia).
         // config: opcional (URLs por entorno y clave del pfx); null = endpoints oficiales y pfx sin clave,
         // o sea el comportamiento historico.
-        public GenerarFacturaService(Entidades.Venta venta, string basePathOverride = null, AfipConfig config = null)
+        // emisor: opcional, titulares fiscales (2026-10-09, ver docs/DECISIONS.md). Si viene, CUIT, condicion IVA, punto
+        // de venta y certificado salen de el (el titular con el que se factura) y no de la empresa de la venta; los
+        // datos del emisor se copian a la FacturaElectronica que se devuelve para que se guarden con el comprobante.
+        // Sin emisor, comportamiento identico al de siempre (SQL Server y llamadores sin titulares).
+        public GenerarFacturaService(Entidades.Venta venta, string basePathOverride = null, AfipConfig config = null, Entidades.EmisorFiscal emisor = null)
         {
             if (venta == null) throw new ArgumentNullException(nameof(venta));
             if (venta.Sucursal == null) throw new ArgumentException("Venta sin Sucursal", nameof(venta));
@@ -59,6 +64,16 @@ namespace AFIP
 
             cuit = venta.Sucursal.Empresa.Cuit.ToString();
             ptoVtaAfip = venta.Sucursal.CodPuntoVentaAfip;
+            string nombreCertificado = venta.Sucursal.Empresa.NombreCertificado_pfx;
+
+            _emisor = emisor;
+            if (emisor != null)
+            {
+                esRRII = emisor.EsRRII;
+                cuit = emisor.Cuit.ToString();
+                ptoVtaAfip = emisor.PuntoVenta;
+                nombreCertificado = emisor.NombreCertificadoPfx;
+            }
 
             config = config ?? AfipConfig.PorDefecto();
             EsHomologacion = config.EsHomologacion(venta.Sucursal.Empresa.Entorno_HOMO_PROD);
@@ -68,7 +83,7 @@ namespace AFIP
 
             // AFIP/<cuit>/prod o /homo segun el entorno (produccion cae al pfx historico de la raiz si todavia
             // no tiene el suyo): la regla vive en AfipRutas, compartida con el padron y la pantalla Certificado ARCA.
-            var ubicacion = AfipRutas.Resolver(basePathOverride, cuit, EsHomologacion, venta.Sucursal.Empresa.NombreCertificado_pfx);
+            var ubicacion = AfipRutas.Resolver(basePathOverride, cuit, EsHomologacion, nombreCertificado);
             AfipRutas.AsegurarPlantilla(ubicacion);
 
             login = new LoginClass(
@@ -487,6 +502,14 @@ namespace AFIP
                         // Emitida en homologacion = comprobante de PRUEBA (sin validez fiscal).
                         EsPrueba = EsHomologacion
                     };
+
+                    // Titulares fiscales: el comprobante guarda quien lo emitio y sus datos fiscales al emitir.
+                    if (_emisor != null)
+                        _emisor.CopiarA(fact);
+
+                    // Titulares fiscales: el comprobante guarda quien lo emitio y sus datos fiscales al emitir.
+                    if (_emisor != null)
+                        _emisor.CopiarA(fact);
 
                     // IVA discriminado para persistencia (si hay)
                     if (listaAlicuotasFactura != null && listaAlicuotasFactura.Count > 0)

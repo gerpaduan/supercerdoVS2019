@@ -274,6 +274,8 @@ namespace DatosPostgres
                     if (cmd.ExecuteScalar() != null)
                         throw new InvalidOperationException("Ya existe una empresa con ese mismo CUIT.");
                 }
+                // Titular compartido entre empresas (2026-10-12): que ese CUIT ya sea titular agregado de OTRA empresa NO impide
+                // crear esta: pasa a ser su titular principal y la empresa administradora del certificado compartido.
             }
 
             int idEmpresa;
@@ -342,10 +344,15 @@ namespace DatosPostgres
             string nombreSucursal = "Suc." + (empresa.RazonSocialAfip ?? "");
             if (nombreSucursal.Length > 50) nombreSucursal = nombreSucursal.Substring(0, 50);
 
+            // Titulares fiscales: toda empresa nace con su titular principal (el CUIT de la empresa) y la sucursal inicial
+            // queda asignada a el.
+            int idTitularPrincipal = AsegurarTitularPrincipal(cn, tx, idEmpresa);
+
             using (var cmd = new NpgsqlCommand(@"
-                INSERT INTO sucursal (sucursal, idempresa, direccion, localidad, provincia, pais, codpuntoventaafip, creado, observaciones)
-                VALUES (@sucursal, @idEmpresa, NULL, NULL, NULL, NULL, NULL, @creado, @observaciones);", cn, tx))
+                INSERT INTO sucursal (sucursal, idempresa, direccion, localidad, provincia, pais, codpuntoventaafip, creado, observaciones, idtitularfacturacion)
+                VALUES (@sucursal, @idEmpresa, NULL, NULL, NULL, NULL, NULL, @creado, @observaciones, @idTitular);", cn, tx))
             {
+                cmd.Parameters.AddWithValue("idTitular", idTitularPrincipal);
                 cmd.Parameters.AddWithValue("sucursal", nombreSucursal);
                 cmd.Parameters.AddWithValue("idEmpresa", idEmpresa);
                 cmd.Parameters.AddWithValue("creado", DateTime.Today);
@@ -357,6 +364,31 @@ namespace DatosPostgres
             InsertarProductoCodigoGenerico(cn, tx, idEmpresa, codigoGenericoCodigo, codigoGenericoNombre, codigoGenericoIdAlicuotaIva);
 
             return idEmpresa;
+        }
+
+        // Crea el titular principal de la empresa si falta (idempotente) y devuelve su id. Espeja empresas.cuit.
+        // Con el rol de super-admin (carnisys_sysadmin_bypass, con GRANT sobre titulares_fiscales) y en la misma
+        // transaccion que el alta de empresa / sucursal.
+        private int AsegurarTitularPrincipal(NpgsqlConnection cn, NpgsqlTransaction tx, int idEmpresa)
+        {
+            using (var cmd = new NpgsqlCommand(@"
+                INSERT INTO titulares_fiscales (idempresa, cuit, espredeterminado, habilitado)
+                SELECT e.idempresa, CASE WHEN e.cuit > 0 THEN e.cuit END, true, true
+                FROM empresas e WHERE e.idempresa = @idEmpresa
+                ON CONFLICT (idempresa) WHERE espredeterminado DO NOTHING;", cn, tx))
+            {
+                cmd.Parameters.AddWithValue("idEmpresa", idEmpresa);
+                cmd.ExecuteNonQuery();
+            }
+
+            using (var cmd = new NpgsqlCommand("SELECT idtitular FROM titulares_fiscales WHERE idempresa = @idEmpresa AND espredeterminado;", cn, tx))
+            {
+                cmd.Parameters.AddWithValue("idEmpresa", idEmpresa);
+                object value = cmd.ExecuteScalar();
+                if (value == null || value == DBNull.Value)
+                    throw new InvalidOperationException("No se pudo crear el titular de facturación principal de la empresa.");
+                return Convert.ToInt32(value);
+            }
         }
 
         // Mismos valores exactos que CrearProductoAjusteFormulaInterna (SQL Server). Ver
@@ -405,6 +437,33 @@ namespace DatosPostgres
 
         public void ActualizarEmpresa(Entidades.Empresa empresa)
         {
+            // Titular compartido (2026-10-12): el CUIT de la empresa es la carpeta del certificado que usan las otras empresas
+            // que lo tienen como titular; cambiarlo las dejaria sin certificado. Se bloquea mientras haya otras empresas.
+            object compartidas = ScalarAdmin(@"
+                SELECT COUNT(1) FROM titulares_fiscales t
+                WHERE t.idempresa <> @idEmpresa AND NOT t.revocado
+                  AND t.cuit = (SELECT e.cuit FROM empresas e WHERE e.idempresa = @idEmpresa)
+                  AND (SELECT e.cuit FROM empresas e WHERE e.idempresa = @idEmpresa) IS DISTINCT FROM @cuit;",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", empresa.IdEmpresa);
+                    p.Add("cuit", NpgsqlTypes.NpgsqlDbType.Bigint).Value = empresa.Cuit > 0 ? (object)empresa.Cuit : DBNull.Value;
+                });
+            if (compartidas != null && compartidas != DBNull.Value && Convert.ToInt64(compartidas) > 0)
+                throw new InvalidOperationException("No se puede cambiar el CUIT de la empresa: lo usan como titular " + Convert.ToInt64(compartidas)
+                    + " empresa(s) más, que dejarían de encontrar su certificado. Cancelá primero esas titularidades.");
+
+            // El principal espeja el CUIT; si la empresa ya tiene ese CUIT como titular agregado, el indice (idempresa, cuit) lo rechazaria.
+            object propio = ScalarAdmin(@"
+                SELECT COUNT(1) FROM titulares_fiscales WHERE idempresa = @idEmpresa AND NOT espredeterminado AND cuit = @cuit;",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", empresa.IdEmpresa);
+                    p.Add("cuit", NpgsqlTypes.NpgsqlDbType.Bigint).Value = empresa.Cuit > 0 ? (object)empresa.Cuit : DBNull.Value;
+                });
+            if (propio != null && propio != DBNull.Value && Convert.ToInt64(propio) > 0)
+                throw new InvalidOperationException("La empresa ya tiene a ese CUIT como titular de facturación agregado: cancelá esa titularidad antes de usarlo como CUIT de la empresa.");
+
             NonQueryAdmin(@"
                 UPDATE empresas SET
                     razonsocialafip = @razonSocialAfip, cuit = @cuit, nombrefantasia = @nombreFantasia,
@@ -414,7 +473,9 @@ namespace DatosPostgres
                     basepath = @basePath, esrrii = @esRRII, nombrecertificado_pfx = @nombreCertificadoPfx,
                     entorno_homo_prod = @entornoHomoProd, basedatosnombre = @baseDatosNombre, activa = @activa,
                     observaciones = @observaciones, empresa_propia = @empresaPropia, es_carniceria = @esCarniceria
-                WHERE idempresa = @idEmpresa;",
+                WHERE idempresa = @idEmpresa;
+                -- Titulares fiscales: el titular principal espeja el CUIT de la empresa (misma transaccion).
+                UPDATE titulares_fiscales SET cuit = @cuit WHERE idempresa = @idEmpresa AND espredeterminado;",
                 p =>
                 {
                     p.AddWithValue("idEmpresa", empresa.IdEmpresa);
@@ -474,12 +535,15 @@ namespace DatosPostgres
                 try
                 {
                     int idSucursalNueva;
+                    // Titulares fiscales: toda sucursal nueva nace asignada al titular principal de su empresa.
+                    int idTitularPrincipal = AsegurarTitularPrincipal(cn, tx, sucursal.IdEmpresa);
                     using (var cmd = new NpgsqlCommand(@"
-                        INSERT INTO sucursal (sucursal, idempresa, direccion, localidad, provincia, pais, codpuntoventaafip, creado, observaciones)
-                        VALUES (@sucursal, @idEmpresa, @direccion, @localidad, @provincia, @pais, @codPuntoVentaAfip, @creado, @observaciones)
+                        INSERT INTO sucursal (sucursal, idempresa, direccion, localidad, provincia, pais, codpuntoventaafip, creado, observaciones, idtitularfacturacion)
+                        VALUES (@sucursal, @idEmpresa, @direccion, @localidad, @provincia, @pais, @codPuntoVentaAfip, @creado, @observaciones, @idTitular)
                         RETURNING idsucursal;", cn, tx))
                     {
                         SetSucursalParams(cmd.Parameters, sucursal);
+                        cmd.Parameters.AddWithValue("idTitular", idTitularPrincipal);
                         idSucursalNueva = Convert.ToInt32(cmd.ExecuteScalar());
                     }
 
@@ -544,7 +608,13 @@ namespace DatosPostgres
                     sucursal = @sucursal, idempresa = @idEmpresa, direccion = @direccion,
                     localidad = @localidad, provincia = @provincia, pais = @pais,
                     codpuntoventaafip = @codPuntoVentaAfip, observaciones = @observaciones
-                WHERE idsucursal = @idSucursal;", cn, tx))
+                WHERE idsucursal = @idSucursal;
+                -- Titulares fiscales: si la sucursal cambio de empresa, su titular asignado ya no es de esa empresa:
+                -- vuelve al titular principal de la empresa nueva y se limpian los puntos de venta que tenia asignados.
+                UPDATE sucursal s SET idtitularfacturacion = (SELECT t.idtitular FROM titulares_fiscales t WHERE t.idempresa = s.idempresa AND t.espredeterminado)
+                WHERE s.idsucursal = @idSucursal AND s.idtitularfacturacion IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM titulares_fiscales x WHERE x.idtitular = s.idtitularfacturacion AND x.idempresa = s.idempresa);
+                DELETE FROM titulares_fiscales_sucursal WHERE idsucursal = @idSucursal AND idempresa <> @idEmpresa;", cn, tx))
             {
                 SetSucursalParams(cmd.Parameters, sucursal);
                 cmd.Parameters.AddWithValue("idSucursal", sucursal.IdSucursal);
@@ -743,7 +813,9 @@ namespace DatosPostgres
         public bool ExisteCuit(long cuit, int idEmpresaExcluir)
         {
             object value = ScalarAdmin(
-                "SELECT COUNT(1) FROM empresas WHERE cuit = @cuit AND (@idEmpresaExcluir <= 0 OR idempresa <> @idEmpresaExcluir);",
+                // Solo empresas: un CUIT es principal de UNA sola empresa (login /Login/<cuit>). Que sea titular agregado de otras
+                // empresas esta permitido (titular compartido, 2026-10-12).
+                @"SELECT COUNT(1) FROM empresas WHERE cuit = @cuit AND (@idEmpresaExcluir <= 0 OR idempresa <> @idEmpresaExcluir);",
                 p =>
                 {
                     p.AddWithValue("cuit", cuit);

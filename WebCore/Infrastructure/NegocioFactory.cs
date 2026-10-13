@@ -154,6 +154,17 @@ namespace WebCore.Infrastructure
             return new Negocio.Empleado(repo, tarifaGeneralRepo, CrearPersona(empresa, param), CrearUsuario(empresa, param));
         }
 
+        // Titulares fiscales por empresa y por sucursal (2026-10-09, ver docs/DECISIONS.md). Solo Postgres, pero a
+        // diferencia de CrearEmpleado NO lanza en SQL Server: VentasController (modal de factura, emision, NC) corre con
+        // los dos motores y en SQL Server debe seguir facturando con los datos de la empresa. Devuelve null y quien lo
+        // usa lo trata como "sin titulares" (emisor = empresa).
+        public static Negocio.TitularFiscal CrearTitularFiscal(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return null;
+
+            return new Negocio.TitularFiscal(new DatosPostgres.TitularFiscalPg(PgConnString, empresa.IdEmpresa));
+        }
+
         public static Negocio.RegistroJornada CrearRegistroJornada(IEmpresaContext empresa)
         {
             if (!UsarPostgres)

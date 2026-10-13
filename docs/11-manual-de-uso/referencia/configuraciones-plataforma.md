@@ -3,7 +3,7 @@ titulo: Mapa de configuraciones de la plataforma
 rol: superadmin
 modulo: Referencia
 orden: 1
-revisada: 2026-10-03
+revisada: 2026-10-12
 ---
 # Mapa de configuraciones de la plataforma
 
@@ -16,6 +16,9 @@ Lo que se configura **a nivel de plataforma o servidor** (no por empresa). Para 
 | **Empresa activa** | [Editar empresa](ayuda:pantalla/SystemAdministration.EditarEmpresa) | Una empresa inactiva no tiene dirección de ingreso por CUIT. |
 | **Entorno AFIP** (PROD / HOMO) | [Editar empresa](ayuda:pantalla/SystemAdministration.EditarEmpresa) | HOMO = modo prueba: las facturas no tienen validez fiscal. Los admin ven un cartel "MODO PRUEBA (AFIP)". |
 | **Empresa propia / RRII / Es carnicería** | [Editar empresa](ayuda:pantalla/SystemAdministration.EditarEmpresa) | Marcas de la empresa. **PENDIENTE:** documentar el efecto exacto de cada una en los módulos. |
+| **Titular compartido entre empresas** (mismo CUIT como titular en varias empresas) | [Titulares de facturación](ayuda:pantalla/TitularesFiscales.Index) → *Administración del sistema → Empresas → Titulares* | Solo el superadmin lo asigna. Todas las empresas con ese CUIT usan el **mismo certificado** (sin pedir otro); lo administra una sola (donde el CUIT es el principal). Ver [titular compartido entre empresas](ayuda:concepto/titular-compartido-entre-empresas). |
+| **Cancelar / reponer la titularidad** de una empresa | [Titulares de facturación](ayuda:pantalla/TitularesFiscales.Index) | Solo superadmin. Si nunca facturó se elimina; si ya facturó queda "cancelada" (de solo lectura). Mientras esté cancelada la empresa no puede emitir facturas ni notas de crédito con ese titular. |
+| **No cambiar el CUIT de una empresa mientras otras la usan como titular** | [Editar empresa](ayuda:pantalla/SystemAdministration.EditarEmpresa) | El sistema lo impide hasta cancelar esas titularidades. |
 
 ## Del servidor (archivo de configuración del servidor, `WebCore.dll.config`)
 | Clave | Por defecto | Efecto |

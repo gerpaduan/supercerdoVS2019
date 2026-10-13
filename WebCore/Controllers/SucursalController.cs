@@ -19,6 +19,8 @@ namespace WebCore.Controllers
         private readonly WebCore.Services.IUsuarioSesionService _sesion;
         private readonly IEmpresaContext _empresa;
         private readonly Negocio.Sucursal _oSucursalN;
+        // Titulares fiscales (null en SQL Server: la pantalla no muestra el bloque de titular).
+        private readonly Negocio.TitularFiscal? _titulares;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
@@ -27,6 +29,7 @@ namespace WebCore.Controllers
             _sesion = sesion;
             _empresa = sesion.Empresa;
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa);
+            _titulares = WebCore.Infrastructure.NegocioFactory.CrearTitularFiscal(_empresa);
         }
 
         [HttpGet]
@@ -68,6 +71,7 @@ namespace WebCore.Controllers
             }
 
             var model = CrearViewModel(sucursal, _usuarioActual, true);
+            model.Titular = ArmarBloqueTitular(sucursal);
             ViewBag.Title = "Editar sucursal";
             ViewBag.Seccion = "Mis Sucursales";
             return View("~/Views/Sucursal/Editar.cshtml", model);
@@ -111,6 +115,7 @@ namespace WebCore.Controllers
             {
                 ViewBag.Title = "Editar sucursal";
                 ViewBag.Seccion = "Mis Sucursales";
+                model.Titular = ArmarBloqueTitular(sucursalActual);
                 return View("~/Views/Sucursal/Editar.cshtml", model);
             }
 
@@ -141,8 +146,73 @@ namespace WebCore.Controllers
                 ModelState.AddModelError("", ex.Message);
                 ViewBag.Title = "Editar sucursal";
                 ViewBag.Seccion = "Mis Sucursales";
+                model.Titular = ArmarBloqueTitular(sucursalActual);
                 return View("~/Views/Sucursal/Editar.cshtml", model);
             }
+        }
+
+        // Asigna a la sucursal el titular de facturación (y su punto de venta si no es el principal). Solo administradores y
+        // solo sobre una sucursal de la propia empresa. No pasa por ActualizarDatosBasicos: es otro dato y otra regla
+        // (titulares fiscales, 2026-10-09). Un cambio vale para las facturas FUTURAS de la sucursal.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AsignarTitular(int idSucursal, int idTitular, int? codPuntoVenta)
+        {
+            var sucursal = _oSucursalN.findById(idSucursal);
+            if (sucursal == null || sucursal.IdEmpresa != _empresa.IdEmpresa)
+            {
+                TempData["AlertType"] = "danger";
+                TempData["AlertTitle"] = "Mis Sucursales";
+                TempData["AlertMsg"] = "No se encontró la sucursal solicitada.";
+                return RedirectToAction("Index");
+            }
+
+            if (!PuedeAdministrar(_usuarioActual) || _titulares == null)
+            {
+                TempData["AlertType"] = "info";
+                TempData["AlertTitle"] = "Mis Sucursales";
+                TempData["AlertMsg"] = "Solo un administrador puede cambiar el titular de facturación.";
+                return RedirectToAction("Editar", new { id = idSucursal });
+            }
+
+            string? error = _titulares.AsignarTitularSucursal(sucursal, _empresa.IdEmpresa, idTitular, codPuntoVenta);
+            TempData["AlertType"] = error == null ? "success" : "danger";
+            TempData["AlertTitle"] = "Titular de facturación";
+            TempData["AlertMsg"] = error ?? "El titular de facturación de la sucursal se guardó correctamente.";
+            return RedirectToAction("Editar", new { id = idSucursal });
+        }
+
+        // Bloque "Titular de facturación": titulares habilitados de la empresa con sus puntos de venta. null en SQL Server.
+        private SucursalTitularBloqueVm? ArmarBloqueTitular(Entidades.Sucursal sucursal)
+        {
+            if (_titulares == null) return null;
+
+            var titulares = _titulares.Listar(_empresa.IdEmpresa, false);
+            var principal = titulares.FirstOrDefault(t => t.EsPredeterminado);
+            int actual = _titulares.ObtenerIdTitularDeSucursal(sucursal.IdSucursal) ?? principal?.IdTitular ?? 0;
+            var titularActual = titulares.FirstOrDefault(t => t.IdTitular == actual);
+
+            var bloque = new SucursalTitularBloqueVm { IdTitularActual = actual };
+            if (titularActual != null)
+                bloque.PuntoVentaActual = _titulares.ResolverPuntoVenta(titularActual, sucursal, out _);
+
+            // Solo se ofrecen los habilitados; el actual siempre figura aunque se haya deshabilitado despues.
+            foreach (var t in titulares.Where(t => t.Habilitado || t.IdTitular == actual))
+            {
+                bloque.Opciones.Add(new SucursalTitularOpcionVm
+                {
+                    IdTitular = t.IdTitular,
+                    Nombre = t.RazonSocial ?? "",
+                    Cuit = t.Cuit,
+                    EsPrincipal = t.EsPredeterminado,
+                    Habilitado = t.Habilitado,
+                    TieneCertificado = t.TieneCertificado,
+                    PuntosVenta = t.EsPredeterminado
+                        ? new List<int>()
+                        : t.PuntosVenta.Where(p => p.Habilitado).Select(p => p.CodPuntoVentaAfip).OrderBy(p => p).ToList()
+                });
+            }
+            return bloque;
         }
 
         private SucursalEditVm CrearViewModel(Entidades.Sucursal sucursal, Entidades.Usuario usuario, bool soloLecturaInicial)

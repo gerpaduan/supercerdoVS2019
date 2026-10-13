@@ -216,6 +216,9 @@ namespace WebCore.Controllers
                     idPersona = LeerInt(row, "idPersona"),
                     idEmpresa = LeerInt(row, "idEmpresa"),
                     iva = LeerString(row, "iva"),
+                    // Condicion IVA numerica (2 = RI, 3 = monotributo...): el modal de factura decide la letra con ella
+                    // (0 si el motor no la informa, SQL Server).
+                    idIva = LeerInt(row, "idIva"),
                     razonSocial = LeerString(row, "razonSocial"),
                     cuit = LeerString(row, "cuit"),
                     identificacion = LeerString(row, "nombreIdentif"),

@@ -176,6 +176,58 @@
             </form>
         </div>
     </div>
+
+    @* ============ Titular de facturacion (titulares fiscales, 2026-10-09) ============
+       Form APARTE del de la sucursal (los forms no se anidan) con su propio antiforgery: quien figura como emisor de las
+       facturas de esta sucursal. Vale para las facturas futuras; al facturar se puede elegir otro titular solo para esa factura. *@
+    @if (Model.Titular != null)
+    {
+        var bloque = Model.Titular;
+        var actual = bloque.Opciones.FirstOrDefault(o => o.IdTitular == bloque.IdTitularActual);
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h2 class="h5 mb-1">Titular de facturación</h2>
+                <p class="text-muted mb-2">
+                    Las facturas de esta sucursal salen con los datos fiscales de este titular (CUIT, razón social, condición IVA y certificado de ARCA).
+                    @if (actual != null)
+                    {
+                        <span>Hoy: <strong>@actual.Nombre</strong> (CUIT @actual.Cuit)@(bloque.PuntoVentaActual > 0 ? ", punto de venta " + bloque.PuntoVentaActual.ToString("00000") : ", sin punto de venta definido").</span>
+                    }
+                </p>
+                @if (Model.PuedeAdministrar)
+                {
+                    <form asp-controller="Sucursal" asp-action="AsignarTitular" method="post" id="formTitularSucursal" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idSucursal" value="@Model.IdSucursal" />
+                        <div class="col-12 col-md-5">
+                            <label for="selTitularSucursal" class="form-label mb-0">Titular</label>
+                            <select id="selTitularSucursal" name="idTitular" class="form-select form-select-sm">
+                                @foreach (var o in bloque.Opciones)
+                                {
+                                    <option value="@o.IdTitular" data-principal="@(o.EsPrincipal ? "1" : "0")" data-pv="@string.Join(",", o.PuntosVenta)"
+                                            disabled="@((!o.Habilitado || !o.TieneCertificado) && o.IdTitular != bloque.IdTitularActual ? "disabled" : null)"
+                                            selected="@(o.IdTitular == bloque.IdTitularActual ? "selected" : null)">
+                                        @o.Nombre · CUIT @o.Cuit@(o.EsPrincipal ? " · principal" : "")@(!o.Habilitado ? " · no habilitado" : (!o.TieneCertificado ? " · sin certificado" : ""))
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-8 col-md-3" id="grupoPvTitular">
+                            <label for="selPvTitular" class="form-label mb-0">Punto de venta del titular</label>
+                            <select id="selPvTitular" name="codPuntoVenta" class="form-select form-select-sm"></select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save me-1"></i> Asignar titular</button>
+                        </div>
+                    </form>
+                    <div class="text-muted small mt-2">
+                        Solo se pueden asignar titulares habilitados y con certificado cargado. Los titulares se administran en <a asp-controller="TitularesFiscales" asp-action="Index">Titulares de facturación</a>.
+                        El punto de venta del titular principal es el que define el administrador del sistema para la sucursal.
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>
 
 <style>
@@ -198,6 +250,42 @@
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script>
+        // Titular de facturacion: el punto de venta solo se elige para titulares no principales (el del principal es el
+        // de la sucursal); sus opciones salen de los puntos de venta habilitados de cada titular (data-pv).
+        (function () {
+            var selTitular = document.getElementById("selTitularSucursal");
+            var grupo = document.getElementById("grupoPvTitular");
+            var selPv = document.getElementById("selPvTitular");
+            if (!selTitular || !grupo || !selPv) return;
+
+            var pvActual = "@(Model.Titular?.PuntoVentaActual ?? 0)";
+
+            function actualizar() {
+                var opcion = selTitular.options[selTitular.selectedIndex];
+                var esPrincipal = !opcion || opcion.getAttribute("data-principal") === "1";
+                grupo.classList.toggle("d-none", esPrincipal);
+                selPv.innerHTML = "";
+                selPv.disabled = esPrincipal;
+                if (esPrincipal) return;
+
+                var codigos = (opcion.getAttribute("data-pv") || "").split(",").filter(function (c) { return c; });
+                var vacio = document.createElement("option");
+                vacio.value = "";
+                vacio.textContent = codigos.length === 1 ? "(el único habilitado)" : "(elegir)";
+                selPv.appendChild(vacio);
+                codigos.forEach(function (codigo) {
+                    var o = document.createElement("option");
+                    o.value = codigo;
+                    o.textContent = ("00000" + codigo).slice(-5);
+                    if (codigo === pvActual) o.selected = true;
+                    selPv.appendChild(o);
+                });
+            }
+
+            selTitular.addEventListener("change", actualizar);
+            actualizar();
+        })();
+
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formSucursal",
             soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),

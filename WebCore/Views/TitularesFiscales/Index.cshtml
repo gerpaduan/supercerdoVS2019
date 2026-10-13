@@ -1,0 +1,254 @@
+@model WebCore.Models.TitularesIndexVm
+@using AFIP
+@{
+    ViewBag.Title = "Titulares de facturación";
+    var es = new System.Globalization.CultureInfo("es-AR");
+    string[] meses = { "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+}
+
+@* Titulares fiscales de la empresa: quienes figuran como emisores de las facturas electronicas (ver TitularesFiscalesController).
+   El facturado se compara con los topes SOLO a modo informativo (no hay avisos ni bloqueos). *@
+<div class="container-fluid titulares-page">
+
+    @if (TempData["TitularMensaje"] is string mensajeOk)
+    {
+        <div class="alert alert-success" role="alert">@mensajeOk</div>
+    }
+    @if (TempData["TitularError"] is string mensajeError)
+    {
+        <div class="alert alert-danger" role="alert">@mensajeError</div>
+    }
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+        <h4 class="mb-0">Titulares de facturación</h4>
+        @if (Model.Soportado && Model.PuedeGestionar)
+        {
+            <a class="btn btn-primary btn-sm" asp-action="Editar" asp-route-idEmpresa="@Model.IdEmpresaRuta"><i class="fas fa-plus me-1"></i> Nuevo titular</a>
+        }
+    </div>
+
+    @if (!Model.Soportado)
+    {
+        <div class="alert alert-warning">Los titulares de facturación requieren la base Postgres. En este ambiente la empresa factura con su propio CUIT.</div>
+    }
+    else
+    {
+        <p class="text-muted small mb-2">
+            Cada titular es una persona (por ejemplo un monotributista) que puede figurar como emisor de las facturas de la empresa, con su propio CUIT y certificado de ARCA.
+            El titular <strong>principal</strong> es la empresa misma. Cada sucursal factura con el titular que tenga asignado (se cambia en <em>Mis Sucursales</em>).
+            Entorno en uso por la empresa: <strong>@Model.EntornoEnUso</strong>.
+            @if (!Model.PuedeGestionar)
+            {
+                <text>El alta y la edición de titulares los hace el administrador del sistema; acá podés habilitarlos o deshabilitarlos.</text>
+            }
+        </p>
+        @if (Model.IdEmpresaRuta.HasValue)
+        {
+            <div class="alert alert-warning py-2 small">Administración del sistema: estás viendo la empresa <strong>@Model.EmpresaNombre</strong> (id @Model.IdEmpresaRuta). Los certificados se ven y se cargan desde la sesión de esa empresa.</div>
+        }
+
+        <form method="get" asp-action="Index" class="titulares-filtro card card-body py-2 mb-2">
+            @if (Model.IdEmpresaRuta.HasValue) { <input type="hidden" name="idEmpresa" value="@Model.IdEmpresaRuta" /> }
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-3">
+                    <label for="selMes" class="form-label mb-0">Mes</label>
+                    <select id="selMes" name="mes" class="form-select form-select-sm" onchange="this.form.submit()">
+                        @for (int m = 1; m <= 12; m++)
+                        {
+                            <option value="@m" selected="@(m == Model.Mes ? "selected" : null)">@meses[m]</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label for="selAnio" class="form-label mb-0">Año</label>
+                    <select id="selAnio" name="anio" class="form-select form-select-sm" onchange="this.form.submit()">
+                        @foreach (int a in Model.Anios)
+                        {
+                            <option value="@a" selected="@(a == Model.Anio ? "selected" : null)">@a</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md text-muted small">
+                    Facturado por CarniSys, neto de notas de crédito, solo producción y con CAE. Es informativo: no es el control real de ARCA.
+                </div>
+            </div>
+        </form>
+
+        <div class="card shadow-sm mb-3">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Titular</th>
+                            <th>Emite</th>
+                            <th>Certificado (@Model.EntornoEnUso)</th>
+                            <th class="text-end">Facturado en @meses[Model.Mes] @Model.Anio</th>
+                            <th class="text-end">Facturado anual</th>
+                            <th>Sucursales</th>
+                            <th style="width:230px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fila in Model.Filas)
+                        {
+                            var t = fila.Titular;
+                            string claseCert, etiquetaCert;
+                            switch (fila.EstadoCertificado)
+                            {
+                                case EstadoCertificado.Vigente: claseCert = "success"; etiquetaCert = "Vigente"; break;
+                                case EstadoCertificado.PorVencer: claseCert = "warning text-dark"; etiquetaCert = "Por vencer"; break;
+                                case EstadoCertificado.Vencido: claseCert = "danger"; etiquetaCert = "Vencido"; break;
+                                case EstadoCertificado.Ilegible: claseCert = "danger"; etiquetaCert = "No se puede leer"; break;
+                                default: claseCert = "secondary"; etiquetaCert = "Sin certificado"; break;
+                            }
+                            <tr class="@(t.Habilitado ? "" : "text-muted")">
+                                <td>
+                                    <div class="fw-bold">@t.RazonSocial</div>
+                                    <div class="small text-muted">CUIT @t.Cuit</div>
+                                    @if (t.EsPredeterminado) { <span class="badge bg-dark">principal</span> }
+                                    @if (t.Revocado) { <span class="badge bg-danger" title="El administrador del sistema canceló esta titularidad: no se puede facturar ni emitir notas de crédito con este titular.">titularidad cancelada</span> }
+                                    else if (!t.Habilitado) { <span class="badge bg-secondary">no habilitado</span> }
+                                    @if (fila.OtrasEmpresas > 0) { <span class="badge bg-info text-dark" title="Este CUIT también es titular en otra empresa y usa el mismo certificado de ARCA.">CUIT compartido</span> }
+                                </td>
+                                <td>@(t.EsRRII ? "Resp. Inscripto" : "Monotributo")<div class="small text-muted">Factura @fila.LetrasQueEmite</div></td>
+                                <td>
+                                    @if (!Model.CertificadoDisponible)
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-@claseCert">@etiquetaCert</span>
+                                        @if (fila.VenceCertificado.HasValue)
+                                        {
+                                            <div class="small @(fila.EstadoCertificado == EstadoCertificado.Vigente ? "text-muted" : "text-danger")">vence @fila.VenceCertificado.Value.ToString("dd/MM/yyyy", es)</div>
+                                        }
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (fila.Consumo.TotalCuitMes.HasValue)
+                                    {
+                                        @* CUIT compartido: el tope es de la persona, se compara con el total de todas las empresas. El desglose lo ve solo el superadmin. *@
+                                        <div>$ @fila.Consumo.FacturadoMes.ToString("N2", es) <span class="small text-muted">(esta empresa)</span></div>
+                                        <div class="small fw-bold">Total del CUIT: $ @fila.Consumo.TotalCuitMes.Value.ToString("N2", es)</div>
+                                        @if (Model.PuedeGestionar)
+                                        {
+                                            <div class="small text-muted">@string.Join(" · ", fila.Consumo.PorEmpresaMes.Select(x => x.Nombre + " $ " + x.Importe.ToString("N2", es)))</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div>$ @fila.Consumo.FacturadoMes.ToString("N2", es)</div>
+                                    }
+                                    @if (t.LimiteMensual.HasValue && t.LimiteMensual.Value > 0)
+                                    {
+                                        <div class="small text-muted">tope $ @t.LimiteMensual.Value.ToString("N2", es) · @fila.Consumo.PorcentajeMensual?.ToString("0.#", es)%</div>
+                                    }
+                                    else { <div class="small text-muted">sin tope</div> }
+                                </td>
+                                <td class="text-end">
+                                    @if (fila.Consumo.TotalCuitAnual.HasValue)
+                                    {
+                                        <div>$ @fila.Consumo.FacturadoAnual.ToString("N2", es) <span class="small text-muted">(esta empresa)</span></div>
+                                        <div class="small fw-bold">Total del CUIT: $ @fila.Consumo.TotalCuitAnual.Value.ToString("N2", es)</div>
+                                        @if (Model.PuedeGestionar)
+                                        {
+                                            <div class="small text-muted">@string.Join(" · ", fila.Consumo.PorEmpresaAnual.Select(x => x.Nombre + " $ " + x.Importe.ToString("N2", es)))</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div>$ @fila.Consumo.FacturadoAnual.ToString("N2", es)</div>
+                                    }
+                                    @if (t.LimiteAnual.HasValue && t.LimiteAnual.Value > 0)
+                                    {
+                                        <div class="small text-muted">tope $ @t.LimiteAnual.Value.ToString("N2", es) · @fila.Consumo.PorcentajeAnual?.ToString("0.#", es)%</div>
+                                    }
+                                    else { <div class="small text-muted">sin tope</div> }
+                                    <div class="small text-muted">@(t.VentanaAnual == Entidades.TitularFiscal.VentanaCalendario ? "año calendario" : "últimos 12 meses") (@fila.Consumo.AnualDesde.ToString("dd/MM/yyyy", es) al @fila.Consumo.AnualHasta.ToString("dd/MM/yyyy", es))</div>
+                                    @if (fila.Consumo.TotalCuitAnual.HasValue)
+                                    {
+                                        <div class="small text-warning-emphasis">El CUIT también factura en otras empresas: el tope se compara con el <strong>total del CUIT en todas las empresas</strong>, no solo con lo de esta.</div>
+                                    }
+                                </td>
+                                <td class="small">
+                                    @if (t.SucursalesQueLoUsan.Count == 0) { <span class="text-muted">ninguna</span> }
+                                    else { @string.Join(", ", t.SucursalesQueLoUsan) }
+                                </td>
+                                <td>
+                                    @* Alta y edicion: solo el administrador del sistema. *@
+                                    @if (Model.PuedeGestionar && !t.Revocado)
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary mb-1" asp-action="Editar" asp-route-id="@t.IdTitular" asp-route-idEmpresa="@Model.IdEmpresaRuta">@(t.EsPredeterminado ? "Topes" : "Editar")</a>
+                                    }
+                                    @* Cancelar la titularidad (solo super-admin): se borra si nunca facturo en la empresa; si ya facturo queda cancelada. *@
+                                    @if (Model.PuedeGestionar && !t.EsPredeterminado && !t.Revocado)
+                                    {
+                                        <form asp-action="Revocar" asp-route-idEmpresa="@Model.IdEmpresaRuta" method="post" class="d-inline"
+                                              onsubmit="return confirm('¿Cancelar la titularidad de @(System.Web.HttpUtility.JavaScriptStringEncode(t.RazonSocial ?? ""))?\n\nLa empresa deja de poder facturar y emitir notas de crédito con este titular y sus sucursales vuelven al titular principal.\nSi nunca facturó en esta empresa se elimina y la empresa ya no lo ve; si ya facturó queda como cancelada.');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="idTitular" value="@t.IdTitular" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger mb-1">Cancelar titularidad</button>
+                                        </form>
+                                    }
+                                    @if (Model.PuedeGestionar && t.Revocado)
+                                    {
+                                        <form asp-action="Reponer" asp-route-idEmpresa="@Model.IdEmpresaRuta" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="idTitular" value="@t.IdTitular" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success mb-1">Reponer titularidad</button>
+                                        </form>
+                                    }
+                                    @if (Model.CertificadoDisponible && !t.Revocado)
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary mb-1" asp-controller="CertificadoArca" asp-action="Index" asp-route-idTitular="@t.IdTitular">Certificado</a>
+                                    }
+                                    @* El principal (la empresa) no se deshabilita: es el titular de respaldo de toda sucursal. *@
+                                    @if (!t.EsPredeterminado && !t.Revocado)
+                                    {
+                                        <form asp-action="SetHabilitado" asp-route-idEmpresa="@Model.IdEmpresaRuta" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="idTitular" value="@t.IdTitular" />
+                                            <input type="hidden" name="habilitado" value="@(t.Habilitado ? "false" : "true")" />
+                                            <button type="submit" class="btn btn-sm @(t.Habilitado ? "btn-outline-danger" : "btn-outline-success") mb-1">@(t.Habilitado ? "Deshabilitar" : "Habilitar")</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body py-2">
+                <h6 class="mb-2">Titular y punto de venta de cada sucursal</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light"><tr><th>Sucursal</th><th>Titular</th><th class="text-end">Punto de venta</th></tr></thead>
+                        <tbody>
+                            @foreach (var s in Model.Sucursales)
+                            {
+                                <tr>
+                                    <td>@s.Nombre</td>
+                                    <td>@s.TitularNombre</td>
+                                    <td class="text-end">@(s.PuntoVenta > 0 ? s.PuntoVenta.ToString("00000") : "sin definir")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-muted small mt-1">El titular se cambia en Mis Sucursales; el punto de venta del titular principal lo define el administrador del sistema.</div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .titulares-page { font-size: .88rem; }
+    .titulares-page h4 { font-size: 1.15rem; }
+    .titulares-page .table { font-size: .84rem; }
+    .titulares-page .btn-sm { font-size: .78rem; }
+    .titulares-page .form-label, .titulares-page .form-control, .titulares-page .form-select { font-size: .84rem; }
+</style>

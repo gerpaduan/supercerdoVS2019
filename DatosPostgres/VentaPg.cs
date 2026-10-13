@@ -1642,14 +1642,29 @@ namespace DatosPostgres
                                 (ptovtaafip, fechaemisionafip, desctipocbteafip, codtipocbteafip, nrocbteafip, tipodocafip, nrodocafip,
                                  razonsocialafip, condicionivaafip, domicilioafip, condicionventa, formapago, cae, fecvtocae,
                                  importenetogravado, iva, importetotal, porcentajefacturacion, descitemunitario, observaciones,
-                                 idventa, creado, error, mensajeerror, fechaerror, canterrores, idempresa, esprueba)
+                                 idventa, creado, error, mensajeerror, fechaerror, canterrores, idempresa, esprueba,
+                                 idtitular, cuitemisor, razonsocialemisor, condicionivaemisor, esrriiemisor, iibbemisor,
+                                 inicioactividademisor, domicilioemisor)
                             VALUES
                                 (@ptoVtaAfip, @fechaEmisionAfip, @descTipoCbteAfip, @codTipoCbteAfip, @nroCbteAfip, @tipoDocAfip, @nroDocAfip,
                                  @razonSocialAFIP, @condicionIvaAFIP, @domicilioAFIP, @condicionVenta, @formaPago, @CAE, @fecVtoCAE,
                                  @importeNetoGravado, @iva, @importeTotal, @porcentajeFacturacion, @descItemUnitario, @observaciones,
-                                 @idVenta, now(), @error, @mensajeError, @fechaError, 0, @idEmpresa, @esPrueba)
+                                 @idVenta, now(), @error, @mensajeError, @fechaError, 0, @idEmpresa, @esPrueba,
+                                 @idTitular, @cuitEmisor, @razonSocialEmisor, @condicionIvaEmisor, @esRRIIEmisor, @iibbEmisor,
+                                 @inicioActividadEmisor, @domicilioEmisor)
                             RETURNING id;", con, tx))
                         {
+                            // Datos del emisor (titulares fiscales): solo se escriben en el alta, el UPDATE de abajo no los
+                            // toca (una factura emitida conserva SIEMPRE el titular que la emitio). NULL = factura anterior.
+                            cmd.Parameters.AddWithValue("idTitular", (object)oFacturaElectronicaE.IdTitular ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("cuitEmisor", (object)oFacturaElectronicaE.CuitEmisor ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("razonSocialEmisor", (object)oFacturaElectronicaE.RazonSocialEmisor ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("condicionIvaEmisor", (object)oFacturaElectronicaE.CondicionIvaEmisor ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("esRRIIEmisor", (object)oFacturaElectronicaE.EsRRIIEmisor ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("iibbEmisor", (object)oFacturaElectronicaE.IibbEmisor ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("inicioActividadEmisor",
+                                oFacturaElectronicaE.InicioActividadEmisor.HasValue ? (object)oFacturaElectronicaE.InicioActividadEmisor.Value.Date : DBNull.Value);
+                            cmd.Parameters.AddWithValue("domicilioEmisor", (object)oFacturaElectronicaE.DomicilioEmisor ?? DBNull.Value);
                             cmd.Parameters.AddWithValue("ptoVtaAfip", oFacturaElectronicaE.PtoVtaAfip ?? "");
                             // FechaEmisionAfip es DateTime? -- "x < fecha" con x nulo evalua false
                             // en C# (los operadores relacionales de Nullable<T> nunca son true si
@@ -1822,7 +1837,16 @@ namespace DatosPostgres
                     Error = GetBool(dr, "error"),
                     MensajeError = GetString(dr, "mensajeerror"),
                     EsPrueba = GetBool(dr, "esprueba"),
-                    FechaError = dr["fechaerror"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaerror"])
+                    FechaError = dr["fechaerror"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaerror"]),
+                    // Datos del emisor guardados al emitir (titulares fiscales); NULL = factura anterior.
+                    IdTitular = dr["idtitular"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["idtitular"]),
+                    CuitEmisor = dr["cuitemisor"] == DBNull.Value ? (long?)null : Convert.ToInt64(dr["cuitemisor"]),
+                    RazonSocialEmisor = dr["razonsocialemisor"] == DBNull.Value ? null : Convert.ToString(dr["razonsocialemisor"]),
+                    CondicionIvaEmisor = dr["condicionivaemisor"] == DBNull.Value ? null : Convert.ToString(dr["condicionivaemisor"]),
+                    EsRRIIEmisor = dr["esrriiemisor"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(dr["esrriiemisor"]),
+                    IibbEmisor = dr["iibbemisor"] == DBNull.Value ? (long?)null : Convert.ToInt64(dr["iibbemisor"]),
+                    InicioActividadEmisor = dr["inicioactividademisor"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["inicioactividademisor"]),
+                    DomicilioEmisor = dr["domicilioemisor"] == DBNull.Value ? null : Convert.ToString(dr["domicilioemisor"])
                 },
                 p => p.AddWithValue("id", idFactuElec));
 

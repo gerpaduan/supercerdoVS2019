@@ -3236,6 +3236,7 @@ else
             // usuario igual puede imprimir/emailear el comprobante desde ahi.
             window.AppUrls = window.AppUrls || {
                 ventasImprimir: '@Url.Action("ImprimirTicket", "Ventas")',
+                ventasSugerenciaTitular: '@Url.Action("SugerenciaTitular", "Ventas")',
                 ventasGenerarFactura: '@Url.Action("GenerarFactura", "Ventas")',
                 ventasCerrarSinFacturar: '@Url.Action("CerrarVentaSinFacturar", "Ventas")',
                 ventasGenerarNotaCredito: '@Url.Action("GenerarNotaCredito", "Ventas")',
@@ -3255,7 +3256,22 @@ else
 
             var facturaOkPOS = false;
 
+            // Punto de entrada unico (boton "Facturar" del post-venta, apertura automatica por forma de pago y detalle de
+            // venta): primero consulta si hay que SUGERIR facturar con otro titular (cliente RI y titular de la sucursal
+            // monotributo) y recien despues abre el modal, con el titular elegido o con el de la sucursal (titulares
+            // fiscales, 2026-10-09). Sin el helper (script no cargado todavia) se abre directo, como siempre.
             function abrirFacturaVentaModal(ventaId) {
+                if (!ventaId) return;
+                if (window.FacturaElectronica && typeof window.FacturaElectronica.sugerirTitular === 'function') {
+                    window.FacturaElectronica.sugerirTitular(ventaId, function (idTitular) {
+                        abrirFacturaVentaModalDirecto(ventaId, idTitular);
+                    });
+                    return;
+                }
+                abrirFacturaVentaModalDirecto(ventaId, 0);
+            }
+
+            function abrirFacturaVentaModalDirecto(ventaId, idTitular) {
                 if (!ventaId) return;
                 facturaOkPOS = false;
 
@@ -3265,7 +3281,7 @@ else
                 $.ajax({
                     url: window.AppUrls.ventasImprimir,
                     type: 'GET',
-                    data: { id: ventaId, mm: 0 },
+                    data: { id: ventaId, mm: 0, idTitular: idTitular || 0 },
                     dataType: 'html'
                 })
                     .fail(function () {

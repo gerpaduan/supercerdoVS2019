@@ -28,6 +28,14 @@ namespace WebCore.Models.DTO
         public string EmisorIngresosBrutos { get; set; }
         public string EmisorInicioActividad { get; set; }
 
+        // Titulares fiscales (2026-10-09): titular con el que se factura (0 = el de la sucursal, que resuelve el
+        // servidor), si es Responsable Inscripto y el domicilio tal como lo imprimen el PDF y el ticket.
+        public int IdTitular { get; set; }
+        public bool EmisorEsRRII { get; set; }
+        // Condicion IVA numerica del cliente (2 = RI, 3 = monotributo...): con el emisor decide la letra, en servidor y en el modal.
+        public int ClienteIdIva { get; set; }
+        public string EmisorDomicilioTicket { get; set; }
+
         public string TipoDocAfip { get; set; }
         public string NroDocAfip { get; set; }
         public string RazonSocialAFIP { get; set; }

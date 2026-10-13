@@ -44,7 +44,7 @@
     bool enPagos = enFinanzas && (action == "Pagos"
         || (action == "AddOrEditPago" && returnUrlActual.StartsWith("/Finanzas/Pagos", StringComparison.OrdinalIgnoreCase)));
     bool enConfiguracion = controller == "Usuarios" || controller == "AuditoriaLogin" || controller == "Parametros"
-        || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros" || controller == "CertificadoArca";
+        || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros" || controller == "CertificadoArca" || controller == "TitularesFiscales";
     bool enAdministracionSistema = controller == "SystemAdministration" || controller == "PadronPlataforma";
 
     var usuarioActual = Sesion.UsuarioActual;
@@ -673,6 +673,10 @@
                             @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres)
                             {
                                 <a class="collapse-item @(controller == "CertificadoArca" ? "active" : "")" href="@Url.Action("Index", "CertificadoArca")">Certificado ARCA</a>
+                                @if (esAdmin)
+                                {
+                                    <a class="collapse-item @(controller == "TitularesFiscales" ? "active" : "")" href="@Url.Action("Index", "TitularesFiscales")">Titulares de facturación</a>
+                                }
                             }
                             <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Codigos de barra</a>
                             @* Bug real evitado 2026-09-14 (ver docs/DECISIONS.md): la clasica se retiro de

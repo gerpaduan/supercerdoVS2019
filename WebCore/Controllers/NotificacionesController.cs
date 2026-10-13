@@ -54,7 +54,9 @@ namespace WebCore.Controllers
             }
 
             if (n.Tipo == Entidades.Notificacion.TipoCertificadoArcaPorVencer)
-                return Url.Action("Index", "CertificadoArca") ?? "";
+                // Titulares fiscales: el aviso de un titular no principal lleva su id en el RefId (idtitular * 1.000.000.000 + fecha).
+                return Url.Action("Index", "CertificadoArca", n.RefId >= WebCore.Services.CertificadoArcaEstadoService.FactorTitular
+                    ? new { idTitular = (int)(n.RefId / WebCore.Services.CertificadoArcaEstadoService.FactorTitular) } : null) ?? "";
 
             if (n.Tipo != null && n.Tipo.StartsWith(Entidades.Notificacion.PrefijoBorradorGenericoDescartado, StringComparison.Ordinal))
             {

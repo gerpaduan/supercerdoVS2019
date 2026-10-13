@@ -321,6 +321,22 @@ namespace Entidades
             set { mensajeError = value; }
         }
 
+        // Titular fiscal que emitio el comprobante y sus datos al emitir (titulares fiscales, 2026-10-09, ver
+        // docs/DECISIONS.md). Todo null = comprobante anterior a esa funcion: se imprime con los datos de la empresa
+        // como siempre. Se completan en AFIP.GenerarFacturaService al emitir y se persisten solo en el alta (el
+        // UPDATE de edicion no los toca): reimpresiones, edicion y nota de credito leen SIEMPRE esto.
+        public int? IdTitular { get; set; }
+        public long? CuitEmisor { get; set; }
+        public string RazonSocialEmisor { get; set; }
+        public string CondicionIvaEmisor { get; set; }
+        public bool? EsRRIIEmisor { get; set; }
+        public long? IibbEmisor { get; set; }
+        public DateTime? InicioActividadEmisor { get; set; }
+        public string DomicilioEmisor { get; set; }
+
+        // true si el comprobante tiene guardados los datos del emisor (se emitio con titulares fiscales).
+        public bool TieneEmisorGuardado { get { return CuitEmisor.HasValue && CuitEmisor.Value > 0; } }
+
         // Valores del filtro de entorno del listado de facturas (null/vacio = todas).
         public const string FiltroEntornoProduccion = "PROD";
         public const string FiltroEntornoPrueba = "PRUEBA";
