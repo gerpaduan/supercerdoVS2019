@@ -40,7 +40,7 @@ Consultar **stock, ventas y balance** de una, varias o todas las sucursales. Se 
   - **Positivo, rojo, ↑ "Faltó mercadería"**: había que tener más de lo que se registró al cierre.
   - **Negativo, ámbar, ↓ "Vendido de más"**: se registró más stock al cierre del que correspondía.
   - **0, verde tenue, ✓ "Coincide"**: el cierre coincide con lo calculado.
-- Arriba de la tabla hay una **leyenda** con los tres casos. Al tocar el encabezado *Faltante* la tabla se ordena por ese valor: un toque de menor a mayor (primero los "vendido de más"), otro toque lo invierte (primero los que más faltaron).
+- La tabla va compacta (celdas con poco relleno, columnas angostas) y el valor del *Faltante* tiene el mismo tamaño de letra que el resto de las celdas, distinguido solo por la negrita. Arriba de la tabla hay una **leyenda** con los tres casos. Al tocar el encabezado *Faltante* la tabla se ordena por ese valor: un toque de menor a mayor (primero los "vendido de más"), otro toque lo invierte (primero los que más faltaron).
 - **Estado**: en *Cierre Stock* compara el **Stock Cierre** (el de la misma fila) con el *Punto stock*: *NEGATIVO* si es negativo; *BAJO* si hay punto de stock y el Stock Cierre es menor o igual; *SIN STOCK* si es 0; *OK* en el resto. En *Stock Actual* y *Retroactivo* compara el stock disponible, como siempre. El filtro en vivo *Estado stock* usa esa misma regla.
 - **Totales** (switch *Mostrar totales*): en *Cierre Stock* hay dos tarjetas, **Faltó mercadería** (suma de los Faltantes positivos) y **Vendido de más** (suma de los negativos, en positivo). No se muestra una sola cifra porque lo que faltó y lo vendido de más se compensarían. Ambas se recalculan con las filas visibles.
 - El **detalle de producto** (doble clic en la fila) usa el mismo código de colores en *Stock Cierre* y *Faltante*. En *Stock Actual* y *Stock Retroactivo* no hay colores: allí el mismo dato es el stock disponible, no un faltante.
@@ -59,3 +59,10 @@ Producto, tipo, marca y estado de stock se aplican sobre lo ya cargado, sin volv
 - Con varias sucursales hay una consulta por cada una: puede tardar más que con una sola.
 - Los enlaces anteriores con una sola sucursal (`?idSucursal=N`) siguen funcionando; `idSucursal=0` equivale a **Todas** (en los de stock ahora muestra todas, antes se reemplazaba por tu sucursal).
 - PENDIENTE: documentar con capturas la tabla de cada tipo de reporte, el detalle de stock y los períodos comparativos.
+
+## Exportar a Excel (reportes de stock)
+En la fila de **Mostrar totales**, a la derecha, aparece el botón verde **Exportar a Excel** cuando *Stock Actual*, *Cierre Stock* o *Stock Retroactivo* ya muestran resultados. Descarga un `.xlsx` (nombre `<Reporte>_<fecha>_<hora>.xlsx`) con **los filtros que hay en pantalla** (sucursales, fechas o cierres, producto, tipo, marca y estado), una fila por producto (y sucursal, con 2+ sucursales).
+- Las columnas son las de la tabla: código, producto, (sucursal), St. inicial, Total ingresos, Total egresos, Stock Cierre y Faltante (Cierre Stock) o Stock actual, Punto stock y Estado. Con el switch **Mostrar detalles** activo se suman las de ingresos y egresos desglosados.
+- Cantidades en **números** (se pueden sumar, ordenar y filtrar; la hoja trae filtro automático y encabezado fijo). El *Faltante* lleva signo y color (rojo: faltó mercadería, ámbar: vendido de más, verde: coincide).
+- Las filas con *Stock Actual* se calculan **al momento de exportar** (igual que al buscar). Los otros reportes (Ventas por Producto, Proyección, Balance) no tienen exportación.
+- Pide el mismo permiso que ver el reporte (Stock > Ver stock). Solo lectura. Código: `ReportesController.ExportarStockExcel`, `Services/ExcelReporteStock.cs`.

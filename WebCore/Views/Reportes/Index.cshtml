@@ -185,13 +185,23 @@
             <label class="custom-control-label" for="switchMostrarTotalesReporte">Mostrar totales</label>
         </div>
         <span class="text-muted" id="lblTotalRegistrosCompacto">@cantidadRegistrosVisibles registros visibles</span>
-        @if (!popup)
-        {
-            <button type="button" class="btn btn-outline-secondary btn-sm ms-auto ml-auto" id="btnAbrirVentanaReportes"
-                    title="Abrir esta pantalla en una ventana independiente, sin menús, con los filtros actuales">
-                <i class="fas fa-external-link-alt mr-1"></i>Abrir en ventana
-            </button>
-        }
+        <div class="ms-auto ml-auto d-flex">
+            @* Exportar a Excel: solo en los reportes de stock con resultados (comparten tabla). reportes.js arma la URL con los filtros y el estado de "Mostrar detalles". *@
+            @if (esReporteStockDetalle && Model.ConsultaRealizada && Model.HayResultados)
+            {
+                <button type="button" class="btn btn-outline-success btn-sm mr-2" id="btnExportarExcelReportes"
+                        title="Descargar este reporte en Excel, con los filtros actuales (incluye las columnas de detalle si «Mostrar detalles» está activo)">
+                    <i class="fas fa-file-excel mr-1"></i>Exportar a Excel
+                </button>
+            }
+            @if (!popup)
+            {
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAbrirVentanaReportes"
+                        title="Abrir esta pantalla en una ventana independiente, sin menús, con los filtros actuales">
+                    <i class="fas fa-external-link-alt mr-1"></i>Abrir en ventana
+                </button>
+            }
+        </div>
     </div>
 
     @if (esReporteBalance)
@@ -455,7 +465,7 @@
                                             <td>
                                                 <div class="reporte-stock-producto-wrap">
                                                     <div class="font-weight-semibold reporte-stock-producto-texto" title="@item.Producto">@item.Producto</div>
-                                                    <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                                    <div class="text-muted small" title="Código">[@(item.Codigo > 0 ? item.Codigo.ToString() : "-")]</div>
                                                     @if (stockMultiSucursal)
                                                     {
                                                         <div class="small reporte-stock-sucursal-info">
@@ -1462,9 +1472,10 @@
         border-bottom: 3px solid #6c757d;
     }
 
+    /* Mismo tamano de letra que el resto de las celdas de la fila (antes 1.02rem, desentonaba); se distingue por el peso. */
     #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-valor {
         display: block;
-        font-size: 1.02rem;
+        font-size: inherit;
         font-weight: 800;
     }
 
@@ -1498,6 +1509,78 @@
     #tablaReporteStockActual tbody td.reporte-col-faltante.reporte-faltante-cero .reporte-faltante-etiqueta {
         font-weight: 600;
         opacity: .8;
+    }
+
+    /* Tabla compacta (pedido 2026-10-13): cada fila ocupa UNA sola linea. Producto y codigo van juntos; en Cierre
+       Stock el Faltante junta valor, etiqueta y equivalente en unidades. Menos relleno por celda y columnas mas
+       angostas, para que entren mas filas y columnas sin scroll. */
+    #tablaReporteStockActual tbody td {
+        padding: .16rem .5rem;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    #tablaReporteStockActual thead th {
+        padding: .3rem .5rem;
+    }
+
+    #tablaReporteStockActual th:not(:first-child),
+    #tablaReporteStockActual td:not(:first-child) {
+        width: 13ch;
+        min-width: 13ch;
+        max-width: 13ch;
+    }
+
+    /* Faltante: valor + etiqueta ("Faltó mercadería") + unidades en el mismo renglon, necesita mas ancho. */
+    #tablaReporteStockActual th.reporte-col-faltante,
+    #tablaReporteStockActual td.reporte-col-faltante {
+        width: 32ch;
+        min-width: 32ch;
+        max-width: 32ch;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-valor {
+        display: inline-block;
+        margin-right: .4rem;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-etiqueta {
+        display: inline-block;
+        font-size: .62rem;
+        margin: 0 .4rem 0 0;
+    }
+
+    /* El equivalente en unidades trae la clase d-block (!important): se vuelve en linea solo dentro de esta celda. */
+    #tablaReporteStockActual tbody td.reporte-col-faltante .d-block {
+        display: inline !important;
+        font-size: .62rem;
+    }
+
+    /* Producto y codigo en el mismo renglon: el nombre se recorta con "..." si no entra (el titulo trae el completo). */
+    #tablaReporteStockActual tbody td:first-child .reporte-stock-producto-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        column-gap: .45rem;
+    }
+
+    #tablaReporteStockActual tbody td:first-child .reporte-stock-producto-texto {
+        flex: 0 1 auto;
+        min-width: 0;
+        /* deja lugar al codigo ("[123]") para que no baje de renglon */
+        max-width: calc(100% - 3.2rem);
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #tablaReporteStockActual tbody td:first-child .small {
+        flex: none;
+        font-size: .68rem;
+    }
+
+    /* Con 2+ sucursales la linea de sucursal y fechas va debajo, en su propio renglon. */
+    #tablaReporteStockActual tbody td:first-child .reporte-stock-sucursal-info {
+        flex-basis: 100%;
     }
 
     /* KPI del modal de detalle: mismo codigo de colores que la tabla. */
@@ -2108,6 +2191,7 @@
             sucursalesIds: [@string.Join(",", Model.SucursalesIds)],
             usaCierresPorSucursal: @Model.UsaCierresPorSucursal.ToString().ToLowerInvariant(),
             consultaRealizada: @Model.ConsultaRealizada.ToString().ToLowerInvariant(),
+            exportarStockExcelUrl: "@Url.Action("ExportarStockExcel", "Reportes")",
             tipoReporteActual: "@Model.TipoReporteSeleccionado",
             agrupacionTemporalActual: "@Model.AgrupacionTemporal",
             periodosComparativos: @Html.Raw(periodosComparativosJson),

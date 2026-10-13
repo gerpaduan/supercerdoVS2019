@@ -1609,6 +1609,27 @@
             window.abrirVentanaIndependiente($form.attr("action") + "?" + params.toString(), "reportes");
         });
 
+        // Boton "Exportar a Excel" (reportes de stock): descarga el .xlsx con los filtros que hay en pantalla (mismos
+        // parametros que Buscar) y, si el switch "Mostrar detalles" esta activo, con las columnas de ingresos y egresos
+        // desglosados. Navega directo a la accion (GET): el archivo llega como descarga y la pantalla no se recarga.
+        $("#btnExportarExcelReportes").on("click", function () {
+            var params = new URLSearchParams();
+            $.each($form.serializeArray(), function (_, campo) {
+                if (campo.name !== "buscar" && campo.name !== "popup") {
+                    params.append(campo.name, campo.value);
+                }
+            });
+
+            // Stock Actual siempre reporta "a este momento" (igual que el submit del formulario).
+            if (reportType() === "Stock Actual") {
+                params.set("fechaHasta", nowLocalValue());
+            }
+
+            params.set("detalles", $("#switchMostrarDetallesReporte").is(":checked") ? "true" : "false");
+
+            window.location.href = config.exportarStockExcelUrl + "?" + params.toString();
+        });
+
         syncBranchSelection(null);
         applyReportMode(false);
         applyDetailsMode();

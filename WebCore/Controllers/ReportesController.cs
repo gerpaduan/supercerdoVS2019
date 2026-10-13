@@ -164,6 +164,65 @@ namespace WebCore.Controllers
             return View("~/Views/Reportes/Index.cshtml", model);
         }
 
+        // Exporta a Excel (.xlsx) el reporte de stock que muestra la pantalla (Stock Actual, Cierre Stock o Stock
+        // Retroactivo; mismos parametros que Index mas "detalles" = columnas de ingresos/egresos desglosados).
+        // Mismo permiso que Index (Stock.VerStock), solo lectura. Aplica el filtro de estado en el servidor, porque en
+        // pantalla ese filtro se hace en vivo con JS sobre las filas ya cargadas.
+        [HttpGet]
+        public IActionResult ExportarStockExcel(
+            string tipoReporte = TipoReporteStockActual,
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null,
+            int[] idsSucursales = null,
+            string busquedaProducto = "",
+            string tipoProducto = "",
+            int marcaId = 0,
+            string estadoStock = "Todos",
+            bool detalles = false)
+        {
+            var user = _usuarioActual;
+            string tipo = (tipoReporte ?? "").Trim();
+
+            // Solo los tres reportes que comparten la tabla de stock; el resto no tiene exportacion.
+            if (tipo != TipoReporteStockActual && tipo != TipoReporteCierreStock && tipo != TipoReporteStockRetroactivo)
+                return BadRequest("Este reporte no se puede exportar a Excel.");
+
+            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
+            DateTime hasta = fechaHasta ?? DateTime.Now;
+
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, desde, -1))
+            {
+                ViewBag.Seccion = "Reportes";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            var sucursalesEmpresa = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            var sucursalesElegidas = ResolverSucursalesSeleccionadas(idsSucursales, idSucursal, tipo, user, sucursalesEmpresa);
+            int sucursalSeleccionada = sucursalesElegidas.Count == 1 ? sucursalesElegidas[0] : 0;
+
+            var model = CrearModeloBase(
+                user, tipo, desde, hasta, sucursalSeleccionada, busquedaProducto, tipoProducto, marcaId,
+                "hora", estadoStock, true, sucursalesElegidas, sucursalesEmpresa);
+
+            CargarReporteStockDesdeCierres(model, false);
+
+            // Filtro de estado (OK / BAJO / SIN STOCK / NEGATIVO), igual que el selector de la pantalla.
+            if (!string.IsNullOrWhiteSpace(estadoStock) && !string.Equals(estadoStock.Trim(), "Todos", StringComparison.OrdinalIgnoreCase))
+            {
+                model.FilasStockActual = model.FilasStockActual
+                    .Where(f => string.Equals((f.EstadoStock ?? "").Trim(), estadoStock.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            string sucursalesTexto = string.Join(", ",
+                (model.Sucursales ?? new List<SelectListItem>()).Where(s => s.Selected).Select(s => s.Text));
+
+            byte[] excel = WebCore.Services.ExcelReporteStock.Generar(model, detalles, sucursalesTexto);
+            string nombreArchivo = tipo.Replace(' ', '_') + "_" + DateTime.Now.ToString("yyyyMMdd_HHmm") + ".xlsx";
+            return File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
+        }
+
         [HttpGet]
         public PartialViewResult FiltrosSecundarios(
             string tipoReporte = TipoReporteStockActual,
