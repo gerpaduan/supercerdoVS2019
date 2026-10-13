@@ -3326,14 +3326,21 @@ else
                 abrirFacturaVentaModal(ventaId);
             });
 
-            $(document).on('venta:facturada venta:cerradaSinFacturar', function (e, resp) {
+            // 'factura:actualizada' (editar una factura ya emitida) se escucha igual que 'venta:facturada': antes solo
+            // se reabria el modal por el handler de hidden.bs.modal de abajo, que no sabia nada del resultado.
+            $(document).on('venta:facturada venta:cerradaSinFacturar factura:actualizada', function (e, resp) {
                 facturaOkPOS = true;
                 var ventaId = (resp && (resp.ventaId || resp.idVenta)) || $('#feIdVenta').val();
                 window.mostrarModalPostVenta(ventaId);
             });
 
             $('#modalFacturaElectronica').on('hidden.bs.modal', function () {
-                if (!facturaOkPOS) {
+                // Bug real (2026-10-12): al registrar una factura NUEVA este handler corria antes que el evento
+                // 'venta:facturada' (factura-electronica.js lo dispara tambien en hidden.bs.modal, pero registrado
+                // despues): mostraba el modal CON el aviso "Factura registrada" (y lo consumia) y enseguida el evento
+                // lo volvia a mostrar SIN aviso. Si ya hay un resultado de factura pendiente, el que muestra el modal es
+                // el evento, no este handler (que solo cubre cerrar el modal de factura sin facturar).
+                if (!facturaOkPOS && !window.__pvbFacturaResultado) {
                     window.mostrarModalPostVenta($('#btnPvbImprimir').data('venta-id'));
                 }
             });

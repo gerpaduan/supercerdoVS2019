@@ -12,6 +12,12 @@
 - **Cambio**: `pos-borrador.js` (`alCerrarPestana`) manda el carrito completo con `cierrePestana=true` cuando hay algo sin mandar; `GuardarBorradorRequest.CierrePestana` + `GuardarBorradorPOS` registran el evento `CIERRE_PESTANA` en la misma llamada. `ListarBorradoresPOS` ordena por `Creado` descendente. Detalle en `docs/03-modulos/ventas-y-pos.md`.
 - **Verificado**: JS con sintaxis OK, WebCore compila (0 errores de codigo). Desplegado en la VPS luden el 2026-10-12 junto con la base local (ver `despliegue-y-publicacion.md`); **NO probado en pantalla**: armar un carrito, cerrar la pestana enseguida y ver el ultimo item en "Ver ventas sin guardar".
 
+## 2026-10-12 - POS: al registrar una factura nueva, "Venta completada" ahora muestra el aviso "Factura registrada correctamente"
+
+- **Problema**: el aviso solo aparecia al volver a abrir la factura y registrarla de nuevo (actualizacion): con la factura nueva dos handlers reabrian el modal y el segundo borraba el aviso.
+- **Cambio**: `POS.cshtml`: el handler de cierre del modal de factura no reabre el modal si hay un resultado de factura pendiente, y se escucha tambien `factura:actualizada`. Causa y descartado: `docs/DECISIONS.md` (2026-10-12).
+- **Verificado**: solo por lectura del codigo (el flujo de los dos handlers). **NO probado en el navegador** (el login del fixture local esta roto); PENDIENTE probar: vender, Factura electronica, Registrar -> debe verse el recuadro verde; cerrar el modal de factura con la X -> vuelve el modal sin recuadro.
+
 ## 2026-10-12 - "Cond. IVA" del emisor impresa: Responsable Inscripto / Responsable Monotributo derivado de la condicion real
 
 - **Problema**: en el PDF/ticket de un monotributista "Cond. IVA:" salia vacia y en la empresa RI salia "RRII" (se imprimia un texto libre cargado a mano).

@@ -13,6 +13,14 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-10-12 - POS: tras registrar una factura nueva, "Venta completada" no muestra el aviso de factura
+
+- **Sintoma**: el modal vuelve sin el recuadro "Factura registrada correctamente"; aparecia recien al reabrir la factura y registrarla de nuevo.
+- **Causa**: dos handlers de `hidden.bs.modal` del modal de factura reabrian el modal y el segundo pisaba al primero (ver `docs/DECISIONS.md`, 2026-10-12).
+- **Resolucion**: `WebCore/Views/Ventas/POS.cshtml` (handler de cierre y listener de `factura:actualizada`). Si reaparece, revisar que `window.__pvbFacturaResultado` se setee en `factura-electronica.js` y que solo un camino llame a `mostrarModalPostVenta`.
+
+---
+
 ## 2026-10-12 - POS: un producto con EAN-13 que empieza con 0 no se encuentra ni se agrega al escanearlo
 - **Sintoma**: al escanear un EAN-13 que empieza con 0 el POS no busca solo, no agrega el producto al carrito, o muestra "no coincide".
 - **Causa**: `corte.codigo` es `bigint`: el alta guarda `0123456789012` como `123456789012` (12 digitos). Muchas pistolas (modo UPC-A) y la camara entregan 12 digitos, y la auto-busqueda solo aceptaba 8 o 13 digitos validos; ademas el POS comparaba el codigo del servidor (sin 0) con el del campo (con 0).
