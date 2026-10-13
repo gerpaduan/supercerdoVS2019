@@ -103,6 +103,10 @@ namespace WebCore.Models
         public decimal TotalKg { get; set; }
         public decimal TotalIngresos { get; set; }
         public decimal TotalEgresos { get; set; }
+        // Solo Cierre Stock: el Faltante tiene signo, asi que no se muestra en una sola cifra (los positivos y los
+        // negativos se compensarian). Los dos se guardan en positivo: kg que faltaron / kg vendidos de mas.
+        public decimal TotalFaltoMercaderia { get; set; }
+        public decimal TotalVendidoDeMas { get; set; }
         public int CantidadProductos { get; set; }
         public int CantidadRegistros { get; set; }
     }

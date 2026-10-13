@@ -220,13 +220,32 @@
     }
     else
     {
-        <div class="reportes-totales-grid mb-3 d-none">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">@(esReporteVentasProducto ? "Total kg periodos visibles" : esReporteProyeccion ? "Stock actual visible" : "Total kg visibles")</div>
-                    <div class="h4 mb-0 font-weight-bold" id="totalKgReporte">@Model.Totales.TotalKg.ToString("N3")</div>
+        <div class="reportes-totales-grid @(esCierreStock ? "reportes-totales-grid-cierre" : "") mb-3 d-none">
+            @if (esCierreStock)
+            {
+                @* Cierre Stock: el Faltante tiene signo; sumarlo en una sola cifra compensaria lo que faltó con lo vendido de más. *@
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Faltó mercadería (kg visibles)</div>
+                        <div class="h4 mb-0 font-weight-bold reporte-faltante-pos" id="totalFaltoReporte">@Model.Totales.TotalFaltoMercaderia.ToString("N3")</div>
+                    </div>
                 </div>
-            </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Vendido de más (kg visibles)</div>
+                        <div class="h4 mb-0 font-weight-bold reporte-faltante-neg" id="totalVendidoDeMasReporte">@Model.Totales.TotalVendidoDeMas.ToString("N3")</div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">@(esReporteVentasProducto ? "Total kg periodos visibles" : esReporteProyeccion ? "Stock actual visible" : "Total kg visibles")</div>
+                        <div class="h4 mb-0 font-weight-bold" id="totalKgReporte">@Model.Totales.TotalKg.ToString("N3")</div>
+                    </div>
+                </div>
+            }
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="text-muted small">@(esReporteVentasProducto ? "Total pesos periodos visibles" : esReporteProyeccion ? "Ventas periodos visibles" : "Total ingresos visibles")</div>
@@ -301,11 +320,21 @@
                 {
                     <div class="reportes-floating-zone" id="reportesFloatingZone">
                         <div class="reportes-sticky-stack js-sync-scroll-anchor" id="reportesStickyStack">
-                            <div class="border-bottom px-3 py-2 bg-light reportes-detalle-toolbar">
+                            <div class="border-bottom px-3 py-2 bg-light reportes-detalle-toolbar @(esCierreStock ? "reportes-detalle-toolbar-cierre" : "")">
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox" class="custom-control-input" id="switchMostrarDetallesReporte" />
                                     <label class="custom-control-label" for="switchMostrarDetallesReporte">Mostrar detalles</label>
                                 </div>
+                                @if (esCierreStock)
+                                {
+                                    @* Leyenda de la columna Faltante: el color nunca va solo, siempre con icono y texto. *@
+                                    <div class="reporte-faltante-leyenda">
+                                        <span class="reporte-faltante-leyenda-titulo">Faltante:</span>
+                                        <span class="reporte-faltante-chip reporte-faltante-pos"><i class="fas fa-arrow-up"></i> Positivo: faltó mercadería</span>
+                                        <span class="reporte-faltante-chip reporte-faltante-neg"><i class="fas fa-arrow-down"></i> Negativo: se vendió de más</span>
+                                        <span class="reporte-faltante-chip reporte-faltante-cero"><i class="fas fa-check"></i> 0: coincide con el cierre</span>
+                                    </div>
+                                }
                             </div>
                         </div>
                         <div class="table-responsive js-sync-scroll-body reportes-scroll-y">
@@ -334,8 +363,16 @@
                                             <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-sortable-col" data-sort-key="stockinicial" data-sort-type="number">St. inicial</th>
                                             <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="totalingresos" data-sort-type="number">Total Ingresos</th>
                                             <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="totalegresos" data-sort-type="number">Total Egresos</th>
-                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="stockcierre" data-sort-type="number">Stock Cierre</th>
-                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="stockactual" data-sort-type="number">Faltante</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col reporte-col-stockcierre" data-sort-key="stockcierre" data-sort-type="number"
+                                                title="Stock registrado en el cierre de stock (fecha hasta).">
+                                                Stock Cierre
+                                                <span class="reporte-th-sub">al cierre</span>
+                                            </th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col reporte-col-faltante" data-sort-key="stockactual" data-sort-type="number"
+                                                title="Stock que debería haber (inicial + ingresos − egresos) menos el Stock Cierre. Positivo: faltó mercadería. Negativo: se vendió de más. 0: coincide.">
+                                                Faltante
+                                                <span class="reporte-th-sub">+ faltó · − vendido de más</span>
+                                            </th>
                                         }
                                         else
                                         {
@@ -425,9 +462,22 @@
                                                 <td class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial">@item.StockInicial.ToString("N3")</td>
                                                 <td class="text-right reporte-stock-resumen-col">@item.TotalIngresos.ToString("N3")</td>
                                                 <td class="text-right reporte-stock-resumen-col">@item.TotalEgresos.ToString("N3")</td>
-                                                <td class="text-right reporte-stock-resumen-col font-weight-bold">@item.StockCierre.ToString("N3")</td>
-                                                <td class="text-right reporte-stock-resumen-col">
-                                                    @item.StockActual.ToString("N3")
+                                                <td class="text-right reporte-stock-resumen-col font-weight-bold reporte-col-stockcierre">@item.StockCierre.ToString("N3")</td>
+                                                // Faltante = stock teorico - Stock Cierre (CierreStockWeb). Se clasifica sobre el valor ya
+                                                // redondeado a 3 decimales (los que se muestran) para que "0,000" nunca salga como falta.
+                                                var faltanteRedondeado = Math.Round(item.StockActual, 3);
+                                                var claseFaltante = faltanteRedondeado > 0 ? "reporte-faltante-pos"
+                                                    : faltanteRedondeado < 0 ? "reporte-faltante-neg"
+                                                    : "reporte-faltante-cero";
+                                                var iconoFaltante = faltanteRedondeado > 0 ? "fa-arrow-up"
+                                                    : faltanteRedondeado < 0 ? "fa-arrow-down"
+                                                    : "fa-check";
+                                                var textoFaltante = faltanteRedondeado > 0 ? "Faltó mercadería"
+                                                    : faltanteRedondeado < 0 ? "Vendido de más"
+                                                    : "Coincide";
+                                                <td class="text-right reporte-stock-resumen-col reporte-col-faltante @claseFaltante">
+                                                    <span class="reporte-faltante-valor">@item.StockActual.ToString("+#,##0.000;-#,##0.000;0.000")</span>
+                                                    <span class="reporte-faltante-etiqueta"><i class="fas @iconoFaltante"></i> @textoFaltante</span>
                                                     @if (equivalenteUnidadesStock != null)
                                                     {
                                                         <span class="text-muted small d-block">@equivalenteUnidadesStock</span>
@@ -941,13 +991,15 @@
                                     <span class="text-muted small d-block">St. inicial</span>
                                     <strong id="modalDetalleStockReporteStockInicial">0,000</strong>
                                 </div>
-                                <div class="reporte-stock-modal-kpi">
+                                @* La banda azul (.reporte-col-stockcierre) la agrega reportes.js solo en Cierre Stock. *@
+                                <div class="reporte-stock-modal-kpi" id="modalDetalleStockReporteStockCierreKpi">
                                     <span class="text-muted small d-block">Stock Cierre</span>
                                     <strong id="modalDetalleStockReporteStockCierre">0,000</strong>
                                 </div>
-                                <div class="reporte-stock-modal-kpi">
+                                <div class="reporte-stock-modal-kpi" id="modalDetalleStockReporteFaltanteKpi">
                                     <span class="text-muted small d-block">Faltante</span>
                                     <strong id="modalDetalleStockReporteStockActual">0,000</strong>
+                                    <span class="reporte-faltante-etiqueta" id="modalDetalleStockReporteFaltanteEtiqueta"></span>
                                 </div>
                                 <div class="reporte-stock-modal-kpi">
                                     <span class="text-muted small d-block">Punto stock</span>
@@ -976,10 +1028,14 @@
 
                             <div class="reporte-stock-modal-card reporte-stock-modal-card-egresos">
                                 <div class="reporte-stock-modal-card-title">Egresos</div>
+                                @* Mismo orden que "Solo ingresos" (Compra|Ventas, Elaborado, Stock, Movimiento) para que cada renglón
+                                   quede enfrentado a su par. Ajustes solo existe en ingresos: acá va un renglón vacío del mismo alto,
+                                   así "Tot. ingresos" y "Tot. egresos" quedan a la misma altura. *@
+                                <div class="reporte-stock-modal-line"><span>Ventas</span><strong id="modalDetalleStockReporteVentas">0,000</strong></div>
+                                <div class="reporte-stock-modal-line"><span>Elaborado</span><strong id="modalDetalleStockReporteEgresoElaborado">0,000</strong></div>
                                 <div class="reporte-stock-modal-line"><span>Stock</span><strong id="modalDetalleStockReporteEgresoStock">0,000</strong></div>
                                 <div class="reporte-stock-modal-line"><span>Movimiento</span><strong id="modalDetalleStockReporteEgresoMovimiento">0,000</strong></div>
-                                <div class="reporte-stock-modal-line"><span>Elaborado</span><strong id="modalDetalleStockReporteEgresoElaborado">0,000</strong></div>
-                                <div class="reporte-stock-modal-line"><span>Ventas</span><strong id="modalDetalleStockReporteVentas">0,000</strong></div>
+                                <div class="reporte-stock-modal-line reporte-stock-modal-line-vacia" aria-hidden="true"><span>&nbsp;</span><strong>&nbsp;</strong></div>
                                 <div class="reporte-stock-modal-line reporte-stock-modal-line-total"><span>Tot. egresos</span><strong id="modalDetalleStockReporteTotalEgresos">0,000</strong></div>
                             </div>
                         </div>
@@ -1301,6 +1357,143 @@
         font-size: 0.72rem !important;
         line-height: 1.1;
     }
+
+    /* Cierre Stock: "Stock Cierre" (azul, lo registrado al cierre) y "Faltante" (rojo / ambar / verde segun el signo)
+       se distinguen del resto de columnas. Los tintes van en background-image (capa translucida) para que
+       convivan con el color alternado por producto y con el hover de la fila, que usan background-color. */
+    .reportes-detalle-toolbar-cierre {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .4rem 1.25rem;
+    }
+
+    .reporte-faltante-leyenda {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .3rem .5rem;
+        font-size: .78rem;
+    }
+
+    .reporte-faltante-leyenda-titulo {
+        font-weight: 700;
+    }
+
+    .reporte-faltante-chip,
+    .reporte-faltante-etiqueta {
+        display: inline-block;
+        border-radius: .75rem;
+        padding: .05rem .5rem;
+        font-size: .7rem;
+        font-weight: 700;
+        line-height: 1.35;
+        white-space: nowrap;
+    }
+
+    .reporte-faltante-etiqueta {
+        display: block;
+        width: fit-content;
+        margin: .15rem 0 0 auto;
+    }
+
+    .reporte-th-sub {
+        display: block;
+        font-size: .62rem;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0;
+        opacity: .85;
+    }
+
+    .reporte-faltante-pos { color: #a61e2d; }
+    .reporte-faltante-neg { color: #8a5300; }
+    .reporte-faltante-cero { color: #1e6b3a; }
+
+    /* El fondo solo lo llevan los chips de la leyenda; en celdas y KPI se pinta aparte. */
+    .reporte-faltante-chip.reporte-faltante-pos { background-color: rgba(220, 53, 69, .14); }
+    .reporte-faltante-chip.reporte-faltante-neg { background-color: rgba(255, 153, 0, .22); }
+    .reporte-faltante-chip.reporte-faltante-cero { background-color: rgba(40, 167, 69, .14); }
+
+    .reporte-stock-modal-kpi .reporte-faltante-etiqueta {
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    #tablaReporteStockActual thead th.reporte-col-stockcierre,
+    #tablaReporteStockActual tbody td.reporte-col-stockcierre {
+        background-image: linear-gradient(rgba(45, 91, 143, .13), rgba(45, 91, 143, .13));
+        box-shadow: inset 3px 0 0 #2d5b8f;
+        color: #1d4670;
+    }
+
+    #tablaReporteStockActual thead th.reporte-col-faltante {
+        border-bottom: 3px solid #6c757d;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-valor {
+        display: block;
+        font-size: 1.02rem;
+        font-weight: 800;
+    }
+
+    /* En la celda el fondo lo da la celda entera; la etiqueta queda solo como texto + icono. */
+    #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-etiqueta {
+        background-color: transparent;
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante.reporte-faltante-pos {
+        background-image: linear-gradient(rgba(220, 53, 69, .16), rgba(220, 53, 69, .16));
+        box-shadow: inset 3px 0 0 #dc3545;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante.reporte-faltante-neg {
+        background-image: linear-gradient(rgba(255, 153, 0, .24), rgba(255, 153, 0, .24));
+        box-shadow: inset 3px 0 0 #e68a00;
+    }
+
+    /* "Coincide" (0) es el caso normal: se atenua para que resalten las filas con faltante o venta de mas. */
+    #tablaReporteStockActual tbody td.reporte-col-faltante.reporte-faltante-cero {
+        background-image: linear-gradient(rgba(40, 167, 69, .06), rgba(40, 167, 69, .06));
+        box-shadow: inset 3px 0 0 rgba(40, 167, 69, .45);
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante.reporte-faltante-cero .reporte-faltante-valor {
+        font-weight: 500;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante.reporte-faltante-cero .reporte-faltante-etiqueta {
+        font-weight: 600;
+        opacity: .8;
+    }
+
+    /* KPI del modal de detalle: mismo codigo de colores que la tabla. */
+    .reporte-stock-modal-kpi.reporte-col-stockcierre { border-left: 4px solid #2d5b8f; }
+    .reporte-stock-modal-kpi.reporte-faltante-pos { border-left: 4px solid #dc3545; background-color: rgba(220, 53, 69, .08); }
+    .reporte-stock-modal-kpi.reporte-faltante-neg { border-left: 4px solid #e68a00; background-color: rgba(255, 153, 0, .12); }
+    .reporte-stock-modal-kpi.reporte-faltante-cero { border-left: 4px solid #28a745; background-color: rgba(40, 167, 69, .08); }
+    .reporte-stock-modal-kpi.reporte-faltante-pos strong { color: #a61e2d; }
+    .reporte-stock-modal-kpi.reporte-faltante-neg strong { color: #8a5300; }
+    .reporte-stock-modal-kpi.reporte-faltante-cero strong { color: #1e6b3a; }
+
+    /* Tarjetas de totales de Cierre Stock: ui-refresh.css fija el color de ".font-weight-bold" con !important
+       ("body.app-shell .font-weight-bold"), así que acá hace falta !important para que se vea el rojo / ámbar. */
+    .reportes-totales-grid .h4.reporte-faltante-pos { color: #a61e2d !important; }
+    .reportes-totales-grid .h4.reporte-faltante-neg { color: #8a5300 !important; }
+
+    html.dark-mode .reportes-totales-grid .h4.reporte-faltante-pos { color: #ff9aa5 !important; }
+    html.dark-mode .reportes-totales-grid .h4.reporte-faltante-neg { color: #ffc266 !important; }
+
+    html.dark-mode .reporte-faltante-pos { color: #ff9aa5; }
+    html.dark-mode .reporte-faltante-neg { color: #ffc266; }
+    html.dark-mode .reporte-faltante-cero { color: #7fe0a0; }
+    html.dark-mode #tablaReporteStockActual thead th.reporte-col-stockcierre,
+    html.dark-mode #tablaReporteStockActual tbody td.reporte-col-stockcierre { color: #9cc4f0; }
+    html.dark-mode .reporte-stock-modal-kpi.reporte-faltante-pos strong { color: #ff9aa5; }
+    html.dark-mode .reporte-stock-modal-kpi.reporte-faltante-neg strong { color: #ffc266; }
+    html.dark-mode .reporte-stock-modal-kpi.reporte-faltante-cero strong { color: #7fe0a0; }
 
     #tablaReporteStockActual.reportes-stock-detalles-activos .reporte-stock-resumen-inicial {
         display: none;
@@ -1667,6 +1860,11 @@
         border-bottom: 0;
     }
 
+    /* Renglón de relleno de "Egresos" (ocupa el lugar de Ajustes): conserva el alto pero no se ve. */
+    .reporte-stock-modal-line-vacia {
+        visibility: hidden;
+    }
+
     .reporte-stock-modal-line-total strong {
         font-size: 1.02rem;
     }
@@ -1746,6 +1944,11 @@
 
         .reportes-totales-grid {
             grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        /* Cierre Stock tiene una tarjeta más (Faltó / Vendido de más en vez de un solo "Total kg"). */
+        .reportes-totales-grid.reportes-totales-grid-cierre {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
         }
 
         .reportes-filtros-card .form-control,
@@ -1844,6 +2047,11 @@
         .reporte-stock-modal-grid {
             grid-template-columns: 1fr;
             display: grid;
+        }
+
+        /* Con las tarjetas apiladas ya no hay nada que alinear: el renglón de relleno sobra. */
+        .reporte-stock-modal-line-vacia {
+            display: none;
         }
 
         .reporte-stock-modal-badges {

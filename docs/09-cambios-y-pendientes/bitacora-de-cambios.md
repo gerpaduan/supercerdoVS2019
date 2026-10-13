@@ -1,6 +1,14 @@
 # Bitacora de cambios
 
-## 2026-10-13 (la mas reciente) - Reportes: selector de sucursales con casillas (1, varias o todas); los de stock calculan cada sucursal con sus cierres
+## 2026-10-13 (la mas reciente) - Reportes / Cierre Stock: Stock Cierre y Faltante se distinguen a simple vista; Estado y totales corregidos; modal de detalle alineado
+
+- **Pedido**: mejorar la visión del usuario en las columnas *Stock Cierre* y *Faltante* (positivo = faltó mercadería, negativo = se vendió de más); luego corregir lo propuesto (Estado y totales) y alinear *Tot. ingresos* con *Tot. egresos* en el modal de detalle.
+- **Cambio** (solo WebCore, solo Cierre Stock salvo el modal): leyenda sobre la tabla; *Stock Cierre* con banda azul; *Faltante* con signo y color/ícono/texto; *Estado* calculado contra el Stock Cierre; tarjetas *Faltó mercadería* / *Vendido de más* en lugar del total neteado; en el modal, Egresos en el mismo orden que Ingresos y un renglón vacío en lugar de Ajustes. Stock Actual y Retroactivo no cambian (el modal sí cambia de orden en los tres).
+- **Verificado** (instancia propia, login real, base local): compila sin errores; con 1 y con 2 sucursales (50 filas, con casos reales de Faltante positivo, negativo y cero) las tarjetas Faltó / Vendido de más coinciden con la suma de las filas y se recalculan al filtrar por estado; el Estado coincide con Stock Cierre vs Punto stock; en Stock Actual el Estado sigue igual al cálculo con el stock disponible (0 filas distintas de 55); en el modal los renglones de Ingresos y Egresos quedan en la misma posición y alto (medido); tabla en modo claro y oscuro; sin errores de consola. **NO desplegado.**
+- **Sin re-verificar en el navegador** (la sesión de login venció al final): la banda azul del KPI *Stock Cierre* del modal solo en Cierre Stock (cambio mínimo, cubierto por lectura de código) y el color de las tarjetas de totales en modo oscuro.
+- Decisión y alternativas descartadas: `docs/DECISIONS.md` (2026-10-13, Reportes / Cierre Stock).
+
+## 2026-10-13 - Reportes: selector de sucursales con casillas (1, varias o todas); los de stock calculan cada sucursal con sus cierres
 
 - **Pedido**: replicar en `/Reportes` lo hecho en Existencia por sucursales (antes: una sucursal o "Todas"), sin romper lo que funciona.
 - **Cambio**: dropdown de casillas en los 6 reportes. Ventas por Producto, Proyección y Balance suman las sucursales tildadas (Proyección: una columna por sucursal). Stock Actual / Cierre Stock / Stock Retroactivo con 2+ sucursales: cada una con SUS cierres, una fila por producto y sucursal agrupadas por producto (color alternado + línea de corte), fechas automáticas con aviso; sucursales sin cierres se omiten avisando. Con 1 sucursal todo queda como antes. Enlaces viejos `?idSucursal=N` siguen andando.

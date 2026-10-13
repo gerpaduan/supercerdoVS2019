@@ -1,3 +1,18 @@
+## 2026-10-13 - Reportes / Cierre Stock: cómo se muestran Stock Cierre y Faltante; "Estado" y los totales dejan de usar el Faltante como si fuera stock
+
+- **Problema:** en Cierre Stock, *Stock Cierre* y *Faltante* se leían igual que el resto de las columnas. *Faltante* = (stock inicial + ingresos − egresos) − Stock Cierre (SQL de `CortePg`, alias `"Faltante"`), una **diferencia con signo**: positivo = faltó mercadería, negativo = se vendió de más. Pero el controlador lo guardaba en `StockActual` y lo trataba como un nivel de stock en dos lugares: la columna *Estado* (`CalcularEstadoStock(stockActual, puntoStock)` daba "BAJO" con Faltante 0 y "NEGATIVO" para lo vendido de más) y la tarjeta *Total kg visibles* (sumaba positivos y negativos: se compensaban).
+- **Decidido (solo Cierre Stock; Stock Actual y Retroactivo no cambian):**
+  - *Faltante* con signo explícito y color + ícono + texto (rojo ↑ "Faltó mercadería", ámbar ↓ "Vendido de más", verde atenuado ✓ "Coincide"), leyenda sobre la tabla y la misma convención en el modal de detalle. *Stock Cierre* con banda azul. El color nunca va solo (accesibilidad). La clasificación usa el valor **redondeado a 3 decimales** (los que se ven), igual en servidor, tabla y `reportes.js`.
+  - *Estado* se calcula con el **Stock Cierre** (parámetro `estadoSegunStockCierre` de `AgregarFilasStockSucursal`), no con el Faltante. Motivo: es el stock real al cierre y está en la misma fila, así que el usuario puede verificar el estado a ojo contra *Punto stock*.
+  - *Totales*: en vez de "Total kg visibles" hay **Faltó mercadería** y **Vendido de más** (`Totales.TotalFaltoMercaderia` / `TotalVendidoDeMas`, ambos en positivo), recalculados en vivo por `reportes.js` con las filas visibles.
+  - Modal de detalle: *Egresos* sigue el orden de *Solo ingresos* (Ventas↔Compra, Elaborado, Stock, Movimiento) y un renglón vacío ocupa el lugar de *Ajustes*, para que los dos totales queden a la misma altura (en pantallas < 768 px el renglón vacío se oculta).
+- **Alternativas descartadas:**
+  - *Estado según el stock teórico* (Faltante + Stock Cierre): es lo que usa la bandera `Falta` del SQL original, pero ese número no aparece en la tabla, así que el usuario no podría comprobarlo. Si se prefiere, el cambio es una línea en `AgregarFilasStockSucursal`.
+  - *Ocultar la columna Estado* en Cierre Stock: deja sin sentido el filtro en vivo *Estado stock*.
+  - *Dejar un solo "Total kg"* con signo: oculta justo lo que se quiere ver (faltantes y ventas de más se compensan).
+- **Supuesto sin verificar con datos reales:** el caso Faltante negativo (vendido de más) no existe en la base de prueba; se comprobó forzándolo en el navegador.
+- **Archivos:** `WebCore/Controllers/ReportesController.cs`, `WebCore/Models/ReportesViewModel.cs`, `WebCore/Views/Reportes/Index.cshtml`, `WebCore/wwwroot/Scripts/app/reportes.js`, `docs/11-manual-de-uso/pantallas/Reportes.Index.md`.
+
 ## 2026-10-13 - Stock: no se optimiza el cálculo desde el último cierre (medido: no vale el riesgo); qué se evaluó y cuándo reabrirlo
 
 - **Pregunta:** si una sucursal no cierra seguido, el stock actual suma todos los movimientos desde su último "Cierre Stock" (base 1900-01-01 si no tiene ninguno). ¿Conviene acotar ese costo?

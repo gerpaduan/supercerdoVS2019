@@ -676,6 +676,8 @@ namespace WebCore.Controllers
                 .GroupBy(x => x.IdCorte)
                 .ToDictionary(g => g.Key, g => g.First());
 
+            bool esCierreStock = string.Equals(model.TipoReporteSeleccionado, TipoReporteCierreStock, StringComparison.OrdinalIgnoreCase);
+
             if (!model.UsaCierresPorSucursal)
             {
                 // Una sola sucursal: lo de siempre, con las fechas elegidas en pantalla (desde/hasta de ESA sucursal).
@@ -686,7 +688,8 @@ namespace WebCore.Controllers
                     model.FechaDesde,
                     model.FechaHasta,
                     cortes,
-                    true);
+                    true,
+                    esCierreStock);
             }
             else
             {
@@ -695,7 +698,6 @@ namespace WebCore.Controllers
                 //  - Cierre Stock:       anteultimo -> ultimo cierre de la sucursal.
                 //  - Stock Actual:       ultimo cierre -> ahora.
                 //  - Stock Retroactivo:  ultimo cierre -> la fecha "hasta" elegida.
-                bool esCierreStock = string.Equals(model.TipoReporteSeleccionado, TipoReporteCierreStock, StringComparison.OrdinalIgnoreCase);
                 bool esStockActual = string.Equals(model.TipoReporteSeleccionado, TipoReporteStockActual, StringComparison.OrdinalIgnoreCase);
                 var nombresSucursal = model.Sucursales
                     .Where(x => x.Value != "0")
@@ -724,7 +726,7 @@ namespace WebCore.Controllers
                         : (esStockActual ? DateTime.Now : model.FechaHasta);
 
                     // El "Stock Cierre" (segunda consulta) solo se muestra en Cierre Stock: en los otros no se pide.
-                    AgregarFilasStockSucursal(model, idSucursal, idSucursal, desdeSucursal, hastaSucursal, cortes, esCierreStock);
+                    AgregarFilasStockSucursal(model, idSucursal, idSucursal, desdeSucursal, hastaSucursal, cortes, esCierreStock, esCierreStock);
                 }
             }
 
@@ -751,6 +753,14 @@ namespace WebCore.Controllers
             model.Totales.TotalKg = model.FilasStockActual.Sum(x => x.StockActual);
             model.Totales.TotalIngresos = model.FilasStockActual.Sum(x => x.TotalIngresos);
             model.Totales.TotalEgresos = model.FilasStockActual.Sum(x => x.TotalEgresos);
+            // Cierre Stock: el Faltante va con signo, asi que se separa en "falto" (positivo) y "vendido de mas" (negativo).
+            // Se clasifica con el valor redondeado a 3 decimales, igual que la tabla y reportes.js.
+            model.Totales.TotalFaltoMercaderia = model.FilasStockActual
+                .Where(x => Math.Round(x.StockActual, 3) > 0)
+                .Sum(x => x.StockActual);
+            model.Totales.TotalVendidoDeMas = -model.FilasStockActual
+                .Where(x => Math.Round(x.StockActual, 3) < 0)
+                .Sum(x => x.StockActual);
             model.Totales.CantidadProductos = model.FilasStockActual.Select(x => x.IdCorte).Distinct().Count();
             model.Totales.CantidadRegistros = model.FilasStockActual.Count;
             model.Mensaje = model.UsaCierresPorSucursal
@@ -763,6 +773,7 @@ namespace WebCore.Controllers
         // model.FilasStockActual. idSucursalConsulta: 0 = todas (solo el caso de siempre sin sucursales);
         // idSucursalFila: el id que se guarda en cada fila. traerStockCierre: segunda consulta (hasta..hasta) que
         // alimenta la columna "Stock Cierre"; en el caso de una sola sucursal se pide siempre, como siempre.
+        // estadoSegunStockCierre: true solo en Cierre Stock (ver el comentario donde se calcula el estado).
         private void AgregarFilasStockSucursal(
             ReportesViewModel model,
             int idSucursalConsulta,
@@ -770,7 +781,8 @@ namespace WebCore.Controllers
             DateTime desde,
             DateTime hasta,
             Dictionary<int, Entidades.Corte> cortes,
-            bool traerStockCierre)
+            bool traerStockCierre,
+            bool estadoSegunStockCierre)
         {
             var dt = _oCorteN.CierreStockWeb(
                 "",
@@ -822,7 +834,6 @@ namespace WebCore.Controllers
 
                 decimal stockActual = LeerDecimal(row, "Faltante");
                 decimal puntoStock = LeerDecimal(row, "Pto.Stock");
-                string estado = CalcularEstadoStock(stockActual, puntoStock);
 
                 long codigo = LeerLong(row, "Codigo");
                 decimal stockCierre = tieneColumnaStockCierre
@@ -833,6 +844,12 @@ namespace WebCore.Controllers
                 {
                     stockCierre = sc;
                 }
+
+                // En Stock Actual / Retroactivo "stockActual" es el stock disponible y el estado lo compara con el punto de
+                // stock. En Cierre Stock esa misma columna es el Faltante (stock teorico - Stock Cierre): una diferencia con
+                // signo, no un nivel de stock, y daba "BAJO" o "NEGATIVO" sin sentido. Ahi el estado mira el Stock Cierre
+                // (el stock real al cierre, visible en la misma fila). Decision: docs/DECISIONS.md (2026-10-13, Cierre Stock).
+                string estado = CalcularEstadoStock(estadoSegunStockCierre ? stockCierre : stockActual, puntoStock);
 
                 model.FilasStockActual.Add(new ReporteStockFilaVm
                 {

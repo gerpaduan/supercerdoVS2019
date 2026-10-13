@@ -13,6 +13,14 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-10-13 - San Lorenzo: guardar un ingreso de stock dice "No se pudo resolver la persona para este movimiento"
+
+- **Sintoma**: al guardar un movimiento de stock nuevo (ej. ingreso) en San Lorenzo, el formulario vuelve con ese error.
+- **Causa**: `Parametros.idIndefinido` (`idParametro = 44`) existia pero no tenia fila en `dbo.EmpresaParametros` para la empresa 1; `StockController.Guardar` usa esa persona como proveedor por defecto (`StockController.cs`, `ResolverProveedor`) y sin valor no resuelve ninguna. La persona "Indefinido" existe (`idPersona = 3`). En Servidor SM el parametro si esta cargado (`valor = 4`).
+- **Fix** (aplicado a mano en la base de San Lorenzo, 2026-10-13): `INSERT INTO dbo.EmpresaParametros (idEmpresa, idParametro, valor) VALUES (1, 44, '3');`. Revertir: `DELETE` de esa fila. No requiere redeploy. Al desplegar WebCore en una base nueva, verificar que `idIndefinido` tenga valor.
+
+---
+
 ## 2026-10-12 - POS: tras registrar una factura nueva, "Venta completada" no muestra el aviso de factura
 
 - **Sintoma**: el modal vuelve sin el recuadro "Factura registrada correctamente"; aparecia recien al reabrir la factura y registrarla de nuevo.

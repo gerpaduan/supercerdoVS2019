@@ -34,6 +34,18 @@ Consultar **stock, ventas y balance** de una, varias o todas las sucursales. Se 
   - Una sucursal **sin cierres de stock** no aparece y un aviso lo dice.
   - Con **una sola** sucursal tildada las fechas se eligen a mano, como siempre.
 
+## Leer Stock Cierre y Faltante (reporte Cierre Stock)
+- **Stock Cierre** (columna con banda azul): el stock registrado en el cierre de stock de la fecha *hasta*.
+- **Faltante** = (stock inicial + ingresos − egresos) − Stock Cierre. Se muestra siempre con signo y con color, icono y texto (el color nunca va solo):
+  - **Positivo, rojo, ↑ "Faltó mercadería"**: había que tener más de lo que se registró al cierre.
+  - **Negativo, ámbar, ↓ "Vendido de más"**: se registró más stock al cierre del que correspondía.
+  - **0, verde tenue, ✓ "Coincide"**: el cierre coincide con lo calculado.
+- Arriba de la tabla hay una **leyenda** con los tres casos. Al tocar el encabezado *Faltante* la tabla se ordena por ese valor: un toque de menor a mayor (primero los "vendido de más"), otro toque lo invierte (primero los que más faltaron).
+- **Estado**: en *Cierre Stock* compara el **Stock Cierre** (el de la misma fila) con el *Punto stock*: *NEGATIVO* si es negativo; *BAJO* si hay punto de stock y el Stock Cierre es menor o igual; *SIN STOCK* si es 0; *OK* en el resto. En *Stock Actual* y *Retroactivo* compara el stock disponible, como siempre. El filtro en vivo *Estado stock* usa esa misma regla.
+- **Totales** (switch *Mostrar totales*): en *Cierre Stock* hay dos tarjetas, **Faltó mercadería** (suma de los Faltantes positivos) y **Vendido de más** (suma de los negativos, en positivo). No se muestra una sola cifra porque lo que faltó y lo vendido de más se compensarían. Ambas se recalculan con las filas visibles.
+- El **detalle de producto** (doble clic en la fila) usa el mismo código de colores en *Stock Cierre* y *Faltante*. En *Stock Actual* y *Stock Retroactivo* no hay colores: allí el mismo dato es el stock disponible, no un faltante.
+- En ese detalle, *Solo ingresos* y *Egresos* quedan enfrentados renglón a renglón: **Compra | Ventas**, **Elaborado | Elaborado**, **Stock | Stock**, **Movimiento | Movimiento** y **Ajustes** solo del lado de ingresos (del otro hay un renglón vacío), así *Tot. ingresos* y *Tot. egresos* quedan a la misma altura. En el celular las tarjetas van una debajo de la otra y el renglón vacío no se muestra.
+
 ## Filtros en vivo
 Producto, tipo, marca y estado de stock se aplican sobre lo ya cargado, sin volver a consultar. Los totales se recalculan con las filas visibles.
 

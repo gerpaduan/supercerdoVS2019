@@ -593,6 +593,8 @@
             }
 
             var totalKg = 0;
+            var totalFalto = 0;
+            var totalVendidoDeMas = 0;
             var totalIngresos = 0;
             var totalEgresos = 0;
             var productos = {};
@@ -606,12 +608,24 @@
 
                 registros += 1;
                 productos[$row.attr("data-idcorte")] = true;
-                totalKg += toNumber($row.attr("data-stockactual"));
+                var stockActualFila = toNumber($row.attr("data-stockactual"));
+                totalKg += stockActualFila;
+                // Cierre Stock: el Faltante va con signo, asi que se separa en "falto" (positivo) y "vendido de mas"
+                // (negativo) en lugar de netearlos. Mismo redondeo a 3 decimales que usa el servidor y la tabla.
+                var faltanteFila = Math.round(stockActualFila * 1000) / 1000;
+                if (faltanteFila > 0) {
+                    totalFalto += faltanteFila;
+                } else if (faltanteFila < 0) {
+                    totalVendidoDeMas -= faltanteFila;
+                }
                 totalIngresos += toNumber($row.attr("data-totalingresos"));
                 totalEgresos += toNumber($row.attr("data-totalegresos"));
             });
 
+            // Cada tarjeta existe solo en su tipo de reporte (Cierre Stock vs el resto); jQuery ignora la que falta.
             $("#totalKgReporte").text(formatNumber(totalKg, 3));
+            $("#totalFaltoReporte").text(formatNumber(totalFalto, 3));
+            $("#totalVendidoDeMasReporte").text(formatNumber(totalVendidoDeMas, 3));
             $("#totalIngresosReporte").text(formatNumber(totalIngresos, 3));
             $("#totalEgresosReporte").text(formatNumber(totalEgresos, 3));
             $("#cantidadProductosReporte").text(Object.keys(productos).length);
@@ -1017,7 +1031,22 @@
 
             $("#modalDetalleStockReporteProducto").text($row.attr("data-producto") || "-");
             $("#modalDetalleStockReporteCodigo").text("Codigo: " + ($row.attr("data-codigo") || "-"));
-            $("#modalDetalleStockReporteStockActual").text(formatNumber($row.attr("data-stockactual"), 3));
+            // Faltante firmado y con el mismo codigo de colores de la tabla. Solo en Cierre Stock: en Stock Actual /
+            // Retroactivo el mismo dato es el stock disponible y un valor positivo NO significa que falto mercaderia.
+            var esCierreStock = $tablaStock.find("thead .reporte-col-faltante").length > 0;
+            var faltante = Math.round(toNumber($row.attr("data-stockactual")) * 1000) / 1000;
+            var $faltanteKpi = $("#modalDetalleStockReporteFaltanteKpi");
+            $faltanteKpi.removeClass("reporte-faltante-pos reporte-faltante-neg reporte-faltante-cero");
+            $("#modalDetalleStockReporteStockCierreKpi").toggleClass("reporte-col-stockcierre", esCierreStock);
+            if (esCierreStock) {
+                $("#modalDetalleStockReporteStockActual").text(formatSignedNumber(faltante, 3));
+                $faltanteKpi.addClass(faltante > 0 ? "reporte-faltante-pos" : faltante < 0 ? "reporte-faltante-neg" : "reporte-faltante-cero");
+                $("#modalDetalleStockReporteFaltanteEtiqueta")
+                    .text(faltante > 0 ? "Faltó mercadería" : faltante < 0 ? "Vendido de más" : "Coincide con el cierre");
+            } else {
+                $("#modalDetalleStockReporteStockActual").text(formatNumber(faltante, 3));
+                $("#modalDetalleStockReporteFaltanteEtiqueta").text("");
+            }
             $("#modalDetalleStockReportePuntoStock").text(formatNumber($row.attr("data-puntostock"), 3));
             $("#modalDetalleStockReporteEstado").text($row.children("td").last().text() || "-");
             $("#modalDetalleStockReporteStockInicial").text(formatNumber($row.attr("data-stockinicial"), 3));
