@@ -17,9 +17,9 @@
     var filtro = Model != null && Model.Filtro != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
     var columnas = Model != null ? Model.Columnas : new System.Collections.Generic.List<Entidades.SucursalColumnaStockVm>();
     var productos = Model != null ? Model.Productos : new System.Collections.Generic.List<Entidades.ProductoStockPorSucursalVm>();
-    // Columna "Total" solo cuando el filtro de sucursal es "Todas" (idSucursal=0):
-    // con una sola sucursal seleccionada no hay nada que sumar.
-    bool mostrarTotal = Model != null && Model.Filtro != null && Model.Filtro.IdSucursal == 0;
+    // Columna "Total" solo cuando se muestran 2 o mas sucursales (seleccion multiple o "Todas"):
+    // con una sola no hay nada que sumar. Suma solo las columnas mostradas.
+    bool mostrarTotal = Model != null && columnas.Count > 1;
     // *2: cada sucursal aporta 2 columnas (Stock + Dif.) al layout del <tr>, aunque la de Dif.
     // arranque oculta con d-none -- sigue existiendo en el DOM y hay que contarla en el colspan
     // de la fila de detalle expandible (ver mas abajo). +1 fijo: columna "Estado Stock", tambien

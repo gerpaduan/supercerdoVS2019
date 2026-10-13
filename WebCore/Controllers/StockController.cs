@@ -594,6 +594,9 @@ namespace WebCore.Controllers
             try
             {
                 model.Filtro = CrearFiltroExistencia(user);
+                // Por defecto se tilda solo la sucursal del usuario (si no tiene, quedan todas).
+                if (model.Filtro.IdSucursal > 0)
+                    model.Filtro.IdsSucursales = new List<int> { model.Filtro.IdSucursal };
                 model.ConsultaRealizada = false;
                 model.Mensaje = "Presioná Buscar para consultar stock.";
             }
@@ -613,7 +616,7 @@ namespace WebCore.Controllers
         [HttpGet]
         public IActionResult BuscarExistenciaPorSucursales(
             string texto = "",
-            int idSucursal = 0,
+            int[] idsSucursales = null,
             DateTime? fechaHasta = null,
             string tipo = "",
             int idProveedor = 0,
@@ -628,7 +631,17 @@ namespace WebCore.Controllers
             {
                 var filtro = CrearFiltroExistencia(user);
                 filtro.Texto = (texto ?? "").Trim();
-                filtro.IdSucursal = idSucursal > 0 ? idSucursal : 0;
+
+                // Sucursales tildadas: se descartan ids que no son de esta empresa (input externo).
+                // Si quedan todas o ninguna, IdsSucursales queda vacia = "todas".
+                var idsValidos = (idsSucursales ?? new int[0])
+                    .Where(id => filtro.SucursalesDisponibles.Any(s => s.IdSucursal == id))
+                    .Distinct()
+                    .ToList();
+                filtro.IdSucursal = 0;
+                filtro.IdsSucursales = idsValidos.Count >= filtro.SucursalesDisponibles.Count ? new List<int>() : idsValidos;
+                // El limite de fecha depende de las sucursales elegidas, no de la del usuario.
+                AplicarUltimosCierres(filtro, _oSucursalN.findAll() ?? new List<Entidades.Sucursal>());
                 filtro.FechaHasta = fechaHasta;
                 filtro.Tipo = (tipo ?? "").Trim();
                 filtro.IdProveedor = idProveedor;
@@ -725,9 +738,12 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult ObtenerFechaMinimaExistencia(int idSucursal = 0)
+        public IActionResult ObtenerFechaMinimaExistencia(int[] idsSucursales = null)
         {
-            var filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm { IdSucursal = idSucursal };
+            var filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm
+            {
+                IdsSucursales = (idsSucursales ?? new int[0]).Where(x => x > 0).Distinct().ToList()
+            };
             List<Entidades.Sucursal> sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             AplicarUltimosCierres(filtro, sucursales);
 
@@ -1925,12 +1941,8 @@ namespace WebCore.Controllers
 
             filtro.IdSucursal = idSucursalActual;
             filtro.FechaHasta = DateTime.Now;
-            filtro.SucursalesDisponibles.Add(new Entidades.SucursalColumnaStockVm
-            {
-                IdSucursal = 0,
-                Sucursal = "Todas"
-            });
 
+            // "Todas" ya no es una opcion sintetica (id 0): la vista la arma como checkbox propio.
             foreach (var sucursal in sucursales
                 .Where(x => x != null && x.IdSucursal > 0)
                 .GroupBy(x => x.IdSucursal)
@@ -1958,8 +1970,13 @@ namespace WebCore.Controllers
         // y para que BuscarExistenciaPorSucursales pueda rechazar una consulta invalida.
         private void AplicarUltimosCierres(Entidades.ExistenciaStockPorSucursalFiltroVm filtro, List<Entidades.Sucursal> sucursalesTodas)
         {
-            var sucursalesRelevantes = (filtro.IdSucursal > 0
-                ? sucursalesTodas.Where(s => s != null && s.IdSucursal == filtro.IdSucursal)
+            // IdsSucursales (seleccion multiple) manda; si esta vacia vale IdSucursal (0 = todas).
+            var idsElegidos = filtro.IdsSucursales != null && filtro.IdsSucursales.Count > 0
+                ? filtro.IdsSucursales
+                : (filtro.IdSucursal > 0 ? new List<int> { filtro.IdSucursal } : new List<int>());
+
+            var sucursalesRelevantes = (idsElegidos.Count > 0
+                ? sucursalesTodas.Where(s => s != null && idsElegidos.Contains(s.IdSucursal))
                 : sucursalesTodas.Where(s => s != null && s.IdSucursal > 0))
                 .GroupBy(s => s.IdSucursal)
                 .Select(g => g.First())

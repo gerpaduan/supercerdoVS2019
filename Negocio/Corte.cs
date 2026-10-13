@@ -952,15 +952,25 @@ namespace Negocio
             resultado.Filtro = filtro;
             resultado.ConsultaRealizada = true;
 
+            // Seleccion multiple de sucursales (IdsSucursales, vacia = todas): el DAL solo acepta
+            // una sucursal o todas (0). Con 1 id se consulta solo esa (igual que antes); con 2 o
+            // mas se hace UNA consulta de "todas" y se filtra en memoria, porque el SP tarda
+            // ~1 s con todas y N consultas por sucursal saldrian peor (ver docs/DECISIONS.md).
+            var idsElegidos = (filtro.IdsSucursales ?? new List<int>()).Where(x => x > 0).Distinct().ToList();
+            int idSucursalConsulta = idsElegidos.Count == 1 ? idsElegidos[0] : (idsElegidos.Count == 0 ? filtro.IdSucursal : 0);
+
             var plano = oCorteD.ObtenerExistenciaPorSucursalesPlano(
                 filtro.Texto ?? "",
-                filtro.IdSucursal,
+                idSucursalConsulta,
                 filtro.FechaHasta,
                 filtro.Tipo ?? "",
                 filtro.IdProveedor,
                 filtro.IdMarca,
                 filtro.IdCorte,
                 filtro.SoloConStock) ?? new List<Entidades.ExistenciaStockPorSucursalPlanoVm>();
+
+            if (idsElegidos.Count > 1)
+                plano = plano.Where(x => idsElegidos.Contains(x.IdSucursal)).ToList();
 
             // El SP devuelve PuntoStock desde el campo legacy Corte.puntoStock (global, no por
             // sucursal). Se sobrescribe aca con el valor real de la tabla intermedia Producto x

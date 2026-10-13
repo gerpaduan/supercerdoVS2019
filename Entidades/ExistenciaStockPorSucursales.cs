@@ -8,6 +8,9 @@ namespace Entidades
     {
         public string Texto { get; set; }
         public int IdSucursal { get; set; }
+        // Sucursales tildadas en la pantalla de Existencia por sucursales. Vacia = todas.
+        // Si tiene elementos, manda sobre IdSucursal (que se conserva para los otros consumidores).
+        public List<int> IdsSucursales { get; set; }
         public DateTime? FechaHasta { get; set; }
         public string Tipo { get; set; }
         public int IdProveedor { get; set; }
@@ -38,6 +41,7 @@ namespace Entidades
             Tipo = "";
             EstadoStock = "Todos";
             FechaHasta = DateTime.Now;
+            IdsSucursales = new List<int>();
             SucursalesDisponibles = new List<SucursalColumnaStockVm>();
             TiposDisponibles = new List<string>();
             ProveedoresDisponibles = new List<Persona>();

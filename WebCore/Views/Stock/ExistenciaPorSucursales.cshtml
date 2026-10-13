@@ -23,13 +23,35 @@
                 <div class="stock-filtros-stack">
                     <div class="stock-filtros-row existencia-filtros-row-top">
                         <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroSucursalExistencia">Sucursal</label>
-                            <select id="filtroSucursalExistencia" name="idSucursal" class="form-control">
-                                @foreach (var sucursal in filtro.SucursalesDisponibles)
-                                {
-                                    <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == filtro.IdSucursal ? "selected" : null)">@sucursal.Sucursal</option>
-                                }
-                            </select>
+                            <label class="stock-filtro-label" for="btnSucursalesExistencia">Sucursales</label>
+                            <!-- Seleccion multiple: una, varias o todas. Los checkboxes viajan en el form
+                                 como idsSucursales repetido (vacio de tildadas no se permite, ver script). -->
+                            @{
+                                bool todasTildadas = filtro.IdsSucursales == null || filtro.IdsSucursales.Count == 0;
+                            }
+                            <div class="dropdown existencia-sucursales-dropdown">
+                                <button type="button" id="btnSucursalesExistencia" class="btn btn-outline-secondary btn-block text-left dropdown-toggle"
+                                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
+                                    <span id="lblSucursalesExistencia">Todas</span>
+                                </button>
+                                <div class="dropdown-menu p-2" id="menuSucursalesExistencia">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="chkSucursalTodasExistencia" @(todasTildadas ? "checked" : null)>
+                                        <label class="custom-control-label font-weight-bold" for="chkSucursalTodasExistencia">Todas</label>
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    @foreach (var sucursal in filtro.SucursalesDisponibles)
+                                    {
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input chk-sucursal-existencia" name="idsSucursales"
+                                                   id="chkSucursalExistencia_@sucursal.IdSucursal" value="@sucursal.IdSucursal"
+                                                   data-nombre="@sucursal.Sucursal"
+                                                   @((todasTildadas || filtro.IdsSucursales.Contains(sucursal.IdSucursal)) ? "checked" : null)>
+                                            <label class="custom-control-label" for="chkSucursalExistencia_@sucursal.IdSucursal">@sucursal.Sucursal</label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group mb-0">
@@ -199,6 +221,29 @@
         padding: .32rem .62rem;
     }
 
+    /* Dropdown de sucursales: ancho minimo del boton y menu con scroll si hay muchas. */
+    .existencia-sucursales-page .existencia-sucursales-dropdown .btn {
+        min-width: 12rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Abierto: BS5 pone texto blanco y el fondo queda transparente (se leia vacio). Se fuerza contraste. */
+    .existencia-sucursales-page .existencia-sucursales-dropdown .btn.show,
+    .existencia-sucursales-page .existencia-sucursales-dropdown .btn:active {
+        color: var(--bs-body-color, #212529);
+        background-color: rgba(108, 117, 125, .15);
+        border-color: #6c757d;
+    }
+
+    .existencia-sucursales-page #menuSucursalesExistencia {
+        min-width: 14rem;
+        max-height: 18rem;
+        overflow-y: auto;
+        font-size: .87rem;
+    }
+
     .existencia-sucursales-page .stock-filtro-label,
     .existencia-sucursales-page .custom-control-label {
         font-size: .76rem;
@@ -332,10 +377,43 @@
             var autoActualizacionProximaEjecucion = null;
             var autoActualizacionDisparadaPorTimer = false;
 
+            var $chkSucursales = $(".chk-sucursal-existencia");
+            var $chkTodasSucursales = $("#chkSucursalTodasExistencia");
+            var $lblSucursales = $("#lblSucursalesExistencia");
+
+            // Ids de las sucursales tildadas (siempre al menos una, ver sincronizarSucursales).
+            function obtenerIdsSucursalesTildadas() {
+                return $chkSucursales.filter(":checked").map(function () { return this.value; }).get();
+            }
+
+            // Texto del boton: "Todas", el nombre si hay una sola, o "N sucursales".
+            function actualizarTextoSucursales() {
+                var tildadas = $chkSucursales.filter(":checked");
+                var texto;
+                if (tildadas.length === $chkSucursales.length) texto = "Todas";
+                else if (tildadas.length === 1) texto = tildadas.first().data("nombre");
+                else texto = tildadas.length + " sucursales";
+                $lblSucursales.text(texto);
+            }
+
+            // Mantiene el checkbox "Todas" coherente con los individuales y evita dejar 0 tildadas.
+            function sincronizarSucursales(origen) {
+                if (origen === "todas") {
+                    // Tildar "Todas" marca todas; destildarla no se permite (quedaria vacio).
+                    $chkSucursales.prop("checked", true);
+                    $chkTodasSucursales.prop("checked", true);
+                } else if ($chkSucursales.filter(":checked").length === 0) {
+                    // Intento de destildar la ultima: se revierte.
+                    $(origen).prop("checked", true);
+                }
+                $chkTodasSucursales.prop("checked", $chkSucursales.filter(":checked").length === $chkSucursales.length);
+                actualizarTextoSucursales();
+            }
+
             function obtenerEstadoConsulta() {
                 return {
                     texto: ($("#filtroTextoExistencia").val() || "").trim(),
-                    idSucursal: $("#filtroSucursalExistencia").val() || "0",
+                    idsSucursales: obtenerIdsSucursalesTildadas(),
                     fechaHasta: $("#filtroFechaHastaExistencia").val() || "",
                     tipo: $("#filtroTipoExistencia").val() || "",
                     idProveedor: $("#filtroProveedorExistencia").val() || "0",
@@ -353,12 +431,13 @@
             // actualiza el limite (atributo "min" del selector + el texto de ayuda) cada vez que
             // cambia la sucursal elegida, sin esperar a que se presione Buscar.
             function actualizarFechaMinimaExistencia() {
-                var idSucursal = $("#filtroSucursalExistencia").val() || "0";
+                var idsSucursales = obtenerIdsSucursalesTildadas();
 
                 $.ajax({
                     url: fechaMinimaUrl,
                     type: "GET",
-                    data: { idSucursal: idSucursal }
+                    traditional: true, // idsSucursales=1&idsSucursales=3 (sin corchetes) para int[]
+                    data: { idsSucursales: idsSucursales }
                 }).done(function (resp) {
                     if (!resp || !resp.ok) return;
 
@@ -677,7 +756,7 @@
                 }
             });
 
-            $("#filtroSucursalExistencia, #filtroFechaHastaExistencia, #filtroTipoExistencia, #filtroProveedorExistencia, #filtroMarcaExistencia")
+            $(".chk-sucursal-existencia, #filtroFechaHastaExistencia, #filtroTipoExistencia, #filtroProveedorExistencia, #filtroMarcaExistencia")
                 .on("input change", function () {
                     actualizarPendiente();
                     aplicarFiltrosVisuales();
@@ -710,7 +789,22 @@
                 }
             });
 
-            $("#filtroSucursalExistencia").on("change", actualizarFechaMinimaExistencia);
+            // El menu no se cierra al tildar (si no, habria que reabrirlo por cada sucursal).
+            $("#menuSucursalesExistencia").on("click", function (e) { e.stopPropagation(); });
+
+            // Los listeners de abajo (pendiente/filtros visuales) ya estan atados a .chk-sucursal-existencia;
+            // este corre ademas para mantener "Todas", el texto del boton y el limite de fecha.
+            $chkSucursales.on("change", function () {
+                sincronizarSucursales(this);
+                actualizarPendiente(); // otra vez: el handler generico corrio antes de revertir la ultima destildada
+                actualizarFechaMinimaExistencia();
+            });
+            $chkTodasSucursales.on("change", function () {
+                sincronizarSucursales("todas");
+                actualizarPendiente();
+                actualizarFechaMinimaExistencia();
+            });
+            actualizarTextoSucursales();
 
             $("#filtroEstadoExistencia").on("change", aplicarFiltrosVisuales);
 
