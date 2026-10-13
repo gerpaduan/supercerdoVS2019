@@ -9,7 +9,17 @@ namespace WebCore.Models
         public string TipoReporteSeleccionado { get; set; }
         public DateTime FechaDesde { get; set; }
         public DateTime FechaHasta { get; set; }
+        // Sucursal unica elegida (0 = varias o todas). Se conserva con el significado de siempre: asi todo el
+        // codigo y el JS que ya la leian siguen valiendo cuando hay una sola sucursal.
         public int SucursalId { get; set; }
+        // Sucursales tildadas en el selector (siempre explicitas: con "Todas" van todas las de la empresa).
+        public List<int> SucursalesIds { get; set; }
+        // true si estan tildadas todas las sucursales de la empresa.
+        public bool EsTodasLasSucursales { get; set; }
+        // Reportes de stock con 2+ sucursales: cada una se calcula con SUS propios cierres (ver docs/DECISIONS.md).
+        public bool UsaCierresPorSucursal { get; set; }
+        // Avisos no bloqueantes (ej. una sucursal sin cierres de stock que se omitio del reporte).
+        public List<string> Avisos { get; set; }
         public string BusquedaProducto { get; set; }
         public string TipoProducto { get; set; }
         public int MarcaId { get; set; }
@@ -50,6 +60,8 @@ namespace WebCore.Models
         public ReportesViewModel()
         {
             TipoReporteSeleccionado = "";
+            SucursalesIds = new List<int>();
+            Avisos = new List<string>();
             BusquedaProducto = "";
             TipoProducto = "";
             EstadoStock = "Todos";
@@ -105,7 +117,10 @@ namespace WebCore.Models
         public string TipoProducto { get; set; } = "";
         public int MarcaId { get; set; }
         public string Marca { get; set; } = "";
+        // Inicio del calculo de esta fila (el cierre de partida) y fin del calculo; en el modo de varias
+        // sucursales cada una tiene el suyo y la tabla los muestra bajo el codigo.
         public DateTime? FechaUltimoCierre { get; set; }
+        public DateTime? FechaHastaConsulta { get; set; }
         public decimal StockInicial { get; set; }
         public decimal Compras { get; set; }
         public decimal IngresoElaborado { get; set; }

@@ -149,6 +149,13 @@
         };
         var $listaPeriodos = $("#listaPeriodosComparativos");
         var $agrupacionTemporal = $("#agrupacionTemporalReporte");
+        // Selector de sucursales (casillas). #sucursalReporte (oculto) conserva el contrato de siempre: el id de la
+        // sucursal si hay UNA sola tildada, "0" si son varias o todas. Los checkboxes son la seleccion real.
+        var $chkSucursales = $(".chk-sucursal-reporte");
+        var $chkTodasSucursales = $("#chkSucursalTodasReporte");
+        var $lblSucursales = $("#lblSucursalesReporte");
+        var $infoDesdePorSucursal = $("#infoDesdePorSucursal");
+        var $infoHastaPorSucursal = $("#infoHastaPorSucursal");
 
         function reportType() {
             return $.trim($tipoReporte.val() || "");
@@ -175,21 +182,95 @@
             $pendingCard.toggleClass("d-none", !show);
         }
 
-        function reportRequiresSpecificBranch() {
-            return isStockReport();
+        // Ids de las sucursales tildadas (siempre al menos una, ver syncBranchSelection).
+        function selectedBranchIds() {
+            return $chkSucursales.filter(":checked").map(function () {
+                return parseInt(this.value, 10);
+            }).get();
         }
 
-        function applyBranchRule() {
-            var requiresSpecificBranch = reportRequiresSpecificBranch();
-            var $allOption = $sucursal.find('option[value="0"]');
-            $allOption.prop("disabled", requiresSpecificBranch);
+        // Stock con 2+ sucursales: cada una se calcula con SUS cierres (no hay una fecha desde/hasta unica).
+        function isMultiBranchStock() {
+            return isStockReport() && selectedBranchIds().length >= 2;
+        }
 
-            if (requiresSpecificBranch && ($sucursal.val() === "0" || !$sucursal.val())) {
-                var preferred = config.sucursalActual && config.sucursalActual !== "0"
-                    ? config.sucursalActual
-                    : ($sucursal.find('option:not([value="0"])').first().val() || "0");
-                $sucursal.val(preferred);
+        // Mantiene coherentes "Todas", los checkboxes, el texto del boton y el campo oculto. Siempre queda al menos
+        // una sucursal tildada: si se intenta destildar la ultima, se revierte. origen: "todas" | el checkbox tocado | null.
+        function syncBranchSelection(origen) {
+            if (origen === "todas") {
+                $chkSucursales.prop("checked", true);
+            } else if (origen && !$chkSucursales.filter(":checked").length) {
+                $(origen).prop("checked", true);
             }
+
+            var ids = selectedBranchIds();
+            $chkTodasSucursales.prop("checked", ids.length === $chkSucursales.length);
+            $sucursal.val(ids.length === 1 ? String(ids[0]) : "0");
+
+            var texto;
+            if (ids.length === $chkSucursales.length) {
+                texto = "Todas";
+            } else if (ids.length === 1) {
+                texto = $chkSucursales.filter(":checked").first().attr("data-nombre") || "1 sucursal";
+            } else {
+                texto = ids.length + " sucursales";
+            }
+            $lblSucursales.text(texto);
+        }
+
+        // Reportes de stock con varias sucursales: las fechas dejan de elegirse (cada sucursal usa sus cierres) y se
+        // muestra un texto en su lugar. Stock Retroactivo conserva la fecha "hasta" editable; Stock Actual, "ahora".
+        function applyMultiBranchDates(tipo) {
+            var multi = isMultiBranchStock();
+            $infoDesdePorSucursal.toggleClass("d-none", !multi);
+            $infoHastaPorSucursal.toggleClass("d-none", !(multi && tipo === "Cierre Stock"));
+
+            if (!multi) {
+                return;
+            }
+
+            $fechaDesdeDate.addClass("d-none");
+            $fechaDesdeCierre.addClass("d-none");
+
+            if (tipo === "Cierre Stock") {
+                $fechaHastaDateWrap.addClass("d-none");
+                $fechaHastaCierre.addClass("d-none");
+            }
+
+            syncClosureNames();
+        }
+
+        // Agrupacion visual por producto (solo stock con varias sucursales): color alternado y una linea de corte
+        // cuando cambia el producto. Se recalcula sobre las filas VISIBLES en el orden actual (despues de ordenar o
+        // filtrar), porque ordenar por una columna numerica separa las filas de un mismo producto.
+        function repaintStockGroups() {
+            if (!config.usaCierresPorSucursal || !$rowsStock.length) {
+                return;
+            }
+
+            var ultimoIdCorte = null;
+            var alterno = true;
+            $rowsStock.each(function () {
+                var $row = $(this);
+                $row.removeClass("grupo-stock-a grupo-stock-b corte-stock");
+
+                if ($row.hasClass("d-none")) {
+                    return;
+                }
+
+                var idCorte = $row.attr("data-idcorte");
+                var productoNuevo = idCorte !== ultimoIdCorte;
+                if (productoNuevo) {
+                    alterno = !alterno;
+                }
+
+                $row.addClass(alterno ? "grupo-stock-b" : "grupo-stock-a");
+                if (productoNuevo && ultimoIdCorte !== null) {
+                    $row.addClass("corte-stock");
+                }
+
+                ultimoIdCorte = idCorte;
+            });
         }
 
         function getFilteredClosures() {
@@ -264,8 +345,6 @@
             var anteultimo = list.length > 1 ? list[1].fechaIso : ultimo;
             var ahora = nowLocalValue();
 
-            applyBranchRule();
-
             if (tipo === "Stock Actual") {
                 applyDateMode(true, false);
                 fillClosureSelect($fechaDesdeCierre, resetValues ? ultimo : ($fechaDesdeCierre.val() || config.fechaDesdeActual), parseInt($sucursal.val() || "0", 10) === 0);
@@ -296,6 +375,8 @@
                 $fechaHastaDate.prop("readonly", false);
                 $btnAhora.prop("disabled", false);
             }
+
+            applyMultiBranchDates(tipo);
         }
 
         function getMainDurationMs() {
@@ -535,6 +616,19 @@
             $("#filaSinResultadosReporte").toggleClass("d-none", registros !== 0);
         }
 
+        // Desempate del orden de stock: producto y, con varias sucursales, sucursal (data-sucursal solo existe en ese
+        // modo; sin el atributo ambos valen "" y el resultado es el de siempre).
+        function compareProductoSucursal($a, $b) {
+            var porProducto = (($a.attr("data-producto") || "").toUpperCase())
+                .localeCompare(($b.attr("data-producto") || "").toUpperCase());
+            if (porProducto !== 0) {
+                return porProducto;
+            }
+
+            return (($a.attr("data-sucursal") || "").toUpperCase())
+                .localeCompare(($b.attr("data-sucursal") || "").toUpperCase());
+        }
+
         function sortStockRows(sortKey, sortType) {
             if (!$tablaStock.length || !$rowsStock.length || !sortKey) {
                 return;
@@ -559,8 +653,7 @@
                     valueB = toNumber(valueB);
 
                     if (valueA === valueB) {
-                        return (($a.attr("data-producto") || "").toUpperCase())
-                            .localeCompare(($b.attr("data-producto") || "").toUpperCase()) * direction;
+                        return compareProductoSucursal($a, $b) * direction;
                     }
 
                     return (valueA - valueB) * direction;
@@ -571,8 +664,7 @@
 
                 var compare = valueA.localeCompare(valueB);
                 if (compare === 0) {
-                    compare = (($a.attr("data-producto") || "").toUpperCase())
-                        .localeCompare(($b.attr("data-producto") || "").toUpperCase());
+                    compare = compareProductoSucursal($a, $b);
                 }
 
                 return compare * direction;
@@ -777,6 +869,7 @@
                 });
 
                 updateVisibleTotalsStock();
+                repaintStockGroups();
             }
 
             if ($rowsVentas.length) {
@@ -866,11 +959,13 @@
                 type: "GET",
                 dataType: "html",
                 silentLoading: true,
+                traditional: true,
                 data: {
                     tipoReporte: reportType(),
                     fechaDesde: $fechaDesdeDate.hasClass("d-none") ? $fechaDesdeCierre.val() : $fechaDesdeDate.val(),
                     fechaHasta: $fechaHastaDateWrap.hasClass("d-none") ? $fechaHastaCierre.val() : $fechaHastaDate.val(),
                     idSucursal: $sucursal.val() || "0",
+                    idsSucursales: selectedBranchIds(),
                     busquedaProducto: $("#busquedaProductoReporte").val() || "",
                     tipoProducto: $("#tipoProductoReporte").val() || "",
                     marcaId: $("#marcaReporte").val() || "0",
@@ -1230,6 +1325,7 @@
                     fechaDesde: config.fechaDesdeActual,
                     fechaHasta: config.fechaHastaActual,
                     idSucursal: config.sucursalActual || "0",
+                    idsSucursales: config.sucursalesIds || [],
                     tipoProducto: $("#tipoProductoReporte").val() || "",
                     marcaId: $("#marcaReporte").val() || "0",
                     agrupacionTemporal: config.agrupacionTemporalActual || "hora",
@@ -1326,6 +1422,19 @@
 
         $sucursal.on("change", function () {
             applyReportMode(true);
+        });
+
+        // El menu del selector no se cierra al tildar (data-bs-auto-close="outside"); cada cambio actualiza el campo
+        // oculto y dispara el mismo "change" que antes disparaba el desplegable (aplica el modo de fechas del reporte).
+        $chkSucursales.on("change", function () {
+            syncBranchSelection(this);
+            $sucursal.trigger("change");
+        });
+
+        $chkTodasSucursales.on("change", function () {
+            // "Todas" no se puede destildar (quedaria sin sucursales): tildarla marca todas, destildarla no hace nada.
+            syncBranchSelection("todas");
+            $sucursal.trigger("change");
         });
 
         $btnAhora.on("click", function () {
@@ -1442,6 +1551,7 @@
             $("#btnBuscarReporte").prop("disabled", true).find(".btn-buscar-texto").text("Cargando...");
         });
 
+        syncBranchSelection(null);
         applyReportMode(false);
         applyDetailsMode();
         initializePeriodsFromConfig();

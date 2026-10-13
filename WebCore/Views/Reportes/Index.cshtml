@@ -11,6 +11,10 @@
         string.Equals(Model.TipoReporteSeleccionado, "Stock Retroactivo", StringComparison.OrdinalIgnoreCase);
     var esCierreStock =
         string.Equals(Model.TipoReporteSeleccionado, "Cierre Stock", StringComparison.OrdinalIgnoreCase);
+    var esStockActualVista =
+        string.Equals(Model.TipoReporteSeleccionado, "Stock Actual", StringComparison.OrdinalIgnoreCase);
+    // Stock con 2+ sucursales: una fila por producto y sucursal (cada una con sus cierres).
+    var stockMultiSucursal = Model.UsaCierresPorSucursal;
     var esReporteVentasProducto =
         string.Equals(Model.TipoReporteSeleccionado, "Ventas por Producto", StringComparison.OrdinalIgnoreCase);
     var esReporteProyeccion =
@@ -89,6 +93,8 @@
                         <label class="stock-filtro-label" for="fechaDesdeReporte">Fecha desde</label>
                         <input type="datetime-local" id="fechaDesdeReporte" name="fechaDesde" class="form-control filtro-principal @(Model.UsaCierreEnFechaDesde ? "d-none" : "")" value="@Model.FechaDesdeValor" />
                         <select id="fechaDesdeCierreReporte" class="form-control filtro-principal @(!Model.UsaCierreEnFechaDesde ? "d-none" : "")"></select>
+                        @* Stock con 2+ sucursales: no hay una fecha unica, cada sucursal usa su cierre (lo muestra reportes.js). *@
+                        <div class="form-control-plaintext small text-muted d-none" id="infoDesdePorSucursal"><i class="fas fa-store mr-1"></i>Cierre de cada sucursal</div>
                     </div>
 
                     <div class="form-group mb-0">
@@ -102,11 +108,37 @@
                             </div>
                         </div>
                         <select id="fechaHastaCierreReporte" class="form-control filtro-principal @(Model.UsaCierreEnFechaHasta ? "" : "d-none")"></select>
+                        <div class="form-control-plaintext small text-muted d-none" id="infoHastaPorSucursal"><i class="fas fa-store mr-1"></i>Cierre de cada sucursal</div>
                     </div>
 
                     <div class="form-group mb-0">
-                        <label class="stock-filtro-label" for="sucursalReporte">Sucursal</label>
-                        @Html.DropDownList("idSucursal", Model.Sucursales, new { @class = "form-control filtro-principal", id = "sucursalReporte" })
+                        <label class="stock-filtro-label" for="btnSucursalesReporte">Sucursales</label>
+                        @* Seleccion multiple: una, varias o todas. Los checkboxes (name="idsSucursales") son la seleccion real.
+                           El campo oculto #sucursalReporte conserva el contrato de siempre ("id de la sucursal si hay UNA sola,
+                           0 si son varias o todas"): reportes.js lo lee con $("#sucursalReporte").val() en varios lugares. *@
+                        <input type="hidden" name="idSucursal" id="sucursalReporte" value="@Model.SucursalId" />
+                        <div class="dropdown reportes-sucursales-dropdown">
+                            <button type="button" id="btnSucursalesReporte" class="btn btn-outline-secondary btn-block text-left dropdown-toggle"
+                                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
+                                <span id="lblSucursalesReporte">Todas</span>
+                            </button>
+                            <div class="dropdown-menu p-2" id="menuSucursalesReporte">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input filtro-principal" id="chkSucursalTodasReporte" @(Model.EsTodasLasSucursales ? "checked" : null)>
+                                    <label class="custom-control-label font-weight-bold" for="chkSucursalTodasReporte">Todas</label>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                @foreach (var itemSucursal in Model.Sucursales.Where(x => x.Value != "0"))
+                                {
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input chk-sucursal-reporte filtro-principal" name="idsSucursales"
+                                               id="chkSucursalReporte_@itemSucursal.Value" value="@itemSucursal.Value"
+                                               data-nombre="@itemSucursal.Text" @(itemSucursal.Selected ? "checked" : null)>
+                                        <label class="custom-control-label" for="chkSucursalReporte_@itemSucursal.Value">@itemSucursal.Text</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -241,6 +273,26 @@
             }
             else if (esReporteStockDetalle)
             {
+                if (stockMultiSucursal || (Model.Avisos != null && Model.Avisos.Count > 0))
+                {
+                    <div class="px-3 pt-3" id="avisosStockSucursales">
+                        @if (stockMultiSucursal)
+                        {
+                            <div class="alert alert-info py-2 px-3 mb-2 small">
+                                <i class="fas fa-info-circle mr-1"></i>Cada sucursal se calcula con sus propios cierres de stock.
+                                @(esCierreStock
+                                    ? "Cierre Stock: del anteúltimo al último cierre de cada una."
+                                    : esStockActualVista
+                                        ? "Stock Actual: desde el último cierre de cada una hasta ahora."
+                                        : "Stock Retroactivo: desde el último cierre de cada una hasta la fecha elegida.")
+                            </div>
+                        }
+                        @foreach (var avisoSucursal in Model.Avisos ?? new System.Collections.Generic.List<string>())
+                        {
+                            <div class="alert alert-warning py-2 px-3 mb-2 small"><i class="fas fa-exclamation-triangle mr-1"></i>@avisoSucursal</div>
+                        }
+                    </div>
+                }
                 if (!Model.HayResultados)
                 {
                     <div class="p-4 text-center text-muted">@Model.Mensaje</div>
@@ -294,10 +346,27 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @{
+                                        // Agrupacion visual por producto (solo con 2+ sucursales): color alternado y una linea de
+                                        // corte cuando cambia el producto. reportes.js lo recalcula al ordenar y filtrar en vivo.
+                                        int idCorteAnteriorStock = -1;
+                                        bool grupoStockB = true;
+                                    }
                                     @foreach (var item in Model.FilasStockActual)
                                     {
                                         var textoBusqueda = ((item.Codigo > 0 ? item.Codigo.ToString() + " " : "") + (item.Producto ?? "")).Trim().ToUpperInvariant();
-                                        <tr class="reporte-stock-row"
+                                        var claseFilaStock = "reporte-stock-row";
+                                        if (stockMultiSucursal)
+                                        {
+                                            bool productoNuevo = item.IdCorte != idCorteAnteriorStock;
+                                            if (productoNuevo) { grupoStockB = !grupoStockB; }
+                                            claseFilaStock += grupoStockB ? " grupo-stock-b" : " grupo-stock-a";
+                                            if (productoNuevo && idCorteAnteriorStock != -1) { claseFilaStock += " corte-stock"; }
+                                            idCorteAnteriorStock = item.IdCorte;
+                                        }
+                                        @* data-idsucursal / data-sucursal solo existen con 2+ sucursales (con una sola el HTML es el de siempre). *@
+                                        <tr class="@claseFilaStock"
+                                            @(stockMultiSucursal ? Html.Raw("data-idsucursal=\"" + item.IdSucursal.ToString() + "\" data-sucursal=\"" + System.Net.WebUtility.HtmlEncode(item.Sucursal ?? "") + "\"") : null)
                                             data-search="@textoBusqueda"
                                             data-tipo="@((item.TipoProducto ?? "").Trim().ToUpperInvariant())"
                                             data-marcaid="@item.MarcaId"
@@ -324,6 +393,14 @@
                                                 <div class="reporte-stock-producto-wrap">
                                                     <div class="font-weight-semibold reporte-stock-producto-texto" title="@item.Producto">@item.Producto</div>
                                                     <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                                    @if (stockMultiSucursal)
+                                                    {
+                                                        <div class="small reporte-stock-sucursal-info">
+                                                            @item.Sucursal
+                                                            · @(item.FechaUltimoCierre.HasValue ? item.FechaUltimoCierre.Value.ToString("dd/MM HH:mm") : "-")
+                                                            → @(esStockActualVista ? "ahora" : (item.FechaHastaConsulta.HasValue ? item.FechaHastaConsulta.Value.ToString("dd/MM HH:mm") : "-"))
+                                                        </div>
+                                                    }
                                                     <button type="button"
                                                             class="btn btn-link btn-sm p-0 d-md-none reporte-stock-producto-toggle">
                                                         Ver mas
@@ -916,6 +993,47 @@
 <style>
     .reportes-page .card-body {
         padding: .85rem 1rem;
+    }
+
+    /* Selector de sucursales (casillas): mismo criterio que Existencia por sucursales. */
+    .reportes-sucursales-dropdown .btn {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .reportes-sucursales-dropdown .btn.show,
+    .reportes-sucursales-dropdown .btn:active {
+        color: var(--bs-body-color, #212529);
+        background-color: rgba(108, 117, 125, .15);
+        border-color: #6c757d;
+    }
+
+    #menuSucursalesReporte {
+        min-width: 14rem;
+        max-height: 18rem;
+        overflow-y: auto;
+        font-size: .87rem;
+    }
+
+    /* Stock con 2+ sucursales: filas agrupadas por producto (color alternado + linea de corte). */
+    .reporte-stock-sucursal-info {
+        color: var(--ui-primary, #2d5b8f);
+        font-weight: 600;
+        line-height: 1.35;
+    }
+
+    body.app-shell #tablaReporteStockActual tbody tr.grupo-stock-b > td {
+        background-color: color-mix(in srgb, var(--ui-surface, #ffffff) 90%, var(--ui-primary, #2d5b8f) 10%);
+    }
+
+    body.app-shell #tablaReporteStockActual tbody tr.grupo-stock-b:hover > td,
+    body.app-shell #tablaReporteStockActual tbody tr.grupo-stock-a:hover > td {
+        background-color: var(--ui-table-hover, #f8fafb);
+    }
+
+    body.app-shell #tablaReporteStockActual tbody tr.corte-stock > td {
+        border-top: 2px solid var(--ui-text-muted, #7a838d);
     }
 
     .reportes-filtros-card {
@@ -1769,6 +1887,8 @@
             usaCierreDesde: @Model.UsaCierreEnFechaDesde.ToString().ToLowerInvariant(),
             usaCierreHasta: @Model.UsaCierreEnFechaHasta.ToString().ToLowerInvariant(),
             sucursalActual: "@Model.SucursalId",
+            sucursalesIds: [@string.Join(",", Model.SucursalesIds)],
+            usaCierresPorSucursal: @Model.UsaCierresPorSucursal.ToString().ToLowerInvariant(),
             tipoReporteActual: "@Model.TipoReporteSeleccionado",
             agrupacionTemporalActual: "@Model.AgrupacionTemporal",
             periodosComparativos: @Html.Raw(periodosComparativosJson),

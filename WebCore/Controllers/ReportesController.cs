@@ -75,6 +75,7 @@ namespace WebCore.Controllers
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
             int? idSucursal = null,
+            int[] idsSucursales = null,
             string busquedaProducto = "",
             string tipoProducto = "",
             int marcaId = 0,
@@ -96,17 +97,11 @@ namespace WebCore.Controllers
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
             }
 
-            int sucursalSeleccionada = idSucursal.HasValue
-                ? idSucursal.Value
-                : (user.IdSucursal > 0 ? user.IdSucursal : 0);
-
-            if (!idSucursal.HasValue &&
-                string.Equals(tipoReporte, TipoReporteVentasProducto, StringComparison.OrdinalIgnoreCase))
-            {
-                sucursalSeleccionada = 0;
-            }
-
-            sucursalSeleccionada = AjustarSucursalSegunReporte(tipoReporte, sucursalSeleccionada, user);
+            // Sucursales tildadas (idsSucursales) o, en enlaces viejos, la unica de idSucursal (0 = todas).
+            // Los defaults de siempre (sucursal del usuario / "Todas" en Ventas por Producto) viven en el helper.
+            var sucursalesEmpresa = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            var sucursalesElegidas = ResolverSucursalesSeleccionadas(idsSucursales, idSucursal, tipoReporte, user, sucursalesEmpresa);
+            int sucursalSeleccionada = sucursalesElegidas.Count == 1 ? sucursalesElegidas[0] : 0;
 
             var model = CrearModeloBase(
                 user,
@@ -119,7 +114,9 @@ namespace WebCore.Controllers
                 marcaId,
                 agrupacionTemporal,
                 estadoStock,
-                buscar);
+                buscar,
+                sucursalesElegidas,
+                sucursalesEmpresa);
 
             model.IncluirVentasCuentaCorrienteBalance = incluirVentasCuentaCorrienteBalance;
 
@@ -169,6 +166,7 @@ namespace WebCore.Controllers
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
             int? idSucursal = null,
+            int[] idsSucursales = null,
             string busquedaProducto = "",
             string tipoProducto = "",
             int marcaId = 0,
@@ -186,17 +184,10 @@ namespace WebCore.Controllers
             if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, desde, -1))
                 return PartialView("~/Views/Reportes/_FiltrosSecundarios.cshtml", new ReportesViewModel());
 
-            int sucursalSeleccionada = idSucursal.HasValue
-                ? idSucursal.Value
-                : (user.IdSucursal > 0 ? user.IdSucursal : 0);
-
-            if (!idSucursal.HasValue &&
-                string.Equals(tipoReporte, TipoReporteVentasProducto, StringComparison.OrdinalIgnoreCase))
-            {
-                sucursalSeleccionada = 0;
-            }
-
-            sucursalSeleccionada = AjustarSucursalSegunReporte(tipoReporte, sucursalSeleccionada, user);
+            // Misma resolucion de sucursales que Index (la parcial solo la usa para armar el modelo base).
+            var sucursalesEmpresa = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            var sucursalesElegidas = ResolverSucursalesSeleccionadas(idsSucursales, idSucursal, tipoReporte, user, sucursalesEmpresa);
+            int sucursalSeleccionada = sucursalesElegidas.Count == 1 ? sucursalesElegidas[0] : 0;
 
             var model = CrearModeloBase(
                 user,
@@ -209,7 +200,9 @@ namespace WebCore.Controllers
                 marcaId,
                 agrupacionTemporal,
                 estadoStock,
-                buscar: false);
+                buscar: false,
+                sucursalesIds: sucursalesElegidas,
+                sucursalesEmpresa: sucursalesEmpresa);
 
             model.IncluirVentasCuentaCorrienteBalance = incluirVentasCuentaCorrienteBalance;
 
@@ -225,8 +218,12 @@ namespace WebCore.Controllers
             string tipoProducto = "",
             int marcaId = 0,
             string agrupacionTemporal = "hora",
-            string[] periodoComparativoDesde = null)
+            string[] periodoComparativoDesde = null,
+            int[] idsSucursales = null)
         {
+            // Una sucursal o todas: la consulta de siempre (una sola). Varias tildadas: una por sucursal y se suman
+            // las series punto a punto (los buckets del periodo son los mismos para todas).
+            var idsConsulta = ResolverIdsConsultaSerie(idSucursal, idsSucursales);
             var periodos = ConstruirPeriodosComparativosVentas(fechaDesde, fechaHasta, periodoComparativoDesde);
             var agrupacionAplicada = ObtenerAgrupacionVentasComparativa(periodos.FirstOrDefault());
             var labels = ConstruirLabelsSerie(periodos.First(), agrupacionAplicada);
@@ -242,16 +239,35 @@ namespace WebCore.Controllers
             for (int i = 0; i < periodos.Count; i++)
             {
                 var periodo = periodos[i];
-                var dt = _oCorteN.ObtenerSerieVentasPorCorte(
-                    idCorte,
-                    idSucursal,
-                    periodo.FechaDesde,
-                    periodo.FechaHasta,
-                    tipoProducto,
-                    marcaId,
-                    agrupacionAplicada);
+                List<SerieVentasComparativaPunto> serie = null;
 
-                var serie = CompletarSeriePeriodo(periodo, dt, agrupacionAplicada);
+                foreach (int idSucursalConsulta in idsConsulta)
+                {
+                    var dt = _oCorteN.ObtenerSerieVentasPorCorte(
+                        idCorte,
+                        idSucursalConsulta,
+                        periodo.FechaDesde,
+                        periodo.FechaHasta,
+                        tipoProducto,
+                        marcaId,
+                        agrupacionAplicada);
+
+                    var seriePeriodoSucursal = CompletarSeriePeriodo(periodo, dt, agrupacionAplicada);
+                    if (serie == null)
+                    {
+                        serie = seriePeriodoSucursal;
+                    }
+                    else
+                    {
+                        // Misma cantidad de puntos (los arma el periodo, no los datos): se suma por posicion.
+                        for (int p = 0; p < serie.Count && p < seriePeriodoSucursal.Count; p++)
+                        {
+                            serie[p].Kg += seriePeriodoSucursal[p].Kg;
+                            serie[p].Importe += seriePeriodoSucursal[p].Importe;
+                        }
+                    }
+                }
+
                 if (periodo.EsPrincipal)
                     totalPrincipal = serie.Sum(x => x.Kg);
 
@@ -333,7 +349,9 @@ namespace WebCore.Controllers
             int marcaId,
             string agrupacionTemporal,
             string estadoStock,
-            bool buscar)
+            bool buscar,
+            List<int> sucursalesIds = null,
+            List<Entidades.Sucursal> sucursalesEmpresa = null)
         {
             var model = new ReportesViewModel
             {
@@ -373,27 +391,42 @@ namespace WebCore.Controllers
                     ? (_oCorteN.ObtenerCortesPorEmpresa(idEmpresaCatalogo, false) ?? new List<Entidades.Corte>())
                     : (_oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>()))
                 : new List<Entidades.Corte>();
-            var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            var sucursales = sucursalesEmpresa ?? _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             model.CierresDisponibles = ObtenerCierresDisponibles();
+
+            var sucursalesOrdenadas = sucursales
+                .Where(x => x != null && x.IdSucursal > 0)
+                .GroupBy(x => x.IdSucursal)
+                .Select(g => g.First())
+                .OrderBy(x => x.SucursalNombre)
+                .ToList();
+
+            // Sucursales tildadas: siempre una lista explicita (con "Todas" van todas las de la empresa). Sin pedido
+            // explicito se deriva de la sucursal unica de siempre (0 = todas).
+            model.SucursalesIds = (sucursalesIds != null && sucursalesIds.Count > 0)
+                ? sucursalesIds.ToList()
+                : (sucursalId > 0
+                    ? new List<int> { sucursalId }
+                    : sucursalesOrdenadas.Select(x => x.IdSucursal).ToList());
+            model.EsTodasLasSucursales = sucursalesOrdenadas.Count > 0 &&
+                sucursalesOrdenadas.All(x => model.SucursalesIds.Contains(x.IdSucursal));
+            // SucursalId conserva su significado de siempre: la sucursal si hay exactamente una, si no 0.
+            model.SucursalId = model.SucursalesIds.Count == 1 ? model.SucursalesIds[0] : 0;
 
             model.Sucursales.Add(new SelectListItem
             {
                 Value = "0",
                 Text = "Todas",
-                Selected = model.SucursalId <= 0
+                Selected = model.EsTodasLasSucursales
             });
 
-            foreach (var sucursal in sucursales
-                .Where(x => x != null && x.IdSucursal > 0)
-                .GroupBy(x => x.IdSucursal)
-                .Select(g => g.First())
-                .OrderBy(x => x.SucursalNombre))
+            foreach (var sucursal in sucursalesOrdenadas)
             {
                 model.Sucursales.Add(new SelectListItem
                 {
                     Value = sucursal.IdSucursal.ToString(),
                     Text = sucursal.SucursalNombre,
-                    Selected = sucursal.IdSucursal == model.SucursalId
+                    Selected = model.SucursalesIds.Contains(sucursal.IdSucursal)
                 });
             }
 
@@ -477,12 +510,96 @@ namespace WebCore.Controllers
             bool esReporteBalance =
                 string.Equals(model.TipoReporteSeleccionado, TipoReporteBalance, StringComparison.OrdinalIgnoreCase);
 
+            // Stock con 2+ sucursales: cada una con SUS cierres (no hay una sola fecha-desde/hasta para todas).
+            model.UsaCierresPorSucursal = esReporteStock && model.SucursalesIds.Count >= 2;
+
             model.MostrarFiltroBusquedaProducto = esReporteStock || esReporteVentasProducto || esReporteProyeccion;
             model.MostrarFiltroTipoProducto = esReporteStock || esReporteVentasProducto || esReporteProyeccion;
             model.MostrarFiltroMarca = esReporteStock || esReporteVentasProducto || esReporteProyeccion;
             model.MostrarFiltroEstadoStock = esReporteStock;
             model.MostrarFiltroAgrupacionTemporal = esReporteVentasProducto;
             model.MostrarGrafico = esReporteBalance;
+        }
+
+        // Resuelve que sucursales estan elegidas: las tildadas (idsSucursales) o, en enlaces anteriores al selector
+        // multiple, la unica de idSucursal (0 = todas). Sin pedido valido se conservan los defaults de siempre: la
+        // sucursal del usuario ("Todas" en Ventas por Producto; en los de stock siempre alguna concreta).
+        // Devuelve ids de ESTA empresa, en el orden del selector (por nombre); un id ajeno se descarta (input externo).
+        private List<int> ResolverSucursalesSeleccionadas(
+            int[] idsSucursales,
+            int? idSucursal,
+            string tipoReporte,
+            Entidades.Usuario user,
+            List<Entidades.Sucursal> sucursalesEmpresa)
+        {
+            var validas = (sucursalesEmpresa ?? new List<Entidades.Sucursal>())
+                .Where(x => x != null && x.IdSucursal > 0)
+                .GroupBy(x => x.IdSucursal)
+                .Select(g => g.First())
+                .OrderBy(x => x.SucursalNombre)
+                .Select(x => x.IdSucursal)
+                .ToList();
+
+            List<int> elegidas = null;
+            if (idsSucursales != null && idsSucursales.Length > 0)
+            {
+                elegidas = validas.Where(id => idsSucursales.Contains(id)).ToList();
+            }
+            else if (idSucursal.HasValue)
+            {
+                elegidas = idSucursal.Value > 0
+                    ? validas.Where(id => id == idSucursal.Value).ToList()
+                    : validas.ToList();
+            }
+
+            if (elegidas != null && elegidas.Count > 0)
+                return elegidas;
+
+            // Defaults de siempre (no se pidio nada, o lo pedido no es de esta empresa).
+            if (string.Equals(tipoReporte, TipoReporteVentasProducto, StringComparison.OrdinalIgnoreCase))
+                return validas;
+
+            int porDefecto = AjustarSucursalSegunReporte(tipoReporte, user != null && user.IdSucursal > 0 ? user.IdSucursal : 0, user);
+            return porDefecto > 0 ? new List<int> { porDefecto } : validas;
+        }
+
+        // Ids sobre los que se consulta en los reportes que suman por sucursal (Ventas por Producto, Balance).
+        // Una sucursal -> [id]; todas -> [0] (UNA consulta, igual que antes de existir la seleccion multiple);
+        // varias (no todas) -> la lista, y quien llama recorre y suma.
+        private static List<int> IdsParaConsulta(ReportesViewModel model)
+        {
+            var ids = model.SucursalesIds ?? new List<int>();
+            if (ids.Count == 1)
+                return new List<int> { ids[0] };
+
+            if (ids.Count == 0 || model.EsTodasLasSucursales)
+                return new List<int> { 0 };
+
+            return ids.ToList();
+        }
+
+        // Igual que IdsParaConsulta pero para el endpoint del grafico, que recibe los ids crudos del navegador.
+        private List<int> ResolverIdsConsultaSerie(int idSucursal, int[] idsSucursales)
+        {
+            if (idsSucursales == null || idsSucursales.Length < 2)
+                return new List<int> { idSucursal };
+
+            var validas = (_oSucursalN.findAll() ?? new List<Entidades.Sucursal>())
+                .Where(x => x != null && x.IdSucursal > 0)
+                .Select(x => x.IdSucursal)
+                .Distinct()
+                .ToList();
+            var elegidas = validas.Where(id => idsSucursales.Contains(id)).ToList();
+
+            if (elegidas.Count == 0)
+                return new List<int> { idSucursal };
+
+            if (elegidas.Count == 1)
+                return elegidas;
+
+            return elegidas.Count >= validas.Count
+                ? new List<int> { 0 }
+                : elegidas;
         }
 
         private int AjustarSucursalSegunReporte(string tipoReporte, int sucursalSeleccionada, Entidades.Usuario user)
@@ -547,40 +664,9 @@ namespace WebCore.Controllers
 
         private void CargarReporteStockDesdeCierres(ReportesViewModel model, bool graficarTop)
         {
-            var dt = _oCorteN.CierreStockWeb(
-                "",
-                model.SucursalId > 0 ? model.SucursalId : 0,
-                model.FechaDesde,
-                model.FechaHasta,
-                "",
-                0,
-                0);
-
-            var dtStockCierre = _oCorteN.CierreStockWeb(
-                "",
-                model.SucursalId > 0 ? model.SucursalId : 0,
-                model.FechaHasta,
-                model.FechaHasta,
-                "",
-                0,
-                0);
-
-            var stockCierrePorCorte = new Dictionary<long, decimal>();
-            if (dtStockCierre != null)
-            {
-                foreach (System.Data.DataRow row in dtStockCierre.Rows)
-                {
-                    long codigo = LeerLong(row, "Codigo");
-                    if (codigo > 0)
-                    {
-                        decimal stockCierre = LeerDecimal(row, "Faltante");
-                        stockCierrePorCorte[codigo] = stockCierre;
-                    }
-                }
-            }
-
             model.ConsultaRealizada = true;
             model.FilasStockActual.Clear();
+            model.Avisos.Clear();
 
             int idEmpresaCatalogo = ObtenerIdEmpresaSesion();
             var cortes = (idEmpresaCatalogo > 0
@@ -590,12 +676,141 @@ namespace WebCore.Controllers
                 .GroupBy(x => x.IdCorte)
                 .ToDictionary(g => g.Key, g => g.First());
 
-            if (dt == null || dt.Rows.Count == 0)
+            if (!model.UsaCierresPorSucursal)
+            {
+                // Una sola sucursal: lo de siempre, con las fechas elegidas en pantalla (desde/hasta de ESA sucursal).
+                AgregarFilasStockSucursal(
+                    model,
+                    model.SucursalId > 0 ? model.SucursalId : 0,
+                    model.SucursalId,
+                    model.FechaDesde,
+                    model.FechaHasta,
+                    cortes,
+                    true);
+            }
+            else
+            {
+                // Varias sucursales: cada una se calcula con SUS cierres, porque el stock inicial de una sucursal es
+                // el de su cierre y una fecha-desde unica no sirve para todas (los cierres no coinciden):
+                //  - Cierre Stock:       anteultimo -> ultimo cierre de la sucursal.
+                //  - Stock Actual:       ultimo cierre -> ahora.
+                //  - Stock Retroactivo:  ultimo cierre -> la fecha "hasta" elegida.
+                bool esCierreStock = string.Equals(model.TipoReporteSeleccionado, TipoReporteCierreStock, StringComparison.OrdinalIgnoreCase);
+                bool esStockActual = string.Equals(model.TipoReporteSeleccionado, TipoReporteStockActual, StringComparison.OrdinalIgnoreCase);
+                var nombresSucursal = model.Sucursales
+                    .Where(x => x.Value != "0")
+                    .ToDictionary(x => int.Parse(x.Value, CultureInfo.InvariantCulture), x => x.Text);
+
+                foreach (int idSucursal in model.SucursalesIds)
+                {
+                    var cierresSucursal = FiltrarCierresPorSucursal(model.CierresDisponibles, idSucursal);
+                    var ultimoCierre = cierresSucursal.FirstOrDefault();
+                    string nombreSucursal;
+                    if (!nombresSucursal.TryGetValue(idSucursal, out nombreSucursal))
+                        nombreSucursal = "Sucursal " + idSucursal.ToString(CultureInfo.InvariantCulture);
+
+                    if (ultimoCierre == null)
+                    {
+                        model.Avisos.Add(nombreSucursal + ": no tiene cierres de stock registrados, no se incluye en el reporte.");
+                        continue;
+                    }
+
+                    // Misma regla que la pantalla de una sola sucursal: sin anteultimo se usa el ultimo.
+                    var anteUltimoCierre = cierresSucursal.Skip(1).FirstOrDefault() ?? ultimoCierre;
+
+                    DateTime desdeSucursal = esCierreStock ? anteUltimoCierre.FechaCompra : ultimoCierre.FechaCompra;
+                    DateTime hastaSucursal = esCierreStock
+                        ? ultimoCierre.FechaCompra
+                        : (esStockActual ? DateTime.Now : model.FechaHasta);
+
+                    // El "Stock Cierre" (segunda consulta) solo se muestra en Cierre Stock: en los otros no se pide.
+                    AgregarFilasStockSucursal(model, idSucursal, idSucursal, desdeSucursal, hastaSucursal, cortes, esCierreStock);
+                }
+            }
+
+            if (model.FilasStockActual.Count == 0)
             {
                 model.HayResultados = false;
                 model.Mensaje = "No se encontraron datos para los filtros principales seleccionados.";
                 return;
             }
+
+            model.FilasStockActual = model.FilasStockActual
+                .OrderBy(x => x.Codigo)
+                .ThenBy(x => x.Producto)
+                .ThenBy(x => x.Sucursal)
+                .ToList();
+
+            model.HayResultados = model.FilasStockActual.Count > 0;
+            if (!model.HayResultados)
+            {
+                model.Mensaje = "No se encontraron datos para los filtros principales seleccionados.";
+                return;
+            }
+
+            model.Totales.TotalKg = model.FilasStockActual.Sum(x => x.StockActual);
+            model.Totales.TotalIngresos = model.FilasStockActual.Sum(x => x.TotalIngresos);
+            model.Totales.TotalEgresos = model.FilasStockActual.Sum(x => x.TotalEgresos);
+            model.Totales.CantidadProductos = model.FilasStockActual.Select(x => x.IdCorte).Distinct().Count();
+            model.Totales.CantidadRegistros = model.FilasStockActual.Count;
+            model.Mensaje = model.UsaCierresPorSucursal
+                ? "Reporte cargado. Cada sucursal se calculó con sus propios cierres de stock."
+                : "Reporte cargado. Los filtros secundarios se aplican en vivo sobre los datos visibles.";
+            model.MostrarGrafico = false;
+        }
+
+        // Trae el stock de UNA sucursal (CierreStockWeb) para el rango desde-hasta y agrega sus filas a
+        // model.FilasStockActual. idSucursalConsulta: 0 = todas (solo el caso de siempre sin sucursales);
+        // idSucursalFila: el id que se guarda en cada fila. traerStockCierre: segunda consulta (hasta..hasta) que
+        // alimenta la columna "Stock Cierre"; en el caso de una sola sucursal se pide siempre, como siempre.
+        private void AgregarFilasStockSucursal(
+            ReportesViewModel model,
+            int idSucursalConsulta,
+            int idSucursalFila,
+            DateTime desde,
+            DateTime hasta,
+            Dictionary<int, Entidades.Corte> cortes,
+            bool traerStockCierre)
+        {
+            var dt = _oCorteN.CierreStockWeb(
+                "",
+                idSucursalConsulta > 0 ? idSucursalConsulta : 0,
+                desde,
+                hasta,
+                "",
+                0,
+                0);
+
+            // Clave por codigo dentro de ESTA sucursal: cada llamada tiene su propio diccionario, asi el stock al
+            // cierre de una sucursal nunca se mezcla con el de otra.
+            var stockCierrePorCorte = new Dictionary<long, decimal>();
+            if (traerStockCierre)
+            {
+                var dtStockCierre = _oCorteN.CierreStockWeb(
+                    "",
+                    idSucursalConsulta > 0 ? idSucursalConsulta : 0,
+                    hasta,
+                    hasta,
+                    "",
+                    0,
+                    0);
+
+                if (dtStockCierre != null)
+                {
+                    foreach (System.Data.DataRow row in dtStockCierre.Rows)
+                    {
+                        long codigo = LeerLong(row, "Codigo");
+                        if (codigo > 0)
+                        {
+                            decimal stockCierre = LeerDecimal(row, "Faltante");
+                            stockCierrePorCorte[codigo] = stockCierre;
+                        }
+                    }
+                }
+            }
+
+            if (dt == null || dt.Rows.Count == 0)
+                return;
 
             bool tieneColumnaStockCierre = dt.Columns.Contains("Stock.Cierre");
 
@@ -624,12 +839,13 @@ namespace WebCore.Controllers
                     IdCorte = idCorte,
                     Codigo = codigo,
                     Producto = LeerString(row, "Corte"),
-                    IdSucursal = model.SucursalId,
+                    IdSucursal = idSucursalFila,
                     Sucursal = LeerString(row, "Sucursal"),
                     TipoProducto = corteMeta != null ? (corteMeta.Tipo ?? "") : "",
                     MarcaId = corteMeta != null && corteMeta.Marca != null ? corteMeta.Marca.IdPersona : 0,
                     Marca = corteMeta != null ? (corteMeta.MarcaNombre ?? "") : "",
-                    FechaUltimoCierre = model.FechaDesde,
+                    FechaUltimoCierre = desde,
+                    FechaHastaConsulta = hasta,
                     StockInicial = LeerDecimal(row, "Stock.Ini"),
                     Compras = LeerDecimal(row, "Compras"),
                     IngresoElaborado = LeerDecimal(row, "Ingr.Elab"),
@@ -650,27 +866,6 @@ namespace WebCore.Controllers
                     EstadoStock = estado
                 });
             }
-
-            model.FilasStockActual = model.FilasStockActual
-                .OrderBy(x => x.Codigo)
-                .ThenBy(x => x.Producto)
-                .ThenBy(x => x.Sucursal)
-                .ToList();
-
-            model.HayResultados = model.FilasStockActual.Count > 0;
-            if (!model.HayResultados)
-            {
-                model.Mensaje = "No se encontraron datos para los filtros principales seleccionados.";
-                return;
-            }
-
-            model.Totales.TotalKg = model.FilasStockActual.Sum(x => x.StockActual);
-            model.Totales.TotalIngresos = model.FilasStockActual.Sum(x => x.TotalIngresos);
-            model.Totales.TotalEgresos = model.FilasStockActual.Sum(x => x.TotalEgresos);
-            model.Totales.CantidadProductos = model.FilasStockActual.Select(x => x.IdCorte).Distinct().Count();
-            model.Totales.CantidadRegistros = model.FilasStockActual.Count;
-            model.Mensaje = "Reporte cargado. Los filtros secundarios se aplican en vivo sobre los datos visibles.";
-            model.MostrarGrafico = false;
         }
 
         private void CargarReporteVentasPorProducto(ReportesViewModel model, string[] periodoComparativoDesde)
@@ -697,83 +892,106 @@ namespace WebCore.Controllers
 
             var filas = new Dictionary<string, ReporteVentasProductoFilaVm>(StringComparer.OrdinalIgnoreCase);
 
+            // Una sucursal -> [id]; todas -> [0] (una consulta, como siempre); varias -> una consulta por sucursal.
+            var idsConsulta = IdsParaConsulta(model);
+
             foreach (var periodo in model.PeriodosComparativosVentas)
             {
-                var dt = _oCorteN.TotalPorCortesVendidos(
-                    model.BusquedaProducto,
-                    model.SucursalId,
-                    periodo.FechaDesde,
-                    periodo.FechaHasta,
-                    model.TipoProducto,
-                    0,
-                    model.MarcaId);
-
-                if (dt == null)
-                    continue;
-
-                foreach (System.Data.DataRow row in dt.Rows)
+                for (int indiceConsulta = 0; indiceConsulta < idsConsulta.Count; indiceConsulta++)
                 {
-                    long codigo = LeerLongPrimeraCoincidencia(row, "Codigo", "codigo");
-                    string producto = LeerStringPrimeraCoincidencia(row, "Corte", "Producto", "corte");
-                    int idCorte = LeerIntPrimeraCoincidencia(row, "idCorte", "IdCorte");
-                    Entidades.Corte corteMeta = null;
+                    var dt = _oCorteN.TotalPorCortesVendidos(
+                        model.BusquedaProducto,
+                        idsConsulta[indiceConsulta],
+                        periodo.FechaDesde,
+                        periodo.FechaHasta,
+                        model.TipoProducto,
+                        0,
+                        model.MarcaId);
 
-                    if (idCorte > 0)
-                        cortes.TryGetValue(idCorte, out corteMeta);
-
-                    if (corteMeta == null && codigo > 0)
-                    {
-                        cortesPorCodigo.TryGetValue(codigo, out corteMeta);
-                        if (corteMeta != null)
-                            idCorte = corteMeta.IdCorte;
-                    }
-
-                    if (corteMeta == null && !string.IsNullOrWhiteSpace(producto))
-                    {
-                        cortesPorNombre.TryGetValue(NormalizarClaveProducto(producto), out corteMeta);
-                        if (corteMeta != null)
-                            idCorte = corteMeta.IdCorte;
-                    }
-
-                    string productoNormalizado = !string.IsNullOrWhiteSpace(producto)
-                        ? producto
-                        : corteMeta != null
-                            ? (!string.IsNullOrWhiteSpace(corteMeta.CorteDesc) ? corteMeta.CorteDesc : (corteMeta.corte ?? ""))
-                            : "";
-
-                    var filaKey = idCorte > 0
-                        ? "ID:" + idCorte.ToString(CultureInfo.InvariantCulture)
-                        : codigo > 0
-                            ? "COD:" + codigo.ToString(CultureInfo.InvariantCulture)
-                            : "NOM:" + NormalizarClaveProducto(productoNormalizado);
-
-                    if (string.Equals(filaKey, "NOM:", StringComparison.OrdinalIgnoreCase))
+                    if (dt == null)
                         continue;
 
-                    ReporteVentasProductoFilaVm fila;
-                    if (!filas.TryGetValue(filaKey, out fila))
+                    foreach (System.Data.DataRow row in dt.Rows)
                     {
-                        fila = new ReporteVentasProductoFilaVm
+                        long codigo = LeerLongPrimeraCoincidencia(row, "Codigo", "codigo");
+                        string producto = LeerStringPrimeraCoincidencia(row, "Corte", "Producto", "corte");
+                        int idCorte = LeerIntPrimeraCoincidencia(row, "idCorte", "IdCorte");
+                        Entidades.Corte corteMeta = null;
+
+                        if (idCorte > 0)
+                            cortes.TryGetValue(idCorte, out corteMeta);
+
+                        if (corteMeta == null && codigo > 0)
                         {
-                            IdCorte = idCorte,
-                            Codigo = codigo,
-                            Producto = productoNormalizado,
-                            TipoProducto = corteMeta != null ? (corteMeta.Tipo ?? "") : "",
-                            MarcaId = corteMeta != null && corteMeta.Marca != null ? corteMeta.Marca.IdPersona : 0,
-                            Marca = corteMeta != null ? (corteMeta.MarcaNombre ?? "") : ""
-                        };
-                        filas[filaKey] = fila;
+                            cortesPorCodigo.TryGetValue(codigo, out corteMeta);
+                            if (corteMeta != null)
+                                idCorte = corteMeta.IdCorte;
+                        }
+
+                        if (corteMeta == null && !string.IsNullOrWhiteSpace(producto))
+                        {
+                            cortesPorNombre.TryGetValue(NormalizarClaveProducto(producto), out corteMeta);
+                            if (corteMeta != null)
+                                idCorte = corteMeta.IdCorte;
+                        }
+
+                        string productoNormalizado = !string.IsNullOrWhiteSpace(producto)
+                            ? producto
+                            : corteMeta != null
+                                ? (!string.IsNullOrWhiteSpace(corteMeta.CorteDesc) ? corteMeta.CorteDesc : (corteMeta.corte ?? ""))
+                                : "";
+
+                        var filaKey = idCorte > 0
+                            ? "ID:" + idCorte.ToString(CultureInfo.InvariantCulture)
+                            : codigo > 0
+                                ? "COD:" + codigo.ToString(CultureInfo.InvariantCulture)
+                                : "NOM:" + NormalizarClaveProducto(productoNormalizado);
+
+                        if (string.Equals(filaKey, "NOM:", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        ReporteVentasProductoFilaVm fila;
+                        if (!filas.TryGetValue(filaKey, out fila))
+                        {
+                            fila = new ReporteVentasProductoFilaVm
+                            {
+                                IdCorte = idCorte,
+                                Codigo = codigo,
+                                Producto = productoNormalizado,
+                                TipoProducto = corteMeta != null ? (corteMeta.Tipo ?? "") : "",
+                                MarcaId = corteMeta != null && corteMeta.Marca != null ? corteMeta.Marca.IdPersona : 0,
+                                Marca = corteMeta != null ? (corteMeta.MarcaNombre ?? "") : ""
+                            };
+                            filas[filaKey] = fila;
+                        }
+
+                        if (string.IsNullOrWhiteSpace(fila.Producto))
+                            fila.Producto = productoNormalizado;
+
+                        decimal kg = LeerDecimalPrimeraCoincidencia(row, "Total Kgs", "Total Kg", "Kgs", "Kg", "cantKg", "CantKg");
+                        decimal importe = LeerDecimalPrimeraCoincidencia(row, "totalS", "Total $", "Total", "Importe", "Total Importe");
+
+                        // Con varias sucursales, un producto que ya trajo otra sucursal en este periodo se SUMA a su
+                        // valor (la primera consulta agrega como siempre).
+                        var valorExistente = indiceConsulta > 0
+                            ? fila.ValoresPeriodo.FirstOrDefault(x => string.Equals(x.PeriodoId, periodo.Id, StringComparison.OrdinalIgnoreCase))
+                            : null;
+
+                        if (valorExistente != null)
+                        {
+                            valorExistente.Kg += kg;
+                            valorExistente.Importe += importe;
+                        }
+                        else
+                        {
+                            fila.ValoresPeriodo.Add(new ReporteVentasProductoValorVm
+                            {
+                                PeriodoId = periodo.Id,
+                                Kg = kg,
+                                Importe = importe
+                            });
+                        }
                     }
-
-                    if (string.IsNullOrWhiteSpace(fila.Producto))
-                        fila.Producto = productoNormalizado;
-
-                    fila.ValoresPeriodo.Add(new ReporteVentasProductoValorVm
-                    {
-                        PeriodoId = periodo.Id,
-                        Kg = LeerDecimalPrimeraCoincidencia(row, "Total Kgs", "Total Kg", "Kgs", "Kg", "cantKg", "CantKg"),
-                        Importe = LeerDecimalPrimeraCoincidencia(row, "totalS", "Total $", "Total", "Importe", "Total Importe")
-                    });
                 }
             }
 
@@ -817,6 +1035,46 @@ namespace WebCore.Controllers
             model.Mensaje = "Reporte cargado. Los totales visibles suman todos los periodos comparados.";
         }
 
+        // Trae el stock actual (desde el cierre dado hasta ahora) de una sucursal (0 = todas) y lo vuelca en
+        // stockPorSucursal[idSucursal][codigo]. La sucursal de cada valor es la de la fila del resultado.
+        private void CargarStockActualProyeccion(
+            Dictionary<int, Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>> stockPorSucursal,
+            ReportesViewModel model,
+            int idSucursalConsulta,
+            DateTime fechaDesde)
+        {
+            var dtStockActual = _oCorteN.CierreStockWeb(
+                model.BusquedaProducto,
+                idSucursalConsulta,
+                fechaDesde,
+                DateTime.Now,
+                model.TipoProducto,
+                0,
+                model.MarcaId);
+
+            if (dtStockActual == null)
+                return;
+
+            foreach (System.Data.DataRow row in dtStockActual.Rows)
+            {
+                var codigo = LeerLong(row, "Codigo");
+                if (codigo <= 0)
+                    continue;
+
+                int idSucursalFila = LeerInt(row, "idSucursal");
+                if (!stockPorSucursal.TryGetValue(idSucursalFila, out var stockPorCodigo))
+                {
+                    stockPorCodigo = new Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>();
+                    stockPorSucursal[idSucursalFila] = stockPorCodigo;
+                }
+
+                stockPorCodigo[codigo] = (
+                    LeerDecimalPrimeraCoincidencia(row, "Faltante", "DIF"),
+                    LeerDecimal(row, "promedio"),
+                    LeerBool(row, "Pesable"));
+            }
+        }
+
         private void CargarReporteProyeccionVentasVsStock(ReportesViewModel model, string[] periodoComparativoDesde)
         {
             model.ConsultaRealizada = true;
@@ -840,14 +1098,12 @@ namespace WebCore.Controllers
                 .GroupBy(x => NormalizarClaveProducto(x.corte))
                 .ToDictionary(g => g.Key, g => g.First());
 
-            var cierres = FiltrarCierresPorSucursal(ObtenerCierresDisponibles(), model.SucursalId);
-            var fechaUltimoCierreStock = cierres.FirstOrDefault() != null
-                ? cierres.First().FechaCompra
-                : DateTime.Today;
+            var cierresDisponibles = ObtenerCierresDisponibles();
             var sucursalesBase = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
-            var sucursalesProyeccion = (model.SucursalId > 0
-                    ? sucursalesBase.Where(x => x != null && x.IdSucursal == model.SucursalId)
-                    : sucursalesBase.Where(x => x != null && x.IdSucursal > 0))
+            // Sucursales tildadas (una, varias o todas): una columna por cada una.
+            var sucursalesProyeccion = sucursalesBase
+                .Where(x => x != null && x.IdSucursal > 0 &&
+                            (model.SucursalesIds.Count == 0 || model.SucursalesIds.Contains(x.IdSucursal)))
                 .GroupBy(x => x.IdSucursal)
                 .Select(g => g.First())
                 .OrderBy(x => x.SucursalNombre)
@@ -862,34 +1118,27 @@ namespace WebCore.Controllers
                 .ToList();
 
             var stockPorSucursal = new Dictionary<int, Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>>();
-            var dtStockActualTodas = _oCorteN.CierreStockWeb(
-                model.BusquedaProducto,
-                model.SucursalId > 0 ? model.SucursalId : 0,
-                fechaUltimoCierreStock,
-                DateTime.Now,
-                model.TipoProducto,
-                0,
-                model.MarcaId);
-
-            if (dtStockActualTodas != null)
+            if (model.SucursalesIds.Count <= 1)
             {
-                foreach (System.Data.DataRow row in dtStockActualTodas.Rows)
+                // Una sola sucursal: la consulta de siempre, desde su ultimo cierre.
+                var cierres = FiltrarCierresPorSucursal(cierresDisponibles, model.SucursalId);
+                var fechaUltimoCierreStock = cierres.FirstOrDefault() != null
+                    ? cierres.First().FechaCompra
+                    : DateTime.Today;
+                CargarStockActualProyeccion(stockPorSucursal, model, model.SucursalId > 0 ? model.SucursalId : 0, fechaUltimoCierreStock);
+            }
+            else
+            {
+                // Varias sucursales (o todas): el stock de cada una parte de SU ultimo cierre. Antes se hacia una sola
+                // consulta con el cierre mas reciente de cualquier sucursal, y las que tenian su cierre anterior
+                // quedaban con el stock mal (sin su stock inicial); si los cierres coinciden da lo mismo.
+                foreach (var sucursal in sucursalesProyeccion)
                 {
-                    var codigo = LeerLong(row, "Codigo");
-                    if (codigo <= 0)
-                        continue;
-
-                    int idSucursalFila = LeerInt(row, "idSucursal");
-                    if (!stockPorSucursal.TryGetValue(idSucursalFila, out var stockPorCodigo))
-                    {
-                        stockPorCodigo = new Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>();
-                        stockPorSucursal[idSucursalFila] = stockPorCodigo;
-                    }
-
-                    stockPorCodigo[codigo] = (
-                        LeerDecimalPrimeraCoincidencia(row, "Faltante", "DIF"),
-                        LeerDecimal(row, "promedio"),
-                        LeerBool(row, "Pesable"));
+                    var cierresSucursal = FiltrarCierresPorSucursal(cierresDisponibles, sucursal.IdSucursal);
+                    var fechaUltimoCierreSucursal = cierresSucursal.FirstOrDefault() != null
+                        ? cierresSucursal.First().FechaCompra
+                        : DateTime.Today;
+                    CargarStockActualProyeccion(stockPorSucursal, model, sucursal.IdSucursal, fechaUltimoCierreSucursal);
                 }
             }
 
@@ -1136,11 +1385,14 @@ namespace WebCore.Controllers
                 })
                 .ToList();
 
+            // Una sucursal -> [id]; todas -> [0] (consultas con -1/0 como siempre); varias -> se suman por sucursal.
+            var idsConsultaBalance = IdsParaConsulta(model);
+
             foreach (var periodo in model.PeriodosComparativosVentas)
             {
                 var metricas = CalcularBalancePeriodo(
                     periodo,
-                    model.SucursalId,
+                    idsConsultaBalance,
                     model.IncluirVentasCuentaCorrienteBalance);
 
                 model.PeriodosBalance.Add(metricas.Periodo);
@@ -1167,20 +1419,83 @@ namespace WebCore.Controllers
                 : "Reporte cargado. El balance excluye ventas en cuenta corriente.";
         }
 
+        // idsConsulta: una sola sucursal [id], todas [0] (una consulta con -1/0), o varias (se consulta cada una y se
+        // suma: ventas, kilos, compras, gastos y cobros/pagos son aditivos).
         private BalancePeriodoResultado CalcularBalancePeriodo(
             ReportePeriodoComparativoVm periodo,
-            int sucursalId,
+            List<int> idsConsulta,
             bool incluirVentasCuentaCorriente)
         {
-            int sucursalConsulta = sucursalId > 0 ? sucursalId : -1;
             DateTime desde = periodo.FechaDesde.Date;
             DateTime hasta = periodo.FechaHasta.Date;
             DateTime hastaFinDia = hasta.AddDays(1).AddMilliseconds(-1);
 
-            var ventas = (_oVentaN.getVentasBalancePeriodo(desde, hasta, sucursalConsulta) ?? new List<Entidades.Venta>())
-                .Where(x => x != null)
-                .Where(x => !string.Equals((x.Estado ?? "").Trim(), "ANULADO", StringComparison.OrdinalIgnoreCase))
+            var ventas = new List<Entidades.Venta>();
+            decimal kilosVendidosPesables = 0m;
+            decimal kilosVendidosPesablesGrafico = 0m;
+            decimal totalCompras = 0m;
+            var gastosPorCategoria = new List<ReporteBalanceGastoCategoriaVm>();
+            decimal totalCobros = 0m;
+            decimal totalPagos = 0m;
+
+            foreach (int idSucursalConsulta in idsConsulta)
+            {
+                // 0 = todas las sucursales: las consultas de ventas/gastos/pagos usan -1, las de compras 0 (como siempre).
+                int sucursalConsulta = idSucursalConsulta > 0 ? idSucursalConsulta : -1;
+
+                ventas.AddRange((_oVentaN.getVentasBalancePeriodo(desde, hasta, sucursalConsulta) ?? new List<Entidades.Venta>())
+                    .Where(x => x != null)
+                    .Where(x => !string.Equals((x.Estado ?? "").Trim(), "ANULADO", StringComparison.OrdinalIgnoreCase)));
+
+                kilosVendidosPesables += _oVentaN.getTotalKgsPesablesBalancePeriodo(desde, hasta, sucursalConsulta, true);
+                kilosVendidosPesablesGrafico += _oVentaN.getTotalKgsPesablesBalancePeriodo(desde, hasta, sucursalConsulta, incluirVentasCuentaCorriente);
+
+                System.Data.DataTable dtCompras = _oCompraN.obtenerCompras(
+                    idSucursalConsulta > 0 ? idSucursalConsulta : 0,
+                    "Todos",
+                    "",
+                    desde,
+                    hastaFinDia,
+                    null) ?? new System.Data.DataTable();
+
+                totalCompras += dtCompras.AsEnumerable()
+                    .Where(EsCompraEconomica)
+                    .Sum(x => LeerDecimal(x, "totalS"));
+
+                System.Data.DataTable dtGastosAgrupados = _oCierreN.obtenerGastosAgrupadosBalance(desde, hastaFinDia, sucursalConsulta) ?? new System.Data.DataTable();
+                gastosPorCategoria.AddRange(dtGastosAgrupados.AsEnumerable()
+                    .Select(row => new ReporteBalanceGastoCategoriaVm
+                    {
+                        PeriodoId = periodo.Id,
+                        Categoria = string.IsNullOrWhiteSpace(LeerString(row, "Categoria")) ? "Otros gastos" : LeerString(row, "Categoria"),
+                        Total = LeerDecimal(row, "Total")
+                    }));
+
+                System.Data.DataTable dtPagosBalance = _oCuentaCorrienteN.obtenerTotalesPagosBalance(desde, hasta, sucursalConsulta) ?? new System.Data.DataTable();
+                System.Data.DataRow rowPagosBalance = dtPagosBalance.Rows.Count > 0 ? dtPagosBalance.Rows[0] : null;
+                totalCobros += rowPagosBalance != null ? LeerDecimal(rowPagosBalance, "TotalCobros") : 0m;
+                totalPagos += rowPagosBalance != null ? LeerDecimal(rowPagosBalance, "TotalPagos") : 0m;
+            }
+
+            // Varias sucursales: la misma categoria de gasto que trae mas de una se junta en una sola fila.
+            // (Con una sola consulta se deja tal cual vino.)
+            if (idsConsulta.Count > 1)
+            {
+                gastosPorCategoria = gastosPorCategoria
+                    .GroupBy(x => x.Categoria, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => new ReporteBalanceGastoCategoriaVm
+                    {
+                        PeriodoId = periodo.Id,
+                        Categoria = g.First().Categoria,
+                        Total = g.Sum(x => x.Total)
+                    })
+                    .ToList();
+            }
+
+            gastosPorCategoria = gastosPorCategoria
+                .OrderByDescending(x => x.Total)
                 .ToList();
+            decimal totalGastos = gastosPorCategoria.Sum(x => x.Total);
 
             decimal ventasCuentaCorriente = ventas
                 .Where(EsVentaCuentaCorriente)
@@ -1195,39 +1510,8 @@ namespace WebCore.Controllers
             decimal ventasGrafico = ventasConsideradasGrafico.Sum(x => Convert.ToDecimal(x.TotalImporte));
             decimal kilosVendidosGrafico = ventasConsideradasGrafico.Sum(x => Convert.ToDecimal(x.TotalKgs));
             int cantidadVentasGrafico = ventasConsideradasGrafico.Count;
-            decimal kilosVendidosPesables = _oVentaN.getTotalKgsPesablesBalancePeriodo(desde, hasta, sucursalConsulta, true);
-            decimal kilosVendidosPesablesGrafico = _oVentaN.getTotalKgsPesablesBalancePeriodo(desde, hasta, sucursalConsulta, incluirVentasCuentaCorriente);
             decimal ventasEfectivo = ventas.Sum(CalcularVentaEfectivo);
             decimal ventasBancarizadas = ventas.Sum(CalcularVentaBancarizada);
-
-            System.Data.DataTable dtCompras = _oCompraN.obtenerCompras(
-                sucursalId > 0 ? sucursalId : 0,
-                "Todos",
-                "",
-                desde,
-                hastaFinDia,
-                null) ?? new System.Data.DataTable();
-
-            decimal totalCompras = dtCompras.AsEnumerable()
-                .Where(EsCompraEconomica)
-                .Sum(x => LeerDecimal(x, "totalS"));
-
-            System.Data.DataTable dtGastosAgrupados = _oCierreN.obtenerGastosAgrupadosBalance(desde, hastaFinDia, sucursalConsulta) ?? new System.Data.DataTable();
-            var gastosPorCategoria = dtGastosAgrupados.AsEnumerable()
-                .Select(row => new ReporteBalanceGastoCategoriaVm
-                {
-                    PeriodoId = periodo.Id,
-                    Categoria = string.IsNullOrWhiteSpace(LeerString(row, "Categoria")) ? "Otros gastos" : LeerString(row, "Categoria"),
-                    Total = LeerDecimal(row, "Total")
-                })
-                .OrderByDescending(x => x.Total)
-                .ToList();
-            decimal totalGastos = gastosPorCategoria.Sum(x => x.Total);
-
-            System.Data.DataTable dtPagosBalance = _oCuentaCorrienteN.obtenerTotalesPagosBalance(desde, hasta, sucursalConsulta) ?? new System.Data.DataTable();
-            System.Data.DataRow rowPagosBalance = dtPagosBalance.Rows.Count > 0 ? dtPagosBalance.Rows[0] : null;
-            decimal totalCobros = rowPagosBalance != null ? LeerDecimal(rowPagosBalance, "TotalCobros") : 0m;
-            decimal totalPagos = rowPagosBalance != null ? LeerDecimal(rowPagosBalance, "TotalPagos") : 0m;
 
             decimal baseBalance = incluirVentasCuentaCorriente ? totalVentas : ventasConsumidorFinal;
             decimal balance = baseBalance - totalCompras - totalGastos;
