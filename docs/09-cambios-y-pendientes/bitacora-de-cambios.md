@@ -1,6 +1,14 @@
 # Bitacora de cambios
 
-## 2026-10-13 (la mas reciente) - Eliminar pagos y cobros de la propia caja abierta (sin el permiso de edicion de pagos)
+## 2026-10-13 (la mas reciente) - Reportes: selector de sucursales con casillas (1, varias o todas); los de stock calculan cada sucursal con sus cierres
+
+- **Pedido**: replicar en `/Reportes` lo hecho en Existencia por sucursales (antes: una sucursal o "Todas"), sin romper lo que funciona.
+- **Cambio**: dropdown de casillas en los 6 reportes. Ventas por Producto, Proyección y Balance suman las sucursales tildadas (Proyección: una columna por sucursal). Stock Actual / Cierre Stock / Stock Retroactivo con 2+ sucursales: cada una con SUS cierres, una fila por producto y sucursal agrupadas por producto (color alternado + línea de corte), fechas automáticas con aviso; sucursales sin cierres se omiten avisando. Con 1 sucursal todo queda como antes. Enlaces viejos `?idSucursal=N` siguen andando.
+- **Corrección incluida**: Proyección con "Todas" calculaba el stock de TODAS las sucursales desde el último cierre de cualquiera (San Martín salía con el stock mal); ahora cada sucursal parte de su último cierre (con 1 sucursal no cambia; si los cierres coinciden, da lo mismo).
+- **Verificado** (local, login real): WebCore compila (0 errores); línea base de los 6 reportes con 1 sucursal y "Todas" idéntica antes/después (salvo la corrección de Proyección "Todas"); stock con 2 sucursales = unión exacta de los reportes de cada una; Ventas por Producto, Balance y gráfico con el camino de varias sucursales forzado dieron igual que "Todas" (también con períodos comparativos); selector, modos de fechas por tipo de reporte, orden y filtros en vivo con la agrupación por producto probados en el navegador. **NO desplegado.** PENDIENTE: probar con 3+ sucursales reales y medir tiempos en SQL Server (SM / San Lorenzo): con varias sucursales hay una consulta por cada una.
+- Detalle y alternativas descartadas: `docs/DECISIONS.md` (2026-10-13, Reportes).
+
+## 2026-10-13 - Eliminar pagos y cobros de la propia caja abierta (sin el permiso de edicion de pagos)
 
 - **Problema**: un cajero podia modificar un pago/cobro desde el POS pero el boton Eliminar no le aparecia sin el permiso de edicion de pagos (caso real en Servidor SM).
 - **Cambio**: ademas del permiso, se puede eliminar un pago/cobro cargado por el propio operador desde la apertura de su caja abierta (misma sucursal). Regla en `Negocio.PagoEnCajaAbierta`; el servidor la vuelve a aplicar en `EliminarPago`. Cambiar la persona sigue exigiendo el permiso. Decision y riesgos: `docs/DECISIONS.md` (2026-10-13).
