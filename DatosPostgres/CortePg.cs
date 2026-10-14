@@ -16,7 +16,7 @@ namespace DatosPostgres
     //
     // StockCorteSucursal: NUNCA se porta a Postgres (tabla obsoleta, 0 filas reales, confirmado
     // sin lector/escritor real en C#) -- eliminarCorte omite ese paso a proposito, no es un gap.
-    public class CortePg : Contratos.ICorteRepository, Contratos.ICorteBusquedaSimpleRepository
+    public class CortePg : Contratos.ICorteRepository, Contratos.ICorteBusquedaSimpleRepository, Contratos.IActividadStockRepository
     {
         private readonly string _connectionString;
         private readonly int _idEmpresa;
@@ -2693,61 +2693,13 @@ namespace DatosPostgres
             return dt;
         }
 
-        // Traduccion de a_ExistenciaStockPorSucursales (SP re-escrito 2026-08, mismos 2
-        // fixes de calculo que a_CierreStockWeb -- signo de EgresoStock y
-        // FechaUltimoCierre acotado por @fechaHasta -- mas un fix propio de filtrado por
-        // empresa en el ancla de la CTE recursiva. Verificado directo contra la base
-        // viva con sp_helptext, no contra el snapshot de docs/08-relevamiento/. Mismo
-        // patron de WITH RECURSIVE que CierreStockWeb, con FechaUltimoCierre calculado
-        // por sucursal (no un @fechaDesde fijo) y el CROSS APPLY final resuelto como
-        // columnas calculadas directas (no hace falta LATERAL, son expresiones simples).
-        //
-        // PERFORMANCE (2026-09-21): mismo problema y mismo arreglo que CierreStockWeb (ver el
-        // comentario de ese metodo y docs/DECISIONS.md): los CTE sucursales /
-        // corteefectivoporsucursal / mapacorte se materializan como tablas TEMP (ON COMMIT DROP)
-        // con ANALYZE (+ indice en mapacorte) via DbPg.ReaderConPreparacion, y la consulta
-        // principal las lee con estadisticas reales en vez de los ~25 filas que estima Postgres
-        // para un CTE recursivo. Los nombres de las tablas temp coinciden con los de los CTE
-        // originales a proposito, asi la consulta principal quedo textualmente igual.
-        public List<Entidades.ExistenciaStockPorSucursalPlanoVm> ObtenerExistenciaPorSucursalesPlano(
-            string texto, int idSucursal, DateTime? fechaHasta, string tipo, int idProveedor, int idMarca, int idCorte, bool soloConStock)
-        {
-            DateTime fechaHastaEfectiva = fechaHasta ?? DateTime.Now;
-            string textoLimpio = (texto ?? "").Trim();
-
-            // Paso 1: sucursales pedidas, cada una con la fecha de su ultimo Cierre Stock <= @fechaHasta.
-            // Equivalente al LEFT JOIN corteporcompra + MAX(fechacompra) original (el ultimo cierre
-            // que tiene AL MENOS UNA linea de esa sucursal), pero con EXISTS: recorre solo los
-            // cierres (~1.2k) en vez de unir las ~113k lineas de compra (309 ms -> pocos ms).
-            const string sqlPrepSucursales = @"
-                CREATE TEMP TABLE sucursales ON COMMIT DROP AS (
-                    SELECT s.idsucursal, s.sucursal,
-                           COALESCE(uc.fechaultimocierre, '1900-01-01'::timestamp) AS fechaultimocierre
-                    FROM sucursal s
-                    LEFT JOIN LATERAL (
-                        SELECT MAX(c.fechacompra) AS fechaultimocierre
-                        FROM compras c
-                        WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = '' AND c.fechacompra <= @fechaHasta
-                          AND EXISTS (SELECT 1 FROM corteporcompra cpc WHERE cpc.idcompra = c.idcompra AND cpc.idsucursal = s.idsucursal)
-                    ) uc ON true
-                    WHERE (@idSucursal = 0 OR s.idsucursal = @idSucursal) AND s.idempresa = @idEmpresa
-                )";
-
-            // Paso 1b: ventas del periodo (desde el ultimo cierre de su sucursal hasta @fechaHasta).
-            // Se materializan aparte porque la fecha de corte viene de OTRA tabla (sucursales): el
-            // planificador no puede estimar cuantas ventas caen ahi (estimaba ~95k, reales ~276) y
-            // resolvia el JOIN con lineaventa leyendola ENTERA (1M+ filas, y crece con el historial
-            // de todas las empresas). Con la tabla chica y ANALYZE usa el indice de idventa.
-            const string sqlPrepVentasPeriodo = @"
-                CREATE TEMP TABLE ventasperiodo ON COMMIT DROP AS (
-                    SELECT v.idventa, v.idsucursal
-                    FROM ventas v
-                    INNER JOIN sucursales s ON s.idsucursal = v.idsucursal
-                    WHERE v.fechaventa >= s.fechaultimocierre AND v.fechaventa <= @fechaHasta
-                )";
-
-            // Paso 2: valor efectivo de independiente/encierrestock por (corte, sucursal).
-            const string sqlPrepCorteEfectivo = @"
+        // SQL de preparacion COMPARTIDO por ObtenerExistenciaPorSucursalesPlano y ObtenerActividadStock: valor efectivo de
+        // independiente/encierrestock por (corte, sucursal) y mapa corte origen -> corte de stock con su factor (jerarquia
+        // madre/hija). Se movieron aqui TAL CUAL estaban dentro de ObtenerExistenciaPorSucursalesPlano (2026-10-13) para no
+        // duplicar la parte mas delicada del calculo: si cambia la jerarquia, cambia en un solo lugar y la existencia y la
+        // actividad ("Que pedir") siguen coincidiendo. Ambas requieren una tabla temporal `sucursales` y los parametros
+        // @idEmpresa e @idCorte (0 = sin filtro).
+        private const string SqlPrepCorteEfectivoPorSucursal = @"
                 CREATE TEMP TABLE corteefectivoporsucursal ON COMMIT DROP AS (
                     -- Ver Datos/DB-Procedures/20260917-Alter_a_ExistenciaStockPorSucursales_
                     -- JerarquiaPorSucursal.sql (SQL Server, ya probado) para el razonamiento
@@ -2768,9 +2720,7 @@ namespace DatosPostgres
                     WHERE c.idempresa = @idEmpresa
                 )";
 
-            // Paso 3: mapa corte origen -> corte de stock (con factor), por recursion sobre la
-            // jerarquia madre/hija. Es la parte cara: se calcula una vez y se indexa.
-            const string sqlPrepMapaCorte = @"
+        private const string SqlPrepMapaCorte = @"
                 CREATE TEMP TABLE mapacorte ON COMMIT DROP AS
                 WITH RECURSIVE
                 selfmap AS (
@@ -2837,6 +2787,66 @@ namespace DatosPostgres
                     GROUP BY idsucursal, idcorteorigen, idcortestock
                 )
                 SELECT idsucursal, idcorteorigen, idcortestock, factor FROM mapacorte";
+
+        // Traduccion de a_ExistenciaStockPorSucursales (SP re-escrito 2026-08, mismos 2
+        // fixes de calculo que a_CierreStockWeb -- signo de EgresoStock y
+        // FechaUltimoCierre acotado por @fechaHasta -- mas un fix propio de filtrado por
+        // empresa en el ancla de la CTE recursiva. Verificado directo contra la base
+        // viva con sp_helptext, no contra el snapshot de docs/08-relevamiento/. Mismo
+        // patron de WITH RECURSIVE que CierreStockWeb, con FechaUltimoCierre calculado
+        // por sucursal (no un @fechaDesde fijo) y el CROSS APPLY final resuelto como
+        // columnas calculadas directas (no hace falta LATERAL, son expresiones simples).
+        //
+        // PERFORMANCE (2026-09-21): mismo problema y mismo arreglo que CierreStockWeb (ver el
+        // comentario de ese metodo y docs/DECISIONS.md): los CTE sucursales /
+        // corteefectivoporsucursal / mapacorte se materializan como tablas TEMP (ON COMMIT DROP)
+        // con ANALYZE (+ indice en mapacorte) via DbPg.ReaderConPreparacion, y la consulta
+        // principal las lee con estadisticas reales en vez de los ~25 filas que estima Postgres
+        // para un CTE recursivo. Los nombres de las tablas temp coinciden con los de los CTE
+        // originales a proposito, asi la consulta principal quedo textualmente igual.
+        public List<Entidades.ExistenciaStockPorSucursalPlanoVm> ObtenerExistenciaPorSucursalesPlano(
+            string texto, int idSucursal, DateTime? fechaHasta, string tipo, int idProveedor, int idMarca, int idCorte, bool soloConStock)
+        {
+            DateTime fechaHastaEfectiva = fechaHasta ?? DateTime.Now;
+            string textoLimpio = (texto ?? "").Trim();
+
+            // Paso 1: sucursales pedidas, cada una con la fecha de su ultimo Cierre Stock <= @fechaHasta.
+            // Equivalente al LEFT JOIN corteporcompra + MAX(fechacompra) original (el ultimo cierre
+            // que tiene AL MENOS UNA linea de esa sucursal), pero con EXISTS: recorre solo los
+            // cierres (~1.2k) en vez de unir las ~113k lineas de compra (309 ms -> pocos ms).
+            const string sqlPrepSucursales = @"
+                CREATE TEMP TABLE sucursales ON COMMIT DROP AS (
+                    SELECT s.idsucursal, s.sucursal,
+                           COALESCE(uc.fechaultimocierre, '1900-01-01'::timestamp) AS fechaultimocierre
+                    FROM sucursal s
+                    LEFT JOIN LATERAL (
+                        SELECT MAX(c.fechacompra) AS fechaultimocierre
+                        FROM compras c
+                        WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = '' AND c.fechacompra <= @fechaHasta
+                          AND EXISTS (SELECT 1 FROM corteporcompra cpc WHERE cpc.idcompra = c.idcompra AND cpc.idsucursal = s.idsucursal)
+                    ) uc ON true
+                    WHERE (@idSucursal = 0 OR s.idsucursal = @idSucursal) AND s.idempresa = @idEmpresa
+                )";
+
+            // Paso 1b: ventas del periodo (desde el ultimo cierre de su sucursal hasta @fechaHasta).
+            // Se materializan aparte porque la fecha de corte viene de OTRA tabla (sucursales): el
+            // planificador no puede estimar cuantas ventas caen ahi (estimaba ~95k, reales ~276) y
+            // resolvia el JOIN con lineaventa leyendola ENTERA (1M+ filas, y crece con el historial
+            // de todas las empresas). Con la tabla chica y ANALYZE usa el indice de idventa.
+            const string sqlPrepVentasPeriodo = @"
+                CREATE TEMP TABLE ventasperiodo ON COMMIT DROP AS (
+                    SELECT v.idventa, v.idsucursal
+                    FROM ventas v
+                    INNER JOIN sucursales s ON s.idsucursal = v.idsucursal
+                    WHERE v.fechaventa >= s.fechaultimocierre AND v.fechaventa <= @fechaHasta
+                )";
+
+            // Paso 2: valor efectivo de independiente/encierrestock por (corte, sucursal).
+            const string sqlPrepCorteEfectivo = SqlPrepCorteEfectivoPorSucursal;
+
+            // Paso 3: mapa corte origen -> corte de stock (con factor), por recursion sobre la
+            // jerarquia madre/hija. Es la parte cara: se calcula una vez y se indexa.
+            const string sqlPrepMapaCorte = SqlPrepMapaCorte;
 
             // Sentencias de preparacion, en orden. ANALYZE despues de cada tabla le da al
             // planificador las cardinalidades reales (razon de todo este cambio); el indice sirve
@@ -3080,6 +3090,138 @@ namespace DatosPostgres
                     p.AddWithValue("idMarca", idMarca);
                     p.AddWithValue("idCorte", idCorte);
                     p.AddWithValue("soloConStock", soloConStock);
+                });
+        }
+
+        // ===== "Qué pedir": actividad reciente y proveedor habitual (Contratos.IActividadStockRepository) =====
+        // Solo lectura. Detalle de la pantalla: docs/11-manual-de-uso/pantallas/Reposicion.Index.md.
+
+        // Salidas (ventas + consumo por elaboración) de cada producto que lleva stock, por sucursal. Reusa el MISMO mapa
+        // de jerarquía madre/hija que ObtenerExistenciaPorSucursalesPlano (SqlPrepCorteEfectivoPorSucursal +
+        // SqlPrepMapaCorte): una venta de un producto "hijo" cuenta para el producto que lleva el stock, con su factor.
+        // Así la actividad es coherente con el stock que muestra Existencia por sucursales.
+        //  - ventana: suma de kg/unidades de los últimos diasVentana días (para el consumo diario y la cobertura);
+        //  - historia: hasta diasHistoria días atrás, solo para encontrar la fecha de la última salida.
+        // El consumo por elaboración es lo que "vende" un insumo (sal, madejas, condimentos): sin él, esos productos
+        // parecerían no moverse nunca. Los movimientos entre sucursales NO cuentan (son traslados, no consumo).
+        // idSucursal 0 = todas. Devuelve solo pares con alguna salida dentro de la historia.
+        public List<Entidades.ActividadStockVm> ObtenerActividadStock(int idSucursal, int diasVentana, int diasHistoria)
+        {
+            if (diasVentana < 1) throw new ArgumentOutOfRangeException(nameof(diasVentana));
+            if (diasHistoria < diasVentana) diasHistoria = diasVentana;
+
+            DateTime ahora = DateTime.Now;
+            DateTime desdeVentana = ahora.AddDays(-diasVentana);
+            DateTime desdeHistoria = ahora.AddDays(-diasHistoria);
+
+            // El mapa de jerarquía solo necesita los ids de sucursal (no depende de la fecha del cierre).
+            const string sqlPrepSucursales = @"
+                CREATE TEMP TABLE sucursales ON COMMIT DROP AS (
+                    SELECT s.idsucursal, s.sucursal, '1900-01-01'::timestamp AS fechaultimocierre
+                    FROM sucursal s
+                    WHERE (@idSucursal = 0 OR s.idsucursal = @idSucursal) AND s.idempresa = @idEmpresa
+                )";
+
+            var sentenciasPreparacion = new[]
+            {
+                sqlPrepSucursales,
+                "ANALYZE sucursales",
+                SqlPrepCorteEfectivoPorSucursal,
+                "ANALYZE corteefectivoporsucursal",
+                SqlPrepMapaCorte,
+                "CREATE INDEX ON mapacorte (idsucursal, idcorteorigen)",
+                "ANALYZE mapacorte"
+            };
+
+            const string sql = @"
+                WITH ventasact AS (
+                    SELECT v.idsucursal, mc.idcortestock AS idcorte,
+                           MAX(v.fechaventa) AS ultimaventa,
+                           SUM(CASE WHEN v.fechaventa >= @desdeVentana
+                                    THEN (COALESCE(lv.cantkg,0) - COALESCE(lv.kgsajustetarj,0))::numeric(38,6) * mc.factor
+                                    ELSE 0 END) AS kg,
+                           COUNT(DISTINCT CASE WHEN v.fechaventa >= @desdeVentana THEN v.fechaventa::date END) AS diasconventa
+                    FROM ventas v
+                    INNER JOIN sucursales s ON s.idsucursal = v.idsucursal
+                    INNER JOIN lineaventa lv ON lv.idventa = v.idventa
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = lv.idcorte AND mc.idsucursal = v.idsucursal
+                    WHERE v.fechaventa >= @desdeHistoria AND v.fechaventa <= @ahora
+                    GROUP BY v.idsucursal, mc.idcortestock
+                ),
+                elabact AS (
+                    SELECT e.idsucursal, mc.idcortestock AS idcorte,
+                           MAX(e.fechaembutido) AS ultimaelab,
+                           SUM(CASE WHEN e.fechaembutido >= @desdeVentana
+                                    THEN COALESCE(cpe.kgutilizados,0)::numeric(38,6) * mc.factor
+                                    ELSE 0 END) AS kg
+                    FROM embutidos e
+                    INNER JOIN corteporembutido cpe ON cpe.idembutido = e.idembutido
+                    INNER JOIN sucursales s ON s.idsucursal = e.idsucursal
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpe.idcorte AND mc.idsucursal = e.idsucursal
+                    WHERE COALESCE(e.estado,'') = '' AND e.fechaembutido >= @desdeHistoria AND e.fechaembutido <= @ahora
+                    GROUP BY e.idsucursal, mc.idcortestock
+                )
+                SELECT COALESCE(v.idsucursal, e.idsucursal) AS idsucursal,
+                       COALESCE(v.idcorte, e.idcorte) AS idcorte,
+                       v.ultimaventa, e.ultimaelab,
+                       COALESCE(v.kg, 0)::numeric(18,3) AS ventasventana,
+                       COALESCE(e.kg, 0)::numeric(18,3) AS elaboracionventana,
+                       COALESCE(v.diasconventa, 0) AS diasconventa
+                FROM ventasact v
+                FULL OUTER JOIN elabact e ON e.idsucursal = v.idsucursal AND e.idcorte = v.idcorte;";
+
+            return DbPg.ReaderConPreparacion(_connectionString, _idEmpresa, sentenciasPreparacion, sql,
+                dr => new Entidades.ActividadStockVm
+                {
+                    IdSucursal = Convert.ToInt32(dr["idsucursal"]),
+                    IdCorte = Convert.ToInt32(dr["idcorte"]),
+                    UltimaVenta = dr["ultimaventa"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["ultimaventa"]),
+                    UltimaElaboracion = dr["ultimaelab"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["ultimaelab"]),
+                    VentasVentana = Convert.ToSingle(dr["ventasventana"]),
+                    ElaboracionVentana = Convert.ToSingle(dr["elaboracionventana"]),
+                    DiasConVentaVentana = Convert.ToInt32(dr["diasconventa"])
+                },
+                p =>
+                {
+                    p.AddWithValue("idSucursal", idSucursal);
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    // 0 = sin filtro de corte: SqlPrepMapaCorte lo espera (mismo parametro que la consulta de existencia).
+                    p.AddWithValue("idCorte", 0);
+                    p.AddWithValue("desdeVentana", desdeVentana);
+                    p.AddWithValue("desdeHistoria", desdeHistoria);
+                    p.AddWithValue("ahora", ahora);
+                });
+        }
+
+        // Un proveedor por producto: el de la compra mas reciente (corteproveedor.fechaultimacompra; sin fecha, el ultimo
+        // vinculo cargado). Un producto puede tener varios proveedores; para armar el pedido se usa el habitual.
+        // Los productos sin ningun proveedor cargado no aparecen (la pantalla los junta en "Sin proveedor").
+        public List<Entidades.ProveedorHabitualVm> ObtenerProveedoresHabituales(int idProveedorPreferido)
+        {
+            // El proveedor preferido (el que se filtró en pantalla) gana sobre el más reciente.
+            const string sql = @"
+                SELECT DISTINCT ON (cp.idcorte)
+                       cp.idcorte, cp.idproveedor, COALESCE(p.razonsocial, '') AS proveedor,
+                       cp.ultimoprecio, cp.fechaultimacompra
+                FROM corteproveedor cp
+                LEFT JOIN personas p ON p.idpersona = cp.idproveedor
+                WHERE cp.idempresa = @idEmpresa OR cp.idempresa = 0
+                ORDER BY cp.idcorte, (cp.idproveedor = @idProveedorPreferido) DESC,
+                         cp.fechaultimacompra DESC NULLS LAST, cp.idcorteproveedor DESC;";
+
+            return DbPg.Reader(_connectionString, _idEmpresa, sql,
+                dr => new Entidades.ProveedorHabitualVm
+                {
+                    IdCorte = Convert.ToInt32(dr["idcorte"]),
+                    IdProveedor = Convert.ToInt32(dr["idproveedor"]),
+                    Proveedor = Convert.ToString(dr["proveedor"]) ?? "",
+                    UltimoPrecio = dr["ultimoprecio"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(dr["ultimoprecio"]),
+                    FechaUltimaCompra = dr["fechaultimacompra"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaultimacompra"])
+                },
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("idProveedorPreferido", idProveedorPreferido);
                 });
         }
 

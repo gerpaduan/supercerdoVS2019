@@ -943,14 +943,14 @@ namespace Negocio
             return resultado;
         }
 
-        public Entidades.ExistenciaPorSucursalesVm ObtenerMatrizExistenciaPorSucursales(Entidades.ExistenciaStockPorSucursalFiltroVm filtro)
+        // Existencia "plana" (una fila por producto y sucursal, sin agrupar) con el punto de stock REAL por sucursal.
+        // Es la primera mitad de ObtenerMatrizExistenciaPorSucursales, extraida (2026-10-13, sin cambiar el comportamiento)
+        // para que "Que pedir" (Negocio.ReposicionStock) use exactamente el mismo calculo de stock y de punto de stock
+        // que Existencia por sucursales. filtro.IdsSucursales vacia = todas.
+        public List<Entidades.ExistenciaStockPorSucursalPlanoVm> ObtenerExistenciaPlano(Entidades.ExistenciaStockPorSucursalFiltroVm filtro)
         {
             if (filtro == null)
                 filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
-
-            var resultado = new Entidades.ExistenciaPorSucursalesVm();
-            resultado.Filtro = filtro;
-            resultado.ConsultaRealizada = true;
 
             // Seleccion multiple de sucursales (IdsSucursales, vacia = todas): el DAL solo acepta
             // una sucursal o todas (0). Con 1 id se consulta solo esa (igual que antes); con 2 o
@@ -992,6 +992,20 @@ namespace Negocio
                     ? puntoStockReal
                     : 0;
             }
+
+            return plano;
+        }
+
+        public Entidades.ExistenciaPorSucursalesVm ObtenerMatrizExistenciaPorSucursales(Entidades.ExistenciaStockPorSucursalFiltroVm filtro)
+        {
+            if (filtro == null)
+                filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
+
+            var resultado = new Entidades.ExistenciaPorSucursalesVm();
+            resultado.Filtro = filtro;
+            resultado.ConsultaRealizada = true;
+
+            var plano = ObtenerExistenciaPlano(filtro);
 
             resultado.Columnas = plano
                 .GroupBy(x => new { x.IdSucursal, Nombre = x.Sucursal ?? "" })

@@ -93,6 +93,21 @@ namespace WebCore.Infrastructure
             return new Negocio.Corte(corteRepo, empresa, param, puntoStockRepo);
         }
 
+        // "Qué pedir" (2026-10-13, ver docs/DECISIONS.md). Solo Postgres: la actividad (ventas + elaboración por producto)
+        // y el proveedor habitual se leen con consultas nuevas de CortePg que no existen en SQL Server -- decisión
+        // 2026-09-05 (Postgres es la base oficial y única). Los controllers lo tratan como "pantalla no disponible".
+        public static Negocio.ReposicionStock CrearReposicionStock(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            if (!UsarPostgres)
+                throw new InvalidOperationException("Qué pedir solo está disponible con DataEngine=Postgres.");
+
+            var personaRepo = new DatosPostgres.PersonaPg(PgConnString, empresa.IdEmpresa);
+            var corteRepo = new DatosPostgres.CortePg(PgConnString, empresa.IdEmpresa, personaRepo);
+            var puntoStockRepo = new DatosPostgres.CortePuntoStockSucursalPg(PgConnString, empresa.IdEmpresa);
+            var corteN = new Negocio.Corte(corteRepo, empresa, param, puntoStockRepo);
+            return new Negocio.ReposicionStock(corteN, corteRepo);
+        }
+
         public static Negocio.CortePuntoStockSucursal CrearCortePuntoStockSucursal(IEmpresaContext empresa, IParametrosContext param = null)
         {
             if (!UsarPostgres) return new Negocio.CortePuntoStockSucursal(empresa, param);

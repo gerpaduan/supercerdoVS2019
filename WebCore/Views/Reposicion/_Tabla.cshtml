@@ -1,0 +1,313 @@
+@model Entidades.ReposicionVm
+@using System
+@using System.Globalization
+@using System.Linq
+@using Entidades
+
+@*
+    Resultado de "Qué pedir": avisos de cierre, tarjetas de resumen y la tabla agrupada por proveedor.
+    Lo devuelve Reposicion/Buscar por AJAX y reposicion.js lo inserta en #contenedorReposicion.
+    Reglas y lectura: docs/11-manual-de-uso/pantallas/Reposicion.Index.md. El color nunca va solo: cada estado
+    tiene también texto.
+*@
+
+@functions {
+    private static readonly CultureInfo Cultura = new CultureInfo("es-AR");
+
+    // Cantidad con los decimales justos (5,734 / 20): sin ceros de relleno.
+    private static string Cant(float valor)
+    {
+        return valor.ToString("0.###", Cultura);
+    }
+
+    private static string Unidad(ReposicionFilaVm f)
+    {
+        return f.Pesable ? "kg" : "un.";
+    }
+
+    private static string Plata(decimal valor)
+    {
+        return valor.ToString("C0", Cultura);
+    }
+
+    // "hace 8 días" / "hoy" / "ayer".
+    private static string Hace(int dias)
+    {
+        if (dias <= 0) return "hoy";
+        if (dias == 1) return "ayer";
+        if (dias < 60) return "hace " + dias + " d";
+        if (dias < 730) return "hace " + (dias / 30) + " meses";
+        return "hace más de 2 años";
+    }
+}
+
+@{
+    var f = Model.Filtro;
+    // Con una sola sucursal tildada no hace falta la columna Sucursal.
+    bool variasSucursales = f.IdsSucursales.Count != 1;
+    int columnas = 10 + (variasSucursales ? 1 : 0) + 1; // + otras sucursales
+}
+
+@if (!Model.ConsultaRealizada)
+{
+    <div class="card shadow-sm">
+        <div class="card-body p-4 text-center text-muted">
+            @(string.IsNullOrWhiteSpace(Model.Mensaje) ? "Tocá Buscar para ver qué pedir." : Model.Mensaje)
+        </div>
+    </div>
+}
+else
+{
+    <div class="reposicion-print-titulo">
+        <strong>Qué pedir</strong> — calculado el @Model.FechaCalculo.ToString("dd/MM/yyyy HH:mm") ·
+        Sucursales: @(f.IdsSucursales.Count == 0 ? "Todas" : string.Join(", ", Model.SucursalesDisponibles.Where(s => f.IdsSucursales.Contains(s.IdSucursal)).Select(s => s.Sucursal))) ·
+        Movimiento: últimos @f.DiasVentana días
+    </div>
+
+    @* Aviso de cierre de stock viejo: el stock se calcula desde el último cierre, así que si es muy viejo los números pueden estar desactualizados. *@
+    @foreach (var aviso in Model.AvisosCierre.Where(a => a.Viejo))
+    {
+        <div class="alert alert-warning py-2 mb-2">
+            <i class="fas fa-exclamation-triangle mr-1 me-1"></i>
+            <strong>@aviso.Sucursal</strong>:
+            @if (aviso.FechaUltimoCierre.HasValue)
+            {
+                <text>el último cierre de stock es del @aviso.FechaUltimoCierre.Value.ToString("dd/MM/yyyy") (hace @aviso.DiasDesdeCierre días). El stock se calcula desde ahí: si hubo movimientos sin cargar, puede estar desactualizado.</text>
+            }
+            else
+            {
+                <text>no tiene ningún cierre de stock registrado, así que no hay un punto de partida confiable para el stock.</text>
+            }
+        </div>
+    }
+
+    <div class="reposicion-kpis mb-3">
+        <div class="reposicion-kpi reposicion-kpi-bajo">
+            <div class="reposicion-kpi-titulo">Bajo el punto de stock</div>
+            <div class="reposicion-kpi-valor">@Model.CantBajoPuntoStock</div>
+            <div class="reposicion-kpi-detalle">Se sugiere pedir hasta llegar al punto.</div>
+        </div>
+        <div class="reposicion-kpi reposicion-kpi-cero">
+            <div class="reposicion-kpi-titulo">En cero, con movimiento</div>
+            <div class="reposicion-kpi-valor">@Model.CantEnCeroConMovimiento</div>
+            <div class="reposicion-kpi-detalle">Salieron en los últimos @f.DiasVentana días y no hay stock.</div>
+        </div>
+        <div class="reposicion-kpi reposicion-kpi-ruido">
+            <div class="reposicion-kpi-titulo">En cero, sin movimiento</div>
+            <div class="reposicion-kpi-valor">@Model.CantEnCeroSinMovimiento</div>
+            <div class="reposicion-kpi-detalle">
+                No se avisan (no salieron en @f.DiasVentana días).
+                @if (Model.CantEnCeroSinMovimiento > 0)
+                {
+                    <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="btnToggleSinMovimiento">@(f.MostrarSinMovimiento ? "Ocultar" : "Mostrar")</button>
+                }
+            </div>
+        </div>
+        <div class="reposicion-kpi reposicion-kpi-importe">
+            <div class="reposicion-kpi-titulo">Importe estimado</div>
+            <div class="reposicion-kpi-valor">@Plata(Model.ImporteEstimadoTotal)</div>
+            <div class="reposicion-kpi-detalle">Con el último precio de compra; solo los que tienen precio.</div>
+        </div>
+    </div>
+
+    @if (Model.CantProductosControlados > 0 && Model.CantSinPuntoStock > 0)
+    {
+        <div class="alert alert-info py-2 mb-2">
+            <i class="fas fa-info-circle mr-1 me-1"></i>
+            @Model.CantSinPuntoStock de @Model.CantProductosControlados productos (por sucursal) <strong>no tienen punto de stock cargado</strong>.
+            De esos solo se avisa si están en cero y se movieron recientemente.
+            Para que el sistema calcule cuánto pedir de todos los demás, cargá el punto de stock en
+            <em>Productos &rarr; Ver stock por sucursales</em>, o usá "Sin punto de stock: sugerir cantidad para N días de venta" en <em>Más filtros</em>.
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
+    {
+        <div class="alert alert-danger py-2 mb-2">@Model.Mensaje</div>
+    }
+
+    @if (Model.Filas.Count == 0)
+    {
+        <div class="card shadow-sm">
+            <div class="card-body p-4 text-center text-muted">
+                <i class="fas fa-check-circle text-success mr-1 me-1"></i>
+                No hay nada para pedir con estos filtros.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover tabla-reposicion" id="tablaReposicion">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                @if (variasSucursales)
+                                {
+                                    <th>Sucursal</th>
+                                }
+                                <th class="col-num">Stock</th>
+                                <th class="col-num">Punto</th>
+                                <th class="col-num">Pedir</th>
+                                <th>Motivo</th>
+                                <th class="col-num" title="Salidas por día (ventas + uso en elaboración) en los últimos @f.DiasVentana días">Consumo/día</th>
+                                <th class="col-num" title="Días que alcanza el stock actual al ritmo de los últimos @f.DiasVentana días">Alcanza</th>
+                                <th>Última salida</th>
+                                <th title="Stock del mismo producto en las otras sucursales: se puede resolver con un movimiento en vez de comprar">Otras sucursales</th>
+                                <th class="col-num" title="Último precio de compra y su importe para la cantidad sugerida">Último precio</th>
+                                <th class="col-num">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var grupo in Model.Filas.GroupBy(x => x.Proveedor ?? ""))
+                            {
+                                decimal subtotal = grupo.Where(x => x.ImporteEstimado.HasValue).Sum(x => x.ImporteEstimado.Value);
+                                <tr class="reposicion-prov-row">
+                                    <td colspan="@(columnas)">
+                                        <i class="fas fa-truck mr-1 me-1"></i>
+                                        <strong>@(string.IsNullOrEmpty(grupo.Key) ? "Sin proveedor cargado" : grupo.Key)</strong>
+                                        <span class="text-muted"> · @grupo.Count() @(grupo.Count() == 1 ? "producto" : "productos")</span>
+                                        @if (subtotal > 0)
+                                        {
+                                            <span class="text-muted"> · estimado @Plata(subtotal)</span>
+                                        }
+                                    </td>
+                                </tr>
+                                foreach (var fila in grupo)
+                                {
+                                    string claseFila = fila.Motivo == MotivoReposicion.EnCeroSinMovimiento ? "reposicion-fila-ruido"
+                                        : (fila.StockActual <= 0f ? "reposicion-fila-cero" : "reposicion-fila-bajo");
+                                    bool otrasCubren = fila.Pedir.HasValue && fila.StockOtrasSucursales >= fila.Pedir.Value;
+                                    <tr class="@claseFila">
+                                        <td>
+                                            <strong>@fila.Producto</strong>
+                                            <span class="reposicion-sub">@fila.Codigo</span>
+                                        </td>
+                                        @if (variasSucursales)
+                                        {
+                                            <td>@fila.Sucursal</td>
+                                        }
+                                        <td class="col-num @(fila.StockActual < 0f ? "text-danger font-weight-bold" : "")">
+                                            @Cant(fila.StockActual) <span class="reposicion-sub">@Unidad(fila)</span>
+                                        </td>
+                                        <td class="col-num">
+                                            @if (fila.PuntoStock > 0f)
+                                            {
+                                                @Cant(fila.PuntoStock)
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted" title="No tiene punto de stock cargado">—</span>
+                                            }
+                                        </td>
+                                        <td class="col-num col-pedir">
+                                            @if (fila.Pedir.HasValue)
+                                            {
+                                                @Cant(fila.Pedir.Value)
+                                                <span class="reposicion-sub">@Unidad(fila)</span>
+                                                if (fila.Pesable && fila.Promedio > 0f)
+                                                {
+                                                    <span class="reposicion-sub" title="Unidades aproximadas según el peso promedio del producto">≈ @((fila.Pedir.Value / fila.Promedio).ToString("0.#", Cultura)) un.</span>
+                                                }
+                                            }
+                                            else if (fila.Motivo == MotivoReposicion.EnCeroSinMovimiento)
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted font-weight-normal" title="No tiene punto de stock: cargalo o usá 'sugerir cantidad para N días de venta' en Más filtros">sin punto</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @switch (fila.Motivo)
+                                            {
+                                                case MotivoReposicion.BajoPuntoStock:
+                                                    <span class="reposicion-badge reposicion-badge-bajo">Bajo el punto</span>
+                                                    break;
+                                                case MotivoReposicion.EnCeroConMovimiento:
+                                                    <span class="reposicion-badge reposicion-badge-cero">En cero</span>
+                                                    break;
+                                                default:
+                                                    <span class="reposicion-badge reposicion-badge-ruido">En cero · sin movimiento</span>
+                                                    break;
+                                            }
+                                            @if (fila.StockNegativo)
+                                            {
+                                                <span class="reposicion-badge reposicion-badge-neg" title="El stock calculado es negativo: casi siempre es una compra o ingreso sin cargar, o un cierre desactualizado. Revisalo antes de pedir.">Negativo: revisar</span>
+                                            }
+                                            @if (fila.PuntoPareceAlto)
+                                            {
+                                                <span class="reposicion-badge reposicion-badge-alto" title="El stock que queda alcanza para mucho más tiempo que el que se mueve: el punto de stock cargado probablemente quedó alto.">Punto alto?</span>
+                                            }
+                                        </td>
+                                        <td class="col-num">@(fila.ConsumoDiario > 0f ? Cant(fila.ConsumoDiario) : "—")</td>
+                                        <td class="col-num">
+                                            @if (fila.CoberturaDias.HasValue)
+                                            {
+                                                @(fila.CoberturaDias.Value > 999f ? "+999" : fila.CoberturaDias.Value.ToString("0.#", Cultura)) <span class="reposicion-sub">días</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted" title="No salió nada en el período: no se puede estimar">—</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (fila.UltimaSalida.HasValue)
+                                            {
+                                                <span title="@fila.UltimaSalida.Value.ToString("dd/MM/yyyy")">@Hace(fila.DiasSinSalida ?? 0)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted" title="Sin ventas ni uso en elaboración en el último año">sin salidas</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (fila.OtrasSucursales.Count == 0)
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                            else
+                                            {
+                                                foreach (var otra in fila.OtrasSucursales)
+                                                {
+                                                    <span class="d-block @(otrasCubren ? "reposicion-otras-alcanza" : "")">@otra.Sucursal: @Cant(otra.Stock)</span>
+                                                }
+                                                if (otrasCubren)
+                                                {
+                                                    <span class="reposicion-sub reposicion-otras-alcanza">Se cubre con un movimiento</span>
+                                                }
+                                            }
+                                        </td>
+                                        <td class="col-num">
+                                            @if (fila.UltimoPrecio.HasValue)
+                                            {
+                                                @Plata(fila.UltimoPrecio.Value)
+                                                if (fila.FechaUltimaCompra.HasValue)
+                                                {
+                                                    <span class="reposicion-sub">@fila.FechaUltimaCompra.Value.ToString("dd/MM/yy")</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="col-num">@(fila.ImporteEstimado.HasValue ? Plata(fila.ImporteEstimado.Value) : "—")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <p class="small text-muted mt-2 mb-0">
+            Calculado el @Model.FechaCalculo.ToString("dd/MM/yyyy HH:mm"). <strong>Pedir</strong> = punto de stock &minus; stock actual (el stock negativo cuenta como 0),
+            redondeado hacia arriba. El stock parte del último cierre de cada sucursal.
+        </p>
+    }
+}

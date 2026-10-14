@@ -1,0 +1,281 @@
+@model Entidades.ReposicionVm
+@using System
+@using System.Linq
+
+@*
+    "Qué pedir" (reposición sugerida). Filtros + tabla de resultados que se carga por AJAX (Reposicion/Buscar -> _Tabla).
+    Reglas y lectura de la pantalla: docs/11-manual-de-uso/pantallas/Reposicion.Index.md. Comportamiento en el navegador:
+    wwwroot/Scripts/app/reposicion.js.
+*@
+
+@{
+    ViewBag.Title = "Qué pedir";
+
+    var filtro = Model.Filtro;
+    bool disponible = ViewBag.Disponible is bool d && d;
+    bool todasTildadas = filtro.IdsSucursales == null || filtro.IdsSucursales.Count == 0;
+
+    // Modo ventana independiente (?popup=true): sin sidebar ni barra superior, igual que Existencia por sucursales.
+    bool popup = ViewBag.Popup is bool esPopup && esPopup;
+    if (popup)
+    {
+        Layout = "~/Views/Shared/_LayoutEmbed.cshtml";
+    }
+    // Opciones del selector "días de movimiento". 30 es el valor por defecto de Negocio (ReposicionStockCalculador).
+    var opcionesDias = new[] { 15, 30, 45, 60, 90, 180 };
+}
+
+<div class="container-fluid reposicion-page">
+    @if (popup)
+    {
+        <h5 class="reposicion-popup-titulo mb-2">Qué pedir</h5>
+    }
+
+    @if (!disponible)
+    {
+        <div class="alert alert-warning">@Model.Mensaje</div>
+    }
+
+    <div class="card shadow-sm mb-3 reposicion-no-print">
+        <div class="card-body">
+            <form id="formReposicion" autocomplete="off">
+                <div class="reposicion-filtros-fila">
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="btnSucursalesReposicion">Sucursales</label>
+                        <!-- Selección múltiple: una, varias o todas (siempre al menos una). Mismo componente que Existencia por sucursales. -->
+                        <div class="dropdown ui-multiselect">
+                            <button type="button" id="btnSucursalesReposicion" class="btn dropdown-toggle ui-multiselect-toggle"
+                                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
+                                <span id="lblSucursalesReposicion">Todas</span>
+                            </button>
+                            <div class="dropdown-menu" id="menuSucursalesReposicion">
+                                <div class="custom-control custom-checkbox ui-multiselect-todas">
+                                    <input type="checkbox" class="custom-control-input" id="chkSucursalTodasReposicion" @(todasTildadas ? "checked" : null)>
+                                    <label class="custom-control-label" for="chkSucursalTodasReposicion">Todas</label>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                @foreach (var sucursal in Model.SucursalesDisponibles)
+                                {
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input chk-sucursal-reposicion" name="idsSucursales"
+                                               id="chkSucursalReposicion_@sucursal.IdSucursal" value="@sucursal.IdSucursal"
+                                               data-nombre="@sucursal.Sucursal"
+                                               @((todasTildadas || filtro.IdsSucursales.Contains(sucursal.IdSucursal)) ? "checked" : null)>
+                                        <label class="custom-control-label" for="chkSucursalReposicion_@sucursal.IdSucursal">@sucursal.Sucursal</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroDiasVentana"
+                               title="Un producto en cero solo se avisa si tuvo salidas (ventas o uso en elaboración) dentro de este período. Si no, se considera que ya no se mueve.">
+                            Se considera que se mueve si salió en los últimos
+                        </label>
+                        <select id="filtroDiasVentana" name="diasVentana" class="form-control">
+                            @foreach (var dias in opcionesDias)
+                            {
+                                <option value="@dias" selected="@(dias == filtro.DiasVentana ? "selected" : null)">@dias días</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-0 reposicion-acciones">
+                        <button type="submit" class="btn btn-primary" id="btnBuscarReposicion" @(disponible ? null : "disabled")>
+                            <i class="fas fa-search mr-1 me-1"></i><span class="btn-buscar-texto">Buscar</span>
+                        </button>
+                        <button type="button" class="btn btn-success" id="btnExportarReposicion" disabled
+                                title="Descargar este resultado en Excel">
+                            <i class="fas fa-file-excel mr-1 me-1"></i>Excel
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnImprimirReposicion" disabled
+                                title="Imprimir este resultado">
+                            <i class="fas fa-print mr-1 me-1"></i>Imprimir
+                        </button>
+                        @if (!popup)
+                        {
+                            <button type="button" class="btn btn-outline-secondary" id="btnAbrirVentanaReposicion"
+                                    title="Abrir esta pantalla en una ventana independiente, sin menús">
+                                <i class="fas fa-external-link-alt mr-1 me-1"></i>Abrir en ventana
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="custom-control custom-switch mt-2">
+                    <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzadosReposicion">
+                    <label class="custom-control-label" for="switchFiltrosAvanzadosReposicion">Más filtros y opciones</label>
+                </div>
+
+                <div class="reposicion-avanzados d-none" id="panelAvanzadosReposicion">
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroTextoReposicion">Producto (nombre o código)</label>
+                        <input type="text" id="filtroTextoReposicion" name="texto" class="form-control" maxlength="80" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroTipoReposicion">Tipo</label>
+                        <select id="filtroTipoReposicion" name="tipo" class="form-control">
+                            <option value="">Todos</option>
+                            @foreach (var tipo in Model.TiposDisponibles)
+                            {
+                                <option value="@tipo">@tipo</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroProveedorReposicion">Proveedor</label>
+                        <select id="filtroProveedorReposicion" name="idProveedor" class="form-control">
+                            <option value="0">Todos</option>
+                            @foreach (var proveedor in Model.ProveedoresDisponibles)
+                            {
+                                <option value="@proveedor.IdPersona">@proveedor.RazonSocial</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroMarcaReposicion">Marca</label>
+                        <select id="filtroMarcaReposicion" name="idMarca" class="form-control">
+                            <option value="0">Todas</option>
+                            @foreach (var marca in Model.MarcasDisponibles)
+                            {
+                                <option value="@marca.IdPersona">@marca.RazonSocial</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0 reposicion-avanzados-ancho">
+                        <label class="reposicion-label" for="filtroDiasCobertura"
+                               title="Para los productos que no tienen punto de stock cargado: sugerir pedir lo que se vende en esta cantidad de días. Con 0 solo se avisa que están en cero, sin cantidad.">
+                            Sin punto de stock: sugerir cantidad para
+                        </label>
+                        <div class="input-group">
+                            <input type="number" id="filtroDiasCobertura" name="diasCobertura" class="form-control" min="0" max="60" step="1" value="@filtro.DiasCoberturaSinPunto" />
+                            <div class="input-group-append"><span class="input-group-text">días de venta (0 = no sugerir)</span></div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0 reposicion-avanzados-ancho d-flex align-items-end">
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="switchSinMovimientoReposicion" name="mostrarSinMovimiento" value="true" />
+                            <label class="custom-control-label" for="switchSinMovimientoReposicion">Mostrar también los que están en cero sin movimiento</label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="contenedorReposicion">
+        <div class="card shadow-sm">
+            <div class="card-body p-4 text-center text-muted" id="reposicionEstadoInicial">
+                @(disponible ? "Cargando qué pedir..." : "")
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilo compacto de las pantallas de WebCore (ver el resto de las vistas): nunca el 1rem de Bootstrap. */
+    .reposicion-page { font-size: .9rem; }
+    .reposicion-page .card-body { padding: .82rem 1rem; }
+    .reposicion-page .form-control,
+    .reposicion-page .input-group-text,
+    .reposicion-page .ui-multiselect-toggle { font-size: .87rem !important; min-height: 2.3rem !important; padding: .32rem .58rem !important; }
+    .reposicion-page .btn { font-size: .8rem; padding: .3rem .6rem; }
+    /* Etiquetas propias (no las .badge-* del sitio): el color de texto queda fijo y con contraste aunque la fila esté atenuada.
+       El estado siempre va también en texto, nunca solo en color. */
+    .reposicion-badge { display: inline-block; padding: .18em .5em; border-radius: .35rem; font-size: .7rem; font-weight: 700; line-height: 1.25; white-space: nowrap; }
+    .reposicion-badge-bajo { background: #ffc107; color: #212529; }
+    .reposicion-badge-cero { background: #a61e2d; color: #fff; }
+    .reposicion-badge-ruido { background: #6c757d; color: #fff; }
+    .reposicion-badge-neg { background: #212529; color: #fff; }
+    .reposicion-badge-alto { background: #f1f3f5; color: #212529; border: 1px solid #adb5bd; }
+    .reposicion-page .alert,
+    .reposicion-page .small,
+    .reposicion-page .text-muted { font-size: .8rem; }
+    .reposicion-page .reposicion-label,
+    .reposicion-page .custom-control-label { font-size: .76rem; }
+    .reposicion-popup-titulo { font-weight: 700; font-size: 1rem; }
+
+    .reposicion-filtros-fila,
+    .reposicion-avanzados { display: grid; gap: .65rem; }
+    .reposicion-avanzados { margin-top: .65rem; }
+    .reposicion-acciones { display: flex; flex-wrap: wrap; gap: .4rem; align-items: flex-end; }
+
+    /* Tarjetas de resumen */
+    .reposicion-kpis { display: grid; gap: .65rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .reposicion-kpi { border: 1px solid var(--ui-border, #e3e6ec); border-radius: .6rem; padding: .55rem .75rem; background: var(--ui-surface, #fff); color: var(--ui-text, #1f2937); }
+    .reposicion-kpi-titulo { font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--ui-text-soft, #5f6772); font-weight: 700; }
+    .reposicion-kpi-valor { font-size: 1.35rem; font-weight: 700; line-height: 1.15; }
+    .reposicion-kpi-detalle { font-size: .74rem; color: var(--ui-text-soft, #5f6772); }
+    .reposicion-kpi-bajo { border-left: 4px solid #b26a00; }
+    .reposicion-kpi-cero { border-left: 4px solid #a61e2d; }
+    .reposicion-kpi-ruido { border-left: 4px solid #8a929e; }
+    .reposicion-kpi-importe { border-left: 4px solid #1d4670; }
+
+    /* Tabla */
+    .reposicion-page .tabla-reposicion { width: 100%; font-size: .84rem; margin-bottom: 0; }
+    .reposicion-page .tabla-reposicion th,
+    .reposicion-page .tabla-reposicion td { padding: .42rem .58rem; line-height: 1.15; vertical-align: middle; }
+    .reposicion-page .tabla-reposicion thead th { font-size: .72rem !important; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+    .reposicion-page .tabla-reposicion .reposicion-prov-row td { background: var(--ui-surface-strong, #e9edf2); color: var(--ui-text, #1f2937); font-size: .86rem; border-top: 2px solid var(--ui-border-strong, #c8d0d9); }
+    .reposicion-page .tabla-reposicion .col-pedir { font-weight: 700; font-size: .95rem; white-space: nowrap; }
+    .reposicion-page .tabla-reposicion .col-num { text-align: right; white-space: nowrap; }
+    .reposicion-page .reposicion-sub { display: block; font-size: .72rem; color: var(--ui-text-soft, #5f6772); font-weight: 400; }
+    .reposicion-page .reposicion-fila-cero td:first-child { box-shadow: inset 4px 0 0 #a61e2d; }
+    .reposicion-page .reposicion-fila-bajo td:first-child { box-shadow: inset 4px 0 0 #b26a00; }
+    .reposicion-page .reposicion-fila-ruido td:first-child { box-shadow: inset 4px 0 0 #8a929e; }
+    .reposicion-page .reposicion-fila-ruido td { color: var(--ui-text-soft, #5f6772); }
+    .reposicion-page .reposicion-otras-alcanza { color: #1e6b3a; font-weight: 600; }
+
+    html.dark-mode .reposicion-page .reposicion-otras-alcanza, body.dark-mode .reposicion-page .reposicion-otras-alcanza { color: #6ee7a0; }
+    .reposicion-print-titulo { display: none; }
+
+    @@media (min-width: 768px) {
+        .reposicion-filtros-fila { grid-template-columns: minmax(180px, 1.1fr) minmax(200px, 1.2fr) auto; align-items: end; }
+        .reposicion-avanzados { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .reposicion-avanzados-ancho { grid-column: span 2; }
+        .reposicion-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @@media (min-width: 1200px) {
+        .reposicion-page .form-control,
+        .reposicion-page .input-group-text,
+        .reposicion-page .ui-multiselect-toggle { min-height: 2.15rem !important; font-size: .84rem !important; padding: .28rem .56rem !important; }
+        .reposicion-page .tabla-reposicion { font-size: .8rem; }
+        .reposicion-page .tabla-reposicion thead th { font-size: .69rem !important; }
+    }
+
+    /* Impresión: solo el resultado (sin menús ni filtros), apaisado y sin bordes de tarjeta. */
+    @@page { size: A4 landscape; margin: 10mm; }
+
+    @@media print {
+        /* Una fila no se parte entre hojas, el encabezado de proveedor no queda solo al final de una hoja y los titulos de columna se repiten. */
+        .reposicion-page .tabla-reposicion tr { break-inside: avoid; page-break-inside: avoid; }
+        .reposicion-page .tabla-reposicion .reposicion-prov-row { break-after: avoid; page-break-after: avoid; }
+        .reposicion-page .tabla-reposicion thead { display: table-header-group; }
+        .reposicion-page .reposicion-kpi, .reposicion-page .tabla-reposicion .reposicion-prov-row td { background: #fff !important; color: #000 !important; }
+        .reposicion-page .reposicion-sub, .reposicion-page .reposicion-kpi-titulo, .reposicion-page .reposicion-kpi-detalle, .reposicion-page .reposicion-fila-ruido td { color: #333 !important; }
+        .sidebar, #accordionSidebar, .topbar, footer, .reposicion-no-print, .btn { display: none !important; }
+        #content-wrapper, #content { margin: 0 !important; padding: 0 !important; }
+        .reposicion-page { font-size: .75rem; }
+        .reposicion-page .card { border: 0 !important; box-shadow: none !important; }
+        .reposicion-print-titulo { display: block !important; margin-bottom: .5rem; }
+        .reposicion-page .table-responsive { overflow: visible !important; }
+        .reposicion-page .tabla-reposicion th, .reposicion-page .tabla-reposicion td { padding: .2rem .3rem; }
+    }
+</style>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
+    <script>
+        // URLs y estado inicial que necesita reposicion.js (el script no usa Razor).
+        window.reposicionConfig = {
+            buscarUrl: '@Url.Action("Buscar", "Reposicion")',
+            exportarUrl: '@Url.Action("ExportarExcel", "Reposicion")',
+            ventanaUrl: '@Url.Action("Index", "Reposicion", new { popup = true })',
+            ventanaNombre: 'reposicionQuePedir',
+            disponible: @(disponible ? "true" : "false")
+        };
+    </script>
+    <script src="@Url.Content("~/Scripts/app/reposicion.js")" asp-append-version="true"></script>
+}

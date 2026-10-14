@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (37 de 89 pantallas)
+## Cobertura (38 de 90 pantallas)
 
 ## Manual del usuario
 
@@ -65,6 +65,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
 | pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-10-13 |
 | pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-10-13 |
+| pantallas | Qué pedir | Stock | `pantallas/Reposicion.Index.md` | 2026-10-13 |
 | pantallas | Nuevo / Modificar usuario | Usuarios | `pantallas/Usuarios.Editar.md` | 2026-10-03 |
 | pantallas | Permisos del usuario | Usuarios | `pantallas/Usuarios.Permisos.md` | 2026-10-03 |
 | pantallas | Usuarios | Usuarios | `pantallas/Usuarios.Index.md` | 2026-10-03 |
