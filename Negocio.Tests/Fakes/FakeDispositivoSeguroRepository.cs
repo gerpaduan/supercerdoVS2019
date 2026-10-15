@@ -18,6 +18,7 @@ namespace NegocioTests.Fakes
         public Entidades.DispositivoSeguro ObtenerPorSerie(string numeroSerie, int idEmpresa) => Dispositivos.FirstOrDefault(d => d.IdEmpresa == idEmpresa && d.NumeroSerie == numeroSerie);
         public void SetBloqueado(int id, int idEmpresa, bool bloqueado) { var d = Dispositivos.First(x => x.Id == id); d.Bloqueado = bloqueado; }
         public void SetHabilitadoFichaje(int id, int idEmpresa, bool habilitado) { var d = Dispositivos.First(x => x.Id == id); d.HabilitadoFichaje = habilitado; }
+        public void SetNoBloquearSesion(int id, int idEmpresa, bool noBloquear) { var d = Dispositivos.First(x => x.Id == id); d.NoBloquearSesion = noBloquear; }
         public bool EsFichajeHabilitado(string numeroSerie, int idEmpresa) { var d = ObtenerPorSerie(numeroSerie, idEmpresa); return d != null && !d.Bloqueado && d.HabilitadoFichaje; }
 
         public int CrearSolicitud(Entidades.DispositivoSolicitud solicitud)

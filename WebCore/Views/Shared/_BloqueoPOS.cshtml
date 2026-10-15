@@ -1,0 +1,93 @@
+@* Bloqueo por inactividad del POS (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad").
+   Overlay a pantalla completa que tapa el POS tras N minutos sin actividad y pide la clave del vendedor
+   activo; no navega ni recarga, asi el carrito en memoria queda intacto. Lo incluyen Ventas/POS y
+   PuntosExpendio/POS (usan _LayoutPOS). La logica vive en Scripts/app/pos-bloqueo.js; el desbloqueo se
+   valida en el servidor (VentasController.DesbloquearPOS). Si el vendedor tiene 0 minutos, es usuario de
+   produccion o el dispositivo es "No bloquear sesion", los minutos llegan en 0 y no se activa nada. *@
+@{
+    int minutosBloqueo = ViewBag.MinutosBloqueoPOS is int m ? m : 0;
+    bool requiereOperador = ViewBag.RequiereOperadorPOS is bool ro && ro;
+    bool esProduccion = ViewBag.EsUsuarioProduccion is bool ep && ep;
+    string vendedorBloqueo = ViewBag.VendedorBloqueoPOS as string ?? "";
+    string posInstanceIdBloqueo = ViewBag.PosInstanceId as string ?? "";
+    bool cajaAbiertaAlCargar = ViewBag.CajaAbierta is bool ca && ca;
+    // Solo Ventas maneja caja; el punto de expendio no la valida.
+    bool validarCaja = string.Equals(ViewContext.RouteData.Values["controller"] as string, "Ventas", StringComparison.OrdinalIgnoreCase);
+    bool activoBloqueo = minutosBloqueo > 0 && !requiereOperador;
+}
+@if (activoBloqueo)
+{
+    @* "Cambiar de vendedor" (cuenta de produccion) abre el modal de seleccion de usuario. Ventas/POS solo lo
+       renderiza en la rama "requiere operador" (antes de elegir uno), asi que con el POS ya operativo no
+       existe en el DOM y el boton ("Cambiar operario" incluido) no abria nada: se agrega aca. Punto de
+       expendio lo renderiza siempre (no se duplica el id). *@
+    @if (esProduccion && validarCaja)
+    {
+        @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+    }
+
+    <div id="posBloqueoOverlay" class="pos-bloqueo-overlay d-none" role="dialog" aria-modal="true" aria-labelledby="posBloqueoTitulo" tabindex="-1">
+        <div class="pos-bloqueo-card">
+            <div class="pos-bloqueo-icono"><i class="fas fa-lock"></i></div>
+            <h2 id="posBloqueoTitulo" class="pos-bloqueo-titulo">POS bloqueado</h2>
+            <p class="pos-bloqueo-texto">Se bloqueó por inactividad. La venta en curso quedó resguardada.</p>
+            <p class="pos-bloqueo-texto mb-2">Vendedor: <strong id="posBloqueoVendedor">@vendedorBloqueo</strong></p>
+
+            <form id="posBloqueoForm" autocomplete="off">
+                @* Sin foco automatico a proposito: un lector de codigo de barras que escanee con el POS
+                   bloqueado tipearia el codigo en este campo y contaria como intento fallido. *@
+                <input type="password" id="posBloqueoClave" class="form-control" placeholder="Tu contraseña" autocomplete="new-password" aria-label="Contraseña del vendedor" />
+                <div id="posBloqueoError" class="pos-bloqueo-error d-none" role="alert"></div>
+                <button type="submit" id="posBloqueoBtnDesbloquear" class="btn btn-primary btn-block mt-2">Desbloquear</button>
+            </form>
+
+            <div id="posBloqueoEspera" class="pos-bloqueo-error d-none" role="alert">
+                Demasiados intentos. Reintentá en <strong id="posBloqueoCuenta">0:00</strong>.
+            </div>
+
+            <div class="pos-bloqueo-acciones">
+                @if (esProduccion)
+                {
+                    <button type="button" id="posBloqueoBtnCambiar" class="btn btn-outline-secondary btn-sm">Cambiar de vendedor</button>
+                }
+                else
+                {
+                    <button type="button" id="posBloqueoBtnSalir" class="btn btn-outline-secondary btn-sm">Cerrar sesión</button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.POSBloqueoConfig = {
+            activo: true,
+            minutos: @minutosBloqueo,
+            esProduccion: @(esProduccion ? "true" : "false"),
+            posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceIdBloqueo)),
+            validarCaja: @(validarCaja ? "true" : "false"),
+            cajaAbiertaAlCargar: @(cajaAbiertaAlCargar ? "true" : "false"),
+            urlDesbloquear: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("DesbloquearPOS", "Ventas"))),
+            urlLogout: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Logout", "Login")))
+        };
+    </script>
+    <script src="~/Scripts/app/pos-bloqueo.js" asp-append-version="true"></script>
+
+    @* Estilo compacto del sistema (~0.8-0.9rem), scopeado al overlay. z-index por encima de modales y SweetAlert
+       (el JS lo baja temporalmente mientras se abre el modal de "Cambiar de vendedor"). *@
+    <style>
+        .pos-bloqueo-overlay { position: fixed; inset: 0; z-index: 20000; display: flex; align-items: center; justify-content: center;
+            background: rgba(15, 23, 42, .97); backdrop-filter: blur(6px); font-size: .9rem; }
+        .pos-bloqueo-overlay.d-none { display: none !important; }
+        .pos-bloqueo-overlay.pos-bloqueo-bajo { z-index: 1040; }
+        .pos-bloqueo-overlay:focus { outline: none; }
+        .pos-bloqueo-card { width: min(92vw, 22rem); padding: 1.4rem 1.3rem; border-radius: .8rem; background: #fff; text-align: center;
+            box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .35); }
+        .pos-bloqueo-icono { font-size: 1.8rem; color: #475569; margin-bottom: .3rem; }
+        .pos-bloqueo-titulo { font-size: 1.15rem; font-weight: 700; margin: 0 0 .4rem; }
+        .pos-bloqueo-texto { font-size: .84rem; color: #475569; margin-bottom: .35rem; }
+        .pos-bloqueo-overlay .form-control { font-size: .87rem; min-height: 2.3rem; padding: .32rem .58rem; border-radius: .55rem; text-align: center; }
+        .pos-bloqueo-overlay .btn { font-size: .85rem; border-radius: .55rem; }
+        .pos-bloqueo-error { font-size: .8rem; color: #b91c1c; margin-top: .45rem; }
+        .pos-bloqueo-acciones { margin-top: .9rem; padding-top: .7rem; border-top: 1px solid #e2e8f0; }
+    </style>
+}

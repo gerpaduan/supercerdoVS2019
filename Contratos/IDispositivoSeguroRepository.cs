@@ -25,6 +25,9 @@ namespace Contratos
         // Fichaje de jornada (2026-09-29, ver docs/DECISIONS.md): independiente de Bloqueado.
         void SetHabilitadoFichaje(int id, int idEmpresa, bool habilitado);
 
+        // Bloqueo por inactividad (2026-10-15): true = las sesiones desde este dispositivo no se bloquean.
+        void SetNoBloquearSesion(int id, int idEmpresa, bool noBloquear);
+
         // true solo si existe, no esta bloqueado Y esta habilitado para fichaje.
         bool EsFichajeHabilitado(string numeroSerie, int idEmpresa);
 

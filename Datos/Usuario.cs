@@ -170,6 +170,29 @@ namespace Datos
             );
         }
 
+        public void setMinutosInactividad(Entidades.Usuario oUsuario)
+        {
+            if (oUsuario == null) throw new ArgumentNullException(nameof(oUsuario));
+            if (!ExisteColumnaUsuarios("MinutosInactividad"))
+                return;
+
+            const string sql = @"
+                UPDATE Usuarios
+                SET MinutosInactividad = @minutos
+                WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = oUsuario.Id;
+                    p.Add("@minutos", SqlDbType.Int).Value = Math.Max(0, oUsuario.MinutosInactividad);
+                }
+            );
+        }
+
         public void setEsUsuarioProduccion(Entidades.Usuario oUsuario)
         {
             if (oUsuario == null) throw new ArgumentNullException(nameof(oUsuario));
@@ -777,6 +800,7 @@ namespace Datos
                 PermitirLoginFueraSucursal = GetOptionalBool(dr, "PermitirLoginFueraSucursal"),
                 EsUsuarioProduccion = GetOptionalBool(dr, "esUsuarioProduccion"),
                 RequiereDispositivoSeguro = GetOptionalBool(dr, "RequiereDispositivoSeguro"),
+                MinutosInactividad = GetOptionalInt(dr, "MinutosInactividad"),
                 IntentosFallidosLogin = GetOptionalInt(dr, "intentosFallidosLogin"),
                 Bloqueado = GetOptionalBool(dr, "bloqueado"),
                 FechaBloqueoUtc = GetOptionalDateTime(dr, "fechaBloqueoUtc"),

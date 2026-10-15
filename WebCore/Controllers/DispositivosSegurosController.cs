@@ -240,6 +240,30 @@ namespace WebCore.Controllers
             return RedirectToAction("Index");
         }
 
+        // Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md): "No bloquear sesion" para la PC
+        // propia de un admin. Rige desde el proximo login desde ese dispositivo (viaja como claim).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarNoBloquearSesion(int id, bool noBloquear)
+        {
+            if (!PuedeAdministrar(_usuarioActual))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sin permiso";
+                TempData["AlertMsg"] = "No tiene permisos para cambiar el bloqueo de sesión de dispositivos.";
+                return RedirectToAction("Index");
+            }
+
+            _oDispositivoN.SetNoBloquearSesion(id, _empresa.IdEmpresa, noBloquear);
+
+            TempData["AlertType"] = "success";
+            TempData["AlertTitle"] = "Dispositivos seguros";
+            TempData["AlertMsg"] = noBloquear
+                ? "La sesión ya no se bloqueará por inactividad en este dispositivo (rige desde el próximo inicio de sesión)."
+                : "La sesión volverá a bloquearse por inactividad en este dispositivo (rige desde el próximo inicio de sesión).";
+            return RedirectToAction("Index");
+        }
+
         private bool PuedeAdministrar(Entidades.Usuario usuario)
         {
             return usuario != null && usuario.IdEmpresa == _empresa.IdEmpresa && usuario.Admin;

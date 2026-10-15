@@ -97,6 +97,13 @@ namespace Entidades
         // BaseController.ResolverUsuarioCreador.
         public bool EsUsuarioProduccion { get; set; }
 
+        // Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad"):
+        // minutos sin actividad tras los cuales la web avisa "Extender sesion" y luego cierra la
+        // sesion (en el POS bloquea con clave). 0 = nunca. Los usuarios de produccion quedan
+        // exentos por codigo (ver Negocio.PoliticaInactividad), sin importar este valor.
+        public const int MinutosInactividadPorDefecto = 60;
+        public int MinutosInactividad { get; set; } = MinutosInactividadPorDefecto;
+
         // Bloqueo de cuenta tras N intentos fallidos de contraseña (ver
         // Security:AccountLockoutMaxAttempts en Web.config). Se resetea a 0/false al desbloquear
         // (por email o por un admin) o al lograr un login exitoso. Distinto de LoginRateLimiter

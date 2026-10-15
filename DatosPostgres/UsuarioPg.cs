@@ -160,6 +160,9 @@ namespace DatosPostgres
                 PermitirLoginFueraSucursal = GetBool(dr, "permitirloginfuerasucursal"),
                 EsUsuarioProduccion = GetBool(dr, "esusuarioproduccion"),
                 RequiereDispositivoSeguro = GetBool(dr, "requieredispositivoseguro"),
+                // Si la migracion 20261015 aun no corrio la columna no viene: 0 = sin bloqueo (fail-open
+                // a proposito, para no bloquear a nadie por un deploy a medias).
+                MinutosInactividad = GetInt(dr, "minutosinactividad"),
                 IntentosFallidosLogin = GetInt(dr, "intentosfallidoslogin"),
                 Bloqueado = GetBool(dr, "bloqueado"),
                 FechaBloqueoUtc = dr["fechabloqueoutc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechabloqueoutc"]),
@@ -387,6 +390,17 @@ namespace DatosPostgres
                 {
                     p.AddWithValue("idUsuario", oUsuario.Id);
                     p.AddWithValue("requiere", oUsuario.RequiereDispositivoSeguro);
+                });
+        }
+
+        public void setMinutosInactividad(Entidades.Usuario oUsuario)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "UPDATE usuarios SET minutosinactividad = @minutos WHERE id = @idUsuario;",
+                p =>
+                {
+                    p.AddWithValue("idUsuario", oUsuario.Id);
+                    p.AddWithValue("minutos", Math.Max(0, oUsuario.MinutosInactividad));
                 });
         }
 

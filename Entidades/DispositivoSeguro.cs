@@ -26,5 +26,11 @@ namespace Entidades
         // docs/DECISIONS.md). Independiente de "seguro"/Bloqueado: un dispositivo puede saltar el
         // rate-limit de login sin estar habilitado para fichar, y viceversa.
         public bool HabilitadoFichaje { get; set; }
+
+        // Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad"): si
+        // es true, las sesiones iniciadas desde este dispositivo no se avisan ni se bloquean por
+        // inactividad (ej. la PC propia de un administrador). Por defecto false = se bloquea. Se
+        // lee al iniciar sesion y viaja como claim: un cambio rige desde el proximo login.
+        public bool NoBloquearSesion { get; set; }
     }
 }

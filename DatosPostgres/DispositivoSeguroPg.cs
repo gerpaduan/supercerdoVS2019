@@ -20,7 +20,7 @@ namespace DatosPostgres
 
         private const string SelectBase = @"
                 SELECT d.id, d.idempresa, d.numeroserie, d.descripcion, d.creadoutc, d.idusuariocreador,
-                       d.origen, d.emailalta, d.bloqueado, d.habilitadofichaje,
+                       d.origen, d.emailalta, d.bloqueado, d.habilitadofichaje, d.nobloquearsesion,
                        u.nombre AS nombreusuariocreador
                 FROM dispositivosseguros d
                 LEFT JOIN usuarios u ON u.id = d.idusuariocreador ";
@@ -39,7 +39,8 @@ namespace DatosPostgres
                 Origen = dr["origen"] == DBNull.Value ? "Manual" : Convert.ToString(dr["origen"]),
                 EmailAlta = dr["emailalta"] == DBNull.Value ? "" : Convert.ToString(dr["emailalta"]),
                 Bloqueado = dr["bloqueado"] != DBNull.Value && Convert.ToBoolean(dr["bloqueado"]),
-                HabilitadoFichaje = dr["habilitadofichaje"] != DBNull.Value && Convert.ToBoolean(dr["habilitadofichaje"])
+                HabilitadoFichaje = dr["habilitadofichaje"] != DBNull.Value && Convert.ToBoolean(dr["habilitadofichaje"]),
+                NoBloquearSesion = dr["nobloquearsesion"] != DBNull.Value && Convert.ToBoolean(dr["nobloquearsesion"])
             };
         }
 
@@ -126,6 +127,18 @@ namespace DatosPostgres
                     p.AddWithValue("id", id);
                     p.AddWithValue("idEmpresa", idEmpresa);
                     p.AddWithValue("habilitado", habilitado);
+                });
+        }
+
+        public void SetNoBloquearSesion(int id, int idEmpresa, bool noBloquear)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "UPDATE dispositivosseguros SET nobloquearsesion = @noBloquear WHERE id = @id AND idempresa = @idEmpresa;",
+                p =>
+                {
+                    p.AddWithValue("id", id);
+                    p.AddWithValue("idEmpresa", idEmpresa);
+                    p.AddWithValue("noBloquear", noBloquear);
                 });
         }
 

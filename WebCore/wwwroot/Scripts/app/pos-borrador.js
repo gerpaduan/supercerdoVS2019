@@ -657,8 +657,37 @@
         window.addEventListener('pagehide', alCerrarPestana);
     }
 
+    // Guarda YA el carrito en el servidor (sin esperar el debounce) y resuelve true si el servidor lo tiene
+    // (o si no hay nada que resguardar). Lo usa el bloqueo por inactividad (pos-bloqueo.js) antes de dejar
+    // el POS a otro vendedor: si resuelve false, la venta NO esta a salvo y no hay que descartar el respaldo local.
+    function guardarAhora() {
+        if (!habilitado) return Promise.resolve(false);
+
+        var snap = snapshotActual();
+        if (!hayLineas(snap)) return Promise.resolve(true);
+
+        clearTimeout(estado.timerGuardado);
+        return post(cfg.urls.guardar, {
+            clientId: getClientId(),
+            posInstanceId: posInstanceId(),
+            idSucursalPOS: idSucursalPOS(),
+            soloLatido: false,
+            payload: snap
+        }).then(function (resp) {
+            // cerrado = el servidor ya cerro ese carrito; ajeno = pertenece a otro operador: en ambos casos
+            // el borrador que hay en el servidor no es este carrito.
+            if (resp && resp.ok && !resp.cerrado && !resp.ajeno) {
+                estado.creadoEnServidor = true;
+                estado.pendiente = false;
+                return true;
+            }
+            return false;
+        });
+    }
+
     window.POSBorrador = {
         init: init,
+        guardarAhora: guardarAhora,
         estaHabilitado: function () { return habilitado; },
         getClientId: getClientId,
         adoptarClientId: adoptarClientId,

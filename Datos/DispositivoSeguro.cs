@@ -17,7 +17,7 @@ namespace Datos
 
         private const string SelectBase = @"
                 SELECT d.Id, d.IdEmpresa, d.NumeroSerie, d.Descripcion, d.CreadoUtc, d.IdUsuarioCreador,
-                       d.Origen, d.EmailAlta, d.Bloqueado, d.HabilitadoFichaje,
+                       d.Origen, d.EmailAlta, d.Bloqueado, d.HabilitadoFichaje, d.NoBloquearSesion,
                        u.nombre AS NombreUsuarioCreador
                 FROM DispositivosSeguros d
                 LEFT JOIN Usuarios u ON u.id = d.IdUsuarioCreador ";
@@ -36,7 +36,8 @@ namespace Datos
                 Origen = dr["Origen"] == DBNull.Value ? "Manual" : Convert.ToString(dr["Origen"]),
                 EmailAlta = dr["EmailAlta"] == DBNull.Value ? "" : Convert.ToString(dr["EmailAlta"]),
                 Bloqueado = dr["Bloqueado"] != DBNull.Value && Convert.ToBoolean(dr["Bloqueado"]),
-                HabilitadoFichaje = dr["HabilitadoFichaje"] != DBNull.Value && Convert.ToBoolean(dr["HabilitadoFichaje"])
+                HabilitadoFichaje = dr["HabilitadoFichaje"] != DBNull.Value && Convert.ToBoolean(dr["HabilitadoFichaje"]),
+                NoBloquearSesion = dr["NoBloquearSesion"] != DBNull.Value && Convert.ToBoolean(dr["NoBloquearSesion"])
             };
         }
 
@@ -149,6 +150,23 @@ namespace Datos
                     p.Add("@id", SqlDbType.Int).Value = id;
                     p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
                     p.Add("@habilitado", SqlDbType.Bit).Value = habilitado;
+                }
+            );
+        }
+
+        public void SetNoBloquearSesion(int id, int idEmpresa, bool noBloquear)
+        {
+            const string sql = "UPDATE DispositivosSeguros SET NoBloquearSesion = @noBloquear WHERE Id = @id AND IdEmpresa = @idEmpresa;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@id", SqlDbType.Int).Value = id;
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
+                    p.Add("@noBloquear", SqlDbType.Bit).Value = noBloquear;
                 }
             );
         }

@@ -3,7 +3,7 @@ titulo: Dispositivo seguro (qué es y cómo se configura)
 rol: admin
 modulo: Acceso y seguridad
 orden: 10
-revisada: 2026-10-03
+revisada: 2026-10-15
 ---
 # Dispositivo seguro
 
@@ -45,3 +45,6 @@ Ver [Dispositivos seguros](ayuda:pantalla/DispositivosSeguros.Index) y [Mi Empre
 - Para apagarlo en cualquier momento, desactivá el interruptor: es inmediato y nadie queda sin acceso.
 
 Ver también: [clave rápida (PIN)](ayuda:concepto/clave-rapida-pin), [mapa de configuraciones](ayuda:referencia/configuraciones).
+
+## Relación con el bloqueo por inactividad
+Un dispositivo autorizado también puede marcarse **"No bloquear sesión"** (en [Dispositivos seguros](ayuda:pantalla/DispositivosSeguros.Index)): en esa PC no se pregunta "¿Extender sesión?" ni se bloquea el POS por inactividad. Por defecto todos los dispositivos se bloquean. Ver [bloqueo por inactividad](ayuda:concepto/bloqueo-por-inactividad).

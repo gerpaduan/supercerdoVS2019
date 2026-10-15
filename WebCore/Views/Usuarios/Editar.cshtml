@@ -252,6 +252,22 @@
                             }
                         </div>
                     </div>
+                    @* Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md). *@
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="MinutosInactividad">Minutos de inactividad</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.TextBoxFor(m => m.MinutosInactividad, new { @class = "form-control", id = "MinutosInactividad", type = "number", min = 0, max = 1440, @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.MinutosInactividad, new { @class = "form-control", id = "MinutosInactividad", type = "number", min = 0, max = 1440 })
+                            }
+                            @Html.ValidationMessageFor(m => m.MinutosInactividad, "", new { @class = "text-danger" })
+                            <small class="form-text text-muted">Tras estos minutos sin actividad se avisa “Extender sesión” (5 min) y luego se cierra la sesión; en el POS se bloquea y pide la clave. <strong>0 = nunca.</strong> Los usuarios de producción nunca se bloquean.</small>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-3 d-flex flex-wrap align-items-center">

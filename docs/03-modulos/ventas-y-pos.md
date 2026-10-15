@@ -30,6 +30,15 @@ Pantalla `Ventas/Lineas` (`WebCore/Views/Ventas/Lineas.cshtml`; manual: `docs/11
 - **Finalizar venta** (`VentasController.FinalizarVenta`): la caja se valida siempre con la fecha de **creación** (`fechaCreacion`, ahora), nunca con la fecha de la venta (editable). El salteo de caja para Admin / permiso `Venta.UltimaVenta` se mantiene (decisión 2026-09-07).
 - **Modificar una venta** (`ModificarVenta`): si la venta pertenece a una caja **ya cerrada** (vendedor + sucursal + fecha original), el POS en modo edición muestra el banner `#alertaVentaDeCajaCerrada`; si el cambio altera **monto, forma de pago, fecha o sucursal**, el servidor responde `requiereConfirmacion` y `forma-pago.js` pide confirmar (reenvía con `confirmarCajaCerrada`). Siempre que sea caja cerrada queda un aviso en el cierre (`auditoriacierrecaja`, origen `VENTA`). Detalle: `docs/03-modulos/caja-y-tesoreria.md` y `docs/DECISIONS.md` (2026-10-06).
 
+## Bloqueo por inactividad del POS — 2026-10-15
+
+- **Qué hace.** Tras los minutos de inactividad del **vendedor activo** (`usuarios.minutosinactividad`; 0 = nunca; producción y dispositivos "No bloquear sesión" exentos) tapa el POS con un overlay que pide su contraseña, **sin recargar** (el carrito queda intacto). Concepto para el usuario: `docs/11-manual-de-uso/conceptos/bloqueo-por-inactividad.md`.
+- **Código.** Partial `Views/Shared/_BloqueoPOS.cshtml` (incluido por `Views/Ventas/POS.cshtml` y `Views/PuntosExpendio/POS.cshtml`) + `wwwroot/Scripts/app/pos-bloqueo.js`. Los minutos los calcula `WebCore/Helpers/BloqueoPosHelper.cs` en `POS()` de ambos controllers (`ViewBag.MinutosBloqueoPOS`).
+- **Desbloqueo.** `VentasController.DesbloquearPOS` (también lo usa Punto de expendio, misma Session `OperadorPOS_<posInstanceId>`): el vendedor se resuelve en el servidor; la clave de otro usuario no desbloquea; comparte el rate-limit del step-up de operador (3 intentos / 5 min). En Ventas informa si la caja del vendedor sigue abierta; si no, el cliente recarga para que rija el gate de caja.
+- **Antes de bloquear** se fuerza `POSDraft.save()` y `POSBorrador.guardarAhora()` (nuevo en `pos-borrador.js`). "Cambiar de vendedor" (solo cuenta de producción) exige que el servidor ya tenga la venta; después limpia el carrito local (`POSDraft.clear()`) para que el nuevo operador no la herede. La venta la retoma solo su dueño o un supervisor (`RecuperarBorradorPOS`).
+- **`FinalizarVenta`** rechaza (`requiereOperador`) si la cuenta es de producción y el operador de Session venció, en vez de registrar a nombre de la cuenta compartida.
+- **Límites.** Bloqueo de cliente (se puede saltar con las herramientas de desarrollo); Punto de expendio no tiene borrador en servidor, así que no permite cambiar de vendedor con venta en curso. Decisión completa: `docs/DECISIONS.md` (2026-10-15).
+
 ## Ventas en curso (borrador en servidor) y advertencias del POS
 
 Ver decisión completa, verificación y lista de archivos en `docs/DECISIONS.md` ("Ventas en curso:

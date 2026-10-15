@@ -3,7 +3,7 @@ titulo: Mapa de configuraciones de la empresa
 rol: admin
 modulo: Referencia
 orden: 1
-revisada: 2026-10-12
+revisada: 2026-10-15
 ---
 # Mapa de configuraciones de la empresa
 
@@ -24,6 +24,8 @@ Cada fila es **un interruptor o valor que cambia el comportamiento del sistema**
 | **Intentos de "Ver fórmula"** | Configuración del servidor (`Security:FormulaStepUpMaxAttempts`, `...WindowMinutes`, `...LockoutMinutes`) | Quien administra el servidor | **3** intentos en 5 min, bloqueo de 5 min | Pasados los intentos, esa sesión no puede probar más usuarios y claves durante el bloqueo. |
 | **Política de contraseña** | Fija en el sistema | — | 8+ caracteres, letra + número + carácter especial | Aplica a contraseñas nuevas o cambiadas. Las anteriores siguen valiendo hasta cambiarlas. |
 | **Permitir login fuera de sucursal** | [Editar usuario](ayuda:pantalla/Usuarios.Editar) | Admin | Apagado | Exceptúa a ese no-admin de la validación de ubicación (GPS) que tienen algunas sucursales. |
+| **Minutos de inactividad** (por usuario) | [Editar usuario](ayuda:pantalla/Usuarios.Editar) | Admin | **60** (también para los usuarios existentes) | Tras esos minutos sin tocar el sistema se pregunta "¿Extender sesión?" durante 5 minutos y, si no se extiende, se cierra la sesión; en el POS se bloquea y pide la contraseña del vendedor sin perder la venta. **0 = nunca.** El usuario de producción nunca se bloquea. Ver [bloqueo por inactividad](ayuda:concepto/bloqueo-por-inactividad). |
+| **No bloquear sesión** (por dispositivo) | [Dispositivos seguros](ayuda:pantalla/DispositivosSeguros.Index) | Admin | Apagado (se bloquea) | En ese dispositivo no se avisa ni se bloquea por inactividad, sea cual sea el usuario (pensado para la PC propia de un administrador). Rige desde el próximo inicio de sesión desde esa PC. |
 | **Dirección de ingreso de la empresa** | Automática: `/Login/<CUIT>` | — | — | Con un dispositivo autorizado muestra la lista de usuarios y acepta PIN. Ver [ingresar con el CUIT](ayuda:concepto/login-por-cuit). |
 
 ## Usuarios y permisos

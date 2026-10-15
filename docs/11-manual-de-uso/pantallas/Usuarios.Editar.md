@@ -6,7 +6,7 @@ modulo: Usuarios
 orden: 2
 alias: Usuarios.Guardar
 permiso: Usuario.NuevoUsuario (editar)
-revisada: 2026-10-03
+revisada: 2026-10-15
 ---
 ## Para qué sirve
 Crear un usuario o modificar uno existente. Se llega desde [Usuarios](ayuda:pantalla/Usuarios.Index) con **Crear usuario nuevo** o **Modificar**.
@@ -26,6 +26,7 @@ Crear un usuario o modificar uno existente. Se llega desde [Usuarios](ayuda:pant
 - **Usuario de producción:** cuenta compartida de un sector. Al guardar movimientos/stock/elaborados no pide contraseña: se elige de una lista quién lo hizo. **No puede ser Admin**, pierde Ventas, Finanzas y las Fórmulas de Elaborados, y queda sin *Ajuste de stock*. Ver [roles](ayuda:concepto/roles-y-permisos).
 - **Requiere dispositivo seguro:** le exige a **este** usuario ingresar solo desde un dispositivo autorizado, aunque la empresa no lo exija a todos (no aplica a administradores). Ver [dispositivo seguro](ayuda:concepto/dispositivo-seguro).
 - **Puede operar POS** (viene **tildado** en un alta): le da el permiso mínimo de Ventas para usar el punto de venta (edición solo del día). Se apaga solo si es usuario de producción. Los permisos finos se ajustan en [Permisos](ayuda:pantalla/Usuarios.Permisos).
+- **Minutos de inactividad** (viene en **60**): si pasan esos minutos sin que el usuario toque el sistema, se le pregunta "¿Extender sesión?" y, si no responde en 5 minutos, se cierra la sesión (en el POS se bloquea y pide su contraseña). **0 = nunca.** Un usuario de producción nunca se bloquea, sea cual sea el valor. Entre 0 y 1440. Ver [bloqueo por inactividad](ayuda:concepto/bloqueo-por-inactividad).
 
 ## Reglas y efectos
 - Cambiar la clave **no** cambia el PIN del usuario.

@@ -162,6 +162,11 @@ namespace Negocio
             oDispositivoD.SetHabilitadoFichaje(id, idEmpresa, habilitado);
         }
 
+        public void SetNoBloquearSesion(int id, int idEmpresa, bool noBloquear)
+        {
+            oDispositivoD.SetNoBloquearSesion(id, idEmpresa, noBloquear);
+        }
+
         // true solo si existe, no esta bloqueado Y esta habilitado para fichaje.
         public bool EsFichajeHabilitado(string numeroSerie, int idEmpresa)
         {

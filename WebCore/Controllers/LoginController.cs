@@ -978,6 +978,20 @@ namespace WebCore.Controllers
             return RedirectToAction("Index");
         }
 
+        // Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad"): el usuario
+        // eligio "Extender sesion" en el cartel de inactividad (Scripts/app/inactividad.js). La accion solo
+        // confirma que la sesion sigue viva (el request renueva la cookie deslizante); el contador de
+        // inactividad vive en el navegador. Sin antiforgery a proposito: un CSRF solo lograria mantener
+        // abierta la sesion de la propia victima. Con la clase [AllowAnonymous] hay que chequear a mano.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public IActionResult ExtenderSesion()
+        {
+            if (!_sesion.EstaAutenticado)
+                return Unauthorized();
+            return NoContent();
+        }
+
         // Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): si al cerrar sesion la cuenta tiene
         // ventas del POS sin finalizar, queda constancia en cada una (evento LOGOUT). Nunca debe impedir el
         // logout: si falla solo se loguea.
@@ -1420,7 +1434,7 @@ namespace WebCore.Controllers
             Entidades.DispositivoSeguro? dispositivo, string motivo, string metodoAuth = MetodoAuthClave)
         {
             RegistrarAcceso(user, true, motivo, ip, dispositivo);
-            await FirmarCookieAsync(user, metodoAuth);
+            await FirmarCookieAsync(user, metodoAuth, dispositivo);
             LoginRateLimiter.Reset(ip, usuarioTipeado);
 
             // Modal de sucursal post-login (item 3 de la cuarta ronda de pedidos, 2026-09-10 --
@@ -1499,7 +1513,9 @@ namespace WebCore.Controllers
             return email.Substring(0, 1) + "***" + email.Substring(arroba);
         }
 
-        private async Task FirmarCookieAsync(Entidades.Usuario user, string metodoAuth = MetodoAuthClave)
+        // dispositivo: el dispositivo seguro ya resuelto en el login (null si no se reconocio ninguno).
+        // Si esta marcado "No bloquear sesion" se anota en la cookie para saltar el bloqueo por inactividad.
+        private async Task FirmarCookieAsync(Entidades.Usuario user, string metodoAuth = MetodoAuthClave, Entidades.DispositivoSeguro? dispositivo = null)
         {
             var claims = new List<Claim>
             {
@@ -1512,6 +1528,7 @@ namespace WebCore.Controllers
                 new Claim(SesionClaims.EsUsuarioProduccion, user.EsUsuarioProduccion ? "true" : "false"),
                 new Claim(SesionClaims.PermitirLoginFueraSucursal, user.PermitirLoginFueraSucursal ? "true" : "false"),
                 new Claim(SesionClaims.AuthMethod, metodoAuth),
+                new Claim(SesionClaims.SinBloqueoInactividad, dispositivo != null && dispositivo.NoBloquearSesion ? "true" : "false"),
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

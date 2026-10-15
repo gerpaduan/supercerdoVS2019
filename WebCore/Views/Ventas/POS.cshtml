@@ -1376,6 +1376,10 @@ else
         })();
     </script>
 
+    @* Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md): overlay + pos-bloqueo.js. No se activa si el
+       vendedor tiene 0 minutos, es usuario de produccion o el dispositivo es "No bloquear sesion". *@
+    @Html.Partial("~/Views/Shared/_BloqueoPOS.cshtml")
+
     <script>
         (function () {
             if (@(requiereOperadorPOS ? "true" : "false")) return;

@@ -47,6 +47,9 @@ namespace WebCore.Models
         public bool PermitirLoginFueraSucursal { get; set; }
         public bool EsUsuarioProduccion { get; set; }
         public bool RequiereDispositivoSeguro { get; set; }
+        // Bloqueo por inactividad (0 = nunca; el usuario de produccion queda exento igual). Tope 24 h.
+        [Range(0, 1440, ErrorMessage = "Los minutos de inactividad deben estar entre 0 y 1440.")]
+        public int MinutosInactividad { get; set; } = Entidades.Usuario.MinutosInactividadPorDefecto;
         public bool PuedeOperarPOS { get; set; } = true;
         public int IdEmpresa { get; set; }
         public List<SelectListItem> Sucursales { get; set; } = new List<SelectListItem>();

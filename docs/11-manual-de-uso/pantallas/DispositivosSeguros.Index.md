@@ -5,7 +5,7 @@ rol: admin
 modulo: Acceso y seguridad
 orden: 10
 permiso: Admin de la empresa
-revisada: 2026-10-03
+revisada: 2026-10-15
 ---
 ## Para qué sirve
 Administrar los **dispositivos autorizados** para ingresar cuando la empresa (o un usuario) exige [dispositivo seguro](ayuda:concepto/dispositivo-seguro). Está en *Configuración → Dispositivos seguros*. Solo un administrador puede modificar; cualquier otro usuario que entre por la dirección ve el listado sin botones.
@@ -26,6 +26,7 @@ Si el dispositivo ya está cargado **y bloqueado**, no se re-autoriza: primero h
 ## Acciones de cada dispositivo
 - **Bloquear / Desbloquear:** un dispositivo bloqueado deja de servir para ingresar y el empleado **no puede volver a autorizarlo por su cuenta**. Úsalo si se perdió un equipo o se fue un empleado.
 - **Habilitar fichaje / Deshabilitar fichaje:** independiente del bloqueo. Un dispositivo habilitado permite que **cualquier empleado marque entrada y salida sin contraseña** en *Jornadas → Fichaje* (pensado para una tablet fija en el local).
+- **No bloquear sesión / Volver a bloquear sesión:** por defecto la sesión se bloquea por inactividad en todos los dispositivos. Con *No bloquear sesión*, en ese dispositivo no se avisa ni se bloquea, sea cual sea el usuario (pensado para la PC propia de un administrador). La columna **Sesión** muestra *Se bloquea* o *No se bloquea*. **Rige desde el próximo inicio de sesión** desde esa PC. Ver [bloqueo por inactividad](ayuda:concepto/bloqueo-por-inactividad).
 - **Eliminar:** lo saca de la lista (pide confirmación).
 
 ## Reglas y efectos

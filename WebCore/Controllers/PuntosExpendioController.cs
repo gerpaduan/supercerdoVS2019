@@ -340,6 +340,10 @@ namespace WebCore.Controllers
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.RequiereOperadorPOS = requiereOperadorPOS;
 
+            // Bloqueo por inactividad del POS (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad").
+            ViewBag.MinutosBloqueoPOS = requiereOperadorPOS ? 0 : WebCore.Helpers.BloqueoPosHelper.MinutosPara(User, operador);
+            ViewBag.VendedorBloqueoPOS = operador?.Nombre ?? "";
+
             return View("~/Views/PuntosExpendio/POS.cshtml", model);
         }
 

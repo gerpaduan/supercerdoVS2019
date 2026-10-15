@@ -15,5 +15,8 @@ namespace WebCore.Infrastructure
         // Como se autentico en esta sesion: "clave", "pin" (clave rapida, solo dispositivo seguro) o
         // "huella" (passkey). Las acciones sensibles piden clave completa si fue "pin".
         public const string AuthMethod = "AuthMethod";
+        // Bloqueo por inactividad (2026-10-15): "true" si el dispositivo desde el que se inicio sesion
+        // esta marcado "No bloquear sesion". Se fija al loguearse: un cambio rige desde el proximo login.
+        public const string SinBloqueoInactividad = "SinBloqueoInactividad";
     }
 }

@@ -56,6 +56,7 @@ namespace NegocioTests.Fakes
         public void addOrEditUser(Entidades.Usuario oUsuarioE) => throw new NotImplementedException();
         public void setSucursalUsuario(Entidades.Usuario oUsuario) => throw new NotImplementedException();
         public void setPermitirLoginFueraSucursal(Entidades.Usuario oUsuario) => throw new NotImplementedException();
+        public void setMinutosInactividad(Entidades.Usuario oUsuario) => throw new NotImplementedException();
         public void setEsUsuarioProduccion(Entidades.Usuario oUsuario) => throw new NotImplementedException();
         public void setRequiereDispositivoSeguro(Entidades.Usuario oUsuario) => throw new NotImplementedException();
         public List<Entidades.Usuario> BuscarUsuariosPorIdentificador(string identificador, bool soloActivos) => throw new NotImplementedException();

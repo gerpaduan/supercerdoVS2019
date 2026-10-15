@@ -1487,6 +1487,30 @@
 
     @await RenderSectionAsync("Scripts", required: false)
 
+    @* Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad"). Minutos
+       efectivos = 0 (no se carga nada) para el usuario de produccion, con 0 configurado, o si la sesion
+       se inicio desde un dispositivo marcado "No bloquear sesion" (claim). Este layout no se usa en el
+       POS: alli rige pos-bloqueo.js. *@
+    @{
+        int minutosInactividadEfectivos = Negocio.PoliticaInactividad.MinutosEfectivos(
+            usuarioActual.EsUsuarioProduccion,
+            usuarioActual.MinutosInactividad,
+            User.HasClaim(WebCore.Infrastructure.SesionClaims.SinBloqueoInactividad, "true"));
+    }
+    @if (minutosInactividadEfectivos > 0)
+    {
+        <script>
+            window.__inactividad = {
+                minutos: @minutosInactividadEfectivos,
+                avisoMinutos: @Negocio.PoliticaInactividad.MinutosAvisoExtender,
+                idUsuario: @usuarioActual.Id,
+                logoutUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Logout", "Login"))),
+                extenderUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("ExtenderSesion", "Login")))
+            };
+        </script>
+        <script src="~/Scripts/app/inactividad.js" asp-append-version="true"></script>
+    }
+
     @* Gap real cerrado 2026-09-05 (ver docs/DECISIONS.md), port de Web/Views/Shared/_LayoutBase.cshtml
        (lineas 1144-1180). Todo controller portado hasta ahora ya setea TempData["AlertType"/"Title"/
        "Msg"] tras un guardado/error (fidelidad de logica) pero _Layout.cshtml nunca lo leia -- el

@@ -767,6 +767,11 @@
             });
         })();
     </script>
+
+    @* Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md): overlay + pos-bloqueo.js. El desbloqueo se
+       valida en VentasController.DesbloquearPOS (misma Session de operador POS). Sin caja: no valida caja. *@
+    @Html.Partial("~/Views/Shared/_BloqueoPOS.cshtml")
+
     <script src="~/Scripts/app/punto-expendio-pos.js" asp-append-version="true"></script>
 
     <script>

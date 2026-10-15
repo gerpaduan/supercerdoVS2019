@@ -597,6 +597,54 @@ namespace WebCore.Controllers
             return Json(new { ok = true });
         }
 
+        // Bloqueo por inactividad del POS (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad"):
+        // desbloquea con la clave del VENDEDOR ACTIVO de esta pestana -- el operador autorizado si la
+        // cuenta de la cookie es de produccion, o el usuario logueado en cualquier otro caso. El vendedor
+        // se resuelve aca, en el servidor (nunca viene del cliente), y la clave tiene que ser SUYA: la
+        // de otro usuario, aunque sea valida, no desbloquea. Comparte el rate-limit por sesion del
+        // step-up de operador (3 intentos / 5 min). validarCaja=true (Ventas): ademas informa si el
+        // vendedor sigue con caja abierta, para que el cliente recargue y rija el gate de caja normal si
+        // alguien se la cerro mientras estaba bloqueado.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult DesbloquearPOS(string clave, string posInstanceId, bool validarCaja = true)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            // Cuenta de produccion sin operador en Session (vencio): ResolverOperadorPOS caeria a la cuenta
+            // compartida, cuya clave no identifica a ningun vendedor. Se pide volver a elegir operador.
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null)
+                return Json(new { ok = false, requiereOperador = true });
+
+            var vendedor = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+            if (string.IsNullOrWhiteSpace(clave))
+                return Json(new { ok = false, msg = "Ingresá tu contraseña." });
+
+            var validado = _oUsuarioN.ValidarUsuarioWeb(vendedor.User, clave);
+            if (validado == null || !validado.Activo || validado.Id != vendedor.Id)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = "Contraseña incorrecta." });
+            }
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+
+            bool cajaAbierta = true;
+            if (validarCaja)
+            {
+                var cierre = new Entidades.CierreCaja { Sucursal = vendedor.Sucursal, UsuarioInicio = vendedor };
+                cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+                bool cajaReal = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+                // Mismo criterio que POS(): sin caja real solo sigue quien confirmo operar sin caja (bypass).
+                bool bypassActivo = PuedeOperarSinCajaYEditarFecha(vendedor) && TieneBypassCajaActivo(vendedor.Id);
+                cajaAbierta = cajaReal || bypassActivo;
+            }
+
+            return Json(new { ok = true, cajaAbierta });
+        }
+
         // Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): antes, tener el
         // permiso PuedeOperarSinCajaYEditarFecha saltaba en silencio el modal de apertura de caja
         // -- el usuario entraba directo a POS con solo un banner de advertencia, sin ninguna
@@ -2984,6 +3032,11 @@ namespace WebCore.Controllers
             if (user.EsUsuarioProduccion)
                 ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
 
+            // Bloqueo por inactividad del POS (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad"):
+            // minutos del vendedor activo (0 = no bloquea; sin operador resuelto tampoco, ver el helper).
+            ViewBag.MinutosBloqueoPOS = requiereOperadorPOS ? 0 : WebCore.Helpers.BloqueoPosHelper.MinutosPara(User, operador);
+            ViewBag.VendedorBloqueoPOS = operador?.Nombre ?? "";
+
             if (requiereOperadorPOS)
             {
                 // Sin operador resuelto todavia: no se toca caja/venta hasta que el modal de
@@ -3248,6 +3301,13 @@ namespace WebCore.Controllers
             {
                 var user = _usuarioActual;
                 var operador = ResolverOperadorPOS(request?.PosInstanceId, user);
+
+                // Bloqueo por inactividad (2026-10-15): la Session del operador POS puede vencer antes que la
+                // cookie y ResolverOperadorPOS cae entonces a la cuenta compartida de produccion -- la venta
+                // quedaria a nombre de "produccion" en vez del vendedor real. Se rechaza: el cliente conserva
+                // el carrito y, al recargar el POS, pide elegir operador de nuevo.
+                if (user.EsUsuarioProduccion && operador != null && operador.Id == user.Id)
+                    return Json(new { ok = false, requiereOperador = true, msg = "La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario: la venta en curso no se pierde." });
 
                 if (request == null || request.LineasVenta == null || !request.LineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });

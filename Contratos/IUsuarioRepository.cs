@@ -30,6 +30,8 @@ namespace Contratos
         void setPermitirLoginFueraSucursal(Entidades.Usuario oUsuario);
         void setEsUsuarioProduccion(Entidades.Usuario oUsuario);
         void setRequiereDispositivoSeguro(Entidades.Usuario oUsuario);
+        // Minutos de inactividad antes de pedir "Extender sesion" / bloquear el POS (0 = nunca).
+        void setMinutosInactividad(Entidades.Usuario oUsuario);
         // Persiste ambos contadores/bloqueos (por origen: dispositivo seguro y no seguro).
         void ActualizarEstadoBloqueoLogin(Entidades.Usuario oUsuario, bool sinRestriccionDeTenant = false);
         // Clave rapida (PIN): hash PBKDF2 aparte de la clave. hash vacio = quitar el PIN.

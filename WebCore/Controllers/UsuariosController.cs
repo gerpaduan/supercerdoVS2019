@@ -107,6 +107,7 @@ namespace WebCore.Controllers
                 model.PermitirLoginFueraSucursal = usuario.PermitirLoginFueraSucursal;
                 model.EsUsuarioProduccion = usuario.EsUsuarioProduccion;
                 model.RequiereDispositivoSeguro = usuario.RequiereDispositivoSeguro;
+                model.MinutosInactividad = usuario.MinutosInactividad;
                 model.IdEmpresa = usuario.IdEmpresa;
                 model.PuedeOperarPOS = (_oUsuarioN.getPermisosUsuario(usuario.Id) ?? new List<PermisosUsuarios>())
                     .Any(p => p.IdForm == IdFormVentas && p.DiasPermitidosEditar >= 0);
@@ -224,6 +225,12 @@ namespace WebCore.Controllers
                     {
                         Id = idUsuarioPersistido,
                         RequiereDispositivoSeguro = model.RequiereDispositivoSeguro
+                    });
+
+                    _oUsuarioN.setMinutosInactividad(new Entidades.Usuario
+                    {
+                        Id = idUsuarioPersistido,
+                        MinutosInactividad = model.MinutosInactividad
                     });
 
                     AplicarPuedeOperarPOS(idUsuarioPersistido, model.EsUsuarioProduccion, model.PuedeOperarPOS);

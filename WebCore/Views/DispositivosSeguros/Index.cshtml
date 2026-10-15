@@ -132,6 +132,7 @@
                             <th style="width:130px;">Creado por</th>
                             <th style="width:90px;">Estado</th>
                             <th style="width:110px;">Fichaje</th>
+                            <th style="width:110px;" title="Si está en 'No se bloquea', la sesión no se cierra ni se bloquea por inactividad en este dispositivo.">Sesión</th>
                             @if (Model.PuedeAdministrar)
                             {
                                 <th style="width:280px;">Acciones</th>
@@ -183,6 +184,16 @@
                                             <span class="badge badge-secondary bg-secondary">No</span>
                                         }
                                     </td>
+                                    <td>
+                                        @if (item.NoBloquearSesion)
+                                        {
+                                            <span class="badge badge-warning bg-warning text-dark">No se bloquea</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary bg-secondary">Se bloquea</span>
+                                        }
+                                    </td>
                                     @if (Model.PuedeAdministrar)
                                     {
                                         <td>
@@ -204,6 +215,16 @@
                                                 @Html.Hidden("habilitar", item.HabilitadoFichaje ? "false" : "true")
                                                 <button type="submit" class="btn btn-sm @(item.HabilitadoFichaje ? "btn-outline-secondary" : "btn-outline-primary")">
                                                     @(item.HabilitadoFichaje ? "Deshabilitar fichaje" : "Habilitar fichaje")
+                                                </button>
+                                            </form>
+                                            @* Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md): "No bloquear sesión"
+                                               para la PC propia de un administrador. Por defecto se bloquea. *@
+                                            <form asp-controller="DispositivosSeguros" asp-action="CambiarNoBloquearSesion" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                @Html.Hidden("id", item.Id)
+                                                @Html.Hidden("noBloquear", item.NoBloquearSesion ? "false" : "true")
+                                                <button type="submit" class="btn btn-sm @(item.NoBloquearSesion ? "btn-outline-secondary" : "btn-outline-primary")">
+                                                    @(item.NoBloquearSesion ? "Volver a bloquear sesión" : "No bloquear sesión")
                                                 </button>
                                             </form>
                                             <form asp-controller="DispositivosSeguros" asp-action="Eliminar" method="post" class="d-inline">
