@@ -7,6 +7,9 @@
     ViewBag.Title = "Lineas de elaborado";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     string alertaPermisoFecha = ViewBag.AlertaPermisoFecha as string ?? "";
+    // Anulada = tiene algo en Estado. Mismo criterio que el Total Kg del controlador.
+    int cantidadAnuladas = Model.Items.Count(x => !string.IsNullOrWhiteSpace(x.Estado));
+    int cantidadVigentes = Model.Items.Count - cantidadAnuladas;
 }
 
 <div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="lineas">
@@ -75,12 +78,27 @@
     </div>
 
     <div class="row mb-3">
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-4">
             <div class="card border-left-primary shadow-sm h-100 elaborados-total-card elaborados-summary-card">
                 <div class="card-body">
                     <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg lineas</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalKg.ToString("N3")</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="lblTotalKgLineas">@Model.TotalKg.ToString("N3")</div>
                 </div>
+            </div>
+        </div>
+        @* Total de lineas vigentes visibles (sin anuladas). elaborados.js (filtrarLineas) lo recalcula con el filtro en vivo. *@
+        <div class="col-6 col-md-4">
+            <div class="card border-left-primary shadow-sm h-100 elaborados-total-card elaborados-summary-card">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total lineas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="lblCantidadLineas">@cantidadVigentes.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+        @* Aviso de anuladas: ni el total de Kg ni el de lineas las cuentan, pero siguen apareciendo en la tabla. *@
+        <div class="col-12">
+            <div id="lblAnuladasExcluidasLineas" class="elaborados-anuladas-aviso text-muted @(cantidadAnuladas > 0 ? "" : "d-none")">
+                <span id="lblAnuladasExcluidasLineasTexto">@(cantidadAnuladas == 1 ? "1 anulada excluida" : cantidadAnuladas.ToString("N0") + " anuladas excluidas") del total de Kg y de lineas.</span>
             </div>
         </div>
     </div>
@@ -121,6 +139,7 @@
                                     data-ingrediente="@((item.Ingrediente ?? "").ToLowerInvariant())"
                                     data-cod-elaborado="@item.CodigoElaborado"
                                     data-cod-ingrediente="@item.CodigoIngrediente"
+                                    data-kgs="@item.Kgs.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                     data-estado="@((item.Estado ?? "").ToLowerInvariant())">
                                     <td>@(item.Fecha == DateTime.MinValue ? "" : item.Fecha.ToString("dd/MM/yyyy HH:mm"))</td>
                                     <td>@item.Sucursal</td>

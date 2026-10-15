@@ -10,6 +10,9 @@
     var cultura = CultureInfo.GetCultureInfo("es-AR");
     string successMessage = TempData["ElaboradosSuccessMessage"] as string ?? "";
     string alertaPermisoFecha = ViewBag.AlertaPermisoFecha as string ?? "";
+    // Anulado = tiene algo en Estado. Mismo criterio que el Total Kg del controlador.
+    int cantidadAnuladas = Model.Items.Count(x => !string.IsNullOrWhiteSpace(x.Estado));
+    int cantidadVigentes = Model.Items.Count - cantidadAnuladas;
 }
 
 <div class="container-fluid px-2 px-md-3 elaborados-page"
@@ -91,12 +94,27 @@
     </div>
 
     <div class="row mb-3">
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-4">
             <div class="card border-left-primary shadow-sm h-100 elaborados-total-card">
                 <div class="card-body">
                     <div class="elaborados-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
                     <div class="elaborados-total-value font-weight-bold text-gray-800" id="lblTotalKgElaborados">@Model.TotalKg.ToString("N3", cultura)</div>
                 </div>
+            </div>
+        </div>
+        @* Cantidad de elaborados vigentes visibles (sin anulados). elaborados.js la recalcula con el filtro en vivo. *@
+        <div class="col-6 col-md-4">
+            <div class="card border-left-primary shadow-sm h-100 elaborados-total-card">
+                <div class="card-body">
+                    <div class="elaborados-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Elaborados mostrados</div>
+                    <div class="elaborados-total-value font-weight-bold text-gray-800" id="lblCantidadElaborados">@cantidadVigentes.ToString("N0", cultura)</div>
+                </div>
+            </div>
+        </div>
+        @* Aviso de anulados: ni el total ni el contador los cuentan, pero siguen apareciendo en la tabla. *@
+        <div class="col-12">
+            <div id="lblAnuladasExcluidas" class="elaborados-anuladas-aviso text-muted @(cantidadAnuladas > 0 ? "" : "d-none")">
+                <span id="lblAnuladasExcluidasTexto">@(cantidadAnuladas == 1 ? "1 anulado excluido" : cantidadAnuladas.ToString("N0", cultura) + " anulados excluidos") del total y de la cantidad.</span>
             </div>
         </div>
     </div>

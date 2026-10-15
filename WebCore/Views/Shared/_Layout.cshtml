@@ -485,6 +485,31 @@
                 outline-offset: 2px;
             }
         }
+
+        /* Menu de usuario > sucursal: el nombre a la izquierda y la pista "Cambiar" (letra chica) a la derecha. */
+        .dropdown-item-sucursal {
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-item-sucursal-cambiar {
+            margin-left: auto;
+            padding-left: 1rem;
+            font-size: .68rem;
+            font-weight: 600;
+            white-space: nowrap;
+            color: #4e73df;
+        }
+
+        .dropdown-item-sucursal-cambiar i {
+            font-size: .65rem;
+            margin-right: .15rem;
+        }
+
+        html.dark-mode .dropdown-item-sucursal-cambiar,
+        body.dark-mode .dropdown-item-sucursal-cambiar {
+            color: #8fa8ff;
+        }
     </style>
     <script>
         (function () {
@@ -818,9 +843,13 @@
                                    boton (cerca del extremo derecho de la pantalla) y se salia del viewport. *@
                                 <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
                                     <h6 class="dropdown-header d-lg-none">@usuarioActual.Nombre</h6>
-                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalSucursales">
+                                    @* "Cambiar" a la derecha (2026-10-14, pedido del usuario): sin esa pista el usuario no
+                                       sabia que tocar el nombre de la sucursal abre el modal de cambio. modal-sucursales.js
+                                       lee #lblSucursalActual: tiene que contener solo el nombre. *@
+                                    <a class="dropdown-item dropdown-item-sucursal" href="#" data-bs-toggle="modal" data-bs-target="#modalSucursales" title="Cambiar de sucursal">
                                         <i class="fas fa-store fa-sm fa-fw mr-2 text-gray-400"></i>
                                         <strong id="lblSucursalActual">@sucursalActualNombre</strong>
+                                        <span class="dropdown-item-sucursal-cambiar"><i class="fas fa-exchange-alt fa-fw"></i>Cambiar</span>
                                     </a>
                                     @* Autoservicio de numero de serie (2026-09-10, ver docs/DECISIONS.md
                                        "Batch 6"): visible para CUALQUIER usuario logueado -- a diferencia

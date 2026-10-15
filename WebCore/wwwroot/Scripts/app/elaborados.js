@@ -120,10 +120,14 @@
 
         var filtro = normalizarTexto($('.js-filtro-vivo-elaborados').val());
         var visibles = 0;
+        var vigentes = 0;
+        var anuladas = 0;
         var totalKgs = 0;
         var $rows = $page.find('.js-elaborado-row');
         var $tbody = $('#tbodyElaborados');
         var $lblTotal = $('#lblTotalKgElaborados');
+        var $lblCantidad = $('#lblCantidadElaborados');
+        var $avisoAnuladas = $('#lblAnuladasExcluidas');
 
         $tbody.find('.js-elaborado-empty-client').remove();
         $tbody.find('.js-elaborado-empty-server').toggleClass('d-none', $rows.length > 0);
@@ -152,7 +156,14 @@
 
             if (match) {
                 visibles++;
-                totalKgs += parseFloat($row.data('kgs')) || 0;
+                // Anulado = tiene algo en Estado (mismo criterio que el servidor): se muestra en la tabla
+                // pero no suma al total ni a la cantidad; solo se avisa cuántos se excluyeron.
+                if (String($row.data('estado') || '').trim() !== '') {
+                    anuladas++;
+                } else {
+                    vigentes++;
+                    totalKgs += parseFloat($row.data('kgs')) || 0;
+                }
             }
         });
 
@@ -161,6 +172,20 @@
                 minimumFractionDigits: 3,
                 maximumFractionDigits: 3
             }));
+        }
+
+        // Cantidad de elaborados vigentes que pasan el filtro en vivo (sin anulados, igual que el total).
+        // Este script recalcula ambos al cargar y al filtrar.
+        if ($lblCantidad.length) {
+            $lblCantidad.text(vigentes.toLocaleString('es-AR'));
+        }
+
+        // Aviso en letra chica: solo si hay anulados visibles que quedaron fuera de las cuentas.
+        if ($avisoAnuladas.length) {
+            $avisoAnuladas.toggleClass('d-none', anuladas === 0);
+            $('#lblAnuladasExcluidasTexto').text(
+                (anuladas === 1 ? '1 anulado excluido' : anuladas.toLocaleString('es-AR') + ' anulados excluidos')
+                + ' del total y de la cantidad.');
         }
 
         if ($rows.length > 0 && visibles === 0) {
@@ -175,6 +200,9 @@
         var filtro = normalizarTexto($('.js-filtro-vivo-lineas').val());
         var soloIngredientes = $('#soloIngredientes').is(':checked');
         var visibles = 0;
+        var vigentes = 0;
+        var anuladas = 0;
+        var totalKgs = 0;
         var $rows = $page.find('.js-linea-row');
         var $tbody = $('#tbodyLineasElaborados');
 
@@ -198,8 +226,41 @@
             });
 
             $row.toggleClass('d-none', !match);
-            if (match) visibles++;
+            if (match) {
+                visibles++;
+                // Anulada = tiene algo en Estado (mismo criterio que el servidor): se muestra en la tabla
+                // pero no suma al total de Kg ni al de lineas; solo se avisa cuántas se excluyeron.
+                if (String($row.data('estado') || '').trim() !== '') {
+                    anuladas++;
+                } else {
+                    vigentes++;
+                    totalKgs += parseFloat($row.data('kgs')) || 0;
+                }
+            }
         });
+
+        // Totales de las lineas visibles (sin anuladas); se recalculan al cargar y al filtrar.
+        var $lblTotalKg = $('#lblTotalKgLineas');
+        if ($lblTotalKg.length) {
+            $lblTotalKg.text(totalKgs.toLocaleString('es-AR', {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3
+            }));
+        }
+
+        var $lblCantidad = $('#lblCantidadLineas');
+        if ($lblCantidad.length) {
+            $lblCantidad.text(vigentes.toLocaleString('es-AR'));
+        }
+
+        // Aviso en letra chica: solo si hay anuladas visibles que quedaron fuera de las cuentas.
+        var $avisoAnuladas = $('#lblAnuladasExcluidasLineas');
+        if ($avisoAnuladas.length) {
+            $avisoAnuladas.toggleClass('d-none', anuladas === 0);
+            $('#lblAnuladasExcluidasLineasTexto').text(
+                (anuladas === 1 ? '1 anulada excluida' : anuladas.toLocaleString('es-AR') + ' anuladas excluidas')
+                + ' del total de Kg y de lineas.');
+        }
 
         if ($rows.length > 0 && visibles === 0) {
             renderEmptyRow($tbody, 'js-linea-empty-client', 8, 'No hay resultados con el filtro en vivo.');

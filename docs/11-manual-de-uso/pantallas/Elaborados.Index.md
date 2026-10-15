@@ -5,10 +5,15 @@ rol: usuario
 modulo: Elaborados
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-10-05
+revisada: 2026-10-14
 ---
 ## Para qué sirve
-Listado de los **elaborados registrados** (por sucursal y fechas) con el total de kilos y un detalle desplegable de cada uno.
+Listado de los **elaborados registrados** (por sucursal y fechas) con el total de kilos, la cantidad de elaborados mostrados y un detalle desplegable de cada uno.
+
+## Tarjetas de totales
+- **Total Kg**: suma de la cantidad de los elaborados visibles en la tabla, **sin contar los anulados** (las filas que tienen algo en *Estado*).
+- **Elaborados mostrados**: cuántos elaborados visibles hay en la tabla, **sin contar los anulados**.
+- Ambos se recalculan al escribir en *Nombre elaborado* (filtro en vivo). Los anulados siguen apareciendo en la tabla; si hay alguno visible, debajo de las tarjetas, en letra chica, dice cuántos *"anulados excluidos del total y de la cantidad"*.
 
 ## Fórmula secreta
 En el detalle de un registro, si el producto tiene una fórmula [secreta](ayuda:concepto/formula-secreta), **se ocultan solo los ingredientes que salen de la fórmula** (los que el sistema agrega solo y el producto "Ajuste Fórmula"; en un ingreso rápido, todos los de la fórmula) y la receta. Los ingredientes que el operador cargó a mano siguen visibles. Debajo aparece una fila *"Ingredientes de la fórmula secreta ocultos."* (sin cantidades) con el botón **Ver fórmula**. En la fila del listado, la **Cantidad** no suma los ingredientes ocultos y lleva la etiqueta *"+ ingredientes"* para avisarlo; el total de arriba tampoco los incluye. Abre el selector de usuarios (el mismo de Cerrar Caja): se elige de la lista una persona (la lista muestra solo a quienes tienen permiso sobre fórmulas) y se escribe su contraseña; si valida, el detalle se vuelve a cargar con todos los ingredientes y aparece **Ocultar fórmula**. La fórmula queda visible 5 minutos como máximo.
