@@ -142,6 +142,8 @@ namespace WebCore.Models
         public int IdVenta { get; set; }
         // Fecha y hora reales de la venta (ResumenCompacto es solo el texto): la usa el Excel compacto para ordenar.
         public DateTime FechaVenta { get; set; }
+        // Fecha de creacion del registro: la usa la vista "Ver solo lineas" para ordenar por Creado.
+        public DateTime Creado { get; set; }
         // IDs exactos de la persona y del vendedor de la venta: el filtro en vivo del selector
         // multi-seleccion los compara contra data-id-cliente / data-id-vendedor de la tarjeta.
         public int IdCliente { get; set; }

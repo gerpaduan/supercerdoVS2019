@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (38 de 90 pantallas)
+## Cobertura (39 de 91 pantallas)
 
 ## Manual del usuario
 
@@ -28,7 +28,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Clave rápida (PIN) | Acceso y seguridad | `conceptos/clave-rapida-pin.md` | 2026-10-03 |
 | conceptos | Ingresar con la dirección de tu empresa (CUIT) | Acceso y seguridad | `conceptos/login-por-cuit.md` | 2026-10-04 |
 | conceptos | Buscar cliente, vendedor o proveedor en los filtros (F9 / F10) | Conceptos generales | `conceptos/selector-cliente-vendedor-proveedor.md` | 2026-10-13 |
-| conceptos | Menú de usuario (arriba a la derecha) | Conceptos generales | `conceptos/menu-de-usuario.md` | 2026-10-03 |
+| conceptos | Menú de usuario (arriba a la derecha) | Conceptos generales | `conceptos/menu-de-usuario.md` | 2026-10-14 |
 | conceptos | Roles y permisos (quién puede hacer qué) | Conceptos generales | `conceptos/roles-y-permisos.md` | 2026-10-03 |
 | conceptos | Fórmula secreta | Elaborados | `conceptos/formula-secreta.md` | 2026-10-04 |
 | pantallas | Cambiar contraseña | Acceso y seguridad | `pantallas/Login.ChangePassword.md` | 2026-10-03 |
@@ -40,16 +40,16 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
 | pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-10-09 |
 | pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-13 |
-| pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-13 |
+| pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-14 |
 | pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-10-09 |
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-10-09 |
-| pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-05 |
+| pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-14 |
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-10-04 |
 | pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-05 |
-| pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-05 |
+| pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-14 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-13 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-13 |
-| pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-13 |
+| pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
 | pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-10-13 |
 
 ## Manual del administrador
@@ -66,6 +66,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-10-13 |
 | pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-10-13 |
 | pantallas | Qué pedir | Stock | `pantallas/Reposicion.Index.md` | 2026-10-13 |
+| pantallas | Sugerir puntos de stock | Stock | `pantallas/Reposicion.Puntos.md` | 2026-10-13 |
 | pantallas | Nuevo / Modificar usuario | Usuarios | `pantallas/Usuarios.Editar.md` | 2026-10-03 |
 | pantallas | Permisos del usuario | Usuarios | `pantallas/Usuarios.Permisos.md` | 2026-10-03 |
 | pantallas | Usuarios | Usuarios | `pantallas/Usuarios.Index.md` | 2026-10-03 |

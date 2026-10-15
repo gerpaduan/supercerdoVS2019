@@ -48,6 +48,29 @@
         color: var(--ui-text, inherit);
     }
 
+    /* Vista "Ver solo lineas" (tabla plana): encabezados ordenables con flecha de orden. */
+    .lineas-tabla-plana th.js-plana-ordenable {
+        cursor: pointer;
+        white-space: nowrap;
+        user-select: none;
+    }
+
+    .lineas-tabla-plana th.js-plana-ordenable:hover {
+        text-decoration: underline;
+    }
+
+    .lineas-tabla-plana th .js-plana-flecha {
+        display: inline-block;
+        min-width: .9em;
+        margin-left: .2em;
+        font-size: .8em;
+        opacity: .75;
+    }
+
+    .lineas-tabla-plana td.js-plana-nowrap {
+        white-space: nowrap;
+    }
+
     @@media (min-width: 1200px) {
         .lineas-filtros-grid.cols-4 {
             grid-template-columns: 1fr 1fr 1fr 1fr 140px;

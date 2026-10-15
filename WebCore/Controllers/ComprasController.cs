@@ -370,6 +370,8 @@ namespace WebCore.Controllers
                 var grupo = new CompraLineasGrupoVm
                 {
                     IdCompra = compra.IdCompra,
+                    FechaCompra = compra.FechaCompra,
+                    Creado = compra.Creado,
                     IdProveedor = compra.Proveedor != null ? compra.Proveedor.IdPersona : 0,
                     CollapseId = "compraLineas_" + compra.IdCompra,
                     Titulo = "COMPRA ID: " + compra.IdCompra,

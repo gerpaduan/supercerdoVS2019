@@ -80,9 +80,19 @@
                     </div>
                 </div>
 
-                <div class="custom-control custom-switch mt-1">
-                    <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesCompras" />
-                    <label class="custom-control-label" for="expandirDetallesCompras">Ver detalles</label>
+                <div class="d-flex align-items-center flex-wrap mt-1" style="gap:.75rem;">
+                    @* "Ver detalles" solo aplica a la vista agrupada (en la vista plana ya se ven todos los datos): lineas-agrupadas.js lo oculta. *@
+                    <div class="custom-control custom-switch mr-3 js-detalles-switch-wrap">
+                        <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesCompras" />
+                        <label class="custom-control-label" for="expandirDetallesCompras">Ver detalles</label>
+                    </div>
+                    @* Alterna entre tarjetas por compra y una tabla plana con una fila por linea (ordenable). Ver lineas-agrupadas.js. *@
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVistaSoloLineas"
+                            data-clave-vista="compras"
+                            data-texto-plana="Ver solo líneas"
+                            data-texto-agrupada="Ver agrupado por compra">
+                        <i class="fas fa-list mr-1"></i><span class="js-vista-texto">Ver solo líneas</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -98,6 +108,9 @@
     <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-server @(Model.Compras != null && Model.Compras.Count > 0 ? "d-none" : "")">No se encontraron compras con lineas para los filtros seleccionados.</div>
     <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-client d-none">No hay resultados con el filtro en vivo.</div>
 
+    @* Vista agrupada (tarjeta por compra). Se oculta el CONTENEDOR y no las tarjetas: otras partes de la pantalla
+       consultan `.js-registro-card:not(.d-none)` para saber si hay resultados. *@
+    <div class="js-vista-agrupada">
     @if (Model.Compras != null)
     {
         foreach (var compra in Model.Compras)
@@ -107,7 +120,10 @@
             <div class="card shadow-sm mb-3 linea-registro-card js-registro-card"
                  data-proveedor="@(proveedor != null ? proveedor.Valor : "")"
                  data-id-proveedor="@compra.IdProveedor"
-                 data-tipoCompra="@(tipoCompra != null ? tipoCompra.Valor : "")">
+                 data-tipoCompra="@(tipoCompra != null ? tipoCompra.Valor : "")"
+                 data-fecha="@compra.FechaCompra.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)"
+                 data-creado="@(compra.Creado.HasValue ? compra.Creado.Value.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) : "")"
+                 data-creado-texto="@(compra.Creado.HasValue ? compra.Creado.Value.ToString("dd/MM/yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) : "-")">
                 <div class="card-header bg-white">
                     <div class="d-flex justify-content-between align-items-start flex-wrap">
                         <div>
@@ -143,7 +159,7 @@
                         <tbody>
                             @foreach (var linea in compra.Lineas)
                             {
-                                <tr class="js-linea-row" data-codigo="@linea.Codigo" data-producto="@linea.Producto" data-kg="@linea.CantidadKg" data-total="@linea.Total" data-unidades="0">
+                                <tr class="js-linea-row" data-codigo="@linea.Codigo" data-producto="@linea.Producto" data-kg="@linea.CantidadKg" data-precio="@linea.Precio" data-total="@linea.Total" data-unidades="0">
                                     <td>@linea.Codigo</td>
                                     <td>@linea.Producto</td>
                                     <td class="text-right">@linea.CantidadKgTexto</td>
@@ -157,6 +173,18 @@
             </div>
         }
     }
+    </div>
+
+    @* Vista plana ("Ver solo líneas"): una fila por línea. La arma lineas-agrupadas.js a partir de las tarjetas de arriba
+       (encabezado y filas se generan en el navegador); empieza oculta. *@
+    <div class="card shadow-sm js-vista-plana d-none">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 elaborados-table-compact lineas-tabla-plana">
+                <thead class="thead-light"><tr class="js-plana-encabezado"></tr></thead>
+                <tbody class="js-plana-cuerpo"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <style>

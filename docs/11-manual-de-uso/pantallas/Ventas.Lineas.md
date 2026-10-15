@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 3
 permiso: PENDIENTE (la acción no valida un permiso propio; a los usuarios de producción les pide elegir el operador de Ventas antes de entrar)
-revisada: 2026-10-13
+revisada: 2026-10-14
 ---
 ## Para qué sirve
 Ver **cada venta con sus líneas** (producto, cantidad en kilos, precio y total de cada línea) de un período, con una tarjeta por venta. Sirve para revisar qué se vendió producto por producto y para **exportarlo a PDF o Excel**.
@@ -19,6 +19,15 @@ Ver **cada venta con sus líneas** (producto, cantidad en kilos, precio y total 
 
 ## Totales
 Cuatro tarjetas: **Total Kg**, **Total pesos** (suma de las líneas que se ven), **Cantidad de líneas** y **Cantidad de registros** (ventas).
+
+## Ver solo líneas
+El botón **Ver solo líneas** (debajo de los filtros) cambia la pantalla de una tarjeta por venta a **una sola tabla con una fila por línea**; al tocarlo de nuevo (*Ver agrupado por venta*) volvés a las tarjetas.
+- Cada fila trae: **Fecha**, **Creado** (cuándo se cargó el registro, con segundos), nro/comprobante, sucursal, cliente, vendedor, forma de pago, código, producto, cantidad/kg, precio y total de la línea, y un ojo para **abrir la venta**.
+- **Ordenar**: tocá el título de una columna (Fecha, Creado, Código, Producto, Cliente, etc.); un segundo toque invierte el orden. La flecha ▲▼ marca la columna activa. Al abrir la vista viene ordenada por **Fecha**, de la más reciente a la más vieja. Las líneas sin código (*-*) quedan siempre al final.
+- Los **filtros en vivo y los totales** de arriba funcionan igual en las dos vistas. *Ver detalles* se oculta en la vista plana (ya se ven todos los datos).
+- **PDF y Excel** no cambian: exportan lo mismo en cualquiera de las dos vistas.
+- El navegador **recuerda la vista elegida** (para esta pantalla) al tocar *Buscar* o cambiar la sucursal.
+- Con muchas columnas, en pantallas angostas la tabla se desplaza hacia los costados dentro de su recuadro.
 
 ## Exportar a PDF o Excel
 1. Dejá la pantalla como la querés: sucursal, fechas (ya aplicadas con **Buscar**) y filtros.

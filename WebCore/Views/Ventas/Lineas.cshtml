@@ -114,9 +114,19 @@
                     </div>
                 </div>
 
-                <div class="custom-control custom-switch mt-1">
-                    <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesVentas" />
-                    <label class="custom-control-label" for="expandirDetallesVentas">Ver detalles</label>
+                <div class="d-flex align-items-center flex-wrap mt-1" style="gap:.75rem;">
+                    @* "Ver detalles" solo aplica a la vista agrupada (en la vista plana ya se ven todos los datos): lineas-agrupadas.js lo oculta. *@
+                    <div class="custom-control custom-switch mr-3 js-detalles-switch-wrap">
+                        <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesVentas" />
+                        <label class="custom-control-label" for="expandirDetallesVentas">Ver detalles</label>
+                    </div>
+                    @* Alterna entre tarjetas por venta y una tabla plana con una fila por linea (ordenable). Ver lineas-agrupadas.js. *@
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVistaSoloLineas"
+                            data-clave-vista="ventas"
+                            data-texto-plana="Ver solo líneas"
+                            data-texto-agrupada="Ver agrupado por venta">
+                        <i class="fas fa-list mr-1"></i><span class="js-vista-texto">Ver solo líneas</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -156,6 +166,9 @@
         No hay resultados con el filtro en vivo.
     </div>
 
+    @* Vista agrupada (tarjeta por venta). Se oculta el CONTENEDOR y no las tarjetas: los botones de exportar de abajo
+       consultan `.js-registro-card:not(.d-none)` para saber si hay resultados. *@
+    <div class="js-vista-agrupada">
     @if (Model.Ventas != null)
     {
         foreach (var venta in Model.Ventas)
@@ -168,7 +181,10 @@
                  data-vendedor="@(vendedor != null ? vendedor.Valor : "")"
                  data-id-cliente="@venta.IdCliente"
                  data-id-vendedor="@venta.IdVendedor"
-                 data-formaPago="@(formaPago != null ? formaPago.Valor : "")">
+                 data-formaPago="@(formaPago != null ? formaPago.Valor : "")"
+                 data-fecha="@venta.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)"
+                 data-creado="@(venta.Creado == DateTime.MinValue ? "" : venta.Creado.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture))"
+                 data-creado-texto="@(venta.Creado == DateTime.MinValue ? "-" : venta.Creado.ToString("dd/MM/yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture))">
                 <div class="card-header bg-white">
                     <div class="d-flex justify-content-between align-items-start flex-wrap">
                         <div>
@@ -208,6 +224,7 @@
                                     data-codigo="@linea.Codigo"
                                     data-producto="@linea.Producto"
                                     data-kg="@linea.CantidadKg"
+                                    data-precio="@linea.Precio"
                                     data-total="@linea.Total"
                                     data-unidades="0">
                                     <td>@linea.Codigo</td>
@@ -223,6 +240,18 @@
             </div>
         }
     }
+    </div>
+
+    @* Vista plana ("Ver solo líneas"): una fila por línea. La arma lineas-agrupadas.js a partir de las tarjetas de arriba
+       (encabezado y filas se generan en el navegador); empieza oculta. *@
+    <div class="card shadow-sm js-vista-plana d-none">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 elaborados-table-compact lineas-tabla-plana">
+                <thead class="thead-light"><tr class="js-plana-encabezado"></tr></thead>
+                <tbody class="js-plana-cuerpo"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <style>

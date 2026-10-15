@@ -1049,6 +1049,7 @@ namespace WebCore.Controllers
                 {
                     IdVenta = venta.IdVenta,
                     FechaVenta = venta.FechaVenta,
+                    Creado = venta.Creado,
                     IdCliente = venta.IdPersona,
                     IdVendedor = venta.IdVendedor,
                     CollapseId = "ventaLineas_" + venta.IdVenta,

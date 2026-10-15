@@ -36,6 +36,10 @@ namespace WebCore.Models
         }
 
         public int IdCompra { get; set; }
+        // Fecha de la compra y fecha de creacion del registro (reales, no texto): las usa la vista "Ver solo lineas"
+        // para ordenar por Fecha y por Creado.
+        public DateTime FechaCompra { get; set; }
+        public DateTime? Creado { get; set; }
         // ID exacto del proveedor de la compra: el filtro en vivo del selector multi-seleccion lo
         // compara contra data-id-proveedor de la tarjeta.
         public int IdProveedor { get; set; }
