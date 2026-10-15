@@ -99,7 +99,7 @@ namespace WebCore.Controllers
         }
 
         // Filtro por proveedor del listado de compras, aplicado sobre el DataTable que devuelve obtenerCompras
-        // (que no tiene parametro de proveedor; mismo patron que QuitarComprasOcultas, asi no se toca el SP
+        // (que no tiene parametro de proveedor; filtra sobre el resultado, asi no se toca el SP
         // de SQL Server ni ICompraRepository). Con IDs: coincidencia EXACTA por idProveedor. Sin IDs y con
         // texto: la razon social contiene el texto (comportamiento de siempre). Modifica y devuelve el mismo DataTable.
         // TODO(claude): confirmar que el SP obtenerCompras de SQL Server (legacy) devuelve idProveedor y razonSocial;
@@ -140,25 +140,6 @@ namespace WebCore.Controllers
         {
             if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion) return usuarioSesion;
             return ObtenerOperadorModulo(modulo) ?? usuarioSesion;
-        }
-
-        // Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01): saca del listado las compras de
-        // proveedores reservados que el usuario restringido no puede ver (solo ve las que cargo el
-        // mismo desde la apertura de su caja). Modifica y devuelve el mismo DataTable.
-        private DataTable QuitarComprasOcultas(DataTable dt)
-        {
-            if (dt == null || !dt.Columns.Contains("idCompra")) return dt;
-
-            var ocultas = _ctaCteReservada.IdsOcultos(Entidades.RestriccionCtaCteReservada.TablaCompras);
-            if (ocultas.Count == 0) return dt;
-
-            for (int i = dt.Rows.Count - 1; i >= 0; i--)
-            {
-                object valor = dt.Rows[i]["idCompra"];
-                if (valor != DBNull.Value && ocultas.Contains(Convert.ToInt32(valor)))
-                    dt.Rows.RemoveAt(i);
-            }
-            return dt;
         }
 
         private static string ClaveSessionOperadorModulo(string modulo) => "OperadorModulo_" + (modulo ?? "");
@@ -297,7 +278,7 @@ namespace WebCore.Controllers
             var seleccionProveedor = ResolverProveedoresFiltro(idsProveedor);
             string proveedorTexto = seleccionProveedor.Ids.Count > 0 ? "" : (proveedor ?? "").Trim();
 
-            DataTable dt = QuitarComprasOcultas(_oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde, hasta, null) ?? new DataTable());
+            DataTable dt = _oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde, hasta, null) ?? new DataTable();
             dt = FiltrarPorProveedor(dt, seleccionProveedor.Ids, proveedorTexto);
             var model = new CompraIndexVm
             {
@@ -349,7 +330,7 @@ namespace WebCore.Controllers
             var seleccionProveedor = ResolverProveedoresFiltro(idsProveedor);
             string proveedorTexto = seleccionProveedor.Ids.Count > 0 ? "" : (proveedor ?? "").Trim();
 
-            DataTable dt = QuitarComprasOcultas(_oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde.Date, hasta.Date, null) ?? new DataTable());
+            DataTable dt = _oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde.Date, hasta.Date, null) ?? new DataTable();
             dt = FiltrarPorProveedor(dt, seleccionProveedor.Ids, proveedorTexto);
             var model = new CompraLineasIndexVm
             {
@@ -420,7 +401,6 @@ namespace WebCore.Controllers
 
         // Detalle de una compra (cabecera + lineas) para el expandible de Compras/Index. Se carga
         // por AJAX solo cuando el usuario abre la fila (mismo patron que StockController.Detalle).
-        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaCompras, "idCompra")]
         public IActionResult Detalle(int idCompra)
         {
             Entidades.Compra compra = _oCompraN.findById_convertToCompra(idCompra);
@@ -551,7 +531,6 @@ namespace WebCore.Controllers
             });
         }
 
-        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaCompras, "id")]
         public IActionResult Editar(int id = 0, string origen = "layout")
         {
             Entidades.Usuario user = _usuarioActual;
@@ -618,7 +597,6 @@ namespace WebCore.Controllers
             return RedirectToAction("Editar", new { id = 0, origen });
         }
 
-        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaCompras, "id")]
         public IActionResult ModificarCompra(int id, string origen = "layout")
         {
             return RedirectToAction("Editar", new { id, origen });
@@ -691,10 +669,6 @@ namespace WebCore.Controllers
                     compraActual = _oCompraN.findById_convertToCompra(model.IdCompra);
                     if (compraActual == null || compraActual.IdCompra == 0)
                         return Fallo("No se encontró la compra a modificar.");
-
-                    // Cuenta corriente reservada: no se edita una compra que el operador no puede ver.
-                    if (_ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaCompras, model.IdCompra, operador))
-                        return Fallo(WebCore.Helpers.ProtegerRegistroReservadoFilter.MensajeDenegado);
                 }
 
                 // Egreso de caja ORIGINAL de la compra (solo las de POS lo tienen), leido antes de modificar nada: es lo

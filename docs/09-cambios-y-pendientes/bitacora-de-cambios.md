@@ -1,6 +1,13 @@
 # Bitacora de cambios
 
-## 2026-10-13 (la mas reciente) - Stock > Que pedir: reposicion sugerida por sucursal (punto de stock, aviso de "en cero" solo si el producto se mueve)
+## 2026-10-15 (la mas reciente) - Stock y Compras: la reserva de cuenta corriente ya no oculta registros
+
+- **Pedido**: un usuario no admin no veia ciertos registros (Pesajes) del index de Stock. Criterio del usuario: la reserva de la persona es solo para datos de cuenta corriente, no para Pesaje ni Compras.
+- **Cambio** (solo WebCore, sin cambios de datos): `StockController` y `ComprasController` ya no filtran ni protegen por `TablaCompras` (listados, `Detalle`, `Editar`, `ModificarCompra`, guardado); `Compras/Index` y `Compras/Lineas` sin el aviso de cuentas reservadas. Ventas, Pagos y extracto siguen igual.
+- **Verificado**: WebCore compila (0 errores). **Sin verificar**: con un usuario restringido real en el navegador; sin commitear ni desplegar.
+- Decision: `docs/DECISIONS.md` (2026-10-15).
+
+## 2026-10-13 - Stock > Que pedir: reposicion sugerida por sucursal (punto de stock, aviso de "en cero" solo si el producto se mueve)
 
 - **Pedido**: analisis de todos los modulos que calculan faltante y una pantalla para saber que pedir y cuanto segun el punto de stock de cada sucursal, avisando los productos en cero pero no los que hace tiempo no se venden; mas como lo hacen los sistemas de gestion de referencia.
 - **Cambio** (solo WebCore + capa de datos Postgres; sin tablas ni columnas nuevas): pantalla `Reposicion/Index` (menu Stock > "Que pedir", solo Postgres): tabla agrupada por proveedor con stock, punto, cantidad a pedir (punto - stock), motivo (bajo el punto / en cero con movimiento / en cero sin movimiento), consumo por dia, dias que alcanza, ultima salida, stock en otras sucursales, ultimo precio e importe estimado; Excel, Imprimir y "Abrir en ventana". Avisos: cierre de stock viejo, stock negativo, "punto alto?". Codigo nuevo: `Negocio/ReposicionStock.cs` (orquestador + `ReposicionStockCalculador`, puro y con tests), `Entidades/ReposicionStock.cs`, `Contratos/IActividadStockRepository.cs`, `CortePg.ObtenerActividadStock` / `ObtenerProveedoresHabituales`, `ReposicionController`, `Views/Reposicion/*`, `Scripts/app/reposicion.js`, `Services/ExcelReposicion.cs`, `NegocioFactory.CrearReposicionStock`, item de menu en `_Layout`. Cambios en codigo existente sin cambio de comportamiento: `Negocio.Corte.ObtenerExistenciaPlano` extraido de `ObtenerMatrizExistenciaPorSucursales`; dos SQL de preparacion de `CortePg` movidos a constantes de clase (texto identico, verificado con diff).
