@@ -105,7 +105,7 @@ namespace WebCore.Infrastructure
             var corteRepo = new DatosPostgres.CortePg(PgConnString, empresa.IdEmpresa, personaRepo);
             var puntoStockRepo = new DatosPostgres.CortePuntoStockSucursalPg(PgConnString, empresa.IdEmpresa);
             var corteN = new Negocio.Corte(corteRepo, empresa, param, puntoStockRepo);
-            return new Negocio.ReposicionStock(corteN, corteRepo);
+            return new Negocio.ReposicionStock(corteN, corteRepo, new Negocio.CortePuntoStockSucursal(puntoStockRepo));
         }
 
         public static Negocio.CortePuntoStockSucursal CrearCortePuntoStockSucursal(IEmpresaContext empresa, IParametrosContext param = null)

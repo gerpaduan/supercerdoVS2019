@@ -393,5 +393,214 @@ namespace NegocioTests
         {
             Assert.Equal(esperado, ReposicionStockCalculador.RedondearPedido(cantidad, pesable), 3);
         }
+
+        // ---- Sugerir puntos de stock ----
+
+        private static ReposicionFiltroVm FiltroPuntos(int diasVentana = 30, int diasCobertura = 7, bool incluirConPunto = false, bool mostrarSinMovimiento = false, params int[] sucursales)
+        {
+            return ReposicionStockCalculador.Normalizar(new ReposicionFiltroVm
+            {
+                DiasVentana = diasVentana,
+                DiasCoberturaPunto = diasCobertura,
+                IncluirConPunto = incluirConPunto,
+                MostrarSinMovimiento = mostrarSinMovimiento,
+                IdsSucursales = sucursales.ToList()
+            });
+        }
+
+        private static PuntosSugeridosVm CalcularPuntos(
+            IList<ExistenciaStockPorSucursalPlanoVm> plano, IList<ActividadStockVm> actividad, ReposicionFiltroVm filtro)
+        {
+            return ReposicionStockCalculador.CalcularPuntosSugeridos(plano, actividad, new List<ProveedorHabitualVm>(), filtro, Ahora);
+        }
+
+        [Theory]
+        [InlineData(2f, 7, 14)]          // 2 kg/día x 7 días
+        [InlineData(0.6248333f, 7, 5)]   // 4,37 -> sube a 5 (Churrasquito real)
+        [InlineData(0.001f, 7, 1)]       // consumo mínimo: nunca menos de 1
+        [InlineData(1000000f, 30, ReposicionStockCalculador.MaxPuntoStock)]  // tope
+        public void SugerirPunto_CubreLosDiasDeConsumo_ConMinimo1YTope(float consumoDiario, int dias, int esperado)
+        {
+            Assert.Equal(esperado, ReposicionStockCalculador.SugerirPunto(consumoDiario, dias));
+        }
+
+        [Fact]
+        public void SinPuntoConConsumo_SeSugiereElPunto_YPuedeCargarse()
+        {
+            // 60 kg en 30 días = 2 kg/día; para 7 días = 14.
+            var r = CalcularPuntos(new[] { Existencia(1, 1, stock: 3f, punto: 0f) }, new[] { Actividad(1, 1, ventas: 60f) }, FiltroPuntos());
+
+            var fila = Assert.Single(r.Filas);
+            Assert.Equal(14, fila.PuntoSugerido);
+            Assert.True(fila.PuedeCargarse);
+            Assert.Equal(1.5f, fila.CoberturaDias.Value, 3);   // 3 kg alcanzan 1,5 días
+            Assert.Equal(1, r.CantConSugerencia);
+            Assert.Equal(1, r.CantSinPunto);
+        }
+
+        [Fact]
+        public void LosDiasDeCobertura_CambianLaSugerencia()
+        {
+            var plano = new[] { Existencia(1, 1, stock: 0f, punto: 0f) };
+            var act = new[] { Actividad(1, 1, ventas: 60f) };
+
+            Assert.Equal(14, CalcularPuntos(plano, act, FiltroPuntos(diasCobertura: 7)).Filas.Single().PuntoSugerido);
+            Assert.Equal(30, CalcularPuntos(plano, act, FiltroPuntos(diasCobertura: 15)).Filas.Single().PuntoSugerido);
+        }
+
+        [Fact]
+        public void ConPuntoCargado_NoSeListaSalvoQueSePidaComparar_Y_NuncaPuedeCargarse()
+        {
+            var plano = new[] { Existencia(1, 1, stock: 3f, punto: 18f) };
+            var act = new[] { Actividad(1, 1, ventas: 60f) };
+
+            var sinComparar = CalcularPuntos(plano, act, FiltroPuntos());
+            Assert.Empty(sinComparar.Filas);
+            Assert.Equal(1, sinComparar.CantConPunto);
+
+            var comparando = CalcularPuntos(plano, act, FiltroPuntos(incluirConPunto: true));
+            var fila = Assert.Single(comparando.Filas);
+            Assert.Equal(14, fila.PuntoSugerido);
+            Assert.Equal(18f, fila.PuntoActual);
+            Assert.False(fila.PuedeCargarse);   // un punto cargado no se pisa
+        }
+
+        [Fact]
+        public void SinConsumo_NoSeSugiere_SeOcultaPeroSeCuenta_YSeListaSiSePide()
+        {
+            var plano = new[] { Existencia(1, 1, stock: 0f, punto: 0f) };
+
+            var oculto = CalcularPuntos(plano, new ActividadStockVm[0], FiltroPuntos());
+            Assert.Empty(oculto.Filas);
+            Assert.Equal(1, oculto.CantSinConsumo);
+
+            var visible = CalcularPuntos(plano, new ActividadStockVm[0], FiltroPuntos(mostrarSinMovimiento: true));
+            var fila = Assert.Single(visible.Filas);
+            Assert.Null(fila.PuntoSugerido);
+            Assert.False(fila.PuedeCargarse);
+        }
+
+        [Fact]
+        public void InsumoConsumidoSoloEnElaboracion_TambienTieneSugerencia()
+        {
+            var r = CalcularPuntos(new[] { Existencia(1, 1, stock: 0f, punto: 0f) }, new[] { Actividad(1, 1, ventas: 0f, elaboracion: 3f) }, FiltroPuntos());
+
+            Assert.Equal(1, Assert.Single(r.Filas).PuntoSugerido);   // 0,1 kg/día x 7 = 0,7 -> 1
+        }
+
+        [Fact]
+        public void LasFilasSeOrdenanPorSucursalYDentroPorConsumoDescendente()
+        {
+            var plano = new[]
+            {
+                Existencia(1, 2, stock: 0f, punto: 0f, nombre: "Poco", sucursal: "B"),
+                Existencia(2, 2, stock: 0f, punto: 0f, nombre: "Mucho", sucursal: "B"),
+                Existencia(3, 1, stock: 0f, punto: 0f, nombre: "Otro", sucursal: "A")
+            };
+            var act = new[] { Actividad(1, 2, ventas: 10f), Actividad(2, 2, ventas: 300f), Actividad(3, 1, ventas: 30f) };
+
+            var r = CalcularPuntos(plano, act, FiltroPuntos());
+
+            Assert.Equal(new[] { "Otro", "Mucho", "Poco" }, r.Filas.Select(x => x.Producto).ToArray());
+        }
+
+        [Theory]
+        [InlineData(0, 7)]
+        [InlineData(-4, 7)]
+        [InlineData(1, 1)]
+        [InlineData(15, 15)]
+        [InlineData(5000, 90)]
+        public void Normalizar_AcotaLosDiasDeCoberturaDelPunto(int pedido, int esperado)
+        {
+            Assert.Equal(esperado, ReposicionStockCalculador.Normalizar(new ReposicionFiltroVm { DiasCoberturaPunto = pedido }).DiasCoberturaPunto);
+        }
+
+        // ---- Validar lo que se guarda (input externo) ----
+
+        private static List<PuntoAGuardarVm> Validar(IList<ExistenciaStockPorSucursalPlanoVm> plano, IEnumerable<PuntoAGuardarVm> pedidos, out List<string> rechazados)
+        {
+            rechazados = new List<string>();
+            return ReposicionStockCalculador.ValidarPuntosAGuardar(plano, pedidos, rechazados);
+        }
+
+        [Fact]
+        public void Guardar_AceptaUnPuntoValidoDeUnProductoSinPunto()
+        {
+            List<string> rechazados;
+            var ok = Validar(new[] { Existencia(1, 1, stock: 0f, punto: 0f) }, new[] { new PuntoAGuardarVm { IdCorte = 1, IdSucursal = 1, PuntoStock = 14 } }, out rechazados);
+
+            Assert.Single(ok);
+            Assert.Empty(rechazados);
+        }
+
+        [Fact]
+        public void Guardar_NuncaPisaUnPuntoYaCargado()
+        {
+            List<string> rechazados;
+            var ok = Validar(new[] { Existencia(1, 1, stock: 0f, punto: 18f, nombre: "Carre", sucursal: "San Lorenzo") },
+                new[] { new PuntoAGuardarVm { IdCorte = 1, IdSucursal = 1, PuntoStock = 99 } }, out rechazados);
+
+            Assert.Empty(ok);
+            var motivo = Assert.Single(rechazados);
+            Assert.Contains("Carre (San Lorenzo)", motivo);
+            Assert.Contains("no se pisa", motivo);
+        }
+
+        [Fact]
+        public void Guardar_RechazaProductosOSucursalesQueNoLlevanStock()
+        {
+            List<string> rechazados;
+            var ok = Validar(new[] { Existencia(1, 1, stock: 0f, punto: 0f) },
+                new[] { new PuntoAGuardarVm { IdCorte = 777, IdSucursal = 1, PuntoStock = 5 }, new PuntoAGuardarVm { IdCorte = 1, IdSucursal = 9, PuntoStock = 5 } }, out rechazados);
+
+            Assert.Empty(ok);
+            Assert.Equal(2, rechazados.Count);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-3)]
+        [InlineData(1000000)]
+        public void Guardar_RechazaValoresFueraDeRango(int valor)
+        {
+            List<string> rechazados;
+            var ok = Validar(new[] { Existencia(1, 1, stock: 0f, punto: 0f) }, new[] { new PuntoAGuardarVm { IdCorte = 1, IdSucursal = 1, PuntoStock = valor } }, out rechazados);
+
+            Assert.Empty(ok);
+            Assert.Contains("entero entre 1 y", Assert.Single(rechazados));
+        }
+
+        [Fact]
+        public void Guardar_UnRepetidoSoloSeAcepta1Vez()
+        {
+            List<string> rechazados;
+            var pedido = new PuntoAGuardarVm { IdCorte = 1, IdSucursal = 1, PuntoStock = 5 };
+            var ok = Validar(new[] { Existencia(1, 1, stock: 0f, punto: 0f) }, new[] { pedido, new PuntoAGuardarVm { IdCorte = 1, IdSucursal = 1, PuntoStock = 6 } }, out rechazados);
+
+            Assert.Equal(5, Assert.Single(ok).PuntoStock);
+            Assert.Contains("repetido", Assert.Single(rechazados));
+        }
+
+        [Fact]
+        public void Guardar_ProcesaComoMuchoElMaximoPorPedido_YAvisa()
+        {
+            var plano = Enumerable.Range(1, ReposicionStockCalculador.MaxPuntosPorGuardado + 20).Select(i => Existencia(i, 1, stock: 0f, punto: 0f)).ToList();
+            var pedidos = plano.Select(f => new PuntoAGuardarVm { IdCorte = f.IdCorte, IdSucursal = 1, PuntoStock = 3 }).ToList();
+            List<string> rechazados;
+
+            var ok = Validar(plano, pedidos, out rechazados);
+
+            Assert.Equal(ReposicionStockCalculador.MaxPuntosPorGuardado, ok.Count);
+            Assert.Contains("solo se procesan los primeros", Assert.Single(rechazados));
+        }
+
+        [Fact]
+        public void Guardar_ConPedidoNuloOConElementosNulos_NoFalla()
+        {
+            List<string> rechazados;
+            Assert.Empty(Validar(new[] { Existencia(1, 1, stock: 0f, punto: 0f) }, null, out rechazados));
+            Assert.Empty(Validar(new[] { Existencia(1, 1, stock: 0f, punto: 0f) }, new PuntoAGuardarVm[] { null }, out rechazados));
+            Assert.Empty(rechazados);
+        }
     }
 }

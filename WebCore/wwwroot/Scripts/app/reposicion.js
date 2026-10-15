@@ -1,6 +1,6 @@
-// Comportamiento de la pantalla "Qué pedir" (Reposicion/Index): selector de sucursales, búsqueda por AJAX,
-// exportación a Excel, impresión y ventana independiente. Las reglas de negocio NO están acá: el servidor calcula
-// todo (Negocio.ReposicionStock) y devuelve la tabla ya armada (Reposicion/_Tabla).
+// Comportamiento de la pantalla "Qué pedir" (Reposicion/Index): búsqueda por AJAX, exportación a Excel, impresión y
+// ventana independiente. Las reglas de negocio NO están acá: el servidor calcula todo (Negocio.ReposicionStock) y devuelve
+// la tabla ya armada (Reposicion/_Tabla). El selector de sucursales y "Más filtros" están en reposicion-comun.js.
 // Depende de jQuery y de window.reposicionConfig (URLs), que define la vista. Ayuda: docs/11-manual-de-uso/pantallas/Reposicion.Index.md.
 (function () {
     "use strict";
@@ -12,48 +12,14 @@
     var $btnBuscarTexto = $btnBuscar.find(".btn-buscar-texto");
     var $btnExportar = $("#btnExportarReposicion");
     var $btnImprimir = $("#btnImprimirReposicion");
-    var $chkSucursales = $(".chk-sucursal-reposicion");
-    var $chkTodas = $("#chkSucursalTodasReposicion");
-    var $lblSucursales = $("#lblSucursalesReposicion");
     var $switchSinMov = $("#switchSinMovimientoReposicion");
 
     // Filtros de la última búsqueda aplicada: el Excel se pide con ESTOS (lo que se ve en pantalla), no con lo que
     // el usuario haya tocado después sin volver a buscar.
     var ultimaConsulta = null;
 
-    // ---- Selector de sucursales (mismo comportamiento que Existencia por sucursales) ----
-
-    function actualizarTextoSucursales() {
-        var tildadas = $chkSucursales.filter(":checked");
-        var texto;
-        if (tildadas.length === $chkSucursales.length) texto = "Todas";
-        else if (tildadas.length === 1) texto = tildadas.first().data("nombre");
-        else texto = tildadas.length + " sucursales";
-        $lblSucursales.text(texto);
-        $("#btnSucursalesReposicion").attr("title", tildadas.map(function () { return $(this).data("nombre"); }).get().join(", "));
-    }
-
-    // Mantiene "Todas" coherente con las individuales y evita dejar 0 tildadas.
-    function sincronizarSucursales(origen) {
-        if (origen === "todas") {
-            $chkSucursales.prop("checked", true);
-            $chkTodas.prop("checked", true);
-        } else if ($chkSucursales.filter(":checked").length === 0) {
-            $(origen).prop("checked", true); // intento de destildar la última: se revierte
-        }
-        $chkTodas.prop("checked", $chkSucursales.filter(":checked").length === $chkSucursales.length);
-        actualizarTextoSucursales();
-    }
-
-    // El menú no se cierra al tildar (si no, habría que reabrirlo por cada sucursal).
-    $("#menuSucursalesReposicion").on("click", function (e) { e.stopPropagation(); });
-    $chkSucursales.on("change", function () { sincronizarSucursales(this); });
-    $chkTodas.on("change", function () { sincronizarSucursales("todas"); });
-    actualizarTextoSucursales();
-
-    $("#switchFiltrosAvanzadosReposicion").on("change", function () {
-        $("#panelAvanzadosReposicion").toggleClass("d-none", !$(this).is(":checked"));
-    });
+    // Selector de sucursales y panel "Más filtros" (comunes a las dos pantallas de Reposicion).
+    window.reposicionComun.iniciarFiltros();
 
     // ---- Búsqueda ----
 

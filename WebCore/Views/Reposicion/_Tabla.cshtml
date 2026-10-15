@@ -3,6 +3,7 @@
 @using System.Globalization
 @using System.Linq
 @using Entidades
+@using static WebCore.Helpers.ReposicionFormato
 
 @*
     Resultado de "Qué pedir": avisos de cierre, tarjetas de resumen y la tabla agrupada por proveedor.
@@ -10,36 +11,6 @@
     Reglas y lectura: docs/11-manual-de-uso/pantallas/Reposicion.Index.md. El color nunca va solo: cada estado
     tiene también texto.
 *@
-
-@functions {
-    private static readonly CultureInfo Cultura = new CultureInfo("es-AR");
-
-    // Cantidad con los decimales justos (5,734 / 20): sin ceros de relleno.
-    private static string Cant(float valor)
-    {
-        return valor.ToString("0.###", Cultura);
-    }
-
-    private static string Unidad(ReposicionFilaVm f)
-    {
-        return f.Pesable ? "kg" : "un.";
-    }
-
-    private static string Plata(decimal valor)
-    {
-        return valor.ToString("C0", Cultura);
-    }
-
-    // "hace 8 días" / "hoy" / "ayer".
-    private static string Hace(int dias)
-    {
-        if (dias <= 0) return "hoy";
-        if (dias == 1) return "ayer";
-        if (dias < 60) return "hace " + dias + " d";
-        if (dias < 730) return "hace " + (dias / 30) + " meses";
-        return "hace más de 2 años";
-    }
-}
 
 @{
     var f = Model.Filtro;
@@ -116,8 +87,9 @@ else
             <i class="fas fa-info-circle mr-1 me-1"></i>
             @Model.CantSinPuntoStock de @Model.CantProductosControlados productos (por sucursal) <strong>no tienen punto de stock cargado</strong>.
             De esos solo se avisa si están en cero y se movieron recientemente.
-            Para que el sistema calcule cuánto pedir de todos los demás, cargá el punto de stock en
-            <em>Productos &rarr; Ver stock por sucursales</em>, o usá "Sin punto de stock: sugerir cantidad para N días de venta" en <em>Más filtros</em>.
+            Para que el sistema calcule cuánto pedir de todos los demás, cargá el punto de stock: usá
+            <a href="@Url.Action("Puntos", "Reposicion")"><strong>Sugerir puntos de stock</strong></a> (propone uno según lo que se consume) o cargalo en
+            <em>Productos &rarr; Ver stock por sucursales</em>. También podés usar "Sin punto de stock: sugerir cantidad para N días de venta" en <em>Más filtros</em>.
         </div>
     }
 
@@ -190,7 +162,7 @@ else
                                             <td>@fila.Sucursal</td>
                                         }
                                         <td class="col-num @(fila.StockActual < 0f ? "text-danger font-weight-bold" : "")">
-                                            @Cant(fila.StockActual) <span class="reposicion-sub">@Unidad(fila)</span>
+                                            @Cant(fila.StockActual) <span class="reposicion-sub">@Unidad(fila.Pesable)</span>
                                         </td>
                                         <td class="col-num">
                                             @if (fila.PuntoStock > 0f)
@@ -206,10 +178,10 @@ else
                                             @if (fila.Pedir.HasValue)
                                             {
                                                 @Cant(fila.Pedir.Value)
-                                                <span class="reposicion-sub">@Unidad(fila)</span>
+                                                <span class="reposicion-sub">@Unidad(fila.Pesable)</span>
                                                 if (fila.Pesable && fila.Promedio > 0f)
                                                 {
-                                                    <span class="reposicion-sub" title="Unidades aproximadas según el peso promedio del producto">≈ @((fila.Pedir.Value / fila.Promedio).ToString("0.#", Cultura)) un.</span>
+                                                    <span class="reposicion-sub" title="Unidades aproximadas según el peso promedio del producto">≈ @(Decimal1(fila.Pedir.Value / fila.Promedio)) un.</span>
                                                 }
                                             }
                                             else if (fila.Motivo == MotivoReposicion.EnCeroSinMovimiento)
@@ -247,7 +219,7 @@ else
                                         <td class="col-num">
                                             @if (fila.CoberturaDias.HasValue)
                                             {
-                                                @(fila.CoberturaDias.Value > 999f ? "+999" : fila.CoberturaDias.Value.ToString("0.#", Cultura)) <span class="reposicion-sub">días</span>
+                                                @(fila.CoberturaDias.Value > 999f ? "+999" : Decimal1(fila.CoberturaDias.Value)) <span class="reposicion-sub">días</span>
                                             }
                                             else
                                             {

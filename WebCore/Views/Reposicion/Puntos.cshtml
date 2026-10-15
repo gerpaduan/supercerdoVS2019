@@ -1,0 +1,185 @@
+@model Entidades.PuntosSugeridosVm
+@using System
+@using System.Linq
+
+@*
+    "Sugerir puntos de stock": propone, para los productos sin punto de stock, el que cubriría N días del consumo reciente
+    (ventas + uso en elaboración) y deja cargar los que el usuario tilde. NUNCA pisa un punto ya cargado.
+    Filtros + tabla que se carga por AJAX (Reposicion/BuscarPuntos -> _TablaPuntos); el guardado es Reposicion/GuardarPuntos.
+    Reglas y lectura: docs/11-manual-de-uso/pantallas/Reposicion.Puntos.md. Comportamiento: wwwroot/Scripts/app/reposicion-puntos.js.
+*@
+
+@{
+    ViewBag.Title = "Sugerir puntos de stock";
+
+    var filtro = Model.Filtro;
+    bool disponible = ViewBag.Disponible is bool d && d;
+    bool todasTildadas = filtro.IdsSucursales == null || filtro.IdsSucursales.Count == 0;
+
+    // Modo ventana independiente (?popup=true): sin sidebar ni barra superior, igual que "Qué pedir".
+    bool popup = ViewBag.Popup is bool esPopup && esPopup;
+    if (popup)
+    {
+        Layout = "~/Views/Shared/_LayoutEmbed.cshtml";
+    }
+    var opcionesDias = new[] { 15, 30, 45, 60, 90, 180 };
+}
+
+<div class="container-fluid reposicion-page reposicion-puntos-page">
+    @if (popup)
+    {
+        <h5 class="reposicion-popup-titulo mb-2">Sugerir puntos de stock</h5>
+    }
+
+    @if (!disponible)
+    {
+        <div class="alert alert-warning">@Model.Mensaje</div>
+    }
+
+    <div class="card shadow-sm mb-3 reposicion-no-print">
+        <div class="card-body">
+            <form id="formPuntos" autocomplete="off">
+                <div class="reposicion-filtros-fila">
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="btnSucursalesReposicion">Sucursales</label>
+                        <!-- Selección múltiple: una, varias o todas (siempre al menos una). Mismo componente que "Qué pedir". -->
+                        <div class="dropdown ui-multiselect">
+                            <button type="button" id="btnSucursalesReposicion" class="btn dropdown-toggle ui-multiselect-toggle"
+                                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
+                                <span id="lblSucursalesReposicion">Todas</span>
+                            </button>
+                            <div class="dropdown-menu" id="menuSucursalesReposicion">
+                                <div class="custom-control custom-checkbox ui-multiselect-todas">
+                                    <input type="checkbox" class="custom-control-input" id="chkSucursalTodasReposicion" @(todasTildadas ? "checked" : null)>
+                                    <label class="custom-control-label" for="chkSucursalTodasReposicion">Todas</label>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                @foreach (var sucursal in Model.SucursalesDisponibles)
+                                {
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input chk-sucursal-reposicion" name="idsSucursales"
+                                               id="chkSucursalReposicion_@sucursal.IdSucursal" value="@sucursal.IdSucursal"
+                                               data-nombre="@sucursal.Sucursal"
+                                               @((todasTildadas || filtro.IdsSucursales.Contains(sucursal.IdSucursal)) ? "checked" : null)>
+                                        <label class="custom-control-label" for="chkSucursalReposicion_@sucursal.IdSucursal">@sucursal.Sucursal</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroDiasVentana"
+                               title="Se mira lo que salió (ventas + uso en elaboración) en este período para calcular el consumo por día.">
+                            Mirar el consumo de los últimos
+                        </label>
+                        <select id="filtroDiasVentana" name="diasVentana" class="form-control">
+                            @foreach (var dias in opcionesDias)
+                            {
+                                <option value="@dias" selected="@(dias == filtro.DiasVentana ? "selected" : null)">@dias días</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroDiasCoberturaPunto"
+                               title="El punto sugerido es lo que se consume en esta cantidad de días: al pedir hasta el punto queda stock para esos días.">
+                            El punto debe cubrir
+                        </label>
+                        <div class="input-group">
+                            <input type="number" id="filtroDiasCoberturaPunto" name="diasCoberturaPunto" class="form-control" min="1" max="90" step="1" value="@filtro.DiasCoberturaPunto" />
+                            <div class="input-group-append"><span class="input-group-text">días de consumo</span></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0 reposicion-acciones">
+                        <button type="submit" class="btn btn-primary" id="btnBuscarPuntos" @(disponible ? null : "disabled")>
+                            <i class="fas fa-search mr-1 me-1"></i><span class="btn-buscar-texto">Buscar</span>
+                        </button>
+                        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Reposicion", new { popup = popup ? "true" : null })"
+                           title="Volver a la lista de lo que hay que pedir">
+                            <i class="fas fa-arrow-left mr-1 me-1"></i>Qué pedir
+                        </a>
+                    </div>
+                </div>
+
+                <div class="custom-control custom-switch mt-2">
+                    <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzadosReposicion">
+                    <label class="custom-control-label" for="switchFiltrosAvanzadosReposicion">Más filtros y opciones</label>
+                </div>
+
+                <div class="reposicion-avanzados d-none" id="panelAvanzadosReposicion">
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroTextoPuntos">Producto (nombre o código)</label>
+                        <input type="text" id="filtroTextoPuntos" name="texto" class="form-control" maxlength="80" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroTipoPuntos">Tipo</label>
+                        <select id="filtroTipoPuntos" name="tipo" class="form-control">
+                            <option value="">Todos</option>
+                            @foreach (var tipo in Model.TiposDisponibles)
+                            {
+                                <option value="@tipo">@tipo</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroProveedorPuntos">Proveedor</label>
+                        <select id="filtroProveedorPuntos" name="idProveedor" class="form-control">
+                            <option value="0">Todos</option>
+                            @foreach (var proveedor in Model.ProveedoresDisponibles)
+                            {
+                                <option value="@proveedor.IdPersona">@proveedor.RazonSocial</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="reposicion-label" for="filtroMarcaPuntos">Marca</label>
+                        <select id="filtroMarcaPuntos" name="idMarca" class="form-control">
+                            <option value="0">Todas</option>
+                            @foreach (var marca in Model.MarcasDisponibles)
+                            {
+                                <option value="@marca.IdPersona">@marca.RazonSocial</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0 reposicion-avanzados-ancho d-flex align-items-end">
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="switchIncluirConPunto" name="incluirConPunto" value="true" />
+                            <label class="custom-control-label" for="switchIncluirConPunto">Mostrar también los que ya tienen punto (solo para comparar; no se pisan)</label>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0 reposicion-avanzados-ancho d-flex align-items-end">
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="switchSinConsumoPuntos" name="mostrarSinMovimiento" value="true" />
+                            <label class="custom-control-label" for="switchSinConsumoPuntos">Mostrar también los que no tuvieron consumo</label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="contenedorPuntos">
+        <div class="card shadow-sm">
+            <div class="card-body p-4 text-center text-muted">
+                @(disponible ? "Calculando sugerencias..." : "")
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="@Url.Content("~/Content/css/reposicion.css?v=1")" />
+
+@section Scripts {
+    <script>
+        // URLs y estado inicial que necesita reposicion-puntos.js (el script no usa Razor).
+        window.puntosConfig = {
+            buscarUrl: '@Url.Action("BuscarPuntos", "Reposicion")',
+            guardarUrl: '@Url.Action("GuardarPuntos", "Reposicion")',
+            disponible: @(disponible ? "true" : "false")
+        };
+    </script>
+    <script src="@Url.Content("~/Scripts/app/reposicion-comun.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/reposicion-puntos.js")" asp-append-version="true"></script>
+}

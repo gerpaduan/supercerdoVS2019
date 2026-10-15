@@ -1,0 +1,212 @@
+@model Entidades.PuntosSugeridosVm
+@using System
+@using System.Linq
+@using Entidades
+@using static WebCore.Helpers.ReposicionFormato
+
+@*
+    Resultado de "Sugerir puntos de stock": tarjetas de resumen y la tabla con el punto sugerido (editable) de cada producto
+    sin punto cargado. Lo devuelve Reposicion/BuscarPuntos por AJAX y reposicion-puntos.js lo inserta en #contenedorPuntos.
+    Un punto ya cargado nunca se pisa: esas filas (si se piden para comparar) no tienen casilla. El color nunca va solo.
+*@
+
+@{
+    var f = Model.Filtro;
+    // Con una sola sucursal tildada no hace falta la columna Sucursal.
+    bool variasSucursales = f.IdsSucursales.Count != 1;
+    bool puedeGuardar = Model.PuedeGuardar;
+    int cargables = Model.Filas.Count(x => x.PuedeCargarse);
+    int maxPunto = Negocio.ReposicionStockCalculador.MaxPuntoStock;
+}
+
+@if (!Model.ConsultaRealizada)
+{
+    <div class="card shadow-sm">
+        <div class="card-body p-4 text-center text-muted">
+            @(string.IsNullOrWhiteSpace(Model.Mensaje) ? "Tocá Buscar para ver las sugerencias." : Model.Mensaje)
+        </div>
+    </div>
+}
+else
+{
+    <div class="reposicion-kpis mb-3">
+        <div class="reposicion-kpi reposicion-kpi-cero">
+            <div class="reposicion-kpi-titulo">Sin punto de stock</div>
+            <div class="reposicion-kpi-valor">@Model.CantSinPunto</div>
+            <div class="reposicion-kpi-detalle">de @Model.CantProductosControlados productos (por sucursal) que llevan stock.</div>
+        </div>
+        <div class="reposicion-kpi reposicion-kpi-bajo">
+            <div class="reposicion-kpi-titulo">Con sugerencia</div>
+            <div class="reposicion-kpi-valor">@Model.CantConSugerencia</div>
+            <div class="reposicion-kpi-detalle">Sin punto y con consumo en los últimos @f.DiasVentana días.</div>
+        </div>
+        <div class="reposicion-kpi reposicion-kpi-ruido">
+            <div class="reposicion-kpi-titulo">Sin consumo</div>
+            <div class="reposicion-kpi-valor">@Model.CantSinConsumo</div>
+            <div class="reposicion-kpi-detalle">No salió nada en @f.DiasVentana días: no se sugiere punto.</div>
+        </div>
+        <div class="reposicion-kpi reposicion-kpi-importe">
+            <div class="reposicion-kpi-titulo">Ya con punto</div>
+            <div class="reposicion-kpi-valor">@Model.CantConPunto</div>
+            <div class="reposicion-kpi-detalle">Se respetan: nunca se pisan.</div>
+        </div>
+    </div>
+
+    <div class="alert alert-info py-2 mb-2">
+        <i class="fas fa-info-circle mr-1 me-1"></i>
+        <strong>Punto sugerido</strong> = lo que se consume por día (últimos @f.DiasVentana días, ventas + uso en elaboración) × @f.DiasCoberturaPunto días,
+        redondeado hacia arriba. Al pedir hasta ese punto queda stock para @f.DiasCoberturaPunto días.
+        Es un punto de partida: revisalo (productos de temporada, promociones, quiebres que distorsionan la venta) y corregí el número antes de cargar.
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Mensaje))
+    {
+        <div class="alert alert-danger py-2 mb-2">@Model.Mensaje</div>
+    }
+
+    @if (Model.Filas.Count == 0)
+    {
+        <div class="card shadow-sm">
+            <div class="card-body p-4 text-center text-muted">
+                <i class="fas fa-check-circle text-success mr-1 me-1"></i>
+                No hay productos para sugerir con estos filtros.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm" id="puntosTablaCard" data-puede-guardar="@(puedeGuardar ? "true" : "false")" data-max-punto="@maxPunto">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover tabla-reposicion" id="tablaPuntos">
+                        <thead>
+                            <tr>
+                                <th class="col-check">
+                                    @if (puedeGuardar && cargables > 0)
+                                    {
+                                        <input type="checkbox" id="chkSeleccionarTodosPuntos" title="Tildar o destildar todos los que se pueden cargar" aria-label="Tildar todos" />
+                                    }
+                                </th>
+                                <th>Producto</th>
+                                @if (variasSucursales)
+                                {
+                                    <th>Sucursal</th>
+                                }
+                                <th class="col-num">Stock</th>
+                                <th class="col-num">Punto actual</th>
+                                <th class="col-num" title="Salidas por día (ventas + uso en elaboración) en los últimos @f.DiasVentana días">Consumo/día</th>
+                                <th class="col-num" title="Días del período en que hubo al menos una venta (el uso en elaboración no cuenta): dice si sale parejo o a golpes">Días con venta</th>
+                                <th class="col-num" title="Días que alcanza el stock actual al ritmo del período">Alcanza</th>
+                                <th>Última salida</th>
+                                <th class="col-num">Punto sugerido</th>
+                                <th>Proveedor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fila in Model.Filas)
+                            {
+                                bool seCarga = puedeGuardar && fila.PuedeCargarse;
+                                <tr class="@(fila.PuedeCargarse ? "" : "reposicion-fila-no-cargable")" data-id-corte="@fila.IdCorte" data-id-sucursal="@fila.IdSucursal">
+                                    <td class="col-check">
+                                        @if (seCarga)
+                                        {
+                                            <input type="checkbox" class="js-punto-check" aria-label="Cargar el punto de @fila.Producto" />
+                                        }
+                                    </td>
+                                    <td>
+                                        <strong>@fila.Producto</strong>
+                                        <span class="reposicion-sub">@fila.Codigo</span>
+                                    </td>
+                                    @if (variasSucursales)
+                                    {
+                                        <td>@fila.Sucursal</td>
+                                    }
+                                    <td class="col-num @(fila.StockActual < 0f ? "text-danger font-weight-bold" : "")">
+                                        @Cant(fila.StockActual) <span class="reposicion-sub">@Unidad(fila.Pesable)</span>
+                                    </td>
+                                    <td class="col-num">
+                                        @if (fila.PuntoActual > 0f)
+                                        {
+                                            <strong>@Cant(fila.PuntoActual)</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" title="No tiene punto de stock cargado">—</span>
+                                        }
+                                    </td>
+                                    <td class="col-num">@(fila.ConsumoDiario > 0f ? Cant(fila.ConsumoDiario) : "—")</td>
+                                    <td class="col-num">
+                                        @if (fila.DiasConVenta > 0)
+                                        {
+                                            @fila.DiasConVenta <span class="reposicion-sub">de @f.DiasVentana</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" title="Sin ventas en el período (si salió, fue por uso en elaboración)">—</span>
+                                        }
+                                    </td>
+                                    <td class="col-num">
+                                        @if (fila.CoberturaDias.HasValue)
+                                        {
+                                            @(fila.CoberturaDias.Value > 999f ? "+999" : Decimal1(fila.CoberturaDias.Value)) <span class="reposicion-sub">días</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" title="No salió nada en el período: no se puede estimar">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (fila.UltimaSalida.HasValue)
+                                        {
+                                            <span title="@fila.UltimaSalida.Value.ToString("dd/MM/yyyy")">@Hace(fila.DiasSinSalida ?? 0)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" title="Sin ventas ni uso en elaboración en el último año">sin salidas</span>
+                                        }
+                                    </td>
+                                    <td class="col-num col-pedir">
+                                        @if (seCarga)
+                                        {
+                                            <input type="number" class="form-control reposicion-punto-input js-punto-input" min="1" max="@maxPunto" step="1"
+                                                   value="@fila.PuntoSugerido" data-sugerido="@fila.PuntoSugerido" aria-label="Punto de stock a cargar para @fila.Producto" />
+                                            <span class="reposicion-sub">@Unidad(fila.Pesable)</span>
+                                        }
+                                        else if (fila.PuntoSugerido.HasValue)
+                                        {
+                                            @fila.PuntoSugerido <span class="reposicion-sub">@Unidad(fila.Pesable)@(fila.PuntoActual > 0f ? " · ya tiene punto" : "")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted font-weight-normal" title="Sin consumo en el período: no hay base para sugerir">sin consumo</span>
+                                        }
+                                    </td>
+                                    <td>@(string.IsNullOrEmpty(fila.Proveedor) ? "—" : fila.Proveedor)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="reposicion-barra-guardar reposicion-no-print mt-2">
+            @if (puedeGuardar)
+            {
+                <span id="lblSeleccionPuntos" class="small">Ninguno seleccionado. Tildá los que quieras cargar (@cargables se pueden cargar).</span>
+                <button type="button" class="btn btn-success" id="btnGuardarPuntos" disabled>
+                    <i class="fas fa-save mr-1 me-1"></i>Cargar puntos de stock seleccionados
+                </button>
+            }
+            else
+            {
+                <span class="small text-muted"><i class="fas fa-lock mr-1 me-1"></i>Solo lectura: no tenés permiso para cargar puntos de stock (se necesita el de editar productos).</span>
+            }
+        </div>
+
+        <p class="small text-muted mt-2 mb-0">
+            Calculado el @Model.FechaCalculo.ToString("dd/MM/yyyy HH:mm"). Cargar un punto no modifica el stock ni crea pedidos; solo define hasta dónde se sugiere pedir en
+            <em>Qué pedir</em>. Después se puede cambiar en <em>Productos &rarr; Ver stock por sucursales</em>.
+        </p>
+    }
+}

@@ -47,3 +47,11 @@ En `Stock/Editar`, el modal "Productos no cargados" completa en bloque los produ
 - **Dependencias de datos:** necesita que el stock tenga un cierre reciente por sucursal y que los productos tengan **punto de stock por sucursal** (`cortepuntostocksucursal`; se carga en Productos → Ver stock por sucursales) y **proveedor** (`corteproveedor`, se completa solo con cada compra). Sin punto de stock solo hay aviso de "en cero".
 - **No hace:** no registra pedidos a proveedor ni "pedidos en camino"; no considera múltiplos de caja; no calcula puntos de pedido estadísticos (no hay lead time registrado).
 - Manual de uso: `docs/11-manual-de-uso/pantallas/Reposicion.Index.md`. Decisión, hallazgos con datos y alternativas descartadas: `docs/DECISIONS.md` (2026-10-13, "Qué pedir").
+
+### Sugerir puntos de stock (2026-10-13)
+
+`Stock → Qué pedir → Sugerir puntos de stock` (`Reposicion/Puntos`, mismo controller, solo Postgres). Para cada producto y sucursal **sin punto de stock y con consumo** propone `consumo por día × días a cubrir` (por defecto 30 días de consumo y 7 de cobertura; entero, mínimo 1) y deja cargar los que el usuario tilde, con el número editable, confirmación y recalculo. Ver: `Stock.VerStock`; cargar: además `Producto.NuevoCorte` (el mismo de Productos).
+
+- **Qué escribe:** `cortepuntostocksucursal` vía `CortePuntoStockSucursal.GuardarPuntosStockLote` (upsert), un producto por vez. **Nunca pisa un punto ya cargado**: lo revalida el servidor (`ReposicionStockCalculador.ValidarPuntosAGuardar`: producto que lleva stock, sin repetidos, entero 1–999.999, máx. 500 por pedido). Queda un log con usuario y cantidad; no hay "deshacer".
+- **Piezas:** `ReposicionStock.ArmarPuntosSugeridos` / `GuardarPuntosSugeridos`, `ReposicionController.Puntos` / `BuscarPuntos` / `GuardarPuntos`, `Views/Reposicion/Puntos.cshtml` + `_TablaPuntos.cshtml`, `reposicion-puntos.js`. Compartidos con *Qué pedir*: `reposicion-comun.js`, `Content/css/reposicion.css`, `Helpers/ReposicionFormato.cs`.
+- Manual: `docs/11-manual-de-uso/pantallas/Reposicion.Puntos.md`. Decisión: `docs/DECISIONS.md` (2026-10-13, "Sugerir puntos de stock").

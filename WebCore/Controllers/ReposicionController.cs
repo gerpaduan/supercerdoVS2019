@@ -113,12 +113,163 @@ namespace WebCore.Controllers
             return File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
         }
 
+        // ---- Sugerir puntos de stock ----
+
+        // Pantalla "Sugerir puntos de stock": para los productos sin punto cargado, propone uno según el consumo reciente y deja
+        // cargar los que el usuario tilde. Ver es Stock.VerStock; guardar pide además el permiso de editar productos.
+        [HttpGet]
+        public IActionResult Puntos(bool popup = false)
+        {
+            var user = _usuarioActual;
+            if (!TienePermiso(user))
+            {
+                ViewBag.Seccion = "Stock";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            var model = new Entidades.PuntosSugeridosVm();
+            var listas = new Entidades.ReposicionVm();
+            CargarListasDeFiltros(listas);
+            CopiarListas(listas, model);
+            if (user != null && user.IdSucursal > 0)
+                model.Filtro.IdsSucursales = new List<int> { user.IdSucursal };
+            model.PuedeGuardar = TienePermisoEditarPuntos(user);
+            model.Mensaje = _oReposicionN == null ? MensajeSoloPostgres : "";
+
+            ViewBag.Title = "Sugerir puntos de stock";
+            ViewBag.Seccion = "Stock";
+            ViewBag.Popup = popup;
+            ViewBag.Disponible = _oReposicionN != null;
+            return View("~/Views/Reposicion/Puntos.cshtml", model);
+        }
+
+        // Tabla de sugerencias (HTML parcial) para el Buscar por AJAX.
+        [HttpGet]
+        public IActionResult BuscarPuntos(
+            int[] idsSucursales = null, string texto = "", string tipo = "", int idProveedor = 0, int idMarca = 0,
+            int diasVentana = 30, int diasCoberturaPunto = 7, bool incluirConPunto = false, bool mostrarSinMovimiento = false)
+        {
+            var user = _usuarioActual;
+            if (!TienePermiso(user))
+                return StatusCode(403, "Sin permiso para ver el stock.");
+
+            var model = new Entidades.PuntosSugeridosVm();
+            var listas = new Entidades.ReposicionVm();
+            CargarListasDeFiltros(listas);
+            CopiarListas(listas, model);
+            model.PuedeGuardar = TienePermisoEditarPuntos(user);
+
+            if (_oReposicionN == null)
+            {
+                model.Mensaje = MensajeSoloPostgres;
+                return PartialView("~/Views/Reposicion/_TablaPuntos.cshtml", model);
+            }
+
+            try
+            {
+                var filtro = new Entidades.ReposicionFiltroVm
+                {
+                    IdsSucursales = IdsSucursalesValidos(idsSucursales, model.SucursalesDisponibles),
+                    Texto = texto,
+                    Tipo = tipo,
+                    IdProveedor = idProveedor,
+                    IdMarca = idMarca,
+                    DiasVentana = diasVentana,
+                    DiasCoberturaPunto = diasCoberturaPunto,
+                    IncluirConPunto = incluirConPunto,
+                    MostrarSinMovimiento = mostrarSinMovimiento
+                };
+
+                var resultado = _oReposicionN.ArmarPuntosSugeridos(filtro);
+                CopiarListas(listas, resultado);
+                resultado.PuedeGuardar = model.PuedeGuardar;
+                return PartialView("~/Views/Reposicion/_TablaPuntos.cshtml", resultado);
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Sugerir puntos de stock: falló la consulta (empresa {IdEmpresa}).", _empresa.IdEmpresa);
+                model.Mensaje = "No se pudieron calcular las sugerencias. Probá de nuevo; si sigue fallando, avisá a soporte.";
+                return PartialView("~/Views/Reposicion/_TablaPuntos.cshtml", model);
+            }
+        }
+
+        // Guarda los puntos que el usuario tildó. Nunca pisa un punto ya cargado (lo revalida Negocio contra el stock real).
+        // Devuelve { ok, guardados, rechazados[] } o { ok:false, error }.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GuardarPuntos([FromBody] WebCore.Models.GuardarPuntosSugeridosRequest request)
+        {
+            var user = _usuarioActual;
+            // Mismo permiso que el guardado de puntos de Productos (ProductosController.GuardarPuntosStockSucursal).
+            if (!TienePermisoEditarPuntos(user))
+                return Json(new { ok = false, error = "No tenés permisos para editar el punto de stock." });
+            if (_oReposicionN == null)
+                return Json(new { ok = false, error = MensajeSoloPostgres });
+
+            var valores = request == null ? null : request.Valores;
+            if (valores == null || valores.Count == 0)
+                return Json(new { ok = false, error = "No hay puntos de stock para guardar." });
+
+            try
+            {
+                var resultado = _oReposicionN.GuardarPuntosSugeridos(valores, _empresa.IdEmpresa);
+                if (resultado.Error != null)
+                {
+                    _log.LogError(resultado.Error, "Sugerir puntos de stock: falló el guardado (empresa {IdEmpresa}, usuario {IdUsuario}); guardados antes del error: {Guardados}.",
+                        _empresa.IdEmpresa, user == null ? 0 : user.Id, resultado.Guardados);
+                    return Json(new
+                    {
+                        ok = false,
+                        error = "No se pudieron guardar todos los puntos de stock. Lo que ya se guardó queda guardado: volvé a buscar para ver cómo quedó.",
+                        guardados = resultado.Guardados,
+                        rechazados = resultado.Rechazados
+                    });
+                }
+
+                // Queda constancia de quién cargó puntos (no hay otra auditoría de este dato).
+                _log.LogInformation("Sugerir puntos de stock: usuario {IdUsuario} cargó {Guardados} puntos (empresa {IdEmpresa}); rechazados: {Rechazados}.",
+                    user == null ? 0 : user.Id, resultado.Guardados, _empresa.IdEmpresa, resultado.Rechazados.Count);
+                return Json(new { ok = resultado.Guardados > 0, guardados = resultado.Guardados, rechazados = resultado.Rechazados,
+                                  error = resultado.Guardados > 0 ? "" : "No se guardó ningún punto de stock." });
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Sugerir puntos de stock: error inesperado al guardar (empresa {IdEmpresa}).", _empresa.IdEmpresa);
+                return Json(new { ok = false, error = "No se pudieron guardar los puntos de stock. Intentá de nuevo." });
+            }
+        }
+
         // ---- internos ----
 
         // Mismo permiso que Reportes (Stock.VerStock); la pantalla solo lee.
-        private bool TienePermiso(Entidades.Usuario user)
+        private bool TienePermiso(Entidades.Usuario? user)
         {
             return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, DateTime.Today, -1);
+        }
+
+        // Cargar puntos de stock: el mismo permiso que ya exige Productos para editarlos.
+        private bool TienePermisoEditarPuntos(Entidades.Usuario? user)
+        {
+            return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+        }
+
+        // Solo ids de sucursales de esta empresa. Todas tildadas o ninguna = "todas" (lista vacía).
+        private static List<int> IdsSucursalesValidos(int[] idsSucursales, List<Entidades.SucursalColumnaStockVm> disponibles)
+        {
+            var idsValidos = (idsSucursales ?? new int[0])
+                .Where(id => disponibles.Any(s => s.IdSucursal == id))
+                .Distinct()
+                .ToList();
+            if (idsValidos.Count >= disponibles.Count) idsValidos.Clear();
+            return idsValidos;
+        }
+
+        private static void CopiarListas(Entidades.ReposicionVm origen, Entidades.PuntosSugeridosVm destino)
+        {
+            destino.SucursalesDisponibles = origen.SucursalesDisponibles;
+            destino.TiposDisponibles = origen.TiposDisponibles;
+            destino.ProveedoresDisponibles = origen.ProveedoresDisponibles;
+            destino.MarcasDisponibles = origen.MarcasDisponibles;
         }
 
         // Valida el input de la pantalla (ids de sucursal que no sean de esta empresa, textos) y llama a Negocio.
@@ -138,16 +289,9 @@ namespace WebCore.Controllers
 
             try
             {
-                // Solo ids de sucursales de esta empresa. Todas tildadas o ninguna = "todas" (lista vacía).
-                var idsValidos = (idsSucursales ?? new int[0])
-                    .Where(id => model.SucursalesDisponibles.Any(s => s.IdSucursal == id))
-                    .Distinct()
-                    .ToList();
-                if (idsValidos.Count >= model.SucursalesDisponibles.Count) idsValidos.Clear();
-
                 var filtro = new Entidades.ReposicionFiltroVm
                 {
-                    IdsSucursales = idsValidos,
+                    IdsSucursales = IdsSucursalesValidos(idsSucursales, model.SucursalesDisponibles),
                     Texto = texto,
                     Tipo = tipo,
                     IdProveedor = idProveedor,

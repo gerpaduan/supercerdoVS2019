@@ -42,6 +42,13 @@ namespace Entidades
         // true = además de los avisos, listar los que están en cero sin movimiento en la ventana.
         public bool MostrarSinMovimiento { get; set; }
 
+        // "Sugerir puntos de stock": cuántos días de consumo debe cubrir el punto sugerido (se acota a 1-90).
+        public int DiasCoberturaPunto { get; set; }
+
+        // "Sugerir puntos de stock": true = listar también los que ya tienen punto cargado (solo para comparar:
+        // un punto cargado nunca se pisa).
+        public bool IncluirConPunto { get; set; }
+
         public ReposicionFiltroVm()
         {
             IdsSucursales = new List<int>();
@@ -49,6 +56,7 @@ namespace Entidades
             Tipo = "";
             DiasVentana = 30;
             DiasCoberturaSinPunto = 0;
+            DiasCoberturaPunto = 7;
         }
     }
 
@@ -164,6 +172,111 @@ namespace Entidades
             TiposDisponibles = new List<string>();
             ProveedoresDisponibles = new List<Persona>();
             MarcasDisponibles = new List<Persona>();
+        }
+    }
+
+    // ---- "Sugerir puntos de stock" ----
+
+    // Una fila = un producto en una sucursal, con el punto de stock que se sugiere cargar.
+    public class PuntoSugeridoFilaVm
+    {
+        public int IdCorte { get; set; }
+        public long Codigo { get; set; }
+        public string Producto { get; set; }
+        public int IdSucursal { get; set; }
+        public string Sucursal { get; set; }
+        public bool Pesable { get; set; }
+        public float Promedio { get; set; }
+
+        public float StockActual { get; set; }
+        // 0 = sin punto cargado.
+        public float PuntoActual { get; set; }
+
+        // Salidas (ventas + consumo por elaboración) dentro de la ventana de consumo.
+        public float ConsumoVentana { get; set; }
+        public float ConsumoDiario { get; set; }
+        // Días de la ventana en que hubo al menos una venta (no cuenta la elaboración): dice si la salida es pareja o a golpes.
+        public int DiasConVenta { get; set; }
+        public float? CoberturaDias { get; set; }
+        public DateTime? UltimaSalida { get; set; }
+        public int? DiasSinSalida { get; set; }
+
+        // Consumo diario x días a cubrir, redondeado hacia arriba (el punto de stock es un entero). null = sin consumo: no se sugiere.
+        public int? PuntoSugerido { get; set; }
+
+        public int IdProveedor { get; set; }
+        public string Proveedor { get; set; }
+
+        // Solo se puede cargar si hoy no tiene punto y hay una sugerencia (un punto ya cargado no se pisa).
+        public bool PuedeCargarse
+        {
+            get { return PuntoActual <= 0f && PuntoSugerido.HasValue; }
+        }
+
+        public PuntoSugeridoFilaVm()
+        {
+            Producto = "";
+            Sucursal = "";
+            Proveedor = "";
+        }
+    }
+
+    public class PuntosSugeridosVm
+    {
+        public ReposicionFiltroVm Filtro { get; set; }
+        public List<PuntoSugeridoFilaVm> Filas { get; set; }
+
+        // Filas (producto x sucursal) que llevan stock en las sucursales consultadas.
+        public int CantProductosControlados { get; set; }
+        public int CantConPunto { get; set; }
+        public int CantSinPunto { get; set; }
+        // Sin punto y con consumo: se les puede sugerir.
+        public int CantConSugerencia { get; set; }
+        // Sin punto y sin consumo en la ventana: no se sugiere nada (se ocultan salvo que se pida lo contrario).
+        public int CantSinConsumo { get; set; }
+
+        public DateTime FechaCalculo { get; set; }
+        public bool ConsultaRealizada { get; set; }
+        public string Mensaje { get; set; }
+        // El usuario puede guardar puntos (permiso de edición de productos): lo decide el controller.
+        public bool PuedeGuardar { get; set; }
+
+        public List<SucursalColumnaStockVm> SucursalesDisponibles { get; set; }
+        public List<string> TiposDisponibles { get; set; }
+        public List<Persona> ProveedoresDisponibles { get; set; }
+        public List<Persona> MarcasDisponibles { get; set; }
+
+        public PuntosSugeridosVm()
+        {
+            Filtro = new ReposicionFiltroVm();
+            Filas = new List<PuntoSugeridoFilaVm>();
+            Mensaje = "";
+            SucursalesDisponibles = new List<SucursalColumnaStockVm>();
+            TiposDisponibles = new List<string>();
+            ProveedoresDisponibles = new List<Persona>();
+            MarcasDisponibles = new List<Persona>();
+        }
+    }
+
+    // Un punto a guardar, tal como llega de la pantalla.
+    public class PuntoAGuardarVm
+    {
+        public int IdCorte { get; set; }
+        public int IdSucursal { get; set; }
+        public int PuntoStock { get; set; }
+    }
+
+    public class GuardarPuntosResultadoVm
+    {
+        public int Guardados { get; set; }
+        // Motivo (con el nombre del producto) de cada punto que NO se guardó.
+        public List<string> Rechazados { get; set; }
+        // Si falló la escritura en la base: lo guardado hasta ahí queda guardado (cada producto se escribe completo o nada).
+        public Exception Error { get; set; }
+
+        public GuardarPuntosResultadoVm()
+        {
+            Rechazados = new List<string>();
         }
     }
 

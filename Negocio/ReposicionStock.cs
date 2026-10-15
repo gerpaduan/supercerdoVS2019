@@ -8,6 +8,7 @@
 // Sintaxis a propósito conservadora (C# 7.3): Negocio también compila para net472.
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Contratos;
 using Entidades;
@@ -18,13 +19,81 @@ namespace Negocio
     {
         private readonly Corte _corteN;
         private readonly IActividadStockRepository _actividadRepo;
+        // Solo hace falta para guardar puntos sugeridos; null = esa operación no está disponible.
+        private readonly CortePuntoStockSucursal _puntoStockN;
 
-        public ReposicionStock(Corte corteN, IActividadStockRepository actividadRepo)
+        public ReposicionStock(Corte corteN, IActividadStockRepository actividadRepo, CortePuntoStockSucursal puntoStockN = null)
         {
             if (corteN == null) throw new ArgumentNullException(nameof(corteN));
             if (actividadRepo == null) throw new ArgumentNullException(nameof(actividadRepo));
             _corteN = corteN;
             _actividadRepo = actividadRepo;
+            _puntoStockN = puntoStockN;
+        }
+
+        // "Sugerir puntos de stock": para cada producto y sucursal, el punto que cubriría DiasCoberturaPunto días del consumo
+        // reciente. Solo lectura (no guarda nada: eso es GuardarPuntosSugeridos, a pedido explícito del usuario).
+        public PuntosSugeridosVm ArmarPuntosSugeridos(ReposicionFiltroVm filtro)
+        {
+            return ArmarPuntosSugeridos(filtro, DateTime.Now);
+        }
+
+        public PuntosSugeridosVm ArmarPuntosSugeridos(ReposicionFiltroVm filtro, DateTime ahora)
+        {
+            var filtroNormalizado = ReposicionStockCalculador.Normalizar(filtro);
+            var plano = _corteN.ObtenerExistenciaPlano(FiltroExistenciaTodas(filtroNormalizado, ahora)) ?? new List<ExistenciaStockPorSucursalPlanoVm>();
+            var actividad = _actividadRepo.ObtenerActividadStock(0, filtroNormalizado.DiasVentana, ReposicionStockCalculador.DiasHistoriaUltimaSalida)
+                ?? new List<ActividadStockVm>();
+            var proveedores = _actividadRepo.ObtenerProveedoresHabituales(filtroNormalizado.IdProveedor)
+                ?? new List<ProveedorHabitualVm>();
+
+            return ReposicionStockCalculador.CalcularPuntosSugeridos(plano, actividad, proveedores, filtroNormalizado, ahora);
+        }
+
+        // Guarda los puntos de stock pedidos. NUNCA pisa un punto ya cargado ni inventa productos: cada pedido se valida contra el
+        // stock actual (ReposicionStockCalculador.ValidarPuntosAGuardar) y lo rechazado vuelve con su motivo. Se escribe un producto
+        // por vez (todas sus sucursales juntas, igual que el guardado de Productos); si la base falla se corta y lo ya escrito queda.
+        public GuardarPuntosResultadoVm GuardarPuntosSugeridos(IEnumerable<PuntoAGuardarVm> pedidos, int idEmpresa)
+        {
+            if (_puntoStockN == null) throw new InvalidOperationException("Guardar puntos de stock no está disponible en esta instancia.");
+
+            var resultado = new GuardarPuntosResultadoVm();
+            var plano = _corteN.ObtenerExistenciaPlano(FiltroExistenciaTodas(ReposicionStockCalculador.Normalizar(null), DateTime.Now))
+                ?? new List<ExistenciaStockPorSucursalPlanoVm>();
+
+            var aceptados = ReposicionStockCalculador.ValidarPuntosAGuardar(plano, pedidos, resultado.Rechazados);
+
+            foreach (var grupo in aceptados.GroupBy(x => x.IdCorte))
+            {
+                try
+                {
+                    var valores = grupo.Select(x => (idSucursal: x.IdSucursal, puntoStock: x.PuntoStock)).ToList();
+                    _puntoStockN.GuardarPuntosStockLote(idEmpresa, grupo.Key, valores);
+                    resultado.Guardados += valores.Count;
+                }
+                catch (Exception ex)
+                {
+                    resultado.Error = ex;
+                    break;
+                }
+            }
+            return resultado;
+        }
+
+        // Existencia de TODAS las sucursales con los filtros de producto del usuario (hace falta ver todas para ofrecer "otras sucursales"
+        // y para validar al guardar).
+        private static ExistenciaStockPorSucursalFiltroVm FiltroExistenciaTodas(ReposicionFiltroVm f, DateTime ahora)
+        {
+            return new ExistenciaStockPorSucursalFiltroVm
+            {
+                Texto = f.Texto,
+                Tipo = f.Tipo,
+                IdProveedor = f.IdProveedor,
+                IdMarca = f.IdMarca,
+                FechaHasta = ahora,
+                SoloConStock = false,
+                IdsSucursales = new List<int>()
+            };
         }
 
         // Consulta todo lo necesario y devuelve el resultado listo para mostrar. Solo lectura.
@@ -39,18 +108,7 @@ namespace Negocio
         {
             var filtroNormalizado = ReposicionStockCalculador.Normalizar(filtro);
 
-            var filtroExistencia = new ExistenciaStockPorSucursalFiltroVm
-            {
-                Texto = filtroNormalizado.Texto,
-                Tipo = filtroNormalizado.Tipo,
-                IdProveedor = filtroNormalizado.IdProveedor,
-                IdMarca = filtroNormalizado.IdMarca,
-                FechaHasta = ahora,
-                SoloConStock = false,
-                IdsSucursales = new List<int>()
-            };
-
-            var plano = _corteN.ObtenerExistenciaPlano(filtroExistencia) ?? new List<ExistenciaStockPorSucursalPlanoVm>();
+            var plano = _corteN.ObtenerExistenciaPlano(FiltroExistenciaTodas(filtroNormalizado, ahora)) ?? new List<ExistenciaStockPorSucursalPlanoVm>();
             var actividad = _actividadRepo.ObtenerActividadStock(0, filtroNormalizado.DiasVentana, ReposicionStockCalculador.DiasHistoriaUltimaSalida)
                 ?? new List<ActividadStockVm>();
             var proveedores = _actividadRepo.ObtenerProveedoresHabituales(filtroNormalizado.IdProveedor)
@@ -70,6 +128,14 @@ namespace Negocio
         public const int DiasVentanaPorDefecto = 30;
         // Tope de "días de venta a cubrir" para productos sin punto de stock.
         public const int MaxDiasCobertura = 60;
+        // "Sugerir puntos de stock": días de consumo que cubre el punto sugerido (por defecto 7; entre 1 y 90).
+        public const int MinDiasCoberturaPunto = 1;
+        public const int MaxDiasCoberturaPunto = 90;
+        public const int DiasCoberturaPuntoPorDefecto = 7;
+        // El punto de stock se guarda como entero: techo razonable para frenar un valor mal tipeado (o un consumo disparatado).
+        public const int MaxPuntoStock = 999999;
+        // Máximo de puntos por pedido de guardado (frena un pedido armado a mano con miles de filas).
+        public const int MaxPuntosPorGuardado = 500;
         // Hasta dónde se mira hacia atrás para mostrar la fecha de la última salida (más viejo = "más de un año").
         public const int DiasHistoriaUltimaSalida = 365;
         // El stock parte del último cierre: pasado este tiempo sin cerrar, los números pueden estar desactualizados.
@@ -95,7 +161,11 @@ namespace Negocio
                 IdMarca = origen.IdMarca > 0 ? origen.IdMarca : 0,
                 DiasVentana = Math.Min(MaxDiasVentana, Math.Max(MinDiasVentana, dias)),
                 DiasCoberturaSinPunto = Math.Min(MaxDiasCobertura, Math.Max(0, cobertura)),
-                MostrarSinMovimiento = origen.MostrarSinMovimiento
+                MostrarSinMovimiento = origen.MostrarSinMovimiento,
+                // 0 o negativo = no lo mandaron: queda el valor por defecto en vez de pegar contra el mínimo.
+                DiasCoberturaPunto = Math.Min(MaxDiasCoberturaPunto, Math.Max(MinDiasCoberturaPunto,
+                    origen.DiasCoberturaPunto <= 0 ? DiasCoberturaPuntoPorDefecto : origen.DiasCoberturaPunto)),
+                IncluirConPunto = origen.IncluirConPunto
             };
         }
 
@@ -278,6 +348,170 @@ namespace Negocio
                 UltimaSalida = ultimaSalida,
                 DiasSinSalida = ultimaSalida.HasValue ? (int?)Math.Max(0, (int)(ahora.Date - ultimaSalida.Value.Date).TotalDays) : null
             };
+        }
+
+        // ---- Sugerir puntos de stock ----
+
+        // Una fila por producto y sucursal tildada con el punto que cubriría filtro.DiasCoberturaPunto días del consumo de los
+        // últimos filtro.DiasVentana días (ventas + elaboración, igual que "Qué pedir"). Se listan los que hoy no tienen punto y
+        // tienen consumo; con IncluirConPunto también los que ya lo tienen (solo para comparar) y con MostrarSinMovimiento los que
+        // no tuvieron consumo (sin sugerencia). Los contadores cubren todo lo consultado, se liste o no.
+        public static PuntosSugeridosVm CalcularPuntosSugeridos(
+            IList<ExistenciaStockPorSucursalPlanoVm> plano,
+            IList<ActividadStockVm> actividad,
+            IList<ProveedorHabitualVm> proveedores,
+            ReposicionFiltroVm filtro,
+            DateTime ahora)
+        {
+            var resultado = new PuntosSugeridosVm { Filtro = filtro, FechaCalculo = ahora, ConsultaRealizada = true };
+            Func<int, bool> sucursalElegida = id => filtro.IdsSucursales.Count == 0 || filtro.IdsSucursales.Contains(id);
+
+            var actividadPor = new Dictionary<Tuple<int, int>, ActividadStockVm>();
+            foreach (var a in actividad ?? new List<ActividadStockVm>())
+            {
+                var clave = Tuple.Create(a.IdSucursal, a.IdCorte);
+                if (!actividadPor.ContainsKey(clave)) actividadPor[clave] = a;
+            }
+            var proveedorPor = new Dictionary<int, ProveedorHabitualVm>();
+            foreach (var p in proveedores ?? new List<ProveedorHabitualVm>())
+            {
+                if (!proveedorPor.ContainsKey(p.IdCorte)) proveedorPor[p.IdCorte] = p;
+            }
+
+            foreach (var r in plano ?? new List<ExistenciaStockPorSucursalPlanoVm>())
+            {
+                if (!sucursalElegida(r.IdSucursal)) continue;
+                resultado.CantProductosControlados++;
+
+                bool tienePunto = r.PuntoStock > 0f;
+                if (tienePunto) resultado.CantConPunto++; else resultado.CantSinPunto++;
+
+                ActividadStockVm act;
+                actividadPor.TryGetValue(Tuple.Create(r.IdSucursal, r.IdCorte), out act);
+
+                float consumoVentana = 0f;
+                DateTime? ultimaSalida = null;
+                int diasConVenta = 0;
+                if (act != null)
+                {
+                    // Una devolución puede dejar el neto negativo: sin salidas reales no hay consumo.
+                    consumoVentana = Math.Max(0f, act.VentasVentana) + Math.Max(0f, act.ElaboracionVentana);
+                    ultimaSalida = MaxFecha(act.UltimaVenta, act.UltimaElaboracion);
+                    diasConVenta = act.DiasConVentaVentana;
+                }
+                float consumoDiario = filtro.DiasVentana > 0 ? consumoVentana / filtro.DiasVentana : 0f;
+                int? sugerido = consumoDiario > 0f ? (int?)SugerirPunto(consumoDiario, filtro.DiasCoberturaPunto) : null;
+
+                if (!tienePunto)
+                {
+                    if (sugerido.HasValue) resultado.CantConSugerencia++; else resultado.CantSinConsumo++;
+                }
+
+                bool listar = (!tienePunto || filtro.IncluirConPunto) && (sugerido.HasValue || filtro.MostrarSinMovimiento);
+                if (!listar) continue;
+
+                float stock = (float)Math.Round(r.StockActual, 3);
+                var fila = new PuntoSugeridoFilaVm
+                {
+                    IdCorte = r.IdCorte,
+                    Codigo = r.Codigo,
+                    Producto = r.Corte ?? "",
+                    IdSucursal = r.IdSucursal,
+                    Sucursal = r.Sucursal ?? "",
+                    Pesable = r.Pesable,
+                    Promedio = r.Promedio,
+                    StockActual = stock,
+                    PuntoActual = r.PuntoStock,
+                    ConsumoVentana = consumoVentana,
+                    ConsumoDiario = consumoDiario,
+                    DiasConVenta = diasConVenta,
+                    CoberturaDias = consumoDiario > 0f ? (float?)(Math.Max(stock, 0f) / consumoDiario) : null,
+                    UltimaSalida = ultimaSalida,
+                    DiasSinSalida = ultimaSalida.HasValue ? (int?)Math.Max(0, (int)(ahora.Date - ultimaSalida.Value.Date).TotalDays) : null,
+                    PuntoSugerido = sugerido
+                };
+
+                ProveedorHabitualVm prov;
+                if (proveedorPor.TryGetValue(r.IdCorte, out prov))
+                {
+                    fila.IdProveedor = prov.IdProveedor;
+                    fila.Proveedor = string.IsNullOrWhiteSpace(prov.Proveedor) ? "" : prov.Proveedor.Trim();
+                }
+                resultado.Filas.Add(fila);
+            }
+
+            // Lo que más se mueve primero (es donde más importa tener el punto bien), dentro de cada sucursal.
+            resultado.Filas = resultado.Filas
+                .OrderBy(x => x.Sucursal, StringComparer.CurrentCultureIgnoreCase)
+                .ThenByDescending(x => x.ConsumoDiario)
+                .ThenBy(x => x.Producto, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+            return resultado;
+        }
+
+        // Punto de stock que cubre `dias` días de consumo: consumo x días, hacia arriba, mínimo 1 y con tope MaxPuntoStock.
+        // Entero porque el punto de stock se guarda como entero (en kg para pesables, en unidades para el resto).
+        public static int SugerirPunto(float consumoDiario, int dias)
+        {
+            double bruto = Math.Round((double)consumoDiario * dias, 3);
+            double techo = Math.Ceiling(bruto);
+            if (techo < 1) techo = 1;
+            if (techo > MaxPuntoStock) techo = MaxPuntoStock;
+            return (int)techo;
+        }
+
+        // Separa los puntos que se pueden guardar de los que no, contra el stock real (plano = existencia de todas las sucursales).
+        // Es la defensa del lado servidor: lo que llega de la pantalla es input externo. Rechaza (y explica en `rechazados`):
+        //  - producto/sucursal que no llevan stock; - repetidos en el mismo pedido; - valores fuera de 1..MaxPuntoStock;
+        //  - productos que YA tienen punto de stock (nunca se pisa un punto cargado por el usuario).
+        // Procesa como mucho MaxPuntosPorGuardado. Devuelve los aceptados.
+        public static List<PuntoAGuardarVm> ValidarPuntosAGuardar(
+            IList<ExistenciaStockPorSucursalPlanoVm> plano, IEnumerable<PuntoAGuardarVm> pedidos, IList<string> rechazados)
+        {
+            var aceptados = new List<PuntoAGuardarVm>();
+            var lista = (pedidos ?? new PuntoAGuardarVm[0]).Where(p => p != null).ToList();
+
+            var existencia = new Dictionary<Tuple<int, int>, ExistenciaStockPorSucursalPlanoVm>();
+            foreach (var f in plano ?? new List<ExistenciaStockPorSucursalPlanoVm>())
+            {
+                var clave = Tuple.Create(f.IdCorte, f.IdSucursal);
+                if (!existencia.ContainsKey(clave)) existencia[clave] = f;
+            }
+
+            var vistos = new HashSet<Tuple<int, int>>();
+            foreach (var p in lista.Take(MaxPuntosPorGuardado))
+            {
+                var clave = Tuple.Create(p.IdCorte, p.IdSucursal);
+                ExistenciaStockPorSucursalPlanoVm fila;
+                if (!existencia.TryGetValue(clave, out fila))
+                {
+                    rechazados.Add("Producto " + p.IdCorte + " en la sucursal " + p.IdSucursal + ": no lleva stock en esa sucursal.");
+                    continue;
+                }
+
+                string nombre = (string.IsNullOrWhiteSpace(fila.Corte) ? "Producto " + p.IdCorte : fila.Corte.Trim()) + " (" + (fila.Sucursal ?? "") + ")";
+                if (!vistos.Add(clave))
+                {
+                    rechazados.Add(nombre + ": figura repetido en el pedido.");
+                    continue;
+                }
+                if (p.PuntoStock < 1 || p.PuntoStock > MaxPuntoStock)
+                {
+                    rechazados.Add(nombre + ": el punto de stock debe ser un número entero entre 1 y " + MaxPuntoStock + ".");
+                    continue;
+                }
+                if (fila.PuntoStock > 0f)
+                {
+                    rechazados.Add(nombre + ": ya tiene punto de stock cargado ("
+                        + fila.PuntoStock.ToString("0.###", CultureInfo.InvariantCulture) + "); no se pisa.");
+                    continue;
+                }
+                aceptados.Add(p);
+            }
+
+            if (lista.Count > MaxPuntosPorGuardado)
+                rechazados.Add("Se recibieron " + lista.Count + " puntos; solo se procesan los primeros " + MaxPuntosPorGuardado + ".");
+            return aceptados;
         }
 
         // Redondeo hacia arriba: pesables a 0,1 (no se pide 12,347 kg); por unidad, al entero.

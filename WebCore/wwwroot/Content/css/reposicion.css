@@ -1,0 +1,100 @@
+/* Estilos de las pantallas de Reposicion: "Qué pedir" (Reposicion/Index) y "Sugerir puntos de stock" (Reposicion/Puntos).
+   Compacto como el resto de WebCore (nunca el 1rem de Bootstrap), con las variables de tema del sitio (--ui-*) para que
+   se vea bien en claro y en oscuro. Todo cuelga de .reposicion-page. Detalle: docs/11-manual-de-uso/pantallas/Reposicion.Index.md. */
+    /* Estilo compacto de las pantallas de WebCore (ver el resto de las vistas): nunca el 1rem de Bootstrap. */
+    .reposicion-page { font-size: .9rem; }
+    .reposicion-page .card-body { padding: .82rem 1rem; }
+    .reposicion-page .form-control,
+    .reposicion-page .input-group-text,
+    .reposicion-page .ui-multiselect-toggle { font-size: .87rem !important; min-height: 2.3rem !important; padding: .32rem .58rem !important; }
+    .reposicion-page .btn { font-size: .8rem; padding: .3rem .6rem; }
+    /* Etiquetas propias (no las .badge-* del sitio): el color de texto queda fijo y con contraste aunque la fila esté atenuada.
+       El estado siempre va también en texto, nunca solo en color. */
+    .reposicion-badge { display: inline-block; padding: .18em .5em; border-radius: .35rem; font-size: .7rem; font-weight: 700; line-height: 1.25; white-space: nowrap; }
+    .reposicion-badge-bajo { background: #ffc107; color: #212529; }
+    .reposicion-badge-cero { background: #a61e2d; color: #fff; }
+    .reposicion-badge-ruido { background: #6c757d; color: #fff; }
+    .reposicion-badge-neg { background: #212529; color: #fff; }
+    .reposicion-badge-alto { background: #f1f3f5; color: #212529; border: 1px solid #adb5bd; }
+    .reposicion-page .alert,
+    .reposicion-page .small,
+    .reposicion-page .text-muted { font-size: .8rem; }
+    .reposicion-page .reposicion-label,
+    .reposicion-page .custom-control-label { font-size: .76rem; }
+    .reposicion-popup-titulo { font-weight: 700; font-size: 1rem; }
+
+    .reposicion-filtros-fila,
+    .reposicion-avanzados { display: grid; gap: .65rem; }
+    .reposicion-avanzados { margin-top: .65rem; }
+    .reposicion-acciones { display: flex; flex-wrap: wrap; gap: .4rem; align-items: flex-end; }
+
+    /* Tarjetas de resumen */
+    .reposicion-kpis { display: grid; gap: .65rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .reposicion-kpi { border: 1px solid var(--ui-border, #e3e6ec); border-radius: .6rem; padding: .55rem .75rem; background: var(--ui-surface, #fff); color: var(--ui-text, #1f2937); }
+    .reposicion-kpi-titulo { font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--ui-text-soft, #5f6772); font-weight: 700; }
+    .reposicion-kpi-valor { font-size: 1.35rem; font-weight: 700; line-height: 1.15; }
+    .reposicion-kpi-detalle { font-size: .74rem; color: var(--ui-text-soft, #5f6772); }
+    .reposicion-kpi-bajo { border-left: 4px solid #b26a00; }
+    .reposicion-kpi-cero { border-left: 4px solid #a61e2d; }
+    .reposicion-kpi-ruido { border-left: 4px solid #8a929e; }
+    .reposicion-kpi-importe { border-left: 4px solid #1d4670; }
+
+    /* Tabla */
+    .reposicion-page .tabla-reposicion { width: 100%; font-size: .84rem; margin-bottom: 0; }
+    .reposicion-page .tabla-reposicion th,
+    .reposicion-page .tabla-reposicion td { padding: .42rem .58rem; line-height: 1.15; vertical-align: middle; }
+    .reposicion-page .tabla-reposicion thead th { font-size: .72rem !important; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+    .reposicion-page .tabla-reposicion .reposicion-prov-row td { background: var(--ui-surface-strong, #e9edf2); color: var(--ui-text, #1f2937); font-size: .86rem; border-top: 2px solid var(--ui-border-strong, #c8d0d9); }
+    .reposicion-page .tabla-reposicion .col-pedir { font-weight: 700; font-size: .95rem; white-space: nowrap; }
+    .reposicion-page .tabla-reposicion .col-num { text-align: right; white-space: nowrap; }
+    .reposicion-page .reposicion-sub { display: block; font-size: .72rem; color: var(--ui-text-soft, #5f6772); font-weight: 400; }
+    .reposicion-page .reposicion-fila-cero td:first-child { box-shadow: inset 4px 0 0 #a61e2d; }
+    .reposicion-page .reposicion-fila-bajo td:first-child { box-shadow: inset 4px 0 0 #b26a00; }
+    .reposicion-page .reposicion-fila-ruido td:first-child { box-shadow: inset 4px 0 0 #8a929e; }
+    .reposicion-page .reposicion-fila-ruido td { color: var(--ui-text-soft, #5f6772); }
+    .reposicion-page .reposicion-otras-alcanza { color: #1e6b3a; font-weight: 600; }
+
+    html.dark-mode .reposicion-page .reposicion-otras-alcanza, body.dark-mode .reposicion-page .reposicion-otras-alcanza { color: #6ee7a0; }
+    .reposicion-print-titulo { display: none; }
+
+    @media (min-width: 768px) {
+        .reposicion-filtros-fila { grid-template-columns: minmax(180px, 1.1fr) minmax(200px, 1.2fr) auto; align-items: end; }
+        .reposicion-avanzados { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .reposicion-avanzados-ancho { grid-column: span 2; }
+        .reposicion-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @media (min-width: 1200px) {
+        .reposicion-page .form-control,
+        .reposicion-page .input-group-text,
+        .reposicion-page .ui-multiselect-toggle { min-height: 2.15rem !important; font-size: .84rem !important; padding: .28rem .56rem !important; }
+        .reposicion-page .tabla-reposicion { font-size: .8rem; }
+        .reposicion-page .tabla-reposicion thead th { font-size: .69rem !important; }
+    }
+
+    /* Impresión: solo el resultado (sin menús ni filtros), apaisado y sin bordes de tarjeta. */
+    @page { size: A4 landscape; margin: 10mm; }
+
+    @media print {
+        /* Una fila no se parte entre hojas, el encabezado de proveedor no queda solo al final de una hoja y los titulos de columna se repiten. */
+        .reposicion-page .tabla-reposicion tr { break-inside: avoid; page-break-inside: avoid; }
+        .reposicion-page .tabla-reposicion .reposicion-prov-row { break-after: avoid; page-break-after: avoid; }
+        .reposicion-page .tabla-reposicion thead { display: table-header-group; }
+        .reposicion-page .reposicion-kpi, .reposicion-page .tabla-reposicion .reposicion-prov-row td { background: #fff !important; color: #000 !important; }
+        .reposicion-page .reposicion-sub, .reposicion-page .reposicion-kpi-titulo, .reposicion-page .reposicion-kpi-detalle, .reposicion-page .reposicion-fila-ruido td { color: #333 !important; }
+        .sidebar, #accordionSidebar, .topbar, footer, .reposicion-no-print, .btn { display: none !important; }
+        #content-wrapper, #content { margin: 0 !important; padding: 0 !important; }
+        .reposicion-page { font-size: .75rem; }
+        .reposicion-page .card { border: 0 !important; box-shadow: none !important; }
+        .reposicion-print-titulo { display: block !important; margin-bottom: .5rem; }
+        .reposicion-page .table-responsive { overflow: visible !important; }
+        .reposicion-page .tabla-reposicion th, .reposicion-page .tabla-reposicion td { padding: .2rem .3rem; }
+    }
+
+/* ---- Sugerir puntos de stock (Reposicion/Puntos) ---- */
+.reposicion-page .tabla-reposicion .col-check { width: 2rem; text-align: center; }
+.reposicion-page .reposicion-punto-input { width: 5.5rem; display: inline-block; text-align: right; font-weight: 700; padding: .15rem .35rem !important; min-height: 1.9rem !important; }
+.reposicion-page .reposicion-fila-no-cargable { color: var(--ui-text-soft, #5f6772); }
+.reposicion-barra-guardar { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between;
+    background: var(--ui-surface, #fff); color: var(--ui-text, #1f2937); border: 1px solid var(--ui-border, #d7dce3); border-radius: .6rem; padding: .55rem .85rem; }
+@media print { .reposicion-barra-guardar { display: none !important; } }

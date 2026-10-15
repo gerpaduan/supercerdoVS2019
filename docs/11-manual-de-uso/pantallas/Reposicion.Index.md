@@ -39,7 +39,7 @@ Ventas **y** uso en elaboración. Los insumos (sal, condimentos, madejas, colora
 
 ## Avisos de la pantalla
 - **Cierre de stock viejo:** el stock se calcula desde el **último cierre de stock de cada sucursal**. Si pasaron más de 30 días (o no hay ninguno) se avisa: lo que no se haya cargado desde entonces no está en el stock.
-- **"N de M productos no tienen punto de stock"**: de esos solo se avisa si están en cero y se movieron. Cargá el punto de stock en *Productos → Ver stock por sucursales* para que el sistema calcule cuánto pedir de todos.
+- **"N de M productos no tienen punto de stock"**: de esos solo se avisa si están en cero y se movieron. Para que el sistema calcule cuánto pedir de todos, cargá los puntos: el botón **Sugerir puntos de stock** ([ayuda](ayuda:pantalla/Reposicion.Puntos)) propone uno según lo que se consume y deja cargar varios de una vez; o cargalos a mano en *Productos → Ver stock por sucursales*.
 
 ## Notas y límites
 - El sistema **no registra pedidos a proveedor**: si ya pediste algo que todavía no llegó, la pantalla lo sigue sugiriendo. Mirá la fecha de la última compra (columna *Último precio*).
