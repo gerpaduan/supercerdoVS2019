@@ -2,7 +2,7 @@
 
 ## 2026-10-16 (la mas reciente) - Deploy de WebCore en Servidor SM y San Lorenzo (HEAD `5a63e9bc` + 18 archivos sin commitear)
 
-- **A pedido del usuario** ("recompilar y publicar en SM y luego en SL"); VPS luden **no** se toco. Salio el codigo de las 4 entradas de abajo (Pesaje en Postgres, desvincular pesajes en Stock, "Precios por seleccion", clave de la persona para modificar registros anteriores a hoy), que estaba **sin commitear**: por eso sus lineas "sin desplegar" ya no valen para SM y SL (siguen valiendo para la VPS). Sin migraciones.
+- **A pedido del usuario** ("recompilar y publicar en SM y luego en SL"); VPS luden **no** se toco. Salio el codigo de las 4 entradas de abajo (Pesaje en Postgres, desvincular pesajes en Stock, "Precios por seleccion", clave de la persona para modificar registros anteriores a hoy), que estaba **sin commitear** al desplegar (despues se commiteo como `309724b3`, sin push): por eso sus lineas "sin commitear ni desplegar" ya no valen para SM y SL (siguen valiendo para la VPS). Sin migraciones.
 - **Verificado**: 513 tests de Negocio verdes; paquete Release win-x64 (`WebCore.dll` `552E0BAED135`); en ambos servidores hash del zip, DLL nueva, config y `AFIP\` intactas, y `/Login` 200 con titulo por HTTPS; `/SuperCerdoWeb/` 200. **Sin verificar**: nada con login real (las 4 funciones nuevas quedan pendientes de prueba en SM/SL); Event Log de SL no revisado; los E2E no se corrieron.
 - Detalle (hashes, backups, rollback): `docs/07-operacion-y-soporte/despliegue-y-publicacion.md`, seccion "Redeploy WebCore en Servidor SM y San Lorenzo -- 2026-10-16".
 
