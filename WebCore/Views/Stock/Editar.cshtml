@@ -479,6 +479,14 @@
                                 disabled="@(Model.PuedeHabilitarEdicion ? null : "disabled")">
                             <i class="fas fa-edit mr-1"></i> Modificar
                         </button>
+                        @if (ViewBag.UrlModificarConClave is string urlModificarConClave)
+                        {
+                            @* Registro anterior a hoy desde la cuenta de produccion: pide la clave de la persona elegida (ElevacionRegistroHelper). *@
+                            <a class="btn btn-warning mr-2 mb-2" href="@urlModificarConClave"
+                               title="Este registro es anterior a hoy: ingresá tu clave para verificar tu permiso">
+                                <i class="fas fa-key mr-1"></i> Modificar con mi clave
+                            </a>
+                        }
                     }
                     <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarStock">
                         <i class="fas fa-save mr-1"></i> Guardar stock
@@ -504,6 +512,7 @@
             <div class="modal-body">
                 <div id="stockVincularPesajesWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
                 <div class="small text-muted mb-1">Se muestran solo pesajes de la misma sucursal, ordenados del m&aacute;s reciente al m&aacute;s antiguo.</div>
+                <div class="small text-muted mb-1">Un pesaje ya vinculado se puede desvincular desde la columna Acci&oacute;n: se quitan sus productos de este pesaje y se aplica al guardar.</div>
                 <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalVincularPesajesStock">-</strong></div>
                 <div class="row align-items-end mb-3 stock-modal-filters">
                     <div class="col-12 col-lg-4">

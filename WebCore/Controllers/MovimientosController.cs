@@ -164,7 +164,7 @@ namespace WebCore.Controllers
             return Editar(0, idUsuarioCreador);
         }
 
-        public IActionResult Editar(int id = 0, int idUsuarioCreador = 0)
+        public IActionResult Editar(int id = 0, int idUsuarioCreador = 0, bool conClave = false)
         {
             var user = _usuarioActual;
 
@@ -186,16 +186,36 @@ namespace WebCore.Controllers
 
                 // Port de Web/Controllers/MovimientosController.cs:192-199.
                 puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, model.FechaMovimiento, user.Id);
-                if (!puedeModificar && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.VerMovimientos, model.FechaMovimiento, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */))
+                bool puedeVer = puedeModificar || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.VerMovimientos, model.FechaMovimiento, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */);
+
+                // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
+                // persona elegida y su permiso por fecha se SUMA al de la cuenta (docs/DECISIONS.md, 2026-10-15).
+                var elevado = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloMovimientos, user, idUsuarioCreador, model.FechaMovimiento);
+                if (WebCore.Helpers.ElevacionRegistroHelper.NecesitaClave(user, idUsuarioCreador, model.FechaMovimiento, puedeModificar, puedeVer, conClave, elevado))
+                    return WebCore.Helpers.ElevacionRegistroHelper.RedirigirAClave(this, WebCore.Helpers.ElevacionRegistroHelper.ModuloMovimientos, idUsuarioCreador);
+
+                if (elevado != null)
+                {
+                    puedeModificar = puedeModificar || _oUsuarioN.tienePermiso(elevado, Entidades.Permisos.Movimiento.NuevoMovimiento, model.FechaMovimiento, elevado.Id);
+                    puedeVer = puedeVer || puedeModificar || _oUsuarioN.tienePermiso(elevado, Entidades.Permisos.Movimiento.VerMovimientos, model.FechaMovimiento, -1);
+                }
+
+                if (!puedeVer)
                 {
                     TempData["AlertType"] = "warning";
                     TempData["AlertTitle"] = "Permisos";
-                    TempData["AlertMsg"] = "No tenés permisos para consultar movimientos.";
+                    TempData["AlertMsg"] = elevado != null
+                        ? WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevado, Entidades.Permisos.Movimiento.NuevoMovimiento, false)
+                        : "No tenés permisos para consultar movimientos.";
                     return RedirectToAction("Index");
                 }
 
                 model.SoloLecturaInicial = true;
                 model.PuedeHabilitarEdicion = puedeModificar;
+                // Solo consulta por fecha desde la cuenta de produccion: ofrece modificar con la clave de la persona elegida.
+                if (!puedeModificar && elevado == null
+                    && WebCore.Helpers.ElevacionRegistroHelper.AplicaElevacion(user, idUsuarioCreador, model.FechaMovimiento))
+                    ViewBag.UrlModificarConClave = Url.Action("Editar", "Movimientos", new { id, idUsuarioCreador, conClave = true });
             }
             else
             {
@@ -320,8 +340,18 @@ namespace WebCore.Controllers
                 // permiso usa SIEMPRE el usuario de sesion real (asi funciona SoloRegistrosPropios
                 // sin cambios); el creador que efectivamente queda grabado se resuelve DESPUES,
                 // con el id elegido en la pantalla de SeleccionUsuario (cuenta de produccion).
-                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, model?.FechaMovimiento ?? DateTime.Today, user.Id))
-                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar movimientos." });
+                DateTime fechaPermisoGuardar = model?.FechaMovimiento ?? DateTime.Today;
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, fechaPermisoGuardar, user.Id))
+                {
+                    // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su
+                    // clave al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.
+                    var elevadoGuardar = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloMovimientos, user, idUsuarioCreador, fechaPermisoGuardar);
+                    if (elevadoGuardar == null)
+                        return Json(new { ok = false, mensaje = "No tiene permisos para guardar movimientos." });
+
+                    if (!_oUsuarioN.tienePermiso(elevadoGuardar, Entidades.Permisos.Movimiento.NuevoMovimiento, fechaPermisoGuardar, elevadoGuardar.Id))
+                        return Json(new { ok = false, mensaje = WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevadoGuardar, Entidades.Permisos.Movimiento.NuevoMovimiento, false) });
+                }
 
                 user = ResolverUsuarioCreador(idUsuarioCreador, user);
 

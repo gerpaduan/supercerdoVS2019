@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
 
@@ -38,6 +39,94 @@ namespace WebCore.Controllers
             ViewBag.Title = "Seleccionar usuario";
 
             return View("~/Views/SeleccionUsuario/Index.cshtml");
+        }
+
+        // ===== Clave para modificar un registro anterior a hoy (docs/DECISIONS.md, 2026-10-15) =====
+        // La cuenta de produccion eligio su nombre sin clave; si ella sola no puede tocar un registro
+        // anterior a hoy, los controllers de Movimientos/Stock/Elaborados mandan aca para que esa persona
+        // ponga SU clave (ver ElevacionRegistroHelper). Con la clave validada vuelve a returnUrl y el
+        // controller evalua el permiso por fecha de esa persona.
+        private const string MensajeClaveIncorrecta = "La clave es incorrecta.";
+
+        [HttpGet]
+        public IActionResult ClaveParaModificar(string modulo, int idUsuario, string returnUrl, string cancelUrl)
+        {
+            var candidato = ObtenerCandidatoClave(modulo, idUsuario);
+            if (candidato == null)
+                return RedirectDeVuelta(cancelUrl, "No se pudo identificar al usuario. Elegilo de nuevo.");
+
+            return VistaClave(modulo, candidato, returnUrl, cancelUrl, null, 0);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ConfirmarClaveParaModificar(string modulo, int idUsuario, string clave, string returnUrl, string cancelUrl)
+        {
+            var candidato = ObtenerCandidatoClave(modulo, idUsuario);
+            if (candidato == null)
+                return RedirectDeVuelta(cancelUrl, "No se pudo identificar al usuario. Elegilo de nuevo.");
+
+            // Limite de intentos por sesion, el mismo del step-up de Ventas/Compras/POS.
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return VistaClave(modulo, candidato, returnUrl, cancelUrl,
+                    "Demasiados intentos. Esperá un momento antes de volver a probar.", (int)Math.Ceiling(retryAfter.TotalSeconds));
+
+            var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            var validado = string.IsNullOrWhiteSpace(clave) ? null : oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (validado == null || !validado.Activo || validado.Id != candidato.Id)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return VistaClave(modulo, candidato, returnUrl, cancelUrl, MensajeClaveIncorrecta, 0);
+            }
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+            WebCore.Helpers.ElevacionRegistroHelper.Registrar(HttpContext.Session, modulo, validado);
+            return Redirect(Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Index", "Home"));
+        }
+
+        // Persona elegida en pantalla, solo si la sesion es la cuenta de produccion, el modulo es uno de los
+        // tres y la persona esta activa y es de la misma empresa (mismo criterio que ResolverUsuarioCreador).
+        private Entidades.Usuario ObtenerCandidatoClave(string modulo, int idUsuario)
+        {
+            var sesion = _sesion.UsuarioActual;
+            if (sesion == null || !sesion.EsUsuarioProduccion || idUsuario <= 0
+                || !WebCore.Helpers.ElevacionRegistroHelper.EsModuloValido(modulo))
+                return null;
+
+            var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            var candidato = oUsuarioN.getUsuarioById(idUsuario);
+            return candidato != null && candidato.Activo && candidato.IdEmpresa == sesion.IdEmpresa ? candidato : null;
+        }
+
+        private IActionResult VistaClave(string modulo, Entidades.Usuario candidato, string returnUrl, string cancelUrl, string error, int segundosBloqueo)
+        {
+            ViewBag.Title = "Ingresá tu clave";
+            ViewBag.Modulo = modulo;
+            ViewBag.IdUsuario = candidato.Id;
+            ViewBag.NombreUsuario = candidato.Nombre;
+            ViewBag.ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Index", "Home");
+            ViewBag.CancelUrl = Url.IsLocalUrl(cancelUrl) ? cancelUrl : Url.Action("Index", "Home");
+            ViewBag.Error = error;
+            ViewBag.SegundosBloqueo = segundosBloqueo;
+            return View("~/Views/SeleccionUsuario/ClaveParaModificar.cshtml");
+        }
+
+        private IActionResult RedirectDeVuelta(string cancelUrl, string mensaje)
+        {
+            TempData["AlertType"] = "warning";
+            TempData["AlertTitle"] = "Usuario";
+            TempData["AlertMsg"] = mensaje;
+            return Redirect(Url.IsLocalUrl(cancelUrl) ? cancelUrl : Url.Action("Index", "Home"));
+        }
+
+        // Ver ComprasController.ObtenerSessionIdEstable: Session no manda la cookie hasta el primer write, y sin
+        // eso el limite de intentos por sesion nunca acumula.
+        private string ObtenerSessionIdEstable()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_estable")))
+                HttpContext.Session.SetString("_estable", "1");
+            return HttpContext.Session.Id;
         }
 
         // Mismo criterio que el resto de los controllers de esta migracion (Movimientos/Stock/

@@ -121,6 +121,12 @@
             productoRequestSeq: 0,
             comprasPesajeDetalle: {},
             loadingDetalleCompraPesaje: {},
+            // Pesajes que el usuario desvinculo en esta edicion (id -> true). Se aplican al Guardar:
+            // getPesajesVinculados() los omite y SincronizarPesajesVinculados les saca el vinculo.
+            pesajesDesvinculados: {},
+            // Ultimo listado del modal "Vincular pesajes": permite redibujarlo (p. ej. tras
+            // desvincular) sin volver al servidor.
+            pesajesVinculablesItems: [],
             loadingPersonaModal: false,
             loadingNoCargados: false,
             loadingComprasPesaje: false,
@@ -631,9 +637,13 @@
         var map = {};
         var items = [];
 
+        // Los desvinculados en esta edicion se omiten: al no viajar en PesajesVinculadosIds, el
+        // servidor les saca el vinculo al guardar (SincronizarPesajesVinculados).
+        var desvinculados = state.pesajesDesvinculados || {};
+
         $.each((state.config && state.config.pesajesVinculadosExistentes) || [], function (_, id) {
             var idPesaje = parseInt(id, 10) || 0;
-            if (idPesaje <= 0 || map[idPesaje]) return;
+            if (idPesaje <= 0 || map[idPesaje] || desvinculados[idPesaje]) return;
 
             map[idPesaje] = true;
             items.push({ id: idPesaje, texto: '' });
@@ -641,7 +651,7 @@
 
         $.each(state.lineas || [], function (_, linea) {
             var idPesaje = parseInt(linea.idPesajeVinculado, 10) || 0;
-            if (idPesaje <= 0 || map[idPesaje]) return;
+            if (idPesaje <= 0 || map[idPesaje] || desvinculados[idPesaje]) return;
 
             map[idPesaje] = true;
             items.push({
@@ -1315,6 +1325,9 @@
     function renderPesajesVinculables($form, items) {
         var html = '';
 
+        // Se guarda el listado para poder redibujar el modal sin ir al servidor (ver desvincularPesaje).
+        getState($form).pesajesVinculablesItems = items || [];
+
         if (!items || !items.length) {
             html = '<tr><td colspan="8" class="text-center text-muted py-4">No hay pesajes disponibles para vincular.</td></tr>';
         } else {
@@ -1323,8 +1336,14 @@
                 var proveedor = item.proveedor || '-';
                 var yaVinculado = yaEstaVinculadoEnEdicion($form, item.idCompra);
                 var esActual = item.esActual === true;
-                var textoBoton = esActual ? 'Pesaje actual' : (yaVinculado ? 'Ya vinculado' : 'Vincular');
-                var disabled = esActual || yaVinculado;
+                // Un pesaje ya vinculado a este se puede desvincular (quita sus lineas de este pesaje
+                // y le saca el vinculo, previa confirmacion); el pesaje actual no tiene accion.
+                var puedeDesvincular = !esActual && yaVinculado;
+                var textoBoton = esActual ? 'Pesaje actual' : 'Vincular';
+                var disabled = esActual;
+                var botonAccionHtml = puedeDesvincular
+                    ? '<button type="button" class="btn btn-sm btn-outline-danger" data-action="desvincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '"><i class="fas fa-unlink mr-1"></i>Desvincular</button>'
+                    : '<button type="button" class="btn btn-sm ' + (disabled ? 'btn-outline-secondary' : 'btn-info') + '" data-action="vincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '"' + (disabled ? ' disabled="disabled"' : '') + '>' + textoBoton + '</button>';
 
                 html += '<tr>'
                     + '<td>' + escapeHtml(item.idCompra || 0) + '</td>'
@@ -1336,7 +1355,7 @@
                     + '<td class="text-right font-weight-bold">' + formatNumber(item.kgsMedias || item.totalKg || 0, 3) + '</td>'
                     + '<td>' + escapeHtml(item.sucursal || '-') + '</td>'
                     + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-info" data-action="toggle-detalle-vincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '" data-target="#' + detailId + '" aria-expanded="false" aria-controls="' + detailId + '"><i class="fas fa-list mr-1"></i>Detalle</button></td>'
-                    + '<td class="text-center"><button type="button" class="btn btn-sm ' + (disabled ? 'btn-outline-secondary' : 'btn-info') + '" data-action="vincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '"' + (disabled ? ' disabled="disabled"' : '') + '>' + textoBoton + '</button></td>'
+                    + '<td class="text-center">' + botonAccionHtml + '</td>'
                     + '</tr>';
                 html += '<tr class="bg-light">'
                     + '<td colspan="8" class="p-0">'
@@ -1443,6 +1462,10 @@
                 return;
             }
 
+            // Si se desvinculo antes en esta misma edicion, al volver a vincularlo deja de estar
+            // "desvinculado" (si no, getPesajesVinculados lo seguiria omitiendo).
+            delete state.pesajesDesvinculados[idCompra];
+
             renderLineas($form);
             scheduleDraft($form);
             getVincularPesajesModal().modal('hide');
@@ -1450,6 +1473,189 @@
             $button.prop('disabled', false);
         }, function (mensaje) {
             showVincularPesajesWarning(mensaje || 'No se pudo vincular el pesaje.');
+            $button.prop('disabled', false);
+        });
+    }
+
+    // Tolerancia al comparar kilos entre una linea de este pesaje y una del pesaje vinculado:
+    // vincularPesaje copia los kilos desde un texto con 3 decimales (DetalleCompraPesaje) y el
+    // servidor los guarda como float, asi que menos de medio gramo de diferencia es el mismo valor.
+    var TOLERANCIA_KILOS_VINCULO = 0.0005;
+
+    // Busca en `lineas` la primera linea NO consumida con el mismo producto y kilos que una linea del
+    // pesaje vinculado. `etiquetadas` = true busca solo entre las que traen el id de ese pesaje
+    // (vinculadas en esta sesion); false, solo entre las sin etiqueta (las que ya estaban guardadas:
+    // el origen de la linea no se persiste, ver docs/DECISIONS.md 2026-08-13). Devuelve el indice o -1.
+    function buscarLineaCoincidente(lineas, consumidas, idPesaje, idCorte, kilos, etiquetadas) {
+        for (var i = 0; i < lineas.length; i++) {
+            if (consumidas[i]) continue;
+
+            var linea = lineas[i];
+            if ((parseInt(linea.idCorte, 10) || 0) !== idCorte) continue;
+
+            var etiqueta = parseInt(linea.idPesajeVinculado, 10) || 0;
+            if (etiquetadas ? etiqueta !== idPesaje : etiqueta !== 0) continue;
+
+            if (Math.abs(toNumber(linea.cantKgs) - kilos) > TOLERANCIA_KILOS_VINCULO) continue;
+
+            return i;
+        }
+
+        return -1;
+    }
+
+    // Calcula que lineas de `state.lineas` vinieron del pesaje vinculado `idPesaje`, sin modificar nada.
+    // `detalle` es el item de DetalleCompraPesaje (las lineas ACTUALES de ese pesaje). Cada linea del
+    // pesaje vinculado se empareja 1 a 1 con una linea de este pesaje (mismo producto y kilos),
+    // priorizando las etiquetadas con su id; las etiquetadas que sobren tambien cuentan (son
+    // inequivocamente suyas). Nunca toma lineas etiquetadas con OTRO pesaje.
+    // Devuelve { indices, kilosTotal, esperadas, encontradas }: `esperadas` = lineas del pesaje
+    // vinculado que se copiaron al vincular (con producto), `encontradas` = cuantas se hallaron aca.
+    // Limite conocido: si el pesaje vinculado se edito despues de vincularlo, sus lineas nuevas no
+    // coinciden y quedan sin encontrar (el dialogo de confirmacion lo avisa).
+    function calcularLineasDePesajeVinculado(state, idPesaje, detalle) {
+        var lineas = state.lineas || [];
+        var consumidas = {};
+        var indices = [];
+        var kilosTotal = 0;
+        var esperadas = 0;
+        var encontradas = 0;
+
+        function consumir(indice) {
+            consumidas[indice] = true;
+            indices.push(indice);
+            kilosTotal += toNumber(lineas[indice].cantKgs);
+        }
+
+        $.each((detalle && detalle.lineas) || [], function (_, lineaPesaje) {
+            var idCorte = parseInt(lineaPesaje.idCorte, 10) || 0;
+            if (idCorte <= 0) return; // igual que vincularPesaje: las lineas sin producto nunca se copiaron
+
+            esperadas++;
+            var kilos = toNumber(lineaPesaje.kilos);
+            var indice = buscarLineaCoincidente(lineas, consumidas, idPesaje, idCorte, kilos, true);
+            if (indice < 0) indice = buscarLineaCoincidente(lineas, consumidas, idPesaje, idCorte, kilos, false);
+            if (indice < 0) return;
+
+            encontradas++;
+            consumir(indice);
+        });
+
+        $.each(lineas, function (indice, linea) {
+            if (!consumidas[indice] && (parseInt(linea.idPesajeVinculado, 10) || 0) === idPesaje) {
+                consumir(indice);
+            }
+        });
+
+        return { indices: indices, kilosTotal: kilosTotal, esperadas: esperadas, encontradas: encontradas };
+    }
+
+    // Pide confirmacion antes de desvincular: SweetAlert si esta cargado, si no window.confirm
+    // (mismo criterio que reposicion-puntos.js). Llama a onConfirm o a onCancel segun la respuesta.
+    function confirmarDesvinculacion(idPesaje, calculo, onConfirm, onCancel) {
+        var cantidadQuitar = calculo.indices.length;
+        var faltantes = calculo.esperadas - calculo.encontradas;
+        var kilosTexto = formatNumber(calculo.kilosTotal, 3);
+
+        var detalleQuitar = cantidadQuitar > 0
+            ? 'Se quitarán ' + cantidadQuitar + (cantidadQuitar === 1 ? ' línea' : ' líneas') + ' (' + kilosTexto + ' kg) de este pesaje y se le sacará el vínculo al pesaje #' + idPesaje + '.'
+            : 'No se encontraron líneas de este pesaje para quitar; solo se le sacará el vínculo al pesaje #' + idPesaje + '.';
+        var detalleFaltantes = (faltantes > 0 && cantidadQuitar > 0)
+            ? 'No se encontraron en este pesaje ' + faltantes + ' de las ' + calculo.esperadas + ' líneas del pesaje #' + idPesaje + ' (se modificaron o ya se quitaron): esas no se tocan.'
+            : '';
+        var detalleGuardar = 'Los cambios se aplican al presionar Guardar.';
+
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire({
+                icon: 'warning',
+                title: '¿Desvincular el pesaje #' + idPesaje + '?',
+                html: escapeHtml(detalleQuitar)
+                    + (detalleFaltantes ? '<br><br><span class="text-danger">' + escapeHtml(detalleFaltantes) + '</span>' : '')
+                    + '<br><br>' + escapeHtml(detalleGuardar),
+                showCancelButton: true,
+                confirmButtonText: 'Desvincular',
+                cancelButtonText: 'Cancelar',
+                focusCancel: true
+            }).then(function (resultado) {
+                if (resultado.isConfirmed) {
+                    onConfirm();
+                } else {
+                    onCancel();
+                }
+            });
+            return;
+        }
+
+        var pregunta = detalleQuitar + (detalleFaltantes ? '\n\n' + detalleFaltantes : '') + '\n\n' + detalleGuardar + '\n\n¿Desvincular?';
+        if (window.confirm(pregunta)) {
+            onConfirm();
+        } else {
+            onCancel();
+        }
+    }
+
+    // Aplica en la pantalla (sin tocar la base: eso pasa al Guardar) la desvinculacion ya confirmada:
+    // quita las lineas del pesaje vinculado y lo marca como desvinculado para que no viaje en
+    // PesajesVinculadosIds (SincronizarPesajesVinculados le pone idpesajeajustado = NULL).
+    function aplicarDesvinculacion($form, idPesaje, calculo) {
+        var state = getState($form);
+
+        // Se quitan de atras para adelante para que los indices pendientes no se corran.
+        var indicesDesc = calculo.indices.slice().sort(function (a, b) { return b - a; });
+        $.each(indicesDesc, function (_, indice) {
+            state.lineas.splice(indice, 1);
+        });
+
+        state.pesajesDesvinculados[idPesaje] = true;
+
+        renderLineas($form);
+        renderPesajesVinculables($form, state.pesajesVinculablesItems);
+        capturarRespaldo('Stock', $form);
+        scheduleDraft($form);
+    }
+
+    function mostrarExitoDesvinculacion($form, cantidadQuitada) {
+        var mensaje = 'Se quitaron ' + cantidadQuitada + (cantidadQuitada === 1 ? ' línea' : ' líneas') + '. Presione Guardar para aplicar los cambios.';
+
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire({
+                icon: 'success',
+                title: 'Pesaje desvinculado',
+                text: mensaje,
+                timer: 2500,
+                showConfirmButton: false
+            });
+            return;
+        }
+
+        showFeedback($form, 'Pesaje desvinculado. ' + mensaje);
+    }
+
+    // Boton "Desvincular" del modal "Vincular pesajes": trae las lineas actuales del pesaje
+    // vinculado, calcula cuales de este pesaje vinieron de el, pide confirmacion y recien ahi aplica.
+    function desvincularPesaje($form, $button) {
+        if (!$button || !$button.length) return;
+
+        var idCompra = parseInt($button.data('id-compra'), 10) || 0;
+        if (idCompra <= 0) {
+            showVincularPesajesWarning('Seleccione un pesaje válido.');
+            return;
+        }
+
+        $button.prop('disabled', true);
+        clearVincularPesajesWarning();
+
+        cargarDetalleCompraPesaje($form, idCompra, function (detalle) {
+            var calculo = calcularLineasDePesajeVinculado(getState($form), idCompra, detalle);
+
+            confirmarDesvinculacion(idCompra, calculo, function () {
+                aplicarDesvinculacion($form, idCompra, calculo);
+                mostrarExitoDesvinculacion($form, calculo.indices.length);
+            }, function () {
+                $button.prop('disabled', false);
+            });
+        }, function (mensaje) {
+            showVincularPesajesWarning(mensaje || 'No se pudo desvincular el pesaje.');
             $button.prop('disabled', false);
         });
     }
@@ -1761,7 +1967,10 @@
                 cantidad: $form.find('#txtCantKgs').val(),
                 balanza: $form.find('#chkBalanzaLinea').is(':checked')
             },
-            lineas: state.lineas
+            lineas: state.lineas,
+            // Ids de pesajes desvinculados en esta edicion: sin esto, al restaurar el borrador las
+            // lineas ya estarian quitadas pero el pesaje volveria a figurar vinculado.
+            pesajesDesvinculados: $.map(state.pesajesDesvinculados || {}, function (_, id) { return parseInt(id, 10) || null; })
         };
     }
 
@@ -1845,6 +2054,14 @@
         }
 
         state.lineas = $.isArray(draft.lineas) ? $.map(draft.lineas, function (linea) { return normalizeLinea(linea); }) : [];
+
+        // Los borradores anteriores a "Desvincular pesajes" no traen el campo: se asume ninguno.
+        state.pesajesDesvinculados = {};
+        $.each($.isArray(draft.pesajesDesvinculados) ? draft.pesajesDesvinculados : [], function (_, id) {
+            var idPesaje = parseInt(id, 10) || 0;
+            if (idPesaje > 0) state.pesajesDesvinculados[idPesaje] = true;
+        });
+
         renderLineas($form);
     }
 
@@ -2473,6 +2690,10 @@
 
         $modalVincularPesajes.on('click.stockVincular', '[data-action="vincular-pesaje"]', function () {
             vincularPesaje($form, $(this));
+        });
+
+        $modalVincularPesajes.on('click.stockVincular', '[data-action="desvincular-pesaje"]', function () {
+            desvincularPesaje($form, $(this));
         });
 
         $modalVincularPesajes.on('shown.bs.modal.stockVincular', function () {

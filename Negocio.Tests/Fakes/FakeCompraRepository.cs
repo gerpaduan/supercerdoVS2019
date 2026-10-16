@@ -16,6 +16,13 @@ namespace NegocioTests.Fakes
         public int IdCompraAAsignar { get; set; } = 1;
         public bool AddOrEditCompraFueLlamado { get; private set; }
 
+        // actualizarEstadoPesaje (estado del ajuste de un Pesaje): se registra cuantas veces se llamo y si
+        // la unidad de trabajo YA estaba completada en ese momento (en Postgres debe ser despues del commit,
+        // si no se pisa con el lock de la fila que la propia transaccion modifico).
+        public int ActualizarEstadoPesajeLlamadas { get; private set; }
+        public bool? UnitOfWorkCompletadaAlActualizarEstado { get; private set; }
+        public Exception ExcepcionAlActualizarEstado { get; set; }
+
         public FakeCompraRepository(Contratos.IUnitOfWork unitOfWorkAEntregar = null, Exception excepcionAlAgregar = null)
         {
             _unitOfWorkAEntregar = unitOfWorkAEntregar;
@@ -34,7 +41,9 @@ namespace NegocioTests.Fakes
         public void anularCompra(int idCompra) => throw new NotImplementedException();
         public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal) => throw new NotImplementedException();
         public DataTable getLineasCompras(int idSucursal, string tipoCompra, string texto, string codigo, string corte, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal) => throw new NotImplementedException();
-        public DataTable findById(int idCompra) => throw new NotImplementedException();
+        // Sin filas: Negocio.Compra.findById_convertToCompra devuelve una compra vacia (lo justo para
+        // que estadoAjusteStock calcule "No realizado" sin necesitar Persona/Sucursal fakes).
+        public DataTable findById(int idCompra) => new DataTable();
         public int agregarCompra(Compra oCompraE) => throw new NotImplementedException();
         public void ModificarCompra(Compra oCompraE) => throw new NotImplementedException();
         public void actualizarObservacionesCompra(int idCompra, string observaciones, int actualizadoPor) => throw new NotImplementedException();
@@ -57,8 +66,13 @@ namespace NegocioTests.Fakes
         public DataTable porcentajeCortesPorCompra(int idCompra) => throw new NotImplementedException();
         public DataTable getPromMedias(int idCompra) => throw new NotImplementedException();
         public DataTable getPorcCortesEnMedias(int idCompra) => throw new NotImplementedException();
-        public int getIdAjusteDelPesaje(int idPesaje) => throw new NotImplementedException();
+        public int getIdAjusteDelPesaje(int idPesaje) => 0;
         public Dictionary<int, int> getIdsAjustePorPesajes(IEnumerable<int> idsPesaje) => throw new NotImplementedException();
-        public void actualizarEstadoPesaje(int idPesaje, Compra.estadoAjusteStock estadoAjStock) => throw new NotImplementedException();
+        public void actualizarEstadoPesaje(int idPesaje, Compra.estadoAjusteStock estadoAjStock)
+        {
+            ActualizarEstadoPesajeLlamadas++;
+            UnitOfWorkCompletadaAlActualizarEstado = (_unitOfWorkAEntregar as FakeUnitOfWork)?.CompletarLlamado;
+            if (ExcepcionAlActualizarEstado != null) throw ExcepcionAlActualizarEstado;
+        }
     }
 }

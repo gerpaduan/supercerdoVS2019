@@ -1,0 +1,63 @@
+@{
+    // Pantalla informativa que pide la clave de la persona elegida en la cuenta de produccion para modificar
+    // (o consultar) un registro anterior a hoy. Ver ElevacionRegistroHelper y docs/DECISIONS.md (2026-10-15).
+    // La clave se valida en SeleccionUsuarioController.ConfirmarClaveParaModificar; nunca se guarda ni se loguea.
+    string modulo = ViewBag.Modulo as string ?? "";
+    int idUsuario = ViewBag.IdUsuario is int idU ? idU : 0;
+    string nombre = ViewBag.NombreUsuario as string ?? "";
+    string returnUrl = ViewBag.ReturnUrl as string ?? "";
+    string cancelUrl = ViewBag.CancelUrl as string ?? "";
+    string error = ViewBag.Error as string;
+    int segundosBloqueo = ViewBag.SegundosBloqueo is int s ? s : 0;
+    bool bloqueado = segundosBloqueo > 0;
+}
+
+<style>
+    .clave-registro-card { max-width: 460px; font-size: .85rem; }
+    .clave-registro-card h5 { font-size: 1rem; }
+    .clave-registro-card .form-control { font-size: .9rem; }
+    .clave-registro-card .small { font-size: .78rem; }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="card shadow-sm mx-auto clave-registro-card">
+        <div class="card-body">
+            <h5 class="text-primary mb-2"><i class="fas fa-key mr-1"></i> Ingresá tu clave para modificar el registro</h5>
+            <p class="mb-2">
+                Este registro es <strong>anterior a la fecha actual</strong> y la cuenta de producción no tiene permiso para
+                modificarlo. Para continuar, <strong>@nombre</strong>, ingresá tu clave: se va a verificar que <strong>tu usuario</strong>
+                tenga permiso para modificar registros de esa fecha.
+            </p>
+
+            @if (!string.IsNullOrWhiteSpace(error))
+            {
+                <div class="alert alert-danger py-2 mb-2" role="alert">@error@(bloqueado ? " (" + segundosBloqueo + " s)" : "")</div>
+            }
+
+            <form method="post" asp-controller="SeleccionUsuario" asp-action="ConfirmarClaveParaModificar" autocomplete="off">
+                <input type="hidden" name="modulo" value="@modulo" />
+                <input type="hidden" name="idUsuario" value="@idUsuario" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <input type="hidden" name="cancelUrl" value="@cancelUrl" />
+
+                <div class="form-group mb-3">
+                    <label for="claveRegistro" class="mb-1">Clave de @nombre</label>
+                    <input type="password" id="claveRegistro" name="clave" class="form-control" autocomplete="new-password"
+                           autofocus required disabled="@(bloqueado ? "disabled" : null)" />
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="@cancelUrl" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+                    <button type="submit" class="btn btn-primary btn-sm" disabled="@(bloqueado ? "disabled" : null)">
+                        <i class="fas fa-lock-open mr-1"></i> Continuar
+                    </button>
+                </div>
+            </form>
+
+            <p class="text-muted small mt-3 mb-0">
+                Si tu usuario tampoco tiene permiso para esa fecha, se te va a avisar hasta qué fecha podés modificar registros.
+                La clave vale 15 minutos en este módulo.
+            </p>
+        </div>
+    </div>
+</div>

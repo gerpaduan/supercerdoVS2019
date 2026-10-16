@@ -79,10 +79,14 @@ namespace Negocio
         {
             // Mismo mecanismo que Negocio.Venta.agregarVenta: TransactionScope para SQL Server
             // (sin cambios), IUnitOfWork explicito para Postgres (ver docs/DECISIONS.md,
-            // 2026-08-20). oCorteN.editPrecioCorte y actualizarEstadoPesaje (mas abajo) NO
-            // participan de la unidad de trabajo compartida todavia -- caminos condicionales,
-            // no exercitados por el testeo real hecho hasta ahora (ActualizarPrecioVenta y
-            // PesajeCortes). Si alguna vez fallan en modo Postgres, aplicar el mismo patron.
+            // 2026-08-20). oCorteN.editPrecioCorte (mas abajo) NO participa de la unidad de
+            // trabajo compartida todavia -- camino condicional (ActualizarPrecioVenta) no
+            // exercitado por el testeo real hecho hasta ahora; si alguna vez falla en modo
+            // Postgres, aplicar el mismo patron. El estado del Pesaje (actualizarEstadoPesaje) en
+            // Postgres se actualiza DESPUES del commit, no dentro de la unidad de trabajo: usa otra
+            // conexion y, al editar un pesaje existente, quedaba esperando el lock de la fila que
+            // la propia transaccion ya habia modificado hasta el timeout de 30 s (ver docs/DECISIONS.md
+            // 2026-10-16, "Guardar un Pesaje existente en Postgres").
             var unitOfWork = oCompraD.IniciarUnitOfWork();
             if (unitOfWork == null)
             {
@@ -104,17 +108,47 @@ namespace Negocio
             {
                 using (unitOfWork)
                 {
+                    int id;
                     try
                     {
-                        int id = EjecutarAddOrEditCompra(oCompraE, tipoCompra, listaMediaRes, listaCortePorCompra, esEgresoCaja, oEgresoCajaE, unitOfWork);
+                        id = EjecutarAddOrEditCompra(oCompraE, tipoCompra, listaMediaRes, listaCortePorCompra, esEgresoCaja, oEgresoCajaE, unitOfWork);
                         unitOfWork.Completar();
-                        return id;
                     }
                     catch (Exception ex)
                     {
                         throw new Exception("Error en registrar la compra: \n" + ex.Message, ex);
                     }
+
+                    // Ya con la compra confirmada (commit hecho), el estado del Pesaje se actualiza por
+                    // su propia conexion sin pelear el lock de la fila. Si fallara, la compra YA quedo
+                    // guardada: el mensaje lo dice para que no se la vuelva a cargar (duplicaria).
+                    try
+                    {
+                        ActualizarEstadoPesajeSiCorresponde(oCompraE);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("La compra " + id + " se guardó, pero no se pudo actualizar el estado del ajuste del pesaje: \n" + ex.Message, ex);
+                    }
+
+                    return id;
                 }
+            }
+        }
+
+        // Para un Pesaje de medias (con cantidad y kilos de medias) recalcula el estado de su ajuste
+        // (No realizado / Actualizado / No actualizado) y lo guarda en la compra. No hace nada para
+        // otros tipos ni para un pesaje sin medias.
+        private void ActualizarEstadoPesajeSiCorresponde(Entidades.Compra oCompraE)
+        {
+            if (!oCompraE.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes)))
+                return;
+
+            //se verifica que el pesaje sea de medias
+            if ((!oCompraE.KgsMedias.Equals(null) && oCompraE.KgsMedias > 0) &&
+                (!oCompraE.CantMedias.Equals(null) && oCompraE.CantMedias > 0))
+            {
+                actualizarEstadoPesaje(oCompraE.IdCompra, estadoAjusteStock(oCompraE.IdCompra, 0));
             }
         }
 
@@ -148,16 +182,10 @@ namespace Negocio
                 }
             }
 
-            //Se actualiza el estado del Pesaje
-            if (oCompraE.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes)))
-            {
-                //se verifica que el pesaje sea de medias
-                if ((!oCompraE.KgsMedias.Equals(null) && oCompraE.KgsMedias > 0) &&
-                    (!oCompraE.CantMedias.Equals(null) && oCompraE.CantMedias > 0))
-                {
-                    actualizarEstadoPesaje(oCompraE.IdCompra, estadoAjusteStock(oCompraE.IdCompra, 0));
-                }
-            }
+            //Se actualiza el estado del Pesaje. Con unidad de trabajo (Postgres) se difiere hasta
+            //despues del commit (ver AddOrEditCompra); con TransactionScope (SQL Server) queda aca.
+            if (unitOfWork == null)
+                ActualizarEstadoPesajeSiCorresponde(oCompraE);
 
             //Cuenta Corriente
             crearMovCtaCteCompra(oCompraE, unitOfWork);

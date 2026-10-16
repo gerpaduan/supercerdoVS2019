@@ -11,6 +11,12 @@
     bool puedeEditarProducto = ViewBag.PuedeEditarProducto != null && (bool)ViewBag.PuedeEditarProducto;
     bool puedeModificarPreciosProducto = ViewBag.PuedeModificarPreciosProducto != null && (bool)ViewBag.PuedeModificarPreciosProducto;
     bool puedeEliminarProducto = ViewBag.PuedeEliminarProducto != null && (bool)ViewBag.PuedeEliminarProducto;
+    // Modo "Precios por selección": misma grilla con columna de tildes que Etiquetas, pero el lote de
+    // precios opera solo sobre los productos tildados. Sin permiso de modificar precios, ?modo=precios
+    // cae a la grilla normal (el servidor igual valida el permiso en EditPrecioCorte).
+    bool modoPrecios = (modo == "precios") && puedeModificarPreciosProducto;
+    // Ambos modos muestran la columna de tildes (checkbox + contador de seleccionados).
+    bool modoSeleccion = modoEtiquetas || modoPrecios;
     var filtroTipoActual = Context.Request.Query["tipo"].ToString();
     int filtroMarcaActual = 0;
     int.TryParse(Context.Request.Query["marcaId"].ToString() is { Length: > 0 } marcaQs ? marcaQs : "0", out filtroMarcaActual);
@@ -63,6 +69,17 @@
                     <i class="fas fa-barcode mr-1"></i> <span class="atajo-letra">E</span>tiquetas (PDF)
                 </a>
 
+                @* Cambio de precios solo de los productos que se tildan en la grilla (mismo patrón que Etiquetas).
+                   Mismo permiso que "Modificar precio". El link se deshabilita sin permiso. *@
+                <a id="lnkPrecios"
+                   data-hotkey="p"
+                   class="btn btn-outline-warning @(puedeModificarPreciosProducto ? "" : "disabled")"
+                   href="@(puedeModificarPreciosProducto ? Url.Action("Index", "Productos", new { modo = "precios" }) : "#")"
+                   title="Elegí tildando en la grilla qué productos cambiar de precio. Atajo: Alt + P"
+                   @(puedeModificarPreciosProducto ? "" : "aria-disabled=true tabindex=-1")>
+                    <i class="fas fa-dollar-sign mr-1"></i> <span class="atajo-letra">P</span>recios por selección
+                </a>
+
                 <button type="button"
                         id="btnCatalogoGlobal"
                         class="btn btn-outline-info"
@@ -81,7 +98,7 @@
                     <i class="fas fa-percent mr-1"></i> Ajuste por forma de pago
                 </button>
 
-                @if (modoEtiquetas)
+                @if (modoSeleccion)
                 {
                     <a id="lnkVolver"
                        data-hotkey="v"
@@ -242,9 +259,9 @@
          CARD TABLA
          ========================= -->
     <div class="card shadow mb-4 tabla-card">
-        @if (modoEtiquetas)
+        @if (modoSeleccion)
         {
-            <!-- Barra modo etiquetas -->
+            <!-- Barra de selección (modo etiquetas y modo precios): tildar / destildar visibles + contador -->
             <div class="d-flex flex-wrap justify-content-between align-items-center p-2 border-bottom bg-white">
                 <div class="d-flex flex-wrap gap-2">
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="seleccionarTodos(true)">
@@ -258,20 +275,42 @@
                     <span class="text-muted ml-2" id="lblSeleccionados">0 seleccionados</span>
                 </div>
 
-                <div class="d-flex align-items-center gap-2">
-                    <label for="selTamanoEtiqueta" class="text-muted mb-0 mr-1">Tamaño:</label>
-                    <select id="selTamanoEtiqueta" class="form-control form-control-sm" style="width:auto;">
-                        <option value="chica">Chica (40x30mm)</option>
-                        <option value="mediana" selected>Mediana (60x35mm)</option>
-                        <option value="grande">Grande (100x50mm)</option>
-                    </select>
+                @if (modoEtiquetas)
+                {
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="selTamanoEtiqueta" class="text-muted mb-0 mr-1">Tamaño:</label>
+                        <select id="selTamanoEtiqueta" class="form-control form-control-sm" style="width:auto;">
+                            <option value="chica">Chica (40x30mm)</option>
+                            <option value="mediana" selected>Mediana (60x35mm)</option>
+                            <option value="grande">Grande (100x50mm)</option>
+                        </select>
 
-                    <button type="button" class="btn btn-sm btn-success" onclick="generarEtiquetas()">
-                        <i class="fas fa-file-pdf mr-1"></i> Generar etiquetas
-                    </button>
-                </div>
+                        <button type="button" class="btn btn-sm btn-success" onclick="generarEtiquetas()">
+                            <i class="fas fa-file-pdf mr-1"></i> Generar etiquetas
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    @* Modo precios: dos formas de cambiar el precio de lo tildado. Ambas operan solo sobre
+                       las filas visibles y tildadas (ver getVisiblePriceRows en el script). *@
+                    <div class="d-flex flex-wrap align-items-center gap-2 ml-3">
+                        <span class="text-muted small mr-1">Cambiar el precio de los tildados:</span>
+
+                        <button type="button" class="btn btn-sm btn-success" id="btnPorcentajeTildados" onclick="abrirPorcentajeTildados()">
+                            <i class="fas fa-percent mr-1"></i> Aplicar % a los tildados
+                        </button>
+
+                        <button type="button" class="btn btn-sm btn-outline-success" id="btnUnoPorUnoTildados" onclick="abrirUnoPorUnoTildados()">
+                            <i class="fas fa-list-ol mr-1"></i> Uno por uno
+                        </button>
+                    </div>
+                }
             </div>
+        }
 
+        @if (modoEtiquetas)
+        {
             <form id="formEtiquetas" method="post" action="@Url.Action("GenerarEtiquetasPdf", "Productos")" class="d-none">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="ids" id="idsEtiquetas" />
@@ -293,7 +332,7 @@
 
                 <thead class="thead-dark">
                     <tr>
-                        @if (modoEtiquetas)
+                        @if (modoSeleccion)
                         {
                             <th style="width:42px;" class="text-center">✓</th>
                         }
@@ -332,11 +371,12 @@
                             data-precio="@item.PrecioKg.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                             data-tipo="@item.Tipo"
                             data-marca-id="@(item.Marca != null ? item.Marca.IdPersona.ToString() : "")">
-                            @if (modoEtiquetas)
+                            @if (modoSeleccion)
                             {
                                 <td class="text-center">
+                                    @* chk-etiqueta: estilo (custom.css) y E2E; chk-seleccion: lo que usa el script en ambos modos *@
                                     <input type="checkbox"
-                                           class="chk-etiqueta"
+                                           class="chk-etiqueta chk-seleccion"
                                            value="@item.idCorte"
                                            onchange="actualizarSeleccionados()" />
                                 </td>
@@ -417,7 +457,7 @@
                         <tr class="tr-detalles">
                             @{
                                 int baseCols = ((sucursalIdSeleccionada != 0) ? 5 : 4) + sucursales.Count; // incluye columnas stock sucursales (aunque estén ocultas)
-                                int colspan = modoEtiquetas ? (baseCols + 1) : baseCols;
+                                int colspan = modoSeleccion ? (baseCols + 1) : baseCols;
                             }
                             <td colspan="@colspan" class="p-0">
                                 <div id="@detailsId" class="collapse">
@@ -545,7 +585,7 @@
                 <div class="modal-content">
 
                     <div class="modal-header">
-                        <h5 class="modal-title">Modificar precio</h5>
+                        <h5 class="modal-title" id="tituloModalPrecio">Modificar precio</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -554,7 +594,8 @@
                     <div class="modal-body">
                         <input type="hidden" id="IdCorte" name="IdCorte" />
 
-                        <div class="border rounded p-3 mb-3">
+                        @* wrapperEscaner: se oculta cuando el modal se abre desde la barra "Precios por selección" *@
+                        <div class="border rounded p-3 mb-3" id="wrapperEscaner">
                             <div class="custom-control custom-switch">
                                 <input type="checkbox" class="custom-control-input" id="switchEscanerPrecio">
                                 <label class="custom-control-label" for="switchEscanerPrecio">Mediante escáner de código de barras</label>
@@ -607,14 +648,16 @@
                             <small id="errorPrecio" class="text-danger d-none">El precio ingresado es inválido.</small>
                         </div>
 
-                        <div class="border rounded p-3 mt-3">
-                            <div class="custom-control custom-switch">
+                        @* En modo precios los interruptores de lote se ocultan (los botones de la barra ya eligen el modo)
+                           y el recuadro solo se ve cuando se aplica un porcentaje. *@
+                        <div class="border rounded p-3 mt-3" id="wrapperLote">
+                            <div class="custom-control custom-switch" id="ctrlSwitchModificarLote">
                                 <input type="checkbox" class="custom-control-input" id="switchModificarLote">
                                 <label class="custom-control-label" for="switchModificarLote">Modificar en lote</label>
                             </div>
 
                             <div id="bloqueModificarLote" class="d-none mt-3">
-                                <div class="custom-control custom-switch">
+                                <div class="custom-control custom-switch" id="ctrlSwitchAplicarPorcentajeTodos">
                                     <input type="checkbox" class="custom-control-input" id="switchAplicarPorcentajeTodos">
                                     <label class="custom-control-label" for="switchAplicarPorcentajeTodos">Aplicar porcentaje a todos</label>
                                 </div>
@@ -625,7 +668,7 @@
                                         <input type="text" id="PorcentajeLote" class="form-control" autocomplete="off" inputmode="decimal" placeholder="+10 o -5">
                                     </div>
                                     <small class="form-text text-muted mb-0">
-                                        Se aplicará el porcentaje a todos los productos visibles actualmente.
+                                        Se aplicará el porcentaje @(modoPrecios ? "solo a los productos tildados." : "a todos los productos visibles actualmente.")
                                     </small>
                                     <small id="errorPorcentajeLote" class="text-danger d-none">Ingrese un porcentaje válido distinto de 0.</small>
                                 </div>
@@ -730,7 +773,7 @@
                 <div class="modal-body">
                     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
                         <div>
-                            <p class="text-muted mb-1">Se listan los productos visibles actualmente con el nuevo precio propuesto.</p>
+                            <p class="text-muted mb-1">Se listan @(modoPrecios ? "los productos tildados" : "los productos visibles actualmente") con el nuevo precio propuesto.</p>
                             <small id="infoPorcentajePreview" class="text-muted d-none"></small>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="btnQuitarPreciosCero">
@@ -866,6 +909,8 @@
         solicitudActual: 0
     };
     const tabla = document.getElementById("tablaProductos");
+    // Modo "Precios por selección" (?modo=precios): el lote de precios opera solo sobre lo tildado.
+    const MODO_PRECIOS = @(modoPrecios ? "true" : "false");
     const TIEMPO_PAUSA_LECTURA_SCANNER = 2000;
     let scannerCatalogoGlobal = null;
     const scannerCatalogoGlobalState = {
@@ -1019,9 +1064,9 @@
             return;
         }
 
-        const chk = fila.querySelector(".chk-etiqueta");
+        const chk = fila.querySelector(".chk-seleccion");
         if (chk) {
-            // Modo etiquetas activo: doble clic en la fila selecciona/deselecciona
+            // Modo etiquetas o precios activo: doble clic en la fila selecciona/deselecciona
             // en vez de desplegar el detalle (pedido explicito del usuario).
             chk.checked = !chk.checked;
             chk.dispatchEvent(new Event("change", { bubbles: true }));
@@ -1881,10 +1926,10 @@
     }
 
     // ============================
-    // MODO ETIQUETAS: seleccionar + generar
+    // MODOS DE SELECCIÓN (etiquetas y precios): seleccionar + generar / cambiar precios
     // ============================
     function seleccionarTodos(estado) {
-        document.querySelectorAll(".chk-etiqueta").forEach(chk => {
+        document.querySelectorAll(".chk-seleccion").forEach(chk => {
             // sólo si la fila está visible
             const tr = chk.closest("tr");
             if (tr && tr.style.display === "none") return;
@@ -1893,25 +1938,25 @@
         actualizarSeleccionados();
     }
 
+    // Checkboxes tildados cuya fila está visible: una selección oculta por el buscador o por un
+    // filtro sigue tildada en el DOM pero no cuenta (ni se usa) hasta que la fila vuelva a verse.
+    function getChecksTildados() {
+        return Array.from(document.querySelectorAll(".chk-seleccion"))
+            .filter(chk => {
+                const tr = chk.closest("tr");
+                return tr && tr.style.display !== "none" && chk.checked;
+            });
+    }
+
     function actualizarSeleccionados() {
         const lbl = document.getElementById("lblSeleccionados");
         if (!lbl) return;
 
-        const checks = Array.from(document.querySelectorAll(".chk-etiqueta"))
-            .filter(chk => {
-                const tr = chk.closest("tr");
-                return tr && tr.style.display !== "none" && chk.checked;
-            });
-
-        lbl.textContent = `${checks.length} seleccionados`;
+        lbl.textContent = `${getChecksTildados().length} seleccionados`;
     }
 
     function generarEtiquetas() {
-        const checks = Array.from(document.querySelectorAll(".chk-etiqueta"))
-            .filter(chk => {
-                const tr = chk.closest("tr");
-                return tr && tr.style.display !== "none" && chk.checked;
-            });
+        const checks = getChecksTildados();
 
         if (!checks.length) {
             Swal.fire("Atención", "No seleccionaste ningún producto.", "info");
@@ -1935,7 +1980,11 @@
         batchPreviewPercent: null,
         scannerMode: false,
         scannerLocked: false,
-        isOpeningVerification: false
+        isOpeningVerification: false,
+        // true cuando el modal se abrió desde la barra de "Precios por selección" (oculta el escáner)
+        desdeSeleccion: false,
+        // ids guardados en el recorrido "uno por uno" de modo precios; se destildan al cerrar el modal
+        idsGuardadosUnoPorUno: []
     };
     let scannerPrecio = null;
 
@@ -1986,9 +2035,15 @@
         return formatNumberEs(numero, 2) + "%";
     }
 
+    // Filas sobre las que opera el lote de precios (porcentaje y "uno por uno"): las visibles y,
+    // en modo precios, solo las que además están tildadas (ver docs/DECISIONS.md, 2026-10-16).
     function getVisiblePriceRows() {
         return getFilasProductos().filter(fila => {
             if (fila.style.display === "none") return false;
+            if (MODO_PRECIOS) {
+                const chk = fila.querySelector(".chk-seleccion");
+                if (!chk || !chk.checked) return false;
+            }
             const boton = fila.querySelector('button[title="Modificar precio"]');
             return !!(boton && !boton.disabled);
         });
@@ -2064,6 +2119,20 @@
         $("#btnGuardarPrecio i")
             .toggleClass("fa-save", !aplicarPorcentaje)
             .toggleClass("fa-clipboard-check", aplicarPorcentaje);
+
+        // Modo precios: la barra ya eligió entre "% a los tildados" y "uno por uno", así que los
+        // interruptores de lote no se muestran y el recuadro solo aparece al aplicar un porcentaje.
+        // Fuera de ese modo nada de esto se toca (queda el comportamiento de siempre).
+        if (MODO_PRECIOS) {
+            $("#ctrlSwitchModificarLote, #ctrlSwitchAplicarPorcentajeTodos").addClass("d-none");
+            $("#wrapperLote").toggleClass("d-none", !aplicarPorcentaje);
+            $("#wrapperEscaner").toggleClass("d-none", precioModalState.desdeSeleccion);
+
+            let titulo = "Modificar precio";
+            if (aplicarPorcentaje) titulo = "Aplicar % a los productos tildados";
+            else if (modificarLote) titulo = "Modificar precios uno por uno (tildados)";
+            $("#tituloModalPrecio").text(titulo);
+        }
     }
 
     function limpiarErroresPrecioModal() {
@@ -2192,10 +2261,13 @@
 
         if (!opts.preserveBatchState) {
             $("#switchEscanerPrecio").prop("checked", false);
-            $("#switchModificarLote").prop("checked", false);
+            // forzarLote: "uno por uno" desde la barra de modo precios (prende solo "Modificar en lote")
+            $("#switchModificarLote").prop("checked", !!opts.forzarLote);
             $("#switchAplicarPorcentajeTodos").prop("checked", false);
             $("#PorcentajeLote").val("");
             resetScannerPrecioFields();
+            precioModalState.desdeSeleccion = !!opts.desdeSeleccion;
+            precioModalState.idsGuardadosUnoPorUno = [];
         }
 
         precioModalState.currentRow = fila;
@@ -2235,6 +2307,53 @@
         const fila = button ? button.closest("tr") : getProductRowById(id);
         if (!fila) return;
         abrirModalPrecioParaFila(fila, { preserveBatchState: false });
+    }
+
+    // ===== Modo "Precios por selección" (?modo=precios): botones de la barra =====
+    // Ambos operan sobre getVisiblePriceRows(), que en este modo devuelve solo lo tildado y visible.
+    function avisarSinTildados() {
+        Swal.fire("Atención", "No seleccionaste ningún producto.", "info");
+    }
+
+    // "Aplicar % a los tildados": abre el modal solo con el campo de porcentaje; "Verificar cambios"
+    // sigue por abrirModalVerificacionPorcentaje y muestra la lista preliminar de los tildados.
+    function abrirPorcentajeTildados() {
+        if (!getVisiblePriceRows().length) {
+            avisarSinTildados();
+            return;
+        }
+
+        limpiarErroresPrecioModal();
+        $("#switchEscanerPrecio").prop("checked", false);
+        $("#switchModificarLote").prop("checked", true);
+        $("#switchAplicarPorcentajeTodos").prop("checked", true);
+        $("#PorcentajeLote").val("");
+        resetScannerPrecioFields();
+        precioModalState.desdeSeleccion = true;
+        precioModalState.idsGuardadosUnoPorUno = [];
+
+        syncPrecioModalVisualState();
+        $("#modalPrecio").modal("show");
+    }
+
+    // "Uno por uno": abre el modal en el primer tildado (orden de la grilla); cada Guardar pasa al
+    // siguiente tildado (avanzarSiguienteProductoLote) y al terminar avisa.
+    function abrirUnoPorUnoTildados() {
+        const filas = getVisiblePriceRows();
+        if (!filas.length) {
+            avisarSinTildados();
+            return;
+        }
+
+        abrirModalPrecioParaFila(filas[0], { preserveBatchState: false, forzarLote: true, desdeSeleccion: true });
+    }
+
+    // Destilda una fila al terminar de guardar su precio en modo precios. El contador y la protección
+    // de salida los refresca quien la llama, con actualizarSeleccionados().
+    function destildarFilaPorId(id) {
+        const fila = getProductRowById(id);
+        const chk = fila ? fila.querySelector(".chk-seleccion") : null;
+        if (chk) chk.checked = false;
     }
 
     // ===== Ajuste por forma de pago (modal) =====
@@ -2415,7 +2534,10 @@
 
         if (!siguiente) {
             $("#modalPrecio").modal("hide");
-            Swal.fire("Sin más productos", "No hay más productos para modificar con los filtros actuales", "info");
+            Swal.fire(
+                "Sin más productos",
+                MODO_PRECIOS ? "No quedan más productos tildados para modificar." : "No hay más productos para modificar con los filtros actuales",
+                "info");
             return;
         }
 
@@ -2479,7 +2601,11 @@
         precioModalState.batchPreviewPercent = porcentaje;
         precioModalState.batchPreviewItems = construirItemsPreviewPorcentaje(porcentaje);
         if (!precioModalState.batchPreviewItems.length) {
-            Swal.fire("Atención", "No hay productos visibles para modificar con los filtros actuales.", "info");
+            if (MODO_PRECIOS) {
+                avisarSinTildados();
+            } else {
+                Swal.fire("Atención", "No hay productos visibles para modificar con los filtros actuales.", "info");
+            }
             return;
         }
         renderPreviewMasivo();
@@ -2526,6 +2652,9 @@
                     resetScannerPrecioFields();
                     focusCodigoPrecio();
                 } else if (modificarLote) {
+                    // Modo precios: se anota el id y se destilda recién al cerrar el modal, porque
+                    // avanzarSiguienteProductoLote busca la fila actual dentro de la lista de tildados.
+                    if (MODO_PRECIOS) precioModalState.idsGuardadosUnoPorUno.push(Number(resp.id));
                     avanzarSiguienteProductoLote();
                 } else {
                     $("#modalPrecio").modal("hide");
@@ -2628,6 +2757,9 @@
                         throw new Error("permiso");
                     }
                     actualizarPrecioFila(resp.id, resp.precio, resp.precioFormateado);
+                    // Modo precios: lo ya guardado se destilda para no aplicar dos veces el mismo
+                    // porcentaje; si algo falla más adelante, solo quedan tildados los pendientes.
+                    if (MODO_PRECIOS) destildarFilaPorId(resp.id);
                 });
             });
         });
@@ -2637,9 +2769,15 @@
             Swal.fire("Guardado", "Se actualizaron los precios seleccionados.", "success");
         }, function (err) {
             if (err && err.message === "permiso") return;
-            Swal.fire("Error", "Ocurrió un problema al guardar los cambios masivos.", "error");
+            Swal.fire(
+                "Error",
+                MODO_PRECIOS
+                    ? "Ocurrió un problema al guardar los cambios masivos. Los productos ya guardados quedaron destildados; los pendientes siguen tildados."
+                    : "Ocurrió un problema al guardar los cambios masivos.",
+                "error");
         }).then(function () {
             $btn.prop("disabled", false);
+            if (MODO_PRECIOS) actualizarSeleccionados();
         });
     }
 
@@ -2684,6 +2822,15 @@
             $("#switchEscanerPrecio").prop("checked", false);
             $("#switchModificarLote").prop("checked", false);
             $("#switchAplicarPorcentajeTodos").prop("checked", false);
+            precioModalState.desdeSeleccion = false;
+
+            // Modo precios, "uno por uno": al cerrar el modal (terminó el recorrido o se canceló) se
+            // destildan los productos que sí se guardaron; los que no, siguen tildados.
+            if (MODO_PRECIOS && precioModalState.idsGuardadosUnoPorUno.length) {
+                precioModalState.idsGuardadosUnoPorUno.forEach(destildarFilaPorId);
+                precioModalState.idsGuardadosUnoPorUno = [];
+                actualizarSeleccionados();
+            }
             syncPrecioModalVisualState();
         }
     });
@@ -2955,7 +3102,7 @@
     actualizarSeleccionados();
 
         // =========================
-        // PROTECCIÓN SALIDA (modo etiquetas) - SAFE
+        // PROTECCIÓN SALIDA (modos etiquetas y precios) - SAFE
         // =========================
         function _setProteccionSalida(valor) {
             // preferimos usar tus funciones del layout si están
@@ -2976,12 +3123,12 @@
 
         function updateExitProtectionEtiquetas() {
             // Solo aplica si estamos en modo etiquetas (o al menos existe la UI)
-            const hayModoEtiquetas = document.querySelector(".chk-etiqueta") != null
+            const hayModoSeleccion = document.querySelector(".chk-seleccion") != null
                 || document.getElementById("lblSeleccionados") != null;
 
-            if (!hayModoEtiquetas) return;
+            if (!hayModoSeleccion) return;
 
-            const checked = document.querySelectorAll(".chk-etiqueta:checked").length;
+            const checked = document.querySelectorAll(".chk-seleccion:checked").length;
             _setProteccionSalida(checked > 0);
         }
 
@@ -2991,7 +3138,7 @@
 
             // Cada cambio de checkbox recalcula
             document.addEventListener("change", function (e) {
-                if (e.target && e.target.classList.contains("chk-etiqueta")) {
+                if (e.target && e.target.classList.contains("chk-seleccion")) {
                     updateExitProtectionEtiquetas();
                 }
             });

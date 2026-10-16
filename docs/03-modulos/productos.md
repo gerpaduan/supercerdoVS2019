@@ -35,6 +35,14 @@ Recargo (+) o descuento (-) sobre el **precio de lista** del producto segun como
 - **Como se aplica en el POS**: en el navegador, `precioLista x factor` (`wwwroot/Scripts/app/pos-forma-pago-precios.js`); el servidor guarda el precio final de cada linea y no recalcula. Si algun factor es distinto de 1 (`RequierePreseleccionFormaPagoPOS`), el POS abre el modal de forma de pago **al cargar la pagina**: si se elige una, los precios se calculan con ella; si se cierra con Escape, se carga a **precio de lista** y la forma se elige al finalizar la venta, donde el carrito se recalcula y se avisa el cambio de total (2026-09-26). Las ventas ya guardadas no cambian.
 - **Limite conocido**: no hay historial de quien cambio el porcentaje (igual que cuando eran parametros).
 
+## Cambio de precios en lote (WebCore)
+
+El precio de un producto es un solo campo (`Corte.PrecioKg`, por kg o por unidad segun `Pesable`). Se cambia desde `Productos/Index` (todo el JS es inline en `WebCore/Views/Productos/Index.cshtml`) con un POST por producto a `Productos/EditPrecioCorte` (permiso `Producto.ModificarPrecios`; no hay endpoint de lote).
+
+- **Por filtro (modo normal)**: boton `$` de una fila -> "Modificar en lote" -> "Aplicar porcentaje a todos" (o uno por uno). Opera sobre **todas las filas visibles** (buscador + filtros). Muestra una lista preliminar editable (`#modalVerificarPrecios`) antes de guardar.
+- **Por seleccion (desde 2026-10-16)**: boton "Precios por seleccion" (Alt+P) -> `Productos/Index?modo=precios`. Misma grilla con columna de tildes que Etiquetas (`.chk-seleccion`); las acciones "Aplicar % a los tildados" y "Uno por uno" operan **solo sobre las filas visibles y tildadas**. El cambio vive en `getVisiblePriceRows()` (con `MODO_PRECIOS` solo devuelve las tildadas); la lista preliminar, el guardado y el recorrido son los mismos del modo normal. Lo guardado se destilda. Sin el permiso, `?modo=precios` cae a la grilla normal. Decision: `docs/DECISIONS.md` (2026-10-16).
+- **Limites conocidos**: sin transaccion (un POST por producto), sin historial de quien cambio el precio ni del precio anterior (`docs/10-migracion-aspnet-core/gaps.md`), la seleccion se pierde al recargar la pagina y `EditPrecioCorte` no valida precio > 0 en el servidor.
+
 ## Dependencias
 
 - `Web/Models/CorteUpsertVM.cs`, `CatalogoGlobalProductosVm.cs`, `ProductoGlobalSeleccionVm.cs`, `ImportarProductosGlobalesRequest.cs`.

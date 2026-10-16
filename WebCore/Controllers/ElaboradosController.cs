@@ -238,7 +238,7 @@ namespace WebCore.Controllers
             return VistaIngresoRapido(true);
         }
 
-        public IActionResult EditarIngresoRapido(int idElaborado = 0, int id = 0, bool esDesarme = false, int idUsuarioCreador = 0)
+        public IActionResult EditarIngresoRapido(int idElaborado = 0, int id = 0, bool esDesarme = false, int idUsuarioCreador = 0, bool conClave = false)
         {
             var user = _usuarioActual;
             int idCreadorPermiso = user.Id;
@@ -270,13 +270,34 @@ namespace WebCore.Controllers
                 // Port de Web/Controllers/ElaboradosController.cs:254-262.
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
                 bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador);
-                if (!puedeModificar && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1))
+                bool puedeVer = puedeModificar || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1);
+
+                // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
+                // persona elegida y su permiso por fecha se SUMA al de la cuenta (docs/DECISIONS.md, 2026-10-15).
+                var elevado = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, user, idUsuarioCreador, embutido.FechaEmbutido);
+                if (WebCore.Helpers.ElevacionRegistroHelper.NecesitaClave(user, idUsuarioCreador, embutido.FechaEmbutido, puedeModificar, puedeVer, conClave, elevado))
+                    return WebCore.Helpers.ElevacionRegistroHelper.RedirigirAClave(this, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, idUsuarioCreador);
+
+                if (elevado != null)
+                {
+                    puedeModificar = puedeModificar || _oUsuarioN.tienePermiso(elevado, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador);
+                    puedeVer = puedeVer || puedeModificar || _oUsuarioN.tienePermiso(elevado, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1);
+                }
+
+                if (!puedeVer)
                 {
                     TempData["AlertType"] = "warning";
                     TempData["AlertTitle"] = "Permisos";
-                    TempData["AlertMsg"] = "No tiene permisos para consultar elaborados.";
+                    TempData["AlertMsg"] = elevado != null
+                        ? WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevado, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, false)
+                        : "No tiene permisos para consultar elaborados.";
                     return RedirectToAction(esDesarme ? "Desarme" : "IngresoRapido");
                 }
+
+                // Solo consulta por fecha desde la cuenta de produccion: ofrece modificar con la clave de la persona elegida.
+                if (!puedeModificar && elevado == null
+                    && WebCore.Helpers.ElevacionRegistroHelper.AplicaElevacion(user, idUsuarioCreador, embutido.FechaEmbutido))
+                    ViewBag.UrlModificarConClave = Url.Action("EditarIngresoRapido", "Elaborados", new { id, esDesarme, idUsuarioCreador, conClave = true });
 
                 idCreadorPermiso = idCreador;
                 var modelEdicion = CrearViewModelIngresoRapidoEdicion(embutido, user, esDesarme);
@@ -350,7 +371,7 @@ namespace WebCore.Controllers
             return View(model);
         }
 
-        public IActionResult Carga(int id = 0, int idUsuarioCreador = 0)
+        public IActionResult Carga(int id = 0, int idUsuarioCreador = 0, bool conClave = false)
         {
             var user = _usuarioActual;
             int idCreadorPermiso = user.Id;
@@ -374,13 +395,34 @@ namespace WebCore.Controllers
                 // Port de Web/Controllers/ElaboradosController.cs:360-368.
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
                 bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador);
-                if (!puedeModificar && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1))
+                bool puedeVer = puedeModificar || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1);
+
+                // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
+                // persona elegida y su permiso por fecha se SUMA al de la cuenta (docs/DECISIONS.md, 2026-10-15).
+                var elevado = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, user, idUsuarioCreador, embutido.FechaEmbutido);
+                if (WebCore.Helpers.ElevacionRegistroHelper.NecesitaClave(user, idUsuarioCreador, embutido.FechaEmbutido, puedeModificar, puedeVer, conClave, elevado))
+                    return WebCore.Helpers.ElevacionRegistroHelper.RedirigirAClave(this, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, idUsuarioCreador);
+
+                if (elevado != null)
+                {
+                    puedeModificar = puedeModificar || _oUsuarioN.tienePermiso(elevado, Entidades.Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador);
+                    puedeVer = puedeVer || puedeModificar || _oUsuarioN.tienePermiso(elevado, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1);
+                }
+
+                if (!puedeVer)
                 {
                     TempData["AlertType"] = "warning";
                     TempData["AlertTitle"] = "Permisos";
-                    TempData["AlertMsg"] = "No tiene permisos para consultar elaborados.";
+                    TempData["AlertMsg"] = elevado != null
+                        ? WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevado, Entidades.Permisos.Elaborado.IngresoEmbutido, false)
+                        : "No tiene permisos para consultar elaborados.";
                     return RedirectToAction("Index");
                 }
+
+                // Solo consulta por fecha desde la cuenta de produccion: ofrece modificar con la clave de la persona elegida.
+                if (!puedeModificar && elevado == null
+                    && WebCore.Helpers.ElevacionRegistroHelper.AplicaElevacion(user, idUsuarioCreador, embutido.FechaEmbutido))
+                    ViewBag.UrlModificarConClave = Url.Action("Carga", "Elaborados", new { id, idUsuarioCreador, conClave = true });
 
                 idCreadorPermiso = idCreador;
                 model = CrearViewModelEdicion(embutido, user);
@@ -948,7 +990,16 @@ namespace WebCore.Controllers
                 // Port de Web/Controllers/ElaboradosController.cs:724 (GuardarIngresoRapido).
                 DateTime fechaPermisoRapido = embutidoOriginal != null ? embutidoOriginal.FechaEmbutido : (model != null ? model.FechaEmbutido : DateTime.Today);
                 if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, fechaPermisoRapido, idCreadorPermiso))
-                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
+                {
+                    // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su
+                    // clave al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.
+                    var elevadoRapido = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, user, idUsuarioCreador, fechaPermisoRapido);
+                    if (elevadoRapido == null)
+                        return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
+
+                    if (!_oUsuarioN.tienePermiso(elevadoRapido, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, fechaPermisoRapido, idCreadorPermiso))
+                        return Json(new { ok = false, mensaje = WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevadoRapido, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, false) });
+                }
 
                 var elaborado = _oCorteN.findCorteById(model.IdElaborado, false);
                 int idEmpresaSesion = _usuarioActual.IdEmpresa > 0 ? _usuarioActual.IdEmpresa : _empresa.IdEmpresa;
@@ -1048,7 +1099,15 @@ namespace WebCore.Controllers
                 // Port de Web/Controllers/ElaboradosController.cs:830-832.
                 DateTime fechaPermisoCarga = embutidoOriginal != null ? embutidoOriginal.FechaEmbutido : (model != null ? model.FechaEmbutido : DateTime.Today);
                 if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, fechaPermisoCarga, idCreadorPermisoCarga))
-                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
+                {
+                    // Idem GuardarIngresoRapido: suma el permiso de la persona que puso su clave (ElevacionRegistroHelper).
+                    var elevadoCarga = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, user, idUsuarioCreador, fechaPermisoCarga);
+                    if (elevadoCarga == null)
+                        return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
+
+                    if (!_oUsuarioN.tienePermiso(elevadoCarga, Entidades.Permisos.Elaborado.IngresoEmbutido, fechaPermisoCarga, idCreadorPermisoCarga))
+                        return Json(new { ok = false, mensaje = WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevadoCarga, Entidades.Permisos.Elaborado.IngresoEmbutido, false) });
+                }
 
                 var corteElaborado = _oCorteN.findCorteById(model.IdElaborado, false);
                 int idEmpresaSesion = _usuarioActual.IdEmpresa > 0 ? _usuarioActual.IdEmpresa : _empresa.IdEmpresa;
@@ -1122,7 +1181,7 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult Anular(int idEmbutido)
+        public JsonResult Anular(int idEmbutido, int idUsuarioCreador = 0)
         {
             try
             {
@@ -1137,13 +1196,23 @@ namespace WebCore.Controllers
                 string permisoAnulacion = embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido
                     ? Entidades.Permisos.Elaborado.IngresoEmbutidoRapido
                     : Entidades.Permisos.Elaborado.IngresoEmbutido;
+                // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su clave
+                // al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.
+                Entidades.Usuario elevadoAnulacion = null;
                 if (!_oUsuarioN.tienePermiso(user, permisoAnulacion, embutido.FechaEmbutido, idCreadorAnulacion))
-                    return Json(new { ok = false, mensaje = "No tiene permisos para anular este elaborado." });
+                {
+                    elevadoAnulacion = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, user, idUsuarioCreador, embutido.FechaEmbutido);
+                    if (elevadoAnulacion == null)
+                        return Json(new { ok = false, mensaje = "No tiene permisos para anular este elaborado." });
+
+                    if (!_oUsuarioN.tienePermiso(elevadoAnulacion, permisoAnulacion, embutido.FechaEmbutido, idCreadorAnulacion))
+                        return Json(new { ok = false, mensaje = WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevadoAnulacion, permisoAnulacion, false) });
+                }
 
                 if (string.Equals(embutido.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase))
                     return Json(new { ok = false, mensaje = "El elaborado ya se encuentra anulado." });
 
-                embutido.ActualizadoPor = _usuarioActual;
+                embutido.ActualizadoPor = elevadoAnulacion ?? _usuarioActual;
                 _oCorteN.anularEmbutido(embutido);
 
                 return Json(new

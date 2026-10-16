@@ -236,7 +236,7 @@ namespace WebCore.Controllers
             return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado, idUsuarioCreador });
         }
 
-        public IActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0)
+        public IActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0, bool conClave = false)
         {
             Entidades.Usuario user = _usuarioActual;
 
@@ -271,15 +271,32 @@ namespace WebCore.Controllers
             DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
             int idCreadorPermiso = compra != null && compra.CreadoPor != null ? compra.CreadoPor.Id : user.Id;
             bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermiso, idCreadorPermiso);
-            if (!puedeModificar)
+            bool puedeVer = puedeModificar || (compra != null && _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, fechaPermiso, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */));
+
+            // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
+            // persona elegida y su permiso por fecha se SUMA al de la cuenta (docs/DECISIONS.md, 2026-10-15).
+            Entidades.Usuario elevado = null;
+            if (compra != null)
             {
-                if (compra == null || !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, fechaPermiso, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */))
+                elevado = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloStock, user, idUsuarioCreador, fechaPermiso);
+                if (WebCore.Helpers.ElevacionRegistroHelper.NecesitaClave(user, idUsuarioCreador, fechaPermiso, puedeModificar, puedeVer, conClave, elevado))
+                    return WebCore.Helpers.ElevacionRegistroHelper.RedirigirAClave(this, WebCore.Helpers.ElevacionRegistroHelper.ModuloStock, idUsuarioCreador);
+
+                if (elevado != null)
                 {
-                    TempData["AlertType"] = "warning";
-                    TempData["AlertTitle"] = "Permisos";
-                    TempData["AlertMsg"] = "No tiene permisos para crear o modificar stock.";
-                    return RedirectToAction("Index");
+                    puedeModificar = puedeModificar || _oUsuarioN.tienePermiso(elevado, Entidades.Permisos.Stock.AddOrEditStock, fechaPermiso, idCreadorPermiso);
+                    puedeVer = puedeVer || puedeModificar || _oUsuarioN.tienePermiso(elevado, Entidades.Permisos.Stock.VerStock, fechaPermiso, -1);
                 }
+            }
+
+            if (!puedeVer)
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = elevado != null
+                    ? WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevado, Entidades.Permisos.Stock.AddOrEditStock, false)
+                    : "No tiene permisos para crear o modificar stock.";
+                return RedirectToAction("Index");
             }
 
             if (EsAjuste(tipoOperacion) && !user.Admin)
@@ -293,6 +310,10 @@ namespace WebCore.Controllers
             var model = compra != null ? CrearViewModelEdicion(compra, user) : CrearViewModelNuevo(user, tipoOperacion);
             model.SoloLecturaInicial = model.EsEdicion;
             model.PuedeHabilitarEdicion = !model.EsEdicion || puedeModificar;
+            // Solo consulta por fecha desde la cuenta de produccion: ofrece modificar con la clave de la persona elegida.
+            if (compra != null && !puedeModificar && elevado == null
+                && WebCore.Helpers.ElevacionRegistroHelper.AplicaElevacion(user, idUsuarioCreador, fechaPermiso))
+                ViewBag.UrlModificarConClave = Url.Action("Editar", "Stock", new { id, idUsuarioCreador, conClave = true });
             // Quien esta operando esta pantalla ahora (campo "Usuario" del formulario) -- con
             // produccion, el operador real ya seleccionado antes de entrar, no "User Produccion"
             // (ver docs/DECISIONS.md). Con el stub (EsUsuarioProduccion=false) siempre es la
@@ -360,9 +381,21 @@ namespace WebCore.Controllers
             // Port de Web/Controllers/StockController.cs:584-593.
             DateTime fechaPermisoGuardar = model.FechaCompra;
             int idCreadorPermisoGuardar = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : user.Id;
-            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermisoGuardar, idCreadorPermisoGuardar))
+            bool puedeGuardar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermisoGuardar, idCreadorPermisoGuardar);
+            // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su clave
+            // al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.
+            Entidades.Usuario elevadoGuardar = null;
+            if (!puedeGuardar)
             {
-                ModelState.AddModelError("", "No tiene permisos para guardar este movimiento.");
+                elevadoGuardar = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloStock, user, idUsuarioCreador, fechaPermisoGuardar);
+                if (elevadoGuardar != null)
+                    puedeGuardar = _oUsuarioN.tienePermiso(elevadoGuardar, Entidades.Permisos.Stock.AddOrEditStock, fechaPermisoGuardar, idCreadorPermisoGuardar);
+            }
+            if (!puedeGuardar)
+            {
+                ModelState.AddModelError("", elevadoGuardar != null
+                    ? WebCore.Helpers.ElevacionRegistroHelper.MensajeSinPermisoFecha(elevadoGuardar, Entidades.Permisos.Stock.AddOrEditStock, false)
+                    : "No tiene permisos para guardar este movimiento.");
                 if (user.EsUsuarioProduccion)
                     model.UsuarioNombre = usuarioCreador.Nombre;
                 CargarViewBags(model, idUsuarioCreador);

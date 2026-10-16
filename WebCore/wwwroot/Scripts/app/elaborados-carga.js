@@ -1190,7 +1190,9 @@
                     type: 'POST',
                     data: {
                         __RequestVerificationToken: $form.find('input[name="__RequestVerificationToken"]').val(),
-                        idEmbutido: toInt($('#IdEmbutido').val())
+                        idEmbutido: toInt($('#IdEmbutido').val()),
+                        // Persona elegida en la cuenta de produccion: el server suma su permiso por fecha (ElevacionRegistroHelper).
+                        idUsuarioCreador: parseInt(window.IdUsuarioCreadorPreseleccionado, 10) || 0
                     }
                 }).done(function (resp) {
                     if (!resp || !resp.ok) {

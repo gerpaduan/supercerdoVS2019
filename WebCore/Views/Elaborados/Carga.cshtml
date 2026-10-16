@@ -65,6 +65,14 @@
                 {
                     <div class="alert alert-secondary" role="alert">
                         El elaborado se muestra en modo vista porque no tiene permisos para modificarlo.
+                        @if (ViewBag.UrlModificarConClave is string urlModificarConClave)
+                        {
+                            @* Registro anterior a hoy desde la cuenta de produccion: pide la clave de la persona elegida (ElevacionRegistroHelper). *@
+                            <a class="btn btn-warning btn-sm ml-2" href="@urlModificarConClave"
+                               title="Este registro es anterior a hoy: ingresá tu clave para verificar tu permiso">
+                                <i class="fas fa-key mr-1"></i> Modificar con mi clave
+                            </a>
+                        }
                     </div>
                 }
                 else if (Model.EsEdicion && !esAnulado)
