@@ -1,30 +1,43 @@
 @model Entidades.ExistenciaPorSucursalesVm
 @using System
+@using System.Globalization
 @using System.Linq
 
+@*
+    Tabla de Existencia por sucursales (HTML parcial: la carga la vista y la reemplaza el Buscar por AJAX).
+    Columnas: Cod. | Producto | [Stock | Estado | A pedir] por sucursal || ... || [Stock | Estado] Total | Total pedido | $ ult.
+    compra | Importe est. | +. Una fila por producto (mas su detalle expandible). Las columnas del pedido ("A pedir", Total
+    pedido, precio e importe) viajan siempre en el HTML pero estan ocultas hasta que se enciende "Ingresar pedido"
+    (existencia-pedido.js las llena: el parcial solo deja el esqueleto y los datos que hacen falta en data-). Todos los
+    estilos viven en ExistenciaPorSucursales.cshtml (este parcial es solo HTML): asi no se repiten en cada refresco. El
+    ordenamiento, los filtros de la barra, el modo compacto y la edicion del punto de stock los hace el JS de la vista
+    leyendo los atributos data- de cada fila. Estado de cada celda: Negocio.ExistenciaEstado (el estado de la consulta SQL
+    usa el punto global legacy, no el real de la sucursal). Detalle: docs/DECISIONS.md 2026-10-19.
+*@
+
 @functions {
-    private string CssEstado(string estado)
+    // Numeros para atributos data-: invariantes (punto decimal) para que el JS los lea sin ambiguedad.
+    private static string Inv(double valor)
     {
-        string valor = (estado ?? "").Trim().ToUpperInvariant();
-        if (valor == "NEGATIVO") return "text-danger font-weight-bold";
-        if (valor == "BAJO") return "text-warning font-weight-bold";
-        if (valor == "SIN STOCK") return "text-muted";
-        return "";
+        return valor.ToString("R", CultureInfo.InvariantCulture);
     }
+
+    // Textos y clases del estado: compartidos con las exportaciones (WebCore.Helpers.ExistenciaEstadoTextos).
+    private static string TextoEstado(Negocio.ExistenciaEstado estado) => WebCore.Helpers.ExistenciaEstadoTextos.Texto(estado);
+    private static string ClaseEstado(Negocio.ExistenciaEstado estado) => WebCore.Helpers.ExistenciaEstadoTextos.ClaseEstado(estado);
+    private static string ClaseStock(Negocio.ExistenciaEstado estado) => WebCore.Helpers.ExistenciaEstadoTextos.ClaseStock(estado);
 }
 
 @{
-    var filtro = Model != null && Model.Filtro != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
     var columnas = Model != null ? Model.Columnas : new System.Collections.Generic.List<Entidades.SucursalColumnaStockVm>();
     var productos = Model != null ? Model.Productos : new System.Collections.Generic.List<Entidades.ProductoStockPorSucursalVm>();
-    // Columna "Total" solo cuando se muestran 2 o mas sucursales (seleccion multiple o "Todas"):
-    // con una sola no hay nada que sumar. Suma solo las columnas mostradas.
+    // Columna "Total" solo cuando se muestran 2 o mas sucursales: con una sola no hay nada que sumar. Suma solo las mostradas.
     bool mostrarTotal = Model != null && columnas.Count > 1;
-    // *2: cada sucursal aporta 2 columnas (Stock + Dif.) al layout del <tr>, aunque la de Dif.
-    // arranque oculta con d-none -- sigue existiendo en el DOM y hay que contarla en el colspan
-    // de la fila de detalle expandible (ver mas abajo). +1 fijo: columna "Estado Stock", tambien
-    // siempre presente en el DOM (oculta con d-none), igual criterio que las columnas Dif.
-    int totalColumnas = 2 + (columnas.Count * 2) + (mostrarTotal ? 1 : 0) + 1;
+    // El lapiz para editar el punto de stock solo aparece con el permiso de Productos (lo resuelve StockController).
+    bool puedeEditarPunto = ViewBag.PuedeEditarPunto is bool permiso && permiso;
+    // Columnas del <tr>: Cod. + Producto + 3 por sucursal (Stock + Estado + A pedir; Estado y A pedir siguen en el DOM aunque esten
+    // ocultas) + 2 del Total + 3 del pedido (Total pedido, $ ult. compra, Importe est.) + el "+".
+    int totalColumnas = 2 + (columnas.Count * 3) + (mostrarTotal ? 2 : 0) + 3 + 1;
 }
 
 @if (Model == null || !Model.ConsultaRealizada)
@@ -41,325 +54,152 @@ else if (productos == null || productos.Count == 0)
 }
 else
 {
-    <style>
-        .tabla-existencia-sucursales {
-            table-layout: fixed;
-            width: max-content;
-            font-size: .84rem;
-        }
-
-        .tabla-full {
-            overflow-x: auto;
-        }
-
-        .tabla-existencia-sucursales th,
-        .tabla-existencia-sucursales td {
-            vertical-align: top;
-            padding: .42rem .58rem;
-            line-height: 1.15;
-        }
-
-        .existencia-col-toggle,
-        .existencia-col-toggle-cell {
-            width: 55px;
-            min-width: 55px;
-        }
-
-        .existencia-col-producto,
-        .existencia-col-producto-cell {
-            position: sticky;
-            left: 0;
-            z-index: 3;
-            background: #fff;
-            width: 25ch;
-            min-width: 25ch;
-            max-width: 25ch;
-        }
-
-        .tabla-existencia-sucursales thead .existencia-col-producto {
-            z-index: 5;
-            background: #f8f9fc;
-        }
-
-        .tabla-existencia-sucursales thead th,
-        .tabla-existencia-sucursales > thead > tr > th,
-        .tabla-existencia-sucursales .thead-light th {
-            font-size: .73rem !important;
-            font-weight: 700;
-            letter-spacing: .02em;
-            text-transform: uppercase;
-            padding-top: .38rem;
-            padding-bottom: .38rem;
-            line-height: 1.1;
-        }
-
-        .tabla-existencia-sucursales th.text-right.text-nowrap,
-        .tabla-existencia-sucursales td.text-right.text-nowrap {
-            width: 18ch;
-            min-width: 18ch;
-            max-width: 18ch;
-        }
-
-        .existencia-col-total {
-            font-weight: 700;
-            background: #f8f9fc;
-        }
-
-        .existencia-producto-row {
-            cursor: pointer;
-        }
-
-        .existencia-producto-wrap {
-            max-width: 25ch;
-        }
-
-        .existencia-producto-desc {
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: normal;
-            line-height: 1.2;
-            max-width: 25ch;
-            font-weight: 600;
-            word-break: break-word;
-        }
-
-        .existencia-producto-codigo {
-            display: block;
-            margin-top: .2rem;
-            font-size: .72rem;
-            color: #858796;
-        }
-
-        .existencia-producto-completo {
-            font-size: .78rem;
-            color: #6c757d;
-            margin-bottom: .75rem;
-        }
-
-        .existencia-producto-completo strong {
-            color: inherit;
-        }
-
-        .existencia-detalle-box {
-            background: #f8f9fc;
-            overflow: hidden;
-        }
-
-        .existencia-detalle-scroll-sync {
-            max-width: 100%;
-            max-height: 22rem;
-            overflow: auto;
-        }
-
-        .existencia-detalle-tabla {
-            width: max-content;
-            min-width: 100%;
-            font-size: .79rem;
-        }
-
-        .existencia-detalle-tabla th,
-        .existencia-detalle-tabla td {
-            white-space: nowrap;
-        }
-
-        .existencia-detalle-tabla thead th {
-            font-size: .67rem !important;
-            line-height: 1.1;
-            padding-top: .32rem;
-            padding-bottom: .32rem;
-        }
-
-        .existencia-detalle-destacado {
-            background: #f4f8fc;
-            font-weight: 600;
-        }
-
-        .existencia-detalle-stockactual {
-            background: #e7f1fb;
-            font-weight: 700;
-        }
-
-        html.dark-mode .existencia-col-producto,
-        html.dark-mode .existencia-col-producto-cell {
-            background: #1f2533;
-        }
-
-        html.dark-mode .tabla-existencia-sucursales thead .existencia-col-producto {
-            background: #273043;
-        }
-
-        html.dark-mode .existencia-col-total {
-            background: #273043;
-        }
-
-        html.dark-mode .existencia-detalle-box {
-            background: #273043;
-        }
-
-        html.dark-mode .existencia-producto-codigo,
-        html.dark-mode .existencia-producto-completo {
-            color: rgba(255,255,255,.72);
-        }
-
-        html.dark-mode .existencia-detalle-destacado {
-            background: #2b394d;
-            color: #f8f9fc;
-        }
-
-        html.dark-mode .existencia-detalle-stockactual {
-            background: #35506f;
-            color: #ffffff;
-        }
-
-        @@media (min-width: 1200px) {
-            .tabla-existencia-sucursales {
-                font-size: .8rem;
-            }
-
-            .tabla-existencia-sucursales thead th,
-            .tabla-existencia-sucursales > thead > tr > th,
-            .tabla-existencia-sucursales .thead-light th {
-                font-size: .68rem !important;
-                padding-top: .34rem;
-                padding-bottom: .34rem;
-            }
-
-            .existencia-detalle-tabla {
-                font-size: .75rem;
-            }
-
-            .existencia-detalle-tabla thead th {
-                font-size: .63rem !important;
-            }
-        }
-
-        @@media (max-width: 767.98px) {
-            .tabla-full .tabla-existencia-sucursales {
-                width: max-content !important;
-                min-width: 0 !important;
-            }
-
-            .existencia-col-producto,
-            .existencia-col-producto-cell {
-                min-width: 9rem;
-                width: 9rem;
-                max-width: 9rem;
-            }
-
-            .existencia-producto-wrap,
-            .existencia-producto-desc {
-                max-width: 15ch;
-            }
-
-            .tabla-existencia-sucursales th.text-right.text-nowrap,
-            .tabla-existencia-sucursales td.text-right.text-nowrap {
-                min-width: 92px;
-                width: 92px;
-            }
-
-            .existencia-detalle-scroll-sync {
-                max-height: 18rem;
-            }
-        }
-    </style>
-
-    <div class="d-flex align-items-center mb-2 px-3 pt-3 existencia-search-toolbar">
-        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaExistencia"
-                title="Buscar producto" aria-expanded="false">
-            <i class="fas fa-search"></i>
-        </button>
-        <input type="text" id="filtroTextoExistencia" name="texto" class="form-control form-control-sm ml-2 d-none"
-               value="@filtro.Texto" placeholder="Producto / texto" autocomplete="off" style="max-width:280px;" />
-    </div>
-
-    <div class="table-responsive tabla-full js-sync-scroll-body">
-        <table class="table table-bordered table-hover mb-0 tabla-existencia-sucursales js-sticky-first-col">
+    @* Sin la clase js-sync-scroll-body: la tabla scrollea por dentro con su propia barra (alto acotado por el JS de la vista), asi que la
+       barra horizontal flotante de table-scroll-sync.js sobraba y quedaba duplicada. *@
+    <div class="table-responsive tabla-full">
+        <table class="table table-bordered table-hover mb-0 tabla-existencia-sucursales">
             <thead class="thead-light">
                 <tr>
-                    <th class="existencia-col-producto">Producto</th>
-                    @foreach (var columna in columnas)
+                    <th rowspan="2" class="ex-col-cod ex-sortable" data-sort-key="cod" title="Ordenar por código">Cód.</th>
+                    <th rowspan="2" class="ex-col-prod ex-sortable" data-sort-key="nom" title="Ordenar por producto">Producto</th>
+                    @for (int i = 0; i < columnas.Count; i++)
                     {
-                        <th class="text-right text-nowrap">@columna.Sucursal</th>
-                        <th class="text-right text-nowrap existencia-dif-col d-none" title="Stock actual menos punto de stock">Dif. @columna.Sucursal</th>
+                        @* El colspan lo ajusta el JS segun las columnas visibles (Estado y A pedir se pueden ocultar). *@
+                        <th colspan="2" class="ex-grupo ex-grupo-ini @(i % 2 == 1 ? "ex-alt" : "")" data-id-sucursal="@columnas[i].IdSucursal">
+                            <span class="ex-grupo-nombre">@columnas[i].Sucursal</span>
+                            <button type="button" class="btn btn-sm ex-btn-aceptar-suc ex-col-pedir" data-id-sucursal="@columnas[i].IdSucursal"
+                                    title="Cargar las sugerencias de @columnas[i].Sucursal (solo los productos visibles)">
+                                <i class="fas fa-magic"></i>
+                            </button>
+                        </th>
                     }
                     @if (mostrarTotal)
                     {
-                        <th class="text-right text-nowrap existencia-col-total">Total</th>
+                        <th colspan="2" class="ex-grupo ex-grupo-ini ex-grupo-total">Total</th>
                     }
-                    <th class="text-right text-nowrap existencia-col-estadostock d-none">Estado Stock</th>
-                    <th class="existencia-col-toggle"></th>
+                    <th rowspan="2" class="ex-pedido-fin ex-grupo-ini ex-sortable ex-th-tp" data-sort-key="tp" title="Ordenar por el total pedido">Total pedido</th>
+                    <th rowspan="2" class="ex-pedido-fin" title="Precio de la última compra (por kg o unidad)">$ últ. compra</th>
+                    <th rowspan="2" class="ex-pedido-fin ex-sortable" data-sort-key="imp" title="Ordenar por el importe estimado">Importe est.</th>
+                    <th rowspan="2" class="existencia-col-toggle"></th>
+                </tr>
+                <tr>
+                    @for (int i = 0; i < columnas.Count; i++)
+                    {
+                        <th class="ex-sub ex-sortable ex-grupo-ini @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="s@(columnas[i].IdSucursal)" title="Ordenar por stock de @columnas[i].Sucursal">Stock</th>
+                        <th class="ex-sub ex-sortable ex-col-estado @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="e@(columnas[i].IdSucursal)" title="Ordenar por estado en @columnas[i].Sucursal (primero los faltantes)">Estado</th>
+                        <th class="ex-sub ex-sortable ex-col-pedir @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="p@(columnas[i].IdSucursal)" title="Ordenar por lo pedido a @columnas[i].Sucursal">A pedir</th>
+                    }
+                    @if (mostrarTotal)
+                    {
+                        <th class="ex-sub ex-sortable ex-grupo-ini ex-grupo-total" data-sort-key="st" title="Ordenar por stock total">Stock</th>
+                        <th class="ex-sub ex-sortable ex-col-estado ex-grupo-total" data-sort-key="et" title="Ordenar por estado del total (primero los faltantes)">Estado</th>
+                    }
                 </tr>
             </thead>
             <tbody>
                 @foreach (var producto in productos)
                 {
                     string detailId = "detalleExistencia_" + producto.IdCorte;
-                    float totalStockProducto = columnas.Sum(c => producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)?.StockActual ?? 0f);
-                    float totalPuntoStockProducto = columnas.Sum(c => producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)?.PuntoStock ?? 0f);
-                    float estadoStockValor = totalStockProducto - totalPuntoStockProducto;
-                    string claseEstadoStock = estadoStockValor < 0 ? "text-danger font-weight-bold" : estadoStockValor > 0 ? "text-success font-weight-bold" : "text-warning font-weight-bold";
+
+                    // Estado de cada sucursal y del total, con el punto REAL de la sucursal.
+                    var celdas = columnas.Select(c =>
+                        producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)
+                        ?? new Entidades.StockSucursalCeldaVm { IdSucursal = c.IdSucursal, Sucursal = c.Sucursal, EstadoStock = "SIN STOCK" }).ToList();
+                    var estados = celdas.Select(c => Negocio.ExistenciaEstado.Calcular(c.StockActual, c.PuntoStock)).ToList();
+                    double totalStock = celdas.Sum(c => (double)c.StockActual);
+                    double totalPunto = celdas.Sum(c => (double)c.PuntoStock);
+                    var estadoTotal = Negocio.ExistenciaEstado.Calcular(totalStock, totalPunto);
+
+                    // Datos para ordenar y filtrar en el navegador (numeros invariantes; las claves son ids numericos, no hace falta escapar).
+                    var atributos = new System.Text.StringBuilder();
+                    for (int i = 0; i < columnas.Count; i++)
+                    {
+                        atributos.Append(" data-s-").Append(columnas[i].IdSucursal).Append("=\"").Append(Inv(celdas[i].StockActual)).Append("\"");
+                        atributos.Append(" data-e-").Append(columnas[i].IdSucursal).Append("=\"").Append(Inv(estados[i].ClaveOrden)).Append("\"");
+                    }
+                    atributos.Append(" data-s-t=\"").Append(Inv(totalStock)).Append("\" data-e-t=\"").Append(Inv(estadoTotal.ClaveOrden)).Append("\"");
+                    // Orden por lo pedido (Ingresar pedido): arrancan en 0 y existencia-pedido.js los mantiene al cargar cantidades.
+                    for (int i = 0; i < columnas.Count; i++)
+                    {
+                        atributos.Append(" data-p-").Append(columnas[i].IdSucursal).Append("=\"0\"");
+                    }
+                    atributos.Append(" data-tp=\"0\" data-imp=\"0\"");
+                    // Promedio por unidad (para el "= N un." del pedido): el del producto, que es el mismo en todas las sucursales.
+                    double promedioProducto = celdas.Select(c => (double)c.Promedio).FirstOrDefault(p => p > 0);
+                    bool productoPesable = celdas.Any(c => c.Pesable);
+                    atributos.Append(" data-prom=\"").Append(Inv(promedioProducto)).Append("\" data-pes=\"").Append(productoPesable ? "1" : "0").Append("\"");
+                    // Clases de estado presentes en alguna sucursal mostrada: alimentan el filtro "Estado" de la barra.
+                    var clases = estados.Select(e => e.ClaseFiltro).Where(c => c.Length > 0).Distinct().ToList();
+                    bool algunoSinPunto = estados.Any(e => e.SinPuntoCargado);
+
                     <tr class="existencia-producto-row"
                         data-detail-target="#@detailId"
                         data-texto="@producto.TextoBusqueda"
-                        data-estados="@producto.EstadosFila">
-                        <td class="existencia-col-producto-cell">
-                            <div class="existencia-producto-wrap">
-                                <div class="existencia-producto-desc" title="@producto.Corte">@producto.Corte</div>
-                                <span class="existencia-producto-codigo">cod: @producto.Codigo</span>
-                            </div>
+                        data-id-corte="@producto.IdCorte"
+                        data-cod="@producto.Codigo"
+                        data-nom="@producto.Corte"
+                        data-clases="@string.Join(" ", clases)"
+                        data-sinpto="@(algunoSinPunto ? "1" : "0")"
+                        @Html.Raw(atributos.ToString())>
+                        <td class="ex-col-cod-cell">@producto.Codigo</td>
+                        <td class="ex-col-prod-cell">
+                            <div class="existencia-producto-desc" title="@producto.Corte">@producto.Corte</div>
                         </td>
-                        @foreach (var columna in columnas)
+                        @for (int i = 0; i < columnas.Count; i++)
                         {
-                            var celda = producto.Celdas.FirstOrDefault(x => x.IdSucursal == columna.IdSucursal) ?? new Entidades.StockSucursalCeldaVm
-                            {
-                                IdSucursal = columna.IdSucursal,
-                                Sucursal = columna.Sucursal,
-                                StockActual = 0f,
-                                PuntoStock = 0f,
-                                EstadoStock = "SIN STOCK"
-                            };
+                            var celda = celdas[i];
+                            var estado = estados[i];
+                            string altClase = i % 2 == 1 ? "ex-alt" : "";
+                            var equivalenteUnidades = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)celda.StockActual, (decimal)celda.Promedio, celda.Pesable);
 
-                            <td class="text-right text-nowrap @CssEstado(celda.EstadoStock)" title="@celda.EstadoStock">
+                            <td class="text-right text-nowrap ex-grupo-ini @altClase @ClaseStock(estado)" title="@TextoEstado(estado)">
                                 @celda.StockActual.ToString("N3")
-                                @{ var equivalenteUnidades = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)celda.StockActual, (decimal)celda.Promedio, celda.Pesable); }
                                 @if (equivalenteUnidades != null)
                                 {
-                                    <span class="existencia-producto-codigo">@equivalenteUnidades</span>
+                                    <span class="existencia-unidades">@equivalenteUnidades</span>
                                 }
                             </td>
-
-                            // Dif. = stock actual menos punto de stock de esa sucursal (columna oculta por
-                            // defecto, la muestra el interruptor "Estado Stock"). Punto stock sin configurar
-                            // (0) no se distingue de "configurado en 0" -- decision explicita, mas simple.
-                            float dif = celda.StockActual - celda.PuntoStock;
-                            string claseDif = dif < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
-                            string signoDif = dif > 0 ? "+" : "";
-                            var equivalenteUnidadesDif = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)dif, (decimal)celda.Promedio, celda.Pesable);
-
-                            <td class="text-right text-nowrap existencia-dif-col d-none @claseDif" title="@("Punto stock: " + celda.PuntoStock.ToString("N3"))">
-                                @(signoDif + dif.ToString("N3"))
-                                @if (equivalenteUnidadesDif != null)
+                            <td class="text-right text-nowrap ex-col-estado @altClase"
+                                data-id-corte="@producto.IdCorte" data-id-sucursal="@celda.IdSucursal"
+                                data-stock="@Inv(celda.StockActual)" data-punto="@Inv(celda.PuntoStock)">
+                                <span class="ex-est @ClaseEstado(estado) js-ex-estado-texto">@TextoEstado(estado)</span>
+                                <span class="existencia-unidades js-ex-pto">@(celda.PuntoStock > 0 ? "pto " + celda.PuntoStock.ToString("N0") : "")</span>
+                                @if (puedeEditarPunto)
                                 {
-                                    <span class="existencia-producto-codigo">@equivalenteUnidadesDif (pto: @celda.PuntoStock.ToString("N3"))</span>
+                                    <button type="button" class="ex-btn-pto" title="Editar el punto de stock de @columnas[i].Sucursal"
+                                            data-nombre="@producto.Corte" data-sucursal="@columnas[i].Sucursal">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
                                 }
+                            </td>
+                            @* A pedir (Ingresar pedido): el input y las pistas las arma existencia-pedido.js; aca queda el esqueleto. *@
+                            <td class="text-right ex-col-pedir ex-pedir-cell @altClase" data-id-corte="@producto.IdCorte" data-id-sucursal="@celda.IdSucursal">
+                                <div class="ex-ped-celda">
+                                    <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm ex-in-pedir"
+                                           data-id-corte="@producto.IdCorte" data-id-sucursal="@celda.IdSucursal"
+                                           aria-label="A pedir de @producto.Corte a @columnas[i].Sucursal" />
+                                    <span class="ex-ped-eq"></span>
+                                    <span class="ex-ped-hint"></span>
+                                </div>
                             </td>
                         }
                         @if (mostrarTotal)
                         {
-                            <td class="text-right text-nowrap existencia-col-total" title="Suma de stock en todas las sucursales">
-                                @totalStockProducto.ToString("N3")
+                            <td class="text-right text-nowrap ex-grupo-ini ex-grupo-total font-weight-bold" title="Suma de stock en las sucursales mostradas">
+                                @totalStock.ToString("N3")
+                            </td>
+                            <td class="text-right text-nowrap ex-col-estado ex-grupo-total ex-estado-total" title="Total menos la suma de los puntos de stock de las sucursales mostradas">
+                                <span class="ex-est js-ex-estado-texto @ClaseEstado(estadoTotal)">@TextoEstado(estadoTotal)</span>
+                                <span class="existencia-unidades js-ex-pto">@(totalPunto > 0 ? "pto " + totalPunto.ToString("N0") : "")</span>
                             </td>
                         }
-                        <td class="text-right text-nowrap existencia-col-estadostock d-none @claseEstadoStock" title="Total menos punto de stock (sucursales visibles)">
-                            @estadoStockValor.ToString("N3")
-                            @if (estadoStockValor < 0)
-                            {
-                                <span class="existencia-producto-codigo">Faltante</span>
-                            }
+                        @* Cierre del pedido (Ingresar pedido): total pedido a todas las sucursales, precio de la ultima compra e importe estimado. *@
+                        <td class="text-right text-nowrap ex-pedido-fin ex-grupo-ini ex-tp-cell">
+                            <span class="ex-tp-cant font-weight-bold"></span>
+                            <span class="ex-tp-eq"></span>
                         </td>
+                        <td class="text-right text-nowrap ex-pedido-fin ex-precio-cell"></td>
+                        <td class="text-right text-nowrap ex-pedido-fin ex-importe-cell font-weight-bold"></td>
                         <td class="text-center existencia-col-toggle-cell">
                             <button type="button" class="btn btn-link p-0 btn-toggle-existencia" data-target="#@detailId" title="Expandir detalle">
                                 <i class="far fa-plus-square"></i>
@@ -369,6 +209,9 @@ else
                     <tr id="@detailId" class="existencia-detalle-row d-none">
                         <td colspan="@totalColumnas" class="p-0">
                             <div class="p-3 border-top existencia-detalle-box">
+                                <div class="existencia-producto-completo">
+                                    <strong>@producto.Corte</strong> · cód. @producto.Codigo
+                                </div>
                                 <div class="table-responsive existencia-detalle-scroll-sync js-sync-scroll-body">
                                     <table class="table table-sm table-bordered mb-0 existencia-detalle-tabla">
                                         <thead class="thead-light">
@@ -388,12 +231,13 @@ else
                                                 <th class="text-right">Ventas</th>
                                                 <th class="text-right existencia-detalle-destacado" title="TotalEgresos">Tot. Egr.</th>
                                                 <th class="text-right existencia-detalle-stockactual" title="StockActual">Stock Act.</th>
-                                                <th title="EstadoStock">Estado</th>
+                                                <th title="Estado según el punto de stock de la sucursal">Estado</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var detalle in producto.Detalles.OrderBy(x => x.Sucursal))
                                             {
+                                                var estadoDetalle = Negocio.ExistenciaEstado.Calcular(detalle.StockActual, detalle.PuntoStock);
                                                 <tr>
                                                     <td class="existencia-detalle-destacado">@detalle.Sucursal</td>
                                                     <td>@(detalle.FechaUltimoCierre.HasValue ? detalle.FechaUltimoCierre.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
@@ -408,9 +252,9 @@ else
                                                     <td class="text-right">@detalle.EgresoMovimiento.ToString("N3")</td>
                                                     <td class="text-right">@detalle.EgresoElaborado.ToString("N3")</td>
                                                     <td class="text-right">@detalle.Ventas.ToString("N3")</td>
-                                                    <td class="text-right existencia-detalle-destacado">@detalle.TotalEgresos.ToString("N3")</td>
-                                                    <td class="text-right existencia-detalle-stockactual @CssEstado(detalle.EstadoStock)">@detalle.StockActual.ToString("N3")</td>
-                                                    <td class="@CssEstado(detalle.EstadoStock)">@detalle.EstadoStock</td>
+                                                    <td class="text-right">@detalle.TotalEgresos.ToString("N3")</td>
+                                                    <td class="text-right existencia-detalle-stockactual @ClaseStock(estadoDetalle)">@detalle.StockActual.ToString("N3")</td>
+                                                    <td class="@ClaseEstado(estadoDetalle)">@TextoEstado(estadoDetalle)@(detalle.PuntoStock > 0 ? " · pto " + detalle.PuntoStock.ToString("N0") : "")</td>
                                                 </tr>
                                             }
                                         </tbody>

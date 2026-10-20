@@ -1,0 +1,62 @@
+@using System.Globalization
+@using System.Linq
+
+@* Tabla del listado de pedidos (parcial: la carga Index y la reemplaza el Buscar por AJAX). Datos: ViewBag.Lista (List<Entidades.PedidoResumen>). *@
+
+@{
+    var lista = ViewBag.Lista as System.Collections.Generic.List<Entidades.PedidoResumen> ?? new System.Collections.Generic.List<Entidades.PedidoResumen>();
+    string errorLista = ViewBag.ErrorLista as string ?? "";
+    var cultura = new CultureInfo("es-AR");
+}
+
+@if (!string.IsNullOrEmpty(errorLista))
+{
+    <div class="alert alert-danger m-3">@errorLista</div>
+}
+else if (lista.Count == 0)
+{
+    <div class="p-4 text-center text-muted">No hay pedidos con esos filtros. Los pedidos se arman en <em>Stock → Existencia por sucursales</em> con <strong>Ingresar pedido</strong>.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th>N°</th>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Sucursales</th>
+                    <th class="text-right">Productos</th>
+                    <th class="text-right">Líneas</th>
+                    <th class="text-right">Total estimado</th>
+                    <th>Nota</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in lista)
+                {
+                    <tr>
+                        <td><a href="@Url.Action("Detalle", "Pedidos", new { id = p.Id })" class="font-weight-bold">@p.Id</a></td>
+                        <td class="text-nowrap">@p.Fecha.ToString("dd/MM/yyyy HH:mm", cultura)@if (p.Modificado.HasValue) { <span class="badge badge-secondary ml-1" title="Modificado el @p.Modificado.Value.ToString("dd/MM/yyyy HH:mm", cultura)">modificado</span> }</td>
+                        <td>@p.Usuario</td>
+                        <td>@p.Sucursales</td>
+                        <td class="text-right">@p.Productos</td>
+                        <td class="text-right">@p.Lineas</td>
+                        <td class="text-right text-nowrap">
+                            $ @p.TotalEstimado.ToString("N2", cultura)
+                            @if (p.LineasSinPrecio > 0)
+                            {
+                                <div class="small text-muted" title="@Negocio.PedidoTextos.AvisoSinPrecio(p.LineasSinPrecio)">parcial · @p.LineasSinPrecio sin precio</div>
+                            }
+                        </td>
+                        <td>@p.Nota</td>
+                        <td class="text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Detalle", "Pedidos", new { id = p.Id })">Ver</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="px-3 py-2 small text-muted">@(Negocio.Pedido.Contar(lista.Count, "pedido", "pedidos")) (lo más reciente primero)</div>
+}

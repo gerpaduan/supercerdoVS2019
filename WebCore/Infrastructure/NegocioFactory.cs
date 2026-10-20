@@ -108,6 +108,16 @@ namespace WebCore.Infrastructure
             return new Negocio.ReposicionStock(corteN, corteRepo, new Negocio.CortePuntoStockSucursal(puntoStockRepo));
         }
 
+        // Pedidos de compra armados desde Existencia por sucursales (2026-10-19, ver docs/DECISIONS.md). Solo Postgres: las tablas
+        // pedido/pedidolinea/pedidoevento (migracion 20261019) no existen en SQL Server; los controllers lo tratan como "no disponible".
+        public static Negocio.Pedido CrearPedido(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres)
+                throw new InvalidOperationException("El módulo de Pedidos solo está disponible con DataEngine=Postgres.");
+
+            return new Negocio.Pedido(new DatosPostgres.PedidoPg(PgConnString, empresa.IdEmpresa));
+        }
+
         public static Negocio.CortePuntoStockSucursal CrearCortePuntoStockSucursal(IEmpresaContext empresa, IParametrosContext param = null)
         {
             if (!UsarPostgres) return new Negocio.CortePuntoStockSucursal(empresa, param);

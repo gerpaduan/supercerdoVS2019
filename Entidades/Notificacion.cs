@@ -24,6 +24,7 @@ namespace Entidades
         public const string TipoBorradorDescartadoMovimiento = PrefijoBorradorGenericoDescartado + "MOVIMIENTO";
         public const string TipoBorradorDescartadoEmbutidoCarga = PrefijoBorradorGenericoDescartado + "EMBUTIDO_CARGA";
         public const string TipoBorradorDescartadoEmbutidoRapido = PrefijoBorradorGenericoDescartado + "EMBUTIDO_RAPIDO";
+        public const string TipoBorradorDescartadoPedidoStock = PrefijoBorradorGenericoDescartado + "PEDIDO_STOCK";
 
         // Borrador generico interrumpido (deteccion perezosa, mismo criterio que TipoVentaInterrumpida):
         // se calcula cuando el admin consulta la campana, no hay proceso en segundo plano.
@@ -33,6 +34,7 @@ namespace Entidades
         public const string TipoBorradorInterrumpidoMovimiento = PrefijoBorradorGenericoInterrumpido + "MOVIMIENTO";
         public const string TipoBorradorInterrumpidoEmbutidoCarga = PrefijoBorradorGenericoInterrumpido + "EMBUTIDO_CARGA";
         public const string TipoBorradorInterrumpidoEmbutidoRapido = PrefijoBorradorGenericoInterrumpido + "EMBUTIDO_RAPIDO";
+        public const string TipoBorradorInterrumpidoPedidoStock = PrefijoBorradorGenericoInterrumpido + "PEDIDO_STOCK";
 
         // Certificado digital de AFIP/ARCA por vencer o vencido. RefId = fecha de vencimiento (yyyyMMdd):
         // al renovar cambia y el aviso anterior deja de aplicar. Ver WebCore.Services.CertificadoArcaEstadoService.

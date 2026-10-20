@@ -305,4 +305,13 @@ namespace Entidades
         public decimal? UltimoPrecio { get; set; }
         public DateTime? FechaUltimaCompra { get; set; }
     }
+
+    // Precios de la ultima compra de cada producto para estimar el importe de un pedido, ya separados por antiguedad: los vigentes se
+    // usan; los descartados tienen precio pero su compra es de hace demasiado (un precio de hace años subestima el total por la inflacion),
+    // asi que el producto queda "sin precio" y la pantalla puede explicar por que.
+    public class UltimosPreciosCompraVm
+    {
+        public List<ProveedorHabitualVm> Vigentes { get; set; } = new List<ProveedorHabitualVm>();
+        public List<ProveedorHabitualVm> DescartadosPorAntiguedad { get; set; } = new List<ProveedorHabitualVm>();
+    }
 }

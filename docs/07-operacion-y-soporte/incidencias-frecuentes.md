@@ -396,3 +396,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Causa**: tras guardar un movimiento nuevo el formulario seguia con `IdMovimiento = 0`; cualquier segundo guardado (doble click, Enter, Alt+G / Alt+Enter con el aviso abierto) creaba otro. Ademas el aviso se cerraba con `hide()` aunque Bootstrap lo ignora mientras anima su apertura, y se imprimia antes de que terminara de ocultarse.
 - **Fix**: `movimientos.js` ignora submits con un guardado en vuelo o con el aviso abierto y enlaza el formulario al id guardado (un nuevo "Guardar" actualiza, no crea); `modal-postmovimiento.js` cierra el aviso y recien despues imprime, y acepta una sola accion por apertura. Detalle y pruebas: `docs/DECISIONS.md` (2026-10-17). Los duplicados que ya existan no se detectan ni se corrigen solos: WebCore no tiene accion de borrado de movimientos en pantalla (`CortePg.eliminarMovimiento` existe en la capa de datos pero no esta expuesto), asi que hay que sacarlos de la base a mano y con cuidado.
 
+## Ingresar pedido: el pedido en curso no se resguarda ("Borradores sin guardar" siempre vacío) (2026-10-19)
+- **Sintoma**: en Existencia por sucursales, con *Ingresar pedido* encendido y cantidades cargadas, al cortar la luz o cerrar la pestaña no aparece ningún borrador en **Borradores sin guardar**.
+- **Causa**: falta correr la migración `20261019b-Alter_borradorgenerico_modulo_pedido_stock.sql`; el CHECK `ck_borradorgenerico_modulo` de `borradorgenerico` no acepta el módulo `PEDIDO_STOCK` y el INSERT falla (23514). El navegador ignora el error a propósito (no debe frenar el formulario); en el log del servidor aparece como excepción de `GuardarBorrador`.
+- **Fix**: correr la migración como `carnisys_admin` (aditiva e idempotente) **antes** de publicar el código; no hace falta reiniciar. Verificar con `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname='ck_borradorgenerico_modulo'` (debe listar `PEDIDO_STOCK`).
+
+## Dos WebCore de prueba en `localhost` se desloguean entre sí (2026-10-19)
+- **Sintoma**: probando con dos instancias de WebCore en puertos distintos (por ejemplo 5271 y 5272), iniciar sesión en una cierra la sesión de la otra (los `fetch` devuelven el HTML del login).
+- **Causa**: las cookies de `localhost` no distinguen puertos; las dos instancias comparten la cookie de autenticación y de sesión.
+- **Fix**: abrir cada instancia con un host distinto (`http://localhost:5271` y `http://127.0.0.1:5272`; levantar con `--urls http://127.0.0.1:5272`).

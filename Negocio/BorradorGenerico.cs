@@ -285,6 +285,7 @@ namespace Negocio
                 case Entidades.BorradorGenerico.ModuloMovimiento: return Entidades.Notificacion.TipoBorradorDescartadoMovimiento;
                 case Entidades.BorradorGenerico.ModuloEmbutidoCarga: return Entidades.Notificacion.TipoBorradorDescartadoEmbutidoCarga;
                 case Entidades.BorradorGenerico.ModuloEmbutidoRapido: return Entidades.Notificacion.TipoBorradorDescartadoEmbutidoRapido;
+                case Entidades.BorradorGenerico.ModuloPedidoStock: return Entidades.Notificacion.TipoBorradorDescartadoPedidoStock;
                 default: throw new ArgumentException("Módulo de borrador desconocido: " + modulo, nameof(modulo));
             }
         }
@@ -298,6 +299,7 @@ namespace Negocio
                 case Entidades.BorradorGenerico.ModuloMovimiento: return "Movimientos";
                 case Entidades.BorradorGenerico.ModuloEmbutidoCarga: return "Embutidos";
                 case Entidades.BorradorGenerico.ModuloEmbutidoRapido: return "Embutidos - Ingreso rápido";
+                case Entidades.BorradorGenerico.ModuloPedidoStock: return "Pedido de stock";
                 default: return modulo;
             }
         }

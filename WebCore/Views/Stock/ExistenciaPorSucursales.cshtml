@@ -2,6 +2,15 @@
 @using System
 @using System.Linq
 
+@*
+    Existencia por sucursales: stock y estado de cada producto, una sucursal por grupo de columnas.
+    Barra de una sola linea (modo compacto, recordado por navegador) con filtros avanzados plegados, tabla ordenable y
+    autoactualizacion encendida desde que se abre. La tabla la arma _TablaExistenciaPorSucursales.cshtml; toda la logica del
+    navegador (orden, filtros, compacto, autoactualizar, editar punto de stock, exportar) esta en
+    Scripts/app/existencia-sucursales.js. Reglas y porques: docs/DECISIONS.md 2026-10-19 y
+    docs/11-manual-de-uso/pantallas/Stock.ExistenciaPorSucursales.md.
+*@
+
 @{
     ViewBag.Title = "Existencia por sucursales";
 
@@ -22,813 +31,717 @@
     {
         Layout = "~/Views/Shared/_LayoutEmbed.cshtml";
     }
+
+    // "Con movimiento" usa la actividad de "Que pedir": solo Postgres. Los limites de la autoactualizacion salen de App.config.
+    bool movimientoDisponible = ViewBag.MovimientoDisponible is bool md && md;
+    int jitterInicialMaxSegundos = ViewBag.JitterInicialMaxSegundos is int jit ? jit : 0;
+    int reintentoCargaSegundos = ViewBag.ReintentoCargaSegundos is int rei ? rei : 120;
+
+    // "Ingresar pedido": sugerencias y precios salen de la actividad de "Que pedir" (solo Postgres); el autoguardado usa los borradores
+    // en servidor (modulo PEDIDO_STOCK) cuando estan habilitados. Datos del operador y de la sucursal del borrador: StockController.
+    bool pedidoDisponible = ViewBag.PedidoDisponible is bool pd && pd;
+    bool pedidoBorradorHabilitado = ViewBag.PedidoBorradorHabilitado is bool pbh && pbh;
+    var modalBorradoresData = new ViewDataDictionary(ViewData);
+    modalBorradoresData["TituloBorradoresGenerico"] = "Pedidos sin guardar";
+
+    bool todasTildadas = filtro.IdsSucursales == null || filtro.IdsSucursales.Count == 0;
+
+    // Desplegables de seleccion multiple de los filtros avanzados (Tipos / Proveedores / Marcas): sin nada tildado = sin filtro.
+    var desplegables = new[]
+    {
+        new { Clave = "tipos", Etiqueta = "Tipos", Campo = "tipos", Singular = "tipo", Plural = "tipos",
+              // La lista de tipos trae una fila "Todos" propia de la grilla de tipos: aca "Todos" es el tilde de arriba, no un tipo.
+              Items = filtro.TiposDisponibles.Where(t => !string.Equals((t ?? "").Trim(), "Todos", StringComparison.OrdinalIgnoreCase))
+                  .Select(t => new { Valor = t, Texto = t }).ToList() },
+        new { Clave = "proveedores", Etiqueta = "Proveedores", Campo = "idsProveedores", Singular = "proveedor", Plural = "proveedores",
+              Items = filtro.ProveedoresDisponibles.Select(p => new { Valor = p.IdPersona.ToString(), Texto = p.RazonSocial }).ToList() },
+        new { Clave = "marcas", Etiqueta = "Marcas", Campo = "idsMarcas", Singular = "marca", Plural = "marcas",
+              Items = filtro.MarcasDisponibles.Select(m => new { Valor = m.IdPersona.ToString(), Texto = m.RazonSocial }).ToList() }
+    };
 }
 
-<div class="container-fluid existencia-sucursales-page">
+<div class="container-fluid existencia-sucursales-page" id="existenciaPage">
+    @* Antes de pintar el resto: aplica el modo compacto recordado (sin parpadeo del diseno normal). Mismo criterio que usa el JS
+       de la pantalla; la ventana independiente tiene su propia clave y arranca compacta. *@
+    <script>
+        (function () {
+            try {
+                var esPopup = @(popup ? "true" : "false");
+                var guardado = localStorage.getItem(esPopup ? "existenciaCompactoPopup" : "existenciaCompacto");
+                var compacto = guardado === null ? esPopup : guardado === "1";
+                if (compacto) document.getElementById("existenciaPage").classList.add("existencia-compacto");
+            } catch (e) {
+                if (@(popup ? "true" : "false")) document.getElementById("existenciaPage").classList.add("existencia-compacto");
+            }
+        })();
+    </script>
+
     @if (popup)
     {
         // _LayoutEmbed no tiene barra superior: el titulo de la pantalla se muestra aca.
         <h5 class="existencia-popup-titulo mb-2">Existencia por sucursales</h5>
     }
-    <div class="card shadow-sm mb-3 stock-filtros-card">
-        <div class="card-body">
-            <form id="formExistenciaSucursales" autocomplete="off">
-                <div class="stock-filtros-stack">
-                    <div class="stock-filtros-row existencia-filtros-row-top">
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="btnSucursalesExistencia">Sucursales</label>
-                            <!-- Seleccion multiple: una, varias o todas. Los checkboxes viajan en el form
-                                 como idsSucursales repetido (vacio de tildadas no se permite, ver script). -->
-                            @{
-                                bool todasTildadas = filtro.IdsSucursales == null || filtro.IdsSucursales.Count == 0;
-                            }
-                            <div class="dropdown ui-multiselect">
-                                <button type="button" id="btnSucursalesExistencia" class="btn dropdown-toggle ui-multiselect-toggle"
-                                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
-                                    <span id="lblSucursalesExistencia">Todas</span>
-                                </button>
-                                <div class="dropdown-menu" id="menuSucursalesExistencia">
-                                    <div class="custom-control custom-checkbox ui-multiselect-todas">
-                                        <input type="checkbox" class="custom-control-input" id="chkSucursalTodasExistencia" @(todasTildadas ? "checked" : null)>
-                                        <label class="custom-control-label" for="chkSucursalTodasExistencia">Todas</label>
-                                    </div>
-                                    <div class="dropdown-divider"></div>
-                                    @foreach (var sucursal in filtro.SucursalesDisponibles)
-                                    {
-                                        <div class="custom-control custom-checkbox">
-                                            <input type="checkbox" class="custom-control-input chk-sucursal-existencia" name="idsSucursales"
-                                                   id="chkSucursalExistencia_@sucursal.IdSucursal" value="@sucursal.IdSucursal"
-                                                   data-nombre="@sucursal.Sucursal"
-                                                   @((todasTildadas || filtro.IdsSucursales.Contains(sucursal.IdSucursal)) ? "checked" : null)>
-                                            <label class="custom-control-label" for="chkSucursalExistencia_@sucursal.IdSucursal">@sucursal.Sucursal</label>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label d-none d-md-block">&nbsp;</label>
-                            <!-- Fecha hasta ya no se elige a mano: siempre se recalcula a la fecha/hora
-                                 exacta del momento de la busqueda (manual o autoactualizada, ver el
-                                 submit del form en el script). El datepicker/label visibles ya no
-                                 aportan nada, asi que se saca de la vista -- sigue viajando oculto
-                                 para no romper el resto de la logica (min de fecha, serialize del form). -->
-                            <input type="hidden" id="filtroFechaHastaExistencia" name="fechaHasta" value="@fechaHasta" min="@fechaMinima" />
-                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarExistencia">
-                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+    @* Token para los POST de esta pantalla (editar punto de stock, exportar): _LayoutEmbed no trae el global del layout normal. *@
+    @Html.AntiForgeryToken()
+
+    <div class="card shadow-sm ex-card">
+        <div class="card-body ex-barra-wrap">
+            <form id="formExistenciaSucursales" autocomplete="off">
+                <div class="ex-barra">
+                    @* Interruptor GRANDE (no un chip chico): al encenderlo cada sucursal gana la columna "A pedir". Apagado = solo contorno,
+                       encendido = relleno de color; toda la etiqueta es clickeable. Lo maneja Scripts/app/existencia-pedido.js. *@
+                    <div class="ex-ctl ex-ctl-pedido">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <span class="ex-pedido-toggle">
+                            <input type="checkbox" class="ex-chip-input" id="switchPedidoExistencia" />
+                            <label class="ex-pedido-toggle-texto" for="switchPedidoExistencia"
+                                   title="Cargar cantidades a pedir por sucursal, con sugerencias según el consumo del período">
+                                <i class="fas fa-clipboard-list ex-pt-ico-off" aria-hidden="true"></i>
+                                <i class="fas fa-clipboard-check ex-pt-ico-on" aria-hidden="true"></i>
+                                <span>Ingresar pedido</span>
+                            </label>
+                        </span>
+                    </div>
+                    @if (pedidoBorradorHabilitado)
+                    {
+                        @* Pedidos que quedaron a medio cargar (corte de luz, cierre del navegador): visible aunque el modo pedido este apagado. *@
+                        <div class="ex-ctl">
+                            <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                            <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresPedido"
+                                    title="Pedidos que quedaron a medio cargar (corte de luz, cierre del navegador)">
+                                <i class="fas fa-history"></i><span class="ex-btn-texto ml-1">Borradores sin guardar</span>
+                                <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
                             </button>
                         </div>
+                    }
 
-                        <div class="form-group mb-0 existencia-check-wrap">
-                            <div class="custom-control custom-switch existencia-check">
-                                <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzadosExistencia">
-                                <label class="custom-control-label" for="switchFiltrosAvanzadosExistencia">Filtros avanzados</label>
+                    <div class="ex-ctl ex-ctl-sucursales">
+                        <label class="ex-lbl" for="btnSucursalesExistencia">Sucursales</label>
+                        <!-- Seleccion multiple: una, varias o todas. Los checkboxes viajan en el form como idsSucursales
+                             repetido (vacio de tildadas no se permite, ver script). -->
+                        <div class="dropdown ui-multiselect">
+                            <button type="button" id="btnSucursalesExistencia" class="btn dropdown-toggle ui-multiselect-toggle"
+                                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
+                                <span id="lblSucursalesExistencia">Todas</span>
+                            </button>
+                            <div class="dropdown-menu" id="menuSucursalesExistencia">
+                                <div class="custom-control custom-checkbox ui-multiselect-todas">
+                                    <input type="checkbox" class="custom-control-input" id="chkSucursalTodasExistencia" @(todasTildadas ? "checked" : null)>
+                                    <label class="custom-control-label" for="chkSucursalTodasExistencia">Todas</label>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                @foreach (var sucursal in filtro.SucursalesDisponibles)
+                                {
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input chk-sucursal-existencia" name="idsSucursales"
+                                               id="chkSucursalExistencia_@sucursal.IdSucursal" value="@sucursal.IdSucursal"
+                                               data-nombre="@sucursal.Sucursal"
+                                               @((todasTildadas || filtro.IdsSucursales.Contains(sucursal.IdSucursal)) ? "checked" : null)>
+                                        <label class="custom-control-label" for="chkSucursalExistencia_@sucursal.IdSucursal">@sucursal.Sucursal</label>
+                                    </div>
+                                }
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="ex-ctl ex-ctl-texto">
+                        <label class="ex-lbl" for="filtroTextoExistencia">Producto</label>
+                        <div class="ex-input-icon">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <input type="search" id="filtroTextoExistencia" name="texto" class="form-control"
+                                   placeholder="Producto o código" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <div class="ex-ctl">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <!-- Fecha hasta ya no se elige a mano: siempre se recalcula a la fecha/hora exacta del momento de la
+                             busqueda (manual o autoactualizada, ver el submit del form en el script). Viaja oculta. -->
+                        <input type="hidden" id="filtroFechaHastaExistencia" name="fechaHasta" value="@fechaHasta" min="@fechaMinima" />
+                        <button type="submit" class="btn btn-primary" id="btnBuscarExistencia" title="Buscar (actualiza el stock ahora)">
+                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+                        </button>
+                    </div>
+
+                    <div class="ex-ctl">
+                        <label class="ex-lbl" for="filtroClaseEstadoExistencia">Estado</label>
+                        <select id="filtroClaseEstadoExistencia" class="form-control" title="Mostrar solo los productos con este estado en alguna de las sucursales">
+                            <option value="todos">Todos los estados</option>
+                            <option value="bien">Bien (OK)</option>
+                            <option value="falta">Faltantes</option>
+                            <option value="sinpto">Punto de stock 0</option>
+                        </select>
+                    </div>
+
+                    <div class="ex-ctl">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <button type="button" class="btn btn-outline-secondary" id="btnFiltrosAvanzadosExistencia" aria-expanded="false"
+                                aria-controls="panelFiltrosAvanzadosExistencia" title="Tipos, proveedores, marcas y movimiento">
+                            <i class="fas fa-sliders-h mr-1"></i>Filtros<span id="badgeFiltrosExistencia" class="badge badge-primary ml-1 d-none">0</span>
+                        </button>
+                    </div>
+
+                    <span class="ex-sep d-none d-lg-block"></span>
+
+                    <div class="ex-ctl ex-ctl-chip">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <span class="ex-chip" title="Actualiza el stock cada @intervaloAutoMinutos minutos, hasta 6 veces">
+                            <input type="checkbox" class="ex-chip-input" id="switchAutoActualizarExistencia" />
+                            <label class="ex-chip-texto" for="switchAutoActualizarExistencia"><i class="fas fa-sync-alt mr-1"></i>Auto <span id="lblAutoChipExistencia" class="ex-chip-detalle"></span></label>
+                        </span>
+                    </div>
+                    <div class="ex-ctl ex-ctl-chip">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <span class="ex-chip" title="Mostrar la columna Estado (faltante, punto de stock)">
+                            <input type="checkbox" class="ex-chip-input" id="switchEstadoStockExistencia" checked />
+                            <label class="ex-chip-texto" for="switchEstadoStockExistencia">Estado</label>
+                        </span>
+                    </div>
+                    <div class="ex-ctl ex-ctl-chip">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <span class="ex-chip" title="Expandir el detalle de todos los productos">
+                            <input type="checkbox" class="ex-chip-input" id="switchExpandirExistencia" />
+                            <label class="ex-chip-texto" for="switchExpandirExistencia">Expandir</label>
+                        </span>
+                    </div>
+                    <div class="ex-ctl ex-ctl-chip">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <span class="ex-chip" title="Diseño compacto: filas de una línea y barra reducida (se recuerda en este navegador)">
+                            <input type="checkbox" class="ex-chip-input" id="switchCompactoExistencia" />
+                            <label class="ex-chip-texto" for="switchCompactoExistencia"><i class="fas fa-compress-alt mr-1"></i>Compacto</label>
+                        </span>
+                    </div>
+
+                    <span class="ex-grow"></span>
+
+                    <div class="ex-ctl ex-ctl-acciones">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary" id="btnExcelExistencia" title="Exportar a Excel lo que se ve (filtros y orden actuales)">
+                                <i class="far fa-file-excel"></i><span class="ex-btn-texto ml-1">Excel</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="btnPdfExistencia" title="Exportar a PDF lo que se ve (filtros y orden actuales)">
+                                <i class="far fa-file-pdf"></i><span class="ex-btn-texto ml-1">PDF</span>
+                            </button>
                             @if (!popup)
                             {
-                                <button type="button" class="btn btn-outline-secondary ml-3 ms-3" id="btnAbrirVentanaExistencia"
+                                <button type="button" class="btn btn-outline-secondary" id="btnAbrirVentanaExistencia"
                                         title="Abrir esta pantalla en una ventana independiente, sin menús">
-                                    <i class="fas fa-external-link-alt mr-1"></i>Abrir en ventana
+                                    <i class="fas fa-external-link-alt"></i><span class="ex-btn-texto ml-1">Ventana</span>
                                 </button>
                             }
                         </div>
                     </div>
+                </div>
 
-                    <div class="existencia-filtros-avanzados-grid d-none" id="panelFiltrosAvanzadosExistencia">
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroTipoExistencia">Tipo</label>
-                            <select id="filtroTipoExistencia" name="tipo" class="form-control">
-                                <option value="">Todos</option>
-                                @foreach (var tipo in filtro.TiposDisponibles)
+                <div class="ex-avanzados d-none" id="panelFiltrosAvanzadosExistencia">
+                    @foreach (var d in desplegables)
+                    {
+                        <div class="ex-ctl ex-ctl-ms">
+                            <label class="ex-lbl-fijo">@d.Etiqueta</label>
+                            <div class="dropdown ui-multiselect ex-ms" data-ms="@d.Clave" data-singular="@d.Singular" data-plural="@d.Plural">
+                                <button type="button" class="btn dropdown-toggle ui-multiselect-toggle" data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
+                                    <span class="ex-ms-resumen">Todos</span>
+                                </button>
+                                <div class="dropdown-menu ex-ms-menu">
+                                    <input type="search" class="form-control form-control-sm ex-ms-buscar" placeholder="Buscar…" autocomplete="off" />
+                                    <div class="custom-control custom-checkbox ui-multiselect-todas">
+                                        <input type="checkbox" class="custom-control-input ex-ms-todos" id="chkTodos_@d.Clave" checked>
+                                        <label class="custom-control-label" for="chkTodos_@d.Clave">Todos</label>
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <div class="ex-ms-lista">
+                                        @for (int i = 0; i < d.Items.Count; i++)
+                                        {
+                                            <div class="custom-control custom-checkbox ex-ms-item" data-texto="@d.Items[i].Texto.ToLowerInvariant()">
+                                                <input type="checkbox" class="custom-control-input ex-ms-chk" name="@d.Campo" value="@d.Items[i].Valor"
+                                                       data-nombre="@d.Items[i].Texto" id="chk_@(d.Clave)_@i">
+                                                <label class="custom-control-label" for="chk_@(d.Clave)_@i">@d.Items[i].Texto</label>
+                                            </div>
+                                        }
+                                        @if (d.Items.Count == 0)
+                                        {
+                                            <div class="text-muted small px-2 py-1">No hay opciones cargadas.</div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="ex-ctl ex-ctl-periodo">
+                        <label class="ex-lbl-fijo" for="filtroPeriodoDesdeExistencia">Período desde</label>
+                        <div class="ex-periodo">
+                            <input type="date" id="filtroPeriodoDesdeExistencia" name="periodoDesde" class="form-control" />
+                            <span class="ex-periodo-atajos">
+                                @foreach (var dias in new[] { 7, 15, 30, 60, 90, 180, 365 })
                                 {
-                                    <option value="@tipo" selected="@(string.Equals(tipo, filtro.Tipo, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@tipo</option>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm ex-periodo-dias" data-dias="@dias" title="Desde hace @dias días">@(dias)&nbsp;d</button>
                                 }
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="ex-ctl ex-ctl-movimiento">
+                        <label class="ex-lbl-fijo">Con movimiento</label>
+                        <div class="ex-movimiento" title="@(movimientoDisponible ? "" : "No disponible con este motor de datos")">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="chkConMovimientoExistencia" name="conMovimiento" value="true"
+                                       @(movimientoDisponible ? null : "disabled")>
+                                <label class="custom-control-label" for="chkConMovimientoExistencia">Solo con al menos</label>
+                            </div>
+                            <input type="number" id="filtroMovimientoMinimoExistencia" name="movimientoMinimo" class="form-control ex-mov-min"
+                                   min="0.001" step="any" value="1" disabled />
+                            <select id="filtroMovimientoMedidaExistencia" name="movimientoMedida" class="form-control ex-mov-medida" disabled>
+                                <option value="salidas">Salidas (kg/un.)</option>
+                                <option value="dias">Días con venta</option>
                             </select>
                         </div>
-
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroProveedorExistencia">Proveedor</label>
-                            <select id="filtroProveedorExistencia" name="idProveedor" class="form-control">
-                                <option value="0">Todos</option>
-                                @foreach (var proveedor in filtro.ProveedoresDisponibles)
-                                {
-                                    <option value="@proveedor.IdPersona" selected="@(proveedor.IdPersona == filtro.IdProveedor ? "selected" : null)">@proveedor.RazonSocial</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroMarcaExistencia">Marca</label>
-                            <select id="filtroMarcaExistencia" name="idMarca" class="form-control">
-                                <option value="0">Todas</option>
-                                @foreach (var marca in filtro.MarcasDisponibles)
-                                {
-                                    <option value="@marca.IdPersona" selected="@(marca.IdPersona == filtro.IdMarca ? "selected" : null)">@marca.RazonSocial</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroEstadoExistencia">EstadoStock</label>
-                            <select id="filtroEstadoExistencia" name="estadoStock" class="form-control">
-                                @foreach (var estado in filtro.EstadosDisponibles)
-                                {
-                                    <option value="@estado" selected="@(string.Equals(estado, filtro.EstadoStock, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@estado</option>
-                                }
-                            </select>
+                        <div class="ex-ayuda">
+                            @if (movimientoDisponible)
+                            {
+                                <text><b>Salidas</b> = ventas + uso en elaborados, desde la fecha del período hasta ahora. <b>Días con venta</b> cuenta solo ventas. Cumple si alguna sucursal mostrada alcanza el mínimo.</text>
+                            }
+                            else
+                            {
+                                <text>No disponible con este motor de datos (solo Postgres).</text>
+                            }
                         </div>
                     </div>
                 </div>
             </form>
-        </div>
-    </div>
 
-    <div class="card shadow-sm mb-3 existencia-estado-card">
-        <div class="card-body py-3">
-            <div class="existencia-estado-grid">
-                <div class="existencia-estado-item">
-                    <span class="text-muted">Última actualización:</span>
-                    <strong id="lblUltimaActualizacionExistencia">-</strong>
+            @* ---------- Barra del pedido (solo visible con "Ingresar pedido" encendido) ---------- *@
+            <div class="ex-pedido-barra d-none" id="barraPedidoExistencia">
+                <div class="ex-pedido-leyenda">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    <span id="lblLeyendaPedidoExistencia">Cargando sugerencias…</span>
+                    <a href="#" id="lnkCambiarPeriodoPedido" class="ml-1">Cambiar</a>
+                    <span class="ex-pedido-ayuda ml-1" id="lblAyudaPedidoExistencia" tabindex="0" role="note"
+                          title="La sugerencia se calcula por sucursal: consumo del período (lo vendido más lo que se usó en elaborados desde la fecha elegida) menos el stock actual. Si el stock alcanza se avisa «stock suficiente». Ejemplo, pedidos cada 30 días: período desde hoy − 30; si se vendieron 80,500 y se usaron 12,000 en elaborados (92,500) y hay 40,000 de stock, se sugiere pedir 52,500. Las sugerencias no se cargan solas: las aceptás vos. Si el stock es negativo se toma como 0.">
+                        <i class="far fa-question-circle" aria-hidden="true"></i>
+                    </span>
                 </div>
-                <div class="existencia-estado-item existencia-estado-item-full">
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="switchAutoActualizarExistencia">
-                        <label class="custom-control-label" for="switchAutoActualizarExistencia">Autoactualizar stock</label>
+                <div class="ex-pedido-acciones">
+                    <div class="ex-ctl">
+                        <label class="ex-lbl-fijo" for="selSugerirSegunExistencia">Sugerir según</label>
+                        <select id="selSugerirSegunExistencia" class="form-control">
+                            <option value="consumo">Consumo − stock</option>
+                            <option value="punto">Hasta el punto de stock</option>
+                            <option value="mayor">El mayor de los dos</option>
+                        </select>
                     </div>
-                    <span id="lblAutoActualizarExistencia" class="small text-muted">Cada @intervaloAutoMinutos minutos, hasta 6 veces.</span>
+                    <div class="ex-ctl">
+                        <label class="ex-lbl-fijo">&nbsp;</label>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-primary" id="btnAceptarTodasExistencia"
+                                    title="Cargar las sugerencias en las celdas de todas las sucursales (solo los productos que se ven)">
+                                <i class="fas fa-magic mr-1"></i>Aceptar sugerencias
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" id="btnCompletarPuntoExistencia"
+                                    title="Cargar «hasta el punto de stock» solo en las celdas que están bajo el punto">
+                                <i class="fas fa-bullseye mr-1"></i>Completar bajo el punto <span id="lblCantBajoPuntoExistencia">(0)</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="btnLimpiarPedidoExistencia" title="Borrar todas las cantidades cargadas">
+                                <i class="fas fa-eraser mr-1"></i>Limpiar
+                            </button>
+                        </div>
+                    </div>
+                    <span class="ex-grow"></span>
+                    <div class="ex-ctl">
+                        <label class="ex-lbl-fijo">&nbsp;</label>
+                        <button type="button" class="btn btn-primary" id="btnGuardarPedidoExistencia" disabled
+                                title="Revisar el pedido antes de guardarlo (muestra solo los productos con cantidad)">
+                            <i class="fas fa-save mr-1"></i>Guardar pedido <span id="lblContadorPedidoExistencia" class="ex-pedido-contador">(0 productos)</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="existencia-estado-item">
-                    <span id="lblAvisoPendienteExistencia" class="text-warning d-none">Hay filtros sin aplicar.</span>
-                    <span id="lblEstadoConsultaExistencia" class="text-muted">Presioná Buscar para consultar stock.</span>
-                </div>
-                <div class="existencia-estado-item existencia-estado-item-right">
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="switchEstadoStockExistencia">
-                        <label class="custom-control-label" for="switchEstadoStockExistencia">Estado Stock</label>
-                    </div>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="switchExpandirExistencia">
-                        <label class="custom-control-label" for="switchExpandirExistencia">Expandir todos</label>
-                    </div>
+                <div class="ex-pedido-resumen">
+                    <span id="lblResumenCeldasPedido" class="ex-pedido-chip"></span>
+                    <span id="lblResumenTotalPedido" class="ex-pedido-chip ex-pedido-total"></span>
+                    <span id="lblEstadoBorradorPedido" class="text-muted small d-none"></span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-0" id="contenedorTablaExistenciaSucursales">
+        <div class="card-body ex-estado-linea">
+            <span class="ex-estado-item"><span class="text-muted">Actualizado:</span> <strong id="lblUltimaActualizacionExistencia">-</strong></span>
+            <span class="ex-estado-item text-success" id="lblAutoActualizarExistencia">Cada @intervaloAutoMinutos minutos, hasta 6 veces.</span>
+            <span class="ex-estado-item text-warning d-none" id="lblAvisoPendienteExistencia">Hay filtros sin aplicar.</span>
+            <span class="ex-estado-item text-muted" id="lblEstadoConsultaExistencia">Presioná Buscar para consultar stock.</span>
+            <span class="ex-estado-item text-muted" id="lblFechaMinimaExistencia"></span>
+            <span class="ex-grow"></span>
+            <span class="ex-estado-item text-muted" id="lblPieExistencia"></span>
+        </div>
+
+        <div class="p-0 ex-tabla-wrap" id="contenedorTablaExistenciaSucursales">
             @Html.Partial("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", Model)
         </div>
     </div>
 </div>
 
+@* Vista preliminar del pedido: solo los productos con cantidad cargada. El cuerpo lo arma existencia-pedido.js. *@
+<div class="modal fade" id="modalPreviaPedidoExistencia" tabindex="-1" role="dialog" aria-hidden="true" aria-labelledby="tituloPreviaPedidoExistencia">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="tituloPreviaPedidoExistencia"><i class="fas fa-clipboard-check mr-2"></i>Vista preliminar del pedido</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body p-0" id="cuerpoPreviaPedidoExistencia"></div>
+            <div class="modal-footer ex-previa-pie">
+                <div class="ex-previa-resumen" id="resumenPreviaPedidoExistencia"></div>
+                <div class="ex-previa-botones">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><i class="fas fa-arrow-left mr-1"></i>Volver a editar</button>
+                    @* Guarda con Pedidos/Guardar (modulo Pedidos, Fase 3) y abre el dialogo de ticket/PDF/mail/Excel de pedido-acciones.js. *@
+                    <button type="button" class="btn btn-success" id="btnConfirmarPedidoExistencia" title="Guardar el pedido tal como se ve en esta vista">
+                        <i class="fas fa-check mr-1"></i>Confirmar y guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@if (pedidoBorradorHabilitado)
+{
+    @Html.Partial("~/Views/Shared/_ModalBorradoresGenerico.cshtml", modalBorradoresData)
+}
+
 <style>
-    .existencia-sucursales-page .card-body {
-        padding: .82rem 1rem;
-    }
+    /* ---------- Base (diseño normal) ---------- */
+    .existencia-sucursales-page { font-size: .9rem; }
+    .existencia-sucursales-page .card-body { padding: .7rem .85rem; }
+    .existencia-popup-titulo { font-weight: 700; font-size: 1rem; }
 
-    .existencia-filtros-row-top,
-    .existencia-filtros-avanzados-grid,
-    .existencia-estado-grid {
-        display: grid;
-        gap: .65rem;
-    }
+    .ex-card { display: flex; flex-direction: column; overflow: visible; }
+    .ex-barra-wrap { order: 1; }
+    .ex-estado-linea { order: 2; display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; padding-top: 0 !important; font-size: .8rem; }
+    .ex-tabla-wrap { order: 3; }
 
-    .existencia-filtros-avanzados-grid {
-        margin-top: .65rem;
-    }
+    .ex-barra { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .55rem .6rem; }
+    .ex-ctl { display: flex; flex-direction: column; min-width: 0; }
+    .ex-ctl-sucursales { width: 13rem; }
+    .ex-ctl-texto { flex: 1 1 13rem; min-width: 10rem; }
+    .ex-grow { flex: 1 1 auto; }
+    .ex-sep { width: 1px; align-self: stretch; background: var(--ui-border, #dee2e6); margin: 0 .1rem; }
+    .ex-lbl, .ex-lbl-fijo { font-size: .74rem; color: var(--ui-text-muted, #6c757d); margin-bottom: .15rem; }
 
-    .existencia-check-wrap {
-        display: flex;
-        align-items: end;
-    }
-
-    .existencia-check {
-        padding-bottom: .38rem;
-    }
-
-    .existencia-popup-titulo {
-        font-weight: 700;
-        font-size: 1rem;
-    }
-
-    .existencia-estado-card {
-        border: 1px solid #e9ecef;
-        border-radius: .75rem;
-    }
-
-    .existencia-estado-item {
-        display: flex;
-        align-items: center;
-        gap: .4rem;
-        flex-wrap: wrap;
-    }
-
-    .existencia-estado-item-full {
-        grid-column: 1 / -1;
-        justify-content: flex-start;
-        order: 4;
-    }
-
-    .existencia-estado-item-right {
-        justify-content: flex-end;
-    }
-
-    .existencia-sucursales-page .stock-filtros-card .card-body {
-        padding: .72rem .85rem;
-    }
-
-    .existencia-sucursales-page .stock-filtros-card .form-control,
-    .existencia-sucursales-page .stock-filtros-card .btn {
-        min-height: 2.35rem;
-        font-size: .87rem;
-        padding: .32rem .62rem;
-    }
-
-    .existencia-sucursales-page .stock-filtro-label,
-    .existencia-sucursales-page .custom-control-label {
-        font-size: .76rem;
-    }
-
-    .existencia-sucursales-page .existencia-estado-card .card-body {
-        padding: .62rem .82rem !important;
-    }
-
-    .existencia-sucursales-page .existencia-estado-item,
-    .existencia-sucursales-page .existencia-estado-item .text-muted,
-    .existencia-sucursales-page .existencia-estado-item .small,
-    .existencia-sucursales-page #lblEstadoConsultaExistencia,
-    .existencia-sucursales-page #lblAvisoPendienteExistencia {
-        font-size: .8rem;
-    }
-
-    .existencia-sucursales-page .existencia-estado-item strong {
+    .existencia-sucursales-page .ex-barra .form-control,
+    .existencia-sucursales-page .ex-barra .btn,
+    .existencia-sucursales-page .ex-avanzados .form-control,
+    .existencia-sucursales-page .ex-avanzados .btn:not(.btn-sm),
+    .existencia-sucursales-page .ui-multiselect-toggle {
+        min-height: 2.15rem;
         font-size: .84rem;
+        padding: .28rem .6rem;
     }
 
-    @@media (min-width: 1200px) {
-        .existencia-sucursales-page .mb-3 {
-            margin-bottom: .85rem !important;
-        }
+    .ex-input-icon { position: relative; }
+    .ex-input-icon > i { position: absolute; left: .6rem; top: 50%; transform: translateY(-50%); color: var(--ui-text-muted, #6c757d); font-size: .8rem; pointer-events: none; }
+    .ex-input-icon > input { padding-left: 1.9rem; }
 
-        .existencia-sucursales-page .card-body {
-            padding: .7rem .85rem;
-        }
-
-        .existencia-sucursales-page .stock-filtros-card .card-body {
-            padding: .65rem .8rem;
-        }
-
-        .existencia-sucursales-page .stock-filtros-card .form-control,
-        .existencia-sucursales-page .stock-filtros-card .btn {
-            min-height: 2.15rem;
-            font-size: .84rem;
-            padding: .28rem .56rem;
-        }
-
-        .existencia-sucursales-page .existencia-estado-card .card-body {
-            padding: .52rem .74rem !important;
-        }
-
-        .existencia-sucursales-page .existencia-estado-item,
-        .existencia-sucursales-page .existencia-estado-item .text-muted,
-        .existencia-sucursales-page .existencia-estado-item .small,
-        .existencia-sucursales-page #lblEstadoConsultaExistencia,
-        .existencia-sucursales-page #lblAvisoPendienteExistencia {
-            font-size: .76rem;
-        }
-
-        .existencia-sucursales-page .existencia-estado-item strong {
-            font-size: .8rem;
-        }
-
-        .existencia-filtros-row-top {
-            grid-template-columns: 2fr 1fr auto;
-            align-items: end;
-        }
-
-        .existencia-filtros-avanzados-grid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-
-        .existencia-estado-grid {
-            grid-template-columns: 1fr 1.5fr auto;
-            align-items: center;
-        }
+    /* Interruptores en forma de "chip": el checkbox real (para el JS) queda oculto y la etiqueta se pinta como boton. */
+    .ex-chip { position: relative; display: inline-flex; }
+    .ex-chip-input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+    .ex-chip-texto {
+        display: inline-flex; align-items: center; margin: 0; cursor: pointer; user-select: none;
+        min-height: 2.15rem; padding: 0 .7rem; font-size: .8rem; white-space: nowrap;
+        border: 1px solid var(--ui-border-strong, #ced4da); border-radius: .55rem; background: var(--ui-surface, #fff); color: var(--ui-text, #212529);
     }
+    .ex-chip-texto:hover { border-color: var(--ui-primary, #2d5b8f); }
+    .ex-chip-input:checked + .ex-chip-texto { background: var(--ui-primary-soft, rgba(45, 91, 143, .12)); border-color: var(--ui-primary, #2d5b8f); color: var(--ui-primary, #2d5b8f); font-weight: 600; }
+    .ex-chip-input:focus-visible + .ex-chip-texto { outline: 2px solid var(--ui-primary, #2d5b8f); outline-offset: 1px; }
+    .ex-chip-detalle { margin-left: .25rem; font-weight: 400; font-variant-numeric: tabular-nums; }
 
-    @@media (min-width: 768px) and (max-width: 1199.98px) {
-        .existencia-filtros-row-top {
-            grid-template-columns: 2fr 1fr auto;
-            align-items: end;
-        }
-
-        .existencia-estado-grid {
-            grid-template-columns: 1fr 1.5fr auto;
-        }
-
-        .existencia-filtros-avanzados-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
+    /* ---------- Ingresar pedido ---------- */
+    /* Interruptor grande: >= 38 px de alto, ícono + texto, toda la etiqueta clickeable. Apagado = contorno; encendido = relleno.
+       Tambien en Compacto conserva su tamaño (no es un chip chico). */
+    .ex-pedido-toggle { position: relative; display: inline-flex; }
+    .ex-pedido-toggle-texto {
+        display: inline-flex; align-items: center; gap: .5rem; margin: 0; cursor: pointer; user-select: none; white-space: nowrap;
+        min-height: 2.6rem; padding: 0 1.15rem; font-size: .95rem; font-weight: 700; border-radius: .6rem;
+        border: 2px solid var(--ui-primary, #2d5b8f); background: var(--ui-surface, #fff); color: var(--ui-primary, #2d5b8f);
+        transition: background-color .12s, color .12s;
     }
+    .ex-pedido-toggle-texto:hover { background: var(--ui-primary-soft, rgba(45, 91, 143, .12)); }
+    /* !important: el tema global pinta las <label> con su propio color y dejaba el texto oscuro sobre el relleno. */
+    .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto,
+    .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto span { background-color: var(--ui-primary, #2d5b8f); color: #fff !important; }
+    .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto span { background-color: transparent; }
+    .ex-pedido-toggle .ex-pedido-toggle-texto { color: var(--ui-primary, #2d5b8f) !important; }
+    .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto { color: #fff !important; }
+    .ex-pedido-toggle .ex-chip-input:focus-visible + .ex-pedido-toggle-texto { outline: 3px solid var(--ui-primary, #2d5b8f); outline-offset: 2px; }
+    .ex-pedido-toggle .ex-pt-ico-on, .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto .ex-pt-ico-off { display: none; }
+    .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto .ex-pt-ico-on { display: inline-block; }
+    .existencia-compacto .ex-pedido-toggle-texto { min-height: 2.45rem; padding: 0 1rem; font-size: .9rem; }
+
+    /* Las columnas del pedido existen siempre en el HTML y se muestran solo con el modo encendido. */
+    .ex-col-pedir, .ex-pedido-fin { display: none; }
+    .existencia-pedido-on th.ex-col-pedir, .existencia-pedido-on td.ex-col-pedir,
+    .existencia-pedido-on th.ex-pedido-fin, .existencia-pedido-on td.ex-pedido-fin { display: table-cell; }
+    .existencia-pedido-on .ex-grupo .ex-btn-aceptar-suc.ex-col-pedir { display: inline-block; }
+
+    .ex-pedido-barra { margin-top: .6rem; padding: .55rem .7rem; border: 1px solid var(--ui-primary, #2d5b8f); border-radius: .6rem; background: var(--ui-primary-soft, rgba(45, 91, 143, .07)); }
+    .ex-pedido-barra.d-none { display: none !important; }
+    .ex-pedido-leyenda { font-size: .8rem; margin-bottom: .45rem; }
+    .ex-pedido-leyenda .ex-pedido-ayuda { cursor: help; color: var(--ui-text-muted, #6c757d); }
+    .ex-pedido-acciones { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .45rem .6rem; }
+    .ex-pedido-acciones .ex-ctl select { min-width: 12rem; }
+    .existencia-sucursales-page .ex-pedido-acciones .form-control,
+    .existencia-sucursales-page .ex-pedido-acciones .btn { min-height: 2.15rem; font-size: .84rem; padding: .28rem .6rem; }
+    .ex-pedido-resumen { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .6rem; margin-top: .45rem; font-size: .8rem; }
+    .ex-pedido-chip { display: inline-block; padding: .12rem .55rem; border-radius: 1rem; background: var(--ui-surface, #fff); border: 1px solid var(--ui-border, #dee2e6); }
+    .ex-pedido-chip:empty { display: none; }
+    .ex-pedido-total { font-weight: 700; }
+    .ex-pedido-contador { font-weight: 400; opacity: .9; }
+
+    .ex-btn-aceptar-suc { border: 0; background: transparent; color: var(--ui-primary, #2d5b8f); padding: 0 .3rem; margin-left: .25rem; line-height: 1; display: none; }
+    .ex-btn-aceptar-suc:hover { color: #198754; }
+
+    .ex-pedir-cell { min-width: 11rem; }
+    .ex-ped-celda { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .2rem .4rem; }
+    .existencia-sucursales-page input.ex-in-pedir { width: 6.2rem; text-align: right; font-variant-numeric: tabular-nums; padding: .15rem .4rem; height: auto; min-height: 1.7rem; font-size: .84rem; }
+    .existencia-sucursales-page input.ex-in-pedir.ex-in-invalido { border-color: #dc3545; background-color: rgba(220, 53, 69, .08); }
+    .existencia-sucursales-page input.ex-in-pedir.ex-in-cargada { border-color: var(--ui-primary, #2d5b8f); font-weight: 600; }
+    .ex-ped-eq { font-size: .72rem; color: var(--ui-text-muted, #7a838d); white-space: nowrap; }
+    .ex-ped-hint { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .2rem; }
+    .ex-ped-hint:empty { display: none; }
+    .ex-ped-hint .ex-pista, .ex-ped-hint .ex-chip-punto {
+        border: 1px dashed var(--ui-text-muted, #7a838d); background: transparent; border-radius: .9rem; padding: 0 .5rem; font-size: .72rem;
+        line-height: 1.5; color: var(--ui-text-soft, #5f6772); cursor: pointer; white-space: nowrap;
+    }
+    .ex-ped-hint .ex-pista:hover { border-color: var(--ui-primary, #2d5b8f); color: var(--ui-primary, #2d5b8f); }
+    .ex-ped-hint .ex-chip-punto { border-color: #b7791f; color: #8a5a12; }
+    .ex-ped-hint .ex-chip-punto:hover { background: rgba(183, 121, 31, .14); }
+    .ex-ped-hint .ex-suficiente { font-size: .72rem; color: #198754; white-space: nowrap; }
+    .ex-tp-eq { display: block; font-size: .72rem; color: var(--ui-text-muted, #7a838d); font-weight: 400; }
+    .ex-precio-cell { color: var(--ui-text-soft, #5f6772); }
+    .ex-precio-cell .ex-sinprecio { color: var(--ui-text-muted, #7a838d); font-size: .74rem; }
+    .existencia-compacto .ex-ped-celda { flex-wrap: nowrap; }
+    .existencia-compacto input.ex-in-pedir { min-height: 1.45rem; padding: .05rem .35rem; font-size: .78rem; }
+    .existencia-compacto .ex-tp-eq { display: inline; margin-left: .3rem; }
+    .existencia-compacto .ex-pedido-barra { margin-top: .35rem; padding: .35rem .5rem; }
+
+    /* Vista preliminar del pedido */
+    .ex-previa-tabla { font-size: .84rem; margin: 0; }
+    .ex-previa-tabla th { position: sticky; top: 0; background: var(--ui-table-head, #eceff3); z-index: 2; font-size: .72rem; text-transform: uppercase; }
+    .ex-previa-tabla td, .ex-previa-tabla th { padding: .35rem .6rem; vertical-align: middle; }
+    .ex-previa-aviso { color: #b7791f; cursor: help; margin-left: .3rem; }
+    .ex-previa-pie { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; }
+    .ex-previa-resumen { font-size: .84rem; }
+    .ex-previa-resumen b { font-variant-numeric: tabular-nums; }
 
     @@media (max-width: 767.98px) {
-        .existencia-filtros-row-top,
-        .existencia-filtros-avanzados-grid,
-        .existencia-estado-grid {
-            grid-template-columns: 1fr;
-        }
+        .ex-ctl-pedido { width: 100%; }
+        .ex-pedido-toggle, .ex-pedido-toggle-texto { width: 100%; justify-content: center; }
+        .ex-pedido-acciones .ex-ctl, .ex-pedido-acciones .btn-group { width: 100%; }
+        .ex-pedido-acciones .btn-group { flex-wrap: wrap; }
+    }
 
-        .existencia-estado-item-right {
-            justify-content: flex-start;
-        }
+    /* En modo oscuro el primario es un azul claro: el texto del interruptor encendido pasa a oscuro para conservar el contraste. */
+    html.dark-mode .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto { color: #0b1220 !important; }
+    html.dark-mode .ex-pedido-barra { background: rgba(125, 170, 220, .1); }
+    html.dark-mode .ex-pedido-chip { background: #273043; border-color: rgba(255, 255, 255, .18); }
+    html.dark-mode .ex-ped-hint .ex-suficiente { color: #6fd39a; }
+    html.dark-mode .ex-ped-hint .ex-chip-punto { color: #f2c46d; border-color: #f2c46d; }
+    html.dark-mode .ex-previa-aviso { color: #f2c46d; }
 
-        .stock-filtro-accion .btn {
-            min-height: 2.7rem;
-        }
+    /* ---------- Filtros avanzados (cerrados hasta que el usuario los abre) ---------- */
+    .ex-avanzados {
+        display: flex; flex-wrap: wrap; align-items: flex-start; gap: .6rem 1rem; margin-top: .6rem; padding-top: .6rem;
+        border-top: 1px dashed var(--ui-border, #dee2e6);
+    }
+    .ex-avanzados.d-none { display: none !important; }
+    .ex-ctl-ms { width: 13rem; }
+    .ex-ms-menu { min-width: 16rem; }
+    .ex-ms-menu .ex-ms-buscar { margin-bottom: .35rem; }
+    .ex-ms-lista { max-height: 13rem; overflow-y: auto; }
+    .ex-periodo { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+    .ex-periodo input[type=date] { width: 9.5rem; }
+    .ex-periodo-atajos { display: inline-flex; gap: .2rem; flex-wrap: wrap; }
+    .existencia-sucursales-page .ex-periodo-dias.active { background: var(--ui-primary, #2d5b8f) !important; color: #fff !important; border-color: var(--ui-primary, #2d5b8f) !important; }
+    .ex-movimiento { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+    .ex-movimiento .custom-control { margin: 0; }
+    .ex-mov-min { width: 5.5rem; }
+    .ex-mov-medida { width: 9.5rem; }
+    .ex-ayuda { font-size: .72rem; color: var(--ui-text-muted, #6c757d); max-width: 28rem; margin-top: .2rem; }
+
+    /* ---------- Tabla ---------- */
+    .ex-tabla-wrap .tabla-full { overflow: auto; }
+    .tabla-existencia-sucursales { width: max-content; min-width: 100%; font-size: .84rem; margin-bottom: 0; }
+    .tabla-existencia-sucursales th,
+    .tabla-existencia-sucursales td { vertical-align: middle; padding: .42rem .58rem; line-height: 1.2; }
+    .tabla-existencia-sucursales thead th {
+        font-size: .72rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+        position: sticky; top: 0; z-index: 4; background: var(--ui-table-head, #eceff3);
+    }
+    .tabla-existencia-sucursales thead th.ex-sortable { cursor: pointer; user-select: none; }
+    .tabla-existencia-sucursales thead th.ex-sortable:hover { color: var(--ui-primary, #2d5b8f); }
+    .tabla-existencia-sucursales thead th.ex-orden-asc::after { content: " ▲"; font-size: .65rem; }
+    .tabla-existencia-sucursales thead th.ex-orden-desc::after { content: " ▼"; font-size: .65rem; }
+    .tabla-existencia-sucursales thead th.ex-grupo { text-align: center; }
+
+    /* Las dos primeras columnas (Cod. y Producto) quedan fijas a la izquierda al desplazar. */
+    /* El ancho de "Cod." lo da el codigo mas largo (un codigo de barras entra en una linea): el JS lo mide y lo deja en --ex-cod-w
+       para que "Producto" quede pegado justo a su derecha. */
+    .ex-col-cod, .ex-col-cod-cell { position: sticky; left: 0; z-index: 3; min-width: 3.4rem; white-space: nowrap; text-align: left; color: var(--ui-text-soft, #5f6772); }
+    .ex-col-prod, .ex-col-prod-cell { position: sticky; left: var(--ex-cod-w, 4.8rem); z-index: 3; min-width: 12rem; box-shadow: inset -1px 0 0 var(--ui-border-strong, #ced4da); }
+    .ex-col-cod-cell, .ex-col-prod-cell { background-color: var(--ui-surface, #fff); }
+    .tabla-existencia-sucursales thead .ex-col-cod,
+    .tabla-existencia-sucursales thead .ex-col-prod { z-index: 6; background: var(--ui-table-head, #eceff3); }
+
+    /* Separador entre sucursales: doble linea + un tinte suave en las impares, para distinguirlas de un vistazo. */
+    .tabla-existencia-sucursales .ex-grupo-ini { border-left: 3px double var(--ui-text-muted, #7a838d) !important; }
+    .tabla-existencia-sucursales td.ex-alt,
+    .tabla-existencia-sucursales th.ex-alt { background-image: linear-gradient(rgba(128, 128, 128, .08), rgba(128, 128, 128, .08)); }
+    .ex-grupo-total { font-weight: 600; }
+
+    .existencia-producto-row { cursor: pointer; }
+    .existencia-producto-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-word; font-weight: 600; max-width: 25ch; }
+    .existencia-unidades { display: block; font-size: .72rem; color: #858796; }
+    .existencia-producto-completo { font-size: .78rem; color: #6c757d; margin-bottom: .6rem; }
+    .existencia-producto-completo strong { color: inherit; }
+
+    .ex-est { font-weight: 600; }
+    .ex-est-neg { color: #dc3545; }
+    .ex-est-falta { color: #dc3545; }
+    .ex-est-punto { color: #b7791f; }
+    .ex-est-ok { color: #198754; }
+    .ex-est-sin { color: var(--ui-text-muted, #7a838d); font-weight: 400; }
+    .ex-btn-pto {
+        border: 0; background: transparent; padding: 0 .25rem; margin-left: .15rem; color: var(--ui-text-muted, #7a838d);
+        font-size: .72rem; cursor: pointer; line-height: 1;
+    }
+    .ex-btn-pto:hover { color: var(--ui-primary, #2d5b8f); }
+
+    .existencia-detalle-box { background: #f8f9fc; overflow: hidden; }
+    .existencia-detalle-scroll-sync { max-width: 100%; max-height: 22rem; overflow: auto; }
+    .existencia-detalle-tabla { width: max-content; min-width: 100%; font-size: .79rem; }
+    .existencia-detalle-tabla th, .existencia-detalle-tabla td { white-space: nowrap; }
+    .existencia-detalle-tabla thead th { font-size: .67rem !important; line-height: 1.1; padding-top: .32rem; padding-bottom: .32rem; position: static; }
+    .existencia-detalle-destacado { background: #f4f8fc; font-weight: 600; }
+    .existencia-detalle-stockactual { background: #e7f1fb; font-weight: 700; }
+
+    /* Mini-editor del punto de stock (flota sobre la celda). */
+    .ex-pop-pto {
+        position: fixed; z-index: 2000; width: 16rem; padding: .65rem .75rem; border-radius: .7rem;
+        background: var(--ui-surface, #fff); border: 1px solid var(--ui-border-strong, #ced4da); box-shadow: 0 10px 28px rgba(15, 23, 42, .2);
+        font-size: .8rem;
+    }
+    .ex-pop-pto .ex-pop-titulo { font-weight: 600; margin-bottom: .1rem; }
+    .ex-pop-pto .ex-pop-sub { color: var(--ui-text-muted, #6c757d); margin-bottom: .4rem; }
+    .ex-pop-pto .ex-pop-fila { display: flex; gap: .35rem; }
+    .ex-pop-pto input { width: 6rem; text-align: right; }
+    .ex-pop-pto .ex-pop-error { color: #dc3545; margin-top: .3rem; min-height: 1rem; }
+
+    html.dark-mode .existencia-detalle-box { background: #273043; }
+    html.dark-mode .existencia-detalle-destacado { background: #2b394d; color: #f8f9fc; }
+    html.dark-mode .existencia-detalle-stockactual { background: #35506f; color: #fff; }
+    html.dark-mode .existencia-producto-completo,
+    html.dark-mode .existencia-unidades { color: rgba(255, 255, 255, .72); }
+    html.dark-mode .ex-est-neg, html.dark-mode .ex-est-falta { color: #ff8a8a; }
+    html.dark-mode .ex-est-ok { color: #6fd39a; }
+    html.dark-mode .ex-est-punto { color: #f2c46d; }
+
+    /* ---------- Diseño compacto: barra de una linea, filas de un renglon ---------- */
+    .existencia-compacto .ex-lbl { display: none; }
+    .existencia-compacto .ex-card > .card-body { padding: .3rem .5rem; }
+    .existencia-compacto .ex-barra { align-items: center; gap: .3rem .4rem; }
+    .existencia-compacto .ex-barra .form-control,
+    .existencia-compacto .ex-barra .btn,
+    .existencia-compacto .ui-multiselect-toggle,
+    .existencia-compacto .ex-chip-texto { min-height: 1.85rem; font-size: .78rem; padding: .12rem .5rem; }
+    .existencia-compacto .ex-chip-texto { padding: 0 .55rem; }
+    .existencia-compacto .ex-ctl-sucursales { width: 10.5rem; }
+    .existencia-compacto .ex-ctl-texto { flex: 1 1 9rem; min-width: 8rem; }
+    .existencia-compacto .btn-buscar-texto,
+    .existencia-compacto .ex-btn-texto { display: none; }
+    .existencia-compacto .ex-ctl-chip, .existencia-compacto .ex-ctl { justify-content: center; }
+    .existencia-compacto .ex-estado-linea { order: 4; padding: .15rem .6rem !important; font-size: .72rem; border-top: 1px solid var(--ui-border, #dee2e6); }
+    .existencia-compacto .ex-avanzados { margin-top: .35rem; padding-top: .35rem; }
+    .existencia-compacto .tabla-existencia-sucursales { font-size: .78rem; }
+    .existencia-compacto .tabla-existencia-sucursales th,
+    .existencia-compacto .tabla-existencia-sucursales td { padding: .1rem .42rem; line-height: 1.25; }
+    .existencia-compacto .tabla-existencia-sucursales thead th { font-size: .66rem; padding-top: .18rem; padding-bottom: .18rem; }
+    .existencia-compacto .existencia-producto-desc { display: block; white-space: nowrap; text-overflow: ellipsis; max-width: 24rem; font-weight: 500; }
+    .existencia-compacto .existencia-unidades { display: inline; margin-left: .3rem; }
+    .existencia-compacto .ex-col-prod, .existencia-compacto .ex-col-prod-cell { min-width: 14rem; max-width: 24rem; }
+    .existencia-compacto .ex-col-cod, .existencia-compacto .ex-col-cod-cell { min-width: 3rem; }
+    .existencia-compacto .existencia-col-toggle-cell { padding: 0 .3rem; }
+
+    @@media (max-width: 767.98px) {
+        .ex-barra { align-items: stretch; }
+        .ex-ctl-sucursales, .ex-ctl-texto, .ex-ctl-ms { width: 100%; flex: 1 1 100%; }
+        /* En pantallas chicas solo "Cod." queda fijo: dos columnas fijas se comerian casi todo el ancho. */
+        .ex-col-prod, .ex-col-prod-cell { position: static; min-width: 9rem; }
+        .existencia-compacto .ex-col-prod, .existencia-compacto .ex-col-prod-cell { min-width: 9rem; max-width: 14rem; }
+        .existencia-producto-desc { max-width: 15ch; }
     }
 </style>
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
     <script>
-        (function () {
-            // Ventana independiente (helper compartido ventana-independiente.js): un nombre fijo por pantalla,
-            // asi un segundo click reutiliza la ventana ya abierta (la recarga y la trae al frente).
-            var VENTANA_URL = '@Url.Action("ExistenciaPorSucursales", "Stock", new { popup = true })';
-            var VENTANA_NOMBRE = 'existenciaPorSucursales';
-            $("#btnAbrirVentanaExistencia").on("click", function () {
-                window.abrirVentanaIndependiente(VENTANA_URL, VENTANA_NOMBRE);
-            });
+        // Configuracion que el JS de la pantalla no puede saber solo: URLs, flags del servidor y limites de config.
+        window.ExistenciaConfig = {
+            popup: @(popup ? "true" : "false"),
+            ventanaUrl: '@Url.Action("ExistenciaPorSucursales", "Stock", new { popup = true })',
+            ventanaNombre: 'existenciaPorSucursales',
+            buscarUrl: '@Url.Action("BuscarExistenciaPorSucursales", "Stock")',
+            exportarUrl: '@Url.Action("ExportarExistencia", "Stock")',
+            fechaMinimaUrl: '@Url.Action("ObtenerFechaMinimaExistencia", "Stock")',
+            guardarPuntoUrl: '@Url.Action("GuardarPuntosStockSucursal", "Productos")',
+            intervaloAutoMinutos: @intervaloAutoMinutos,
+            maxAutoActualizaciones: 6,
+            jitterInicialMaxSegundos: @jitterInicialMaxSegundos,
+            reintentoCargaSegundos: @reintentoCargaSegundos,
+            movimientoDisponible: @(movimientoDisponible ? "true" : "false")
+        };
 
-            var buscarUrl = '@Url.Action("BuscarExistenciaPorSucursales", "Stock")';
-            var fechaMinimaUrl = '@Url.Action("ObtenerFechaMinimaExistencia", "Stock")';
-            var $form = $("#formExistenciaSucursales");
-            var $fechaHasta = $("#filtroFechaHastaExistencia");
-            var $lblFechaMinima = $("#lblFechaMinimaExistencia");
-            var $contenedor = $("#contenedorTablaExistenciaSucursales");
-            var $btnBuscar = $("#btnBuscarExistencia");
-            var $btnBuscarTexto = $btnBuscar.find(".btn-buscar-texto");
-            var $lblUltima = $("#lblUltimaActualizacionExistencia");
-            var $lblPendiente = $("#lblAvisoPendienteExistencia");
-            var $lblEstado = $("#lblEstadoConsultaExistencia");
-            var $switchExpandir = $("#switchExpandirExistencia");
-            var $switchEstadoStock = $("#switchEstadoStockExistencia");
-            var $switchAuto = $("#switchAutoActualizarExistencia");
-            var $lblAuto = $("#lblAutoActualizarExistencia");
-            var consultaAplicada = null;
-            var sincronizandoScrollDetalle = false;
-            var ultimoToqueDetalle = { target: "", time: 0 };
-            var intervaloAutoMinutos = @intervaloAutoMinutos;
-            var maxAutoActualizaciones = 6;
-            var autoActualizacionesEjecutadas = 0;
-            var autoActualizacionTimer = null;
-            var autoActualizacionCountdownTimer = null;
-            var autoActualizacionProximaEjecucion = null;
-            var autoActualizacionDisparadaPorTimer = false;
-
-            var $chkSucursales = $(".chk-sucursal-existencia");
-            var $chkTodasSucursales = $("#chkSucursalTodasExistencia");
-            var $lblSucursales = $("#lblSucursalesExistencia");
-
-            // Ids de las sucursales tildadas (siempre al menos una, ver sincronizarSucursales).
-            function obtenerIdsSucursalesTildadas() {
-                return $chkSucursales.filter(":checked").map(function () { return this.value; }).get();
-            }
-
-            // Texto del boton: "Todas", el nombre si hay una sola, o "N sucursales".
-            function actualizarTextoSucursales() {
-                var tildadas = $chkSucursales.filter(":checked");
-                var texto;
-                if (tildadas.length === $chkSucursales.length) texto = "Todas";
-                else if (tildadas.length === 1) texto = tildadas.first().data("nombre");
-                else texto = tildadas.length + " sucursales";
-                $lblSucursales.text(texto);
-                // Tooltip con los nombres de las tildadas (el texto del boton puede quedar cortado).
-                $("#btnSucursalesExistencia").attr("title", tildadas.map(function () { return $(this).data("nombre"); }).get().join(", "));
-            }
-
-            // Mantiene el checkbox "Todas" coherente con los individuales y evita dejar 0 tildadas.
-            function sincronizarSucursales(origen) {
-                if (origen === "todas") {
-                    // Tildar "Todas" marca todas; destildarla no se permite (quedaria vacio).
-                    $chkSucursales.prop("checked", true);
-                    $chkTodasSucursales.prop("checked", true);
-                } else if ($chkSucursales.filter(":checked").length === 0) {
-                    // Intento de destildar la ultima: se revierte.
-                    $(origen).prop("checked", true);
-                }
-                $chkTodasSucursales.prop("checked", $chkSucursales.filter(":checked").length === $chkSucursales.length);
-                actualizarTextoSucursales();
-            }
-
-            function obtenerEstadoConsulta() {
-                return {
-                    texto: ($("#filtroTextoExistencia").val() || "").trim(),
-                    idsSucursales: obtenerIdsSucursalesTildadas(),
-                    fechaHasta: $("#filtroFechaHastaExistencia").val() || "",
-                    tipo: $("#filtroTipoExistencia").val() || "",
-                    idProveedor: $("#filtroProveedorExistencia").val() || "0",
-                    idMarca: $("#filtroMarcaExistencia").val() || "0"
-                };
-            }
-
-            function estadosIguales(a, b) {
-                return JSON.stringify(a) === JSON.stringify(b);
-            }
-
-            // El calculo de existencia parte siempre del ultimo cierre de stock registrado, sin
-            // importar que "Fecha hasta" se pida -- por eso no tiene sentido dejar elegir una fecha
-            // anterior a ese cierre (daria un resultado incorrecto, ver docs/DECISIONS.md). Esto
-            // actualiza el limite (atributo "min" del selector + el texto de ayuda) cada vez que
-            // cambia la sucursal elegida, sin esperar a que se presione Buscar.
-            function actualizarFechaMinimaExistencia() {
-                var idsSucursales = obtenerIdsSucursalesTildadas();
-
-                $.ajax({
-                    url: fechaMinimaUrl,
-                    type: "GET",
-                    traditional: true, // idsSucursales=1&idsSucursales=3 (sin corchetes) para int[]
-                    data: { idsSucursales: idsSucursales }
-                }).done(function (resp) {
-                    if (!resp || !resp.ok) return;
-
-                    $fechaHasta.attr("min", resp.fechaMinima || "");
-
-                    if (resp.fechaMinima && $fechaHasta.val() && $fechaHasta.val() < resp.fechaMinima) {
-                        $fechaHasta.val(resp.fechaMinima);
-                    }
-
-                    if (resp.fechaMinima) {
-                        var fechaCorta = resp.fechaMinima.split("T")[0].split("-").reverse().join("/");
-                        var detalle = (resp.detalle || []).map(function (d) { return d.Sucursal + ": " + d.fecha; }).join(" · ");
-                        $lblFechaMinima.text("— Cálculo desde " + fechaCorta).attr("title", detalle);
-                    } else {
-                        $lblFechaMinima.text("— sin cierre de stock registrado").attr("title", "");
-                    }
-                });
-            }
-
-            function actualizarPendiente() {
-                if (!consultaAplicada) {
-                    $lblPendiente.addClass("d-none");
-                    return;
-                }
-
-                var pendiente = !estadosIguales(consultaAplicada, obtenerEstadoConsulta());
-                $lblPendiente.toggleClass("d-none", !pendiente);
-            }
-
-            function aplicarExpandidoGlobal() {
-                var expandir = $switchExpandir.is(":checked");
-                $contenedor.find(".existencia-detalle-row").each(function () {
-                    var $fila = $(this);
-                    var visiblePadre = !$fila.prev(".existencia-producto-row").hasClass("d-none");
-                    $fila.toggleClass("d-none", !(expandir && visiblePadre));
-                });
-
-                $contenedor.find(".btn-toggle-existencia i").toggleClass("fa-minus-square", expandir).toggleClass("fa-plus-square", !expandir);
-            }
-
-            function aplicarEstadoStockExistencia() {
-                var mostrar = $switchEstadoStock.is(":checked");
-                $contenedor.find(".existencia-dif-col, .existencia-col-estadostock").toggleClass("d-none", !mostrar);
-            }
-
-            function toggleDetalleExistencia(target) {
-                var $detalle = target ? $(target) : $();
-                if (!$detalle.length) return;
-                var expandido = !$detalle.hasClass("d-none");
-                $detalle.toggleClass("d-none", expandido);
-                $('.btn-toggle-existencia[data-target="' + target + '"]')
-                    .find("i")
-                    .toggleClass("fa-plus-square", expandido)
-                    .toggleClass("fa-minus-square", !expandido);
-            }
-
-            function aplicarFiltrosVisuales() {
-                var texto = ($("#filtroTextoExistencia").val() || "").trim().toUpperCase();
-                var estado = ($("#filtroEstadoExistencia").val() || "Todos").trim().toUpperCase();
-
-                $contenedor.find(".existencia-producto-row").each(function () {
-                    var $row = $(this);
-                    var textoRow = ($row.attr("data-texto") || "").toUpperCase();
-                    var estados = ($row.attr("data-estados") || "").toUpperCase().split("|");
-                    var coincideTexto = !texto || textoRow.indexOf(texto) >= 0;
-                    var coincideEstado = estado === "TODOS" || estados.indexOf(estado) >= 0;
-                    var visible = coincideTexto && coincideEstado;
-                    var target = $row.attr("data-detail-target");
-                    var $detalle = target ? $(target) : $();
-
-                    $row.toggleClass("d-none", !visible);
-                    if (!visible) {
-                        $detalle.addClass("d-none");
-                    }
-                });
-
-                aplicarExpandidoGlobal();
-            }
-
-            function setBuscando(buscando) {
-                $btnBuscar.prop("disabled", buscando);
-                $btnBuscarTexto.text(buscando ? "Buscando..." : "Buscar");
-            }
-
-            function limpiarTimerAutoActualizacion() {
-                if (autoActualizacionTimer) {
-                    window.clearTimeout(autoActualizacionTimer);
-                    autoActualizacionTimer = null;
-                }
-
-                if (autoActualizacionCountdownTimer) {
-                    window.clearInterval(autoActualizacionCountdownTimer);
-                    autoActualizacionCountdownTimer = null;
-                }
-
-                autoActualizacionProximaEjecucion = null;
-            }
-
-            function actualizarTextoAutoActualizacion() {
-                if (!$switchAuto.is(":checked")) {
-                    $lblAuto
-                        .removeClass("text-success text-warning")
-                        .addClass("text-muted")
-                        .text("Cada " + intervaloAutoMinutos + " minutos, hasta 6 veces.");
-                    return;
-                }
-
-                var restantes = Math.max(0, maxAutoActualizaciones - autoActualizacionesEjecutadas);
-                if (!autoActualizacionProximaEjecucion) {
-                    $lblAuto
-                        .removeClass("text-muted text-warning")
-                        .addClass("text-success")
-                        .text("Autoactualización activa. Restan " + restantes + " ejecuciones.");
-                    return;
-                }
-
-                var msRestantes = Math.max(0, autoActualizacionProximaEjecucion - new Date().getTime());
-                var totalSegundos = Math.ceil(msRestantes / 1000);
-                var minutos = Math.floor(totalSegundos / 60);
-                var segundos = totalSegundos % 60;
-
-                $lblAuto
-                    .removeClass("text-muted text-warning")
-                    .addClass("text-success")
-                    .text("Autoactualización activa. Próxima en " + minutos + ":" + String(segundos).padStart(2, "0") + ". Restan " + restantes + " ejecuciones.");
-            }
-
-            function notificarAutoActualizacionDesactivada() {
-                var mensaje = "La actualización automática de stock fue desactivada. Volvé a activarla si la necesitás.";
-                $lblEstado.text(mensaje);
-                $lblAuto
-                    .removeClass("text-muted text-success")
-                    .addClass("text-warning")
-                    .text(mensaje);
-
-                if (window.Swal && typeof window.Swal.fire === "function") {
-                    window.Swal.fire({
-                        icon: "info",
-                        title: "Autoactualización desactivada",
-                        text: mensaje
-                    });
+        // "Ingresar pedido" (existencia-pedido.js): URLs, disponibilidad del motor y config del autoguardado en servidor (borradores).
+        window.ExistenciaPedidoConfig = {
+            disponible: @(pedidoDisponible ? "true" : "false"),
+            consumoUrl: '@Url.Action("ConsumoPeriodo", "Stock")',
+            preciosUrl: '@Url.Action("UltimosPreciosCompra", "Stock")',
+            guardarUrl: '@Url.Action("Guardar", "Pedidos")',
+            // De donde sale el importe estimado: textos y limite de "precio viejo" de una sola fuente (Negocio.PedidoTextos / Pedidos:DiasPrecioViejo).
+            precios: {
+                aclaracion: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Negocio.PedidoTextos.AclaracionPrecio)),
+                etiquetaTotal: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Negocio.PedidoTextos.EtiquetaTotal(0))),
+                etiquetaTotalParcial: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Negocio.PedidoTextos.EtiquetaTotal(1))),
+                diasPrecioViejo: @WebCore.Helpers.PedidoPrecioSettings.DiasPrecioViejo,
+                avisoPrecioViejo: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Negocio.PedidoTextos.AvisoPrecioViejo(WebCore.Helpers.PedidoPrecioSettings.DiasPrecioViejo)))
+            },
+            borrador: {
+                habilitado: @(pedidoBorradorHabilitado ? "true" : "false"),
+                modulo: '@Entidades.BorradorGenerico.ModuloPedidoStock',
+                idSucursal: @(ViewBag.PedidoIdSucursalBorrador is int idSucBorrador ? idSucBorrador : 0),
+                idOperador: @(ViewBag.PedidoIdOperador is int idOpBorrador ? idOpBorrador : 0),
+                nombreOperador: @Html.Raw(System.Text.Json.JsonSerializer.Serialize((ViewBag.PedidoNombreOperador as string) ?? "")),
+                latidoSegundos: @WebCore.Helpers.BorradorGenericoSettings.LatidoSegundos,
+                maxLineas: @WebCore.Helpers.BorradorGenericoSettings.MaxLineas,
+                urls: {
+                    guardar: '@Url.Action("GuardarBorrador", "BorradoresGenerico")',
+                    evento: '@Url.Action("EventoBorrador", "BorradoresGenerico")',
+                    listar: '@Url.Action("ListarBorradores", "BorradoresGenerico")',
+                    recuperar: '@Url.Action("RecuperarBorrador", "BorradoresGenerico")',
+                    descartar: '@Url.Action("DescartarBorrador", "BorradoresGenerico")',
+                    marcarFinalizado: '@Url.Action("MarcarFinalizado", "BorradoresGenerico")'
                 }
             }
-
-            function desactivarAutoActualizacion(informarUsuario) {
-                limpiarTimerAutoActualizacion();
-                autoActualizacionesEjecutadas = 0;
-                $switchAuto.prop("checked", false);
-                actualizarTextoAutoActualizacion();
-
-                if (informarUsuario) {
-                    notificarAutoActualizacionDesactivada();
-                }
-            }
-
-            function programarProximaAutoActualizacion() {
-                limpiarTimerAutoActualizacion();
-
-                if (!$switchAuto.is(":checked")) {
-                    actualizarTextoAutoActualizacion();
-                    return;
-                }
-
-                if (autoActualizacionesEjecutadas >= maxAutoActualizaciones) {
-                    desactivarAutoActualizacion(true);
-                    return;
-                }
-
-                autoActualizacionProximaEjecucion = new Date().getTime() + (intervaloAutoMinutos * 60 * 1000);
-                autoActualizacionTimer = window.setTimeout(function () {
-                    autoActualizacionTimer = null;
-
-                    if (!$switchAuto.is(":checked")) {
-                        actualizarTextoAutoActualizacion();
-                        return;
-                    }
-
-                    autoActualizacionDisparadaPorTimer = true;
-                    $form.trigger("submit");
-                }, intervaloAutoMinutos * 60 * 1000);
-
-                autoActualizacionCountdownTimer = window.setInterval(actualizarTextoAutoActualizacion, 1000);
-                actualizarTextoAutoActualizacion();
-            }
-
-            function ahoraLocalInput() {
-                var ahora = new Date();
-                var off = ahora.getTimezoneOffset();
-                var local = new Date(ahora.getTime() - (off * 60000));
-                return local.toISOString().slice(0, 16);
-            }
-
-            function actualizarUltimaActualizacion() {
-                var ahora = new Date();
-                var dd = String(ahora.getDate()).padStart(2, "0");
-                var mm = String(ahora.getMonth() + 1).padStart(2, "0");
-                var yyyy = ahora.getFullYear();
-                var hh = String(ahora.getHours()).padStart(2, "0");
-                var mi = String(ahora.getMinutes()).padStart(2, "0");
-                var ss = String(ahora.getSeconds()).padStart(2, "0");
-                $lblUltima.text(dd + "/" + mm + "/" + yyyy + " " + hh + ":" + mi + ":" + ss);
-            }
-
-            function vincularScrollDetalles() {
-                $contenedor.find(".existencia-detalle-scroll-sync")
-                    .off("scroll.syncDetalle")
-                    .on("scroll.syncDetalle", function () {
-                        if (sincronizandoScrollDetalle) {
-                            return;
-                        }
-
-                        sincronizandoScrollDetalle = true;
-                        var scrollLeft = this.scrollLeft;
-
-                        $contenedor.find(".existencia-detalle-scroll-sync").not(this).each(function () {
-                            this.scrollLeft = scrollLeft;
-                        });
-
-                        sincronizandoScrollDetalle = false;
-                    });
-            }
-
-            $form.on("submit", function (e) {
-                e.preventDefault();
-                // Fecha hasta siempre se recalcula al momento exacto de la busqueda (manual o
-                // autoactualizada) -- unico punto de entrada para ambos triggers, ya que la
-                // autoactualizacion tambien dispara este mismo submit.
-                $("#filtroFechaHastaExistencia").val(ahoraLocalInput());
-                setBuscando(true);
-                $lblEstado.text("Consultando stock...");
-
-                $.ajax({
-                    url: buscarUrl,
-                    type: "GET",
-                    // #filtroTextoExistencia ya no es descendiente de $form (vive arriba de la
-                    // tabla) -- $form.serialize() no lo incluiria, y el servidor si lo usa como
-                    // filtro real (LIKE en el SP), asi que se agrega a mano.
-                    data: $form.serialize() + "&texto=" + encodeURIComponent($("#filtroTextoExistencia").val() || "")
-                }).done(function (html) {
-                    $contenedor.html(html);
-                    consultaAplicada = obtenerEstadoConsulta();
-                    actualizarUltimaActualizacion();
-                    actualizarPendiente();
-                    aplicarFiltrosVisuales();
-                    aplicarEstadoStockExistencia();
-                    vincularScrollDetalles();
-                    if ($switchAuto.is(":checked") && autoActualizacionDisparadaPorTimer) {
-                        autoActualizacionesEjecutadas += 1;
-                        $lblEstado.text("Consulta actualizada. Autoactualización " + autoActualizacionesEjecutadas + " de " + maxAutoActualizaciones + ".");
-                    } else {
-                        $lblEstado.text("Consulta actualizada.");
-                    }
-                }).fail(function () {
-                    $contenedor.html('<div class="alert alert-danger m-3 mb-0">No se pudo consultar la existencia por sucursales.</div>');
-                    $lblEstado.text("Ocurrió un error al consultar stock.");
-                }).always(function () {
-                    var ejecucionAutomatica = autoActualizacionDisparadaPorTimer;
-                    autoActualizacionDisparadaPorTimer = false;
-                    setBuscando(false);
-                    if ($switchAuto.is(":checked")) {
-                        if (ejecucionAutomatica && autoActualizacionesEjecutadas >= maxAutoActualizaciones) {
-                            desactivarAutoActualizacion(true);
-                        } else {
-                            programarProximaAutoActualizacion();
-                        }
-                    } else {
-                        actualizarTextoAutoActualizacion();
-                    }
-                });
-            });
-
-            $(document).on("click", ".btn-toggle-existencia", function (e) {
-                e.stopPropagation();
-                var target = $(this).attr("data-target");
-                toggleDetalleExistencia(target);
-            });
-
-            $(document).on("dblclick", ".existencia-producto-row", function (e) {
-                if ($(e.target).closest(".btn-toggle-existencia").length) return;
-                toggleDetalleExistencia($(this).attr("data-detail-target"));
-            });
-
-            $(document).on("touchend", ".existencia-producto-row", function (e) {
-                if ($(e.target).closest(".btn-toggle-existencia").length) return;
-
-                var ahora = new Date().getTime();
-                var target = $(this).attr("data-detail-target") || "";
-                var esDobleToque = ultimoToqueDetalle.target === target && (ahora - ultimoToqueDetalle.time) <= 350;
-
-                ultimoToqueDetalle = {
-                    target: target,
-                    time: ahora
-                };
-
-                if (!esDobleToque) return;
-
-                e.preventDefault();
-                toggleDetalleExistencia(target);
-                ultimoToqueDetalle = { target: "", time: 0 };
-            });
-
-            $switchExpandir.on("change", aplicarExpandidoGlobal);
-            $switchEstadoStock.on("change", aplicarEstadoStockExistencia);
-            $switchAuto.on("change", function () {
-                if ($(this).is(":checked")) {
-                    autoActualizacionesEjecutadas = 0;
-                    $lblEstado.text("Autoactualización activada. Se actualizará cada " + intervaloAutoMinutos + " minutos hasta 6 veces.");
-                    programarProximaAutoActualizacion();
-                } else {
-                    limpiarTimerAutoActualizacion();
-                    autoActualizacionesEjecutadas = 0;
-                    actualizarTextoAutoActualizacion();
-                    if (consultaAplicada) {
-                        $lblEstado.text("Autoactualización desactivada.");
-                    }
-                }
-            });
-
-            $(".chk-sucursal-existencia, #filtroFechaHastaExistencia, #filtroTipoExistencia, #filtroProveedorExistencia, #filtroMarcaExistencia")
-                .on("input change", function () {
-                    actualizarPendiente();
-                    aplicarFiltrosVisuales();
-                });
-
-            // #filtroTextoExistencia vive dentro del contenedor que se reemplaza entero por AJAX
-            // en cada Buscar (ver el "done" del submit mas abajo) -- un binding directo como el de
-            // arriba quedaria huerfano despues del primer refresh. Delegado sobre $contenedor, que
-            // si persiste (solo se le reemplaza el innerHTML).
-            $contenedor.on("input change", "#filtroTextoExistencia", function () {
-                actualizarPendiente();
-                aplicarFiltrosVisuales();
-            });
-
-            // Mismo patron toggle+input colapsable que #btnToggleBusquedaLineasStock en
-            // Stock/Editar -- tambien delegado sobre $contenedor por la misma razon de arriba.
-            $contenedor.on("click", "#btnToggleBusquedaExistencia", function () {
-                var $btn = $(this);
-                var $input = $contenedor.find("#filtroTextoExistencia");
-                var mostrar = $input.hasClass("d-none");
-                $input.toggleClass("d-none", !mostrar);
-                $btn.attr("aria-expanded", mostrar ? "true" : "false");
-
-                if (mostrar) {
-                    $input.focus();
-                } else {
-                    $input.val("");
-                    actualizarPendiente();
-                    aplicarFiltrosVisuales();
-                }
-            });
-
-            // El menu no se cierra al tildar (si no, habria que reabrirlo por cada sucursal).
-            $("#menuSucursalesExistencia").on("click", function (e) { e.stopPropagation(); });
-
-            // Los listeners de abajo (pendiente/filtros visuales) ya estan atados a .chk-sucursal-existencia;
-            // este corre ademas para mantener "Todas", el texto del boton y el limite de fecha.
-            $chkSucursales.on("change", function () {
-                sincronizarSucursales(this);
-                actualizarPendiente(); // otra vez: el handler generico corrio antes de revertir la ultima destildada
-                actualizarFechaMinimaExistencia();
-            });
-            $chkTodasSucursales.on("change", function () {
-                sincronizarSucursales("todas");
-                actualizarPendiente();
-                actualizarFechaMinimaExistencia();
-            });
-            actualizarTextoSucursales();
-
-            $("#filtroEstadoExistencia").on("change", aplicarFiltrosVisuales);
-
-            $("#switchFiltrosAvanzadosExistencia").on("change", function () {
-                $("#panelFiltrosAvanzadosExistencia").toggleClass("d-none", !$(this).is(":checked"));
-            });
-
-            aplicarFiltrosVisuales();
-            aplicarEstadoStockExistencia();
-            vincularScrollDetalles();
-            actualizarTextoAutoActualizacion();
-        })();
+        };
     </script>
+    <script src="@Url.Content("~/Scripts/app/existencia-sucursales.js")" asp-append-version="true"></script>
+    @* Antes de existencia-pedido.js: el modulo del pedido usa window.BorradorGenerico (autoguardado en servidor) y, tras guardar,
+       window.PedidoAcciones (ticket, PDF, mail y Excel; pedido-acciones.js). El ticket lo imprime ticket-print.js: _Layout ya lo trae,
+       _LayoutEmbed (ventana independiente) no. *@
+    <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
+    @if (popup)
+    {
+        <script src="@Url.Content("~/Scripts/app/ticket-print.js")" asp-append-version="true"></script>
+    }
+    <script src="@Url.Content("~/Scripts/app/pedido-acciones.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/existencia-pedido.js")" asp-append-version="true"></script>
 }

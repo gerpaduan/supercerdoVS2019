@@ -1,0 +1,155 @@
+@model Entidades.Pedido
+@using System.Globalization
+@using System.Linq
+
+@*
+    Modificar un pedido guardado: cambiar cantidades por sucursal, quitar productos y agregar otros. Las lineas que ya estaban MANTIENEN su precio de
+    ultima compra guardado (solo cambia la cantidad); las lineas nuevas quedan sin precio. Un usuario de produccion necesita ademas el usuario y la
+    clave de una persona autorizada (se piden al guardar; queda en el historial). Control optimista: si otra persona lo modifico mientras se editaba,
+    el servidor lo rechaza. Logica en wwwroot/Scripts/app/pedidos-editar.js. Docs: docs/DECISIONS.md (2026-10-19, Pedidos).
+*@
+
+@{
+    ViewBag.Title = "Modificar pedido N° " + Model.Id;
+    var sucursales = ViewBag.Sucursales as System.Collections.Generic.List<Entidades.Sucursal> ?? new System.Collections.Generic.List<Entidades.Sucursal>();
+    long version = ViewBag.Version is long v ? v : 0L;
+    bool requiereAutorizacion = ViewBag.RequiereAutorizacion is bool ra && ra;
+    var pivot = WebCore.Services.PedidoPivot.Construir(Model);
+    var cultura = new CultureInfo("es-AR");
+    // Cantidades que se muestran con coma decimal (como en el resto del sistema); los datos para calcular viajan con punto.
+    string Cant(decimal valor) => valor.ToString("0.###", cultura);
+    string Inv(decimal valor) => valor.ToString("0.####", CultureInfo.InvariantCulture);
+}
+
+<div class="container-fluid pedido-editar-page"
+     data-id="@Model.Id" data-version="@version" data-requiere-autorizacion="@(requiereAutorizacion ? "1" : "0")"
+     data-guardar-url="@Url.Action("Modificar", "Pedidos", new { id = Model.Id })"
+     data-detalle-url="@Url.Action("Detalle", "Pedidos", new { id = Model.Id })"
+     data-buscar-producto-url="@Url.Action("BuscarCorte", "Stock")">
+    @Html.AntiForgeryToken()
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-start" style="gap:.75rem">
+                <div>
+                    <h5 class="mb-1">Modificar pedido N° @Model.Id</h5>
+                    <div class="small text-muted">
+                        @Model.Fecha.ToString("dd/MM/yyyy HH:mm", cultura) · hecho por @Model.Usuario. Los productos que ya estaban conservan su precio de última compra; los que agregues quedan sin precio.
+                    </div>
+                    @if (requiereAutorizacion)
+                    {
+                        <div class="small text-warning mt-1"><i class="fas fa-lock mr-1"></i>Al guardar se va a pedir el usuario y la contraseña de una persona autorizada.</div>
+                    }
+                </div>
+                <div class="text-right">
+                    <div class="small text-muted" id="pedTotalEtiqueta" data-etiqueta="@Negocio.PedidoTextos.EtiquetaTotal(0)" data-etiqueta-parcial="@Negocio.PedidoTextos.EtiquetaTotal(1)">@Negocio.PedidoTextos.EtiquetaTotal(Model.LineasSinPrecio)</div>
+                    <div class="h5 mb-0" id="pedTotalEstimado">$ 0,00</div>
+                    <div class="small text-warning d-none" id="pedSinPrecio"></div>
+                </div>
+            </div>
+
+            <div class="form-group mt-3 mb-2">
+                <label for="pedNota" class="small mb-1">Nota (opcional)</label>
+                <input type="text" id="pedNota" class="form-control" maxlength="500" value="@Model.Nota" />
+            </div>
+
+            <div class="ped-agregar">
+                <label for="pedBuscarProducto" class="small mb-1">Agregar un producto</label>
+                <div class="position-relative">
+                    <input type="search" id="pedBuscarProducto" class="form-control" placeholder="Nombre o código del producto" autocomplete="off" />
+                    <div id="pedResultados" class="list-group ped-resultados d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0 pedido-tabla" id="tablaPedidoEditar">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Cód.</th>
+                            <th>Producto</th>
+                            @foreach (var s in sucursales)
+                            {
+                                <th class="text-right">@s.SucursalNombre</th>
+                            }
+                            <th class="text-right">Total</th>
+                            <th class="text-right">$ últ. compra</th>
+                            <th class="text-right">Importe est.</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoPedidoEditar">
+                        @foreach (var f in pivot.Filas)
+                        {
+                            <tr class="ped-fila" data-id-corte="@f.IdCorte"
+                                data-precio="@(f.Precio.HasValue ? Inv(f.Precio.Value) : "")"
+                                data-pesable="@(f.Pesable ? "1" : "0")" data-promedio="@(f.Promedio.HasValue ? Inv(f.Promedio.Value) : "")">
+                                <td class="text-muted">@f.Codigo</td>
+                                <td>@f.Producto</td>
+                                @foreach (var s in sucursales)
+                                {
+                                    int idx = pivot.Sucursales.FindIndex(x => x.IdSucursal == s.IdSucursal);
+                                    decimal? cantidad = idx >= 0 ? f.Cantidades[idx] : null;
+                                    <td class="text-right">
+                                        <input type="text" inputmode="decimal" class="form-control form-control-sm text-right ped-cant" data-id-sucursal="@s.IdSucursal"
+                                               value="@(cantidad.HasValue ? Cant(cantidad.Value) : "")" aria-label="@f.Producto en @s.SucursalNombre" />
+                                    </td>
+                                }
+                                <td class="text-right text-nowrap font-weight-bold ped-total">0</td>
+                                <td class="text-right text-nowrap ped-precio">
+                                    @if (f.Precio.HasValue)
+                                    {
+                                        <text>$ @f.Precio.Value.ToString("N2", cultura)</text>
+                                        // De quien y de cuando es el precio guardado; en naranja si era viejo respecto de la fecha del pedido.
+                                        string origen = Negocio.PedidoTextos.DescribirOrigenPrecio(f.Proveedor, f.FechaPrecio);
+                                        if (origen.Length > 0 || f.PrecioViejo)
+                                        {
+                                            <span class="ped-origen @(f.PrecioViejo ? "text-warning" : "text-muted")" title="@(f.PrecioViejo ? "Precio de hace " + f.DiasDelPrecio + " días respecto del pedido: puede estar desactualizado" : "Compra que dio este precio")">@(f.PrecioViejo ? "⚠ " : "")@origen</span>
+                                        }
+                                    }
+                                    else { <span class="text-muted">sin precio</span> }
+                                </td>
+                                <td class="text-right text-nowrap ped-importe">—</td>
+                                <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger ped-quitar" title="Quitar este producto del pedido"><i class="fas fa-trash"></i></button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @* De donde sale el importe: el mismo texto que en el detalle, el ticket, el PDF, el Excel y el mail (Negocio.PedidoTextos). *@
+    <div class="small text-muted mb-3">
+        @Negocio.PedidoTextos.AclaracionPrecio
+        @if (pivot.HayPreciosViejos) { <span> @Negocio.PedidoTextos.AvisoPrecioViejo(pivot.DiasPrecioViejo)</span> }
+        Los productos que agregues quedan sin precio y no suman al total.
+    </div>
+
+    <div class="d-flex flex-wrap" style="gap:.5rem">
+        <button type="button" class="btn btn-primary" id="btnGuardarCambios"><i class="fas fa-save mr-1"></i>Guardar cambios</button>
+        <a href="@Url.Action("Detalle", "Pedidos", new { id = Model.Id })" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</div>
+
+<style>
+    .pedido-editar-page { font-size: .9rem; }
+    .pedido-editar-page .card-body { padding: .82rem 1rem; }
+    .pedido-editar-page .btn { font-size: .84rem; padding: .3rem .7rem; }
+    .pedido-editar-page .form-control { font-size: .87rem; }
+    .pedido-tabla { font-size: .84rem; }
+    .pedido-tabla th, .pedido-tabla td { padding: .3rem .5rem; line-height: 1.15; vertical-align: middle; }
+    .pedido-tabla thead th { font-size: .72rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+    .pedido-tabla .ped-cant { width: 5.8rem; margin-left: auto; }
+    .ped-resultados { position: absolute; z-index: 30; left: 0; right: 0; max-height: 16rem; overflow-y: auto; box-shadow: 0 8px 20px rgba(15, 23, 42, .15); }
+    .ped-resultados .list-group-item { cursor: pointer; padding: .4rem .7rem; font-size: .84rem; }
+    .ped-fila.ped-sin-cantidad { opacity: .55; }
+    .ped-origen { display: block; font-size: .72rem; font-weight: 400; }
+</style>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/pedidos-editar.js")" asp-append-version="true"></script>
+}

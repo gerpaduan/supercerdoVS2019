@@ -1,0 +1,107 @@
+@using System.Linq
+
+@*
+    Pedidos guardados (Stock > Pedidos): listado con filtros. Los pedidos se arman en Stock > Existencia por sucursales ("Ingresar pedido");
+    aca se ven, se abren y, con permiso, se modifican. Solo Postgres. Reglas y porques: docs/DECISIONS.md (2026-10-19, Pedidos).
+*@
+
+@{
+    ViewBag.Title = "Pedidos";
+    bool disponible = ViewBag.Disponible is bool d && d;
+    string mensaje = ViewBag.Mensaje as string ?? "";
+    var sucursales = ViewBag.Sucursales as System.Collections.Generic.List<Entidades.Sucursal> ?? new System.Collections.Generic.List<Entidades.Sucursal>();
+    DateTime desde = ViewBag.Desde is DateTime dd ? dd : DateTime.Today.AddDays(-30);
+    DateTime hasta = ViewBag.Hasta is DateTime hh ? hh : DateTime.Today;
+}
+
+<div class="container-fluid pedidos-index-page">
+    @Html.AntiForgeryToken()
+
+    @if (!disponible)
+    {
+        <div class="alert alert-warning">@mensaje</div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <form id="formPedidos" autocomplete="off" class="pedidos-filtros">
+                    <div class="form-group mb-0">
+                        <label for="filtroDesde" class="pedidos-label">Desde</label>
+                        <input type="date" id="filtroDesde" name="desde" class="form-control" value="@desde.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="filtroHasta" class="pedidos-label">Hasta</label>
+                        <input type="date" id="filtroHasta" name="hasta" class="form-control" value="@hasta.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="filtroSucursal" class="pedidos-label">Sucursal</label>
+                        <select id="filtroSucursal" name="idSucursal" class="form-control">
+                            <option value="0">Todas</option>
+                            @foreach (var s in sucursales)
+                            {
+                                <option value="@s.IdSucursal">@s.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="filtroUsuario" class="pedidos-label">Usuario</label>
+                        <input type="text" id="filtroUsuario" name="usuario" class="form-control" placeholder="Quién lo hizo" />
+                    </div>
+                    <div class="form-group mb-0 pedidos-texto">
+                        <label for="filtroTexto" class="pedidos-label">Producto, código o nota</label>
+                        <input type="search" id="filtroTexto" name="texto" class="form-control" placeholder="Buscar en los pedidos" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="pedidos-label d-none d-md-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary" id="btnBuscarPedidos"><i class="fas fa-search mr-1"></i>Buscar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0" id="contenedorPedidos">
+                @Html.Partial("~/Views/Pedidos/_Tabla.cshtml")
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .pedidos-index-page { font-size: .9rem; }
+    .pedidos-index-page .card-body { padding: .82rem 1rem; }
+    .pedidos-index-page .form-control { font-size: .87rem; min-height: 2.3rem; padding: .32rem .58rem; }
+    .pedidos-index-page .btn { font-size: .84rem; padding: .3rem .7rem; }
+    .pedidos-filtros { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .6rem .8rem; }
+    .pedidos-texto { flex: 1 1 14rem; min-width: 10rem; }
+    .pedidos-label { font-size: .76rem; color: var(--ui-text-muted, #6c757d); margin-bottom: .15rem; }
+    .pedidos-index-page .table { font-size: .84rem; margin-bottom: 0; }
+    .pedidos-index-page .table th, .pedidos-index-page .table td { padding: .42rem .58rem; line-height: 1.15; vertical-align: middle; }
+    .pedidos-index-page .table thead th { font-size: .72rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+    @@media (min-width: 1200px) {
+        .pedidos-index-page .form-control { min-height: 2.15rem; font-size: .84rem; }
+        .pedidos-index-page .table { font-size: .8rem; }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var $form = $("#formPedidos");
+            var $contenedor = $("#contenedorPedidos");
+            var $btn = $("#btnBuscarPedidos");
+
+            $form.on("submit", function (e) {
+                e.preventDefault();
+                $btn.prop("disabled", true);
+                $.get("@Url.Action("Buscar", "Pedidos")", $form.serialize())
+                    .done(function (html) { $contenedor.html(html); })
+                    .fail(function () {
+                        $contenedor.html('<div class="alert alert-danger m-3">No se pudo consultar los pedidos. Intentá de nuevo.</div>');
+                    })
+                    .always(function () { $btn.prop("disabled", false); });
+            });
+        })();
+    </script>
+}

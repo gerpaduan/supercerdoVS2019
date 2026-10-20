@@ -82,6 +82,11 @@ namespace Contratos
         DataTable obtenerInfoCorte(int idCorte);
         DataTable obtenerCorteProveedor(int idCorte);
         DataTable obtenerCortesPorProveedor(int idProveedor);
+        // Productos que se le COMPRARON a cada proveedor: una fila por (proveedor, producto) con al menos una compra real (tipo "Cortes", no
+        // anulada). Columnas: idProveedor, razonSocial, idCorte. A diferencia de obtenerCortesPorProveedor no cuenta las operaciones de stock
+        // (Cierre/Ingreso/Egreso/Ajuste) que tambien se guardan en Compras, ni depende de CorteProveedor (que solo se llena desde 2025 y
+        // esta incompleta). Lo usa Existencia por sucursales: lista y filtro de proveedores (docs/DECISIONS.md 2026-10-19).
+        DataTable obtenerProductosCompradosPorProveedor();
         Entidades.Embutido findEmbutidoById(int idEmbutido);
         int agregarEmbutido(Entidades.Embutido oEmbutido);
         void anularEmbutido(Entidades.Embutido oEmbutidoE);

@@ -19,9 +19,13 @@ namespace Entidades
         public const string ModuloEmbutidoCarga = "EMBUTIDO_CARGA";
         public const string ModuloEmbutidoRapido = "EMBUTIDO_RAPIDO";
 
+        // Pedido de compra armado en Existencia por sucursales ("Ingresar pedido", 2026-10-19). Las "lineas" son pares
+        // producto-sucursal con cantidad. Solo Postgres (la pantalla de pedido depende de la actividad de "Que pedir").
+        public const string ModuloPedidoStock = "PEDIDO_STOCK";
+
         public static readonly string[] ModulosValidos =
         {
-            ModuloCompra, ModuloStock, ModuloMovimiento, ModuloEmbutidoCarga, ModuloEmbutidoRapido
+            ModuloCompra, ModuloStock, ModuloMovimiento, ModuloEmbutidoCarga, ModuloEmbutidoRapido, ModuloPedidoStock
         };
 
         public int Id { get; set; }

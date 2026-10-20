@@ -746,6 +746,20 @@ namespace Datos
             );
         }
 
+        // Ver Contratos.ICorteRepository.obtenerProductosCompradosPorProveedor (solo compras reales: tipo Cortes).
+        public DataTable obtenerProductosCompradosPorProveedor()
+        {
+            const string sql = @"
+                SELECT DISTINCT c.idProveedor, p.razonSocial, cpc.idCorte
+                FROM dbo.Compras c
+                INNER JOIN dbo.CortePorCompra cpc ON cpc.idCompra = c.idCompra
+                INNER JOIN dbo.Personas p ON p.idPersona = c.idProveedor
+                WHERE c.tipoCompra = 'Cortes'
+                  AND ISNULL(c.estado, '') = '';";
+
+            return Db.DataTable(_empresa, sql, CommandType.Text);
+        }
+
         // =========================
         // FORMULAS
         // =========================

@@ -35,7 +35,7 @@
     // limpieza de operador de modulo, una linea arriba.
     WebCore.Helpers.PermisosHelper.LimpiarBypassCajaSiSalioDePOS(Context.Session, controller, action, Sesion.UsuarioActual?.Id ?? 0);
 
-    bool enStock = controller == "Stock" || controller == "Reposicion";
+    bool enStock = controller == "Stock" || controller == "Reposicion" || controller == "Pedidos";
     bool enEmpleados = controller == "Empleados" || controller == "Jornadas" || controller == "Liquidaciones";
     bool enPuntosExpendio = controller == "PuntosExpendio";
     bool enFinanzas = controller == "Finanzas";
@@ -584,12 +584,14 @@
                 </a>
                 <div id="collapseStock" class="collapse @(enStock ? "show" : "")">
                     <div class="collapse-inner rounded">
-                        <a class="collapse-item @(enStock && action == "Index" ? "active" : "")" href="@Url.Action("Index", "Stock")">Gestion de stock</a>
-                        <a class="collapse-item @(enStock && action == "ExistenciaPorSucursales" ? "active" : "")" href="@Url.Action("ExistenciaPorSucursales", "Stock")">Existencia por sucursales</a>
+                        <a class="collapse-item @(controller == "Stock" && action == "Index" ? "active" : "")" href="@Url.Action("Index", "Stock")">Gestion de stock</a>
+                        <a class="collapse-item @(controller == "Stock" && action == "ExistenciaPorSucursales" ? "active" : "")" href="@Url.Action("ExistenciaPorSucursales", "Stock")">Existencia por sucursales</a>
                         @* Qué pedir (2026-10-13): solo Postgres, oculto si el motor activo es SQL Server. *@
                         @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres)
                         {
                             <a class="collapse-item @(controller == "Reposicion" ? "active" : "")" href="@Url.Action("Index", "Reposicion")">Qué pedir</a>
+                            @* Pedidos guardados desde Existencia por sucursales (2026-10-19): solo Postgres, igual que Qué pedir. *@
+                            <a class="collapse-item @(controller == "Pedidos" ? "active" : "")" href="@Url.Action("Index", "Pedidos")">Pedidos</a>
                         }
                     </div>
                 </div>

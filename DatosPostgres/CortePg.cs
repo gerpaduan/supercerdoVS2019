@@ -1285,6 +1285,20 @@ namespace DatosPostgres
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idProveedor", idProveedor));
         }
 
+        // Ver Contratos.ICorteRepository.obtenerProductosCompradosPorProveedor (solo compras reales: tipo Cortes). La RLS acota a la empresa.
+        public DataTable obtenerProductosCompradosPorProveedor()
+        {
+            const string sql = @"
+                SELECT DISTINCT c.idproveedor AS ""idProveedor"", p.razonsocial AS ""razonSocial"", cpc.idcorte AS ""idCorte""
+                FROM compras c
+                INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
+                INNER JOIN personas p ON p.idpersona = c.idproveedor
+                WHERE c.tipocompra = 'Cortes'
+                  AND COALESCE(c.estado, '') = '';";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql);
+        }
+
         public Embutido findEmbutidoById(int idEmbutido)
         {
             var lista = DbPg.Reader(_connectionString, _idEmpresa,
@@ -3111,9 +3125,23 @@ namespace DatosPostgres
             if (diasHistoria < diasVentana) diasHistoria = diasVentana;
 
             DateTime ahora = DateTime.Now;
-            DateTime desdeVentana = ahora.AddDays(-diasVentana);
-            DateTime desdeHistoria = ahora.AddDays(-diasHistoria);
+            return ConsultarActividadStock(idSucursal, ahora.AddDays(-diasVentana), ahora.AddDays(-diasHistoria), ahora);
+        }
 
+        // Misma consulta pero con la FECHA EXACTA de inicio en vez de "N dias hacia atras": convertir una fecha elegida
+        // por el usuario a dias correria el inicio hasta un dia (2026-10-19, filtro "Con movimiento" y sugerencias de pedido
+        // de Existencia por sucursales). La ventana y la historia coinciden: solo interesa lo que paso desde esa fecha.
+        // Devuelve solo pares con alguna salida desde `desde`. La version por dias de arriba no cambia (Que pedir).
+        public List<Entidades.ActividadStockVm> ObtenerActividadStock(int idSucursal, DateTime desde)
+        {
+            DateTime ahora = DateTime.Now;
+            if (desde > ahora) throw new ArgumentOutOfRangeException(nameof(desde), "La fecha no puede ser futura.");
+
+            return ConsultarActividadStock(idSucursal, desde, desde, ahora);
+        }
+
+        private List<Entidades.ActividadStockVm> ConsultarActividadStock(int idSucursal, DateTime desdeVentana, DateTime desdeHistoria, DateTime ahora)
+        {
             // El mapa de jerarquía solo necesita los ids de sucursal (no depende de la fecha del cierre).
             const string sqlPrepSucursales = @"
                 CREATE TEMP TABLE sucursales ON COMMIT DROP AS (
@@ -3222,6 +3250,36 @@ namespace DatosPostgres
                 {
                     p.AddWithValue("idEmpresa", _idEmpresa);
                     p.AddWithValue("idProveedorPreferido", idProveedorPreferido);
+                });
+        }
+
+        // Ver Contratos.IActividadStockRepository.ObtenerUltimasComprasPorProducto. Misma definicion de "compra real" que
+        // obtenerProductosCompradosPorProveedor (tipo Cortes y sin anular: compras tambien guarda ajustes, ingresos, egresos, pesajes y
+        // media res, que no son compras de productos). Desempate de dos lineas del mismo dia: la de la compra de id mayor y, dentro de
+        // esa compra, la de la linea de id mayor. La RLS acota a la empresa (como la consulta hermana).
+        public List<Entidades.ProveedorHabitualVm> ObtenerUltimasComprasPorProducto()
+        {
+            const string sql = @"
+                SELECT DISTINCT ON (cpc.idcorte)
+                       cpc.idcorte, c.idproveedor, COALESCE(p.razonsocial, '') AS proveedor,
+                       cpc.preciokg AS ultimoprecio, c.fechacompra AS fechaultimacompra
+                FROM corteporcompra cpc
+                INNER JOIN compras c ON c.idcompra = cpc.idcompra
+                LEFT JOIN personas p ON p.idpersona = c.idproveedor
+                WHERE c.tipocompra = 'Cortes'
+                  AND COALESCE(c.estado, '') = ''
+                  AND cpc.preciokg > 0
+                ORDER BY cpc.idcorte, c.fechacompra DESC, c.idcompra DESC, cpc.idcorteporcompra DESC;";
+
+            return DbPg.Reader(_connectionString, _idEmpresa, sql,
+                dr => new Entidades.ProveedorHabitualVm
+                {
+                    IdCorte = Convert.ToInt32(dr["idcorte"]),
+                    // compras.idproveedor admite NULL: sin proveedor la compra igual da precio y fecha (0 = sin proveedor).
+                    IdProveedor = dr["idproveedor"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idproveedor"]),
+                    Proveedor = Convert.ToString(dr["proveedor"]) ?? "",
+                    UltimoPrecio = dr["ultimoprecio"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(dr["ultimoprecio"]),
+                    FechaUltimaCompra = dr["fechaultimacompra"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaultimacompra"])
                 });
         }
 

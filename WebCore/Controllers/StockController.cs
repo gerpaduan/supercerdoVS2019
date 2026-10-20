@@ -34,6 +34,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Utilidades;
 using WebCore.Models;
 
@@ -67,10 +68,13 @@ namespace WebCore.Controllers
         // vez de 2), ver docs/DECISIONS.md -- motivo por el cual esta nota se preserva.
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public StockController(WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.ICtaCteReservadaService ctaCteReservada)
+        private readonly ILogger<StockController> _log;
+
+        public StockController(WebCore.Services.IUsuarioSesionService sesion, WebCore.Services.ICtaCteReservadaService ctaCteReservada, ILogger<StockController> log)
         {
             _sesion = sesion;
             _ctaCteReservada = ctaCteReservada;
+            _log = log;
             _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
@@ -614,10 +618,32 @@ namespace WebCore.Controllers
             ViewBag.Seccion = "Stock";
             // popup=true: la vista se muestra en una ventana independiente (sin menus, con _LayoutEmbed).
             ViewBag.Popup = popup;
+            // El lapiz de "editar punto de stock" solo se muestra con el permiso de Productos (Producto.NuevoCorte).
+            ViewBag.PuedeEditarPunto = PuedeEditarPuntoStock();
+            // "Con movimiento" usa la actividad de "Que pedir": solo Postgres.
+            ViewBag.MovimientoDisponible = ReposicionN != null;
+            // "Ingresar pedido" (sugerencias por consumo y precios de compra) tambien depende de la actividad de "Que pedir": solo Postgres.
+            ViewBag.PedidoDisponible = ReposicionN != null;
+            // Autoguardado del pedido en curso con el sistema de borradores en servidor (modulo PEDIDO_STOCK). El operador es el usuario
+            // de la sesion; la sucursal del borrador es la del usuario (o la primera de la empresa si no tiene), siempre la misma para
+            // que "Borradores sin guardar" liste lo que se guardo.
+            ViewBag.PedidoBorradorHabilitado = ReposicionN != null && WebCore.Helpers.BorradorGenericoSettings.Habilitado;
+            ViewBag.PedidoIdOperador = user.Id;
+            ViewBag.PedidoNombreOperador = user.Nombre ?? "";
+            ViewBag.PedidoIdSucursalBorrador = model.Filtro.IdSucursal > 0
+                ? model.Filtro.IdSucursal
+                : (model.Filtro.SucursalesDisponibles.Count > 0 ? model.Filtro.SucursalesDisponibles[0].IdSucursal : 0);
+            // Limites de la actualizacion automatica (App.config, ExistenciaCargaSettings): espaciado de la 1.a busqueda y reintento.
+            ViewBag.JitterInicialMaxSegundos = WebCore.Helpers.ExistenciaCargaSettings.JitterInicialMaxSegundos;
+            ViewBag.ReintentoCargaSegundos = WebCore.Helpers.ExistenciaCargaSettings.ReintentoSegundos;
 
             return View("~/Views/Stock/ExistenciaPorSucursales.cshtml", model);
         }
 
+        // Busqueda de Existencia por sucursales (tabla parcial). auto=true marca las llamadas AUTOMATICAS (la 1.a busqueda al
+        // abrir y las del autoactualizar): si el servidor esta cargado se postergan con HTTP 503 + Retry-After en vez de calcular
+        // (ExistenciaCargaGuard, docs/DECISIONS.md 2026-10-19). El Buscar manual (auto=false) nunca se rechaza. `auto` es una
+        // cortesia de carga, no seguridad: nada que proteger si alguien manda auto=0.
         [HttpGet]
         public IActionResult BuscarExistenciaPorSucursales(
             string texto = "",
@@ -627,7 +653,122 @@ namespace WebCore.Controllers
             int idProveedor = 0,
             int idMarca = 0,
             int idCorte = 0,
-            bool soloConStock = false)
+            bool soloConStock = false,
+            string[] tipos = null,
+            int[] idsProveedores = null,
+            int[] idsMarcas = null,
+            bool conMovimiento = false,
+            string movimientoMedida = "",
+            double movimientoMinimo = 0,
+            DateTime? periodoDesde = null,
+            bool auto = false)
+        {
+            if (!WebCore.Helpers.ExistenciaCargaGuard.TryEntrar(auto, out int segundosReintento))
+            {
+                Response.StatusCode = 503;
+                Response.Headers["Retry-After"] = segundosReintento.ToString(CultureInfo.InvariantCulture);
+                return Json(new { ok = false, ocupado = true, reintentoSegundos = segundosReintento });
+            }
+
+            var cronometro = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                var model = ConsultarModeloExistencia(texto, idsSucursales, fechaHasta, tipo, idProveedor, idMarca, idCorte, soloConStock,
+                    tipos, idsProveedores, idsMarcas, conMovimiento, movimientoMedida, movimientoMinimo, periodoDesde);
+                ViewBag.PuedeEditarPunto = PuedeEditarPuntoStock();
+                return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
+            }
+            finally
+            {
+                // Se registra siempre (aun con error): la duracion alimenta el umbral de latencia del guard.
+                cronometro.Stop();
+                WebCore.Helpers.ExistenciaCargaGuard.Salir(cronometro.Elapsed);
+            }
+        }
+
+        // Tope de productos por exportacion (la lista de idCorte viaja en el cuerpo del POST).
+        private const int MaxProductosExportacion = 20000;
+
+        // Exporta a Excel o PDF lo que se ve en pantalla: los mismos filtros de la ultima busqueda y la lista ORDENADA de idCorte
+        // visibles (el filtro de Estado y el orden se hacen en el navegador, asi la logica queda en un solo lugar). El stock se
+        // recalcula en el momento. Cuenta como busqueda manual para el guard de carga (nunca se rechaza, pero se mide).
+        // Detalle: docs/11-manual-de-uso/pantallas/Stock.ExistenciaPorSucursales.md.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ExportarExistencia(
+            string formato = "xlsx",
+            string idsCorte = "",
+            bool mostrarEstado = true,
+            string texto = "",
+            int[] idsSucursales = null,
+            string[] tipos = null,
+            int[] idsProveedores = null,
+            int[] idsMarcas = null,
+            bool conMovimiento = false,
+            string movimientoMedida = "",
+            double movimientoMinimo = 0,
+            DateTime? periodoDesde = null)
+        {
+            bool esPdf = string.Equals(formato, "pdf", StringComparison.OrdinalIgnoreCase);
+            if (!esPdf && !string.Equals(formato, "xlsx", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Formato de exportación inválido.");
+
+            var ids = ParsearIdsCorte(idsCorte);
+            if (ids == null) return BadRequest("La lista de productos a exportar no es válida.");
+            if (ids.Count == 0) return BadRequest("No hay productos para exportar.");
+            if (ids.Count > MaxProductosExportacion)
+                return BadRequest("Hay demasiados productos para exportar de una vez (máximo " + MaxProductosExportacion + "). Acotá los filtros.");
+
+            WebCore.Helpers.ExistenciaCargaGuard.TryEntrar(false, out _);
+            var cronometro = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                DateTime generado = DateTime.Now;
+                var model = ConsultarModeloExistencia(texto, idsSucursales, generado, "", 0, 0, 0, false,
+                    tipos, idsProveedores, idsMarcas, conMovimiento, movimientoMedida, movimientoMinimo, periodoDesde);
+                if (model.Productos.Count == 0)
+                    return BadRequest(string.IsNullOrWhiteSpace(model.Mensaje) ? "No hay productos para exportar." : model.Mensaje);
+
+                var vm = WebCore.Services.ExistenciaExportacion.Construir(model, ids, mostrarEstado, generado);
+                string baseNombre = "Existencia_por_sucursales_" + generado.ToString("yyyyMMdd_HHmm", CultureInfo.InvariantCulture);
+                return esPdf
+                    ? File(WebCore.Services.PdfExistenciaSucursales.Generar(vm), "application/pdf", baseNombre + ".pdf")
+                    : File(WebCore.Services.ExcelExistenciaSucursales.Generar(vm),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", baseNombre + ".xlsx");
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "No se pudo exportar la existencia por sucursales.");
+                return StatusCode(500, "No se pudo generar el archivo. Intentá de nuevo.");
+            }
+            finally
+            {
+                cronometro.Stop();
+                WebCore.Helpers.ExistenciaCargaGuard.Salir(cronometro.Elapsed);
+            }
+        }
+
+        // "1,2,3" -> [1,2,3]; null si hay algo que no sea un entero positivo (input externo: se rechaza todo, no se adivina).
+        private static List<int> ParsearIdsCorte(string csv)
+        {
+            var lista = new List<int>();
+            if (string.IsNullOrWhiteSpace(csv)) return lista;
+            // Corta antes de partir: MaxProductosExportacion ids de hasta 11 digitos con su coma.
+            if (csv.Length > MaxProductosExportacion * 12) return null;
+
+            foreach (string parte in csv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                int id;
+                if (!int.TryParse(parte.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out id) || id <= 0) return null;
+                lista.Add(id);
+            }
+            return lista;
+        }
+
+        private Entidades.ExistenciaPorSucursalesVm ConsultarModeloExistencia(
+            string texto, int[] idsSucursales, DateTime? fechaHasta, string tipo, int idProveedor, int idMarca, int idCorte,
+            bool soloConStock, string[] tipos, int[] idsProveedores, int[] idsMarcas,
+            bool conMovimiento, string movimientoMedida, double movimientoMinimo, DateTime? periodoDesde)
         {
             Entidades.Usuario user = _usuarioActual;
             var model = new Entidades.ExistenciaPorSucursalesVm();
@@ -654,6 +795,37 @@ namespace WebCore.Controllers
                 filtro.IdCorte = idCorte > 0 ? idCorte : 0;
                 filtro.SoloConStock = soloConStock;
 
+                // Seleccion multiple de Tipos / Proveedores / Marcas (input externo): solo valores que existen en las listas
+                // de esta empresa. Vacia = sin filtro; si tiene elementos manda sobre el escalar (Negocio.Corte.ObtenerExistenciaPlano).
+                filtro.Tipos = (tipos ?? new string[0])
+                    .Select(x => (x ?? "").Trim())
+                    .Where(x => x.Length > 0 && filtro.TiposDisponibles.Any(d => string.Equals(d, x, StringComparison.OrdinalIgnoreCase)))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                filtro.IdsProveedores = (idsProveedores ?? new int[0])
+                    .Where(id => filtro.ProveedoresDisponibles.Any(p => p.IdPersona == id))
+                    .Distinct()
+                    .ToList();
+                filtro.IdsMarcas = (idsMarcas ?? new int[0])
+                    .Where(id => filtro.MarcasDisponibles.Any(m => m.IdPersona == id))
+                    .Distinct()
+                    .ToList();
+
+                // Filtro "Con movimiento": se valida ANTES de calcular el stock para no gastar la consulta con parametros invalidos.
+                DateTime desdeMovimiento = DateTime.MinValue;
+                string medidaMovimiento = Negocio.ExistenciaFiltros.MedidaSalidas;
+                if (conMovimiento)
+                {
+                    string errorMovimiento = ValidarFiltroMovimiento(periodoDesde, movimientoMinimo, movimientoMedida, out desdeMovimiento, out medidaMovimiento);
+                    if (errorMovimiento != null)
+                    {
+                        model.Filtro = filtro;
+                        model.ConsultaRealizada = true;
+                        model.Mensaje = errorMovimiento;
+                        return model;
+                    }
+                }
+
                 // El limite ya se recalculo para el idSucursal correcto dentro de
                 // CrearFiltroExistencia -> AplicarUltimosCierres. El calculo de
                 // a_ExistenciaStockPorSucursales usa el ultimo cierre como punto de partida sin
@@ -668,20 +840,200 @@ namespace WebCore.Controllers
                     model.Mensaje = "No se puede consultar una fecha anterior al último cierre de stock (" +
                         filtro.FechaMinimaConsulta.Value.ToString("dd/MM/yyyy HH:mm") +
                         "). El cálculo siempre parte del último cierre registrado.";
-                    return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
+                    return model;
                 }
 
                 model = _oCorteN.ObtenerMatrizExistenciaPorSucursales(filtro);
                 model.Filtro = filtro;
+
+                // "Con movimiento": se descartan los productos sin salidas (ventas + consumo en elaborados) desde la fecha
+                // elegida en las sucursales mostradas. Una consulta de solo lectura mas (Negocio.ReposicionStock).
+                if (conMovimiento)
+                {
+                    // ReposicionN no es null aca: ValidarFiltroMovimiento ya rechazo el filtro cuando el motor no es Postgres.
+                    var conMov = ReposicionN!.ObtenerCortesConMovimiento(filtro.IdsSucursales, desdeMovimiento, movimientoMinimo, medidaMovimiento);
+                    model.Productos = model.Productos.Where(p => conMov.Contains(p.IdCorte)).ToList();
+                    if (model.Productos.Count == 0)
+                        model.Mensaje = "Ningún producto tuvo movimiento desde el " + desdeMovimiento.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                            + " con el mínimo elegido en las sucursales mostradas.";
+                }
             }
             catch (Exception ex)
             {
+                _log.LogError(ex, "Error al consultar la existencia por sucursales.");
                 model.Filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
                 model.ConsultaRealizada = true;
                 model.Mensaje = "Error al consultar la existencia por sucursales. " + ex.Message;
             }
 
-            return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
+            return model;
+        }
+
+        // Tope hacia atras del "Periodo desde" (constante nombrada, no numero magico): evita consultas de historia absurdas.
+        private const int MaxDiasPeriodoMovimiento = 3650;
+
+        // Valida los parametros del filtro "Con movimiento" (input externo). Devuelve el mensaje de error para el usuario o null
+        // si estan bien; en ese caso `desde` es la fecha (sin hora) y `medida` la medida normalizada.
+        private string ValidarFiltroMovimiento(DateTime? periodoDesde, double minimo, string medidaPedida, out DateTime desde, out string medida)
+        {
+            desde = DateTime.MinValue;
+            medida = string.Equals((medidaPedida ?? "").Trim(), Negocio.ExistenciaFiltros.MedidaDiasVenta, StringComparison.OrdinalIgnoreCase)
+                ? Negocio.ExistenciaFiltros.MedidaDiasVenta
+                : Negocio.ExistenciaFiltros.MedidaSalidas;
+
+            if (ReposicionN == null)
+                return "El filtro Con movimiento solo está disponible cuando el sistema usa Postgres.";
+
+            string errorPeriodo = ValidarPeriodoDesde(periodoDesde, out desde);
+            if (errorPeriodo != null) return errorPeriodo;
+
+            if (double.IsNaN(minimo) || double.IsInfinity(minimo) || minimo <= 0 || minimo > 1000000000d)
+                return "El mínimo de movimiento debe ser un número mayor que cero.";
+            if (medida == Negocio.ExistenciaFiltros.MedidaDiasVenta && minimo != Math.Floor(minimo))
+                return "Con la medida \"Días con venta\" el mínimo debe ser un número entero.";
+
+            return null;
+        }
+
+        // Valida la fecha "Periodo desde" (input externo) que comparten el filtro "Con movimiento" y las sugerencias de "Ingresar
+        // pedido": obligatoria, no futura y con el tope hacia atras de MaxDiasPeriodoMovimiento. Devuelve el mensaje para el usuario
+        // o null si esta bien; en ese caso `desde` es la fecha sin hora.
+        private static string ValidarPeriodoDesde(DateTime? periodoDesde, out DateTime desde)
+        {
+            desde = DateTime.MinValue;
+            if (!periodoDesde.HasValue)
+                return "Elegí la fecha desde la que se cuentan las ventas y el uso en elaborados.";
+
+            DateTime ahora = DateTime.Now;
+            desde = periodoDesde.Value.Date;
+            if (desde > ahora)
+                return "La fecha del período no puede ser futura.";
+            if (desde < ahora.Date.AddDays(-MaxDiasPeriodoMovimiento))
+                return "La fecha del período no puede ser anterior a " + MaxDiasPeriodoMovimiento + " días.";
+            return null;
+        }
+
+        // "Ingresar pedido": consumo del periodo (ventas + uso en elaborados) por producto y sucursal desde la fecha elegida hasta
+        // ahora. El navegador lo pide al encender el pedido y al cambiar el "Periodo desde"; con eso, el stock y el punto de cada
+        // celda arma la sugerencia (Negocio.PedidoSugerencia). Solo lectura y solo Postgres. Cuenta como consulta manual para el
+        // guard de carga (nunca se rechaza, pero su duracion se mide). Detalle: docs/DECISIONS.md 2026-10-19.
+        [HttpGet]
+        public IActionResult ConsumoPeriodo(DateTime? desde = null, int[] idsSucursales = null)
+        {
+            if (ReposicionN == null)
+                return Json(new { ok = false, noDisponible = true, mensaje = "Ingresar pedido solo está disponible cuando el sistema usa Postgres." });
+
+            string error = ValidarPeriodoDesde(desde, out DateTime fechaDesde);
+            if (error != null) return Json(new { ok = false, mensaje = error });
+
+            WebCore.Helpers.ExistenciaCargaGuard.TryEntrar(false, out _);
+            var cronometro = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                // Sucursales (input externo): solo las de esta empresa. Sin ninguna valida queda "todas".
+                var sucursalesEmpresa = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+                var ids = (idsSucursales ?? new int[0])
+                    .Where(id => sucursalesEmpresa.Any(s => s.IdSucursal == id))
+                    .Distinct()
+                    .ToList();
+
+                var consumo = ReposicionN.ObtenerConsumoPeriodo(ids, fechaDesde);
+                return Json(new
+                {
+                    ok = true,
+                    desde = fechaDesde.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    // float -> 3 decimales: sin el ruido binario (0,1f llegaria como 0,10000000149).
+                    items = consumo.Select(x => new
+                    {
+                        idCorte = x.IdCorte,
+                        idSucursal = x.IdSucursal,
+                        ventas = Math.Round((double)x.VentasVentana, 3),
+                        elaboracion = Math.Round((double)x.ElaboracionVentana, 3)
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "No se pudo calcular el consumo del período para Ingresar pedido.");
+                return Json(new { ok = false, mensaje = "No se pudo calcular el consumo del período. Intentá de nuevo." });
+            }
+            finally
+            {
+                cronometro.Stop();
+                WebCore.Helpers.ExistenciaCargaGuard.Salir(cronometro.Elapsed);
+            }
+        }
+
+        // "Ingresar pedido": precio de la ultima compra de cada producto, para estimar el importe del pedido. Lo pide el navegador una
+        // sola vez al encender el modo pedido (no carga esta consulta a quien solo mira stock). Fuente: la ULTIMA COMPRA real de cada
+        // producto (lineas de compras tipo Cortes no anuladas: precio por kg, fecha y proveedor de esa compra), no corteproveedor (incompleta);
+        // "Que pedir" no cambia. Productos sin precio no aparecen. Una compra de hace mas de Pedidos:DiasPrecioMaximo dias NO da precio (un
+        // precio de hace años subestima el total): esos productos vienen aparte en `descartados` para explicarlo en pantalla.
+        // Solo lectura y solo Postgres. Detalle: docs/DECISIONS.md 2026-10-19.
+        [HttpGet]
+        public IActionResult UltimosPreciosCompra()
+        {
+            if (ReposicionN == null)
+                return Json(new { ok = false, noDisponible = true, mensaje = "Ingresar pedido solo está disponible cuando el sistema usa Postgres." });
+
+            try
+            {
+                int diasMaximo = WebCore.Helpers.PedidoPrecioSettings.DiasPrecioMaximo;
+                var precios = ReposicionN.ObtenerUltimosPreciosCompra(DateTime.Now, diasMaximo);
+                Func<DateTime?, string> fechaIso = f => f.HasValue ? f.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "";
+                return Json(new
+                {
+                    ok = true,
+                    diasMaximo,
+                    items = precios.Vigentes.Select(x => new
+                    {
+                        idCorte = x.IdCorte,
+                        precio = x.UltimoPrecio!.Value,
+                        proveedor = x.Proveedor ?? "",
+                        fecha = fechaIso(x.FechaUltimaCompra)
+                    }),
+                    descartados = precios.DescartadosPorAntiguedad.Select(x => new { idCorte = x.IdCorte, fecha = fechaIso(x.FechaUltimaCompra) })
+                });
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "No se pudieron consultar los últimos precios de compra para Ingresar pedido.");
+                return Json(new { ok = false, mensaje = "No se pudieron consultar los precios de compra." });
+            }
+        }
+
+        // Negocio.ReposicionStock (actividad y precios de compra); solo Postgres: null con otro motor. Perezoso para no armar los
+        // repositorios en las demas acciones de Stock.
+        private Negocio.ReposicionStock? _reposicionN;
+        private bool _reposicionNResuelto;
+        private Negocio.ReposicionStock? ReposicionN
+        {
+            get
+            {
+                if (!_reposicionNResuelto)
+                {
+                    _reposicionN = WebCore.Infrastructure.NegocioFactory.UsarPostgres
+                        ? WebCore.Infrastructure.NegocioFactory.CrearReposicionStock(_empresa, _param)
+                        : null;
+                    _reposicionNResuelto = true;
+                }
+                return _reposicionN;
+            }
+        }
+
+        // Editar el punto de stock desde esta pantalla exige el mismo permiso que el modal de Productos
+        // (ProductosController.GuardarPuntosStockSucursal): Producto.NuevoCorte.
+        private bool PuedeEditarPuntoStock()
+        {
+            try
+            {
+                return _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "No se pudo resolver el permiso de edicion del punto de stock; se oculta el lapiz.");
+                return false;
+            }
         }
 
         // Consumido tambien desde ProductosController.Index ("Ver stock por sucursales") --
@@ -2016,40 +2368,21 @@ namespace WebCore.Controllers
             return tipos.OrderBy(x => x).ToList();
         }
 
+        // Proveedores del filtro: SOLO los que tienen al menos una compra real de un producto ("proveedores a los que se les compro":
+        // compras tipo Cortes, no anuladas), que es lo mismo que despues filtra Negocio.Corte.ObtenerExistenciaPlano. Antes se usaba
+        // buscarProveedor(""), que en Postgres no esta implementado (tira NotImplementedException): la lista salia siempre vacia
+        // y el filtro de proveedor no se podia usar (2026-10-19, docs/DECISIONS.md).
         private List<Entidades.Persona> ObtenerProveedoresExistencia()
         {
-            var proveedores = new List<Entidades.Persona>();
-            DataTable dt;
             try
             {
-                dt = _oPersonaN.buscarProveedor("") ?? new DataTable();
+                return _oCorteN.ObtenerProveedoresConProductosComprados();
             }
-            catch
+            catch (Exception ex)
             {
-                return proveedores;
+                _log.LogError(ex, "No se pudo cargar la lista de proveedores del filtro de existencia; el filtro queda sin opciones.");
+                return new List<Entidades.Persona>();
             }
-
-            foreach (DataRow row in dt.Rows)
-            {
-                int id = row.Table.Columns.Contains("idPersona") && row["idPersona"] != DBNull.Value ? Convert.ToInt32(row["idPersona"]) : 0;
-                string razonSocial = row.Table.Columns.Contains("razonSocial") && row["razonSocial"] != DBNull.Value
-                    ? Convert.ToString(row["razonSocial"])
-                    : (row.Table.Columns.Contains("Proveedor") && row["Proveedor"] != DBNull.Value ? Convert.ToString(row["Proveedor"]) : "");
-
-                if (id <= 0 || string.IsNullOrWhiteSpace(razonSocial))
-                    continue;
-
-                if (proveedores.Any(x => x.IdPersona == id))
-                    continue;
-
-                proveedores.Add(new Entidades.Persona
-                {
-                    IdPersona = id,
-                    RazonSocial = razonSocial
-                });
-            }
-
-            return proveedores.OrderBy(x => x.RazonSocial).ToList();
         }
 
         private List<Entidades.Persona> ObtenerMarcasExistencia()

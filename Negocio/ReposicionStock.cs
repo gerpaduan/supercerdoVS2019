@@ -31,6 +31,40 @@ namespace Negocio
             _puntoStockN = puntoStockN;
         }
 
+        // Existencia por sucursales, filtro "Con movimiento" (2026-10-19): idCorte de los productos que tuvieron movimiento
+        // desde la fecha exacta `desde` hasta ahora en alguna de las sucursales indicadas (vacio = todas), segun la medida
+        // (ExistenciaFiltros.MedidaSalidas = ventas + consumo en elaborados; MedidaDiasVenta = dias con venta).
+        // Una sola consulta de solo lectura (la misma actividad que usa "Que pedir", con su jerarquia madre/hija); el recorte
+        // por sucursal y por minimo se hace en memoria (ExistenciaFiltros.CortesConMovimiento, con tests).
+        public HashSet<int> ObtenerCortesConMovimiento(ICollection<int> idsSucursales, DateTime desde, double minimo, string medida)
+        {
+            if (minimo <= 0) throw new ArgumentOutOfRangeException(nameof(minimo), "El minimo debe ser mayor que cero.");
+
+            var actividad = _actividadRepo.ObtenerActividadStock(0, desde) ?? new List<ActividadStockVm>();
+            return ExistenciaFiltros.CortesConMovimiento(actividad, idsSucursales, minimo, medida);
+        }
+
+        // Existencia por sucursales, "Ingresar pedido" (2026-10-19): consumo del periodo (ventas + uso en elaborados) por producto
+        // y sucursal desde la fecha exacta `desde` hasta ahora, para las sucursales indicadas (vacio = todas). Es la base de la
+        // sugerencia "consumo menos stock" (PedidoSugerencia). Una consulta de solo lectura, la misma de "Que pedir" y del filtro
+        // "Con movimiento"; el recorte por sucursal y el descarte de pares sin consumo se hacen en memoria (con tests).
+        public List<ActividadStockVm> ObtenerConsumoPeriodo(ICollection<int> idsSucursales, DateTime desde)
+        {
+            var actividad = _actividadRepo.ObtenerActividadStock(0, desde) ?? new List<ActividadStockVm>();
+            return PedidoSugerencia.ConsumoDeSucursales(actividad, idsSucursales);
+        }
+
+        // "Ingresar pedido" y Pedidos: precio de la ULTIMA COMPRA real de cada producto (lineas de compras tipo Cortes no anuladas),
+        // con su fecha y el proveedor de esa compra, sin importar el proveedor. Solo productos con precio > 0. Solo lectura.
+        // Desde 2026-10-19 NO usa corteproveedor (tabla auxiliar incompleta: solo desde 2025-02) sino las compras mismas; donde ambas
+        // fuentes tienen dato coinciden (66 de 66 productos, medido), asi que solo agrega productos. "Que pedir" sigue con
+        // ObtenerProveedoresHabituales (docs/DECISIONS.md, 2026-10-19, "Pedidos: fuente del precio"). Los precios de compras de hace
+        // mas de diasMaximo dias no se usan (quedan en DescartadosPorAntiguedad para poder explicarlo): ver PedidoSugerencia.SepararPorAntiguedad.
+        public UltimosPreciosCompraVm ObtenerUltimosPreciosCompra(DateTime ahora, int diasMaximo)
+        {
+            return PedidoSugerencia.SepararPorAntiguedad(_actividadRepo.ObtenerUltimasComprasPorProducto(), ahora, diasMaximo);
+        }
+
         // "Sugerir puntos de stock": para cada producto y sucursal, el punto que cubriría DiasCoberturaPunto días del consumo
         // reciente. Solo lectura (no guarda nada: eso es GuardarPuntosSugeridos, a pedido explícito del usuario).
         public PuntosSugeridosVm ArmarPuntosSugeridos(ReposicionFiltroVm filtro)

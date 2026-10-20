@@ -379,6 +379,7 @@ namespace DatosPostgres
                        CASE b.modulo
                            WHEN 'COMPRA' THEN 'Compras' WHEN 'STOCK' THEN 'Stock' WHEN 'MOVIMIENTO' THEN 'Movimientos'
                            WHEN 'EMBUTIDO_CARGA' THEN 'Embutidos' WHEN 'EMBUTIDO_RAPIDO' THEN 'Embutidos - ingreso rápido'
+                           WHEN 'PEDIDO_STOCK' THEN 'Pedido de stock'
                            ELSE b.modulo
                        END || ')',
                        COALESCE(u.nombre, 'Un operador') || ' dejó un formulario sin guardar'

@@ -354,6 +354,11 @@ namespace Negocio
         {
             return oCorteD.obtenerCortesPorProveedor(idProveedor);
         }
+        // Ver Contratos.ICorteRepository.obtenerProductosCompradosPorProveedor.
+        public DataTable obtenerProductosCompradosPorProveedor()
+        {
+            return oCorteD.obtenerProductosCompradosPorProveedor();
+        }
         public DataTable obtenerTiposProducto(bool mostrarTodos)
         {
             DataTable dtAlicuotasIva = new DataTable();
@@ -959,18 +964,53 @@ namespace Negocio
             var idsElegidos = (filtro.IdsSucursales ?? new List<int>()).Where(x => x > 0).Distinct().ToList();
             int idSucursalConsulta = idsElegidos.Count == 1 ? idsElegidos[0] : (idsElegidos.Count == 0 ? filtro.IdSucursal : 0);
 
+            // Seleccion multiple de Tipos / Marcas / Proveedores (Tipos, IdsMarcas, IdsProveedores; vacia = sin filtro, y manda
+            // sobre el escalar equivalente). Mismo criterio que las sucursales: una sola consulta y filtro en memoria.
+            //  - Tipo y Marca con UN valor se le piden al motor como siempre (SP / SQL, en los dos motores);
+            //    con 2 o mas no se filtra en el motor y se intersecta aca el resultado (ExistenciaFiltros).
+            //  - Proveedores SIEMPRE en memoria, con los productos comprados a cada proveedor elegido
+            //    (obtenerCortesPorProveedor: compras no anuladas); al motor va IdProveedor=0. Decision: docs/DECISIONS.md 2026-10-19.
+            var tiposElegidos = (filtro.Tipos ?? new List<string>())
+                .Select(x => (x ?? "").Trim()).Where(x => x.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var marcasElegidas = (filtro.IdsMarcas ?? new List<int>()).Where(x => x > 0).Distinct().ToList();
+            var proveedoresElegidos = (filtro.IdsProveedores ?? new List<int>()).Where(x => x > 0).Distinct().ToList();
+
+            string tipoMotor = tiposElegidos.Count == 1 ? tiposElegidos[0] : (tiposElegidos.Count > 1 ? "" : (filtro.Tipo ?? ""));
+            int marcaMotor = marcasElegidas.Count == 1 ? marcasElegidas[0] : (marcasElegidas.Count > 1 ? 0 : filtro.IdMarca);
+            int proveedorMotor = proveedoresElegidos.Count > 0 ? 0 : filtro.IdProveedor;
+
             var plano = oCorteD.ObtenerExistenciaPorSucursalesPlano(
                 filtro.Texto ?? "",
                 idSucursalConsulta,
                 filtro.FechaHasta,
-                filtro.Tipo ?? "",
-                filtro.IdProveedor,
-                filtro.IdMarca,
+                tipoMotor,
+                proveedorMotor,
+                marcaMotor,
                 filtro.IdCorte,
                 filtro.SoloConStock) ?? new List<Entidades.ExistenciaStockPorSucursalPlanoVm>();
 
             if (idsElegidos.Count > 1)
                 plano = plano.Where(x => idsElegidos.Contains(x.IdSucursal)).ToList();
+
+            if (tiposElegidos.Count > 1 || marcasElegidas.Count > 1 || proveedoresElegidos.Count > 0)
+            {
+                // Tipo y Marca salen del listado de productos (ya trae Tipo y Marca); solo se lee si hace falta.
+                List<Entidades.Corte> cortes = (tiposElegidos.Count > 1 || marcasElegidas.Count > 1)
+                    ? oCorteD.findAllCortesListado()
+                    : null;
+
+                HashSet<int> permitidosTipo = tiposElegidos.Count > 1 ? ExistenciaFiltros.CortesPorTipos(cortes, tiposElegidos) : null;
+                HashSet<int> permitidosMarca = marcasElegidas.Count > 1 ? ExistenciaFiltros.CortesPorMarcas(cortes, marcasElegidas) : null;
+                HashSet<int> permitidosProveedor = null;
+                if (proveedoresElegidos.Count > 0)
+                {
+                    permitidosProveedor = ExistenciaFiltros.CortesPorProveedores(
+                        LeerComprasPorProveedor(oCorteD.obtenerProductosCompradosPorProveedor()), proveedoresElegidos);
+                }
+
+                plano = ExistenciaFiltros.Aplicar(plano, permitidosTipo, permitidosMarca, permitidosProveedor);
+            }
 
             // El SP devuelve PuntoStock desde el campo legacy Corte.puntoStock (global, no por
             // sucursal). Se sobrescribe aca con el valor real de la tabla intermedia Producto x
@@ -994,6 +1034,35 @@ namespace Negocio
             }
 
             return plano;
+        }
+
+        // Lee la tabla de obtenerProductosCompradosPorProveedor (idProveedor, razonSocial, idCorte; por posicion, los nombres de columna
+        // varian entre motores) como pares (proveedor, producto). Filas con ids vacios se ignoran.
+        private static List<ExistenciaFiltros.CompraProveedorProducto> LeerComprasPorProveedor(DataTable tabla)
+        {
+            var pares = new List<ExistenciaFiltros.CompraProveedorProducto>();
+            if (tabla == null || tabla.Columns.Count < 3) return pares;
+
+            foreach (DataRow fila in tabla.Rows)
+            {
+                if (fila[0] == DBNull.Value || fila[2] == DBNull.Value) continue;
+                pares.Add(new ExistenciaFiltros.CompraProveedorProducto
+                {
+                    IdProveedor = Convert.ToInt32(fila[0]),
+                    Proveedor = fila[1] == DBNull.Value ? "" : Convert.ToString(fila[1]),
+                    IdCorte = Convert.ToInt32(fila[2])
+                });
+            }
+            return pares;
+        }
+
+        // Proveedores a los que se les compro algo (compras reales, tipo Cortes, no anuladas), para la lista del filtro de proveedores
+        // de Existencia por sucursales: solo los que el filtro puede encontrar. Ordenados por nombre, sin repetir.
+        public List<Entidades.Persona> ObtenerProveedoresConProductosComprados()
+        {
+            return ExistenciaFiltros.ProveedoresDistintos(LeerComprasPorProveedor(oCorteD.obtenerProductosCompradosPorProveedor()))
+                .Select(p => new Entidades.Persona { IdPersona = p.Key, RazonSocial = p.Value })
+                .ToList();
         }
 
         public Entidades.ExistenciaPorSucursalesVm ObtenerMatrizExistenciaPorSucursales(Entidades.ExistenciaStockPorSucursalFiltroVm filtro)

@@ -15,6 +15,12 @@ namespace Entidades
         public string Tipo { get; set; }
         public int IdProveedor { get; set; }
         public int IdMarca { get; set; }
+        // Seleccion multiple de Tipos / Proveedores / Marcas (Existencia por sucursales). Vacia = sin filtro.
+        // Si tiene elementos, manda sobre el escalar equivalente de arriba (Tipo, IdProveedor, IdMarca), que se
+        // conserva para los otros consumidores ("Que pedir", modal de Productos). Ver Negocio.ExistenciaFiltros.
+        public List<string> Tipos { get; set; }
+        public List<int> IdsProveedores { get; set; }
+        public List<int> IdsMarcas { get; set; }
         public int IdCorte { get; set; }
         public bool SoloConStock { get; set; }
         public string EstadoStock { get; set; }
@@ -42,6 +48,9 @@ namespace Entidades
             EstadoStock = "Todos";
             FechaHasta = DateTime.Now;
             IdsSucursales = new List<int>();
+            Tipos = new List<string>();
+            IdsProveedores = new List<int>();
+            IdsMarcas = new List<int>();
             SucursalesDisponibles = new List<SucursalColumnaStockVm>();
             TiposDisponibles = new List<string>();
             ProveedoresDisponibles = new List<Persona>();
