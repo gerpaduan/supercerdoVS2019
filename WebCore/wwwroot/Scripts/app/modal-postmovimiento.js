@@ -9,14 +9,22 @@
 (function () {
     var KEY_TICKET_MM = 'postmovimiento_ticket_mm';
 
+    // Tope de espera al cerrar el modal antes de seguir de todos modos (red de seguridad, ver cerrarModal).
+    var ESPERA_MAXIMA_CIERRE_MS = 1000;
+
     var state = {
         redirectUrl: '',
         pdfUrl: '',
         imprimirUrl: '',
         imprimirPayloadUrl: '',
         whatsappTexto: '',
-        stayOnPage: false
+        stayOnPage: false,
+        accionElegida: false    // ya se eligio Continuar / Imprimir / PDF / WhatsApp: las demas se ignoran
     };
+
+    // true desde open() hasta que Bootstrap termina de ocultar el modal. movimientos.js lo consulta para no
+    // dejar guardar de nuevo el formulario mientras este aviso sigue arriba (ver estaAbierto).
+    var abierto = false;
 
     function getUltimoTicketMm() {
         var v = null;
@@ -56,8 +64,55 @@
         }
     }
 
-    function cerrarModal() {
-        $('#modalPostMovimiento').modal('hide');
+    // Registra que ya se eligio una accion final. Devuelve false si ya habia una: durante la animacion de cierre
+    // (~300 ms) los botones siguen siendo clickeables y un doble click imprimia dos tickets o abria dos PDF.
+    function tomarAccion() {
+        if (state.accionElegida) return false;
+        state.accionElegida = true;
+        return true;
+    }
+
+    // Cierra el modal. Si se pasa `alCerrar`, lo ejecuta UNA sola vez cuando el modal ya quedo oculto de verdad
+    // (evento hidden.bs.modal), o a los ESPERA_MAXIMA_CIERRE_MS como red de seguridad si ese evento no llegara.
+    // Dos cuidados que antes no estaban:
+    //  - Bootstrap ignora hide() mientras el modal todavia anima su APERTURA y lo dejaba abierto para siempre (mismo
+    //    cuidado que post-comprobante.js): en ese caso se espera al 'shown' y recien ahi se cierra.
+    //  - Ocultar tarda ~300 ms y window.print() congela la pagina: si la impresion arranca antes de que termine, el
+    //    dialogo de impresion se abre con el modal a medio cerrar y, al cancelarlo, "Movimiento guardado" parece
+    //    seguir ahi. Por eso imprimirTicket() imprime desde `alCerrar`.
+    // _isShown / _isTransitioning son internos de Bootstrap (los usan tambien modal-stack.js y post-comprobante.js).
+    function cerrarModal(alCerrar) {
+        var $modal = $('#modalPostMovimiento');
+        var instancia = window.bootstrap && window.bootstrap.Modal ? window.bootstrap.Modal.getInstance($modal[0]) : null;
+        var mostrado = !!(instancia && instancia._isShown);
+        var animando = !!(instancia && instancia._isTransitioning);
+
+        if (typeof alCerrar === 'function') {
+            if (!mostrado && !animando) {
+                // Ya estaba cerrado del todo: no va a llegar ningun 'hidden'.
+                alCerrar();
+            } else {
+                var ejecutado = false;
+                var ejecutar = function () {
+                    if (ejecutado) return;
+                    ejecutado = true;
+                    alCerrar();
+                };
+                $modal.one('hidden.bs.modal', ejecutar);
+                window.setTimeout(ejecutar, ESPERA_MAXIMA_CIERRE_MS);
+            }
+        }
+
+        // Cerrado o cerrandose: el 'hidden' llega solo.
+        if (!mostrado) return;
+
+        // Todavia abriendose: hide() seria ignorado.
+        if (animando) {
+            $modal.one('shown.bs.modal', function () { $modal.modal('hide'); });
+            return;
+        }
+
+        $modal.modal('hide');
     }
 
     function cerrarYRedirigir() {
@@ -82,12 +137,19 @@
 
     // Imprime el ticket sin salir de la vista: solo cierra el modal (no redirige, a diferencia de
     // "Continuar"/"No imprimir"). Pedido explicito del usuario, ver docs/DECISIONS.md 2026-09-23.
+    // Primero cierra el modal y recien cuando quedo oculto manda a imprimir (ver cerrarModal).
     function imprimirTicket(mm) {
-        window.TicketPrint.imprimir({
+        if (!tomarAccion()) return;
+
+        // Las URLs se leen ahora, no dentro del callback: el modal podria reabrirse con otro movimiento antes.
+        var opcionesTicket = {
             ticketUrl: conMm(state.imprimirUrl, mm),
             payloadUrl: conMm(state.imprimirPayloadUrl, mm)
+        };
+
+        cerrarModal(function () {
+            window.TicketPrint.imprimir(opcionesTicket);
         });
-        cerrarModal();
     }
 
     function abrirWhatsapp() {
@@ -105,6 +167,8 @@
             state.imprimirPayloadUrl = resp.imprimirPayloadUrl || '';
             state.whatsappTexto = resp.whatsappTexto || '';
             state.stayOnPage = !!resp.stayOnPage;
+            state.accionElegida = false;
+            abierto = true;
             actualizarTextoTicket();
             var collapse = getBloqueTicketCollapse();
             if (collapse) collapse.hide();
@@ -119,6 +183,11 @@
                 keyboard: false
             });
             $('#modalPostMovimiento').modal('show');
+        },
+
+        // true mientras el aviso "Movimiento guardado" sigue en pantalla (desde open() hasta que termina de ocultarse).
+        estaAbierto: function () {
+            return abierto;
         }
     };
 
@@ -129,7 +198,12 @@
             }, 50);
         });
 
+        $('#modalPostMovimiento').on('hidden.bs.modal', function () {
+            abierto = false;
+        });
+
         $('#btnPostMovimientoNoImprimir').on('click', function () {
+            if (!tomarAccion()) return;
             cerrarYRedirigir();
         });
 
@@ -165,11 +239,13 @@
         });
 
         $('#btnPostMovimientoPdf').on('click', function () {
+            if (!tomarAccion()) return;
             abrirNuevaVentana(state.pdfUrl);
             cerrarYRedirigir();
         });
 
         $('#btnPostMovimientoWhatsapp').on('click', function () {
+            if (!tomarAccion()) return;
             abrirWhatsapp();
             cerrarYRedirigir();
         });

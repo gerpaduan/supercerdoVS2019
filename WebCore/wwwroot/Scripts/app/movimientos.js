@@ -191,6 +191,7 @@
             lines: Array.isArray(window.movimientoLineasIniciales) ? window.movimientoLineasIniciales.slice() : [],
             draftTimer: null,
             saving: false,
+            enviando: false,    // hay un POST de guardado en vuelo: otro submit se ignora (ver #formMovimiento submit)
             productoTimer: null,
             productoRequestSeq: 0,
             readOnly: !!config.soloLecturaInicial,
@@ -1237,6 +1238,14 @@
 
         $('#formMovimiento').on('submit', function (e) {
             e.preventDefault();
+
+            // Un solo guardado a la vez. Se ignora el submit si (a) todavia hay un guardado en vuelo (doble click,
+            // Enter repetido) o (b) el aviso "Movimiento guardado" sigue arriba: Alt+G / Alt+Enter de
+            // edit-page-guard.js llegan hasta aca aunque el modal este abierto. Sin esto cada submit extra
+            // creaba otro movimiento (el servidor no distingue un reintento de un movimiento nuevo).
+            if (state.enviando) return;
+            if (window.PostMovimientoModal && typeof window.PostMovimientoModal.estaAbierto === 'function' && window.PostMovimientoModal.estaAbierto()) return;
+
             // Codigo escrito en el buscador sin agregar a la tabla: no se guarda hasta agregarlo o borrarlo.
             if (window.ProductoPendienteGuard && window.ProductoPendienteGuard.bloqueaGuardado({
                 codigoSelector: '#txtCodigoProducto',
@@ -1251,6 +1260,7 @@
 
             function guardarMovimientoReal() {
                 state.saving = true;
+                state.enviando = true;
 
                 $.ajax({
                     url: $form.attr('action'),
@@ -1261,6 +1271,20 @@
                         state.saving = false;
                         showAlert('error', 'Movimiento', (resp && resp.mensaje) || 'No se pudo guardar el movimiento.');
                         return;
+                    }
+
+                    // El formulario queda enlazado al movimiento recien guardado. Tras "Imprimir" la persona se queda en
+                    // esta pantalla (stayOnPage) con el formulario de "nuevo" todavia armado: sin esto, un segundo
+                    // "Guardar" desde aca (boton, Enter, Alt+Enter) creaba OTRO movimiento igual (IdMovimiento=0);
+                    // ahora lo actualiza (el servidor reemplaza las lineas, no las duplica). Tambien se actualizan las
+                    // URLs de impresion de esta pantalla (openPrintOptions) con las del movimiento guardado.
+                    var idGuardado = toInt(resp.movimientoId);
+                    if (idGuardado > 0) {
+                        $('#IdMovimiento').val(idGuardado);
+                        config.pdfUrl = resp.pdfUrl || config.pdfUrl;
+                        config.imprimirUrl = resp.imprimirUrl || config.imprimirUrl;
+                        config.imprimirPayloadUrl = resp.imprimirPayloadUrl || config.imprimirPayloadUrl;
+                        config.whatsappTexto = resp.whatsappTexto || config.whatsappTexto;
                     }
 
                     if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
@@ -1279,6 +1303,10 @@
                     var mensaje = 'No se pudo guardar el movimiento.';
                     if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) mensaje = xhr.responseJSON.mensaje;
                     showAlert('error', 'Movimiento', mensaje);
+                }).always(function () {
+                    // Va ultimo a proposito: jQuery corre los callbacks en el orden en que se registran, asi que para
+                    // cuando se libera el guardado el aviso post-guardado (que tambien frena submits) ya esta abierto.
+                    state.enviando = false;
                 });
             }
 
