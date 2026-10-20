@@ -3,7 +3,7 @@ titulo: Fórmula secreta
 rol: usuario
 modulo: Elaborados
 orden: 40
-revisada: 2026-10-04
+revisada: 2026-10-20
 ---
 # Fórmula secreta
 
@@ -27,7 +27,7 @@ La fórmula vuelve a ocultarse sola a los **5 minutos**, al tocar **Ocultar** o 
 
 ## Reglas
 - El mensaje de error es siempre el mismo (*"Usuario o contraseña incorrectos, o sin permiso para ver fórmulas"*): no dice si el usuario existe ni si tiene permiso.
-- Con **3 intentos fallidos** seguidos, esa sesión queda bloqueada **5 minutos** para probar usuarios y contraseñas.
+- Con **5 intentos fallidos** seguidos, esa sesión queda bloqueada **5 minutos** para probar usuarios y contraseñas. Desde el 3.er error el mensaje avisa cuántos intentos quedan. Ver [intentos de clave al autorizar](ayuda:concepto/intentos-de-clave-al-autorizar).
 - No se puede usar un usuario inactivo ni bloqueado.
 - Cada vez que alguien ve una fórmula secreta, la oculta, falla al intentarlo, o marca/desmarca una fórmula como secreta, queda un registro (quién se identificó, quién estaba operando, qué producto, desde qué IP y cuándo). PENDIENTE: todavía no hay una pantalla para consultar ese registro.
 - Los borradores sin guardar de Ingreso rápido y Carga no guardan la fórmula de un producto secreto.

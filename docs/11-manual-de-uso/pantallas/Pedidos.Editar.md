@@ -5,7 +5,7 @@ rol: admin
 modulo: Stock
 orden: 7
 permiso: Stock.AddOrEditStock o administrador. Un usuario de producción puede abrirla, pero al guardar necesita la autorización de otra persona
-revisada: 2026-10-19
+revisada: 2026-10-20
 alias: Pedidos.Modificar
 ---
 ## Para qué sirve
@@ -27,7 +27,7 @@ alias: Pedidos.Modificar
 ## Usuario de producción: hace falta una persona autorizada
 Si entraste con una **cuenta de producción** (la cuenta compartida del local), al guardar se abre un cartel pidiendo **usuario y contraseña de una persona autorizada** (administrador o con permiso para modificar stock).
 - Tiene que ser una **persona**: una cuenta de producción no puede autorizar, ni la propia ni otra.
-- Si el usuario o la contraseña no sirven, o la persona no tiene permiso, el mensaje es siempre el mismo (*Usuario o contraseña incorrectos, o sin permiso para modificar pedidos*). Después de varios intentos fallidos seguidos hay que **esperar unos segundos**.
+- Si el usuario o la contraseña no sirven, o la persona no tiene permiso, el mensaje es siempre el mismo (*Usuario o contraseña incorrectos, o sin permiso para modificar pedidos*). Tenés **5 intentos**; desde el 3.º el mensaje dice cuántos te quedan y, al 5.º, hay que **esperar 5 minutos** (ver [intentos de clave al autorizar](ayuda:concepto/intentos-de-clave-al-autorizar)).
 - La persona que autorizó **queda registrada en el historial** del pedido. Los intentos rechazados quedan en el registro del sistema (sin la contraseña).
 - Con un usuario común no se pide nada.
 

@@ -48,6 +48,9 @@ namespace WebCore.Controllers
         // controller evalua el permiso por fecha de esa persona.
         private const string MensajeClaveIncorrecta = "La clave es incorrecta.";
 
+        // La vista agrega sola " (N s)" cuando hay bloqueo, por eso este texto no lleva los segundos.
+        private const string MensajeDemasiadosIntentos = "Demasiados intentos. Esperá un momento antes de volver a probar.";
+
         [HttpGet]
         public IActionResult ClaveParaModificar(string modulo, int idUsuario, string returnUrl, string cancelUrl)
         {
@@ -70,14 +73,18 @@ namespace WebCore.Controllers
             string sessionId = ObtenerSessionIdEstable();
             if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
                 return VistaClave(modulo, candidato, returnUrl, cancelUrl,
-                    "Demasiados intentos. Esperá un momento antes de volver a probar.", (int)Math.Ceiling(retryAfter.TotalSeconds));
+                    MensajeDemasiadosIntentos, (int)Math.Ceiling(retryAfter.TotalSeconds));
 
             var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
             var validado = string.IsNullOrWhiteSpace(clave) ? null : oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
             if (validado == null || !validado.Activo || validado.Id != candidato.Id)
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
-                return VistaClave(modulo, candidato, returnUrl, cancelUrl, MensajeClaveIncorrecta, 0);
+                var fallo = WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                // Si este fallo agoto los intentos se informa el bloqueo ya (con su cuenta regresiva); si no, el
+                // error con el aviso de intentos restantes cuando corresponde.
+                return fallo.SeBloqueo
+                    ? VistaClave(modulo, candidato, returnUrl, cancelUrl, MensajeDemasiadosIntentos, fallo.SegundosBloqueo)
+                    : VistaClave(modulo, candidato, returnUrl, cancelUrl, fallo.ConAviso(MensajeClaveIncorrecta), 0);
             }
 
             WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);

@@ -72,12 +72,16 @@ namespace WebCore.Helpers
             var validado = oUsuarioN.ValidarUsuarioWeb(supervisor.Usuario, supervisor.Clave);
             if (validado == null || !EsSupervisor(validado, oUsuarioN))
             {
-                PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                var fallo = PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                // Si este fallo agoto los intentos se informa el bloqueo ya; si no, el error con el aviso de intentos restantes.
                 return new Resultado
                 {
                     Autorizado = false,
                     RequiereSupervisor = true,
-                    Mensaje = "Usuario o contraseña incorrectos, o sin permiso de supervisor."
+                    Bloqueado = fallo.SeBloqueo,
+                    Mensaje = fallo.SeBloqueo
+                        ? fallo.MensajeBloqueo
+                        : fallo.ConAviso("Usuario o contraseña incorrectos, o sin permiso de supervisor.")
                 };
             }
 

@@ -137,23 +137,20 @@ namespace WebCore.Controllers
             const string mensajeGenerico = "Usuario o contraseña incorrectos.";
             if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave))
             {
-                WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             var candidato = _oUsuarioN.getUsuarioById(idUsuario);
             if (candidato == null || !candidato.Activo)
             {
-                WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
             bool tienePermiso = validado != null && _oUsuarioN.tienePermiso(validado, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1);
             if (validado == null || !validado.Activo || !tienePermiso)
             {
-                WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             WebCore.Helpers.CierreCajaStepUpRateLimiter.Reset(sessionId);

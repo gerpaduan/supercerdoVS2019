@@ -303,11 +303,14 @@ namespace WebCore.Controllers
             // VentasController, donde la cuenta de produccion tampoco puede ser su propio operador. Mismo mensaje que cualquier otra falla.
             if (validado == null || !validado.Activo || validado.EsUsuarioProduccion || !PuedeModificar(validado))
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                var fallo = WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
                 // Auditoria del intento fallido (nunca la clave): quien pidio autorizacion y el usuario que se ingreso como autorizador.
                 _log.LogWarning("Autorización rechazada para modificar un pedido: solicitante {IdUsuario}, autorizador ingresado {Autorizador}.",
                     _usuarioActual?.Id, TextoSeguroParaLog(supervisor.Usuario));
-                return (false, false, "Usuario o contraseña incorrectos, o sin permiso para modificar pedidos.", null);
+                // Si este fallo agoto los intentos se informa el bloqueo ya; si no, el error con el aviso de intentos restantes.
+                if (fallo.SeBloqueo)
+                    return (false, true, fallo.MensajeBloqueo, null);
+                return (false, false, fallo.ConAviso("Usuario o contraseña incorrectos, o sin permiso para modificar pedidos."), null);
             }
 
             WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);

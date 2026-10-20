@@ -5,7 +5,7 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-10-07
+revisada: 2026-10-20
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
@@ -49,6 +49,7 @@ Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consulta
 ## Reglas y efectos
 - El importe del cajero **no es un egreso**: no cambia el total de EgresosCaja ni la diferencia.
 - El cajero puede corregir su conteo solo **mientras su caja siga abierta**; una vez cerrada queda como lo declaró.
+- Si quien cierra **no tiene el permiso** y se pide usuario y clave de quien lo tiene, hay **5 intentos**: desde el 3.º el mensaje dice cuántos quedan y al 5.º se bloquea 5 minutos (cuenta regresiva en el selector). Ver [intentos de clave al autorizar](ayuda:concepto/intentos-de-clave-al-autorizar).
 - **PENDIENTE:** documentar el cambio de sucursal de una caja y el botón Actividades de este modal.
 - **PENDIENTE:** prueba manual en el navegador con sesión de este flujo (no verificado todavía).
 

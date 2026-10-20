@@ -1,6 +1,13 @@
 # Bitacora de cambios
 
-## 2026-10-19 (la mas reciente) - POS: «Total c/saldo» en el post-venta y al elegir la forma de pago
+## 2026-10-20 (la mas reciente) - Autorizaciones con clave (POS, Cierre de Caja, Ver fórmula): 5 intentos y aviso «Te quedan N intentos» desde el 3.er error
+
+- **Pedido**: el POS se bloqueaba a los 3 intentos fallidos por 5 minutos; quiere 5 y que, desde el 3.º, se informe cuántos quedan antes del bloqueo. Además: alinear «Ver fórmula» y Cierre de Caja, y saber si el bloqueo es del usuario o del dispositivo y si los dispositivos seguros lo evitan.
+- **Cambio**: los tres limitadores de clave por sesión (operador de POS/módulo y demás autorizaciones, Cierre de Caja, Ver fórmula) pasan de 3 a **5 intentos** (ventana y bloqueo siguen en 5 min). Desde el 3.er error el mensaje agrega «Te quedan N intentos antes del bloqueo» y el 5.º informa el bloqueo (cuenta regresiva) en ese mismo intento, en vez de en el siguiente. No bloquea al usuario ni al dispositivo: cuenta por sesión del navegador, compartida por los vendedores de una PC de producción. Sin excepción para dispositivos seguros (decisión en `docs/DECISIONS.md`). Sin migraciones ni cambios de JS.
+- **Verificado**: `WebCore` compila; proyecto nuevo `WebCore.Tests` con 18 tests verdes (validado con una rotura a propósito). **Sin verificar**: la pantalla en el navegador con sesión real, y si cerrar sesión reinicia el contador.
+- **Manual**: concepto nuevo `intentos-de-clave-al-autorizar` y ajustes en fórmula secreta, bloqueo por inactividad, mapa de configuraciones, Clave para modificar, Modificar pedido y Cajas abiertas.
+
+## 2026-10-19 - POS: «Total c/saldo» en el post-venta y al elegir la forma de pago
 
 - **Pedido**: ver el total de la venta más el saldo del cliente debajo del total en el aviso de venta completada y en la elección de la forma de pago.
 - **Cambio**: renglón más chico **Total c/saldo** (o **A favor**) debajo del total en los dos lugares, siempre que el cliente tenga saldo para informar y sin importar la forma de pago. En el modal se recalcula con descuento/recargo; en el post-venta usa el saldo anterior a la venta. Carrito y ticket sin cambios. Sin migraciones.

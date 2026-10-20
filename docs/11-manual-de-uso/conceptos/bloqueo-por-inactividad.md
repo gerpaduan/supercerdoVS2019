@@ -3,7 +3,7 @@ titulo: Bloqueo por inactividad (sesión y POS)
 rol: usuario
 modulo: Acceso y seguridad
 orden: 12
-revisada: 2026-10-15
+revisada: 2026-10-20
 ---
 # Bloqueo por inactividad
 
@@ -17,7 +17,7 @@ En una PC que usan varios empleados, evita que alguien use la sesión que otro d
 
 ## Qué pasa en el POS
 - Pasados los minutos de inactividad del **vendedor**, el POS se **bloquea** con una pantalla que pide **su contraseña**. **La venta en curso no se pierde**: queda tal cual y, además, resguardada en el servidor.
-- Solo la contraseña **del mismo vendedor** desbloquea. La de otro usuario no sirve, aunque sea correcta.
+- Solo la contraseña **del mismo vendedor** desbloquea. La de otro usuario no sirve, aunque sea correcta. Los errores tienen un límite de **5 intentos** (avisa cuántos quedan desde el 3.º; al 5.º se espera 5 minutos): ver [intentos de clave al autorizar](ayuda:concepto/intentos-de-clave-al-autorizar).
 - Si mientras estaba bloqueado **le cerraron la caja**, al desbloquear el POS se recarga y vuelve a pedir abrir caja.
 - **Otro vendedor necesita la PC:**
   - Cuenta de **producción**: botón **Cambiar de vendedor** (elige usuario y pone su contraseña). La venta bloqueada queda en *Ayuda (F1) → Ver ventas sin cerrar* a nombre de su dueño; solo el dueño la retoma, o un supervisor con su autorización. El nuevo vendedor empieza una venta limpia y necesita **su propia caja abierta** para vender.

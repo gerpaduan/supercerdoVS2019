@@ -709,9 +709,9 @@ namespace WebCore.Controllers
             var resultado = _oUsuarioN.AutorizarVerFormulaSecreta(candidatoElegido?.User ?? "", clave);
             if (!resultado.Autorizado)
             {
-                WebCore.Helpers.FormulaStepUpRateLimiter.RegisterFailure(sessionId);
+                var fallo = WebCore.Helpers.FormulaStepUpRateLimiter.RegisterFailure(sessionId);
                 AuditarFormulaSinFallar(Entidades.AuditoriaFormula.TipoFallo, resultado.IdUsuarioCandidato, idCorte, resultado.Motivo);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(fallo.ComoRespuestaJson(mensajeGenerico));
             }
 
             // Falla cerrado: si no se puede dejar constancia de quien vio la formula, no se muestra.

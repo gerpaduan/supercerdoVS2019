@@ -41,7 +41,9 @@ namespace WebCore.Helpers
             return true;
         }
 
-        public static void RegisterFailure(string sessionId)
+        // Registra un intento fallido y devuelve cuantos quedan (para avisar "Te quedan N intentos") o si este
+        // fallo dejo la sesion bloqueada.
+        public static StepUpFailureResult RegisterFailure(string sessionId)
         {
             var now = DateTimeOffset.UtcNow;
             var window = GetWindow();
@@ -68,8 +70,11 @@ namespace WebCore.Helpers
                 }
 
                 state.Failures++;
-                if (state.Failures >= maxAttempts)
+                bool seBloqueo = state.Failures >= maxAttempts;
+                if (seBloqueo)
                     state.LockedUntilUtc = now.Add(lockout);
+
+                return new StepUpFailureResult(state.Failures, maxAttempts, lockout, seBloqueo);
             }
         }
 
@@ -107,7 +112,8 @@ namespace WebCore.Helpers
 
         private static int GetMaxAttempts()
         {
-            return GetInt("Security:CierreCajaStepUpMaxAttempts", 3, 1, 10);
+            // 5 intentos (pedido del usuario, 2026-10-20; antes 3), alineado con el step-up de operador de POS.
+            return GetInt("Security:CierreCajaStepUpMaxAttempts", 5, 1, 10);
         }
 
         private static TimeSpan GetWindow()

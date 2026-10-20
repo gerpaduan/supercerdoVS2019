@@ -666,15 +666,13 @@ namespace WebCore.Controllers
 
             if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave) || string.IsNullOrWhiteSpace(posInstanceId))
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             var candidato = _oUsuarioN.getUsuarioById(idUsuario);
             if (candidato == null || !candidato.Activo)
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
@@ -682,8 +680,7 @@ namespace WebCore.Controllers
                 (validado != null && _oUsuarioN.tienePermiso(validado, Entidades.Permisos.Venta.NuevaVenta, DateTime.Now, validado.Id));
             if (validado == null || !validado.Activo || !tienePermiso)
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
@@ -700,22 +697,19 @@ namespace WebCore.Controllers
             const string mensajeGenerico = "Usuario o contraseña incorrectos.";
             if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave) || string.IsNullOrWhiteSpace(modulo))
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             var candidato = _oUsuarioN.getUsuarioById(idUsuario);
             if (candidato == null || !candidato.Activo)
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
             if (validado == null || !validado.Activo)
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = mensajeGenerico });
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
             WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
@@ -765,8 +759,7 @@ namespace WebCore.Controllers
             var validado = _oUsuarioN.ValidarUsuarioWeb(vendedor.User, clave);
             if (validado == null || !validado.Activo || validado.Id != vendedor.Id)
             {
-                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
-                return Json(new { ok = false, msg = "Contraseña incorrecta." });
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson("Contraseña incorrecta."));
             }
 
             WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
