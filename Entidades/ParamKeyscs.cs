@@ -34,6 +34,11 @@ namespace Entidades
         public const string ImporteMaxRedondeo = "importeMaxRedondeo";
         public const string IdPagoCobroEgresoCaja = "idPagoCobroEgresoCaja";
         public const string CodProdGenerico = "codProdGenerico";
+
+        // Sí/No (2026-10-19): con Sí el ticket termico de venta NO fiscal (X) no imprime el nombre ni los
+        // slogans de la empresa. Sin valor = No (se imprimen, como siempre). El ticket facturado no cambia.
+        // Ver VentasController.OcultarEncabezadoTicketNoFiscal.
+        public const string OcultarEncabezadoTicketNoFiscal = "ocultarEncabezadoTicketNoFiscal";
     }
 
 }

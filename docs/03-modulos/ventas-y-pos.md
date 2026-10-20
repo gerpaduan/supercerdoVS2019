@@ -13,6 +13,14 @@ Documentar el flujo de ventas, caja, articulos, pesaje y uso del POS.
 - Dependencias con balanza o perifericos
 - Riesgos
 
+## Ocultar nombre y slogans en el ticket de venta no fiscal — 2026-10-19
+
+Manual: `docs/11-manual-de-uso/pantallas/Ventas.POS.md` (sección «Nombre de la empresa en el ticket»). Decisión: `docs/DECISIONS.md` (2026-10-19).
+
+- **Parámetro** por empresa `ocultarEncabezadoTicketNoFiscal` (`ParamKeys.OcultarEncabezadoTicketNoFiscal`, tipo 2 = Sí/No, pantalla Parámetros). Sin valor = No. Alta del catálogo: `DatosPostgres/DB-Migrations/20261019d-…sql` y, para SQL Server, `Datos/DB-Procedures/20261019-Insert_Parametro_OcultarEncabezadoTicketNoFiscal.sql` (INSERT dinámico según el esquema; no corrido todavía).
+- **Lectura**: `VentasController.OcultarEncabezadoTicketNoFiscal()`. Lo aplican las dos copias del ticket de venta con el mismo criterio `mostrarDatosEmpresa = esFacturada || !ocultar`: `ConstruirLineasTicketVenta` (ESC/POS, `ImprimirTicketPayload`) y `Views/Ventas/_TicketHTML.cshtml` (vía `ViewBag.OcultarEncabezadoNoFiscal`, `ImprimirTicketHtml`). Se omiten el nombre (`ObtenerNombreEmpresaVenta`) y `Slogan1..3`.
+- **No afecta**: ticket facturado (con CAE), PDF de la venta, recibos de pago/cobro y tickets de caja (`ComprobanteTickets`), ticket X del WinForms.
+
 ## Líneas de venta: exportar a PDF y Excel — 2026-10-13
 
 Pantalla `Ventas/Lineas` (`WebCore/Views/Ventas/Lineas.cshtml`; manual: `docs/11-manual-de-uso/pantallas/Ventas.Lineas.md`). Botones **PDF** y **Excel** en la cabecera → `VentasController.LineasPdf` / `LineasExcel` (GET, misma firma que `Lineas`, mismo gate de usuario de producción).

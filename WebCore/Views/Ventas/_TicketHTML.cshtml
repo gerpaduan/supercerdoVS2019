@@ -34,6 +34,12 @@
     bool esFacturaA = esFacturada && factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codFacturaA_Afip;
     bool agruparItemUnitario = esFacturada && !string.IsNullOrWhiteSpace(factura.DescItemUnitario);
 
+    // Nombre y slogans de la empresa (2026-10-19): el ticket no fiscal (X) los omite si la empresa activo
+    // el parametro ocultarEncabezadoTicketNoFiscal; el facturado los muestra siempre. Mismo criterio que
+    // VentasController.ConstruirLineasTicketVenta (ticket ESC/POS).
+    bool ocultarEncabezadoNoFiscal = ViewBag.OcultarEncabezadoNoFiscal is bool ocultarEncabezado && ocultarEncabezado;
+    bool mostrarDatosEmpresa = esFacturada || !ocultarEncabezadoNoFiscal;
+
     Func<string, int, string> truncar = (texto, maximo) =>
     {
         texto = texto ?? "";
@@ -365,21 +371,24 @@
         <div class="ticket-subtitle">@codigoComprobante</div>
         <div class="ticket-line">&nbsp;</div>
 
-        @if (!string.IsNullOrWhiteSpace(negocio))
+        @if (mostrarDatosEmpresa)
         {
-            <div class="ticket-business">@negocio</div>
-        }
-        @if (!string.IsNullOrWhiteSpace(negocioAgregado1))
-        {
-            <div class="ticket-subtitle">@negocioAgregado1</div>
-        }
-        @if (!string.IsNullOrWhiteSpace(negocioAgregado2))
-        {
-            <div class="ticket-subtitle">@negocioAgregado2</div>
-        }
-        @if (!string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-")
-        {
-            <div class="ticket-subtitle">@negocioAgregado3</div>
+            if (!string.IsNullOrWhiteSpace(negocio))
+            {
+                <div class="ticket-business">@negocio</div>
+            }
+            if (!string.IsNullOrWhiteSpace(negocioAgregado1))
+            {
+                <div class="ticket-subtitle">@negocioAgregado1</div>
+            }
+            if (!string.IsNullOrWhiteSpace(negocioAgregado2))
+            {
+                <div class="ticket-subtitle">@negocioAgregado2</div>
+            }
+            if (!string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-")
+            {
+                <div class="ticket-subtitle">@negocioAgregado3</div>
+            }
         }
 
         @if (esFacturada)

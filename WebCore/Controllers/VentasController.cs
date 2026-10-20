@@ -2309,6 +2309,8 @@ namespace WebCore.Controllers
             ViewBag.NegocioAgregado1 = empresaTicket != null ? empresaTicket.Slogan1 ?? "" : "";
             ViewBag.NegocioAgregado2 = empresaTicket != null ? empresaTicket.Slogan2 ?? "" : "";
             ViewBag.NegocioAgregado3 = empresaTicket != null ? empresaTicket.Slogan3 ?? "" : "";
+            // La vista decide con su propio esFacturada: el parametro no afecta al ticket facturado.
+            ViewBag.OcultarEncabezadoNoFiscal = OcultarEncabezadoTicketNoFiscal();
 
             return View("~/Views/Ventas/_TicketHTML.cshtml", venta);
         }
@@ -2366,6 +2368,7 @@ namespace WebCore.Controllers
         // clasico: Negocio/Slogans salen de Empresa (mismo criterio y mismo TODO que
         // ImprimirTicketHtml, no de AppSettings), y se agrega el bloque de datos a completar para
         // transferencias que ya tiene la vista HTML.
+        // Nombre y slogans (2026-10-19): el ticket X los omite si OcultarEncabezadoTicketNoFiscal().
         private List<string> ConstruirLineasTicketVenta(Entidades.Venta venta, int ticketMm, FacturaElectronicaDto factura, Entidades.Empresa empresa)
         {
             int cantMaxChar = ticketMm == 58 ? 32 : 43;
@@ -2431,10 +2434,16 @@ namespace WebCore.Controllers
             lineas.Add(EscPosFormato.DobleTamano(centrar(esFacturada ? obtenerTituloComprobante(factura.CodTipoCbteAfip) : "X", EscPosFormato.AnchoDobleTamano(cantMaxChar))));
             lineas.Add(centrar(esFacturada ? ("COD." + factura.CodTipoCbteAfip.ToString("00")) : "-No valido como Factura-", cantMaxChar));
             lineas.Add("");
-            if (!string.IsNullOrWhiteSpace(negocio)) lineas.Add(EscPosFormato.DobleTamanoFuenteB(centrar(negocio, EscPosFormato.AnchoDobleTamanoFuenteB(cantMaxChar))));
-            if (!string.IsNullOrWhiteSpace(negocioAgregado1)) lineas.Add(centrar(negocioAgregado1, cantMaxChar));
-            if (!string.IsNullOrWhiteSpace(negocioAgregado2)) lineas.Add(centrar(negocioAgregado2, cantMaxChar));
-            if (!string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-") lineas.Add(centrar(negocioAgregado3, cantMaxChar));
+            // Nombre y slogans de la empresa: en el ticket no fiscal (X) se omiten si la empresa lo pide
+            // (parametro ocultarEncabezadoTicketNoFiscal); en el facturado salen siempre.
+            bool mostrarDatosEmpresa = esFacturada || !OcultarEncabezadoTicketNoFiscal();
+            if (mostrarDatosEmpresa)
+            {
+                if (!string.IsNullOrWhiteSpace(negocio)) lineas.Add(EscPosFormato.DobleTamanoFuenteB(centrar(negocio, EscPosFormato.AnchoDobleTamanoFuenteB(cantMaxChar))));
+                if (!string.IsNullOrWhiteSpace(negocioAgregado1)) lineas.Add(centrar(negocioAgregado1, cantMaxChar));
+                if (!string.IsNullOrWhiteSpace(negocioAgregado2)) lineas.Add(centrar(negocioAgregado2, cantMaxChar));
+                if (!string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-") lineas.Add(centrar(negocioAgregado3, cantMaxChar));
+            }
 
             // Datos fiscales de la empresa (solo comprobantes con CAE); se omiten los vacios
             // Titulares fiscales: datos del emisor del COMPROBANTE (titular que facturo), que ya vienen en el DTO.
@@ -2939,6 +2948,15 @@ namespace WebCore.Controllers
             return !string.IsNullOrWhiteSpace(nombre)
                 ? nombre.Trim()
                 : "CarniSys";
+        }
+
+        // Parametro por empresa (2026-10-19, ver docs/DECISIONS.md "Parametro para ocultar los datos de la
+        // empresa en el ticket de venta no fiscal"): true = el ticket termico X no imprime el nombre ni los
+        // slogans. Sin valor = false (se imprimen, como siempre). Solo lo aplican los dos armados del ticket
+        // de venta (ConstruirLineasTicketVenta y _TicketHTML.cshtml) y nunca al ticket facturado.
+        private bool OcultarEncabezadoTicketNoFiscal()
+        {
+            return _param.GetBool01(ParamKeys.OcultarEncabezadoTicketNoFiscal, false);
         }
 
         private string ConvertirTextoAHtml(string texto)

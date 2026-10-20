@@ -1,6 +1,13 @@
 # Bitacora de cambios
 
-## 2026-10-16 (la mas reciente) - Deploy de WebCore en Servidor SM y San Lorenzo (HEAD `5a63e9bc` + 18 archivos sin commitear)
+## 2026-10-19 (la mas reciente) - POS: parámetro para no imprimir el nombre y los slogans de la empresa en el ticket no fiscal
+
+- **Pedido**: que cada empresa elija si el ticket no fiscal muestra su nombre y sus slogans.
+- **Cambio**: parámetro `ocultarEncabezadoTicketNoFiscal` (Sí/No, pantalla Parámetros, sin cargar = No). Con Sí, el ticket de venta X (ESC/POS y navegador, 58 y 80 mm) sale sin nombre ni slogans. El ticket facturado, los PDF, los recibos y los tickets de caja no cambian. Alta del catálogo: `DatosPostgres/DB-Migrations/20261019d-…sql` y `Datos/DB-Procedures/20261019-Insert_Parametro_OcultarEncabezadoTicketNoFiscal.sql`.
+- **Verificado**: `WebCore` compila; en la base local (migración ya aplicada, idparametro 23) con login real y un usuario de prueba ya borrado: la pantalla Parámetros muestra el casillero, y con Sí el ticket X (ESC/POS y HTML, 80 y 58 mm) sale sin `SuperCerdo` ni el slogan mientras el facturado queda idéntico; con No o sin valor, todo igual que antes. **Sin verificar**: guardar desde la pantalla (el valor se cargó por SQL), impresión física, script de SQL Server.
+- **Pendiente de deploy**: correr la migración Postgres en luden y el script de SQL Server en Servidor SM y San Lorenzo (mirar antes el esquema de `dbo.Parametros`).
+
+## 2026-10-16 - Deploy de WebCore en Servidor SM y San Lorenzo (HEAD `5a63e9bc` + 18 archivos sin commitear)
 
 - **A pedido del usuario** ("recompilar y publicar en SM y luego en SL"); VPS luden **no** se toco. Salio el codigo de las 4 entradas de abajo (Pesaje en Postgres, desvincular pesajes en Stock, "Precios por seleccion", clave de la persona para modificar registros anteriores a hoy), que estaba **sin commitear** al desplegar (despues se commiteo como `309724b3`, sin push): por eso sus lineas "sin commitear ni desplegar" ya no valen para SM y SL (siguen valiendo para la VPS). Sin migraciones.
 - **Verificado**: 513 tests de Negocio verdes; paquete Release win-x64 (`WebCore.dll` `552E0BAED135`); en ambos servidores hash del zip, DLL nueva, config y `AFIP\` intactas, y `/Login` 200 con titulo por HTTPS; `/SuperCerdoWeb/` 200. **Sin verificar**: nada con login real (las 4 funciones nuevas quedan pendientes de prueba en SM/SL); Event Log de SL no revisado; los E2E no se corrieron.
