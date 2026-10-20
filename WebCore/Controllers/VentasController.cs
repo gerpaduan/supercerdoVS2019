@@ -97,6 +97,8 @@ namespace WebCore.Controllers
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Usuario _oUsuarioN;
+        // Saldo de cuenta corriente del cliente para el POS y el ticket (2026-10-19).
+        private readonly Negocio.CuentaCorriente _oCtaCteN;
         private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
         private readonly WebCore.Services.IAfipConfigProvider _afip;
         // Titulares fiscales (null en SQL Server: se factura con los datos de la empresa como siempre).
@@ -137,6 +139,7 @@ namespace WebCore.Controllers
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            _oCtaCteN = WebCore.Infrastructure.NegocioFactory.CrearCuentaCorriente(_empresa, _param);
             _oBarcodeInterpreter = WebCore.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(_empresa, _param);
             _filtroPicker = new FiltroPickerService(_oPersonaN, _oUsuarioN);
         }
@@ -305,6 +308,143 @@ namespace WebCore.Controllers
         private IActionResult DenegarRegistroReservado()
         {
             return WebCore.Helpers.ProtegerRegistroReservadoFilter.Denegar(ControllerContext);
+        }
+
+        // ===== Saldo de cuenta corriente del cliente (2026-10-19) =====
+        // El POS lo muestra debajo del cliente elegido y el ticket de la venta lo imprime si el cajero
+        // lo acepta (ver docs/DECISIONS.md "Saldo del cliente en el POS y en el ticket"). Convencion
+        // de signo: saldo negativo = el cliente debe; positivo = a favor. El servidor SIEMPRE recalcula:
+        // el JS solo pide "incluir saldo", nunca manda montos.
+
+        // Umbral en pesos hasta el cual el saldo no se informa (parametro editable por el admin).
+        private decimal SaldoMinimoInformar()
+        {
+            return _param.GetDecimal(ParamKeys.SaldoMinimoInformar, Negocio.CalculoSaldoCliente.SaldoMinimoInformarPorDefecto);
+        }
+
+        // Saldo de `idPersona` que corresponde informar, o null si no hay nada que mostrar: persona
+        // invalida, Consumidor Final, cuenta reservada para este usuario (misma regla que Finanzas),
+        // sin movimientos, o saldo que no supera SaldoMinimoInformar. Si la venta ya registrada fue a
+        // cta cte (`ventaEnCtaCte`), su Debito ya esta en el saldo: se saca con
+        // `importeMovimientoVenta` para devolver el saldo ANTERIOR a la venta (el que va al ticket).
+        private decimal? ObtenerSaldoInformable(int idPersona, bool ventaEnCtaCte = false, decimal importeMovimientoVenta = 0m)
+        {
+            if (idPersona <= 0 || idPersona == _param.GetInt(ParamKeys.IdConsumidorFinal, 0))
+                return null;
+
+            if (_ctaCteReservada.SaldoOculto(idPersona))
+                return null;
+
+            decimal? saldoActual = _oCtaCteN.obtenerSaldoPersona(idPersona);
+            if (!saldoActual.HasValue)
+                return null;
+
+            decimal saldo = Negocio.CalculoSaldoCliente.Redondear(
+                Negocio.CalculoSaldoCliente.SaldoPrevioVenta(saldoActual.Value, ventaEnCtaCte, importeMovimientoVenta));
+
+            return Negocio.CalculoSaldoCliente.SaldoSuperaUmbral(saldo, SaldoMinimoInformar()) ? saldo : (decimal?)null;
+        }
+
+        // Saldo anterior a `venta` (con signo) si corresponde ofrecerlo en su ticket; null si no.
+        private decimal? ObtenerSaldoPrevioParaTicket(Entidades.Venta venta)
+        {
+            if (venta == null)
+                return null;
+
+            // Mismo importe con el que Negocio.Venta.crearMovCtaCteVenta genero el Debito (NO
+            // TotalImporte: pueden diferir por redondeo). Pasa por double para no perder los
+            // centavos de un float grande (Convert.ToDecimal(float) deja solo 7 cifras).
+            decimal importeMovimiento = venta.LineasVenta != null && venta.LineasVenta.Count > 0
+                ? Convert.ToDecimal((double)venta.getImporteVenta(venta))
+                : 0m;
+
+            return ObtenerSaldoInformable(venta.IdPersona, venta.EnCtaCte, importeMovimiento);
+        }
+
+        // Saldo previo para el ticket que se esta imprimiendo, o null si no se pidio (`incluirSaldo`
+        // false) o no corresponde. Si falla la consulta se loguea y el ticket sale sin saldo: el saldo
+        // es un agregado y no puede impedir imprimir el comprobante de la venta.
+        private decimal? SaldoPrevioParaImprimir(Entidades.Venta venta, bool incluirSaldo)
+        {
+            if (!incluirSaldo)
+                return null;
+
+            try
+            {
+                return ObtenerSaldoPrevioParaTicket(venta);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "No se pudo calcular el saldo para imprimir el ticket de la venta {IdVenta}; se imprime sin saldo", venta?.IdVenta);
+                return null;
+            }
+        }
+
+        // GET: Ventas/SaldoCliente?idPersona=X[&idVentaEditar=Y]
+        // Saldo para el renglon "Saldo" debajo del cliente elegido en el POS y para el "Total c/saldo"
+        // debajo del total del carrito. `mostrar` = false cuando no hay nada que informar (ver
+        // ObtenerSaldoInformable: Consumidor Final, cuenta reservada, saldo chico...). Ante un error
+        // responde mostrar=false: el saldo es informativo y no debe trabar la venta.
+        //
+        // `saldoParaTotal` es el saldo (con signo) que se suma al total del carrito. Es el mismo `saldo`,
+        // salvo al MODIFICAR una venta (`idVentaEditar`) del mismo cliente: si esa venta fue a cta cte,
+        // su Debito ya esta en el saldo y el carrito trae su importe, asi que se usa el saldo ANTERIOR a
+        // esa venta (mismo calculo que el ticket) para no contarla dos veces. `mostrarTotal` = false si
+        // ese saldo no supera el minimo a informar (el POS entonces no muestra "Total c/saldo").
+        [HttpGet]
+        public IActionResult SaldoCliente(int idPersona, int idVentaEditar = 0)
+        {
+            try
+            {
+                decimal? saldo = ObtenerSaldoInformable(idPersona);
+                decimal? saldoParaTotal = saldo;
+
+                if (idVentaEditar > 0)
+                {
+                    var ventaEditada = _oVentaN.getVentaById(idVentaEditar);
+                    if (ventaEditada != null && ventaEditada.IdPersona == idPersona)
+                        saldoParaTotal = ObtenerSaldoPrevioParaTicket(ventaEditada);
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    mostrar = saldo.HasValue,
+                    saldo = saldo ?? 0m,
+                    mostrarTotal = saldoParaTotal.HasValue,
+                    saldoParaTotal = saldoParaTotal ?? 0m
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "No se pudo obtener el saldo de cuenta corriente de la persona {IdPersona}", idPersona);
+                return Json(new { ok = false, mostrar = false, saldo = 0m, mostrarTotal = false, saldoParaTotal = 0m });
+            }
+        }
+
+        // GET: Ventas/SaldoParaTicket?id=ventaId
+        // El post-venta del POS lo consulta antes de imprimir el ticket para saber si corresponde
+        // preguntar si se incluye el saldo. `saldoPrevio` es el saldo ANTERIOR a esta venta, con signo.
+        // `enCtaCte` dice si la venta se suma al saldo en el ticket (solo si fue a cuenta corriente);
+        // si no, el ticket muestra unicamente el saldo anterior (2026-10-19).
+        [HttpGet]
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
+        public IActionResult SaldoParaTicket(int id)
+        {
+            try
+            {
+                var venta = _oVentaN.getVentaById(id);
+                if (venta == null)
+                    return Json(new { ok = false, tieneSaldo = false, saldoPrevio = 0m, enCtaCte = false });
+
+                decimal? saldoPrevio = ObtenerSaldoPrevioParaTicket(venta);
+                return Json(new { ok = true, tieneSaldo = saldoPrevio.HasValue, saldoPrevio = saldoPrevio ?? 0m, enCtaCte = venta.EnCtaCte });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "No se pudo obtener el saldo para el ticket de la venta {IdVenta}", id);
+                return Json(new { ok = false, tieneSaldo = false, saldoPrevio = 0m, enCtaCte = false });
+            }
         }
 
         // GET: Ventas/HistorialPreciosCliente
@@ -2280,7 +2420,7 @@ namespace WebCore.Controllers
         // (mismo comportamiento que tendria el clasico si esas claves no estuvieran seteadas).
         [HttpGet]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
-        public IActionResult ImprimirTicketHtml(int id, int mm = 80)
+        public IActionResult ImprimirTicketHtml(int id, int mm = 80, bool incluirSaldo = false)
         {
             var venta = _oVentaN.getVentaById(id);
             if (venta == null)
@@ -2288,6 +2428,10 @@ namespace WebCore.Controllers
 
             int medida = mm == 58 ? 58 : 80;
             ViewBag.Medida = medida;
+
+            // Saldo del cliente (2026-10-19): solo si el cajero acepto sumarlo. Se recalcula aca (no se
+            // confia en el cliente) y es null si no hay nada que informar (reservada, saldo chico, etc.).
+            ViewBag.SaldoPrevioTicket = SaldoPrevioParaImprimir(venta, incluirSaldo);
 
             var facturaTicket = ObtenerFacturaAsociadaVenta(venta.IdVenta);
             ViewBag.FacturaTicket = (facturaTicket != null && facturaTicket.Id > 0)
@@ -2323,7 +2467,7 @@ namespace WebCore.Controllers
         // lo dibuja con ESC/POS nativo, el server no genera imagen).
         [HttpGet]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
-        public IActionResult ImprimirTicketPayload(int id, int mm = 80)
+        public IActionResult ImprimirTicketPayload(int id, int mm = 80, bool incluirSaldo = false)
         {
             try
             {
@@ -2332,6 +2476,8 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, mensaje = "Venta no encontrada." });
 
                 int ticketMm = mm == 58 ? 58 : 80;
+                // Saldo del cliente (2026-10-19): ver ImprimirTicketHtml.
+                decimal? saldoPrevioTicket = SaldoPrevioParaImprimir(venta, incluirSaldo);
                 var facturaTicket = ObtenerFacturaAsociadaVenta(venta.IdVenta);
                 var notaCreditoTicket = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
                 bool tieneFactura = facturaTicket != null && facturaTicket.Id > 0;
@@ -2347,7 +2493,7 @@ namespace WebCore.Controllers
                 {
                     ok = true,
                     ticketMm = ticketMm,
-                    ticketLines = ConstruirLineasTicketVenta(venta, ticketMm, facturaDto, ObtenerEmpresaVenta(venta)),
+                    ticketLines = ConstruirLineasTicketVenta(venta, ticketMm, facturaDto, ObtenerEmpresaVenta(venta), saldoPrevioTicket),
                     qrValue = qrValue,
                     tieneFactura = tieneFactura,
                     tieneNotaCredito = notaCreditoTicket != null && notaCreditoTicket.Id > 0,
@@ -2368,8 +2514,10 @@ namespace WebCore.Controllers
         // clasico: Negocio/Slogans salen de Empresa (mismo criterio y mismo TODO que
         // ImprimirTicketHtml, no de AppSettings), y se agrega el bloque de datos a completar para
         // transferencias que ya tiene la vista HTML.
+        // `saldoPrevio` (2026-10-19): saldo del cliente ANTES de esta venta, con signo; solo viene si el
+        // cajero acepto sumarlo al ticket (ver ObtenerSaldoPrevioParaTicket). null = sin bloque de saldo.
         // Nombre y slogans (2026-10-19): el ticket X los omite si OcultarEncabezadoTicketNoFiscal().
-        private List<string> ConstruirLineasTicketVenta(Entidades.Venta venta, int ticketMm, FacturaElectronicaDto factura, Entidades.Empresa empresa)
+        private List<string> ConstruirLineasTicketVenta(Entidades.Venta venta, int ticketMm, FacturaElectronicaDto factura, Entidades.Empresa empresa, decimal? saldoPrevio = null)
         {
             int cantMaxChar = ticketMm == 58 ? 32 : 43;
             bool esFacturada = factura != null && factura.IdFactura > 0 && !string.IsNullOrWhiteSpace(factura.CAE);
@@ -2553,6 +2701,16 @@ namespace WebCore.Controllers
             {
                 lineas.Add(formatearTotal("Pago", Convert.ToDecimal(venta.Abona), cantMaxChar));
                 lineas.Add(formatearTotal("Vuelto", Convert.ToDecimal(venta.Cambio), cantMaxChar));
+            }
+
+            // Saldo de cuenta corriente del cliente (2026-10-19): debajo de Total/Pago/Vuelto y antes
+            // del pie fiscal. Mismo bloque que _TicketHTML.cshtml (TicketSaldoLineas es la fuente unica).
+            if (saldoPrevio.HasValue)
+            {
+                decimal totalVentaTicket = esFacturada ? factura.ImporteTotal : Convert.ToDecimal(venta.TotalImporte);
+                // La venta se suma al saldo solo si es a cta cte; si no, solo el saldo anterior.
+                foreach (var lineaSaldo in TicketSaldoLineas.Construir(totalVentaTicket, saldoPrevio.Value, cantMaxChar, venta.EnCtaCte))
+                    lineas.Add(lineaSaldo.EsTotal ? EscPosFormato.Negrita(lineaSaldo.Texto) : lineaSaldo.Texto);
             }
 
             // Pie fiscal (solo comprobantes con CAE)

@@ -94,6 +94,14 @@ namespace NegocioTests.Fakes
         };
 
         public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona, string ordenSaldo = "DESC") => throw new NotImplementedException();
+        // Misma semantica que las implementaciones reales: SUM(importe) de la persona, null si no tiene
+        // ningun movimiento (se calcula sobre Movimientos, que addOrEditMovCtaCte va llenando).
+        public decimal? obtenerSaldoPersona(int idPersona)
+        {
+            var delaPersona = Movimientos.Where(m => m.Persona != null && m.Persona.IdPersona == idPersona).ToList();
+            return delaPersona.Count == 0 ? (decimal?)null : delaPersona.Sum(m => (decimal)m.Importe);
+        }
+
         public DataTable obtenerResumenDashboard() => throw new NotImplementedException();
         public DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde) => throw new NotImplementedException();
         public DataTable obtenerCheques(string texto, DateTime fechaDesde, DateTime fechaHasta, bool soloPropios, string estado) => throw new NotImplementedException();

@@ -184,6 +184,20 @@ namespace Datos
             );
         }
 
+        // Saldo de una persona (ver Contratos.ICuentaCorrienteRepository.obtenerSaldoPersona). SUM sobre
+        // cero filas devuelve NULL: asi se distingue "sin movimientos" (null) de "saldo 0".
+        public decimal? obtenerSaldoPersona(int idPersona)
+        {
+            object saldo = Db.Scalar(
+                _empresa,
+                "SELECT SUM(importe) FROM dbo.MovCtaCte WHERE idPersona = @idPersona;",
+                CommandType.Text,
+                setParams: p => p.Add("@idPersona", SqlDbType.Int).Value = idPersona
+            );
+
+            return (saldo == null || saldo == DBNull.Value) ? (decimal?)null : Convert.ToDecimal(saldo);
+        }
+
         public DataTable obtenerResumenDashboard()
         {
             const string sql = @"

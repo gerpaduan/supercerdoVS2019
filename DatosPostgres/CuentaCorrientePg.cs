@@ -183,6 +183,19 @@ namespace DatosPostgres
             });
         }
 
+        // Saldo de una persona (ver Contratos.ICuentaCorrienteRepository.obtenerSaldoPersona). SUM sobre
+        // cero filas es NULL: asi se distingue "sin movimientos" (null) de "saldo 0". Misma suma que
+        // obtenerCtasCtes (sin filtrar quitadoctacte), para que ambos muestren el mismo numero.
+        public decimal? obtenerSaldoPersona(int idPersona)
+        {
+            object saldo = DbPg.Scalar(
+                _connectionString, _idEmpresa,
+                "SELECT SUM(importe) FROM movctacte WHERE idpersona = @idPersona;",
+                p => p.AddWithValue("idPersona", idPersona));
+
+            return (saldo == null || saldo == DBNull.Value) ? (decimal?)null : Convert.ToDecimal(saldo);
+        }
+
         public DataTable obtenerResumenDashboard()
         {
             const string sql = @"

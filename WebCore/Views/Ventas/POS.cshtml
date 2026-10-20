@@ -217,6 +217,13 @@
                         <span class="pos-cliente-identificacion-label">Ident.:</span>
                         <span id="clienteIdentificacionTexto">@(Model.Persona?.Identificacion ?? "")</span>
                     </div>
+                    @* Saldo de cuenta corriente del cliente (docs/DECISIONS.md, 2026-10-19): arranca oculto;
+                       actualizarSaldoCliente lo completa segun el cliente elegido. Rojo "(debe)" o verde
+                       "(a favor)"; el servidor decide si corresponde mostrarlo (reservada, saldo chico, CF). *@
+                    <div id="clienteSaldoWrap" class="pos-cliente-saldo d-none">
+                        <span class="pos-cliente-saldo-label">Saldo:</span>
+                        <span id="clienteSaldoTexto"></span>
+                    </div>
                     @* Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01): arranca oculta; la muestra
                        actualizarAccesoHistorialPreciosCliente segun el cliente elegido. *@
                     <div id="clienteReservadaWrap" class="d-none mt-1 small text-muted">
@@ -381,6 +388,16 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h2 class="m-0 pos-total-label">Total</h2>
                                     <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
+                                </div>
+                                @* Total con saldo de cuenta corriente (docs/DECISIONS.md, 2026-10-19): total del carrito
+                                   + lo que el cliente debia (o - lo que tiene a favor), en letra mas chica. Arranca oculto;
+                                   actualizarTotalConSaldo lo muestra solo si el servidor informa saldo (Consumidor Final,
+                                   cuenta reservada y saldo chico no lo informan) y el carrito tiene importe. *@
+                                <div id="posTotalConSaldoWrap" class="d-none">
+                                    <div class="d-flex justify-content-between align-items-baseline pos-total-con-saldo">
+                                        <span id="posTotalConSaldoLabel" class="pos-total-con-saldo-label">Total c/saldo</span>
+                                        <span id="posTotalConSaldoValor" class="pos-total-con-saldo-value">$ 0,00</span>
+                                    </div>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-start pos-sale-summary-row">
                                     <div id="posVentaItemsResumen" class="pos-sale-items text-muted"></div>
@@ -2431,6 +2448,8 @@ else
                 imprimir: "@Url.Action("Imprimir", "Ventas")",
                 imprimirTicketHtml: "@Url.Action("ImprimirTicketHtml", "Ventas")",
                 imprimirTicketPayload: "@Url.Action("ImprimirTicketPayload", "Ventas")",
+                saldoCliente: "@Url.Action("SaldoCliente", "Ventas")",
+                saldoParaTicket: "@Url.Action("SaldoParaTicket", "Ventas")",
                 obtenerDatosEmailComprobante: "@Url.Action("ObtenerDatosEmailComprobante", "Ventas")",
                 enviarComprobanteEmail: "@Url.Action("EnviarComprobanteEmail", "Ventas")"
             };
@@ -2501,6 +2520,111 @@ else
 
             window.setClienteIdentificacionVisual = setClienteIdentificacionVisual;
 
+            // Saldo de cuenta corriente del cliente elegido (docs/DECISIONS.md, 2026-10-19). Lo pide a
+            // Ventas/SaldoCliente, que decide si corresponde mostrarlo (Consumidor Final, cuenta reservada
+            // para este usuario, sin movimientos o saldo por debajo del minimo a informar). Rojo "(debe)"
+            // si es negativo, verde "(a favor)" si es positivo. tokenSaldoCliente descarta una respuesta
+            // vieja si el cajero cambia de cliente antes de que llegue. Lo dispara
+            // actualizarAccesoHistorialPreciosCliente, el punto por el que pasa todo cambio de cliente.
+            var tokenSaldoCliente = 0;
+
+            // Renglon debajo del total del carrito (2026-10-19), en letra mas chica. La venta se SUMA al
+            // saldo solo si es a cuenta corriente (ahi la deuda realmente crece); si no, muestra unicamente
+            // el saldo anterior:
+            //   - forma de pago preseleccionada = CtaCte -> "Total c/saldo" = total del carrito - saldo con
+            //     signo (saldo negativo = debe, se suma; a favor, se resta; si el saldo a favor supera la
+            //     venta dice "A favor").
+            //   - cualquier otra (o ninguna elegida todavia; en muchos negocios se elige al cobrar) ->
+            //     "Saldo anterior (debe|a favor)" sin sumar nada.
+            // `saldoParaTotalPOS` lo deja actualizarSaldoCliente con lo que informa el servidor (que ya
+            // aplica Consumidor Final, cuenta reservada y saldo chico); null = no se muestra. Lo llama
+            // pos-cart.js (recalculateTotal) en cada cambio del carrito, pos-state.js al cambiar la forma
+            // de pago preseleccionada y actualizarSaldoCliente cuando llega el saldo. Con el carrito vacio
+            // se oculta: ahi alcanza con el renglon "Saldo" de debajo del cliente.
+            var saldoParaTotalPOS = null;
+            function formaPagoPreseleccionadaEsCtaCte() {
+                var forma = window.POSState && window.POSState.getFormaPagoPreseleccionada
+                    ? window.POSState.getFormaPagoPreseleccionada() : null;
+                return !!forma && String(forma.tipo || "").toLowerCase() === "ctacte";
+            }
+            window.actualizarTotalConSaldo = function (total) {
+                var $wrap = $("#posTotalConSaldoWrap");
+                if (!$wrap.length) return;
+
+                if (typeof total !== "number") {
+                    total = window.POSState && window.POSState.getTotal ? window.POSState.getTotal() : 0;
+                }
+
+                if (saldoParaTotalPOS === null || !(total > 0)) {
+                    $wrap.addClass("d-none");
+                    return;
+                }
+
+                var $label = $("#posTotalConSaldoLabel");
+                var $valor = $("#posTotalConSaldoValor");
+                var formato = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+
+                if (formaPagoPreseleccionadaEsCtaCte()) {
+                    // A centavos: total y saldo vienen de flotantes distintos.
+                    var conSaldo = Math.round((total - saldoParaTotalPOS) * 100) / 100;
+                    // Si el saldo a favor supera la venta no se muestra un total negativo: se rotula "A favor".
+                    $label.text(conSaldo >= 0 ? "Total c/saldo" : "A favor");
+                    $valor.text("$ " + Math.abs(conSaldo).toLocaleString("es-AR", formato));
+                    $valor.removeClass("pos-total-con-saldo-value--debe pos-total-con-saldo-value--favor");
+                } else {
+                    var debe = saldoParaTotalPOS < 0;
+                    $label.text(debe ? "Saldo anterior (debe)" : "Saldo anterior (a favor)");
+                    $valor.text("$ " + Math.abs(saldoParaTotalPOS).toLocaleString("es-AR", formato));
+                    $valor.toggleClass("pos-total-con-saldo-value--debe", debe)
+                        .toggleClass("pos-total-con-saldo-value--favor", !debe);
+                }
+                $wrap.removeClass("d-none");
+            };
+
+            function actualizarSaldoCliente(idPersona) {
+                var token = ++tokenSaldoCliente;
+                var $wrap = $("#clienteSaldoWrap");
+                var $texto = $("#clienteSaldoTexto");
+
+                function ocultar() {
+                    $wrap.addClass("d-none").removeClass("pos-cliente-saldo--debe pos-cliente-saldo--favor");
+                    $texto.text("");
+                    saldoParaTotalPOS = null;
+                    window.actualizarTotalConSaldo();
+                }
+
+                ocultar();
+                idPersona = parseInt(idPersona, 10) || 0;
+                if (!idPersona || idPersona === @idConsumidorFinalPOS) return;
+                if (!$wrap.length || !window.api || !window.api.venta || !window.api.venta.saldoCliente) return;
+
+                // Al modificar una venta se manda su id: el servidor saca esa venta del saldo del total
+                // (si fue a cta cte ya esta en el saldo y el carrito trae su importe).
+                var idVentaEditar = window.esEdicionVenta ? (parseInt($("#idVentaEditar").val(), 10) || 0) : 0;
+
+                $.get(window.api.venta.saldoCliente, { idPersona: idPersona, idVentaEditar: idVentaEditar })
+                    .done(function (resp) {
+                        if (token !== tokenSaldoCliente) return; // llego tarde: ya se eligio otro cliente
+                        if (!resp || !resp.ok) return;
+
+                        if (resp.mostrar) {
+                            var saldo = Number(resp.saldo) || 0;
+                            var debe = saldo < 0;
+                            $texto.text("$ " + Math.abs(saldo).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+                                (debe ? " (debe)" : " (a favor)"));
+                            $wrap.removeClass("d-none").addClass(debe ? "pos-cliente-saldo--debe" : "pos-cliente-saldo--favor");
+                        }
+
+                        saldoParaTotalPOS = resp.mostrarTotal ? (Number(resp.saldoParaTotal) || 0) : null;
+                        window.actualizarTotalConSaldo();
+                    })
+                    .fail(function (xhr) {
+                        // El saldo es informativo: si falla no se traba la venta, solo queda sin mostrar.
+                        console.warn("No se pudo obtener el saldo del cliente", xhr && xhr.status);
+                        if (token === tokenSaldoCliente) ocultar();
+                    });
+            }
+
             // Gate del historial de precios por cliente (F8 / boton), 2026-09-06 (retomado -- ver
             // docs/DECISIONS.md): se oculta con Consumidor Final y con clientes de cuenta corriente
             // reservada si el usuario no tiene permiso de cuentas corrientes (2026-10-01; antes lo
@@ -2511,6 +2635,9 @@ else
             function actualizarAccesoHistorialPreciosCliente(idPersona) {
                 var $btn = $("#btnHistorialPreciosCliente");
                 idPersona = parseInt(idPersona, 10) || 0;
+
+                // Todo cambio de cliente pasa por aca: el saldo se actualiza junto con el resto.
+                actualizarSaldoCliente(idPersona);
 
                 // Un precio copiado es especifico del cliente del que se copio -- si cambia el
                 // cliente, no tiene sentido seguir ofreciendo "Pegar" con un precio de otro cliente.
@@ -3157,6 +3284,30 @@ else
                 });
             }
 
+            // Pregunta si se incluye el saldo de cuenta corriente del cliente en el ticket (docs/DECISIONS.md,
+            // 2026-10-19). `saldoPrevio` es el saldo anterior a esta venta, con signo (negativo = debe).
+            // `enCtaCte`: la venta se suma al saldo SOLO si fue a cuenta corriente; si no, el ticket
+            // muestra unicamente el saldo anterior y el texto lo aclara.
+            // Devuelve una Promise<boolean>: true solo si el cajero confirma; cualquier otra salida
+            // (No, Esc, cerrar) imprime el ticket sin saldo. El texto sale solo de un numero formateado.
+            function pvbPreguntarSumarSaldo(saldoPrevio, enCtaCte) {
+                var saldo = Number(saldoPrevio) || 0;
+                var monto = "$ " + Math.abs(saldo).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                var detalle = enCtaCte
+                    ? "El ticket mostrará el saldo anterior y el total con esta venta, que es a cuenta corriente."
+                    : "Esta venta no es a cuenta corriente: el ticket mostrará solo el saldo anterior, sin sumarla.";
+                return Swal.fire({
+                    icon: "question",
+                    title: enCtaCte ? "¿Sumar el saldo al ticket?" : "¿Mostrar el saldo en el ticket?",
+                    html: "El cliente " + (saldo < 0 ? "debe " : "tiene a favor ") + "<b>" + monto + "</b>.<br><small>" + detalle + "</small>",
+                    showCancelButton: true,
+                    confirmButtonText: enCtaCte ? "Sí, sumar saldo" : "Sí, mostrar saldo",
+                    cancelButtonText: "No"
+                }).then(function (result) {
+                    return !!result.isConfirmed;
+                });
+            }
+
             window.mostrarModalPostVenta = function (ventaId) {
                 // Filtros del modal de expendios reiniciados al finalizar (pedido explicito del
                 // usuario, ver docs/DECISIONS.md).
@@ -3199,17 +3350,41 @@ else
                 var ventaId = $(this).data("venta-id");
                 var mmRecordado = pvbObtenerMedidaTicket();
 
-                function abrirTicket(mm) {
+                function imprimirTicket(mm, incluirSaldo) {
                     // Agente local si esta instalado; si no, dialogo del navegador via iframe
                     // oculto -- nunca pestaña nueva (ver ticket-print.js)
                     // Al terminar de imprimir se cierra el modal y se vuelve al POS listo para
                     // otra venta (igual que "Nueva venta" y que el clasico, cerrarPostVentaSegunOrigen);
                     // el retraso deja que el spool del navegador/agente termine antes del reload.
+                    // incluirSaldo solo "pide" el bloque de saldo: el servidor recalcula el monto y
+                    // decide si corresponde (no viaja ningun importe desde aca).
+                    var saldo = incluirSaldo ? "&incluirSaldo=true" : "";
                     window.TicketPrint.imprimir({
-                        ticketUrl: window.api.venta.imprimirTicketHtml + "?id=" + ventaId + "&mm=" + mm,
-                        payloadUrl: window.api.venta.imprimirTicketPayload + "?id=" + ventaId + "&mm=" + mm,
+                        ticketUrl: window.api.venta.imprimirTicketHtml + "?id=" + ventaId + "&mm=" + mm + saldo,
+                        payloadUrl: window.api.venta.imprimirTicketPayload + "?id=" + ventaId + "&mm=" + mm + saldo,
                         onDone: function () { setTimeout(pvbContinuarNuevaVenta, 400); }
                     });
+                }
+
+                // Antes de imprimir se consulta si el cliente tiene saldo de cuenta corriente que valga
+                // la pena informar (docs/DECISIONS.md, 2026-10-19). Si lo tiene, se le pregunta al cajero
+                // si lo suma al ticket; si no, o si la consulta falla, se imprime como siempre.
+                function abrirTicket(mm) {
+                    $.get(window.api.venta.saldoParaTicket, { id: ventaId })
+                        .done(function (resp) {
+                            if (!resp || !resp.ok || !resp.tieneSaldo) {
+                                imprimirTicket(mm, false);
+                                return;
+                            }
+                            pvbPreguntarSumarSaldo(resp.saldoPrevio, !!resp.enCtaCte).then(function (sumar) {
+                                imprimirTicket(mm, sumar);
+                            });
+                        })
+                        .fail(function (xhr) {
+                            // El saldo es un agregado: no puede impedir imprimir el comprobante.
+                            console.warn("No se pudo consultar el saldo para el ticket", xhr && xhr.status);
+                            imprimirTicket(mm, false);
+                        });
                 }
 
                 if (mmRecordado) {

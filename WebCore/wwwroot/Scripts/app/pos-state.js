@@ -13,6 +13,15 @@
         requierePreseleccionFormaPago: false
     };
 
+    // El POS de Ventas muestra bajo el total un renglon que depende de la forma de pago preseleccionada
+    // (saldo de cuenta corriente: la venta se suma solo si es a cta cte, 2026-10-19). La pagina lo
+    // define; el POS de Expendio, que comparte este script, no: por eso el typeof.
+    function avisarCambioFormaPago() {
+        if (typeof window.actualizarTotalConSaldo === 'function') {
+            window.actualizarTotalConSaldo();
+        }
+    }
+
     function normalizarLinea(linea) {
         if (!linea) return linea;
 
@@ -96,6 +105,7 @@
             state.listaExpendios = [];
             state.formaPagoPreseleccionada = null;
             state.modoFormaPago = 'finalizacion';
+            avisarCambioFormaPago();
         },
 
         nextIndex: function () {
@@ -174,6 +184,7 @@
 
         setFormaPagoPreseleccionada: function (value) {
             state.formaPagoPreseleccionada = value || null;
+            avisarCambioFormaPago();
             return state.formaPagoPreseleccionada;
         },
 
@@ -183,6 +194,7 @@
 
         clearFormaPagoPreseleccionada: function () {
             state.formaPagoPreseleccionada = null;
+            avisarCambioFormaPago();
             return state.formaPagoPreseleccionada;
         },
 

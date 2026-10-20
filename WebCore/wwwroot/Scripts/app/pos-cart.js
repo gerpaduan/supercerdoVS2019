@@ -169,6 +169,10 @@
                     maximumFractionDigits: 2
                 })
             );
+            // "Total c/saldo" del POS de Ventas (2026-10-19): la pagina lo define; el POS de Expendio no.
+            if (typeof window.actualizarTotalConSaldo === "function") {
+                window.actualizarTotalConSaldo(total);
+            }
             updateCartSummary();
         }
 

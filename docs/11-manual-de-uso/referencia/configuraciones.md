@@ -3,7 +3,7 @@ titulo: Mapa de configuraciones de la empresa
 rol: admin
 modulo: Referencia
 orden: 1
-revisada: 2026-10-15
+revisada: 2026-10-19
 ---
 # Mapa de configuraciones de la empresa
 
@@ -57,4 +57,5 @@ Cada fila es **un interruptor o valor que cambia el comportamiento del sistema**
 ## Ventas y POS
 | Configuración | Dónde se cambia | Quién | Por defecto | Efecto |
 |---|---|---|---|---|
+| **Saldo mínimo a informar** (`saldoMinimoInformar`, en pesos) | Pantalla **Parámetros** (`/Parametros`) | Admin | **100** (vacío = 100) | En el [POS](ayuda:pantalla/Ventas.POS), un cliente cuyo saldo de cuenta corriente sea **igual o menor** a este monto (en deuda o a favor) **no muestra el saldo** debajo del nombre ni se ofrece sumarlo al ticket. Por encima se muestra el saldo exacto. Con **0** se informa cualquier saldo distinto de cero. Pensado para ignorar diferencias de unos pocos pesos que no se cobran. |
 | **Ocultar datos de la empresa en el ticket no fiscal** (`ocultarEncabezadoTicketNoFiscal`, Sí/No) | Pantalla **Parámetros** (`/Parametros`) | Admin | **No** (sin cargar = No) | Con **Sí**, el ticket de venta no fiscal (X) del [POS](ayuda:pantalla/Ventas.POS) no imprime el nombre de la empresa ni los slogans. El ticket facturado (con CAE), los PDF y los demás tickets (recibos, caja) no cambian. En Servidor SM y San Lorenzo (SQL Server) aparece recién al correr su script de alta; si la base no tiene la columna `tipo`, se carga `1` (ocultar) o `0` en vez del casillero. |

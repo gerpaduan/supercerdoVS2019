@@ -16,6 +16,10 @@ namespace Contratos
         Contratos.IUnitOfWork IniciarUnitOfWork();
 
         DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona, string ordenSaldo = "DESC");
+        // Saldo de UNA persona: SUM(importe) de sus movimientos (negativo = la persona debe, positivo =
+        // a favor). null si no tiene ningun movimiento. Liviano a proposito: obtenerCtasCtes agrupa toda
+        // la tabla y el POS lo consulta en cada cliente elegido y en cada impresion (DECISIONS 2026-10-19).
+        decimal? obtenerSaldoPersona(int idPersona);
         DataTable obtenerResumenDashboard();
         DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde);
         // unitOfWork opcional: ver Contratos/IUnitOfWork.cs.

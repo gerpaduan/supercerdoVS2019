@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (42 de 92 pantallas)
+## Cobertura (46 de 95 pantallas)
 
 ## Manual del usuario
 
@@ -53,6 +53,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-16 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-13 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
+| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-10-19 |
 | pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-10-13 |
 
 ## Manual del administrador
@@ -67,13 +68,16 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Titulares de facturación | Facturación | `pantallas/TitularesFiscales.Index.md` | 2026-10-12 |
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
 | pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-10-13 |
-| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-10-13 |
+| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-10-19 |
+| pantallas | Modificar pedido | Stock | `pantallas/Pedidos.Editar.md` | 2026-10-19 |
+| pantallas | Pedido (detalle) | Stock | `pantallas/Pedidos.Detalle.md` | 2026-10-19 |
+| pantallas | Pedidos | Stock | `pantallas/Pedidos.Index.md` | 2026-10-19 |
 | pantallas | Qué pedir | Stock | `pantallas/Reposicion.Index.md` | 2026-10-13 |
 | pantallas | Sugerir puntos de stock | Stock | `pantallas/Reposicion.Puntos.md` | 2026-10-13 |
 | pantallas | Nuevo / Modificar usuario | Usuarios | `pantallas/Usuarios.Editar.md` | 2026-10-15 |
 | pantallas | Permisos del usuario | Usuarios | `pantallas/Usuarios.Permisos.md` | 2026-10-03 |
 | pantallas | Usuarios | Usuarios | `pantallas/Usuarios.Index.md` | 2026-10-03 |
-| referencia | Mapa de configuraciones de la empresa | Referencia | `referencia/configuraciones.md` | 2026-10-15 |
+| referencia | Mapa de configuraciones de la empresa | Referencia | `referencia/configuraciones.md` | 2026-10-19 |
 
 ## Manual del super administrador
 
@@ -109,4 +113,4 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **Sucursal**: Editar, Index
 - **SucursalesSpike**: Index
 - **SystemAdministration**: EditarSucursal, Sucursales
-- **Ventas**: AutorizarModulo, DetalleFactura, DetalleVenta, POS
+- **Ventas**: AutorizarModulo, DetalleFactura, DetalleVenta

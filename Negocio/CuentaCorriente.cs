@@ -47,6 +47,12 @@ namespace Negocio
             return oCtaCteD.obtenerCtasCtes(txtBusqueda, idPersona, ordenSaldo);
         }
 
+        // Saldo de una persona (negativo = debe, positivo = a favor); null si no tiene movimientos.
+        public decimal? obtenerSaldoPersona(int idPersona)
+        {
+            return oCtaCteD.obtenerSaldoPersona(idPersona);
+        }
+
         public DataTable obtenerResumenDashboard()
         {
             return oCtaCteD.obtenerResumenDashboard();

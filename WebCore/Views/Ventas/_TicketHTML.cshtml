@@ -236,6 +236,23 @@
         lineasPie.Add(formatearTotal("Vuelto", Convert.ToDecimal(Model.Cambio), cantMaxChar));
     }
 
+    // Saldo de cuenta corriente del cliente (2026-10-19): solo si el cajero acepto sumarlo (el controller
+    // deja el saldo ANTERIOR a la venta en ViewBag.SaldoPrevioTicket; null = sin bloque). Debajo de
+    // Total/Pago/Vuelto y antes del pie fiscal. Mismas lineas que el ticket ESC/POS: ambos usan
+    // TicketSaldoLineas, la fuente unica.
+    string lineaTotalConSaldo = null;
+    object saldoPrevioObj = ViewBag.SaldoPrevioTicket;
+    if (saldoPrevioObj is decimal saldoPrevioTicket)
+    {
+        decimal totalVentaTicket = esFacturada ? factura.ImporteTotal : Convert.ToDecimal(Model.TotalImporte);
+        // La venta se suma al saldo solo si es a cta cte; si no, solo el saldo anterior (sin linea de total).
+        foreach (var lineaSaldo in WebCore.Services.TicketSaldoLineas.Construir(totalVentaTicket, saldoPrevioTicket, cantMaxChar, Model.EnCtaCte))
+        {
+            lineasPie.Add(lineaSaldo.Texto);
+            if (lineaSaldo.EsTotal) lineaTotalConSaldo = lineaSaldo.Texto;
+        }
+    }
+
     if (esFacturada)
     {
         lineasPie.Add("");
@@ -422,6 +439,11 @@
             }
             else if (esFacturaA && linea == formatearTotal("TOTAL", factura.ImporteTotal, cantMaxChar))
             {
+                <div class="ticket-total">@renderLineaHtml(linea)</div>
+            }
+            else if (lineaTotalConSaldo != null && linea == lineaTotalConSaldo)
+            {
+                // "TOTAL c/saldo": resaltado igual que el total de la venta.
                 <div class="ticket-total">@renderLineaHtml(linea)</div>
             }
             else if (lineasFiscalesChicas.Contains(linea))

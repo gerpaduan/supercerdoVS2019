@@ -35,6 +35,10 @@ namespace Entidades
         public const string IdPagoCobroEgresoCaja = "idPagoCobroEgresoCaja";
         public const string CodProdGenerico = "codProdGenerico";
 
+        // Saldo de cuenta corriente (en pesos) hasta el cual el POS no lo muestra ni lo ofrece en el
+        // ticket (2026-10-19). Ver Negocio.CalculoSaldoCliente.
+        public const string SaldoMinimoInformar = "saldoMinimoInformar";
+
         // Sí/No (2026-10-19): con Sí el ticket termico de venta NO fiscal (X) no imprime el nombre ni los
         // slogans de la empresa. Sin valor = No (se imprimen, como siempre). El ticket facturado no cambia.
         // Ver VentasController.OcultarEncabezadoTicketNoFiscal.

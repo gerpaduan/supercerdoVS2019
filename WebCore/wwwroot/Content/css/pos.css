@@ -319,6 +319,36 @@
         letter-spacing: -.03em;
     }
 
+    /* "Total c/saldo" de cuenta corriente (2026-10-19): debajo del total, en letra mas chica. */
+    .pos-total-con-saldo {
+        margin-top: .3rem;
+        line-height: 1.1;
+    }
+
+    .pos-total-con-saldo-label {
+        color: #91a0b2;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    /* Mismo verde azulado que el total (pos-expendio.css lo fija en #0f766e sobre .pos-total-value). */
+    .pos-total-con-saldo-value {
+        color: #0f766e;
+        font-size: 1.5rem;
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+    /* "Saldo anterior" (venta que NO es a cta cte): rojo = debe, verde = a favor, igual que el renglon
+       "Saldo" de debajo del cliente. Mas especifico que la regla base para ganarle en ambos temas. */
+    .pos-total-con-saldo .pos-total-con-saldo-value--debe {
+        color: #b91c1c;
+    }
+
+    .pos-total-con-saldo .pos-total-con-saldo-value--favor {
+        color: #15803d;
+    }
+
     .pos-sale-summary {
         font-size: .82rem;
         line-height: 1.2;
@@ -405,6 +435,33 @@
         font-weight: 700;
         color: #475569;
         margin-right: .24rem;
+    }
+
+    /* Saldo de cuenta corriente del cliente (2026-10-19): misma tipografia compacta que la
+       identificacion. Rojo = debe, verde = a favor. */
+    .pos-cliente-saldo {
+        margin-top: .16rem;
+        padding-left: .9rem;
+        padding-right: .35rem;
+        font-size: .76rem;
+        line-height: 1.12;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .pos-cliente-saldo-label {
+        color: #475569;
+        margin-right: .24rem;
+    }
+
+    .pos-cliente-saldo--debe {
+        color: #b91c1c;
+    }
+
+    .pos-cliente-saldo--favor {
+        color: #15803d;
     }
 
     .pos-cliente .input-group > .form-control {
@@ -550,6 +607,18 @@
 
     html.dark-mode .pos-cliente-identificacion-label {
         color: #cbd5e1;
+    }
+
+    html.dark-mode .pos-cliente-saldo-label {
+        color: #cbd5e1;
+    }
+
+    html.dark-mode .pos-cliente-saldo--debe {
+        color: #f87171;
+    }
+
+    html.dark-mode .pos-cliente-saldo--favor {
+        color: #4ade80;
     }
 
     html.dark-mode #btnBuscarPersona {
@@ -2263,6 +2332,14 @@
             font-size: 2rem !important;
         }
 
+        .pos-total-con-saldo-label {
+            font-size: .85rem;
+        }
+
+        .pos-total-con-saldo-value {
+            font-size: 1.2rem;
+        }
+
         #inputCantidad {
             font-size: 1.25rem;
             min-height: 42px;
@@ -2359,8 +2436,21 @@
         border-top-color: #2f4d69;
     }
 
-    html.dark-mode .pos-page .pos-total-value {
+    html.dark-mode .pos-page .pos-total-value,
+    html.dark-mode .pos-page .pos-total-con-saldo-value {
         color: #73e0c2;
+    }
+
+    html.dark-mode .pos-page .pos-total-con-saldo-label {
+        color: #9db0c7;
+    }
+
+    html.dark-mode .pos-page .pos-total-con-saldo .pos-total-con-saldo-value--debe {
+        color: #f87171;
+    }
+
+    html.dark-mode .pos-page .pos-total-con-saldo .pos-total-con-saldo-value--favor {
+        color: #4ade80;
     }
 
     html.dark-mode .pos-page .pos-total-label,
