@@ -19,6 +19,11 @@ namespace Contratos
         bool SoportaConteoCajero { get; }
         bool GuardarConteoCajero(int idCierre, float importe, string conteoBilletes);
 
+        // Detalle del contador de billetes de la APERTURA (2026-10-17). Solo Postgres; en SQL Server SoportaConteoApertura es
+        // false y la apertura sigue sin guardar el detalle. GuardarConteoApertura devuelve false si la caja ya no esta abierta.
+        bool SoportaConteoApertura { get; }
+        bool GuardarConteoApertura(int idCierre, string conteoBilletes);
+
         // Auditoria de cierres y reapertura de la ultima caja (2026-10-06, ver docs/DECISIONS.md). Solo Postgres:
         // SoportaAuditoriaCierre es false en SQL Server y entonces ni se avisa ni se registra nada.
         bool SoportaAuditoriaCierre { get; }

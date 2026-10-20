@@ -241,6 +241,28 @@ namespace DatosPostgres
             return filas > 0;
         }
 
+        public bool SoportaConteoApertura => true;
+
+        // Guarda SOLO el detalle del contador de billetes de la apertura (conteobilletesapertura). Va aparte del INSERT de
+        // addOrEditCierreCaja a proposito: si la migracion 20261017 todavia no corrio, abrir la caja no se rompe (esto falla
+        // y el llamador lo registra sin tumbar la apertura). Solo mientras la caja sigue abierta (usuariocierre = '0').
+        // Devuelve false si no se actualizo ninguna fila.
+        public bool GuardarConteoApertura(int idCierre, string conteoBilletes)
+        {
+            const string sql = @"
+                UPDATE cierrecaja
+                SET conteobilletesapertura = @conteo
+                WHERE id = @id AND usuariocierre = '0';";
+
+            int filas = DbPg.NonQuery(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("id", idCierre);
+                // '' / null -> NULL: sin detalle de billetes (el monto pudo tipearse a mano).
+                p.AddWithValue("conteo", string.IsNullOrWhiteSpace(conteoBilletes) ? (object)DBNull.Value : conteoBilletes);
+            });
+            return filas > 0;
+        }
+
         #region Auditoria de cierres y reapertura (2026-10-06, ver docs/DECISIONS.md)
 
         public bool SoportaAuditoriaCierre => true;

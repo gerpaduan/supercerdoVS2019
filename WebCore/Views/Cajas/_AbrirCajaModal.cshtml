@@ -38,7 +38,28 @@
                     <label class="font-weight-bold text-gray-700">
                         <i class="fas fa-dollar-sign mr-1"></i> Caja inicial
                     </label>
-                    <input type="text" id="montoInicial" class="form-control form-control-lg" placeholder="Ingrese monto inicial">
+                    @* Contador de billetes (2026-10-17, ver docs/DECISIONS.md): el boton lo engancha el delegado de
+                       calculadora-billetes-targets.js y Alt+B lo dispara (calculadora-billetes.js busca el boton visible del
+                       modal de arriba). data-cb-sin-post: Aceptar solo vuelca el total en el monto y el detalle en el
+                       textarea oculto, sin el modal de impresion propio de la calculadora. El detalle viaja a AbrirCaja
+                       solo si el monto sigue coincidiendo con el total contado (ver abrirCaja en POS.cshtml). *@
+                    <div class="input-group">
+                        <input type="text" id="montoInicial" class="form-control form-control-lg" placeholder="Ingrese monto inicial">
+                        <div class="input-group-append">
+                            <button type="button"
+                                    id="btnCalculadoraBilletesApertura"
+                                    class="btn btn-outline-secondary js-calculadora-billetes-launch"
+                                    data-cb-context="apertura"
+                                    data-cb-input="#montoInicial"
+                                    data-cb-conteo="#conteoBilletesApertura"
+                                    data-cb-sin-post="true"
+                                    title="Contador de billetes (Alt+B)">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="conteoBilletesApertura" class="d-none" readonly tabindex="-1"></textarea>
+                    <small id="avisoConteoApertura" class="form-text d-none"></small>
                 </div>
 
                 @* Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): antes, tener

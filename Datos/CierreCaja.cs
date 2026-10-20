@@ -187,6 +187,15 @@ namespace Datos
             throw new NotSupportedException("El conteo de cierre del cajero no esta disponible en SQL Server.");
         }
 
+        // Detalle del contador de billetes de la apertura (2026-10-17): solo Postgres, mismo criterio que el conteo del
+        // cajero. En SQL Server la apertura sigue guardando solo cajaInicio y el ticket sale sin el detalle del contador.
+        public bool SoportaConteoApertura => false;
+
+        public bool GuardarConteoApertura(int idCierre, string conteoBilletes)
+        {
+            throw new NotSupportedException("El detalle del contador de billetes de la apertura no esta disponible en SQL Server.");
+        }
+
         // Auditoria de cierres y reapertura (2026-10-06): solo Postgres. Con SoportaAuditoriaCierre = false los
         // llamadores ni consultan ni registran, asi que SQL Server se comporta exactamente como siempre.
         public bool SoportaAuditoriaCierre => false;

@@ -12,6 +12,14 @@ Documentar aperturas, cierres, movimientos de caja y controles asociados.
 - Reportes
 - Riesgos operativos
 
+## Apertura de caja (POS) — 2026-10-17
+
+- **Dónde**: único punto de entrada = el modal `#modalAbrirCaja` (`Views/Cajas/_AbrirCajaModal.cshtml`) que `Ventas/POS.cshtml` muestra cuando el operador no tiene caja abierta; `abrirCaja()` vive inline en `POS.cshtml` y hace `POST Cajas/AbrirCaja` (`CajasController.AbrirCaja`: sin permiso propio; guarda `cajainicio`, `fechahorainicio`, sucursal y usuario; "Ya existe una caja abierta" si la última sigue abierta).
+- **Contador de billetes en la Caja inicial**: botón junto a `#montoInicial` (`js-calculadora-billetes-launch`, `data-cb-sin-post`) y **Alt+B** (lo resuelve `calculadora-billetes.js`: botón visible del modal de arriba). Al aceptar, el total pasa al monto y el detalle al textarea oculto `#conteoBilletesApertura`. Si después se tipea otro monto, un aviso lo marca y **el detalle no se envía** (solo se guarda si el monto sigue coincidiendo con lo contado). `POS.cshtml` incluye `_CalculadoraBilletesModal` y `_ModalPostComprobante` también en la rama sin caja abierta (antes solo estaban en la rama con caja).
+- **Ticket de apertura**: al abrir, `AbrirCaja` devuelve `id` y las URLs `ImprimirTicketApertura` / `ImprimirTicketAperturaPayload`; el POS abre `PostComprobanteModal` ("Caja abierta": cerrar sin imprimir o ticket 58/80 mm; sin PDF ni mail) y recién al terminar recarga. Contenido (`ComprobanteTickets.ConstruirLineasAperturaCaja`, `ReciboAperturaCajaVm`): empresa, APERTURA DE CAJA, Caja Nro, Sucursal, Usuario, Fecha, MONTO INICIAL y, si hubo contador, su detalle con el `TOTAL EFECTIVO`; firma. Lo puede pedir el dueño de la caja (o una cuenta de producción, mismo criterio que el conteo de cierre) o quien tiene `Caja.CerrarCaja`.
+- **Datos**: `cierrecaja.conteobilletesapertura` (text NULL; migración `DatosPostgres/DB-Migrations/20261017-Alter_cierrecaja_add_conteobilletesapertura.sql`, **correrla antes de publicar**). Se escribe con un método propio (`GuardarConteoApertura`); `addOrEditCierreCaja` no la toca, así que sin la migración la apertura sigue andando y solo se pierde el detalle en el ticket.
+- **Límites**: el detalle del contador es **solo Postgres** (`SoportaConteoApertura` es false en SQL Server: el botón igual completa el monto y el ticket sale sin el contador). `#montoInicial` no tiene máscara: tipear `1.500` se guarda como 1,5 (anterior a este cambio; el contador escribe `1500.00`). Detalle y alternativas descartadas: `docs/DECISIONS.md` (2026-10-17).
+
 ## Pagos y cobros (Finanzas > Pagos) — 2026-09-24
 
 - **Listado**: `GET /Finanzas/Pagos` (`FinanzasController.Pagos`, permiso `Permisos.Finanza.VerPagos`). Filtros: persona/N° recibo, rango de fechas (por defecto el último mes), Pago/Cobro y "Ver eliminados". Cada fila abre `AddOrEditPago?idPago=`.

@@ -975,6 +975,68 @@ namespace WebCore.Controllers
             }
         }
 
+        // ===== Ticket de apertura de caja (2026-10-17): ticket 58/80 mm en el mismo modal que egresos/pagos (post-comprobante.js).
+        // Sin PDF ni mail: AbrirCaja solo devuelve las dos URLs del ticket y el modal oculta el resto de los botones. =====
+
+        // Arma los datos del ticket o devuelve null si la caja no existe / el usuario no puede verla. Puede verla quien abrio
+        // la caja (recien abierta desde el POS) o quien tiene permiso de cerrar caja. No exige que la caja siga abierta.
+        private ReciboAperturaCajaVm ConstruirReciboAperturaVm(int idCierre)
+        {
+            var user = _usuarioActual;
+            if (user == null || idCierre <= 0) return null;
+
+            var cierre = _oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "");
+            if (cierre == null || cierre.Id == 0) return null;
+
+            bool puede = EsCajaPropiaDelUsuario(cierre)
+                || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1);
+            if (!puede) return null;
+
+            var sucursal = cierre.Sucursal;
+            var empresa = user.Empresa;
+            if (empresa == null && sucursal != null && sucursal.IdEmpresa > 0)
+                empresa = _oSucursalN.findEmpresaById(sucursal.IdEmpresa);
+
+            return new ReciboAperturaCajaVm
+            {
+                Cierre = cierre,
+                Empresa = empresa,
+                SucursalNombre = sucursal != null ? (sucursal.SucursalNombre ?? "") : "",
+                UsuarioNombre = cierre.UsuarioInicio != null ? (cierre.UsuarioInicio.Nombre ?? "") : ""
+            };
+        }
+
+        // HTML del ticket: fallback por navegador (iframe oculto de ticket-print.js). Mismo texto que el payload.
+        [HttpGet]
+        public IActionResult ImprimirTicketApertura(int idCierre, int mm = 80)
+        {
+            var vm = ConstruirReciboAperturaVm(idCierre);
+            if (vm == null) return NotFound();
+
+            int ticketMm = WebCore.Services.ComprobanteTickets.NormalizarMm(mm);
+            ViewBag.TicketMm = ticketMm;
+            ViewBag.TicketTitulo = "Apertura de caja " + vm.Cierre.Id;
+            // Sin formato ESC/POS: este HTML lo imprime el navegador y mostraria los caracteres de control.
+            ViewBag.TicketLineas = string.Join("\n", WebCore.Services.ComprobanteTickets.ConstruirLineasAperturaCaja(vm, ticketMm, false));
+            return View("~/Views/Shared/_TicketTexto.cshtml");
+        }
+
+        // Payload JSON para el agente de impresion ESC/POS local.
+        [HttpGet]
+        public IActionResult ImprimirTicketAperturaPayload(int idCierre, int mm = 80)
+        {
+            var vm = ConstruirReciboAperturaVm(idCierre);
+            if (vm == null) return Json(new { ok = false, mensaje = "No se encontró la apertura de caja." });
+
+            int ticketMm = WebCore.Services.ComprobanteTickets.NormalizarMm(mm);
+            return Json(new
+            {
+                ok = true,
+                ticketMm,
+                ticketLines = WebCore.Services.ComprobanteTickets.ConstruirLineasAperturaCaja(vm, ticketMm, true)
+            });
+        }
+
         [HttpGet]
         public IActionResult NuevoEgresoCaja(int id = 0, bool desdePos = false, int idCierre = 0)
         {
@@ -1074,8 +1136,30 @@ namespace WebCore.Controllers
             }
         }
 
+        // Tope de caracteres del detalle del contador de billetes que se guarda con la apertura (el detalle completo del
+        // contador ronda los 600; el resto es margen).
+        private const int MaxCaracteresConteoApertura = 2000;
+
+        // Deja el detalle del contador listo para guardar e imprimir: sin caracteres de control (el texto termina en el
+        // payload ESC/POS de la termica, donde un ESC colado seria un comando de impresora), con saltos de linea "\n" y
+        // acotado en largo. Devuelve "" si no hay detalle. El detalle viene del navegador: se trata como input externo.
+        private static string NormalizarConteoApertura(string conteoBilletes)
+        {
+            if (string.IsNullOrWhiteSpace(conteoBilletes)) return "";
+
+            var sb = new System.Text.StringBuilder(Math.Min(conteoBilletes.Length, MaxCaracteresConteoApertura));
+            foreach (char c in conteoBilletes.Replace("\r\n", "\n").Replace('\r', '\n'))
+            {
+                if (sb.Length >= MaxCaracteresConteoApertura) break;
+                if (c == '\n' || !char.IsControl(c)) sb.Append(c);
+            }
+            return sb.ToString().Trim();
+        }
+
+        // conteoBilletes (opcional): detalle del contador de billetes con el que se cargo el monto inicial. Se guarda aparte
+        // (solo Postgres) y sale en el ticket de apertura. Sin el, o con SQL Server, la apertura funciona igual.
         [HttpPost]
-        public IActionResult AbrirCaja(string cajaInicio, string fechaHora, string posInstanceId = null)
+        public IActionResult AbrirCaja(string cajaInicio, string fechaHora, string posInstanceId = null, string conteoBilletes = null)
         {
             try
             {
@@ -1119,7 +1203,42 @@ namespace WebCore.Controllers
 
                 _oCierreN.addOrEditCierreCaja(nuevoCierre);
 
-                return Json(new { ok = true });
+                // Id de la caja recien abierta: Postgres lo deja en la entidad (RETURNING id); SQL Server no, asi que se busca
+                // la ultima caja de este operador en la sucursal (la que se acaba de insertar).
+                int idCierreNuevo = nuevoCierre.Id;
+                if (idCierreNuevo <= 0)
+                {
+                    var cajaNueva = _oCierreN.findByIdOrLast(nuevoCierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+                    idCierreNuevo = cajaNueva != null ? cajaNueva.Id : 0;
+                }
+
+                // Sin id no hay forma de pedir el ticket: la caja ya esta abierta, se responde ok sin comprobante.
+                if (idCierreNuevo <= 0)
+                    return Json(new { ok = true });
+
+                // Detalle del contador de billetes: la caja ya esta abierta, asi que si esto falla (p. ej. la migracion
+                // 20261017 todavia no corrio) se registra y se sigue: solo se pierde el detalle en el ticket.
+                string conteo = NormalizarConteoApertura(conteoBilletes);
+                if (conteo.Length > 0 && _oCierreN.SoportaConteoApertura)
+                {
+                    try
+                    {
+                        _oCierreN.GuardarConteoApertura(idCierreNuevo, conteo);
+                    }
+                    catch (Exception exConteo)
+                    {
+                        System.Diagnostics.Trace.TraceError("No se pudo guardar el detalle del contador de la apertura (caja " + idCierreNuevo + "): " + exConteo.Message);
+                    }
+                }
+
+                // URLs del modal post-apertura (post-comprobante.js): solo ticket termico, sin PDF ni mail.
+                return Json(new
+                {
+                    ok = true,
+                    id = idCierreNuevo,
+                    ticketUrl = Url.Action("ImprimirTicketApertura", "Cajas", new { idCierre = idCierreNuevo }),
+                    ticketPayloadUrl = Url.Action("ImprimirTicketAperturaPayload", "Cajas", new { idCierre = idCierreNuevo })
+                });
             }
             catch (Exception ex)
             {

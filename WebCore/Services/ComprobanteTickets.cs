@@ -1,5 +1,5 @@
-// Lineas de texto de los tickets termicos (58 / 80 mm) de los comprobantes de pago/cobro, de egreso de caja y del
-// conteo de cierre del cajero.
+// Lineas de texto de los tickets termicos (58 / 80 mm) de los comprobantes de pago/cobro, de egreso de caja, del
+// conteo de cierre del cajero y de la apertura de caja.
 // UNA sola fuente de texto: la usan tanto el payload JSON para el agente ESC/POS (formatoEscPos = true, con
 // negritas incrustadas) como el HTML del fallback por navegador (formatoEscPos = false, texto plano), asi no
 // pueden desalinearse (mismo patron que PuntosExpendioController.ConstruirLineasTicketPuntoExpendio).
@@ -198,6 +198,43 @@ namespace WebCore.Services
 
             lineas.Add("");
             lineas.AddRange(Envolver("Conteo informativo: el cierre oficial lo confirma el encargado.", ancho));
+
+            AgregarFirma(lineas, ancho, "Firma cajero: ");
+            return lineas;
+        }
+
+        // ---------- apertura de caja ----------
+
+        // Comprobante de la apertura: fecha, sucursal, usuario y monto inicial. Si el monto se cargo con el contador de
+        // billetes, suma su detalle (el texto del contador ya trae la linea "TOTAL EFECTIVO"). Es informativo, no fiscal.
+        public static List<string> ConstruirLineasAperturaCaja(ReciboAperturaCajaVm vm, int mm, bool formatoEscPos)
+        {
+            int ancho = CaracteresPorLinea(mm);
+            var cierre = vm.Cierre;
+            var lineas = new List<string>();
+
+            string Neg(string linea) => formatoEscPos ? EscPosFormato.Negrita(linea) : linea;
+
+            string empresa = vm.Empresa != null
+                ? (!string.IsNullOrWhiteSpace(vm.Empresa.NombreFantasia) ? vm.Empresa.NombreFantasia : vm.Empresa.RazonSocialAfip)
+                : "";
+            if (!string.IsNullOrWhiteSpace(empresa)) lineas.Add(Neg(Centrar(empresa, ancho)));
+
+            lineas.Add(Neg(Centrar("APERTURA DE CAJA", ancho)));
+            lineas.Add(Truncar("Doc. no valido como factura", ancho));
+            lineas.Add("");
+            lineas.Add(Truncar("Caja Nro: " + cierre.Id, ancho));
+            lineas.Add(Truncar("Sucursal: " + (vm.SucursalNombre ?? ""), ancho));
+            lineas.Add(Truncar("Usuario: " + (vm.UsuarioNombre ?? ""), ancho));
+            if (cierre.FechaHoraInicio.HasValue)
+                lineas.Add(Truncar("Fecha: " + cierre.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm", CulturaAr), ancho));
+            lineas.Add(new string('-', ancho));
+
+            decimal monto = Convert.ToDecimal(cierre.CajaInicio ?? 0f);
+            lineas.Add(Neg(Extremos("MONTO INICIAL", "$ " + monto.ToString("N2", CulturaAr), ancho)));
+
+            // Solo si el monto se cargo con el contador (y el motor lo guarda): sin detalle no agrega nada.
+            AgregarBloque(lineas, "Conteo de billetes:", cierre.ConteoBilletesApertura, ancho);
 
             AgregarFirma(lineas, ancho, "Firma cajero: ");
             return lineas;

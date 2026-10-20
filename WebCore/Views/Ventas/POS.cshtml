@@ -1220,6 +1220,12 @@ else if (requiereOperadorPOS)
 else
 {
     @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
+    @* Contador de billetes y modal post-comprobante tambien SIN caja abierta (2026-10-17, ver docs/DECISIONS.md): el
+       boton del contador de _AbrirCajaModal (y Alt+B) abre #modalCalculadoraBilletes, y tras abrir la caja se ofrece el
+       ticket de apertura con #modalPostComprobante. Antes solo se renderizaban en la rama "caja abierta" de arriba, asi
+       que aca el boton no habria hecho nada (los scripts si se cargan siempre). *@
+    @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
+    @Html.Partial("~/Views/Shared/_ModalPostComprobante.cshtml")
     @* Item 7 (2026-09-11, ver docs/DECISIONS.md): ContinuarSinCajaAbierta es [ValidateAntiForgeryToken] --
        sin este token, la rama de "sin caja real" hoy nunca lo incluia (nadie lo necesitaba antes). *@
     <div id="globalAntiForgeryToken" style="display:none;">
@@ -1402,9 +1408,65 @@ else
                     }
                 }
 
+                // ---- Contador de billetes en el monto inicial (2026-10-17, ver docs/DECISIONS.md) ----
+                // Monto con el que se armo el detalle del contador que hay en pantalla (null = no hay detalle). Lo fija
+                // el contador cada vez que se acepta; si despues el monto se cambia a mano, el detalle deja de valer.
+                var importeDelConteoApertura = null;
+                // Hay una apertura en curso (o ya hecha y esperando la eleccion del ticket): otro Abrir Caja se ignora.
+                // Doble click o Enter repetido mandaban dos POST y el chequeo "ya existe una caja abierta" del
+                // servidor no es atomico. Solo se libera si la apertura falla.
+                var abriendoCaja = false;
+
+                // Misma lectura que CajasController.ParseFloat (coma -> punto): asi el monto que compara el navegador es el
+                // que va a guardar el servidor.
+                function aNumeroApertura(texto) {
+                    var n = parseFloat(String(texto == null ? "" : texto).replace(",", "."));
+                    return isNaN(n) ? null : n;
+                }
+
+                // Detalle del contador listo para enviar: "" si no hay o si el monto ya no coincide con lo contado.
+                function conteoAperturaVigente() {
+                    var conteo = $.trim($("#conteoBilletesApertura").val());
+                    if (!conteo || importeDelConteoApertura === null) return "";
+                    var monto = aNumeroApertura($("#montoInicial").val());
+                    if (monto === null || Math.abs(monto - importeDelConteoApertura) >= 0.005) return "";
+                    return conteo;
+                }
+
+                // Aviso bajo el monto: el detalle se guarda, o ya no coincide y no se va a guardar.
+                function evaluarConteoApertura() {
+                    var $aviso = $("#avisoConteoApertura");
+                    if ($.trim($("#conteoBilletesApertura").val()) === "") {
+                        $aviso.addClass("d-none").text("");
+                        return;
+                    }
+
+                    if (conteoAperturaVigente()) {
+                        $aviso.removeClass("d-none text-warning").addClass("text-muted")
+                            .text("Monto cargado con el contador de billetes: el detalle sale en el ticket de apertura.");
+                        return;
+                    }
+
+                    var contado = Number(importeDelConteoApertura || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    $aviso.removeClass("d-none text-muted").addClass("text-warning")
+                        .text("El monto ya no coincide con el contador de billetes ($ " + contado + "): el detalle no se guarda.");
+                }
+
                 window.abrirCaja = function () {
+                    if (abriendoCaja) return;
+
                     var cajaInicio = $("#montoInicial").val();
                     var fechaHora = $("#fechaHoraApertura").val();
+                    abriendoCaja = true;
+
+                    // Cierra el modal y recarga el POS, ya con la caja abierta.
+                    function recargarPOS() {
+                        $("#modalAbrirCaja").modal("hide");
+                        // Mismo fix que pvbContinuarNuevaVenta (2026-09-10, item 9, ver
+                        // docs/DECISIONS.md) -- bug secundario de la misma familia.
+                        window.PosNavegandoInternoPOS = true;
+                        location.reload();
+                    }
 
                     $.ajax({
                         url: "@Url.Action("AbrirCaja", "Cajas")",
@@ -1413,19 +1475,36 @@ else
                         // posInstanceId real (2026-09-06, ver docs/DECISIONS.md) -- antes iba
                         // vacio a proposito, asi que CajasController.AbrirCaja nunca podia
                         // resolver el operador real de la cuenta compartida de produccion.
-                        data: { cajaInicio: cajaInicio, fechaHora: fechaHora, posInstanceId: window.PosOperadorConfig?.posInstanceId || "" },
+                        data: {
+                            cajaInicio: cajaInicio,
+                            fechaHora: fechaHora,
+                            posInstanceId: window.PosOperadorConfig?.posInstanceId || "",
+                            conteoBilletes: conteoAperturaVigente()
+                        },
                         success: function (r) {
                             if (r && r.ok) {
-                                $("#modalAbrirCaja").modal("hide");
-                                // Mismo fix que pvbContinuarNuevaVenta (2026-09-10, item 9, ver
-                                // docs/DECISIONS.md) -- bug secundario de la misma familia.
-                                window.PosNavegandoInternoPOS = true;
-                                location.reload();
+                                // Ticket de apertura: el modal de comprobante deja imprimirlo (o no) y recien al
+                                // terminar se recarga. Sin URL del ticket o sin el modal, se recarga directo como antes.
+                                if (r.ticketUrl && window.PostComprobanteModal && typeof window.PostComprobanteModal.open === "function") {
+                                    window.PostComprobanteModal.open({
+                                        titulo: "Caja abierta",
+                                        mensaje: "La caja se abrió correctamente. ¿Querés imprimir el ticket de apertura?",
+                                        ticketUrl: r.ticketUrl,
+                                        ticketPayloadUrl: r.ticketPayloadUrl,
+                                        id: r.id,
+                                        onClose: recargarPOS
+                                    });
+                                    return;
+                                }
+
+                                recargarPOS();
                                 return;
                             }
+                            abriendoCaja = false;
                             mostrarErrorAbrirCaja((r && r.mensaje) ? r.mensaje : "Error al abrir caja.");
                         },
                         error: function () {
+                            abriendoCaja = false;
                             mostrarErrorAbrirCaja("No se pudo contactar al servidor.");
                         }
                     });
@@ -1438,6 +1517,15 @@ else
                     window.POSBorrador?.avisarSinCaja?.();
                     $("#modalAbrirCaja").on("shown.bs.modal", function () {
                         $("#montoInicial").trigger("focus");
+                    });
+
+                    // Contador de billetes: el monto se tipeo a mano (revalida el aviso) o el contador cargo / limpio el
+                    // detalle. El contador escribe primero el monto y despues el detalle, asi que al llegar el 'change' del
+                    // detalle el monto ya es el total contado.
+                    $("#montoInicial").on("input", evaluarConteoApertura);
+                    $("#conteoBilletesApertura").on("change", function () {
+                        importeDelConteoApertura = ($.trim($(this).val()) !== "") ? aNumeroApertura($("#montoInicial").val()) : null;
+                        evaluarConteoApertura();
                     });
 
                     $("#btnCancelarAbrirCaja").off("click").on("click", function () {

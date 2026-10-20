@@ -110,6 +110,11 @@ namespace Negocio
                     string conteoFecha = ObtenerValorString(drCierreCaja, "fechaConteoCajero");
                     oCierreE.FechaConteoCajero = string.IsNullOrEmpty(conteoFecha) ? (DateTime?)null : Convert.ToDateTime(conteoFecha);
 
+                    // Detalle del contador de billetes de la apertura: solo Postgres; sin la columna (SQL Server o migracion
+                    // 20261017 sin correr) queda en null.
+                    string conteoApertura = ObtenerValorString(drCierreCaja, "conteoBilletesApertura");
+                    oCierreE.ConteoBilletesApertura = string.IsNullOrEmpty(conteoApertura) ? null : conteoApertura;
+
                     listCierreCaja.Add(oCierreE);
                 }
             }
@@ -148,6 +153,15 @@ namespace Negocio
         public bool GuardarConteoCajero(int idCierre, float importe, string conteoBilletes)
         {
             return oCierreD.GuardarConteoCajero(idCierre, importe, conteoBilletes);
+        }
+
+        // Detalle del contador de billetes de la apertura (2026-10-17): false en SQL Server (el ticket sale sin ese detalle).
+        public bool SoportaConteoApertura => oCierreD.SoportaConteoApertura;
+
+        // Guarda el detalle del contador de la apertura. Devuelve false si la caja ya no esta abierta. No toca cajaInicio.
+        public bool GuardarConteoApertura(int idCierre, string conteoBilletes)
+        {
+            return oCierreD.GuardarConteoApertura(idCierre, conteoBilletes);
         }
 
         // ===== Auditoria de cierres y reapertura (2026-10-06, ver docs/DECISIONS.md) -- solo Postgres =====

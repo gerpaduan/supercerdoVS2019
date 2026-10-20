@@ -100,6 +100,10 @@ namespace Entidades
         public string ConteoBilletesCajero { get; set; }
         public DateTime? FechaConteoCajero { get; set; }
 
+        // Detalle multilinea del contador de billetes con el que se cargo el monto inicial (CajaInicio) al abrir la caja.
+        // NULL = monto tipeado a mano o motor sin soporte (SQL Server). Ver docs/DECISIONS.md 2026-10-17.
+        public string ConteoBilletesApertura { get; set; }
+
         Entidades.Usuario usuarioInicio;
 
         public Entidades.Usuario UsuarioInicio

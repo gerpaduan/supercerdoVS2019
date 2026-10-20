@@ -29,6 +29,8 @@ namespace NegocioTests.Fakes
         public DataTable findCierreCajaMultiples(List<CierreCaja> listaCierreCaja) => throw new NotImplementedException();
         public bool SoportaConteoCajero => true;
         public bool GuardarConteoCajero(int idCierre, float importe, string conteoBilletes) => throw new NotImplementedException();
+        public bool SoportaConteoApertura => true;
+        public bool GuardarConteoApertura(int idCierre, string conteoBilletes) => throw new NotImplementedException();
 
         // Auditoria de cierres / reapertura (2026-10-06). El fake deja configurar el cierre "cerrado que contiene la
         // fecha" (CierreCerradoQueContiene) y anota las auditorias registradas, para testear CajaCerradaService.
