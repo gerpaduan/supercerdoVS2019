@@ -331,6 +331,7 @@ function configurarModalFormaPagoSegunModo() {
     $('.form-group.form-check.mb-4').toggle(modo === 'finalizacion');
     $('#totalVenta').val(modo === 'preseleccion' ? '-' : formatearImporteFormaPago(totalVentaOriginal));
     $('#totalVenta').closest('.form-group').toggle(true);
+    actualizarTotalConSaldoFormaPago(totalVentaOriginal);
 
     // Bonificacion por % a todos: solo tiene sentido al finalizar una venta real (2026-09-06,
     // ver docs/DECISIONS.md) -- en modo "preseleccion" (elegir forma de pago para que el carrito
@@ -1089,6 +1090,31 @@ function hayLineasBonificadasEnCarrito() {
 // si no. El verde (#lblTotalConDescuentoTotalVenta) ya NO muestra el total resultante -- muestra
 // el MONTO del descuento/recargo en si (la diferencia). Ej: total $10, 10% de descuento -> verde
 // "$1", azul "$9".
+// "Total c/saldo" debajo de "Total de la Venta" (2026-10-19, ver docs/DECISIONS.md "Total c/saldo en el
+// post-venta y en el modal de forma de pago"): `total` es el mismo importe que se acaba de poner en
+// #totalVenta (con descuento/recargo si hay uno activo). Se muestra SIEMPRE que el cliente tenga saldo para
+// informar, sin importar la forma de pago que se elija (el ticket, en cambio, suma la venta al saldo solo si
+// es a cuenta corriente). El saldo y la formula los pone Ventas/POS.cshtml (obtenerSaldoParaTotalPOS ya
+// aplica Consumidor Final, cuenta reservada, saldo chico y la venta en edicion; calcularTotalConSaldoPOS);
+// si esas funciones no existen el renglon queda oculto. Oculto tambien al
+// preseleccionar la forma de pago (todavia no hay total real).
+function actualizarTotalConSaldoFormaPago(total) {
+    const $wrap = $('#fpTotalConSaldoWrap');
+    if (!$wrap.length) return;
+
+    const saldo = typeof window.obtenerSaldoParaTotalPOS === 'function' ? window.obtenerSaldoParaTotalPOS() : null;
+    if (getModoFormaPagoActual() !== 'finalizacion' || saldo === null ||
+        typeof window.calcularTotalConSaldoPOS !== 'function' || !(Number(total) > 0)) {
+        $wrap.addClass('d-none');
+        return;
+    }
+
+    const conSaldo = window.calcularTotalConSaldoPOS(total, saldo);
+    $('#fpTotalConSaldoEtiqueta').text(conSaldo.etiqueta);
+    $('#fpTotalConSaldoValor').text('$ ' + formatearImporteFormaPago(conSaldo.monto));
+    $wrap.removeClass('d-none');
+}
+
 function actualizarTotalConDescuento() {
     const montoConDescuento = totalVentaOriginal * (1 - (porcentajeTotalVentaActivo / 100));
     totalVentaActual = montoConDescuento > 0 ? montoConDescuento : 0;
@@ -1097,6 +1123,7 @@ function actualizarTotalConDescuento() {
     const esRecargo = porcentajeTotalVentaActivo < 0;
 
     $('#totalVenta').val(formatearImporteFormaPago(totalVentaActual));
+    actualizarTotalConSaldoFormaPago(totalVentaActual);
     $('#lblTotalVentaConDescuentoTag').toggleClass('d-none', !porcentajeTotalVentaActivo);
     $('#lblEtiquetaMontoDescuento').text(esRecargo ? 'Recargo aplicado' : 'Descuento aplicado');
     $('#lblTotalConDescuentoTotalVenta').text('$ ' + formatearImporteFormaPago(Math.abs(montoDescuento)));
@@ -1131,6 +1158,7 @@ function cerrarBloquePorcentajeTotalVenta() {
     totalVentaActual = totalVentaOriginal;
     // Se quita el descuento: el azul vuelve a mostrar el total tal cual, sin el tag "(con descuento)".
     $('#totalVenta').val(formatearImporteFormaPago(totalVentaActual));
+    actualizarTotalConSaldoFormaPago(totalVentaActual);
     $('#lblTotalVentaConDescuentoTag').addClass('d-none');
 
     // El total volvio al original: los importes del mixto tambien se borran (ver limpiarMontosPagoMixto).

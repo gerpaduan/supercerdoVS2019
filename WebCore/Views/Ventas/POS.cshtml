@@ -2542,6 +2542,22 @@ else
             // de pago preseleccionada y actualizarSaldoCliente cuando llega el saldo. Con el carrito vacio
             // se oculta: ahi alcanza con el renglon "Saldo" de debajo del cliente.
             var saldoParaTotalPOS = null;
+
+            // Formula unica del "Total c/saldo" (carrito, modal de forma de pago y post-venta): total menos
+            // el saldo con signo (debe = negativo, se suma; a favor, se resta), a centavos porque total y
+            // saldo vienen de flotantes distintos. Si el saldo a favor supera la venta no se muestra un
+            // total negativo: se rotula "A favor". Devuelve { etiqueta, monto } con el monto ya en positivo.
+            window.calcularTotalConSaldoPOS = function (total, saldo) {
+                var conSaldo = Math.round(((Number(total) || 0) - (Number(saldo) || 0)) * 100) / 100;
+                return { etiqueta: conSaldo >= 0 ? "Total c/saldo" : "A favor", monto: Math.abs(conSaldo) };
+            };
+
+            // Saldo (con signo) que corresponde sumar al total de la venta en curso, o null si no hay nada
+            // que informar. Lo lee el modal de forma de pago (forma-pago.js) para su "Total c/saldo".
+            window.obtenerSaldoParaTotalPOS = function () {
+                return saldoParaTotalPOS;
+            };
+
             function formaPagoPreseleccionadaEsCtaCte() {
                 var forma = window.POSState && window.POSState.getFormaPagoPreseleccionada
                     ? window.POSState.getFormaPagoPreseleccionada() : null;
@@ -2565,11 +2581,9 @@ else
                 var formato = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
 
                 if (formaPagoPreseleccionadaEsCtaCte()) {
-                    // A centavos: total y saldo vienen de flotantes distintos.
-                    var conSaldo = Math.round((total - saldoParaTotalPOS) * 100) / 100;
-                    // Si el saldo a favor supera la venta no se muestra un total negativo: se rotula "A favor".
-                    $label.text(conSaldo >= 0 ? "Total c/saldo" : "A favor");
-                    $valor.text("$ " + Math.abs(conSaldo).toLocaleString("es-AR", formato));
+                    var conSaldo = window.calcularTotalConSaldoPOS(total, saldoParaTotalPOS);
+                    $label.text(conSaldo.etiqueta);
+                    $valor.text("$ " + conSaldo.monto.toLocaleString("es-AR", formato));
                     $valor.removeClass("pos-total-con-saldo-value--debe pos-total-con-saldo-value--favor");
                 } else {
                     var debe = saldoParaTotalPOS < 0;
@@ -3308,6 +3322,36 @@ else
                 });
             }
 
+            // "Total c/saldo" debajo del total del post-venta (2026-10-19, ver docs/DECISIONS.md "Total c/saldo
+            // en el post-venta y en el modal de forma de pago"): se muestra SIEMPRE que el cliente tenga saldo
+            // para informar, sea cual sea la forma de pago (dato para el cajero; el ticket, en cambio, suma la
+            // venta solo si fue a cuenta corriente). Usa el saldo ANTERIOR a esta venta (Ventas/SaldoParaTicket:
+            // si la venta fue a cta cte ya esta en el saldo y se la saca) y el mismo total que muestra el modal.
+            // Si la consulta falla o no hay saldo, el renglon queda oculto. pvbVentaTotalConSaldo descarta una
+            // respuesta que llega tarde, cuando el modal ya muestra otra venta.
+            var pvbVentaTotalConSaldo = 0;
+            function pvbMostrarTotalConSaldo(ventaId, total) {
+                var $wrap = $("#pvbTotalConSaldoWrap");
+                $wrap.addClass("d-none");
+                pvbVentaTotalConSaldo = ventaId;
+                if (!$wrap.length || !(total > 0) || !window.api?.venta?.saldoParaTicket) return;
+
+                $.get(window.api.venta.saldoParaTicket, { id: ventaId })
+                    .done(function (resp) {
+                        if (pvbVentaTotalConSaldo !== ventaId) return;
+                        if (!resp || !resp.ok || !resp.tieneSaldo) return;
+
+                        var conSaldo = window.calcularTotalConSaldoPOS(total, Number(resp.saldoPrevio) || 0);
+                        $("#pvbTotalConSaldoEtiqueta").text(conSaldo.etiqueta);
+                        $("#pvbTotalConSaldoValor").text("$ " + conSaldo.monto.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                        $wrap.removeClass("d-none");
+                    })
+                    .fail(function (xhr) {
+                        // Informativo: si falla, el post-venta sigue igual, sin el renglon.
+                        console.warn("No se pudo obtener el saldo para el post-venta", xhr && xhr.status);
+                    });
+            }
+
             window.mostrarModalPostVenta = function (ventaId) {
                 // Filtros del modal de expendios reiniciados al finalizar (pedido explicito del
                 // usuario, ver docs/DECISIONS.md).
@@ -3321,6 +3365,7 @@ else
                 var total = window.POSState?.getTotal ? window.POSState.getTotal() : 0;
                 $("#pvbResumenVenta").text("Venta #" + ventaId + " registrada correctamente.");
                 $("#pvbTotalVenta").text("$ " + total.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                pvbMostrarTotalConSaldo(ventaId, total);
                 $("#btnPvbImprimir").data("venta-id", ventaId);
                 $("#btnPvbTicket").data("venta-id", ventaId);
                 $("#btnPvbEmail").data("venta-id", ventaId);

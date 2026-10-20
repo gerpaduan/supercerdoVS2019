@@ -1,6 +1,12 @@
 # Bitacora de cambios
 
-## 2026-10-19 (la mas reciente) - POS: parámetro para no imprimir el nombre y los slogans de la empresa en el ticket no fiscal
+## 2026-10-19 (la mas reciente) - POS: «Total c/saldo» en el post-venta y al elegir la forma de pago
+
+- **Pedido**: ver el total de la venta más el saldo del cliente debajo del total en el aviso de venta completada y en la elección de la forma de pago.
+- **Cambio**: renglón más chico **Total c/saldo** (o **A favor**) debajo del total en los dos lugares, siempre que el cliente tenga saldo para informar y sin importar la forma de pago. En el modal se recalcula con descuento/recargo; en el post-venta usa el saldo anterior a la venta. Carrito y ticket sin cambios. Sin migraciones.
+- **Verificado**: `WebCore` compila; en el POS con login real (base local, usuario de prueba y su borrador ya borrados, sin registrar ventas): modal con y sin descuento, oculto al preseleccionar; post-venta con venta a cta cte, en efectivo y de Consumidor Final; modo oscuro. **Sin verificar**: una venta real cobrada de punta a punta, móvil.
+
+## 2026-10-19 - POS: parámetro para no imprimir el nombre y los slogans de la empresa en el ticket no fiscal
 
 - **Pedido**: que cada empresa elija si el ticket no fiscal muestra su nombre y sus slogans.
 - **Cambio**: parámetro `ocultarEncabezadoTicketNoFiscal` (Sí/No, pantalla Parámetros, sin cargar = No). Con Sí, el ticket de venta X (ESC/POS y navegador, 58 y 80 mm) sale sin nombre ni slogans. El ticket facturado, los PDF, los recibos y los tickets de caja no cambian. Alta del catálogo: `DatosPostgres/DB-Migrations/20261019d-…sql` y `Datos/DB-Procedures/20261019-Insert_Parametro_OcultarEncabezadoTicketNoFiscal.sql`.

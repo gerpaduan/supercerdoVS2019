@@ -31,6 +31,13 @@ Se actualiza solo con cada cambio del carrito y al cambiar la forma de pago. Apa
 
 Al **modificar una venta** a cuenta corriente del mismo cliente, el saldo que se usa es el de **antes** de esa venta (el renglón Saldo de arriba sigue mostrando el saldo actual), para no contarla dos veces.
 
+## Total con saldo al cobrar y después de la venta
+Si el cliente tiene saldo para informar (mismas reglas que el renglón **Saldo**), debajo del total aparece, en letra más chica, **Total c/saldo**: el total de la venta **más lo que el cliente debe** (si tiene saldo a favor, se resta; si supera la venta dice **A favor** con la diferencia).
+- **Al finalizar, en la elección de la forma de pago:** debajo de **Total de la Venta**. Si aplicás un descuento o recargo con **/**, se recalcula sobre el total nuevo.
+- **En el aviso de venta completada:** debajo del total de la venta. Usa el saldo que el cliente tenía **antes** de esta venta.
+
+A diferencia del carrito y del ticket, acá la suma se muestra **siempre**, sea cual sea la forma de pago: es un dato para el cajero (por ejemplo, si el cliente quiere pagar la venta y su deuda). El ticket sigue la regla de siempre: suma la venta al saldo **solo si es a cuenta corriente**.
+
 ## Sumar el saldo al ticket
 Después de registrar la venta, al tocar **Ticket** (atajo **2**):
 1. Si el cliente tiene un saldo que corresponde informar, el sistema pregunta si se incluye en el ticket y dice cuánto debe o tiene a favor: **«¿Sumar el saldo al ticket?»** si la venta fue a **cuenta corriente**, **«¿Mostrar el saldo en el ticket?»** si se pagó de otra forma.

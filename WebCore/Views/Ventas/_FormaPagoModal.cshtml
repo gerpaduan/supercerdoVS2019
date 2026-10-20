@@ -145,6 +145,13 @@
                                muestra mientras hay un % activo, para aclarar que el numero de
                                arriba ya lo incluye. *@
                             <small id="lblTotalVentaConDescuentoTag" class="text-muted d-none">(con descuento)</small>
+                            @* Total + saldo de cuenta corriente del cliente (2026-10-19), mas chico. Lo completa
+                               forma-pago.js (actualizarTotalConSaldoFormaPago) sobre el mismo total de arriba,
+                               con descuento/recargo incluido; oculto sin saldo para informar o al preseleccionar. *@
+                            <div id="fpTotalConSaldoWrap" class="fp-total-con-saldo d-none">
+                                <span id="fpTotalConSaldoEtiqueta" class="fp-total-con-saldo-label">Total c/saldo</span>
+                                <span id="fpTotalConSaldoValor" class="fp-total-con-saldo-value">$ 0,00</span>
+                            </div>
                         </div>
                     </div>
 
@@ -296,6 +303,33 @@
         #modalFormaPago #totalVenta {
             font-size: 2.6rem !important;
         }
+    }
+
+    /* "Total c/saldo" debajo del total (2026-10-19): mas chico que el total, mismo verde azulado que
+       el renglon del carrito (pos.css, .pos-total-con-saldo-value). */
+    #modalFormaPago .fp-total-con-saldo {
+        margin-top: .35rem;
+        line-height: 1.15;
+    }
+
+    #modalFormaPago .fp-total-con-saldo-label {
+        color: #6c757d;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    #modalFormaPago .fp-total-con-saldo-value {
+        color: #0f766e;
+        font-size: 1.35rem;
+        font-weight: 800;
+    }
+
+    html.dark-mode #modalFormaPago .fp-total-con-saldo-label {
+        color: #9db0c7;
+    }
+
+    html.dark-mode #modalFormaPago .fp-total-con-saldo-value {
+        color: #73e0c2;
     }
 
     /* Mientras el input de descuento tiene el foco (2026-09-07, pedido explicito del usuario --
