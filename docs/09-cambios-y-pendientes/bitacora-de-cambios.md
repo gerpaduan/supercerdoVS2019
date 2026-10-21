@@ -15,6 +15,65 @@
 - **Deuda**: F6 → «Mis actividades» sigue usando el `idCierre` de la carga; `DetalleVenta`/cambiar forma de pago siguen evaluando con la cuenta compartida o la sucursal del operador (detalle en `docs/DECISIONS.md`).
 - **Manual**: `pantallas/Ventas.POS.md`, sección «Mis ventas (F6)».
 
+## 2026-10-20 - Stock del destino en el movimiento: período a mano con «Actualizar sugerencias», «Cambiar período» y el «+» junto a Kgs.
+
+- **Pedido**: que el «+» de agregar producto quede seguido de Kgs. también sin el teclado; que el bloque del sugerido se abra con un botón; y que cambiar la fecha no recalcule solo, sino que avise que hay que actualizar.
+- **Cambio**: atajos 1/2/3/7/15 d aplican al instante; una fecha a mano deja la tira en ámbar con **Actualizar sugerencias** (o Enter, o ⟳), con los sugeridos atenuados y sin click hasta aplicar; la actualización automática usa el período ya aplicado. Botón «Cambiar período» / «Ocultar» y la tira compacta clickeable. «Agregar producto» con el stock al lado se acomoda por el ancho real del bloque (container query): Cant. Un. + Kgs. + «+» siempre en el mismo renglón, con o sin teclado. Corrige la versión anterior del mismo día, que dejaba caer el «+» solo abajo.
+- **Verificado en el navegador** (usuario de prueba descartable, ya borrado): 0 consultas al escribir fechas, 1 al actualizar / Enter / atajo / ⟳, click bloqueado mientras está pendiente, autorrefresco con el período aplicado; la fila medida a 1200 y 1600 px con y sin teclado. `WebCore` compila. **Sin verificar**: modo oscuro, Firefox/Safari.
+
+## 2026-10-20 - Movimientos/Editar: Resumen y Observaciones bajo la tabla con el stock al lado; botones outline visibles al apretarlos
+
+- **Pedido**: con el stock al lado, dar más ancho a «Agregar producto» y la tabla; y los botones «Stock destino» y del teclado digital no se distinguían en modo claro.
+- **Cambio**: Resumen / Observaciones pasan debajo de la tabla (lado a lado) solo con el panel encendido. Los botones outline de Bootstrap quedaban con texto blanco sobre fondo transparente al apretarlos o encenderlos (`ui-refresh.css`): ahora tienen fondo propio (arreglo global).
+- **Verificado**: compila. **Sin verificar en el navegador** (sin usuario de prueba): el acomodo y los botones en modo claro/oscuro.
+
+## 2026-10-20 - Nuevo movimiento: stock de la sucursal destino al lado, con «Sugerido a enviar»
+
+- **Pedido**: ver el stock de la sucursal destino mientras se arma un movimiento (stock a la izquierda, carga a la derecha, independizable en ventana), cargar productos con doble click, marcar lo que ya va en el movimiento, seguir al destino, estimar lo que conviene enviar (consumo desde/hasta − stock) y actualizar cada 15 minutos o a pedido.
+- **Cambio**: botón «Stock destino» en `Movimientos/Editar` con un panel (la Existencia compacta en «modo movimiento», dentro de un iframe) o una ventana independiente; se hablan por un canal de mensajes por pestaña. Nueva columna **Sugerido** (ventas + uso en elaborados del período − stock; atajos 1/2/3/7/15 días y fecha hasta), recalculada en cada actualización con aviso de cuántos cambiaron (ámbar) sin tocar el movimiento. Doble click o click en el sugerido carga el producto (y la cantidad) con el foco en la cantidad; los productos del movimiento se marcan «+N en mov.».
+- **Verificado**: en el navegador con sesión real (usuario de prueba ya borrado, ningún movimiento guardado) el flujo completo, incluida la ventana como segunda pestaña. **Sin verificar**: la ventana emergente real (`resizeTo`), modo oscuro y movimientos ya guardados.
+- **Manual**: `Movimientos.Editar` (nueva) y `Stock.ExistenciaPorSucursales`.
+
+## 2026-10-20 - Existencia por sucursales: resumen de los filtros avanzados aplicados (chips con ×) con el panel cerrado
+
+- **Pedido**: ver un resumen de los filtros aplicados cuando los bloques de filtros y pedido están colapsados.
+- **Cambio**: línea bajo la barra con un chip por filtro avanzado aplicado (Tipo, Proveedor, Marca, Movimiento y su período), visible solo si hay filtros y el panel «Filtros» está cerrado. Click en el chip lo edita, × lo quita y busca, «Limpiar» quita todos; «⚠ sin aplicar» si hay cambios sin buscar. No repite Sucursales, texto ni Estado.
+- **Verificado**: en el navegador con sesión real (usuario de prueba ya borrado): aparición/ocultamiento, textos, ×, click, Limpiar y marca «sin aplicar». Sin verificar: modo oscuro y ventana muy angosta.
+- **Manual**: `Stock.ExistenciaPorSucursales` (Resumen de los filtros aplicados).
+
+## 2026-10-20 - Existencia por sucursales: los controles de la barra de herramientas (diseño compacto) quedan alineados
+
+- **Pedido**: alinear bien la altura de los elementos de la barra (Sucursales, Producto y Estado quedaban ~11 px más arriba que el resto).
+- **Causa y cambio**: los rótulos de relleno de los demás controles llevan `d-md-block` (Bootstrap, `!important`) y seguían ocupando ~17 px en compacto; una regla de CSS (`.existencia-compacto .ex-lbl { display: none !important }`) los oculta. **Verificado** en el navegador con sesión real (usuario de prueba ya borrado): todos los controles comparten el mismo centro vertical y la barra pasó de 59,4 a 39,2 px de alto. **Ingresar pedido** sigue más alto que el resto a propósito (control grande); queda centrado.
+
+## 2026-10-20 - Existencia por sucursales: la barra del pedido se colapsa a una línea y la ventana independiente propone ensancharse
+
+- **Pedido**: botoncito para colapsar el bloque del pedido (que no ocupe alto de pantalla) y, en la ventana independiente, proponer ensancharla para ver todas las columnas.
+- **Cambio**: botón ▲/▼ en la barra del pedido: colapsada queda una línea con el resumen y un Guardar pedido propio (se recuerda en el navegador). En la ventana independiente, al encender *Ingresar pedido* (con las sugerencias ya cargadas) o *Ver precios*, si hay columnas fuera de vista aparece un cartel «¿Ensanchar la ventana?»; al aceptar se ensancha lo que falta (tope: la pantalla) y «No, gracias» no vuelve a preguntar hasta cerrar la ventana.
+- **Verificado**: con los scripts reales sobre un DOM de prueba (colapsar/expandir, persistencia, cartel una sola vez, `resizeTo`/`moveTo` con los argumentos esperados, aviso si no se pudo, sin repetir tras «No, gracias»); `WebCore` compila y `WebCore.Tests` 38 verdes. **Sin verificar**: la pantalla real con sesión (sin usuario de prueba) y el `resizeTo` en una ventana emergente real. Detalle en `docs/DECISIONS.md`.
+- **Manual**: `Stock.ExistenciaPorSucursales` (Ingresar pedido y ventana independiente).
+
+## 2026-10-20 - Existencia por sucursales: letra 1 punto más grande en el diseño compacto (mismo alto de filas) y columna Stock en negrita
+
+- **Pedido**: agrandar un punto la letra sin cambiar la altura de las filas y poner negrita a la columna Stock.
+- **Cambio**: en el compacto, letra +1 pt (también los textos chicos: unidades, pistas, equivalentes) con el interlineado fijado a la medida de antes; Stock de cada sucursal en negrita (el `≈ N un.` queda normal). Se quitó además una regla vieja que anulaba el ancho mínimo de «A pedir» en compacto (defecto del mismo día).
+- **Verificado**: en el navegador con sesión real (usuario de prueba ya borrado) las 59 filas miden 29,6 px antes y después, con y sin pedido. **Costo**: las columnas de ancho fijo crecen con la letra; en una ventana de 640 px la tabla ya necesita unos 40 px de scroll lateral (a 1440 px de pantalla, con 1 sucursal, entra sin scroll). Sin verificar: modo oscuro, Firefox/Safari.
+- **Manual**: `Stock.ExistenciaPorSucursales` (diseño compacto).
+
+## 2026-10-20 - Existencia por sucursales: período con fecha hasta, atajos 1/2/3 d, «A pedir» compacta junto a Stock/Estado y precios ocultos tras un interruptor
+
+- **Pedido**: atajos de «Período desde» de 1, 2 y 3 días (sin 90 ni 180); poder cerrar el período con una fecha hasta opcional; la columna A pedir más compacta y junto a producto, stock y estado; las columnas «$ últ. compra» e «Importe est.» ocultas siempre y visibles con un interruptor.
+- **Cambio**: la fecha hasta **no necesitó SQL nuevo** (la consulta de actividad ya tenía un tope superior): regla en `Negocio.ExistenciaPeriodo` (14 tests), botón «+ Fecha hasta» y `hasta` en el filtro «Con movimiento», las sugerencias del pedido y la exportación; con hasta, «N d» = los N días que terminan ahí. A pedir: sin ancho de más, alineada a la izquierda, casilla angosta, pistas cortas en compacto y fila resaltada al escribir (se corrigió además que la regla compacta de la casilla nunca se aplicaba). Interruptor «$ Ver precios» (tabla y vista preliminar; arranca apagado, no se recuerda); el total estimado sigue visible.
+- **Verificado**: `Negocio.Tests` 666 verdes; en el navegador con sesión real (usuario de prueba ya borrado): atajos, fecha hasta de punta a punta (leyenda, tooltips, filtro de servidor, mensajes de error, exportación) y la consulta con tope contra psql; precios ocultos/visibles en tabla y vista preliminar. **Sin verificar**: el archivo exportado con hasta, modo oscuro, Firefox/Safari. Con 2 sucursales y el pedido encendido la tabla necesita scroll lateral.
+- **Manual**: `Stock.ExistenciaPorSucursales` (período con fecha hasta, columna A pedir, interruptor de precios).
+
+## 2026-10-20 - Existencia por sucursales: columnas Cód. (15 caracteres) y Producto (30) de ancho fijo, el resto al contenido; la ventana independiente abre en un tercio de la pantalla
+
+- **Pedido**: compactar más la tabla (Cód. de 15 caracteres, Producto pegado de 30, Stock/Estado/A pedir al ancho de su contenido) para ver todo sin mover los ojos, y abrir la pantalla compacta en escritorio con 1/3 del ancho de la pantalla.
+- **Cambio**: anchos fijos de Cód. y Producto (con «…» y tooltip si el nombre no entra), columna de relleno al final para que nada se estire, encabezados en una línea y menos relleno lateral en compacto; `abrirVentanaIndependiente` acepta una fracción del ancho de la pantalla (Existencia usa 1/3, mínimo 560 px; Reportes y Reposición no cambian). Las reglas «de celular» de la pantalla ahora exigen además dispositivo táctil: una ventana de escritorio angosta conserva el diseño de escritorio.
+- **Verificado**: `WebCore` compila; en el navegador con sesión real (usuario de prueba ya borrado) la tabla de 1 sucursal entra sin scroll lateral en 640 px y con 2 sucursales los grupos se ajustan; el cálculo del ancho de ventana da 640 / 853 / 560 / 1100 según la pantalla. **Sin verificar**: la ventana emergente real, Firefox/Safari, modo oscuro. Con *Ingresar pedido* en una ventana de un tercio la tabla se desplaza (Cód. y Producto fijos).
+- **Manual**: `Stock.ExistenciaPorSucursales` (ancho de las columnas y tamaño de la ventana).
+
 ## 2026-10-19 - POS: «Total c/saldo» en el post-venta y al elegir la forma de pago
 
 - **Pedido**: ver el total de la venta más el saldo del cliente debajo del total en el aviso de venta completada y en la elección de la forma de pago.

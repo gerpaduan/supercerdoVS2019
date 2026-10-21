@@ -3140,6 +3140,17 @@ namespace DatosPostgres
             return ConsultarActividadStock(idSucursal, desde, desde, ahora);
         }
 
+        // Con tope superior: el SQL de ConsultarActividadStock ya acotaba por "<= @ahora"; aca ese tope es el `hasta` pedido (un periodo
+        // cerrado) en vez del momento actual. Misma consulta, sin SQL nuevo. Un `hasta` posterior a ahora no suma nada de mas (no hay
+        // ventas futuras), asi que no hace falta recortarlo.
+        public List<Entidades.ActividadStockVm> ObtenerActividadStock(int idSucursal, DateTime desde, DateTime hasta)
+        {
+            if (desde > DateTime.Now) throw new ArgumentOutOfRangeException(nameof(desde), "La fecha no puede ser futura.");
+            if (hasta < desde) throw new ArgumentOutOfRangeException(nameof(hasta), "La fecha hasta no puede ser anterior a la fecha desde.");
+
+            return ConsultarActividadStock(idSucursal, desde, desde, hasta);
+        }
+
         private List<Entidades.ActividadStockVm> ConsultarActividadStock(int idSucursal, DateTime desdeVentana, DateTime desdeHistoria, DateTime ahora)
         {
             // El mapa de jerarquía solo necesita los ids de sucursal (no depende de la fecha del cierre).

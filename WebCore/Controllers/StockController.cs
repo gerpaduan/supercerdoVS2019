@@ -589,7 +589,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult ExistenciaPorSucursales(bool popup = false)
+        public IActionResult ExistenciaPorSucursales(bool popup = false, string modo = "", int idSucursal = 0, string canal = "")
         {
             Entidades.Usuario user = _usuarioActual;
 
@@ -598,12 +598,23 @@ namespace WebCore.Controllers
             // siempre esta autorizado.
             var model = new Entidades.ExistenciaPorSucursalesVm();
 
+            // Lista blanca de "modo" y forma del "canal" (nombre del canal de mensajes con la pantalla de Movimientos; letras, numeros y guion).
+            bool modoMovimiento = string.Equals((modo ?? "").Trim(), "movimiento", StringComparison.OrdinalIgnoreCase);
+            string canalMovimiento = modoMovimiento && System.Text.RegularExpressions.Regex.IsMatch(canal ?? "", "^[A-Za-z0-9-]{1,40}$") ? canal : "";
+
             try
             {
                 model.Filtro = CrearFiltroExistencia(user);
                 // Por defecto se tilda solo la sucursal del usuario (si no tiene, quedan todas).
                 if (model.Filtro.IdSucursal > 0)
                     model.Filtro.IdsSucursales = new List<int> { model.Filtro.IdSucursal };
+                // Modo "movimiento" (stock de la sucursal DESTINO al lado de Movimientos/Editar): idSucursal es input externo, se acepta solo
+                // si es una sucursal de esta empresa; si no, queda lo de siempre (la sucursal del usuario).
+                if (modoMovimiento && idSucursal > 0 && model.Filtro.SucursalesDisponibles.Any(s => s.IdSucursal == idSucursal))
+                {
+                    model.Filtro.IdSucursal = idSucursal;
+                    model.Filtro.IdsSucursales = new List<int> { idSucursal };
+                }
                 model.ConsultaRealizada = false;
                 model.Mensaje = "Presioná Buscar para consultar stock.";
             }
@@ -618,6 +629,13 @@ namespace WebCore.Controllers
             ViewBag.Seccion = "Stock";
             // popup=true: la vista se muestra en una ventana independiente (sin menus, con _LayoutEmbed).
             ViewBag.Popup = popup;
+            // Modo movimiento: compacta, sin pedido ni selector de sucursales, con la columna "Sugerido a enviar" y mensajes con el movimiento.
+            ViewBag.ModoMovimiento = modoMovimiento;
+            ViewBag.CanalMovimiento = canalMovimiento;
+            ViewBag.IdSucursalMovimiento = modoMovimiento ? model.Filtro.IdSucursal : 0;
+            ViewBag.SucursalMovimiento = modoMovimiento
+                ? (model.Filtro.SucursalesDisponibles.FirstOrDefault(s => s.IdSucursal == model.Filtro.IdSucursal)?.Sucursal ?? "")
+                : "";
             // El lapiz de "editar punto de stock" solo se muestra con el permiso de Productos (Producto.NuevoCorte).
             ViewBag.PuedeEditarPunto = PuedeEditarPuntoStock();
             // "Con movimiento" usa la actividad de "Que pedir": solo Postgres.
@@ -661,6 +679,7 @@ namespace WebCore.Controllers
             string movimientoMedida = "",
             double movimientoMinimo = 0,
             DateTime? periodoDesde = null,
+            DateTime? periodoHasta = null,
             bool auto = false)
         {
             if (!WebCore.Helpers.ExistenciaCargaGuard.TryEntrar(auto, out int segundosReintento))
@@ -674,7 +693,7 @@ namespace WebCore.Controllers
             try
             {
                 var model = ConsultarModeloExistencia(texto, idsSucursales, fechaHasta, tipo, idProveedor, idMarca, idCorte, soloConStock,
-                    tipos, idsProveedores, idsMarcas, conMovimiento, movimientoMedida, movimientoMinimo, periodoDesde);
+                    tipos, idsProveedores, idsMarcas, conMovimiento, movimientoMedida, movimientoMinimo, periodoDesde, periodoHasta);
                 ViewBag.PuedeEditarPunto = PuedeEditarPuntoStock();
                 return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
             }
@@ -707,7 +726,8 @@ namespace WebCore.Controllers
             bool conMovimiento = false,
             string movimientoMedida = "",
             double movimientoMinimo = 0,
-            DateTime? periodoDesde = null)
+            DateTime? periodoDesde = null,
+            DateTime? periodoHasta = null)
         {
             bool esPdf = string.Equals(formato, "pdf", StringComparison.OrdinalIgnoreCase);
             if (!esPdf && !string.Equals(formato, "xlsx", StringComparison.OrdinalIgnoreCase))
@@ -725,7 +745,7 @@ namespace WebCore.Controllers
             {
                 DateTime generado = DateTime.Now;
                 var model = ConsultarModeloExistencia(texto, idsSucursales, generado, "", 0, 0, 0, false,
-                    tipos, idsProveedores, idsMarcas, conMovimiento, movimientoMedida, movimientoMinimo, periodoDesde);
+                    tipos, idsProveedores, idsMarcas, conMovimiento, movimientoMedida, movimientoMinimo, periodoDesde, periodoHasta);
                 if (model.Productos.Count == 0)
                     return BadRequest(string.IsNullOrWhiteSpace(model.Mensaje) ? "No hay productos para exportar." : model.Mensaje);
 
@@ -768,7 +788,7 @@ namespace WebCore.Controllers
         private Entidades.ExistenciaPorSucursalesVm ConsultarModeloExistencia(
             string texto, int[] idsSucursales, DateTime? fechaHasta, string tipo, int idProveedor, int idMarca, int idCorte,
             bool soloConStock, string[] tipos, int[] idsProveedores, int[] idsMarcas,
-            bool conMovimiento, string movimientoMedida, double movimientoMinimo, DateTime? periodoDesde)
+            bool conMovimiento, string movimientoMedida, double movimientoMinimo, DateTime? periodoDesde, DateTime? periodoHasta)
         {
             Entidades.Usuario user = _usuarioActual;
             var model = new Entidades.ExistenciaPorSucursalesVm();
@@ -813,10 +833,12 @@ namespace WebCore.Controllers
 
                 // Filtro "Con movimiento": se valida ANTES de calcular el stock para no gastar la consulta con parametros invalidos.
                 DateTime desdeMovimiento = DateTime.MinValue;
+                DateTime? limiteMovimiento = null;
                 string medidaMovimiento = Negocio.ExistenciaFiltros.MedidaSalidas;
                 if (conMovimiento)
                 {
-                    string errorMovimiento = ValidarFiltroMovimiento(periodoDesde, movimientoMinimo, movimientoMedida, out desdeMovimiento, out medidaMovimiento);
+                    string errorMovimiento = ValidarFiltroMovimiento(periodoDesde, periodoHasta, movimientoMinimo, movimientoMedida,
+                        out desdeMovimiento, out limiteMovimiento, out medidaMovimiento);
                     if (errorMovimiento != null)
                     {
                         model.Filtro = filtro;
@@ -851,10 +873,10 @@ namespace WebCore.Controllers
                 if (conMovimiento)
                 {
                     // ReposicionN no es null aca: ValidarFiltroMovimiento ya rechazo el filtro cuando el motor no es Postgres.
-                    var conMov = ReposicionN!.ObtenerCortesConMovimiento(filtro.IdsSucursales, desdeMovimiento, movimientoMinimo, medidaMovimiento);
+                    var conMov = ReposicionN!.ObtenerCortesConMovimiento(filtro.IdsSucursales, desdeMovimiento, movimientoMinimo, medidaMovimiento, limiteMovimiento);
                     model.Productos = model.Productos.Where(p => conMov.Contains(p.IdCorte)).ToList();
                     if (model.Productos.Count == 0)
-                        model.Mensaje = "Ningún producto tuvo movimiento desde el " + desdeMovimiento.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                        model.Mensaje = "Ningún producto tuvo movimiento " + TextoPeriodo(desdeMovimiento, limiteMovimiento)
                             + " con el mínimo elegido en las sucursales mostradas.";
                 }
             }
@@ -869,14 +891,14 @@ namespace WebCore.Controllers
             return model;
         }
 
-        // Tope hacia atras del "Periodo desde" (constante nombrada, no numero magico): evita consultas de historia absurdas.
-        private const int MaxDiasPeriodoMovimiento = 3650;
-
         // Valida los parametros del filtro "Con movimiento" (input externo). Devuelve el mensaje de error para el usuario o null
-        // si estan bien; en ese caso `desde` es la fecha (sin hora) y `medida` la medida normalizada.
-        private string ValidarFiltroMovimiento(DateTime? periodoDesde, double minimo, string medidaPedida, out DateTime desde, out string medida)
+        // si estan bien; en ese caso `desde` es la fecha (sin hora), `limiteSuperior` el ultimo instante del dia "hasta" (null = hasta
+        // ahora) y `medida` la medida normalizada.
+        private string ValidarFiltroMovimiento(DateTime? periodoDesde, DateTime? periodoHasta, double minimo, string medidaPedida,
+            out DateTime desde, out DateTime? limiteSuperior, out string medida)
         {
             desde = DateTime.MinValue;
+            limiteSuperior = null;
             medida = string.Equals((medidaPedida ?? "").Trim(), Negocio.ExistenciaFiltros.MedidaDiasVenta, StringComparison.OrdinalIgnoreCase)
                 ? Negocio.ExistenciaFiltros.MedidaDiasVenta
                 : Negocio.ExistenciaFiltros.MedidaSalidas;
@@ -884,7 +906,7 @@ namespace WebCore.Controllers
             if (ReposicionN == null)
                 return "El filtro Con movimiento solo está disponible cuando el sistema usa Postgres.";
 
-            string errorPeriodo = ValidarPeriodoDesde(periodoDesde, out desde);
+            string errorPeriodo = Negocio.ExistenciaPeriodo.Validar(periodoDesde, periodoHasta, DateTime.Now, out desde, out limiteSuperior);
             if (errorPeriodo != null) return errorPeriodo;
 
             if (double.IsNaN(minimo) || double.IsInfinity(minimo) || minimo <= 0 || minimo > 1000000000d)
@@ -895,35 +917,27 @@ namespace WebCore.Controllers
             return null;
         }
 
-        // Valida la fecha "Periodo desde" (input externo) que comparten el filtro "Con movimiento" y las sugerencias de "Ingresar
-        // pedido": obligatoria, no futura y con el tope hacia atras de MaxDiasPeriodoMovimiento. Devuelve el mensaje para el usuario
-        // o null si esta bien; en ese caso `desde` es la fecha sin hora.
-        private static string ValidarPeriodoDesde(DateTime? periodoDesde, out DateTime desde)
+        // Texto del periodo para los mensajes: "desde el 20/09/2026" o, con fecha hasta, "entre el 01/09/2026 y el 30/09/2026".
+        private static string TextoPeriodo(DateTime desde, DateTime? limiteSuperior)
         {
-            desde = DateTime.MinValue;
-            if (!periodoDesde.HasValue)
-                return "Elegí la fecha desde la que se cuentan las ventas y el uso en elaborados.";
-
-            DateTime ahora = DateTime.Now;
-            desde = periodoDesde.Value.Date;
-            if (desde > ahora)
-                return "La fecha del período no puede ser futura.";
-            if (desde < ahora.Date.AddDays(-MaxDiasPeriodoMovimiento))
-                return "La fecha del período no puede ser anterior a " + MaxDiasPeriodoMovimiento + " días.";
-            return null;
+            string d = desde.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+            return limiteSuperior.HasValue
+                ? "entre el " + d + " y el " + limiteSuperior.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+                : "desde el " + d;
         }
 
         // "Ingresar pedido": consumo del periodo (ventas + uso en elaborados) por producto y sucursal desde la fecha elegida hasta
-        // ahora. El navegador lo pide al encender el pedido y al cambiar el "Periodo desde"; con eso, el stock y el punto de cada
-        // celda arma la sugerencia (Negocio.PedidoSugerencia). Solo lectura y solo Postgres. Cuenta como consulta manual para el
-        // guard de carga (nunca se rechaza, pero su duracion se mide). Detalle: docs/DECISIONS.md 2026-10-19.
+        // ahora o, si se agrego, hasta la fecha "hasta" (el dia entero). El navegador lo pide al encender el pedido y al cambiar el
+        // periodo; con eso, el stock y el punto de cada celda arma la sugerencia (Negocio.PedidoSugerencia). Solo lectura y solo
+        // Postgres. Cuenta como consulta manual para el guard de carga (nunca se rechaza, pero su duracion se mide). Las reglas de
+        // las fechas son Negocio.ExistenciaPeriodo. Detalle: docs/DECISIONS.md 2026-10-19 y 2026-10-20.
         [HttpGet]
-        public IActionResult ConsumoPeriodo(DateTime? desde = null, int[] idsSucursales = null)
+        public IActionResult ConsumoPeriodo(DateTime? desde = null, DateTime? hasta = null, int[] idsSucursales = null)
         {
             if (ReposicionN == null)
                 return Json(new { ok = false, noDisponible = true, mensaje = "Ingresar pedido solo está disponible cuando el sistema usa Postgres." });
 
-            string error = ValidarPeriodoDesde(desde, out DateTime fechaDesde);
+            string error = Negocio.ExistenciaPeriodo.Validar(desde, hasta, DateTime.Now, out DateTime fechaDesde, out DateTime? limiteSuperior);
             if (error != null) return Json(new { ok = false, mensaje = error });
 
             WebCore.Helpers.ExistenciaCargaGuard.TryEntrar(false, out _);
@@ -937,11 +951,13 @@ namespace WebCore.Controllers
                     .Distinct()
                     .ToList();
 
-                var consumo = ReposicionN.ObtenerConsumoPeriodo(ids, fechaDesde);
+                var consumo = ReposicionN.ObtenerConsumoPeriodo(ids, fechaDesde, limiteSuperior);
                 return Json(new
                 {
                     ok = true,
                     desde = fechaDesde.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    // null = sin fecha hasta (se cuenta hasta ahora).
+                    hasta = limiteSuperior.HasValue ? limiteSuperior.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : null,
                     // float -> 3 decimales: sin el ruido binario (0,1f llegaria como 0,10000000149).
                     items = consumo.Select(x => new
                     {

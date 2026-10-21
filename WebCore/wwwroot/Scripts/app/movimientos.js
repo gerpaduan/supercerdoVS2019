@@ -787,6 +787,25 @@
             $('#lblTotalKilos').text(formatKg(totalKilos));
             syncSortHeaders();
             syncReadOnlyUi();
+            notificarLineas();
+        }
+
+        // Aviso a quien quiera saber que lleva el movimiento (hoy: el panel de stock del destino, movimiento-stock-destino.js): un evento con las
+        // cantidades acumuladas por codigo { "123": { u: unidades, k: kilos } }. No cambia nada de la pantalla.
+        function resumenDeLineas() {
+            var resumen = {};
+            state.lines.forEach(function (line) {
+                var cod = String(line.Codigo || '').trim();
+                if (!/^\d{1,18}$/.test(cod)) return;
+                if (!resumen[cod]) resumen[cod] = { u: 0, k: 0 };
+                resumen[cod].u += toInt(line.CantUnidad);
+                resumen[cod].k += toFloat(line.CantKg);
+            });
+            return resumen;
+        }
+
+        function notificarLineas() {
+            $(document).trigger('movimiento:lineas', [resumenDeLineas()]);
         }
 
         function buildAcumulados() {
@@ -1362,6 +1381,37 @@
             syncReadOnlyUi();
         };
         window.MovimientosEdit.syncPrimaryAction = syncPrimaryAction;
+        // Para el panel de stock del destino: carga un producto como si se hubiera elegido en el buscador (codigo -> busca el producto -> foco en
+        // la cantidad). Con `cantidad` (el sugerido a enviar) la deja puesta: kilos si el producto es por peso, unidades si no; no agrega la
+        // linea (el usuario confirma con +). Sin permiso de edicion no hace nada.
+        window.MovimientosEdit.resumenLineas = resumenDeLineas;
+        window.MovimientosEdit.cargarProducto = function (codigo, cantidad, pesable) {
+            if (state.readOnly) return;
+            $codigo.val(codigo || '');
+            // Se limpian las cantidades del producto anterior: la linea exige Cant. Un. y Kgs., y no debe arrastrarse un valor ajeno.
+            $cantUnidad.val('');
+            $cantKgs.val('');
+            buscarPorCodigo(function (ok) {
+                if (!ok) return;
+                var c = Number(cantidad);
+                if (isFinite(c) && c > 0) {
+                    if (pesable) {
+                        // Por peso: los kilos sugeridos y, si el producto tiene promedio, las unidades equivalentes (la linea exige las dos y
+                        // validarRelacionCantidadKilos las compara). El foco queda en Cant. Un. para que el usuario lo confirme.
+                        var kg = Math.round(c * 1000) / 1000;
+                        var promedio = toFloat($productoPromedio.val());
+                        $cantKgs.val(String(kg).replace('.', ',')).trigger('input').trigger('change');
+                        if (promedio > 0) $cantUnidad.val(String(Math.max(1, Math.round(kg / promedio)))).trigger('input').trigger('change');
+                    } else {
+                        // Por unidades: se envia entero; los kilos acompañan a las unidades (como en el resto de la pantalla para los no pesables).
+                        var unidades = Math.max(1, Math.ceil(c - 1e-9));
+                        $cantUnidad.val(String(unidades)).trigger('input').trigger('change');
+                        $cantKgs.val(String(unidades)).trigger('input').trigger('change');
+                    }
+                }
+                $cantUnidad.focus().select();
+            });
+        };
     }
 
     $(function () {

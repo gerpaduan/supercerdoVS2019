@@ -37,6 +37,11 @@
                 <i class="fas fa-print mr-1"></i> Imprimir
             </button>
         }
+        @* Stock de la sucursal destino al lado del movimiento (solo escritorio): movimiento-stock-destino.js. *@
+        <button type="button" class="btn btn-outline-primary d-none d-lg-inline-block" id="btnStockDestino" aria-pressed="false"
+                title="Ver el stock de la sucursal destino mientras armás el movimiento">
+            <i class="fas fa-warehouse mr-1"></i> Stock destino
+        </button>
         @if (borradorGenericoHabilitado)
         {
             <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresMovimientos">
@@ -46,6 +51,22 @@
         }
     </div>
 
+    @* Con "Stock destino" encendido (y pantalla >= 1200 px) el contenido pasa a dos columnas: el stock del destino a la izquierda y la carga
+       del movimiento a la derecha. El panel es un iframe de Stock/ExistenciaPorSucursales en modo movimiento. *@
+    <div class="mov-layout" id="movLayout">
+        <aside class="mov-stock-panel d-none" id="panelStockDestino" aria-label="Stock de la sucursal destino">
+            <div class="mov-stock-cab">
+                <span class="mov-stock-titulo" id="lblTituloStockDestino">Stock de la sucursal destino</span>
+                <span class="mov-stock-acciones">
+                    <button type="button" id="btnStockDestinoActualizar" title="Actualizar el stock ahora" aria-label="Actualizar el stock ahora"><i class="fas fa-sync-alt"></i></button>
+                    <button type="button" id="btnStockDestinoVentana" title="Abrir en una ventana independiente" aria-label="Abrir en una ventana independiente"><i class="fas fa-external-link-alt"></i></button>
+                    <button type="button" id="btnStockDestinoCerrar" title="Cerrar el panel" aria-label="Cerrar el panel"><i class="fas fa-times"></i></button>
+                </span>
+            </div>
+            <div class="mov-stock-aviso d-none" id="avisoStockDestino">Elegí la sucursal destino para ver su stock.</div>
+            <iframe id="frameStockDestino" class="mov-stock-frame" title="Stock de la sucursal destino"></iframe>
+        </aside>
+        <div class="mov-form-col">
     <div class="card shadow-sm movimiento-panel-card">
         <div class="card-body">
             <form id="formMovimiento" method="post" action="@Url.Action("Guardar", "Movimientos")" novalidate>
@@ -99,7 +120,7 @@
 
                 <hr />
 
-                <div class="row">
+                <div class="row mov-fila-principal">
                     <div class="col-12 col-xl-8">
                         <div class="border rounded p-3 mb-3 movimiento-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
@@ -234,7 +255,7 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-xl-4">
+                    <div class="col-12 col-xl-4 mov-lateral">
                         <div class="card bg-light movimiento-panel-card movimiento-summary-card">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-2 movimiento-section-title">Resumen</h6>
@@ -330,6 +351,8 @@
             </form>
         </div>
     </div>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="modalAcumuladosMovimiento" tabindex="-1" role="dialog" aria-hidden="true">
@@ -369,6 +392,48 @@
 }
 
 <style>
+    /* Stock de la sucursal destino al lado (movimiento-stock-destino.js): dos columnas solo con el panel encendido y >= 1200 px. */
+    .mov-layout.mov-con-stock { display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 10fr); gap: .75rem; align-items: start; }
+    .mov-layout.mov-con-stock .mov-stock-panel { display: flex; flex-direction: column; position: sticky; top: .5rem; height: calc(100vh - 7rem); min-height: 22rem; }
+    .mov-layout:not(.mov-con-stock) .mov-stock-panel { display: none !important; }
+    /* Con el stock al lado, la carga del movimiento queda angosta: "Agregar producto" y la tabla ocupan todo el ancho y Resumen / Observaciones
+       pasan debajo, lado a lado (si no, los dos bloques se repartirian 8/12 y 4/12 de una columna chica). */
+    .mov-layout.mov-con-stock .mov-fila-principal > .col-xl-8,
+    .mov-layout.mov-con-stock .mov-fila-principal > .col-xl-4 { flex: 0 0 100%; max-width: 100%; }
+    /* Con el stock al lado "Agregar producto" queda angosto (y mas con el teclado digital): las columnas de Bootstrap se cortan por el ancho de la
+       PANTALLA y no por el de este bloque, asi que Cant. Un., Kgs. y el + terminaban cada uno en su renglon. Se acomoda por el ancho REAL de los
+       campos (container query sobre .numeric-keypad-toggle-fields), con Cant. Un. + Kgs. + "+" siempre juntos en el mismo renglon:
+         - ancho (> 36rem): todo en una linea;
+         - medio (<= 36rem): Codigo + Producto arriba, Cant. Un. + Kgs. + "+" abajo;
+         - muy angosto (<= 22rem, teclado abierto): Codigo, Producto y Cant. Un. + Kgs. + "+", un renglon cada uno.
+       Los selectores llevan el id del bloque para ganarle a numeric-keypad.css (con el teclado abierto apila cada columna a lo ancho).
+       (Intentos descartados: flex-wrap con anchos base dejaba caer el "+" solo abajo; nowrap fijo dejaba Producto en ~70 px a 1200 px.) */
+    .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .numeric-keypad-toggle-fields { container-type: inline-size; }
+    .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row { flex-wrap: nowrap; }
+    .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > [class*="col-"] { flex: 0 0 auto; width: auto; max-width: none; min-width: 0; }
+    .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo { flex: 0 1 8.5rem; }
+    .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-producto { flex: 1 1 10rem; }
+    .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-cantidad { flex: 0 0 5.5rem; }
+    .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-btn-add { width: auto; }
+    @@container (max-width: 36rem) {
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row { flex-wrap: wrap; }
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo { flex: 0 0 38%; }
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-producto { flex: 0 0 62%; }
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-cantidad { flex: 1 1 0; }
+    }
+    @@container (max-width: 22rem) {
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo,
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-producto { flex: 0 0 100%; }
+    }
+    .mov-layout.mov-con-stock .mov-lateral { display: flex; flex-wrap: wrap; gap: .75rem; }
+    .mov-layout.mov-con-stock .mov-lateral > .card { flex: 1 1 14rem; margin-top: 0 !important; }
+    .mov-stock-panel { border: 1px solid var(--ui-primary, #2d5b8f); border-radius: .6rem; background: var(--ui-surface, #fff); overflow: hidden; }
+    .mov-stock-cab { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .3rem .6rem; font-size: .84rem; font-weight: 600;
+        background: var(--ui-primary-soft, rgba(45, 91, 143, .1)); border-bottom: 1px solid var(--ui-border, #dee2e6); }
+    .mov-stock-acciones button { border: 0; background: transparent; padding: .1rem .35rem; color: var(--ui-text-muted, #6c757d); cursor: pointer; }
+    .mov-stock-acciones button:hover { color: var(--ui-primary, #2d5b8f); }
+    .mov-stock-aviso { padding: 1rem; text-align: center; color: var(--ui-text-muted, #6c757d); font-size: .85rem; }
+    .mov-stock-frame { flex: 1 1 auto; width: 100%; border: 0; min-height: 0; background: #fff; }
     .movimiento-page .movimiento-panel-card {
         border: 1px solid #e9ecef;
         border-radius: .75rem;
@@ -757,6 +822,9 @@
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
+    <script>window.movimientoStockDestinoConfig = { url: '@Url.Action("ExistenciaPorSucursales", "Stock")' };</script>
+    <script src="@Url.Content("~/Scripts/app/movimiento-stock-destino.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>

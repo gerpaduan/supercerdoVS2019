@@ -18,6 +18,11 @@ namespace Contratos
         // No admite fechas futuras.
         List<Entidades.ActividadStockVm> ObtenerActividadStock(int idSucursal, System.DateTime desde);
 
+        // Igual, pero acotada ARRIBA: cuenta lo ocurrido entre `desde` y `hasta` (ambos inclusive; `hasta` es un instante, normalmente el
+        // ultimo del dia elegido, ver Negocio.ExistenciaPeriodo). Sirve para un periodo ya cerrado (ej. el mes pasado). No admite
+        // `desde` futuro ni `hasta` anterior a `desde`.
+        List<Entidades.ActividadStockVm> ObtenerActividadStock(int idSucursal, System.DateTime desde, System.DateTime hasta);
+
         // Un proveedor por producto: el de la compra más reciente (corteproveedor). Si idProveedorPreferido > 0 y el
         // producto también se le compra a ese proveedor, se devuelve ese (para que filtrar por proveedor muestre al
         // proveedor filtrado). 0 = sin preferencia.

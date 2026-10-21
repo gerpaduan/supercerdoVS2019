@@ -36,21 +36,33 @@ namespace Negocio
         // (ExistenciaFiltros.MedidaSalidas = ventas + consumo en elaborados; MedidaDiasVenta = dias con venta).
         // Una sola consulta de solo lectura (la misma actividad que usa "Que pedir", con su jerarquia madre/hija); el recorte
         // por sucursal y por minimo se hace en memoria (ExistenciaFiltros.CortesConMovimiento, con tests).
-        public HashSet<int> ObtenerCortesConMovimiento(ICollection<int> idsSucursales, DateTime desde, double minimo, string medida)
+        // limiteSuperior (2026-10-20): ultimo instante del periodo (el dia "hasta" entero); null = hasta ahora. Ver ExistenciaPeriodo.Validar.
+        public HashSet<int> ObtenerCortesConMovimiento(ICollection<int> idsSucursales, DateTime desde, double minimo, string medida, DateTime? limiteSuperior = null)
         {
             if (minimo <= 0) throw new ArgumentOutOfRangeException(nameof(minimo), "El minimo debe ser mayor que cero.");
 
-            var actividad = _actividadRepo.ObtenerActividadStock(0, desde) ?? new List<ActividadStockVm>();
+            var actividad = ActividadDelPeriodo(desde, limiteSuperior);
             return ExistenciaFiltros.CortesConMovimiento(actividad, idsSucursales, minimo, medida);
+        }
+
+        // Actividad (ventas + uso en elaborados) de todas las sucursales entre `desde` y el limite superior (null = hasta ahora).
+        // Una sola consulta de solo lectura; es la base del filtro "Con movimiento" y de las sugerencias de "Ingresar pedido".
+        private List<ActividadStockVm> ActividadDelPeriodo(DateTime desde, DateTime? limiteSuperior)
+        {
+            var actividad = limiteSuperior.HasValue
+                ? _actividadRepo.ObtenerActividadStock(0, desde, limiteSuperior.Value)
+                : _actividadRepo.ObtenerActividadStock(0, desde);
+            return actividad ?? new List<ActividadStockVm>();
         }
 
         // Existencia por sucursales, "Ingresar pedido" (2026-10-19): consumo del periodo (ventas + uso en elaborados) por producto
         // y sucursal desde la fecha exacta `desde` hasta ahora, para las sucursales indicadas (vacio = todas). Es la base de la
         // sugerencia "consumo menos stock" (PedidoSugerencia). Una consulta de solo lectura, la misma de "Que pedir" y del filtro
         // "Con movimiento"; el recorte por sucursal y el descarte de pares sin consumo se hacen en memoria (con tests).
-        public List<ActividadStockVm> ObtenerConsumoPeriodo(ICollection<int> idsSucursales, DateTime desde)
+        // limiteSuperior (2026-10-20): ultimo instante del periodo (el dia "hasta" entero); null = hasta ahora.
+        public List<ActividadStockVm> ObtenerConsumoPeriodo(ICollection<int> idsSucursales, DateTime desde, DateTime? limiteSuperior = null)
         {
-            var actividad = _actividadRepo.ObtenerActividadStock(0, desde) ?? new List<ActividadStockVm>();
+            var actividad = ActividadDelPeriodo(desde, limiteSuperior);
             return PedidoSugerencia.ConsumoDeSucursales(actividad, idsSucursales);
         }
 

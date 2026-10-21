@@ -37,7 +37,8 @@
     bool puedeEditarPunto = ViewBag.PuedeEditarPunto is bool permiso && permiso;
     // Columnas del <tr>: Cod. + Producto + 3 por sucursal (Stock + Estado + A pedir; Estado y A pedir siguen en el DOM aunque esten
     // ocultas) + 2 del Total + 3 del pedido (Total pedido, $ ult. compra, Importe est.) + el "+".
-    int totalColumnas = 2 + (columnas.Count * 3) + (mostrarTotal ? 2 : 0) + 3 + 1;
+    // Cod. + Producto, 4 por sucursal (Stock/Estado/A pedir/Sugerido), Total (2), cierre del pedido (3), boton de detalle (1) y la columna de relleno (1).
+    int totalColumnas = 2 + (columnas.Count * 4) + (mostrarTotal ? 2 : 0) + 3 + 1 + 1;
 }
 
 @if (Model == null || !Model.ConsultaRealizada)
@@ -78,9 +79,12 @@ else
                         <th colspan="2" class="ex-grupo ex-grupo-ini ex-grupo-total">Total</th>
                     }
                     <th rowspan="2" class="ex-pedido-fin ex-grupo-ini ex-sortable ex-th-tp" data-sort-key="tp" title="Ordenar por el total pedido">Total pedido</th>
-                    <th rowspan="2" class="ex-pedido-fin" title="Precio de la última compra (por kg o unidad)">$ últ. compra</th>
-                    <th rowspan="2" class="ex-pedido-fin ex-sortable" data-sort-key="imp" title="Ordenar por el importe estimado">Importe est.</th>
+                    @* Precio e importe: ocultos hasta que el usuario enciende "Ver precios" (clase existencia-precios-on, ver la vista). *@
+                    <th rowspan="2" class="ex-pedido-fin ex-col-precio" title="Precio de la última compra (por kg o unidad)">$ últ. compra</th>
+                    <th rowspan="2" class="ex-pedido-fin ex-col-precio ex-sortable" data-sort-key="imp" title="Ordenar por el importe estimado">Importe est.</th>
                     <th rowspan="2" class="existencia-col-toggle"></th>
+                    @* Relleno: absorbe el ancho que sobra para que ninguna otra columna se estire (todas quedan al ancho de su contenido). *@
+                    <th rowspan="2" class="ex-col-relleno" aria-hidden="true"></th>
                 </tr>
                 <tr>
                     @for (int i = 0; i < columnas.Count; i++)
@@ -88,6 +92,8 @@ else
                         <th class="ex-sub ex-sortable ex-grupo-ini @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="s@(columnas[i].IdSucursal)" title="Ordenar por stock de @columnas[i].Sucursal">Stock</th>
                         <th class="ex-sub ex-sortable ex-col-estado @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="e@(columnas[i].IdSucursal)" title="Ordenar por estado en @columnas[i].Sucursal (primero los faltantes)">Estado</th>
                         <th class="ex-sub ex-sortable ex-col-pedir @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="p@(columnas[i].IdSucursal)" title="Ordenar por lo pedido a @columnas[i].Sucursal">A pedir</th>
+                        @* Solo en el modo movimiento (ver la vista): lo que conviene enviar = consumo del periodo - stock. Lo llena existencia-movimiento.js. *@
+                        <th class="ex-sub ex-sortable ex-col-sug @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="g@(columnas[i].IdSucursal)" title="Sugerido a enviar (ventas + uso en elaborados del período − stock): ordenar, primero el mayor">Sugerido</th>
                     }
                     @if (mostrarTotal)
                     {
@@ -141,7 +147,7 @@ else
                         data-clases="@string.Join(" ", clases)"
                         data-sinpto="@(algunoSinPunto ? "1" : "0")"
                         @Html.Raw(atributos.ToString())>
-                        <td class="ex-col-cod-cell">@producto.Codigo</td>
+                        <td class="ex-col-cod-cell"><div class="ex-cod-txt" title="@producto.Codigo">@producto.Codigo</div></td>
                         <td class="ex-col-prod-cell">
                             <div class="existencia-producto-desc" title="@producto.Corte">@producto.Corte</div>
                         </td>
@@ -152,7 +158,7 @@ else
                             string altClase = i % 2 == 1 ? "ex-alt" : "";
                             var equivalenteUnidades = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)celda.StockActual, (decimal)celda.Promedio, celda.Pesable);
 
-                            <td class="text-right text-nowrap ex-grupo-ini @altClase @ClaseStock(estado)" title="@TextoEstado(estado)">
+                            <td class="text-right text-nowrap ex-grupo-ini ex-col-stock @altClase @ClaseStock(estado)" title="@TextoEstado(estado)">
                                 @celda.StockActual.ToString("N3")
                                 @if (equivalenteUnidades != null)
                                 {
@@ -182,6 +188,7 @@ else
                                     <span class="ex-ped-hint"></span>
                                 </div>
                             </td>
+                            <td class="text-right ex-col-sug ex-sug-celda @altClase" data-id-corte="@producto.IdCorte" data-id-sucursal="@celda.IdSucursal"></td>
                         }
                         @if (mostrarTotal)
                         {
@@ -198,13 +205,14 @@ else
                             <span class="ex-tp-cant font-weight-bold"></span>
                             <span class="ex-tp-eq"></span>
                         </td>
-                        <td class="text-right text-nowrap ex-pedido-fin ex-precio-cell"></td>
-                        <td class="text-right text-nowrap ex-pedido-fin ex-importe-cell font-weight-bold"></td>
+                        <td class="text-right text-nowrap ex-pedido-fin ex-col-precio ex-precio-cell"></td>
+                        <td class="text-right text-nowrap ex-pedido-fin ex-col-precio ex-importe-cell font-weight-bold"></td>
                         <td class="text-center existencia-col-toggle-cell">
                             <button type="button" class="btn btn-link p-0 btn-toggle-existencia" data-target="#@detailId" title="Expandir detalle">
                                 <i class="far fa-plus-square"></i>
                             </button>
                         </td>
+                        <td class="ex-col-relleno" aria-hidden="true"></td>
                     </tr>
                     <tr id="@detailId" class="existencia-detalle-row d-none">
                         <td colspan="@totalColumnas" class="p-0">

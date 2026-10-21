@@ -27,6 +27,11 @@
     // Modo ventana independiente (?popup=true): layout minimo sin sidebar/topbar, el mismo patron que
     // Productos/AddOrEdit?embed=true. Se abre desde el boton "Abrir en ventana" de la vista normal.
     bool popup = ViewBag.Popup is bool esPopup && esPopup;
+    // Modo "movimiento": esta misma pantalla como panel de stock de la sucursal DESTINO de Movimientos/Editar (en un iframe o en una ventana
+    // independiente). Siempre compacta; sin pedido, selector de sucursales, exportar ni "Ventana"; con la columna "Sugerido a enviar".
+    // Habla con el movimiento por un BroadcastChannel (existencia-movimiento.js). Ver docs/DECISIONS.md (2026-10-20).
+    bool modoMovimiento = ViewBag.ModoMovimiento is bool mm && mm;
+    string canalMovimiento = (ViewBag.CanalMovimiento as string) ?? "";
     if (popup)
     {
         Layout = "~/Views/Shared/_LayoutEmbed.cshtml";
@@ -60,7 +65,7 @@
     };
 }
 
-<div class="container-fluid existencia-sucursales-page" id="existenciaPage">
+<div class="container-fluid existencia-sucursales-page@(modoMovimiento ? " ex-modo-mov" : "")" id="existenciaPage">
     @* Antes de pintar el resto: aplica el modo compacto recordado (sin parpadeo del diseno normal). Mismo criterio que usa el JS
        de la pantalla; la ventana independiente tiene su propia clave y arranca compacta. *@
     <script>
@@ -68,7 +73,7 @@
             try {
                 var esPopup = @(popup ? "true" : "false");
                 var guardado = localStorage.getItem(esPopup ? "existenciaCompactoPopup" : "existenciaCompacto");
-                var compacto = guardado === null ? esPopup : guardado === "1";
+                var compacto = @Html.Raw(modoMovimiento ? "true" : "guardado === null ? esPopup : guardado === \"1\"");
                 if (compacto) document.getElementById("existenciaPage").classList.add("existencia-compacto");
             } catch (e) {
                 if (@(popup ? "true" : "false")) document.getElementById("existenciaPage").classList.add("existencia-compacto");
@@ -76,7 +81,7 @@
         })();
     </script>
 
-    @if (popup)
+    @if (popup && !modoMovimiento)
     {
         // _LayoutEmbed no tiene barra superior: el titulo de la pantalla se muestra aca.
         <h5 class="existencia-popup-titulo mb-2">Existencia por sucursales</h5>
@@ -106,7 +111,7 @@
                     @if (pedidoBorradorHabilitado)
                     {
                         @* Pedidos que quedaron a medio cargar (corte de luz, cierre del navegador): visible aunque el modo pedido este apagado. *@
-                        <div class="ex-ctl">
+                        <div class="ex-ctl ex-ctl-borradores">
                             <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                             <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresPedido"
                                     title="Pedidos que quedaron a medio cargar (corte de luz, cierre del navegador)">
@@ -205,7 +210,7 @@
                             <label class="ex-chip-texto" for="switchExpandirExistencia">Expandir</label>
                         </span>
                     </div>
-                    <div class="ex-ctl ex-ctl-chip">
+                    <div class="ex-ctl ex-ctl-chip ex-ctl-compacto">
                         <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                         <span class="ex-chip" title="Diseño compacto: filas de una línea y barra reducida (se recuerda en este navegador)">
                             <input type="checkbox" class="ex-chip-input" id="switchCompactoExistencia" />
@@ -276,10 +281,23 @@
                         <div class="ex-periodo">
                             <input type="date" id="filtroPeriodoDesdeExistencia" name="periodoDesde" class="form-control" />
                             <span class="ex-periodo-atajos">
-                                @foreach (var dias in new[] { 7, 15, 30, 60, 90, 180, 365 })
+                                @* Los atajos son la unica lista de dias: el JS (existencia-sucursales.js) la lee de estos botones. *@
+                                @* En el modo movimiento solo los atajos cortos: otro periodo se elige escribiendo la fecha. *@
+                                @foreach (var dias in (modoMovimiento ? new[] { 1, 2, 3, 7, 15 } : new[] { 1, 2, 3, 7, 15, 30, 60, 365 }))
                                 {
-                                    <button type="button" class="btn btn-outline-secondary btn-sm ex-periodo-dias" data-dias="@dias" title="Desde hace @dias días">@(dias)&nbsp;d</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm ex-periodo-dias" data-dias="@dias"
+                                            title="@((dias == 1 ? "Desde hace 1 día" : "Desde hace " + dias + " días") + ". Con fecha hasta: desde " + dias + (dias == 1 ? " día" : " días") + " antes de esa fecha.")">@(dias)&nbsp;d</button>
                                 }
+                            </span>
+                            @* Fecha hasta (opcional): sin ella se cuenta hasta ahora. Con ella el periodo queda cerrado (ej. el mes pasado). El campo
+                               arranca deshabilitado y oculto para que no viaje en la busqueda mientras no se agregue. *@
+                            <button type="button" class="btn btn-outline-secondary btn-sm ex-periodo-agregar" id="btnAgregarHastaExistencia"
+                                    title="Agregar una fecha hasta para cerrar el período (por defecto se cuenta hasta ahora)">+ Fecha hasta</button>
+                            <span class="ex-periodo-hasta d-none" id="grupoPeriodoHastaExistencia">
+                                <label for="filtroPeriodoHastaExistencia" class="mb-0">hasta</label>
+                                <input type="date" id="filtroPeriodoHastaExistencia" name="periodoHasta" class="form-control" disabled />
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnQuitarHastaExistencia"
+                                        title="Quitar la fecha hasta (se vuelve a contar hasta ahora)" aria-label="Quitar la fecha hasta">&times;</button>
                             </span>
                         </div>
                     </div>
@@ -302,7 +320,7 @@
                         <div class="ex-ayuda">
                             @if (movimientoDisponible)
                             {
-                                <text><b>Salidas</b> = ventas + uso en elaborados, desde la fecha del período hasta ahora. <b>Días con venta</b> cuenta solo ventas. Cumple si alguna sucursal mostrada alcanza el mínimo.</text>
+                                <text><b>Salidas</b> = ventas + uso en elaborados, desde la fecha del período hasta ahora (o hasta la fecha «hasta», si la agregás). <b>Días con venta</b> cuenta solo ventas. Cumple si alguna sucursal mostrada alcanza el mínimo.</text>
                             }
                             else
                             {
@@ -313,17 +331,72 @@
                 </div>
             </form>
 
+            @if (modoMovimiento)
+            {
+                @* Modo movimiento: el periodo (desde / hasta) sale del panel de Filtros y queda siempre a la vista junto a la leyenda de la columna
+                   "Sugerido a enviar" (existencia-movimiento.js mueve ahi el bloque del periodo). *@
+                <div class="ex-mov-bloque ex-mov-colapsado" id="bloqueMovExistencia">
+                    @* Compacto por defecto (una linea con el resumen del periodo); "Cambiar período" (o un click en la tira) lo abre. No se recuerda:
+                       siempre arranca compacto. *@
+                    <button type="button" class="ex-mov-colapsar" id="btnColapsarBloqueMov" aria-expanded="false" title="Mostrar el período y la explicación del sugerido">
+                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                        <span class="ex-mov-colapsar-txt">Cambiar período</span>
+                    </button>
+                    <span class="ex-mov-resumen" id="lblResumenMov">Sugerido: calculando…</span>
+                    @* Fechas escritas a mano sin aplicar: las sugerencias siguen con el periodo anterior hasta confirmar (existencia-movimiento.js). *@
+                    <span class="ex-mov-aviso-pendiente d-none" id="avisoPendienteMov" role="status">
+                        <span id="lblPendienteMov"></span>
+                        <button type="button" class="btn btn-warning btn-sm ex-mov-aplicar" id="btnAplicarPeriodoMov">
+                            <i class="fas fa-sync-alt" aria-hidden="true"></i> Actualizar sugerencias
+                        </button>
+                    </span>
+                    <div class="ex-mov-periodo" id="hostPeriodoMov"></div>
+                    <div class="ex-mov-leyenda">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <span id="lblLeyendaSugeridoMov">Calculando las sugerencias…</span>
+                        <span id="lblRecalculadoMov" class="ex-mov-recalculado"></span>
+                    </div>
+                </div>
+            }
+
+            @* Resumen de los filtros avanzados (Tipos, Proveedores, Marcas y "Con movimiento") de la ULTIMA busqueda: se ve solo si hay alguno aplicado y
+               el panel "Filtros" esta cerrado, para no perder de vista por que faltan productos. Cada chip se edita con un click y se quita con la x.
+               Los chips los arma existencia-sucursales.js (renderResumenFiltros). *@
+            <div class="ex-resumen-filtros d-none" id="resumenFiltrosExistencia">
+                <span class="ex-rf-etiqueta"><i class="fas fa-filter" aria-hidden="true"></i> Filtros aplicados:</span>
+                <span class="ex-rf-lista"></span>
+                <span class="ex-rf-pendiente d-none" title="Cambiaste filtros y todavía no tocaste Buscar: lo que se ve es la última búsqueda">⚠ sin aplicar</span>
+                <button type="button" class="ex-rf-limpiar" title="Quitar todos los filtros avanzados y volver a buscar">Limpiar</button>
+            </div>
+
             @* ---------- Barra del pedido (solo visible con "Ingresar pedido" encendido) ---------- *@
+            @* El boton de la izquierda colapsa la barra a UNA linea (resumen + Guardar) para que no ocupe el alto de la pantalla; se recuerda
+               en este navegador. Lo maneja Scripts/app/existencia-pedido.js. *@
             <div class="ex-pedido-barra d-none" id="barraPedidoExistencia">
+                <div class="ex-pedido-linea1">
+                <button type="button" class="ex-pedido-colapsar" id="btnColapsarBarraPedido" aria-expanded="true" aria-controls="cuerpoBarraPedidoExistencia"
+                        title="Ocultar las opciones del pedido (queda una sola línea con el resumen y Guardar)">
+                    <i class="fas fa-chevron-up" aria-hidden="true"></i>
+                </button>
                 <div class="ex-pedido-leyenda">
                     <i class="fas fa-info-circle" aria-hidden="true"></i>
                     <span id="lblLeyendaPedidoExistencia">Cargando sugerencias…</span>
                     <a href="#" id="lnkCambiarPeriodoPedido" class="ml-1">Cambiar</a>
                     <span class="ex-pedido-ayuda ml-1" id="lblAyudaPedidoExistencia" tabindex="0" role="note"
-                          title="La sugerencia se calcula por sucursal: consumo del período (lo vendido más lo que se usó en elaborados desde la fecha elegida) menos el stock actual. Si el stock alcanza se avisa «stock suficiente». Ejemplo, pedidos cada 30 días: período desde hoy − 30; si se vendieron 80,500 y se usaron 12,000 en elaborados (92,500) y hay 40,000 de stock, se sugiere pedir 52,500. Las sugerencias no se cargan solas: las aceptás vos. Si el stock es negativo se toma como 0.">
+                          title="La sugerencia se calcula por sucursal: consumo del período (lo vendido más lo que se usó en elaborados desde la fecha elegida hasta ahora, o hasta la fecha «hasta» si la agregaste) menos el stock actual. Si el stock alcanza se avisa «stock suficiente». Ejemplo, pedidos cada 30 días: período desde hoy − 30; si se vendieron 80,500 y se usaron 12,000 en elaborados (92,500) y hay 40,000 de stock, se sugiere pedir 52,500. Las sugerencias no se cargan solas: las aceptás vos. Si el stock es negativo se toma como 0.">
                         <i class="far fa-question-circle" aria-hidden="true"></i>
                     </span>
                 </div>
+                @* Solo se ve con la barra colapsada: el resumen del pedido y un Guardar (el mismo que el de las opciones). *@
+                <div class="ex-pedido-mini">
+                    <span class="ex-pedido-mini-texto" id="lblMiniPedidoExistencia">Pedido sin cantidades cargadas</span>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnGuardarMiniPedidoExistencia" disabled
+                            title="Revisar el pedido antes de guardarlo (muestra solo los productos con cantidad)">
+                        <i class="fas fa-save mr-1"></i>Guardar pedido
+                    </button>
+                </div>
+                </div>
+                <div class="ex-pedido-cuerpo" id="cuerpoBarraPedidoExistencia">
                 <div class="ex-pedido-acciones">
                     <div class="ex-ctl">
                         <label class="ex-lbl-fijo" for="selSugerirSegunExistencia">Sugerir según</label>
@@ -349,6 +422,15 @@
                             </button>
                         </div>
                     </div>
+                    @* Los precios (ultima compra e importe estimado) estan ocultos siempre: se ven solo si el usuario enciende este interruptor
+                       (columnas de la tabla y de la vista preliminar). No se recuerda: cada vez que se abre la pantalla arranca apagado. *@
+                    <div class="ex-ctl ex-ctl-chip">
+                        <label class="ex-lbl-fijo">&nbsp;</label>
+                        <span class="ex-chip" title="Mostrar el precio de la última compra y el importe estimado de cada producto (en la tabla y en la vista preliminar). Por defecto están ocultos.">
+                            <input type="checkbox" class="ex-chip-input" id="switchPreciosPedidoExistencia" />
+                            <label class="ex-chip-texto" for="switchPreciosPedidoExistencia"><i class="fas fa-dollar-sign mr-1"></i>Ver precios</label>
+                        </span>
+                    </div>
                     <span class="ex-grow"></span>
                     <div class="ex-ctl">
                         <label class="ex-lbl-fijo">&nbsp;</label>
@@ -362,6 +444,7 @@
                     <span id="lblResumenCeldasPedido" class="ex-pedido-chip"></span>
                     <span id="lblResumenTotalPedido" class="ex-pedido-chip ex-pedido-total"></span>
                     <span id="lblEstadoBorradorPedido" class="text-muted small d-none"></span>
+                </div>
                 </div>
             </div>
         </div>
@@ -482,10 +565,29 @@
     .existencia-pedido-on th.ex-col-pedir, .existencia-pedido-on td.ex-col-pedir,
     .existencia-pedido-on th.ex-pedido-fin, .existencia-pedido-on td.ex-pedido-fin { display: table-cell; }
     .existencia-pedido-on .ex-grupo .ex-btn-aceptar-suc.ex-col-pedir { display: inline-block; }
+    /* Precio de la ultima compra e importe estimado: siguen ocultos con el pedido encendido hasta que se enciende "Ver precios".
+       (Van despues de la regla de arriba: empatan en especificidad y gana la ultima.) */
+    .existencia-pedido-on th.ex-col-precio, .existencia-pedido-on td.ex-col-precio { display: none; }
+    .existencia-pedido-on.existencia-precios-on th.ex-col-precio, .existencia-pedido-on.existencia-precios-on td.ex-col-precio { display: table-cell; }
 
     .ex-pedido-barra { margin-top: .6rem; padding: .55rem .7rem; border: 1px solid var(--ui-primary, #2d5b8f); border-radius: .6rem; background: var(--ui-primary-soft, rgba(45, 91, 143, .07)); }
     .ex-pedido-barra.d-none { display: none !important; }
-    .ex-pedido-leyenda { font-size: .8rem; margin-bottom: .45rem; }
+    /* Primera linea de la barra: boton para colapsar + leyenda (o, colapsada, el resumen con su Guardar). */
+    .ex-pedido-linea1 { display: flex; align-items: flex-start; gap: .5rem; margin-bottom: .45rem; }
+    .ex-pedido-colapsar {
+        flex: 0 0 auto; width: 1.6rem; height: 1.6rem; padding: 0; line-height: 1; border-radius: .4rem; cursor: pointer;
+        border: 1px solid var(--ui-primary, #2d5b8f); background: transparent; color: var(--ui-primary, #2d5b8f); font-size: .75rem;
+    }
+    .ex-pedido-colapsar:hover { background: var(--ui-primary-soft, rgba(45, 91, 143, .12)); }
+    .ex-pedido-colapsar:focus-visible { outline: 2px solid var(--ui-primary, #2d5b8f); outline-offset: 1px; }
+    .ex-pedido-mini { display: none; flex: 1 1 auto; min-width: 0; align-items: center; justify-content: space-between; gap: .6rem; font-size: .8rem; font-weight: 600; }
+    .ex-pedido-mini-texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ex-pedido-barra.ex-colapsada { padding-top: .3rem; padding-bottom: .3rem; }
+    .ex-pedido-barra.ex-colapsada .ex-pedido-linea1 { margin-bottom: 0; align-items: center; }
+    .ex-pedido-barra.ex-colapsada .ex-pedido-leyenda,
+    .ex-pedido-barra.ex-colapsada .ex-pedido-cuerpo { display: none; }
+    .ex-pedido-barra.ex-colapsada .ex-pedido-mini { display: flex; }
+    .ex-pedido-leyenda { font-size: .8rem; flex: 1 1 auto; min-width: 0; }
     .ex-pedido-leyenda .ex-pedido-ayuda { cursor: help; color: var(--ui-text-muted, #6c757d); }
     .ex-pedido-acciones { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .45rem .6rem; }
     .ex-pedido-acciones .ex-ctl select { min-width: 12rem; }
@@ -500,13 +602,17 @@
     .ex-btn-aceptar-suc { border: 0; background: transparent; color: var(--ui-primary, #2d5b8f); padding: 0 .3rem; margin-left: .25rem; line-height: 1; display: none; }
     .ex-btn-aceptar-suc:hover { color: #198754; }
 
+    /* "A pedir" pegada a Stock y Estado: la celda no tiene ancho minimo (toma el de su contenido) y el contenido va alineado a la
+       izquierda, justo despues del Estado; antes la casilla quedaba contra el borde derecho de una celda ancha y habia que cruzar la
+       tabla con la vista para leer producto, stock y estado y despues tipear la cantidad. */
     .ex-pedir-cell { min-width: 11rem; }
-    .ex-ped-celda { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .2rem .4rem; }
+    .tabla-existencia-sucursales td.ex-pedir-cell { text-align: left; }
+    .ex-ped-celda { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: .2rem .4rem; }
     .existencia-sucursales-page input.ex-in-pedir { width: 6.2rem; text-align: right; font-variant-numeric: tabular-nums; padding: .15rem .4rem; height: auto; min-height: 1.7rem; font-size: .84rem; }
     .existencia-sucursales-page input.ex-in-pedir.ex-in-invalido { border-color: #dc3545; background-color: rgba(220, 53, 69, .08); }
     .existencia-sucursales-page input.ex-in-pedir.ex-in-cargada { border-color: var(--ui-primary, #2d5b8f); font-weight: 600; }
     .ex-ped-eq { font-size: .72rem; color: var(--ui-text-muted, #7a838d); white-space: nowrap; }
-    .ex-ped-hint { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .2rem; }
+    .ex-ped-hint { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: .2rem; }
     .ex-ped-hint:empty { display: none; }
     .ex-ped-hint .ex-pista, .ex-ped-hint .ex-chip-punto {
         border: 1px dashed var(--ui-text-muted, #7a838d); background: transparent; border-radius: .9rem; padding: 0 .5rem; font-size: .72rem;
@@ -519,10 +625,21 @@
     .ex-tp-eq { display: block; font-size: .72rem; color: var(--ui-text-muted, #7a838d); font-weight: 400; }
     .ex-precio-cell { color: var(--ui-text-soft, #5f6772); }
     .ex-precio-cell .ex-sinprecio { color: var(--ui-text-muted, #7a838d); font-size: .74rem; }
-    .existencia-compacto .ex-ped-celda { flex-wrap: nowrap; }
-    .existencia-compacto input.ex-in-pedir { min-height: 1.45rem; padding: .05rem .35rem; font-size: .78rem; }
+    /* Compacto: casilla angosta (entra "159,256"), todo en un renglon y las pistas en su version corta (sin los textos .ex-h-lbl).
+       El selector lleva las dos clases del contenedor para ganarle en especificidad a la regla base de arriba. */
+    .existencia-compacto .ex-ped-celda { flex-wrap: nowrap; gap: 0 .3rem; }
+    /* Ancho minimo = casilla + "≈ N un.": al tipear una cantidad la columna no se ensancha (no se corren las columnas de la derecha). */
+    .existencia-compacto .ex-pedir-cell { min-width: 9.2rem; }
+    .existencia-sucursales-page.existencia-compacto input.ex-in-pedir { width: 4.9rem; min-height: 1.45rem; padding: .05rem .35rem; font-size: calc(.78rem + 1pt); line-height: 1.2; }
+    .existencia-compacto .ex-ped-hint { flex-wrap: nowrap; }
+    .existencia-compacto .ex-ped-hint .ex-pista, .existencia-compacto .ex-ped-hint .ex-chip-punto { padding: 0 .4rem; font-size: calc(.7rem + 1pt); line-height: .945rem; }
+    .existencia-compacto .ex-h-lbl { display: none; }
     .existencia-compacto .ex-tp-eq { display: inline; margin-left: .3rem; }
+    /* La fila donde se esta tipeando se resalta de punta a punta: ayuda a seguir producto, stock y estado hasta la casilla. */
+    .existencia-sucursales-page .existencia-producto-row:focus-within > td { background-color: var(--ex-fila-activa, #e7eff9); }
+    html.dark-mode .existencia-sucursales-page { --ex-fila-activa: #2b394d; }
     .existencia-compacto .ex-pedido-barra { margin-top: .35rem; padding: .35rem .5rem; }
+    .existencia-compacto .ex-pedido-barra.ex-colapsada { padding-top: .25rem; padding-bottom: .25rem; }
 
     /* Vista preliminar del pedido */
     .ex-previa-tabla { font-size: .84rem; margin: 0; }
@@ -533,7 +650,9 @@
     .ex-previa-resumen { font-size: .84rem; }
     .ex-previa-resumen b { font-variant-numeric: tabular-nums; }
 
-    @@media (max-width: 767.98px) {
+    /* Reglas "de celular": solo en dispositivos tactiles angostos. Una ventana de escritorio angosta (la ventana independiente abre en
+       un tercio de la pantalla, ~640 px) conserva el diseno de escritorio: barra compacta y columnas Cod./Producto de ancho fijo. */
+    @@media (max-width: 767.98px) and (pointer: coarse) {
         .ex-ctl-pedido { width: 100%; }
         .ex-pedido-toggle, .ex-pedido-toggle-texto { width: 100%; justify-content: center; }
         .ex-pedido-acciones .ex-ctl, .ex-pedido-acciones .btn-group { width: 100%; }
@@ -554,6 +673,86 @@
         border-top: 1px dashed var(--ui-border, #dee2e6);
     }
     .ex-avanzados.d-none { display: none !important; }
+
+    /* ---------- Modo movimiento (panel de stock del destino de Movimientos/Editar) ---------- */
+    /* La columna "Sugerido a enviar" existe siempre en el HTML y solo se ve en este modo (como las columnas del pedido). */
+    .ex-col-sug { display: none; }
+    .ex-modo-mov th.ex-col-sug, .ex-modo-mov td.ex-col-sug { display: table-cell; }
+    /* Sin pedido, sin selector de sucursales (lo fija el movimiento), sin exportar/ventana ni alternar compacto: la pantalla es solo para mirar y elegir. */
+    .ex-modo-mov .ex-ctl-pedido, .ex-modo-mov .ex-ctl-borradores, .ex-modo-mov .ex-ctl-sucursales,
+    .ex-modo-mov .ex-ctl-acciones, .ex-modo-mov .ex-ctl-compacto, .ex-modo-mov .ex-ctl-movimiento { display: none !important; }
+    /* El panel es angosto (~la mitad de la pantalla): Cod. y Producto mas cortos que en la pantalla normal (15 y 30 caracteres). */
+    .ex-modo-mov .tabla-existencia-sucursales { --ex-cod-ch: 9ch; --ex-prod-ch: 22ch; }
+    .ex-mov-bloque {
+        display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .8rem; margin-top: .35rem; padding: .25rem .5rem;
+        border: 1px dashed var(--ui-primary, #2d5b8f); border-radius: .5rem; background: var(--ui-primary-soft, rgba(45, 91, 143, .07)); font-size: .78rem;
+    }
+    .ex-mov-colapsar {
+        flex: 0 0 auto; display: inline-flex; align-items: center; gap: .3rem; height: 1.4rem; padding: 0 .45rem; line-height: 1; border-radius: .35rem;
+        cursor: pointer; font-size: .72rem; font-weight: 600; white-space: nowrap;
+        border: 1px solid var(--ui-primary, #2d5b8f); background: transparent; color: var(--ui-primary, #2d5b8f);
+    }
+    .ex-mov-colapsar .fas { font-size: .65rem; }
+    .ex-mov-colapsar:hover { background: var(--ui-primary-soft, rgba(45, 91, 143, .12)); }
+    .ex-mov-bloque.ex-mov-colapsado { cursor: pointer; }
+    /* Fechas sin aplicar: la tira pasa a ambar (aun compacta, puede ocupar dos renglones) y los sugeridos se atenuan y no se pueden cargar. */
+    .ex-mov-aviso-pendiente { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .3rem .5rem; font-weight: 600; color: #8a5a00; }
+    .ex-mov-aviso-pendiente.d-none { display: none !important; }
+    .ex-mov-aplicar { padding: .05rem .5rem; font-size: .74rem; line-height: 1.3; white-space: nowrap; }
+    .ex-mov-bloque.ex-mov-pendiente { border-style: solid; border-color: #d39e00; background: #fff7e0; }
+    .ex-mov-bloque.ex-mov-colapsado.ex-mov-pendiente { flex-wrap: wrap; }
+    html.dark-mode .ex-mov-bloque.ex-mov-pendiente { background: #3a2f12; }
+    html.dark-mode .ex-mov-aviso-pendiente { color: #ffd77a; }
+    .ex-sug-pendiente .ex-sug-num, .ex-sug-pendiente .ex-sug-ok { opacity: .4; }
+    .ex-sug-pendiente .ex-sug-num { cursor: not-allowed; }
+    .ex-mov-resumen { display: none; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    /* Colapsado: una linea (boton + resumen + "recalculado"); el periodo y la explicacion quedan ocultos hasta abrirlo. */
+    .ex-mov-bloque.ex-mov-colapsado { flex-wrap: nowrap; gap: .4rem; padding: .15rem .45rem; }
+    .ex-mov-bloque.ex-mov-colapsado .ex-mov-resumen { display: inline; }
+    .ex-mov-bloque.ex-mov-colapsado .ex-mov-periodo,
+    .ex-mov-bloque.ex-mov-colapsado .ex-mov-leyenda > :not(.ex-mov-recalculado) { display: none; }
+    .ex-mov-bloque.ex-mov-colapsado .ex-mov-leyenda { flex: 0 1 auto; }
+    .ex-mov-bloque .ex-ctl-periodo { flex-direction: row; align-items: center; gap: .4rem; }
+    .ex-mov-bloque .ex-ctl-periodo .ex-lbl-fijo { margin: 0; white-space: nowrap; }
+    .ex-mov-leyenda { flex: 1 1 14rem; min-width: 0; color: var(--ui-text-soft, #5f6772); }
+    .ex-mov-recalculado { margin-left: .4rem; color: var(--ui-text-muted, #6c757d); white-space: nowrap; }
+    /* Fila elegible con doble click (carga el producto en el movimiento) y fila de un producto que ya va en el movimiento. */
+    .ex-modo-mov .existencia-producto-row { cursor: pointer; }
+    .ex-modo-mov .existencia-producto-row.ex-en-mov > td { background-color: var(--ex-fila-mov, #e7eff9); }
+    .ex-en-mov-tag { margin-left: .35rem; font-size: .8em; font-weight: 600; color: var(--ui-primary, #2d5b8f); white-space: nowrap; }
+    .ex-en-mov-tag.ex-revisar { color: #b7791f; }
+    html.dark-mode .ex-modo-mov { --ex-fila-mov: #2b394d; }
+    .ex-sug-celda { white-space: nowrap; }
+    .ex-sug-num { border: 1px dashed var(--ui-text-muted, #7a838d); border-radius: .9rem; background: transparent; padding: 0 .5rem; font: inherit; font-weight: 700; cursor: pointer; color: var(--ui-text, #212529); }
+    .ex-sug-num:hover { border-color: var(--ui-primary, #2d5b8f); color: var(--ui-primary, #2d5b8f); }
+    .ex-sug-ok { color: #198754; font-weight: 600; }
+    .ex-sug-cambio { box-shadow: inset 0 0 0 2px #f2c46d; }
+    html.dark-mode .ex-sug-ok { color: #6fd39a; }
+
+    /* ---------- Resumen de los filtros avanzados aplicados (con el panel "Filtros" cerrado) ---------- */
+    .ex-resumen-filtros {
+        display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .4rem; margin-top: .5rem; padding: .25rem .55rem;
+        border: 1px dashed var(--ui-primary, #2d5b8f); border-radius: .5rem; background: var(--ui-primary-soft, rgba(45, 91, 143, .07)); font-size: .8rem;
+    }
+    .ex-resumen-filtros.d-none { display: none !important; }
+    .ex-rf-etiqueta { color: var(--ui-text-muted, #6c757d); white-space: nowrap; }
+    .ex-rf-lista { display: contents; }
+    .ex-rf-chip {
+        display: inline-flex; align-items: center; max-width: 26rem; overflow: hidden;
+        border: 1px solid var(--ui-border-strong, #ced4da); border-radius: 1rem; background: var(--ui-surface, #fff);
+    }
+    .ex-rf-texto {
+        min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+        border: 0; background: transparent; font: inherit; color: inherit; padding: .05rem .3rem .05rem .6rem;
+    }
+    .ex-rf-texto:hover { color: var(--ui-primary, #2d5b8f); }
+    .ex-rf-quitar { border: 0; background: transparent; padding: 0 .5rem 0 .2rem; line-height: 1; font-size: 1rem; color: var(--ui-text-muted, #6c757d); cursor: pointer; }
+    .ex-rf-quitar:hover { color: #dc3545; }
+    .ex-rf-pendiente { color: #b7791f; white-space: nowrap; }
+    .ex-rf-pendiente.d-none { display: none !important; }
+    .ex-rf-limpiar { margin-left: auto; border: 0; background: transparent; padding: 0; font: inherit; color: var(--ui-primary, #2d5b8f); text-decoration: underline; cursor: pointer; }
+    html.dark-mode .ex-rf-pendiente { color: #f2c46d; }
+    .existencia-compacto .ex-resumen-filtros { margin-top: .3rem; padding: .12rem .45rem; font-size: .74rem; }
     .ex-ctl-ms { width: 13rem; }
     .ex-ms-menu { min-width: 16rem; }
     .ex-ms-menu .ex-ms-buscar { margin-bottom: .35rem; }
@@ -561,6 +760,9 @@
     .ex-periodo { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
     .ex-periodo input[type=date] { width: 9.5rem; }
     .ex-periodo-atajos { display: inline-flex; gap: .2rem; flex-wrap: wrap; }
+    .ex-periodo .ex-periodo-agregar { border-style: dashed; }
+    .ex-periodo-hasta { display: inline-flex; align-items: center; gap: .35rem; }
+    .ex-periodo-hasta.d-none { display: none !important; }
     .existencia-sucursales-page .ex-periodo-dias.active { background: var(--ui-primary, #2d5b8f) !important; color: #fff !important; border-color: var(--ui-primary, #2d5b8f) !important; }
     .ex-movimiento { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
     .ex-movimiento .custom-control { margin: 0; }
@@ -570,13 +772,22 @@
 
     /* ---------- Tabla ---------- */
     .ex-tabla-wrap .tabla-full { overflow: auto; }
-    .tabla-existencia-sucursales { width: max-content; min-width: 100%; font-size: .84rem; margin-bottom: 0; }
+    /* Anchos: Cod. y Producto son FIJOS (15 y 30 caracteres) y quedan pegados; Stock, Estado, A pedir y el resto toman el ancho de su
+       contenido. El ancho que sobra lo absorbe la columna de relleno (.ex-col-relleno, la ultima), asi nada se estira y todo queda
+       a la vista sin mover los ojos. Con "width: 100%" la tabla ocupa al menos el ancho disponible y crece (con scroll) si no entra. */
+    .tabla-existencia-sucursales { --ex-cod-ch: 15ch; --ex-prod-ch: 30ch; width: 100%; font-size: .84rem; margin-bottom: 0; }
     .tabla-existencia-sucursales th,
     .tabla-existencia-sucursales td { vertical-align: middle; padding: .42rem .58rem; line-height: 1.2; }
     .tabla-existencia-sucursales thead th {
         font-size: .72rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
         position: sticky; top: 0; z-index: 4; background: var(--ui-table-head, #eceff3);
     }
+    /* Encabezados en una sola linea. Lleva ".table" porque el CSS global del sitio (".table thead th { white-space: normal }") empata en
+       especificidad con la regla de arriba y le gana por orden de carga. */
+    .tabla-existencia-sucursales.table thead th { white-space: nowrap; }
+    /* La columna de relleno no tiene relleno interno (si no, el padding de las celdas de arriba le deja un minimo de ~10 px). */
+    .tabla-existencia-sucursales .ex-col-relleno,
+    .existencia-compacto .tabla-existencia-sucursales .ex-col-relleno { width: 100%; padding: 0; }
     .tabla-existencia-sucursales thead th.ex-sortable { cursor: pointer; user-select: none; }
     .tabla-existencia-sucursales thead th.ex-sortable:hover { color: var(--ui-primary, #2d5b8f); }
     .tabla-existencia-sucursales thead th.ex-orden-asc::after { content: " ▲"; font-size: .65rem; }
@@ -586,8 +797,11 @@
     /* Las dos primeras columnas (Cod. y Producto) quedan fijas a la izquierda al desplazar. */
     /* El ancho de "Cod." lo da el codigo mas largo (un codigo de barras entra en una linea): el JS lo mide y lo deja en --ex-cod-w
        para que "Producto" quede pegado justo a su derecha. */
-    .ex-col-cod, .ex-col-cod-cell { position: sticky; left: 0; z-index: 3; min-width: 3.4rem; white-space: nowrap; text-align: left; color: var(--ui-text-soft, #5f6772); }
-    .ex-col-prod, .ex-col-prod-cell { position: sticky; left: var(--ex-cod-w, 4.8rem); z-index: 3; min-width: 12rem; box-shadow: inset -1px 0 0 var(--ui-border-strong, #ced4da); }
+    .ex-col-cod, .ex-col-cod-cell { position: sticky; left: 0; z-index: 3; white-space: nowrap; text-align: left; color: var(--ui-text-soft, #5f6772); }
+    .ex-col-prod, .ex-col-prod-cell { position: sticky; left: var(--ex-cod-w, 7rem); z-index: 3; box-shadow: inset -1px 0 0 var(--ui-border-strong, #ced4da); }
+    /* El ancho fijo lo da el contenido interno (un bloque de 15 / 30 caracteres): el texto que no entra se corta con "..." y el nombre
+       completo queda en el tooltip. */
+    .ex-cod-txt { width: var(--ex-cod-ch); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ex-col-cod-cell, .ex-col-prod-cell { background-color: var(--ui-surface, #fff); }
     .tabla-existencia-sucursales thead .ex-col-cod,
     .tabla-existencia-sucursales thead .ex-col-prod { z-index: 6; background: var(--ui-table-head, #eceff3); }
@@ -597,9 +811,12 @@
     .tabla-existencia-sucursales td.ex-alt,
     .tabla-existencia-sucursales th.ex-alt { background-image: linear-gradient(rgba(128, 128, 128, .08), rgba(128, 128, 128, .08)); }
     .ex-grupo-total { font-weight: 600; }
+    /* Columna Stock en negrita (el "≈ N un." de al lado queda en peso normal). El Total ya es negrita. */
+    .tabla-existencia-sucursales td.ex-col-stock { font-weight: 700; }
+    .tabla-existencia-sucursales td.ex-col-stock .existencia-unidades { font-weight: 400; }
 
     .existencia-producto-row { cursor: pointer; }
-    .existencia-producto-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-word; font-weight: 600; max-width: 25ch; }
+    .existencia-producto-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-word; font-weight: 600; width: var(--ex-prod-ch); }
     .existencia-unidades { display: block; font-size: .72rem; color: #858796; }
     .existencia-producto-completo { font-size: .78rem; color: #6c757d; margin-bottom: .6rem; }
     .existencia-producto-completo strong { color: inherit; }
@@ -646,7 +863,10 @@
     html.dark-mode .ex-est-punto { color: #f2c46d; }
 
     /* ---------- Diseño compacto: barra de una linea, filas de un renglon ---------- */
-    .existencia-compacto .ex-lbl { display: none; }
+    /* "!important": los rotulos de relleno (&nbsp;) llevan "d-md-block" de Bootstrap (display: block !important a partir de 768 px) y sin esto
+       seguian ocupando ~17 px en compacto: los controles que los tienen (Ingresar pedido, Borradores, Buscar, Filtros, chips, Excel/PDF) quedaban
+       ~10 px mas abajo que los que no (Sucursales, Producto, Estado). */
+    .existencia-compacto .ex-lbl { display: none !important; }
     .existencia-compacto .ex-card > .card-body { padding: .3rem .5rem; }
     .existencia-compacto .ex-barra { align-items: center; gap: .3rem .4rem; }
     .existencia-compacto .ex-barra .form-control,
@@ -661,23 +881,34 @@
     .existencia-compacto .ex-ctl-chip, .existencia-compacto .ex-ctl { justify-content: center; }
     .existencia-compacto .ex-estado-linea { order: 4; padding: .15rem .6rem !important; font-size: .72rem; border-top: 1px solid var(--ui-border, #dee2e6); }
     .existencia-compacto .ex-avanzados { margin-top: .35rem; padding-top: .35rem; }
-    .existencia-compacto .tabla-existencia-sucursales { font-size: .78rem; }
+    /* Letra de la tabla compacta: +1 pt (era .78rem), SIN cambiar el alto de las filas. El interlineado pasa a una medida fija (.975rem =
+       .78rem x 1,25, lo de antes): la linea de texto mide lo mismo con letra mas grande y el alto lo siguen fijando el boton + y la casilla. */
+    .existencia-compacto .tabla-existencia-sucursales { font-size: calc(.78rem + 1pt); }
     .existencia-compacto .tabla-existencia-sucursales th,
-    .existencia-compacto .tabla-existencia-sucursales td { padding: .1rem .42rem; line-height: 1.25; }
+    .existencia-compacto .tabla-existencia-sucursales td { padding: .1rem .3rem; line-height: .975rem; }
+    /* Los textos chicos de la tabla (unidades, pistas, equivalentes) suben tambien 1 pt, cada uno con su interlineado de antes. */
+    .existencia-compacto .existencia-unidades,
+    .existencia-compacto .ex-ped-eq,
+    .existencia-compacto .ex-tp-eq,
+    .existencia-compacto .ex-ped-hint .ex-suficiente,
+    .existencia-compacto .ex-btn-pto { font-size: calc(.72rem + 1pt); }
+    .existencia-compacto .ex-precio-cell .ex-sinprecio { font-size: calc(.74rem + 1pt); }
     .existencia-compacto .tabla-existencia-sucursales thead th { font-size: .66rem; padding-top: .18rem; padding-bottom: .18rem; }
-    .existencia-compacto .existencia-producto-desc { display: block; white-space: nowrap; text-overflow: ellipsis; max-width: 24rem; font-weight: 500; }
+    .existencia-compacto .existencia-producto-desc { display: block; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; }
     .existencia-compacto .existencia-unidades { display: inline; margin-left: .3rem; }
-    .existencia-compacto .ex-col-prod, .existencia-compacto .ex-col-prod-cell { min-width: 14rem; max-width: 24rem; }
-    .existencia-compacto .ex-col-cod, .existencia-compacto .ex-col-cod-cell { min-width: 3rem; }
     .existencia-compacto .existencia-col-toggle-cell { padding: 0 .3rem; }
+    /* Ventana angosta (un tercio de la pantalla): se recortan los margenes laterales para que Cod. + Producto + Stock + Estado entren sin desplazar. */
+    .existencia-sucursales-page.existencia-compacto { padding-left: 0; padding-right: 0; }
+    .app-embed .container-fluid:has(> .existencia-sucursales-page.existencia-compacto) { padding-left: .35rem; padding-right: .35rem; }
 
-    @@media (max-width: 767.98px) {
+    @@media (max-width: 767.98px) and (pointer: coarse) {
         .ex-barra { align-items: stretch; }
         .ex-ctl-sucursales, .ex-ctl-texto, .ex-ctl-ms { width: 100%; flex: 1 1 100%; }
         /* En pantallas chicas solo "Cod." queda fijo: dos columnas fijas se comerian casi todo el ancho. */
-        .ex-col-prod, .ex-col-prod-cell { position: static; min-width: 9rem; }
-        .existencia-compacto .ex-col-prod, .existencia-compacto .ex-col-prod-cell { min-width: 9rem; max-width: 14rem; }
-        .existencia-producto-desc { max-width: 15ch; }
+        .ex-col-prod, .ex-col-prod-cell { position: static; }
+        /* En el celular el ancho fijo de 15/30 caracteres sobra: Cod. y Producto toman su contenido hasta un tope. */
+        .ex-cod-txt { width: auto; max-width: 11ch; }
+        .existencia-producto-desc, .existencia-compacto .existencia-producto-desc { width: auto; max-width: 15ch; }
     }
 </style>
 
@@ -697,7 +928,12 @@
             maxAutoActualizaciones: 6,
             jitterInicialMaxSegundos: @jitterInicialMaxSegundos,
             reintentoCargaSegundos: @reintentoCargaSegundos,
-            movimientoDisponible: @(movimientoDisponible ? "true" : "false")
+            movimientoDisponible: @(movimientoDisponible ? "true" : "false"),
+            // Modo movimiento (panel de stock del destino de Movimientos/Editar): ver existencia-movimiento.js.
+            modoMovimiento: @(modoMovimiento ? "true" : "false"),
+            canalMovimiento: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(canalMovimiento)),
+            idSucursalMovimiento: @(ViewBag.IdSucursalMovimiento is int idSucMov ? idSucMov : 0),
+            urlMovimiento: '@Url.Action("ExistenciaPorSucursales", "Stock")'
         };
 
         // "Ingresar pedido" (existencia-pedido.js): URLs, disponibilidad del motor y config del autoguardado en servidor (borradores).
@@ -744,4 +980,6 @@
     }
     <script src="@Url.Content("~/Scripts/app/pedido-acciones.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/existencia-pedido.js")" asp-append-version="true"></script>
+    @* Despues de existencia-pedido.js: usa window.ExistenciaPedidoCalculo (la misma regla de la sugerencia). Inerte fuera del modo movimiento. *@
+    <script src="@Url.Content("~/Scripts/app/existencia-movimiento.js")" asp-append-version="true"></script>
 }

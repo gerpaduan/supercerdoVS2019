@@ -638,6 +638,34 @@ body.app-shell .btn-outline-secondary:hover {
     color: var(--ui-text);
 }
 
+/* Mismo problema en los demas estados: al apretar el boton (:active), dejarlo encendido (.active, aria-pressed) o abrir su menu (.show) el
+   texto de Bootstrap pasa a blanco pero el fondo sigue transparente (la regla de arriba le gana) = boton invisible en modo claro. Ej.: "Stock
+   destino" encendido y el boton del teclado digital en Movimientos/Editar. Se les da fondo explicito, igual que al :hover de secondary. */
+body.app-shell .btn-outline-secondary:active,
+body.app-shell .btn-outline-secondary.active,
+body.app-shell .btn-outline-secondary.show {
+    background: var(--ui-surface-strong);
+    border-color: var(--ui-border-strong);
+    color: var(--ui-text);
+}
+
+body.app-shell .btn-outline-primary:hover,
+body.app-shell .btn-outline-primary:active,
+body.app-shell .btn-outline-primary.active,
+body.app-shell .btn-outline-primary.show {
+    background: var(--ui-primary);
+    border-color: var(--ui-primary);
+    color: #fff;
+}
+
+/* En modo oscuro el primario es un azul claro: el texto pasa a oscuro para conservar el contraste. */
+html.dark-mode body.app-shell .btn-outline-primary:hover,
+html.dark-mode body.app-shell .btn-outline-primary:active,
+html.dark-mode body.app-shell .btn-outline-primary.active,
+html.dark-mode body.app-shell .btn-outline-primary.show {
+    color: #0b1220;
+}
+
 /* Selector multiple de casillas dentro de un desplegable (.ui-multiselect): sucursales en Reportes y en Existencia
    por sucursales. El boton (.ui-multiselect-toggle) copia el aspecto de un .form-control -- mismo borde, fondo y
    radio, y la MISMA especificidad, asi que cada pantalla le da el mismo alto que a sus otros filtros (le llegan igual
@@ -732,6 +760,29 @@ body.app-shell .btn-outline-danger:hover {
 
 body.app-shell .text-danger {
     color: #9e4b35 !important;
+}
+
+/* Modo oscuro: el rojo ladrillo de arriba y el gris de Bootstrap de los botones outline (#6c757d) quedaban por debajo de 3:1 sobre la
+   superficie oscura (ej. el stock negativo y el boton "Filtros" en Existencia / panel "Stock destino" del movimiento, 2026-10-20). Mismo
+   rojo claro que ya usa Existencia para "Negativo" (#ff8a8a). */
+html.dark-mode body.app-shell .text-danger {
+    color: #ff8a8a !important;
+}
+
+html.dark-mode body.app-shell .btn-outline-secondary {
+    color: var(--ui-text-soft);
+    border-color: var(--ui-border-strong);
+}
+
+html.dark-mode body.app-shell .btn-outline-danger {
+    color: #ff8a8a;
+    border-color: rgba(255, 138, 138, 0.5);
+}
+
+html.dark-mode body.app-shell .btn-outline-danger:hover {
+    background: var(--ui-danger-soft);
+    border-color: #ff8a8a;
+    color: #ffb4b4;
 }
 
 body.app-shell .btn-light {

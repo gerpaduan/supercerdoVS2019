@@ -4,7 +4,7 @@
 //  - Orden por encabezado, filtros de la barra (texto, Estado) y filtros avanzados de seleccion multiple.
 //  - Diseno compacto recordado por navegador, columna Estado, edicion del punto de stock sin salir de la pantalla y exportacion.
 //  - "Ingresar pedido" (Scripts/app/existencia-pedido.js) se engancha por window.ExistenciaPantalla y por eventos jQuery sobre
-//    #existenciaPage: existencia:tablaCargada, existencia:filtrado, existencia:puntoCambiado y existencia:periodoCambiado.
+//    #existenciaPage: existencia:tablaCargada, existencia:filtrado, existencia:puntoCambiado y existencia:periodoCambiado ({ origen }).
 // Lee su configuracion de window.ExistenciaConfig (la deja la vista). La tabla la dibuja _TablaExistenciaPorSucursales.cshtml
 // y se reemplaza entera en cada Buscar: por eso los handlers de la tabla van delegados sobre #contenedorTablaExistenciaSucursales.
 // Reglas y porques: docs/DECISIONS.md 2026-10-19 y docs/11-manual-de-uso/pantallas/Stock.ExistenciaPorSucursales.md.
@@ -24,7 +24,11 @@
     var $panelAvanzados = $('#panelFiltrosAvanzadosExistencia');
     var $btnAvanzados = $('#btnFiltrosAvanzadosExistencia');
     var $badgeAvanzados = $('#badgeFiltrosExistencia');
+    var $resumenFiltros = $('#resumenFiltrosExistencia');   // linea con los filtros avanzados aplicados (panel cerrado)
     var $periodo = $('#filtroPeriodoDesdeExistencia');
+    var $periodoHasta = $('#filtroPeriodoHastaExistencia');   // fecha hasta del periodo (opcional): no confundir con $fechaHasta (stock a la fecha)
+    var $grupoHasta = $('#grupoPeriodoHastaExistencia');
+    var $btnAgregarHasta = $('#btnAgregarHastaExistencia');
     var $chkMovimiento = $('#chkConMovimientoExistencia');
     var $movMinimo = $('#filtroMovimientoMinimoExistencia');
     var $movMedida = $('#filtroMovimientoMedidaExistencia');
@@ -43,9 +47,14 @@
     var $chkTodasSucursales = $('#chkSucursalTodasExistencia');
     var $lblSucursales = $('#lblSucursalesExistencia');
 
-    var DIAS_PERIODO_DEFECTO = 30;
-    var CLAVE_DIAS_PERIODO = 'existenciaPeriodoDias';
-    var DIAS_PERIODO_ATAJOS = [7, 15, 30, 60, 90, 180, 365];
+    // Modo movimiento (panel de stock del destino): atajos cortos, por defecto 7 dias y su propia clave (no pisa la de la pantalla normal).
+    var MODO_MOV = !!cfg.modoMovimiento;
+    var DIAS_PERIODO_DEFECTO = MODO_MOV ? 7 : 30;
+    var CLAVE_DIAS_PERIODO = MODO_MOV ? 'existenciaPeriodoDiasMov' : 'existenciaPeriodoDias';
+    // Los dias de los atajos salen de los botones de la vista (una sola lista): ver iniciarPeriodo.
+    var DIAS_PERIODO_ATAJOS = [];
+    // La ventana independiente (compacta) abre con un tercio del ancho de la pantalla.
+    var ANCHO_VENTANA_FRACCION = 1 / 3;
 
     var consultaAplicada = null;       // foto de los filtros de la ultima busqueda (para el aviso "hay filtros sin aplicar")
     var ultimaConsulta = null;         // querystring de la ultima busqueda exitosa (lo usa la exportacion)
@@ -238,27 +247,76 @@
         $('.ex-periodo-dias').removeClass('active').filter('[data-dias="' + dias + '"]').addClass('active');
     }
 
-    function fechaDesdeDias(dias) {
-        var d = new Date();
+    // La fecha "hasta" esta agregada (el campo esta visible y habilitado).
+    function hayFechaHasta() {
+        return !$grupoHasta.hasClass('d-none');
+    }
+
+    // Fecha de referencia de los atajos "N d": la fecha hasta si hay una valida; si no, hoy. Con hasta, "30 d" = los 30 dias que
+    // terminan en esa fecha (desde = hasta - 30); sin hasta, desde = hoy - 30 (como siempre).
+    function fechaReferenciaPeriodo() {
+        var iso = hayFechaHasta() ? $periodoHasta.val() : '';
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+        var d = m ? new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10)) : new Date();
         d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function fechaDesdeDias(dias) {
+        var d = fechaReferenciaPeriodo();
         d.setDate(d.getDate() - dias);
         return isoFecha(d);
+    }
+
+    // Los limites de los dos campos se acotan entre si: el desde no pasa del hasta (ni de hoy) y el hasta no es anterior al desde ni futuro.
+    // Es ayuda para el selector de fechas; el servidor valida igual (Negocio.ExistenciaPeriodo).
+    function actualizarLimitesPeriodo() {
+        var hoy = isoFecha(new Date());
+        $periodo.attr('max', hayFechaHasta() && $periodoHasta.val() ? $periodoHasta.val() : hoy);
+        $periodoHasta.attr('max', hoy).attr('min', $periodo.val() || '');
+    }
+
+    // origen: 'atajo' (un click en 1 d, 7 d...) o 'fecha' (fecha escrita a mano, agregar / quitar la fecha hasta). El modo movimiento aplica
+    // los atajos al instante y deja las fechas a mano pendientes hasta que el usuario las confirma (existencia-movimiento.js).
+    function avisarPeriodoCambiado(origen) {
+        actualizarLimitesPeriodo();
+        actualizarPendiente();
+        $page.trigger('existencia:periodoCambiado', [{ origen: origen || 'fecha' }]);
     }
 
     function aplicarPeriodoDias(dias) {
         $periodo.val(fechaDesdeDias(dias));
         guardarLS(CLAVE_DIAS_PERIODO, String(dias));
         marcarAtajoPeriodo(dias);
-        actualizarPendiente();
-        $page.trigger('existencia:periodoCambiado');
+        avisarPeriodoCambiado('atajo');
+    }
+
+    // Agrega o quita la fecha hasta. Al agregarla arranca en hoy (equivale a no tenerla hasta que se cambie); al quitarla se vuelve a
+    // contar hasta ahora. Si hay un atajo activo, el desde se recalcula contra la nueva referencia para conservar los N dias.
+    function mostrarFechaHasta(mostrar) {
+        $grupoHasta.toggleClass('d-none', !mostrar);
+        $btnAgregarHasta.toggleClass('d-none', mostrar);
+        $periodoHasta.prop('disabled', !mostrar).val(mostrar ? isoFecha(new Date()) : '');
+
+        var dias = diasDelAtajoActivo();
+        if (dias !== null) $periodo.val(fechaDesdeDias(dias));
+        avisarPeriodoCambiado();
+        if (mostrar) $periodoHasta.trigger('focus');
+    }
+
+    function diasDelAtajoActivo() {
+        var $activo = $('.ex-periodo-dias.active');
+        return $activo.length ? parseInt($activo.attr('data-dias'), 10) : null;
     }
 
     function iniciarPeriodo() {
+        DIAS_PERIODO_ATAJOS = $('.ex-periodo-dias').map(function () { return parseInt($(this).attr('data-dias'), 10); }).get();
+        // Un valor recordado que ya no es un atajo (ej. 90 o 180, que se quitaron) vuelve al valor por defecto.
         var dias = parseInt(leerLS(CLAVE_DIAS_PERIODO, String(DIAS_PERIODO_DEFECTO)), 10);
         if (DIAS_PERIODO_ATAJOS.indexOf(dias) < 0) dias = DIAS_PERIODO_DEFECTO;
-        $periodo.attr('max', isoFecha(new Date()));
         $periodo.val(fechaDesdeDias(dias));
         marcarAtajoPeriodo(dias);
+        actualizarLimitesPeriodo();
     }
 
     function actualizarControlesMovimiento() {
@@ -280,16 +338,113 @@
             conMovimiento: conMovimiento,
             movimientoMinimo: conMovimiento ? $movMinimo.val() : '',
             movimientoMedida: conMovimiento ? $movMedida.val() : '',
-            periodoDesde: conMovimiento ? $periodo.val() : ''
+            periodoDesde: conMovimiento ? $periodo.val() : '',
+            periodoHasta: conMovimiento && hayFechaHasta() ? ($periodoHasta.val() || '') : ''
         };
     }
 
+    // Hay cambios en los controles que todavia no se aplicaron con Buscar (lo que se ve es la ultima busqueda).
+    function hayFiltrosSinAplicar() {
+        return !!consultaAplicada && JSON.stringify(consultaAplicada) !== JSON.stringify(obtenerEstadoConsulta());
+    }
+
     function actualizarPendiente() {
-        if (!consultaAplicada) {
-            $lblPendiente.addClass('d-none');
-            return;
+        var pendiente = hayFiltrosSinAplicar();
+        $lblPendiente.toggleClass('d-none', !pendiente);
+        // La misma marca en el resumen de filtros (solo se ve si el resumen esta a la vista).
+        $resumenFiltros.find('.ex-rf-pendiente').toggleClass('d-none', !pendiente);
+    }
+
+    // ---------- Resumen de los filtros avanzados aplicados ----------
+    // Una linea bajo la barra con los filtros avanzados (Tipos, Proveedores, Marcas y "Con movimiento", los que quedan escondidos tras el boton
+    // "Filtros") de la ULTIMA busqueda, para saber por que faltan productos cuando el panel esta cerrado. Sucursales, texto y Estado no se repiten:
+    // siempre estan a la vista en la barra. Cada chip se edita con un click (abre el panel en ese control) y se quita con la x (quita ese filtro y
+    // busca de nuevo); "Limpiar" quita todos. Los textos se arman con .text(): los nombres no se interpretan como HTML.
+
+    var RESUMEN_MAX_NOMBRES = 2;      // nombres que se listan en el chip; el resto va como "+N" (y completo en el tooltip)
+    var CLAVES_FILTROS_AVANZADOS = ['tipos', 'proveedores', 'marcas', 'movimiento'];
+
+    // Nombre visible de una opcion tildada (los tipos viajan por nombre; proveedores y marcas, por id).
+    function nombreDeOpcion(clave, valor) {
+        var $chk = $('.ex-ms[data-ms="' + clave + '"] .ex-ms-chk').filter(function () { return this.value === String(valor); }).first();
+        return $chk.length ? String($chk.attr('data-nombre') || valor) : String(valor);
+    }
+
+    function resumirNombres(nombres) {
+        var corto = nombres.slice(0, RESUMEN_MAX_NOMBRES).join(', ');
+        return nombres.length > RESUMEN_MAX_NOMBRES ? corto + ' +' + (nombres.length - RESUMEN_MAX_NOMBRES) : corto;
+    }
+
+    // 'aaaa-mm-dd' -> 'dd/mm' (o 'dd/mm/aaaa'); '' si no es una fecha valida.
+    function fechaDelPeriodo(iso, conAnio) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+        return m ? m[3] + '/' + m[2] + (conAnio ? '/' + m[1] : '') : '';
+    }
+
+    // Chips de una consulta (la foto de obtenerEstadoConsulta): [{ clave, texto, titulo }], en el orden del panel.
+    function armarResumenFiltros(c) {
+        var items = [];
+        [['tipos', 'Tipo', c.tipos], ['proveedores', 'Proveedor', c.idsProveedores], ['marcas', 'Marca', c.idsMarcas]].forEach(function (par) {
+            var valores = par[2] || [];
+            if (!valores.length) return;
+            var nombres = valores.map(function (v) { return nombreDeOpcion(par[0], v); });
+            items.push({ clave: par[0], texto: par[1] + ': ' + resumirNombres(nombres), titulo: par[1] + ': ' + nombres.join(', ') });
+        });
+
+        if (c.conMovimiento) {
+            var medida = c.movimientoMedida === 'dias' ? 'días con venta' : 'salidas';
+            var numero = Number(String(c.movimientoMinimo).replace(',', '.'));
+            var minimo = isFinite(numero) && numero > 0 ? numero.toLocaleString('es-AR', { maximumFractionDigits: 3 }) : String(c.movimientoMinimo || '');
+            var corto = c.periodoHasta ? fechaDelPeriodo(c.periodoDesde, false) + ' al ' + fechaDelPeriodo(c.periodoHasta, false) : 'desde ' + fechaDelPeriodo(c.periodoDesde, false);
+            var completo = c.periodoHasta ? fechaDelPeriodo(c.periodoDesde, true) + ' al ' + fechaDelPeriodo(c.periodoHasta, true) : 'desde ' + fechaDelPeriodo(c.periodoDesde, true) + ' hasta ahora';
+            items.push({
+                clave: 'movimiento',
+                texto: 'Movimiento ≥ ' + minimo + ' ' + medida + ' · ' + corto,
+                titulo: 'Con movimiento: al menos ' + minimo + ' ' + medida + ' ' + completo
+            });
         }
-        $lblPendiente.toggleClass('d-none', JSON.stringify(consultaAplicada) === JSON.stringify(obtenerEstadoConsulta()));
+        return items;
+    }
+
+    function renderResumenFiltros() {
+        var items = consultaAplicada ? armarResumenFiltros(consultaAplicada) : [];
+        // Con el panel abierto los controles ya se ven: el resumen sobra.
+        var visible = items.length > 0 && $panelAvanzados.hasClass('d-none');
+        var $lista = $resumenFiltros.find('.ex-rf-lista').empty();
+        $resumenFiltros.toggleClass('d-none', !visible);
+
+        if (visible) {
+            items.forEach(function (it) {
+                var $chip = $('<span class="ex-rf-chip"></span>').attr('data-clave', it.clave);
+                $('<button type="button" class="ex-rf-texto"></button>').text(it.texto).attr('title', it.titulo + ' · tocá para editarlo').appendTo($chip);
+                $('<button type="button" class="ex-rf-quitar"></button>').html('&times;').attr('aria-label', 'Quitar el filtro ' + it.texto)
+                    .attr('title', 'Quitar este filtro y volver a buscar').appendTo($chip);
+                $chip.appendTo($lista);
+            });
+            $resumenFiltros.find('.ex-rf-pendiente').toggleClass('d-none', !hayFiltrosSinAplicar());
+        }
+        // El resumen suma o resta una linea: la tabla recalcula su alto.
+        window.setTimeout(ajustarAltoTabla, 0);
+    }
+
+    // Deja un filtro avanzado "sin filtrar" en los controles (no busca: lo hace quien llama).
+    function limpiarFiltroAvanzado(clave) {
+        if (clave === 'movimiento') {
+            $chkMovimiento.prop('checked', false);
+            actualizarControlesMovimiento();
+        } else {
+            var $ms = $('.ex-ms[data-ms="' + clave + '"]');
+            $ms.find('.ex-ms-chk').prop('checked', false);
+            actualizarResumenMs($ms);
+        }
+        actualizarBadgeAvanzados();
+    }
+
+    // Abre el panel y deja el cursor en el control de ese filtro.
+    function abrirFiltroAvanzado(clave) {
+        alternarPanelAvanzados(true);
+        var $foco = clave === 'movimiento' ? $movMinimo : $('.ex-ms[data-ms="' + clave + '"] .ui-multiselect-toggle');
+        $foco.first().trigger('focus');
     }
 
     // ---------- Orden ----------
@@ -303,7 +458,7 @@
             : clave === 'et' ? 'data-e-t'
                 : clave === 'tp' ? 'data-tp'
                     : clave === 'imp' ? 'data-imp'
-                        : (clave.charAt(0) === 's' ? 'data-s-' : clave.charAt(0) === 'p' ? 'data-p-' : 'data-e-') + clave.slice(1);
+                        : (clave.charAt(0) === 's' ? 'data-s-' : clave.charAt(0) === 'p' ? 'data-p-' : clave.charAt(0) === 'g' ? 'data-g-' : 'data-e-') + clave.slice(1);
         return Number(fila.getAttribute(atributo)) || 0;
     }
 
@@ -312,7 +467,7 @@
     function direccionInicialOrden(clave) {
         if (clave === 'tp' || clave === 'imp') return -1;
         var c = clave.charAt(0);
-        return ((c === 's' || c === 'p') && clave !== 'nom') ? -1 : 1;
+        return ((c === 's' || c === 'p' || c === 'g') && clave !== 'nom') ? -1 : 1;
     }
 
     // Reordena las filas de producto llevandose juntas su fila de detalle. Estable: ante empate queda el orden del servidor (codigo).
@@ -388,7 +543,7 @@
     function aplicarEstadoStockExistencia() {
         var mostrar = $switchEstado.is(':checked');
         $contenedor.find('.ex-col-estado').toggleClass('d-none', !mostrar);
-        $contenedor.find('th.ex-grupo[data-id-sucursal]').attr('colspan', 1 + (mostrar ? 1 : 0) + (pedidoActivo ? 1 : 0));
+        $contenedor.find('th.ex-grupo[data-id-sucursal]').attr('colspan', 1 + (mostrar ? 1 : 0) + (pedidoActivo ? 1 : 0) + (MODO_MOV ? 1 : 0));
         $contenedor.find('th.ex-grupo-total').attr('colspan', mostrar ? 2 : 1);
     }
 
@@ -420,6 +575,77 @@
         // las dos filas con rowspan y su alto es el de las dos juntas).
         var alto1 = $tf.find('thead tr:first-child')[0].offsetHeight || 0;
         $tf.find('thead tr:nth-child(2) th').css('top', alto1 + 'px');
+    }
+
+    // ---------- Ventana independiente: proponer ensancharla ----------
+    // Al armar un pedido aparecen columnas (A pedir, Total pedido, precios) que en una ventana angosta quedan fuera de vista. Solo en la
+    // ventana independiente (abierta con window.open): ahi el script puede cambiarle el tamano; en una pestana normal no hace nada.
+
+    var ensancharRechazado = false;   // el usuario dijo "No, gracias": no se vuelve a preguntar mientras la pantalla siga abierta
+    var ensancharPreguntando = false;
+    var MARGEN_ENSANCHE_PX = 24;      // se suma a lo que falta (barras de desplazamiento y bordes de la ventana)
+    var ESPERA_MEDIR_VENTANA_MS = 400;// el navegador aplica el cambio de tamano un instante despues del resizeTo
+
+    // Pixeles de la tabla que quedan fuera de la ventana (lo que hay que desplazar hacia el costado para verla toda).
+    function pxFueraDeVista() {
+        var tf = $contenedor.find('.tabla-full')[0];
+        return tf ? Math.max(0, tf.scrollWidth - tf.clientWidth) : 0;
+    }
+
+    function anchoDisponiblePantalla() {
+        return (window.screen && (window.screen.availWidth || window.screen.width)) || 0;
+    }
+
+    // Ensancha la ventana lo que falta (tope: el ancho de la pantalla) y, si al ensancharla se saldria por la derecha, la corre a la izquierda.
+    function ensancharVentana(faltan) {
+        var disponible = anchoDisponiblePantalla();
+        var origen = (window.screen && window.screen.availLeft) || 0;
+        var anchoAntes = window.outerWidth;
+        var objetivo = anchoAntes + faltan + MARGEN_ENSANCHE_PX;
+        var nuevo = disponible > 0 ? Math.min(objetivo, disponible) : objetivo;
+        var izquierda = window.screenX || 0;
+        if (disponible > 0 && izquierda + nuevo > origen + disponible) izquierda = Math.max(origen, origen + disponible - nuevo);
+
+        try {
+            window.resizeTo(nuevo, window.outerHeight);
+            window.moveTo(izquierda, window.screenY || 0);
+        } catch (e) {
+            console.error('No se pudo ensanchar la ventana', e);
+        }
+
+        window.setTimeout(function () {
+            ajustarAltoTabla();
+            var quedan = pxFueraDeVista();
+            if (quedan <= 2) return;
+            if (window.outerWidth <= anchoAntes) {
+                avisar('No se pudo ensanchar sola', 'Ensanchá la ventana arrastrando el borde: faltan unos ' + Math.ceil(quedan) + ' px para ver todas las columnas.', 'info');
+            } else {
+                avisar('La ventana ya ocupa todo el ancho', 'Aun así no entran todas las columnas: el resto se ve desplazando la tabla hacia el costado (Cód. y Producto quedan fijos).', 'info');
+            }
+        }, ESPERA_MEDIR_VENTANA_MS);
+    }
+
+    // Si hay columnas fuera de vista, pregunta si ensanchar la ventana. Lo llama el pedido al encenderse (cuando ya cargaron las sugerencias, que
+    // son lo que define el ancho de "A pedir") y al encender "Ver precios".
+    function proponerEnsancharVentana() {
+        if (!cfg.popup || ensancharRechazado || ensancharPreguntando) return;
+        var faltan = pxFueraDeVista();
+        if (faltan <= 2) return;
+        if (!(window.Swal && typeof window.Swal.fire === 'function')) return;
+
+        ensancharPreguntando = true;
+        window.Swal.fire({
+            icon: 'question',
+            title: 'Ensanchar la ventana',
+            html: 'Hay columnas que quedan <b>fuera de la ventana</b> (faltan unos ' + Math.ceil(faltan) + ' px de ancho). ¿La ensancho para que se vean todas?',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, ensanchar',
+            cancelButtonText: 'No, gracias'
+        }).then(function (resultado) {
+            ensancharPreguntando = false;
+            if (resultado.isConfirmed) ensancharVentana(faltan);
+            else ensancharRechazado = true;
+        });
     }
 
     function vincularScrollDetalles() {
@@ -635,6 +861,7 @@
             consultaAplicada = obtenerEstadoConsulta();
             $lblUltima.text(new Date().toLocaleString('es-AR'));
             actualizarPendiente();
+            renderResumenFiltros();
             refrescarVistaTabla();
             if (esAutomatica && cuentaVuelta) {
                 autoActualizacionesEjecutadas += 1;
@@ -837,7 +1064,8 @@
     // ---------- Eventos ----------
 
     $('#btnAbrirVentanaExistencia').on('click', function () {
-        window.abrirVentanaIndependiente(cfg.ventanaUrl, cfg.ventanaNombre);
+        // La ventana nace compacta y de un tercio de la pantalla: con Cod. y Producto de ancho fijo, la tabla entra sin desplazar.
+        window.abrirVentanaIndependiente(cfg.ventanaUrl, cfg.ventanaNombre, { anchoFraccionPantalla: ANCHO_VENTANA_FRACCION });
     });
     $('#btnExcelExistencia').on('click', function () { exportar('xlsx'); });
     $('#btnPdfExistencia').on('click', function () { exportar('pdf'); });
@@ -845,10 +1073,21 @@
     function alternarPanelAvanzados(abrir) {
         $panelAvanzados.toggleClass('d-none', !abrir);
         $btnAvanzados.attr('aria-expanded', abrir ? 'true' : 'false');
-        window.setTimeout(ajustarAltoTabla, 0);
+        renderResumenFiltros(); // abierto el panel el resumen se oculta; cerrado vuelve a aparecer (y recalcula el alto de la tabla)
     }
 
     $btnAvanzados.on('click', function () { alternarPanelAvanzados($panelAvanzados.hasClass('d-none')); });
+
+    // Resumen de filtros: un click en el chip lo edita, la x lo quita y busca de nuevo, "Limpiar" quita todos los avanzados y busca.
+    $resumenFiltros.on('click', '.ex-rf-texto', function () { abrirFiltroAvanzado($(this).closest('.ex-rf-chip').attr('data-clave')); });
+    $resumenFiltros.on('click', '.ex-rf-quitar', function () {
+        limpiarFiltroAvanzado($(this).closest('.ex-rf-chip').attr('data-clave'));
+        $form.trigger('submit'); // busqueda manual
+    });
+    $resumenFiltros.on('click', '.ex-rf-limpiar', function () {
+        CLAVES_FILTROS_AVANZADOS.forEach(limpiarFiltroAvanzado);
+        $form.trigger('submit'); // busqueda manual
+    });
 
     // Sucursales: el menu no se cierra al tildar.
     $('#menuSucursalesExistencia').on('click', function (e) { e.stopPropagation(); });
@@ -887,8 +1126,15 @@
     $('.ex-periodo-dias').on('click', function () { aplicarPeriodoDias(parseInt($(this).attr('data-dias'), 10)); });
     $periodo.on('change input', function () {
         $('.ex-periodo-dias').removeClass('active'); // fecha tipeada a mano: ningun atajo coincide
-        actualizarPendiente();
-        $page.trigger('existencia:periodoCambiado');
+        avisarPeriodoCambiado();
+    });
+    $btnAgregarHasta.on('click', function () { mostrarFechaHasta(true); });
+    $('#btnQuitarHastaExistencia').on('click', function () { mostrarFechaHasta(false); });
+    // Al cambiar la fecha hasta con un atajo activo, el periodo conserva sus N dias (el desde se corre con el hasta).
+    $periodoHasta.on('change input', function () {
+        var dias = diasDelAtajoActivo();
+        if (dias !== null) $periodo.val(fechaDesdeDias(dias));
+        avisarPeriodoCambiado();
     });
     $chkMovimiento.on('change', function () {
         actualizarControlesMovimiento();
@@ -944,6 +1190,8 @@
     });
 
     $contenedor.on('dblclick', '.existencia-producto-row', function (e) {
+        // Modo movimiento: el doble click elige el producto para el movimiento (existencia-movimiento.js), no abre el detalle (queda el boton +).
+        if (MODO_MOV) return;
         // Los inputs "A pedir" y sus pistas no expanden el detalle (doble click = seleccionar el texto de la cantidad).
         if ($(e.target).closest('.btn-toggle-existencia, .ex-btn-pto, .ex-pedir-cell').length) return;
         toggleDetalleExistencia($(this).attr('data-detail-target'));
@@ -1028,14 +1276,21 @@
         restaurarConsulta: restaurarConsulta,
         irAlPeriodo: irAlPeriodo,
         ordenar: ordenarTabla,
+        // Si la tabla esta ordenada por `clave` (ej. 'imp', una columna que se acaba de ocultar) vuelve al orden por codigo.
+        restablecerOrdenSi: function (clave) {
+            if (orden.clave !== clave) return;
+            orden = { clave: 'cod', dir: 1 };
+            ordenarTabla();
+            actualizarPie();
+        },
         reaplicarFiltros: aplicarFiltrosVisuales,
         ajustarAlto: ajustarAltoTabla,
+        proponerEnsancharVentana: proponerEnsancharVentana,
         hayTabla: function () { return consultaAplicada !== null; },
         periodoDesde: function () { return $periodo.val() || ''; },
-        diasPeriodoActual: function () {
-            var activo = $('.ex-periodo-dias.active');
-            return activo.length ? parseInt(activo.attr('data-dias'), 10) : null;
-        },
+        // '' = sin fecha hasta (se cuenta hasta ahora).
+        periodoHasta: function () { return hayFechaHasta() ? ($periodoHasta.val() || '') : ''; },
+        diasPeriodoActual: diasDelAtajoActivo,
         idsSucursalesTildadas: obtenerIdsSucursalesTildadas,
         consultaAplicada: function () { return consultaAplicada ? JSON.parse(JSON.stringify(consultaAplicada)) : null; },
         avisar: avisar

@@ -137,6 +137,7 @@
 
     var DEBOUNCE_PERIODO_MS = 500;                // espera tras cambiar la fecha antes de pedir el consumo de nuevo
     var CLAVE_SEGUN = 'existenciaPedidoSegun';
+    var CLAVE_BARRA_COLAPSADA = 'existenciaPedidoBarraColapsada';   // '1' = la barra del pedido queda en una sola linea (se recuerda en este navegador)
     var MS_POR_DIA = 24 * 60 * 60 * 1000;
 
     var $page = $('#existenciaPage');
@@ -159,6 +160,10 @@
     var $btnBorradores = $('#btnVerBorradoresPedido');
     var $btnConfirmar = $('#btnConfirmarPedidoExistencia');
     var $labelToggle = $switch.next('label');
+    var $switchPrecios = $('#switchPreciosPedidoExistencia');   // "Ver precios": muestra las columnas $ ult. compra e Importe est.
+    var $btnColapsar = $('#btnColapsarBarraPedido');            // colapsa la barra del pedido a una linea (resumen + Guardar)
+    var $lblMini = $('#lblMiniPedidoExistencia');
+    var $btnGuardarMini = $('#btnGuardarMiniPedidoExistencia');
 
     // ---------- Estado ----------
 
@@ -167,6 +172,7 @@
     var catalogo = {};               // idCorte -> { codigo, nombre, promedio, pesable, stock:{suc}, punto:{suc} } de la ultima tabla (y de las anteriores)
     var consumo = {};                // idCorte -> { idSucursal -> { ventas, elaboracion } }
     var consumoDesde = null;         // 'aaaa-mm-dd' del consumo cargado
+    var consumoHasta = '';           // 'aaaa-mm-dd' del ultimo dia del periodo ('' = sin fecha hasta: se conto hasta ahora)
     var consumoEstado = 'sin';       // sin | cargando | ok | error | nodisponible
     var mensajeConsumo = '';
     var precios = {};                // idCorte -> { precio, proveedor, fecha }
@@ -177,6 +183,7 @@
     var indice = { tbody: null, filas: {}, celdas: {}, sucursales: [] };
     var secConsumo = 0, secPrecios = 0;
     var timerPeriodo = null;
+    var proponerAnchoPendiente = false;  // recien encendido: cuando carguen las sugerencias se ofrece ensanchar la ventana independiente si hace falta
     var restauracionPendiente = false;   // se cargo un borrador: al llegar la tabla se avisa que lineas no aparecen
     var proteccionActiva = false;
     var guardando = false;               // se esta guardando el pedido definitivo (frena el autoguardado del borrador)
@@ -219,13 +226,15 @@
         return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : '';
     }
 
-    function diasDesde(iso) {
+    // Dias entre una fecha 'aaaa-mm-dd' y otra (por defecto, hoy). null si la fecha no es valida.
+    function diasDesde(iso, hastaIso) {
         var p = String(iso || '').split('-');
         if (p.length !== 3) return null;
         var desde = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
-        var hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-        return Math.round((hoy.getTime() - desde.getTime()) / MS_POR_DIA);
+        var h = String(hastaIso || '').split('-');
+        var fin = h.length === 3 ? new Date(parseInt(h[0], 10), parseInt(h[1], 10) - 1, parseInt(h[2], 10)) : new Date();
+        fin.setHours(0, 0, 0, 0);
+        return Math.round((fin.getTime() - desde.getTime()) / MS_POR_DIA);
     }
 
     // Dias que tiene el precio de ultima compra (null si no se sabe de cuando es) y si superan el limite configurado: "precio viejo".
@@ -368,6 +377,7 @@
     // Texto del tooltip de una pista: el desglose del calculo, para que el usuario vea de donde sale el numero.
     function tituloPista(d, idSuc) {
         var desdeCorto = consumoDesde ? formatearFecha(consumoDesde).slice(0, 5) : '';
+        if (consumoHasta) desdeCorto += ' hasta ' + formatearFecha(consumoHasta).slice(0, 5);
         var stockReal = d.prod.stock[idSuc] || 0;
         var stockTxt = stockReal < 0 ? 'stock 0 (el stock es negativo: ' + fmtCant3.format(stockReal) + ')' : 'stock ' + fmtCant3.format(d.res.stock);
         var porConsumo = 'Vendido ' + fmtCant3.format(d.consumo.ventas) + ' + usado en elaborados ' + fmtCant3.format(d.consumo.elaboracion)
@@ -389,8 +399,10 @@
         var d = resultadoDeCelda(celda.idCorte, celda.idSuc);
         if (!d) return;
 
+        // Las pistas muestran el numero tal como se va a cargar en la casilla (sin ceros de relleno): ocupan menos y no hay dos formatos.
+        // Las partes de texto largas van en .ex-h-lbl: el diseno compacto las oculta (el tooltip y el Estado de la fila ya lo explican).
         if (d.res.sugerido > 0 && !iguales(qty, d.res.sugerido)) {
-            var pista = el('button', 'ex-pista', 'sug. ' + fmtCant3.format(d.res.sugerido));
+            var pista = el('button', 'ex-pista', 'sug. ' + fmtInput.format(d.res.sugerido));
             pista.type = 'button';
             pista.setAttribute('data-valor', String(d.res.sugerido));
             pista.title = tituloPista(d, celda.idSuc) + ' (click para cargarla)';
@@ -399,7 +411,9 @@
 
         // Con "Hasta el punto" la pista ya es esa cantidad: el chip sobraria.
         if (d.res.bajoPunto && segun !== 'punto' && !iguales(qty, d.res.faltaHastaPunto)) {
-            var chip = el('button', 'ex-chip-punto', '⚠ bajo pto · +' + fmtInput.format(d.res.faltaHastaPunto));
+            var chip = el('button', 'ex-chip-punto', '⚠ ');
+            chip.appendChild(el('span', 'ex-h-lbl', 'bajo pto · '));
+            chip.appendChild(document.createTextNode('+' + fmtInput.format(d.res.faltaHastaPunto)));
             chip.type = 'button';
             chip.setAttribute('data-valor', String(d.res.faltaHastaPunto));
             chip.title = 'Está bajo el punto de stock: punto ' + fmtCant3.format(d.res.punto) + ' − stock ' + fmtCant3.format(d.res.stock)
@@ -408,7 +422,8 @@
         }
 
         if (d.res.stockSuficiente && consumoEstado === 'ok') {
-            var ok = el('span', 'ex-suficiente', '✔ stock suficiente');
+            var ok = el('span', 'ex-suficiente', '✔');
+            ok.appendChild(el('span', 'ex-h-lbl', ' stock suficiente'));
             ok.title = 'El stock (' + fmtCant3.format(d.res.stock) + ') cubre el consumo del período (' + fmtCant3.format(d.res.consumo)
                 + ') y el punto de stock (' + fmtCant3.format(d.res.punto) + ')';
             hint.appendChild(ok);
@@ -511,6 +526,22 @@
             }
         }
         $lblResumenTotal.text(partes.join(' · '));
+
+        // Resumen de la barra colapsada: cantidad de productos y total (lo primero que dice el resumen de arriba) y su propio Guardar.
+        var textoMini = productos === 0 ? 'Pedido sin cantidades cargadas' : plural(productos, 'producto', 'productos') + (partes.length ? ' · ' + partes[0] : '');
+        $lblMini.text(textoMini).attr('title', textoMini);
+        $btnGuardarMini.prop('disabled', productos === 0);
+    }
+
+    // Colapsa o expande la barra del pedido. Colapsada queda UNA linea (boton + resumen + Guardar) y no ocupa el alto de la pantalla; la tabla
+    // recupera ese espacio. recordar = guardar la eleccion en este navegador (al abrir el pedido se aplica sin volver a guardar).
+    function aplicarColapso(colapsar, recordar) {
+        $barra.toggleClass('ex-colapsada', colapsar);
+        $btnColapsar.attr('aria-expanded', colapsar ? 'false' : 'true')
+            .attr('title', colapsar ? 'Mostrar las opciones del pedido' : 'Ocultar las opciones del pedido (queda una sola línea con el resumen y Guardar)')
+            .find('i').toggleClass('fa-chevron-up', !colapsar).toggleClass('fa-chevron-down', colapsar);
+        if (recordar) guardarLS(CLAVE_BARRA_COLAPSADA, colapsar ? '1' : '0');
+        pantalla.ajustarAlto();
     }
 
     // Resumen de las celdas que se ven: cuantas estan bajo el punto de stock (por sucursal) y cuantas tienen stock suficiente.
@@ -603,9 +634,14 @@
             agregarTextoPrecios();
             return;
         }
-        var dias = diasDesde(consumoDesde);
+        // Sin fecha hasta: "desde 20/09/2026 (30 días)" = hasta hoy. Con fecha hasta: "desde 01/09/2026 hasta 30/09/2026 (29 días)".
+        var dias = diasDesde(consumoDesde, consumoHasta);
         $leyenda.append(document.createTextNode('Sugerencia = ventas + uso en elaborados desde '));
         $leyenda.append(el('b', null, formatearFecha(consumoDesde)));
+        if (consumoHasta) {
+            $leyenda.append(document.createTextNode(' hasta '));
+            $leyenda.append(el('b', null, formatearFecha(consumoHasta)));
+        }
         $leyenda.append(document.createTextNode((dias !== null ? ' (' + plural(dias, 'día', 'días') + ')' : '') + ', menos el stock actual'));
         agregarTextoPrecios();
     }
@@ -620,12 +656,17 @@
             mensajeConsumo = 'elegí la fecha de «Período desde»';
             renderLeyenda();
             renderTodo();
+            proponerAnchoSiCorresponde();
             return;
         }
 
         consumoEstado = 'cargando';
         renderLeyenda();
-        $.ajax({ url: cfg.consumoUrl, type: 'GET', data: { desde: desde } }).done(function (resp) {
+        // Sin fecha hasta no se manda el parametro: el servidor cuenta hasta ahora.
+        var datos = { desde: desde };
+        var hasta = pantalla.periodoHasta();
+        if (hasta) datos.hasta = hasta;
+        $.ajax({ url: cfg.consumoUrl, type: 'GET', data: datos }).done(function (resp) {
             if (seq !== secConsumo) return; // llego una respuesta vieja (se cambio la fecha mientras tanto)
             if (resp && resp.ok) {
                 consumo = {};
@@ -633,6 +674,7 @@
                     (consumo[it.idCorte] || (consumo[it.idCorte] = {}))[it.idSucursal] = { ventas: it.ventas || 0, elaboracion: it.elaboracion || 0 };
                 });
                 consumoDesde = resp.desde || desde;
+                consumoHasta = resp.hasta || '';
                 consumoEstado = 'ok';
                 mensajeConsumo = '';
             } else {
@@ -649,7 +691,16 @@
             if (seq !== secConsumo) return;
             renderLeyenda();
             renderTodo();
+            proponerAnchoSiCorresponde();
         });
+    }
+
+    // Una sola vez por encendido, ya con las sugerencias dibujadas (definen el ancho de "A pedir"): en la ventana independiente, si hay
+    // columnas fuera de vista, se ofrece ensancharla (ExistenciaPantalla.proponerEnsancharVentana decide si hace falta).
+    function proponerAnchoSiCorresponde() {
+        if (!proponerAnchoPendiente) return;
+        proponerAnchoPendiente = false;
+        window.setTimeout(pantalla.proponerEnsancharVentana, 0);
     }
 
     // Precio de la ultima compra de cada producto: se pide una vez al encender el pedido (no carga la consulta a quien solo mira stock).
@@ -699,6 +750,8 @@
         }
         activo = true;
         $barra.removeClass('d-none');
+        aplicarColapso(leerLS(CLAVE_BARRA_COLAPSADA, '0') === '1', false); // como la dejo la ultima vez
+        proponerAnchoPendiente = true;
         pantalla.establecerPedidoActivo(true); // muestra las columnas, pausa la autoactualizacion y ajusta el alto de la tabla
         asegurarIndice();
         renderTodo();
@@ -891,8 +944,12 @@
         [['Cód.', ''], ['Producto', '']].forEach(function (t) { trh.appendChild(el('th', null, t[0])); });
         sucs.forEach(function (s) { trh.appendChild(el('th', 'text-right', nombreSucursal(s))); });
         if (sucs.length > 1) trh.appendChild(el('th', 'text-right', 'Total pedido'));
-        trh.appendChild(el('th', 'text-right', '$ últ. compra'));
-        trh.appendChild(el('th', 'text-right', 'Importe est.'));
+        // Precio e importe solo si el usuario encendio "Ver precios" (por defecto la vista preliminar no los muestra).
+        var verPrecios = $switchPrecios.is(':checked');
+        if (verPrecios) {
+            trh.appendChild(el('th', 'text-right', '$ últ. compra'));
+            trh.appendChild(el('th', 'text-right', 'Importe est.'));
+        }
         thead.appendChild(trh);
         tabla.appendChild(thead);
 
@@ -921,25 +978,28 @@
                 if (eq !== null) tdTotal.appendChild(el('div', 'small text-muted font-weight-normal', '≈ ' + fmtUn.format(eq) + ' un.'));
                 tr.appendChild(tdTotal);
             }
-            var tdPrecio = el('td', 'text-right text-nowrap', it.precio ? fmtPlata.format(it.precio.precio) : '');
-            if (it.precio) {
-                // De quien y de cuando es el precio, a la vista (no solo en el tooltip); en naranja con los dias si es viejo.
-                tdPrecio.title = textoOrigenPrecio(it.precio);
-                var viejo = precioEsViejo(it.precio);
-                var origen = (it.precio.proveedor ? it.precio.proveedor + ' · ' : '') + formatearFecha(it.precio.fecha);
-                if (viejo) origen = '⚠ ' + origen + ' · hace ' + plural(diasDelPrecio(it.precio), 'día', 'días');
-                if (origen) tdPrecio.appendChild(el('div', 'small ' + (viejo ? 'text-warning' : 'text-muted'), origen));
-                if (viejo) { conPrecioViejo++; tdPrecio.title += ' · el precio puede estar desactualizado'; }
-            } else {
-                var sinPrecioSpan = el('span', 'text-muted small', preciosEstado === 'ok' ? 'sin precio' : '—');
-                if (preciosEstado === 'ok') sinPrecioSpan.title = textoSinPrecio(it.idCorte);
-                tdPrecio.appendChild(sinPrecioSpan);
-            }
-            tr.appendChild(tdPrecio);
-
-            var tdImporte = el('td', 'text-right text-nowrap', it.importe === null ? '' : fmtPlata.format(it.importe));
-            tr.appendChild(tdImporte);
+            // Los totales del pie se calculan siempre (con o sin las columnas a la vista).
+            var viejo = it.precio ? precioEsViejo(it.precio) : false;
+            if (viejo) conPrecioViejo++;
             if (it.importe === null) sinPrecio++; else centavos += Math.round(it.importe * 100);
+
+            if (verPrecios) {
+                var tdPrecio = el('td', 'text-right text-nowrap', it.precio ? fmtPlata.format(it.precio.precio) : '');
+                if (it.precio) {
+                    // De quien y de cuando es el precio, a la vista (no solo en el tooltip); en naranja con los dias si es viejo.
+                    tdPrecio.title = textoOrigenPrecio(it.precio);
+                    var origen = (it.precio.proveedor ? it.precio.proveedor + ' · ' : '') + formatearFecha(it.precio.fecha);
+                    if (viejo) origen = '⚠ ' + origen + ' · hace ' + plural(diasDelPrecio(it.precio), 'día', 'días');
+                    if (origen) tdPrecio.appendChild(el('div', 'small ' + (viejo ? 'text-warning' : 'text-muted'), origen));
+                    if (viejo) tdPrecio.title += ' · el precio puede estar desactualizado';
+                } else {
+                    var sinPrecioSpan = el('span', 'text-muted small', preciosEstado === 'ok' ? 'sin precio' : '—');
+                    if (preciosEstado === 'ok') sinPrecioSpan.title = textoSinPrecio(it.idCorte);
+                    tdPrecio.appendChild(sinPrecioSpan);
+                }
+                tr.appendChild(tdPrecio);
+                tr.appendChild(el('td', 'text-right text-nowrap', it.importe === null ? '' : fmtPlata.format(it.importe)));
+            }
             tbody.appendChild(tr);
         });
         tabla.appendChild(tbody);
@@ -948,7 +1008,8 @@
         envoltorio.appendChild(tabla);
         $cuerpoPrevia.empty().append(envoltorio);
         // De donde sale el importe (frase unica de Negocio.PedidoTextos) y, si hay, la leyenda de la marca de precio viejo.
-        if (preciosEstado === 'ok') {
+        // Solo con las columnas de precio a la vista: la aclaracion habla de ellas.
+        if (verPrecios && preciosEstado === 'ok') {
             $cuerpoPrevia.append(el('div', 'small text-muted mt-2', TXT_ACLARACION
                 + (conPrecioViejo > 0 ? ' ' + (cfgPrecios.avisoPrecioViejo || ('Los precios marcados son de hace más de ' + plural(DIAS_PRECIO_VIEJO, 'día', 'días') + '.')) : '')));
         }
@@ -1203,6 +1264,17 @@
     $('#lnkCambiarPeriodoPedido').on('click', function (e) { e.preventDefault(); pantalla.irAlPeriodo(); });
     $btnTodas.on('click', function () { aceptarSugerencias(null, false); });
     $btnPunto.on('click', function () { aceptarSugerencias(null, true); });
+    // "Ver precios": muestra/oculta las columnas $ ult. compra e Importe est. de la tabla (la clase la usa el CSS de la vista). Al ocultarlas, si la
+    // tabla estaba ordenada por Importe vuelve al orden por codigo (no quedaria ninguna columna que explique el orden). No se recuerda.
+    $switchPrecios.on('change', function () {
+        $page.toggleClass('existencia-precios-on', this.checked);
+        if (!this.checked) pantalla.restablecerOrdenSi('imp');
+        pantalla.ajustarAlto();
+        // Dos columnas mas: en la ventana independiente puede que ya no entren todas.
+        if (this.checked) window.setTimeout(pantalla.proponerEnsancharVentana, 0);
+    });
+    $btnColapsar.on('click', function () { aplicarColapso(!$barra.hasClass('ex-colapsada'), true); });
+    $btnGuardarMini.on('click', abrirVistaPrevia);
     $btnLimpiar.on('click', limpiarPedido);
     $btnGuardar.on('click', abrirVistaPrevia);
     $btnConfirmar.on('click', confirmarGuardado);
