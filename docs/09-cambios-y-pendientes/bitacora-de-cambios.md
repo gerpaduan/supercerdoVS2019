@@ -1,6 +1,12 @@
 # Bitacora de cambios
 
-## 2026-10-20 (la mas reciente) - Autorizaciones con clave (POS, Cierre de Caja, Ver fórmula): 5 intentos y aviso «Te quedan N intentos» desde el 3.er error
+## 2026-10-21 (la mas reciente) - Inputs numericos: las flechas del teclado (arriba/abajo) ya no suben ni bajan el valor
+
+- **Pedido** (captura de Movimientos, «Agregar producto»): en la carga de producto y cantidades el numero solo se escribe.
+- **Cambio**: `WebCore/wwwroot/Scripts/app/sin-rueda-numerica.js` cancela el `keydown` de ArrowUp/ArrowDown en todo `input[type=number]` (global, los 3 layouts ya lo cargan; no corta la propagacion, asi que el autocompletar sigue recibiendo las flechas). Las flechitas visuales y la ruedita ya estaban ocultas/bloqueadas desde 2026-10-05. Detalle y alcance: `docs/DECISIONS.md` (2026-10-21).
+- **Verificado**: en el navegador con los archivos reales: las flechas dejan el valor igual (sin el script, 5 → 8) y tipear funciona. **Sin verificar**: en las pantallas con sesion iniciada. Manual de uso: sin cambios (no hay pantalla ni configuracion afectada que lo documente).
+
+## 2026-10-20 - Autorizaciones con clave (POS, Cierre de Caja, Ver fórmula): 5 intentos y aviso «Te quedan N intentos» desde el 3.er error
 
 - **Pedido**: el POS se bloqueaba a los 3 intentos fallidos por 5 minutos; quiere 5 y que, desde el 3.º, se informe cuántos quedan antes del bloqueo. Además: alinear «Ver fórmula» y Cierre de Caja, y saber si el bloqueo es del usuario o del dispositivo y si los dispositivos seguros lo evitan.
 - **Cambio**: los tres limitadores de clave por sesión (operador de POS/módulo y demás autorizaciones, Cierre de Caja, Ver fórmula) pasan de 3 a **5 intentos** (ventana y bloqueo siguen en 5 min). Desde el 3.er error el mensaje agrega «Te quedan N intentos antes del bloqueo» y el 5.º informa el bloqueo (cuenta regresiva) en ese mismo intento, en vez de en el siguiente. No bloquea al usuario ni al dispositivo: cuenta por sesión del navegador, compartida por los vendedores de una PC de producción. Sin excepción para dispositivos seguros (decisión en `docs/DECISIONS.md`). Sin migraciones ni cambios de JS.
