@@ -24,7 +24,15 @@ namespace NegocioTests.Fakes
             return oEgresoCaja;
         }
 
-        public DataTable findCierreCaja(CierreCaja oCierreParam, CierreCaja.tipoBusqueda tipoBusquedaParam, string texto, DateTime? fechaDesde) => throw new NotImplementedException();
+        // Busqueda de cajas (2026-10-20, tests de CajaAbiertaDelVendedor): devuelve CajasEncontradas (vacia si no se
+        // configuro) y anota cada busqueda para verificar con que sucursal y usuario se consulto.
+        public DataTable CajasEncontradas { get; set; }
+        public List<(CierreCaja Parametro, CierreCaja.tipoBusqueda Tipo)> BusquedasCaja { get; } = new List<(CierreCaja, CierreCaja.tipoBusqueda)>();
+        public DataTable findCierreCaja(CierreCaja oCierreParam, CierreCaja.tipoBusqueda tipoBusquedaParam, string texto, DateTime? fechaDesde)
+        {
+            BusquedasCaja.Add((oCierreParam, tipoBusquedaParam));
+            return CajasEncontradas ?? new DataTable();
+        }
         public void addOrEditCierreCaja(CierreCaja oCierreCajaE) => throw new NotImplementedException();
         public DataTable findCierreCajaMultiples(List<CierreCaja> listaCierreCaja) => throw new NotImplementedException();
         public bool SoportaConteoCajero => true;

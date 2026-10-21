@@ -13,6 +13,14 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-10-20 - POS con la cuenta de produccion: F6 > Mis ventas dice "No hay una caja abierta para consultar ventas." / el POS da error 500 con un operador
+
+- **Sintoma**: con la cuenta compartida Produccion y un empleado autorizado como operador, "Mis ventas" no lista sus ventas y muestra ese aviso; o, al autorizar a ciertos empleados, el POS cae con error 500 (`NullReferenceException`).
+- **Causa**: "Mis ventas" usaba el `idCierre` calculado al cargar el POS (0 o viejo) y, con 0, la caja de la cuenta compartida, que nunca tiene; y la caja del operador se buscaba con **su** sucursal en vez de la de la sesion (operador sin sucursal → 500; de otra sucursal → nunca aparece su caja).
+- **Resolucion** (2026-10-20, ver `docs/DECISIONS.md`): `Negocio.CierreCaja.CajaAbiertaDelVendedor` + `VentasController.MisVentas` con `posInstanceId`. Si el aviso sigue apareciendo: confirmar que el operador tenga una caja **abierta** en la sucursal de la cuenta de produccion (`cierrecaja` con `usuarioinicio` = id del operador, `usuariocierre = '0'`); sin caja abierta el aviso es correcto.
+
+---
+
 ## 2026-10-13 - San Lorenzo: guardar un ingreso de stock dice "No se pudo resolver la persona para este movimiento"
 
 - **Sintoma**: al guardar un movimiento de stock nuevo (ej. ingreso) en San Lorenzo, el formulario vuelve con ese error.

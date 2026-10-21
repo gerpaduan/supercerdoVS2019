@@ -2139,9 +2139,12 @@ else
             // window.CajasAbiertas, en Cajas/CajasAbiertas.cshtml) -- el boton no hacia nada.
             // Reusa el mismo modal/contenedor que Egresos (cargarEnModal), evita duplicar markup.
             window.POSVentas = {
+            // posInstanceId (2026-10-20, ver docs/DECISIONS.md "Mis ventas desde el POS con la cuenta de produccion"):
+            // MisVentas resuelve en el servidor la caja abierta actual del vendedor de esta pestaña (el operador, con
+            // la cuenta compartida de produccion); ya no usa el idCierre resuelto al cargar la pagina.
                 abrirMis: function () {
                     window.POSEgresos.cargarEnModal(
-                        '@Url.Action("MisVentas", "Ventas", new { desdePos = true, idCierre = idCierreActividadPOS })',
+                        '@Url.Action("MisVentas", "Ventas", new { desdePos = true, posInstanceId })',
                         "Mis ventas",
                         false);
                 },

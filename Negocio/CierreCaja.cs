@@ -68,6 +68,30 @@ namespace Negocio
             return cierreCaja;
         }
 
+        // Caja abierta del vendedor de un POS (2026-10-20, ver docs/DECISIONS.md "Caja del vendedor con la cuenta de
+        // produccion"). Se busca a nombre del VENDEDOR y en la sucursal de la SESION (idSucursalSesion): la misma con la
+        // que se abre la caja (CajasController.AbrirCaja) y se registra la venta (VentasController.FinalizarVenta). Con la
+        // cuenta compartida de produccion el vendedor es el operador autorizado, cuya sucursal propia puede ser otra o no
+        // existir: buscar con esa la caja no aparecia nunca, o tiraba NullReferenceException. Para un usuario normal el
+        // vendedor es el mismo usuario de la sesion, asi que el resultado no cambia.
+        // Devuelve null si no hay vendedor, si la sesion no tiene sucursal o si su ultima caja en esa sucursal ya cerro.
+        public Entidades.CierreCaja CajaAbiertaDelVendedor(int idSucursalSesion, Entidades.Usuario vendedor)
+        {
+            if (vendedor == null || vendedor.Id <= 0 || idSucursalSesion <= 0)
+                return null;
+
+            // FindLast solo usa el id de la sucursal y el del usuario: no hace falta cargar la sucursal completa.
+            var busqueda = new Entidades.CierreCaja
+            {
+                Sucursal = new Entidades.Sucursal { IdSucursal = idSucursalSesion },
+                UsuarioInicio = vendedor
+            };
+
+            Entidades.CierreCaja cierre = findByIdOrLast(busqueda, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            bool abierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+            return abierta ? cierre : null;
+        }
+
         private List<Entidades.CierreCaja> convertDatatableToList(DataTable dtCierreCaja)
         {
             List<Entidades.CierreCaja> listCierreCaja = new List<Entidades.CierreCaja>();

@@ -54,7 +54,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-16 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-13 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
-| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-10-19 |
+| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-10-20 |
 | pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-10-13 |
 
 ## Manual del administrador

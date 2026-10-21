@@ -5,10 +5,10 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-10-19
+revisada: 2026-10-20
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6).** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -56,3 +56,9 @@ El ticket **no fiscal** (el que dice **X** / «No valido como Factura») imprime
 - Solo el ticket del post-venta ofrece el saldo. La **reimpresión desde el historial**, el **PDF** y el **email** no lo incluyen.
 - El ticket facturado (con CAE) también lo admite: el saldo va después del total fiscal y antes de los datos fiscales.
 - PENDIENTE: el resto de la pantalla (carrito, forma de pago, caja, borradores) no se documentó en esta revisión.
+## Mis ventas (F6)
+**F6** abre **Mis actividades**; ahí el botón **Mis ventas** lista las ventas del vendedor **desde que abrió su caja** (la caja abierta en este momento), agrupadas por día, con buscador por cliente y filtro por forma de pago. Tocar una venta abre su detalle.
+- Con la cuenta compartida de **producción** son las ventas del **empleado que se autorizó** en esa pestaña («Autorizate para operar» o «Cambiar operario»), no las de la cuenta compartida. Si cambiás de operario, Mis ventas muestra las del nuevo.
+- **«La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.»**: con la cuenta de producción, la autorización del empleado se perdió (por ejemplo, por mucho tiempo sin usar el POS). Recargá la página y volvé a autorizarte.
+- **«No hay una caja abierta para consultar ventas.»**: el vendedor no tiene una caja abierta ahora (por ejemplo, entró con «venta rápida sin apertura de caja» o un encargado ya le cerró la caja). Es correcto: Mis ventas solo muestra la caja abierta. Las ventas anteriores se ven en el listado de **Ventas**.
+

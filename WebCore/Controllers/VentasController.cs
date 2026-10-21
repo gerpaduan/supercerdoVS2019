@@ -163,18 +163,14 @@ namespace WebCore.Controllers
         // 293-445, adaptado a IUsuarioSesionService/ISession en vez de Session["Usuario"]/
         // HttpSessionStateBase. =====
 
-        // "La ultima venta del cierre del vendedor" resuelve por el CierreCaja mas reciente de esa
-        // sucursal+usuario (findByIdOrLast/FindLast) que todavia no tiene UsuarioCierre asignado.
+        // "La ultima venta del cierre del vendedor" resuelve por el CierreCaja mas reciente de ese
+        // usuario que todavia no tiene UsuarioCierre asignado. La sucursal es la de la SESION, no la propia
+        // del vendedor (2026-10-20, ver Negocio.CierreCaja.CajaAbiertaDelVendedor): con la cuenta de
+        // produccion "user" es el operador, y la caja se abre y se vende con la sucursal de la cuenta compartida.
         private Entidades.CierreCaja ObtenerCierreCajaActual(Entidades.Usuario user)
         {
-            if (user == null || user.IdSucursal == 0) return null;
-            if (user.Sucursal == null) user.Sucursal = _oSucursalN.findById(user.IdSucursal);
-            if (user.Sucursal == null) return null;
-
-            var cierre = new Entidades.CierreCaja { Sucursal = user.Sucursal, UsuarioInicio = user };
-            cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-            bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
-            return cajaAbierta ? cierre : null;
+            if (user == null || _usuarioActual == null) return null;
+            return _oCierreN.CajaAbiertaDelVendedor(_usuarioActual.IdSucursal, user);
         }
 
         // Pedido explicito del usuario (2026-09-07, ver docs/DECISIONS.md "Editar fecha de venta en
@@ -767,9 +763,9 @@ namespace WebCore.Controllers
             bool cajaAbierta = true;
             if (validarCaja)
             {
-                var cierre = new Entidades.CierreCaja { Sucursal = vendedor.Sucursal, UsuarioInicio = vendedor };
-                cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-                bool cajaReal = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+                // Misma busqueda que POS() (sucursal de la sesion, ver ObtenerCierreCajaActual): con la sucursal propia
+                // del operador, uno sin sucursal tiraba NullReferenceException al desbloquear.
+                bool cajaReal = ObtenerCierreCajaActual(vendedor) != null;
                 // Mismo criterio que POS(): sin caja real solo sigue quien confirmo operar sin caja (bypass).
                 bool bypassActivo = PuedeOperarSinCajaYEditarFecha(vendedor) && TieneBypassCajaActivo(vendedor.Id);
                 cajaAbierta = cajaReal || bypassActivo;
@@ -1278,11 +1274,24 @@ namespace WebCore.Controllers
             return model;
         }
 
-        public IActionResult MisVentas(bool desdePos = false, int idCierre = 0)
+        // desdePos=true (F6 > Mis ventas del POS): las ventas de la caja abierta ACTUAL del vendedor de esta pestaña,
+        // resuelta aca con posInstanceId (ver ObtenerCierreMisVentas). idCierre>0 sin desdePos: la caja que eligio el
+        // encargado en Cajas Abiertas.
+        public IActionResult MisVentas(bool desdePos = false, int idCierre = 0, string posInstanceId = "")
         {
             var user = _usuarioActual;
 
-            var cierre = ObtenerCierreMisVentas(user, desdePos, idCierre);
+            // Cuenta de produccion sin operador en Session (vencio): ResolverOperadorPOS caeria a la cuenta compartida,
+            // que nunca tiene caja, y el aviso de "no hay caja" confunde. Mismo mensaje que FinalizarVenta.
+            if (desdePos && user.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null)
+            {
+                ViewBag.Mensaje = "La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.";
+                ViewBag.DesdePOS = desdePos;
+                ViewBag.IdCierreActividad = idCierre;
+                return PartialView("~/Views/Ventas/_MisVentas.cshtml", new List<Entidades.Venta>());
+            }
+
+            var cierre = ObtenerCierreMisVentas(desdePos, idCierre, posInstanceId);
             if (cierre == null)
             {
                 ViewBag.Mensaje = "No hay una caja abierta para consultar ventas.";
@@ -2241,35 +2250,28 @@ namespace WebCore.Controllers
             };
         }
 
-        private Entidades.CierreCaja ObtenerCierreMisVentas(Entidades.Usuario user, bool desdePos, int idCierre)
+        // Caja de "Mis ventas". Desde el POS (2026-10-20, ver docs/DECISIONS.md "Mis ventas desde el POS con la cuenta
+        // de produccion") se ignora el idCierre que manda la pagina: es el que resolvio POS() al cargarla y puede haber
+        // quedado viejo (caja cerrada o abierta despues), y con idCierre=0 se caia a la caja del usuario de la cookie,
+        // que con la cuenta compartida de produccion nunca existe (las cajas son del operador). Se busca la caja abierta
+        // del vendedor de esta pestaña con el mismo criterio que POS(). Sin desdePos (Cajas Abiertas) se usa idCierre,
+        // y solo si esa caja sigue abierta (sin cambios).
+        private Entidades.CierreCaja ObtenerCierreMisVentas(bool desdePos, int idCierre, string posInstanceId)
         {
-            if (idCierre > 0)
-            {
-                var cierrePorId = _oCierreN.findByIdOrLast(
-                    new Entidades.CierreCaja { Id = idCierre },
-                    Entidades.CierreCaja.tipoBusqueda.FindById,
-                    ""
-                );
+            if (desdePos)
+                return ObtenerCierreCajaActual(ResolverOperadorPOS(posInstanceId, _usuarioActual));
 
-                bool abierta = cierrePorId != null && (cierrePorId.UsuarioCierre == null || cierrePorId.UsuarioCierre.Id == 0);
-                return abierta ? cierrePorId : null;
-            }
-
-            if (!desdePos || user == null || user.IdSucursal == 0)
+            if (idCierre <= 0)
                 return null;
 
-            if (user.Sucursal == null)
-                user.Sucursal = _oSucursalN.findById(user.IdSucursal);
+            var cierrePorId = _oCierreN.findByIdOrLast(
+                new Entidades.CierreCaja { Id = idCierre },
+                Entidades.CierreCaja.tipoBusqueda.FindById,
+                ""
+            );
 
-            var cierre = new Entidades.CierreCaja
-            {
-                Sucursal = user.Sucursal,
-                UsuarioInicio = user
-            };
-
-            cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-            bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
-            return cajaAbierta ? cierre : null;
+            bool abierta = cierrePorId != null && (cierrePorId.UsuarioCierre == null || cierrePorId.UsuarioCierre.Id == 0);
+            return abierta ? cierrePorId : null;
         }
 
         private static string DecodeReturnUrlIfNeeded(string returnUrl)
@@ -3302,13 +3304,11 @@ namespace WebCore.Controllers
             // busqueda usaba "user" (la cuenta compartida) -- nunca encontraba la caja real. Para
             // un usuario NO-produccion, ResolverOperadorPOS ya devuelve la misma persona sin
             // cambios, asi que este fix no altera nada para el caso normal.
-            var cierre = new Entidades.CierreCaja
-            {
-                Sucursal = operador.Sucursal,
-                UsuarioInicio = operador
-            };
-            cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-            bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+            // Sucursal de la busqueda (2026-10-20, ver ObtenerCierreCajaActual): la de la sesion, no la propia del
+            // operador -- con la del operador, uno de otra sucursal nunca encontraba la caja que acababa de abrir
+            // (AbrirCaja la crea con la sucursal de la sesion) y uno sin sucursal tiraba NullReferenceException.
+            var cierre = ObtenerCierreCajaActual(operador);
+            bool cajaAbierta = cierre != null;
 
             // Item 5 (2026-09-07, ver docs/DECISIONS.md): usuario con permiso de "modificar venta"
             // puede operar el POS aunque no tenga caja abierta, y editar la fecha de la venta en

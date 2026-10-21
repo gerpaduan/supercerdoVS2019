@@ -7,6 +7,14 @@
 - **Verificado**: `WebCore` compila; proyecto nuevo `WebCore.Tests` con 18 tests verdes (validado con una rotura a propósito). **Sin verificar**: la pantalla en el navegador con sesión real, y si cerrar sesión reinicia el contador.
 - **Manual**: concepto nuevo `intentos-de-clave-al-autorizar` y ajustes en fórmula secreta, bloqueo por inactividad, mapa de configuraciones, Clave para modificar, Modificar pedido y Cajas abiertas.
 
+## 2026-10-20 - POS con la cuenta de producción: «Mis ventas» encuentra la caja del operador y el POS no cae con operadores sin sucursal
+
+- **Pedido**: con la cuenta Produccion logueada y otro usuario operando, F6 → Mis ventas decía «No hay una caja abierta para consultar ventas.».
+- **Cambio**: «Mis ventas» desde el POS busca en el servidor la caja abierta actual del vendedor de la pestaña (manda `posInstanceId`; ya no usa el `idCierre` resuelto al cargar la página ni cae a la cuenta compartida). La caja del vendedor se busca siempre en la sucursal de la sesión, la misma con la que se abre la caja y se registra la venta (`Negocio.CierreCaja.CajaAbiertaDelVendedor`, usada por el POS, el desbloqueo y los permisos de modificar): un operador sin sucursal ya no hace caer el POS con 500 y uno de otra sucursal encuentra su caja. Producción sin operador vigente → «La autorización del vendedor venció…». Sin caja abierta el aviso se mantiene (decisión del usuario). Cajas Abiertas y usuarios normales sin cambios.
+- **Verificado**: `Negocio.Tests` 673/673 (7 nuevos), `WebCore.Tests` 38/38, y por HTTP con usuarios de prueba descartables (base local; ya borrados): los 7 casos de `docs/DECISIONS.md` (2026-10-20). **Sin verificar**: el disparador exacto del reporte (en la VPS no hay operadores de otra sucursal; sí 3 sin sucursal) y la pantalla en el navegador (se probó por HTTP).
+- **Deuda**: F6 → «Mis actividades» sigue usando el `idCierre` de la carga; `DetalleVenta`/cambiar forma de pago siguen evaluando con la cuenta compartida o la sucursal del operador (detalle en `docs/DECISIONS.md`).
+- **Manual**: `pantallas/Ventas.POS.md`, sección «Mis ventas (F6)».
+
 ## 2026-10-19 - POS: «Total c/saldo» en el post-venta y al elegir la forma de pago
 
 - **Pedido**: ver el total de la venta más el saldo del cliente debajo del total en el aviso de venta completada y en la elección de la forma de pago.
