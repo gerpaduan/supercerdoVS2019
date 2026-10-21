@@ -36,11 +36,12 @@
                 </div>
                 <p class="mb-1" id="pvbResumenVenta">Venta registrada correctamente.</p>
                 <h3 class="mb-3 font-weight-bold text-success" id="pvbTotalVenta"></h3>
-                @* Total + saldo de cuenta corriente del cliente (2026-10-19), mas chico. Lo completa
-                   pvbMostrarTotalConSaldo en POS.cshtml; oculto si el cliente no tiene saldo para informar. *@
-                <div id="pvbTotalConSaldoWrap" class="pvb-total-con-saldo d-none">
-                    <span id="pvbTotalConSaldoEtiqueta" class="pvb-total-con-saldo-label">Total c/saldo</span>
-                    <span id="pvbTotalConSaldoValor" class="pvb-total-con-saldo-value">$ 0,00</span>
+                @* Saldo del cliente tal como quedo (2026-10-19), mas chico: rojo si debe, azul si esta a favor. Lo completa
+                   pvbMostrarSaldoCliente en POS.cshtml; oculto si el cliente no tiene saldo para informar. *@
+                <div id="pvbSaldoClienteWrap" class="pvb-saldo-cliente d-none">
+                    <span id="pvbSaldoClienteEtiqueta" class="pvb-saldo-cliente-label">Saldo del cliente</span>
+                    <span id="pvbSaldoClienteValor" class="pvb-saldo-cliente-value">$ 0,00</span>
+                    <div id="pvbSaldoClienteNota" class="pvb-saldo-cliente-nota"></div>
                 </div>
 
                 <div class="d-flex flex-column" style="gap:.5rem;">
@@ -140,29 +141,52 @@
         border-radius: .5rem;
     }
 
-    /* "Total c/saldo" debajo del total (2026-10-19): pegado al h3 (que trae mb-3) y mas chico. */
-    .pvb-total-con-saldo {
+    /* Saldo del cliente tal como quedo, debajo del total (2026-10-19): pegado al h3 (que trae mb-3) y mas chico.
+       Rojo si el cliente debe, azul si esta a favor (POS.cshtml, marcarEstadoSaldoPOS pone --debe / --favor). */
+    .pvb-saldo-cliente {
         margin: -.6rem 0 .9rem;
         line-height: 1.15;
     }
 
-    .pvb-total-con-saldo-label {
+    .pvb-saldo-cliente-label {
         color: #6c757d;
         font-size: .9rem;
         font-weight: 700;
     }
 
-    .pvb-total-con-saldo-value {
+    .pvb-saldo-cliente-value {
         color: #0f766e;
         font-size: 1.15rem;
         font-weight: 800;
     }
 
-    html.dark-mode .pvb-total-con-saldo-label {
+    .pvb-saldo-cliente-value--debe {
+        color: #b91c1c;
+    }
+
+    .pvb-saldo-cliente-value--favor {
+        color: #1d4ed8;
+    }
+
+    .pvb-saldo-cliente-nota {
+        color: #6c757d;
+        font-size: .75rem;
+    }
+
+    html.dark-mode .pvb-saldo-cliente-label,
+    html.dark-mode .pvb-saldo-cliente-nota {
         color: #9db0c7;
     }
 
-    html.dark-mode .pvb-total-con-saldo-value {
+    html.dark-mode .pvb-saldo-cliente-value {
         color: #73e0c2;
+    }
+
+    html.dark-mode .pvb-saldo-cliente-value--debe {
+        color: #f87171;
+    }
+
+    html.dark-mode .pvb-saldo-cliente-value--favor {
+        color: #60a5fa;
     }
 </style>

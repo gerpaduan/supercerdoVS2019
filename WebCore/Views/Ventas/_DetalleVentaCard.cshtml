@@ -8,12 +8,11 @@
     IdCierreActividad, ReturnUrlDetalle, TieneFacturaVenta, TieneNotaCreditoVenta,
     IdNotaCreditoVenta).
 
-    "Modificar venta" (batch 7 iteracion 5) y "Cambiar Forma de Pago" (iteracion 6) agregados
-    (ver docs/10-migracion-aspnet-core/PLAN-POS-UI.md) -- SIN el chequeo de permisos real del
-    original (PuedeModificarUltimaVenta/PuedeCambiarFormaPago, Web/Controllers/VentasController.
-    cs:2521-2643): ambos ViewBag se fijan en `true` siempre porque WebCore corre con usuario
-    unico Admin=true, sin sesion. TODO(claude): portar esas reglas reales (y "usuario
-    produccion") cuando se diseñe login/sesion real -- ver docs/10-migracion-aspnet-core/gaps.md.
+    "Modificar venta" (batch 7 iteracion 5) y "Cambiar Forma de Pago" (iteracion 6): se muestran
+    segun ViewBag.PuedeModificarVenta / PuedeCambiarFormaPago, que VentasController.DetalleVenta
+    calcula con las reglas reales (PuedeModificarUltimaVenta / PuedeCambiarFormaPago). Desde el POS
+    se evaluan con el vendedor de la pestaña: con la cuenta de produccion, el operador autorizado
+    (2026-10-20, ver docs/DECISIONS.md "Modificar ventas desde el POS con la cuenta de produccion").
 
     "Factura / Imprimir" (2026-09-10, item 1 de la segunda ronda de pedidos -- ver
     docs/DECISIONS.md "Batch 9: Factura/Imprimir en DetalleVenta/DetalleFactura") abre
@@ -24,6 +23,12 @@
 @{
     bool modoModal = ViewBag.ModoModal != null && (bool)ViewBag.ModoModal;
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    // Pestaña de POS de la que vino el detalle (2026-10-20, VentasController.DetalleVenta): "Modificar venta" y
+    // "Cambiar Forma de Pago" la conservan, y la vuelta al guardar tambien, para que el POS en edicion reconozca al
+    // mismo operador de la cuenta de produccion sin pedir autorizarse de nuevo.
+    string posInstanceIdDetalle = ViewBag.PosInstanceIdDetalle as string ?? "";
+    string posInstanceIdLinks = desdePos && !string.IsNullOrWhiteSpace(posInstanceIdDetalle) ? posInstanceIdDetalle : null;
+    string returnUrlEdicion = desdePos ? Url.Action("POS", "Ventas", new { posInstanceId = posInstanceIdLinks }) : null;
     int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
     string returnUrlDetalle = ViewBag.ReturnUrlDetalle as string ?? "";
     var index = 1;
@@ -218,7 +223,7 @@
                    cuando venimos de POS; fuera de POS (pantalla completa de Actividades/Cajas
                    Abiertas) se sigue cayendo al fallback de forma-pago.js (DetalleVenta). *@
                 <a id="btnModificarVentaDetalle"
-                   href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, returnUrl = desdePos ? Url.Action("POS", "Ventas") : null })"
+                   href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })"
                    class="btn btn-light btn-block text-left mb-2">
                     <i class="fas fa-edit mr-2"></i> Modificar venta
                 </a>
@@ -230,7 +235,7 @@
         <div class="row mt-2">
             <div class="col">
                 <a id="btnCambiarFormaPagoDetalle"
-                   href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, soloFormaPago = true, returnUrl = desdePos ? Url.Action("POS", "Ventas") : null })"
+                   href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, soloFormaPago = true, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })"
                    class="btn btn-light btn-block text-left mb-2">
                     <i class="fas fa-sync-alt mr-2"></i> Cambiar Forma de Pago
                 </a>
@@ -352,6 +357,10 @@
             btn.addEventListener("click", function () {
                 if (typeof window.desactivarAvisoSalidaPOS === "function") {
                     window.desactivarAvisoSalidaPOS();
+                }
+                // Va a la misma pestaña de POS (2026-10-20): el pagehide del POS no debe borrar al operador.
+                if (@(posInstanceIdLinks != null ? "true" : "false")) {
+                    window.PosConservarOperadorAlSalir = true;
                 }
             });
         }

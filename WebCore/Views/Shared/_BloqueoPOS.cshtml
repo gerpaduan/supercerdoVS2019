@@ -64,6 +64,7 @@
             minutos: @minutosBloqueo,
             esProduccion: @(esProduccion ? "true" : "false"),
             posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceIdBloqueo)),
+            tokenOperador: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.TokenOperadorBloqueoPOS as string ?? "")),
             validarCaja: @(validarCaja ? "true" : "false"),
             cajaAbiertaAlCargar: @(cajaAbiertaAlCargar ? "true" : "false"),
             urlDesbloquear: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("DesbloquearPOS", "Ventas"))),

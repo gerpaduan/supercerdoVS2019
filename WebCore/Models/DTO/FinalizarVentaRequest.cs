@@ -33,5 +33,27 @@ namespace WebCore.Models.DTO
         // docs/DECISIONS.md "Cambios en cajas cerradas y reapertura"). ModificarVenta responde requiereConfirmacion
         // si hace falta y el cliente reenvia el mismo request con esto en true (caja-cerrada-confirm.js).
         public bool ConfirmarCajaCerrada { get; set; }
+
+        // Cobro que el cliente paga en el momento, junto con la venta (2026-10-21, ver docs/DECISIONS.md "Cobrar el
+        // saldo del cliente al finalizar la venta"). Opcional: sin esto la venta se registra como siempre. Con esto la
+        // venta se fuerza a cuenta corriente (FormaPago/EsPagoMixto/Efectivo de arriba se ignoran) y la forma de pago
+        // elegida pasa a ser la del cobro.
+        public CobroSaldoDto CobroSaldo { get; set; }
+    }
+
+    // Datos del cobro junto con la venta. El servidor valida todo (Negocio.CobroJuntoVenta) y, con PagaTodo,
+    // calcula el importe con el saldo real del cliente: el navegador nunca decide cuanto se cobra de mas.
+    public class CobroSaldoDto
+    {
+        // Forma del cobro; en pago mixto, el "otro medio" (el efectivo va aparte, en Efectivo).
+        public string FormaPago { get; set; }
+        public bool EsMixto { get; set; }
+        public decimal Efectivo { get; set; }
+
+        // Importe que paga el cliente (ignorado si PagaTodo).
+        public decimal Importe { get; set; }
+
+        // "Paga todo": se cobra lo que el cliente debe despues de esta venta, calculado por el servidor.
+        public bool PagaTodo { get; set; }
     }
 }

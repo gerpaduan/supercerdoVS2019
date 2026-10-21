@@ -319,7 +319,7 @@
         letter-spacing: -.03em;
     }
 
-    /* "Total c/saldo" de cuenta corriente (2026-10-19): debajo del total, en letra mas chica. */
+    /* "Total c/saldo" de cuenta corriente (2026-10-19): debajo del total, en letra mas chica, con cualquier forma de pago. */
     .pos-total-con-saldo {
         margin-top: .3rem;
         line-height: 1.1;
@@ -339,14 +339,14 @@
         letter-spacing: -.02em;
     }
 
-    /* "Saldo anterior" (venta que NO es a cta cte): rojo = debe, verde = a favor, igual que el renglon
-       "Saldo" de debajo del cliente. Mas especifico que la regla base para ganarle en ambos temas. */
+    /* El color dice si el cliente DEBE (rojo) o le queda saldo A FAVOR (azul) despues de esta venta; con resultado 0 queda el
+       verde azulado de arriba. Mas especifico que la regla base para ganarle en ambos temas (2026-10-19). */
     .pos-total-con-saldo .pos-total-con-saldo-value--debe {
         color: #b91c1c;
     }
 
     .pos-total-con-saldo .pos-total-con-saldo-value--favor {
-        color: #15803d;
+        color: #1d4ed8;
     }
 
     .pos-sale-summary {
@@ -2450,7 +2450,7 @@
     }
 
     html.dark-mode .pos-page .pos-total-con-saldo .pos-total-con-saldo-value--favor {
-        color: #4ade80;
+        color: #60a5fa;
     }
 
     html.dark-mode .pos-page .pos-total-label,

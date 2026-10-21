@@ -107,6 +107,54 @@
                         </button>
                     </div>
 
+                    @* Saldo que le quedaria al cliente si se toca Cta. Cte. (2026-10-19, ver docs/DECISIONS.md "Finalizar venta:
+                       saldo que quedaria con Cta. Cte."). Un clic en un boton de forma de pago FINALIZA la venta, por eso el aviso
+                       esta visible antes, pegado a la fila de botones. Lo arma forma-pago.js (actualizarSaldoCtaCteFormaPago):
+                       saldo actual - esta venta, en rojo si debe y azul si queda a favor, con la cuenta debajo. Oculto si el
+                       cliente no tiene saldo para informar, con Pago Mixto (Cta. Cte. no admite mixto), si el boton esta bloqueado
+                       o al preseleccionar. *@
+                    @* Cobro del saldo junto con la venta (2026-10-21, ver docs/DECISIONS.md "Cobrar el saldo del cliente al
+                       finalizar la venta"): si con esta venta el cliente quedaria debiendo, el cajero puede tildar "El cliente
+                       paga ahora". La venta va sola a Cta. Cte. (el boton queda inhabilitado) y la forma de pago que se elige
+                       es la del COBRO. Importe que paga + "Paga todo" (el servidor recalcula la deuda real). Lo maneja
+                       forma-pago.js (actualizarSaldoCtaCteFormaPago / actualizarDetalleCobroSaldo). *@
+                    <div class="col-12 mb-2 d-none" id="fpSaldoCtaCteBox">
+                        <div class="fp-saldo-ctacte" id="fpSaldoCtaCte" role="status">
+                            <div class="fp-saldo-ctacte-titulo" id="fpSaldoCtaCteTitulo">Si elegís Cta. Cte. (4), el saldo queda:</div>
+                            <div class="fp-saldo-ctacte-resultado">
+                                <span id="fpSaldoCtaCteMonto" class="fp-saldo-ctacte-monto">$ 0,00</span>
+                                <span id="fpSaldoCtaCteEstado" class="fp-saldo-ctacte-estado"></span>
+                            </div>
+                            <div id="fpSaldoCtaCteCuenta" class="fp-saldo-ctacte-cuenta"></div>
+                        </div>
+
+                        <div class="fp-cobro-saldo d-none" id="fpCobroSaldoWrap">
+                            <div class="d-flex align-items-center flex-wrap">
+                                <div class="custom-control custom-switch mr-3 me-3">
+                                    <input type="checkbox" class="custom-control-input" id="chkCobrarSaldoFp">
+                                    <label class="custom-control-label font-weight-bold" for="chkCobrarSaldoFp">El cliente paga ahora</label>
+                                </div>
+                                <small class="text-muted" id="lblAtajoCobrarSaldo">Atajo: presioná "C"</small>
+                            </div>
+
+                            <div class="fp-cobro-detalle d-none" id="fpCobroSaldoDetalle">
+                                <div class="fp-cobro-fila">
+                                    <label for="txtImporteCobroFp" class="fp-cobro-titulo mb-0">Importe que paga</label>
+                                    <div class="input-group fp-cobro-input">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" id="txtImporteCobroFp" class="form-control text-right"
+                                               inputmode="decimal" autocomplete="off" placeholder="0,00">
+                                    </div>
+                                    <div class="custom-control custom-switch ml-2 ms-2">
+                                        <input type="checkbox" class="custom-control-input" id="chkPagaTodoFp">
+                                        <label class="custom-control-label" for="chkPagaTodoFp">Paga todo</label>
+                                    </div>
+                                </div>
+                                <div class="fp-cobro-queda" id="fpCobroSaldoQueda" role="status"></div>
+                                <div class="fp-cobro-leyenda">Elegí con qué paga: la venta va a Cta. Cte. y el cobro se registra con esa forma de pago (en Pago Mixto, como dos cobros).</div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- TOTAL VENTA -->
                     <div class="col-12 mt-3">
@@ -145,13 +193,6 @@
                                muestra mientras hay un % activo, para aclarar que el numero de
                                arriba ya lo incluye. *@
                             <small id="lblTotalVentaConDescuentoTag" class="text-muted d-none">(con descuento)</small>
-                            @* Total + saldo de cuenta corriente del cliente (2026-10-19), mas chico. Lo completa
-                               forma-pago.js (actualizarTotalConSaldoFormaPago) sobre el mismo total de arriba,
-                               con descuento/recargo incluido; oculto sin saldo para informar o al preseleccionar. *@
-                            <div id="fpTotalConSaldoWrap" class="fp-total-con-saldo d-none">
-                                <span id="fpTotalConSaldoEtiqueta" class="fp-total-con-saldo-label">Total c/saldo</span>
-                                <span id="fpTotalConSaldoValor" class="fp-total-con-saldo-value">$ 0,00</span>
-                            </div>
                         </div>
                     </div>
 
@@ -305,31 +346,203 @@
         }
     }
 
-    /* "Total c/saldo" debajo del total (2026-10-19): mas chico que el total, mismo verde azulado que
-       el renglon del carrito (pos.css, .pos-total-con-saldo-value). */
-    #modalFormaPago .fp-total-con-saldo {
-        margin-top: .35rem;
-        line-height: 1.15;
+    /* Cuadro "saldo que quedaria con Cta. Cte." bajo los botones (2026-10-19). Rojo si el cliente queda debiendo,
+       azul si le queda a favor (forma-pago.js -> marcarEstadoSaldoPOS pone --debe / --favor en .fp-saldo-ctacte);
+       con resultado 0 queda el verde azulado neutro. */
+    #modalFormaPago .fp-saldo-ctacte {
+        border: 1px solid #dee2e6;
+        border-left-width: .35rem;
+        border-radius: .5rem;
+        padding: .4rem .7rem;
+        line-height: 1.2;
+        background: #f8f9fa;
     }
 
-    #modalFormaPago .fp-total-con-saldo-label {
-        color: #6c757d;
-        font-size: 1rem;
-        font-weight: 700;
+    #modalFormaPago .fp-saldo-ctacte-titulo {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #495057;
     }
 
-    #modalFormaPago .fp-total-con-saldo-value {
+    #modalFormaPago .fp-saldo-ctacte-resultado {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: .2rem .6rem;
+    }
+
+    #modalFormaPago .fp-saldo-ctacte-monto {
         color: #0f766e;
-        font-size: 1.35rem;
+        font-size: 1.7rem;
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+    #modalFormaPago .fp-saldo-ctacte-estado {
+        color: #0f766e;
+        font-size: 1rem;
         font-weight: 800;
     }
 
-    html.dark-mode #modalFormaPago .fp-total-con-saldo-label {
+    #modalFormaPago .fp-saldo-ctacte-cuenta {
+        color: #6c757d;
+        font-size: .8rem;
+    }
+
+    #modalFormaPago .fp-saldo-ctacte--debe {
+        border-left-color: #b91c1c;
+    }
+
+    #modalFormaPago .fp-saldo-ctacte--debe .fp-saldo-ctacte-monto,
+    #modalFormaPago .fp-saldo-ctacte--debe .fp-saldo-ctacte-estado {
+        color: #b91c1c;
+    }
+
+    #modalFormaPago .fp-saldo-ctacte--favor {
+        border-left-color: #1d4ed8;
+    }
+
+    #modalFormaPago .fp-saldo-ctacte--favor .fp-saldo-ctacte-monto,
+    #modalFormaPago .fp-saldo-ctacte--favor .fp-saldo-ctacte-estado {
+        color: #1d4ed8;
+    }
+
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte {
+        background: rgba(255, 255, 255, .05);
+        border-color: #2f4d69;
+    }
+
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte-titulo {
+        color: #cbd8ea;
+    }
+
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte-cuenta {
         color: #9db0c7;
     }
 
-    html.dark-mode #modalFormaPago .fp-total-con-saldo-value {
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte-monto,
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte-estado {
         color: #73e0c2;
+    }
+
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte--debe {
+        border-left-color: #f87171;
+    }
+
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte--debe .fp-saldo-ctacte-monto,
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte--debe .fp-saldo-ctacte-estado {
+        color: #f87171;
+    }
+
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte--favor {
+        border-left-color: #60a5fa;
+    }
+
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte--favor .fp-saldo-ctacte-monto,
+    html.dark-mode #modalFormaPago .fp-saldo-ctacte--favor .fp-saldo-ctacte-estado {
+        color: #60a5fa;
+    }
+
+    /* Cobro del saldo junto con la venta (2026-10-21): switch "El cliente paga ahora" pegado al cuadro del saldo, y
+       debajo el importe que paga, "Paga todo" y lo que le queda a la cuenta. */
+    #modalFormaPago .fp-cobro-saldo {
+        margin-top: .4rem;
+        padding: .4rem .7rem;
+        border: 1px dashed #adb5bd;
+        border-radius: .5rem;
+        text-align: left;
+    }
+
+    #modalFormaPago .fp-cobro-fila {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: .4rem .6rem;
+        margin-top: .4rem;
+    }
+
+    #modalFormaPago .fp-cobro-titulo {
+        font-size: .9rem;
+        font-weight: 600;
+    }
+
+    #modalFormaPago .fp-cobro-input {
+        width: 11rem;
+    }
+
+    #modalFormaPago .fp-cobro-input .form-control {
+        font-weight: 700;
+    }
+
+    #modalFormaPago .fp-cobro-queda {
+        margin-top: .3rem;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #0f766e;
+    }
+
+    #modalFormaPago .fp-cobro-queda--debe {
+        color: #b91c1c;
+    }
+
+    #modalFormaPago .fp-cobro-queda--favor {
+        color: #1d4ed8;
+    }
+
+    #modalFormaPago .fp-cobro-queda--aviso {
+        color: #b45309;
+    }
+
+    #modalFormaPago .fp-cobro-leyenda {
+        margin-top: .2rem;
+        font-size: .75rem;
+        color: #6c757d;
+    }
+
+    html.dark-mode #modalFormaPago .fp-cobro-saldo {
+        border-color: #4b6480;
+    }
+
+    html.dark-mode #modalFormaPago .fp-cobro-queda {
+        color: #73e0c2;
+    }
+
+    html.dark-mode #modalFormaPago .fp-cobro-queda--debe {
+        color: #f87171;
+    }
+
+    html.dark-mode #modalFormaPago .fp-cobro-queda--favor {
+        color: #60a5fa;
+    }
+
+    html.dark-mode #modalFormaPago .fp-cobro-queda--aviso {
+        color: #fbbf24;
+    }
+
+    html.dark-mode #modalFormaPago .fp-cobro-leyenda {
+        color: #9db0c7;
+    }
+
+    /* Modo compacto (bloque de descuento o Pago Mixto abiertos): el cuadro se achica para que el modal siga entrando. */
+    #modalFormaPago.pos-modal-compacto .fp-cobro-saldo {
+        padding: .25rem .5rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-cobro-leyenda {
+        display: none;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-saldo-ctacte {
+        padding: .2rem .5rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-saldo-ctacte-monto {
+        font-size: 1.25rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-saldo-ctacte-cuenta {
+        font-size: .72rem;
     }
 
     /* Mientras el input de descuento tiene el foco (2026-09-07, pedido explicito del usuario --

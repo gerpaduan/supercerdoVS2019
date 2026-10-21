@@ -340,6 +340,10 @@ namespace WebCore.Controllers
             // Bloqueo por inactividad del POS (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad").
             ViewBag.MinutosBloqueoPOS = requiereOperadorPOS ? 0 : WebCore.Helpers.BloqueoPosHelper.MinutosPara(User, operador);
             ViewBag.VendedorBloqueoPOS = operador?.Nombre ?? "";
+            // Token del operador de esta pestana: lo devuelve el desbloqueo si la Session lo perdio (ver VentasController.DesbloquearPOS).
+            ViewBag.TokenOperadorBloqueoPOS = (user.EsUsuarioProduccion && !requiereOperadorPOS)
+                ? WebCore.Helpers.TokenOperadorPos.Crear(HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(), posInstanceIdNormalizado, operador.Id)
+                : "";
 
             return View("~/Views/PuntosExpendio/POS.cshtml", model);
         }

@@ -246,7 +246,9 @@
     {
         decimal totalVentaTicket = esFacturada ? factura.ImporteTotal : Convert.ToDecimal(Model.TotalImporte);
         // La venta se suma al saldo solo si es a cta cte; si no, solo el saldo anterior (sin linea de total).
-        foreach (var lineaSaldo in WebCore.Services.TicketSaldoLineas.Construir(totalVentaTicket, saldoPrevioTicket, cantMaxChar, Model.EnCtaCte))
+        // Cobros pagados junto con la venta (2026-10-21): suman "Su pago" y el saldo actual (ver TicketSaldoLineas).
+        var cobrosTicketHtml = ViewBag.CobrosTicket as List<WebCore.Services.TicketSaldoLineas.Cobro>;
+        foreach (var lineaSaldo in WebCore.Services.TicketSaldoLineas.Construir(totalVentaTicket, saldoPrevioTicket, cantMaxChar, Model.EnCtaCte, cobrosTicketHtml))
         {
             lineasPie.Add(lineaSaldo.Texto);
             if (lineaSaldo.EsTotal) lineaTotalConSaldo = lineaSaldo.Texto;

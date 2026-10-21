@@ -264,6 +264,9 @@ function bloquearFormasPagoNoPreseleccionadas() {
             const coincide = normalizarTipoFormaPago($(this).data('tipo')) === tipoSeleccionado;
             $(this).prop('disabled', ventaEnProceso || !coincide);
         });
+        // El cuadro del saldo depende de que el boton Cta. Cte. este habilitado (recien recalculado arriba).
+        aplicarBloqueoCobroSaldo();
+        actualizarSaldoCtaCteFormaPago();
         return;
     }
 
@@ -275,6 +278,9 @@ function bloquearFormasPagoNoPreseleccionadas() {
         const excluidoPorMixto = esPagoMixto && (tipo === 'Efectivo' || tipo === 'CtaCte');
         $(this).prop('disabled', ventaEnProceso || excluidoPorMixto);
     });
+    // El cuadro del saldo depende de que el boton Cta. Cte. este habilitado (recien recalculado arriba).
+    aplicarBloqueoCobroSaldo();
+    actualizarSaldoCtaCteFormaPago();
 }
 
 window.actualizarResumenFormaPagoPOS = function () {
@@ -331,7 +337,8 @@ function configurarModalFormaPagoSegunModo() {
     $('.form-group.form-check.mb-4').toggle(modo === 'finalizacion');
     $('#totalVenta').val(modo === 'preseleccion' ? '-' : formatearImporteFormaPago(totalVentaOriginal));
     $('#totalVenta').closest('.form-group').toggle(true);
-    actualizarTotalConSaldoFormaPago(totalVentaOriginal);
+    // En preseleccion (que retorna mas abajo, antes de bloquearFormasPagoNoPreseleccionadas) esto oculta el cuadro del saldo.
+    actualizarSaldoCtaCteFormaPago();
 
     // Bonificacion por % a todos: solo tiene sentido al finalizar una venta real (2026-09-06,
     // ver docs/DECISIONS.md) -- en modo "preseleccion" (elegir forma de pago para que el carrito
@@ -510,6 +517,10 @@ $('#modalFormaPago').on('shown.bs.modal', function () {
     actualizarHintDescuentoInput(true);
     $('#bloquePorcentajeTotalVenta').hide();
     bloqueDescuentoAbierto = false;
+    // Cobro del saldo (2026-10-21): cada vez que se abre el modal arranca destildado.
+    $('#chkCobrarSaldoFp').prop('checked', false);
+    $('#chkPagaTodoFp').prop('checked', false);
+    $('#txtImporteCobroFp').val('');
     resetPagoMixto();
     window.preCargarFormaPagoActual?.();
 });
@@ -598,11 +609,16 @@ $('.btn-forma-pago').on('click', function () {
             // las lineas bonificadas quedan fuera del recalculo (ver puedeRecalcularLinea).
             if (!aplicarDescuentoTotalVentaAntesDeFinalizarSiCorresponde()) return;
 
+            // El cliente paga ahora (2026-10-21): la venta va a Cta. Cte. y `tipo` es la forma del COBRO.
+            const cobroSaldo = armarCobroSaldoFormaPago(tipo, false, 0);
+            if (cobroSaldo === false) return;
+
             finalizarVenta({
-                formaPago: tipo,
+                formaPago: cobroSaldo ? 'CtaCte' : tipo,
                 esPagoMixto: false,
                 efectivo: 0,
-                idPersona: $('#idPersona').val()
+                idPersona: $('#idPersona').val(),
+                cobroSaldo: cobroSaldo
             });
         };
 
@@ -673,7 +689,7 @@ $('.btn-forma-pago').on('click', function () {
 $('#montoEfectivo').on('input', function () {
 
     const efectivo = parseFloat(this.value) || 0;
-    let restante = totalVentaActual - efectivo;
+    let restante = objetivoPagoMixto() - efectivo;
     if (restante < 0) restante = 0;
 
     $('#montoOtroPago').val(restante.toFixed(2));
@@ -682,7 +698,7 @@ $('#montoEfectivo').on('input', function () {
 $('#montoOtroPago').on('input', function () {
 
     const otro = parseFloat(this.value) || 0;
-    let restante = totalVentaActual - otro;
+    let restante = objetivoPagoMixto() - otro;
     if (restante < 0) restante = 0;
 
     $('#montoEfectivo').val(restante.toFixed(2));
@@ -716,22 +732,28 @@ $('#btnFinalizarPagoMixto').on('click', function () {
         return;
     }
 
-    if ((efectivo + otro).toFixed(2) !== totalVentaActual.toFixed(2)) {
+    const objetivo = objetivoPagoMixto();
+    if ((efectivo + otro).toFixed(2) !== objetivo.toFixed(2)) {
         Swal.fire({
             icon: 'warning',
             title: 'Importes incorrectos',
-            text: 'La suma no coincide con el total'
+            text: cobroSaldoTildado() ? 'La suma no coincide con el importe que paga el cliente' : 'La suma no coincide con el total'
         });
         return;
     }
 
     if (!aplicarDescuentoTotalVentaAntesDeFinalizarSiCorresponde()) return;
 
+    // El cliente paga ahora: la venta va a Cta. Cte. y el pago mixto describe el COBRO (dos cobros en el servidor).
+    const cobroSaldo = armarCobroSaldoFormaPago(otroTipoPagoSeleccionado, true, efectivo);
+    if (cobroSaldo === false) return;
+
     finalizarVenta({
-        formaPago: otroTipoPagoSeleccionado,
-        esPagoMixto: true,
-        efectivo: efectivo,
-        idPersona: $('#idPersona').val()
+        formaPago: cobroSaldo ? 'CtaCte' : otroTipoPagoSeleccionado,
+        esPagoMixto: cobroSaldo ? false : true,
+        efectivo: cobroSaldo ? 0 : efectivo,
+        idPersona: $('#idPersona').val(),
+        cobroSaldo: cobroSaldo
     });
 });
 
@@ -844,7 +866,10 @@ function finalizarVenta(data) {
         // como FINALIZADA. null si la funcion esta apagada.
         clientId: window.POSBorrador?.getClientId?.() || null,
         // Segunda vuelta de "esta venta es de una caja ya cerrada": el usuario ya confirmo (caja-cerrada-confirm.js).
-        confirmarCajaCerrada: !!data.confirmarCajaCerrada
+        confirmarCajaCerrada: !!data.confirmarCajaCerrada,
+        // El cliente paga ahora (2026-10-21): cobro que se registra junto con la venta (ver armarCobroSaldoFormaPago).
+        // Con esto formaPago/esPagoMixto/efectivo de arriba son los de la venta (Cta. Cte., sin mixto).
+        cobroSaldo: data.cobroSaldo || null
     };
 
     // El filtro global de antiforgery (Web/Filters/ValidateAppAntiForgeryTokenAttribute.cs) exige el token
@@ -944,6 +969,9 @@ function finalizarVenta(data) {
                 }).then(function () {
                     const returnUrl = window.POSModo?.returnUrl || $('#returnUrlPOS').val() || '';
                     if (returnUrl) {
+                        // Vuelve a la misma pestaña de POS (2026-10-20): el pagehide no debe borrar al operador de la
+                        // cuenta de produccion (window.PosEsMismaPestana, ver POS.cshtml).
+                        if (window.PosEsMismaPestana?.(returnUrl)) window.PosConservarOperadorAlSalir = true;
                         window.location.href = returnUrl;
                         return;
                     }
@@ -957,10 +985,15 @@ function finalizarVenta(data) {
                 return;
             }
 
+            // Cobro junto con la venta (2026-10-21): el post-venta lo necesita para el ticket (ids de los cobros) y la
+            // factura obligatoria se decide con la forma de pago del COBRO (la venta quedo en Cta. Cte., que no la exige).
+            window.POSCobroTrasVenta = payload.cobroSaldo ? { ventaId: ventaId, cobros: resp.cobros || [] } : null;
+            const formaPagoParaFactura = payload.cobroSaldo ? payload.cobroSaldo.formaPago : payload.formaPago;
+
             const $fp = $('#modalFormaPago');
             const requiereFacturaAutomatica = window.VentasFacturaModal
                 && typeof window.VentasFacturaModal.requiereFacturaAutomatica === 'function'
-                && window.VentasFacturaModal.requiereFacturaAutomatica(payload.formaPago);
+                && window.VentasFacturaModal.requiereFacturaAutomatica(formaPagoParaFactura);
 
             // 1) Sacar el foco de adentro ANTES de ocultar (evita el warning)
             $fp.find(':focus').trigger('blur');
@@ -975,6 +1008,19 @@ function finalizarVenta(data) {
 
                 window.mostrarModalPostVenta(ventaId, tel);
             });
+
+            // La venta quedo en Cta. Cte. pero el cobro no se pudo registrar: se avisa para que el cajero lo cargue por
+            // F2 (Cuenta corriente). Se muestra al cerrarse el modal de forma de pago, encima del post-venta.
+            if (payload.cobroSaldo && resp.cobroError) {
+                $fp.one('hidden.bs.modal', function () {
+                    if (!window.Swal) return;
+                    window.Swal.fire({
+                        icon: 'warning',
+                        title: 'La venta se registró, pero el cobro no',
+                        text: 'La venta quedó en Cta. Cte. ' + resp.cobroError + ' Registrá el cobro desde F2 (Cuentas corrientes).'
+                    });
+                });
+            }
 
             // 3) Ocultar modal forma pago
             $fp.modal('hide');
@@ -1090,30 +1136,221 @@ function hayLineasBonificadasEnCarrito() {
 // si no. El verde (#lblTotalConDescuentoTotalVenta) ya NO muestra el total resultante -- muestra
 // el MONTO del descuento/recargo en si (la diferencia). Ej: total $10, 10% de descuento -> verde
 // "$1", azul "$9".
-// "Total c/saldo" debajo de "Total de la Venta" (2026-10-19, ver docs/DECISIONS.md "Total c/saldo en el
-// post-venta y en el modal de forma de pago"): `total` es el mismo importe que se acaba de poner en
-// #totalVenta (con descuento/recargo si hay uno activo). Se muestra SIEMPRE que el cliente tenga saldo para
-// informar, sin importar la forma de pago que se elija (el ticket, en cambio, suma la venta al saldo solo si
-// es a cuenta corriente). El saldo y la formula los pone Ventas/POS.cshtml (obtenerSaldoParaTotalPOS ya
-// aplica Consumidor Final, cuenta reservada, saldo chico y la venta en edicion; calcularTotalConSaldoPOS);
-// si esas funciones no existen el renglon queda oculto. Oculto tambien al
-// preseleccionar la forma de pago (todavia no hay total real).
-function actualizarTotalConSaldoFormaPago(total) {
-    const $wrap = $('#fpTotalConSaldoWrap');
-    if (!$wrap.length) return;
+// Cuadro "Si elegis Cta. Cte. (4), el saldo queda: ..." bajo los botones (2026-10-19, ver docs/DECISIONS.md
+// "Finalizar venta: saldo que quedaria con Cta. Cte."). Un clic en un boton de forma de pago FINALIZA la venta,
+// asi que el cajero tiene que ver ANTES lo que le pasa a la cuenta del cliente si toca Cta. Cte.: el saldo que le
+// queda = saldo actual - esta venta (una venta a cta cte genera un Debito por su importe). Sirve igual con deuda
+// ("$ X DEBE", rojo, saldo actual + venta) que con saldo a favor ("$ X A FAVOR", azul, saldo actual - venta; si el
+// a favor no alcanza queda "DEBE" por la diferencia). Usa el total vigente (totalVentaActual: con descuento o
+// recargo si hay uno activo). El saldo y la formula los pone Ventas/POS.cshtml (obtenerSaldoParaTotalPOS ya aplica
+// Consumidor Final, cuenta reservada, saldo chico y la venta en edicion; calcularSaldoResultantePOS); si esas
+// funciones no existen el cuadro queda oculto. Tambien queda oculto al preseleccionar la forma de pago (todavia no
+// hay total real) y cuando el boton Cta. Cte. no se puede usar (Pago Mixto no admite Cta. Cte., o en una edicion
+// el boton esta bloqueado por la forma preseleccionada): por eso se vuelve a calcular al final de
+// bloquearFormasPagoNoPreseleccionadas, y POS.cshtml la llama cuando llega el saldo con el modal ya abierto.
+//
+// Cobro del saldo junto con la venta (2026-10-21, ver docs/DECISIONS.md "Cobrar el saldo del cliente al finalizar la
+// venta"): si con esta venta el cliente quedaria DEBIENDO, el mismo cuadro ofrece el switch "El cliente paga ahora".
+// Tildado, la venta va sola a Cta. Cte. (su boton queda inhabilitado, tecla 4 incluida), la forma de pago que se toca
+// es la del COBRO y el cuadro pasa a decir cuanto debe en total con esta venta; debajo, el importe que paga, "Paga
+// todo" y lo que le queda a la cuenta. Con Pago Mixto el cuadro del saldo se oculta (Cta. Cte. no admite mixto) pero
+// el switch sigue disponible: el mixto reparte el importe del cobro (dos cobros: Efectivo + otro medio).
+const TITULO_SALDO_CTACTE = 'Si elegís Cta. Cte. (4), el saldo queda:';
+const TITULO_SALDO_CON_COBRO = 'Con esta venta el cliente debe en total:';
+let actualizandoImporteCobro = false;
+
+function cobroSaldoTildado() {
+    return $('#chkCobrarSaldoFp').is(':checked');
+}
+
+// Con el cobro tildado la venta ya va a Cta. Cte.: ese boton no se puede usar como forma de cobro.
+function aplicarBloqueoCobroSaldo() {
+    if (cobroSaldoTildado()) {
+        $('.btn-forma-pago[data-tipo="CtaCte"]').prop('disabled', true);
+    }
+}
+
+// Deuda con la que quedaria el cliente con esta venta a Cta. Cte. (0 si no queda debiendo).
+function deudaTrasVentaFormaPago() {
+    const saldo = typeof window.obtenerSaldoParaTotalPOS === 'function' ? window.obtenerSaldoParaTotalPOS() : null;
+    if (saldo === null || typeof window.calcularSaldoResultantePOS !== 'function') return 0;
+    const resultado = window.calcularSaldoResultantePOS(Number(totalVentaActual) || 0, saldo);
+    return resultado.estado === 'debe' ? resultado.monto : 0;
+}
+
+// Importe que el cliente paga: con "Paga todo" la deuda mostrada (el servidor la recalcula con el saldo real); si
+// no, lo tipeado. El campo usa la mascara es-AR: getRawValue lo devuelve sin puntos de miles ("1234,5").
+function importeCobroFormaPago() {
+    if ($('#chkPagaTodoFp').is(':checked')) return deudaTrasVentaFormaPago();
+    const crudo = window.MoneyInputMask ? window.MoneyInputMask.getRawValue('#txtImporteCobroFp') : ($('#txtImporteCobroFp').val() || '');
+    const importe = parseNumeroPOS(crudo);
+    return Number.isFinite(importe) && importe > 0 ? importe : 0;
+}
+
+function actualizarDetalleCobroSaldo(deuda) {
+    const tildado = cobroSaldoTildado();
+    $('#fpCobroSaldoDetalle').toggleClass('d-none', !tildado);
+    $('#fpSaldoCtaCteTitulo').text(tildado ? TITULO_SALDO_CON_COBRO : TITULO_SALDO_CTACTE);
+    $('#lblAtajoCobrarSaldo').text(tildado ? 'Atajo: presioná "C" para quitarlo' : 'Atajo: presioná "C"');
+    if (!tildado) return;
+
+    const pagaTodo = $('#chkPagaTodoFp').is(':checked');
+    const $importe = $('#txtImporteCobroFp');
+    if (pagaTodo) {
+        // Lo completa el sistema: el campo queda de solo lectura con la deuda (se dispara 'input' para que la
+        // mascara resincronice su estado interno; el guard evita que el propio handler vuelva a entrar).
+        actualizandoImporteCobro = true;
+        $importe.val(formatearImporteFormaPago(deuda));
+        $importe.get(0)?.dispatchEvent(new Event('input', { bubbles: true }));
+        actualizandoImporteCobro = false;
+    }
+    $importe.prop('readonly', pagaTodo || ventaEnProceso);
+    $('#chkCobrarSaldoFp, #chkPagaTodoFp').prop('disabled', ventaEnProceso);
+
+    // Lo que le queda a la cuenta del cliente despues de cobrar: es lo que no se puede equivocar.
+    const importe = importeCobroFormaPago();
+    const queda = Math.round((deuda - importe) * 100) / 100;
+    let texto;
+    let clase = '';
+    if (!(importe > 0)) {
+        texto = 'Ingresá el importe que paga el cliente';
+        clase = 'fp-cobro-queda--aviso';
+    } else if (queda > 0) {
+        texto = 'Le queda debiendo $ ' + formatearImporteFormaPago(queda);
+        clase = 'fp-cobro-queda--debe';
+    } else if (queda < 0) {
+        texto = 'Paga de más: le queda a favor $ ' + formatearImporteFormaPago(-queda);
+        clase = 'fp-cobro-queda--favor';
+    } else {
+        texto = 'La cuenta queda en $ 0,00';
+    }
+    $('#fpCobroSaldoQueda').removeClass('fp-cobro-queda--debe fp-cobro-queda--favor fp-cobro-queda--aviso')
+        .addClass(clase).text(texto);
+}
+
+function actualizarSaldoCtaCteFormaPago() {
+    const $box = $('#fpSaldoCtaCteBox');
+    if (!$box.length) return;
 
     const saldo = typeof window.obtenerSaldoParaTotalPOS === 'function' ? window.obtenerSaldoParaTotalPOS() : null;
+    const total = Number(totalVentaActual) || 0;
     if (getModoFormaPagoActual() !== 'finalizacion' || saldo === null ||
-        typeof window.calcularTotalConSaldoPOS !== 'function' || !(Number(total) > 0)) {
-        $wrap.addClass('d-none');
+        typeof window.calcularSaldoResultantePOS !== 'function' || !(total > 0)) {
+        // Sin saldo para informar (otro cliente, Consumidor Final, error de red...) no hay cobro posible.
+        if (cobroSaldoTildado()) {
+            $('#chkCobrarSaldoFp').prop('checked', false);
+            bloquearFormasPagoNoPreseleccionadas(); // rehabilita Cta. Cte. y vuelve a llamar a esta funcion
+            return;
+        }
+        $('#fpCobroSaldoWrap').addClass('d-none');
+        actualizarDetalleCobroSaldo(0);
+        $box.addClass('d-none');
         return;
     }
 
-    const conSaldo = window.calcularTotalConSaldoPOS(total, saldo);
-    $('#fpTotalConSaldoEtiqueta').text(conSaldo.etiqueta);
-    $('#fpTotalConSaldoValor').text('$ ' + formatearImporteFormaPago(conSaldo.monto));
-    $wrap.removeClass('d-none');
+    const resultado = window.calcularSaldoResultantePOS(total, saldo);
+    const aFavor = saldo > 0;
+    const deuda = resultado.estado === 'debe' ? resultado.monto : 0;
+
+    // El cobro necesita deuda tras la venta y caja abierta (lo decide POS.cshtml con POSCobroSaldoDisponible); no
+    // aplica al modificar una venta ni a "solo forma de pago". Si deja de corresponder estando tildado (un descuento
+    // que deja saldo a favor, otro cliente) se destilda solo y se rehabilitan las formas de pago.
+    const cobroPosible = window.POSCobroSaldoDisponible === true && window.esEdicionVenta !== true &&
+        !(window.POSModo && window.POSModo.soloFormaPago === true) && deuda > 0;
+    if (!cobroPosible && cobroSaldoTildado()) {
+        $('#chkCobrarSaldoFp').prop('checked', false);
+        bloquearFormasPagoNoPreseleccionadas(); // vuelve a llamar a esta funcion, ya destildado
+        return;
+    }
+    $('#fpCobroSaldoWrap').toggleClass('d-none', !cobroPosible);
+
+    // Con el cobro tildado Cta. Cte. esta inhabilitado a proposito pero el cuadro tiene que seguir visible.
+    const ctaCteDisponible = cobroSaldoTildado() || !$('.btn-forma-pago[data-tipo="CtaCte"]').prop('disabled');
+    $('#fpSaldoCtaCte').toggleClass('d-none', !ctaCteDisponible);
+    if (!ctaCteDisponible && !cobroPosible) {
+        $box.addClass('d-none');
+        return;
+    }
+
+    $('#fpSaldoCtaCteMonto').text('$ ' + formatearImporteFormaPago(resultado.monto));
+    $('#fpSaldoCtaCteEstado').text(resultado.etiqueta);
+    // La cuenta: con deuda la venta se SUMA a lo que debe; con saldo a favor se RESTA de lo que tiene.
+    $('#fpSaldoCtaCteCuenta').text('saldo actual $ ' + formatearImporteFormaPago(Math.abs(saldo)) +
+        (aFavor ? ' (a favor) − ' : ' (debe) + ') + 'esta venta $ ' + formatearImporteFormaPago(total));
+    // Rojo si el cliente queda debiendo, azul si le queda a favor.
+    window.marcarEstadoSaldoPOS?.($('#fpSaldoCtaCte'), 'fp-saldo-ctacte', resultado.estado);
+    actualizarDetalleCobroSaldo(deuda);
+    $box.removeClass('d-none');
 }
+window.actualizarSaldoCtaCteFormaPago = actualizarSaldoCtaCteFormaPago;
+
+// Arma el cobro que viaja con la venta (data.cobroSaldo de finalizarVenta), o null si el switch no esta tildado, o
+// false si falta el importe (ya avisa al cajero). `formaPago` es la forma del cobro; en pago mixto el "otro medio",
+// con `efectivo` aparte. El servidor valida todo y con "Paga todo" recalcula la deuda real.
+function armarCobroSaldoFormaPago(formaPago, esMixto, efectivo) {
+    if (!cobroSaldoTildado()) return null;
+
+    const pagaTodo = $('#chkPagaTodoFp').is(':checked');
+    const importe = importeCobroFormaPago();
+    if (!(importe > 0)) {
+        if (window.Swal) {
+            window.Swal.fire({ icon: 'warning', title: 'Cobro', text: 'Ingresá el importe que paga el cliente (o tildá "Paga todo").' });
+        }
+        return false;
+    }
+
+    return { formaPago: formaPago, esMixto: !!esMixto, efectivo: Number(efectivo) || 0, importe: importe, pagaTodo: pagaTodo };
+}
+
+// Monto que hay que repartir en el pago mixto: el total de la venta o, con cobro, el importe que paga el cliente.
+function objetivoPagoMixto() {
+    return cobroSaldoTildado() ? importeCobroFormaPago() : totalVentaActual;
+}
+
+// Switch "El cliente paga ahora": al tildarlo "Paga todo" arranca DESTILDADO (pedido del usuario, 2026-10-21: el
+// cajero elige si cobra todo o escribe el importe) con el importe vacio, y Cta. Cte. se inhabilita.
+$('#chkCobrarSaldoFp').on('change', function () {
+    const tildado = this.checked;
+    if (tildado) {
+        $('#chkPagaTodoFp').prop('checked', false);
+        actualizandoImporteCobro = true;
+        $('#txtImporteCobroFp').val('').get(0)?.dispatchEvent(new Event('input', { bubbles: true }));
+        actualizandoImporteCobro = false;
+    }
+    limpiarMontosPagoMixto();
+    // Recalcula que botones se pueden usar: tildado, Cta. Cte. se inhabilita; destildado, vuelve a las reglas de siempre.
+    bloquearFormasPagoNoPreseleccionadas();
+    // Con el importe vacio el cursor va directo al campo para tipear lo que recibe.
+    if (tildado) {
+        requestAnimationFrame(function () { $('#txtImporteCobroFp').trigger('focus').select(); });
+    }
+});
+
+// "Paga todo": completa la deuda; destildado, el cajero tipea el importe.
+$('#chkPagaTodoFp').on('change', function () {
+    limpiarMontosPagoMixto();
+    if (!this.checked) {
+        // Destildado: el campo arranca vacio (tenia la deuda completa) para que el cajero tipee lo que recibe.
+        actualizandoImporteCobro = true;
+        $('#txtImporteCobroFp').val('').get(0)?.dispatchEvent(new Event('input', { bubbles: true }));
+        actualizandoImporteCobro = false;
+    }
+    actualizarSaldoCtaCteFormaPago();
+    if (!this.checked) {
+        requestAnimationFrame(function () { $('#txtImporteCobroFp').trigger('focus').select(); });
+    }
+});
+
+$('#txtImporteCobroFp').on('input', function () {
+    if (actualizandoImporteCobro) return;
+    limpiarMontosPagoMixto();
+    actualizarSaldoCtaCteFormaPago();
+});
+
+$(document).ready(function () {
+    // Mascara es-AR del importe del cobro (se carga junto con POS.cshtml; sin ella el campo sigue siendo valido).
+    if (window.MoneyInputMask) window.MoneyInputMask.attach('#txtImporteCobroFp');
+});
 
 function actualizarTotalConDescuento() {
     const montoConDescuento = totalVentaOriginal * (1 - (porcentajeTotalVentaActivo / 100));
@@ -1123,7 +1360,7 @@ function actualizarTotalConDescuento() {
     const esRecargo = porcentajeTotalVentaActivo < 0;
 
     $('#totalVenta').val(formatearImporteFormaPago(totalVentaActual));
-    actualizarTotalConSaldoFormaPago(totalVentaActual);
+    actualizarSaldoCtaCteFormaPago();
     $('#lblTotalVentaConDescuentoTag').toggleClass('d-none', !porcentajeTotalVentaActivo);
     $('#lblEtiquetaMontoDescuento').text(esRecargo ? 'Recargo aplicado' : 'Descuento aplicado');
     $('#lblTotalConDescuentoTotalVenta').text('$ ' + formatearImporteFormaPago(Math.abs(montoDescuento)));
@@ -1158,7 +1395,7 @@ function cerrarBloquePorcentajeTotalVenta() {
     totalVentaActual = totalVentaOriginal;
     // Se quita el descuento: el azul vuelve a mostrar el total tal cual, sin el tag "(con descuento)".
     $('#totalVenta').val(formatearImporteFormaPago(totalVentaActual));
-    actualizarTotalConSaldoFormaPago(totalVentaActual);
+    actualizarSaldoCtaCteFormaPago();
     $('#lblTotalVentaConDescuentoTag').addClass('d-none');
 
     // El total volvio al original: los importes del mixto tambien se borran (ver limpiarMontosPagoMixto).
@@ -1423,10 +1660,26 @@ $(document).ready(function () {
         // (2026-09-07, pedido explicito del usuario -- ver docs/DECISIONS.md): sin esto, escribir
         // "10" en el campo de % de descuento disparaba "1"=Efectivo/"0"=nada a mitad de tipeo,
         // finalizando la venta sin querer. Misma guarda que ya usa el atajo "/" mas arriba.
-        const tagFoco = (document.activeElement && document.activeElement.tagName) || '';
-        if (tagFoco === 'INPUT' || tagFoco === 'TEXTAREA' || tagFoco === 'SELECT') return;
+        // Un switch (checkbox) con el foco no bloquea los atajos: se llega ahi con el mouse al tildar "El cliente paga
+        // ahora" o el Pago Mixto, y despues hay que poder tocar la forma de pago con 1-6. Solo bloquean los campos de
+        // texto (donde se tipea un importe o un porcentaje).
+        const focoEl = document.activeElement;
+        const tagFoco = (focoEl && focoEl.tagName) || '';
+        const tipoFoco = ((focoEl && focoEl.type) || '').toLowerCase();
+        const focoEnSwitch = tagFoco === 'INPUT' && (tipoFoco === 'checkbox' || tipoFoco === 'radio');
+        if (!focoEnSwitch && (tagFoco === 'INPUT' || tagFoco === 'TEXTAREA' || tagFoco === 'SELECT')) return;
 
-        const mapa = { '1': 'Efectivo', '2': 'Debito', '3': 'Credito', '4': 'CtaCte', '5': 'Qr', '6': 'Transferencia' };
+        // "C": tilda/destilda "El cliente paga ahora" (solo si el switch esta disponible: queda debiendo con esta venta).
+        if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const $chkCobro = $('#chkCobrarSaldoFp');
+            if ($chkCobro.is(':visible') && !$chkCobro.prop('disabled') && getModoFormaPagoActual() === 'finalizacion') {
+                e.preventDefault();
+                if (!e.repeat) $chkCobro.prop('checked', !$chkCobro.is(':checked')).trigger('change');
+            }
+            return;
+        }
+
+        const mapa ={ '1': 'Efectivo', '2': 'Debito', '3': 'Credito', '4': 'CtaCte', '5': 'Qr', '6': 'Transferencia' };
         const k = mapa[e.key] || mapa[(e.code || '').replace('Numpad', '')];
         if (k) window.seleccionarFormaPago(k);
 

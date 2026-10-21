@@ -40,6 +40,23 @@ namespace Negocio
             return totalVenta - saldoPrevio;
         }
 
+        // Variante de SaldoPrevioVenta cuando el cliente tambien pago en el momento (cobro junto con la
+        // venta, 2026-10-21): el saldo actual ya incluye el Credito del cobro (positivo, `totalCobros`),
+        // asi que ademas de la venta a cta cte se le resta lo cobrado para volver al saldo ANTERIOR a
+        // la operacion completa.
+        public static decimal SaldoPrevioVentaConCobros(decimal saldoActual, bool ventaEnCtaCte, decimal importeMovimientoVenta, decimal totalCobros)
+        {
+            return SaldoPrevioVenta(saldoActual, ventaEnCtaCte, importeMovimientoVenta) - totalCobros;
+        }
+
+        // Saldo con el que queda el cliente tras la venta y el cobro, a partir del saldo anterior: la venta
+        // lo reduce solo si fue a cta cte (`sumarVenta`) y el cobro lo aumenta. Es el "Saldo actual" que
+        // cierra el ticket (negativo = debe, 0 = cuenta saldada).
+        public static decimal SaldoTrasCobros(decimal saldoPrevio, decimal totalVenta, bool sumarVenta, decimal totalCobros)
+        {
+            return saldoPrevio - (sumarVenta ? totalVenta : 0m) + totalCobros;
+        }
+
         // true si el saldo merece informarse: su valor absoluto (a centavos) supera el umbral. Es
         // simetrico (un saldo a favor chico tampoco se informa). Un umbral negativo (dato corrupto
         // en Parametros) se trata como 0, o sea "informar cualquier saldo distinto de cero".

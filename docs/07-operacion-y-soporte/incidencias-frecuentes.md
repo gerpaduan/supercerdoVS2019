@@ -16,8 +16,9 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 ## 2026-10-20 - POS con la cuenta de produccion: F6 > Mis ventas dice "No hay una caja abierta para consultar ventas." / el POS da error 500 con un operador
 
 - **Sintoma**: con la cuenta compartida Produccion y un empleado autorizado como operador, "Mis ventas" no lista sus ventas y muestra ese aviso; o, al autorizar a ciertos empleados, el POS cae con error 500 (`NullReferenceException`).
-- **Causa**: "Mis ventas" usaba el `idCierre` calculado al cargar el POS (0 o viejo) y, con 0, la caja de la cuenta compartida, que nunca tiene; y la caja del operador se buscaba con **su** sucursal en vez de la de la sesion (operador sin sucursal → 500; de otra sucursal → nunca aparece su caja).
+- **Causa**: la URL de "Mis ventas" estaba escrita en el `<script>` como `'@Url.Action(...)'` y salia con `&amp;` entre parametros: el `idCierre` llegaba en 0 y se usaba la caja de la cuenta compartida, que nunca tiene (corregido el 2026-10-20 serializando la URL; regla en `docs/DECISIONS.md`). Ademas la caja del operador se buscaba con **su** sucursal en vez de la de la sesion (operador sin sucursal → 500; de otra sucursal → nunca aparece su caja).
 - **Resolucion** (2026-10-20, ver `docs/DECISIONS.md`): `Negocio.CierreCaja.CajaAbiertaDelVendedor` + `VentasController.MisVentas` con `posInstanceId`. Si el aviso sigue apareciendo: confirmar que el operador tenga una caja **abierta** en la sucursal de la cuenta de produccion (`cierrecaja` con `usuarioinicio` = id del operador, `usuariocierre = '0'`); sin caja abierta el aviso es correcto.
+- **Variante «La autorizacion del vendedor vencio» (2026-10-21)**: el POS muestra al operador pero el servidor ya no lo recuerda. Causa: la autorizacion vive en la Session en memoria, que vencia a los 20 min sin actividad que la use (y se borra al reiniciar el servidor). Desde 2026-10-21 dura 12 h y se renueva con cada request (`Sesion:IdleTimeoutMinutos` en `App.config`, default 720). Si aparece igual: se reinicio el servidor / el contenedor (autorizarse de nuevo; el carrito se conserva) o la clave de `App.config` quedo muy baja.
 
 ---
 

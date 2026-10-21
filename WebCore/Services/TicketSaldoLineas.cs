@@ -39,9 +39,23 @@ namespace WebCore.Services
         // `saldoPrevio` es el saldo ANTES de esta venta, con signo (negativo = debe; ver
         // Negocio.CalculoSaldoCliente). `totalVenta` es el mismo total que imprime el ticket arriba.
         // Los importes salen con "N2" y sin simbolo, igual que el resto de las lineas del ticket.
-        public static List<Linea> Construir(decimal totalVenta, decimal saldoPrevio, int ancho, bool sumarVenta)
+        //
+        // Cobro junto con la venta (2026-10-21): si el cliente pago en el momento (`cobros`), el bloque sigue con
+        // un renglon por cada pago y cierra con el saldo con el que queda la cuenta (el "Saldo actual", en negrita):
+        //
+        //   Saldo anterior (debe)       5.000,00
+        //                       -------
+        //   TOTAL c/saldo               7.000,00
+        //   Su pago Efectivo            3.000,00
+        //                       -------
+        //   Saldo actual (debe)         4.000,00      (o "Saldo actual 0,00" si salda la cuenta)
+        //
+        // Sin cobros el bloque es el de siempre.
+        public static List<Linea> Construir(decimal totalVenta, decimal saldoPrevio, int ancho, bool sumarVenta,
+            IReadOnlyList<Cobro> cobros = null)
         {
             decimal saldo = Negocio.CalculoSaldoCliente.Redondear(saldoPrevio);
+            bool hayCobros = cobros != null && cobros.Count > 0;
 
             // 58 mm (32 caracteres) usa "Saldo ant.": con "Saldo anterior (a favor)" + un importe de
             // 12 caracteres la linea se pasaria del ancho y la impresora la partiria.
@@ -53,10 +67,44 @@ namespace WebCore.Services
             {
                 decimal total = Negocio.CalculoSaldoCliente.Redondear(Negocio.CalculoSaldoCliente.TotalConSaldo(totalVenta, saldo));
                 lineas.Add(new Linea("-------".PadLeft(ancho), false));
-                lineas.Add(new Linea(Renglon(total >= 0m ? "TOTAL c/saldo" : "A favor", Math.Abs(total), ancho), true));
+                // Con cobros la linea resaltada es el saldo actual del final, no este total.
+                lineas.Add(new Linea(Renglon(total >= 0m ? "TOTAL c/saldo" : "A favor", Math.Abs(total), ancho), !hayCobros));
+            }
+
+            if (hayCobros)
+            {
+                decimal totalCobros = 0m;
+                foreach (var cobro in cobros)
+                {
+                    decimal importe = Negocio.CalculoSaldoCliente.Redondear(cobro.Importe);
+                    totalCobros += importe;
+                    // 58 mm: "Pago Transferencia" + importe entra en 32 caracteres; "Su pago Transferencia" no.
+                    lineas.Add(new Linea(Renglon((ancho >= 40 ? "Su pago " : "Pago ") + cobro.FormaPago, importe, ancho), false));
+                }
+
+                decimal saldoFinal = Negocio.CalculoSaldoCliente.Redondear(
+                    Negocio.CalculoSaldoCliente.SaldoTrasCobros(saldo, totalVenta, sumarVenta, totalCobros));
+                string etiquetaFinal = (ancho >= 40 ? "Saldo actual" : "Saldo act.")
+                    + (saldoFinal < 0m ? " (debe)" : (saldoFinal > 0m ? " (a favor)" : ""));
+
+                lineas.Add(new Linea("-------".PadLeft(ancho), false));
+                lineas.Add(new Linea(Renglon(etiquetaFinal, Math.Abs(saldoFinal), ancho), true));
             }
 
             return lineas;
+        }
+
+        // Un cobro que el cliente pago junto con la venta (forma de pago tal como se muestra y su importe).
+        public sealed class Cobro
+        {
+            public Cobro(string formaPago, decimal importe)
+            {
+                FormaPago = formaPago;
+                Importe = importe;
+            }
+
+            public string FormaPago { get; }
+            public decimal Importe { get; }
         }
 
         // "etiqueta ........ importe" en una linea de `ancho` caracteres. Mismo armado que formatearTotal

@@ -389,10 +389,11 @@
                                     <h2 class="m-0 pos-total-label">Total</h2>
                                     <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
                                 </div>
-                                @* Total con saldo de cuenta corriente (docs/DECISIONS.md, 2026-10-19): total del carrito
-                                   + lo que el cliente debia (o - lo que tiene a favor), en letra mas chica. Arranca oculto;
-                                   actualizarTotalConSaldo lo muestra solo si el servidor informa saldo (Consumidor Final,
-                                   cuenta reservada y saldo chico no lo informan) y el carrito tiene importe. *@
+                                @* Saldo de cuenta corriente del cliente bajo el total (docs/DECISIONS.md, 2026-10-19), en letra mas
+                                   chica: "Saldo actual (debe|a favor)" y, con Cta. Cte. elegida de antemano, "Quedaria (debe|a favor)"
+                                   (rojo si debe, azul si queda a favor). Arranca oculto; actualizarTotalConSaldo lo muestra solo si el
+                                   servidor informa saldo (Consumidor Final, cuenta reservada y saldo chico no lo informan) y el carrito
+                                   tiene importe. *@
                                 <div id="posTotalConSaldoWrap" class="d-none">
                                     <div class="d-flex justify-content-between align-items-baseline pos-total-con-saldo">
                                         <span id="posTotalConSaldoLabel" class="pos-total-con-saldo-label">Total c/saldo</span>
@@ -1389,8 +1390,11 @@ else
             // GET de la pagina siguiente por la misma Session, borrando el operador recien
             // autorizado antes de que la pagina nueva lo buscara. Las navegaciones que vuelven a
             // esta misma instancia marcan window.PosNavegandoInternoPOS=true antes de navegar.
+            // window.PosConservarOperadorAlSalir (2026-10-20): ir a "Modificar venta" / "Cambiar forma de pago" y volver
+            // al POS al guardar o salir de la edicion, con el MISMO posInstanceId. Solo evita borrar el operador; a
+            // diferencia de PosNavegandoInternoPOS no frena el resguardo de la venta en curso de pos-borrador.js.
             window.addEventListener('pagehide', function () {
-                if (window.PosNavegandoInternoPOS) return;
+                if (window.PosNavegandoInternoPOS || window.PosConservarOperadorAlSalir) return;
                 if (navigator.sendBeacon) {
                     var data = new Blob([JSON.stringify({ posInstanceId: cfg.posInstanceId })], { type: 'application/json' });
                     navigator.sendBeacon(cfg.urlCerrar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId), data);
@@ -2064,7 +2068,10 @@ else
                 // permiso no podia ver ni su propia actividad. MisActividadesCaja es la misma
                 // pantalla sin ese gate (solo exige que la caja consultada sea la propia).
                 mis: '@Url.Action("MisActividadesCaja", "Cajas", new { idCierre = idCierreActividadPOS })',
-                nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas", new { desdePos = true, idCierre = idCierreActividadPOS })',
+                // Serializada (2026-10-20, ver docs/DECISIONS.md "URLs con varios parametros dentro de <script>"):
+                // '@@Url.Action(...)' sale con "&amp;" entre parametros, el navegador no lo decodifica dentro de un
+                // script y el servidor recibia idCierre=0 (perdia la caja del operador).
+                nuevo: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("NuevoEgresoCaja", "Cajas", new { desdePos = true, idCierre = idCierreActividadPOS }))),
                 guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
             };
 
@@ -2138,13 +2145,16 @@ else
             // ese objeto nunca se definia en esta vista (solo existe su equivalente admin,
             // window.CajasAbiertas, en Cajas/CajasAbiertas.cshtml) -- el boton no hacia nada.
             // Reusa el mismo modal/contenedor que Egresos (cargarEnModal), evita duplicar markup.
-            window.POSVentas = {
             // posInstanceId (2026-10-20, ver docs/DECISIONS.md "Mis ventas desde el POS con la cuenta de produccion"):
             // MisVentas resuelve en el servidor la caja abierta actual del vendedor de esta pestaña (el operador, con
             // la cuenta compartida de produccion); ya no usa el idCierre resuelto al cargar la pagina.
+            // La URL va serializada, no entre comillas: '@@Url.Action(...)' sale con "&amp;" entre parametros, que dentro
+            // de un <script> no se decodifica, y el segundo parametro llegaba vacio. Esa era la causa del reporte: con
+            // idCierre=0 MisVentas caia a la caja de la cuenta compartida ("No hay una caja abierta...").
+            window.POSVentas = {
                 abrirMis: function () {
                     window.POSEgresos.cargarEnModal(
-                        '@Url.Action("MisVentas", "Ventas", new { desdePos = true, posInstanceId })',
+                        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("MisVentas", "Ventas", new { desdePos = true, posInstanceId }))),
                         "Mis ventas",
                         false);
                 },
@@ -2153,9 +2163,12 @@ else
                     var id = parseInt(idVenta, 10) || 0;
                     if (id <= 0) return;
 
+                    // posInstanceId (2026-10-20): DetalleVenta evalua "Modificar venta" / "Cambiar forma de pago" con
+                    // el vendedor de esta pestaña (el operador, con la cuenta de produccion).
                     var url = window.api.venta.detalle
                         + '?id=' + encodeURIComponent(id)
-                        + '&modal=true&desdePos=true&idCierre=' + encodeURIComponent(@idCierreActividadPOS);
+                        + '&modal=true&desdePos=true&idCierre=' + encodeURIComponent(@idCierreActividadPOS)
+                        + '&posInstanceId=' + encodeURIComponent(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)));
                     window.POSEgresos.cargarEnModal(url, "Detalle de venta", false);
                 }
             };
@@ -2531,35 +2544,56 @@ else
             // actualizarAccesoHistorialPreciosCliente, el punto por el que pasa todo cambio de cliente.
             var tokenSaldoCliente = 0;
 
-            // Renglon debajo del total del carrito (2026-10-19), en letra mas chica. La venta se SUMA al
-            // saldo solo si es a cuenta corriente (ahi la deuda realmente crece); si no, muestra unicamente
-            // el saldo anterior:
-            //   - forma de pago preseleccionada = CtaCte -> "Total c/saldo" = total del carrito - saldo con
-            //     signo (saldo negativo = debe, se suma; a favor, se resta; si el saldo a favor supera la
-            //     venta dice "A favor").
+            // Renglon debajo del total del carrito (2026-10-19), en letra mas chica. La venta se RESTA al
+            // saldo (se suma a lo que debe) solo si es a cuenta corriente (ahi la cuenta realmente cambia):
+            //   - forma de pago preseleccionada = CtaCte -> "Quedaria (debe|a favor)": el saldo que le queda
+            //     al cliente con esta venta (calcularSaldoResultantePOS).
             //   - cualquier otra (o ninguna elegida todavia; en muchos negocios se elige al cobrar) ->
-            //     "Saldo anterior (debe|a favor)" sin sumar nada.
+            //     "Saldo actual (debe|a favor)", sin sumar nada: pagar en efectivo o tarjeta no cambia su cuenta.
+            // Rojo si debe, azul si queda a favor. El aviso de lo que pasa al tocar Cta. Cte. justo antes de
+            // finalizar esta en el modal de forma de pago (forma-pago.js, actualizarSaldoCtaCteFormaPago).
             // `saldoParaTotalPOS` lo deja actualizarSaldoCliente con lo que informa el servidor (que ya
             // aplica Consumidor Final, cuenta reservada y saldo chico); null = no se muestra. Lo llama
-            // pos-cart.js (recalculateTotal) en cada cambio del carrito, pos-state.js al cambiar la forma
-            // de pago preseleccionada y actualizarSaldoCliente cuando llega el saldo. Con el carrito vacio
-            // se oculta: ahi alcanza con el renglon "Saldo" de debajo del cliente.
+            // pos-cart.js (recalculateTotal) en cada cambio del carrito, pos-state.js al cambiar la forma de
+            // pago preseleccionada y actualizarSaldoCliente cuando llega el saldo. Con el carrito vacio se
+            // oculta: ahi alcanza con el renglon "Saldo" de debajo del cliente.
             var saldoParaTotalPOS = null;
 
-            // Formula unica del "Total c/saldo" (carrito, modal de forma de pago y post-venta): total menos
-            // el saldo con signo (debe = negativo, se suma; a favor, se resta), a centavos porque total y
-            // saldo vienen de flotantes distintos. Si el saldo a favor supera la venta no se muestra un
-            // total negativo: se rotula "A favor". Devuelve { etiqueta, monto } con el monto ya en positivo.
-            window.calcularTotalConSaldoPOS = function (total, saldo) {
-                var conSaldo = Math.round(((Number(total) || 0) - (Number(saldo) || 0)) * 100) / 100;
-                return { etiqueta: conSaldo >= 0 ? "Total c/saldo" : "A favor", monto: Math.abs(conSaldo) };
+            // Formula unica del saldo que le quedaria al cliente si la venta va a cuenta corriente (carrito con
+            // CtaCte, cuadro del modal de forma de pago): saldo actual - total de la venta, con el saldo con
+            // signo (negativo = debe, positivo = a favor), a centavos porque total y saldo vienen de flotantes
+            // distintos. Devuelve { monto, estado, etiqueta } con el monto ya en positivo: estado "debe"
+            // (resultado < 0: queda debiendo `monto`), "favor" (resultado > 0: le queda saldo a favor) o ""
+            // (resultado 0); etiqueta "DEBE" / "A FAVOR" / "". Ej.: saldo +300 (a favor) y venta 1000 -> debe 700.
+            window.calcularSaldoResultantePOS = function (total, saldo) {
+                var aPagar = Math.round(((Number(total) || 0) - (Number(saldo) || 0)) * 100) / 100;
+                return {
+                    monto: Math.abs(aPagar),
+                    estado: aPagar > 0 ? "debe" : (aPagar < 0 ? "favor" : ""),
+                    etiqueta: aPagar > 0 ? "DEBE" : (aPagar < 0 ? "A FAVOR" : "")
+                };
             };
 
-            // Saldo (con signo) que corresponde sumar al total de la venta en curso, o null si no hay nada
-            // que informar. Lo lee el modal de forma de pago (forma-pago.js) para su "Total c/saldo".
+            // Pinta un monto de saldo: rojo si el cliente debe, azul si le queda a favor. `base` es la clase del
+            // monto (pos-total-con-saldo-value, fp-saldo-ctacte-monto, pvb-saldo-cliente-value); cada componente
+            // define en su CSS los modificadores --debe y --favor. Lo usan el carrito, el modal de forma de pago
+            // y el post-venta, para que los tres coincidan.
+            window.marcarEstadoSaldoPOS = function ($valor, base, estado) {
+                $valor.toggleClass(base + "--debe", estado === "debe")
+                    .toggleClass(base + "--favor", estado === "favor");
+            };
+
+            // Saldo actual (con signo) del cliente elegido, o null si no hay nada que informar. Lo lee el modal
+            // de forma de pago (forma-pago.js) para su cuadro de "saldo que quedaria con Cta. Cte.". Al modificar
+            // una venta ya es el saldo ANTERIOR a esa venta (ver SaldoCliente en el servidor).
             window.obtenerSaldoParaTotalPOS = function () {
                 return saldoParaTotalPOS;
             };
+
+            // Cobro del saldo junto con la venta (docs/DECISIONS.md, 2026-10-21): el switch "El cliente paga ahora"
+            // del modal de forma de pago solo se ofrece con una caja abierta, porque el cobro se asienta en la caja
+            // del operador (egreso de caja). El servidor lo vuelve a exigir.
+            window.POSCobroSaldoDisponible = @(idCierreActividadPOS > 0 ? "true" : "false");
 
             function formaPagoPreseleccionadaEsCtaCte() {
                 var forma = window.POSState && window.POSState.getFormaPagoPreseleccionada
@@ -2582,19 +2616,22 @@ else
                 var $label = $("#posTotalConSaldoLabel");
                 var $valor = $("#posTotalConSaldoValor");
                 var formato = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+                var prefijo, monto, estado;
 
                 if (formaPagoPreseleccionadaEsCtaCte()) {
-                    var conSaldo = window.calcularTotalConSaldoPOS(total, saldoParaTotalPOS);
-                    $label.text(conSaldo.etiqueta);
-                    $valor.text("$ " + conSaldo.monto.toLocaleString("es-AR", formato));
-                    $valor.removeClass("pos-total-con-saldo-value--debe pos-total-con-saldo-value--favor");
+                    var resultado = window.calcularSaldoResultantePOS(total, saldoParaTotalPOS);
+                    prefijo = "Quedaría";
+                    monto = resultado.monto;
+                    estado = resultado.estado;
                 } else {
-                    var debe = saldoParaTotalPOS < 0;
-                    $label.text(debe ? "Saldo anterior (debe)" : "Saldo anterior (a favor)");
-                    $valor.text("$ " + Math.abs(saldoParaTotalPOS).toLocaleString("es-AR", formato));
-                    $valor.toggleClass("pos-total-con-saldo-value--debe", debe)
-                        .toggleClass("pos-total-con-saldo-value--favor", !debe);
+                    prefijo = "Saldo actual";
+                    monto = Math.abs(saldoParaTotalPOS);
+                    estado = saldoParaTotalPOS < 0 ? "debe" : "favor";
                 }
+
+                $label.text(prefijo + (estado === "debe" ? " (debe)" : (estado === "favor" ? " (a favor)" : "")));
+                $valor.text("$ " + monto.toLocaleString("es-AR", formato));
+                window.marcarEstadoSaldoPOS($valor, "pos-total-con-saldo-value", estado);
                 $wrap.removeClass("d-none");
             };
 
@@ -2608,6 +2645,9 @@ else
                     $texto.text("");
                     saldoParaTotalPOS = null;
                     window.actualizarTotalConSaldo();
+                    // Tambien el cuadro del modal de forma de pago (si esta abierto): sin saldo no puede quedar
+                    // mostrando el del cliente anterior (Consumidor Final, error de red, cambio de cliente).
+                    if (typeof window.actualizarSaldoCtaCteFormaPago === "function") window.actualizarSaldoCtaCteFormaPago();
                 }
 
                 ocultar();
@@ -2634,6 +2674,9 @@ else
 
                         saldoParaTotalPOS = resp.mostrarTotal ? (Number(resp.saldoParaTotal) || 0) : null;
                         window.actualizarTotalConSaldo();
+                        // Si el modal de forma de pago ya esta abierto cuando llega el saldo, su cuadro de
+                        // "saldo que quedaria con Cta. Cte." se arma recien ahora.
+                        if (typeof window.actualizarSaldoCtaCteFormaPago === "function") window.actualizarSaldoCtaCteFormaPago();
                     })
                     .fail(function (xhr) {
                         // El saldo es informativo: si falla no se traba la venta, solo queda sin mostrar.
@@ -2823,9 +2866,33 @@ else
             // Reusa toda la mecanica de edicion de venta de la iteracion 5 -- solo bloquea la UI
             // de productos y abre el modal de forma de pago automaticamente. Port literal de
             // Web/Views/Ventas/POS.cshtml:2390-2420,2801-2805.
+            // Salida de la edicion de una venta (2026-10-20, ver docs/DECISIONS.md "Modificar ventas desde el POS con la
+            // cuenta de produccion"). true si url vuelve a ESTA pestaña de POS (mismo posInstanceId): el detalle de
+            // F6 > Mis ventas manda returnUrl = POS con el posInstanceId de la pestaña. Lo usa tambien forma-pago.js al
+            // volver despues de guardar, para no borrar al operador en el pagehide.
+            window.PosEsMismaPestana = function (url) {
+                var instancia = window.POSModo?.instanceId || "";
+                return !!url && !!instancia && url.indexOf("posInstanceId=" + encodeURIComponent(instancia)) >= 0;
+            };
+
+            // A donde va "Salir edicion": con la cuenta de produccion, de vuelta al POS de la misma pestaña (el detalle a
+            // pantalla completa pediria autorizar el modulo Ventas y se perderia el operador). Con un usuario normal, al
+            // detalle de la venta, como siempre.
+            function urlSalidaEdicionVenta() {
+                var returnUrl = window.POSModo?.returnUrl || "";
+                if (window.PosOperadorConfig?.esUsuarioProduccion && window.PosEsMismaPestana(returnUrl)) return returnUrl;
+                return window.api.venta.detalle + "?id=" + encodeURIComponent($("#idVentaEditar").val());
+            }
+
+            function salirDeEdicionVenta() {
+                var url = urlSalidaEdicionVenta();
+                if (window.PosEsMismaPestana(url)) window.PosConservarOperadorAlSalir = true;
+                window.location.href = url;
+            }
+
             function volverDesdeSoloFormaPago() {
                 window.desactivarAvisoSalidaPOS?.();
-                window.location.href = window.api.venta.detalle + "?id=" + encodeURIComponent($("#idVentaEditar").val());
+                salirDeEdicionVenta();
             }
 
             function aplicarModoSoloFormaPago() {
@@ -2836,7 +2903,9 @@ else
                     .prop("disabled", true)
                     .attr("readonly", "readonly");
                 $("#tablaItems").addClass("pos-bloqueado");
-                $("#btnSalirPOS").attr("href", window.api.venta.detalle + "?id=" + encodeURIComponent($("#idVentaEditar").val()));
+                $("#btnSalirPOS").attr("href", urlSalidaEdicionVenta()).on("click", function () {
+                    if (window.PosEsMismaPestana($(this).attr("href"))) window.PosConservarOperadorAlSalir = true;
+                });
 
                 setTimeout(function () {
                     window.POSGuard
@@ -3227,7 +3296,7 @@ else
                         cancelButtonText: "No"
                     }).then(function (result) {
                         if (!result.isConfirmed) return;
-                        window.location.href = window.api.venta.detalle + "?id=" + encodeURIComponent($("#idVentaEditar").val());
+                        salirDeEdicionVenta();
                     });
                     return;
                 }
@@ -3325,28 +3394,49 @@ else
                 });
             }
 
-            // "Total c/saldo" debajo del total del post-venta (2026-10-19, ver docs/DECISIONS.md "Total c/saldo
-            // en el post-venta y en el modal de forma de pago"): se muestra SIEMPRE que el cliente tenga saldo
-            // para informar, sea cual sea la forma de pago (dato para el cajero; el ticket, en cambio, suma la
-            // venta solo si fue a cuenta corriente). Usa el saldo ANTERIOR a esta venta (Ventas/SaldoParaTicket:
-            // si la venta fue a cta cte ya esta en el saldo y se la saca) y el mismo total que muestra el modal.
-            // Si la consulta falla o no hay saldo, el renglon queda oculto. pvbVentaTotalConSaldo descarta una
-            // respuesta que llega tarde, cuando el modal ya muestra otra venta.
-            var pvbVentaTotalConSaldo = 0;
-            function pvbMostrarTotalConSaldo(ventaId, total) {
-                var $wrap = $("#pvbTotalConSaldoWrap");
+            // Saldo del cliente tal como QUEDO, debajo del total del post-venta (2026-10-19, ver docs/DECISIONS.md
+            // "Finalizar venta: saldo que quedaria con Cta. Cte."): "Saldo del cliente (debe|a favor)" en rojo o
+            // azul. Es el saldo real de ahora (Ventas/SaldoParaTicket -> saldoActual): si la venta fue a cuenta
+            // corriente ya la incluye; si se pago de otra forma es el mismo de antes, y la nota chica lo aclara.
+            // Aparece solo si el servidor lo informa (Consumidor Final, cuenta reservada y saldo chico no); si
+            // la consulta falla el renglon queda oculto. pvbVentaSaldoCliente descarta una respuesta que llega
+            // tarde, cuando el modal ya muestra otra venta.
+            var pvbVentaSaldoCliente = 0;
+
+            // Ids (separados por coma) de los cobros que el cliente pago junto con ESTA venta (modal de forma de pago,
+            // "El cliente paga ahora", 2026-10-21); "" si no hubo. El servidor valida cuales cuentan.
+            function pvbIdsCobro(ventaId) {
+                var cobro = window.POSCobroTrasVenta;
+                if (!cobro || String(cobro.ventaId) !== String(ventaId) || !Array.isArray(cobro.cobros)) return "";
+                return cobro.cobros.map(function (c) { return c.id; }).join(",");
+            }
+
+            function pvbMostrarSaldoCliente(ventaId) {
+                var $wrap = $("#pvbSaldoClienteWrap");
                 $wrap.addClass("d-none");
-                pvbVentaTotalConSaldo = ventaId;
-                if (!$wrap.length || !(total > 0) || !window.api?.venta?.saldoParaTicket) return;
+                pvbVentaSaldoCliente = ventaId;
+                if (!$wrap.length || !window.api?.venta?.saldoParaTicket) return;
 
-                $.get(window.api.venta.saldoParaTicket, { id: ventaId })
+                $.get(window.api.venta.saldoParaTicket, { id: ventaId, idsCobro: pvbIdsCobro(ventaId) })
                     .done(function (resp) {
-                        if (pvbVentaTotalConSaldo !== ventaId) return;
-                        if (!resp || !resp.ok || !resp.tieneSaldo) return;
+                        if (pvbVentaSaldoCliente !== ventaId) return;
+                        if (!resp || !resp.ok || !resp.tieneSaldoActual) return;
 
-                        var conSaldo = window.calcularTotalConSaldoPOS(total, Number(resp.saldoPrevio) || 0);
-                        $("#pvbTotalConSaldoEtiqueta").text(conSaldo.etiqueta);
-                        $("#pvbTotalConSaldoValor").text("$ " + conSaldo.monto.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                        var saldo = Number(resp.saldoActual) || 0;
+                        var totalCobros = Number(resp.totalCobros) || 0;
+                        var estado = saldo < 0 ? "debe" : "favor";
+                        // Con un cobro que salda la cuenta el saldo queda en 0: ni "debe" ni "a favor".
+                        var sufijo = saldo === 0 ? " (saldado)" : (estado === "debe" ? " (debe)" : " (a favor)");
+                        $("#pvbSaldoClienteEtiqueta").text("Saldo del cliente" + sufijo);
+                        var $valor = $("#pvbSaldoClienteValor");
+                        $valor.text("$ " + Math.abs(saldo).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                        window.marcarEstadoSaldoPOS($valor, "pvb-saldo-cliente-value", estado);
+                        $("#pvbSaldoClienteNota").text(totalCobros > 0
+                            ? "Incluye esta venta, que quedó en cuenta corriente, y el cobro de $ " +
+                                totalCobros.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "."
+                            : (resp.enCtaCte
+                                ? "Incluye esta venta, que quedó en cuenta corriente."
+                                : "Esta venta no es a Cta. Cte.: no cambia su saldo."));
                         $wrap.removeClass("d-none");
                     })
                     .fail(function (xhr) {
@@ -3368,7 +3458,7 @@ else
                 var total = window.POSState?.getTotal ? window.POSState.getTotal() : 0;
                 $("#pvbResumenVenta").text("Venta #" + ventaId + " registrada correctamente.");
                 $("#pvbTotalVenta").text("$ " + total.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                pvbMostrarTotalConSaldo(ventaId, total);
+                pvbMostrarSaldoCliente(ventaId);
                 $("#btnPvbImprimir").data("venta-id", ventaId);
                 $("#btnPvbTicket").data("venta-id", ventaId);
                 $("#btnPvbEmail").data("venta-id", ventaId);
@@ -3398,6 +3488,9 @@ else
                 var ventaId = $(this).data("venta-id");
                 var mmRecordado = pvbObtenerMedidaTicket();
 
+                // Cobros pagados junto con la venta: el ticket los muestra con el saldo actual, sin preguntar.
+                var idsCobro = pvbIdsCobro(ventaId);
+
                 function imprimirTicket(mm, incluirSaldo) {
                     // Agente local si esta instalado; si no, dialogo del navegador via iframe
                     // oculto -- nunca pestaña nueva (ver ticket-print.js)
@@ -3406,7 +3499,7 @@ else
                     // el retraso deja que el spool del navegador/agente termine antes del reload.
                     // incluirSaldo solo "pide" el bloque de saldo: el servidor recalcula el monto y
                     // decide si corresponde (no viaja ningun importe desde aca).
-                    var saldo = incluirSaldo ? "&incluirSaldo=true" : "";
+                    var saldo = (incluirSaldo ? "&incluirSaldo=true" : "") + (idsCobro ? "&idsCobro=" + encodeURIComponent(idsCobro) : "");
                     window.TicketPrint.imprimir({
                         ticketUrl: window.api.venta.imprimirTicketHtml + "?id=" + ventaId + "&mm=" + mm + saldo,
                         payloadUrl: window.api.venta.imprimirTicketPayload + "?id=" + ventaId + "&mm=" + mm + saldo,
@@ -3418,6 +3511,12 @@ else
                 // la pena informar (docs/DECISIONS.md, 2026-10-19). Si lo tiene, se le pregunta al cajero
                 // si lo suma al ticket; si no, o si la consulta falla, se imprime como siempre.
                 function abrirTicket(mm) {
+                    // Con cobro registrado el saldo va en el ticket si o si (es lo que el cajero eligio al cobrar).
+                    if (idsCobro) {
+                        imprimirTicket(mm, true);
+                        return;
+                    }
+
                     $.get(window.api.venta.saldoParaTicket, { id: ventaId })
                         .done(function (resp) {
                             if (!resp || !resp.ok || !resp.tieneSaldo) {

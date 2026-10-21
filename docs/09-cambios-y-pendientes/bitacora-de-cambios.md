@@ -1,12 +1,12 @@
 # Bitacora de cambios
 
-## 2026-10-21 (la mas reciente) - Cerrar Caja: «Caja Cierre» e «Importe Retirado» deben ser números
+## 2026-10-21 - Cerrar Caja: «Caja Cierre» e «Importe Retirado» deben ser números
 
 - **Pedido**: validar que los dos campos tengan valores numéricos.
 - **Cambio**: antes un campo vacío o con texto se guardaba como `$0` sin avisar (`ParseFloat` devolvía 0). Ahora `guardarCierreCaja` (`CajasAbiertas.cshtml`) valida en el navegador (`validarImportesCierre`, acepta `1234.5`, `1234,5` y `1.234,56`) y `CajasController.CerrarCaja` valida de nuevo con `Helpers/ImporteCierreParser.cs` (rechaza vacío, texto, `NaN`, `Infinity`), antes del aviso de ventas en curso. **Importe Retirado ya no puede quedar vacío: si no se retiró nada hay que poner 0.** Manual: `Cajas.CajasAbiertas`.
 - **Verificado**: `WebCore` compila; `WebCore.Tests` 75/75 (`ImporteCierreParserTests`, nuevos); el parser del navegador, probado aparte con 14 entradas. **Sin verificar**: en el navegador con el modal real (requiere usuario de prueba).
 
-## 2026-10-21 - Inputs numericos: las flechas del teclado (arriba/abajo) ya no suben ni bajan el valor
+## 2026-10-21 (la mas reciente) - Inputs numericos: las flechas del teclado (arriba/abajo) ya no suben ni bajan el valor
 
 - **Pedido** (captura de Movimientos, «Agregar producto»): en la carga de producto y cantidades el numero solo se escribe.
 - **Cambio**: `WebCore/wwwroot/Scripts/app/sin-rueda-numerica.js` cancela el `keydown` de ArrowUp/ArrowDown en todo `input[type=number]` (global, los 3 layouts ya lo cargan; no corta la propagacion, asi que el autocompletar sigue recibiendo las flechas). Las flechitas visuales y la ruedita ya estaban ocultas/bloqueadas desde 2026-10-05. Detalle y alcance: `docs/DECISIONS.md` (2026-10-21).
@@ -25,6 +25,19 @@
 - **Verificado**: `WebCore` compila (0 errores), `WebCore.Tests` 57/57; en el navegador con un usuario admin de prueba descartable (se forzó `CajasStepUpTienePermisoDirecto = false` para que pida la autorización): el contador arranca en 5:00, pasa a rojo en el último minuto y desaparece solo al llegar a 0; **Extender** abre el selector, con clave correcta vuelve a 5:00 y al cancelar el contador sigue; **Finalizar** hace `POST RevocarAutorizacionCierre` (200), oculta el contador y la siguiente acción vuelve a pedir la clave; si el pedido falla avisa y la autorización sigue; sin desborde en 375 px. Usuario y su fila de `loginubicacionlog` borrados. **Sin verificar**: con un usuario real sin el permiso `Caja.CerrarCaja` (los 403 del servidor), ni la cuenta de producción.
 - **Manual**: `Cajas.CajasAbiertas` (sección «Si no tenés el permiso de cerrar caja»).
 
+## 2026-10-21 - POS: «El cliente paga ahora» cobra el saldo del cliente en el mismo modal de forma de pago
+
+- **Pedido**: cuando el cliente debe, poder tildar en «Seleccione la Forma de Pago» que va a pagar; la venta va a Cta. Cte., el cobro se registra con la forma elegida (Débito, Efectivo, mixto…), con «Paga todo» para dejar la cuenta en cero, todo al guardar la venta, y el ticket con el pago y el saldo actual.
+- **Cambio**: switch `#chkCobrarSaldoFp` (atajo C) en `_FormaPagoModal.cshtml` / `forma-pago.js` (Cta. Cte. se inhabilita; importe que paga + «Paga todo» + «Le queda…»); `FinalizarVentaRequest.CobroSaldo` → `VentasController.FinalizarVenta` valida, guarda la venta y registra el/los cobros (`Negocio/CobroJuntoVenta.cs`; pago mixto = dos cobros); ticket con `Su pago` y `Saldo actual` (`TicketSaldoLineas`, `idsCobro`); factura obligatoria según la forma del cobro; post-venta «Saldo del cliente (saldado)».
+- **Verificado**: `Negocio.Tests` 699/699, `WebCore.Tests` 55/55; en el navegador con usuario de prueba y caja descartables (cobro parcial con Débito, «Paga todo» mixto y simple, rechazo sin guardar, venta común sin cambios, tickets 58/80 mm), datos de prueba borrados y saldos originales comprobados. **Sin verificar**: factura electrónica registrada, usuario restringido con cliente reservado, impresión física, SQL Server.
+- **Manual**: `Ventas.POS` (sección «Cobrar el saldo al finalizar»); decisión en `docs/DECISIONS.md` (2026-10-21).
+
+## 2026-10-21 - Desbloqueo del POS: sin cartel «¿Deseas abandonar el sitio?» y sin volver al login del operador
+
+- **Pedido**: al desbloquear el POS salía el cartel del navegador de abandonar el sitio, y volvía a pedir el login del operador en vez de mostrar el POS; debe pedir la clave de la operadora bloqueada (Agustina), no de otra persona.
+- **Cambio**: `pos-bloqueo.js` apaga el aviso de salida antes de recargar; `POS()` (Ventas y Punto de expendio) entrega un token firmado de la pestaña + operador (`Helpers/TokenOperadorPos.cs`) y `DesbloquearPOS` lo usa para recuperar al operador si su Session venció o el servidor se reinició, exigiendo la clave de ese usuario. Decisión: `docs/DECISIONS.md` (2026-10-21).
+- **Verificado**: `WebCore` compila; `WebCore.Tests` 46/46. **Sin verificar**: el flujo en el navegador con sesión real.
+
 ## 2026-10-20 - Autorizaciones con clave (POS, Cierre de Caja, Ver fórmula): 5 intentos y aviso «Te quedan N intentos» desde el 3.er error
 
 - **Pedido**: el POS se bloqueaba a los 3 intentos fallidos por 5 minutos; quiere 5 y que, desde el 3.º, se informe cuántos quedan antes del bloqueo. Además: alinear «Ver fórmula» y Cierre de Caja, y saber si el bloqueo es del usuario o del dispositivo y si los dispositivos seguros lo evitan.
@@ -39,6 +52,7 @@
 - **Verificado**: `Negocio.Tests` 673/673 (7 nuevos), `WebCore.Tests` 38/38, y por HTTP con usuarios de prueba descartables (base local; ya borrados): los 7 casos de `docs/DECISIONS.md` (2026-10-20). **Sin verificar**: el disparador exacto del reporte (en la VPS no hay operadores de otra sucursal; sí 3 sin sucursal) y la pantalla en el navegador (se probó por HTTP).
 - **Deuda**: F6 → «Mis actividades» sigue usando el `idCierre` de la carga; `DetalleVenta`/cambiar forma de pago siguen evaluando con la cuenta compartida o la sucursal del operador (detalle en `docs/DECISIONS.md`).
 - **Manual**: `pantallas/Ventas.POS.md`, sección «Mis ventas (F6)».
+- **Corrección del mismo día (causa real)**: la URL de Mis ventas (y la de F7 «Nuevo egreso») estaba en el `<script>` como `'@Url.Action(...)'` y salía con `&amp;`: el segundo parámetro (`idCierre`, después `posInstanceId`) llegaba vacío. Ahora va serializada (regla en `docs/DECISIONS.md`, «URLs con varios parámetros dentro de `<script>`»). Verificado en el navegador con la cuenta de producción (F7 sin verificar).
 
 ## 2026-10-21 - Cuenta de producción: la autorización del operador ya no vence a los 20 minutos
 
@@ -47,6 +61,13 @@
 - **Cambio**: la Session dura 12 h (clave `Sesion:IdleTimeoutMinutos` en `App.config`, default 720, rango 5–1440) y se renueva con cada request de un usuario logueado. Las reglas del operador no cambian: ve todas las ventas de su caja desde la apertura y modifica con sus permisos, igual que con su propia sesión.
 - **Verificado**: `WebCore.Tests` (tests del ajuste) y servidor de prueba con la Session a 5 min: ver `docs/DECISIONS.md` (2026-10-21). **Riesgo**: un reinicio del servidor o del contenedor sigue borrando la autorización (Session en memoria): hay que autorizarse de nuevo.
 - **Config nueva**: `Sesion:IdleTimeoutMinutos` (opcional, en `App.config.example`).
+
+## 2026-10-20 - POS con la cuenta de producción: el operador puede modificar y cambiar la forma de pago de las ventas de su caja
+
+- **Pedido**: desde F6 → Mis ventas → detalle, el operador autorizado en la cuenta Produccion solo veía «Factura / Imprimir»; tiene que poder modificar la venta y cambiar la forma de pago si es de su caja abierta en esa sucursal.
+- **Cambio**: el detalle abierto desde el POS evalúa los dos botones con el operador de la pestaña y su caja (mismas reglas que un usuario normal; «Modificar venta» sigue exigiendo el permiso de modificar ventas). Los links y la vuelta al guardar conservan la pestaña (`posInstanceId`) y no borran al operador; con la cuenta de producción «Salir edición» vuelve al POS. Usuario normal sin cambios.
+- **Verificado en el navegador** (usuarios de prueba descartables, ya borrados): los dos botones aparecen, la edición abre sin pedir operador, «Salir edición» y el guardado («Venta actualizada», forma de pago a Efectivo) vuelven al POS con el operador vigente. `WebCore.Tests` 38/38.
+- **Manual**: `pantallas/Ventas.POS.md`, «Mis ventas (F6)».
 
 ## 2026-10-20 - Pantallas embebidas (stock del destino, ventanas independientes): siguen el modo oscuro en vivo
 
@@ -120,6 +141,24 @@
 - **Cambio**: anchos fijos de Cód. y Producto (con «…» y tooltip si el nombre no entra), columna de relleno al final para que nada se estire, encabezados en una línea y menos relleno lateral en compacto; `abrirVentanaIndependiente` acepta una fracción del ancho de la pantalla (Existencia usa 1/3, mínimo 560 px; Reportes y Reposición no cambian). Las reglas «de celular» de la pantalla ahora exigen además dispositivo táctil: una ventana de escritorio angosta conserva el diseño de escritorio.
 - **Verificado**: `WebCore` compila; en el navegador con sesión real (usuario de prueba ya borrado) la tabla de 1 sucursal entra sin scroll lateral en 640 px y con 2 sucursales los grupos se ajustan; el cálculo del ancho de ventana da 640 / 853 / 560 / 1100 según la pantalla. **Sin verificar**: la ventana emergente real, Firefox/Safari, modo oscuro. Con *Ingresar pedido* en una ventana de un tercio la tabla se desplaza (Cód. y Producto fijos).
 - **Manual**: `Stock.ExistenciaPorSucursales` (ancho de las columnas y tamaño de la ventana).
+
+## 2026-10-19 - POS: el modal de forma de pago avisa el saldo que quedaría con Cta. Cte. (deuda y a favor); se retira el «Total c/saldo» genérico
+
+- **Pedido**: tanto con deuda como con saldo a favor, informar al finalizar que tocando Cta. Cte. ese es el saldo que le queda al cliente.
+- **Cambio**: cuadro bajo los botones de forma de pago con el saldo que quedaría (rojo = DEBE, azul = A FAVOR) y la cuenta (saldo actual ± esta venta); carrito con «Saldo actual» (o «Quedaría» si ya está elegida Cta. Cte.); aviso de venta completada con el «Saldo del cliente» tal como quedó; `SaldoParaTicket` suma `saldoActual`. El ticket no cambia. Sin migraciones.
+- **Verificación**: en el POS con login real (base local, usuario de prueba y su borrador ya borrados, sin registrar ventas): cuadro del modal con deuda (rojo), con descuento, con Pago Mixto (se oculta) y con saldo a favor (azul); carrito sin forma de pago. Defecto hallado y corregido: con Consumidor Final y el modal abierto el cuadro quedaba con el saldo anterior. **A cargo del usuario**: esa corrección, «a favor que no alcanza», carrito con Cta. Cte. preseleccionada, aviso de venta completada, modo oscuro y móvil.
+
+## 2026-10-19 - POS: «Total c/saldo» en rojo si el cliente debe y azul si le queda a favor
+
+- **Pedido**: que quede claro al cliente si el saldo es deuda o a favor.
+- **Cambio**: el importe del «Total c/saldo» (carrito, modal de forma de pago y aviso de venta completada) sale en **rojo** si el cliente queda debiendo, en **azul** si le queda saldo a favor (rótulo «A favor») y sin color de estado si da cero; con variantes de modo oscuro. Sin migraciones.
+- **Verificado**: en el POS con login real (servidor del 5270 reiniciado, base local, usuario de prueba y su borrador ya borrados, sin registrar ventas): rojo con un cliente que debe, azul («A favor») con uno a favor, en carrito y modal; post-venta en rojo (el azul y el cero, forzando el estado con la misma función); modo oscuro. **Sin verificar**: una venta real cobrada de punta a punta, móvil.
+
+## 2026-10-19 - POS: el carrito muestra «Total c/saldo» con cualquier forma de pago, en lugar del «Saldo anterior»
+
+- **Pedido**: mostrar el total con saldo también en el renglón de debajo del total del carrito, en lugar del saldo anterior.
+- **Cambio**: el carrito muestra siempre «Total c/saldo» (o «A favor»), sin depender de la forma de pago, como el modal de forma de pago y el post-venta. El ticket sigue sumando la venta solo si es a cuenta corriente. Se quitó el código que quedó sin uso (aviso de cambio de forma de pago en `pos-state.js`, estilos rojo/verde del «Saldo anterior»). Sin migraciones.
+- **Verificado**: en el POS con login real (servidor del 5270 reiniciado, base local, usuario de prueba y su borrador ya borrados, sin registrar ventas): un solo renglón «Total c/saldo» con cualquier forma de pago o ninguna, oculto con carrito vacío y con Consumidor Final, «A favor», modo oscuro; modal y post-venta sin cambios. **Sin verificar**: una venta real cobrada de punta a punta, móvil.
 
 ## 2026-10-19 - POS: «Total c/saldo» en el post-venta y al elegir la forma de pago
 

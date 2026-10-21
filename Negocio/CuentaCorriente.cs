@@ -53,6 +53,13 @@ namespace Negocio
             return oCtaCteD.obtenerSaldoPersona(idPersona);
         }
 
+        // Ultimo movimiento de cta cte de un registro (una venta, un pago...), o null si no tiene. El ticket de
+        // venta lo usa para validar que un cobro es posterior a la venta y para leer su importe real (2026-10-21).
+        public Entidades.MovCtaCte getMovCtaCteDeRegistro(Entidades.MovCtaCte.tablas tabla, int idTabla)
+        {
+            return oCtaCteD.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId);
+        }
+
         public DataTable obtenerResumenDashboard()
         {
             return oCtaCteD.obtenerResumenDashboard();

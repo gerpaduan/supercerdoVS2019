@@ -188,6 +188,9 @@
     function recargarMismaInstancia() {
         var url = new URL(window.location.href);
         if (cfg.posInstanceId) url.searchParams.set('posInstanceId', cfg.posInstanceId);
+        // Es una recarga a proposito (la venta ya esta resguardada): sin el cartel "¿Deseas abandonar el sitio?" de
+        // pos-cart.js, que saltaba por la venta en curso o por un modal abierto.
+        if (typeof window.desactivarAvisoSalidaPOS === 'function') window.desactivarAvisoSalidaPOS();
         window.PosNavegandoInternoPOS = true;
         window.location.href = url.toString();
     }
@@ -213,6 +216,8 @@
             data: {
                 clave: clave,
                 posInstanceId: cfg.posInstanceId,
+                // Permite al servidor recuperar al operador si su Session vencio mientras estaba bloqueado.
+                tokenOperador: cfg.tokenOperador || '',
                 validarCaja: cfg.validarCaja,
                 __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
             }

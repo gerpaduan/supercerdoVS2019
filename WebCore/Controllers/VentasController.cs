@@ -280,17 +280,21 @@ namespace WebCore.Controllers
             return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.NuevaVenta, fechaSeleccionada ?? venta.FechaVenta, vendedorId);
         }
 
+        // La sucursal que cuenta es la de la SESION (2026-10-20): con la cuenta de produccion "user" es el operador, y
+        // su caja y sus ventas quedan en la sucursal de la cuenta compartida (ver ObtenerCierreCajaActual). Para un
+        // usuario normal es la misma.
         private bool PuedeCambiarFormaPago(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
         {
             if (venta == null) return false;
             user = user ?? _usuarioActual;
-            if (user == null || user.IdSucursal == 0) return false;
+            int idSucursalSesion = _usuarioActual.IdSucursal;
+            if (user == null || idSucursalSesion == 0) return false;
 
             if (TienePermisoAdministrativoSobreVenta(venta, user)) return true;
 
             cierre = cierre ?? ObtenerCierreCajaActual(user);
             if (cierre == null || cierre.FechaHoraInicio == null || cierre.UsuarioInicio == null) return false;
-            if (venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal) return false;
+            if (venta.Sucursal == null || venta.Sucursal.idSucursal != idSucursalSesion) return false;
             if (venta.Vendedor == null || venta.Vendedor.Id != cierre.UsuarioInicio.Id) return false;
 
             DateTime inicio = cierre.FechaHoraInicio.Value;
@@ -323,7 +327,13 @@ namespace WebCore.Controllers
         // sin movimientos, o saldo que no supera SaldoMinimoInformar. Si la venta ya registrada fue a
         // cta cte (`ventaEnCtaCte`), su Debito ya esta en el saldo: se saca con
         // `importeMovimientoVenta` para devolver el saldo ANTERIOR a la venta (el que va al ticket).
-        private decimal? ObtenerSaldoInformable(int idPersona, bool ventaEnCtaCte = false, decimal importeMovimientoVenta = 0m)
+        //
+        // Cobro junto con la venta (2026-10-21): `totalCobros` es lo que el cliente pago en esa operacion (el saldo
+        // actual ya lo incluye, se le resta para volver al saldo anterior). Con cobros (o `ignorarUmbral`) el saldo
+        // se informa aunque no supere el minimo: el pago es parte del ticket y el saldo con el que queda la cuenta,
+        // por chico que sea (incluso 0), es lo que cierra el comprobante.
+        private decimal? ObtenerSaldoInformable(int idPersona, bool ventaEnCtaCte = false, decimal importeMovimientoVenta = 0m,
+            decimal totalCobros = 0m, bool ignorarUmbral = false)
         {
             if (idPersona <= 0 || idPersona == _param.GetInt(ParamKeys.IdConsumidorFinal, 0))
                 return null;
@@ -336,13 +346,15 @@ namespace WebCore.Controllers
                 return null;
 
             decimal saldo = Negocio.CalculoSaldoCliente.Redondear(
-                Negocio.CalculoSaldoCliente.SaldoPrevioVenta(saldoActual.Value, ventaEnCtaCte, importeMovimientoVenta));
+                Negocio.CalculoSaldoCliente.SaldoPrevioVentaConCobros(saldoActual.Value, ventaEnCtaCte, importeMovimientoVenta, totalCobros));
 
-            return Negocio.CalculoSaldoCliente.SaldoSuperaUmbral(saldo, SaldoMinimoInformar()) ? saldo : (decimal?)null;
+            bool informar = ignorarUmbral || totalCobros > 0m || Negocio.CalculoSaldoCliente.SaldoSuperaUmbral(saldo, SaldoMinimoInformar());
+            return informar ? saldo : (decimal?)null;
         }
 
         // Saldo anterior a `venta` (con signo) si corresponde ofrecerlo en su ticket; null si no.
-        private decimal? ObtenerSaldoPrevioParaTicket(Entidades.Venta venta)
+        // `totalCobros`: lo cobrado junto con la venta (ver ObtenerSaldoInformable).
+        private decimal? ObtenerSaldoPrevioParaTicket(Entidades.Venta venta, decimal totalCobros = 0m)
         {
             if (venta == null)
                 return null;
@@ -354,20 +366,70 @@ namespace WebCore.Controllers
                 ? Convert.ToDecimal((double)venta.getImporteVenta(venta))
                 : 0m;
 
-            return ObtenerSaldoInformable(venta.IdPersona, venta.EnCtaCte, importeMovimiento);
+            return ObtenerSaldoInformable(venta.IdPersona, venta.EnCtaCte, importeMovimiento, totalCobros);
+        }
+
+        // Cobros que el cliente pago junto con `venta` (ids separados por coma que manda el POS, maximo 2: efectivo y
+        // otro medio). El servidor NO confia en la lista: solo cuenta los cobros validos de ESTA venta: de la misma
+        // persona, no eliminados, a favor del cliente (no pagos a proveedores) y asentados en la cta cte DESPUES de la
+        // venta. El importe sale del movimiento de cta cte. Ante cualquier error se loguea y se devuelve lo que se
+        // pudo validar (el ticket sale sin esos cobros: no puede impedir imprimir).
+        private List<TicketSaldoLineas.Cobro> ObtenerCobrosParaTicket(Entidades.Venta venta, string idsCobro)
+        {
+            var cobros = new List<TicketSaldoLineas.Cobro>();
+            if (venta == null || string.IsNullOrWhiteSpace(idsCobro))
+                return cobros;
+
+            try
+            {
+                var movVenta = _oCtaCteN.getMovCtaCteDeRegistro(Entidades.MovCtaCte.tablas.Ventas, venta.IdVenta);
+                if (movVenta == null || movVenta.Id <= 0)
+                    return cobros;
+
+                var ids = idsCobro.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(s => int.TryParse(s, out int n) ? n : 0)
+                    .Where(n => n > 0)
+                    .Distinct()
+                    .Take(2);
+
+                foreach (int idPago in ids)
+                {
+                    var pago = _oCtaCteN.getPagoById(idPago);
+                    if (pago == null || pago.Eliminado || pago.AProveedor)
+                        continue;
+
+                    int idPersonaPago = pago.Persona != null ? pago.Persona.idPersona : pago.IdPersona;
+                    if (idPersonaPago != venta.IdPersona)
+                        continue;
+
+                    var movPago = _oCtaCteN.getMovCtaCteDeRegistro(Entidades.MovCtaCte.tablas.Pagos, idPago);
+                    if (movPago == null || movPago.Id <= movVenta.Id)
+                        continue;
+
+                    cobros.Add(new TicketSaldoLineas.Cobro(pago.FormaPago, Negocio.CalculoSaldoCliente.Redondear(Convert.ToDecimal((double)movPago.Importe))));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "No se pudieron validar los cobros {IdsCobro} para el ticket de la venta {IdVenta}", idsCobro, venta.IdVenta);
+            }
+
+            return cobros;
         }
 
         // Saldo previo para el ticket que se esta imprimiendo, o null si no se pidio (`incluirSaldo`
-        // false) o no corresponde. Si falla la consulta se loguea y el ticket sale sin saldo: el saldo
-        // es un agregado y no puede impedir imprimir el comprobante de la venta.
-        private decimal? SaldoPrevioParaImprimir(Entidades.Venta venta, bool incluirSaldo)
+        // false y sin cobros) o no corresponde. Con `cobros` (cobro junto con la venta) el saldo se incluye
+        // siempre: el cajero ya lo eligio al cobrar. Si falla la consulta se loguea y el ticket sale sin saldo:
+        // el saldo es un agregado y no puede impedir imprimir el comprobante de la venta.
+        private decimal? SaldoPrevioParaImprimir(Entidades.Venta venta, bool incluirSaldo, IReadOnlyList<TicketSaldoLineas.Cobro> cobros = null)
         {
-            if (!incluirSaldo)
+            bool hayCobros = cobros != null && cobros.Count > 0;
+            if (!incluirSaldo && !hayCobros)
                 return null;
 
             try
             {
-                return ObtenerSaldoPrevioParaTicket(venta);
+                return ObtenerSaldoPrevioParaTicket(venta, hayCobros ? cobros.Sum(c => c.Importe) : 0m);
             }
             catch (Exception ex)
             {
@@ -423,23 +485,44 @@ namespace WebCore.Controllers
         // preguntar si se incluye el saldo. `saldoPrevio` es el saldo ANTERIOR a esta venta, con signo.
         // `enCtaCte` dice si la venta se suma al saldo en el ticket (solo si fue a cuenta corriente);
         // si no, el ticket muestra unicamente el saldo anterior (2026-10-19).
+        // `saldoActual` (2026-10-19) es el saldo del cliente TAL COMO QUEDO: el real de ahora, que ya incluye
+        // esta venta si fue a cta cte. Lo muestra el aviso de "Venta completada"; mismas reglas de
+        // informable que `saldoPrevio` (Consumidor Final, cuenta reservada, minimo a informar), evaluadas
+        // por separado sobre cada saldo (`tieneSaldoActual`).
+        //
+        // `idsCobro` (2026-10-21): cobros que el cliente pago junto con la venta (ver ObtenerCobrosParaTicket). Con
+        // cobros validos `saldoPrevio` ya es el anterior a TODA la operacion, el saldo se informa aunque sea chico
+        // (o 0: cuenta saldada) y se devuelve `totalCobros` para la nota del post-venta.
         [HttpGet]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
-        public IActionResult SaldoParaTicket(int id)
+        public IActionResult SaldoParaTicket(int id, string idsCobro = "")
         {
             try
             {
                 var venta = _oVentaN.getVentaById(id);
                 if (venta == null)
-                    return Json(new { ok = false, tieneSaldo = false, saldoPrevio = 0m, enCtaCte = false });
+                    return Json(new { ok = false, tieneSaldo = false, saldoPrevio = 0m, enCtaCte = false, tieneSaldoActual = false, saldoActual = 0m, totalCobros = 0m });
 
-                decimal? saldoPrevio = ObtenerSaldoPrevioParaTicket(venta);
-                return Json(new { ok = true, tieneSaldo = saldoPrevio.HasValue, saldoPrevio = saldoPrevio ?? 0m, enCtaCte = venta.EnCtaCte });
+                var cobros = ObtenerCobrosParaTicket(venta, idsCobro);
+                decimal totalCobros = cobros.Sum(c => c.Importe);
+
+                decimal? saldoPrevio = ObtenerSaldoPrevioParaTicket(venta, totalCobros);
+                decimal? saldoActual = ObtenerSaldoInformable(venta.IdPersona, ignorarUmbral: totalCobros > 0m);
+                return Json(new
+                {
+                    ok = true,
+                    tieneSaldo = saldoPrevio.HasValue,
+                    saldoPrevio = saldoPrevio ?? 0m,
+                    enCtaCte = venta.EnCtaCte,
+                    tieneSaldoActual = saldoActual.HasValue,
+                    saldoActual = saldoActual ?? 0m,
+                    totalCobros
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "No se pudo obtener el saldo para el ticket de la venta {IdVenta}", id);
-                return Json(new { ok = false, tieneSaldo = false, saldoPrevio = 0m, enCtaCte = false });
+                return Json(new { ok = false, tieneSaldo = false, saldoPrevio = 0m, enCtaCte = false, tieneSaldoActual = false, saldoActual = 0m, totalCobros = 0m });
             }
         }
 
@@ -552,13 +635,15 @@ namespace WebCore.Controllers
         {
             if (venta == null) return "Venta inválida.";
             user = user ?? _usuarioActual;
-            if (user == null || user.IdSucursal == 0) return "Sesión expirada.";
+            // Misma sucursal que PuedeCambiarFormaPago: la de la sesion.
+            int idSucursalSesion = _usuarioActual.IdSucursal;
+            if (user == null || idSucursalSesion == 0) return "Sesión expirada.";
 
             if (TienePermisoAdministrativoSobreVenta(venta, user)) return "";
 
             cierre = cierre ?? ObtenerCierreCajaActual(user);
             if (cierre == null || cierre.FechaHoraInicio == null || cierre.UsuarioInicio == null) return "No tenés una caja abierta.";
-            if (venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal) return "La venta pertenece a otra sucursal.";
+            if (venta.Sucursal == null || venta.Sucursal.idSucursal != idSucursalSesion) return "La venta pertenece a otra sucursal.";
             if (venta.Vendedor == null || venta.Vendedor.Id != cierre.UsuarioInicio.Id) return "La venta no pertenece a tu cierre de caja actual.";
 
             DateTime inicio = cierre.FechaHoraInicio.Value;
@@ -735,30 +820,53 @@ namespace WebCore.Controllers
         // step-up de operador (3 intentos / 5 min). validarCaja=true (Ventas): ademas informa si el
         // vendedor sigue con caja abierta, para que el cliente recargue y rija el gate de caja normal si
         // alguien se la cerro mientras estaba bloqueado.
+        //
+        // Operador vencido (2026-10-21): la Session del servidor puede perder al operador mientras el POS esta
+        // bloqueado (vence a los 20 min sin pedidos, o se reinicio el servidor). El cliente devuelve entonces el
+        // token firmado que recibio al cargar (TokenOperadorPos): el servidor reconoce de quien es la pestana, exige
+        // la clave de ESE usuario (la de otro no sirve) y lo vuelve a registrar, sin pasar de nuevo por el login.
+        // Sin token valido se sigue pidiendo elegir operador (requiereOperador).
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult DesbloquearPOS(string clave, string posInstanceId, bool validarCaja = true)
+        public JsonResult DesbloquearPOS(string clave, string posInstanceId, bool validarCaja = true, string tokenOperador = "")
         {
             string sessionId = ObtenerSessionIdEstable();
             if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
                 return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
 
             // Cuenta de produccion sin operador en Session (vencio): ResolverOperadorPOS caeria a la cuenta
-            // compartida, cuya clave no identifica a ningun vendedor. Se pide volver a elegir operador.
-            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null)
-                return Json(new { ok = false, requiereOperador = true });
+            // compartida, cuya clave no identifica a ningun vendedor. Se intenta recuperarlo del token firmado;
+            // si no hay token valido, se pide volver a elegir operador.
+            bool operadorVencido = _usuarioActual.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null;
+            Entidades.Usuario vendedor;
+            if (operadorVencido)
+            {
+                var proteccion = HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>();
+                int idRecuperado = WebCore.Helpers.TokenOperadorPos.Leer(proteccion, tokenOperador, posInstanceId);
+                vendedor = idRecuperado > 0 ? _oUsuarioN.getUsuarioById(idRecuperado) : null;
+                if (vendedor == null || !vendedor.Activo)
+                    return Json(new { ok = false, requiereOperador = true });
+            }
+            else
+            {
+                vendedor = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+            }
 
-            var vendedor = ResolverOperadorPOS(posInstanceId, _usuarioActual);
             if (string.IsNullOrWhiteSpace(clave))
                 return Json(new { ok = false, msg = "Ingresá tu contraseña." });
 
             var validado = _oUsuarioN.ValidarUsuarioWeb(vendedor.User, clave);
-            if (validado == null || !validado.Activo || validado.Id != vendedor.Id)
+            // Al recuperar al operador se exige ademas el mismo permiso que pidio el login original (ValidarOperadorPOS).
+            bool permisoVentas = !operadorVencido
+                || (validado != null && _oUsuarioN.tienePermiso(validado, Entidades.Permisos.Venta.NuevaVenta, DateTime.Now, validado.Id));
+            if (validado == null || !validado.Activo || validado.Id != vendedor.Id || !permisoVentas)
             {
                 return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson("Contraseña incorrecta."));
             }
 
             WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+            if (operadorVencido)
+                RegistrarOperadorPOS(posInstanceId, validado);
 
             bool cajaAbierta = true;
             if (validarCaja)
@@ -1317,7 +1425,9 @@ namespace WebCore.Controllers
 
         // GET: Ventas/DetalleVenta/5
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
-        public IActionResult DetalleVenta(int id, bool modal = false, bool desdePos = false, int idCierre = 0, string returnUrl = "")
+        // posInstanceId (2026-10-20): pestaña de POS desde la que se abrio el detalle (F6 > Mis ventas). Con la cuenta de
+        // produccion identifica al operador autorizado ahi, que es quien modifica / cambia la forma de pago.
+        public IActionResult DetalleVenta(int id, bool modal = false, bool desdePos = false, int idCierre = 0, string returnUrl = "", string posInstanceId = "")
         {
             // Usuario de produccion: exige operador autorizado SOLO en la pantalla completa -- no
             // en modo "modal" (embebido dentro de POS, que ya tiene su propio operador de POS
@@ -1347,10 +1457,18 @@ namespace WebCore.Controllers
             ViewBag.TieneNotaCreditoVenta = (int)ViewBag.IdNotaCreditoVenta > 0;
             // Permisos reales (Batch 5, 2026-09-06, ver docs/DECISIONS.md) -- port literal de
             // Web/Controllers/VentasController.cs:454-457.
-            ViewBag.PuedeModificarVenta = PuedeModificarUltimaVenta(venta);
-            ViewBag.MotivoNoPuedeModificarVenta = (bool)ViewBag.PuedeModificarVenta ? "" : ObtenerMotivoNoPuedeModificarUltimaVenta(venta);
-            ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta);
-            ViewBag.MotivoNoPuedeCambiarFormaPago = (bool)ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta);
+            // Desde el POS (2026-10-20, ver docs/DECISIONS.md "Modificar ventas desde el POS con la cuenta de produccion")
+            // se evaluan con el VENDEDOR de esa pestaña: con la cuenta de produccion, el operador autorizado y su caja
+            // abierta (antes se evaluaban con la cuenta compartida, que nunca tiene caja, y solo quedaba "Imprimir").
+            // Mismas reglas que para un usuario normal; ModificarVenta las vuelve a validar al guardar.
+            var vendedor = desdePos ? ResolverOperadorPOS(posInstanceId, _usuarioActual) : _usuarioActual;
+            var cierreVendedor = ObtenerCierreCajaActual(vendedor);
+            ViewBag.PuedeModificarVenta = PuedeModificarUltimaVenta(venta, vendedor, cierreVendedor);
+            ViewBag.MotivoNoPuedeModificarVenta = (bool)ViewBag.PuedeModificarVenta ? "" : ObtenerMotivoNoPuedeModificarUltimaVenta(venta, vendedor, cierreVendedor);
+            ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta, vendedor, cierreVendedor);
+            ViewBag.MotivoNoPuedeCambiarFormaPago = (bool)ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta, vendedor, cierreVendedor);
+            // Los links de modificar llevan la misma pestaña, para que el POS en edicion reconozca al mismo operador.
+            ViewBag.PosInstanceIdDetalle = desdePos ? (posInstanceId ?? "") : "";
 
             if (modal)
                 return PartialView(venta);
@@ -2415,7 +2533,7 @@ namespace WebCore.Controllers
         // (mismo comportamiento que tendria el clasico si esas claves no estuvieran seteadas).
         [HttpGet]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
-        public IActionResult ImprimirTicketHtml(int id, int mm = 80, bool incluirSaldo = false)
+        public IActionResult ImprimirTicketHtml(int id, int mm = 80, bool incluirSaldo = false, string idsCobro = "")
         {
             var venta = _oVentaN.getVentaById(id);
             if (venta == null)
@@ -2426,7 +2544,12 @@ namespace WebCore.Controllers
 
             // Saldo del cliente (2026-10-19): solo si el cajero acepto sumarlo. Se recalcula aca (no se
             // confia en el cliente) y es null si no hay nada que informar (reservada, saldo chico, etc.).
-            ViewBag.SaldoPrevioTicket = SaldoPrevioParaImprimir(venta, incluirSaldo);
+            // Cobros pagados junto con la venta (2026-10-21, idsCobro): el servidor valida cuales cuentan; con
+            // cobros el saldo se incluye siempre y el ticket suma "Su pago" y el saldo actual.
+            var cobrosTicket = ObtenerCobrosParaTicket(venta, idsCobro);
+            decimal? saldoPrevioTicketHtml = SaldoPrevioParaImprimir(venta, incluirSaldo, cobrosTicket);
+            ViewBag.SaldoPrevioTicket = saldoPrevioTicketHtml;
+            ViewBag.CobrosTicket = saldoPrevioTicketHtml.HasValue ? cobrosTicket : new List<TicketSaldoLineas.Cobro>();
 
             var facturaTicket = ObtenerFacturaAsociadaVenta(venta.IdVenta);
             ViewBag.FacturaTicket = (facturaTicket != null && facturaTicket.Id > 0)
@@ -2462,7 +2585,7 @@ namespace WebCore.Controllers
         // lo dibuja con ESC/POS nativo, el server no genera imagen).
         [HttpGet]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
-        public IActionResult ImprimirTicketPayload(int id, int mm = 80, bool incluirSaldo = false)
+        public IActionResult ImprimirTicketPayload(int id, int mm = 80, bool incluirSaldo = false, string idsCobro = "")
         {
             try
             {
@@ -2471,8 +2594,9 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, mensaje = "Venta no encontrada." });
 
                 int ticketMm = mm == 58 ? 58 : 80;
-                // Saldo del cliente (2026-10-19): ver ImprimirTicketHtml.
-                decimal? saldoPrevioTicket = SaldoPrevioParaImprimir(venta, incluirSaldo);
+                // Saldo del cliente (2026-10-19) y cobros junto con la venta (2026-10-21): ver ImprimirTicketHtml.
+                var cobrosTicket = ObtenerCobrosParaTicket(venta, idsCobro);
+                decimal? saldoPrevioTicket = SaldoPrevioParaImprimir(venta, incluirSaldo, cobrosTicket);
                 var facturaTicket = ObtenerFacturaAsociadaVenta(venta.IdVenta);
                 var notaCreditoTicket = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
                 bool tieneFactura = facturaTicket != null && facturaTicket.Id > 0;
@@ -2488,7 +2612,7 @@ namespace WebCore.Controllers
                 {
                     ok = true,
                     ticketMm = ticketMm,
-                    ticketLines = ConstruirLineasTicketVenta(venta, ticketMm, facturaDto, ObtenerEmpresaVenta(venta), saldoPrevioTicket),
+                    ticketLines = ConstruirLineasTicketVenta(venta, ticketMm, facturaDto, ObtenerEmpresaVenta(venta), saldoPrevioTicket, cobrosTicket),
                     qrValue = qrValue,
                     tieneFactura = tieneFactura,
                     tieneNotaCredito = notaCreditoTicket != null && notaCreditoTicket.Id > 0,
@@ -2512,7 +2636,8 @@ namespace WebCore.Controllers
         // `saldoPrevio` (2026-10-19): saldo del cliente ANTES de esta venta, con signo; solo viene si el
         // cajero acepto sumarlo al ticket (ver ObtenerSaldoPrevioParaTicket). null = sin bloque de saldo.
         // Nombre y slogans (2026-10-19): el ticket X los omite si OcultarEncabezadoTicketNoFiscal().
-        private List<string> ConstruirLineasTicketVenta(Entidades.Venta venta, int ticketMm, FacturaElectronicaDto factura, Entidades.Empresa empresa, decimal? saldoPrevio = null)
+        private List<string> ConstruirLineasTicketVenta(Entidades.Venta venta, int ticketMm, FacturaElectronicaDto factura, Entidades.Empresa empresa, decimal? saldoPrevio = null,
+            IReadOnlyList<TicketSaldoLineas.Cobro> cobros = null)
         {
             int cantMaxChar = ticketMm == 58 ? 32 : 43;
             bool esFacturada = factura != null && factura.IdFactura > 0 && !string.IsNullOrWhiteSpace(factura.CAE);
@@ -2704,7 +2829,7 @@ namespace WebCore.Controllers
             {
                 decimal totalVentaTicket = esFacturada ? factura.ImporteTotal : Convert.ToDecimal(venta.TotalImporte);
                 // La venta se suma al saldo solo si es a cta cte; si no, solo el saldo anterior.
-                foreach (var lineaSaldo in TicketSaldoLineas.Construir(totalVentaTicket, saldoPrevio.Value, cantMaxChar, venta.EnCtaCte))
+                foreach (var lineaSaldo in TicketSaldoLineas.Construir(totalVentaTicket, saldoPrevio.Value, cantMaxChar, venta.EnCtaCte, cobros))
                     lineas.Add(lineaSaldo.EsTotal ? EscPosFormato.Negrita(lineaSaldo.Texto) : lineaSaldo.Texto);
             }
 
@@ -3207,6 +3332,10 @@ namespace WebCore.Controllers
             // minutos del vendedor activo (0 = no bloquea; sin operador resuelto tampoco, ver el helper).
             ViewBag.MinutosBloqueoPOS = requiereOperadorPOS ? 0 : WebCore.Helpers.BloqueoPosHelper.MinutosPara(User, operador);
             ViewBag.VendedorBloqueoPOS = operador?.Nombre ?? "";
+            // Token del operador de esta pestana: lo devuelve el desbloqueo si la Session lo perdio (ver DesbloquearPOS).
+            ViewBag.TokenOperadorBloqueoPOS = (user.EsUsuarioProduccion && !requiereOperadorPOS)
+                ? WebCore.Helpers.TokenOperadorPos.Crear(HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(), posInstanceIdNormalizado, operador.Id)
+                : "";
 
             if (requiereOperadorPOS)
             {
@@ -3545,6 +3674,11 @@ namespace WebCore.Controllers
                 // Batch 6 (2026-09-11) solo afecta la fecha de la venta (arriba), no este bypass.
                 bool puedeOperarSinCajaEnCurso = PuedeOperarSinCajaYEditarFecha(operador);
 
+                // Cobro junto con la venta (2026-10-21): la venta va SIEMPRE a cuenta corriente (lo que el cliente
+                // paga se registra aparte como cobro, con la forma de pago elegida) y sin pago mixto en la venta.
+                bool conCobroSaldo = request.CobroSaldo != null;
+                string formaPagoVenta = conCobroSaldo ? Entidades.Venta.formaPagoEnum.CtaCte.ToString() : request.FormaPago;
+
                 var venta = new Entidades.Venta
                 {
                     Persona = persona,
@@ -3553,9 +3687,9 @@ namespace WebCore.Controllers
                     FechaVenta = fechaVentaFinal,
                     TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()),
                     Observaciones = request.Observaciones ?? "",
-                    FormaPago = request.FormaPago,
-                    EnCtaCte = request.FormaPago == Entidades.Venta.formaPagoEnum.CtaCte.ToString(),
-                    PagoMixtoEfectivo = request.EsPagoMixto ? request.Efectivo : 0
+                    FormaPago = formaPagoVenta,
+                    EnCtaCte = formaPagoVenta == Entidades.Venta.formaPagoEnum.CtaCte.ToString(),
+                    PagoMixtoEfectivo = !conCobroSaldo && request.EsPagoMixto ? request.Efectivo : 0
                 };
 
                 if (venta.EnCtaCte && (!venta.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())
@@ -3587,6 +3721,16 @@ namespace WebCore.Controllers
                     .Distinct()
                     .ToList();
 
+                // Cobro junto con la venta: se valida TODO antes de guardar nada (importe, forma, mixto, caja abierta),
+                // asi un cobro mal armado no deja una venta a cta cte sin su cobro.
+                List<Negocio.CobroJuntoVenta.ParteCobro> partesCobro = null;
+                if (conCobroSaldo)
+                {
+                    var errorCobro = ValidarCobroJuntoVenta(request.CobroSaldo, venta, cierreParaFecha, out partesCobro);
+                    if (errorCobro != null)
+                        return Json(new { ok = false, msg = errorCobro });
+                }
+
                 int idVenta = _oVentaN.agregarVenta(venta);
 
                 // Ventas en curso: la venta ya quedo guardada, se marca el borrador como FINALIZADA. Mejor
@@ -3604,6 +3748,14 @@ namespace WebCore.Controllers
                     }
                 }
 
+                if (conCobroSaldo)
+                {
+                    var registrados = RegistrarCobrosJuntoVenta(request.CobroSaldo!, partesCobro!, venta, idVenta, cierreParaFecha!, out string cobroError);
+                    // Nombres explicitos (minuscula): el POS los lee tal cual, sin depender de la politica de nombres del JSON.
+                    var cobros = registrados.Select(c => new { id = c.Id, formaPago = c.FormaPago, importe = c.Importe }).ToList();
+                    return Json(new { ok = true, ventaId = idVenta, cobros, cobroError });
+                }
+
                 return Json(new { ok = true, ventaId = idVenta });
             }
             catch (Exception ex)
@@ -3611,6 +3763,126 @@ namespace WebCore.Controllers
                 Response.StatusCode = 500;
                 return Json(new { ok = false, msg = "Error al finalizar la venta", error = ex.Message });
             }
+        }
+
+        // ===== Cobro junto con la venta (2026-10-21, ver docs/DECISIONS.md "Cobrar el saldo del cliente al
+        // finalizar la venta") =====
+
+        // Resultado de un cobro registrado, tal como lo devuelve FinalizarVenta al POS.
+        private sealed class CobroRegistrado
+        {
+            public int Id { get; set; }
+            public string FormaPago { get; set; }
+            public decimal Importe { get; set; }
+        }
+
+        // Valida el cobro ANTES de guardar la venta y devuelve el mensaje de error (null = todo bien) y las partes a
+        // cobrar. `venta` ya trae sus lineas armadas. Con "Paga todo" el importe es la deuda que quedaria tras esta
+        // venta (saldo actual - importe de la venta); en pago simple se recalcula despues de guardar con el saldo
+        // real (ver RegistrarCobrosJuntoVenta), aca solo sirve para validar que hay deuda.
+        private string ValidarCobroJuntoVenta(CobroSaldoDto cobro, Entidades.Venta venta, Entidades.CierreCaja cajaAbierta,
+            out List<Negocio.CobroJuntoVenta.ParteCobro> partes)
+        {
+            partes = null;
+            int idPersona = venta.Persona.idPersona;
+
+            // El cobro se asienta en la caja del operador (egreso de caja): sin caja abierta REAL no se puede, aunque
+            // el usuario tenga el bypass de "vender sin caja" (ese permiso es para la venta, no para mover plata).
+            if (cajaAbierta == null || cajaAbierta.UsuarioInicio == null)
+                return "Para registrar el cobro necesitás una caja abierta.";
+
+            if (_ctaCteReservada.SaldoOculto(idPersona) && cobro.PagaTodo)
+                return "No se puede cobrar todo el saldo de este cliente: su cuenta corriente es reservada.";
+
+            decimal importe = cobro.Importe;
+            if (cobro.PagaTodo)
+            {
+                decimal saldoActual = _oCtaCteN.obtenerSaldoPersona(idPersona) ?? 0m;
+                decimal importeVenta = venta.LineasVenta != null && venta.LineasVenta.Count > 0
+                    ? Convert.ToDecimal((double)venta.getImporteVenta(venta))
+                    : 0m;
+                importe = Negocio.CobroJuntoVenta.ImportePagaTodo(saldoActual - importeVenta);
+                if (importe <= 0m)
+                    return "El cliente no tiene deuda para cobrar con esta venta.";
+            }
+
+            var resultado = Negocio.CobroJuntoVenta.Partes(importe, cobro.FormaPago, cobro.EsMixto, cobro.Efectivo);
+            if (!resultado.Ok)
+                return resultado.Error;
+
+            partes = resultado.Partes;
+            return null;
+        }
+
+        // Registra los cobros (1, o 2 en pago mixto) DESPUES de guardar la venta, uno por forma de pago, igual que un
+        // cobro de F2 > Cuenta corriente (numero de recibo automatico, egreso de caja del operador). Con "Paga todo" y
+        // un solo cobro el importe se recalcula con el saldo real (ya con la venta asentada); en mixto se usan las
+        // partes ya validadas. Si algo falla NO se deshace la venta (ya esta guardada y a cta cte): se loguea y se
+        // devuelve `cobroError` para que el POS avise y el cajero cobre desde F2. Devuelve lo registrado hasta ahi.
+        private List<CobroRegistrado> RegistrarCobrosJuntoVenta(CobroSaldoDto cobro, List<Negocio.CobroJuntoVenta.ParteCobro> partes,
+            Entidades.Venta venta, int idVenta, Entidades.CierreCaja cajaAbierta, out string cobroError)
+        {
+            cobroError = null;
+            var registrados = new List<CobroRegistrado>();
+
+            try
+            {
+                int idPersona = venta.Persona.idPersona;
+
+                // "Paga todo" simple: el importe sale del saldo real, que ya incluye el Debito de la venta.
+                if (cobro.PagaTodo && !cobro.EsMixto)
+                {
+                    decimal saldoReal = _oCtaCteN.obtenerSaldoPersona(idPersona) ?? 0m;
+                    decimal deuda = Negocio.CobroJuntoVenta.ImportePagaTodo(saldoReal);
+                    if (deuda <= 0m)
+                    {
+                        cobroError = "El cliente ya no tiene deuda: no se registró el cobro.";
+                        return registrados;
+                    }
+                    partes = new List<Negocio.CobroJuntoVenta.ParteCobro> { new Negocio.CobroJuntoVenta.ParteCobro(partes[0].FormaPago, deuda) };
+                }
+
+                DateTime fechaCobro = DateTime.Now;
+                foreach (var parte in partes)
+                {
+                    var pago = new Entidades.Pago
+                    {
+                        Persona = venta.Persona,
+                        Sucursal = venta.Sucursal,
+                        Fecha = fechaCobro,
+                        AProveedor = false,
+                        FormaPago = parte.FormaPago,
+                        Importe = (float)parte.Importe,
+                        Efectivo = 0,
+                        Banco = "",
+                        NroCheque = "",
+                        TitularCheque = "",
+                        ConteoBilletes = string.Empty,
+                        Cheques = new List<Entidades.Cheque>(),
+                        Observaciones = "Cobro junto con la venta #" + idVenta,
+                        NroRecibo = _oCtaCteN.getNroReciboAutomatico(venta.Sucursal.idSucursal),
+                        CreadoPor = _usuarioActual
+                    };
+                    pago.FormaPago_ = (Entidades.Pago.formasPago)Enum.Parse(typeof(Entidades.Pago.formasPago), pago.FormaPago);
+
+                    var (valido, mensaje) = _oCtaCteN.ValidarPago(pago);
+                    if (!valido)
+                    {
+                        cobroError = string.IsNullOrWhiteSpace(mensaje) ? "No se pudo validar el cobro." : mensaje;
+                        return registrados;
+                    }
+
+                    var guardado = _oCtaCteN.addOrEditPago(pago, cajaAbierta, null);
+                    registrados.Add(new CobroRegistrado { Id = guardado.Id, FormaPago = parte.FormaPago, Importe = parte.Importe });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "La venta {IdVenta} se registro en cuenta corriente pero fallo el cobro que se cargaba junto con ella", idVenta);
+                cobroError = "No se pudo registrar el cobro: " + ex.GetBaseException().Message;
+            }
+
+            return registrados;
         }
 
         [HttpPost]
