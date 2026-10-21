@@ -196,6 +196,8 @@ namespace DatosPostgres
                 DesvioEstandar = GetFloat(dr, "desvioestandar"),
                 Creado = dr["creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["creado"]),
                 Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]),
+                ActualizadoPorId = GetInt(dr, "actualizadopor") > 0 ? GetInt(dr, "actualizadopor") : (int?)null,
+                ActualizadoPorNombre = GetString(dr, "actualizadopornombrejoin"),
                 IdAlicuotaIva = GetInt(dr, "idalicuotaiva"),
                 AlicuotaIva = GetFloat(dr, "alicuotaiva"),
                 Pesable = GetBool(dr, "pesable")
@@ -233,10 +235,12 @@ namespace DatosPostgres
                 SELECT
                     c.*,
                     m.idpersona AS marcaidpersona, m.razonsocial AS marcanombrejoin,
-                    cm.idcorte AS cortemaestroidjoin, cm.corte AS cortemaestronombrejoin
+                    cm.idcorte AS cortemaestroidjoin, cm.corte AS cortemaestronombrejoin,
+                    ua.nombre AS actualizadopornombrejoin
                 FROM corte c
                 LEFT JOIN personas m ON c.idmarca = m.idpersona
                 LEFT JOIN corte cm ON c.idcortemaestro = cm.idcorte
+                LEFT JOIN usuarios ua ON c.actualizadopor = ua.id
                 ORDER BY c.codigo ASC;";
 
             return DbPg.Reader(_connectionString, _idEmpresa, sql, MapCorteListado);
@@ -276,10 +280,12 @@ namespace DatosPostgres
                 SELECT
                     c.*,
                     m.idpersona AS marcaidpersona, m.razonsocial AS marcanombrejoin,
-                    cm.idcorte AS cortemaestroidjoin, cm.corte AS cortemaestronombrejoin
+                    cm.idcorte AS cortemaestroidjoin, cm.corte AS cortemaestronombrejoin,
+                    ua.nombre AS actualizadopornombrejoin
                 FROM corte c
                 LEFT JOIN personas m ON c.idmarca = m.idpersona
                 LEFT JOIN corte cm ON c.idcortemaestro = cm.idcorte
+                LEFT JOIN usuarios ua ON c.actualizadopor = ua.id
                 WHERE c.idempresa = @idEmpresa
                 ORDER BY c.codigo ASC;";
 
@@ -305,12 +311,16 @@ namespace DatosPostgres
         {
             if (oCorteE == null) throw new ArgumentNullException(nameof(oCorteE));
 
+            // Cambiar el precio cuenta como modificar el producto: se asienta fecha y usuario (el
+            // modal individual y "Precios por seleccion" pasan por aca). Sin usuario (ej. precio
+            // actualizado al cargar una compra) queda NULL: no se le atribuye a un usuario anterior.
             DbPg.NonQuery(_connectionString, _idEmpresa,
-                "UPDATE corte SET preciokg = @precioKg WHERE idcorte = @idCorte;",
+                "UPDATE corte SET preciokg = @precioKg, actualizado = now(), actualizadopor = @actualizadoPor WHERE idcorte = @idCorte;",
                 p =>
                 {
                     p.AddWithValue("precioKg", oCorteE.precioKg);
                     p.AddWithValue("idCorte", oCorteE.idCorte);
+                    p.AddWithValue("actualizadoPor", oCorteE.ActualizadoPorId.HasValue ? (object)oCorteE.ActualizadoPorId.Value : DBNull.Value);
                 });
         }
 
@@ -345,7 +355,7 @@ namespace DatosPostgres
                         independiente=@independiente, idcortemaestro=@idCorteMaestro, porcentaje=@porcentaje,
                         porcentajehueso=@porcentajeHueso, desvioestandar=@desvioEstandar, promedio=@promedio,
                         puntostock=@puntoStock, idalicuotaiva=@idAlicuotaIva, alicuotaiva=@alicuotaIva,
-                        pesable=@pesable, nivel=@nivel, idmarca=@idMarca, actualizado=now()
+                        pesable=@pesable, nivel=@nivel, idmarca=@idMarca, actualizado=now(), actualizadopor=@actualizadoPor
                     WHERE idcorte=@idCorte;";
 
                 DbPg.NonQuery(_connectionString, _idEmpresa, sqlUpdate, p =>
@@ -370,6 +380,7 @@ namespace DatosPostgres
                     p.AddWithValue("pesable", oCorteE.Pesable);
                     p.AddWithValue("nivel", nivel);
                     p.AddWithValue("idMarca", idMarca > 0 ? (object)idMarca : DBNull.Value);
+                    p.AddWithValue("actualizadoPor", oCorteE.ActualizadoPorId.HasValue ? (object)oCorteE.ActualizadoPorId.Value : DBNull.Value);
                 });
 
                 // Historial write-only (nadie lo lee de vuelta) -- replica el insert real de la

@@ -1,5 +1,20 @@
 # Bitacora de cambios
 
+## 2026-10-21 - Productos: cambiar el precio asienta fecha y usuario de modificación; se muestran en el detalle; el filtro de fechas completa 00:00:00
+
+- **Pedido**: *Modificar precio* y *Precios por selección* no actualizaban la fecha de modificación del producto; mostrar en el detalle (chico) la última fecha y el usuario; en «Actualizado en período», fecha sin hora = 00:00:00.
+- **Causa**: ambos modales llaman a `ProductosController.EditPrecioCorte` → `CortePg.editPrecioCorte`, que solo hacía `UPDATE corte SET preciokg`. No tocaba `corte.actualizado`.
+- **Cambio**: migración `20261021-Alter_corte_add_actualizadopor.sql` (columna nullable `corte.actualizadopor`). `editPrecioCorte` ahora setea `actualizado = now()` y `actualizadopor`; `addOrEditCorte` también guarda el usuario. `Entidades.Corte` suma `ActualizadoPorId/Nombre`; el listado del Index trae el nombre (join `usuarios`). Detalle de cada producto: «Últ. modificación: dd/MM/yyyy HH:mm:ss por X». Filtro: fecha y hora en inputs separados (`date` + `time`), el hidden compuesto queda `yyyy-MM-ddTHH:mm:ss` y la hora vacía se completa con `00:00:00`.
+- **Alcance**: `editPrecioCorte` también lo llaman Compras (precio de la compra) y Elaborados: ahora ellos también actualizan la fecha, con usuario NULL (no se atribuye al usuario anterior).
+- **Orden de deploy**: migración ANTES del código (sin la columna, guardar un precio falla). Solo Postgres; SQL Server no se toca.
+- **Verificado**: `WebCore` compila (con vistas). **Sin verificar**: la migración aplicada y el flujo en el navegador (requiere aplicar la migración en la base y un usuario de prueba).
+
+## 2026-10-21 - Productos: al guardar un precio aparece el aviso «Guardado» con OK
+
+- **Pedido**: al guardar el precio desde *Modificar precio*, avisar con un SweetAlert de éxito con botón OK, aceptable antes de que el modal termine de cerrarse.
+- **Cambio**: en `guardarPrecio` (`Views/Productos/Index.cshtml`), rama de guardado simple: `modal("hide")` y `Swal.fire` de éxito en el acto, sin esperar `hidden.bs.modal`. El modo escáner y «uno por uno» no cambian (siguen su flujo; el lote ya tenía su aviso). Manual: `Productos.Index`.
+- **Verificado**: solo lectura del código. **Sin verificar**: en el navegador (requiere usuario de prueba).
+
 ## 2026-10-21 - Cerrar Caja: «Caja Cierre» e «Importe Retirado» deben ser números
 
 - **Pedido**: validar que los dos campos tengan valores numéricos.

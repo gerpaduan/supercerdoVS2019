@@ -739,3 +739,11 @@ Agrega columnas a `pagos` (`eliminado`, `eliminadopor`, `fechaeliminacion`, `mot
 **Rollback**: redeployar el build anterior con el tag y el `pg_dump`; las columnas y tablas nuevas solo suman. Si ya hay facturas de otros titulares, el build viejo las imprimiria con el CUIT del principal.
 
 **Despues del deploy (a cargo del usuario)**: en cada titular no principal cargar certificado (Certificado ARCA), traer o cargar sus puntos de venta y asignarlo a una sucursal; probar en **homologacion** con dos CUIT (uno RI y otro monotributo) la sugerencia de titular RI, el cambio de titular en el modal, una NC y la reimpresion de una factura vieja.
+
+## Productos: ultima modificacion con usuario (2026-10-21) -- migracion ANTES del codigo
+
+Columna en Postgres **y** en SQL Server (en SQL Server solo para WebCore: el WinForms no la usa ni la escribe). Ver `docs/DECISIONS.md` «Productos: cambiar el precio cuenta como modificar el producto». Estado al 2026-10-21: aplicada en Postgres local y en SQL Server de Servidor SM y San Lorenzo (`Datos/DB-Procedures/20261021-Alter_Corte_add_ActualizadoPor.sql`); **pendiente en la VPS luden y en la VM Carnisys (Postgres)**.
+
+1. **Migracion**: `DatosPostgres/DB-Migrations/20261021-Alter_corte_add_actualizadopor.sql`, como `carnisys_admin` (agrega `corte.actualizadopor integer NULL`; aditiva e idempotente; una sola corrida cubre a todas las empresas). Aplicar en dev local y en la base de produccion.
+2. **Deploy de codigo**: mismos pasos que el resto de esta guia. **Sin la columna, guardar un precio falla** (tambien desde Compras y Elaborados).
+3. **Rollback**: el build anterior ignora la columna; no hace falta revertir el esquema.

@@ -26,6 +26,16 @@
     var filtroCodigoHastaActual = Context.Request.Query["codigoHasta"].ToString();
     var filtroFechaDesdeActual = Context.Request.Query["fechaDesde"].ToString();
     var filtroFechaHastaActual = Context.Request.Query["fechaHasta"].ToString();
+
+    // Filtro "Familia de producto": opciones del selector y valores actuales (vienen del controller).
+    var productosFamilia = ViewBag.ProductosFamilia as List<SelectListItem> ?? new List<SelectListItem>();
+    int familiaIdActual = ViewBag.FamiliaId != null ? (int)ViewBag.FamiliaId : 0;
+    // Sin producto elegido, "Hijos" arranca tildado (el uso mas comun); con producto elegido se respeta lo que pidio la URL.
+    bool familiaHijosActual = familiaIdActual > 0 ? (bool)ViewBag.FamiliaHijos : true;
+    bool familiaPadresActual = familiaIdActual > 0 && (bool)ViewBag.FamiliaPadres;
+    var familiaTextoActual = familiaIdActual > 0
+        ? (productosFamilia.FirstOrDefault(o => o.Value == familiaIdActual.ToString())?.Text ?? "")
+        : "";
 }
 
 <div class="container-fluid productos-wrap">
@@ -228,12 +238,49 @@
 
                 <div class="col-lg-4 col-md-6 mb-2">
                     <label class="mb-1 font-weight-bold">Actualizado en período</label>
-                    <div class="d-flex align-items-center">
-                        <input type="datetime-local" step="1" class="form-control" id="fFechaDesde" value="@filtroFechaDesdeActual">
-                        <span class="px-2 text-muted font-weight-bold">/</span>
-                        <input type="datetime-local" step="1" class="form-control" id="fFechaHasta" value="@filtroFechaHastaActual">
+                    @* Fecha y hora van en inputs separados (type=date + type=time) porque un datetime-local con la hora sin
+                       completar entrega value="" y la fecha elegida se perdia. fFechaDesde/fFechaHasta son hidden con el
+                       valor compuesto "yyyy-MM-ddTHH:mm:ss" (lo que lee recargarConFiltros); si se elige fecha sin hora,
+                       la hora queda 00:00:00. *@
+                    <input type="hidden" id="fFechaDesde" value="@filtroFechaDesdeActual">
+                    <input type="hidden" id="fFechaHasta" value="@filtroFechaHastaActual">
+                    <div class="d-flex align-items-center mb-1">
+                        <span class="text-muted small mr-2" style="width:3rem;">Desde</span>
+                        <input type="date" class="form-control" id="fFechaDesdeD" aria-label="Actualizado desde: fecha">
+                        <input type="time" step="1" class="form-control ml-1" id="fFechaDesdeH" aria-label="Actualizado desde: hora">
                     </div>
-                    <small class="text-muted">Toma la fecha de modificación o, si no existe, la de creación.</small>
+                    <div class="d-flex align-items-center">
+                        <span class="text-muted small mr-2" style="width:3rem;">Hasta</span>
+                        <input type="date" class="form-control" id="fFechaHastaD" aria-label="Actualizado hasta: fecha">
+                        <input type="time" step="1" class="form-control ml-1" id="fFechaHastaH" aria-label="Actualizado hasta: hora">
+                    </div>
+                    <small class="text-muted">Toma la fecha de modificación (incluye cambios de precio) o, si no existe, la de creación. Sin hora, se toma 00:00:00.</small>
+                </div>
+
+                @* Familia de producto (2026-10-21): el producto elegido + su cadena de cortes maestros (idcortemaestro,
+                   incluye presentaciones). Filtro de servidor: se aplica con "Aplicar". Ver docs/DECISIONS.md. *@
+                <div class="col-lg-5 col-md-12 mb-2">
+                    <label class="mb-1 font-weight-bold" for="fFamiliaTexto">Familia de producto</label>
+                    <input type="text" id="fFamiliaTexto" class="form-control" list="dlFamiliaProductos" autocomplete="off"
+                           placeholder="Escribí código o nombre y elegí el producto" value="@familiaTextoActual">
+                    <input type="hidden" id="fFamiliaId" value="@(familiaIdActual > 0 ? familiaIdActual.ToString() : "")">
+                    <datalist id="dlFamiliaProductos">
+                        @foreach (var opcion in productosFamilia)
+                        {
+                            <option value="@opcion.Text" data-id="@opcion.Value"></option>
+                        }
+                    </datalist>
+                    <div class="mt-1">
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" class="custom-control-input" id="fFamiliaHijos" @(familiaHijosActual ? "checked" : "")>
+                            <label class="custom-control-label" for="fFamiliaHijos">Hijos, nietos…</label>
+                        </div>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" class="custom-control-input" id="fFamiliaPadres" @(familiaPadresActual ? "checked" : "")>
+                            <label class="custom-control-label" for="fFamiliaPadres">Padres, abuelos…</label>
+                        </div>
+                    </div>
+                    <small class="text-muted">Muestra el producto elegido y su cadena de cortes maestros (incluye presentaciones).</small>
                 </div>
 
                 <div class="col-12 mt-2">
@@ -559,7 +606,16 @@
 
                                         <div class="mt-2 text-muted small">
                                             ID: <b>@item.idCorte</b>
-                                            @* Si tenés CorteMaestro / independiente / etc, lo agregamos acá *@
+                                            @* Ultima modificacion (edicion del producto o cambio de precio): corte.actualizado + corte.actualizadopor.
+                                               Sin fecha = nunca modificado; sin usuario = se modifico por un proceso sin usuario (ej. una compra). *@
+                                            <span class="ml-3">
+                                                Últ. modificación:
+                                                <b>@(item.Actualizado.HasValue ? item.Actualizado.Value.ToString("dd/MM/yyyy HH:mm:ss") : "-")</b>
+                                                @if (item.Actualizado.HasValue && !string.IsNullOrWhiteSpace(item.ActualizadoPorNombre))
+                                                {
+                                                    <text> por <b>@item.ActualizadoPorNombre</b></text>
+                                                }
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -1679,7 +1735,31 @@
     const filtroCodigoHasta = document.getElementById("fCodigoHasta");
     const filtroFechaDesde = document.getElementById("fFechaDesde");
     const filtroFechaHasta = document.getElementById("fFechaHasta");
+    const filtroFechaDesdeD = document.getElementById("fFechaDesdeD");
+    const filtroFechaDesdeH = document.getElementById("fFechaDesdeH");
+    const filtroFechaHastaD = document.getElementById("fFechaHastaD");
+    const filtroFechaHastaH = document.getElementById("fFechaHastaH");
+    const filtroFamiliaTexto = document.getElementById("fFamiliaTexto");
+    const filtroFamiliaId = document.getElementById("fFamiliaId");
+    const filtroFamiliaHijos = document.getElementById("fFamiliaHijos");
+    const filtroFamiliaPadres = document.getElementById("fFamiliaPadres");
     let filtrosPendientesServidor = false;
+
+    // Familia de producto: deja en el campo oculto el id del producto que coincide con lo escrito
+    // ("codigo - nombre" tal cual lo ofrece el datalist, o solo el codigo). Sin coincidencia exacta lo vacia,
+    // asi un texto a medio escribir nunca filtra por un producto equivocado.
+    function resolverFamiliaId() {
+        const texto = (filtroFamiliaTexto?.value || "").trim().toLowerCase();
+        let id = "";
+        if (texto) {
+            const opciones = Array.from(document.querySelectorAll("#dlFamiliaProductos option"));
+            const exacta = opciones.find(o => o.value.trim().toLowerCase() === texto);
+            const porCodigo = exacta || opciones.find(o => o.value.split(" - ")[0].trim() === texto);
+            id = porCodigo ? (porCodigo.dataset.id || "") : "";
+        }
+        if (filtroFamiliaId) filtroFamiliaId.value = id;
+        return id;
+    }
 
     function setMensajeFiltrosPendientes(show) {
         filtrosPendientesServidor = show;
@@ -1762,6 +1842,19 @@
         const codigoHasta = (filtroCodigoHasta?.value || "").trim();
         const fechaDesde = (filtroFechaDesde?.value || "").trim();
         const fechaHasta = (filtroFechaHasta?.value || "").trim();
+        const familiaId = resolverFamiliaId();
+
+        // Con un producto escrito que no esta en la lista no se recarga: se avisa en vez de ignorar el filtro.
+        if ((filtroFamiliaTexto?.value || "").trim() && !familiaId) {
+            alert("Elegí un producto de la lista en \"Familia de producto\" (código - nombre).");
+            filtroFamiliaTexto.focus();
+            return;
+        }
+        if (familiaId) {
+            nuevaUrl.searchParams.set("familiaId", familiaId);
+            nuevaUrl.searchParams.set("familiaHijos", filtroFamiliaHijos?.checked ? "true" : "false");
+            nuevaUrl.searchParams.set("familiaPadres", filtroFamiliaPadres?.checked ? "true" : "false");
+        }
 
         if (tipo) nuevaUrl.searchParams.set("tipo", tipo);
         if (marcaId) nuevaUrl.searchParams.set("marcaId", marcaId);
@@ -1784,10 +1877,12 @@
     }
 
     function limpiarFiltrosAvanzados() {
-        ["fTipo","fMarca","fProveedor","fCodigoDesde","fCodigoHasta","fFechaDesde","fFechaHasta"].forEach(id => {
+        ["fTipo","fMarca","fProveedor","fCodigoDesde","fCodigoHasta","fFechaDesde","fFechaHasta","fFechaDesdeD","fFechaDesdeH","fFechaHastaD","fFechaHastaH","fFamiliaTexto","fFamiliaId"].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = "";
         });
+        if (filtroFamiliaHijos) filtroFamiliaHijos.checked = true;
+        if (filtroFamiliaPadres) filtroFamiliaPadres.checked = false;
 
         const url = new URL(window.location.href);
         const tieneFiltrosServidorAplicados = !!(url.searchParams.get("proveedorId")
@@ -1796,7 +1891,8 @@
             || url.searchParams.get("codigoDesde")
             || url.searchParams.get("codigoHasta")
             || url.searchParams.get("fechaDesde")
-            || url.searchParams.get("fechaHasta"));
+            || url.searchParams.get("fechaHasta")
+            || url.searchParams.get("familiaId"));
 
         setMensajeFiltrosPendientes(false);
 
@@ -1835,13 +1931,64 @@
         });
     });
 
+    // Familia de producto: filtro de servidor, cualquier cambio queda pendiente hasta "Aplicar".
+    filtroFamiliaTexto?.addEventListener("input", function () {
+        resolverFamiliaId();
+        setMensajeFiltrosPendientes(true);
+    });
+    [filtroFamiliaHijos, filtroFamiliaPadres].forEach(el => {
+        el?.addEventListener("change", function () {
+            setMensajeFiltrosPendientes(true);
+        });
+    });
+
     filtroProveedor?.addEventListener("change", function () {
         setMensajeFiltrosPendientes(true);
     });
 
-    [filtroFechaDesde, filtroFechaHasta].forEach(el => {
-        el?.addEventListener("change", function () {
-            setMensajeFiltrosPendientes(true);
+    // "Actualizado en periodo": fecha + hora en inputs separados; el hidden (fFechaDesde/fFechaHasta) lleva el valor
+    // compuesto "yyyy-MM-ddTHH:mm:ss". Fecha sin hora => 00:00:00 (se muestra en el input de hora).
+    const HORA_POR_DEFECTO_FILTRO_FECHA = "00:00:00";
+
+    function normalizarHoraFiltro(hora) {
+        const h = (hora || "").trim();
+        if (!h) return "";
+        return h.length === 5 ? h + ":00" : h; // el input time devuelve HH:mm si los segundos son 0
+    }
+
+    function componerFechaFiltro(inputFecha, inputHora, inputOculto) {
+        const fecha = (inputFecha?.value || "").trim();
+        if (!fecha) {
+            if (inputHora) inputHora.value = "";
+            inputOculto.value = "";
+            return;
+        }
+        let hora = normalizarHoraFiltro(inputHora?.value);
+        if (!hora) {
+            hora = HORA_POR_DEFECTO_FILTRO_FECHA;
+            if (inputHora) inputHora.value = hora;
+        }
+        inputOculto.value = fecha + "T" + hora;
+    }
+
+    function cargarFechaFiltroDesdeValor(inputOculto, inputFecha, inputHora) {
+        const valor = (inputOculto?.value || "").trim();
+        if (!valor) return;
+        const partes = valor.split("T");
+        if (inputFecha) inputFecha.value = partes[0] || "";
+        if (inputHora) inputHora.value = normalizarHoraFiltro(partes[1]) || HORA_POR_DEFECTO_FILTRO_FECHA;
+    }
+
+    [
+        [filtroFechaDesdeD, filtroFechaDesdeH, filtroFechaDesde],
+        [filtroFechaHastaD, filtroFechaHastaH, filtroFechaHasta]
+    ].forEach(([inputFecha, inputHora, inputOculto]) => {
+        cargarFechaFiltroDesdeValor(inputOculto, inputFecha, inputHora);
+        [inputFecha, inputHora].forEach(el => {
+            el?.addEventListener("change", function () {
+                componerFechaFiltro(inputFecha, inputHora, inputOculto);
+                setMensajeFiltrosPendientes(true);
+            });
         });
     });
 
@@ -2657,7 +2804,15 @@
                     if (MODO_PRECIOS) precioModalState.idsGuardadosUnoPorUno.push(Number(resp.id));
                     avanzarSiguienteProductoLote();
                 } else {
+                    // Se cierra el modal y se avisa en el acto, sin esperar a que termine su animacion:
+                    // el usuario puede aceptar el aviso (OK) antes de que el modal termine de cerrarse.
                     $("#modalPrecio").modal("hide");
+                    Swal.fire({
+                        icon: "success",
+                        title: "Guardado",
+                        text: "El precio se guardó correctamente.",
+                        confirmButtonText: "OK"
+                    });
                 }
             })
             .fail(function () {

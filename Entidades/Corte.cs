@@ -60,6 +60,11 @@ namespace Entidades
             set { actualizado = value; }
         }
 
+        // Usuario de la ultima modificacion (id y nombre para mostrar). Null/vacio = no se sabe.
+        // Solo lo completa la implementacion Postgres; en SQL Server queda sin valor.
+        public int? ActualizadoPorId { get; set; }
+        public string ActualizadoPorNombre { get; set; }
+
 
         public int IdCorte
         {

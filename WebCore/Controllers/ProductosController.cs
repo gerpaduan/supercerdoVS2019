@@ -104,12 +104,33 @@ namespace WebCore.Controllers
             long? codigoDesde = null,
             long? codigoHasta = null,
             DateTime? fechaDesde = null,
-            DateTime? fechaHasta = null)
+            DateTime? fechaHasta = null,
+            int familiaId = 0,
+            bool familiaHijos = false,
+            bool familiaPadres = false)
         {
             int idEmpresaSesion = _empresa != null ? _empresa.IdEmpresa : 0;
-            var productos = (_oCorteN.ObtenerCortesListado(idEmpresaSesion, SucursalId) ?? new List<Entidades.Corte>())
-                .Where(x => x != null && x.Codigo >= 0)
+            var listadoCompleto = (_oCorteN.ObtenerCortesListado(idEmpresaSesion, SucursalId) ?? new List<Entidades.Corte>())
+                .Where(x => x != null)
                 .ToList();
+            var productos = listadoCompleto
+                .Where(x => x.Codigo >= 0)
+                .ToList();
+
+            // Filtro "Familia de producto" (2026-10-21): el elegido mas sus hijos/nietos... y/o padres/abuelos...
+            // La cadena se arma sobre el listado completo de la empresa (antes de los demas filtros) para que un
+            // eslabon intermedio que otro filtro dejaria afuera no corte la cadena.
+            if (familiaId > 0)
+            {
+                var maestroPorCorte = new Dictionary<int, int>();
+                foreach (var corte in listadoCompleto)
+                    maestroPorCorte[corte.IdCorte] = corte.CorteMaestro != null ? corte.CorteMaestro.IdCorte : 0;
+
+                var idsFamilia = WebCore.Services.JerarquiaProductos.ObtenerFamilia(maestroPorCorte, familiaId, familiaHijos, familiaPadres);
+                productos = productos
+                    .Where(x => idsFamilia.Contains(x.IdCorte))
+                    .ToList();
+            }
 
             if (!string.IsNullOrWhiteSpace(tipo))
             {
@@ -173,6 +194,14 @@ namespace WebCore.Controllers
             ViewBag.Tipos = ObtenerListaTipos();
             ViewBag.Marcas = ObtenerListaMarcas();
             ViewBag.Proveedores = ObtenerListaProveedores();
+            // Opciones del selector de "Familia de producto": todos los productos, no solo los del filtro actual.
+            ViewBag.ProductosFamilia = listadoCompleto
+                .Where(x => x.Codigo >= 0)
+                .Select(x => new SelectListItem { Value = x.IdCorte.ToString(), Text = x.Codigo + " - " + x.CorteDesc })
+                .ToList();
+            ViewBag.FamiliaId = familiaId;
+            ViewBag.FamiliaHijos = familiaHijos;
+            ViewBag.FamiliaPadres = familiaPadres;
             // Port de Web/Controllers/ProductosController.cs:125-127 (2026-09-09, Batch B, ver
             // docs/DECISIONS.md "Batch B: permisos reales + operador de produccion"). "Eliminar"
             // reusa el mismo permiso NuevoCorte que Editar -- no hay un permiso separado en
@@ -953,6 +982,8 @@ namespace WebCore.Controllers
                 e.Creado = DateTime.Now;
 
             e.Actualizado = DateTime.Now;
+            // Usuario de la modificacion: se muestra en el detalle del Index (corte.actualizadopor).
+            e.ActualizadoPorId = _sesion.UsuarioActual != null && _sesion.UsuarioActual.Id > 0 ? _sesion.UsuarioActual.Id : (int?)null;
         }
 
         private int GetIdPersonaReflection(object persona)
@@ -1837,6 +1868,8 @@ namespace WebCore.Controllers
             Entidades.Corte model = new Entidades.Corte();
             model.idCorte = IdCorte;
             model.precioKg = precioDecimal;
+            // El repositorio asienta fecha (actualizado) y este usuario como ultima modificacion del producto.
+            model.ActualizadoPorId = _sesion.UsuarioActual != null && _sesion.UsuarioActual.Id > 0 ? _sesion.UsuarioActual.Id : (int?)null;
             _oCorteN.editPrecioCorte(model);
 
             return Json(new

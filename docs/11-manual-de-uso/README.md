@@ -51,7 +51,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-14 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-13 |
 | pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-10-20 |
-| pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-10-16 |
+| pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-10-21 |
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-16 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-13 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |

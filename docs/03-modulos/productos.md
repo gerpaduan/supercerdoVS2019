@@ -43,6 +43,15 @@ El precio de un producto es un solo campo (`Corte.PrecioKg`, por kg o por unidad
 - **Por seleccion (desde 2026-10-16)**: boton "Precios por seleccion" (Alt+P) -> `Productos/Index?modo=precios`. Misma grilla con columna de tildes que Etiquetas (`.chk-seleccion`); las acciones "Aplicar % a los tildados" y "Uno por uno" operan **solo sobre las filas visibles y tildadas**. El cambio vive en `getVisiblePriceRows()` (con `MODO_PRECIOS` solo devuelve las tildadas); la lista preliminar, el guardado y el recorrido son los mismos del modo normal. Lo guardado se destilda. Sin el permiso, `?modo=precios` cae a la grilla normal. Decision: `docs/DECISIONS.md` (2026-10-16).
 - **Limites conocidos**: sin transaccion (un POST por producto), sin historial de quien cambio el precio ni del precio anterior (`docs/10-migracion-aspnet-core/gaps.md`), la seleccion se pierde al recargar la pagina y `EditPrecioCorte` no valida precio > 0 en el servidor.
 
+## Filtro "Familia de producto" (WebCore, desde 2026-10-21)
+
+En `Productos/Index` > Filtros avanzados: elige un producto y muestra el producto + sus descendientes (hijos, nietos…) y/o ascendientes (padre, abuelo…).
+
+- **Relacion usada**: `corte.idcortemaestro` (`Entidades.Corte.CorteMaestro`); incluye presentaciones (cajas/packs), que usan el mismo campo.
+- **Calculo**: `WebCore/Services/JerarquiaProductos.ObtenerFamilia` (funcion pura, sin tope de profundidad, tolera ciclos; tests en `WebCore.Tests/JerarquiaProductosTests.cs`). El arbol se arma en `ProductosController.Index` con el listado completo de la empresa **antes** de los demas filtros, para que un eslabon intermedio filtrado no corte la cadena.
+- **Parametros de la URL**: `familiaId`, `familiaHijos`, `familiaPadres` (filtro de servidor: se aplica con "Aplicar", como Proveedor y Fechas). El selector es un `<datalist>` con todos los productos (`ViewBag.ProductosFamilia`).
+- **Limite conocido**: el selector lista todos los productos de la empresa en el HTML (mismo orden de magnitud que la grilla, que ya los trae todos).
+
 ## Dependencias
 
 - `Web/Models/CorteUpsertVM.cs`, `CatalogoGlobalProductosVm.cs`, `ProductoGlobalSeleccionVm.cs`, `ImportarProductosGlobalesRequest.cs`.
