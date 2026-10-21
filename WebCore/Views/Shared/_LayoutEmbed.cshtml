@@ -5,7 +5,7 @@
    (Bootstrap 5 + shim BS4, Font Awesome, custom.css/ui-refresh.css, jQuery, SweetAlert2, scanner,
    buscador de productos y la barra de scroll flotante de tablas anchas) y expone la seccion
    "Scripts". Todo lo demas de _Layout (sidebar, modales de sucursal/dispositivo, calculadora de
-   billetes, tema, proteccion de salida) NO se carga a proposito. *@
+   billetes, boton de tema, proteccion de salida) NO se carga a proposito; el tema elegido en la pantalla principal si se sigue en vivo. *@
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -14,7 +14,8 @@
     <title>@ViewData["Title"] - CarniSys</title>
     <script type="importmap"></script>
 
-    @* Mismo preload de modo oscuro que _Layout: el iframe respeta el tema elegido por el usuario. *@
+    @* Mismo preload de modo oscuro que _Layout: el iframe respeta el tema elegido por el usuario al cargar (el cambio en vivo lo sigue
+       el script del comienzo del <body>). *@
     <script>
         (function () {
             try {
@@ -35,6 +36,32 @@
     <link rel="stylesheet" href="~/WebCore.styles.css" asp-append-version="true" />
 </head>
 <body class="app-shell app-embed">
+    @* Tema en vivo: el preload del <head> solo mira el tema al cargar. Dentro de un iframe (ej. el stock del destino en Movimientos/Editar)
+       o en una ventana independiente, si el usuario cambia claro/oscuro en la pantalla principal, esta quedaba con el tema viejo hasta
+       recargarla. El evento "storage" llega a los demas documentos del mismo origen cuando _Layout guarda el tema: se reaplica aca.
+       Mismas claves que _Layout ("carnisys-theme" y la vieja "darkMode") y la clase tambien en <body>, como hace _Layout. *@
+    <script>
+        (function () {
+            function temaGuardado() {
+                try {
+                    return localStorage.getItem("carnisys-theme") || (localStorage.getItem("darkMode") === "true" ? "dark" : "light");
+                } catch (e) {
+                    return document.documentElement.classList.contains("dark-mode") ? "dark" : "light"; // sin acceso al storage: se deja el tema actual
+                }
+            }
+
+            function aplicarTema() {
+                var oscuro = temaGuardado() === "dark";
+                document.documentElement.classList.toggle("dark-mode", oscuro);
+                document.body.classList.toggle("dark-mode", oscuro);
+            }
+
+            aplicarTema();
+            window.addEventListener("storage", function (e) {
+                if (e.key === null || e.key === "carnisys-theme" || e.key === "darkMode") aplicarTema();
+            });
+        })();
+    </script>
     <div class="container-fluid pt-2 pb-3">
         @RenderBody()
     </div>

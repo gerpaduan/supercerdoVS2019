@@ -15,6 +15,13 @@
 - **Deuda**: F6 → «Mis actividades» sigue usando el `idCierre` de la carga; `DetalleVenta`/cambiar forma de pago siguen evaluando con la cuenta compartida o la sucursal del operador (detalle en `docs/DECISIONS.md`).
 - **Manual**: `pantallas/Ventas.POS.md`, sección «Mis ventas (F6)».
 
+## 2026-10-20 - Pantallas embebidas (stock del destino, ventanas independientes): siguen el modo oscuro en vivo
+
+- **Pedido**: en modo oscuro el panel «Stock destino» del movimiento quedaba claro.
+- **Cambio**: `_LayoutEmbed.cshtml` leía el tema solo al cargar; ahora lo reaplica cuando cambia en la pantalla principal (evento `storage`) y marca también `<body>`, como `_Layout`. Vale para todo lo embebido (iframes y ventanas `?popup=true`).
+- **Contraste en oscuro** (`ui-refresh.css`, global): el rojo de `.text-danger` (stock negativo) y el gris de los botones outline (ej. «Filtros», «Volver») tienen ahora variante oscura legible; en claro no cambian.
+- **Verificado en el navegador** (usuario de prueba descartable, ya borrado): el panel pasa a oscuro y vuelve a claro sin recargar al tocar el botón de tema; contrastes medidos (7:1 y 10:1). **Sin verificar**: la ventana independiente real.
+
 ## 2026-10-20 - Stock del destino en el movimiento: período a mano con «Actualizar sugerencias», «Cambiar período» y el «+» junto a Kgs.
 
 - **Pedido**: que el «+» de agregar producto quede seguido de Kgs. también sin el teclado; que el bloque del sugerido se abra con un botón; y que cambiar la fecha no recalcule solo, sino que avise que hay que actualizar.
