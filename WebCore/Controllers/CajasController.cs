@@ -147,14 +147,23 @@ namespace WebCore.Controllers
             }
 
             var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
-            bool tienePermiso = validado != null && _oUsuarioN.tienePermiso(validado, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1);
-            if (validado == null || !validado.Activo || !tienePermiso)
+            if (validado == null || !validado.Activo)
             {
                 return Json(WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
             }
 
+            // Credenciales correctas pero sin Caja.CerrarCaja: se dice por que (el usuario de la pantalla ya
+            // probo ser esa persona con su clave, asi que no se filtra nada nuevo). Sigue contando como intento
+            // fallido para que la pantalla no sirva para probar claves de usuarios sin permiso sin limite.
+            if (!_oUsuarioN.tienePermiso(validado, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1))
+            {
+                string nombre = string.IsNullOrWhiteSpace(validado.Nombre) ? "Ese usuario" : validado.Nombre;
+                return Json(WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId)
+                    .ComoRespuestaJson(nombre + " no tiene permiso para cerrar caja. Elegí a un usuario que lo tenga."));
+            }
+
             WebCore.Helpers.CierreCajaStepUpRateLimiter.Reset(sessionId);
-            WebCore.Helpers.PermisosHelper.RegistrarElevacionCierre(HttpContext.Session, validado, TimeSpan.FromMinutes(5));
+            WebCore.Helpers.PermisosHelper.RegistrarElevacionCierre(HttpContext.Session, validado, WebCore.Helpers.PermisosHelper.DuracionElevacionCierre);
             return Json(new { ok = true, nombre = validado.Nombre });
         }
 
@@ -297,6 +306,15 @@ namespace WebCore.Controllers
             if (modoModificacion && !_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Caja.CierresDeCaja, DateTime.Today, -1))
                 return Json(new { ok = false, error = "No tiene permisos para modificar un cierre de caja histórico." });
 
+            // Los dos importes que carga el encargado tienen que ser numeros: ParseFloat devuelve 0 ante vacio o
+            // basura y el cierre se guardaba con $0 sin avisar. Se valida antes del aviso de ventas en curso para
+            // no pedir esa confirmacion y despues rechazar.
+            if (!WebCore.Helpers.ImporteCierreParser.TryParse(CajaCierre, out float cajaCierre))
+                return Json(new { ok = false, error = "Caja Cierre tiene que ser un número (por ejemplo 1500 o 1500,50)." });
+
+            if (!WebCore.Helpers.ImporteCierreParser.TryParse(ImporteRetirado, out float importeRetirado))
+                return Json(new { ok = false, error = "Importe Retirado tiene que ser un número (si no se retiró nada, poné 0)." });
+
             Entidades.CierreCaja model = _oCierreN.findByIdOrLast(
                 new CierreCaja { Id = Id },
                 Entidades.CierreCaja.tipoBusqueda.FindById,
@@ -347,9 +365,9 @@ namespace WebCore.Controllers
                 }
             }
 
-            model.CajaCierre = ParseFloat(CajaCierre);
+            model.CajaCierre = cajaCierre;
             model.Diferencia = ParseFloat(Diferencia);
-            model.ImporteRetirado = ParseFloat(ImporteRetirado);
+            model.ImporteRetirado = importeRetirado;
             model.CajaInicioSiguiente = ParseFloat(CajaInicioSiguiente);
             model.UsuarioCierre = usuarioAutorizado;
             model.FechaHoraCierre = modoModificacion

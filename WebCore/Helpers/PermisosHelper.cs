@@ -184,6 +184,10 @@ namespace WebCore.Helpers
         // observable), documentada explicitamente en vez de asumida en silencio.
         private const string ClaveSessionElevacionCierre = "CierreCajaElevacion";
 
+        // Cuanto vale la autorizacion de Cierre de Caja desde que se valida la clave. Fuente unica: la usa el
+        // controller al registrar la elevacion y la vista (CajasAbiertas.cshtml) para el contador regresivo.
+        public static readonly TimeSpan DuracionElevacionCierre = TimeSpan.FromMinutes(5);
+
         private sealed class ElevacionCierre
         {
             public Entidades.Usuario Usuario { get; set; }

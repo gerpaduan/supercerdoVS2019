@@ -1,10 +1,29 @@
 # Bitacora de cambios
 
-## 2026-10-21 (la mas reciente) - Inputs numericos: las flechas del teclado (arriba/abajo) ya no suben ni bajan el valor
+## 2026-10-21 (la mas reciente) - Cerrar Caja: «Caja Cierre» e «Importe Retirado» deben ser números
+
+- **Pedido**: validar que los dos campos tengan valores numéricos.
+- **Cambio**: antes un campo vacío o con texto se guardaba como `$0` sin avisar (`ParseFloat` devolvía 0). Ahora `guardarCierreCaja` (`CajasAbiertas.cshtml`) valida en el navegador (`validarImportesCierre`, acepta `1234.5`, `1234,5` y `1.234,56`) y `CajasController.CerrarCaja` valida de nuevo con `Helpers/ImporteCierreParser.cs` (rechaza vacío, texto, `NaN`, `Infinity`), antes del aviso de ventas en curso. **Importe Retirado ya no puede quedar vacío: si no se retiró nada hay que poner 0.** Manual: `Cajas.CajasAbiertas`.
+- **Verificado**: `WebCore` compila; `WebCore.Tests` 75/75 (`ImporteCierreParserTests`, nuevos); el parser del navegador, probado aparte con 14 entradas. **Sin verificar**: en el navegador con el modal real (requiere usuario de prueba).
+
+## 2026-10-21 - Inputs numericos: las flechas del teclado (arriba/abajo) ya no suben ni bajan el valor
 
 - **Pedido** (captura de Movimientos, «Agregar producto»): en la carga de producto y cantidades el numero solo se escribe.
 - **Cambio**: `WebCore/wwwroot/Scripts/app/sin-rueda-numerica.js` cancela el `keydown` de ArrowUp/ArrowDown en todo `input[type=number]` (global, los 3 layouts ya lo cargan; no corta la propagacion, asi que el autocompletar sigue recibiendo las flechas). Las flechitas visuales y la ruedita ya estaban ocultas/bloqueadas desde 2026-10-05. Detalle y alcance: `docs/DECISIONS.md` (2026-10-21).
 - **Verificado**: en el navegador con los archivos reales: las flechas dejan el valor igual (sin el script, 5 → 8) y tipear funciona. **Sin verificar**: en las pantallas con sesion iniciada. Manual de uso: sin cambios (no hay pantalla ni configuracion afectada que lo documente).
+
+## 2026-10-21 - Autorizar Cierre de Caja: mensaje claro cuando la clave es correcta pero el usuario no tiene el permiso
+
+- **Pedido**: con usuario y clave correctos pero sin `Caja.CerrarCaja`, el selector decía «Usuario o contraseña incorrectos.».
+- **Cambio**: `CajasController.AutorizarAccionCierre` separa ese caso y responde «[Nombre] no tiene permiso para cerrar caja. Elegí a un usuario que lo tenga.» (sigue contando como intento fallido y con el aviso de intentos restantes). Usuario o clave mal, o usuario inactivo, mantienen el mensaje genérico. Manual: `Cajas.CajasAbiertas`.
+- **Verificado**: `WebCore` compila. **Sin verificar**: en el navegador con un usuario sin el permiso.
+
+## 2026-10-21 - Cajas abiertas: contador de la autorización de Cierre de Caja con «Extender» y «Finalizar»
+
+- **Pedido**: un contador regresivo con botones para terminar la autorización del operador del cierre o extenderla.
+- **Cambio**: `CajasAbiertas.cshtml` muestra `#cierreCajaAutorizacion` (nombre, tiempo restante, **Extender** = vuelve a pedir usuario y clave, **Finalizar** = `RevocarAutorizacionCierre`); la vigencia sale de `PermisosHelper.DuracionElevacionCierre` (5 min), que antes estaba duplicada en C# y JS. Decisión: `docs/DECISIONS.md` (2026-10-21).
+- **Verificado**: `WebCore` compila (0 errores), `WebCore.Tests` 57/57; en el navegador con un usuario admin de prueba descartable (se forzó `CajasStepUpTienePermisoDirecto = false` para que pida la autorización): el contador arranca en 5:00, pasa a rojo en el último minuto y desaparece solo al llegar a 0; **Extender** abre el selector, con clave correcta vuelve a 5:00 y al cancelar el contador sigue; **Finalizar** hace `POST RevocarAutorizacionCierre` (200), oculta el contador y la siguiente acción vuelve a pedir la clave; si el pedido falla avisa y la autorización sigue; sin desborde en 375 px. Usuario y su fila de `loginubicacionlog` borrados. **Sin verificar**: con un usuario real sin el permiso `Caja.CerrarCaja` (los 403 del servidor), ni la cuenta de producción.
+- **Manual**: `Cajas.CajasAbiertas` (sección «Si no tenés el permiso de cerrar caja»).
 
 ## 2026-10-20 - Autorizaciones con clave (POS, Cierre de Caja, Ver fórmula): 5 intentos y aviso «Te quedan N intentos» desde el 3.er error
 

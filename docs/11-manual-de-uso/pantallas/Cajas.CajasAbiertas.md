@@ -5,7 +5,7 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-10-20
+revisada: 2026-10-21
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
@@ -14,8 +14,18 @@ Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consulta
 1. Elegí sucursal y buscá al cajero si hace falta.
 2. En la caja del cajero tocá **Cerrar**. Se abre **Cerrar Caja** con la caja inicial, las ventas y los egresos hasta ese momento.
 3. Cargá **Caja Cierre** (el efectivo que hay en la caja) e **Importe Retirado**. Se calculan solos la **Diferencia** (verde hasta ±100, amarillo hasta ±300, rojo más allá) y **Queda en Caja**.
+   **Los dos campos tienen que tener un número** (si no se retiró nada, poné `0` en Importe Retirado). Si alguno está vacío o no es un número, **Cerrar Caja** no guarda: avisa cuál es y deja el cursor ahí. El servidor lo controla también.
 4. Con el botón de flechas junto a **Fecha Cierre** (**Actualizar importes**) se vuelven a traer ventas, egresos y la fecha hasta ahora.
 5. **Cerrar Caja** confirma. Si el cajero tiene ventas sin finalizar, el sistema avisa y hay que confirmar.
+
+## Si no tenés el permiso de cerrar caja (autorización temporal)
+- Al tocar **Ventas**, **Actividad**, **Cerrar** o **Cambiar sucursal** se pide **usuario y clave** de alguien que sí tiene el permiso. La autorización **vale 5 minutos** desde que la clave es correcta (no se renueva sola con lo que hagas).
+- Mientras está vigente aparece, en el encabezado de **Cajas abiertas**, **Autorizado por [nombre]**, el **tiempo que queda** (verde; rojo en el último minuto) y dos botones:
+  - **Extender**: vuelve a pedir usuario y clave; si son correctos, el tiempo **arranca de nuevo en 5 minutos** (a nombre de quien puso la clave). Si cancelás, la autorización actual sigue su curso.
+  - **Finalizar**: termina la autorización **ahora**; la próxima acción vuelve a pedir usuario y clave. Si el sistema no puede terminarla avisa y el contador sigue.
+- Al llegar a 0:00 el contador desaparece solo. Si salís de la pantalla o la recargás, la autorización también se termina.
+- Si ponés usuario y clave **correctos** pero esa persona **no tiene el permiso** de cerrar caja, el selector lo dice: *"[Nombre] no tiene permiso para cerrar caja. Elegí a un usuario que lo tenga."* (cuenta como un intento fallido). Con usuario o clave equivocados sigue diciendo *"Usuario o contraseña incorrectos."*
+- Quien tiene el permiso de cerrar caja no ve el contador (no necesita autorización).
 
 ## Importe que cargó el cajero (conteo de cierre)
 - El cajero puede contar su caja desde el POS (**Mis actividades → Mi cierre**, con el contador de billetes). Ese importe **no cierra la caja**: es una referencia para el encargado.
