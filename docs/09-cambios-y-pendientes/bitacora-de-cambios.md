@@ -40,6 +40,14 @@
 - **Deuda**: F6 → «Mis actividades» sigue usando el `idCierre` de la carga; `DetalleVenta`/cambiar forma de pago siguen evaluando con la cuenta compartida o la sucursal del operador (detalle en `docs/DECISIONS.md`).
 - **Manual**: `pantallas/Ventas.POS.md`, sección «Mis ventas (F6)».
 
+## 2026-10-21 - Cuenta de producción: la autorización del operador ya no vence a los 20 minutos
+
+- **Pedido**: «La autorización del vendedor venció» seguía apareciendo en Mis ventas con la cuenta de producción; el operador tiene que ver y modificar las ventas de su caja como si hubiese iniciado la sesión él mismo.
+- **Causa**: la autorización del operador vive en la Session en memoria del servidor, que vencía a los 20 min (default de ASP.NET) y solo se renovaba en las operaciones que la usan; el login (12 h) seguía vigente y el POS seguía mostrando al operador.
+- **Cambio**: la Session dura 12 h (clave `Sesion:IdleTimeoutMinutos` en `App.config`, default 720, rango 5–1440) y se renueva con cada request de un usuario logueado. Las reglas del operador no cambian: ve todas las ventas de su caja desde la apertura y modifica con sus permisos, igual que con su propia sesión.
+- **Verificado**: `WebCore.Tests` (tests del ajuste) y servidor de prueba con la Session a 5 min: ver `docs/DECISIONS.md` (2026-10-21). **Riesgo**: un reinicio del servidor o del contenedor sigue borrando la autorización (Session en memoria): hay que autorizarse de nuevo.
+- **Config nueva**: `Sesion:IdleTimeoutMinutos` (opcional, en `App.config.example`).
+
 ## 2026-10-20 - Pantallas embebidas (stock del destino, ventanas independientes): siguen el modo oscuro en vivo
 
 - **Pedido**: en modo oscuro el panel «Stock destino» del movimiento quedaba claro.

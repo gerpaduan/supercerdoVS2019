@@ -64,7 +64,13 @@ builder.Services.AddAuthorization(options =>
 // con contraseña (mecanismo B, Batch 5) -- la identidad principal del usuario va en la cookie de
 // autenticacion de arriba, nunca en esta Session.
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
+// IdleTimeout (2026-10-21, ver docs/DECISIONS.md "Autorizacion del operador: Session de 12 h"): el default de
+// ASP.NET es 20 min y la autorizacion del operador de produccion se perdia en medio del turno ("La autorizacion del
+// vendedor vencio") con el login todavia vigente. Ahora dura como la cookie de login (configurable) y se renueva abajo.
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = WebCore.Helpers.SesionServidorSettings.IdleTimeout;
+});
 
 // Login por huella (passkeys WebAuthn, ver docs/DECISIONS.md "Login por huella (passkeys)"). Solo se
 // registra si el ambiente lo habilita (Postgres + Passkeys:* en App.config, ver PasskeySettings):
@@ -107,6 +113,15 @@ app.UseRouting();
 
 app.UseSession();
 app.UseAuthentication();
+// Renueva la Session en cada request de un usuario logueado (2026-10-21): ASP.NET solo extiende el IdleTimeout si el
+// request la CARGA, y la mayoria de los requests del POS (busqueda de productos, latidos, F6) no la tocan; sin esto el
+// vencimiento contaba desde la ultima venta/autorizacion y no desde la ultima actividad. LoadAsync no escribe nada.
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true)
+        await context.Session.LoadAsync(context.RequestAborted);
+    await next();
+});
 app.UseAuthorization();
 
 app.MapControllerRoute(

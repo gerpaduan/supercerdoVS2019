@@ -68,6 +68,9 @@
     <!-- Sidebar de _Layout.cshtml: modulos todavia no migrados a WebCore linkean con URL
          absoluta al Web clasico. Sin barra final. -->
     <add key="WebClasicoBaseUrl" value="https://localhost:44371" />
+    <!-- Minutos que la Session del servidor (autorizacion del operador de la cuenta de produccion) sigue viva sin
+         actividad del navegador; se renueva con cada request. Entre 5 y 1440; sin la clave: 720 = 12 h (igual que el login). -->
+    <add key="Sesion:IdleTimeoutMinutos" value="720" />
   </appSettings>
   <connectionStrings>
     <add name="ConexionPrincipal"
