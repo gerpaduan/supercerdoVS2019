@@ -11,6 +11,9 @@
     string ticketTexto = (ViewBag.TicketLineas as string) ?? "";
     string ticketTitulo = (ViewBag.TicketTitulo as string) ?? "Comprobante";
     string ticketClass = mm == 80 ? "ticket-80mm" : "ticket-58mm";
+    // Un salto de pagina (\f) en el texto separa varios tickets en uno solo (ej. Pedidos: un ticket por sucursal): cada uno sale en su
+    // propia pagina y la impresora corta al final de cada una. Sin \f queda un solo ticket, como siempre.
+    string[] ticketsTexto = ticketTexto.Split('\f');
 }
 <!DOCTYPE html>
 <html>
@@ -28,15 +31,24 @@
         body.ticket-80mm { width: 80mm; }
 
         .ticket-text { margin: 0; padding: 3mm 2.5mm; white-space: pre-wrap; font-size: 12px; line-height: 1.22; }
+        .ticket-corte { height: 0; break-after: page; page-break-after: always; }
     </style>
 </head>
 @* Autoimprime solo si se abre como pagina propia; dentro del iframe de ticket-print.js imprime el helper. *@
 <body class="@ticketClass" onload="if (window.top === window) window.print()">
-    <pre class="ticket-text">@ticketTexto</pre>
-
-    @for (int i = 0; i < 10; i++)
+    @for (int t = 0; t < ticketsTexto.Length; t++)
     {
-        <pre class="ticket-text">&nbsp;</pre>
+        <pre class="ticket-text">@ticketsTexto[t]</pre>
+
+        @for (int i = 0; i < 10; i++)
+        {
+            <pre class="ticket-text">&nbsp;</pre>
+        }
+
+        @if (t < ticketsTexto.Length - 1)
+        {
+            <div class="ticket-corte"></div>
+        }
     }
 </body>
 </html>

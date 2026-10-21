@@ -48,6 +48,17 @@ namespace WebCore.Services
             return FuenteBOn + DobleTamanoOn + linea + DobleTamanoOff + FuenteBOff;
         }
 
+        // GS V 65 0 -- avanza el papel hasta la posicion de corte y hace un corte parcial. Es el MISMO comando que el agente agrega al final de
+        // cada ticket (PrintAgent/EscPosTicketPrinter.cs), asi que la impresora ya lo soporta. Puesto como una linea en el medio de ticketLines
+        // permite varios tickets en un solo trabajo de impresion, cortando entre uno y otro (Pedidos: un ticket por sucursal). El corte final
+        // lo sigue poniendo el agente. Lleva un byte 0x00: viaja como \u0000 en el JSON y el agente lo pasa tal cual (CP850 no lo altera).
+        // TODO(claude): el corte en el MEDIO de un trabajo no se pudo probar con una impresora fisica; confirmarlo en un ticket impreso real
+        // (si la impresora no lo respeta, la alternativa es mandar un trabajo por sucursal desde ticket-print.js).
+        public static string Corte()
+        {
+            return "\x1D\x56\x41\x00";
+        }
+
         // Caracteres por linea en doble tamaño (fuente A): la mitad del ancho normal.
         // Ej. 32 -> 16 (58 mm), 43 -> 21 (80 mm).
         public static int AnchoDobleTamano(int anchoNormal)

@@ -32,7 +32,7 @@ namespace WebCore.Services
                 fila++;
                 Secundaria(hoja, ref fila, "Fecha: " + pedido.Fecha.ToString("dd/MM/yyyy HH:mm") + " · Usuario: " + pedido.Usuario);
                 if (!string.IsNullOrWhiteSpace(pedido.Nota)) Secundaria(hoja, ref fila, "Nota: " + pedido.Nota);
-                // De donde sale el importe: el mismo texto que la pantalla, el ticket, el PDF y el mail (Negocio.PedidoTextos).
+                // De donde sale el importe: el mismo texto que la pantalla, el PDF y el mail (Negocio.PedidoTextos).
                 Secundaria(hoja, ref fila, global::Negocio.PedidoTextos.AclaracionPrecio);
                 if (pivot.HayPreciosViejos) Secundaria(hoja, ref fila, global::Negocio.PedidoTextos.AvisoPrecioViejo(pivot.DiasPrecioViejo) + " (columna \"Fecha del precio\" en naranja).");
                 fila++;

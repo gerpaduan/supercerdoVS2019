@@ -102,7 +102,7 @@ namespace WebCore.Services
                         if (aviso.Length > 0)
                             col.Item().AlignRight().Text(aviso).FontColor(Colors.Grey.Darken1);
 
-                        // De donde sale el importe: el mismo texto que la pantalla, el ticket, el Excel y el mail (Negocio.PedidoTextos).
+                        // De donde sale el importe: el mismo texto que la pantalla, el Excel y el mail (Negocio.PedidoTextos).
                         col.Item().PaddingTop(4).Text(global::Negocio.PedidoTextos.AclaracionPrecio
                             + (pivot.HayPreciosViejos ? " " + global::Negocio.PedidoTextos.AvisoPrecioViejo(pivot.DiasPrecioViejo) : ""))
                             .FontColor(Colors.Grey.Darken1).FontSize(8f);

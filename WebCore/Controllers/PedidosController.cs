@@ -369,7 +369,8 @@ namespace WebCore.Controllers
             return _oPedidoN.ObtenerPorId(id);
         }
 
-        // HTML del ticket: fallback por navegador (iframe oculto de ticket-print.js). Mismo texto que el payload del agente ESC/POS.
+        // HTML del ticket: fallback por navegador (iframe oculto de ticket-print.js). Mismo texto que el payload del agente ESC/POS. Un ticket por
+        // sucursal, sin importes (WebCore.Services.PedidoTicket): con varias sucursales cada una sale en su pagina.
         [HttpGet]
         public IActionResult Ticket(int id, int mm = 80)
         {
@@ -384,7 +385,8 @@ namespace WebCore.Controllers
             return View("~/Views/Shared/_TicketTexto.cshtml");
         }
 
-        // Payload JSON para el agente de impresion ESC/POS local.
+        // Payload JSON para el agente de impresion ESC/POS local. Con varias sucursales, ticketLines trae un ticket por sucursal con el comando
+        // de corte entre uno y otro (EscPosFormato.Corte): un solo trabajo de impresion, cortado por sucursal.
         [HttpGet]
         public IActionResult TicketPayload(int id, int mm = 80)
         {

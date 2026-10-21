@@ -60,6 +60,13 @@
 - **Verificado**: en el navegador con sesión real (usuario de prueba ya borrado) las 59 filas miden 29,6 px antes y después, con y sin pedido. **Costo**: las columnas de ancho fijo crecen con la letra; en una ventana de 640 px la tabla ya necesita unos 40 px de scroll lateral (a 1440 px de pantalla, con 1 sucursal, entra sin scroll). Sin verificar: modo oscuro, Firefox/Safari.
 - **Manual**: `Stock.ExistenciaPorSucursales` (diseño compacto).
 
+## 2026-10-20 - Pedidos: el ticket térmico sale uno por sucursal, con el formato de Movimientos, sin importes y cortado entre sucursales
+
+- **Pedido**: al imprimir el ticket de un pedido, copiar el formato de Movimientos (producto, código y cantidad que pide cada sucursal); por el ancho del papel, un ticket por sucursal y, con dos o más, cortarlo entre uno y otro; nada de importes ni total.
+- **Cambio**: `PedidoTicket` arma un ticket por sucursal (título y sucursal en negrita, columnas Producto / Cant. / Kgs., código debajo en fuente B, Total y Observaciones); los pesables van en Kgs. y el resto en Cant.; cada ticket dice «N de M». Entre tickets va el comando de corte de siempre (`EscPosFormato.Corte`, el mismo que el agente pone al final), sin tocar el agente; en el HTML de respaldo, un salto de página por sucursal. Precios, importes y total estimado salen del ticket (siguen en la pantalla, PDF, Excel y mail).
+- **Verificado**: `WebCore.Tests` 38 verdes (20 nuevos, validados con roturas a propósito); `WebCore` compila. **Sin verificar**: el corte en el medio de un trabajo con una impresora física y la impresión del HTML con varias páginas.
+- **Manual**: `Pedidos.Detalle` (sección «El ticket térmico») y `Stock.ExistenciaPorSucursales`.
+
 ## 2026-10-20 - Existencia por sucursales: período con fecha hasta, atajos 1/2/3 d, «A pedir» compacta junto a Stock/Estado y precios ocultos tras un interruptor
 
 - **Pedido**: atajos de «Período desde» de 1, 2 y 3 días (sin 90 ni 180); poder cerrar el período con una fecha hasta opcional; la columna A pedir más compacta y junto a producto, stock y estado; las columnas «$ últ. compra» e «Importe est.» ocultas siempre y visibles con un interruptor.

@@ -1,5 +1,5 @@
-// Un pedido "en cruz": una fila por producto y una columna por sucursal (lo que se ve en el detalle y lo que imprimen el PDF, el Excel y el
-// ticket). Las lineas guardadas son un renglon por producto y sucursal; aca se juntan. Sin acceso a base de datos ni efectos secundarios.
+// Un pedido "en cruz": una fila por producto y una columna por sucursal (lo que se ve en el detalle y lo que imprimen el PDF y el Excel; el ticket
+// termico, en cambio, sale uno por sucursal desde las lineas: PedidoTicket). Las lineas guardadas son un renglon por producto y sucursal; aca se juntan. Sin acceso a base de datos ni efectos secundarios.
 using System;
 using System.Collections.Generic;
 using System.Linq;

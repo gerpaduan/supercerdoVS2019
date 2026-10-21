@@ -1,5 +1,5 @@
-// Textos y reglas de presentacion del precio estimado de un pedido: UNA sola fuente para la pantalla de armado, el detalle, el ticket, el PDF,
-// el Excel y el mail, para que todos digan lo mismo. Puro (sin base ni configuracion): el limite de "precio viejo" lo pasa quien llama.
+// Textos y reglas de presentacion del precio estimado de un pedido: UNA sola fuente para la pantalla de armado, el detalle, el PDF,
+// el Excel y el mail, para que todos digan lo mismo (el ticket termico no lleva importes: desde 2026-10-20 es solo producto, codigo y cantidad). Puro (sin base ni configuracion): el limite de "precio viejo" lo pasa quien llama.
 // Por que existe: el importe del pedido es una ESTIMACION con el ultimo precio de compra de cada producto SIN distinguir proveedor, y muchos
 // productos no tienen precio; el usuario tiene que verlo en el mismo lugar donde ve el total. Ver docs/DECISIONS.md (2026-10-19, Pedidos).
 using System;
