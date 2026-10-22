@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 1
 permiso: Compra.VerCompras (sin el permiso se muestra "Acceso denegado"; a los usuarios de producción les pide elegir el operador de Compras antes de entrar)
-revisada: 2026-10-13
+revisada: 2026-10-23
 ---
 ## Para qué sirve
 Ver las **compras de un período** (proveedor, tipo, cantidad, total, sucursal) y abrir el detalle de cada una.
@@ -17,6 +17,7 @@ Ver las **compras de un período** (proveedor, tipo, cantidad, total, sucursal) 
 - **Descripción**: busca texto en el proveedor, el número de documento y las observaciones. Es independiente de **Proveedor**: si usás los dos, se piden las dos condiciones.
 
 ## Botones
+- **Ver eliminados**: lleva a [Registros eliminados](ayuda:pantalla/RegistrosEliminados.Index) de compras (solo para administradores y quien puede modificar compras).
 - **Nueva compra** (Alt+N) y **Ver lineas** (Alt+V): abren la carga de una compra y las [líneas de compra](ayuda:pantalla/Compras.Lineas). *Ver lineas* lleva los filtros que ya están aplicados (incluido el proveedor).
 
 ## Totales y lista

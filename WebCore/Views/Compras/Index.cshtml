@@ -41,6 +41,12 @@
         <a class="btn btn-outline-primary mt-2 mt-md-0 ml-md-2 compras-btn-accion" href="@Url.Action("Lineas", "Compras", new { idSucursal = idSucursal, tipoCompra = tipoCompra, texto = texto, proveedor = proveedorTexto, idsProveedor = idsProveedor, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })" id="btnVerLineasComprasIndex">
             <i class="fas fa-stream mr-1"></i> Ver lineas
         </a>
+        @if (ViewBag.PuedeVerEliminados == true)
+        {
+            <a class="btn btn-outline-danger mt-2 mt-md-0 ml-md-2 compras-btn-accion" href="@Url.Action("Index", "RegistrosEliminados", new { modulo = "COMPRA" })" id="btnVerEliminadosComprasIndex">
+                <i class="fas fa-trash-alt mr-1"></i> Ver eliminados
+            </a>
+        }
     </div>
 
     <div class="card shadow-sm mb-3 compras-filtros-card">

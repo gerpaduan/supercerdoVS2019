@@ -416,6 +416,329 @@ namespace Negocio
             return oCompraD.obtenerMediasPorCompra(idCompra);
         }
 
+        #region Eliminacion con motivo (2026-10-22, ver docs/DECISIONS.md "Eliminar compras, stock y movimientos")
+
+        private sealed class FotoCompra
+        {
+            public Entidades.Compra Compra;
+            public List<Entidades.AuditoriaEliminacionLinea> Lineas = new List<Entidades.AuditoriaEliminacionLinea>();
+            public double Importe;
+            public double TotalKg;
+        }
+
+        // Lee la compra y sus lineas tal como estan ahora (lo que se va a borrar). null si la compra no existe.
+        private FotoCompra cargarFotoParaEliminar(int idCompra)
+        {
+            Entidades.Compra compra = findById_convertToCompra(idCompra);
+            if (compra == null || compra.IdCompra == 0) return null;
+
+            var foto = new FotoCompra { Compra = compra };
+            int idSucursalCompra = compra.Sucursal != null ? compra.Sucursal.IdSucursal : 0;
+
+            DataTable cortes = oCompraD.obtenerCortesPorCompra(idCompra);
+            if (cortes != null && cortes.Rows.Count > 0)
+            {
+                // Codigo y nombre del producto: se copian a la auditoria porque el producto puede cambiar o borrarse despues.
+                var productos = new Dictionary<int, KeyValuePair<long, string>>();
+                DataTable catalogo = oCorteN.obtenerCortes();
+                if (catalogo != null)
+                {
+                    foreach (DataRow rowCorte in catalogo.Rows)
+                        productos[Convert.ToInt32(rowCorte["idCorte"])] =
+                            new KeyValuePair<long, string>(Convert.ToInt64(rowCorte["codigo"]), Convert.ToString(rowCorte["corte"]));
+                }
+
+                foreach (DataRow row in cortes.Rows)
+                {
+                    int idCorte = Convert.ToInt32(row["idCorte"]);
+                    double cantKg = row["cantKg"] == DBNull.Value ? 0 : Convert.ToDouble(row["cantKg"]);
+                    double precioKg = row["precioKg"] == DBNull.Value ? 0 : Convert.ToDouble(row["precioKg"]);
+                    bool balanza = row["balanza"] != DBNull.Value && Convert.ToBoolean(row["balanza"]);
+                    bool noContado = row.Table.Columns.Contains("noContado") && row["noContado"] != DBNull.Value && Convert.ToBoolean(row["noContado"]);
+                    var detalle = new List<string>();
+                    if (balanza) detalle.Add("Balanza");
+                    if (noContado) detalle.Add("No contado");
+
+                    KeyValuePair<long, string> producto;
+                    bool conocido = productos.TryGetValue(idCorte, out producto);
+                    foto.Lineas.Add(new Entidades.AuditoriaEliminacionLinea
+                    {
+                        IdCorte = idCorte,
+                        Codigo = conocido ? (long?)producto.Key : null,
+                        Producto = conocido ? producto.Value : "(producto " + idCorte + ")",
+                        IdSucursal = row["idSucursal"] == DBNull.Value ? idSucursalCompra : Convert.ToInt32(row["idSucursal"]),
+                        CantKg = cantKg,
+                        PrecioKg = precioKg,
+                        Detalle = detalle.Count > 0 ? string.Join(" | ", detalle) : null
+                    });
+                    foto.TotalKg += cantKg;
+                    foto.Importe += cantKg * precioKg;
+                }
+            }
+
+            DataTable medias = oCompraD.obtenerMediasPorCompra(idCompra);
+            if (medias != null)
+            {
+                foreach (DataRow row in medias.Rows)
+                {
+                    double kg = row["kgMedia"] == DBNull.Value ? 0 : Convert.ToDouble(row["kgMedia"]);
+                    double precio = row["precioMedia"] == DBNull.Value ? 0 : Convert.ToDouble(row["precioMedia"]);
+                    string tropa = row["nroTropa"] == DBNull.Value ? "" : Convert.ToString(row["nroTropa"]);
+                    foto.Lineas.Add(new Entidades.AuditoriaEliminacionLinea
+                    {
+                        Producto = "Media res",
+                        IdSucursal = idSucursalCompra,
+                        CantKg = kg,
+                        PrecioKg = precio,
+                        Detalle = string.IsNullOrEmpty(tropa) ? null : "Tropa " + tropa
+                    });
+                    foto.TotalKg += kg;
+                    foto.Importe += kg * precio;
+                }
+            }
+
+            return foto;
+        }
+
+        // Registros que dependen de este y que quedarian apuntando a algo que ya no existe: no se puede eliminar hasta resolverlos.
+        private List<string> calcularBloqueosEliminacion(Entidades.Compra compra)
+        {
+            var bloqueos = new List<string>();
+
+            List<int> vinculados = oCompraD.obtenerPesajesVinculadosPorDestino(compra.IdCompra) ?? new List<int>();
+            if (vinculados.Count > 0)
+                bloqueos.Add("Tiene pesajes vinculados (" + EliminacionRegistro.ListarIds(vinculados) + "). Desvinculalos o eliminalos primero.");
+
+            if (EliminacionRegistro.EsPesaje(compra.TipoCompra))
+            {
+                int idAjuste = oCompraD.getIdAjusteDelPesaje(compra.IdCompra);
+                if (idAjuste > 0)
+                    bloqueos.Add("Tiene un ajuste de stock generado (#" + idAjuste + "). Eliminá primero el ajuste.");
+            }
+
+            return bloqueos;
+        }
+
+        private static string FormatearImporte(double importe)
+        {
+            return "$ " + importe.ToString("N2", new System.Globalization.CultureInfo("es-AR"));
+        }
+
+        // Saldo de cta cte: positivo = a favor de la persona, negativo = debe.
+        private static string FormatearSaldo(decimal saldo)
+        {
+            return saldo < 0 ? FormatearImporte((double)-saldo) + " (debe)" : FormatearImporte((double)saldo) + " (a favor)";
+        }
+
+        // Todo lo que el usuario necesita ver antes de confirmar. null si la compra no existe. No escribe nada.
+        public VistaPreviaEliminacion obtenerVistaPreviaEliminacion(int idCompra)
+        {
+            FotoCompra foto = cargarFotoParaEliminar(idCompra);
+            if (foto == null) return null;
+
+            Entidades.Compra compra = foto.Compra;
+            var vista = new VistaPreviaEliminacion
+            {
+                Modulo = EliminacionRegistro.ModuloDeTipoCompra(compra.TipoCompra),
+                IdRegistro = compra.IdCompra,
+                TipoRegistro = compra.TipoCompra,
+                FechaRegistro = compra.FechaCompra,
+                IdSucursal = compra.Sucursal != null ? compra.Sucursal.IdSucursal : 0,
+                SucursalNombre = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
+                PersonaNombre = compra.Proveedor != null ? compra.Proveedor.RazonSocial : "",
+                NroRemito = compra.NroRemito ?? "",
+                IdUsuarioCreador = compra.CreadoPor != null ? compra.CreadoPor.Id : 0,
+                EnCtaCte = compra.EnCtaCte,
+                Importe = foto.Importe,
+                TotalKg = foto.TotalKg,
+                CantLineas = foto.Lineas.Count,
+                RequiereAdmin = EliminacionRegistro.RequiereAdmin(compra.TipoCompra),
+                Lineas = foto.Lineas,
+                Bloqueos = calcularBloqueosEliminacion(compra)
+            };
+
+            Entidades.MovCtaCte movCtaCte = oCtaCteN.getMovCtaCteVigenteDeRegistro(Entidades.MovCtaCte.tablas.Compras, compra.IdCompra);
+            if (movCtaCte != null && compra.Proveedor != null)
+            {
+                decimal saldoActual = oCtaCteN.obtenerSaldoPersona(compra.Proveedor.IdPersona) ?? 0m;
+                decimal saldoDespues = saldoActual - (decimal)movCtaCte.Importe;
+                vista.EfectoCtaCte = "Se genera el asiento contrario en la cuenta corriente de " + compra.Proveedor.RazonSocial
+                    + ": el saldo pasa de " + FormatearSaldo(saldoActual) + " a " + FormatearSaldo(saldoDespues) + ". El asiento original queda en el extracto.";
+            }
+
+            Entidades.EgresoCaja egreso = oCierreN.findEgresoCajaPorCompra(compra.IdCompra);
+            if (egreso != null && egreso.Id > 0)
+            {
+                vista.Egreso = egreso;
+                if (egreso.Monto != 0)
+                    vista.Avisos.Add("La compra tiene un egreso de caja de " + FormatearImporte(egreso.Monto)
+                        + ": se registra un egreso opuesto con la fecha de hoy.");
+            }
+
+            if (string.Equals(compra.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes), StringComparison.OrdinalIgnoreCase))
+                vista.Avisos.Add("Si esta compra actualizó el precio de venta de algún producto, ese precio no se revierte.");
+            if (string.Equals(compra.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase))
+                vista.Avisos.Add("Un cierre de stock es el punto de partida del cálculo: al eliminarlo cambia el stock de la sucursal desde el cierre anterior.");
+            if (vista.Modulo == Entidades.AuditoriaEliminacion.ModuloStock)
+                vista.Avisos.Add("El stock de " + vista.SucursalNombre + " se recalcula sin este registro.");
+
+            return vista;
+        }
+
+        // Elimina DE VERDAD una compra o una operacion de stock. Valida, arma la foto, y en una sola transaccion: borra el registro
+        // y sus lineas, guarda la auditoria, genera el asiento contrario en la cta cte del proveedor (si tenia uno vigente) y el
+        // egreso de caja opuesto (si tenia monto). No chequea permisos ni la clave: eso es del controller (quien llama garantiza
+        // que usuarioElimino ya valido su usuario y clave). moduloEsperado evita borrar stock desde Compras y al reves.
+        public ResultadoEliminacion eliminarCompra(int idCompra, string moduloEsperado, string motivo, Entidades.Usuario usuarioElimino,
+            Entidades.Usuario usuarioSesion, string ip)
+        {
+            if (usuarioElimino == null || usuarioElimino.Id <= 0)
+                return ResultadoEliminacion.Fallo("No se pudo identificar al usuario que elimina el registro.");
+
+            string errorMotivo = EliminacionRegistro.ValidarMotivo(motivo, out string motivoNormalizado);
+            if (errorMotivo != null) return ResultadoEliminacion.Fallo(errorMotivo);
+
+            FotoCompra foto = cargarFotoParaEliminar(idCompra);
+            if (foto == null) return ResultadoEliminacion.Fallo("El registro no existe o ya fue eliminado.");
+
+            Entidades.Compra compra = foto.Compra;
+            if (!string.Equals(EliminacionRegistro.ModuloDeTipoCompra(compra.TipoCompra), moduloEsperado, StringComparison.Ordinal))
+                return ResultadoEliminacion.Fallo("Este registro es de tipo «" + compra.TipoCompra + "» y no se elimina desde esta pantalla.");
+
+            List<string> bloqueos = calcularBloqueosEliminacion(compra);
+            if (bloqueos.Count > 0) return ResultadoEliminacion.Fallo(string.Join(" ", bloqueos));
+
+            // Efectos que se van a producir, escritos en la auditoria (se calculan antes: la auditoria se inserta junto con el borrado).
+            Entidades.MovCtaCte movVigente = oCtaCteN.getMovCtaCteVigenteDeRegistro(Entidades.MovCtaCte.tablas.Compras, compra.IdCompra);
+            Entidades.EgresoCaja egreso = oCierreN.findEgresoCajaPorCompra(compra.IdCompra);
+            bool hayEgresoConMonto = egreso != null && egreso.Id > 0 && egreso.Monto != 0;
+
+            var efectos = new List<string>();
+            if (movVigente != null) efectos.Add("Asiento contrario en la cuenta corriente del proveedor por " + FormatearImporte(Math.Abs(movVigente.Importe)) + ".");
+            if (hayEgresoConMonto) efectos.Add("Egreso de caja opuesto por " + FormatearImporte(egreso.Monto) + " con fecha " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + ".");
+
+            var auditoria = new Entidades.AuditoriaEliminacion
+            {
+                Modulo = EliminacionRegistro.ModuloDeTipoCompra(compra.TipoCompra),
+                IdRegistro = compra.IdCompra,
+                TipoRegistro = compra.TipoCompra,
+                FechaRegistro = compra.FechaCompra,
+                IdSucursal = compra.Sucursal != null ? (int?)compra.Sucursal.IdSucursal : null,
+                IdPersona = compra.Proveedor != null ? (int?)compra.Proveedor.IdPersona : null,
+                NroRemito = compra.NroRemito,
+                EnCtaCte = compra.EnCtaCte,
+                CantMedias = compra.CantMedias,
+                KgsMedias = compra.KgsMedias,
+                Importe = foto.Importe,
+                TotalKg = foto.TotalKg,
+                CantLineas = foto.Lineas.Count,
+                Observaciones = compra.Observaciones,
+                IdUsuarioCreador = compra.CreadoPor != null ? (int?)compra.CreadoPor.Id : null,
+                Creado = compra.Creado,
+                IdUsuarioElimino = usuarioElimino.Id,
+                IdUsuarioSesion = (usuarioSesion ?? usuarioElimino).Id,
+                Motivo = motivoNormalizado,
+                Ip = ip,
+                Efectos = efectos.Count > 0 ? string.Join("\n", efectos) : null
+            };
+
+            int idAuditoria;
+            try
+            {
+                var unitOfWork = oCompraD.IniciarUnitOfWork();
+                if (unitOfWork == null)
+                {
+                    using (TransactionScope scope = new TransactionScope())
+                    {
+                        idAuditoria = EjecutarEliminarCompra(compra, auditoria, movVigente != null, hayEgresoConMonto ? egreso : null, usuarioElimino, null);
+                        scope.Complete();
+                    }
+                }
+                else
+                {
+                    using (unitOfWork)
+                    {
+                        idAuditoria = EjecutarEliminarCompra(compra, auditoria, movVigente != null, hayEgresoConMonto ? egreso : null, usuarioElimino, unitOfWork);
+                        unitOfWork.Completar();
+                    }
+                }
+            }
+            catch (RegistroYaEliminadoException)
+            {
+                return ResultadoEliminacion.Fallo("El registro ya fue eliminado por otro usuario.");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar el registro: \n" + ex.Message, ex);
+            }
+
+            auditoria.Id = idAuditoria;
+            var resultado = new ResultadoEliminacion { Ok = true, IdAuditoria = idAuditoria, Auditoria = auditoria };
+
+            // Ya con el borrado confirmado: lo que sigue es secundario y su falla no deshace nada.
+            try
+            {
+                RecalcularEstadoDelPesajeDelAjuste(compra);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("No se pudo recalcular el estado del pesaje tras eliminar el ajuste " + compra.IdCompra + ": " + ex);
+                resultado.Advertencia = "El registro se eliminó, pero no se pudo actualizar el estado del ajuste del pesaje. Abrí el pesaje y guardalo para recalcularlo.";
+            }
+
+            oCtaCteN.notificarRegistroEliminado(auditoria, usuarioElimino.Nombre,
+                (compra.TipoCompra ?? "registro") + " #" + compra.IdCompra + (compra.Proveedor != null ? " de " + compra.Proveedor.RazonSocial : "")
+                + " por " + FormatearImporte(foto.Importe));
+
+            return resultado;
+        }
+
+        private int EjecutarEliminarCompra(Entidades.Compra compra, Entidades.AuditoriaEliminacion auditoria, bool revertirCtaCte,
+            Entidades.EgresoCaja egresoAReversar, Entidades.Usuario usuarioElimino, Contratos.IUnitOfWork unitOfWork)
+        {
+            // 1) Borrado + auditoria. Si devuelve 0 nadie escribio nada: otro usuario se adelanto.
+            int idAuditoria = oCompraD.eliminarCompraConAuditoria(compra.IdCompra, auditoria, unitOfWork);
+            if (idAuditoria == 0) throw new RegistroYaEliminadoException();
+
+            // 2) Cuenta corriente del proveedor: asiento contrario (queda el original + el ELIMINADO).
+            if (revertirCtaCte)
+                oCtaCteN.registrarContraasientoPorEliminacion(Entidades.MovCtaCte.tablas.Compras, compra.IdCompra, usuarioElimino, unitOfWork);
+
+            // 3) Caja: egreso opuesto fechado HOY (la caja original puede estar cerrada y no se reescribe). Va ultimo: si falla,
+            // se deshace todo lo anterior.
+            if (egresoAReversar != null)
+            {
+                egresoAReversar.Id = 0;
+                egresoAReversar.Descripcion = "ELIMINADO: " + egresoAReversar.Descripcion;
+                egresoAReversar.Monto = egresoAReversar.Monto * -1;
+                egresoAReversar.Fecha = DateTime.Now;
+                egresoAReversar.CreadoPor = usuarioElimino.Id;
+                egresoAReversar.ActualizadoPor = 0;
+                oCierreN.addOrEditEgresoCaja(egresoAReversar, unitOfWork);
+            }
+
+            return idAuditoria;
+        }
+
+        // Al eliminar un Ajuste de stock, el Pesaje que ajustaba vuelve a "No realizado". Mismo criterio que
+        // ActualizarEstadoPesajeSiCorresponde: solo para pesajes de medias.
+        private void RecalcularEstadoDelPesajeDelAjuste(Entidades.Compra ajusteEliminado)
+        {
+            if (!EliminacionRegistro.EsAjuste(ajusteEliminado.TipoCompra)) return;
+
+            int idPesaje = ajusteEliminado.IdPesajeAjustado ?? 0;
+            if (idPesaje <= 0) int.TryParse(ajusteEliminado.NroRemito, out idPesaje);
+            if (idPesaje <= 0) return;
+
+            Entidades.Compra pesaje = findById_convertToCompra(idPesaje);
+            if (pesaje == null || pesaje.IdCompra == 0 || !EliminacionRegistro.EsPesaje(pesaje.TipoCompra)) return;
+            if (!(pesaje.KgsMedias.HasValue && pesaje.KgsMedias.Value > 0 && pesaje.CantMedias.HasValue && pesaje.CantMedias.Value > 0)) return;
+
+            actualizarEstadoPesaje(idPesaje, estadoAjusteStock(idPesaje, 0));
+        }
+
+        #endregion
+
         public void anularCompra(int idCompra)
         {
             oCompraD.anularCompra(idCompra);

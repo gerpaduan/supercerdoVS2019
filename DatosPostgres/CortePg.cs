@@ -1118,6 +1118,71 @@ namespace DatosPostgres
             return "";
         }
 
+        // Reasignacion en lote de tipo: una transaccion (si una fila falla no queda ninguna cambiada).
+        // RLS ya limita al tenant; el filtro idempresa es defensa en profundidad, igual que addOrEditTipoProducto.
+        public void reasignarTipoCortes(IEnumerable<KeyValuePair<int, string>> idCorteNuevoTipo, int? idUsuario)
+        {
+            if (idCorteNuevoTipo == null) throw new ArgumentNullException(nameof(idCorteNuevoTipo));
+
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    foreach (var cambio in idCorteNuevoTipo)
+                    {
+                        using (var cmd = new NpgsqlCommand(
+                            "UPDATE corte SET tipo = @tipo, actualizado = now(), actualizadopor = @actualizadoPor WHERE idcorte = @idCorte AND idempresa = @idEmpresa;", con, tx))
+                        {
+                            cmd.Parameters.AddWithValue("tipo", cambio.Value ?? "");
+                            cmd.Parameters.AddWithValue("actualizadoPor", idUsuario.HasValue ? (object)idUsuario.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("idCorte", cambio.Key);
+                            cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    tx?.Commit();
+                }
+                catch
+                {
+                    try { tx?.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        // Reasignacion en lote de marca (null / 0 = sin marca). Misma transaccion todo-o-nada que el tipo.
+        public void reasignarMarcaCortes(IEnumerable<KeyValuePair<int, int?>> idCorteNuevaMarca, int? idUsuario)
+        {
+            if (idCorteNuevaMarca == null) throw new ArgumentNullException(nameof(idCorteNuevaMarca));
+
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    foreach (var cambio in idCorteNuevaMarca)
+                    {
+                        using (var cmd = new NpgsqlCommand(
+                            "UPDATE corte SET idmarca = @idMarca, actualizado = now(), actualizadopor = @actualizadoPor WHERE idcorte = @idCorte AND idempresa = @idEmpresa;", con, tx))
+                        {
+                            cmd.Parameters.AddWithValue("idMarca", cambio.Value.HasValue && cambio.Value.Value > 0 ? (object)cambio.Value.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("actualizadoPor", idUsuario.HasValue ? (object)idUsuario.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("idCorte", cambio.Key);
+                            cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    tx?.Commit();
+                }
+                catch
+                {
+                    try { tx?.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
         #endregion
 
         #region Embutido (Etapa 11a)
@@ -1585,6 +1650,43 @@ namespace DatosPostgres
                     try { tx?.Rollback(); } catch { }
                     throw;
                 }
+            }
+        }
+
+        // Eliminacion con motivo (WebCore): borra el movimiento y sus lineas y guarda la foto completa en la auditoria, todo en
+        // una transaccion. No escribe MovimientoHistorial: la auditoria ya conserva lo que tenia, el motivo y quien lo elimino.
+        // Devuelve 0 (sin escribir nada) si el movimiento ya no existia.
+        public int eliminarMovimientoConAuditoria(int idMovimiento, AuditoriaEliminacion auditoria)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            using (var uow = UnitOfWorkPg.Iniciar(_connectionString, _idEmpresa))
+            {
+                int borrados = DbPg.NonQuery(_connectionString, _idEmpresa, "DELETE FROM movimiento WHERE idmovimiento = @idMovimiento;",
+                    p => p.AddWithValue("idMovimiento", idMovimiento), uow);
+                if (borrados == 0) return 0;
+
+                int idAuditoria = AuditoriaEliminacionPg.Insertar(_connectionString, _idEmpresa, auditoria, uow);
+
+                DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                    INSERT INTO auditoriaeliminacionlineas (idempresa, idauditoria, idcorte, codigo, producto, idsucursal, cantkg, cantunidad, preciokg, detalle)
+                    SELECT @idEmpresa, @idAuditoria, cpm.idcorte, c.codigo, c.corte, NULL, cpm.cantkg, cpm.cantunidad, NULL,
+                           CASE WHEN cpm.pesobalanza THEN 'Balanza' END
+                    FROM cortepormovimiento cpm
+                    LEFT JOIN corte c ON c.idcorte = cpm.idcorte
+                    WHERE cpm.idmovimientos = @idMovimiento
+                    ORDER BY cpm.idcortemovimiento;", p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("idAuditoria", idAuditoria);
+                    p.AddWithValue("idMovimiento", idMovimiento);
+                }, uow);
+
+                DbPg.NonQuery(_connectionString, _idEmpresa, "DELETE FROM cortepormovimiento WHERE idmovimientos = @idMovimiento;",
+                    p => p.AddWithValue("idMovimiento", idMovimiento), uow);
+
+                uow.Completar();
+                return idAuditoria;
             }
         }
 

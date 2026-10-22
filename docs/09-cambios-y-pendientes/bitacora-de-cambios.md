@@ -1,5 +1,14 @@
 # Bitacora de cambios
 
+## 2026-10-22 - Eliminar compras, stock y movimientos (motivo, clave de nuevo y auditoría con la foto completa)
+
+- **Pedido**: agregar la acción de eliminar a Movimientos, Compras y Stock; en Compras tener en cuenta la cuenta corriente; con motivo; el registro se elimina pero queda quién lo eliminó, cuándo y qué ítems tenía; siempre se vuelve a validar usuario y contraseña.
+- **Cambio**: botón **Eliminar** en `Compras/Editar`, `Stock/Editar` y `Movimientos/Editar` (parcial `_EliminarRegistro` + `eliminar-registro.js`): vista previa (resumen, líneas, efectos, bloqueos) → motivo + usuario y contraseña → se borra. Compra en cuenta corriente: **asiento contrario** `ELIMINADO - ...`; egreso de caja con monto: egreso opuesto de hoy (con confirmación si la caja está cerrada); `corteproveedor` recalculado. Foto completa (cabecera y líneas con nombre de producto) en `auditoriaeliminaciones` / `auditoriaeliminacionlineas`. Pantalla nueva **Configuración → Registros eliminados** (solo admin). Aviso al admin en la campana.
+- **Reglas**: permiso = el de modificar, con la persona que pone la clave; Ajuste y Cierre de stock solo admin; se bloquea si hay pesajes vinculados o ajuste generado; Movimientos queda deshabilitado mientras `Movimientos:ReplicaEntreBases` sea `true` (por defecto con SQL Server: SM y SL replican los movimientos).
+- **Orden de deploy**: migración ANTES del código en los dos motores (ver `despliegue-y-publicacion.md`). Aplicada solo en las bases locales.
+- **Verificado**: `Negocio.Tests` verdes; arnés contra Postgres y SQL Server locales (compra a cta cte, Cortes, Ingreso Stock, movimiento, bloqueos). **Sin verificar**: el flujo en el navegador y SQL Server 2008.
+- Decisión: `docs/DECISIONS.md` (2026-10-22). Manual: `Compras.Editar.md`, `Stock.Editar.md`, `Movimientos.Editar.md`, `RegistrosEliminados.Index.md`, concepto `eliminar-registros`.
+
 ## 2026-10-21 - Productos: cambiar el precio asienta fecha y usuario de modificación; se muestran en el detalle; el filtro de fechas completa 00:00:00
 
 - **Pedido**: *Modificar precio* y *Precios por selección* no actualizaban la fecha de modificación del producto; mostrar en el detalle (chico) la última fecha y el usuario; en «Actualizado en período», fecha sin hora = 00:00:00.

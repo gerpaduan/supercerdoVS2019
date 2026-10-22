@@ -31,7 +31,9 @@ namespace NegocioTests.Fakes
         public void addOrEditPersona(Entidades.Persona oPersonaE) => throw new NotImplementedException();
         public int addOrEditPersonaConId(Entidades.Persona oPersonaE) => throw new NotImplementedException();
         public void eliminarPersona(Entidades.Persona oPersonaE) => throw new NotImplementedException();
-        public Entidades.Persona findById(int id) => throw new NotImplementedException();
+        // Personas que devuelve findById (los tests de eliminacion de compras necesitan al proveedor).
+        public Dictionary<int, Entidades.Persona> PersonasPorId { get; } = new Dictionary<int, Entidades.Persona>();
+        public Entidades.Persona findById(int id) => PersonasPorId.TryGetValue(id, out var persona) ? persona : throw new NotImplementedException();
         public DataTable buscarProveedor(string buscarTexto) => throw new NotImplementedException();
         public DataTable buscarPersona(string buscarTexto, bool? marca) => throw new NotImplementedException();
         public DataTable getIva() => throw new NotImplementedException();

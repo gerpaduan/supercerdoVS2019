@@ -73,6 +73,11 @@ namespace Contratos
         string importarTiposProductoGlobales(IEnumerable<string> tiposProducto, int? idUsuarioAlta);
         string addOrEditTipoProducto(string tiposProducto, string orden, bool esInsert, string tipoToUpdate);
         string eliminarTipoProducto(string tiposProducto);
+        // Reasignacion en lote (Productos > Tipos/Marcas, 2026-10-22): cambia el tipo / la marca de varios productos en UNA transaccion
+        // (todo o nada) y deja la ultima modificacion (actualizado + actualizadopor). Un idMarca null o 0 deja el producto sin marca.
+        // No escribe el historial actualizacioncorte (write-only, ver docs/DECISIONS.md).
+        void reasignarTipoCortes(IEnumerable<KeyValuePair<int, string>> idCorteNuevoTipo, int? idUsuario);
+        void reasignarMarcaCortes(IEnumerable<KeyValuePair<int, int?>> idCorteNuevaMarca, int? idUsuario);
 
         DataTable getListaElegirEmbutido();
         DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta);
@@ -96,6 +101,10 @@ namespace Contratos
         int addOrEditMovimiento(Entidades.Movimiento oMovimientoE);
         void modificarMovimiento(Entidades.Movimiento oMovimientoE);
         void eliminarMovimiento(int idMovimiento, Entidades.Usuario oUsuario);
+        // Elimina el movimiento y sus lineas y guarda la foto completa en la auditoria (AuditoriaEliminaciones), todo en una
+        // transaccion. Devuelve el id de la auditoria, o 0 si el movimiento ya no existia (no se escribe nada).
+        // eliminarMovimiento (arriba) lo sigue usando el WinForms y no deja motivo.
+        int eliminarMovimientoConAuditoria(int idMovimiento, Entidades.AuditoriaEliminacion auditoria);
         void agregarCortePorMovimiento(Entidades.CortePorMovimiento cortePorMovimiento);
         void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE);
         DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto);

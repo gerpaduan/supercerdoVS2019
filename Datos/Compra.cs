@@ -29,6 +29,73 @@ namespace Datos
             );
         }
 
+        // Eliminacion con motivo (WebCore): un solo batch que borra la cabecera, guarda la auditoria (cabecera + foto de las
+        // lineas), recalcula CorteProveedor y borra las lineas. Sin BEGIN TRAN propio: la atomicidad la da el TransactionScope de
+        // Negocio.Compra (XACT_ABORT corta el batch ante cualquier error). Si la compra ya no existe devuelve 0 sin escribir nada.
+        public int eliminarCompraConAuditoria(int idCompra, Entidades.AuditoriaEliminacion auditoria, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            // La fecha y el proveedor de CorteProveedor se leen de la base ANTES de borrar (la fecha que lee Negocio pasa por texto y
+            // pierde las fracciones de segundo, y la comparacion con CorteProveedor.fechaUltimaCompra tiene que ser exacta).
+            string sql = @"
+                SET XACT_ABORT ON;
+                DECLARE @fechaCompraElim DATETIME, @idProveedorElim INT, @tipoCompraElim NVARCHAR(100);
+                SELECT @fechaCompraElim = fechaCompra, @idProveedorElim = idProveedor, @tipoCompraElim = tipoCompra
+                FROM dbo.Compras WHERE idCompra = @idCompraEliminar;
+                DELETE FROM dbo.Compras WHERE idCompra = @idCompraEliminar;
+                IF @@ROWCOUNT = 0
+                BEGIN
+                    SELECT CAST(0 AS INT);
+                    RETURN;
+                END
+                " + AuditoriaEliminacionSql.SqlInsertarCabecera + @"
+                INSERT INTO dbo.AuditoriaEliminacionLineas (idEmpresa, idAuditoria, idCorte, codigo, producto, idSucursal, cantKg, cantUnidad, precioKg, detalle)
+                SELECT @idEmpresa, @idAuditoria, cpc.idCorte, c.codigo, c.corte, cpc.idSucursal, cpc.cantKg, NULL, cpc.precioKg,
+                       CASE WHEN cpc.balanza = 1 THEN 'Balanza' ELSE NULL END
+                FROM dbo.CortePorCompra cpc
+                LEFT JOIN dbo.Corte c ON c.idCorte = cpc.idCorte
+                WHERE cpc.idCompra = @idCompraEliminar
+                ORDER BY cpc.idCortePorCompra;
+
+                INSERT INTO dbo.AuditoriaEliminacionLineas (idEmpresa, idAuditoria, idCorte, codigo, producto, idSucursal, cantKg, cantUnidad, precioKg, detalle)
+                SELECT @idEmpresa, @idAuditoria, NULL, NULL, 'Media res', m.idSucursal, m.kgMedia, NULL, m.precioMedia,
+                       CASE WHEN ISNULL(m.nroTropa, '') <> '' THEN 'Tropa ' + m.nroTropa ELSE NULL END
+                FROM dbo.MediaRes m
+                WHERE m.idCompra = @idCompraEliminar
+                ORDER BY m.idMedia;
+                IF @tipoCompraElim = 'Cortes'
+                BEGIN
+                UPDATE cp SET ultimoPrecio = x.precioKg, fechaUltimaCompra = x.fechaCompra
+                FROM dbo.CorteProveedor cp
+                INNER JOIN (SELECT cpc.idCorte, cpc.precioKg, c.fechaCompra,
+                                   ROW_NUMBER() OVER (PARTITION BY cpc.idCorte ORDER BY c.fechaCompra DESC, c.idCompra DESC, cpc.idCortePorCompra DESC) AS rn
+                            FROM dbo.CortePorCompra cpc
+                            INNER JOIN dbo.Compras c ON c.idCompra = cpc.idCompra
+                            WHERE c.idProveedor = @idProveedorElim AND c.tipoCompra = 'Cortes') x ON x.idCorte = cp.idCorte AND x.rn = 1
+                WHERE cp.idProveedor = @idProveedorElim AND cp.fechaUltimaCompra = @fechaCompraElim
+                  AND cp.idCorte IN (SELECT idCorte FROM dbo.CortePorCompra WHERE idCompra = @idCompraEliminar);
+
+                DELETE cp FROM dbo.CorteProveedor cp
+                WHERE cp.idProveedor = @idProveedorElim AND cp.fechaUltimaCompra = @fechaCompraElim
+                  AND cp.idCorte IN (SELECT idCorte FROM dbo.CortePorCompra WHERE idCompra = @idCompraEliminar)
+                  AND NOT EXISTS (SELECT 1 FROM dbo.CortePorCompra cpc
+                                  INNER JOIN dbo.Compras c ON c.idCompra = cpc.idCompra
+                                  WHERE c.idProveedor = @idProveedorElim AND c.tipoCompra = 'Cortes' AND cpc.idCorte = cp.idCorte);
+                END
+                DELETE FROM dbo.CortePorCompra WHERE idCompra = @idCompraEliminar;
+                DELETE FROM dbo.MediaRes WHERE idCompra = @idCompraEliminar;
+                SELECT @idAuditoria;";
+
+            object id = Db.Scalar(_empresa, sql, CommandType.Text, p =>
+            {
+                p.Add("@idCompraEliminar", SqlDbType.Int).Value = idCompra;
+                AuditoriaEliminacionSql.AgregarParametros(p, _empresa.IdEmpresa, auditoria);
+            });
+
+            return id == null || id == DBNull.Value ? 0 : Convert.ToInt32(id);
+        }
+
         public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
         {
             return Db.DataTable(

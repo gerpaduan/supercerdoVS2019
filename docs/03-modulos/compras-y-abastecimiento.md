@@ -25,3 +25,9 @@ Alta/edición de una compra (`Compras/Editar`, `ComprasController.Guardar`) auto
 Un borrador **propio** que figura "En uso" (corte de luz/cuelgue, todavía dentro de `BorradorGenerico:MinutosSinLatidoInterrumpida`) se puede cargar igual confirmando "Cargar igual" (desde 2026-10-04; rota el `clientId`, ver `docs/DECISIONS.md` 2026-10-04). Descartar sigue esperando el umbral.
 
 Con el feature apagado por config (default en SQL Server hasta activarlo), sigue el resguardo local de siempre: borrador en `localStorage` (banner "Recuperar/Limpiar borrador") y respaldo por captura de pantalla (`captura-respaldo.js`, botón "Activar respaldo automático", solo Chrome/Edge). Ambos mecanismos son mutuamente excluyentes con el borrador en servidor, nunca conviven.
+
+## Eliminar una compra (2026-10-22)
+- `Negocio.Compra.eliminarCompra` / `obtenerVistaPreviaEliminacion`; endpoints `Compras/PrevisualizarEliminar` (GET) y `Compras/Eliminar` (POST). Botón **Eliminar** en `Compras/Editar` (pantalla completa; no dentro del modal del POS ni de la cuenta corriente).
+- Borra la compra y sus líneas (`corteporcompra` / `mediares`), guarda la foto completa en `auditoriaeliminaciones` + `auditoriaeliminacionlineas`, genera el **asiento contrario** `ELIMINADO - ...` en la cuenta corriente del proveedor si tenía uno vigente, un **egreso de caja opuesto** (fecha de hoy) si el egreso de la compra tenía monto, y recalcula `corteproveedor`. Todo en una transacción. Aviso al admin (campana).
+- Pide motivo (10 a 300 caracteres) y **usuario y contraseña en cada eliminación**. Permiso = `Compra.ModificarCompra` de quien puso la clave. Se bloquea si hay pesajes vinculados a la compra.
+- Detalle y alternativas: `docs/DECISIONS.md` (2026-10-22, «Eliminar compras, stock y movimientos»). Manual: `docs/11-manual-de-uso/pantallas/Compras.Editar.md`, `RegistrosEliminados.Index.md` y el concepto `eliminar-registros`.

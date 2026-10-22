@@ -46,6 +46,12 @@
 }
 
 <div class="container-fluid px-2 px-md-3 compra-page @(embebido ? "compra-page-pos" : "")" data-compra-page="1">
+    @if (ViewBag.RecuperandoEliminado is string textoRecuperando)
+    {
+        <div class="alert alert-info py-2 small" role="alert" id="avisoRecuperandoEliminado">
+            <i class="fas fa-undo mr-1"></i> @textoRecuperando
+        </div>
+    }
     <div id="compraDraftBanner" class="alert alert-warning d-none" role="alert">
         Se encontró un borrador local de esta compra.
         <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
@@ -522,6 +528,10 @@
                                     data-edit-readonly-ignore="true">
                                 <i class="fas fa-edit mr-1"></i> Modificar
                             </button>
+                        }
+                        @if (!embebido && ViewBag.EliminarRegistro is WebCore.Models.EliminarRegistroVm vmEliminarCompra)
+                        {
+                            <partial name="_EliminarRegistro" model="vmEliminarCompra" />
                         }
                         @if (!embebido)
                         {

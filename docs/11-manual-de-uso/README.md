@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (47 de 95 pantallas)
+## Cobertura (52 de 97 pantallas)
 
 ## Manual del usuario
 
@@ -27,6 +27,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Bloqueo de usuarios por intentos fallidos | Acceso y seguridad | `conceptos/bloqueo-de-usuarios.md` | 2026-10-03 |
 | conceptos | Bloqueo por inactividad (sesión y POS) | Acceso y seguridad | `conceptos/bloqueo-por-inactividad.md` | 2026-10-21 |
 | conceptos | Clave rápida (PIN) | Acceso y seguridad | `conceptos/clave-rapida-pin.md` | 2026-10-03 |
+| conceptos | Eliminar compras, stock y movimientos | Acceso y seguridad | `conceptos/eliminar-registros.md` | 2026-10-22 |
 | conceptos | Ingresar con la dirección de tu empresa (CUIT) | Acceso y seguridad | `conceptos/login-por-cuit.md` | 2026-10-04 |
 | conceptos | Intentos de clave al autorizar (POS, Cierre de Caja, Ver fórmula) | Acceso y seguridad | `conceptos/intentos-de-clave-al-autorizar.md` | 2026-10-20 |
 | conceptos | Buscar cliente, vendedor o proveedor en los filtros (F9 / F10) | Conceptos generales | `conceptos/selector-cliente-vendedor-proveedor.md` | 2026-10-13 |
@@ -41,18 +42,22 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
 | pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-10-09 |
-| pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-13 |
+| pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-10-22 |
+| pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-23 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-14 |
+| pantallas | Registros eliminados | Configuración | `pantallas/RegistrosEliminados.Index.md` | 2026-10-23 |
 | pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-10-09 |
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-10-09 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-14 |
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-10-04 |
 | pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-05 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-14 |
-| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-13 |
-| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-10-20 |
-| pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-10-21 |
-| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-16 |
+| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-22 |
+| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-10-22 |
+| pantallas | Marcas de productos | Productos | `pantallas/Productos.Marcas.md` | 2026-10-22 |
+| pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-10-22 |
+| pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-10-22 |
+| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-22 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-13 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
 | pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-10-21 |
@@ -97,7 +102,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 - **Actividades**: Index
 - **CodigosBarra**: Editar, Index
-- **Compras**: AutorizarModulo, Editar
+- **Compras**: AutorizarModulo
 - **Elaborados**: IngresoRapido
 - **Empleados**: Editar, Historial, Index, Vacaciones
 - **Finanzas**: Cheques, CtaCtePersona, CtasCtes, Pagos
@@ -108,7 +113,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **PadronPlataforma**: Index
 - **Parametros**: Index
 - **Personas**: Editar, Index
-- **Productos**: AddOrEdit, EmbedGuardado, Marcas, Tipos
+- **Productos**: AddOrEdit, EmbedGuardado
 - **PuntosExpendio**: ExpendiosGenerados, POS, Sectores
 - **SeleccionUsuario**: Index
 - **Stock**: Index, Lineas

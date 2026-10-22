@@ -29,6 +29,11 @@
          SQL Server queda solo como legado -- el switch (WebCore/Infrastructure/NegocioFactory.cs)
          se mantiene por compatibilidad, pero el default real es "Postgres". -->
     <add key="DataEngine" value="Postgres" />
+    <!-- Eliminar movimientos (2026-10-22, ver docs/DECISIONS.md "Eliminar compras, stock y movimientos"): "true" si esta base
+         replica sus movimientos con otra (Servidor SM <-> San Lorenzo, idMovOrigen): ahi Eliminar queda deshabilitado porque la
+         copia en la otra base no se borra sola. Sin la clave: con SQL Server se asume "true", con Postgres "false". Poner "false"
+         cuando se unifiquen las bases. -->
+    <add key="Movimientos:ReplicaEntreBases" value="false" />
     <!-- Seguridad del login (2026-10-02, ver docs/DECISIONS.md "Login por CUIT, clave rapida (PIN) y
          politica de clave"). TrustedProxies: IPs o redes (ip o ip/prefijo, separadas por coma) de
          proxies de confianza ADEMAS de loopback y redes privadas, que ya se confian solos. Solo

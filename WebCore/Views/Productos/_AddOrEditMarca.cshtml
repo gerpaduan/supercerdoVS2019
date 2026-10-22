@@ -20,6 +20,10 @@
     }
 }
 
+@* El buscador de propietario (y el alta de persona) NO viven en este parcial: son modales de la pagina
+   Marcas.cshtml. Un modal dentro de otro modal deja la pantalla bloqueada (el fondo oscuro tapa al
+   modal de adelante y el foco queda atrapado en el de atras). Aca solo estan el campo y sus botones;
+   Marcas.cshtml escucha los clics (#btnBuscarPropietarioMarca) y completa #marcaAdminIdPropietario. *@
 <form action="/" method="post" id="formMarcaAdmin">
     @Html.AntiForgeryToken()
     <input type="hidden" name="IdPersona" value="@(Model != null ? Model.IdPersona : 0)" />
@@ -89,82 +93,8 @@
     </div>
 </form>
 
-<div class="modal fade" id="modalBuscarPropietarioMarca" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Seleccionar propietario</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group mb-2">
-                    <input type="text" class="form-control" id="qPropietarioMarca" placeholder="Escribi para buscar..." />
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="button" id="btnBuscarPropietarioListado">Buscar</button>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Persona</th>
-                                <th style="width:30%;">CUIT</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbPropietariosMarca">
-                            <tr><td colspan="2" class="text-muted">Cargando personas...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <small class="text-muted d-block mt-2">Doble clic o Enter para seleccionar la primera fila.</small>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
     (function () {
-        var urlPersonas = '@Url.Action("Listar", "Personas")';
-
-        function renderPropietarios(items) {
-            var $tb = $('#tbPropietariosMarca');
-            if (!items || !items.length) {
-                $tb.html('<tr><td colspan="2" class="text-muted">No se encontraron personas.</td></tr>');
-                return;
-            }
-
-            var html = '';
-            items.forEach(function (x) {
-                var nombre = x.razonSocial || '';
-                var cuit = x.cuit || '';
-                html += '<tr class="fila-propietario-marca" data-id="' + x.idPersona + '" data-nombre="' + $('<div>').text(nombre).html() + '">';
-                html += '<td>' + $('<div>').text(nombre).html() + '</td>';
-                html += '<td>' + $('<div>').text(cuit).html() + '</td>';
-                html += '</tr>';
-            });
-            $tb.html(html);
-            $tb.find('tr:first').addClass('table-active');
-        }
-
-        function buscarPropietarios() {
-            $.get(urlPersonas, { filtro: ($('#qPropietarioMarca').val() || '').trim() })
-                .done(renderPropietarios)
-                .fail(function () {
-                    $('#tbPropietariosMarca').html('<tr><td colspan="2" class="text-danger">No se pudo cargar el listado de personas.</td></tr>');
-                });
-        }
-
-        function seleccionarPropietario($row) {
-            if (!$row || !$row.length) return;
-
-            $('#marcaAdminIdPropietario').val($row.data('id') || '');
-            $('#marcaAdminPropietarioNombre').val($row.data('nombre') || '');
-            $('#modalBuscarPropietarioMarca').modal('hide');
-        }
-
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formMarcaAdmin",
             soloLecturaInicial: @(esEdicion ? "true" : "false"),
@@ -185,36 +115,6 @@
                 '- El sistema informara cuando haya marcas parecidas al agregar una nueva.'
             );
         });
-
-        $('#btnBuscarPropietarioMarca').off('click').on('click', function () {
-            $('#modalBuscarPropietarioMarca').modal('show');
-            buscarPropietarios();
-            setTimeout(function () {
-                $('#qPropietarioMarca').focus().select();
-            }, 100);
-        });
-
-        $('#btnBuscarPropietarioListado').off('click').on('click', buscarPropietarios);
-
-        $('#qPropietarioMarca').off('input').on('input', function () {
-            buscarPropietarios();
-        }).off('keydown').on('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                seleccionarPropietario($('#tbPropietariosMarca tr:first'));
-            }
-        });
-
-        $('#tbPropietariosMarca')
-            .off('click', 'tr')
-            .on('click', 'tr', function () {
-                $('#tbPropietariosMarca tr').removeClass('table-active');
-                $(this).addClass('table-active');
-            })
-            .off('dblclick', 'tr')
-            .on('dblclick', 'tr', function () {
-                seleccionarPropietario($(this));
-            });
 
         $('#btnQuitarPropietarioMarca').off('click').on('click', function () {
             if (!$('#marcaAdminIdPropietario').val()) return;

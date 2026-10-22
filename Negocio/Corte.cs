@@ -632,6 +632,105 @@ namespace Negocio
              oCorteD.eliminarMovimiento(idMovimiento, oUsuario);
          }
 
+         // Eliminacion con motivo (2026-10-22, ver docs/DECISIONS.md "Eliminar compras, stock y movimientos"). No chequea
+         // permisos, clave ni la replica entre bases: eso es del controller.
+         public VistaPreviaEliminacion obtenerVistaPreviaEliminacionMovimiento(int idMovimiento)
+         {
+             Entidades.Movimiento movimiento = oCorteD.cargarMovimiento(idMovimiento, false);
+             if (movimiento == null || movimiento.IdMovimiento == 0) return null;
+
+             List<Entidades.CortePorMovimiento> lineas = oCorteD.cargarCortesPorMovimiento(idMovimiento, false) ?? new List<Entidades.CortePorMovimiento>();
+             var vista = new VistaPreviaEliminacion
+             {
+                 Modulo = Entidades.AuditoriaEliminacion.ModuloMovimiento,
+                 IdRegistro = movimiento.IdMovimiento,
+                 TipoRegistro = "Movimiento",
+                 FechaRegistro = movimiento.FechaMovimiento,
+                 IdSucursal = movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.IdSucursal : 0,
+                 SucursalNombre = movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre : "",
+                 IdSucursalDestino = movimiento.SucursalDestino != null ? movimiento.SucursalDestino.IdSucursal : 0,
+                 SucursalDestinoNombre = movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre : "",
+                 IdUsuarioCreador = movimiento.CreadoPor != null ? movimiento.CreadoPor.Id : 0,
+                 CantLineas = lineas.Count,
+                 Lineas = convertirLineasMovimientoParaAuditoria(lineas, movimiento)
+             };
+             foreach (Entidades.AuditoriaEliminacionLinea linea in vista.Lineas) vista.TotalKg += linea.CantKg ?? 0;
+             vista.Avisos.Add("El stock de " + vista.SucursalNombre + " y el de " + vista.SucursalDestinoNombre + " se recalculan sin este movimiento.");
+             return vista;
+         }
+
+         private static List<Entidades.AuditoriaEliminacionLinea> convertirLineasMovimientoParaAuditoria(List<Entidades.CortePorMovimiento> lineas, Entidades.Movimiento movimiento)
+         {
+             var resultado = new List<Entidades.AuditoriaEliminacionLinea>();
+             foreach (Entidades.CortePorMovimiento linea in lineas)
+             {
+                 resultado.Add(new Entidades.AuditoriaEliminacionLinea
+                 {
+                     IdCorte = linea.Corte != null ? (int?)linea.Corte.idCorte : null,
+                     Codigo = linea.Corte != null ? (long?)linea.Corte.codigo : null,
+                     Producto = linea.Corte != null ? linea.Corte.corte : null,
+                     CantKg = linea.CantKg,
+                     CantUnidad = linea.CantUnidad,
+                     Detalle = linea.PesoBalanza ? "Balanza" : null
+                 });
+             }
+             return resultado;
+         }
+
+         public ResultadoEliminacion eliminarMovimientoConMotivo(int idMovimiento, string motivo, Entidades.Usuario usuarioElimino, Entidades.Usuario usuarioSesion, string ip)
+         {
+             if (usuarioElimino == null || usuarioElimino.Id <= 0)
+                 return ResultadoEliminacion.Fallo("No se pudo identificar al usuario que elimina el movimiento.");
+
+             string errorMotivo = EliminacionRegistro.ValidarMotivo(motivo, out string motivoNormalizado);
+             if (errorMotivo != null) return ResultadoEliminacion.Fallo(errorMotivo);
+
+             Entidades.Movimiento movimiento = oCorteD.cargarMovimiento(idMovimiento, false);
+             if (movimiento == null || movimiento.IdMovimiento == 0)
+                 return ResultadoEliminacion.Fallo("El movimiento no existe o ya fue eliminado.");
+
+             List<Entidades.CortePorMovimiento> lineas = oCorteD.cargarCortesPorMovimiento(idMovimiento, false) ?? new List<Entidades.CortePorMovimiento>();
+             double totalKg = 0;
+             foreach (Entidades.CortePorMovimiento linea in lineas) totalKg += linea.CantKg;
+
+             var auditoria = new Entidades.AuditoriaEliminacion
+             {
+                 Modulo = Entidades.AuditoriaEliminacion.ModuloMovimiento,
+                 IdRegistro = movimiento.IdMovimiento,
+                 TipoRegistro = "Movimiento",
+                 FechaRegistro = movimiento.FechaMovimiento,
+                 IdSucursal = movimiento.SucursalOrigen != null ? (int?)movimiento.SucursalOrigen.IdSucursal : null,
+                 IdSucursalDestino = movimiento.SucursalDestino != null ? (int?)movimiento.SucursalDestino.IdSucursal : null,
+                 TotalKg = totalKg,
+                 CantLineas = lineas.Count,
+                 Observaciones = movimiento.Observaciones,
+                 IdUsuarioCreador = movimiento.CreadoPor != null ? (int?)movimiento.CreadoPor.Id : null,
+                 Creado = movimiento.Creado,
+                 IdUsuarioElimino = usuarioElimino.Id,
+                 IdUsuarioSesion = (usuarioSesion ?? usuarioElimino).Id,
+                 Motivo = motivoNormalizado,
+                 Ip = ip,
+                 Efectos = movimiento.IdMovOrigen.HasValue && movimiento.IdMovOrigen.Value > 0
+                     ? "Era una copia replicada del movimiento #" + movimiento.IdMovOrigen.Value + " de la otra base."
+                     : null
+             };
+
+             int idAuditoria;
+             try
+             {
+                 idAuditoria = oCorteD.eliminarMovimientoConAuditoria(idMovimiento, auditoria);
+             }
+             catch (Exception ex)
+             {
+                 throw new Exception("Error al eliminar el movimiento: \n" + ex.Message, ex);
+             }
+
+             if (idAuditoria == 0) return ResultadoEliminacion.Fallo("El movimiento ya fue eliminado por otro usuario.");
+
+             auditoria.Id = idAuditoria;
+             return new ResultadoEliminacion { Ok = true, IdAuditoria = idAuditoria, Auditoria = auditoria };
+         }
+
          public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
 
@@ -1210,6 +1309,16 @@ namespace Negocio
         {
             
             return oCorteD.eliminarTipoProducto(tiposProducto);
+        }
+
+        public void reasignarTipoCortes(IEnumerable<KeyValuePair<int, string>> idCorteNuevoTipo, int? idUsuario)
+        {
+            oCorteD.reasignarTipoCortes(idCorteNuevoTipo, idUsuario);
+        }
+
+        public void reasignarMarcaCortes(IEnumerable<KeyValuePair<int, int?>> idCorteNuevaMarca, int? idUsuario)
+        {
+            oCorteD.reasignarMarcaCortes(idCorteNuevaMarca, idUsuario);
         }
 
 

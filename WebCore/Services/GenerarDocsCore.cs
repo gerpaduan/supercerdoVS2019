@@ -904,7 +904,6 @@ namespace WebCore.Services
         {
             public float AnchoMm;
             public float AltoMm;
-            public bool MostrarLogo;
             public bool MostrarFecha;
             public float FuenteNombreGrande;
             public float FuenteNombreMedia;
@@ -912,6 +911,9 @@ namespace WebCore.Services
             public float FuentePrecio;
             public float FuentePrecioLabel;
             public float FuenteFecha;
+            // Bajada (mm) del "$" y de los centavos respecto del tope de la linea del precio, para que queden alineados
+            // con lo alto de los enteros (el interlineado de la fuente grande deja aire arriba).
+            public float OffsetSuperindiceMm;
         }
 
         private static TamanoEtiqueta ResolverTamanoEtiquetaInterno(string tamano)
@@ -923,28 +925,28 @@ namespace WebCore.Services
                     {
                         AnchoMm = 40,
                         AltoMm = 30,
-                        MostrarLogo = false,
                         MostrarFecha = true,
-                        FuenteNombreGrande = 6.3f,
-                        FuenteNombreMedia = 5.6f,
-                        FuenteNombreChica = 4.9f,
-                        FuentePrecio = 20,
-                        FuentePrecioLabel = 4,
-                        FuenteFecha = 3
+                        FuenteNombreGrande = 7.4f,
+                        FuenteNombreMedia = 5.9f,
+                        FuenteNombreChica = 5.1f,
+                        FuentePrecio = 22,
+                        FuentePrecioLabel = 3.6f,
+                        FuenteFecha = 2,
+                        OffsetSuperindiceMm = 0.7f
                     };
                 case "grande":
                     return new TamanoEtiqueta
                     {
                         AnchoMm = 100,
                         AltoMm = 50,
-                        MostrarLogo = true,
                         MostrarFecha = true,
-                        FuenteNombreGrande = 14f,
-                        FuenteNombreMedia = 11.9f,
+                        FuenteNombreGrande = 15.5f,
+                        FuenteNombreMedia = 12.5f,
                         FuenteNombreChica = 10.5f,
                         FuentePrecio = 46,
-                        FuentePrecioLabel = 7,
-                        FuenteFecha = 6
+                        FuentePrecioLabel = 6.8f,
+                        FuenteFecha = 5,
+                        OffsetSuperindiceMm = 1.5f
                     };
                 case "mediana":
                 default:
@@ -952,22 +954,26 @@ namespace WebCore.Services
                     {
                         AnchoMm = 60,
                         AltoMm = 35,
-                        MostrarLogo = true,
                         MostrarFecha = true,
-                        FuenteNombreGrande = 9.1f,
-                        FuenteNombreMedia = 7.7f,
-                        FuenteNombreChica = 7f,
-                        FuentePrecio = 30,
-                        FuentePrecioLabel = 5,
-                        FuenteFecha = 4
+                        FuenteNombreGrande = 11f,
+                        FuenteNombreMedia = 8.8f,
+                        FuenteNombreChica = 7.6f,
+                        FuentePrecio = 32,
+                        FuentePrecioLabel = 4.6f,
+                        FuenteFecha = 3,
+                        OffsetSuperindiceMm = 1f
                     };
             }
         }
 
-        // logoBytes: leido por el controller (IWebHostEnvironment.WebRootPath), no aca -- mismo
-        // criterio ya establecido en VentasController para AFIP (_env.ContentRootPath), este
-        // servicio se mantiene libre de acceso a disco/DI.
-        public static byte[] GenerarPdfEtiquetas(List<Entidades.Corte> productos, string tamano, byte[] logoBytes)
+        // Las etiquetas ya no llevan logo (2026-10-22, pedido del usuario): este servicio sigue libre de acceso a disco/DI.
+        public static byte[] GenerarPdfEtiquetas(List<Entidades.Corte> productos, string tamano)
+        {
+            return ConstruirDocumentoEtiquetas(productos, tamano).GeneratePdf();
+        }
+
+        // Se separa del PDF para poder revisar el diseno de la etiqueta como imagen (Document.GenerateImages) sin abrir el PDF.
+        private static QuestPDF.Infrastructure.IDocument ConstruirDocumentoEtiquetas(List<Entidades.Corte> productos, string tamano)
         {
             var tam = ResolverTamanoEtiquetaInterno(tamano);
             string fechaImpresion = DateTime.Now.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
@@ -1007,7 +1013,7 @@ namespace WebCore.Services
                                     row.ConstantItem(tam.AnchoMm, Unit.Millimetre)
                                         .ShowEntire()
                                         .Height(tam.AltoMm, Unit.Millimetre)
-                                        .Element(c => DibujarEtiqueta(c, producto, tam, logoBytes, fechaImpresion));
+                                        .Element(c => DibujarEtiqueta(c, producto, tam, fechaImpresion));
                                 }
                             });
                         }
@@ -1015,100 +1021,109 @@ namespace WebCore.Services
                 });
             });
 
-            return documento.GeneratePdf();
+            return documento;
         }
 
-        private static void DibujarEtiqueta(IContainer container, Entidades.Corte producto, TamanoEtiqueta tam, byte[] logoBytes, string fechaImpresion)
+        // Diseno "A" (2026-10-22, pedido del usuario): nombre en negrita (hasta 2 lineas) sobre una linea, precio grande
+        // a la derecha con "$" y centavos chicos arriba (formato argentino: 9.900 + 00), y abajo el codigo de barras a la
+        // izquierda con la unidad ("PRECIO POR KG"/"POR UNIDAD", etiqueta oscura) y la fecha de emision a la derecha.
+        // Sin logo. Todos los tamanos usan las mismas proporciones; cambian solo las fuentes (ver ResolverTamanoEtiquetaInterno).
+        private static void DibujarEtiqueta(IContainer container, Entidades.Corte producto, TamanoEtiqueta tam, string fechaImpresion)
         {
             float padMm = tam.AnchoMm * 0.05f;
             string nombre = (producto.CorteDesc ?? "").ToUpperInvariant();
-            float fuenteNombre = nombre.Length > 40 ? tam.FuenteNombreChica : (nombre.Length > 25 ? tam.FuenteNombreMedia : tam.FuenteNombreGrande);
+
+            // Nombre corto: una linea grande. Mediano: hasta 2 lineas. Muy largo: 2 lineas con la fuente chica (ClampLines corta el resto).
+            float fuenteNombre = nombre.Length > 60 ? tam.FuenteNombreChica : (nombre.Length > 22 ? tam.FuenteNombreMedia : tam.FuenteNombreGrande);
+
+            // Precio en formato argentino: miles con punto y centavos aparte ("9.900" + "00"). Se arma a mano (no con
+            // la cultura es-AR) para no depender de los datos de cultura del servidor.
+            decimal precio = Math.Round((decimal)producto.PrecioKg, 2, MidpointRounding.AwayFromZero);
+            long entero = (long)Math.Truncate(precio);
+            string textoEntero = entero.ToString("#,0", CultureInfo.InvariantCulture).Replace(',', '.');
+            string textoCentavos = ((int)Math.Round((precio - entero) * 100, MidpointRounding.AwayFromZero)).ToString("00", CultureInfo.InvariantCulture);
+
+            float fuenteSimbolo = tam.FuentePrecio * 0.38f;
+            float fuenteCentavos = tam.FuentePrecio * 0.43f;
 
             container
                 .Border(0.4f)
                 .BorderColor(Colors.Grey.Lighten1)
-                // Padding mayormente horizontal (no en las 4 direcciones parejo): el original
-                // (iTextSharp) usa "pad" como margen de contenido horizontal, con las bandas
-                // verticales (headerH/precioH/footerH) ya ocupando casi el 100% del alto real --
-                // aplicar el mismo valor tambien arriba/abajo le resta a la etiqueta ~2*padMm de
-                // alto disponible antes de dibujar una sola linea, y sumado al interlineado propio
-                // de QuestPDF (ver mas abajo) es lo que tiraba DocumentLayoutException bajo
-                // ShowEntire() con datos reales (5 productos, "mediana").
+                // Padding mayormente horizontal (el vertical es una fraccion): con bandas verticales que ocupan casi
+                // todo el alto, un padding parejo tiraba DocumentLayoutException bajo ShowEntire() con datos reales.
                 .PaddingHorizontal(padMm, Unit.Millimetre)
-                .PaddingVertical(padMm * 0.25f, Unit.Millimetre)
+                .PaddingVertical(padMm * 0.3f, Unit.Millimetre)
                 .Column(col =>
                 {
-                    // --- Encabezado: nombre (izquierda) + logo (derecha) ---
-                    // Sin .Height() fijo (ver comentario de padding arriba, mismo motivo): se deja
-                    // que cada seccion mida su alto natural -- el tamaño de fuente (ya calibrado
-                    // por tam.Fuente*, ver ResolverTamanoEtiquetaInterno) sigue siendo el mismo que
-                    // el original, la etiqueta completa sigue entrando en su tamaño fisico fijo.
-                    // LineHeight(1): QuestPDF reserva interlineado extra por defecto (no aplica en
-                    // el posicionamiento absoluto glifo-por-glifo del original) -- sin achicarlo,
-                    // cada linea de texto pesa mas de lo que el layout original asumia.
-                    col.Item().Row(row =>
-                    {
-                        row.RelativeItem().AlignLeft().AlignMiddle().Text(nombre).FontSize(fuenteNombre).LineHeight(1f);
-
-                        if (tam.MostrarLogo && logoBytes != null)
+                    // --- Nombre: alto fijo para que el precio quede siempre a la misma altura (1 o 2 lineas) ---
+                    // LineHeight(1): QuestPDF reserva interlineado extra por defecto; sin achicarlo cada linea pesa mas.
+                    col.Item().Height(tam.AltoMm * 0.27f, Unit.Millimetre).AlignMiddle()
+                        .Text(texto =>
                         {
-                            // Causa real de un DocumentLayoutException encontrado con datos
-                            // reales: sin un alto explicito, FitArea calcula el alto natural del
-                            // logo a partir de SU PROPIO ancho + relacion de aspecto (aca, ancho
-                            // generoso / aspecto 1.4 = ~12.5mm) en vez de respetar la proporcion
-                            // del encabezado -- eso solo ya superaba el 30% de alto pensado para
-                            // esta fila, e inflaba toda la etiqueta por encima de tam.AltoMm. El
-                            // original tambien acota ambas dimensiones (logoMaxW/logoMaxH), no
-                            // solo el ancho.
-                            row.ConstantItem(tam.AnchoMm * 0.30f, Unit.Millimetre)
-                                .Height(tam.AltoMm * 0.30f * 0.85f, Unit.Millimetre)
-                                .AlignMiddle().AlignRight()
-                                .Image(logoBytes).FitArea();
-                        }
-                    });
+                            texto.DefaultTextStyle(s => s.FontSize(fuenteNombre).Bold().LineHeight(1.05f));
+                            texto.ClampLines(2);
+                            texto.Span(nombre);
+                        });
 
                     // --- Linea divisoria ---
                     col.Item().PaddingVertical(0.2f, Unit.Millimetre).LineHorizontal(0.75f).LineColor(Colors.Grey.Darken2);
 
-                    // --- Precio grande + etiqueta "precio por kg" / "precio unitario" ---
-                    col.Item().Column(precioCol =>
+                    // --- Precio: "$" y centavos alineados arriba, enteros grandes ---
+                    col.Item().Row(row =>
                     {
-                        precioCol.Item().AlignRight().Text(text =>
-                        {
-                            text.DefaultTextStyle(s => s.LineHeight(1f));
-                            text.Span("$").FontSize(tam.FuentePrecio * 0.45f).Bold();
-                            text.Span(producto.PrecioKg.ToString("#,0.00", CultureInfo.InvariantCulture)).FontSize(tam.FuentePrecio).Bold();
-                        });
-
-                        precioCol.Item().AlignRight().Text(producto.Pesable ? "PRECIO POR KG" : "PRECIO UNITARIO")
-                            .FontSize(tam.FuentePrecioLabel).Bold().FontColor(Colors.Grey.Darken3).LineHeight(1f);
+                        row.RelativeItem();
+                        row.AutoItem().AlignTop().PaddingTop(tam.OffsetSuperindiceMm * 1f, Unit.Millimetre)
+                            .Text("$").FontSize(fuenteSimbolo).Bold().LineHeight(1f);
+                        row.AutoItem().PaddingHorizontal(0.3f, Unit.Millimetre)
+                            .Text(textoEntero).FontSize(tam.FuentePrecio).Bold().LineHeight(1f);
+                        row.AutoItem().AlignTop().PaddingTop(tam.OffsetSuperindiceMm, Unit.Millimetre)
+                            .Text(textoCentavos).FontSize(fuenteCentavos).Bold().LineHeight(1f);
                     });
 
-                    // --- Pie: codigo de barras (izquierda) + fecha de emision (derecha) ---
-                    // Alto acotado explicitamente (mismo motivo que el logo del encabezado, ver
-                    // comentario de arriba): sin un limite de alto, el SVG del codigo de barras
-                    // puede pedir mas espacio del pensado para esta fila.
+                    // --- Pie: codigo de barras (izquierda) | unidad y fecha de emision (derecha) ---
+                    // Alto del codigo acotado explicitamente: sin limite, el SVG puede pedir mas espacio del pensado.
                     col.Item().Row(row =>
                     {
                         string svg = GenerarBarcodeSvg(producto.Codigo);
                         if (svg != null)
                         {
-                            row.RelativeItem().Height(tam.AltoMm * 0.24f, Unit.Millimetre)
-                                .AlignLeft().AlignMiddle().Svg(svg).FitArea();
+                            // Se quita el texto que dibuja ZXing dentro del SVG (sale diminuto) y se escribe el numero aparte,
+                            // con una fuente legible, justo debajo de las barras.
+                            string svgBarras = System.Text.RegularExpressions.Regex.Replace(
+                                svg, "<text[^>]*>.*?</text>", "", System.Text.RegularExpressions.RegexOptions.Singleline);
+
+                            row.ConstantItem(tam.AnchoMm * 0.5f, Unit.Millimetre).Column(izquierda =>
+                            {
+                                izquierda.Item().Height(tam.AltoMm * 0.27f, Unit.Millimetre).AlignLeft().AlignTop().Svg(svgBarras).FitArea();
+                                izquierda.Item().PaddingLeft(0.5f, Unit.Millimetre).Text(producto.Codigo.ToString(CultureInfo.InvariantCulture))
+                                    .FontSize(tam.FuentePrecioLabel).FontColor(Colors.Grey.Darken3).LineHeight(1f);
+                            });
                         }
                         else
                         {
-                            row.RelativeItem().AlignLeft().AlignMiddle().Text("Cód: " + producto.Codigo).FontSize(tam.FuenteFecha).LineHeight(1f);
+                            row.ConstantItem(tam.AnchoMm * 0.5f, Unit.Millimetre).AlignLeft().AlignMiddle()
+                                .Text("Cód: " + producto.Codigo).FontSize(tam.FuentePrecioLabel + 1).LineHeight(1f);
                         }
 
-                        if (tam.MostrarFecha)
+                        row.RelativeItem().ExtendVertical().Column(derecha =>
                         {
-                            row.ConstantItem(tam.AnchoMm * 0.42f, Unit.Millimetre).Column(fechaCol =>
+                            derecha.Item().AlignRight().CornerRadius(1.2f, Unit.Millimetre).Background(Colors.Grey.Darken4)
+                                .PaddingHorizontal(1.3f, Unit.Millimetre).PaddingVertical(0.35f, Unit.Millimetre)
+                                .Text(producto.Pesable ? "PRECIO POR KG" : "PRECIO POR UNIDAD")
+                                .FontSize(tam.FuentePrecioLabel).Bold().FontColor(Colors.White).LineHeight(1f);
+
+                            // ExtendVertical + AlignBottom empuja la fecha al borde inferior de la etiqueta (mismo
+                            // mecanismo que el pie de los comprobantes de este archivo).
+                            if (tam.MostrarFecha)
                             {
-                                fechaCol.Item().AlignRight().Text("FECHA DE EMISIÓN").FontSize(tam.FuenteFecha).Bold().FontColor(Colors.Grey.Darken3).LineHeight(1f);
-                                fechaCol.Item().AlignRight().Text(fechaImpresion).FontSize(tam.FuenteFecha).FontColor(Colors.Grey.Darken3).LineHeight(1f);
-                            });
-                        }
+                                derecha.Item().ExtendVertical().AlignBottom().AlignRight().Text(text =>
+                                {
+                                    text.DefaultTextStyle(s => s.FontSize(tam.FuenteFecha).FontColor(Colors.Grey.Darken3).LineHeight(1f));
+                                    text.Span("FECHA DE EMISIÓN ").Bold();
+                                    text.Span(fechaImpresion);
+                                });
+                            }
+                        });
                     });
                 });
         }

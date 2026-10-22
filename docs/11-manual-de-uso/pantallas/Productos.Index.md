@@ -5,15 +5,15 @@ rol: usuario
 modulo: Productos
 orden: 1
 permiso: Producto.ModificarPrecios para cambiar precios (el botón $ de cada fila y "Precios por selección" quedan deshabilitados sin él)
-revisada: 2026-10-21
+revisada: 2026-10-22
 ---
 
 ## Para qué sirve
 Listado de los **productos** de la empresa, con su código, nombre, stock y precio. Desde acá se crean, editan y eliminan productos, se imprimen etiquetas y se cambian precios.
 
 ## Buscar y filtrar
-- **Buscador**: filtra al escribir por código o por nombre.
-- **Filtros avanzados** (interruptor de arriba a la derecha): tipo, marca y rango de código se aplican al instante; proveedor, fechas y *Familia de producto* necesitan **Aplicar** (recargan la pantalla).
+- **Buscador**: filtra al escribir por código o por nombre, combinado con los filtros avanzados. La **lupa** recarga la tabla desde el servidor (trae productos nuevos o cambiados) conservando los filtros aplicados y el texto buscado; ya no hace falta F5.
+- **Filtros avanzados** (interruptor de arriba a la derecha): tipo, marca y rango de código se aplican al instante; proveedor, fechas y *Familia de producto* necesitan **Aplicar** (recargan la pantalla). **Enter** en cualquier campo del panel equivale a **Aplicar**.
 - **Actualizado en período** (Filtros avanzados): *Desde* y *Hasta* tienen fecha y hora. Si elegís la fecha y no la hora, la hora queda en **00:00:00** (se completa sola). Un *Hasta* con hora 00:00:00 incluye todo ese día. Toma la fecha de última modificación del producto —que ahora también se actualiza al **cambiar el precio**— o, si nunca se modificó, la de creación.
 - **Última modificación**: al desplegar **Detalles** de un producto, abajo se ve en chico «Últ. modificación: fecha y hora por usuario». Sin fecha («-») = nunca se modificó; sin usuario = lo modificó un proceso sin usuario (por ejemplo, el precio actualizado al cargar una compra) o fue anterior a este registro.
 - **Familia de producto** (dentro de Filtros avanzados): sirve para ver un producto junto con los que dependen de él o de los que él depende. Escribí el código o el nombre y elegí el producto de la lista (tiene que quedar el texto «código - nombre»), y tildá:
@@ -44,7 +44,10 @@ Cosas a tener en cuenta:
 - Cada precio se guarda de a uno. Al guardarlo (por *Modificar precio* o por selección) el producto queda con la **fecha y el usuario de última modificación** (se ven en el detalle del producto). El sistema **no guarda cuál era el precio anterior**.
 
 ## Etiquetas
-**Etiquetas (PDF)** (Alt + E) funciona igual: tildás los productos, elegís el tamaño (chica, mediana o grande) y **Generar etiquetas** descarga un PDF con una etiqueta por producto.
+**Etiquetas (PDF)** (Alt + E) funciona igual: tildás los productos, elegís el tamaño (chica, mediana o grande) y **Generar etiquetas** descarga un PDF con una etiqueta por producto. Cada etiqueta lleva el nombre arriba, el precio grande en formato argentino (por ejemplo 9.900 con los centavos chicos), el código de barras con su número, la unidad (precio por kg o por unidad) y la fecha de emisión al pie; no lleva logo. Al generar el PDF ya no aparece el aviso del navegador de abandonar el sitio.
+
+## Catálogo global: importar sin precio
+En el catálogo global, al tildar un producto aparece su casillero de **Precio**, que normalmente hay que completar para poder **Importar seleccionados**. Si tildás **Cargar faltantes sin precio con precio 0** (arriba de la lista), los tildados que no tengan precio se importan con **precio 0** (el estado de la fila pasa a "Precio 0"). Los que sí tienen precio escrito conservan ese precio. Con el tilde apagado se sigue exigiendo el precio.
 
 ## Resto de la pantalla
 PENDIENTE: documentar la columna de stock por sucursal, la vista completa, las acciones de cada fila (ver, stock por sucursales, eliminar), Tipos, Marcas, el catálogo global y el ajuste por forma de pago (no verificado contra el código en esta revisión).

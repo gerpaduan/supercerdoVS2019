@@ -21,6 +21,12 @@
 }
 
 <div class="container-fluid px-2 px-md-3 movimiento-page movimiento-form-compact" data-movimiento-page="1">
+    @if (ViewBag.RecuperandoEliminado is string textoRecuperando)
+    {
+        <div class="alert alert-info py-2 small" role="alert" id="avisoRecuperandoEliminado">
+            <i class="fas fa-undo mr-1"></i> @textoRecuperando
+        </div>
+    }
     <div id="movimientoDraftBanner" class="alert alert-warning d-none" role="alert">
         Se encontró un borrador local de este movimiento.
         <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
@@ -340,6 +346,10 @@
                                 <i class="fas fa-key mr-1"></i> Modificar con mi clave
                             </a>
                         }
+                    }
+                    @if (ViewBag.EliminarRegistro is WebCore.Models.EliminarRegistroVm vmEliminarMovimiento)
+                    {
+                        <partial name="_EliminarRegistro" model="vmEliminarMovimiento" />
                     }
                     <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarMovimiento">
                         <i class="fas fa-save mr-1"></i> Guardar movimiento

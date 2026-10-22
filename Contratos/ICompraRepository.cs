@@ -16,6 +16,13 @@ namespace Contratos
         Contratos.IUnitOfWork IniciarUnitOfWork();
 
         void anularCompra(int idCompra);
+
+        // Elimina DE VERDAD la compra (o la operacion de stock) con sus lineas (CortePorCompra / MediaRes) y, en la misma
+        // transaccion, guarda la foto en la auditoria (cabecera de `auditoria` + lineas copiadas de la base). Si la compra era
+        // tipo Cortes recalcula CorteProveedor (ultimo precio por proveedor) sin tocar las filas que no vienen de esta compra.
+        // Devuelve el id de la auditoria, o 0 si la compra ya no existia (otro usuario la elimino en el medio: no se escribe nada).
+        // unitOfWork: ver Contratos/IUnitOfWork.cs (SQL Server lo ignora; ahi la atomicidad la da el TransactionScope de Negocio).
+        int eliminarCompraConAuditoria(int idCompra, Entidades.AuditoriaEliminacion auditoria, Contratos.IUnitOfWork unitOfWork = null);
         DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal);
         DataTable getLineasCompras(int idSucursal, string tipoCompra, string texto, string codigo, string corte, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal);
         DataTable findById(int idCompra);

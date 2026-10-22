@@ -68,7 +68,8 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalTipoProducto" tabindex="-1" role="dialog" aria-hidden="true">
+@* El modal cuelga del body, fuera de .productos-tipos-page: lleva la clase para heredar la fuente compacta. *@
+<div class="modal fade productos-tipos-page" id="modalTipoProducto" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -84,7 +85,24 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalCatalogoGlobalTiposProducto" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+@* Lista de productos del tipo que se quiere eliminar, para pasarlos a otro tipo (Scripts/app/reasignar-productos.js). *@
+<div class="modal fade productos-tipos-page" id="modalReasignarProductos" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Productos con este tipo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalReasignarProductosBody">
+                <div class="text-center text-muted py-4">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCatalogoGlobalTiposProducto"tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-catalogo-global-tipos-dialog" role="document">
         <div class="modal-content" id="modalCatalogoGlobalTiposProductoContent">
             <div class="modal-body">
@@ -112,27 +130,38 @@
         padding: .32rem .58rem;
     }
 
-    .productos-tipos-page .table {
-        font-size: .84rem;
+    /* Tabla compacta (mismo criterio que la grilla de Productos). Los selectores con #content son necesarios:
+       ui-refresh.css fija 14px en "body.app-shell #content .table thead th" y gana por el id. */
+    .productos-tipos-page .table,
+    .productos-tipos-page .table td {
+        font-size: .78rem;
     }
 
     .productos-tipos-page .table th,
     .productos-tipos-page .table td {
-        padding: .42rem .58rem;
-        line-height: 1.15;
+        padding: .28rem .5rem;
+        line-height: 1.1;
         vertical-align: middle;
     }
 
-    .productos-tipos-page .table thead th,
+    body.app-shell #content .productos-tipos-page .table thead th,
     .productos-tipos-page .table > thead > tr > th {
-        font-size: .73rem;
+        font-size: .68rem;
         font-weight: 700;
         letter-spacing: .02em;
         text-transform: uppercase;
+        padding-top: .32rem;
+        padding-bottom: .32rem;
+    }
+
+    .productos-tipos-page .table .btn.btn-sm {
+        font-size: .72rem;
+        padding: .16rem .42rem;
+        line-height: 1.12;
     }
 
     .productos-tipos-page .badge {
-        font-size: .76rem;
+        font-size: .68rem;
     }
 
     .productos-tipos-page .btn {
@@ -165,24 +194,27 @@
             padding: .28rem .54rem;
         }
 
-        .productos-tipos-page .table {
-            font-size: .8rem;
+        .productos-tipos-page .table,
+        .productos-tipos-page .table td {
+            font-size: .76rem;
         }
 
-        .productos-tipos-page .table thead th,
+        body.app-shell #content .productos-tipos-page .table thead th,
         .productos-tipos-page .table > thead > tr > th {
-            font-size: .68rem;
+            font-size: .66rem;
         }
     }
 </style>
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/reasignar-productos.js")" asp-append-version="true"></script>
     <script>
         (function () {
             var urlModal = '@Url.Action("TipoProductoModal", "Productos")';
             var urlGuardar = '@Url.Action("GuardarTipoProducto", "Productos")';
             var urlEliminar = '@Url.Action("EliminarTipoProducto", "Productos")';
+            var urlReasignar = '@Url.Action("ReasignarTipoModal", "Productos")';
             var urlVerGlobales = '@Url.Action("VerGlobalesTiposProducto", "Productos")';
             var urlBuscarGlobales = '@Url.Action("BuscarGlobalesTiposProducto", "Productos")';
             var urlImportarGlobales = '@Url.Action("ImportarTiposProductoSeleccionados", "Productos")';
@@ -430,6 +462,12 @@
                             tipo: tipo
                         },
                         success: function (resp) {
+                            // Tipo con productos: no se elimina, se abre la lista para pasarlos a otro tipo.
+                            if (resp && resp.enUso) {
+                                window.ReasignarProductos.abrir({ urlModal: urlReasignar, parametros: { tipo: tipo } });
+                                return;
+                            }
+
                             if (!resp || !resp.success) {
                                 alert(resp && resp.message ? resp.message : 'No se pudo eliminar el tipo de producto.');
                                 return;

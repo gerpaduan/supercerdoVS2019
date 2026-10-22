@@ -1,0 +1,119 @@
+@* Registros eliminados (Compras, Stock y Movimientos): solo administradores. Ver docs/DECISIONS.md "Eliminar compras, stock y movimientos". *@
+@model WebCore.Models.RegistrosEliminadosIndexVm
+@{
+    ViewData["Title"] = "Registros eliminados";
+    var es = new System.Globalization.CultureInfo("es-AR");
+    string Etiqueta(string modulo) => modulo == "COMPRA" ? "Compra" : modulo == "STOCK" ? "Stock" : modulo == "MOVIMIENTO" ? "Movimiento" : modulo;
+}
+
+<style>
+    .reg-elim-page { font-size: .85rem; }
+    .reg-elim-page .form-control, .reg-elim-page .btn { font-size: .85rem; }
+    .reg-elim-page table { font-size: .8rem; }
+    .reg-elim-page td.motivo { max-width: 340px; white-space: normal; }
+</style>
+
+<div class="container-fluid reg-elim-page">
+    <p class="text-muted mb-2">Compras, movimientos de stock y movimientos entre sucursales que se eliminaron: quién, cuándo, por qué y qué tenían.</p>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+            <form method="get" action="@Url.Action("Index", "RegistrosEliminados")">
+                <div class="form-row align-items-end">
+                    <div class="col-6 col-md-2 mb-2">
+                        <label class="mb-1" for="modulo">Tipo</label>
+                        <select id="modulo" name="modulo" class="form-control form-control-sm">
+                            @if (Model.ModulosPermitidos.Count > 1)
+                            {
+                                <option value="" selected="@(Model.Modulo == "")">Todos</option>
+                            }
+                            @if (Model.ModulosPermitidos.Contains("COMPRA"))
+                            {
+                                <option value="COMPRA" selected="@(Model.Modulo == "COMPRA")">Compras</option>
+                            }
+                            @if (Model.ModulosPermitidos.Contains("STOCK"))
+                            {
+                                <option value="STOCK" selected="@(Model.Modulo == "STOCK")">Stock</option>
+                            }
+                            @if (Model.ModulosPermitidos.Contains("MOVIMIENTO"))
+                            {
+                                <option value="MOVIMIENTO" selected="@(Model.Modulo == "MOVIMIENTO")">Movimientos</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-2 mb-2">
+                        <label class="mb-1" for="fechaDesde">Eliminados desde</label>
+                        <input type="date" id="fechaDesde" name="fechaDesde" class="form-control form-control-sm" value="@Model.FechaDesde" />
+                    </div>
+                    <div class="col-6 col-md-2 mb-2">
+                        <label class="mb-1" for="fechaHasta">Hasta</label>
+                        <input type="date" id="fechaHasta" name="fechaHasta" class="form-control form-control-sm" value="@Model.FechaHasta" />
+                    </div>
+                    <div class="col-12 col-md-4 mb-2">
+                        <label class="mb-1" for="texto">Buscar</label>
+                        <input type="text" id="texto" name="texto" class="form-control form-control-sm" value="@Model.Texto" placeholder="Motivo, remito, nº de registro, usuario o proveedor" />
+                    </div>
+                    <div class="col-6 col-md-2 mb-2">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search mr-1"></i> Buscar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Eliminado</th>
+                            <th>Tipo</th>
+                            <th class="text-right">Nº</th>
+                            <th>Fecha del registro</th>
+                            <th>Sucursal</th>
+                            <th>Proveedor / persona</th>
+                            <th class="text-right">Importe</th>
+                            <th class="text-right">Líneas</th>
+                            <th>Eliminó</th>
+                            <th>Motivo</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items.Count == 0)
+                        {
+                            <tr><td colspan="11" class="text-center text-muted py-3">No hay registros eliminados en ese período.</td></tr>
+                        }
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="text-nowrap">@item.FechaEliminacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@Etiqueta(item.Modulo)<div class="text-muted small">@item.TipoRegistro</div></td>
+                                <td class="text-right">@item.IdRegistro</td>
+                                <td class="text-nowrap">@(item.FechaRegistro.HasValue ? item.FechaRegistro.Value.ToString("dd/MM/yyyy HH:mm") : "")</td>
+                                <td>@item.Sucursal</td>
+                                <td>@item.Persona</td>
+                                <td class="text-right text-nowrap">@(item.Importe.HasValue && item.Importe.Value != 0 ? "$ " + item.Importe.Value.ToString("N2", es) : "")</td>
+                                <td class="text-right">@item.CantLineas</td>
+                                <td>
+                                    @item.UsuarioElimino
+                                    @if (!string.IsNullOrEmpty(item.UsuarioSesion) && item.UsuarioSesion != item.UsuarioElimino)
+                                    {
+                                        <div class="text-muted small">sesión: @item.UsuarioSesion</div>
+                                    }
+                                </td>
+                                <td class="motivo">@item.Motivo</td>
+                                <td><a class="btn btn-outline-secondary btn-sm" href="@Url.Action("Detalle", "RegistrosEliminados", new { id = item.Id })">Ver</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @if (Model.Items.Count >= 1000)
+    {
+        <div class="small text-muted mt-1">Se muestran los 1000 más recientes: acotá el período para ver el resto.</div>
+    }
+</div>

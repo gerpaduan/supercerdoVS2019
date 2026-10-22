@@ -1419,11 +1419,172 @@ namespace WebCore.Controllers
             if (reservado)
                 return Json(new { success = false, message = "El tipo seleccionado es reservado por el sistema y no puede eliminarse." });
 
+            // Con productos no se elimina: se avisa (enUso) para que la pantalla abra la lista de reasignacion
+            // (ReasignarTipoModal). El chequeo del repositorio de abajo queda como red de seguridad.
+            int enUso = ObtenerProductosDeEmpresa().Count(x => MismoNombre(x.Tipo, tipo));
+            if (enUso > 0)
+                return Json(new { success = false, enUso = true, cantidad = enUso, message = "El tipo tiene " + enUso + " producto(s)." });
+
             string mensaje = _oCorteN.eliminarTipoProducto(tipo);
             if (!string.IsNullOrWhiteSpace(mensaje))
                 return Json(new { success = false, message = mensaje });
 
             return Json(new { success = true, message = "El tipo de producto se eliminó correctamente." });
+        }
+
+        // ===== Reasignacion en lote de tipo / marca (2026-10-22, ver docs/DECISIONS.md) =====
+
+        // Todos los productos de la empresa (mismo listado que usa Index). El tipo/marca "en uso" se decide sobre esto.
+        private List<Entidades.Corte> ObtenerProductosDeEmpresa()
+        {
+            return (_oCorteN.ObtenerCortesListado(_empresa != null ? _empresa.IdEmpresa : 0, 0) ?? new List<Entidades.Corte>())
+                .Where(x => x != null)
+                .ToList();
+        }
+
+        private static bool MismoNombre(string a, string b)
+        {
+            return string.Equals((a ?? "").Trim(), (b ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Cambios que manda la pantalla como JSON (sin el tope de 1024 elementos del model binder de colecciones).
+        // Un JSON ilegible se trata como lista vacia: no se cambia nada.
+        private static List<ReasignacionCambioVm> LeerCambiosReasignacion(string cambiosJson)
+        {
+            if (string.IsNullOrWhiteSpace(cambiosJson))
+                return new List<ReasignacionCambioVm>();
+
+            try
+            {
+                var opciones = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                return System.Text.Json.JsonSerializer.Deserialize<List<ReasignacionCambioVm>>(cambiosJson, opciones)
+                    ?? new List<ReasignacionCambioVm>();
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Reasignacion de productos - JSON de cambios invalido: {0}", ex);
+                return new List<ReasignacionCambioVm>();
+            }
+        }
+
+        // Tipos a los que se puede pasar un producto: los de la empresa y los reservados, menos el que se elimina.
+        private List<string> ObtenerTiposDestino(string tipoOrigen)
+        {
+            DataTable dt = _oCorteN.obtenerTiposProductoGrillaEmpresa("") ?? new DataTable();
+            return dt.AsEnumerable()
+                .Select(row => (Convert.ToString(row["tipo"]) ?? "").Trim())
+                .Where(t => t.Length > 0 && !MismoNombre(t, tipoOrigen))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(t => t, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReasignarTipoModal(string tipo = "")
+        {
+            try
+            {
+                if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1))
+                    return Content("<div class='alert alert-danger mb-0'>No tenés permisos para administrar tipos de producto.</div>", "text/html");
+
+                var row = BuscarTipoProductoRow(tipo);
+                if (row == null)
+                    return Content("<div class='alert alert-danger mb-0'>No se encontró el tipo de producto seleccionado.</div>", "text/html");
+
+                string origen = (Convert.ToString(row["tipo"]) ?? "").Trim();
+
+                var model = new ReasignarProductosVm
+                {
+                    Campo = "Tipo",
+                    OrigenTexto = origen,
+                    OrigenValor = origen,
+                    UrlGuardar = Url.Action("GuardarReasignacionTipo", "Productos") ?? "",
+                    Items = ObtenerProductosDeEmpresa()
+                        .Where(x => MismoNombre(x.Tipo, origen))
+                        .OrderBy(x => x.Codigo)
+                        .Select(x => new ReasignarProductoItemVm { IdCorte = x.IdCorte, Codigo = x.Codigo, Producto = x.CorteDesc ?? "", Actual = x.Tipo ?? "" })
+                        .ToList(),
+                    Opciones = ObtenerTiposDestino(origen)
+                        .Select(t => new SelectListItem { Value = t, Text = t })
+                        .ToList()
+                };
+
+                string html = await RenderPartialViewToStringAsync("_ReasignarProductosModal", model);
+                return Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                string detalle = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Content("<div class='alert alert-danger mb-0'>No se pudo abrir la lista de productos: " + System.Net.WebUtility.HtmlEncode(detalle) + "</div>", "text/html");
+            }
+        }
+
+        // Guarda la reasignacion de tipo de los productos de la lista. Una fila se rechaza (y se cuenta) si el destino no existe,
+        // es el mismo tipo, o si el producto ya no tiene el tipo de origen (lo cambio otra sesion mientras el modal estaba abierto).
+        // Si despues de guardar no queda ningun producto con el tipo y no es reservado, se elimina en el mismo paso.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarReasignacionTipo(string origen, string cambiosJson)
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1))
+                return Json(new { success = false, message = "No tenés permisos para administrar tipos de producto." });
+
+            var filaOrigen = BuscarTipoProductoRow(origen);
+            if (filaOrigen == null)
+                return Json(new { success = false, message = "No se encontró el tipo de producto seleccionado." });
+
+            string tipoOrigen = (Convert.ToString(filaOrigen["tipo"]) ?? "").Trim();
+            bool reservado = filaOrigen.Table.Columns.Contains("Reservado")
+                && filaOrigen["Reservado"] != DBNull.Value
+                && Convert.ToBoolean(filaOrigen["Reservado"]);
+
+            var destinosValidos = ObtenerTiposDestino(tipoOrigen);
+            var productos = ObtenerProductosDeEmpresa();
+            var productosPorId = productos.GroupBy(x => x.IdCorte).ToDictionary(g => g.Key, g => g.First());
+
+            var aplicar = new List<KeyValuePair<int, string>>();
+            int rechazados = 0;
+
+            foreach (var cambio in LeerCambiosReasignacion(cambiosJson).GroupBy(c => c.IdCorte).Select(g => g.Last()))
+            {
+                string nuevo = (cambio.Nuevo ?? "").Trim();
+                if (nuevo.Length == 0) continue; // sin seleccion: no se toca
+
+                string destino = destinosValidos.FirstOrDefault(t => MismoNombre(t, nuevo));
+                if (destino == null
+                    || !productosPorId.TryGetValue(cambio.IdCorte, out var producto)
+                    || !MismoNombre(producto.Tipo, tipoOrigen))
+                {
+                    rechazados++;
+                    continue;
+                }
+
+                aplicar.Add(new KeyValuePair<int, string>(cambio.IdCorte, destino));
+            }
+
+            if (aplicar.Count > 0)
+                _oCorteN.reasignarTipoCortes(aplicar, _sesion.UsuarioActual != null && _sesion.UsuarioActual.Id > 0 ? _sesion.UsuarioActual.Id : (int?)null);
+
+            int quedan = productos.Count(x => MismoNombre(x.Tipo, tipoOrigen)) - aplicar.Count;
+            bool eliminado = false;
+            string avisoEliminar = "";
+
+            if (quedan <= 0 && !reservado)
+            {
+                string mensajeEliminar = _oCorteN.eliminarTipoProducto(tipoOrigen);
+                if (string.IsNullOrWhiteSpace(mensajeEliminar))
+                    eliminado = true;
+                else
+                    avisoEliminar = " No se pudo eliminar el tipo: " + mensajeEliminar;
+            }
+
+            string mensaje = aplicar.Count + " producto(s) pasaron a otro tipo.";
+            if (rechazados > 0) mensaje += " " + rechazados + " no se cambiaron (cambió el producto o el destino no es válido).";
+            if (eliminado) mensaje += " El tipo \"" + tipoOrigen + "\" se eliminó.";
+            else if (quedan > 0) mensaje += " Quedan " + quedan + " producto(s) con el tipo \"" + tipoOrigen + "\"; el tipo no se eliminó.";
+            mensaje += avisoEliminar;
+
+            return Json(new { success = true, actualizados = aplicar.Count, rechazados, quedan = Math.Max(quedan, 0), eliminado, message = mensaje });
         }
 
         private DataRow BuscarTipoProductoRow(string tipo)
@@ -1581,6 +1742,170 @@ namespace WebCore.Controllers
                 success = true,
                 message = esInsert ? "La marca se guardó correctamente." : "La marca se actualizó correctamente."
             });
+        }
+
+        // ===== Eliminar marca y reasignar sus productos (2026-10-22, ver docs/DECISIONS.md) =====
+        // Mismo permiso que crear/modificar marcas (Producto.NuevoCorte).
+
+        private static bool EsDeMarca(Entidades.Corte producto, int idMarca)
+        {
+            return producto.Marca != null && producto.Marca.IdPersona == idMarca;
+        }
+
+        // Marcas a las que se puede pasar un producto, menos la que se elimina.
+        private List<SelectListItem> ObtenerMarcasDestino(int idMarcaOrigen)
+        {
+            return ObtenerListaMarcas()
+                .Where(m => m.Value != idMarcaOrigen.ToString(CultureInfo.InvariantCulture))
+                .ToList();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult EliminarMarca(int idPersona)
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return Json(new { success = false, message = "No tenés permisos para administrar marcas." });
+
+            var marca = idPersona > 0 ? _oPersonaN.findById(idPersona) : null;
+            if (marca == null || marca.IdPersona <= 0 || !marca.Marca)
+                return Json(new { success = false, message = "No se encontró la marca seleccionada." });
+
+            // Con productos no se elimina: la pantalla abre la lista de reasignacion (ReasignarMarcaModal).
+            int enUso = ObtenerProductosDeEmpresa().Count(x => EsDeMarca(x, marca.IdPersona));
+            if (enUso > 0)
+                return Json(new { success = false, enUso = true, cantidad = enUso, message = "La marca tiene " + enUso + " producto(s)." });
+
+            string errorEliminar = EliminarMarcaSinProductos(marca);
+            if (!string.IsNullOrEmpty(errorEliminar))
+                return Json(new { success = false, message = errorEliminar });
+
+            return Json(new { success = true, message = "La marca se eliminó correctamente." });
+        }
+
+        // Borra la marca (es una fila de personas con marca = true). Si la base la rechaza (referencias que no
+        // son productos) se loguea con contexto y se devuelve un mensaje claro en vez de un error 500.
+        private string EliminarMarcaSinProductos(Entidades.Persona marca)
+        {
+            try
+            {
+                _oPersonaN.eliminarPersona(marca);
+                return "";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("EliminarMarca - idPersona {0}: {1}", marca.IdPersona, ex);
+                return "No se pudo eliminar la marca: todavía tiene otros datos asociados.";
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReasignarMarcaModal(int idMarca = 0)
+        {
+            try
+            {
+                if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                    return Content("<div class='alert alert-danger mb-0'>No tenés permisos para administrar marcas.</div>", "text/html");
+
+                var marca = idMarca > 0 ? _oPersonaN.findById(idMarca) : null;
+                if (marca == null || marca.IdPersona <= 0 || !marca.Marca)
+                    return Content("<div class='alert alert-danger mb-0'>No se encontró la marca seleccionada.</div>", "text/html");
+
+                var model = new ReasignarProductosVm
+                {
+                    Campo = "Marca",
+                    OrigenTexto = marca.RazonSocial ?? "",
+                    OrigenValor = marca.IdPersona.ToString(CultureInfo.InvariantCulture),
+                    PermiteSinValor = true,
+                    UrlGuardar = Url.Action("GuardarReasignacionMarca", "Productos") ?? "",
+                    Items = ObtenerProductosDeEmpresa()
+                        .Where(x => EsDeMarca(x, marca.IdPersona))
+                        .OrderBy(x => x.Codigo)
+                        .Select(x => new ReasignarProductoItemVm { IdCorte = x.IdCorte, Codigo = x.Codigo, Producto = x.CorteDesc ?? "", Actual = marca.RazonSocial ?? "" })
+                        .ToList(),
+                    Opciones = ObtenerMarcasDestino(marca.IdPersona)
+                };
+
+                string html = await RenderPartialViewToStringAsync("_ReasignarProductosModal", model);
+                return Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                string detalle = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Content("<div class='alert alert-danger mb-0'>No se pudo abrir la lista de productos: " + System.Net.WebUtility.HtmlEncode(detalle) + "</div>", "text/html");
+            }
+        }
+
+        // Igual que GuardarReasignacionTipo: "Nuevo" es el id de la marca destino, "0" = sin marca, vacio = sin cambio.
+        // Se rechaza la fila si la marca destino no existe o el producto ya no es de la marca de origen.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarReasignacionMarca(string origen, string cambiosJson)
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return Json(new { success = false, message = "No tenés permisos para administrar marcas." });
+
+            int idOrigen;
+            if (!int.TryParse((origen ?? "").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out idOrigen) || idOrigen <= 0)
+                return Json(new { success = false, message = "No se encontró la marca seleccionada." });
+
+            var marcaOrigen = _oPersonaN.findById(idOrigen);
+            if (marcaOrigen == null || marcaOrigen.IdPersona <= 0 || !marcaOrigen.Marca)
+                return Json(new { success = false, message = "No se encontró la marca seleccionada." });
+
+            var destinosValidos = new HashSet<int>(ObtenerMarcasDestino(idOrigen)
+                .Select(m => { int id; return int.TryParse(m.Value, out id) ? id : 0; })
+                .Where(id => id > 0));
+            var productos = ObtenerProductosDeEmpresa();
+            var productosPorId = productos.GroupBy(x => x.IdCorte).ToDictionary(g => g.Key, g => g.First());
+
+            var aplicar = new List<KeyValuePair<int, int?>>();
+            int rechazados = 0;
+
+            foreach (var cambio in LeerCambiosReasignacion(cambiosJson).GroupBy(c => c.IdCorte).Select(g => g.Last()))
+            {
+                string nuevo = (cambio.Nuevo ?? "").Trim();
+                if (nuevo.Length == 0) continue; // sin seleccion: no se toca
+
+                int idNuevo;
+                bool destinoOk = int.TryParse(nuevo, NumberStyles.Integer, CultureInfo.InvariantCulture, out idNuevo)
+                    && (idNuevo == 0 || destinosValidos.Contains(idNuevo));
+
+                if (!destinoOk
+                    || !productosPorId.TryGetValue(cambio.IdCorte, out var producto)
+                    || !EsDeMarca(producto, idOrigen))
+                {
+                    rechazados++;
+                    continue;
+                }
+
+                aplicar.Add(new KeyValuePair<int, int?>(cambio.IdCorte, idNuevo > 0 ? (int?)idNuevo : null));
+            }
+
+            if (aplicar.Count > 0)
+                _oCorteN.reasignarMarcaCortes(aplicar, _sesion.UsuarioActual != null && _sesion.UsuarioActual.Id > 0 ? _sesion.UsuarioActual.Id : (int?)null);
+
+            int quedan = productos.Count(x => EsDeMarca(x, idOrigen)) - aplicar.Count;
+            bool eliminada = false;
+            string avisoEliminar = "";
+
+            if (quedan <= 0)
+            {
+                string errorEliminar = EliminarMarcaSinProductos(marcaOrigen);
+                if (string.IsNullOrEmpty(errorEliminar))
+                    eliminada = true;
+                else
+                    avisoEliminar = " " + errorEliminar;
+            }
+
+            string nombre = marcaOrigen.RazonSocial ?? "";
+            string mensaje = aplicar.Count + " producto(s) pasaron a otra marca.";
+            if (rechazados > 0) mensaje += " " + rechazados + " no se cambiaron (cambió el producto o el destino no es válido).";
+            if (eliminada) mensaje += " La marca \"" + nombre + "\" se eliminó.";
+            else if (quedan > 0) mensaje += " Quedan " + quedan + " producto(s) con la marca \"" + nombre + "\"; la marca no se eliminó.";
+            mensaje += avisoEliminar;
+
+            return Json(new { success = true, actualizados = aplicar.Count, rechazados, quedan = Math.Max(quedan, 0), eliminada, message = mensaje });
         }
 
         private string ConstruirAdvertenciaMarcasParecidas(string razonSocial, int idMarcaActual)
@@ -1806,19 +2131,7 @@ namespace WebCore.Controllers
             if (productos.Count == 0)
                 return NotFound();
 
-            byte[] logoBytes = null;
-            try
-            {
-                string logoPath = Path.Combine(_env.WebRootPath, "Content", "img", "CarniSys_Logo_sinSlogan.png");
-                if (System.IO.File.Exists(logoPath))
-                    logoBytes = System.IO.File.ReadAllBytes(logoPath);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.TraceError("GenerarEtiquetasPdf - no se pudo cargar el logo: {0}", ex);
-            }
-
-            byte[] bytes = WebCore.Services.GenerarDocsCore.GenerarPdfEtiquetas(productos, tamano, logoBytes);
+            byte[] bytes = WebCore.Services.GenerarDocsCore.GenerarPdfEtiquetas(productos, tamano);
             return File(bytes, "application/pdf", "Etiquetas.pdf");
         }
 

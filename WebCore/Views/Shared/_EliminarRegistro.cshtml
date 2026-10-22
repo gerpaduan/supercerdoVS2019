@@ -1,0 +1,15 @@
+@* Boton "Eliminar" de Compras, Stock y Movimientos + su modal (lo arma wwwroot/Scripts/app/eliminar-registro.js). Va DENTRO de la
+   barra de botones de la pantalla de edicion; el modal se agrega al <body> (la clave no puede viajar con el formulario de guardado).
+   Eliminar pide motivo y usuario+contraseña (aunque ya haya sesion). Ver docs/DECISIONS.md "Eliminar compras, stock y movimientos". *@
+@model WebCore.Models.EliminarRegistroVm
+@{
+    bool deshabilitado = !string.IsNullOrEmpty(Model.MotivoDeshabilitado);
+}
+<span class="d-inline-block mr-2 mb-2" title="@(deshabilitado ? Model.MotivoDeshabilitado : "")">
+    <button type="button" class="btn btn-outline-danger" id="btnEliminarRegistro" data-edit-readonly-ignore="true"
+            disabled="@(deshabilitado ? "disabled" : null)">
+        <i class="fas fa-trash-alt mr-1"></i> Eliminar
+    </button>
+</span>
+<script type="application/json" id="eliminarRegistroConfig">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))</script>
+<script src="@Url.Content("~/Scripts/app/eliminar-registro.js")" asp-append-version="true"></script>

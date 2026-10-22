@@ -65,6 +65,8 @@ namespace WebCore.Controllers
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly WebCore.Services.ICtaCteReservadaService _ctaCteReservada;
+        // Consulta de compras eliminadas: si se abre una por URL se explica quien la elimino (ver EliminacionRegistroWeb).
+        private readonly Negocio.AuditoriaEliminaciones _auditoriaEliminacionN;
         // Selector multi-seleccion de Proveedor (parseo de IDs y nombres resueltos para pintar el input).
         private readonly WebCore.Services.FiltroPickerService _filtroPicker;
 
@@ -87,6 +89,7 @@ namespace WebCore.Controllers
             _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
             _filtroPicker = new WebCore.Services.FiltroPickerService(_oPersonaN, _oUsuarioN);
+            _auditoriaEliminacionN = WebCore.Infrastructure.NegocioFactory.CrearAuditoriaEliminaciones(_empresa);
         }
 
         // Normaliza el CSV de IDs de proveedor del selector multi-seleccion (querystring = input externo:
@@ -283,6 +286,7 @@ namespace WebCore.Controllers
             };
 
             ViewBag.Title = "Compras";
+            ViewBag.PuedeVerEliminados = WebCore.Helpers.EliminacionRegistroWeb.PuedeVerEliminados(_usuarioActual, _oUsuarioN, Entidades.AuditoriaEliminacion.ModuloCompra);
             ViewBag.Seccion = "Compras";
             ViewBag.Sucursales = _oSucursalN.findAll();
             ViewBag.IdSucursal = idSucursal;
@@ -530,7 +534,7 @@ namespace WebCore.Controllers
             });
         }
 
-        public IActionResult Editar(int id = 0, string origen = "layout")
+        public IActionResult Editar(int id = 0, string origen = "layout", int desdeEliminado = 0)
         {
             Entidades.Usuario user = _usuarioActual;
             string origenNormalizado = NormalizarOrigen(origen);
@@ -559,7 +563,8 @@ namespace WebCore.Controllers
             {
                 compra = _oCompraN.findById_convertToCompra(id);
                 if (compra == null || compra.IdCompra == 0)
-                    return NotFound();
+                    return WebCore.Helpers.EliminacionRegistroWeb.ResolverRegistroEliminado(this, user, _oUsuarioN, _auditoriaEliminacionN,
+                        Entidades.AuditoriaEliminacion.ModuloCompra, id, "Compras") ?? NotFound();
 
                 idCreador = compra.CreadoPor != null ? compra.CreadoPor.Id : operador.Id;
             }
@@ -581,9 +586,26 @@ namespace WebCore.Controllers
                 ? CrearViewModelEdicion(compra, user, origenNormalizado)
                 : CrearViewModelNuevo(user, origenNormalizado);
 
+            // Recuperar una compra eliminada: alta precargada con sus datos (solo pantalla completa, nunca dentro de un modal).
+            if (compra == null && desdeEliminado > 0 && !desdePos && !enModal)
+            {
+                string errorRecuperar = PrecargarDesdeEliminada(model, user, desdeEliminado);
+                if (errorRecuperar != "")
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Recuperar compra";
+                    TempData["AlertMsg"] = errorRecuperar;
+                    return RedirectToAction("Index");
+                }
+            }
+
             model.SubmissionToken = Guid.NewGuid().ToString("N");
             model.EnModal = enModal;
             CargarViewBags(model, user);
+
+            // Boton Eliminar: solo en la pantalla completa (no dentro del modal del POS ni de la cta cte).
+            if (!desdePos && !enModal)
+                ViewBag.EliminarRegistro = CrearBotonEliminar(compra, user);
 
             if (desdePos || enModal)
                 return PartialView("~/Views/Compras/Editar.cshtml", model);
@@ -599,6 +621,187 @@ namespace WebCore.Controllers
         public IActionResult ModificarCompra(int id, string origen = "layout")
         {
             return RedirectToAction("Editar", new { id, origen });
+        }
+
+        // ===== Eliminar una compra (2026-10-22, ver docs/DECISIONS.md "Eliminar compras, stock y movimientos") =====
+        // El registro se BORRA; queda la foto completa en la auditoria (Registros eliminados). Cta cte del proveedor: asiento
+        // contrario. Siempre revalida usuario y contraseña, y el permiso se evalua con la persona que puso la clave.
+
+        // Precarga el alta (model, ya creado por CrearViewModelNuevo) con la cabecera y las lineas de una compra eliminada que quedaron
+        // en la auditoria. Devuelve "" si salio bien o el motivo por el que no se puede. Las lineas cuyo producto ya no existe se
+        // omiten y se avisa en el cartel. Se guarda como compra NUEVA (ver EliminacionRegistroWeb.CargarParaRecuperar).
+        private string PrecargarDesdeEliminada(CompraEditVm model, Entidades.Usuario user, int idAuditoria)
+        {
+            var auditoria = WebCore.Helpers.EliminacionRegistroWeb.CargarParaRecuperar(_auditoriaEliminacionN, _oUsuarioN, user, idAuditoria,
+                Entidades.AuditoriaEliminacion.ModuloCompra, out string error);
+            if (auditoria == null) return error;
+
+            var proveedor = auditoria.IdPersona.HasValue ? _oPersonaN.findById(auditoria.IdPersona.Value) : null;
+            model.TipoCompra = auditoria.TipoRegistro ?? model.TipoCompra;
+            model.TiposCompraDisponibles = ObtenerTiposCompraDisponibles(model.PermiteMediaRes, false, model.TipoCompra);
+            if (auditoria.IdSucursal.HasValue)
+            {
+                model.IdSucursal = auditoria.IdSucursal.Value;
+                model.SucursalNombre = auditoria.SucursalNombre ?? model.SucursalNombre;
+            }
+            if (auditoria.FechaRegistro.HasValue) model.FechaCompra = auditoria.FechaRegistro.Value;
+            if (proveedor != null && proveedor.IdPersona > 0)
+            {
+                model.IdProveedor = proveedor.IdPersona;
+                model.ProveedorNombre = proveedor.RazonSocial;
+                model.ProveedorCuit = proveedor.Cuit;
+            }
+            model.EnCtaCte = auditoria.EnCtaCte == true;
+            model.NroRemito = auditoria.NroRemito ?? "";
+            model.Observaciones = auditoria.Observaciones ?? "";
+            model.CantMedias = auditoria.CantMedias;
+            model.KgsMedias = auditoria.KgsMedias.HasValue ? (float?)auditoria.KgsMedias.Value : null;
+
+            var avisos = new List<string>();
+            model.Lineas.Clear();
+            int index = 0;
+            foreach (var linea in auditoria.Lineas)
+            {
+                if (EsTipoMediaRes(model.TipoCompra))
+                {
+                    index++;
+                    float kg = (float)(linea.CantKg ?? 0);
+                    float precio = (float)(linea.PrecioKg ?? 0);
+                    model.Lineas.Add(new CompraLineaVm
+                    {
+                        Index = index,
+                        TipoLinea = "MediaRes",
+                        NroTropa = WebCore.Helpers.EliminacionRegistroWeb.TropaDe(linea.Detalle),
+                        KgMedia = kg,
+                        PrecioMedia = precio,
+                        TotalLinea = kg * precio
+                    });
+                    continue;
+                }
+
+                var corte = linea.IdCorte.HasValue ? _oCorteN.findCorteById(linea.IdCorte.Value, false) : null;
+                if (corte == null || corte.IdCorte <= 0)
+                {
+                    avisos.Add("Se omitió la línea de «" + linea.Producto + "» porque el producto ya no existe.");
+                    continue;
+                }
+
+                index++;
+                float cantKgs = (float)(linea.CantKg ?? 0);
+                float precioKg = (float)(linea.PrecioKg ?? 0);
+                model.Lineas.Add(new CompraLineaVm
+                {
+                    Index = index,
+                    TipoLinea = "Corte",
+                    IdCorte = corte.IdCorte,
+                    Codigo = corte.Codigo,
+                    CorteNombre = corte.CorteDesc,
+                    CantKgs = cantKgs,
+                    PrecioKg = precioKg,
+                    ActualizarPrecioVenta = false,
+                    Balanza = WebCore.Helpers.EliminacionRegistroWeb.DetalleTiene(linea.Detalle, "Balanza"),
+                    TotalLinea = cantKgs * precioKg
+                });
+            }
+
+            // Clave propia: no se mezcla con el borrador de una compra nueva comun.
+            model.DraftKey = BuildDraftKey(user, model.IdSucursal, "recuperada" + auditoria.Id, 0);
+            RecalcularTotales(model);
+            ViewBag.RecuperandoEliminado = WebCore.Helpers.EliminacionRegistroWeb.TextoRecuperando(auditoria, "la compra", avisos);
+            return "";
+        }
+
+        // Modelo del boton Eliminar de Compras/Editar, o null si no corresponde mostrarlo (compra nueva o sin permiso).
+        // Una sesion normal lo ve solo si puede modificar esa compra; la cuenta de produccion siempre (la persona se valida al confirmar).
+        private WebCore.Models.EliminarRegistroVm? CrearBotonEliminar(Entidades.Compra? compra, Entidades.Usuario user)
+        {
+            if (compra == null || compra.IdCompra <= 0) return null;
+
+            int idCreador = compra.CreadoPor != null ? compra.CreadoPor.Id : -1;
+            if (!user.EsUsuarioProduccion && !user.Admin
+                && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Compra.ModificarCompra, compra.FechaCompra, idCreador))
+                return null;
+
+            return WebCore.Helpers.EliminacionRegistroWeb.CrearVm(
+                Entidades.AuditoriaEliminacion.ModuloCompra, compra.IdCompra, "la compra",
+                Url.Action("PrevisualizarEliminar", "Compras"), Url.Action("Eliminar", "Compras"), Url.Action("Index", "Compras"),
+                user, _oUsuarioN);
+        }
+
+        [HttpGet]
+        public IActionResult PrevisualizarEliminar(int id)
+        {
+            var vista = id > 0 ? _oCompraN.obtenerVistaPreviaEliminacion(id) : null;
+            if (vista == null)
+                return Json(new { ok = false, mensaje = "La compra no existe o ya fue eliminada." });
+            if (vista.Modulo != Entidades.AuditoriaEliminacion.ModuloCompra)
+                return Json(new { ok = false, mensaje = "Este registro no es una compra: se elimina desde Stock." });
+
+            return Json(WebCore.Helpers.EliminacionRegistroWeb.VistaPreviaJson(vista));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Eliminar(int id, string motivo, int idUsuarioAutoriza, string clave, bool confirmarCajaCerrada = false)
+        {
+            try
+            {
+                // 1) Usuario y contraseña, siempre (limite de intentos por sesion).
+                var auth = WebCore.Helpers.ReautenticacionEliminacion.Validar(HttpContext.Session, _usuarioActual, idUsuarioAutoriza, clave, _oUsuarioN);
+                if (!auth.Ok) return Json(WebCore.Helpers.EliminacionRegistroWeb.RevalidacionFallidaJson(auth));
+                var persona = auth.Usuario;
+
+                var vista = id > 0 ? _oCompraN.obtenerVistaPreviaEliminacion(id) : null;
+                if (vista == null)
+                    return Json(new { ok = false, mensaje = "La compra no existe o ya fue eliminada." });
+                if (vista.Modulo != Entidades.AuditoriaEliminacion.ModuloCompra)
+                    return Json(new { ok = false, mensaje = "Este registro no es una compra: se elimina desde Stock." });
+
+                // 2) Permiso de quien puso la clave (el mismo que para modificar la compra, con su limite de fecha).
+                if (!persona.Admin && !_oUsuarioN.tienePermiso(persona, Entidades.Permisos.Compra.ModificarCompra, vista.FechaRegistro, vista.IdUsuarioCreador))
+                    return Json(new { ok = false, mensaje = persona.Nombre + " no tiene permiso para eliminar esta compra (o su fecha queda fuera de lo que su permiso permite)." });
+
+                // 3) Caja ya cerrada: el egreso opuesto cae en la caja actual y la original queda sin ese reverso -> se avisa y se confirma.
+                var cajaCerradaN = new Negocio.CajaCerradaServicio(_oCierreN);
+                var cajasCerradas = new List<Entidades.CierreCaja>();
+                if (vista.Egreso != null && vista.Egreso.Id > 0 && vista.Egreso.Monto != 0)
+                {
+                    int idSucursalEgreso = vista.Egreso.Sucursal != null ? vista.Egreso.Sucursal.idSucursal : vista.IdSucursal;
+                    cajasCerradas = cajaCerradaN.Evaluar(new Negocio.CajaCerradaConsulta(vista.Egreso.CreadoPor, idSucursalEgreso, vista.Egreso.Fecha));
+                    if (cajasCerradas.Count > 0 && !confirmarCajaCerrada)
+                    {
+                        return Json(WebCore.Helpers.CajaCerradaRespuesta.Confirmacion(
+                            cajasCerradas,
+                            new List<string> { WebCore.Helpers.CajaCerradaRespuesta.LineaImporte("Se elimina la compra #" + vista.IdRegistro, vista.Egreso.Monto, 0) },
+                            "eliminar",
+                            "El egreso opuesto se registra con la fecha de hoy, en la caja actual de quien elimina: la caja cerrada queda sin ese reverso."));
+                    }
+                }
+
+                // 4) Eliminacion (borrado + auditoria + cta cte + caja, en una transaccion).
+                var resultado = _oCompraN.eliminarCompra(id, Entidades.AuditoriaEliminacion.ModuloCompra, motivo, persona, _usuarioActual, WebCore.Helpers.ClientIp.Obtener(HttpContext));
+                if (!resultado.Ok)
+                    return Json(new { ok = false, mensaje = resultado.Mensaje });
+
+                cajaCerradaN.Registrar(
+                    Entidades.AuditoriaCierreCaja.OrigenCompra, id, Entidades.AuditoriaCierreCaja.AccionEliminacion,
+                    cajasCerradas, persona.Id, persona.Nombre,
+                    vista.Egreso != null ? (double?)vista.Egreso.Monto : null, null, null, null,
+                    "Se eliminó la compra. Motivo: " + resultado.Auditoria.Motivo);
+
+                return Json(new
+                {
+                    ok = true,
+                    mensaje = "La compra se eliminó.",
+                    advertencia = resultado.Advertencia ?? "",
+                    redirectUrl = Url.Action("Index", "Compras")
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("Error al eliminar la compra " + id + ": " + ex);
+                return Json(new { ok = false, mensaje = "Error al eliminar la compra. " + ex.Message });
+            }
         }
 
         // Guarda contra doble-submit real: se vio en produccion (datos reales del usuario, no

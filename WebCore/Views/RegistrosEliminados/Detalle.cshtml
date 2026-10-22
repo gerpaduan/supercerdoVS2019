@@ -1,0 +1,118 @@
+@* Detalle de un registro eliminado: cabecera, quien lo elimino y todas sus lineas. Solo administradores. Ver docs/DECISIONS.md "Eliminar compras, stock y movimientos". *@
+@model Entidades.AuditoriaEliminacion
+@{
+    ViewData["Title"] = "Registro eliminado";
+    var es = new System.Globalization.CultureInfo("es-AR");
+    string etiqueta = Model.Modulo == "COMPRA" ? "Compra" : Model.Modulo == "STOCK" ? "Movimiento de stock" : "Movimiento";
+    string Fila(double? valor, string formato) => valor.HasValue ? valor.Value.ToString(formato, es) : "";
+}
+
+<style>
+    .reg-elim-detalle { font-size: .85rem; }
+    .reg-elim-detalle table { font-size: .8rem; }
+    .reg-elim-detalle dt { font-weight: 600; color: #6c757d; font-size: .78rem; }
+    .reg-elim-detalle dd { margin-bottom: .45rem; }
+</style>
+
+<div class="container-fluid reg-elim-detalle">
+    <div class="mb-2">
+        <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("Index", "RegistrosEliminados", new { modulo = Model.Modulo })"><i class="fas fa-arrow-left mr-1"></i> Volver al listado</a>
+        @if (ViewBag.UrlRecuperar is string urlRecuperar)
+        {
+            <a class="btn btn-success btn-sm ml-2" href="@urlRecuperar" title="Abre la pantalla de carga con los datos y las lÃ­neas de este registro; vos decidÃ­s si lo guardÃ¡s de nuevo">
+                <i class="fas fa-undo mr-1"></i> Recuperar
+            </a>
+            <span class="small text-muted ml-2">Se carga con estos datos y se guarda como un registro nuevo.</span>
+        }
+        else if (ViewBag.MotivoNoRecuperable is string motivoNoRecuperable)
+        {
+            <span class="small text-muted ml-2"><i class="fas fa-info-circle mr-1"></i>@motivoNoRecuperable</span>
+        }
+    </div>
+
+    <div class="alert alert-danger py-2">
+        <b>@etiqueta #@Model.IdRegistro eliminado</b> el @Model.FechaEliminacion.ToString("dd/MM/yyyy HH:mm") por <b>@Model.UsuarioEliminoNombre</b>.
+        @if (!string.IsNullOrEmpty(Model.UsuarioSesionNombre) && Model.IdUsuarioSesion != Model.IdUsuarioElimino)
+        {
+            <span>(sesión abierta con la cuenta @Model.UsuarioSesionNombre)</span>
+        }
+        <div class="mt-1"><b>Motivo:</b> @Model.Motivo</div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header py-2 font-weight-bold">Cómo estaba el registro</div>
+                <div class="card-body py-2">
+                    <dl class="mb-0">
+                        <dt>Tipo</dt><dd>@Model.TipoRegistro</dd>
+                        <dt>Fecha</dt><dd>@(Model.FechaRegistro.HasValue ? Model.FechaRegistro.Value.ToString("dd/MM/yyyy HH:mm") : "")</dd>
+                        <dt>@(string.IsNullOrEmpty(Model.SucursalDestinoNombre) ? "Sucursal" : "Origen → Destino")</dt>
+                        <dd>@Model.SucursalNombre@(string.IsNullOrEmpty(Model.SucursalDestinoNombre) ? "" : " → " + Model.SucursalDestinoNombre)</dd>
+                        @if (!string.IsNullOrEmpty(Model.PersonaNombre))
+                        {
+                            <dt>@(Model.Modulo == "COMPRA" ? "Proveedor" : "Persona")</dt><dd>@Model.PersonaNombre</dd>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.NroRemito))
+                        {
+                            <dt>Remito</dt><dd>@Model.NroRemito</dd>
+                        }
+                        @if (Model.Importe.HasValue && Model.Importe.Value != 0)
+                        {
+                            <dt>Importe</dt><dd>$ @Fila(Model.Importe, "N2")@(Model.EnCtaCte == true ? " · en cuenta corriente" : "")</dd>
+                        }
+                        <dt>Total</dt><dd>@Fila(Model.TotalKg, "N2") kg en @Model.CantLineas líneas</dd>
+                        @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+                        {
+                            <dt>Observaciones</dt><dd>@Model.Observaciones</dd>
+                        }
+                        <dt>Creado</dt><dd>@(Model.Creado.HasValue ? Model.Creado.Value.ToString("dd/MM/yyyy HH:mm") : "") @(string.IsNullOrEmpty(Model.UsuarioCreadorNombre) ? "" : "por " + Model.UsuarioCreadorNombre)</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header py-2 font-weight-bold">Qué pasó al eliminarlo</div>
+                <div class="card-body py-2">
+                    <dl class="mb-0">
+                        <dt>Eliminó</dt><dd>@Model.UsuarioEliminoNombre</dd>
+                        <dt>Cuándo</dt><dd>@Model.FechaEliminacion.ToString("dd/MM/yyyy HH:mm:ss")</dd>
+                        @if (!string.IsNullOrEmpty(Model.Ip))
+                        {
+                            <dt>Desde</dt><dd>@Model.Ip</dd>
+                        }
+                        <dt>Efectos</dt>
+                        <dd>@if (string.IsNullOrWhiteSpace(Model.Efectos)) { <span class="text-muted">Ninguno (no tocó cuenta corriente ni caja).</span> } else { <span style="white-space:pre-line">@Model.Efectos</span> }</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header py-2 font-weight-bold">Líneas que tenía (@Model.Lineas.Count)</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0">
+                    <thead class="thead-light">
+                        <tr><th>Cód.</th><th>Producto</th><th>Detalle</th><th class="text-right">Kg</th><th class="text-right">Un.</th><th class="text-right">Precio</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var linea in Model.Lineas)
+                        {
+                            <tr>
+                                <td>@(linea.Codigo.HasValue ? linea.Codigo.Value.ToString() : "")</td>
+                                <td>@linea.Producto</td>
+                                <td>@linea.Detalle</td>
+                                <td class="text-right">@Fila(linea.CantKg, "N3")</td>
+                                <td class="text-right">@(linea.CantUnidad.HasValue ? linea.CantUnidad.Value.ToString() : "")</td>
+                                <td class="text-right">@(linea.PrecioKg.HasValue && linea.PrecioKg.Value != 0 ? linea.PrecioKg.Value.ToString("N2", es) : "")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-10-16
+revisada: 2026-10-22
 alias: Stock.Nuevo
 ---
 ## Para qué sirve
@@ -30,6 +30,13 @@ Cosas a tener en cuenta:
 - Si este pesaje tiene dos líneas idénticas (mismo producto y kilos) y el pesaje vinculado aportó una, se quita una de las dos (son equivalentes).
 - Al guardar, el pesaje desvinculado queda marcado como *modificado* (cambia su fecha y usuario de última modificación).
 - La confirmación se puede cancelar sin efecto.
+
+## Eliminar un movimiento de stock
+El botón rojo **Eliminar** aparece al abrir un movimiento **ya guardado** (ingreso, egreso, cierre, ajuste o pesaje) para quien puede modificarlo. Funciona igual que en [Compras](ayuda:pantalla/Compras.Editar): resumen y líneas, **motivo obligatorio** (10 a 300 caracteres) y **usuario y contraseña en cada eliminación** (ver [eliminar registros](ayuda:concepto/eliminar-registros)).
+- El registro **se borra** y el stock de la sucursal se recalcula sin él. Queda la constancia (quién, cuándo, motivo y todas las líneas) en [Registros eliminados](ayuda:pantalla/RegistrosEliminados.Index).
+- **Ajuste de stock y Cierre de stock:** solo administradores. Un **cierre** es el punto de partida del cálculo: al eliminarlo cambia el stock de la sucursal desde el cierre anterior (la ventana lo avisa).
+- Un **Pesaje** con pesajes vinculados o con un **ajuste generado** no se puede eliminar: primero se desvinculan o se elimina el ajuste. Al eliminar un **ajuste**, el pesaje que ajustaba vuelve a «No realizado».
+- No se puede deshacer desde el sistema.
 
 ## Resto de la pantalla
 PENDIENTE: documentar los datos del encabezado, la carga de productos (código, balanza, teclado numérico), Productos no cargados, Acumulados, Ver porcentaje de cortes y Generar ajuste, Vincular compra, borradores y las reglas por tipo de movimiento (no verificado contra el código en esta revisión).

@@ -38,6 +38,8 @@ namespace WebCore.Controllers
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Usuario _oUsuarioN;
+        // Consulta de movimientos eliminados: si se abre uno por URL se explica quien lo elimino (ver EliminacionRegistroWeb).
+        private readonly Negocio.AuditoriaEliminaciones _auditoriaEliminacionN;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
@@ -51,6 +53,7 @@ namespace WebCore.Controllers
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            _auditoriaEliminacionN = WebCore.Infrastructure.NegocioFactory.CrearAuditoriaEliminaciones(_empresa);
         }
 
         public IActionResult Index(int idSucursalOrigen = 0, int idSucursalDestino = 0, DateTime? fechaDesde = null, DateTime? fechaHasta = null, bool verDetalles = false)
@@ -77,6 +80,7 @@ namespace WebCore.Controllers
             };
 
             ViewBag.Title = "Movimientos";
+            ViewBag.PuedeVerEliminados = WebCore.Helpers.EliminacionRegistroWeb.PuedeVerEliminados(user, _oUsuarioN, Entidades.AuditoriaEliminacion.ModuloMovimiento);
             ViewBag.Sucursales = ConstruirSucursalesConTodas(sucursales);
 
             return View(model);
@@ -164,7 +168,7 @@ namespace WebCore.Controllers
             return Editar(0, idUsuarioCreador);
         }
 
-        public IActionResult Editar(int id = 0, int idUsuarioCreador = 0, bool conClave = false)
+        public IActionResult Editar(int id = 0, int idUsuarioCreador = 0, bool conClave = false, int desdeEliminado = 0)
         {
             var user = _usuarioActual;
 
@@ -182,7 +186,8 @@ namespace WebCore.Controllers
             {
                 model = CrearModeloEdicion(id, user);
                 if (model == null)
-                    return NotFound();
+                    return WebCore.Helpers.EliminacionRegistroWeb.ResolverRegistroEliminado(this, user, _oUsuarioN, _auditoriaEliminacionN,
+                        Entidades.AuditoriaEliminacion.ModuloMovimiento, id, "Movimientos") ?? NotFound();
 
                 // Port de Web/Controllers/MovimientosController.cs:192-199.
                 puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, model.FechaMovimiento, user.Id);
@@ -229,6 +234,18 @@ namespace WebCore.Controllers
                 }
 
                 model = CrearModeloNuevo(user);
+                // Recuperar un movimiento eliminado: alta precargada con sus datos.
+                if (desdeEliminado > 0)
+                {
+                    string errorRecuperar = PrecargarDesdeEliminado(model, user, desdeEliminado);
+                    if (errorRecuperar != "")
+                    {
+                        TempData["AlertType"] = "warning";
+                        TempData["AlertTitle"] = "Recuperar movimiento";
+                        TempData["AlertMsg"] = errorRecuperar;
+                        return RedirectToAction("Index");
+                    }
+                }
                 model.SoloLecturaInicial = false;
                 model.PuedeHabilitarEdicion = true;
             }
@@ -238,6 +255,7 @@ namespace WebCore.Controllers
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
             ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreador;
+            if (id > 0) ViewBag.EliminarRegistro = CrearBotonEliminar(id, model.FechaMovimiento, user);
 
             // Bug real (2026-09-08, ver docs/DECISIONS.md): "return View(model)" sin nombre
             // explicito resuelve la vista segun la RUTA ENTRANTE, no segun el metodo C# que
@@ -246,6 +264,132 @@ namespace WebCore.Controllers
             // "Views/Movimientos/Nuevo.cshtml" (no existe) y tiraba InvalidOperationException.
             // Clasico usa ruta explicita ("~/Views/Movimientos/Editar.cshtml") por el mismo motivo.
             return View("Editar", model);
+        }
+
+        // ===== Eliminar un movimiento (2026-10-22, ver docs/DECISIONS.md "Eliminar compras, stock y movimientos") =====
+        // El movimiento se BORRA (el stock de origen y destino se recalcula solo); queda la foto completa en la auditoria
+        // (Registros eliminados). Siempre revalida usuario y contraseña; el permiso se evalua con la persona que puso la clave.
+        // Con la replica entre bases activa (Movimientos:ReplicaEntreBases) NO se puede eliminar: la copia en la otra base no se borra sola.
+
+        // Precarga el alta (model, ya creado por CrearModeloNuevo) con la cabecera y las lineas de un movimiento eliminado que quedaron
+        // en la auditoria. "" si salio bien o el motivo por el que no se puede. Las lineas cuyo producto ya no existe se omiten y se
+        // avisa. Se guarda como movimiento NUEVO.
+        private string PrecargarDesdeEliminado(MovimientoEditVm model, Entidades.Usuario user, int idAuditoria)
+        {
+            var auditoria = WebCore.Helpers.EliminacionRegistroWeb.CargarParaRecuperar(_auditoriaEliminacionN, _oUsuarioN, user, idAuditoria,
+                Entidades.AuditoriaEliminacion.ModuloMovimiento, out string error);
+            if (auditoria == null) return error;
+
+            if (auditoria.IdSucursal.HasValue) model.IdSucursalOrigen = auditoria.IdSucursal.Value;
+            if (auditoria.IdSucursalDestino.HasValue) model.IdSucursalDestino = auditoria.IdSucursalDestino.Value;
+            if (auditoria.FechaRegistro.HasValue) model.FechaMovimiento = auditoria.FechaRegistro.Value;
+            model.Observaciones = auditoria.Observaciones ?? "";
+
+            var avisos = new List<string>();
+            var lineas = new List<Entidades.CortePorMovimiento>();
+            foreach (var linea in auditoria.Lineas)
+            {
+                var corte = linea.IdCorte.HasValue ? _oCorteN.findCorteById(linea.IdCorte.Value, false) : null;
+                if (corte == null || corte.IdCorte <= 0)
+                {
+                    avisos.Add("Se omitió la línea de «" + linea.Producto + "» porque el producto ya no existe.");
+                    continue;
+                }
+
+                lineas.Add(new Entidades.CortePorMovimiento
+                {
+                    Corte = corte,
+                    CantUnidad = linea.CantUnidad ?? 0,
+                    CantKg = (float)(linea.CantKg ?? 0),
+                    PesoBalanza = WebCore.Helpers.EliminacionRegistroWeb.DetalleTiene(linea.Detalle, "Balanza"),
+                    PermitirIngreso = true
+                });
+            }
+
+            model.Lineas = lineas.Select(MapLinea).ToList();
+            ViewBag.RecuperandoEliminado = WebCore.Helpers.EliminacionRegistroWeb.TextoRecuperando(auditoria, "el movimiento", avisos);
+            return "";
+        }
+
+        // Modelo del boton Eliminar de Movimientos/Editar, o null si no corresponde mostrarlo (movimiento nuevo o sin permiso).
+        // Deshabilitado (con el motivo) si hay replica entre bases. La cuenta de produccion siempre lo ve.
+        private WebCore.Models.EliminarRegistroVm? CrearBotonEliminar(int idMovimiento, DateTime fechaMovimiento, Entidades.Usuario user)
+        {
+            if (idMovimiento <= 0) return null;
+
+            if (!user.EsUsuarioProduccion && !user.Admin)
+            {
+                var movimiento = _oCorteN.cargarMovimiento(idMovimiento, false);
+                int idCreador = movimiento != null && movimiento.CreadoPor != null ? movimiento.CreadoPor.Id : -1;
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, fechaMovimiento, idCreador))
+                    return null;
+            }
+
+            return WebCore.Helpers.EliminacionRegistroWeb.CrearVm(
+                Entidades.AuditoriaEliminacion.ModuloMovimiento, idMovimiento, "el movimiento",
+                Url.Action("PrevisualizarEliminar", "Movimientos"), Url.Action("Eliminar", "Movimientos"), Url.Action("Index", "Movimientos"),
+                user, _oUsuarioN,
+                WebCore.Helpers.EliminacionRegistroSettings.ReplicaMovimientosEntreBases ? WebCore.Helpers.EliminacionRegistroSettings.MensajeReplicaMovimientos : null);
+        }
+
+        [HttpGet]
+        public IActionResult PrevisualizarEliminar(int id)
+        {
+            if (WebCore.Helpers.EliminacionRegistroSettings.ReplicaMovimientosEntreBases)
+                return Json(new { ok = false, mensaje = WebCore.Helpers.EliminacionRegistroSettings.MensajeReplicaMovimientos });
+
+            var vista = id > 0 ? _oCorteN.obtenerVistaPreviaEliminacionMovimiento(id) : null;
+            if (vista == null)
+                return Json(new { ok = false, mensaje = "El movimiento no existe o ya fue eliminado." });
+
+            return Json(WebCore.Helpers.EliminacionRegistroWeb.VistaPreviaJson(vista));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Eliminar(int id, string motivo, int idUsuarioAutoriza, string clave)
+        {
+            try
+            {
+                // 0) Replica entre bases: se corta antes de pedir nada (no depende de quien sea).
+                if (WebCore.Helpers.EliminacionRegistroSettings.ReplicaMovimientosEntreBases)
+                    return Json(new { ok = false, mensaje = WebCore.Helpers.EliminacionRegistroSettings.MensajeReplicaMovimientos });
+
+                // 1) Usuario y contraseña, siempre (limite de intentos por sesion).
+                var auth = WebCore.Helpers.ReautenticacionEliminacion.Validar(HttpContext.Session, _usuarioActual, idUsuarioAutoriza, clave, _oUsuarioN);
+                if (!auth.Ok) return Json(WebCore.Helpers.EliminacionRegistroWeb.RevalidacionFallidaJson(auth));
+                var persona = auth.Usuario;
+
+                var vista = id > 0 ? _oCorteN.obtenerVistaPreviaEliminacionMovimiento(id) : null;
+                if (vista == null)
+                    return Json(new { ok = false, mensaje = "El movimiento no existe o ya fue eliminado." });
+
+                // 2) Permiso de quien puso la clave: el mismo que para modificar movimientos (con su limite de fecha).
+                if (!persona.Admin && !_oUsuarioN.tienePermiso(persona, Entidades.Permisos.Movimiento.NuevoMovimiento, vista.FechaRegistro, vista.IdUsuarioCreador))
+                    return Json(new { ok = false, mensaje = persona.Nombre + " no tiene permiso para eliminar este movimiento (o su fecha queda fuera de lo que su permiso permite)." });
+
+                // 3) Eliminacion (borrado + auditoria, en una transaccion) y aviso al admin.
+                var resultado = _oCorteN.eliminarMovimientoConMotivo(id, motivo, persona, _usuarioActual, WebCore.Helpers.ClientIp.Obtener(HttpContext));
+                if (!resultado.Ok)
+                    return Json(new { ok = false, mensaje = resultado.Mensaje });
+
+                WebCore.Infrastructure.NegocioFactory.CrearCuentaCorriente(_empresa, _param).notificarRegistroEliminado(
+                    resultado.Auditoria, persona.Nombre,
+                    "el movimiento #" + id + " de " + vista.SucursalNombre + " a " + vista.SucursalDestinoNombre);
+
+                return Json(new
+                {
+                    ok = true,
+                    mensaje = "El movimiento se eliminó.",
+                    advertencia = resultado.Advertencia ?? "",
+                    redirectUrl = Url.Action("Index", "Movimientos")
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("Error al eliminar el movimiento " + id + ": " + ex);
+                return Json(new { ok = false, mensaje = "Error al eliminar el movimiento. " + ex.Message });
+            }
         }
 
         [HttpGet]

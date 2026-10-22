@@ -966,6 +966,9 @@ namespace WebCore.Controllers
             ViewBag.IdPersona = idPersona;
             ViewBag.Persona = persona;
             ViewBag.SaldoPersona = saldo;
+            // Saldo exacto (negativo = debe, positivo = a favor) que usa el interruptor "Saldar cuenta" del alta.
+            // Es el mismo que el POST recalcula, no el del extracto del encabezado.
+            ViewBag.SaldoSaldar = _oCtaCteN.obtenerSaldoPersona(idPersona) ?? 0m;
             ViewBag.ImprimirPagoPdfUrl = idPago > 0 ? Url.Action("ImprimirPdfPago", "Finanzas", new { id = idPago }) : "";
 
             // Pago existente fuera de POS: solo lectura hasta "Modificar"; cambio de persona y eliminacion
@@ -1013,7 +1016,8 @@ namespace WebCore.Controllers
             string ChequesJson = "",
             bool desdePos = false,
             string posInstanceId = "",
-            bool confirmarCajaCerrada = false)
+            bool confirmarCajaCerrada = false,
+            bool saldarCuenta = false)
         {
             returnUrl = DecodeReturnUrlIfNeeded(returnUrl);
 
@@ -1045,6 +1049,30 @@ namespace WebCore.Controllers
 
             oPagoE.Importe = ParseFloat(importe);
             oPagoE.Efectivo = string.IsNullOrEmpty(Efectivo) ? 0 : ParseFloat(Efectivo);
+
+            // "Saldar cuenta" (2026-10-22, ver docs/DECISIONS.md): solo en alta. El servidor recalcula el saldo real y
+            // pisa operacion e importe, porque el saldo que vio la pantalla pudo cambiar (otra caja, otra venta).
+            // No aplica con cheques: ahi el importe sale de los cheques cargados.
+            if (saldarCuenta)
+            {
+                if (oPagoE.Id > 0)
+                    return Json(new { ok = false, mensaje = "Saldar cuenta solo se puede usar al cargar un pago o cobro nuevo." });
+
+                if (oPagoE.FormaPago_.ToString().Contains("Cheque", StringComparison.OrdinalIgnoreCase))
+                    return Json(new { ok = false, mensaje = "Saldar cuenta no se puede combinar con una forma de pago con cheques." });
+
+                // Cuenta reservada vista por un usuario restringido: no se le revela el saldo ni siquiera por el importe.
+                if (_ctaCteReservada.SaldoOculto(idPersona))
+                    return Json(new { ok = false, mensaje = WebCore.Helpers.ProtegerRegistroReservadoFilter.MensajeDenegado });
+
+                var saldar = Negocio.SaldarCuenta.Resolver(_oCtaCteN.obtenerSaldoPersona(idPersona) ?? 0m);
+                if (!saldar.PuedeSaldar)
+                    return Json(new { ok = false, mensaje = "La cuenta ya está saldada: no hay saldo para cobrar ni pagar." });
+
+                oPagoE.AProveedor = saldar.AProveedor;
+                oPagoE.Importe = (float)saldar.Importe;
+            }
+
             oPagoE.Banco = "";
             oPagoE.NroCheque = "";
             oPagoE.TitularCheque = "";

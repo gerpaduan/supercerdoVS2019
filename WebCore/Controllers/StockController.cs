@@ -60,6 +60,8 @@ namespace WebCore.Controllers
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly WebCore.Services.ICtaCteReservadaService _ctaCteReservada;
+        // Consulta de registros eliminados: si se abre uno por URL se explica quien lo elimino (ver EliminacionRegistroWeb).
+        private readonly Negocio.AuditoriaEliminaciones _auditoriaEliminacionN;
 
         // Id real del usuario logueado (no un stub) -- OBLIGATORIO que sea correcto, no cosmetico:
         // a diferencia de Index/Detalle (donde Id nunca se persiste), Guardar/GenerarAjustePesaje
@@ -84,6 +86,7 @@ namespace WebCore.Controllers
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            _auditoriaEliminacionN = WebCore.Infrastructure.NegocioFactory.CrearAuditoriaEliminaciones(_empresa);
         }
 
         public IActionResult Index(int? idSucursal = null, string tipoCompra = "Ver Todos", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
@@ -115,6 +118,7 @@ namespace WebCore.Controllers
             };
 
             ViewBag.Title = "Stock";
+            ViewBag.PuedeVerEliminados = WebCore.Helpers.EliminacionRegistroWeb.PuedeVerEliminados(_usuarioActual, _oUsuarioN, Entidades.AuditoriaEliminacion.ModuloStock);
             ViewBag.Sucursales = _oSucursalN.findAll();
             ViewBag.IdSucursal = sucursalSeleccionada;
             ViewBag.TipoCompra = tipoNormalizado;
@@ -240,7 +244,7 @@ namespace WebCore.Controllers
             return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado, idUsuarioCreador });
         }
 
-        public IActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0, bool conClave = false)
+        public IActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0, bool conClave = false, int desdeEliminado = 0)
         {
             Entidades.Usuario user = _usuarioActual;
 
@@ -257,7 +261,8 @@ namespace WebCore.Controllers
             {
                 compra = _oCompraN.findById_convertToCompra(id);
                 if (compra == null || compra.IdCompra == 0)
-                    return NotFound();
+                    return WebCore.Helpers.EliminacionRegistroWeb.ResolverRegistroEliminado(this, user, _oUsuarioN, _auditoriaEliminacionN,
+                        Entidades.AuditoriaEliminacion.ModuloStock, id, "Stock") ?? NotFound();
             }
 
             string tipoOperacion = compra != null ? compra.TipoCompra : NormalizarTipoOperacion(tipoCompra);
@@ -312,6 +317,19 @@ namespace WebCore.Controllers
             }
 
             var model = compra != null ? CrearViewModelEdicion(compra, user) : CrearViewModelNuevo(user, tipoOperacion);
+
+            // Recuperar una operacion de stock eliminada: alta precargada con sus datos.
+            if (compra == null && desdeEliminado > 0)
+            {
+                string errorRecuperar = PrecargarDesdeEliminada(model, user, desdeEliminado);
+                if (errorRecuperar != "")
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Recuperar movimiento de stock";
+                    TempData["AlertMsg"] = errorRecuperar;
+                    return RedirectToAction("Index");
+                }
+            }
             model.SoloLecturaInicial = model.EsEdicion;
             model.PuedeHabilitarEdicion = !model.EsEdicion || puedeModificar;
             // Solo consulta por fecha desde la cuenta de produccion: ofrece modificar con la clave de la persona elegida.
@@ -326,6 +344,7 @@ namespace WebCore.Controllers
                 ? ResolverUsuarioCreador(idUsuarioCreador, user).Nombre
                 : (user.Nombre ?? "");
             CargarViewBags(model, idUsuarioCreador);
+            ViewBag.EliminarRegistro = CrearBotonEliminar(compra, user);
 
             return View("~/Views/Stock/Editar.cshtml", model);
         }
@@ -522,6 +541,156 @@ namespace WebCore.Controllers
                 CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
+            }
+        }
+
+        // ===== Eliminar una operacion de stock (2026-10-22, ver docs/DECISIONS.md "Eliminar compras, stock y movimientos") =====
+        // El registro se BORRA (su stock deja de contar: el stock se calcula al consultar); queda la foto completa en la
+        // auditoria (Registros eliminados). Siempre revalida usuario y contraseña; el permiso se evalua con la persona que
+        // puso la clave. Ajuste y Cierre de stock: solo admin. Un Pesaje con ajuste o con pesajes vinculados se bloquea.
+
+        // Precarga el alta (model, ya creado por CrearViewModelNuevo con el tipo de la operacion) con la cabecera y las lineas de una
+        // operacion de stock eliminada que quedaron en la auditoria. "" si salio bien o el motivo por el que no se puede. Las lineas
+        // cuyo producto ya no existe se omiten y se avisa. Los vinculos con otros pesajes o compras no se recuperan. Se guarda como NUEVA.
+        private string PrecargarDesdeEliminada(StockEditVm model, Entidades.Usuario user, int idAuditoria)
+        {
+            var auditoria = WebCore.Helpers.EliminacionRegistroWeb.CargarParaRecuperar(_auditoriaEliminacionN, _oUsuarioN, user, idAuditoria,
+                Entidades.AuditoriaEliminacion.ModuloStock, out string error);
+            if (auditoria == null) return error;
+
+            if (!string.Equals(NormalizarTipoOperacion(auditoria.TipoRegistro ?? ""), model.TipoCompra, StringComparison.OrdinalIgnoreCase))
+                return "El tipo de operación no coincide con el del registro eliminado.";
+
+            if (auditoria.IdSucursal.HasValue)
+            {
+                model.IdSucursal = auditoria.IdSucursal.Value;
+                model.SucursalNombre = auditoria.SucursalNombre ?? model.SucursalNombre;
+            }
+            if (auditoria.FechaRegistro.HasValue) model.FechaCompra = auditoria.FechaRegistro.Value;
+            model.Observaciones = auditoria.Observaciones ?? "";
+            model.CantMedias = auditoria.CantMedias;
+            model.KgsMedias = auditoria.KgsMedias.HasValue ? (float?)auditoria.KgsMedias.Value : null;
+            if (EsPesaje(model.TipoCompra) && auditoria.IdPersona.HasValue)
+            {
+                var proveedor = ResolverProveedor(auditoria.IdPersona.Value);
+                if (proveedor != null && proveedor.IdPersona > 0)
+                {
+                    model.IdProveedor = proveedor.IdPersona;
+                    model.ProveedorNombre = proveedor.RazonSocial;
+                    model.ProveedorCuit = proveedor.Cuit;
+                }
+            }
+
+            var avisos = new List<string>();
+            model.Lineas.Clear();
+            int index = 0;
+            foreach (var linea in auditoria.Lineas)
+            {
+                var corte = linea.IdCorte.HasValue ? _oCorteN.findCorteById(linea.IdCorte.Value, false) : null;
+                if (corte == null || corte.IdCorte <= 0)
+                {
+                    avisos.Add("Se omitió la línea de «" + linea.Producto + "» porque el producto ya no existe.");
+                    continue;
+                }
+
+                index++;
+                model.Lineas.Add(new StockLineaVm
+                {
+                    Index = index,
+                    IdCorte = corte.IdCorte,
+                    Codigo = corte.Codigo,
+                    Producto = corte.CorteDesc,
+                    CantKgs = (float)(linea.CantKg ?? 0),
+                    Balanza = WebCore.Helpers.EliminacionRegistroWeb.DetalleTiene(linea.Detalle, "Balanza"),
+                    CreadoTexto = FormatearFechaHora(DateTime.Now),
+                    Pesable = corte.Pesable,
+                    NoContado = WebCore.Helpers.EliminacionRegistroWeb.DetalleTiene(linea.Detalle, "No contado")
+                });
+            }
+
+            if (EsPesaje(model.TipoCompra))
+                avisos.Add("Los vínculos con otros pesajes o compras no se recuperan.");
+
+            // Clave propia: no se mezcla con el borrador de una operacion nueva comun.
+            model.DraftKey = BuildDraftKey(user, model.IdSucursal, model.TipoCompra + "_recuperada" + auditoria.Id, 0);
+            RecalcularTotales(model);
+            ViewBag.RecuperandoEliminado = WebCore.Helpers.EliminacionRegistroWeb.TextoRecuperando(auditoria, "el movimiento de stock", avisos);
+            return "";
+        }
+
+        // Modelo del boton Eliminar de Stock/Editar, o null si no corresponde mostrarlo (registro nuevo, sin permiso, o un
+        // Ajuste/Cierre para quien no es admin). La cuenta de produccion siempre lo ve: la persona se valida al confirmar.
+        private WebCore.Models.EliminarRegistroVm? CrearBotonEliminar(Entidades.Compra? compra, Entidades.Usuario user)
+        {
+            if (compra == null || compra.IdCompra <= 0) return null;
+
+            if (!user.EsUsuarioProduccion)
+            {
+                if (Negocio.EliminacionRegistro.RequiereAdmin(compra.TipoCompra) && !user.Admin) return null;
+
+                int idCreador = compra.CreadoPor != null ? compra.CreadoPor.Id : -1;
+                if (!user.Admin && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, compra.FechaCompra, idCreador))
+                    return null;
+            }
+
+            return WebCore.Helpers.EliminacionRegistroWeb.CrearVm(
+                Entidades.AuditoriaEliminacion.ModuloStock, compra.IdCompra, "el movimiento de stock",
+                Url.Action("PrevisualizarEliminar", "Stock"), Url.Action("Eliminar", "Stock"), Url.Action("Index", "Stock"),
+                user, _oUsuarioN);
+        }
+
+        [HttpGet]
+        public IActionResult PrevisualizarEliminar(int id)
+        {
+            var vista = id > 0 ? _oCompraN.obtenerVistaPreviaEliminacion(id) : null;
+            if (vista == null)
+                return Json(new { ok = false, mensaje = "El registro no existe o ya fue eliminado." });
+            if (vista.Modulo != Entidades.AuditoriaEliminacion.ModuloStock)
+                return Json(new { ok = false, mensaje = "Este registro es una compra: se elimina desde Compras." });
+
+            return Json(WebCore.Helpers.EliminacionRegistroWeb.VistaPreviaJson(vista));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Eliminar(int id, string motivo, int idUsuarioAutoriza, string clave)
+        {
+            try
+            {
+                // 1) Usuario y contraseña, siempre (limite de intentos por sesion).
+                var auth = WebCore.Helpers.ReautenticacionEliminacion.Validar(HttpContext.Session, _usuarioActual, idUsuarioAutoriza, clave, _oUsuarioN);
+                if (!auth.Ok) return Json(WebCore.Helpers.EliminacionRegistroWeb.RevalidacionFallidaJson(auth));
+                var persona = auth.Usuario;
+
+                var vista = id > 0 ? _oCompraN.obtenerVistaPreviaEliminacion(id) : null;
+                if (vista == null)
+                    return Json(new { ok = false, mensaje = "El registro no existe o ya fue eliminado." });
+                if (vista.Modulo != Entidades.AuditoriaEliminacion.ModuloStock)
+                    return Json(new { ok = false, mensaje = "Este registro es una compra: se elimina desde Compras." });
+
+                // 2) Permiso de quien puso la clave: el mismo que para modificar stock (con su limite de fecha); Ajuste y Cierre, solo admin.
+                if (vista.RequiereAdmin && !persona.Admin)
+                    return Json(new { ok = false, mensaje = "Eliminar un " + vista.TipoRegistro + " requiere un usuario administrador." });
+                if (!persona.Admin && !_oUsuarioN.tienePermiso(persona, Entidades.Permisos.Stock.AddOrEditStock, vista.FechaRegistro, vista.IdUsuarioCreador))
+                    return Json(new { ok = false, mensaje = persona.Nombre + " no tiene permiso para eliminar este movimiento de stock (o su fecha queda fuera de lo que su permiso permite)." });
+
+                // 3) Eliminacion (borrado + auditoria + recalculo del estado del pesaje, en una transaccion).
+                var resultado = _oCompraN.eliminarCompra(id, Entidades.AuditoriaEliminacion.ModuloStock, motivo, persona, _usuarioActual, WebCore.Helpers.ClientIp.Obtener(HttpContext));
+                if (!resultado.Ok)
+                    return Json(new { ok = false, mensaje = resultado.Mensaje });
+
+                return Json(new
+                {
+                    ok = true,
+                    mensaje = "El movimiento de stock se eliminó.",
+                    advertencia = resultado.Advertencia ?? "",
+                    redirectUrl = Url.Action("Index", "Stock")
+                });
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Error al eliminar el movimiento de stock {IdCompra}", id);
+                return Json(new { ok = false, mensaje = "Error al eliminar el movimiento de stock. " + ex.Message });
             }
         }
 

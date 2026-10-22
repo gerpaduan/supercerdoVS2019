@@ -16,6 +16,7 @@ Cada vez que el sistema pide **usuario y clave para autorizar algo** (no es el i
 | **Compras / Ventas**: elegir el operador del módulo (cuenta de producción) | Común |
 | **Clave para modificar** un registro anterior a hoy (Movimientos, Stock, Elaborados) | Común |
 | **Modificar un pedido** (autorización de quien tiene permiso) | Común |
+| **Eliminar** una compra, una operación de stock o un movimiento (usuario y contraseña en cada eliminación; ver [eliminar registros](ayuda:concepto/eliminar-registros)) | Común |
 | **Cerrar caja** cuando no tenés el permiso (se pide usuario y clave de quien lo tiene) | Propio |
 | **Ver fórmula** de una fórmula secreta | Propio |
 

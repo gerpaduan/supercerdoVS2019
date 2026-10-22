@@ -67,7 +67,8 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalMarcaAdmin" tabindex="-1" role="dialog" aria-hidden="true">
+@* Los modales cuelgan del body, fuera de .productos-marcas-page: llevan la clase para heredar la fuente compacta. *@
+<div class="modal fade productos-marcas-page" id="modalMarcaAdmin" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -77,6 +78,43 @@
                 </button>
             </div>
             <div class="modal-body" id="modalMarcaAdminBody">
+                <div class="text-center text-muted py-4">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Lista de productos de la marca que se quiere eliminar, para pasarlos a otra marca (Scripts/app/reasignar-productos.js). *@
+<div class="modal fade productos-marcas-page" id="modalReasignarProductos" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Productos con esta marca</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalReasignarProductosBody">
+                <div class="text-center text-muted py-4">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Buscador de propietario: el mismo buscador de personas del POS (Personas/_BuscarPersona), con "Nueva" para dar de
+   alta la persona (CUIT + datos de AFIP). Es un modal hermano de #modalMarcaAdmin, nunca hijo: ver el flujo en el script. *@
+@Html.Partial("~/Views/Personas/_BuscarPersona.cshtml")
+
+<div class="modal fade productos-marcas-page" id="modalPersonaCrearMarca" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva persona (propietario)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalPersonaCrearMarcaBody">
                 <div class="text-center text-muted py-4">Cargando...</div>
             </div>
         </div>
@@ -101,23 +139,34 @@
         padding: .32rem .58rem;
     }
 
-    .productos-marcas-page .table {
-        font-size: .84rem;
+    /* Tabla compacta (mismo criterio que la grilla de Productos). Los selectores con #content son necesarios:
+       ui-refresh.css fija 14px en "body.app-shell #content .table thead th" y gana por el id. */
+    .productos-marcas-page .table,
+    .productos-marcas-page .table td {
+        font-size: .78rem;
     }
 
     .productos-marcas-page .table th,
     .productos-marcas-page .table td {
-        padding: .42rem .58rem;
-        line-height: 1.15;
+        padding: .28rem .5rem;
+        line-height: 1.1;
         vertical-align: middle;
     }
 
-    .productos-marcas-page .table thead th,
+    body.app-shell #content .productos-marcas-page .table thead th,
     .productos-marcas-page .table > thead > tr > th {
-        font-size: .73rem;
+        font-size: .68rem;
         font-weight: 700;
         letter-spacing: .02em;
         text-transform: uppercase;
+        padding-top: .32rem;
+        padding-bottom: .32rem;
+    }
+
+    .productos-marcas-page .table .btn.btn-sm {
+        font-size: .72rem;
+        padding: .16rem .42rem;
+        line-height: 1.12;
     }
 
     .productos-marcas-page .btn {
@@ -150,23 +199,28 @@
             padding: .28rem .54rem;
         }
 
-        .productos-marcas-page .table {
-            font-size: .8rem;
+        .productos-marcas-page .table,
+        .productos-marcas-page .table td {
+            font-size: .76rem;
         }
 
-        .productos-marcas-page .table thead th,
+        body.app-shell #content .productos-marcas-page .table thead th,
         .productos-marcas-page .table > thead > tr > th {
-            font-size: .68rem;
+            font-size: .66rem;
         }
     }
 </style>
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/reasignar-productos.js")" asp-append-version="true"></script>
     <script>
         (function () {
             var urlModal = '@Url.Action("MarcaModal", "Productos")';
             var urlGuardar = '@Url.Action("GuardarMarca", "Productos")';
+            var urlEliminar = '@Url.Action("EliminarMarca", "Productos")';
+            var urlReasignar = '@Url.Action("ReasignarMarcaModal", "Productos")';
+            var token = $('#formTokenMarcasAdmin input[name="__RequestVerificationToken"]').val();
 
             function abrirModal(idPersona) {
                 var titulo = idPersona ? 'Modificar marca' : 'Nueva marca';
@@ -190,6 +244,40 @@
                 .off('click.marcasNuevo', '#btnNuevaMarca')
                 .on('click.marcasNuevo', '#btnNuevaMarca', function () {
                     abrirModal(0);
+                })
+                .off('click.marcasEliminar', '.btn-eliminar-marca-admin')
+                .on('click.marcasEliminar', '.btn-eliminar-marca-admin', function () {
+                    var idMarca = $(this).data('id');
+                    var nombre = ($(this).data('nombre') || '').toString();
+                    if (!idMarca) return;
+
+                    if (!confirm('¿Está seguro que desea eliminar la marca ' + nombre.toUpperCase() + '?')) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: urlEliminar,
+                        type: 'POST',
+                        data: { __RequestVerificationToken: token, idPersona: idMarca },
+                        success: function (resp) {
+                            // Marca con productos: no se elimina, se abre la lista para pasarlos a otra marca.
+                            if (resp && resp.enUso) {
+                                window.ReasignarProductos.abrir({ urlModal: urlReasignar, parametros: { idMarca: idMarca } });
+                                return;
+                            }
+
+                            if (!resp || !resp.success) {
+                                alert(resp && resp.message ? resp.message : 'No se pudo eliminar la marca.');
+                                return;
+                            }
+
+                            alert(resp.message || 'La marca se eliminó correctamente.');
+                            window.location.reload();
+                        },
+                        error: function () {
+                            alert('No se pudo eliminar la marca.');
+                        }
+                    });
                 })
                 .off('click.marcasEditar', '.btn-editar-marca-admin')
                 .on('click.marcasEditar', '.btn-editar-marca-admin', function () {
@@ -230,6 +318,251 @@
                         },
                         error: function () {
                             $('#marcaAdminError').removeClass('d-none').text('No se pudo guardar la marca.');
+                        }
+                    });
+                });
+        })();
+    </script>
+
+    <script>
+        // Propietario de la marca: buscador de personas (el del POS) + alta de persona con datos de AFIP.
+        // Flujo de modales: Bootstrap no soporta modales apilados (el fondo oscuro tapa al de adelante y el foco queda
+        // atrapado en el de atras, que dejaba la pantalla bloqueada). Por eso se trabaja de a uno:
+        //   marca -> buscador -> (Nueva) alta de persona -> vuelve a la marca con el propietario cargado.
+        // Cerrar el buscador o el alta sin elegir tambien vuelve al formulario de la marca, sin perder lo escrito.
+        (function () {
+            var urlListar = '@Url.Action("Listar", "Personas")';
+            var urlCrear = '@Url.Action("PersonaModal", "Personas")';
+            var urlGuardarCrear = '@Url.Action("GuardarPersonaModal", "Personas")';
+            var DEBOUNCE_BUSQUEDA_MS = 200;
+            var MAX_ATAJOS_ALT = 9;
+
+            var $modalMarca = $('#modalMarcaAdmin');
+            var $modalBuscar = $('#modalBuscarPersona');
+            var $modalCrear = $('#modalPersonaCrearMarca');
+            var siguienteTrasBuscar = 'marca'; // 'marca' (volver al formulario) | 'crear' (abrir el alta)
+            var timerBusqueda = null;
+            var tokenBusqueda = 0;
+
+            function esc(valor) {
+                return $('<div>').text(valor == null ? '' : String(valor)).html();
+            }
+
+            // Cambia de modal sin apilarlos: espera a que $desde termine de cerrarse y recien ahi abre $hacia.
+            function pasarA($desde, $hacia, alAbrir) {
+                $desde.one('hidden.bs.modal', function () {
+                    $hacia.modal('show');
+                    if (alAbrir) alAbrir();
+                });
+                $desde.modal('hide');
+            }
+
+            function volverAMarca() {
+                $modalMarca.modal('show');
+            }
+
+            function cargarPersonas() {
+                var token = ++tokenBusqueda;
+                $.getJSON(urlListar, { filtro: ($('#filtroPersona').val() || '').trim() })
+                    .done(function (lista) {
+                        if (token !== tokenBusqueda) return; // llego una respuesta vieja
+
+                        var html = '';
+                        (lista || []).forEach(function (p, index) {
+                            var numTexto = index < MAX_ATAJOS_ALT ? String(index + 1) : '–';
+                            html += '<tr class="fila-persona" data-id="' + esc(p.idPersona) + '" data-razon="' + esc(p.razonSocial) + '">'
+                                + '<td class="col-numero-cell d-none d-md-table-cell">' + numTexto + '</td>'
+                                + '<td>' + esc(p.cuit) + '</td>'
+                                + '<td>' + esc(p.razonSocial) + (p.ctaCteReservada ? ' <i class="fas fa-lock text-muted ml-1" title="Cuenta corriente reservada"></i>' : '') + '</td>'
+                                + '<td>' + esc(p.identificacion) + '</td>'
+                                + '</tr>';
+                        });
+
+                        if (!html) html = '<tr><td colspan="4" class="text-center text-muted py-3">No se encontraron personas.</td></tr>';
+                        $('#tablaPersonas').html(html);
+                        $('#tablaPersonas tr.fila-persona:first').addClass('is-selected');
+                    })
+                    .fail(function () {
+                        if (token !== tokenBusqueda) return;
+                        $('#tablaPersonas').html('<tr><td colspan="4" class="text-center text-danger py-3">No se pudo cargar el listado de personas.</td></tr>');
+                    });
+            }
+
+            // Carga el propietario elegido en el formulario de la marca (el campo y los botones viven en _AddOrEditMarca).
+            function setPropietario(id, nombre) {
+                $('#marcaAdminIdPropietario').val(id || '');
+                $('#marcaAdminPropietarioNombre').val(nombre || '');
+                $('#btnQuitarPropietarioMarca').toggle(!!id);
+            }
+
+            function seleccionarFila($fila) {
+                if (!$fila || !$fila.length) return;
+                setPropietario($fila.data('id'), $fila.data('razon'));
+                siguienteTrasBuscar = 'marca';
+                $modalBuscar.modal('hide'); // al cerrarse, el handler de hidden vuelve a la marca
+            }
+
+            // ---- abrir el buscador desde el formulario de la marca
+            $(document)
+                .off('click.marcaPropietario', '#btnBuscarPropietarioMarca')
+                .on('click.marcaPropietario', '#btnBuscarPropietarioMarca', function () {
+                    siguienteTrasBuscar = 'marca';
+                    $('#filtroPersona').val('');
+                    $('#tablaPersonas').empty();
+                    pasarA($modalMarca, $modalBuscar);
+                });
+
+            $modalBuscar.on('shown.bs.modal.marcaPropietario', function () {
+                // "Nueva" viene oculto en el parcial (el POS lo muestra por script): aca si se usa.
+                $('#btnNuevaPersonaDesdeBuscar').removeClass('d-none');
+                $('#filtroPersona').trigger('focus').select();
+                cargarPersonas();
+            });
+
+            $modalBuscar.on('hidden.bs.modal.marcaPropietario', function () {
+                var destino = siguienteTrasBuscar;
+                siguienteTrasBuscar = 'marca';
+                if (destino === 'crear') return; // el click en "Nueva" ya enlazo la apertura del alta
+                volverAMarca();
+            });
+
+            // ---- busqueda en vivo y teclado (mismo comportamiento que el buscador del POS)
+            $(document)
+                .off('input.marcaPropietario', '#filtroPersona')
+                .on('input.marcaPropietario', '#filtroPersona', function () {
+                    window.clearTimeout(timerBusqueda);
+                    timerBusqueda = window.setTimeout(cargarPersonas, DEBOUNCE_BUSQUEDA_MS);
+                });
+
+            $(document)
+                .off('click.marcaPropietario', '#tablaPersonas tr.fila-persona')
+                .on('click.marcaPropietario', '#tablaPersonas tr.fila-persona', function () {
+                    $('#tablaPersonas tr.fila-persona').removeClass('is-selected');
+                    $(this).addClass('is-selected');
+                })
+                .off('dblclick.marcaPropietario', '#tablaPersonas tr.fila-persona')
+                .on('dblclick.marcaPropietario', '#tablaPersonas tr.fila-persona', function () {
+                    seleccionarFila($(this));
+                });
+
+            // En Windows, Alt+digito del numpad compone un caracter del sistema y lo suelta al soltar Alt, contra
+            // el campo que tenga el foco en ese momento (ya puede ser otro). Se cancela el primer beforeinput/keypress
+            // tras un atajo Alt+numero. Duplicado a proposito de persona-buscar.js (no hay modulo compartido).
+            var suprimirCaracterAlt = false;
+            var timerSupresionAlt = null;
+
+            function cancelarSiSupresionActiva(e) {
+                if (!suprimirCaracterAlt) return;
+                suprimirCaracterAlt = false;
+                window.clearTimeout(timerSupresionAlt);
+                e.preventDefault();
+            }
+            document.addEventListener('beforeinput', cancelarSiSupresionActiva, true);
+            document.addEventListener('keypress', cancelarSiSupresionActiva, true);
+
+            function digitoAlt(e) {
+                if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return null;
+                var m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code || '');
+                return m ? parseInt(m[1], 10) : null;
+            }
+
+            $(document)
+                .off('keydown.marcaPropietario', '#filtroPersona')
+                .on('keydown.marcaPropietario', '#filtroPersona', function (e) {
+                    var $filas = $('#tablaPersonas tr.fila-persona');
+                    if (!$filas.length) return;
+
+                    var digito = digitoAlt(e);
+                    if (digito != null) {
+                        e.preventDefault();
+                        suprimirCaracterAlt = true;
+                        window.clearTimeout(timerSupresionAlt);
+                        timerSupresionAlt = window.setTimeout(function () { suprimirCaracterAlt = false; }, 500);
+                        seleccionarFila($filas.eq(digito - 1));
+                        return;
+                    }
+
+                    var $sel = $filas.filter('.is-selected').first();
+                    if (!$sel.length) $sel = $filas.first().addClass('is-selected');
+
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        var $otra = e.key === 'ArrowDown' ? $sel.next('.fila-persona') : $sel.prev('.fila-persona');
+                        if ($otra.length) {
+                            $sel.removeClass('is-selected');
+                            $otra.addClass('is-selected');
+                            $otra[0].scrollIntoView({ block: 'nearest' });
+                        }
+                        return;
+                    }
+
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        seleccionarFila($sel);
+                    }
+                });
+
+            // ---- alta de persona (propietario nuevo): el formulario ya trae CUIT + boton "Buscar en AFIP"
+            $(document)
+                .off('click.marcaPropietario', '#btnNuevaPersonaDesdeBuscar')
+                .on('click.marcaPropietario', '#btnNuevaPersonaDesdeBuscar', function () {
+                    var textoBuscado = ($('#filtroPersona').val() || '').trim();
+                    siguienteTrasBuscar = 'crear';
+
+                    pasarA($modalBuscar, $modalCrear, function () {
+                        $('#modalPersonaCrearMarcaBody').html('<div class="text-center text-muted py-4">Cargando...</div>');
+                        $.get(urlCrear)
+                            .done(function (html) {
+                                $('#modalPersonaCrearMarcaBody').html(html);
+
+                                // Lo que se tipeo en el buscador pasa al alta: 11 digitos = CUIT (y se consulta AFIP solo),
+                                // cualquier otro texto = razon social.
+                                var digitos = textoBuscado.replace(/\D/g, '');
+                                if (/^[\d\-\s]+$/.test(textoBuscado) && digitos.length === 11) {
+                                    $('#PersonaModalCuit').val(digitos);
+                                    $('#btnBuscarAfipPersonaModal').trigger('click');
+                                } else if (textoBuscado && !/^[\d\-\s]+$/.test(textoBuscado)) {
+                                    $('#PersonaModalRazonSocial').val(textoBuscado.toUpperCase());
+                                }
+                            })
+                            .fail(function () {
+                                $('#modalPersonaCrearMarcaBody').html('<div class="alert alert-danger mb-0">No se pudo abrir el formulario de alta.</div>');
+                            });
+                    });
+                });
+
+            // Cerrar el alta (Cancelar / X / guardar) vuelve al formulario de la marca.
+            $modalCrear.on('hidden.bs.modal.marcaPropietario', function () {
+                $('#modalPersonaCrearMarcaBody').empty();
+                volverAMarca();
+            });
+
+            // Guardar la persona nueva y dejarla como propietario. La validacion del IVA la hace el propio formulario
+            // (corta la propagacion si falta), asi que aca solo llegan envios completos.
+            $(document)
+                .off('submit.marcaPropietario', '#formPersonaModal')
+                .on('submit.marcaPropietario', '#formPersonaModal', function (e) {
+                    e.preventDefault();
+                    var $form = $(this);
+                    var $btn = $('#btnGuardarPersonaModal');
+                    $btn.prop('disabled', true);
+
+                    $.ajax({
+                        url: urlGuardarCrear,
+                        type: 'POST',
+                        data: $form.serialize(),
+                        success: function (resp) {
+                            if (!resp || !resp.success) {
+                                $('#personaModalError').removeClass('d-none').text((resp && resp.message) || 'No se pudo guardar la persona.');
+                                $btn.prop('disabled', false);
+                                return;
+                            }
+                            setPropietario(resp.idPersona, resp.razonSocial);
+                            $modalCrear.modal('hide'); // al cerrarse, vuelve a la marca
+                        },
+                        error: function () {
+                            $('#personaModalError').removeClass('d-none').text('No se pudo guardar la persona.');
+                            $btn.prop('disabled', false);
                         }
                     });
                 });

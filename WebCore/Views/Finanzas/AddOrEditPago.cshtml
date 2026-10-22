@@ -70,6 +70,12 @@
     var sucursalActualPago = sucursales.FirstOrDefault(s => s.idSucursal == idSucursalPago);
     if (sucursalActualPago != null && !string.IsNullOrWhiteSpace(sucursalActualPago.sucursal)) nombreSucursalPago = sucursalActualPago.sucursal;
 
+    // "Saldar cuenta" (2026-10-22, ver docs/DECISIONS.md): solo en alta y con el saldo visible (en una cuenta reservada
+    // vista por un usuario restringido no se ofrece, para no revelar el saldo por el importe).
+    bool saldoReservadoParaSaldar = ViewBag.OcultarSaldo is bool ocultarSaldoFlag && ocultarSaldoFlag;
+    bool ofrecerSaldarCuenta = esNuevo && !saldoReservadoParaSaldar;
+    var saldarCuenta = Negocio.SaldarCuenta.Resolver(ViewBag.SaldoSaldar is decimal saldoSaldar ? saldoSaldar : 0m);
+
     var chequeBusquedaViewData = new ViewDataDictionary(ViewData);
     chequeBusquedaViewData["ChequeBusquedaEnPago"] = true;
 }
@@ -169,6 +175,29 @@
                         <option value="false">Cobro (recibo dinero)</option>
                         <option value="true">Pago (entrego dinero)</option>
                     </select>
+                    @if (ofrecerSaldarCuenta)
+                    {
+                        @* Saldar cuenta: elige solo la operacion (saldo negativo = cobro, positivo = pago) y carga el saldo como
+                           importe. El servidor vuelve a calcular el saldo al guardar (AddOrEditPagoPost, saldarCuenta=true). *@
+                        <div class="custom-control custom-switch mt-2" id="wrapSaldarCuenta">
+                            <input type="checkbox" class="custom-control-input" id="chkSaldarCuenta"
+                                   data-puede-saldar="@(saldarCuenta.PuedeSaldar ? "true" : "false")"
+                                   data-a-proveedor="@(saldarCuenta.AProveedor ? "true" : "false")"
+                                   data-importe="@saldarCuenta.Importe.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                                   @(saldarCuenta.PuedeSaldar ? "" : "disabled") />
+                            <label class="custom-control-label" for="chkSaldarCuenta" id="lblSaldarCuenta">
+                                Saldar cuenta
+                                @if (saldarCuenta.PuedeSaldar)
+                                {
+                                    <span class="text-muted">&mdash; @(saldarCuenta.AProveedor ? "pagar" : "cobrar") $ @saldarCuenta.Importe.ToString("N2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">&mdash; la cuenta no tiene saldo</span>
+                                }
+                            </label>
+                        </div>
+                    }
                 </div>
             }
 
@@ -725,6 +754,8 @@
                     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
                     if (focoEnControlEditable()) return;
                     if (!$('.pago-operacion-elegir').is(':visible')) return;
+                    // Con "Saldar cuenta" activo la operacion la define el saldo: los atajos no la cambian.
+                    if (saldarCuentaActivo()) return;
 
                     if (event.key === '1') {
                         event.preventDefault();
@@ -759,6 +790,57 @@
                 }
             })(0);
         }
+
+        // ===== Saldar cuenta (2026-10-22, ver docs/DECISIONS.md) =====
+        // Solo existe en alta y con el saldo visible. Al activarlo: elige la operacion (saldo negativo = cobro, positivo =
+        // pago), carga el saldo como importe y bloquea ambos. El servidor recalcula el saldo al guardar, asi que esto es
+        // solo la vista previa. Se desactiva solo si la forma de pago pasa a cheque (ahi el importe sale de los cheques).
+        var $chkSaldarCuenta = $('#chkSaldarCuenta');
+
+        function saldarCuentaActivo() {
+            return $chkSaldarCuenta.length > 0 && $chkSaldarCuenta.is(':checked');
+        }
+
+        function bloquearOperacionEImporteSaldar(bloquear) {
+            $('.pago-operacion-opcion').prop('disabled', bloquear);
+            $('#txtImporte').prop('readonly', bloquear || esFormaCheque($('#FormaPago_').val()));
+            $('#btnCalculadoraBilletesPagoWrap').toggle(!bloquear && !esFormaCheque($('#FormaPago_').val()));
+        }
+
+        function cargarImporteEnCampo(texto) {
+            // 'input' hace que la mascara de importe re-sincronice lo escrito por codigo.
+            $('#txtImporte').val(texto).trigger('input');
+        }
+
+        function actualizarEstadoSaldarCuenta() {
+            if (!$chkSaldarCuenta.length) return;
+
+            var esCheque = esFormaCheque($('#FormaPago_').val());
+            var puedeSaldar = $chkSaldarCuenta.data('puedeSaldar') === true;
+
+            if (esCheque && saldarCuentaActivo()) {
+                $chkSaldarCuenta.prop('checked', false);
+                bloquearOperacionEImporteSaldar(false);
+            }
+
+            $chkSaldarCuenta
+                .prop('disabled', !puedeSaldar || esCheque)
+                .attr('title', esCheque ? 'No se puede saldar la cuenta con una forma de pago con cheques.' : '');
+        }
+
+        $chkSaldarCuenta.on('change', function () {
+            if (this.checked) {
+                var importe = parseFloat($(this).attr('data-importe')) || 0;
+                seleccionarOperacion($(this).attr('data-a-proveedor') === 'true' ? 'true' : 'false');
+                cargarImporteEnCampo(importe.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                bloquearOperacionEImporteSaldar(true);
+            } else {
+                bloquearOperacionEImporteSaldar(false);
+                cargarImporteEnCampo('');
+            }
+        });
+
+        actualizarEstadoSaldarCuenta();
 
         // ===== Pago con Cheque/EftvoCheque (2026-09-05, ver docs/DECISIONS.md) =====
         // Port de la logica de _AddOrEditPagoScripts.cshtml (Web clasico), acotada a lo que esta
@@ -800,9 +882,13 @@
             var esCheque = esFormaCheque($('#FormaPago_').val());
             var esMixto = esFormaMixta($('#FormaPago_').val());
 
+            // Con "Saldar cuenta" activo el importe sigue bloqueado aunque la forma de pago no sea cheque.
+            actualizarEstadoSaldarCuenta();
+            var saldando = saldarCuentaActivo();
+
             $('#bloqueCheques').toggle(esCheque);
-            $('#txtImporte').prop('readonly', esCheque);
-            $('#btnCalculadoraBilletesPagoWrap').toggle(!esCheque);
+            $('#txtImporte').prop('readonly', esCheque || saldando);
+            $('#btnCalculadoraBilletesPagoWrap').toggle(!esCheque && !saldando);
 
             if (esCheque && esMixto) {
                 $('#bloqueEfectivo').show();
@@ -915,7 +1001,8 @@
                 // por default aunque la vista corriera embebida en POS: nunca forzaba la
                 // sucursal/caja abierta del vendedor ni devolvia cerrarModalPago=true.
                 '&desdePos=' + (desdePosPago ? 'true' : 'false') +
-                '&posInstanceId=' + encodeURIComponent(posInstanceIdPago || '');
+                '&posInstanceId=' + encodeURIComponent(posInstanceIdPago || '') +
+                '&saldarCuenta=' + (saldarCuentaActivo() ? 'true' : 'false');
 
             var $btn = $(this);
             $btn.prop('disabled', true);
@@ -1446,6 +1533,9 @@
     #addOrEditPagoContainer .pago-op-card:hover,
     #addOrEditPagoContainer .pago-op-card:focus-visible { background: var(--pago-op-suave); box-shadow: 0 .2rem .55rem rgba(0,0,0,.12); outline: none; }
     #addOrEditPagoContainer .pago-op-card:active { transform: scale(.985); }
+    /* "Saldar cuenta" activo: la operacion la define el saldo, la tarjeta no elegida queda apagada. */
+    #addOrEditPagoContainer .pago-op-card:disabled { cursor: not-allowed; }
+    #addOrEditPagoContainer .pago-op-card:disabled:not(.active) { opacity: .45; }
     #addOrEditPagoContainer .pago-op-card.active { background: var(--pago-op-color); box-shadow: 0 .25rem .65rem rgba(0,0,0,.2); }
     #addOrEditPagoContainer .pago-op-card.active .pago-op-titulo,
     #addOrEditPagoContainer .pago-op-card.active .pago-op-sub { color: #fff; }

@@ -14,7 +14,7 @@
                 <th>Marca</th>
                 <th style="width:30%;">Propietario</th>
                 <th>Otros datos</th>
-                <th style="width:150px;">Acciones</th>
+                <th style="width:190px;">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -38,20 +38,19 @@
                         <td>@(!string.IsNullOrWhiteSpace(propietario) ? propietario : "-")</td>
                         <td>@(!string.IsNullOrWhiteSpace(otrosDatos) ? otrosDatos : "-")</td>
                         <td class="text-nowrap">
-                            @if (puedeCrear)
+                            @if (puedeCrear || usuarioAdmin)
                             {
                                 <button type="button"
                                         class="btn btn-sm btn-outline-primary btn-editar-marca-admin"
                                         data-id="@id">
                                     Modificar
                                 </button>
-                            }
-                            else if (usuarioAdmin)
-                            {
+                                @* Eliminar: solo sin productos; con productos abre la lista para pasarlos a otra marca. *@
                                 <button type="button"
-                                        class="btn btn-sm btn-outline-primary btn-editar-marca-admin"
-                                        data-id="@id">
-                                    Modificar
+                                        class="btn btn-sm btn-outline-danger btn-eliminar-marca-admin"
+                                        data-id="@id"
+                                        data-nombre="@marca">
+                                    Eliminar
                                 </button>
                             }
                         </td>

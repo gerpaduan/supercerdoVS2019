@@ -39,15 +39,35 @@ namespace NegocioTests.Fakes
         }
 
         public void anularCompra(int idCompra) => throw new NotImplementedException();
+
+        // Eliminacion con motivo (2026-10-22): configurable y registra lo recibido.
+        public bool EliminarLlamado { get; private set; }
+        public AuditoriaEliminacion AuditoriaRecibida { get; private set; }
+        public Contratos.IUnitOfWork UnitOfWorkRecibida { get; private set; }
+        public int IdAuditoriaADevolver { get; set; } = 77;
+        public int eliminarCompraConAuditoria(int idCompra, AuditoriaEliminacion auditoria, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            EliminarLlamado = true;
+            AuditoriaRecibida = auditoria;
+            UnitOfWorkRecibida = unitOfWork;
+            return IdAuditoriaADevolver;
+        }
+
+        // Datos que lee Negocio.Compra.eliminarCompra / obtenerVistaPreviaEliminacion.
+        public DataTable FilaCompra { get; set; }
+        public DataTable CortesPorCompra { get; set; }
+        public DataTable MediasPorCompra { get; set; }
+        public List<int> PesajesVinculados { get; set; } = new List<int>();
+        public int IdAjusteDelPesaje { get; set; }
         public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal) => throw new NotImplementedException();
         public DataTable getLineasCompras(int idSucursal, string tipoCompra, string texto, string codigo, string corte, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal) => throw new NotImplementedException();
         // Sin filas: Negocio.Compra.findById_convertToCompra devuelve una compra vacia (lo justo para
         // que estadoAjusteStock calcule "No realizado" sin necesitar Persona/Sucursal fakes).
-        public DataTable findById(int idCompra) => new DataTable();
+        public DataTable findById(int idCompra) => FilaCompra ?? new DataTable();
         public int agregarCompra(Compra oCompraE) => throw new NotImplementedException();
         public void ModificarCompra(Compra oCompraE) => throw new NotImplementedException();
         public void actualizarObservacionesCompra(int idCompra, string observaciones, int actualizadoPor) => throw new NotImplementedException();
-        public List<int> obtenerPesajesVinculadosPorDestino(int idPesajeDestino) => throw new NotImplementedException();
+        public List<int> obtenerPesajesVinculadosPorDestino(int idPesajeDestino) => PesajesVinculados;
         public Dictionary<int, List<int>> obtenerPesajesVinculadosPorDestinos(IEnumerable<int> idsDestino) => throw new NotImplementedException();
         public void actualizarIdPesajeAjustado(int idCompra, int? idPesajeAjustado, int actualizadoPor) => throw new NotImplementedException();
         public float getTotalCompra(int idCompra, string tipoCompra) => throw new NotImplementedException();
@@ -56,8 +76,8 @@ namespace NegocioTests.Fakes
         public void limpiarCortesPorCompra(int idCompra) => throw new NotImplementedException();
         public void agregarMediaRes(MediaRes oMediaResE, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
         public int obtenerIdUltimaCompra() => throw new NotImplementedException();
-        public DataTable obtenerCortesPorCompra(int idCompra) => throw new NotImplementedException();
-        public DataTable obtenerMediasPorCompra(int idCompra) => throw new NotImplementedException();
+        public DataTable obtenerCortesPorCompra(int idCompra) => CortesPorCompra ?? new DataTable();
+        public DataTable obtenerMediasPorCompra(int idCompra) => MediasPorCompra ?? new DataTable();
         public void modificarMediaPorCompra(MediaRes oMediaResE, int idCompra) => throw new NotImplementedException();
         public void modificarCortePorCompra(CortePorCompra oCorteE, int idCompra) => throw new NotImplementedException();
         public void quitarStockMedia(MediaRes oMediaResE, int idCompra) => throw new NotImplementedException();
@@ -66,7 +86,7 @@ namespace NegocioTests.Fakes
         public DataTable porcentajeCortesPorCompra(int idCompra) => throw new NotImplementedException();
         public DataTable getPromMedias(int idCompra) => throw new NotImplementedException();
         public DataTable getPorcCortesEnMedias(int idCompra) => throw new NotImplementedException();
-        public int getIdAjusteDelPesaje(int idPesaje) => 0;
+        public int getIdAjusteDelPesaje(int idPesaje) => IdAjusteDelPesaje;
         public Dictionary<int, int> getIdsAjustePorPesajes(IEnumerable<int> idsPesaje) => throw new NotImplementedException();
         public void actualizarEstadoPesaje(int idPesaje, Compra.estadoAjusteStock estadoAjStock)
         {

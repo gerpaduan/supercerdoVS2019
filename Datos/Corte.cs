@@ -1313,6 +1313,45 @@ namespace Datos
             );
         }
 
+        // Eliminacion con motivo (WebCore): un solo batch con su propia transaccion que borra el movimiento, guarda la auditoria
+        // (cabecera + foto de las lineas) y borra las lineas. Si el movimiento ya no existe devuelve 0 sin escribir nada.
+        // WebCore no la usa con la replica entre bases activa (Movimientos:ReplicaEntreBases): la copia no se borra sola.
+        public int eliminarMovimientoConAuditoria(int idMovimiento, Entidades.AuditoriaEliminacion auditoria)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            string sql = @"
+                SET XACT_ABORT ON;
+                BEGIN TRAN;
+                DELETE FROM dbo.Movimiento WHERE idMovimiento = @idMovimientoEliminar;
+                IF @@ROWCOUNT = 0
+                BEGIN
+                    ROLLBACK TRAN;
+                    SELECT CAST(0 AS INT);
+                    RETURN;
+                END
+                " + AuditoriaEliminacionSql.SqlInsertarCabecera + @"
+                INSERT INTO dbo.AuditoriaEliminacionLineas (idEmpresa, idAuditoria, idCorte, codigo, producto, idSucursal, cantKg, cantUnidad, precioKg, detalle)
+                SELECT @idEmpresa, @idAuditoria, cpm.idCorte, c.codigo, c.corte, NULL, cpm.cantKg, cpm.cantUnidad, NULL,
+                       CASE WHEN cpm.pesoBalanza = 1 THEN 'Balanza' ELSE NULL END
+                FROM dbo.CortePorMovimiento cpm
+                LEFT JOIN dbo.Corte c ON c.idCorte = cpm.idCorte
+                WHERE cpm.idMovimientos = @idMovimientoEliminar
+                ORDER BY cpm.idCorteMovimiento;
+
+                DELETE FROM dbo.CortePorMovimiento WHERE idMovimientos = @idMovimientoEliminar;
+                COMMIT TRAN;
+                SELECT @idAuditoria;";
+
+            object id = Db.Scalar(_empresa, sql, CommandType.Text, p =>
+            {
+                p.Add("@idMovimientoEliminar", SqlDbType.Int).Value = idMovimiento;
+                AuditoriaEliminacionSql.AgregarParametros(p, _empresa.IdEmpresa, auditoria);
+            });
+
+            return id == null || id == DBNull.Value ? 0 : Convert.ToInt32(id);
+        }
+
         public void agregarCortePorMovimiento(Entidades.CortePorMovimiento cortePorMovimiento)
         {
             if (cortePorMovimiento == null) throw new ArgumentNullException(nameof(cortePorMovimiento));
@@ -2098,6 +2137,75 @@ namespace Datos
             }
 
             return "";
+        }
+
+        // Reasignacion en lote de tipo: una transaccion (todo o nada). Deja la ultima modificacion en
+        // Corte.actualizado / Corte.actualizadoPor (columna aplicada en SM y SL, ver docs/DECISIONS.md 2026-10-21).
+        public void reasignarTipoCortes(IEnumerable<KeyValuePair<int, string>> idCorteNuevoTipo, int? idUsuario)
+        {
+            if (idCorteNuevoTipo == null) throw new ArgumentNullException(nameof(idCorteNuevoTipo));
+
+            using (SqlConnection cn = Db.Open(_empresa))
+            using (SqlTransaction tx = cn.BeginTransaction())
+            {
+                try
+                {
+                    foreach (var cambio in idCorteNuevoTipo)
+                    {
+                        using (SqlCommand cmd = new SqlCommand(
+                            "UPDATE Corte SET tipo = @tipo, actualizado = GETDATE(), actualizadoPor = @actualizadoPor WHERE idCorte = @idCorte AND idEmpresa = @idEmpresa", cn, tx))
+                        {
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@tipo", cambio.Value ?? "");
+                            cmd.Parameters.AddWithValue("@actualizadoPor", idUsuario.HasValue ? (object)idUsuario.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@idCorte", cambio.Key);
+                            cmd.Parameters.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        // Reasignacion en lote de marca (null / 0 = sin marca). Misma transaccion todo-o-nada que el tipo.
+        public void reasignarMarcaCortes(IEnumerable<KeyValuePair<int, int?>> idCorteNuevaMarca, int? idUsuario)
+        {
+            if (idCorteNuevaMarca == null) throw new ArgumentNullException(nameof(idCorteNuevaMarca));
+
+            using (SqlConnection cn = Db.Open(_empresa))
+            using (SqlTransaction tx = cn.BeginTransaction())
+            {
+                try
+                {
+                    foreach (var cambio in idCorteNuevaMarca)
+                    {
+                        using (SqlCommand cmd = new SqlCommand(
+                            "UPDATE Corte SET idMarca = @idMarca, actualizado = GETDATE(), actualizadoPor = @actualizadoPor WHERE idCorte = @idCorte AND idEmpresa = @idEmpresa", cn, tx))
+                        {
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@idMarca", cambio.Value.HasValue && cambio.Value.Value > 0 ? (object)cambio.Value.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@actualizadoPor", idUsuario.HasValue ? (object)idUsuario.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@idCorte", cambio.Key);
+                            cmd.Parameters.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
         }
 
         public long sugerirCodigo(string tipo)

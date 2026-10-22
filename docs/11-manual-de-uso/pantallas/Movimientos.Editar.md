@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-10-20
+revisada: 2026-10-22
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -32,6 +32,10 @@ La columna **Sugerido** estima lo que conviene mandar: **ventas + uso en elabora
 - Cada vez que el stock se actualiza las sugerencias se **recalculan solas** y la leyenda dice *«Recalculado 11:23 · 3 cambiaron»*. Las celdas cuyo sugerido **cambió** quedan marcadas en ámbar (el tooltip dice el valor anterior); si ese producto ya está en el movimiento, su «en mov.» se pinta en ámbar para que **revises la cantidad**. El movimiento nunca se modifica solo.
 - Con un período **cerrado** (fecha hasta anterior a hoy) las actualizaciones solo releen el stock.
 - Solo con la base de datos nueva (Postgres): con la anterior la columna avisa que no está disponible.
+
+## Eliminar un movimiento
+El botón rojo **Eliminar** aparece al abrir un movimiento **ya guardado** para quien puede modificarlo. Muestra el resumen y las líneas, pide **motivo obligatorio** (10 a 300 caracteres) y **usuario y contraseña en cada eliminación** (ver [eliminar registros](ayuda:concepto/eliminar-registros)). El movimiento **se borra**, el stock del origen y del destino se recalcula sin él, y queda la constancia (quién, cuándo, motivo y todas las líneas) en [Registros eliminados](ayuda:pantalla/RegistrosEliminados.Index). No se puede deshacer desde el sistema.
+- **Deshabilitado donde los movimientos se replican entre dos bases** (hoy Servidor SM y San Lorenzo): la copia en la otra base no se borra sola, así que el botón figura apagado con la explicación. Se habilita cuando se unifiquen las bases (configuración `Movimientos:ReplicaEntreBases`, ver el [mapa de configuraciones de la plataforma](ayuda:referencia/configuraciones-plataforma)).
 
 ## Si algo no anda
 - El botón **Stock destino** no aparece: es solo para pantallas de escritorio, y necesita un navegador reciente.

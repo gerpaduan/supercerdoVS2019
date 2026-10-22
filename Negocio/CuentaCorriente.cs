@@ -542,6 +542,62 @@ namespace Negocio
             }
         }
 
+        // Movimiento de cta cte VIGENTE de un registro (compra, venta...), o null si no tiene o ya fue "Quitado de Cta.Cte.".
+        // Es el que un asiento contrario por eliminacion revertiria.
+        public Entidades.MovCtaCte getMovCtaCteVigenteDeRegistro(Entidades.MovCtaCte.tablas tabla, int idTabla, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            Entidades.MovCtaCte oMovCtaCte = oCtaCteD.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId, unitOfWork);
+            return oMovCtaCte != null && oMovCtaCte.Id > 0 && !oMovCtaCte.QuitadoCtaCta ? oMovCtaCte : null;
+        }
+
+        // Asiento contrario "ELIMINADO - ..." para un registro que se elimina de verdad (hoy: compras). Mismo criterio que
+        // EjecutarEliminarPago y que la ANULACION de crearMovCtaCte: se toma el ultimo movimiento del registro, se lo copia con
+        // el tipo opuesto y la fecha original, asi el neto del registro es cero y el extracto muestra ambos renglones. Si el
+        // registro no estaba en cta cte (o ya fue quitado) no hay nada vigente que revertir y devuelve null. Participa de la
+        // unidad de trabajo recibida.
+        public string registrarContraasientoPorEliminacion(Entidades.MovCtaCte.tablas tabla, int idTabla, Entidades.Usuario oUsuarioE,
+            Contratos.IUnitOfWork unitOfWork = null)
+        {
+            Entidades.MovCtaCte oMovCtaCte = getMovCtaCteVigenteDeRegistro(tabla, idTabla, unitOfWork);
+            if (oMovCtaCte == null) return null;
+
+            string detalleOriginal = oMovCtaCte.Detalle;
+            oMovCtaCte.Id = 0;
+            oMovCtaCte.Detalle = "ELIMINADO - " + detalleOriginal;
+            oMovCtaCte.Tipo = oMovCtaCte.getTipoMovOpuesto(oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
+            oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
+            oMovCtaCte.Creado = DateTime.Now;
+            oMovCtaCte.CreadoPor = oUsuarioE;
+            oCtaCteD.addOrEditMovCtaCte(oMovCtaCte, unitOfWork);
+
+            return "Asiento contrario en la cuenta corriente (" + oMovCtaCte.Tipo + " por $" + Math.Abs(oMovCtaCte.Importe).ToString("N2") + ")";
+        }
+
+        // Aviso al admin (campana) de un registro eliminado. Despues del commit: es una advertencia, no parte de la operacion
+        // contable; si falla se registra y no se deshace la eliminacion. Solo Postgres (en SQL Server upsertNotificacion no hace nada).
+        public void notificarRegistroEliminado(Entidades.AuditoriaEliminacion auditoria, string nombreUsuarioElimino, string descripcionRegistro)
+        {
+            try
+            {
+                string titulo = auditoria.Modulo == Entidades.AuditoriaEliminacion.ModuloCompra ? "Compra eliminada"
+                    : auditoria.Modulo == Entidades.AuditoriaEliminacion.ModuloStock ? "Stock eliminado" : "Movimiento eliminado";
+
+                oCtaCteD.upsertNotificacion(new Entidades.Notificacion
+                {
+                    IdSucursal = auditoria.IdSucursal,
+                    Tipo = Entidades.Notificacion.TipoRegistroEliminado,
+                    Severidad = Entidades.Notificacion.SeveridadAdvertencia,
+                    Titulo = titulo,
+                    Mensaje = nombreUsuarioElimino + " eliminó " + descripcionRegistro + ". Motivo: " + auditoria.Motivo,
+                    RefId = auditoria.Id
+                }, true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("No se pudo crear la notificacion REGISTRO_ELIMINADO de la auditoria " + auditoria.Id + ": " + ex);
+            }
+        }
+
         // Observaciones del registro origen de cada movimiento de la cta cte de la persona, indexadas por
         // "tabla|idTabla" (ej. "Pagos|123"). Solo trae los que tienen texto.
         public Dictionary<string, string> obtenerObservacionesCtaCte(int idPersona)

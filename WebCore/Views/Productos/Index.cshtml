@@ -168,9 +168,11 @@
             <div class="input-group">
                 <input type="text" id="buscador" class="form-control" placeholder="Buscar por código o nombre...">
                 <div class="input-group-append">
-                    <span class="input-group-text">
+                    @* Lupa: recarga la tabla desde el servidor (productos nuevos o cambiados) conservando filtros y texto buscado. *@
+                    <button type="button" id="btnRecargarProductos" class="btn btn-outline-secondary"
+                            title="Recargar la tabla (aplica los filtros si los hay)" aria-label="Recargar la tabla">
                         <i class="fas fa-search"></i>
-                    </span>
+                    </button>
                 </div>
             </div>
             <div class="mt-2">
@@ -1209,6 +1211,11 @@
         }
     }
 
+    // Tilde "Cargar faltantes sin precio con precio 0": permite importar sin exigir precio a cada producto.
+    function precioCeroFaltantesCatalogoGlobalActivo() {
+        return $("#chkPrecioCeroFaltantesGlobales").is(":checked");
+    }
+
     function renderEstadoCatalogoGlobalFila(row) {
         const $row = $(row);
         const $estado = $row.find(".js-estado-global");
@@ -1225,6 +1232,14 @@
         const precioActual = ($precio.val() || "").toString().trim();
 
         togglePrecioCatalogoGlobalFila(row, false);
+
+        if (seleccionado && precioActual === "" && precioCeroFaltantesCatalogoGlobalActivo()) {
+            $estado.html(
+                '<span class="badge badge-info">Precio 0</span><br />' +
+                '<small class="text-muted">Se importa con precio 0</small>'
+            );
+            return;
+        }
 
         if (seleccionado && precioActual === "") {
             $estado.html(
@@ -1396,6 +1411,10 @@
             actualizarResumenCatalogoGlobal();
         });
 
+        $("#chkPrecioCeroFaltantesGlobales").off("change").on("change", function () {
+            renderEstadoCatalogoGlobalTabla();
+        });
+
         $("#chkVerSoloSeleccionadosGlobales").off("change").on("change", function () {
             catalogoGlobalState.verSoloSeleccionados = $(this).is(":checked");
             aplicarFiltroSeleccionadosCatalogoGlobal();
@@ -1463,6 +1482,13 @@
             if (!seleccionados.length) {
                 setAlertCatalogoGlobal("Seleccione al menos un producto para importar.");
                 return;
+            }
+
+            // Con el tilde activo, los seleccionados sin precio se mandan con 0 (el servidor acepta 0, rechaza vacio).
+            if (precioCeroFaltantesCatalogoGlobalActivo()) {
+                seleccionados.forEach(function (item) {
+                    if (item.precio === "") item.precio = "0";
+                });
             }
 
             const sinPrecio = seleccionados.filter(function (item) { return item.precio === ""; });
@@ -1658,29 +1684,24 @@
     }
     actualizarContador();
 
+    // El texto buscado se combina con los filtros de cliente en aplicarFiltrosCliente (antes el buscador
+    // pisaba esos filtros y viceversa).
     buscador.addEventListener("keyup", function () {
-        const valor = (this.value || "").toLowerCase().trim();
-        // El codigo es bigint: un EAN-13 con 0 inicial esta guardado sin ese 0 (aditivo: tambien se
-        // busca por el texto sin ceros a la izquierda).
-        // (Esta vista no carga barcode-code-input.js, por eso no usa window.codigoSinCeros.)
-        const valorSinCeros = /^\d+$/.test(valor) ? valor.replace(/^0+(?=\d)/, "") : valor;
-        let visibles = 0;
+        aplicarFiltrosCliente();
+    });
 
-        getFilasProductos().forEach(fila => {
-            const codigo = (fila.dataset.codigo || "").toLowerCase();
-            const nombre = (fila.dataset.nombre || "").toLowerCase();
-            const coincide = codigo.includes(valor) || codigo.includes(valorSinCeros) || nombre.includes(valor);
+    // Lupa: recarga la tabla desde el servidor con los filtros actuales. El texto buscado se guarda en
+    // sessionStorage porque el buscador es de cliente y se perderia con la recarga; al cargar se restaura.
+    const CLAVE_BUSQUEDA_PRODUCTOS = "buscadorProductosPendiente";
 
-            fila.style.display = coincide ? "" : "none";
-
-            const det = getFilaDetallesDe(fila);
-            if (det) det.style.display = coincide ? "" : "none";
-
-            if (coincide) visibles++;
-        });
-
-        actualizarContador(visibles);
-        actualizarSeleccionados();
+    document.getElementById("btnRecargarProductos")?.addEventListener("click", function () {
+        const recargo = recargarConFiltros();
+        if (!recargo) return;
+        try {
+            sessionStorage.setItem(CLAVE_BUSQUEDA_PRODUCTOS, buscador.value || "");
+        } catch (e) {
+            console.warn("No se pudo conservar el texto buscado al recargar.", e);
+        }
     });
 
     // ============================
@@ -1793,6 +1814,12 @@
         const codigoDesde = cd === "" ? null : parseInt(cd, 10);
         const codigoHasta = ch === "" ? null : parseInt(ch, 10);
 
+        // Texto del buscador (codigo o nombre). El codigo es bigint: un EAN-13 con 0 inicial esta guardado
+        // sin ese 0 (aditivo: tambien se busca por el texto sin ceros a la izquierda).
+        // (Esta vista no carga barcode-code-input.js, por eso no usa window.codigoSinCeros.)
+        const texto = (buscador.value || "").toLowerCase().trim();
+        const textoSinCeros = /^\d+$/.test(texto) ? texto.replace(/^0+(?=\d)/, "") : texto;
+
         let visibles = 0;
 
         getFilasProductos().forEach(fila => {
@@ -1803,6 +1830,12 @@
             const codNum = parseInt(codStr, 10);
 
             let ok = true;
+
+            if (texto) {
+                const codigoFila = codStr.toLowerCase();
+                const nombreFila = (fila.dataset.nombre || "").toLowerCase();
+                if (!(codigoFila.includes(texto) || codigoFila.includes(textoSinCeros) || nombreFila.includes(texto))) ok = false;
+            }
 
             if (tipo && fTipo !== tipo) ok = false;
             if (marcaId && fMarcaId !== marcaId) ok = false;
@@ -1824,6 +1857,7 @@
         if (switchVista.checked) setVistaCompleta(true);
     }
 
+    // Devuelve true si disparo la recarga, false si la frena una validacion (familia sin producto valido).
     function recargarConFiltros() {
         const url = new URL(window.location.href);
         const params = url.searchParams;
@@ -1848,7 +1882,7 @@
         if ((filtroFamiliaTexto?.value || "").trim() && !familiaId) {
             alert("Elegí un producto de la lista en \"Familia de producto\" (código - nombre).");
             filtroFamiliaTexto.focus();
-            return;
+            return false;
         }
         if (familiaId) {
             nuevaUrl.searchParams.set("familiaId", familiaId);
@@ -1865,6 +1899,7 @@
         if (fechaHasta) nuevaUrl.searchParams.set("fechaHasta", fechaHasta);
 
         navegarProductosConLoader(nuevaUrl.toString());
+        return true;
     }
 
     function aplicarFiltrosAvanzados() {
@@ -1992,6 +2027,36 @@
         });
     });
 
+    // Enter en cualquier campo del panel de filtros = boton "Aplicar". Se difiere con setTimeout para que,
+    // si Enter elige una opcion del datalist de Familia, el campo ya tenga el valor elegido.
+    panelFiltros.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" || e.isComposing) return;
+        if (!e.target.matches("input:not([type=checkbox]), select")) return;
+        e.preventDefault();
+        window.setTimeout(function () {
+            // Fecha/hora: asegurar que el valor compuesto (hidden) este al dia antes de aplicar.
+            componerFechaFiltro(filtroFechaDesdeD, filtroFechaDesdeH, filtroFechaDesde);
+            componerFechaFiltro(filtroFechaHastaD, filtroFechaHastaH, filtroFechaHasta);
+            if ((filtroFechaDesde.value || "") !== (new URL(window.location.href).searchParams.get("fechaDesde") || "")
+                || (filtroFechaHasta.value || "") !== (new URL(window.location.href).searchParams.get("fechaHasta") || "")) {
+                setMensajeFiltrosPendientes(true);
+            }
+            resolverFamiliaId();
+            aplicarFiltrosAvanzados();
+        }, 0);
+    });
+
+    // Tras la recarga de la lupa: restaura el texto que estaba en el buscador (se usa una sola vez).
+    try {
+        const busquedaGuardada = sessionStorage.getItem(CLAVE_BUSQUEDA_PRODUCTOS);
+        if (busquedaGuardada !== null) {
+            sessionStorage.removeItem(CLAVE_BUSQUEDA_PRODUCTOS);
+            buscador.value = busquedaGuardada;
+        }
+    } catch (e) {
+        console.warn("No se pudo restaurar el texto buscado.", e);
+    }
+
     aplicarFiltrosCliente();
 
     // ============================
@@ -2113,7 +2178,15 @@
         const ids = checks.map(x => x.value).join(",");
         document.getElementById("idsEtiquetas").value = ids;
         document.getElementById("tamanoEtiquetas").value = document.getElementById("selTamanoEtiqueta").value;
+
+        // El POST devuelve el PDF y la pantalla queda como esta, pero el navegador igual dispara el aviso
+        // "¿Deseas abandonar el sitio?" por la proteccion de salida (hay productos tildados). Se apaga solo
+        // mientras sale el envio y se vuelve a calcular despues, para que la seleccion siga protegida.
+        window.__protegerSalida = false;
         document.getElementById("formEtiquetas").submit();
+        window.setTimeout(function () {
+            if (typeof updateExitProtectionEtiquetas === "function") updateExitProtectionEtiquetas();
+        }, 2000);
     }
 
     // =========================
@@ -3851,37 +3924,86 @@
         overflow: auto;
     }
 
-    #tablaCatalogoGlobal {
-        min-width: 920px;
-        font-size: .82rem;
+    /* Diseno compacto (mismo criterio que la grilla de Productos y Marcas). Los selectores con
+       "body.app-shell #modalCatalogoGlobal" son necesarios: ui-refresh.css fija min-height 2.75rem en
+       .form-control, 14px en "#content .table thead th" y padding 1.1rem en .modal-body, y gana por especificidad. */
+    body.app-shell #modalCatalogoGlobal .modal-body {
+        font-size: .8rem;
     }
 
-    #tablaCatalogoGlobal thead th {
+    body.app-shell #modalCatalogoGlobal .modal-header,
+    body.app-shell #modalCatalogoGlobal .modal-footer {
+        padding: .4rem .75rem;
+    }
+
+    body.app-shell #modalCatalogoGlobal label,
+    body.app-shell #modalCatalogoGlobal .alert,
+    body.app-shell #modalCatalogoGlobal .small,
+    body.app-shell #modalCatalogoGlobal small {
+        font-size: .76rem;
+    }
+
+    body.app-shell #modalCatalogoGlobal .alert {
+        line-height: 1.25;
+    }
+
+    body.app-shell #modalCatalogoGlobal .form-control,
+    body.app-shell #modalCatalogoGlobal .form-control-sm,
+    body.app-shell #modalCatalogoGlobal .btn-sm {
+        min-height: 0;
+        height: 1.9rem;
+        padding: .15rem .5rem;
+        font-size: .8rem;
+        border-radius: .45rem;
+    }
+
+    body.app-shell #modalCatalogoGlobal .input-group > .btn {
+        padding: .15rem .55rem;
+    }
+
+    #tablaCatalogoGlobal {
+        min-width: 820px;
+    }
+
+    body.app-shell #modalCatalogoGlobal #tablaCatalogoGlobal,
+    body.app-shell #modalCatalogoGlobal #tablaCatalogoGlobal td {
+        font-size: .78rem;
+    }
+
+    body.app-shell #modalCatalogoGlobal #tablaCatalogoGlobal th,
+    body.app-shell #modalCatalogoGlobal #tablaCatalogoGlobal td {
+        padding: .22rem .45rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    body.app-shell #modalCatalogoGlobal #tablaCatalogoGlobal thead th {
         position: sticky;
         top: 0;
         z-index: 2;
-        background: #f8f9fa;
-        padding: .38rem .45rem;
-        font-size: .76rem;
+        font-size: .68rem;
+        letter-spacing: .02em;
+        padding-top: .3rem;
+        padding-bottom: .3rem;
         white-space: nowrap;
     }
 
-    #tablaCatalogoGlobal tbody td {
-        padding: .3rem .45rem;
-        line-height: 1.2;
-    }
-
     #tablaCatalogoGlobal .font-weight-bold {
-        font-size: .84rem;
+        font-size: .8rem;
     }
 
-    #tablaCatalogoGlobal small {
-        font-size: .72rem;
+    body.app-shell #modalCatalogoGlobal #tablaCatalogoGlobal small {
+        font-size: .68rem;
     }
 
-    #tablaCatalogoGlobal .form-control-sm {
-        height: calc(1.35em + .38rem + 2px);
-        padding: .15rem .35rem;
+    body.app-shell #modalCatalogoGlobal #tablaCatalogoGlobal .badge {
+        font-size: .65rem;
+        padding: .2em .45em;
+    }
+
+    body.app-shell #modalCatalogoGlobal #tablaCatalogoGlobal .form-control-sm {
+        height: 1.7rem;
+        padding: .1rem .4rem;
         font-size: .78rem;
     }
 

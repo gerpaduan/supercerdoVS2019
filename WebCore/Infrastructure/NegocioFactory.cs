@@ -148,6 +148,15 @@ namespace WebCore.Infrastructure
             return new Negocio.CuentaCorriente(repo, empresa, param) { CierreCajaFactory = () => CrearCierreCaja(empresa, param) };
         }
 
+        // Consulta de la auditoria de registros eliminados (Compras, Stock, Movimientos): Postgres o SQL Server segun DataEngine.
+        public static Negocio.AuditoriaEliminaciones CrearAuditoriaEliminaciones(IEmpresaContext empresa)
+        {
+            Contratos.IAuditoriaEliminacionRepository repo = UsarPostgres
+                ? (Contratos.IAuditoriaEliminacionRepository)new DatosPostgres.AuditoriaEliminacionPg(PgConnString, empresa.IdEmpresa)
+                : new Datos.AuditoriaEliminacionSql(empresa);
+            return new Negocio.AuditoriaEliminaciones(repo);
+        }
+
         public static Negocio.BarcodeInterpreter CrearBarcodeInterpreter(IEmpresaContext empresa, IParametrosContext param = null)
         {
             if (!UsarPostgres) return new Negocio.BarcodeInterpreter(empresa, param);

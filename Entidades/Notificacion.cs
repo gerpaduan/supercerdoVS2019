@@ -16,6 +16,9 @@ namespace Entidades
         public const string TipoPagoEliminado = "PAGO_ELIMINADO";
         public const string TipoPagoFechaDistinta = "PAGO_FECHA_DISTINTA";
 
+        // Compra, operacion de stock o movimiento eliminado con motivo. RefId = id de la auditoria (AuditoriaEliminacion.Id).
+        public const string TipoRegistroEliminado = "REGISTRO_ELIMINADO";
+
         // Borrador generico descartado (Compras/Stock/Movimientos/Embutidos) -- un tipo por modulo para
         // que NotificacionesController.DetalleUrl() pueda enrutar el detalle sin parsear el mensaje.
         public const string PrefijoBorradorGenericoDescartado = "BORRADOR_DESCARTADO_";

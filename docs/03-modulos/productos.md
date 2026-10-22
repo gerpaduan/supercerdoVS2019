@@ -62,3 +62,6 @@ En `Productos/Index` > Filtros avanzados: elige un producto y muestra el product
 
 - Stored procedures legacy sobre `dbo.Corte` (`buscarCodigoCorte`, `buscarCorteSinMaestro`, `addOrEditCorte`) no tienen su SQL versionado en el repo. Antes de alterarlos, traer el texto real con `sp_helptext`/`OBJECT_DEFINITION` (regla ya establecida, ver `docs/09-cambios-y-pendientes/riesgos-conocidos.md`).
 - Cualquier query nueva sobre `dbo.Corte` que necesite ver "todos los productos" debe filtrar explicitamente por `idEmpresa` -- la RLS no alcanza como filtro funcional (ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md`, REGLA del 2026-08-01).
+
+## Eliminar tipos y marcas (2026-10-22)
+`ProductosController`: `EliminarTipoProducto` / `EliminarMarca` (si hay productos responden `enUso`), `ReasignarTipoModal` / `ReasignarMarcaModal` (lista en `Views/Productos/_ReasignarProductosModal.cshtml`) y `GuardarReasignacionTipo` / `GuardarReasignacionMarca` (cambio en lote vía `ICorteRepository.reasignarTipoCortes` / `reasignarMarcaCortes`, transaccional). Detalle y riesgos en `docs/DECISIONS.md` (2026-10-22).

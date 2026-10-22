@@ -38,6 +38,111 @@ namespace DatosPostgres
                 p => p.AddWithValue("idCompra", idCompra));
         }
 
+        public int eliminarCompraConAuditoria(int idCompra, AuditoriaEliminacion auditoria, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            if (auditoria == null) throw new ArgumentNullException(nameof(auditoria));
+
+            // Sin unidad de trabajo compartida abre la propia: la auditoria, el borrado y CorteProveedor van juntos o no van.
+            if (unitOfWork != null)
+                return EjecutarEliminarCompra(idCompra, auditoria, unitOfWork);
+
+            using (var propia = IniciarUnitOfWork())
+            {
+                int idAuditoria = EjecutarEliminarCompra(idCompra, auditoria, propia);
+                propia.Completar();
+                return idAuditoria;
+            }
+        }
+
+        private int EjecutarEliminarCompra(int idCompra, AuditoriaEliminacion auditoria, Contratos.IUnitOfWork unitOfWork)
+        {
+            // 1) Se borra la cabecera primero: si devuelve 0 filas otro usuario la elimino en el medio y no se escribe nada mas.
+            // RETURNING devuelve los valores EXACTOS de la base (la fecha con sus microsegundos): CorteProveedor.fechaultimacompra se
+            // compara contra ellos mas abajo, y la fecha que lee Negocio (via texto) pierde las fracciones de segundo.
+            var borradas = DbPg.Reader(_connectionString, _idEmpresa,
+                "DELETE FROM compras WHERE idcompra = @idCompra RETURNING fechacompra, idproveedor, tipocompra;",
+                dr => new
+                {
+                    FechaCompra = Convert.ToDateTime(dr["fechacompra"]),
+                    IdProveedor = Convert.ToInt32(dr["idproveedor"]),
+                    Tipo = Convert.ToString(dr["tipocompra"])
+                },
+                p => p.AddWithValue("idCompra", idCompra), unitOfWork);
+            if (borradas.Count == 0) return 0;
+
+            // 2) Cabecera de la auditoria + foto de las lineas (todavia existen: se borran recien en el paso 4).
+            int idAuditoria = AuditoriaEliminacionPg.Insertar(_connectionString, _idEmpresa, auditoria, unitOfWork);
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO auditoriaeliminacionlineas (idempresa, idauditoria, idcorte, codigo, producto, idsucursal, cantkg, cantunidad, preciokg, detalle)
+                SELECT @idEmpresa, @idAuditoria, cpc.idcorte, c.codigo, c.corte, cpc.idsucursal, cpc.cantkg, NULL, cpc.preciokg,
+                       NULLIF(CONCAT_WS(' | ', CASE WHEN cpc.balanza THEN 'Balanza' END, CASE WHEN cpc.nocontado THEN 'No contado' END), '')
+                FROM corteporcompra cpc
+                LEFT JOIN corte c ON c.idcorte = cpc.idcorte
+                WHERE cpc.idcompra = @idCompra
+                ORDER BY cpc.idcorteporcompra;", p =>
+            {
+                p.AddWithValue("idEmpresa", _idEmpresa);
+                p.AddWithValue("idAuditoria", idAuditoria);
+                p.AddWithValue("idCompra", idCompra);
+            }, unitOfWork);
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO auditoriaeliminacionlineas (idempresa, idauditoria, idcorte, codigo, producto, idsucursal, cantkg, cantunidad, preciokg, detalle)
+                SELECT @idEmpresa, @idAuditoria, NULL, NULL, 'Media res', m.idsucursal, m.kgmedia, NULL, m.preciomedia,
+                       CASE WHEN COALESCE(m.nrotropa, '') <> '' THEN 'Tropa ' || m.nrotropa END
+                FROM mediares m
+                WHERE m.idcompra = @idCompra
+                ORDER BY m.idmedia;", p =>
+            {
+                p.AddWithValue("idEmpresa", _idEmpresa);
+                p.AddWithValue("idAuditoria", idAuditoria);
+                p.AddWithValue("idCompra", idCompra);
+            }, unitOfWork);
+
+            // 3) CorteProveedor (ultimo precio por proveedor): solo las filas que venian de ESTA compra (misma fecha de ultima
+            // compra). Si quedan otras compras del producto se apunta a la mas reciente; si no quedan, la fila se borra.
+            // Las filas anteriores a las lineas (CorteProveedor solo tiene historia desde 2025-02) no se tocan.
+            var compraBorrada = borradas[0];
+            if (string.Equals(compraBorrada.Tipo, "Cortes", StringComparison.OrdinalIgnoreCase))
+            {
+                Action<Npgsql.NpgsqlParameterCollection> paramsProveedor = p =>
+                {
+                    p.AddWithValue("idProveedor", compraBorrada.IdProveedor);
+                    p.AddWithValue("fechaCompra", compraBorrada.FechaCompra);
+                    p.AddWithValue("idCompra", idCompra);
+                };
+
+                DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                    UPDATE corteproveedor cp
+                    SET ultimoprecio = x.preciokg, fechaultimacompra = x.fechacompra
+                    FROM (SELECT DISTINCT ON (cpc.idcorte) cpc.idcorte, cpc.preciokg, c.fechacompra
+                          FROM corteporcompra cpc
+                          INNER JOIN compras c ON c.idcompra = cpc.idcompra
+                          WHERE c.idproveedor = @idProveedor AND c.tipocompra = 'Cortes'
+                          ORDER BY cpc.idcorte, c.fechacompra DESC, c.idcompra DESC, cpc.idcorteporcompra DESC) x
+                    WHERE cp.idproveedor = @idProveedor AND cp.idcorte = x.idcorte AND cp.fechaultimacompra = @fechaCompra
+                      AND cp.idcorte IN (SELECT idcorte FROM corteporcompra WHERE idcompra = @idCompra);", paramsProveedor, unitOfWork);
+
+                DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                    DELETE FROM corteproveedor cp
+                    WHERE cp.idproveedor = @idProveedor AND cp.fechaultimacompra = @fechaCompra
+                      AND cp.idcorte IN (SELECT idcorte FROM corteporcompra WHERE idcompra = @idCompra)
+                      AND NOT EXISTS (SELECT 1 FROM corteporcompra cpc
+                                      INNER JOIN compras c ON c.idcompra = cpc.idcompra
+                                      WHERE c.idproveedor = @idProveedor AND c.tipocompra = 'Cortes' AND cpc.idcorte = cp.idcorte);",
+                    paramsProveedor, unitOfWork);
+            }
+
+            // 4) Lineas de la compra.
+            DbPg.NonQuery(_connectionString, _idEmpresa, "DELETE FROM corteporcompra WHERE idcompra = @idCompra;",
+                p => p.AddWithValue("idCompra", idCompra), unitOfWork);
+            DbPg.NonQuery(_connectionString, _idEmpresa, "DELETE FROM mediares WHERE idcompra = @idCompra;",
+                p => p.AddWithValue("idCompra", idCompra), unitOfWork);
+
+            return idAuditoria;
+        }
+
         // conexionSucursal (ruteo a otra conexion SQL Server para sucursales remotas San
         // Martin/San Lorenzo, ver Utilidades/Db.cs) no tiene equivalente en Postgres -- se ignora,
         // siempre consulta la base local. Mismo tratamiento que SucursalPg con esas sucursales.

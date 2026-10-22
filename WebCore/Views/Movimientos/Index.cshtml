@@ -15,6 +15,12 @@
         <a class="btn btn-outline-primary movimientos-btn-accion ml-md-2" href="@Url.Action("Lineas", "Movimientos", new { idSucursalOrigen = Model.IdSucursalOrigen, idSucursalDestino = Model.IdSucursalDestino, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-dd"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-dd") })" id="btnVerLineasMovimientosIndex">
             <i class="fas fa-stream mr-1"></i> Ver lineas
         </a>
+        @if (ViewBag.PuedeVerEliminados == true)
+        {
+            <a class="btn btn-outline-danger movimientos-btn-accion ml-md-2" href="@Url.Action("Index", "RegistrosEliminados", new { modulo = "MOVIMIENTO" })" id="btnVerEliminadosMovimientosIndex">
+                <i class="fas fa-trash-alt mr-1"></i> Ver eliminados
+            </a>
+        }
     </div>
 
     <div class="card shadow-sm mb-3 movimientos-filtros-card">
