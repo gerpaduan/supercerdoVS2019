@@ -44,7 +44,8 @@
     bool enPagos = enFinanzas && (action == "Pagos"
         || (action == "AddOrEditPago" && returnUrlActual.StartsWith(Context.Request.PathBase + "/Finanzas/Pagos", StringComparison.OrdinalIgnoreCase)));
     bool enConfiguracion = controller == "Usuarios" || controller == "AuditoriaLogin" || controller == "RegistrosEliminados" || controller == "Parametros"
-        || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros" || controller == "CertificadoArca" || controller == "TitularesFiscales";
+        || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros" || controller == "CertificadoArca" || controller == "TitularesFiscales"
+        || (controller == "Home" && action == "Utilidades");
     bool enAdministracionSistema = controller == "SystemAdministration" || controller == "PadronPlataforma";
 
     var usuarioActual = Sesion.UsuarioActual;
@@ -90,7 +91,10 @@
     // independiente de esAdmin -- mismo criterio que SystemAdministrationAccessHelper del clasico.
     bool puedeAdministrarSistema = WebCore.Infrastructure.NegocioFactory.CrearSystemAdministrationRepository().EsSuperAdmin(usuarioActual.Id);
 
-    bool mostrarConfiguracion = esAdmin;
+    // Configuracion se muestra tambien al usuario de produccion compartido (EsUsuarioProduccion), pero SOLO con
+    // "Utilidades" (descarga de agentes de impresion/balanza que cada terminal de planta debe instalar). El resto
+    // de los items sigue siendo solo admin (ver bloque @if (esAdmin) del menu).
+    bool mostrarConfiguracion = esAdmin || usuarioActual.EsUsuarioProduccion;
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -689,6 +693,9 @@
                     </a>
                     <div id="collapseConfiguracion" class="collapse @(enConfiguracion ? "show" : "")">
                         <div class="collapse-inner rounded">
+                            @* Items administrativos: solo admin (el usuario de produccion ve unicamente Utilidades, abajo). *@
+                            @if (esAdmin)
+                            {
                             @if (puedeAdministrarUsuarios)
                             {
                                 <a class="collapse-item @(controller == "Usuarios" ? "active" : "")" href="@Url.Action("Index", "Usuarios")">Usuarios</a>
@@ -701,7 +708,7 @@
                             {
                                 <a class="collapse-item @(controller == "RegistrosEliminados" ? "active" : "")" href="@Url.Action("Index", "RegistrosEliminados")">Registros eliminados</a>
                             }
-                            @* mostrarConfiguracion ya exige esAdmin, no hace falta re-chequearlo aca (mismo criterio que el clasico) *@
+                            @* Este bloque ya esta dentro de @if (esAdmin), no hace falta re-chequearlo aca (mismo criterio que el clasico) *@
                             <a class="collapse-item @(controller == "Parametros" ? "active" : "")" href="@Url.Action("Index", "Parametros")">Parametros</a>
                             <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
                             <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
@@ -716,12 +723,15 @@
                                 }
                             }
                             <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Codigos de barra</a>
+                            }
                             @* Bug real evitado 2026-09-14 (ver docs/DECISIONS.md): la clasica se retiro de
                                produccion (VM CarniSys) -- WebClasicoBaseUrl quedo vacio, asi que @legacy(...)
                                generaba href="" (linkeaba a la pagina actual, silenciosamente roto). Mercado
                                Pago es el unico modulo que todavia no se porto a WebCore -- se oculta el link
                                en vez de dejarlo apuntando a un backend que ya no existe. Sacar este comentario
-                               y volver a mostrarlo (como @Url.Action local) cuando se migre el modulo. *@                            <a class="collapse-item @(controller == "Home" && action == "Utilidades" ? "active" : "")" href="@Url.Action("Utilidades", "Home")">Utilidades</a>
+                               y volver a mostrarlo (como @Url.Action local) cuando se migre el modulo. *@
+                            @* Utilidades: visible para admin y para el usuario de produccion (instala los agentes locales de impresora y balanza). *@
+                            <a class="collapse-item @(controller == "Home" && action == "Utilidades" ? "active" : "")" href="@Url.Action("Utilidades", "Home")">Utilidades</a>
                         </div>
                     </div>
                 </li>

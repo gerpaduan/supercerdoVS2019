@@ -3,7 +3,7 @@ titulo: Roles y permisos (quién puede hacer qué)
 rol: usuario
 modulo: Conceptos generales
 orden: 1
-revisada: 2026-10-03
+revisada: 2026-10-22
 ---
 # Roles y permisos
 
@@ -14,7 +14,7 @@ En CarniSys hay cuatro tipos de usuario. Lo que ves en el menú y lo que podés 
 | **Super administrador** | Quien administra la **plataforma** (todas las empresas). Se marca aparte en el usuario; no es lo mismo que "Admin". | Menú **Administración del sistema**: crear y editar empresas, sucursales y usuarios de cualquier empresa, alta rápida de empresa. |
 | **Administrador de empresa** (*Admin*) | El responsable de **una** empresa. | Todo lo de su empresa: ve el menú **Configuración** (Usuarios, Auditoría de accesos, Parámetros, Mi Empresa, Mis Sucursales, Dispositivos seguros), el dashboard con datos y puede todo en los módulos. **No le aplican** el horario laboral ni la exigencia de dispositivo seguro, y **no usa PIN**. |
 | **Usuario con permisos** | Un empleado. No es Admin. | Solo lo que el administrador le tildó en **Usuarios → Ver permisos** (por módulo: ver, editar, cuántos días hacia atrás y si ve todo o solo lo suyo). |
-| **Usuario de producción** | Una cuenta **compartida** para la PC de un sector (varios operarios). Nunca es Admin. | No tiene Ventas ni Finanzas ni Fórmulas, sin importar los permisos tildados. Al guardar movimientos, stock o elaborados, no pide contraseña: se elige de una lista **quién** lo hizo. |
+| **Usuario de producción** | Una cuenta **compartida** para la PC de un sector (varios operarios). Nunca es Admin. | No tiene Ventas ni Finanzas ni Fórmulas, sin importar los permisos tildados. Ve el menú **Configuración** pero **solo con *Utilidades*** (descarga de los agentes de impresora y balanza que hay que instalar en cada PC). Al guardar movimientos, stock o elaborados, no pide contraseña: se elige de una lista **quién** lo hizo. |
 
 ## Cómo funcionan los permisos de un usuario común
 En [Permisos del usuario](ayuda:pantalla/Usuarios.Permisos) hay una fila por módulo con:
