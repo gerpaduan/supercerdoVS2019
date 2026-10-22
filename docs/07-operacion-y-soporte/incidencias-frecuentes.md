@@ -447,3 +447,8 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Sintoma**: probando con dos instancias de WebCore en puertos distintos (por ejemplo 5271 y 5272), iniciar sesión en una cierra la sesión de la otra (los `fetch` devuelven el HTML del login).
 - **Causa**: las cookies de `localhost` no distinguen puertos; las dos instancias comparten la cookie de autenticación y de sesión.
 - **Fix**: abrir cada instancia con un host distinto (`http://localhost:5271` y `http://127.0.0.1:5272`; levantar con `--urls http://127.0.0.1:5272`).
+
+## Egreso desde el POS: «La fecha y hora del egreso debe corresponder a una caja abierta del vendedor» con sesión de producción (2026-10-22)
+- **Sintoma**: con la cuenta compartida de producción logueada y la caja POS abierta por un operador, *Nuevo egreso de caja* (F7) rechaza al guardar aunque la caja está abierta y la fecha es la actual. Lo mismo en *Calcular comisiones electrónicas* desde el POS.
+- **Causa**: `CajasController.GuardarEgresoCajaCore` / `CalcularComisionesElectronicas` validaban `validarCajaAbiertaVendedor` contra el usuario de la sesión (la cuenta de producción, que no tiene caja), no contra el dueño de la caja abierta (el operador).
+- **Fix**: `CajasController.ResolverVendedorEgresoPos`: si la sesión es de producción y es desde POS, se usa al dueño de la caja (`idCierre`) para validar caja, sucursal y permisos de edición. Para usuarios normales no cambia nada.

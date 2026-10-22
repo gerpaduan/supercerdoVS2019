@@ -1088,7 +1088,7 @@ namespace WebCore.Controllers
                 if (egreso == null || egreso.Id == 0)
                     return NotFound("Egreso de caja no encontrado.");
 
-                var validacion = EgresosCajaPolicy.EvaluarModificacion(user, egreso, desdePos, _empresa, _oCierreN.validarCajaAbiertaVendedor);
+                var validacion = EgresosCajaPolicy.EvaluarModificacion(ResolverVendedorEgresoPos(user, desdePos, cierreContexto), egreso, desdePos, _empresa, _oCierreN.validarCajaAbiertaVendedor);
                 if (!validacion.PuedeModificar)
                     return BadRequest(validacion.MensajeBloqueo);
 
@@ -1390,8 +1390,12 @@ namespace WebCore.Controllers
             if (desde > hasta)
                 return BadRequest("La fecha desde no puede ser mayor que la fecha hasta.");
 
+            // Cuenta de produccion en POS: la caja y la sucursal son las del operador (ver ResolverVendedorEgresoPos).
+            var vendedor = ResolverVendedorEgresoPos(user, desdePos, cierreContexto);
+            bool cajaDeOperador = !ReferenceEquals(vendedor, user) && cierreContexto != null && cierreContexto.Sucursal != null;
+
             bool sucursalFija = desdePos || (cierreContexto != null && cierreContexto.Sucursal != null);
-            int sucursalSeleccionada = desdePos
+            int sucursalSeleccionada = desdePos && !cajaDeOperador
                 ? user.IdSucursal
                 : (cierreContexto != null && cierreContexto.Sucursal != null
                     ? cierreContexto.Sucursal.idSucursal
@@ -1401,7 +1405,7 @@ namespace WebCore.Controllers
             if (sucursalSeleccionada > 0 && sucursal == null)
                 return BadRequest("Sucursal inválida.");
 
-            if (desdePos && !_oCierreN.validarCajaAbiertaVendedor(DateTime.Now, sucursal, user))
+            if (desdePos && !_oCierreN.validarCajaAbiertaVendedor(DateTime.Now, sucursal, vendedor))
                 return BadRequest("Debe tener una caja abierta en la sucursal activa para registrar egresos desde POS.");
 
             var model = CrearModelComisionesElectronicas(desde, hasta, DateTime.Now, sucursalSeleccionada, desdePos, idCierre);
@@ -1876,6 +1880,10 @@ namespace WebCore.Controllers
                 .GroupBy(x => x.Id)
                 .ToDictionary(g => g.Key, g => g.First());
 
+            // Cuenta de produccion en POS: la sucursal activa y la caja son las del operador (ver ResolverVendedorEgresoPos).
+            var vendedorPos = ResolverVendedorEgresoPos(user, desdePos, cierreContexto);
+            int idSucursalPos = vendedorPos != null ? vendedorPos.IdSucursal : 0;
+
             bool puedeEditarEnPos = false;
             if (desdePos)
             {
@@ -1885,8 +1893,8 @@ namespace WebCore.Controllers
                                    cierrePos.Sucursal != null &&
                                    cierrePos.Sucursal.idSucursal > 0 &&
                                    CajaSigueAbierta(cierrePos) &&
-                                   user.IdSucursal > 0 &&
-                                   user.IdSucursal == cierrePos.Sucursal.idSucursal;
+                                   idSucursalPos > 0 &&
+                                   idSucursalPos == cierrePos.Sucursal.idSucursal;
             }
 
             foreach (DataRow row in dt.Rows)
@@ -1922,7 +1930,7 @@ namespace WebCore.Controllers
                         if (idCompraRelacionado > 0 &&
                             (cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)) &&
                             egreso.Sucursal != null &&
-                            egreso.Sucursal.idSucursal == user.IdSucursal)
+                            egreso.Sucursal.idSucursal == idSucursalPos)
                         {
                             comprasModificables[id] = idCompraRelacionado;
                         }
@@ -1938,7 +1946,7 @@ namespace WebCore.Controllers
 
                     if ((cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)) &&
                         egreso.Sucursal != null &&
-                        egreso.Sucursal.idSucursal == user.IdSucursal)
+                        egreso.Sucursal.idSucursal == idSucursalPos)
                     {
                         idsModificables.Add(id);
                     }
@@ -2135,6 +2143,23 @@ namespace WebCore.Controllers
             }
         }
 
+        // En el POS con la cuenta compartida de produccion, la caja abierta es del operador autorizado (dueño de
+        // cierreContexto), no de la cuenta de sesion: validar contra la sesion daba "debe corresponder a una caja abierta
+        // del vendedor" aunque la caja estuviera abierta. Para cualquier otro usuario devuelve el mismo objeto (sin cambios).
+        // El idCierre llega del cliente, pero solo se confia para cuentas de produccion (mismo criterio que MisActividadesCaja).
+        private Entidades.Usuario ResolverVendedorEgresoPos(Entidades.Usuario user, bool desdePos, CierreCaja? cierreContexto)
+        {
+            if (!desdePos || user == null || !user.EsUsuarioProduccion)
+                return user;
+
+            var duenoCaja = cierreContexto?.UsuarioInicio;
+            if (duenoCaja == null || duenoCaja.Id <= 0 || duenoCaja.Id == user.Id)
+                return user;
+
+            // getUsuarioById trae la entidad completa (IdSucursal, Admin); UsuarioInicio del cierre viene parcial.
+            return _oUsuarioN.getUsuarioById(duenoCaja.Id) ?? user;
+        }
+
         private bool FechaDentroDeCaja(DateTime fecha, CierreCaja cierre)
         {
             if (cierre == null || cierre.FechaHoraInicio == null)
@@ -2172,8 +2197,13 @@ namespace WebCore.Controllers
                     return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "La caja seleccionada ya no se encuentra abierta." };
             }
 
+            // Cuenta compartida de produccion: la caja es del operador, no de la sesion (ver ResolverVendedorEgresoPos).
+            var vendedor = ResolverVendedorEgresoPos(user, desdePos, cierreContexto);
+
             if (desdePos)
-                idSucursal = user.IdSucursal;
+                idSucursal = !ReferenceEquals(vendedor, user) && cierreContexto != null && cierreContexto.Sucursal != null
+                    ? cierreContexto.Sucursal.idSucursal
+                    : user.IdSucursal;
             else if (cierreContexto != null && cierreContexto.Sucursal != null)
                 idSucursal = cierreContexto.Sucursal.idSucursal;
 
@@ -2187,7 +2217,7 @@ namespace WebCore.Controllers
 
             if (desdePos)
             {
-                bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(fecha, sucursal, user);
+                bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(fecha, sucursal, vendedor);
                 if (!cajaAbierta)
                     return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "La fecha y hora del egreso debe corresponder a una caja abierta del vendedor." };
             }
@@ -2206,7 +2236,7 @@ namespace WebCore.Controllers
 
             if (egresoAnterior != null)
             {
-                var validacion = EgresosCajaPolicy.EvaluarModificacion(user, egresoAnterior, desdePos, _empresa, _oCierreN.validarCajaAbiertaVendedor);
+                var validacion = EgresosCajaPolicy.EvaluarModificacion(vendedor, egresoAnterior, desdePos, _empresa, _oCierreN.validarCajaAbiertaVendedor);
                 if (!validacion.PuedeModificar)
                     return new GuardarEgresoCajaResultado { Ok = false, Mensaje = validacion.MensajeBloqueo };
             }

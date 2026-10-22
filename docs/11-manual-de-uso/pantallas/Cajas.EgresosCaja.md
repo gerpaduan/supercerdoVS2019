@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-10-09
+revisada: 2026-10-22
 ---
 
 ## Para qué sirve
