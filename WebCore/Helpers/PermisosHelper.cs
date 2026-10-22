@@ -71,7 +71,10 @@ namespace WebCore.Helpers
         // dos. VentasController.ObtenerOperadorModulo/RegistrarOperadorModulo (privados, mismo
         // formato de clave "OperadorModulo_"+modulo) nunca se limpiaban, asi que el operador de
         // Ventas quedaba autorizado el resto de la sesion sin importar a que otro modulo navegara.
-        private static readonly string[] ControllersConOperadorModuloSesion = { "Compras", "Ventas" };
+        //
+        // 2026-10-22: se suma "DispositivosSeguros" (login de un admin para operar la pantalla, ver
+        // DispositivosSegurosController): el operador vive solo mientras se esta en ese controller.
+        private static readonly string[] ControllersConOperadorModuloSesion = { "Compras", "Ventas", "DispositivosSeguros" };
 
         public static void LimpiarOperadorModuloSiSalioDelModulo(ISession session, string controllerActual)
         {

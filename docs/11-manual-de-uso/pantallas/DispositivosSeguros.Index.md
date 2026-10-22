@@ -5,10 +5,13 @@ rol: admin
 modulo: Acceso y seguridad
 orden: 10
 permiso: Admin de la empresa
-revisada: 2026-10-15
+revisada: 2026-10-22
 ---
 ## Para qué sirve
-Administrar los **dispositivos autorizados** para ingresar cuando la empresa (o un usuario) exige [dispositivo seguro](ayuda:concepto/dispositivo-seguro). Está en *Configuración → Dispositivos seguros*. Solo un administrador puede modificar; cualquier otro usuario que entre por la dirección ve el listado sin botones.
+Administrar los **dispositivos autorizados** para ingresar cuando la empresa (o un usuario) exige [dispositivo seguro](ayuda:concepto/dispositivo-seguro). Está en *Configuración → Dispositivos seguros*, y el ítem lo ve **cualquier usuario**, pero la pantalla solo la opera un **administrador**:
+- Si entrás como administrador, se abre directo.
+- Si entrás como usuario de producción o como usuario común, primero se pide el **usuario y la contraseña de un administrador** (el mismo tipo de login que se pide para entrar a Ventas o Compras; el combo lista solo administradores). Ese administrador queda activo **hasta que salgas de la pantalla**: al ir a otra sección y volver, se pide de nuevo. Tras 5 contraseñas incorrectas seguidas se bloquea unos minutos.
+- Todo lo que se haga queda a nombre de ese administrador (por ejemplo, quién creó o aprobó un dispositivo).
 
 ## Qué ves
 **1. Solicitudes de autorización pendientes** (tarjeta amarilla, solo si hay): pedidos de empleados desde la pantalla *"Este dispositivo no está autorizado"*. Por cada una: usuario, nombre del dispositivo y mensaje, IP, fecha y:
@@ -31,7 +34,7 @@ Si el dispositivo ya está cargado **y bloqueado**, no se re-autoriza: primero h
 
 ## Reglas y efectos
 - Un dispositivo autorizado además **no queda frenado por la IP** cuando alguien se equivoca de contraseña; el bloqueo por usuario (7 errores) sigue aplicando.
-- Todo lo que hagas (aprobar, rechazar, bloquear) y cada ingreso desde estos dispositivos queda en la [Auditoría de accesos](ayuda:pantalla/AuditoriaLogin.Index).
+- Aprobar y rechazar solicitudes, y cada ingreso desde estos dispositivos, queda en la [Auditoría de accesos](ayuda:pantalla/AuditoriaLogin.Index). **Bloquear, habilitar fichaje, no bloquear sesión y eliminar no dejan registro de quién lo hizo.**
 - Si el servidor no tiene aplicada la tabla de solicitudes, la tarjeta de pendientes simplemente no aparece. **PENDIENTE:** confirmar si en Postgres se pueden cargar dos veces el mismo número de serie (en SQL Server no).
 
 ## Configuraciones relacionadas

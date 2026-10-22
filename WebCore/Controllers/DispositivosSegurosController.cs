@@ -3,9 +3,19 @@
 // serie via agente local) que saltan el bloqueo por IP del login. Usuario/empresa reales via
 // IUsuarioSesionService (login real, ver docs/DECISIONS.md 2026-09-06) -- ya no hay stub
 // hardcodeado.
+//
+// Acceso (2026-10-22, ver docs/DECISIONS.md): el menu Configuracion -> Dispositivos seguros lo ve todo
+// usuario, pero la pantalla solo opera con un ADMINISTRADOR: si la sesion es admin entra directo; si no
+// (usuario de produccion o comun) se pide usuario y clave de un admin ("operador", mismo login que Ventas/
+// Compras) y queda activo en Session hasta salir de la pantalla (PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo).
+// Lo que se hace en la pantalla queda a nombre del operador, no de la cuenta de sesion.
 using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
+using WebCore.Helpers;
 using WebCore.Models;
 
 namespace WebCore.Controllers
@@ -25,12 +35,31 @@ namespace WebCore.Controllers
             _oDispositivoN = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(_empresa);
         }
 
+        // Clave del operador en Session ("OperadorModulo_DispositivosSeguros"): el nombre del modulo debe ser
+        // igual al del controller para que el layout lo limpie al salir de la pantalla.
+        private const string ModuloOperador = "DispositivosSeguros";
+
+        // Quien opera la pantalla: el usuario de sesion si es admin; si no, el admin que se logueo como
+        // operador (null si todavia no lo hizo).
+        private Entidades.Usuario OperadorActivo
+        {
+            get
+            {
+                if (PuedeAdministrar(_usuarioActual)) return _usuarioActual;
+                return PermisosHelper.ObtenerOperadorModulo(HttpContext.Session, ModuloOperador);
+            }
+        }
+
         [HttpGet]
         public IActionResult Index()
         {
+            // Sin admin (de sesion u operador) no se muestra nada: se pide el login de un administrador.
+            if (!PuedeAdministrar(OperadorActivo))
+                return RedirectToAction("AutorizarModulo", new { returnUrl = Url.Action("Index", "DispositivosSeguros") });
+
             var model = new DispositivosSegurosIndexVm
             {
-                PuedeAdministrar = PuedeAdministrar(_usuarioActual),
+                PuedeAdministrar = true,
                 Items = _oDispositivoN.Listar(_empresa.IdEmpresa)
             };
 
@@ -58,7 +87,7 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Agregar(string numeroSerie, string descripcion)
         {
-            if (!PuedeAdministrar(_usuarioActual))
+            if (!PuedeAdministrar(OperadorActivo))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Sin permiso";
@@ -82,7 +111,7 @@ namespace WebCore.Controllers
                     IdEmpresa = _empresa.IdEmpresa,
                     NumeroSerie = numeroSerie,
                     Descripcion = (descripcion ?? "").Trim(),
-                    IdUsuarioCreador = _usuarioActual.Id
+                    IdUsuarioCreador = OperadorActivo.Id
                 });
 
                 TempData["AlertType"] = "success";
@@ -103,7 +132,7 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Eliminar(int id)
         {
-            if (!PuedeAdministrar(_usuarioActual))
+            if (!PuedeAdministrar(OperadorActivo))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Sin permiso";
@@ -126,7 +155,7 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult CambiarBloqueo(int id, bool bloquear)
         {
-            if (!PuedeAdministrar(_usuarioActual))
+            if (!PuedeAdministrar(OperadorActivo))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Sin permiso";
@@ -150,7 +179,7 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult AprobarSolicitud(int id, string? descripcion)
         {
-            if (!PuedeAdministrar(_usuarioActual))
+            if (!PuedeAdministrar(OperadorActivo))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Sin permiso";
@@ -159,9 +188,10 @@ namespace WebCore.Controllers
             }
 
             var solicitud = _oDispositivoN.ObtenerSolicitud(id, _empresa.IdEmpresa);
-            bool aprobada = _oDispositivoN.AprobarSolicitud(id, _empresa.IdEmpresa, _usuarioActual.Id, descripcion ?? "");
+            var operador = OperadorActivo;
+            bool aprobada = _oDispositivoN.AprobarSolicitud(id, _empresa.IdEmpresa, operador.Id, descripcion ?? "");
             if (aprobada && solicitud != null)
-                RegistrarEventoSolicitud(solicitud, "Dispositivo autorizado por administrador (" + (_usuarioActual.User ?? "") + "): " + solicitud.Nombre);
+                RegistrarEventoSolicitud(solicitud, "Dispositivo autorizado por administrador (" + (operador.User ?? "") + "): " + solicitud.Nombre);
 
             TempData["AlertType"] = aprobada ? "success" : "warning";
             TempData["AlertTitle"] = "Dispositivos seguros";
@@ -175,7 +205,7 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult RechazarSolicitud(int id)
         {
-            if (!PuedeAdministrar(_usuarioActual))
+            if (!PuedeAdministrar(OperadorActivo))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Sin permiso";
@@ -184,9 +214,10 @@ namespace WebCore.Controllers
             }
 
             var solicitud = _oDispositivoN.ObtenerSolicitud(id, _empresa.IdEmpresa);
-            bool rechazada = _oDispositivoN.RechazarSolicitud(id, _empresa.IdEmpresa, _usuarioActual.Id);
+            var operador = OperadorActivo;
+            bool rechazada = _oDispositivoN.RechazarSolicitud(id, _empresa.IdEmpresa, operador.Id);
             if (rechazada && solicitud != null)
-                RegistrarEventoSolicitud(solicitud, "Solicitud de dispositivo rechazada por administrador (" + (_usuarioActual.User ?? "") + "): " + solicitud.Nombre);
+                RegistrarEventoSolicitud(solicitud, "Solicitud de dispositivo rechazada por administrador (" + (operador.User ?? "") + "): " + solicitud.Nombre);
 
             TempData["AlertType"] = rechazada ? "success" : "warning";
             TempData["AlertTitle"] = "Dispositivos seguros";
@@ -222,7 +253,7 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult CambiarHabilitadoFichaje(int id, bool habilitar)
         {
-            if (!PuedeAdministrar(_usuarioActual))
+            if (!PuedeAdministrar(OperadorActivo))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Sin permiso";
@@ -246,7 +277,7 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult CambiarNoBloquearSesion(int id, bool noBloquear)
         {
-            if (!PuedeAdministrar(_usuarioActual))
+            if (!PuedeAdministrar(OperadorActivo))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Sin permiso";
@@ -262,6 +293,82 @@ namespace WebCore.Controllers
                 ? "La sesión ya no se bloqueará por inactividad en este dispositivo (rige desde el próximo inicio de sesión)."
                 : "La sesión volverá a bloquearse por inactividad en este dispositivo (rige desde el próximo inicio de sesión).";
             return RedirectToAction("Index");
+        }
+
+        // ===== Login del administrador (operador) para usuarios no admin =====
+        // Mismo patron que ComprasController/VentasController.AutorizarModulo (pantalla dedicada + modal de
+        // seleccion de usuario con clave + limite de intentos por sesion), con una regla extra: el operador
+        // DEBE ser administrador de esta empresa.
+        [HttpGet]
+        public IActionResult AutorizarModulo(string? returnUrl)
+        {
+            // Ya hay admin (de sesion u operador): no hay nada que autorizar.
+            string destino = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? returnUrl
+                : Url.Action("Index", "DispositivosSeguros")!;
+            if (PuedeAdministrar(OperadorActivo)) return LocalRedirect(destino);
+
+            ViewBag.UsuariosAdminEmpresa = ObtenerAdministradoresParaCombo();
+            ViewBag.ReturnUrlModulo = destino;
+            ViewBag.Title = "Autorizar administrador";
+            ViewBag.Seccion = "Dispositivos seguros";
+            return View("~/Views/DispositivosSeguros/AutorizarModulo.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperador(int idUsuario, string? clave)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            // Mensaje unico para usuario inexistente, clave mala o usuario que no es admin: no dar pistas.
+            const string mensajeGenerico = "Usuario o contraseña incorrectos.";
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave))
+                return Json(PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            var usuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa);
+            var candidato = usuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+                return Json(PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            var validado = usuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (validado == null || !validado.Activo || !PuedeAdministrar(validado))
+                return Json(PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            PosOperadorStepUpRateLimiter.Reset(sessionId);
+            PermisosHelper.RegistrarOperadorModulo(HttpContext.Session, ModuloOperador, validado);
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
+        // ASP.NET Core Session no manda el Set-Cookie hasta el primer write: sin esto el rate-limit por
+        // sesion nunca acumula (ver el mismo helper en VentasController/ComprasController).
+        private string ObtenerSessionIdEstable()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_estable")))
+                HttpContext.Session.SetString("_estable", "1");
+            return HttpContext.Session.Id;
+        }
+
+        // Solo administradores activos de la empresa (columna "admin"): son los unicos que pueden autorizar.
+        // OJO: el parametro soloAdmin de obtenerUsuarios NO sirve aca, trae unicamente la cuenta global
+        // "admin". Si la consulta no trae las columnas esperadas, el combo queda vacio y no se puede entrar
+        // (falla cerrado).
+        private List<object> ObtenerAdministradoresParaCombo()
+        {
+            var dt = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa).obtenerUsuarios(true);
+            if (dt == null || !dt.Columns.Contains("id") || !dt.Columns.Contains("nombre") || !dt.Columns.Contains("admin"))
+                return new List<object>();
+
+            return dt.AsEnumerable()
+                .Where(row => row["id"] != DBNull.Value && row["nombre"] != DBNull.Value
+                    && row["admin"] != DBNull.Value && Convert.ToBoolean(row["admin"]))
+                .Select(row => new { id = Convert.ToInt32(row["id"]), nombre = Convert.ToString(row["nombre"]) ?? "" })
+                .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
+                .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
+                .Cast<object>()
+                .ToList();
         }
 
         private bool PuedeAdministrar(Entidades.Usuario usuario)

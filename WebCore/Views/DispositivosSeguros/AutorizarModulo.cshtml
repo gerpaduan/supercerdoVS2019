@@ -1,0 +1,51 @@
+@{
+    // Pantalla dedicada de login del administrador para "Dispositivos seguros" -- mismo patron que
+    // Views/Compras/AutorizarModulo.cshtml (ver docs/DECISIONS.md, 2026-10-22). Solo aparece para usuarios no admin.
+    ViewBag.Title = "Autorizar administrador";
+    ViewBag.Seccion = "Dispositivos seguros";
+    string returnUrlModulo = ViewBag.ReturnUrlModulo as string ?? Url.Action("Index", "DispositivosSeguros");
+}
+
+@Html.AntiForgeryToken()
+
+<div class="container-fluid mt-5">
+    <div class="text-center">
+        <h4 class="text-primary"><i class="fas fa-user-shield mr-1"></i> Autorizate para continuar</h4>
+        <p class="text-gray-500 mb-4">Dispositivos seguros solo lo administra un administrador -- identificate con su usuario y contraseña.</p>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    <script>
+        (function () {
+            // Solo administradores activos de la empresa (el servidor vuelve a validar que lo sea).
+            var usuariosAdmin = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosAdminEmpresa ?? new System.Collections.Generic.List<object>()));
+            var urlAutorizar = '@Url.Action("AutorizarOperador", "DispositivosSeguros")';
+            var returnUrlModulo = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(returnUrlModulo));
+
+            function pedirOperador() {
+                window.SeleccionUsuario.abrir({
+                    titulo: 'Autorizate como administrador',
+                    usuarios: usuariosAdmin,
+                    requierePassword: true,
+                    validarUrl: urlAutorizar
+                }).then(function () {
+                    window.location.href = returnUrlModulo;
+                }).catch(function () {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
+
+            $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
+                if (!$(this).data('resuelto')) {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                }
+            });
+
+            pedirOperador();
+        })();
+    </script>
+}

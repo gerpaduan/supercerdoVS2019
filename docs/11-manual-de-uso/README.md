@@ -69,7 +69,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 |---|---|---|---|---|
 | conceptos | Dispositivo seguro (qué es y cómo se configura) | Acceso y seguridad | `conceptos/dispositivo-seguro.md` | 2026-10-15 |
 | pantallas | Auditoría de accesos | Acceso y seguridad | `pantallas/AuditoriaLogin.Index.md` | 2026-10-03 |
-| pantallas | Dispositivos seguros | Acceso y seguridad | `pantallas/DispositivosSeguros.Index.md` | 2026-10-15 |
+| pantallas | Dispositivos seguros | Acceso y seguridad | `pantallas/DispositivosSeguros.Index.md` | 2026-10-22 |
 | pantallas | Cajas abiertas y cierre de caja | Caja | `pantallas/Cajas.CajasAbiertas.md` | 2026-10-21 |
 | pantallas | Certificado ARCA | Facturación | `pantallas/CertificadoArca.Index.md` | 2026-10-12 |
 | pantallas | Titulares de facturación | Facturación | `pantallas/TitularesFiscales.Index.md` | 2026-10-12 |

@@ -48,14 +48,18 @@ public sealed class DispositivosSegurosAutoservicioTests
     }
 
     [Fact]
-    public async Task DropdownDeUsuario_LinkDispositivosSeguros_EsAdminOnly()
+    public async Task MenuConfiguracion_LinkDispositivosSeguros_LoVeTodoUsuarioPeroPideLoginDeAdmin()
     {
-        // Regresion: el link "Dispositivos seguros" del menu "Configuracion" sigue siendo
-        // admin-only -- el autoservicio nuevo NO amplia ese gate.
+        // Desde 2026-10-22 el link "Dispositivos seguros" lo ve todo usuario; un no admin que entra
+        // es llevado al login de un administrador (AutorizarModulo) y no ve el listado.
         var page = await LoginNoAdminAsync();
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Home/Index", new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 20000 });
 
-        Assert.Equal(0, await page.Locator("a[href*='/DispositivosSeguros']").CountAsync());
+        Assert.Equal(1, await page.Locator("a.collapse-item[href*='/DispositivosSeguros']").CountAsync());
+
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/DispositivosSeguros", new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 20000 });
+        Assert.Contains("/DispositivosSeguros/AutorizarModulo", page.Url);
+        Assert.Equal(0, await page.Locator("form[action*='/DispositivosSeguros/Agregar']").CountAsync());
 
         await page.CloseAsync();
     }

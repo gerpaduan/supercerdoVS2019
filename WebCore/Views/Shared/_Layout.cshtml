@@ -91,10 +91,6 @@
     // independiente de esAdmin -- mismo criterio que SystemAdministrationAccessHelper del clasico.
     bool puedeAdministrarSistema = WebCore.Infrastructure.NegocioFactory.CrearSystemAdministrationRepository().EsSuperAdmin(usuarioActual.Id);
 
-    // Configuracion se muestra tambien al usuario de produccion compartido (EsUsuarioProduccion), pero SOLO con
-    // "Utilidades" (descarga de agentes de impresion/balanza que cada terminal de planta debe instalar). El resto
-    // de los items sigue siendo solo admin (ver bloque @if (esAdmin) del menu).
-    bool mostrarConfiguracion = esAdmin || usuarioActual.EsUsuarioProduccion;
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -683,8 +679,9 @@
                     </a>
                 </li>
             }
-            @if (mostrarConfiguracion)
-            {
+            @* Configuracion la ve TODO usuario (2026-10-22, ver docs/DECISIONS.md): los no admin (incluido el usuario de
+               produccion compartido) ven solo "Dispositivos seguros" (pide el login de un administrador al entrar) y
+               "Utilidades" (descarga de los agentes de impresora y balanza). El resto es solo admin (bloque @if (esAdmin)). *@
                 <li class="nav-item">
                     <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseConfiguracion" role="button" aria-expanded="@(enConfiguracion ? "true" : "false")" aria-controls="collapseConfiguracion">
                         <i class="fas fa-fw fa-tools"></i>
@@ -693,7 +690,7 @@
                     </a>
                     <div id="collapseConfiguracion" class="collapse @(enConfiguracion ? "show" : "")">
                         <div class="collapse-inner rounded">
-                            @* Items administrativos: solo admin (el usuario de produccion ve unicamente Utilidades, abajo). *@
+                            @* Items administrativos: solo admin (los demas usuarios ven unicamente Dispositivos seguros y Utilidades, abajo). *@
                             @if (esAdmin)
                             {
                             @if (puedeAdministrarUsuarios)
@@ -712,7 +709,6 @@
                             <a class="collapse-item @(controller == "Parametros" ? "active" : "")" href="@Url.Action("Index", "Parametros")">Parametros</a>
                             <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
                             <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
-                            <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
                             @* Certificados de AFIP: solo Postgres (multitenant). En SQL Server (una sola empresa) el certificado sigue siendo el .pfx de AFIP<CUIT> y no hay pantalla. *@
                             @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres)
                             {
@@ -730,12 +726,13 @@
                                Pago es el unico modulo que todavia no se porto a WebCore -- se oculta el link
                                en vez de dejarlo apuntando a un backend que ya no existe. Sacar este comentario
                                y volver a mostrarlo (como @Url.Action local) cuando se migre el modulo. *@
-                            @* Utilidades: visible para admin y para el usuario de produccion (instala los agentes locales de impresora y balanza). *@
+                            @* Dispositivos seguros: visible para todos; al entrar, un no admin debe loguear a un administrador (DispositivosSegurosController). *@
+                            <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
+                            @* Utilidades: visible para todos (instala los agentes locales de impresora y balanza). *@
                             <a class="collapse-item @(controller == "Home" && action == "Utilidades" ? "active" : "")" href="@Url.Action("Utilidades", "Home")">Utilidades</a>
                         </div>
                     </div>
                 </li>
-            }
             @if (puedeAdministrarSistema)
             {
                 <li class="nav-item">
