@@ -78,7 +78,7 @@ namespace WebCore.Helpers
             }.Where(m => PuedeVerEliminados(usuario, oUsuarioN, m)).ToList();
         }
 
-        // ===== Recuperar un registro eliminado (2026-10-23) =====
+        // ===== Recuperar un registro eliminado (2026-10-22) =====
         // "Recuperar" NO restaura el registro original: abre la pantalla de alta del modulo precargada con la cabecera y las lineas
         // que quedaron en la auditoria, y la persona decide si lo guarda de nuevo (se guarda como un registro NUEVO, con otro numero).
 

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Configuración
 orden: 40
 permiso: administradores (los tres tipos) y quien puede modificar compras, stock o movimientos (solo los eliminados de ese módulo)
-revisada: 2026-10-23
+revisada: 2026-10-22
 alias: RegistrosEliminados.Detalle
 ---
 ## Para qué sirve

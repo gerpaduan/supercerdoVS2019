@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 1
 permiso: Compra.VerCompras (sin el permiso se muestra "Acceso denegado"; a los usuarios de producción les pide elegir el operador de Compras antes de entrar)
-revisada: 2026-10-23
+revisada: 2026-10-22
 ---
 ## Para qué sirve
 Ver las **compras de un período** (proveedor, tipo, cantidad, total, sucursal) y abrir el detalle de cada una.

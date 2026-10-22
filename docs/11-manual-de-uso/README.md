@@ -43,9 +43,9 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
 | pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-10-09 |
 | pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-10-22 |
-| pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-23 |
+| pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-22 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-14 |
-| pantallas | Registros eliminados | Configuración | `pantallas/RegistrosEliminados.Index.md` | 2026-10-23 |
+| pantallas | Registros eliminados | Configuración | `pantallas/RegistrosEliminados.Index.md` | 2026-10-22 |
 | pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-10-09 |
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-10-09 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-14 |

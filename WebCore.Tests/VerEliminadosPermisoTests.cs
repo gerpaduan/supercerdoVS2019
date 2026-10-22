@@ -1,5 +1,5 @@
 // Tests de quien puede ver los registros eliminados (WebCore.Helpers.EliminacionRegistroWeb.PuedeVerEliminados): el admin ve los tres
-// modulos; quien puede MODIFICAR un modulo ve los eliminados de ese modulo; la cuenta de produccion no. Ver docs/DECISIONS.md (2026-10-23).
+// modulos; quien puede MODIFICAR un modulo ve los eliminados de ese modulo; la cuenta de produccion no. Ver docs/DECISIONS.md (2026-10-22).
 using System.Collections.Generic;
 using WebCore.Helpers;
 
