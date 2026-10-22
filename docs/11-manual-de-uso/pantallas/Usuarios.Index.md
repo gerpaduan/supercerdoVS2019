@@ -6,7 +6,7 @@ modulo: Usuarios
 orden: 1
 alias: Usuarios.DesbloquearUsuario, Usuarios.QuitarPin
 permiso: Usuario.VerUsuarios (ver) / Usuario.NuevoUsuario (editar)
-revisada: 2026-10-03
+revisada: 2026-10-22
 ---
 ## Para qué sirve
 Ver y administrar los **usuarios de tu empresa**: crearlos, modificarlos, darles permisos, desbloquearlos y quitarles el PIN. Está en *Configuración → Usuarios*. Los botones solo aparecen si sos administrador o tenés permiso de **edición** de usuarios; sin eso ves el listado sin acciones.
@@ -17,12 +17,15 @@ Abrí el menú lateral, tocá **Configuración (1)** y después **Usuarios (2)**
 ![Menú lateral: Configuración (1) y Usuarios (2)](media:Usuarios.Index/menu.png)
 
 ## Qué ves
-Un listado con **todos** los usuarios de la empresa (también los inactivos), por nombre. Columnas: ID, Nombre, Usuario, **Admin**, **Activo**, **Bloqueado**, Email, sucursal e ID de empresa.
+Un listado de los usuarios de la empresa, por nombre (por defecto solo los activos; los inactivos se ven con los filtros). Columnas: ID, Nombre, Usuario, **Admin**, **Activo**, **Bloqueado**, Email, sucursal e ID de empresa.
 
 ![Pantalla Usuarios: Crear usuario nuevo (1), Buscar usuario (2) y Acciones de cada fila (3)](media:Usuarios.Index/listado.png)
 
+> PENDIENTE (2026-10-22): las capturas y el video de esta pantalla son anteriores a los filtros; regenerarlas.
+
 - **(1) Crear usuario nuevo.**
 - **(2) Buscar usuario:** filtra en vivo por id, nombre, usuario o email.
+- **Filtros Administrador, Activo y Bloqueado:** tres listas desplegables que se combinan entre sí y con el buscador. Cada una ofrece *Todos*, *Sí* y *No*; **Bloqueado** suma *Parcial* (bloqueo solo en dispositivos no autorizados). **Al abrir la pantalla solo se ven los usuarios activos** (Activo = *Sí*): para ver los inactivos elegí *No* o *Todos* en Activo. **Limpiar filtros** vuelve a ese estado inicial. Debajo se muestra cuántos usuarios se ven del total (ej. «12 de 15 usuario(s)»).
 - **(3) Acciones** de cada fila (ver más abajo).
 - **Bloqueado:** **Sí** (rojo) = el usuario está bloqueado por completo; **Parcial** (amarillo) = bloqueado solo para ingresar desde dispositivos **no** autorizados (puede seguir entrando desde el suyo); **No**.
 

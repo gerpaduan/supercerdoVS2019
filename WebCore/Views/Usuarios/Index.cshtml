@@ -17,7 +17,7 @@
     <div class="card shadow-sm mb-3">
         <div class="card-body py-3">
             <div class="row align-items-end">
-                <div class="col-12 col-lg-6">
+                <div class="col-12 col-lg-4 mb-2 mb-lg-0">
                     <label for="filtroUsuarios" class="font-weight-bold mb-1">Buscar usuario</label>
                     <div class="input-group">
                         <input type="text" id="filtroUsuarios" class="form-control" placeholder="Buscar por id, nombre, usuario o email" autocomplete="off" />
@@ -28,9 +28,38 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-lg-6 mt-2 mt-lg-0 text-lg-right">
-                    <span id="contadorUsuarios" class="text-muted small"></span>
+                <div class="col-4 col-lg-2">
+                    <label for="filtroAdmin" class="font-weight-bold mb-1">Administrador</label>
+                    <select id="filtroAdmin" class="form-control custom-select">
+                        <option value="">Todos</option>
+                        <option value="1">Sí</option>
+                        <option value="0">No</option>
+                    </select>
                 </div>
+                <div class="col-4 col-lg-2">
+                    <label for="filtroActivo" class="font-weight-bold mb-1">Activo</label>
+                    @* Por defecto solo se muestran los activos (pedido del usuario, 2026-10-22). *@
+                    <select id="filtroActivo" class="form-control custom-select">
+                        <option value="">Todos</option>
+                        <option value="1" selected>Sí</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+                <div class="col-4 col-lg-2">
+                    <label for="filtroBloqueado" class="font-weight-bold mb-1">Bloqueado</label>
+                    <select id="filtroBloqueado" class="form-control custom-select">
+                        <option value="">Todos</option>
+                        <option value="total">Sí</option>
+                        <option value="parcial">Parcial</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+                <div class="col-12 col-lg-2 mt-2 mt-lg-0 text-lg-right">
+                    <button type="button" id="limpiarFiltros" class="btn btn-sm btn-outline-secondary">Limpiar filtros</button>
+                </div>
+            </div>
+            <div class="mt-2">
+                <span id="contadorUsuarios" class="text-muted small"></span>
             </div>
         </div>
     </div>
@@ -65,6 +94,9 @@
                             foreach (var item in Model.Items)
                             {
                                 <tr class="js-usuario-row"
+                                    data-admin="@(item.Admin ? "1" : "0")"
+                                    data-activo="@(item.Activo ? "1" : "0")"
+                                    data-bloqueado="@(item.Bloqueado ? "total" : item.BloqueadoNoSeguro ? "parcial" : "no")"
                                     data-search="@((item.Id + " " + (item.Nombre ?? "") + " " + (item.Usuario ?? "") + " " + (item.Email ?? "") + " " + item.IdEmpresa + " " + item.IdSucursalUser).ToLowerInvariant())">
                                     <td>@item.Id</td>
                                     <td>@item.Nombre</td>
@@ -223,23 +255,46 @@
             var $filtro = $('#filtroUsuarios');
             var $rows = $('#tablaUsuarios tbody .js-usuario-row');
             var $contador = $('#contadorUsuarios');
+            var $admin = $('#filtroAdmin');
+            var $activo = $('#filtroActivo');
+            var $bloqueado = $('#filtroBloqueado');
 
+            // Una fila se ve si cumple el texto Y cada select (valor vacio = sin filtro).
+            // Bloqueado distingue "total" de "parcial" (bloqueo solo en dispositivos no autorizados),
+            // igual que la columna Bloqueado de la tabla.
             function aplicarFiltro() {
                 var texto = ($filtro.val() || '').toLowerCase().trim();
+                var admin = String($admin.val() || '');
+                var activo = String($activo.val() || '');
+                var bloqueado = String($bloqueado.val() || '');
                 var visibles = 0;
 
                 $rows.each(function () {
                     var $row = $(this);
                     var search = String($row.data('search') || '');
-                    var visible = !texto || search.indexOf(texto) >= 0;
+                    var visible = (!texto || search.indexOf(texto) >= 0)
+                        && (!admin || String($row.attr('data-admin')) === admin)
+                        && (!activo || String($row.attr('data-activo')) === activo)
+                        && (!bloqueado || String($row.attr('data-bloqueado')) === bloqueado);
                     $row.toggleClass('d-none', !visible);
                     if (visible) visibles++;
                 });
 
-                $contador.text(visibles + ' usuario(s) visible(s)');
+                $contador.text(visibles + ' de ' + $rows.length + ' usuario(s)');
+            }
+
+            // "Limpiar filtros" vuelve al estado inicial de la pantalla (solo activos).
+            function limpiarFiltros() {
+                $filtro.val('');
+                $admin.val('');
+                $activo.val('1');
+                $bloqueado.val('');
+                aplicarFiltro();
             }
 
             $filtro.on('input', aplicarFiltro);
+            $admin.add($activo).add($bloqueado).on('change', aplicarFiltro);
+            $('#limpiarFiltros').on('click', limpiarFiltros);
             aplicarFiltro();
         })();
     </script>
