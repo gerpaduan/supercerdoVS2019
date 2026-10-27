@@ -194,18 +194,20 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnSeleccionarCompraPesaje">
+                        @* Celular: los dos botones de vincular van lado a lado (col-6) y a todo el ancho de su columna. stock-btn-vincular
+                           reemplaza el "btn-block" de Bootstrap 4, que Bootstrap 5 elimino (ver <style> de esta vista, 2026-10-27). *@
+                        <div class="col-6 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnSeleccionarCompraPesaje">
                             <div class="form-group mb-lg-0">
                                 <label class="d-none d-lg-block">&nbsp;</label>
-                                <button type="button" class="btn btn-outline-primary btn-block" id="btnSeleccionarCompraPesaje">
+                                <button type="button" class="btn btn-outline-primary btn-block stock-btn-vincular" id="btnSeleccionarCompraPesaje">
                                     <i class="fas fa-shopping-basket mr-1"></i> Vincular compra
                                 </button>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnVincularPesaje">
+                        <div class="col-6 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnVincularPesaje">
                             <div class="form-group mb-lg-0">
                                 <label class="d-none d-lg-block">&nbsp;</label>
-                                <button type="button" class="btn btn-outline-info btn-block" id="btnVincularPesajes">
+                                <button type="button" class="btn btn-outline-info btn-block stock-btn-vincular" id="btnVincularPesajes">
                                     <i class="fas fa-link mr-1"></i> Vincular pesajes
                                 </button>
                             </div>
@@ -293,7 +295,9 @@
                         <div class="border rounded p-3 mb-3 stock-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 stock-section-title">Agregar producto</h6>
-                                <div class="d-flex flex-wrap align-items-center gap-3">
+                                @* stock-acciones-agregar: en celular (<768px) pasa a una grilla debajo del titulo (switch Balanza a lo ancho y
+                                   los botones visibles repartidos en partes iguales); en desktop no cambia. *@
+                                <div class="d-flex flex-wrap align-items-center gap-3 stock-acciones-agregar">
                                     <div class="custom-control custom-switch mr-2">
                                         <input type="checkbox" class="custom-control-input" id="chkBalanzaLinea" checked />
                                         <label class="custom-control-label" for="chkBalanzaLinea">Balanza</label>
@@ -392,16 +396,31 @@
                         <div id="stockPesajesVinculadosInfo" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
 
                         <div class="d-flex align-items-center mb-2 stock-search-toolbar">
+                            @* data-edit-readonly-ignore: buscar y ordenar las lineas son solo de lectura, siguen activos en modo ver (2026-10-27). *@
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaLineasStock"
-                                    title="Buscar en la tabla" aria-expanded="false">
+                                    data-edit-readonly-ignore="true" title="Buscar en la tabla" aria-expanded="false">
                                 <i class="fas fa-search"></i>
                             </button>
                             <input type="text" id="filtroLineasStock" class="form-control form-control-sm ml-2 d-none"
+                                   data-edit-readonly-ignore="true"
                                    placeholder="Buscar por producto o código..." autocomplete="off" style="max-width:280px;">
+                            @* Solo celular (<768px): en la lista no hay encabezados para tocar, el orden se elige aca. Arranca en
+                               "ultimos primero" (stock.js, state.sortDirection); en desktop se ordena con los encabezados. Mismo
+                               criterio que Movimientos/Editar. *@
+                            <select id="ordenLineasStock" class="form-control form-control-sm d-md-none ml-auto stock-orden-celular"
+                                    data-edit-readonly-ignore="true" aria-label="Ordenar las líneas">
+                                <option value="creado:desc">Últimos primero</option>
+                                <option value="creado:asc">Primeros primero</option>
+                                <option value="codigo:asc">Código</option>
+                                <option value="producto:asc">Producto</option>
+                                <option value="cantidad:desc">Cantidad (mayor)</option>
+                            </select>
                         </div>
 
+                        @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
+                           las clases de cada celda las pone renderLineas() en stock.js. En desktop la tabla no cambia. *@
                         <div class="table-responsive">
-                            <table class="table table-bordered table-sm stock-table-compact" id="tablaLineasStock">
+                            <table class="table table-bordered table-sm stock-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasStock">
                                 <thead class="thead-light">
                                     <tr>
                                         <th class="stock-th-producto">
@@ -420,7 +439,7 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-xl-4">
+                    <div class="col-12 col-xl-4 stock-lateral">
                         <div class="card bg-light stock-panel-card stock-summary-card">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-2 stock-section-title">Resumen</h6>
@@ -443,7 +462,7 @@
                             </div>
                         </div>
                         <small class="form-text text-muted mt-2" id="txtAyudaCantidad">
-                            @(permiteNegativo ? "Puede ingresar valores positivos o negativos según el ajuste o egreso." : "")
+                            @(esEgreso ? "En Egreso las cantidades se guardan en negativo (se convierten solas)." : (esAjuste ? "En Ajuste puede ingresar valores positivos o negativos." : ""))
                         </small>
                         <div class="card stock-panel-card mt-3">
                             <div class="card-body">
@@ -843,6 +862,54 @@
 
     .stock-page .stock-summary-card .card-body {
         padding: .58rem .76rem;
+    }
+
+    /* Resumen / Observaciones / Datos quedan debajo de las lineas cuando la pantalla es angosta (< 1200 px): un espacio entre
+       ambos bloques para que se note que son dos cosas distintas (mismo criterio que Movimientos/Editar, 2026-10-27). */
+    @@media (max-width: 1199.98px) { .stock-page .stock-lateral { margin-top: 1.1rem; } }
+
+    /* Botones de vincular (Pesaje): "btn-block" es de Bootstrap 4 y aca (Bootstrap 5) no existe, asi que el boton quedaba del ancho
+       de su texto. Hasta 991 px (donde las columnas dejan de ser col-lg-2) ocupan todo el ancho de su columna; el texto puede
+       partirse en dos renglones en pantallas muy angostas. En desktop no se toca (2026-10-27, pedido: solo responsive). */
+    @@media (max-width: 991.98px) {
+        .stock-page .stock-btn-vincular { width: 100%; white-space: normal; }
+    }
+
+    /* Celular: acciones de "Agregar producto" (switch Balanza, Ver acumulados, Ver Porc(%), Productos no cargados, respaldo) en una
+       grilla debajo del titulo. auto-fit: 1 boton visible ocupa todo el ancho, 2 se reparten 50/50, 3 pasan a dos renglones; los
+       ocultos (d-none, los prende y apaga stock.js segun la accion) no cuentan. */
+    @@media (max-width: 767.98px) {
+        .stock-page .stock-acciones-agregar {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+            gap: .4rem;
+        }
+
+        /* min-height en 0: cuando el switch Balanza esta oculto (sin balanza) el contenedor no debe dejar un renglon vacio
+           (si esta visible, su propio texto le da el alto). El padding-left no se toca: ahi se apoya el dibujo del switch. */
+        .stock-page .stock-acciones-agregar > .custom-control,
+        .stock-page .stock-acciones-agregar > span {
+            grid-column: 1 / -1;
+            margin-right: 0 !important;
+            min-height: 0;
+        }
+
+        .stock-page .stock-acciones-agregar > .btn { width: 100%; }
+    }
+
+    /* Celular: selector de orden de las lineas. Con .stock-search-toolbar para ganarle al min-height: 2.75rem de ui-refresh.css
+       (body.app-shell .form-control). margin-left:auto a mano: ml-auto es de Bootstrap 4 y aca no aplica. */
+    @@media (max-width: 767.98px) {
+        .stock-page .stock-search-toolbar .stock-orden-celular {
+            width: auto;
+            max-width: 11rem;
+            margin-left: auto;
+            min-height: 0;
+            height: 2rem;
+            padding: .15rem 1.6rem .15rem .5rem;
+            font-size: .8rem;
+        }
     }
 
     .stock-page .stock-table-compact {

@@ -1,5 +1,19 @@
 # Bitacora de cambios
 
+## 2026-10-27 - Stock/Editar: botones ordenados en celular y signo de las cantidades al cambiar la acción
+
+- **Pedido**: ordenar los botones de vincular y de «Agregar producto» en celular (solo responsive); al cambiar la acción, las cantidades pasan a negativas en Egreso y a positivas al salir de Egreso (salvo Ajuste), e informar al usuario.
+- **Cambio**: en celular «Vincular compra» y «Vincular pesajes» van lado a lado y los botones de «Agregar producto» se reparten el ancho. Al cambiar la acción, Egreso → todas las líneas cargadas a negativas; Ingreso / Cierre / Pesaje → todas a positivas (también desde Ajuste); Ajuste → sin cambios. Aviso verde con cuántas líneas cambiaron y texto de ayuda por acción bajo Cantidad. Archivos: `Views/Stock/Editar.cshtml`, `wwwroot/Scripts/app/stock.js`.
+- **Verificado**: en la app con usuario temporal (borrado), sin guardar. **Sin verificar**: línea nueva tras el cambio de acción, guardar, modo oscuro. **Deuda**: el servidor no valida negativos en Ingreso / Cierre / Pesaje.
+- Decisión: `docs/DECISIONS.md` (2026-10-27). Manual: `Stock.Editar.md`.
+
+## 2026-10-27 - Stock/Editar: mismo estilo que Movimientos/Editar (lista en celular, selector de orden, lupa y orden en modo ver)
+
+- **Pedido**: aplicar en `Stock/Editar` el estilo de `Movimientos/Editar`.
+- **Cambio**: en celular las líneas cargadas son una lista compacta (producto, cantidad, código, hora de carga, balanza como icono, tacho); selector de orden (arranca en «últimos primero»); lupa y selector siguen activos en modo ver; espacio entre las líneas y el Resumen. Desktop sin cambios. El orden de guardado ya era el de carga. Archivos: `Views/Stock/Editar.cshtml`, `wwwroot/Scripts/app/stock.js`.
+- **Verificado**: en la app con usuario temporal (borrado), modo ver, celular 375 px y desktop; compila. **Sin verificar**: modo oscuro real, líneas «No contado» / «Pesaje #N», línea de otro día, guardar.
+- Decisión: `docs/DECISIONS.md` (2026-10-27). Manual: `Stock.Editar.md`.
+
 ## 2026-10-22 - Eliminar compras, stock y movimientos (motivo, clave de nuevo y auditoría con la foto completa)
 
 - **Pedido**: agregar la acción de eliminar a Movimientos, Compras y Stock; en Compras tener en cuenta la cuenta corriente; con motivo; el registro se elimina pero queda quién lo eliminó, cuándo y qué ítems tenía; siempre se vuelve a validar usuario y contraseña.

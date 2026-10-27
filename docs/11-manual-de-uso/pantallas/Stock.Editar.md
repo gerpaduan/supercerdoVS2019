@@ -43,3 +43,22 @@ PENDIENTE: documentar los datos del encabezado, la carga de productos (código, 
 
 ## Datos del registro
 - En la pantalla de un registro ya guardado, **Creado** y **Actualizado** (con el usuario debajo de cada fecha) se muestran en un bloque compacto de dos columnas, con letra chica, para ocupar poca altura.
+
+## En el celular
+- **Líneas cargadas:** se ven como una lista. Arriba el producto y la cantidad; abajo el código (`Cód. 132`), la **hora de carga** y el icono de **balanza** (azul = pesado en balanza, gris = no). Si la línea se cargó **otro día** que el registro, en vez de la hora aparece fecha y hora en ámbar. Las etiquetas **No contado** y **Pesaje #N** quedan junto al nombre del producto. El botón rojo de la derecha **quita la línea**. En la computadora la tabla sigue igual.
+- **Orden:** en el celular arranca con **lo último cargado arriba**. Con el selector de la derecha se puede cambiar (primeros primero, código, producto, cantidad). En la computadora se ordena tocando los encabezados, como siempre.
+- El orden en que se ven las líneas **no cambia el orden en que se guardan**: siempre se guardan en el orden en que se cargaron.
+- El selector de orden y la **lupa de búsqueda** **siguen activos en el modo ver** (cuando los campos y la tabla están bloqueados): solo cambian cómo se ven las líneas.
+- **Botones:** en un **Pesaje**, **Vincular compra** y **Vincular pesajes** van uno al lado del otro. En **Agregar producto**, **Ver acumulados**, **Ver Porc(%)** y **Productos no cargados** (los que corresponden a la acción elegida) se reparten el ancho debajo del título.
+
+## Signo de las cantidades según la acción
+Al **cambiar la acción** (botón **Cambiar** junto a la acción) las cantidades **ya cargadas** se ajustan solas, y el sistema avisa con un mensaje verde sobre la tabla cuántas líneas cambiaron:
+
+| Pasás a | Qué pasa con las líneas ya cargadas | Las que cargues después |
+|---|---|---|
+| **Egreso** | todas pasan a **negativas** | se cargan en negativo (tipeás el número en positivo y se convierte solo) |
+| **Ingreso, Cierre o Pesaje** | todas pasan a **positivas** (también si venías de Ajuste con negativas) | deben ser mayores a cero |
+| **Ajuste** | **no cambian** (si venías de Egreso quedan negativas) | positivas o negativas, como las tipees |
+
+- El cambio es solo en pantalla: **queda definitivo al tocar Guardar**. Si cambiás de acción y volvés a la anterior, las cantidades que pasaron a positivas o negativas **no vuelven a su signo original** (por ejemplo, Ajuste → Ingreso → Ajuste deja todo positivo).
+- El texto de ayuda debajo de **Cantidad** dice la regla de la acción elegida.

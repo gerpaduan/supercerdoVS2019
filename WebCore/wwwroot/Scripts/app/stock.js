@@ -141,7 +141,10 @@
             balanzaUltimaLectura: null,
             focusAgregarPendiente: false,
             sortKey: 'creado',
-            sortDirection: 'asc',
+            // En el celular arranca en "ultimos primero": lo recien cargado queda arriba, cerca del formulario (2026-10-27, mismo
+            // criterio que Movimientos; en desktop sigue el orden de carga). El orden guardado no depende de esto: los hidden
+            // Lineas[i] salen de state.lineas (ver rebuildHiddenInputs).
+            sortDirection: (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) ? 'desc' : 'asc',
             searchText: '',
             // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
             // Embutidos"): instancia de BorradorGenerico.crear() cuando esta habilitado, o null
@@ -158,12 +161,15 @@
         $form.data('__stockState', state);
     }
 
-    function showFeedback($form, text) {
+    // duracionMs opcional: los avisos largos (ej. cambio de signo al cambiar la accion) necesitan mas que los 2,2 s por defecto.
+    // Si llega otro aviso antes de que venza el anterior, el temporizador viejo se cancela para no taparlo.
+    function showFeedback($form, text, duracionMs) {
         var $feedback = $form.find('#stockFeedback');
+        window.clearTimeout($feedback.data('timerFeedback'));
         $feedback.text(text).removeClass('d-none');
-        window.setTimeout(function () {
+        $feedback.data('timerFeedback', window.setTimeout(function () {
             $feedback.addClass('d-none').text('');
-        }, 2200);
+        }, duracionMs || 2200));
     }
 
     function focusCantidadManual($form) {
@@ -502,6 +508,63 @@
         $('#lblFechaNoCargadosContexto').text($.trim(fecha));
     }
 
+    // Texto de ayuda bajo "Cantidad": la regla de signo de cada accion (misma en la vista, Editar.cshtml).
+    function getAyudaCantidad(tipoCompra) {
+        switch (String(tipoCompra || '').toLowerCase()) {
+            case 'egreso stock': return 'En Egreso las cantidades se guardan en negativo (se convierten solas).';
+            case 'ajuste stock': return 'En Ajuste puede ingresar valores positivos o negativos.';
+            default: return '';
+        }
+    }
+
+    // Al cambiar la accion con "Cambiar" (2026-10-27): Egreso -> todas las lineas cargadas a negativas; una accion que no admite
+    // negativos (Ingreso, Cierre, Pesaje) -> todas a positivas; Ajuste -> sin cambios (admite ambos signos). Las lineas que se
+    // carguen despues siguen la regla de siempre (ver validarLinea). Las de cantidad 0 no se tocan.
+    // Devuelve { cantidad: lineas modificadas, sentido: 'negativas' | 'positivas' | '' }. El servidor ya normaliza Egreso a
+    // negativo al guardar (StockController); no valida negativos en las demas acciones (deuda, ver docs/DECISIONS.md).
+    function aplicarSignoALineas($form, tipoCompra) {
+        var state = getState($form);
+        var tipo = String(tipoCompra || '').toLowerCase();
+        var aNegativo = tipo === 'egreso stock';
+        var aPositivo = tipo !== 'egreso stock' && tipo !== 'ajuste stock';
+        var cantidad = 0;
+
+        if (!aNegativo && !aPositivo) return { cantidad: 0, sentido: '' };
+
+        $.each(state.lineas, function (_, linea) {
+            var valor = toNumber(linea.cantKgs);
+            if (!valor) return;
+            var nuevo = aNegativo ? -Math.abs(valor) : Math.abs(valor);
+            if (nuevo !== valor) {
+                linea.cantKgs = nuevo;
+                cantidad++;
+            }
+        });
+
+        return { cantidad: cantidad, sentido: aNegativo ? 'negativas' : 'positivas' };
+    }
+
+    // Aviso al cambiar de accion: dice como quedaron las lineas cargadas y como se cargaran las proximas.
+    function avisarCambioSignoCantidad($form, tipoCompra, resultado) {
+        var etiqueta = getTipoCompraLabel(tipoCompra);
+        var tipo = String(tipoCompra || '').toLowerCase();
+        var texto;
+
+        if (tipo === 'ajuste stock') {
+            texto = 'Acción cambiada a ' + etiqueta + ': puede cargar cantidades positivas o negativas. Las líneas ya cargadas no se modificaron.';
+        } else if (tipo === 'egreso stock') {
+            texto = resultado.cantidad > 0
+                ? 'Acción cambiada a ' + etiqueta + ': ' + resultado.cantidad + (resultado.cantidad === 1 ? ' línea cargada pasó' : ' líneas cargadas pasaron') + ' a negativas, y las que cargue también.'
+                : 'Acción cambiada a ' + etiqueta + ': las cantidades se cargan en negativo.';
+        } else {
+            texto = resultado.cantidad > 0
+                ? 'Acción cambiada a ' + etiqueta + ': ' + resultado.cantidad + (resultado.cantidad === 1 ? ' línea cargada pasó' : ' líneas cargadas pasaron') + ' a positivas, y las que cargue también.'
+                : 'Acción cambiada a ' + etiqueta + ': las cantidades se cargan en positivo.';
+        }
+
+        showFeedback($form, texto, 8000);
+    }
+
     function syncTipoCompraUi($form) {
         var state = getState($form);
         var tipoCompra = $form.find('#TipoCompra').val() || '';
@@ -526,7 +589,7 @@
         $form.find('#btnVerPorcentajePesaje').toggleClass('d-none', !esPesaje);
         $form.find('#btnProductosNoCargados').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
         actualizarContextoNoCargados($form);
-        $form.find('#txtAyudaCantidad').text(permiteCantidadNegativa ? 'Puede ingresar valores positivos o negativos según el ajuste o egreso.' : '');
+        $form.find('#txtAyudaCantidad').text(getAyudaCantidad(tipoCompra));
 
         if (String(tipoCompra).toLowerCase() !== 'cierre stock') {
             $('#modalProductosNoCargadosStock').modal('hide');
@@ -783,6 +846,39 @@
                 $el.attr('title', 'Ordenar por ' + label);
             }
         });
+
+        // Selector "Ordenar" del celular (#ordenLineasStock, solo < 768px): refleja el orden actual. Si el orden vigente no es
+        // una de sus opciones (ej. cantidad ascendente elegido en desktop) queda en blanco.
+        var $orden = $form.find('#ordenLineasStock');
+        if ($orden.length) {
+            var valorOrden = state.sortKey + ':' + state.sortDirection;
+            $orden.val($orden.find('option[value="' + valorOrden + '"]').length ? valorOrden : '');
+        }
+    }
+
+    // Hora de carga de una linea para la lista del celular (port de Helpers/HoraLineaDetalle.cs): si se cargo el mismo dia
+    // que el registro (#FechaCompra) solo la hora; si fue otro dia, fecha y hora (con anio solo si tambien cambia) y otroDia
+    // = true para resaltarla. texto vacio si creadoTexto no se puede leer.
+    function formatearHoraLinea($form, creadoTexto) {
+        var creado = parseCreadoTexto(creadoTexto);
+        if (!creado) return { texto: '', otroDia: false };
+
+        function dos(n) { return (n < 10 ? '0' : '') + n; }
+        var hora = dos(creado.getHours()) + ':' + dos(creado.getMinutes());
+
+        // #FechaCompra es un datetime-local ("yyyy-MM-ddTHH:mm"); si no se puede leer se muestra solo la hora.
+        var partes = /^(\d{4})-(\d{2})-(\d{2})/.exec(String($form.find('#FechaCompra').val() || ''));
+        if (!partes) return { texto: hora, otroDia: false };
+
+        var anioRegistro = parseInt(partes[1], 10);
+        var mismoDia = creado.getFullYear() === anioRegistro
+            && creado.getMonth() + 1 === parseInt(partes[2], 10)
+            && creado.getDate() === parseInt(partes[3], 10);
+        if (mismoDia) return { texto: hora, otroDia: false };
+
+        var fecha = dos(creado.getDate()) + '/' + dos(creado.getMonth() + 1);
+        if (creado.getFullYear() !== anioRegistro) fecha += '/' + String(creado.getFullYear()).slice(-2);
+        return { texto: fecha + ' ' + hora, otroDia: true };
     }
 
     function renderLineas($form) {
@@ -817,12 +913,25 @@
                 ? '<span class="badge badge-info mb-1">Pesaje vinculado #' + escapeHtml(linea.idPesajeVinculado) + '</span><br>'
                 : '';
 
+            // Clases cc-*: en el celular la tabla es una lista (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css);
+            // cc-solo-card / cc-solo-tabla eligen que version de cada dato se ve en cada vista. En desktop no cambia nada.
+            var etiquetasCelular = (linea.noContado ? ' <span class="badge badge-warning">No contado</span>' : '')
+                + (linea.idPesajeVinculado > 0 ? ' <span class="badge badge-info">Pesaje #' + escapeHtml(linea.idPesajeVinculado) + '</span>' : '');
+            var hora = formatearHoraLinea($form, linea.creadoTexto);
+            var textoBalanza = linea.balanza ? 'Pesado en balanza' : 'Sin balanza';
+
             html += '<tr data-index="' + item.indiceOriginal + '">'
-                + '<td><strong>' + escapeHtml(linea.producto || '') + '</strong><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></td>'
-                + '<td class="text-right">' + formatNumber(linea.cantKgs, 3) + '</td>'
-                + '<td class="text-center">' + (linea.balanza ? '*' : '') + '</td>'
-                + '<td>' + (linea.noContado ? '<span class="badge badge-warning mb-1">No contado</span><br>' : '') + vinculoHtml + escapeHtml(linea.creadoTexto || '-') + '</td>'
-                + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + item.indiceOriginal + '"><i class="fas fa-trash"></i></button></td>'
+                + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.codigo || '') + '</td>'
+                + '<td class="cc-l-prod"><strong>' + escapeHtml(linea.producto || '') + '</strong>'
+                + '<span class="cc-solo-card">' + etiquetasCelular + '</span>'
+                + '<span class="cc-solo-tabla"><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></span></td>'
+                + '<td class="text-right cc-l-kg">' + formatNumber(linea.cantKgs, 3) + '</td>'
+                + '<td class="text-center cc-l-bal cc-l-ultimo"><span class="cc-solo-tabla">' + (linea.balanza ? '*' : '') + '</span>'
+                + '<i class="cc-solo-card fas fa-balance-scale ' + (linea.balanza ? 'text-primary' : 'cc-ico-off') + '" role="img" aria-label="' + textoBalanza + '" title="' + textoBalanza + '"></i></td>'
+                + '<td class="cc-l-hora' + (hora.otroDia ? ' cc-l-hora-otro-dia' : '') + (hora.texto === '' ? ' cc-vacio' : '') + '">'
+                + '<span class="cc-solo-tabla">' + (linea.noContado ? '<span class="badge badge-warning mb-1">No contado</span><br>' : '') + vinculoHtml + escapeHtml(linea.creadoTexto || '-') + '</span>'
+                + '<span class="cc-solo-card" title="' + (hora.otroDia ? 'Cargada otro día que el registro' : 'Hora de carga') + '"><i class="far fa-clock"></i>' + escapeHtml(hora.texto) + '</span></td>'
+                + '<td class="text-center cc-l-acc"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + item.indiceOriginal + '" title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>'
                 + '</tr>';
         });
 
@@ -2584,9 +2693,22 @@
         });
 
         $form.on('change.stock', '#TipoCompraVisual', function () {
-            $form.find('#TipoCompra').val($(this).val() || '');
+            var tipoAnterior = $form.find('#TipoCompra').val() || '';
+            var tipoNuevo = $(this).val() || '';
+            $form.find('#TipoCompra').val(tipoNuevo);
             syncTipoCompraUi($form);
             $(this).prop('disabled', true);
+
+            // Solo si la accion realmente cambio: ajusta el signo de las lineas ya cargadas y avisa (ver aplicarSignoALineas).
+            if (String(tipoAnterior).toLowerCase() !== String(tipoNuevo).toLowerCase()) {
+                var resultado = aplicarSignoALineas($form, tipoNuevo);
+                if (resultado.cantidad > 0) {
+                    renderLineas($form);
+                    capturarRespaldo('Stock', $form);
+                    scheduleDraft($form);
+                }
+                avisarCambioSignoCantidad($form, tipoNuevo, resultado);
+            }
         });
 
         $form.on('blur.stock', '#TipoCompraVisual', function () {
@@ -2814,6 +2936,15 @@
                 state.sortKey = key;
                 state.sortDirection = 'asc';
             }
+            renderLineas($form);
+        });
+
+        // Celular: sin encabezados para tocar, el orden se elige con el selector (valor "clave:direccion").
+        $form.on('change.stock', '#ordenLineasStock', function () {
+            var partes = String($(this).val() || '').split(':');
+            if (!partes[0]) return;
+            state.sortKey = partes[0];
+            state.sortDirection = partes[1] === 'desc' ? 'desc' : 'asc';
             renderLineas($form);
         });
 
