@@ -35,6 +35,17 @@
             return isNaN(n) ? 0.0 : n;
         }
 
+        // Importe en formato argentino ("$ 9.900,00") SOLO PARA MOSTRAR. Los textos guardados en cada linea
+        // (linea.precio / subtotal / cant, "$ 9900.00") NO se pasan a este formato: fnum, parseNumeroPOS
+        // (forma-pago.js), toFloatAR (pos-state.js) y parseMoney los vuelven a leer como numero, y con punto de
+        // miles darian mal el importe (ej. fnum("$ 9.900,00") = 9.9). Recibe numero o texto con punto decimal.
+        function fmtMoneda(v) {
+            return "$ " + toFloatAR(v).toLocaleString("es-AR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
         function focusElementLater(selector) {
             if (!selector) return;
 
@@ -373,7 +384,7 @@
                 // (VentasController.ObtenerExpendioPOS ya hace la comparacion contra el precio
                 // actual real via join), se avisa aca para que el cajero lo note antes de cobrar.
                 const cambioPrecioBadge = l.cambioPrecio
-                    ? ` <span class="badge badge-warning" title="El precio de lista actual es $ ${Number(l.precioListaActual || 0).toFixed(2)}, distinto al precio con que se cargó este ítem del expendio.">Cambio precio</span>`
+                    ? ` <span class="badge badge-warning" title="El precio de lista actual es ${fmtMoneda(Number(l.precioListaActual || 0))}, distinto al precio con que se cargó este ítem del expendio.">Cambio precio</span>`
                     : "";
 
                 // El numero visible es la posicion actual en la lista (1-based), no
@@ -381,6 +392,10 @@
                 // un item del medio, los siguientes se renumeran sin saltos. l.index se
                 // sigue usando como data-id: es la clave estable para lookups/clicks
                 // (findLineaByIndex, scrollLineVisible), no puede cambiar entre renders.
+                // Cantidad e importes se muestran en formato argentino ("2,000 x $ 9.900,00", pedido 2026-10-27);
+                // los valores guardados en la linea no cambian (ver fmtMoneda).
+                const cantNum = parseCant(l.cant);
+                const cantTexto = isFinite(cantNum) ? fmtCant(cantNum) : String(l.cant ?? "");
                 $tbody.append(`
                     <tr data-id="${l.index}" class="fila-item ${claseAnulada}">
                         <td>
@@ -389,8 +404,8 @@
                             </div>
                             ${detalleExpendio}
                             <div class="d-flex justify-content-between item-detalle">
-                                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio} ${bonificacion}${cambioPrecioBadge}</span>
-                                <span class="fw-bold">${l.subtotal}</span>
+                                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${cantTexto} x ${fmtMoneda(l.precio)} ${bonificacion}${cambioPrecioBadge}</span>
+                                <span class="fw-bold">${fmtMoneda(l.subtotal)}</span>
                             </div>
                         </td>
                     </tr>
@@ -729,7 +744,7 @@
                 const precioEsperado = precioListaNum * (1 - (bonif / 100));
                 const difiere = Math.abs(precioEsperado - precioActualNum) > 0.5;
                 if (difiere) {
-                    $("#precioListaVigenteTexto").text("$ " + precioListaNum.toFixed(2));
+                    $("#precioListaVigenteTexto").text(fmtMoneda(precioListaNum));
                     $alertaInconsistencia.removeClass("d-none");
                 } else {
                     $alertaInconsistencia.addClass("d-none");

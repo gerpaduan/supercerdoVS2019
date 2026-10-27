@@ -91,7 +91,8 @@ public sealed class AlertaInconsistenciaPrecioTests
 
             Assert.True(await page.Locator("#alertaPrecioListaInconsistente").IsVisibleAsync(),
                 "la alerta de inconsistencia deberia aparecer: precio de lista cambio de 12000 a 13000 despues de bonificar la linea");
-            Assert.Contains("13000", await page.Locator("#precioListaVigenteTexto").InnerTextAsync());
+            // Formato argentino desde 2026-10-27 (pos-cart.js fmtMoneda).
+            Assert.Contains("13.000,00", await page.Locator("#precioListaVigenteTexto").InnerTextAsync());
         }
         finally
         {
