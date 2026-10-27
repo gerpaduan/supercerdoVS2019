@@ -91,8 +91,10 @@
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
+            @* En celular (<768px) cada movimiento se muestra como tarjeta (CSS compartido
+               wwwroot/Content/css/tabla-cards.css): la fecha encabeza la tarjeta y el detalle desplegable queda pegado debajo. *@
             <div class="table-responsive">
-                <table class="table table-hover mb-0" id="tablaMovimientos">
+                <table class="table table-hover mb-0 tabla-cards" id="tablaMovimientos">
                     <thead class="thead-dark">
                         <tr>
                             <th style="width:140px;">Fecha movimiento</th>
@@ -124,23 +126,23 @@
                             foreach (var movimiento in Model.Movimientos)
                             {
                                 <tr data-movimiento-row="@movimiento.IdMovimiento">
-                                    <td>@movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td>@movimiento.Origen</td>
+                                    <td class="cc-titulo cc-titulo-flex">@movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")<span class="cc-solo-card cc-titulo-extra" title="Número de movimiento">#@movimiento.IdMovimiento</span></td>
+                                    <td data-label="Origen">@movimiento.Origen</td>
                                     @if (Model.MostrarColumnasInternas)
                                     {
-                                        <td>@(string.IsNullOrWhiteSpace(movimiento.DeOrigen) ? "-" : movimiento.DeOrigen)</td>
-                                        <td>@movimiento.Estado</td>
+                                        <td data-label="De origen">@(string.IsNullOrWhiteSpace(movimiento.DeOrigen) ? "-" : movimiento.DeOrigen)</td>
+                                        <td data-label="Estado">@movimiento.Estado</td>
                                     }
-                                    <td>@movimiento.Destino</td>
-                                    <td class="text-right">@movimiento.TotalUnidad.ToString("N0")</td>
-                                    <td class="text-right">@movimiento.TotalKilos.ToString("N3")</td>
-                                    <td class="text-center">
+                                    <td data-label="Destino">@movimiento.Destino</td>
+                                    <td class="text-right" data-label="Total unidad">@movimiento.TotalUnidad.ToString("N0")</td>
+                                    <td class="text-right" data-label="Total kilos">@movimiento.TotalKilos.ToString("N3")</td>
+                                    <td class="text-center @(movimiento.TieneObservaciones ? "" : "cc-vacio")" data-label="Observaciones">
                                         @if (movimiento.TieneObservaciones)
                                         {
                                             <span class="badge badge-pill badge-info" title="@movimiento.Observaciones">1</span>
                                         }
                                     </td>
-                                    <td>
+                                    <td class="cc-ancho" data-label="Creado">
                                         @* Creado: fecha/hora + usuario; si se modifico, etiqueta "Modificado" con fecha y usuario. *@
                                         @await Html.PartialAsync("~/Views/Shared/_CeldaCreadoModificado.cshtml", new WebCore.Models.CeldaCreadoModificadoVm
                                         {
@@ -150,10 +152,10 @@
                                             ActualizadoPor = movimiento.ActualizadoPor
                                         })
                                     </td>
-                                    <td>
+                                    <td class="cc-acciones">
                                         <div class="btn-group btn-group-sm">
                                             <a class="btn btn-outline-primary" href="@Url.Action("Editar", "Movimientos", new { id = movimiento.IdMovimiento })" title="Ver movimiento">
-                                                <i class="fas fa-eye"></i>
+                                                <i class="fas fa-eye"></i><span class="cc-solo-card"> Ver</span>
                                             </a>
                                             @* Boton nuevo (cuarta ronda de pedidos, 2026-09-10, ver
                                                docs/DECISIONS.md "Batch 7"): trae pdfUrl/imprimirUrl/
@@ -164,19 +166,19 @@
                                                     class="btn btn-outline-dark js-imprimir-movimiento"
                                                     data-id="@movimiento.IdMovimiento"
                                                     title="Imprimir">
-                                                <i class="fas fa-print"></i>
+                                                <i class="fas fa-print"></i><span class="cc-solo-card"> Imprimir</span>
                                             </button>
                                             <button type="button"
                                                     class="btn btn-outline-secondary js-toggle-detalle"
                                                     data-id="@movimiento.IdMovimiento"
                                                     data-target="#movDetalle_@movimiento.IdMovimiento"
                                                     title="Ver detalle">
-                                                <i class="fas fa-angle-down"></i>
+                                                <i class="fas fa-angle-down"></i><span class="cc-solo-card"> Detalle</span>
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
-                                <tr id="movDetalle_@movimiento.IdMovimiento" class="d-none bg-light" data-detalle-row="@movimiento.IdMovimiento" data-loaded="false">
+                                <tr id="movDetalle_@movimiento.IdMovimiento" class="d-none bg-light cc-fila-detalle" data-detalle-row="@movimiento.IdMovimiento" data-loaded="false">
                                     <td colspan="@(Model.MostrarColumnasInternas ? 10 : 8)">
                                         <div class="p-3 js-detalle-container text-muted">Cargando detalle...</div>
                                     </td>

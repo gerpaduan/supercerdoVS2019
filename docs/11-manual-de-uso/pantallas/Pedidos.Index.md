@@ -5,7 +5,7 @@ rol: admin
 modulo: Stock
 orden: 5
 permiso: Stock.VerStock (sin el permiso se muestra "Acceso denegado")
-revisada: 2026-10-19
+revisada: 2026-10-27
 alias: Pedidos.Buscar
 ---
 ## Para qué sirve
@@ -33,3 +33,7 @@ Es una **estimación**: cantidad pedida × el **precio de la última compra** de
 ## Si algo no anda
 - *No hay pedidos con esos filtros*: ampliá las fechas o sacá el filtro de usuario/sucursal.
 - *Acceso denegado*: tu usuario no tiene el permiso de ver stock.
+
+## En el celular
+- En pantallas angostas (celular) cada pedido se ve como **tarjeta**: el **número** arriba, después fecha, usuario, sucursales, productos, líneas, **total estimado** y la nota (si tiene). **Ver** abre el pedido. No hace falta desplazarse de costado.
+- En la computadora la pantalla se ve igual que antes.

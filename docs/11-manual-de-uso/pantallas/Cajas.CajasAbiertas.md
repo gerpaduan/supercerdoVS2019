@@ -5,7 +5,7 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-10-21
+revisada: 2026-10-26
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
@@ -55,6 +55,12 @@ Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consulta
 - Al confirmar la caja vuelve a **Cajas abiertas** como cuando se abrió: se borran el cierre cargado (Caja Cierre, diferencia, importe retirado, queda en caja, totales) y **el conteo que había declarado el cajero**. Queda registrada la reapertura con todo lo que se deshizo.
 - El vendedor puede **seguir vendiendo** al recargar el POS. Si el encargado ya retiró efectivo, al volver a cerrar la diferencia no lo tendrá en cuenta.
 - Solo disponible en empresas con base Postgres.
+
+## En el celular
+- En pantallas angostas (celular) **Cajas abiertas** y el **Historial de cierres** se ven como **tarjetas**, una debajo de otra, en vez de tablas: no hace falta desplazarse de costado.
+- Cada tarjeta de caja abierta tiene arriba al **vendedor**, después sucursal, inicio y caja inicial, y abajo los botones (**Ventas**, **Actividad**, **Cerrar** y, si hay varias sucursales, **Cambiar sucursal**).
+- Cada tarjeta del historial dice **Caja #número** y muestra los mismos datos que las columnas de la tabla, de a dos por renglón. **Origen del cierre** y **Avisos** solo aparecen si tienen algo. Los botones (**Modificar**, **Reabrir**) quedan al pie.
+- Si los botones no entran a lo ancho de la tarjeta (por ejemplo con el menú lateral abierto), los que sobran pasan al renglón de abajo. En la computadora la pantalla se ve igual que antes.
 
 ## Reglas y efectos
 - El importe del cajero **no es un egreso**: no cambia el total de EgresosCaja ni la diferencia.

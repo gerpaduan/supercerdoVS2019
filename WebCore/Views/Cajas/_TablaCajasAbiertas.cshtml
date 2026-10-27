@@ -4,8 +4,10 @@
     bool hayVariasSucursales = ViewBag.HayVariasSucursales != null && (bool)ViewBag.HayVariasSucursales;
 }
 
+@* En celular (<768px) cada fila se muestra como tarjeta: las clases cc-* y los data-label los usa el
+   CSS compartido wwwroot/Content/css/tabla-cards.css (pedido 2026-10-26: sin scroll horizontal). *@
 <div class="table-responsive">
-    <table class="table table-bordered table-striped table-sm cajas-table-compact" id="tablaCajas">
+    <table class="table table-bordered table-striped table-sm cajas-table-compact tabla-cards" id="tablaCajas">
         <thead class="thead-dark">
             <tr>
                 <th style="width: 18%;">Sucursal</th>
@@ -19,11 +21,11 @@
             @foreach (System.Data.DataRow row in Model.Rows)
             {
                 <tr>
-                    <td>@row["sucursal"]</td>
-                    <td>@row["vendedor"]</td>
-                    <td>@row["fechaHoraInicio"]</td>
-                    <td>@row["cajaInicio"]</td>
-                    <td class="text-nowrap">
+                    <td data-label="Sucursal">@row["sucursal"]</td>
+                    <td class="cc-titulo">@row["vendedor"]</td>
+                    <td data-label="Inicio">@row["fechaHoraInicio"]</td>
+                    <td data-label="Caja inicial $">@row["cajaInicio"]</td>
+                    <td class="text-nowrap cc-acciones">
                         <button class="btn btn-success btn-sm"
                                 onclick="conAutorizacionCierre(function () { abrirModalVentas(@row["id"]); })">
                             <i class="fas fa-shopping-cart"></i> Ventas
@@ -34,14 +36,14 @@
                             <i class="fas fa-history"></i> Actividad
                         </button>
 
-                        <button class="btn btn-danger btn-sm"
+                        <button class="btn btn-danger btn-sm cc-accion-principal"
                                 onclick="conAutorizacionCierre(function () { abrirModalCerrarCaja(@row["id"]); })">
                             <i class="fas fa-lock"></i> Cerrar
                         </button>
 
                         @if (hayVariasSucursales)
                         {
-                            <button class="btn btn-warning btn-sm"
+                            <button class="btn btn-warning btn-sm cc-accion-ancha"
                                     onclick="conAutorizacionCierre(function () { abrirModalCambioSucursal(@row["id"], @row["idSucursal"], '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(row["sucursal"]) ?? "")', '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(row["vendedor"]) ?? "")', '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(row["fechaHoraInicio"]) ?? "")'); })">
                                 <i class="fas fa-exchange-alt"></i> Cambiar sucursal
                             </button>

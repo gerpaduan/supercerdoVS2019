@@ -1,0 +1,23 @@
+@model WebCore.Models.DatosRegistroCompactoVm
+@* Bloque compacto de "datos del registro" (pedido 2026-10-27, ver docs/DECISIONS.md): son datos que el usuario rara vez necesita leer,
+   asi que ocupan poca altura -- dos columnas, etiqueta chica, valor con la letra de los campos de la pantalla y, si hay, un detalle gris
+   (el usuario). Estilos en wwwroot/Content/css/datos-registro.css. *@
+<div class="datos-registro">
+    @if (!string.IsNullOrWhiteSpace(Model.Titulo))
+    {
+        <div class="datos-registro-titulo">@Model.Titulo</div>
+    }
+    <div class="datos-registro-grilla">
+        @foreach (var item in Model.Items)
+        {
+            <div class="datos-registro-item">
+                <div class="datos-registro-etiqueta">@item.Etiqueta</div>
+                <div class="datos-registro-valor">@(string.IsNullOrWhiteSpace(item.Valor) ? "-" : item.Valor)</div>
+                @if (!string.IsNullOrWhiteSpace(item.Detalle))
+                {
+                    <div class="datos-registro-detalle">@item.Detalle</div>
+                }
+            </div>
+        }
+    </div>
+</div>

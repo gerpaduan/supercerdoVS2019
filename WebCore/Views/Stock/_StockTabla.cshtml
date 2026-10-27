@@ -49,8 +49,10 @@
     }
 }
 
+@* En celular (<768px) cada movimiento de stock se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css):
+   la accion encabeza la tarjeta y la fila de detalle desplegable queda pegada debajo (cc-fila-detalle). *@
 <div class="table-responsive tabla-full">
-    <table class="table table-bordered table-hover mb-0">
+    <table class="table table-bordered table-hover mb-0 tabla-cards">
         <thead class="thead-light">
             <tr>
                 <th style="width: 80px;">ID</th>
@@ -121,11 +123,12 @@
                     }
 
                     <tr>
-                        <td class="stock-id-cell font-weight-bold">@idCompra</td>
-                        <td>@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
-                        <td>@row["sucursal"]</td>
-                        <td>
-                            <div class="stock-accion-titulo">@row["tipoCompra"]</div>
+                        @* En la tarjeta de celular el ID va tenue en el titulo (cc-titulo-linea, abajo): esta celda solo se ve en desktop. *@
+                        <td class="stock-id-cell font-weight-bold cc-solo-tabla" data-label="ID">@idCompra</td>
+                        <td data-label="Fecha">@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                        <td data-label="Sucursal">@row["sucursal"]</td>
+                        <td class="cc-titulo">
+                            <div class="stock-accion-titulo cc-titulo-linea">@row["tipoCompra"]<span class="cc-solo-card cc-titulo-extra" title="Número de registro">#@idCompra</span></div>
                             @if (!string.IsNullOrWhiteSpace(resumenPesaje))
                             {
                                 <div class="stock-accion-resumen" title="@resumenPesaje">@resumenPesaje</div>
@@ -171,14 +174,14 @@
                                 }
                             }
                         </td>
-                        <td class="text-right">@cantKg.ToString("N2")</td>
-                        <td class="text-center">
+                        <td class="text-right cc-destacado" data-label="Cantidad">@cantKg.ToString("N2")</td>
+                        <td class="text-center @(detalle != null && !string.IsNullOrWhiteSpace(detalle.Observaciones) ? "" : "cc-vacio")" data-label="Observaciones">
                             @if (detalle != null && !string.IsNullOrWhiteSpace(detalle.Observaciones))
                             {
                                 <span class="badge badge-pill badge-info" title="@detalle.Observaciones">1</span>
                             }
                         </td>
-                        <td>
+                        <td class="@(string.IsNullOrWhiteSpace(estado) ? "cc-vacio" : "")" data-label="Ajuste">
                             @if (!string.IsNullOrWhiteSpace(estado))
                             {
                                 <span class="font-weight-bold @(estado.Equals("Actualizado", StringComparison.OrdinalIgnoreCase) ? "text-success" : "text-danger")">@estado</span>
@@ -188,7 +191,7 @@
                                 <span class="text-muted">-</span>
                             }
                         </td>
-                        <td>
+                        <td class="cc-ancho" data-label="Creado">
                             @* Creado: fecha/hora + usuario; si se modifico, etiqueta "Modificado" con fecha y usuario.
                                obtenerCompras (CompraPg) devuelve creado / creadopor / actualizado / actualizadopor. *@
                             @await Html.PartialAsync("~/Views/Shared/_CeldaCreadoModificado.cshtml", new WebCore.Models.CeldaCreadoModificadoVm
@@ -199,9 +202,9 @@
                                 ActualizadoPor = LeerTexto(row, "actualizadopor")
                             })
                         </td>
-                        <td class="text-center text-nowrap">
+                        <td class="text-center text-nowrap cc-acciones">
                             <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Stock", new { id = idCompra })" title="Ver stock">
-                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-eye"></i><span class="cc-solo-card"> Ver</span>
                             </a>
                             <button type="button"
                                     class="btn btn-sm btn-link text-decoration-none btn-detalles-stock"
@@ -212,7 +215,7 @@
                             </button>
                         </td>
                     </tr>
-                    <tr>
+                    <tr class="cc-fila-detalle">
                         <td colspan="@totalColumnas" class="p-0">
                             <div id="@detailId" class="collapse stock-detalle-collapse">
                                 <div class="p-3 bg-light border-top stock-detalle-body">

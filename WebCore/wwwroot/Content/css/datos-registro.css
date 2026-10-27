@@ -1,0 +1,45 @@
+/* Bloque compacto de "datos del registro" (Views/Shared/_DatosRegistroCompacto.cshtml): dos columnas, etiqueta chica en mayusculas,
+   valor con el tamano de los campos de la pantalla (.84rem, como el campo "Usuario") y detalle gris debajo. Pensado para datos que el
+   usuario rara vez necesita leer: ocupa poca altura. Decision y motivo: docs/DECISIONS.md (2026-10-27). */
+.datos-registro-titulo {
+    margin-bottom: .35rem;
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ui-text-muted, #6c757d);
+}
+
+.datos-registro-grilla {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .4rem .8rem;
+}
+
+.datos-registro-item {
+    min-width: 0;
+}
+
+.datos-registro-etiqueta {
+    margin-bottom: .1rem;
+    font-size: .64rem;
+    line-height: 1.1;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--ui-text-muted, #6c757d);
+}
+
+.datos-registro-valor {
+    font-size: .84rem;
+    font-weight: 400;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+    color: var(--ui-text, inherit);
+}
+
+.datos-registro-detalle {
+    font-size: .7rem;
+    line-height: 1.1;
+    color: var(--ui-text-muted, #6c757d);
+}

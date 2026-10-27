@@ -1,0 +1,437 @@
+/* Tablas que en celular (<768px) se muestran como tarjetas, una por fila, para no desplazarse de costado.
+   Uso: agregar la clase "tabla-cards" al <table>, "data-label" a cada <td> que deba mostrar rotulo y, si hace falta,
+   las clases de celda de abajo. En desktop no cambia nada (todo vive dentro del @media).
+   Decision y motivo: docs/DECISIONS.md (2026-10-27, "Tablas a tarjetas en celular"). Nacio en Cajas abiertas (2026-10-26).
+
+   Clases de celda (opcionales):
+     .cc-titulo      encabeza la tarjeta (ancho completo, negrita, linea debajo)
+     .cc-cabecera    va justo debajo del titulo (para datos que en la tabla estan separados)
+     .cc-destacado   valor en negrita
+     .cc-ancho       ocupa todo el ancho de la tarjeta
+     .cc-doble       ocupa 2 columnas (para un rotulo largo en tabla-cards-lineas, que tiene 3)
+     .cc-vacio       se oculta en la tarjeta (celda sin contenido: no mostrar el rotulo solo)
+     .cc-acciones    pie con los botones, repartidos en el ancho
+     .cc-solo-card   texto que solo se ve en la tarjeta (ej. rotulo de un boton que en la tabla es solo un icono)
+     .cc-solo-tabla  lo opuesto: solo se ve en la tabla de desktop (ej. "Si/No" que en la tarjeta es un icono)
+     .cc-titulo-flex en una celda .cc-titulo: deja un <span class="cc-solo-card cc-titulo-extra"> tenue a la derecha
+     .cc-titulo-linea lo mismo pero en un elemento DENTRO del titulo (cuando la celda tiene varios bloques)
+     .cc-nota-detalle bloque fuera de la tabla, solo en celular (observaciones / etiquetas / boton de un detalle)
+     .cc-ico-off     icono apagado (gris tenue); encendido = text-primary / text-success de Bootstrap
+   Variantes del <table> (ademas de tabla-cards): tabla-cards-lineas (mini-tarjetas, datos de a 3) y tabla-cards-lista
+   (una sola tarjeta con renglones; celdas ubicadas por .cc-l-prod/.cc-l-cant/.cc-l-kg arriba y .cc-l-cod/.cc-l-hora/
+   .cc-l-bal/.cc-l-ing abajo; .cc-l-ultimo pega el icono de balanza al borde cuando es el unico).
+   Clase de fila (<tr>):
+     .cc-fila-detalle  fila extra de detalle desplegable (ej. Compras): queda pegada debajo de su tarjeta, sin marco
+   Clases de boton dentro de .cc-acciones:
+     .cc-accion-principal  la accion mas usada: ancho completo, mas alta, primera
+     .cc-accion-ancha      accion de uso raro: ancho completo pero baja y de letra chica
+
+   Los selectores llevan "table.tabla-cards" y unos pocos !important a proposito: las vistas traen reglas compactas
+   propias con id (ej. "#tablaCajas td { padding }") que de otro modo ganarian en especificidad. */
+/* Fuera del @media: en la tabla de desktop el texto extra no se ve. */
+.cc-solo-card {
+    display: none;
+}
+
+/* Nota arriba de las lineas de un detalle desplegable (observaciones, etiquetas, un boton): solo en celular, donde se
+   oculta la tarjeta de datos del registro que en desktop la muestra. Va fuera de la tabla, por eso no depende de tabla-cards. */
+.cc-nota-detalle {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    table.tabla-cards .cc-solo-card {
+        display: inline;
+    }
+
+    /* ui-refresh.css enmarca .table-responsive en celular (borde + fondo) y custom.css fuerza overflow-x:auto:
+       con tarjetas sobra el marco y no hay nada que desplazar. */
+    .table-responsive:has(> table.tabla-cards) {
+        overflow-x: visible !important;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    /* .table-bordered de Bootstrap 5 le pone borde al tbody (quedaba un recuadro doble). */
+    table.tabla-cards,
+    table.tabla-cards > tbody {
+        display: block;
+        width: 100%;
+        border: 0;
+        margin-bottom: 0;
+    }
+
+    table.tabla-cards > thead {
+        display: none;
+    }
+
+    table.tabla-cards > tbody > tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: .4rem .75rem;
+        margin-bottom: .55rem;
+        padding: .6rem .7rem;
+        border: 1px solid var(--ui-border, #d7dce3);
+        border-radius: .6rem;
+        background: var(--ui-surface, #fff);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+    }
+
+    /* Filas con color de estado (ej. anulada = .table-danger): el color lo pone la fila, no la celda. */
+    table.tabla-cards > tbody > tr.table-danger,
+    table.tabla-cards > tbody > tr.table-warning,
+    table.tabla-cards > tbody > tr.table-success,
+    table.tabla-cards > tbody > tr.table-info,
+    table.tabla-cards > tbody > tr.table-secondary {
+        background: var(--bs-table-bg);
+    }
+
+    /* Fila de detalle desplegable: sin marco ni alto propio mientras esta cerrada. El margen de arriba negativo
+       (= el margen de abajo de la tarjeta) cancela el hueco y deja el detalle abierto pegado a su tarjeta; cerrada
+       u oculta (d-none), el espaciado entre tarjetas queda igual. */
+    table.tabla-cards > tbody > tr.cc-fila-detalle {
+        display: block;
+        margin: -.55rem 0 .55rem;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    table.tabla-cards > tbody > tr > td {
+        display: block;
+        min-width: 0;
+        padding: 0 !important;
+        border: 0;
+        background-color: transparent;
+        box-shadow: none;
+        text-align: left !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        font-size: .84rem;
+        line-height: 1.25;
+    }
+
+    table.tabla-cards > tbody > tr > td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: .08rem;
+        font-size: .66rem;
+        font-weight: 600;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-titulo {
+        order: -3;
+        grid-column: 1 / -1;
+        padding-bottom: .35rem !important;
+        border-bottom: 1px solid var(--ui-border, #d7dce3);
+        font-size: .92rem;
+        font-weight: 700;
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-cabecera {
+        order: -2;
+    }
+
+    /* Los badges de Bootstrap no cortan el texto: un badge largo se salia de la tarjeta angosta. */
+    table.tabla-cards > tbody > tr > td:not(.cc-acciones) .badge {
+        display: inline-block;
+        max-width: 100%;
+        white-space: normal;
+        text-align: left;
+        line-height: 1.25;
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-destacado {
+        font-weight: 700;
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-ancho,
+    table.tabla-cards > tbody > tr > td[colspan] {
+        grid-column: 1 / -1;
+    }
+
+    /* Rotulo largo en una grilla de 3 columnas (tabla-cards-lineas): la celda ocupa 2 para que el rotulo no se parta. */
+    table.tabla-cards > tbody > tr > td.cc-doble {
+        grid-column: span 2;
+    }
+
+    /* Fila de "no hay resultados": un unico td con colspan y text-center. */
+    table.tabla-cards > tbody > tr > td[colspan].text-center {
+        text-align: center !important;
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-vacio {
+        display: none !important;
+    }
+
+    /* Variante "lineas" (tabla-cards-lineas): para el detalle de un registro (lineas de producto, 5-6 columnas cortas dentro
+       de un panel desplegable). Mini-tarjetas mas bajas y los datos cortos de a 3 por renglon; el producto va de titulo. */
+    table.tabla-cards.tabla-cards-lineas > tbody > tr {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .3rem .6rem;
+        padding: .45rem .6rem;
+        margin-bottom: .4rem;
+    }
+
+    table.tabla-cards.tabla-cards-lineas > tbody > tr > td.cc-titulo {
+        padding-bottom: .25rem !important;
+        font-size: .86rem;
+    }
+
+    table.tabla-cards.tabla-cards-lineas > tbody > tr > td[data-label]::before {
+        font-size: .6rem;
+    }
+
+    /* Titulo con un dato tenue a la derecha (ej. el numero de registro junto a la fecha): .cc-titulo-flex en la celda y
+       <span class="cc-solo-card cc-titulo-extra"> con el dato. */
+    table.tabla-cards > tbody > tr > td.cc-titulo.cc-titulo-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: .5rem;
+    }
+
+    table.tabla-cards .cc-titulo-extra {
+        flex-shrink: 0;
+        white-space: nowrap;
+        font-size: .72rem;
+        font-weight: 400;
+        font-variant-numeric: tabular-nums;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    /* Texto que solo se ve en la tabla de desktop (en la tarjeta lo reemplaza un icono). */
+    table.tabla-cards .cc-solo-tabla {
+        display: none;
+    }
+
+    /* Igual que .cc-titulo-flex pero para un elemento DENTRO del titulo (cuando la celda titulo tiene varios bloques,
+       ej. Stock: accion + resumen + etiquetas): esa linea queda con el dato tenue a la derecha. */
+    table.tabla-cards .cc-titulo-linea {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: .5rem;
+    }
+
+    .cc-nota-detalle {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .35rem .6rem;
+        margin-bottom: .6rem;
+        font-size: .82rem;
+        color: var(--ui-text-soft, #5f6772);
+    }
+
+    .cc-nota-detalle i {
+        margin-right: .35rem;
+    }
+
+    /* Variante "lista" (tabla-cards-lista): las filas son renglones de UNA sola tarjeta, separados por una linea fina.
+       Cada celda se ubica por clase: arriba .cc-l-prod, .cc-l-cant y .cc-l-kg (negrita, a la derecha);
+       debajo .cc-l-cod a la izquierda y los iconos .cc-l-bal / .cc-l-ing a la derecha.
+       Pensada para las lineas de producto de un detalle (Movimientos). Sin rotulos: los datos se entienden por su formato
+       ("Cod. 9", "0 un.", "9,150 kg") y los iconos llevan title. */
+    table.tabla-cards.tabla-cards-lista > tbody {
+        border: 1px solid var(--ui-border, #d7dce3);
+        border-radius: .6rem;
+        background: var(--ui-surface, #fff);
+        padding: 0 .7rem;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr {
+        grid-template-columns: minmax(4.5rem, 1fr) auto auto 1.1rem 1.1rem;
+        gap: .1rem .5rem;
+        margin: 0;
+        padding: .5rem 0;
+        border: 0;
+        border-bottom: 1px solid var(--ui-border, #d7dce3);
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr:last-child {
+        border-bottom: 0;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td[data-label]::before {
+        display: none;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-prod {
+        grid-area: 1 / 1;
+        overflow-wrap: break-word;
+        font-size: .88rem;
+        font-weight: 600;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-kg {
+        grid-area: 1 / 3 / 2 / 6;
+        text-align: right !important;
+        white-space: nowrap !important;
+        font-size: .88rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-bal {
+        grid-area: 2 / 4;
+        align-self: center;
+        text-align: center !important;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-ing {
+        grid-area: 2 / 5;
+        align-self: center;
+        text-align: center !important;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-cod {
+        grid-area: 2 / 1;
+        align-self: center;
+        font-size: .76rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-cant {
+        grid-area: 1 / 2;
+        text-align: right !important;
+        white-space: nowrap !important;
+        font-size: .88rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Hora de carga de la linea (Compras / Stock), abajo a la derecha antes del icono; si es otro dia que el registro
+       trae la fecha y va en ambar (.cc-l-hora-otro-dia, ver Helpers/HoraLineaDetalle.cs). */
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-hora {
+        grid-area: 2 / 2 / 3 / 5;
+        align-self: center;
+        text-align: right !important;
+        white-space: nowrap !important;
+        font-size: .72rem;
+        color: var(--ui-text-muted, #6c757d);
+        font-variant-numeric: tabular-nums;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-hora-otro-dia {
+        color: #a8650a;
+    }
+
+    html.dark-mode table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-hora-otro-dia,
+    body.dark-mode table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-hora-otro-dia {
+        color: #f0b429;
+    }
+
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td .far {
+        margin-right: .2rem;
+    }
+
+    /* Variante "lista-edicion" (tabla-cards-lista + tabla-cards-lista-edicion): lineas editables (Movimientos/Editar y Stock/Editar) con una
+       6.a columna para el boton de quitar (.cc-l-acc), del alto de la linea y centrado a la derecha. */
+    table.tabla-cards.tabla-cards-lista-edicion > tbody > tr {
+        grid-template-columns: minmax(4.5rem, 1fr) auto auto 1.1rem 1.1rem 2.2rem;
+    }
+
+    table.tabla-cards.tabla-cards-lista-edicion > tbody > tr > td.cc-l-acc {
+        grid-area: 1 / 6 / 3 / 7;
+        align-self: center;
+        justify-self: end;
+    }
+
+    table.tabla-cards.tabla-cards-lista-edicion > tbody > tr > td.cc-l-acc .btn {
+        width: 2rem;
+        height: 2rem;
+        margin: 0;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Un solo icono por linea (sin Permitir ingreso): va pegado al borde derecho. */
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-bal.cc-l-ultimo {
+        grid-column: 5;
+    }
+
+    /* Iconos de estado (si/no): encendido = color (text-primary / text-success), apagado = gris tenue. */
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td .fas {
+        font-size: .78rem;
+    }
+
+    table.tabla-cards .cc-ico-off {
+        color: var(--ui-text-muted, #6c757d);
+        opacity: .3;
+    }
+
+    /* Botones: repartidos en el ancho de la tarjeta, con alto comodo para el dedo. */
+    table.tabla-cards > tbody > tr > td.cc-acciones {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem;
+        padding-top: .45rem !important;
+        border-top: 1px solid var(--ui-border, #d7dce3);
+    }
+
+    /* flex 1 1 auto + nowrap: con la barra lateral abierta la tarjeta mide ~230px; un boton que no entra pasa
+       al renglon siguiente en vez de partir la palabra ("Vent|as"), que heredaba el overflow-wrap del td. */
+    table.tabla-cards > tbody > tr > td.cc-acciones .btn,
+    table.tabla-cards > tbody > tr > td.cc-acciones .badge {
+        flex: 1 1 auto;
+        margin: 0 !important; /* bootstrap4-compat le pone margin-left a cada .btn vecino y hay botones con mr-1/mb-1; el espaciado lo da el gap */
+        white-space: nowrap;
+        overflow-wrap: normal;
+        min-height: 2.1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .3rem;
+        font-size: .8rem;
+    }
+
+    /* Grupos de botones (.btn-group): el grupo ocupa todo el ancho y los botones se reparten por igual. */
+    table.tabla-cards > tbody > tr > td.cc-acciones .btn-group {
+        display: flex;
+        flex: 1 1 100%;
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-acciones .btn-group > .btn {
+        flex: 1 1 0;
+    }
+
+    /* Los <form> que envuelven un boton de submit (ej. "Desbloquear") tambien se reparten el ancho. */
+    table.tabla-cards > tbody > tr > td.cc-acciones form {
+        display: flex !important; /* pisa el d-inline que traen estos formularios */
+        flex: 1 1 auto;
+        margin: 0;
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-acciones form .btn {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-acciones .btn.cc-accion-principal {
+        order: -1;
+        flex-basis: 100%;
+        min-height: 2.75rem;
+        font-size: .95rem;
+        font-weight: 700;
+    }
+
+    table.tabla-cards > tbody > tr > td.cc-acciones .btn.cc-accion-ancha {
+        flex-basis: 100%;
+        min-height: 1.7rem;
+        padding-top: .1rem;
+        padding-bottom: .1rem;
+        font-size: .72rem;
+    }
+}

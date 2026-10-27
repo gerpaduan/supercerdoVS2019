@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-10-14
+revisada: 2026-10-27
 ---
 ## Para qué sirve
 Listado de los **elaborados registrados** (por sucursal y fechas) con el total de kilos, la cantidad de elaborados mostrados y un detalle desplegable de cada uno.
@@ -24,3 +24,10 @@ En el detalle de un registro, si el producto tiene una fórmula [secreta](ayuda:
 
 ## Resto de la pantalla
 PENDIENTE: documentar filtros, vista completa, totales y acciones (no verificado contra el código en esta revisión).
+
+## En el celular
+- En pantallas angostas (celular) cada elaborado se ve como **tarjeta**: arriba el **nombre y el código**, después fecha, sucursal, **cantidad**, quién lo creó, y el estado y las observaciones si los tiene. No hace falta desplazarse de costado.
+- Al pie están **Ver** y **Detalles** (abre debajo de la tarjeta el detalle del elaborado). Los elaborados anulados se ven con la tarjeta en amarillo y los desarmes en celeste.
+- Arriba a la derecha del nombre, en gris, va el **número del registro**.
+- **Detalles** en el celular: no se muestra el recuadro de datos del registro. Arriba de los ingredientes aparecen las **observaciones** (si hay); la receta no, porque solo se usa en las cargas. Cada ingrediente muestra el producto y los kilos arriba, y abajo el código y el icono de **balanza** (azul = pesado en balanza, gris = no). Si la fórmula es secreta y está oculta, queda el renglón con el candado y **Ver fórmula**.
+- En la computadora la pantalla se ve igual que antes.

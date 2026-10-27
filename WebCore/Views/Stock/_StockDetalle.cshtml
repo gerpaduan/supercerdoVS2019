@@ -1,6 +1,19 @@
 @model WebCore.Models.CompraIndexDetalleVm
 @using System
 
+@functions {
+    // Resumen en un renglon de la compra vinculada / pesaje asociado para la tarjeta de celular:
+    // "Proveedor · 11 medias · 504,00 kg" (se omite lo que no tenga dato).
+    string StockRelacionadoResumen(string proveedor, int? medias, float? kgs)
+    {
+        var partes = new System.Collections.Generic.List<string>();
+        if (!string.IsNullOrWhiteSpace(proveedor)) partes.Add(proveedor.Trim());
+        if (medias.HasValue) partes.Add(medias.Value + " medias");
+        if (kgs.HasValue) partes.Add(kgs.Value.ToString("N2") + " kg");
+        return partes.Count == 0 ? "-" : string.Join(" · ", partes);
+    }
+}
+
 @{
     string detalleError = ViewBag.StockDetalleError as string ?? "";
 }
@@ -25,6 +38,27 @@ else
     var sucursalDetalle = !string.IsNullOrWhiteSpace(Model.Sucursal) ? Model.Sucursal : "-";
     var tipoDetalle = !string.IsNullOrWhiteSpace(Model.TipoCompra) ? Model.TipoCompra : "-";
 
+    @* Celular (<768px, 2026-10-27): se oculta la tarjeta de datos del registro (abajo) porque repite lo de la tarjeta del
+       movimiento; aca quedan las observaciones (si hay) y el boton Ver Porc(%) de los pesajes (mismo handler delegado por
+       clase en Stock/Index.cshtml). Las lineas son una lista compacta (tabla-cards-lista). En desktop no cambia nada. *@
+    if (!string.IsNullOrWhiteSpace(Model.Observaciones) || Model.EsPesaje)
+    {
+        <div class="cc-nota-detalle">
+            <span>
+                @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+                {
+                    <i class="fas fa-comment-alt"></i>@Model.Observaciones
+                }
+            </span>
+            @if (Model.EsPesaje)
+            {
+                <button type="button" class="btn btn-sm btn-outline-info btn-ver-porcentaje-pesaje-index" data-id-compra="@Model.IdCompra">
+                    <i class="fas fa-percent"></i>Ver Porc(%)
+                </button>
+            }
+        </div>
+    }
+
     <div class="row stock-detalle-layout">
         <div class="col-12 col-xl-8 order-2 order-xl-1">
             @if (Model.EsPesaje && Model.IdCompraVinculada.HasValue && Model.IdCompraVinculada.Value > 0)
@@ -37,7 +71,8 @@ else
                     }
                     else
                     {
-                        <div class="row">
+                        <div class="stock-relacionado-resumen">@StockRelacionadoResumen(Model.ProveedorCompraVinculada, Model.CantMediasCompraVinculada, Model.KgsCompraVinculada)</div>
+                        <div class="row stock-relacionado-grid">
                             <div class="col-12 col-md-3 mb-2 mb-md-0">
                                 <div class="text-muted">Fecha de compra</div>
                                 <div class="font-weight-bold">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
@@ -69,7 +104,8 @@ else
                     }
                     else
                     {
-                        <div class="row">
+                        <div class="stock-relacionado-resumen">@StockRelacionadoResumen(Model.ProveedorPesajeRelacionado, Model.CantMediasPesajeRelacionado, Model.KgsPesajeRelacionado)</div>
+                        <div class="row stock-relacionado-grid">
                             <div class="col-12 col-md-3 mb-2 mb-md-0">
                                 <div class="text-muted">Fecha del pesaje</div>
                                 <div class="font-weight-bold">@(Model.FechaPesajeRelacionado.HasValue ? Model.FechaPesajeRelacionado.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
@@ -105,7 +141,7 @@ else
             }
 
             <div class="table-responsive mt-3 mt-xl-0">
-                <table class="table table-sm table-hover mb-0 stock-detalle-tabla">
+                <table class="table table-sm table-hover mb-0 stock-detalle-tabla tabla-cards tabla-cards-lista">
                     <thead class="thead-light">
                         <tr>
                             <th>Codigo producto</th>
@@ -126,12 +162,23 @@ else
                         {
                             foreach (var linea in Model.Lineas)
                             {
+                                var horaLinea = WebCore.Helpers.HoraLineaDetalle.Formatear(linea.CreadoTexto, Model.FechaCompra);
                                 <tr>
-                                    <td>@linea.Codigo</td>
-                                    <td>@linea.Producto</td>
-                                    <td class="text-right">@linea.CantidadKgTexto</td>
-                                    <td class="text-center">@(linea.Balanza ? "Si" : "-")</td>
-                                    <td>@(!string.IsNullOrWhiteSpace(linea.CreadoTexto) ? linea.CreadoTexto : "-")</td>
+                                    <td class="cc-l-cod"><span class="cc-solo-card">Cód. </span>@linea.Codigo</td>
+                                    <td class="cc-l-prod">@linea.Producto</td>
+                                    <td class="text-right cc-l-kg">@linea.CantidadKgTexto</td>
+                                    @* Balanza: en celular un icono (azul = pesado en balanza, gris tenue = no); en desktop Si / -. *@
+                                    <td class="text-center cc-l-bal cc-l-ultimo">
+                                        <span class="cc-solo-tabla">@(linea.Balanza ? "Si" : "-")</span>
+                                        <i class="cc-solo-card fas fa-balance-scale @(linea.Balanza ? "text-primary" : "cc-ico-off")" role="img"
+                                           aria-label="@(linea.Balanza ? "Pesado en balanza" : "Sin balanza")"
+                                           title="@(linea.Balanza ? "Pesado en balanza" : "Sin balanza")"></i>
+                                    </td>
+                                    @* Creado: en celular solo la hora, o fecha y hora en ambar si la linea se cargo otro dia que el registro. *@
+                                    <td class="cc-l-hora @(horaLinea.OtroDia ? "cc-l-hora-otro-dia" : "") @(horaLinea.Texto == "" ? "cc-vacio" : "")">
+                                        <span class="cc-solo-tabla">@(!string.IsNullOrWhiteSpace(linea.CreadoTexto) ? linea.CreadoTexto : "-")</span>
+                                        <span class="cc-solo-card" title="@(horaLinea.OtroDia ? "Cargada otro día que el registro" : "Hora de carga")"><i class="far fa-clock"></i>@horaLinea.Texto</span>
+                                    </td>
                                 </tr>
                             }
                         }
@@ -200,6 +247,32 @@ else
             font-size: .76rem;
             padding-top: .3rem;
             padding-bottom: .3rem;
+        }
+
+        .stock-relacionado-resumen {
+            display: none;
+        }
+
+        @@media (max-width: 767.98px) {
+            .stock-detalle-meta-card,
+            .stock-relacionado-grid {
+                display: none;
+            }
+
+            .stock-relacionado-resumen {
+                display: block;
+                font-size: .8rem;
+            }
+
+            /* Con el contenedor adelante: la regla base de .stock-relacionado-box vive en _StockTabla.cshtml y no hay que
+               depender del orden en que se cargan los estilos. */
+            .stock-detalle-layout .stock-relacionado-box {
+                padding: .55rem .7rem;
+            }
+
+            .stock-detalle-layout .stock-relacionado-box > .small {
+                margin-bottom: .2rem !important;
+            }
         }
 
         @@media (min-width: 1200px) {

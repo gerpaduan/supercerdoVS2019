@@ -19,8 +19,9 @@ else if (lista.Count == 0)
 }
 else
 {
+    @* En celular (<768px) cada pedido se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css). *@
     <div class="table-responsive">
-        <table class="table table-hover table-bordered mb-0">
+        <table class="table table-hover table-bordered mb-0 tabla-cards">
             <thead class="thead-light">
                 <tr>
                     <th>N°</th>
@@ -38,21 +39,21 @@ else
                 @foreach (var p in lista)
                 {
                     <tr>
-                        <td><a href="@Url.Action("Detalle", "Pedidos", new { id = p.Id })" class="font-weight-bold">@p.Id</a></td>
-                        <td class="text-nowrap">@p.Fecha.ToString("dd/MM/yyyy HH:mm", cultura)@if (p.Modificado.HasValue) { <span class="badge badge-secondary ml-1" title="Modificado el @p.Modificado.Value.ToString("dd/MM/yyyy HH:mm", cultura)">modificado</span> }</td>
-                        <td>@p.Usuario</td>
-                        <td>@p.Sucursales</td>
-                        <td class="text-right">@p.Productos</td>
-                        <td class="text-right">@p.Lineas</td>
-                        <td class="text-right text-nowrap">
+                        <td class="cc-titulo" data-label="Pedido N°"><a href="@Url.Action("Detalle", "Pedidos", new { id = p.Id })" class="font-weight-bold">@p.Id</a></td>
+                        <td class="text-nowrap" data-label="Fecha">@p.Fecha.ToString("dd/MM/yyyy HH:mm", cultura)@if (p.Modificado.HasValue) { <span class="badge badge-secondary ml-1" title="Modificado el @p.Modificado.Value.ToString("dd/MM/yyyy HH:mm", cultura)">modificado</span> }</td>
+                        <td data-label="Usuario">@p.Usuario</td>
+                        <td class="cc-ancho" data-label="Sucursales">@p.Sucursales</td>
+                        <td class="text-right" data-label="Productos">@p.Productos</td>
+                        <td class="text-right" data-label="Líneas">@p.Lineas</td>
+                        <td class="text-right text-nowrap cc-ancho cc-destacado" data-label="Total estimado">
                             $ @p.TotalEstimado.ToString("N2", cultura)
                             @if (p.LineasSinPrecio > 0)
                             {
                                 <div class="small text-muted" title="@Negocio.PedidoTextos.AvisoSinPrecio(p.LineasSinPrecio)">parcial · @p.LineasSinPrecio sin precio</div>
                             }
                         </td>
-                        <td>@p.Nota</td>
-                        <td class="text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Detalle", "Pedidos", new { id = p.Id })">Ver</a></td>
+                        <td class="cc-ancho @(string.IsNullOrWhiteSpace(p.Nota) ? "cc-vacio" : "")" data-label="Nota">@p.Nota</td>
+                        <td class="text-nowrap cc-acciones"><a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Detalle", "Pedidos", new { id = p.Id })">Ver</a></td>
                     </tr>
                 }
             </tbody>

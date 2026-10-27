@@ -456,19 +456,16 @@
                         @if (Model.EsEdicion)
                         {
                             <div class="card stock-panel-card mt-3">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="small text-muted">Creado</div>
-                                            <div class="font-weight-bold">@Model.Creado</div>
-                                            <div class="small text-muted">@Model.CreadoPor</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="small text-muted">Actualizado</div>
-                                            <div class="font-weight-bold">@Model.Actualizado</div>
-                                            <div class="small text-muted">@Model.ActualizadoPor</div>
-                                        </div>
-                                    </div>
+                                <div class="card-body py-2 px-3">
+                                    @* Bloque compacto de dos columnas (pedido 2026-10-27): datos que casi nadie lee. *@
+                                    @await Html.PartialAsync("~/Views/Shared/_DatosRegistroCompacto.cshtml", new WebCore.Models.DatosRegistroCompactoVm
+                                    {
+                                        Items = new System.Collections.Generic.List<WebCore.Models.DatoRegistroCompactoItem>
+                                        {
+                                            new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Creado", Valor = Model.Creado, Detalle = Model.CreadoPor },
+                                            new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Actualizado", Valor = Model.Actualizado, Detalle = Model.ActualizadoPor }
+                                        }
+                                    })
                                 </div>
                             </div>
                         }

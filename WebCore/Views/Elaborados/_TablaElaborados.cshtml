@@ -7,8 +7,10 @@
     int totalColumnas = 8;
 }
 
+@* En celular (<768px) cada elaborado se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css):
+   el elaborado encabeza la tarjeta y el detalle desplegable queda pegado debajo (cc-fila-detalle). *@
 <div class="table-responsive tabla-full">
-    <table class="table table-bordered table-hover mb-0">
+    <table class="table table-bordered table-hover mb-0 tabla-cards">
         <thead class="thead-light">
             <tr>
                 <th style="width:160px;">Fecha</th>
@@ -52,13 +54,13 @@
                         data-observaciones="@((observaciones ?? "").ToLowerInvariant())"
                         data-estado="@((item.Estado ?? "").ToLowerInvariant())"
                         data-detail-id="@detailId">
-                        <td>@(item.Fecha == DateTime.MinValue ? "" : item.Fecha.ToString("dd/MM/yyyy HH:mm:ss"))</td>
-                        <td>@item.Sucursal</td>
-                        <td>
-                            <div class="font-weight-bold">@descripcion</div>
+                        <td data-label="Fecha">@(item.Fecha == DateTime.MinValue ? "" : item.Fecha.ToString("dd/MM/yyyy HH:mm:ss"))</td>
+                        <td data-label="Sucursal">@item.Sucursal</td>
+                        <td class="cc-titulo">
+                            <div class="font-weight-bold cc-titulo-linea">@descripcion<span class="cc-solo-card cc-titulo-extra" title="Número de registro">#@item.Id</span></div>
                             <div class="elaborados-codigo-inline">cod: @(codigo > 0 ? codigo.ToString() : "-")</div>
                         </td>
-                        <td class="text-right">
+                        <td class="text-right cc-destacado" data-label="Cantidad">
                             <div>@item.Kgs.ToString("N3", cultura)</div>
                             @if (item.IngredientesOcultos)
                             {
@@ -66,7 +68,7 @@
                                 <div class="elaborados-codigo-inline" title="La cantidad no incluye los ingredientes de la fórmula secreta.">+ ingredientes</div>
                             }
                         </td>
-                        <td>
+                        <td class="cc-ancho" data-label="Creado">
                             @* Creado: fecha y hora, y debajo (gris, chico) el usuario. Si el registro se modificó,
                                se marca con una etiqueta y se muestra la fecha y el usuario de la última modificación. *@
                             <div class="font-weight-bold elaborados-fecha-creado">@(!string.IsNullOrWhiteSpace(item.Creado) ? item.Creado : "-")</div>
@@ -86,13 +88,13 @@
                                 }
                             }
                         </td>
-                        <td class="text-center">
+                        <td class="text-center @(string.IsNullOrWhiteSpace(observaciones) ? "cc-vacio" : "")" data-label="Observaciones">
                             @if (!string.IsNullOrWhiteSpace(observaciones))
                             {
                                 <span class="badge badge-pill badge-info" title="@observaciones">1</span>
                             }
                         </td>
-                        <td>
+                        <td class="@(string.IsNullOrWhiteSpace(item.Estado) ? "cc-vacio" : "")" data-label="Estado">
                             @if (!string.IsNullOrWhiteSpace(item.Estado))
                             {
                                 <span class="font-weight-bold text-danger">@item.Estado</span>
@@ -102,9 +104,9 @@
                                 <span class="text-muted">-</span>
                             }
                         </td>
-                        <td class="text-left text-nowrap">
+                        <td class="text-left text-nowrap cc-acciones">
                             <a class="btn btn-sm btn-outline-primary" href="@urlModificar" title="Ver elaborado">
-                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-eye"></i><span class="cc-solo-card"> Ver</span>
                             </a>
                             <button type="button"
                                     class="btn btn-sm btn-link text-decoration-none btn-detalles-elaborado"
@@ -113,11 +115,11 @@
                                     aria-controls="@detailId"
                                     title="Detalles"
                                     aria-label="Detalles">
-                                <i class="fas fa-chevron-down"></i>
+                                <i class="fas fa-chevron-down"></i><span class="cc-solo-card"> Detalles</span>
                             </button>
                         </td>
                     </tr>
-                    <tr class="js-elaborado-detail-row" data-parent-detail-id="@detailId">
+                    <tr class="js-elaborado-detail-row cc-fila-detalle" data-parent-detail-id="@detailId">
                         <td colspan="@totalColumnas" class="p-0">
                             <div id="@detailId" class="collapse elaborado-detalle-collapse">
                                 <div class="p-3 border-top elaborados-detalle-wrap">
@@ -206,6 +208,25 @@
     body.dark-mode .elaborados-page .elaborados-detalle-wrap {
         background-color: #1f2937;
         border-top-color: #374151 !important;
+    }
+
+    /* Celular: la fila anulada (amarillo) pinta la tarjeta entera y no cada celda (tabla-cards.css pone las celdas transparentes). */
+    @@media (max-width: 767.98px) {
+        .elaborados-page .elaborados-row-anulado {
+            background: #fff3cd;
+        }
+
+        html.dark-mode .elaborados-page .elaborados-row-anulado,
+        body.dark-mode .elaborados-page .elaborados-row-anulado {
+            background: #5c4712;
+            color: #f3f4f6;
+        }
+
+        .elaborados-page .elaborados-row-anulado > td,
+        html.dark-mode .elaborados-page .elaborados-row-anulado > td,
+        body.dark-mode .elaborados-page .elaborados-row-anulado > td {
+            background-color: transparent;
+        }
     }
 
     @@media (min-width: 1200px) {

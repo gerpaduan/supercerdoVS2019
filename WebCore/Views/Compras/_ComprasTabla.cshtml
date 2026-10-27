@@ -15,8 +15,10 @@
     int totalColumnas = 7 + (mostrarTipoCompra ? 1 : 0) + (mostrarMediasReses ? 1 : 0);
 }
 
+@* En celular (<768px) cada compra se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css):
+   el proveedor encabeza la tarjeta y la fila de detalle desplegable queda pegada debajo (cc-fila-detalle). *@
 <div class="table-responsive tabla-full">
-    <table class="table table-bordered table-hover mb-0">
+    <table class="table table-bordered table-hover mb-0 tabla-cards">
         <thead class="thead-light">
             <tr>
                 <th>Fecha</th>
@@ -57,38 +59,38 @@
                     string detailId = "detCompra_" + idCompra;
 
                     <tr class="@(anulado ? "table-danger" : "")">
-                        <td>@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
-                        <td>@row["nroRemito"]</td>
-                        <td>@row["razonSocial"]</td>
+                        <td data-label="Fecha">@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                        <td data-label="Nro. remito/factura">@row["nroRemito"]</td>
+                        <td class="cc-titulo cc-titulo-flex">@row["razonSocial"]<span class="cc-solo-card cc-titulo-extra" title="Número de compra">#@idCompra</span></td>
                         @if (mostrarTipoCompra)
                         {
-                            <td>@row["tipoCompra"]</td>
+                            <td data-label="Tipo de compra">@row["tipoCompra"]</td>
                         }
-                        <td class="text-right">@cantKg.ToString("N2")</td>
+                        <td class="text-right" data-label="Un./Kg.">@cantKg.ToString("N2")</td>
                         @if (mostrarMediasReses)
                         {
-                            <td class="text-right">@cantMedias</td>
+                            <td class="text-right" data-label="Medias reses">@cantMedias</td>
                         }
-                        <td class="text-right">@totalS.ToString("N2")</td>
-                        <td>@row["sucursal"]</td>
-                        <td class="text-center text-nowrap">
+                        <td class="text-right cc-destacado" data-label="Total">@totalS.ToString("N2")</td>
+                        <td data-label="Sucursal">@row["sucursal"]</td>
+                        <td class="text-center text-nowrap cc-acciones">
                             <button type="button"
                                     class="btn btn-sm btn-outline-secondary btn-detalles-compra"
                                     data-target="#@detailId"
                                     aria-expanded="false"
                                     aria-controls="@detailId"
                                     title="Ver detalle">
-                                <i class="fas fa-angle-down"></i>
+                                <i class="fas fa-angle-down"></i><span class="cc-solo-card">Detalle</span>
                             </button>
                             <a class="btn btn-sm btn-outline-primary"
                                href="@Url.Action("ModificarCompra", "Compras", new { id = idCompra, origen = "layout" })"
                                title="Ver compra"
                                aria-label="Ver compra">
-                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-eye"></i><span class="cc-solo-card">Ver compra</span>
                             </a>
                         </td>
                     </tr>
-                    <tr class="tr-detalles-compra">
+                    <tr class="tr-detalles-compra cc-fila-detalle">
                         <td colspan="@totalColumnas" class="p-0">
                             <div id="@detailId" class="collapse compra-detalle-collapse">
                                 <div class="p-3 bg-light border-top compra-detalle-body">

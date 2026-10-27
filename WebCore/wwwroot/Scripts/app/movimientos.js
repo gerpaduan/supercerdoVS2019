@@ -196,7 +196,9 @@
             productoRequestSeq: 0,
             readOnly: !!config.soloLecturaInicial,
             sortKey: 'ordenIngreso',
-            sortDirection: 'asc',
+            // En el celular arranca en "ultimos primero": lo recien cargado queda arriba, cerca del formulario (2026-10-27,
+            // pedido del usuario; en desktop sigue el orden de carga). El orden guardado no depende de esto (ver renderLines).
+            sortDirection: (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) ? 'desc' : 'asc',
             lineSequence: 0,
             searchText: '',
             // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
@@ -504,6 +506,14 @@
                     $th.attr('title', 'Ordenar por ' + label);
                 }
             });
+
+            // Selector "Ordenar" del celular (#ordenLineasMovimiento, solo < 768px): refleja el orden actual. Si el orden
+            // vigente no es una de sus opciones (ej. codigo descendente elegido en desktop) queda en blanco.
+            var $orden = $('#ordenLineasMovimiento');
+            if ($orden.length) {
+                var valorOrden = state.sortKey + ':' + state.sortDirection;
+                $orden.val($orden.find('option[value="' + valorOrden + '"]').length ? valorOrden : '');
+            }
         }
 
         function ensureSortableHeaders() {
@@ -738,7 +748,7 @@
             var totalKilos = 0;
             var sortedLines = getSortedLinesWithIndex();
 
-            sortedLines.forEach(function (item, index) {
+            sortedLines.forEach(function (item) {
                 var line = item.line;
                 var mostrarCantUnidad = toInt(line.CantUnidad) === 0 ? '' : formatInt(line.CantUnidad);
                 var kilosEnteros = isIntegerDecimal(line.CantKg);
@@ -748,19 +758,30 @@
                 totalKilos += toFloat(line.CantKg);
 
                 // La búsqueda solo afecta qué filas se ven: totales y hidden inputs siguen contemplando TODAS las líneas.
+                // Clases cc-*: en el celular la tabla es una lista (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css);
+                // el # pasa a prefijo del codigo, Balanza / Permitir ingreso a iconos y el tacho a la derecha. En desktop no cambia.
                 if (lineMatchesSearch(line, state.searchText)) {
+                    var orden = toInt(line.__ordenIngreso);
+                    var textoBalanza = line.PesoBalanza ? 'Pesado en balanza' : 'Sin balanza';
+                    var textoIngreso = line.PermitirIngreso ? 'Ingreso permitido: línea autorizada aunque los kilos no coincidían' : 'Ingreso normal';
                     html += '<tr>'
-                        + '<td class="text-center font-weight-bold">' + toInt(line.__ordenIngreso) + '</td>'
-                        + '<td>' + line.Codigo + '</td>'
-                        + '<td>' + line.Producto + '</td>'
-                        + '<td class="text-right">' + mostrarCantUnidad + '</td>'
-                        + '<td class="text-right">' + mostrarKilos + '</td>'
-                        + '<td class="text-center">' + (line.PesoBalanza ? 'Sí' : 'No') + '</td>'
-                        + '<td class="text-center">' + (line.PermitirIngreso ? 'Sí' : 'No') + '</td>'
-                        + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + item.originalIndex + '"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
+                        + '<td class="text-center font-weight-bold cc-solo-tabla">' + orden + '</td>'
+                        + '<td class="cc-l-cod"><span class="cc-solo-card">#' + orden + ' · Cód. </span>' + line.Codigo + '</td>'
+                        + '<td class="cc-l-prod">' + line.Producto + '</td>'
+                        + '<td class="text-right cc-l-cant">' + mostrarCantUnidad + (mostrarCantUnidad ? '<span class="cc-solo-card"> un.</span>' : '') + '</td>'
+                        + '<td class="text-right cc-l-kg">' + mostrarKilos + '</td>'
+                        + '<td class="text-center cc-l-bal"><span class="cc-solo-tabla">' + (line.PesoBalanza ? 'Sí' : 'No') + '</span>'
+                        + '<i class="cc-solo-card fas fa-balance-scale ' + (line.PesoBalanza ? 'text-primary' : 'cc-ico-off') + '" role="img" aria-label="' + textoBalanza + '" title="' + textoBalanza + '"></i></td>'
+                        + '<td class="text-center cc-l-ing"><span class="cc-solo-tabla">' + (line.PermitirIngreso ? 'Sí' : 'No') + '</span>'
+                        + '<i class="cc-solo-card fas fa-user-shield ' + (line.PermitirIngreso ? 'text-success' : 'cc-ico-off') + '" role="img" aria-label="' + textoIngreso + '" title="' + textoIngreso + '"></i></td>'
+                        + '<td class="cc-l-acc"><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + item.originalIndex + '" title="Quitar línea" aria-label="Quitar línea"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
                         + '</tr>';
                 }
+            });
 
+            // Hidden inputs en el ORDEN DE CARGA (state.lines), no en el de pantalla: con "ultimos primero" (celular) o al
+            // ordenar por una columna, las lineas nuevas se guardarian invertidas o mezcladas (2026-10-27, ver docs/DECISIONS.md).
+            state.lines.forEach(function (line, index) {
                 hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorteMovimiento" value="' + (line.IdCorteMovimiento || 0) + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + (line.IdCorte || 0) + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + (line.Codigo || 0) + '" />';
@@ -1079,6 +1100,15 @@
                 state.sortDirection = 'asc';
             }
 
+            renderLines();
+        });
+
+        // Celular: sin encabezados para tocar, el orden se elige con el selector (valor "clave:direccion").
+        $(document).on('change.movimientoSort', '#ordenLineasMovimiento', function () {
+            var partes = String($(this).val() || '').split(':');
+            if (!partes[0]) return;
+            state.sortKey = partes[0];
+            state.sortDirection = partes[1] === 'desc' ? 'desc' : 'asc';
             renderLines();
         });
 

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-10-22
+revisada: 2026-10-27
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -32,6 +32,14 @@ La columna **Sugerido** estima lo que conviene mandar: **ventas + uso en elabora
 - Cada vez que el stock se actualiza las sugerencias se **recalculan solas** y la leyenda dice *«Recalculado 11:23 · 3 cambiaron»*. Las celdas cuyo sugerido **cambió** quedan marcadas en ámbar (el tooltip dice el valor anterior); si ese producto ya está en el movimiento, su «en mov.» se pinta en ámbar para que **revises la cantidad**. El movimiento nunca se modifica solo.
 - Con un período **cerrado** (fecha hasta anterior a hoy) las actualizaciones solo releen el stock.
 - Solo con la base de datos nueva (Postgres): con la anterior la columna avisa que no está disponible.
+
+## En el celular
+- **Agregar producto:** Cant.Un., Kgs. y el botón **+** van en el mismo renglón (con el teclado numérico en pantalla abierto se apilan como antes).
+- **Líneas cargadas:** se ven como una lista. Arriba el producto, las unidades y los kilos; abajo el número de orden y el código (`#3 · Cód. 5`) y dos iconos: **balanza** (azul = pesado en balanza, gris = no) e **ingreso permitido** (verde = la línea se autorizó aunque los kilos no coincidían con las unidades, gris = normal). El botón rojo de la derecha **quita la línea**.
+- **Orden:** en el celular arranca con **lo último cargado arriba**. Con el selector de la derecha se puede cambiar (primeros primero, código, producto, cantidad, kilos). En la computadora se ordena tocando los encabezados, como siempre.
+- El orden en que se ven las líneas **no cambia el orden en que se guardan**: siempre se guardan en el orden en que se cargaron.
+- El selector de orden y la **lupa de búsqueda** **siguen activos en el modo ver** (cuando los campos y la tabla están bloqueados): solo cambian cómo se ven las líneas.
+- **Datos del movimiento** (origen, destino, creado, actualizado) se muestra compacto, en dos columnas y con letra chica, para ocupar poca altura.
 
 ## Eliminar un movimiento
 El botón rojo **Eliminar** aparece al abrir un movimiento **ya guardado** para quien puede modificarlo. Muestra el resumen y las líneas, pide **motivo obligatorio** (10 a 300 caracteres) y **usuario y contraseña en cada eliminación** (ver [eliminar registros](ayuda:concepto/eliminar-registros)). El movimiento **se borra**, el stock del origen y del destino se recalcula sin él, y queda la constancia (quién, cuándo, motivo y todas las líneas) en [Registros eliminados](ayuda:pantalla/RegistrosEliminados.Index). No se puede deshacer desde el sistema.

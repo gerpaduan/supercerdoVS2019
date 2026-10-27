@@ -25,8 +25,9 @@
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
+            @* En celular (<768px) cada empleado se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css). *@
             <div class="table-responsive">
-                <table class="table table-hover table-bordered mb-0">
+                <table class="table table-hover table-bordered mb-0 tabla-cards">
                     <thead class="thead-light">
                         <tr>
                             <th>Empleado</th>
@@ -48,13 +49,13 @@
                             foreach (var item in Model.Items)
                             {
                                 <tr>
-                                    <td>@WebCore.Helpers.EmpleadoDisplay.NombreConIdentificacion(item.RazonSocial, item.Identificacion)</td>
-                                    <td>@item.UsuarioLogin</td>
-                                    <td>@item.FormaLiquidacion</td>
-                                    <td class="text-center">
+                                    <td class="cc-titulo">@WebCore.Helpers.EmpleadoDisplay.NombreConIdentificacion(item.RazonSocial, item.Identificacion)</td>
+                                    <td data-label="Usuario">@item.UsuarioLogin</td>
+                                    <td data-label="Forma de pago">@item.FormaLiquidacion</td>
+                                    <td class="text-center" data-label="Activo">
                                         <span class="badge @(item.Activo ? "badge-success" : "badge-secondary")">@(item.Activo ? "Sí" : "No")</span>
                                     </td>
-                                    <td>
+                                    <td class="cc-acciones">
                                         <a class="btn btn-sm btn-outline-primary mr-1 mb-1" href="@Url.Action("Editar", "Empleados", new { id = item.Id })">Modificar</a>
                                         <a class="btn btn-sm btn-outline-secondary mr-1 mb-1" href="@Url.Action("Vacaciones", "Empleados", new { id = item.Id })">Vacaciones</a>
                                         <a class="btn btn-sm btn-outline-secondary mb-1" href="@Url.Action("Historial", "Empleados", new { id = item.Id })">Historial</a>

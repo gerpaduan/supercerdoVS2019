@@ -49,13 +49,25 @@
                     </div>
                     @if (Model.EsEdicion)
                     {
-                        <div class="col-12 col-lg-3">
+                        @* Celular (<992px): Creado y Actualizado como bloque compacto de dos columnas (pedido 2026-10-27, ahorra altura);
+                           en desktop siguen los dos campos de siempre, en la misma fila que Usuario. *@
+                        <div class="col-12 d-lg-none mb-2">
+                            @await Html.PartialAsync("~/Views/Shared/_DatosRegistroCompacto.cshtml", new WebCore.Models.DatosRegistroCompactoVm
+                            {
+                                Items = new System.Collections.Generic.List<WebCore.Models.DatoRegistroCompactoItem>
+                                {
+                                    new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Creado", Valor = Model.Creado, Detalle = Model.CreadoPor },
+                                    new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Actualizado", Valor = Model.Actualizado, Detalle = Model.ActualizadoPor }
+                                }
+                            })
+                        </div>
+                        <div class="col-12 col-lg-3 d-none d-lg-block">
                             <div class="form-group">
                                 <label>Creado</label>
                                 <input type="text" class="form-control" value="@Model.CreadoPor | @Model.Creado" readonly />
                             </div>
                         </div>
-                        <div class="col-12 col-lg-3">
+                        <div class="col-12 col-lg-3 d-none d-lg-block">
                             <div class="form-group">
                                 <label>Actualizado</label>
                                 <input type="text" class="form-control" value="@Model.ActualizadoPor | @Model.Actualizado" readonly />

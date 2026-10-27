@@ -235,16 +235,33 @@
                         </div>
 
                         <div class="d-flex align-items-center mb-2 movimiento-search-toolbar">
+                            @* data-edit-readonly-ignore: buscar y ordenar las lineas son solo de lectura, siguen activos en modo ver (2026-10-27). *@
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaLineasMovimiento"
-                                    title="Buscar en la tabla" aria-expanded="false">
+                                    data-edit-readonly-ignore="true" title="Buscar en la tabla" aria-expanded="false">
                                 <i class="fas fa-search"></i>
                             </button>
                             <input type="text" id="filtroLineasMovimiento" class="form-control form-control-sm ml-2 d-none"
+                                   data-edit-readonly-ignore="true"
                                    placeholder="Buscar por producto o código..." autocomplete="off" style="max-width:280px;">
+                            @* Solo celular (<768px): en la lista no hay encabezados para tocar, el orden se elige aca. Arranca en
+                               "ultimos primero" (movimientos.js, state.sortDirection); en desktop se ordena con los encabezados.
+                               data-edit-readonly-ignore: en modo ver (campos y tabla bloqueados) el selector sigue activo, solo cambia
+                               como se ven las lineas (edit-readonly.js ignora lo marcado con ese atributo). *@
+                            <select id="ordenLineasMovimiento" class="form-control form-control-sm d-md-none ml-auto movimiento-orden-celular"
+                                    data-edit-readonly-ignore="true" aria-label="Ordenar las líneas">
+                                <option value="ordenIngreso:desc">Últimos primero</option>
+                                <option value="ordenIngreso:asc">Primeros primero</option>
+                                <option value="codigo:asc">Código</option>
+                                <option value="producto:asc">Producto</option>
+                                <option value="cantUnidad:desc">Cantidad (mayor)</option>
+                                <option value="cantKg:desc">Kilos (mayor)</option>
+                            </select>
                         </div>
 
+                        @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
+                           las clases de cada celda las pone renderLines() en movimientos.js. *@
                         <div class="table-responsive">
-                            <table class="table table-bordered table-sm movimiento-table-compact" id="tablaLineasMovimiento">
+                            <table class="table table-bordered table-sm movimiento-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasMovimiento">
                                 <thead class="thead-light">
                                     <tr>
                                         <th style="width:110px;">Código</th>
@@ -301,27 +318,18 @@
                         {
                             <div class="card movimiento-panel-card mt-3 movimiento-meta-card">
                                 <div class="card-body">
-                                    <label class="d-block mb-2">Datos del movimiento</label>
-                                    <div class="movimiento-meta-grid">
-                                        <div class="movimiento-meta-item">
-                                            <div class="small text-muted movimiento-meta-label">Movimiento origen</div>
-                                            <div class="font-weight-bold">@Model.IdMovimientoOrigen</div>
-                                        </div>
-                                        <div class="movimiento-meta-item">
-                                            <div class="small text-muted movimiento-meta-label">Movimiento destino</div>
-                                            <div class="font-weight-bold">@Model.IdMovimientoDestino</div>
-                                        </div>
-                                        <div class="movimiento-meta-item">
-                                            <div class="small text-muted movimiento-meta-label">Creado</div>
-                                            <div class="font-weight-bold">@Model.Creado</div>
-                                            <div class="small text-muted">@Model.CreadoPor</div>
-                                        </div>
-                                        <div class="movimiento-meta-item">
-                                            <div class="small text-muted movimiento-meta-label">Actualizado</div>
-                                            <div class="font-weight-bold">@Model.Actualizado</div>
-                                            <div class="small text-muted">@Model.ActualizadoPor</div>
-                                        </div>
-                                    </div>
+                                    @* Bloque compacto de dos columnas (pedido 2026-10-27): son datos que casi nadie lee, que no ocupen altura. *@
+                                    @await Html.PartialAsync("~/Views/Shared/_DatosRegistroCompacto.cshtml", new WebCore.Models.DatosRegistroCompactoVm
+                                    {
+                                        Titulo = "Datos del movimiento",
+                                        Items = new System.Collections.Generic.List<WebCore.Models.DatoRegistroCompactoItem>
+                                        {
+                                            new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Mov. origen", Valor = Model.IdMovimientoOrigen },
+                                            new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Mov. destino", Valor = Model.IdMovimientoDestino },
+                                            new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Creado", Valor = Model.Creado, Detalle = Model.CreadoPor },
+                                            new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Actualizado", Valor = Model.Actualizado, Detalle = Model.ActualizadoPor }
+                                        }
+                                    })
                                 </div>
                             </div>
                         }
@@ -437,6 +445,11 @@
     }
     .mov-layout.mov-con-stock .mov-lateral { display: flex; flex-wrap: wrap; gap: .75rem; }
     .mov-layout.mov-con-stock .mov-lateral > .card { flex: 1 1 14rem; margin-top: 0 !important; }
+    /* Resumen / Observaciones / Datos quedan debajo de las lineas cuando la pantalla es angosta (< 1200 px) o con el stock al lado: un
+       espacio entre ambos bloques para que se note que son dos cosas distintas (pedido 2026-10-27). Con 2 columnas (>= 1200 px y sin stock)
+       el espacio ya lo da la grilla. */
+    @@media (max-width: 1199.98px) { .movimiento-page .mov-lateral { margin-top: 1.1rem; } }
+    @@media (min-width: 1200px) { .mov-layout.mov-con-stock .mov-lateral { margin-top: 1.1rem; } }
     .mov-stock-panel { border: 1px solid var(--ui-primary, #2d5b8f); border-radius: .6rem; background: var(--ui-surface, #fff); overflow: hidden; }
     .mov-stock-cab { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .3rem .6rem; font-size: .84rem; font-weight: 600;
         background: var(--ui-primary-soft, rgba(45, 91, 143, .1)); border-bottom: 1px solid var(--ui-border, #dee2e6); }
@@ -511,40 +524,13 @@
         line-height: 1.1;
     }
 
-    .movimiento-page .movimiento-meta-label {
-        font-size: .68rem !important;
-        line-height: 1.05;
-        margin-bottom: .14rem !important;
-        text-transform: uppercase;
-        letter-spacing: .03em;
-    }
-
     .movimiento-page .movimiento-summary-card .card-body {
         padding: .62rem .78rem;
     }
 
+    /* Datos del movimiento: tarjeta compacta (el contenido lo da _DatosRegistroCompacto.cshtml). */
     .movimiento-page .movimiento-meta-card .card-body {
-        min-height: calc(1.5em * 2 + 3.2rem);
-    }
-
-    .movimiento-page .movimiento-meta-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: .65rem;
-    }
-
-    .movimiento-page .movimiento-meta-item {
-        min-width: 0;
-    }
-
-    .movimiento-page .movimiento-meta-card .font-weight-bold {
-        font-size: .82rem;
-        line-height: 1.15;
-    }
-
-    .movimiento-page .movimiento-meta-card .small.text-muted:not(.movimiento-meta-label) {
-        font-size: .7rem !important;
-        line-height: 1.1;
+        padding: .5rem .7rem;
     }
 
     .movimiento-page .movimiento-producto-row {
@@ -615,6 +601,43 @@
 
     .movimiento-page .movimiento-btn-add {
         width: 100%;
+    }
+
+    /* Celular (<768px, pedido 2026-10-27): Cant.Un., Kgs. y el "+" en un solo renglon (antes el "+" ocupaba un renglon
+       entero) para que el formulario ocupe menos alto. Con el teclado numerico abierto sigue el apilado de numeric-keypad.css
+       (selector mas especifico, no se toca). */
+    @@media (max-width: 767.98px) {
+        .movimiento-page .movimiento-producto-row > .movimiento-col-cantidad {
+            flex: 1 1 0;
+            width: auto;
+            max-width: none;
+            min-width: 0;
+        }
+
+        .movimiento-page .movimiento-producto-row > .movimiento-col-accion {
+            flex: 0 0 auto;
+            width: auto;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-btn-add {
+            width: 2.6rem;
+            min-width: 2.6rem;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        /* margin-left:auto a mano: ml-auto es de Bootstrap 4 y aca no aplica. Con .movimiento-search-toolbar para ganarle al
+           min-height: 2.75rem de ui-refresh.css (body.app-shell .form-control). */
+        .movimiento-page .movimiento-search-toolbar .movimiento-orden-celular {
+            width: auto;
+            max-width: 11rem;
+            margin-left: auto;
+            min-height: 0;
+            height: 2rem;
+            padding: .15rem 1.6rem .15rem .5rem;
+            font-size: .8rem;
+        }
     }
 
     .movimiento-page .movimiento-table-compact {

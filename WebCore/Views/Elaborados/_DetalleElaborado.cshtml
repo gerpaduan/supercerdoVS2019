@@ -22,6 +22,14 @@ else
     var sucursal = !string.IsNullOrWhiteSpace(Model.Sucursal) ? Model.Sucursal : "-";
     var estado = !string.IsNullOrWhiteSpace(Model.Estado) ? Model.Estado : "-";
 
+    @* Celular (<768px, 2026-10-27): se oculta la tarjeta de datos del registro (abajo) porque repite lo de la tarjeta del
+       elaborado; aca quedan solo las observaciones (si hay). La receta NO: solo se usa en las cargas (pedido del usuario).
+       Los ingredientes son una lista compacta (tabla-cards-lista). En desktop no cambia nada. *@
+    if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+    {
+        <div class="cc-nota-detalle"><span><i class="fas fa-comment-alt"></i>@Model.Observaciones</span></div>
+    }
+
     <div class="row elaborado-detalle-layout">
         <div class="col-12 col-xl-8 order-2 order-xl-1">
             @* Formula secreta (2026-10-04): con la formula visible (hay elevacion) se ofrece "Ocultar". *@
@@ -34,7 +42,7 @@ else
                 </div>
             }
             <div class="table-responsive mt-3 mt-xl-0">
-                <table class="table table-sm table-bordered mb-0 elaborado-detalle-tabla">
+                <table class="table table-sm table-bordered mb-0 elaborado-detalle-tabla tabla-cards tabla-cards-lista">
                     <thead class="thead-light">
                         <tr>
                             <th style="width:120px;">Codigo</th>
@@ -51,10 +59,16 @@ else
                             foreach (var linea in Model.IngredientesUtilizados)
                             {
                                 <tr>
-                                    <td>@(linea.Codigo > 0 ? linea.Codigo.ToString() : "-")</td>
-                                    <td>@(!string.IsNullOrWhiteSpace(linea.Producto) ? linea.Producto : "-")</td>
-                                    <td class="text-right">@linea.Kgs.ToString("N3", cultura)</td>
-                                    <td class="text-center">@(linea.PesoBalanza ? "Si" : "No")</td>
+                                    <td class="cc-l-cod"><span class="cc-solo-card">Cód. </span>@(linea.Codigo > 0 ? linea.Codigo.ToString() : "-")</td>
+                                    <td class="cc-l-prod">@(!string.IsNullOrWhiteSpace(linea.Producto) ? linea.Producto : "-")</td>
+                                    <td class="text-right cc-l-kg">@linea.Kgs.ToString("N3", cultura)</td>
+                                    @* Balanza: en celular un icono (azul = pesado en balanza, gris tenue = no); en desktop Si / No. *@
+                                    <td class="text-center cc-l-bal cc-l-ultimo">
+                                        <span class="cc-solo-tabla">@(linea.PesoBalanza ? "Si" : "No")</span>
+                                        <i class="cc-solo-card fas fa-balance-scale @(linea.PesoBalanza ? "text-primary" : "cc-ico-off")" role="img"
+                                           aria-label="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"
+                                           title="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"></i>
+                                    </td>
                                 </tr>
                             }
                         }
@@ -150,6 +164,12 @@ else
             background-color: #1f2937;
             color: #e5e7eb;
             border-color: #374151;
+        }
+
+        @@media (max-width: 767.98px) {
+            .elaborado-detalle-meta-card {
+                display: none;
+            }
         }
 
         @@media (min-width: 1200px) {

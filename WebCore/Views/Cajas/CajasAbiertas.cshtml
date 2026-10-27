@@ -54,7 +54,7 @@
                                    value="@buscar"
                                    class="form-control"
                                    placeholder="buscar vendedor"
-                                   onkeyup="filtrar()" />
+                                   oninput="filtrarConDemora()" />
 
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button" id="btnBuscarCajasAbiertas" onclick="filtrar()">
@@ -240,6 +240,24 @@
             .cajas-page #tablaCajas > thead > tr > th,
             .cajas-page #tablaResultadoHistorial thead th {
                 font-size: .69rem !important;
+            }
+        }
+
+        /* Celular (<768px): Cajas abiertas e Historial de cierres son tablas-tarjeta (tabla-cards.css, clase
+           "tabla-cards" en las tablas de los parciales; pedido 2026-10-26). Aca queda solo lo propio de esta vista. */
+        @@media (max-width: 767.98px) {
+            .cajas-page .cajas-panel-card > .card-body,
+            .cajas-page .cajas-panel-card .card-body {
+                padding: .65rem .7rem;
+            }
+
+            .cajas-page #formFiltros .row > [class*="col-"] {
+                margin-bottom: .45rem;
+            }
+
+            /* En el historial el titulo de la tarjeta es "Caja #id". */
+            #tablaCierresHistoricos > tbody > tr > td.cc-id::before {
+                content: "Caja #";
             }
         }
     </style>
@@ -791,17 +809,28 @@
             $estado.text(mensaje || (buscando ? "Actualizando búsqueda..." : "Resultados actualizados."));
         }
 
+        // Filtro en vivo del vendedor: espera a que se deje de tipear antes de pedir al servidor.
+        // Se dispara con "input" (no "keyup"), asi Ctrl/Shift/flechas no lanzan busquedas.
+        var FILTRO_DEMORA_MS = 300;
+        var filtroDemoraTimer = null;
+        // Numero de la ultima busqueda lanzada: una respuesta vieja que llega tarde (fuera de orden) no pisa a la nueva.
+        var filtroSolicitudActual = 0;
+
+        function filtrarConDemora() {
+            clearTimeout(filtroDemoraTimer);
+            filtroDemoraTimer = setTimeout(filtrar, FILTRO_DEMORA_MS);
+        }
+
         function filtrar() {
+            clearTimeout(filtroDemoraTimer);
+            const solicitud = ++filtroSolicitudActual;
             const idSucursal = $("#idSucursal").val() || "";
             const buscar = $("#buscarVendedor").val() || "";
             const fechaDesde = $("#fechaDesde").val() || "";
 
-            let pos = 0;
-            const txt = document.getElementById("buscarVendedor");
-            if (txt && document.activeElement === txt && typeof txt.selectionStart === "number") {
-                pos = txt.selectionStart;
-            }
-
+            // Ojo: el input de busqueda esta FUERA de #tablaResultado, asi que el refresco no lo toca. Antes se
+            // le hacia focus() + setSelectionRange(posicion vieja) al terminar cada respuesta: eso hacia
+            // retroceder el cursor al tipear rapido ("german" -> "grmnae") y deseleccionaba el texto (Ctrl+Shift).
             setBuscandoCajasAbiertas(true);
             $("#tablaResultado").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
 
@@ -821,22 +850,16 @@
                 },
                 cache: false,
                 success: function (html) {
+                    if (solicitud !== filtroSolicitudActual) return;
                     $("#tablaResultado").html(html);
-
-                    if (txt) {
-                        setTimeout(() => {
-                            txt.focus();
-                            try {
-                                txt.setSelectionRange(pos, pos);
-                            } catch (e) { }
-                        }, 30);
-                    }
                 },
                 error: function () {
+                    if (solicitud !== filtroSolicitudActual) return;
                     $("#tablaResultado").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar la búsqueda.</div>');
                     $("#estadoBusquedaCajasAbiertasTabla").text("Ocurrió un error al actualizar la búsqueda.");
                 },
                 complete: function () {
+                    if (solicitud !== filtroSolicitudActual) return;
                     const mensaje = $("#estadoBusquedaCajasAbiertasTabla").text();
                     setBuscandoCajasAbiertas(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
                 }
@@ -853,13 +876,16 @@
                     },
                     cache: false,
                     success: function (html) {
+                        if (solicitud !== filtroSolicitudActual) return;
                         $("#tablaResultadoHistorial").html(html);
                     },
                     error: function () {
+                        if (solicitud !== filtroSolicitudActual) return;
                         $("#tablaResultadoHistorial").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar el historial.</div>');
                         $("#estadoBusquedaHistorialCajas").text("Ocurrió un error al actualizar el historial.");
                     },
                     complete: function () {
+                        if (solicitud !== filtroSolicitudActual) return;
                         const mensaje = $("#estadoBusquedaHistorialCajas").text();
                         setBuscandoHistorial(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
                     }

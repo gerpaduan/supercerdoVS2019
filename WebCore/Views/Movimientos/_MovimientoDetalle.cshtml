@@ -8,10 +8,19 @@
     var fechaActualizacion = Model.Actualizado.HasValue ? Model.Actualizado.Value.ToString("dd/MM/yyyy HH:mm") : "-";
 }
 
+@* Observaciones: en celular la tarjeta de datos del registro se oculta, asi que se muestran aca solo si hay texto. *@
+@if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+{
+    <div class="movimiento-detalle-obs"><i class="fas fa-comment-alt mr-1"></i>@Model.Observaciones</div>
+}
+
 <div class="row movimiento-detalle-layout">
     <div class="col-12 col-xl-8 order-2 order-xl-1">
+        @* En celular (<768px) las lineas se muestran como una lista compacta dentro de una tarjeta (CSS compartido
+           wwwroot/Content/css/tabla-cards.css, variante tabla-cards-lista): producto y kilos arriba, codigo y unidades abajo, y
+           Balanza / Permitir ingreso como iconos (en desktop siguen siendo columnas con Si/No). *@
         <div class="table-responsive mt-3 mt-xl-0">
-            <table class="table table-sm table-bordered mb-0">
+            <table class="table table-sm table-bordered mb-0 tabla-cards tabla-cards-lista">
                 <thead class="thead-light">
                     <tr>
                         <th style="width:110px;">Código</th>
@@ -34,12 +43,25 @@
                         foreach (var linea in Model.Lineas)
                         {
                             <tr>
-                                <td>@linea.Codigo</td>
-                                <td>@linea.Producto</td>
-                                <td class="text-right">@linea.CantUnidad</td>
-                                <td class="text-right">@linea.CantKg.ToString("N3")</td>
-                                <td class="text-center">@(linea.PesoBalanza ? "Sí" : "No")</td>
-                                <td class="text-center">@(linea.PermitirIngreso ? "Sí" : "No")</td>
+                                <td class="cc-l-cod"><span class="cc-solo-card">Cód. </span>@linea.Codigo</td>
+                                <td class="cc-l-prod">@linea.Producto</td>
+                                <td class="text-right cc-l-cant">@linea.CantUnidad<span class="cc-solo-card"> un.</span></td>
+                                <td class="text-right cc-l-kg">@linea.CantKg.ToString("N3")<span class="cc-solo-card"> kg</span></td>
+                                @* Balanza: en celular un icono (azul = pesado en balanza, gris tenue = no); en desktop Si/No. *@
+                                <td class="text-center cc-l-bal">
+                                    <span class="cc-solo-tabla">@(linea.PesoBalanza ? "Sí" : "No")</span>
+                                    <i class="cc-solo-card fas fa-balance-scale @(linea.PesoBalanza ? "text-primary" : "cc-ico-off")" role="img"
+                                       aria-label="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"
+                                       title="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"></i>
+                                </td>
+                                @* Permitir ingreso: el operador forzo la linea aunque los kilos no coincidian con las unidades
+                                   (movimientos.js, validarRelacionCantidadKilos). Icono verde = autorizado, gris tenue = normal. *@
+                                <td class="text-center cc-l-ing">
+                                    <span class="cc-solo-tabla">@(linea.PermitirIngreso ? "Sí" : "No")</span>
+                                    <i class="cc-solo-card fas fa-user-shield @(linea.PermitirIngreso ? "text-success" : "cc-ico-off")" role="img"
+                                       aria-label="@(linea.PermitirIngreso ? "Ingreso permitido: línea autorizada aunque los kilos no coincidían" : "Ingreso normal")"
+                                       title="@(linea.PermitirIngreso ? "Ingreso permitido: línea autorizada aunque los kilos no coincidían" : "Ingreso normal")"></i>
+                                </td>
                             </tr>
                         }
                     }
@@ -87,6 +109,29 @@
     html.dark-mode .movimiento-detalle-meta-card .text-muted,
     body.dark-mode .movimiento-detalle-meta-card .text-muted {
         color: #9ca3af !important;
+    }
+
+    .movimiento-detalle-obs {
+        display: none;
+    }
+
+    /* Celular: la tarjeta de datos del registro (id, creo, actualizo) se oculta: el id ya va junto a la fecha del movimiento
+       y el resto no lo busca el usuario ahi. Las observaciones, si hay, salen arriba de las lineas. */
+    @@media (max-width: 767.98px) {
+        .movimiento-detalle-meta-card {
+            display: none;
+        }
+
+        .movimiento-detalle-obs i {
+            margin-right: .35rem;
+        }
+
+        .movimiento-detalle-obs {
+            display: block;
+            margin-bottom: .6rem;
+            font-size: .82rem;
+            color: var(--ui-text-soft, #5f6772);
+        }
     }
 
     @@media (min-width: 1200px) {

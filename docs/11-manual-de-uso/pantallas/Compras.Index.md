@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 1
 permiso: Compra.VerCompras (sin el permiso se muestra "Acceso denegado"; a los usuarios de producción les pide elegir el operador de Compras antes de entrar)
-revisada: 2026-10-22
+revisada: 2026-10-27
 ---
 ## Para qué sirve
 Ver las **compras de un período** (proveedor, tipo, cantidad, total, sucursal) y abrir el detalle de cada una.
@@ -26,3 +26,10 @@ Ver las **compras de un período** (proveedor, tipo, cantidad, total, sucursal) 
 
 ## Notas
 - PENDIENTE: el detalle de cada columna y el de las acciones de fila no se revisó en esta versión.
+
+## En el celular
+- En pantallas angostas (celular) cada compra se ve como **tarjeta**: arriba el **proveedor**, después fecha, nro. de remito/factura, tipo, unidades/kg, medias reses, **total** y sucursal. No hace falta desplazarse de costado.
+- Al pie de la tarjeta están **Detalle** (abre debajo de la tarjeta el detalle de la compra) y **Ver compra**. Las compras anuladas se ven con la tarjeta en rojo.
+- Arriba a la derecha de la tarjeta, en gris, va el **número de compra**.
+- **Detalle** en el celular: no se muestra el recuadro de datos del registro (lo principal ya está en la tarjeta). Arriba de las líneas aparecen las **observaciones** (si hay) y la etiqueta **Cta. cte.** si la compra va a cuenta corriente. Cada línea muestra el producto y la cantidad arriba, y abajo el código, la **hora** en que se cargó y el icono de **balanza** (azul = pesada en balanza, gris = no). Si la línea se cargó **otro día** que la compra, en vez de la hora sale la fecha y hora en ámbar.
+- En la computadora la pantalla se ve igual que antes.
