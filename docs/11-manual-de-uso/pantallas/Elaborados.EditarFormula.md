@@ -29,3 +29,10 @@ PENDIENTE: documentar ingredientes, porcentaje/unidad, ajuste de fórmula, ingre
 
 ## Datos del registro
 - En el celular, **Creado** y **Actualizado** de una fórmula ya guardada se muestran en un bloque compacto de dos columnas, con letra chica; en la computadora siguen los dos campos de siempre.
+
+## En el celular
+- La pantalla se reordena en bloques: el **usuario** es una línea en gris; **código y elaborado** (y **código e ingrediente**) van en la misma fila con la lupa al lado; **valor**, **Auto** y el botón **+** van en la fila siguiente.
+- Las ayudas largas (*Fórmula secreta*, *Calcular por*) quedan detrás del ícono **(i)**: tocalo para verlas u ocultarlas. En la computadora se ven siempre.
+- Los **ingredientes cargados** son una lista: ingrediente y valor arriba, código abajo, un rayo verde si es **Auto** (gris si se carga a mano) y el tacho para quitarlo. Con *No suma peso* o el costeo (Admin) activos, esos datos salen en un renglón debajo de cada ingrediente.
+- El **total** queda pegado a la lista. La tarjeta *Totales* solo se ve en celular si sos Admin, para el costeo.
+- **Guardar** (o **Modificar**) y **Cancelar** ocupan todo el ancho.

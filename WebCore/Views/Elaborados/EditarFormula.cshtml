@@ -41,7 +41,9 @@
                 <div id="lineasFormulaHiddenContainer"></div>
 
                 <div class="row">
-                    <div class="col-12 col-lg-3">
+                    @* Celular (<768px): el Usuario es una linea tenue en vez de un campo de solo lectura (ahorra altura, pedido 2026-10-27). *@
+                    <div class="col-12 d-md-none formula-usuario-linea">Usuario: <strong>@Model.UsuarioNombre</strong></div>
+                    <div class="col-12 col-lg-3 d-none d-md-block">
                         <div class="form-group">
                             <label>Usuario</label>
                             <input type="text" class="form-control" value="@Model.UsuarioNombre" readonly />
@@ -96,13 +98,14 @@
                             </div>
 
                             <div class="row align-items-end">
-                                <div class="col-12 col-md-3 col-lg-2">
+                                @* Celular: codigo y elaborado en la misma fila (col-4 / col-8); la lupa va dentro del input-group del elaborado. *@
+                                <div class="col-4 col-md-3 col-lg-2">
                                     <div class="form-group">
                                         <label for="txtCodigoElaboradoFormula">Codigo</label>
                                         <input type="number" id="txtCodigoElaboradoFormula" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" />
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-9 col-lg-10">
+                                <div class="col-8 col-md-9 col-lg-10">
                                     <div class="form-group">
                                         <label for="txtElaboradoFormulaNombre">Elaborado</label>
                                         <div class="input-group">
@@ -128,11 +131,17 @@
 
                             @* Formula secreta (2026-10-04, ver docs/DECISIONS.md): checkbox nativo (name="Secreta"),
                                no pasa por rebuildHidden(). Se deshabilita junto con el resto en setReadOnly(). *@
-                            <div class="custom-control custom-switch mt-2">
-                                <input type="checkbox" class="custom-control-input" id="chkFormulaSecreta" name="Secreta" value="true" checked="@(Model.Secreta ? "checked" : null)" />
-                                <label class="custom-control-label" for="chkFormulaSecreta"><i class="fas fa-lock mr-1"></i>Fórmula secreta</label>
+                            @* Celular: la ayuda larga queda detras del icono (i) (clase formula-ayuda-texto + boton .js-formula-ayuda, ver script al final). *@
+                            <div class="d-flex align-items-center justify-content-between mt-2">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="chkFormulaSecreta" name="Secreta" value="true" checked="@(Model.Secreta ? "checked" : null)" />
+                                    <label class="custom-control-label" for="chkFormulaSecreta"><i class="fas fa-lock mr-1"></i>Fórmula secreta</label>
+                                </div>
+                                <button type="button" class="btn btn-link p-1 d-md-none js-formula-ayuda" data-target="#ayudaFormulaSecreta" aria-label="Ver ayuda" aria-expanded="false">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
                             </div>
-                            <small class="form-text text-muted">
+                            <small id="ayudaFormulaSecreta" class="form-text text-muted formula-ayuda-texto">
                                 Si está activada, los ingredientes y la receta de esta fórmula no se muestran en Ingreso rápido, Carga ni en el historial de elaborados: para verlos hay que ingresar usuario y contraseña de alguien con permiso sobre fórmulas.
                             </small>
                         </div>
@@ -144,11 +153,16 @@
 
                             <div id="formulaFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
 
-                            <div class="custom-control custom-switch mb-2">
-                                <input type="checkbox" class="custom-control-input" id="chkEscalaUnidadFormula" checked="@(Model.EscalaUnidad ? "checked" : null)" />
-                                <label class="custom-control-label" for="chkEscalaUnidadFormula">Calcular por <strong id="lblEscalaUnidadEtiqueta">@Model.EtiquetaValorFormula</strong></label>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="chkEscalaUnidadFormula" checked="@(Model.EscalaUnidad ? "checked" : null)" />
+                                    <label class="custom-control-label" for="chkEscalaUnidadFormula">Calcular por <strong id="lblEscalaUnidadEtiqueta">@Model.EtiquetaValorFormula</strong></label>
+                                </div>
+                                <button type="button" class="btn btn-link p-1 d-md-none js-formula-ayuda" data-target="#lblEscalaUnidadAyuda" aria-label="Ver ayuda" aria-expanded="false">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
                             </div>
-                            <small class="text-muted d-block mb-3" id="lblEscalaUnidadAyuda"></small>
+                            <small class="text-muted mb-3 formula-ayuda-texto" id="lblEscalaUnidadAyuda"></small>
 
                             <div id="bloqueAjusteFormula" class="d-flex flex-wrap align-items-center mb-3">
                                 <div class="custom-control custom-switch mr-4 mb-2">
@@ -163,13 +177,14 @@
                             <p class="text-muted small mb-3" id="lblAjusteFormulaAyuda"></p>
 
                             <div class="row align-items-end">
-                                <div class="col-12 col-md-3">
+                                @* Celular: codigo + ingrediente en una fila (col-4 / col-8) y valor + Auto + boton + en la siguiente (col-5 / col-4 / col-3). *@
+                                <div class="col-4 col-md-3">
                                     <div class="form-group">
                                         <label for="txtCodigoIngredienteFormula">Codigo</label>
                                         <input type="number" id="txtCodigoIngredienteFormula" class="form-control" step="1" autocomplete="off" />
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-5">
+                                <div class="col-8 col-md-5">
                                     <div class="form-group">
                                         <label for="txtIngredienteFormulaNombre">Ingrediente</label>
                                         <div class="input-group">
@@ -184,13 +199,13 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-2">
+                                <div class="col-5 col-md-2">
                                     <div class="form-group">
                                         <label for="txtPorcentajeFormula" id="lblValorFormulaInput">@Model.EtiquetaValorFormula</label>
                                         <input type="text" id="txtPorcentajeFormula" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" />
                                     </div>
                                 </div>
-                                <div class="col-8 col-md-2 col-lg-1">
+                                <div class="col-4 col-md-2 col-lg-1">
                                     <div class="form-group mb-3">
                                         <div class="custom-control custom-switch formula-auto-wrap">
                                             <input type="checkbox" class="custom-control-input" id="chkAgregarAutoFormula" checked />
@@ -198,7 +213,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-4 col-md-2 col-lg-1">
+                                <div class="col-3 col-md-2 col-lg-1">
                                     <button type="button" class="btn btn-primary btn-block mb-3 formula-btn-add" id="btnAgregarLineaFormula" title="Agregar">
                                         <i class="fas fa-plus"></i>
                                     </button>
@@ -209,8 +224,11 @@
                             </div>
                         </div>
 
+                        @* En celular (<768px) los ingredientes son una lista compacta dentro de una tarjeta (CSS compartido
+                           wwwroot/Content/css/tabla-cards.css, variante tabla-cards-lista-edicion): ingrediente y valor arriba, codigo y rayo de Auto
+                           abajo, tacho de quitar a la derecha. Las filas las arma renderLineas() con las clases cc-l-*. *@
                         <div class="table-responsive mb-3">
-                            <table class="table table-bordered table-sm elaborados-table-compact" id="tablaLineasFormula">
+                            <table class="table table-bordered table-sm elaborados-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasFormula">
                                 <thead class="thead-light">
                                     <tr>
                                         <th style="width:110px;">Codigo</th>
@@ -227,6 +245,17 @@
                                 </thead>
                                 <tbody></tbody>
                             </table>
+                            @* Celular: el total va pegado a la lista; la tarjeta Totales de abajo queda solo para el costeo (Admin). *@
+                            <div class="d-md-none formula-totales-movil">
+                                <div class="d-flex justify-content-between">
+                                    <span id="lblTotalPrincipalTextoMovil">@(Model.EscalaUnidad ? "Total unidades" : "Total porcentaje")</span>
+                                    <strong id="lblTotalPorcentajeMovil">@Model.TotalPorcentaje.ToString("N2")</strong>
+                                </div>
+                                <div class="d-flex justify-content-between @(Model.EscalaUnidad ? "d-none" : "")" id="filaTotalSecundarioMovil">
+                                    <span>Equivalencia en unidades</span>
+                                    <strong id="lblTotalUnidadesMovil">@Model.TotalUnidades.ToString("N2")</strong>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -242,21 +271,24 @@
                             <div id="pasosRecetaContainer"></div>
                         </div>
 
-                        <div class="card bg-light elaborados-panel-card elaborados-summary-card">
+                        @* Celular: sin Admin esta tarjeta no tiene nada que mostrar (los totales ya van junto a la lista), asi que se oculta. *@
+                        <div class="card bg-light elaborados-panel-card elaborados-summary-card @(Model.EsAdmin ? "" : "d-none d-md-block")">
                             <div class="card-body">
-                                <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Totales</h6>
-                                <div class="d-flex justify-content-between">
-                                    <span id="lblTotalPrincipalTexto">@(Model.EscalaUnidad ? "Total unidades" : "Total porcentaje")</span>
-                                    <strong id="lblTotalPorcentaje">@Model.TotalPorcentaje.ToString("N2")</strong>
-                                </div>
-                                <div class="d-flex justify-content-between @(Model.EscalaUnidad ? "d-none" : "")" id="filaTotalSecundario">
-                                    <span>Equivalencia en unidades</span>
-                                    <strong id="lblTotalUnidades">@Model.TotalUnidades.ToString("N2")</strong>
+                                <div class="d-none d-md-block">
+                                    <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Totales</h6>
+                                    <div class="d-flex justify-content-between">
+                                        <span id="lblTotalPrincipalTexto">@(Model.EscalaUnidad ? "Total unidades" : "Total porcentaje")</span>
+                                        <strong id="lblTotalPorcentaje">@Model.TotalPorcentaje.ToString("N2")</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between @(Model.EscalaUnidad ? "d-none" : "")" id="filaTotalSecundario">
+                                        <span>Equivalencia en unidades</span>
+                                        <strong id="lblTotalUnidades">@Model.TotalUnidades.ToString("N2")</strong>
+                                    </div>
                                 </div>
 
                                 @if (Model.EsAdmin)
                                 {
-                                    <hr />
+                                    <hr class="d-none d-md-block" />
                                     <div class="custom-control custom-switch mb-2">
                                         <input type="checkbox" class="custom-control-input" id="chkMostrarCosteoFormula" />
                                         <label class="custom-control-label" for="chkMostrarCosteoFormula">Mostrar costeo</label>
@@ -293,7 +325,7 @@
                     </div>
                 </div>
 
-                <div class="mt-3 d-flex flex-wrap align-items-center">
+                <div class="mt-3 d-flex flex-wrap align-items-center formula-acciones-form">
                     @if (Model.EsEdicion && Model.SoloLecturaInicial)
                     {
                         <button type="button" class="btn btn-primary mr-2 mb-2" id="btnHabilitarEdicionFormula">
@@ -335,6 +367,54 @@
 
     .formula-btn-add i {
         margin: 0;
+    }
+
+    .formula-ayuda-texto {
+        display: block;
+    }
+
+    .formula-totales-movil {
+        font-size: .84rem;
+        font-weight: 600;
+    }
+
+    /* Celular (<768px): usuario como linea tenue, ayudas largas detras del icono (i), total pegado a la lista y botones a todo el ancho. */
+    @@media (max-width: 767.98px) {
+        .elaborados-page .formula-usuario-linea {
+            margin-bottom: .5rem;
+            font-size: .76rem;
+            color: var(--ui-text-muted, #6c757d);
+        }
+
+        .formula-ayuda-texto {
+            display: none;
+        }
+
+        .formula-ayuda-texto.formula-ayuda-abierta {
+            display: block;
+        }
+
+        .js-formula-ayuda {
+            color: var(--ui-text-muted, #6c757d);
+            line-height: 1;
+        }
+
+        .formula-totales-movil {
+            margin-top: .45rem;
+            padding: .45rem .7rem 0;
+            border-top: 1px solid var(--ui-border, #d7dce3);
+        }
+
+        /* Fila de ingrediente: el check "No suma peso" y el bloque de costeo ocupan todo el ancho debajo de la linea. */
+        #tablaLineasFormula > tbody > tr > td.formula-linea-ancha {
+            font-size: .8rem;
+        }
+
+        .formula-acciones-form .btn {
+            flex: 1 1 100%;
+            min-height: 2.75rem;
+            margin-right: 0 !important;
+        }
     }
 </style>
 
@@ -469,6 +549,9 @@
                 $('#lblValorFormulaColumna').text(valorLabel());
                 $('#lblTotalPrincipalTexto').text(state.escalaUnidad ? 'Total unidades' : 'Total porcentaje');
                 $('#filaTotalSecundario').toggleClass('d-none', state.escalaUnidad);
+                // Espejo de los totales para celular (van pegados a la lista; la tarjeta Totales queda solo para el costeo).
+                $('#lblTotalPrincipalTextoMovil').text(state.escalaUnidad ? 'Total unidades' : 'Total porcentaje');
+                $('#filaTotalSecundarioMovil').toggleClass('d-none', state.escalaUnidad);
 
                 $('#chkEscalaUnidadFormula').prop('checked', state.escalaUnidad);
                 $('#lblEscalaUnidadEtiqueta').text(valorLabel());
@@ -637,12 +720,12 @@
             function renderCostoCelda(linea, index) {
                 var oculto = !state.mostrarCosteo;
                 if (linea.EsAjusteFormula) {
-                    return '<td class="text-right' + (oculto ? ' d-none' : '') + '"><span class="text-muted">-</span></td>';
+                    return '<td class="text-right cc-vacio' + (oculto ? ' d-none' : '') + '"><span class="text-muted">-</span></td>';
                 }
 
                 var fuente = linea.FuenteCosto || 'compra';
                 var costoLinea = costoLineaFormula(linea);
-                var html = '<td class="text-right formula-costo-cell' + (oculto ? ' d-none' : '') + '">';
+                var html = '<td class="text-right formula-costo-cell formula-linea-ancha cc-ancho' + (oculto ? ' d-none' : '') + '">';
                 html += '<div class="btn-group btn-group-toggle btn-block mb-1" role="group">';
                 html += '<button type="button" class="btn btn-sm ' + (fuente === 'compra' ? 'btn-primary' : 'btn-outline-secondary') + ' js-fuente-costo-formula" data-index="' + index + '" data-fuente="compra"' + (state.soloLectura ? ' disabled' : '') + '>Compra</button>';
                 html += '<button type="button" class="btn btn-sm ' + (fuente === 'venta' ? 'btn-primary' : 'btn-outline-secondary') + ' js-fuente-costo-formula" data-index="' + index + '" data-fuente="venta"' + (state.soloLectura ? ' disabled' : '') + '>Venta</button>';
@@ -672,19 +755,23 @@
                     total += toNumber(linea.Porcentaje);
                     totalCosto += costoLineaFormula(linea);
                     html += '<tr' + (linea.EsAjusteFormula ? ' class="table-warning"' : '') + '>';
-                    html += '<td>' + (linea.EsAjusteFormula ? 'Ajuste Formula' : (linea.Codigo || '')) + '</td>';
-                    html += '<td>' + (linea.Producto || '') + '</td>';
-                    html += '<td class="text-right">' + formatValue(linea.Porcentaje) + '</td>';
-                    html += '<td class="text-center">' + (linea.AgregarAuto ? 'Si' : 'No') + '</td>';
-                    html += '<td class="text-center' + (modoB ? '' : ' d-none') + '">';
+                    // Clases cc-l-*: en celular la tabla es una lista compacta (tabla-cards-lista-edicion, ver tabla-cards.css).
+                    html += '<td class="cc-l-cod">' + (linea.EsAjusteFormula ? 'Ajuste Formula' : ('<span class="cc-solo-card">Cód. </span>' + (linea.Codigo || ''))) + '</td>';
+                    html += '<td class="cc-l-prod">' + (linea.Producto || '') + '</td>';
+                    html += '<td class="text-right cc-l-kg">' + formatValue(linea.Porcentaje) + '</td>';
+                    // Auto: en celular un rayo (verde = se agrega solo al guardar el elaborado, gris tenue = a mano); en desktop Si/No.
+                    var autoTitulo = linea.AgregarAuto ? 'Auto: se agrega solo al guardar el elaborado' : 'Manual: se carga a mano en el elaborado';
+                    html += '<td class="text-center cc-l-bal"><span class="cc-solo-tabla">' + (linea.AgregarAuto ? 'Si' : 'No') + '</span>'
+                        + '<i class="cc-solo-card fas fa-bolt ' + (linea.AgregarAuto ? 'text-success' : 'cc-ico-off') + '" role="img" aria-label="' + autoTitulo + '" title="' + autoTitulo + '"></i></td>';
+                    html += '<td class="text-center formula-linea-ancha cc-ancho' + (modoB ? '' : ' d-none') + '">';
                     if (!linea.EsAjusteFormula) {
-                        html += '<input type="checkbox" class="js-no-suma-peso" data-index="' + index + '"' + (linea.NoSumaPeso ? ' checked' : '') + (state.soloLectura ? ' disabled' : '') + ' />';
+                        html += '<label class="mb-0"><input type="checkbox" class="js-no-suma-peso" data-index="' + index + '"' + (linea.NoSumaPeso ? ' checked' : '') + (state.soloLectura ? ' disabled' : '') + ' /><span class="cc-solo-card"> No suma peso</span></label>';
                     }
                     html += '</td>';
                     if (state.esAdmin) {
                         html += renderCostoCelda(linea, index);
                     }
-                    html += '<td>';
+                    html += '<td class="cc-l-acc">';
                     if (!linea.EsAjusteFormula) {
                         html += '<button type="button" class="btn btn-sm btn-outline-danger js-remove-linea-formula" data-index="' + index + '"' + (state.soloLectura ? ' disabled' : '') + '><i class="fas fa-trash"></i></button>';
                     }
@@ -695,6 +782,8 @@
                 $('#tablaLineasFormula tbody').html(html);
                 $('#lblTotalPorcentaje').text(formatValue(total));
                 $('#lblTotalUnidades').text(formatValue(state.escalaUnidad ? total : (total / 100)));
+                $('#lblTotalPorcentajeMovil').text(formatValue(total));
+                $('#lblTotalUnidadesMovil').text(formatValue(state.escalaUnidad ? total : (total / 100)));
 
                 if (state.esAdmin) {
                     state.costoTotal = totalCosto;
@@ -903,6 +992,14 @@
             }
 
             $('#chkAgregarAutoFormula').on('change', actualizarMensajeAuto);
+
+            // Celular: el icono (i) muestra u oculta la ayuda larga de al lado (CSS .formula-ayuda-texto / .formula-ayuda-abierta).
+            $(document).on('click', '.js-formula-ayuda', function () {
+                var $ayuda = $($(this).attr('data-target'));
+                var abierta = !$ayuda.hasClass('formula-ayuda-abierta');
+                $ayuda.toggleClass('formula-ayuda-abierta', abierta);
+                $(this).attr('aria-expanded', abierta ? 'true' : 'false');
+            });
 
             $('#chkTieneAjusteFormula').on('change', function () {
                 state.tieneAjuste = $(this).is(':checked');

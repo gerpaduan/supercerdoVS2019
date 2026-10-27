@@ -48,8 +48,11 @@
 
     <div class="card shadow-sm elaborados-panel-card">
         <div class="card-body p-0">
+            @* En celular (<768px) cada elaborado se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css, ver
+               docs/DECISIONS.md 2026-10-27): el nombre encabeza la tarjeta con el codigo tenue a la derecha y el boton Seleccionar
+               ocupa todo el ancho al pie. Sirve igual para Ingreso rapido y para Desarme (misma vista). *@
             <div class="table-responsive">
-                <table class="table table-hover mb-0 elaborados-table-compact" id="tablaIngresoRapidoLista">
+                <table class="table table-hover mb-0 elaborados-table-compact tabla-cards" id="tablaIngresoRapidoLista">
                     <thead class="thead-light">
                         <tr>
                             <th style="width:120px;">Codigo</th>
@@ -66,15 +69,16 @@
                                 data-codigo="@item.Codigo"
                                 data-producto="@item.Producto"
                                 data-rapido="@(item.IngresoRapido ? "1" : "0")">
-                                <td>@item.Codigo</td>
-                                <td>
-                                    <div class="font-weight-bold">@item.Producto</div>
+                                @* El codigo de la columna solo se ve en la tabla; en la tarjeta va en el titulo (cc-titulo-extra). *@
+                                <td class="cc-solo-tabla">@item.Codigo</td>
+                                <td class="cc-titulo">
+                                    <div class="font-weight-bold cc-titulo-linea">@item.Producto<span class="cc-solo-card cc-titulo-extra">cód @item.Codigo</span></div>
                                     @if (!string.IsNullOrWhiteSpace(item.Receta))
                                     {
-                                        <div class="small text-muted text-truncate">@item.Receta</div>
+                                        <div class="small text-muted text-truncate fw-normal">@item.Receta</div>
                                     }
                                 </td>
-                                <td>
+                                <td data-label="Ingreso rápido">
                                     @if (item.IngresoRapido)
                                     {
                                         <span class="badge badge-success">Si</span>
@@ -84,9 +88,9 @@
                                         <span class="badge badge-secondary">No</span>
                                     }
                                 </td>
-                                <td><span class="badge badge-light border">Cargada</span></td>
-                                <td class="elaborados-table-actions">
-                                    <a class="btn btn-sm @(Model.EsDesarme ? "btn-outline-info" : "btn-outline-primary")"
+                                <td data-label="Fórmula"><span class="badge badge-light border">Cargada</span></td>
+                                <td class="elaborados-table-actions cc-acciones">
+                                    <a class="btn btn-sm cc-accion-principal @(Model.EsDesarme ? "btn-outline-info" : "btn-outline-primary")"
                                        href="@Url.Action("EditarIngresoRapido", "Elaborados", new { idElaborado = item.IdCorte, esDesarme = Model.EsDesarme })">
                                         Seleccionar
                                     </a>
