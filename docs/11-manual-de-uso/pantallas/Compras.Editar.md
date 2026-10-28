@@ -5,11 +5,17 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.NuevaCompra (alta) y Compra.ModificarCompra (modificar y eliminar); a los usuarios de producción les pide elegir el operador de Compras antes de entrar
-revisada: 2026-10-22
+revisada: 2026-10-27
 alias: Compras.NuevaCompra, Compras.ModificarCompra
 ---
 ## Para qué sirve
-Cargar una compra nueva o abrir una ya guardada para verla, modificarla o **eliminarla**. Esta página documenta por ahora solo **Eliminar**; el resto de la pantalla (proveedor, productos, medias reses, cuenta corriente, guardar) está pendiente (**PENDIENTE**: no se revisó en esta versión).
+Cargar una compra nueva o abrir una ya guardada para verla, modificarla o **eliminarla**. Esta página documenta por ahora **Eliminar** y cómo se ve **en el celular**; el resto de la pantalla (proveedor, productos, medias reses, cuenta corriente, guardar) está pendiente (**PENDIENTE**: no se revisó en esta versión).
+
+## En el celular
+- **Ajustes:** Desc./Recargo, IVA y Margen / precio de venta están guardados detrás del botón **Ajustes**, al lado de **Agregar producto**. Tocalo para abrirlos y otra vez para cerrarlos. Con el panel cerrado, el botón muestra los ajustes que están encendidos (por ejemplo «IVA 21%»), así sabés que se van a aplicar a la próxima línea. El panel no se cierra solo al agregar un producto.
+- **Cantidad, Precio y Subtotal** van en una misma fila.
+- **Productos cargados:** se ven como una lista. Arriba, el número de línea, el producto y el total; abajo, el código con cantidad × precio (en las medias, la tropa con kilos × precio). Si la línea tiene descuento/recargo, IVA, precio de venta o margen, se muestran en un renglón más. El tacho de la derecha quita la línea.
+- **Orden:** arranca con **lo último cargado arriba**; con el selector de la derecha se cambia a «Primeros primero». En la computadora se ordena tocando «#», como siempre.
 
 ## Eliminar una compra
 El botón rojo **Eliminar** aparece al abrir una compra **ya guardada** (en la pantalla completa; no dentro del modal del POS ni de la cuenta corriente del proveedor) para quien tenga permiso de modificar compras.

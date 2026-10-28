@@ -427,6 +427,7 @@
         updateSubtotalPreview($form);
         syncPrecioVentaMargen($form, source);
         syncContinuousProductState($form);
+        updateResumenAjustes($form);
     }
 
     function clearProductoInputs($form, preserveCode) {
@@ -505,6 +506,7 @@
 
         $form.find('.js-line-order-indicator').text(state.lineasSortAsc ? '↑' : '↓');
         $form.find('.js-line-order-toggle').attr('title', state.lineasSortAsc ? 'Orden ascendente por número' : 'Orden descendente por número');
+        $form.find('#ordenLineasCompra').val(state.lineasSortAsc ? 'asc' : 'desc');
 
         if (!state.lineas.length) {
             $tbody.html('<tr class="js-empty-row"><td colspan="8" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
@@ -512,38 +514,107 @@
             return;
         }
 
+        // Cada fila sirve para las dos vistas (tabla-cards-lista-edicion, ver tabla-cards.css):
+        // - desktop: las 8 columnas de siempre; las celdas .cc-solo-card no se ven.
+        // - celular: renglon de arriba "N · producto" (.cc-l-prod) y total (.cc-l-kg); abajo codigo/tropa con
+        //   cantidad × precio (.cc-l-cod); si la linea tiene ajustes, un tercer renglon con ellos (.cc-l-extra);
+        //   quitar a la derecha (.cc-l-acc).
+        //   Las columnas sueltas (#, cantidad, precio, p. venta, margen) se ocultan con .cc-vacio / .cc-solo-tabla.
+        var botonQuitar = function (index) {
+            return '<td class="text-right cc-l-acc"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '" title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>';
+        };
+        var numeroCard = function (numeroLinea) {
+            return '<span class="cc-solo-card compra-card-numero">' + numeroLinea + ' · </span>';
+        };
+
         for (var index = start; index !== end; index += step) {
             var linea = state.lineas[index];
             var numeroLinea = index + 1;
             if (linea.tipoLinea === 'MediaRes') {
                 var totalMedia = toNumber(linea.kgMedia) * toNumber(linea.precioMedia);
+                var tropa = String(linea.nroTropa || '').trim();
                 html += '<tr data-index="' + index + '">'
-                    + '<td class="text-center font-weight-bold">' + numeroLinea + '</td>'
-                    + '<td><strong>Media</strong></td>'
-                    + '<td class="text-right">' + formatNumber(linea.kgMedia) + '</td>'
-                    + '<td class="text-right">' + formatNumber(linea.precioMedia) + '</td>'
-                    + '<td class="text-right">-</td>'
-                    + '<td class="text-right">-</td>'
-                    + '<td class="text-right">' + formatNumber(totalMedia) + '</td>'
-                    + '<td class="text-right"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
+                    + '<td class="text-center font-weight-bold cc-vacio">' + numeroLinea + '</td>'
+                    + '<td class="cc-l-prod">' + numeroCard(numeroLinea) + '<strong>Media</strong></td>'
+                    + '<td class="text-right cc-solo-tabla">' + formatNumber(linea.kgMedia) + '</td>'
+                    + '<td class="text-right cc-solo-tabla">' + formatNumber(linea.precioMedia) + '</td>'
+                    + '<td class="text-right cc-solo-tabla">-</td>'
+                    + '<td class="text-right cc-solo-tabla">-</td>'
+                    + '<td class="text-right cc-l-kg">' + formatNumber(totalMedia) + '</td>'
+                    + '<td class="cc-l-cod cc-solo-card">' + (tropa ? 'Tropa ' + escapeHtml(tropa) + ' · ' : '')
+                    + formatNumber(linea.kgMedia) + ' × ' + formatNumber(linea.precioMedia) + '</td>'
+                    + botonQuitar(index)
                     + '</tr>';
             } else {
                 var totalCorte = toNumber(linea.totalLinea || (linea.cantKgs * linea.precioKg));
+                var extras = describirAjustesLinea(linea);
                 html += '<tr data-index="' + index + '">'
-                    + '<td class="text-center font-weight-bold">' + numeroLinea + '</td>'
-                    + '<td><strong>' + escapeHtml(linea.corteNombre || '') + '</strong><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></td>'
-                    + '<td class="text-right">' + formatNumber(linea.cantKgs) + '</td>'
-                    + '<td class="text-right">' + formatNumber(linea.precioKg) + '</td>'
-                    + '<td class="text-right">' + (toNumber(linea.precioVenta) > 0 ? formatNumber(linea.precioVenta) : '-') + '</td>'
-                    + '<td class="text-right">' + (toNumber(linea.margen) !== 0 ? formatNumber(linea.margen) : '-') + '</td>'
-                    + '<td class="text-right">' + formatNumber(totalCorte) + '</td>'
-                    + '<td class="text-right"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
+                    + '<td class="text-center font-weight-bold cc-vacio">' + numeroLinea + '</td>'
+                    + '<td class="cc-l-prod">' + numeroCard(numeroLinea) + '<strong>' + escapeHtml(linea.corteNombre || '') + '</strong>'
+                    + '<span class="cc-solo-tabla"><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></span></td>'
+                    + '<td class="text-right cc-solo-tabla">' + formatNumber(linea.cantKgs) + '</td>'
+                    + '<td class="text-right cc-solo-tabla">' + formatNumber(linea.precioKg) + '</td>'
+                    + '<td class="text-right cc-solo-tabla">' + (toNumber(linea.precioVenta) > 0 ? formatNumber(linea.precioVenta) : '-') + '</td>'
+                    + '<td class="text-right cc-solo-tabla">' + (toNumber(linea.margen) !== 0 ? formatNumber(linea.margen) : '-') + '</td>'
+                    + '<td class="text-right cc-l-kg">' + formatNumber(totalCorte) + '</td>'
+                    + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.codigo || '') + ' · '
+                    + formatNumber(linea.cantKgs) + ' × ' + formatNumber(linea.precioKg) + '</td>'
+                    + '<td class="cc-l-extra cc-solo-card' + (extras ? '' : ' cc-vacio') + '">' + escapeHtml(extras) + '</td>'
+                    + botonQuitar(index)
                     + '</tr>';
             }
         }
 
         $tbody.html(html);
         recalculate($form);
+    }
+
+    // Porcentaje corto para los resumenes del celular: "21" en vez de "21.00", "-5.50" queda igual.
+    function formatPorcentajeCorto(value) {
+        return formatNumber(value).replace(/\.00$/, '');
+    }
+
+    // Texto con los ajustes guardados en una linea de producto, para la tarjeta del celular
+    // (ej. "Desc. -5% · IVA 21% · P.v. 180.00 · 30%"). Vacio si la linea no tiene ninguno.
+    function describirAjustesLinea(linea) {
+        var partes = [];
+        var descRecargo = toNumber(linea.descRecargo);
+        if (descRecargo !== 0) {
+            partes.push((descRecargo < 0 ? 'Desc. ' : 'Rec. ') + formatPorcentajeCorto(descRecargo) + '%');
+        }
+        if (toNumber(linea.ivaCompra) > 0) {
+            partes.push('IVA ' + formatPorcentajeCorto(linea.ivaCompra) + '%');
+        }
+        if (toNumber(linea.precioVenta) > 0) {
+            partes.push('P.v. ' + formatNumber(linea.precioVenta));
+        }
+        if (toNumber(linea.margen) !== 0) {
+            partes.push(formatPorcentajeCorto(linea.margen) + '%');
+        }
+        return partes.join(' · ');
+    }
+
+    // Resumen de los ajustes encendidos al lado del boton "Ajustes" del celular (#lblResumenAjustesCompra), para que
+    // con el panel plegado se vea que hay uno activo. Lee los switches y campos de la linea en carga, no las lineas.
+    function updateResumenAjustes($form) {
+        var $resumen = $form.find('#lblResumenAjustesCompra');
+        if (!$resumen.length) return;
+
+        var partes = [];
+        if ($form.find('#chkAplicarDescRecargo').is(':checked')) {
+            var descRecargo = toNumber($form.find('#txtDescRecargo').val());
+            partes.push(descRecargo === 0 ? 'Desc./Rec.' : (descRecargo < 0 ? 'Desc. ' : 'Rec. ') + formatPorcentajeCorto(descRecargo) + '%');
+        }
+        if ($form.find('#chkAplicarIva').is(':checked')) {
+            partes.push('IVA ' + formatPorcentajeCorto($form.find('#txtIvaCompra').val()) + '%');
+        }
+        if ($form.find('#chkAplicarPrecioVentaMargen').is(':checked')) {
+            partes.push('Margen');
+        }
+
+        $resumen.html($.map(partes, function (parte) {
+            return '<span class="compra-ajustes-chip">' + escapeHtml(parte) + '</span>';
+        }).join(''));
     }
 
     function rebuildHiddenInputs($form) {
@@ -1676,6 +1747,21 @@
         $form.on('click.compras', '[data-action="toggle-line-order"]', function () {
             state.lineasSortAsc = !state.lineasSortAsc;
             renderLineas($form);
+        });
+
+        // Selector de orden del celular (#ordenLineasCompra): mismo estado que el encabezado "#" de desktop.
+        $form.on('change.compras', '#ordenLineasCompra', function () {
+            state.lineasSortAsc = $(this).val() === 'asc';
+            renderLineas($form);
+        });
+
+        // Boton "Ajustes" del celular: abre/cierra las cajas de Desc./Recargo, IVA y Margen (solo se ocultan por CSS
+        // en < 768px). Arranca cerrado y no se cierra solo al agregar, para cargar varias lineas con el mismo ajuste.
+        $form.on('click.compras', '#btnToggleAjustesCompra', function () {
+            var $grid = $form.find('#compraAjustesGrid');
+            var abierto = !$grid.hasClass('compra-ajustes-abierto');
+            $grid.toggleClass('compra-ajustes-abierto', abierto);
+            $(this).attr('aria-expanded', abierto ? 'true' : 'false');
         });
 
         $form.on('submit.compras', function (e) {

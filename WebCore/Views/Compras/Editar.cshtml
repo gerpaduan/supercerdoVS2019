@@ -249,28 +249,41 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-2">
+                        @* Celular: Cantidad, Precio y Subtotal en una sola fila (col-4) para bajar la altura (2026-10-27). *@
+                        <div class="col-4 col-md-2">
                             <div class="form-group">
                                 <label for="txtCantKgs">Cantidad</label>
                                 <input type="number" id="txtCantKgs" class="form-control" min="0" step="0.01" />
                             </div>
                         </div>
-                        <div class="col-6 col-md-2">
+                        <div class="col-4 col-md-2">
                             <div class="form-group">
                                 <label for="txtPrecioKg">Precio</label>
                                 @* Monto con MoneyInputMask (compras.js): "." o "," = coma decimal y puntos de miles automaticos. *@
                                 <input type="text" id="txtPrecioKg" class="form-control" inputmode="decimal" autocomplete="off" />
                             </div>
                         </div>
-                        <div class="col-12 col-md-2">
+                        <div class="col-4 col-md-2">
                             <div class="form-group">
                                 <label for="txtSubtotalLinea">Subtotal</label>
                                 <input type="text" id="txtSubtotalLinea" class="form-control" readonly />
                             </div>
                         </div>
                     </div>
-                    <div class="row compra-ajustes-grid mb-3">
-                        <div class="col-12 col-lg-3">
+                    @* Celular (<768px): las 3 cajas de ajustes quedan plegadas detras del boton "Ajustes" (con un resumen de los
+                       ajustes encendidos) y el boton Agregar queda a su lado; .compra-ajustes-abierto las muestra.
+                       compras-editar.css ordena las columnas y compras.js (click de #btnToggleAjustesCompra) maneja el boton.
+                       En desktop el boton no se ve y las cajas estan siempre visibles. *@
+                    <div class="row compra-ajustes-grid mb-3" id="compraAjustesGrid">
+                        <div class="col d-md-none compra-ajustes-toggle-col">
+                            <button type="button" class="btn btn-outline-secondary compra-ajustes-toggle" id="btnToggleAjustesCompra"
+                                    aria-expanded="false" aria-controls="compraAjustesGrid" title="Descuento/recargo, IVA y margen">
+                                <span class="compra-ajustes-toggle-texto"><i class="fas fa-sliders-h mr-1"></i> Ajustes</span>
+                                <span class="compra-ajustes-resumen" id="lblResumenAjustesCompra"></span>
+                                <i class="fas fa-chevron-down compra-ajustes-chevron"></i>
+                            </button>
+                        </div>
+                        <div class="col-12 col-lg-3 compra-ajuste-col">
                             <div class="border rounded p-3 bg-light h-100 compra-ajuste-card">
                                 <div class="custom-control custom-switch mb-2">
                                     <input type="checkbox" class="custom-control-input" id="chkAplicarDescRecargo" />
@@ -288,7 +301,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-lg-3">
+                        <div class="col-12 col-lg-3 compra-ajuste-col">
                             <div class="border rounded p-3 bg-light h-100 compra-ajuste-card">
                                 <div class="custom-control custom-switch mb-2">
                                     <input type="checkbox" class="custom-control-input" id="chkAplicarIva" />
@@ -305,7 +318,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-lg-4">
+                        <div class="col-12 col-lg-4 compra-ajuste-col">
                             <div class="border rounded p-3 h-100 compra-ajuste-card">
                                 <div class="custom-control custom-switch mb-2">
                                     <input type="checkbox" class="custom-control-input" id="chkAplicarPrecioVentaMargen" />
@@ -342,7 +355,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-2 d-flex align-items-end justify-content-lg-end">
+                        <div class="col-12 col-lg-2 d-flex align-items-end justify-content-lg-end compra-agregar-col">
                             <button type="button" class="btn btn-primary mt-2 mt-lg-0" id="btnAgregarLineaCorte">
                                 <i class="fas fa-plus"></i> Agregar producto
                             </button>
@@ -391,8 +404,21 @@
 
                 <div class="row compra-workspace-row">
                     <div class="col-12 col-xl-8">
+                @* Solo celular (<768px): en la lista no hay encabezado "#" para tocar, el orden se elige aca. Usa el mismo
+                   estado que el encabezado (compras.js, state.lineasSortAsc; arranca en "ultimos primero"). *@
+                <div class="d-flex d-md-none align-items-center mb-2 compra-lineas-toolbar">
+                    <span class="font-weight-bold">Productos</span>
+                    <select id="ordenLineasCompra" class="form-control form-control-sm compra-orden-celular"
+                            data-edit-readonly-ignore="true" aria-label="Ordenar las líneas">
+                        <option value="desc">Últimos primero</option>
+                        <option value="asc">Primeros primero</option>
+                    </select>
+                </div>
+                @* En celular las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
+                   las clases de cada celda las pone renderLineas() en compras.js, que reemplaza las filas de Razor al iniciar.
+                   En desktop la tabla no cambia. *@
                 <div class="table-responsive mb-3 compra-tabla-wrap">
-                    <table class="table table-hover table-sm" id="tablaLineasCompra">
+                    <table class="table table-hover table-sm tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasCompra">
                         <thead class="thead-light">
                             <tr>
                                 <th style="width: 70px;">
@@ -549,7 +575,8 @@
     </div>
 </div>
 
-<link rel="stylesheet" href="@Url.Content("~/Content/css/compras-editar.css?v=1")" />
+@* asp-append-version (antes "?v=1" fijo): sin esto el celular seguia con el CSS viejo en cache (2026-10-27). *@
+<link rel="stylesheet" href="@Url.Content("~/Content/css/compras-editar.css")" asp-append-version="true" />
 
 <div id="contenedorModalPersonaCompra"></div>
 @if (borradorGenericoHabilitado && !Model.DesdePos)

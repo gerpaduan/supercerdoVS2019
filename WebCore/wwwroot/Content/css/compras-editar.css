@@ -459,3 +459,142 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         margin-bottom: .75rem;
     }
 }
+
+/* Celular (<768px): ajustes plegables y lineas como lista compacta (2026-10-27).
+   - Ajustes: el boton "Ajustes" (.compra-ajustes-toggle-col) y "Agregar producto" (.compra-agregar-col) quedan en una fila;
+     las 3 cajas (.compra-ajuste-col) van debajo y solo se ven con .compra-ajustes-abierto (lo pone compras.js).
+   - Lineas: tabla-cards-lista-edicion (tabla-cards.css) + la celda propia .cc-l-extra (tercer renglon) con los ajustes
+     de la linea. */
+@media (max-width: 767.98px) {
+    .compra-ajustes-grid {
+        align-items: stretch;
+    }
+
+    .compra-ajustes-grid > div {
+        margin-bottom: 0;
+    }
+
+    .compra-ajustes-grid > .compra-ajustes-toggle-col {
+        order: 0;
+        flex: 1 1 0;
+        min-width: 0;
+        padding-right: .25rem;
+    }
+
+    .compra-ajustes-grid > .compra-agregar-col {
+        order: 1;
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+        padding-left: .25rem;
+    }
+
+    .compra-ajustes-grid > .compra-agregar-col > .btn {
+        margin-top: 0 !important;
+        height: 100%;
+        white-space: nowrap;
+    }
+
+    .compra-ajustes-grid > .compra-ajuste-col {
+        order: 2;
+        display: none;
+        margin-top: .5rem;
+    }
+
+    .compra-ajustes-grid.compra-ajustes-abierto > .compra-ajuste-col {
+        display: block;
+    }
+
+    .compra-ajustes-grid.compra-ajustes-abierto .compra-ajustes-chevron {
+        transform: rotate(180deg);
+    }
+
+    /* Plegado muestra el resumen de ajustes encendidos; abierto ya se ven los switches. */
+    .compra-ajustes-grid.compra-ajustes-abierto .compra-ajustes-resumen {
+        display: none;
+    }
+
+    .compra-ajustes-toggle {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        text-align: left;
+    }
+
+    .compra-ajustes-toggle-texto {
+        flex-shrink: 0;
+    }
+
+    .compra-ajustes-resumen {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: .2rem;
+    }
+
+    .compra-ajustes-chip {
+        padding: .05rem .4rem;
+        border-radius: .6rem;
+        background: #e7f1ff;
+        color: #0b4ea2;
+        font-size: .72rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .compra-ajustes-chevron {
+        flex-shrink: 0;
+        margin-left: auto;
+        font-size: .75rem;
+        transition: transform .15s ease;
+    }
+
+    .compra-ajuste-card {
+        padding: .6rem .75rem !important;
+    }
+
+    /* Toolbar "Productos" + orden. Con #ordenLineasCompra para ganarle al min-height: 2.75rem de ui-refresh.css
+       (body.app-shell .form-control); margin-left:auto a mano (ml-auto no aplica, ver Stock/Editar). */
+    .compra-lineas-toolbar #ordenLineasCompra {
+        width: auto;
+        max-width: 11rem;
+        margin-left: auto;
+        min-height: 0;
+        height: 2rem;
+        padding: .15rem 1.6rem .15rem .5rem;
+        font-size: .8rem;
+    }
+
+    .compra-tabla-wrap {
+        border: 0;
+        background: transparent;
+    }
+
+    .compra-tabla-wrap .compra-card-numero {
+        font-weight: 400;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    /* Ajustes de la linea (desc./IVA/p. venta/margen): tercer renglon propio, solo en las lineas que tienen alguno
+       (si no, .cc-vacio lo oculta). Al lado del codigo apretaba "Cod. · cant × precio" y lo partia en dos. */
+    table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-extra {
+        grid-area: 3 / 1 / 4 / 6;
+        text-align: left !important;
+        font-size: .72rem;
+        color: var(--ui-text-muted, #6c757d);
+        font-variant-numeric: tabular-nums;
+    }
+
+    html.dark-mode .compra-page .compra-tabla-wrap {
+        background: transparent;
+    }
+
+    html.dark-mode .compra-page .compra-ajustes-chip {
+        background: #19324c;
+        color: #b9d7ff;
+    }
+}

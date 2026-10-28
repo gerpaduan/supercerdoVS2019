@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-10-27 - Compras/Editar en celular: ajustes plegables y líneas como lista
+
+- **Pedido**: en celular, líneas de la compra como tarjetas y Desc./Recargo, IVA y Margen detrás de un botón para bajar la altura.
+- **Cambio**: botón «Ajustes» al lado de «Agregar producto» con resumen de los ajustes encendidos; Cantidad / Precio / Subtotal en una fila; líneas como lista (`tabla-cards-lista-edicion`) con un renglón extra para los ajustes de la línea y selector de orden. Desktop sin cambios. `compras-editar.css` con `asp-append-version`.
+- **Verificado**: página de prueba con el CSS y `compras.js` reales (375 px y 1280 px). **Sin verificar**: con login y datos reales, POS, modal de cta. cte., modo oscuro, guardar.
+- Decisión: `docs/DECISIONS.md` (2026-10-27). Manual: `Compras.Editar.md`.
+
 ## 2026-10-27 - Stock/Editar: botones ordenados en celular y signo de las cantidades al cambiar la acción
 
 - **Pedido**: ordenar los botones de vincular y de «Agregar producto» en celular (solo responsive); al cambiar la acción, las cantidades pasan a negativas en Egreso y a positivas al salir de Egreso (salvo Ajuste), e informar al usuario.
