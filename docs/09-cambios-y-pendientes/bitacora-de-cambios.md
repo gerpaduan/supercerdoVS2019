@@ -7,6 +7,12 @@
 - **Verificado**: página de prueba con el CSS y `compras.js` reales (375 px y 1280 px). **Sin verificar**: con login y datos reales, POS, modal de cta. cte., modo oscuro, guardar.
 - Decisión: `docs/DECISIONS.md` (2026-10-27). Manual: `Compras.Editar.md`.
 
+## 2026-10-27 - Base SuperCerdo unificada (SM + SL) en SQL Server local y volcada a carnisys (empresa 1)
+
+- Cambio: se rehizo la base `SuperCerdo` del SQL Server Express local desde los backups del 26/10 de San Martin y San Lorenzo, con script versionado `Datos/Fusion-SuperCerdo/`, y se volco a `carnisys` (Postgres local) reemplazando la empresa 1 (salvo certificados) con `tools/FusionSuperCerdoPg` + `05-volcar-a-carnisys.sql`. Corrige 4 errores de la fusion del 17/9 (envios duplicados, usuaria sin cargar, tipo de egreso 17, stock de SL). Detalle en `docs/DECISIONS.md` (2026-10-27).
+- Verificado: juez de la fusion todo OK (filas, sumas, cta. cte., huerfanos, duplicados); carnisys empresa 1 = SuperCerdo tabla por tabla y las otras empresas sin cambios en sus metricas. 581.914 ventas / 1.064.432 lineas en ambos motores.
+- No verificado: uso de la app sobre la base nueva (login y pantallas) -- PENDIENTE.
+
 ## 2026-10-27 - Elaborados/Carga: ingredientes como lista en celular, orden y lupa, «Cantidad» y «+» en un renglón
 
 - **Pedido**: aplicar a `Elaborados/Carga` el estilo lista de Movimientos/Editar (orden, tacho a la derecha, lupa y orden activos en modo ver); cambiar «Cant. Kgs» por «Cantidad» y dejar el «+» pegado a la cantidad (desktop y celular).

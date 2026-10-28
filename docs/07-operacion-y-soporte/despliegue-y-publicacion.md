@@ -825,3 +825,38 @@ Tablas nuevas de auditoría: sin ellas, **eliminar falla** (el resto de la aplic
 - **Bases viejas borradas (2026-10-26, a pedido del usuario)**: `DROP DATABASE` de `carnisys_old_20260930`, `_20261008`, `_20261012`, `_20261022` y `_20261026` (~440 MB c/u, sin conexiones). Cada una tiene su dump `carnisys-pre-reemplazo-<fecha>.dump` en `/srv/carnisys/backups/` (el de `_20261022` se llama `...-20261023.dump` por el error de fecha de ese día). En el contenedor queda solo `carnisys`.
 - **Rollback** (ya no hay base vieja para renombrar): `docker compose stop web` -> `ALTER DATABASE carnisys RENAME TO carnisys_nueva_descartada` -> `CREATE DATABASE carnisys OWNER carnisys_admin TEMPLATE template0` -> `docker exec -i carnisys-db-1 pg_restore -U postgres -d carnisys --exit-on-error < /srv/carnisys/backups/carnisys-pre-reemplazo-20261026.dump` -> `docker tag carnisys-web:prev-20261026 carnisys-web:latest` -> `up -d web`.
 - **PENDIENTE**: cargar los certificados por CUIT en la VPS si se van a usar allá; `backup-stack.sh` sigue sin cubrir carnisys (los dumps de `/srv/carnisys/backups/` son la única copia de las bases viejas y viven en el mismo disco).
+
+## Unificar SuperCerdo SM + SL (SQL Server local) y volcarla a carnisys (Postgres local, empresa 1)
+
+Reglas y porque: `docs/DECISIONS.md` (2026-10-27). Todo corre en la maquina de desarrollo; no toca los servidores SM/SL ni la VPS.
+Accesos: SQL Server local por autenticacion de Windows; Postgres local en `~/hosts/postgres-local.env` (superusuario).
+
+**1. Fuentes.** Dejar los backups en `C:\backups\SuperCerdoSM.bak` y `C:\backups\SuperCerdoSL.bak` y restaurarlos con nombre fechado
+(sin pisar otras bases; los archivos logicos del .bak son `SuperCerdo` / `SuperCerdo_log`):
+```
+sqlcmd -S .\SQLEXPRESS -E -C -Q "RESTORE DATABASE [SuperCerdo_SM_AAAAMMDD] FROM DISK='C:\backups\SuperCerdoSM.bak' WITH MOVE 'SuperCerdo' TO 'C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA\SuperCerdo_SM_AAAAMMDD.mdf', MOVE 'SuperCerdo_log' TO 'C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\DATA\SuperCerdo_SM_AAAAMMDD_log.ldf'"
+```
+(idem SL). Si existe una `SuperCerdo` anterior que se quiera conservar, renombrarla antes (`ALTER DATABASE ... MODIFY NAME`).
+
+**2. Fusion en SQL Server** (arma `SuperCerdo` como copia de SM + SL; corre el juez al final y aborta si algo no cierra; log en `Datos/Fusion-SuperCerdo/logs/`):
+```
+powershell -File Datos\Fusion-SuperCerdo\fusionar.ps1 -SmDb SuperCerdo_SM_AAAAMMDD -SlDb SuperCerdo_SL_AAAAMMDD -Dst SuperCerdo -Modo corregido
+```
+`-MapDb` (default `SuperCerdo_old_20260917`) es la fusion del 17/9, de donde salen las decisiones manuales de personas/productos: tiene que estar ONLINE durante la corrida. `-Modo replica` reproduce la fusion del 17/9 (solo para validar el motor). Si la guardia aborta por una tabla o columna nueva, agregarle regla en `01-reglas.sql` (no saltear la guardia).
+Con poca RAM libre (< ~700 MB) SQL Server Express puede dar error 701: dejar OFFLINE las bases que no se usan (`ALTER DATABASE ... SET OFFLINE`).
+
+**3. Copia a carnisys.stg** (no toca `public`):
+```
+pg_dump -h localhost -U postgres -Fc -d carnisys -f C:\backups\carnisys_PRE_supercerdo_AAAAMMDD.dump
+dotnet run -c Release --project tools\FusionSuperCerdoPg -- --schema stg --deep
+```
+Variables de entorno: `FUSION_SS_CONN` (ej. `Server=.\SQLEXPRESS;Database=SuperCerdo;Integrated Security=true;TrustServerCertificate=true`), `FUSION_PG_CONN` (sin password, usuario `postgres`, base `carnisys`), `FUSION_PG_PASSWORD`, `FUSION_PG_DB=carnisys`. Tiene que terminar con `== Diferencias == (ninguna)`.
+
+**4. Volcado a la empresa 1** (ensayo y real; el ensayo debe mostrar vacias las secciones "metricas que cambiaron" y "tablas que NO coinciden"):
+```
+psql -h localhost -U postgres -d carnisys -v finish=ROLLBACK -f Datos\Fusion-SuperCerdo\05-volcar-a-carnisys.sql
+psql -h localhost -U postgres -d carnisys -v finish=COMMIT -f Datos\Fusion-SuperCerdo\05-volcar-a-carnisys.sql
+psql -h localhost -U postgres -d carnisys -c "drop schema stg cascade"
+```
+**Rollback**: carnisys -> `pg_restore --clean --if-exists -h localhost -U postgres -d carnisys C:\backups\carnisys_PRE_supercerdo_AAAAMMDD.dump` (con la app detenida); SQL Server -> la base anterior renombrada (`SuperCerdo_old_...`) vuelve a llamarse `SuperCerdo`.
+Corrida 2026-10-27: fuentes `SuperCerdo_SM_20261026` / `SuperCerdo_SL_20261026` (quedaron OFFLINE), respaldo `C:\backups\carnisys_PRE_supercerdo_20261027.dump`.

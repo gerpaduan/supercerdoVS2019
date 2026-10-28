@@ -117,3 +117,6 @@ bld/
 # del servidor. Nunca deben trackearse (ver docs/07-operacion-y-soporte/despliegue-y-publicacion.md).
 /WebCore-*/
 /WebCore-*.zip
+
+# logs de corridas de la fusion SuperCerdo (pueden traer datos de negocio)
+Datos/Fusion-SuperCerdo/logs/
