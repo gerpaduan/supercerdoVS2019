@@ -239,13 +239,13 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-12 col-md-4 col-lg-2">
+                                        <div class="col-12 col-md-4 col-lg-2 ingrediente-col-cantidad">
                                             <div class="form-group">
-                                                <label for="txtKgIngrediente">Cant. Kgs</label>
+                                                <label for="txtKgIngrediente">Cantidad</label>
                                                 <input type="text" id="txtKgIngrediente" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
                                             </div>
                                         </div>
-                                        <div class="col-12 col-md-4 col-lg-2">
+                                        <div class="col-12 col-md-4 col-lg-2 ingrediente-col-accion">
                                             <div class="form-group">
                                                 <label class="d-none d-md-block">&nbsp;</label>
                                                 <button type="button" class="btn btn-primary btn-block" id="btnAgregarIngrediente" title="Agregar ingrediente" disabled="@(esAnulado ? "disabled" : null)">
@@ -260,8 +260,31 @@
                             </div>
                         </div>
 
+                        @* Solo celular (<768px): lupa y selector de orden de las lineas. En desktop la tabla no tiene busqueda ni orden.
+                           data-edit-readonly-ignore: buscar y ordenar son solo de lectura, siguen activos en modo ver (2026-10-27).
+                           Sin atributo name: no entran al serialize() de edit-page-guard ni cuentan como cambios del formulario. *@
+                        <div class="d-flex align-items-center mb-2 d-md-none elaborados-search-toolbar">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaLineasElaborado"
+                                    data-edit-readonly-ignore="true" title="Buscar en la tabla" aria-expanded="false">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <input type="text" id="filtroLineasElaborado" class="form-control form-control-sm ml-2 d-none"
+                                   data-edit-readonly-ignore="true"
+                                   placeholder="Buscar por ingrediente o código..." autocomplete="off" style="max-width:280px;">
+                            <select id="ordenLineasElaborado" class="form-control form-control-sm elaborados-orden-celular"
+                                    data-edit-readonly-ignore="true" aria-label="Ordenar las líneas">
+                                <option value="orden:desc">Últimos primero</option>
+                                <option value="orden:asc">Primeros primero</option>
+                                <option value="codigo:asc">Código</option>
+                                <option value="producto:asc">Ingrediente</option>
+                                <option value="cantKg:desc">Kilos (mayor)</option>
+                            </select>
+                        </div>
+
+                        @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
+                           las clases de cada celda las pone renderLineas() en elaborados-carga.js. En desktop la tabla no cambia. *@
                         <div class="table-responsive mb-3">
-                            <table class="table table-bordered table-sm elaborados-table-compact" id="tablaLineasElaborado">
+                            <table class="table table-bordered table-sm elaborados-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasElaborado">
                                 <thead class="thead-light">
                                     <tr>
                                         <th style="width:110px;">Codigo</th>
@@ -315,7 +338,7 @@
 
                                 <div id="bloqueFormulaCarga" class="@(Model.FormulaOculta ? "d-none" : "")">
                                 <div class="table-responsive formula-elaborado-wrap">
-                                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact" id="tablaFormulaElaborado">
+                                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact tabla-cards tabla-cards-lista" id="tablaFormulaElaborado">
                                         <thead>
                                             <tr>
                                                 <th>Ingrediente</th>
@@ -448,7 +471,7 @@
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact">
+                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact tabla-cards tabla-cards-lista">
                         <thead class="thead-light">
                             <tr>
                                 <th style="width:120px;">Codigo</th>
@@ -477,6 +500,27 @@
     .js-auto-receta {
         overflow: hidden;
         resize: vertical;
+    }
+
+    /* Celular (<768px): Cantidad y el boton "+" en el mismo renglon, el "+" pegado a la cantidad (2026-10-27). Cantidad toma el
+       ancho que sobra y el "+" queda cuadrado del alto de los inputs. Con el teclado numerico en pantalla abierto el apilado
+       de numeric-keypad.css no se toca. En tablet/desktop las columnas (col-md-4 / col-lg-2) siguen igual. */
+    @@media (max-width: 767.98px) {
+        .elaborados-page .ingrediente-col-cantidad { flex: 1 1 0; width: auto; min-width: 0; }
+        .elaborados-page .ingrediente-col-accion { flex: 0 0 auto; width: auto; }
+        .elaborados-page #btnAgregarIngrediente { width: 2.6rem; padding-left: 0; padding-right: 0; }
+
+        /* Selector de orden de las lineas: chico y a la derecha. Con .elaborados-search-toolbar para ganarle al min-height de
+           ui-refresh.css (body.app-shell .form-control). margin-left:auto a mano: ml-auto es de Bootstrap 4 y aca no aplica. */
+        .elaborados-page .elaborados-search-toolbar .elaborados-orden-celular {
+            width: auto;
+            max-width: 11rem;
+            margin-left: auto;
+            min-height: 0;
+            height: 2rem;
+            padding: .15rem 1.6rem .15rem .5rem;
+            font-size: .8rem;
+        }
     }
 </style>
 

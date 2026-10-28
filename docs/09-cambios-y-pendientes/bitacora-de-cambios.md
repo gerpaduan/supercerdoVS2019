@@ -7,6 +7,13 @@
 - **Verificado**: página de prueba con el CSS y `compras.js` reales (375 px y 1280 px). **Sin verificar**: con login y datos reales, POS, modal de cta. cte., modo oscuro, guardar.
 - Decisión: `docs/DECISIONS.md` (2026-10-27). Manual: `Compras.Editar.md`.
 
+## 2026-10-27 - Elaborados/Carga: ingredientes como lista en celular, orden y lupa, «Cantidad» y «+» en un renglón
+
+- **Pedido**: aplicar a `Elaborados/Carga` el estilo lista de Movimientos/Editar (orden, tacho a la derecha, lupa y orden activos en modo ver); cambiar «Cant. Kgs» por «Cantidad» y dejar el «+» pegado a la cantidad (desktop y celular).
+- **Cambio**: ingredientes manuales, fórmula y acumulados como lista en celular (< 768 px); selector de orden (arranca en «últimos primero») y lupa solo en celular; el orden de guardado sigue siendo el de carga. Desktop sin cambios salvo la etiqueta «Cantidad».
+- **Verificado**: en la app con usuario temporal (borrado, con sus borradores), celular 375 px (modo ver, editar, agregar y quitar línea, orden, filtro, costeo, fórmula, acumulados) y desktop 1024 px; compila. **Sin verificar**: guardar, modo oscuro, tablet (768–1199 px).
+- Decisión: `docs/DECISIONS.md` (2026-10-27). Manual: `Elaborados.Carga.md`.
+
 ## 2026-10-27 - Stock/Editar: botones ordenados en celular y signo de las cantidades al cambiar la acción
 
 - **Pedido**: ordenar los botones de vincular y de «Agregar producto» en celular (solo responsive); al cambiar la acción, las cantidades pasan a negativas en Egreso y a positivas al salir de Egreso (salvo Ajuste), e informar al usuario.

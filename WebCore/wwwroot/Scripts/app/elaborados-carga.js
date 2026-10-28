@@ -140,6 +140,13 @@
             // Interruptor de costeo (pedido 2026-09-22): apagado por defecto, el Admin lo activa
             // a proposito antes de ver precios/costos.
             mostrarCosteo: false,
+            // Orden y busqueda de las lineas manuales en la lista del celular (2026-10-27, mismo criterio que Movimientos/Stock).
+            // 'orden' = orden de carga; en el celular arranca en "ultimos primero" (lo recien cargado queda arriba, cerca del
+            // formulario). En desktop no hay selector y queda en orden de carga. El orden de GUARDADO no depende de esto: los
+            // hidden Lineas[i] salen siempre de state.lineas (ver renderLineas).
+            sortKey: 'orden',
+            sortDirection: (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) ? 'desc' : 'asc',
+            searchText: '',
             // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
             // Embutidos"): se completa abajo (crearBorradorGenerico), null si esta deshabilitado
             // (ahi se sigue con localStorage/CapturaRespaldo de siempre).
@@ -537,7 +544,7 @@
             var costoLinea = toFloat(linea.PrecioCosto) * kg;
             var soloLectura = !!config.esAnulado;
 
-            var html = '<td class="text-right produccion-costo-cell' + (state.mostrarCosteo ? '' : ' d-none') + '">';
+            var html = '<td class="text-right produccion-costo-cell cc-ancho' + (state.mostrarCosteo ? '' : ' d-none') + '">';
             html += '<div class="btn-group btn-group-toggle btn-block mb-1" role="group">';
             html += '<button type="button" class="btn btn-sm ' + (fuente === 'compra' ? 'btn-primary' : 'btn-outline-secondary') + ' js-fuente-costo-produccion" data-tabla="' + tabla + '" data-index="' + index + '" data-fuente="compra"' + (soloLectura ? ' disabled' : '') + '>Compra</button>';
             html += '<button type="button" class="btn btn-sm ' + (fuente === 'venta' ? 'btn-primary' : 'btn-outline-secondary') + ' js-fuente-costo-produccion" data-tabla="' + tabla + '" data-index="' + index + '" data-fuente="venta"' + (soloLectura ? ' disabled' : '') + '>Venta</button>';
@@ -588,22 +595,60 @@
             $('#btnAplicarPrecioCarga').prop('disabled', !puedeAplicar);
         }
 
+        function escapeHtml(valor) {
+            return $('<div>').text(valor === null || valor === undefined ? '' : valor).html();
+        }
+
+        // Valor por el que se ordena cada linea manual en la lista (selector del celular).
+        function valorOrdenLinea(linea, indice, clave) {
+            switch (clave) {
+                case 'producto': return String(linea.Producto || '').toLowerCase();
+                case 'codigo': return String(linea.Codigo || '').toLowerCase();
+                case 'cantKg': return toFloat(linea.CantKg);
+                case 'orden':
+                default: return indice;
+            }
+        }
+
+        // Copia de state.lineas con su indice real (indiceOriginal), ordenada y filtrada segun la lista del celular. No muta
+        // state.lineas: el indice real es el que usan el tacho (data-index) y los hidden Lineas[i].
+        function lineasVisibles() {
+            var needle = $.trim(state.searchText || '').toLowerCase();
+            return state.lineas
+                .map(function (linea, index) { return { linea: linea, indiceOriginal: index }; })
+                .filter(function (item) {
+                    return !needle
+                        || String(item.linea.Producto || '').toLowerCase().indexOf(needle) !== -1
+                        || String(item.linea.Codigo || '').toLowerCase().indexOf(needle) !== -1;
+                })
+                .sort(function (a, b) {
+                    var left = valorOrdenLinea(a.linea, a.indiceOriginal, state.sortKey);
+                    var right = valorOrdenLinea(b.linea, b.indiceOriginal, state.sortKey);
+                    var result = (typeof left === 'string' || typeof right === 'string')
+                        ? String(left).localeCompare(String(right), 'es', { numeric: true, sensitivity: 'base' })
+                        : (left === right ? 0 : (left > right ? 1 : -1));
+                    if (result === 0) result = a.indiceOriginal - b.indiceOriginal;
+                    return state.sortDirection === 'desc' ? result * -1 : result;
+                });
+        }
+
+        // El selector "Ordenar" refleja el orden vigente (value "clave:direccion").
+        function syncOrdenLineas() {
+            var $orden = $('#ordenLineasElaborado');
+            if (!$orden.length) return;
+            var valor = state.sortKey + ':' + state.sortDirection;
+            $orden.val($orden.find('option[value="' + valor + '"]').length ? valor : '');
+        }
+
         function renderLineas() {
             var html = '';
             var hidden = '';
             var totalManual = 0;
 
+            // Total, costos y hidden inputs: siempre sobre state.lineas en orden de carga (el orden en pantalla no los afecta).
             state.lineas.forEach(function (linea, index) {
                 totalManual += toFloat(linea.CantKg);
                 if (config.esAdmin) asegurarCostoIngrediente(toInt(linea.IdCorte));
-                html += '<tr>'
-                    + '<td>' + linea.Codigo + '</td>'
-                    + '<td>' + linea.Producto + '</td>'
-                    + '<td class="text-right">' + formatKg(linea.CantKg) + '</td>'
-                    + '<td class="text-center">' + formatBool(linea.PesoBalanza) + '</td>'
-                    + (config.esAdmin ? renderCostoCeldaProduccion(linea, index, 'manual') : '')
-                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-linea" data-index="' + index + '"' + (config.esAnulado ? ' disabled' : '') + '><i class="fas fa-trash"></i></button></td>'
-                    + '</tr>';
 
                 hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + (linea.IdCorte || 0) + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + (linea.Codigo || 0) + '" />';
@@ -613,11 +658,31 @@
                 hidden += '<input type="hidden" name="Lineas[' + index + '].PesoBalanza" value="' + (linea.PesoBalanza ? 'true' : 'false') + '" />';
             });
 
+            // Filas visibles. Clases cc-*: en el celular la tabla es una lista (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css);
+            // cc-solo-card / cc-solo-tabla eligen que version de cada dato se ve en cada vista. En desktop no cambia nada.
+            lineasVisibles().forEach(function (item) {
+                var linea = item.linea;
+                var textoBalanza = linea.PesoBalanza ? 'Pesado en balanza' : 'Sin balanza';
+                html += '<tr>'
+                    + '<td class="cc-solo-tabla">' + escapeHtml(linea.Codigo) + '</td>'
+                    + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.Codigo) + '</td>'
+                    + '<td class="cc-l-prod"><strong class="cc-solo-card">' + escapeHtml(linea.Producto) + '</strong><span class="cc-solo-tabla">' + escapeHtml(linea.Producto) + '</span></td>'
+                    + '<td class="text-right cc-l-kg">' + formatKg(linea.CantKg) + '</td>'
+                    + '<td class="text-center cc-l-bal cc-l-ultimo"><span class="cc-solo-tabla">' + formatBool(linea.PesoBalanza) + '</span>'
+                    + '<i class="cc-solo-card fas fa-balance-scale ' + (linea.PesoBalanza ? 'text-primary' : 'cc-ico-off') + '" role="img" aria-label="' + textoBalanza + '" title="' + textoBalanza + '"></i></td>'
+                    + (config.esAdmin ? renderCostoCeldaProduccion(linea, item.indiceOriginal, 'manual') : '')
+                    + '<td class="cc-l-acc"><button type="button" class="btn btn-sm btn-outline-danger js-remove-linea" data-index="' + item.indiceOriginal + '"' + (config.esAnulado ? ' disabled' : '') + ' title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>'
+                    + '</tr>';
+            });
+
             if (!html) {
-                html = '<tr><td colspan="' + (config.esAdmin ? 6 : 5) + '" class="text-center text-muted">Todavia no agregaste ingredientes manuales.</td></tr>';
+                var sinLineas = !state.lineas.length;
+                html = '<tr><td colspan="' + (config.esAdmin ? 6 : 5) + '" class="text-center text-muted">'
+                    + (sinLineas ? 'Todavia no agregaste ingredientes manuales.' : 'Sin resultados.') + '</td></tr>';
             }
 
             $('#tablaLineasElaborado tbody').html(html);
+            syncOrdenLineas();
             $('#lineasHiddenContainer').html(hidden);
             // Este reemplazo de DOM no dispara input/change -- sin este sync explicito,
             // edit-page-guard.js recien detecta la linea nueva en su polling de 700ms
@@ -642,10 +707,12 @@
                         totalAuto += toFloat(item.Kgs);
                     }
                     if (config.esAdmin) asegurarCostoIngrediente(toInt(item.IdCorte));
+                    // Celular (lista): ingrediente + kilos arriba y debajo "Auto" (se agrega solo al guardar) o "Manual" (la columna "Auto" de desktop se oculta).
                     html += '<tr>'
-                        + '<td>' + item.Producto + '</td>'
-                        + '<td class="text-right">' + formatKg(item.Kgs) + '</td>'
-                        + '<td class="text-center">' + formatBool(item.AgregarAuto) + '</td>'
+                        + '<td class="cc-l-prod">' + item.Producto + '</td>'
+                        + '<td class="text-right cc-l-kg">' + formatKg(item.Kgs) + '</td>'
+                        + '<td class="text-center cc-solo-tabla">' + formatBool(item.AgregarAuto) + '</td>'
+                        + '<td class="cc-l-cod cc-solo-card" title="' + (item.AgregarAuto ? 'Se agrega solo al guardar' : 'No se agrega solo') + '">' + (item.AgregarAuto ? 'Auto' : 'Manual') + '</td>'
                         + (config.esAdmin ? renderCostoCeldaProduccion(item, index, 'formula') : '')
                         + '</tr>';
                 });
@@ -926,9 +993,10 @@
             } else {
                 items.forEach(function (item) {
                     html += '<tr>'
-                        + '<td>' + item.codigo + '</td>'
-                        + '<td>' + item.producto + '</td>'
-                        + '<td class="text-right">' + formatKg(item.cantidad) + '</td>'
+                        + '<td class="cc-solo-tabla">' + escapeHtml(item.codigo) + '</td>'
+                        + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(item.codigo) + '</td>'
+                        + '<td class="cc-l-prod">' + escapeHtml(item.producto) + '</td>'
+                        + '<td class="text-right cc-l-kg">' + formatKg(item.cantidad) + '</td>'
                         + '</tr>';
                 });
             }
@@ -1353,7 +1421,39 @@
             }
         });
 
+        // Celular: sin encabezados para tocar, el orden de las lineas se elige con el selector (valor "clave:direccion").
+        $form.on('change', '#ordenLineasElaborado', function () {
+            var partes = String($(this).val() || '').split(':');
+            if (!partes[0]) return;
+            state.sortKey = partes[0];
+            state.sortDirection = partes[1] === 'desc' ? 'desc' : 'asc';
+            renderLineas();
+        });
+
+        $form.on('click', '#btnToggleBusquedaLineasElaborado', function () {
+            var $btn = $(this);
+            var $input = $('#filtroLineasElaborado');
+            var mostrar = $input.hasClass('d-none');
+            $input.toggleClass('d-none', !mostrar);
+            $btn.attr('aria-expanded', mostrar ? 'true' : 'false');
+
+            if (mostrar) {
+                $input.focus();
+            } else {
+                $input.val('');
+                state.searchText = '';
+                renderLineas();
+            }
+        });
+
+        $form.on('input', '#filtroLineasElaborado', function () {
+            state.searchText = $(this).val() || '';
+            renderLineas();
+        });
+
         $form.on('input change', 'input, select, textarea', function () {
+            // Buscar y ordenar la lista no cambian los datos: no disparan el borrador.
+            if ($(this).is('#filtroLineasElaborado, #ordenLineasElaborado')) return;
             scheduleDraft();
             if ($(this).is('#Receta')) autoResizeTextarea($receta);
         });
