@@ -148,6 +148,73 @@
     }
 }
 
+/* Celular (<768px): la tabla es una lista de renglones (tabla-cards.css, variante tabla-cards-lista). Aca solo lo propio de esta
+   pantalla: sin el marco de la tarjeta de afuera (la lista ya trae el suyo), barra de cantidad + orden, saldo centrado en el
+   renglon con un chevron y en verde / rojo. Desktop no cambia. */
+.ctactes-barra-movil {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .ctactes-index-page .card.mb-4 {
+        margin-bottom: .5rem !important;
+    }
+
+    .ctactes-index-page .ctactes-barra-movil {
+        margin: 0 .15rem .5rem;
+        font-size: .78rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    .ctactes-index-page .ctactes-grid-card {
+        border: 0;
+        background: transparent;
+        box-shadow: none !important;
+    }
+
+    .ctactes-index-page .ctactes-grid-card > .card-body {
+        padding: 0;
+    }
+
+    .ctactes-index-page .ctacte-persona-cell {
+        min-width: 0;
+    }
+
+    .ctactes-index-page #tablaCtasCtes > tbody > tr {
+        cursor: pointer;
+    }
+
+    .ctactes-index-page #tablaCtasCtes > tbody > tr > td.ctactes-saldo {
+        grid-row: 1 / 3;
+        align-self: center;
+    }
+
+    .ctactes-index-page #tablaCtasCtes > tbody > tr > td.ctactes-saldo::after {
+        content: "\f105";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        margin-left: .45rem;
+        color: var(--ui-text-muted, #6c757d);
+        opacity: .6;
+    }
+
+    .ctactes-index-page #tablaCtasCtes .ctactes-saldo-positivo {
+        color: #1e7e34;
+    }
+
+    .ctactes-index-page #tablaCtasCtes .ctactes-saldo-negativo {
+        color: #c82333;
+    }
+
+    html.dark-mode .ctactes-index-page #tablaCtasCtes .ctactes-saldo-positivo {
+        color: #6fd38a;
+    }
+
+    html.dark-mode .ctactes-index-page #tablaCtasCtes .ctactes-saldo-negativo {
+        color: #ff8a8a;
+    }
+}
+
 html.dark-mode .ctactes-index-page .ctacte-persona-principal {
     color: #e5edf7;
 }

@@ -93,7 +93,7 @@
                 }
             </div>
         </div>
-        <div>
+        <div class="ctacte-header-saldo">
             @if (!ocultarSaldo)
             {
                 <h5 class="mb-0">
@@ -195,7 +195,7 @@
                                 <i class="fas fa-file-excel"></i> Excel
                             </a>
                             <button type="button" class="btn btn-outline-primary ctacte-btn-mail" id="btnEnviarMailCtaCte">
-                                <i class="fas fa-envelope"></i> Enviar por mail
+                                <i class="fas fa-envelope"></i> <span class="ctacte-solo-desktop">Enviar por mail</span><span class="ctacte-solo-movil">Mail</span>
                             </button>
                         }
                     </div>
@@ -204,10 +204,14 @@
         </div>
     </div>
 
-    <div class="card shadow-sm ctacte-panel-card">
+    @* En celular (<768px) los movimientos son una lista de renglones dentro de una sola tarjeta (tabla-cards.css, variante
+       tabla-cards-lista, con la disposicion propia de abajo en el <style>): operacion y tipo con el importe a la derecha; fecha,
+       nro. doc. y sucursal con el saldo a la derecha; y el detalle. Mismo HTML que desktop: el click de la fila y el desplegable
+       funcionan igual. Ver docs/DECISIONS.md 2026-10-27. *@
+    <div class="card shadow-sm ctacte-panel-card ctacte-movimientos-card">
         <div class="card-body p-2">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm ctacte-table-compact" id="tablaPersona" width="100%" cellspacing="0">
+                <table class="table table-bordered table-hover table-sm ctacte-table-compact tabla-cards tabla-cards-lista" id="tablaPersona" width="100%" cellspacing="0">
                     <thead class="thead-dark">
                         <tr>
                             <th style="display:none;">ID</th>
@@ -270,9 +274,10 @@
                                 data-es-compra="@(esCompraEditable ? "true" : "false")"
                                 data-id-compra="@(esCompraEditable ? idTablaCompra : 0)"
                                 style="cursor:@((esVenta || esPagoEditable || esCompraEditable) ? "pointer" : "default");">
+                                @* Clases ctacte-m-*: ubican cada celda en el renglon del celular (ver <style> de abajo). *@
                                 <td style="display:none;">@row["ID"]</td>
-                                <td>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
-                                <td class="@claseColorOperacion" style="font-weight:bold;">
+                                <td class="ctacte-m-fecha">@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
+                                <td class="@claseColorOperacion ctacte-m-op" style="font-weight:bold;">
                                     @row["Tabla"]
                                     @if (esContraasiento)
                                     {
@@ -291,9 +296,10 @@
                                         <span class="badge badge-warning ml-1">Modificado</span>
                                     }
                                 </td>
-                                <td class="@claseColorOperacion" style="font-weight:bold;">@tipoImporte</td>
-                                <td>@(tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : "")</td>
-                                <td>
+                                <td class="@claseColorOperacion ctacte-m-tipo" style="font-weight:bold;">@tipoImporte</td>
+                                @{ string nroDocFila = tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : ""; }
+                                <td class="ctacte-m-doc @(string.IsNullOrWhiteSpace(nroDocFila) ? "cc-vacio" : "")">@nroDocFila</td>
+                                <td class="ctacte-m-detalle">
                                     [ID: @row["IdTabla"]] @row["Detalle"]
                                     @if (esHistorico && esPago)
                                     {
@@ -304,27 +310,27 @@
                                         <div class="small text-warning mt-1">Verificar cambios del registro original.</div>
                                     }
                                 </td>
-                                <td class="@claseColorOperacion" style="text-align:right; font-weight:bold;">@importeFila.ToString("N2")</td>
-                                <td style="text-align:right;">@(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))</td>
+                                <td class="@claseColorOperacion ctacte-m-importe" style="text-align:right; font-weight:bold;">@importeFila.ToString("N2")</td>
+                                <td class="ctacte-m-saldo" style="text-align:right;"><span class="cc-solo-card">saldo </span>@(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))</td>
                                 @{
                                     string claveObs = Convert.ToString(row["Tabla"]) + "|" + Convert.ToString(row["IdTabla"]);
                                     string observacionMov = observacionesPorMovimiento.ContainsKey(claveObs) ? observacionesPorMovimiento[claveObs] : "";
                                     bool tieneObs = !string.IsNullOrWhiteSpace(observacionMov);
                                     bool puedeDesplegar = id > 0; // la fila "Saldo Anterior" (id 0) no tiene detalle
                                 }
-                                <td class="text-center">
+                                <td class="text-center ctacte-m-obs @(tieneObs ? "" : "cc-vacio")">
                                     @if (tieneObs)
                                     {
-                                        <span class="ctacte-obs-icono" title="@observacionMov"><i class="fas fa-comment-dots text-info"></i> <span class="badge badge-info">1</span></span>
+                                        <span class="ctacte-obs-icono" title="@observacionMov"><i class="fas fa-comment-dots text-info"></i><span class="cc-solo-tabla"> <span class="badge badge-info">1</span></span></span>
                                     }
                                 </td>
-                                <td>@row["Sucursal"]</td>
-                                <td class="text-center">
+                                <td class="ctacte-m-suc">@row["Sucursal"]</td>
+                                <td class="text-center ctacte-m-toggle @(puedeDesplegar ? "" : "cc-vacio")">
                                     @if (puedeDesplegar)
                                     {
                                         <button type="button" class="btn btn-sm btn-outline-secondary js-toggle-detalle-ctacte"
                                                 data-detalle-de="@id" title="Ver detalle completo" aria-expanded="false">
-                                            <i class="fas fa-angle-down"></i>
+                                            <i class="fas fa-angle-down"></i><span class="cc-solo-card"> Detalle</span>
                                         </button>
                                     }
                                 </td>
@@ -334,13 +340,13 @@
                                 <tr class="ctacte-detalle-row d-none" data-detalle-de="@id">
                                     <td colspan="11" class="bg-light">
                                         <div class="row small ctacte-detalle-grid">
-                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Fecha</span>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</div>
-                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Operación</span>@row["Tabla"] - @tipoImporte</div>
-                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Nro.Doc</span>@(tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : "-")</div>
-                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Sucursal</span>@row["Sucursal"]</div>
-                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Importe</span>@importeFila.ToString("N2")</div>
-                                            <div class="col-6 col-md-3 mb-2"><span class="text-muted d-block">Saldo</span>@(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))</div>
-                                            <div class="col-12 col-md-6 mb-2"><span class="text-muted d-block">Detalle</span>[ID: @row["IdTabla"]] @row["Detalle"]</div>
+                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Fecha</span>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</div>
+                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Operación</span>@row["Tabla"] - @tipoImporte</div>
+                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Nro.Doc</span>@(tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : "-")</div>
+                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Sucursal</span>@row["Sucursal"]</div>
+                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Importe</span>@importeFila.ToString("N2")</div>
+                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Saldo</span>@(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))</div>
+                                            <div class="col-12 col-md-6 mb-2 ctacte-det-dup"><span class="text-muted d-block">Detalle</span>[ID: @row["IdTabla"]] @row["Detalle"]</div>
                                             <div class="col-12 mb-2">
                                                 <span class="text-muted d-block">Observaciones</span>
                                                 @if (tieneObs)
@@ -453,6 +459,64 @@
     .ctacte-detalle-obs { white-space: pre-wrap; word-break: break-word; }
     .ctacte-obs-icono { white-space: nowrap; cursor: help; }
     .ctacte-compra-body { background: #f4f7fb; }
+    .ctacte-page .ctacte-solo-movil { display: none; }
+
+    /* ---- Celular (<768px), 2026-10-27 (ver docs/DECISIONS.md) ----
+       Encabezado apilado (nombre arriba, saldo grande abajo), filtros y acciones a lo ancho, y los movimientos como renglones de
+       una sola tarjeta (tabla-cards-lista). Cada renglon es un flex con 3 lineas; los saltos de linea los ponen tr::before (orden 4)
+       y tr::after (orden 9): 1) operacion · tipo ... importe; 2) fecha · nro. doc ... saldo; 3) sucursal · detalle, obs. y Detalle.
+       La sucursal va en la 3.a linea porque con fecha + nro. doc + sucursal la 2.a no entra a 375 px y el saldo bajaba solo. */
+    @@media (max-width: 767.98px) {
+        .ctacte-page .ctacte-solo-desktop { display: none; }
+        .ctacte-page .ctacte-solo-movil { display: inline; }
+
+        .ctacte-page .ctacte-header-box { flex-direction: column; align-items: stretch !important; }
+        .ctacte-page .ctacte-header-saldo { margin-top: .5rem; padding-top: .4rem; border-top: 1px solid rgba(0, 0, 0, .1); }
+        .ctacte-page .ctacte-header-saldo h5 { display: flex; justify-content: space-between; align-items: baseline; font-size: .82rem; }
+        .ctacte-page .ctacte-header-saldo h5 span { font-size: 1.15rem; }
+
+        .ctacte-page .ctacte-filtros-group { width: 100%; }
+        .ctacte-page .ctacte-fecha-group { max-width: none; }
+        .ctacte-page .ctacte-acciones-row { width: 100%; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; padding-top: .55rem; border-top: 1px solid #e9ecef; }
+        .ctacte-page .ctacte-acciones-row .btn { flex: 1 1 0; margin: 0 !important; min-height: 2.1rem; white-space: nowrap; }
+        .ctacte-page .ctacte-acciones-row #btnAgregarPagoCtaCte { flex-basis: 100%; min-height: 2.75rem; font-weight: 700; }
+
+        .ctacte-page .ctacte-movimientos-card { border: 0; background: transparent; box-shadow: none !important; }
+        .ctacte-page .ctacte-movimientos-card > .card-body { padding: 0 !important; }
+
+        #tablaPersona > tbody > tr.js-fila-ctacte { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .35rem; row-gap: .1rem; }
+        #tablaPersona > tbody > tr.js-fila-ctacte::before,
+        #tablaPersona > tbody > tr.js-fila-ctacte::after { content: ""; flex-basis: 100%; height: 0; }
+        #tablaPersona > tbody > tr.js-fila-ctacte::before { order: 4; }
+        #tablaPersona > tbody > tr.js-fila-ctacte::after { order: 9; }
+        #tablaPersona > tbody > tr > td.ctacte-m-op { order: 1; font-size: .86rem; }
+        #tablaPersona > tbody > tr > td.ctacte-m-tipo { order: 2; font-size: .76rem; font-weight: 400 !important; }
+        #tablaPersona > tbody > tr > td.ctacte-m-importe { order: 3; margin-left: auto; text-align: right !important; white-space: nowrap !important; font-size: .88rem; font-variant-numeric: tabular-nums; }
+        #tablaPersona > tbody > tr > td.ctacte-m-fecha { order: 5; }
+        #tablaPersona > tbody > tr > td.ctacte-m-doc { order: 6; }
+        #tablaPersona > tbody > tr > td.ctacte-m-saldo { order: 8; margin-left: auto; text-align: right !important; white-space: nowrap !important; font-variant-numeric: tabular-nums; }
+        #tablaPersona > tbody > tr > td.ctacte-m-suc { order: 10; white-space: nowrap !important; }
+        #tablaPersona > tbody > tr > td.ctacte-m-detalle { order: 11; flex: 1 1 0; }
+        #tablaPersona > tbody > tr > td.ctacte-m-obs { order: 12; }
+        #tablaPersona > tbody > tr > td.ctacte-m-toggle { order: 13; }
+        #tablaPersona > tbody > tr > td.ctacte-m-fecha,
+        #tablaPersona > tbody > tr > td.ctacte-m-doc,
+        #tablaPersona > tbody > tr > td.ctacte-m-suc,
+        #tablaPersona > tbody > tr > td.ctacte-m-saldo,
+        #tablaPersona > tbody > tr > td.ctacte-m-detalle { font-size: .74rem; color: var(--ui-text-muted, #6c757d); }
+        #tablaPersona > tbody > tr > td.ctacte-m-tipo::before,
+        #tablaPersona > tbody > tr > td.ctacte-m-doc::before,
+        #tablaPersona > tbody > tr > td.ctacte-m-detalle::before { content: "· "; color: var(--ui-text-muted, #6c757d); }
+        #tablaPersona .js-toggle-detalle-ctacte { border: 0; background: none; padding: 0 0 0 .3rem; font-size: .74rem; color: #2f6fd6; box-shadow: none; }
+
+        /* Desplegable: sin los datos que ya estan en el renglon (fecha, operacion, nro. doc, sucursal, importe, saldo, detalle). */
+        #tablaPersona > tbody > tr.ctacte-detalle-row { display: block; padding: 0 0 .5rem; }
+        #tablaPersona > tbody > tr.js-fila-ctacte:has(+ tr.ctacte-detalle-row:not(.d-none)) { border-bottom: 0; }
+        #tablaPersona > tbody > tr.ctacte-detalle-row > td { border-radius: .4rem; padding: .45rem .55rem !important; }
+        #tablaPersona .ctacte-det-dup { display: none; }
+
+        html.dark-mode #tablaPersona .ctacte-row-modificado td { background-color: transparent; }
+    }
 
     /* Fondos claros fijos de arriba (.ctacte-compra-body, .ctacte-row-modificado): el texto que
        cae adentro hereda var(--ui-text) del modal-content/.table (claro en modo oscuro) -- sin

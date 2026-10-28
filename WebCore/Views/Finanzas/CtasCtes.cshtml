@@ -49,12 +49,29 @@
     </div>
 
 
+    @* Celular (<768px): el encabezado de la tabla se oculta (lista de renglones), asi que la cantidad de cuentas y el
+       orden por saldo van aca. Mismo link de orden que el boton del encabezado. *@
+    <div class="d-flex d-md-none justify-content-between align-items-center ctactes-barra-movil">
+        <span id="ctactesCantidadMovil">@Model.Rows.Count cuentas</span>
+        @if (!ocultarSaldo)
+        {
+            <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos })"
+               data-pos-ajax="@(desdePos ? "true" : "false")"
+               data-pos-title="Cuentas corrientes">
+                Saldo: @(ordenSaldo == "ASC" ? "menor primero" : "mayor primero") <i class="fas fa-sort ml-1"></i>
+            </a>
+        }
+    </div>
+
     <!-- GRILLA -->
-    <div class="card shadow @(desdePos ? "" : "ctactes-tabla-card")">
+    @* En celular (<768px) la tabla es una lista de renglones dentro de una sola tarjeta (CSS compartido
+       wwwroot/Content/css/tabla-cards.css, variante tabla-cards-lista): persona arriba a la izquierda, razon social y #id debajo,
+       saldo a la derecha (verde / rojo). Mismo HTML que desktop: ctasctes.js filtra y navega igual. Ver docs/DECISIONS.md 2026-10-27. *@
+    <div class="card shadow ctactes-grid-card @(desdePos ? "" : "ctactes-tabla-card")">
         <div class="card-body">
 
             <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="tablaCtasCtes" width="100%" cellspacing="0">
+                <table class="table table-bordered table-hover tabla-cards tabla-cards-lista" id="tablaCtasCtes" width="100%" cellspacing="0">
                     <thead class="thead-dark">
                         <tr>
 
@@ -117,22 +134,29 @@
 
                                     if (combinarPersona && i == indiceNombreIdentif)
                                     {
-                                        <td class="ctacte-persona-cell">
+                                        <td class="ctacte-persona-cell cc-l-prod">
                                             <div class="ctacte-persona-principal">@nombreIdentif</div>
                                             @if (!string.IsNullOrWhiteSpace(razonSocial))
                                             {
-                                                <div class="ctacte-persona-secundaria">@razonSocial</div>
+                                                <div class="ctacte-persona-secundaria">@razonSocial<span class="cc-solo-card"> · #@idPersona</span></div>
+                                            }
+                                            else
+                                            {
+                                                <div class="ctacte-persona-secundaria cc-solo-card">#@idPersona</div>
                                             }
                                         </td>
                                     }
                                     else if (string.Equals(col.ColumnName, "Saldo", StringComparison.OrdinalIgnoreCase))
                                     {
                                         decimal saldoFila = row[col] == DBNull.Value ? 0m : Convert.ToDecimal(row[col]);
-                                        <td>@(ocultarSaldo ? "***" : saldoFila.ToString("N2"))</td>
+                                        @* Color del saldo (verde / rojo) solo en celular, ver ctasctes.css; con el saldo oculto no se colorea. *@
+                                        string claseSaldo = ocultarSaldo ? "" : (saldoFila > 0 ? "ctactes-saldo-positivo" : (saldoFila < 0 ? "ctactes-saldo-negativo" : ""));
+                                        <td class="cc-l-kg ctactes-saldo @claseSaldo">@(ocultarSaldo ? "***" : saldoFila.ToString("N2"))</td>
                                     }
                                     else
                                     {
-                                        <td>@row[col]</td>
+                                        @* La primera columna es el IdPersona: en la tarjeta va junto a la razon social (#id). *@
+                                        <td class="@(i == 0 ? "cc-solo-tabla" : "")">@row[col]</td>
                                     }
                                 }
                             </tr>
@@ -146,7 +170,8 @@
 
 </div>
 
-<link rel="stylesheet" href="@Url.Content("~/Content/css/ctasctes.css?v=1")" />
+@* asp-append-version (antes ?v=1 fijo): el navegador del celular no toma el CSS nuevo si la URL no cambia. *@
+<link rel="stylesheet" href="@Url.Content("~/Content/css/ctasctes.css")" asp-append-version="true" />
 <script src="@Url.Content("~/Scripts/app/ctasctes.js")" asp-append-version="true"></script>
 <script>
     (function () {
@@ -180,4 +205,21 @@
     if (window.CtasCtesPage && typeof window.CtasCtesPage.init === "function") {
         window.CtasCtesPage.init();
     }
+
+    // Celular: la cantidad de cuentas de la barra de arriba sigue al filtro en vivo de ctasctes.js (que oculta filas con display:none).
+    (function () {
+        var buscador = document.getElementById("txtBuscar");
+        var cantidad = document.getElementById("ctactesCantidadMovil");
+        if (!buscador || !cantidad) return;
+        function actualizarCantidad() {
+            window.requestAnimationFrame(function () {
+                var visibles = Array.prototype.filter.call(document.querySelectorAll("#tbodyCtas > tr"), function (fila) {
+                    return fila.style.display !== "none";
+                }).length;
+                cantidad.textContent = visibles + (visibles === 1 ? " cuenta" : " cuentas");
+            });
+        }
+        buscador.addEventListener("input", actualizarCantidad);
+        actualizarCantidad();
+    })();
 </script>
