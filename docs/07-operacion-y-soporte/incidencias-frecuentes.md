@@ -12,6 +12,13 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - Resolucion
 
 ---
+## 2026-10-29 - Servidor SM: el deploy no entraba por SSH ("Permission denied") por contraseña vencida
+
+- **Sintoma**: `New-SSHSession` a `200.107.107.39:22` con `carnisys-deploy` fallaba con «Permission denied (keyboard-interactive)»; el servidor sí respondía (misma huella ed25519 de siempre) y ofrecía `publickey,password,keyboard-interactive`. El deploy de la mañana anterior había entrado.
+- **Causa**: la contraseña de `carnisys-deploy` (cambiada el 16/09) **expiró el 28/10/2026 12:45**, 42 días después, por la política por defecto de Windows. Se vio con `net user carnisys-deploy` en el servidor (cuenta activa, sin bloqueo).
+- **Resolucion**: renovarla desde una consola de administrador en SM: `Set-LocalUser -Name carnisys-deploy -Password (Read-Host -AsSecureString) -PasswordNeverExpires $true`. Se actualizó `~/hosts/servidorsm.env`. Si vuelve a fallar, mirar primero `net user carnisys-deploy` («La contraseña expira») antes de reintentar claves: cada intento fallido suma al bloqueo.
+- **Riesgo aceptado / pendiente**: la cuenta es administradora, está expuesta a internet (puerto 22) y la contraseña es corta; que no venza reduce la rotación. Alternativa recomendada (regla §4.0 del baseline): entrar por llave y cerrar la contraseña. San Lorenzo tiene su propia cuenta: no se verificó si le pasa lo mismo.
+
 ## 2026-10-29 - POS (SQL Server): "Error al finalizar la venta" al facturar expendios
 
 - **Sintoma**: en Servidor SM, cargar expendios en el POS y finalizar la venta (se vio con Cta. Cte.) mostraba «Error al finalizar la venta»; sin expendios la venta se guardaba bien.
