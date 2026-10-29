@@ -12,6 +12,13 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - Resolucion
 
 ---
+## 2026-10-29 - POS (SQL Server): "Error al finalizar la venta" al facturar expendios
+
+- **Sintoma**: en Servidor SM, cargar expendios en el POS y finalizar la venta (se vio con Cta. Cte.) mostraba «Error al finalizar la venta»; sin expendios la venta se guardaba bien.
+- **Causa**: `Negocio.Venta` leía los expendios (`getExpedioById`, para la leyenda de remitos) dentro del `TransactionScope`; en SQL Server esa lectura abre conexiones anidadas con el lector abierto, la transacción se promueve a distribuida y .NET la rechaza (`TransactionException`). Postgres no se veía afectado.
+- **Resolucion**: la leyenda se arma antes de abrir la transacción (`agregarVenta` / `modificarVenta`). Ver `docs/DECISIONS.md` (2026-10-29). El detalle de la excepción viaja en el campo `error` de la respuesta de `/Ventas/FinalizarVenta` (pestaña Red del navegador), no en el cartel.
+
+
 
 ## 2026-10-22 - San Lorenzo: revision de solo lectura tras la intrusion en Servidor SM (sin cambios hechos)
 

@@ -82,7 +82,14 @@ namespace NegocioTests.Fakes
         // Expendios que devuelve getExpedioById (por id); vacio = ninguno (devuelve null). Lo usa la
         // leyenda "REMITOS ASOCIADOS" de Negocio.Venta.
         public Dictionary<int, Venta> Expendios { get; } = new Dictionary<int, Venta>();
-        public Venta getExpedioById(int idExpendio) => Expendios.TryGetValue(idExpendio, out var e) ? e : null;
+        // Cuantas veces se leyo un expendio con un TransactionScope abierto (en SQL Server eso rompe la venta).
+        public int LecturasDeExpendioDentroDeTransaccion { get; private set; }
+        public Venta getExpedioById(int idExpendio)
+        {
+            if (System.Transactions.Transaction.Current != null)
+                LecturasDeExpendioDentroDeTransaccion++;
+            return Expendios.TryGetValue(idExpendio, out var e) ? e : null;
+        }
         public Func<int, string, long> OnUltimoCorrelativoRemito { get; set; }
         public Func<int, string, bool> OnExisteNroRemito { get; set; }
         public long ultimoCorrelativoRemito(int idSucursal, string prefijo) => OnUltimoCorrelativoRemito != null ? OnUltimoCorrelativoRemito(idSucursal, prefijo) : throw new NotImplementedException();

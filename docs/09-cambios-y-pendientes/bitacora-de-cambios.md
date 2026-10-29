@@ -1,5 +1,13 @@
 # Bitacora de cambios
 
+## 2026-10-29 - POS: no se podía finalizar una venta con expendios en SQL Server (Servidor SM)
+
+- **Pedido:** al cargar expendios y guardar la venta en Cta. Cte. daba «Error al finalizar la venta».
+- **Cambio:** `Negocio/Venta.cs`: la leyenda de remitos asociados (lee los expendios) se arma antes de abrir la transacción, en alta y en modificación. Detalle: `docs/DECISIONS.md` y `docs/07-operacion-y-soporte/incidencias-frecuentes.md` (2026-10-29).
+- **Verificado:** error reproducido con un arnés contra el SQL Server local (`getExpedioById` dentro de un `TransactionScope` → `TransactionException`; fuera, OK) y, con el fix, `Negocio.Venta.agregarVenta` con los expendios 35 y 36 llega hasta el INSERT de la venta (el arnés lo frena, no se escribió nada). `Negocio.Tests`: 734 correctos incluido el test nuevo; 1 falla ajena (`EliminarCompra_ConEgresoEnCeroPorCtaCte_NoRegistraEgresoOpuesto`, de Compras: su expectativa contradice la decisión del 2026-10-28 de registrar siempre el egreso opuesto).
+- **Sin verificar:** una venta real guardada en Servidor SM (falta deploy) ni en Postgres (no estaba afectado).
+
+
 ## 2026-10-28 - Compras desde el POS: modificar y eliminar las propias desde Mis actividades (F6) y fuente del proveedor
 
 - **Pedido:** (1) bajar 2 puntos la fuente del input Proveedor; (2) que el operador, desde Mis actividades del POS, pueda **modificar** las compras que registró desde el comienzo de su caja (no podía); (3) que también pueda **eliminarlas**, con su registro de anulación en los egresos de Mis actividades.

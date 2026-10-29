@@ -103,6 +103,10 @@ namespace Negocio
 
         public int agregarVenta(Entidades.Venta oVentaE, bool esNotaCredito = false)
         {
+            // Remitos asociados: se leen los expendios ANTES de abrir la transaccion (ver el comentario
+            // de AgregarLeyendaRemitosAsociados).
+            AgregarLeyendaRemitosAsociados(oVentaE);
+
             // oVentaD.IniciarUnitOfWork() devuelve null para SQL Server (sigue usando
             // TransactionScope, sin cambios) y una DatosPostgres.UnitOfWorkPg real para Postgres
             // -- TransactionScope no es compatible con el patron de conexion-por-metodo de
@@ -166,8 +170,7 @@ namespace Negocio
                     oVentaE.ComisionTarjeta = 0;
                     break;
             }
-            // Remitos asociados: se agrega la leyenda a las observaciones ANTES de guardar la venta.
-            AgregarLeyendaRemitosAsociados(oVentaE);
+            // La leyenda de remitos asociados ya la agrego agregarVenta, antes de abrir la transaccion.
             oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE, unitOfWork);
 
             ///llama al metodo para asinar el idVenta a la tabla Expendios
@@ -221,6 +224,9 @@ namespace Negocio
 
         public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas, List<Entidades.LineaVenta> lineaNuevosAnulados)
         {
+            // Igual que agregarVenta: los expendios se leen antes de abrir la transaccion.
+            AgregarLeyendaRemitosAsociados(oVentaE);
+
             // Mismo mecanismo que agregarVenta: TransactionScope para SQL Server (sin cambios),
             // IUnitOfWork explicito para Postgres (ver docs/DECISIONS.md, 2026-08-20).
             var unitOfWork = oVentaD.IniciarUnitOfWork();
@@ -274,7 +280,6 @@ namespace Negocio
                     oVentaE.ComisionTarjeta = 0;
                     break;
             }
-            AgregarLeyendaRemitosAsociados(oVentaE);
             oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas, unitOfWork);
 
             if (lineaNuevosAnulados != null)
@@ -596,6 +601,10 @@ namespace Negocio
         // leyenda "REMITOS ASOCIADOS: a / b". Se hace aca (servidor) y no en el navegador para que
         // quede siempre, con cualquier cliente, y sin el tope de largo del comentario del POS.
         // Sin expendios asociados no hace nada ni consulta la base.
+        // Se llama SIEMPRE fuera de la transaccion de la venta (2026-10-29, ver docs/DECISIONS.md): en SQL Server
+        // getExpedioById abre conexiones anidadas (vendedor, sucursal, lineas, cortes) con su lector todavia
+        // abierto; dentro del TransactionScope eso promueve la transaccion a distribuida y .NET la rechaza
+        // ("Error al finalizar la venta" al facturar expendios desde el POS).
         private void AgregarLeyendaRemitosAsociados(Entidades.Venta oVentaE)
         {
             if (oVentaE == null || oVentaE.ListaExpendios == null || oVentaE.ListaExpendios.Count == 0)

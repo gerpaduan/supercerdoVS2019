@@ -90,6 +90,23 @@ namespace NegocioTests
             Assert.Equal("REMITOS ASOCIADOS: A / B", venta.Observaciones);
         }
 
+        // Bug real 2026-10-29 (Servidor SM, SQL Server): leer expendios dentro del TransactionScope promovia la
+        // transaccion a distribuida y la venta fallaba con "Error al finalizar la venta".
+        [Fact]
+        public void Los_expendios_se_leen_fuera_de_la_transaccion_al_agregar_y_al_modificar()
+        {
+            var repo = new FakeVentaRepository();
+            repo.Expendios[10] = Expendio("REMITOS", "A");
+            var venta = CrearVenta(10);
+            var negocio = CrearVentaN(repo);
+
+            negocio.agregarVenta(venta);
+            negocio.modificarVenta(venta, 1, false, null);
+
+            Assert.Equal(0, repo.LecturasDeExpendioDentroDeTransaccion);
+            Assert.Equal("REMITOS ASOCIADOS: A", venta.Observaciones);
+        }
+
         [Fact]
         public void Sin_expendios_no_consulta_la_base_ni_toca_las_observaciones()
         {

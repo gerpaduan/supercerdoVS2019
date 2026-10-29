@@ -21,6 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- FakeVentaRepository mira Transaction.Current (lecturas dentro del TransactionScope de la venta). -->
+    <Reference Include="System.Transactions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Negocio\Negocio.csproj" />
     <ProjectReference Include="..\Contratos\Contratos.csproj" />
     <ProjectReference Include="..\Entidades\Entidades.csproj" />
