@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-10-29 - POS, modal Forma de Pago: se achica también con «El cliente paga ahora»
+
+- **Pedido:** con el cobro tildado quedaban botones y el total fuera de la vista.
+- **Cambio:** `forma-pago.js` (modo compacto también con el cobro tildado) y CSS de `_FormaPagoModal.cshtml` (saldo y cobro lado a lado en escritorio). Detalle: `docs/DECISIONS.md` (2026-10-29).
+- **Verificado (login real con usuario de prueba ya borrado, 1030x820):** con el cobro tildado el modal pasa a compacto, saldo y cobro quedan lado a lado y «Total de la Venta» se ve sin scroll; al destildar vuelve al tamaño normal; también entra con Pago Mixto y descuento abiertos. El saldo y el total se simularon por JavaScript (sin caja abierta ni venta real). **Sin verificar:** modo oscuro y celular.
+
 ## 2026-10-29 - POS: no se podía finalizar una venta con expendios en SQL Server (Servidor SM)
 
 - **Pedido:** al cargar expendios y guardar la venta en Cta. Cte. daba «Error al finalizar la venta».

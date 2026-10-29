@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-10-27
+revisada: 2026-10-29
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»).** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -56,6 +56,7 @@ Si con esta venta el cliente **quedaría debiendo** (el cuadro rojo de arriba), 
 2. Escribí el **importe que paga** (el cursor ya queda en el campo), o tildá **«Paga todo»** (viene destildado) para cobrar toda la deuda. Debajo se lee qué le queda a la cuenta: **«Le queda debiendo $ X»**, **«La cuenta queda en $ 0,00»** o **«Paga de más: le queda a favor $ X»**.
 3. **Tocá la forma de pago con la que paga** (Efectivo, Débito, Crédito, QR o Transferencia, clic o teclas 1 a 6). **Un clic registra la venta y el cobro**: el cobro queda con esa forma de pago (Débito → cobro en Débito), con su recibo automático, y suma a la caja solo si es Efectivo.
 4. **Pago Mixto**: activalo antes o después del tilde. Se reparte el **importe que paga** (no el total de la venta) entre Efectivo y el otro medio, y se registran **dos cobros** (uno en Efectivo y otro en el otro medio).
+5. **El modal se achica solo** (igual que con Pago Mixto o con el descuento): botones de forma de pago en una línea y, en escritorio, el cuadro del saldo y el del cobro lado a lado, para que «Total de la Venta» quede a la vista sin scrollear. Al destildar vuelve al tamaño normal.
 
 **Cuándo no aparece el interruptor:** cliente sin deuda tras la venta (sin saldo, saldo chico, saldo a favor que alcanza), Consumidor Final, cuenta reservada sin permiso, **sin caja abierta** (el cobro se asienta en la caja), al **modificar una venta** o cambiar solo la forma de pago. Si estando tildado cambia el total (por ejemplo, un descuento con **/**) y ya no queda deuda, se destilda solo.
 - **Factura**: si el cobro es con un medio que exige factura electrónica (Débito, Crédito, QR, Transferencia) se abre la factura, igual que en una venta con ese medio.

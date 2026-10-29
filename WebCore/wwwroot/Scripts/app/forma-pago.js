@@ -1109,9 +1109,10 @@ function actualizarHintPagoMixto() {
 }
 
 // Modo compacto del modal (botones en una linea, campos lado a lado): activo si hay descuento
-// desplegado O pago mixto activo, para que no haga falta scrollear para ver los demas campos.
+// desplegado, pago mixto activo O el cobro del saldo tildado ("El cliente paga ahora", 2026-10-29: el bloque
+// del importe empujaba "Total de la Venta" fuera de la vista), para que no haga falta scrollear.
 function actualizarModoCompactoModal() {
-    const compacto = bloqueDescuentoAbierto || $('#chkPagoMixto').is(':checked');
+    const compacto = bloqueDescuentoAbierto || $('#chkPagoMixto').is(':checked') || cobroSaldoTildado();
     $('#modalFormaPago').toggleClass('pos-modal-compacto', compacto);
 }
 
@@ -1189,6 +1190,7 @@ function importeCobroFormaPago() {
 
 function actualizarDetalleCobroSaldo(deuda) {
     const tildado = cobroSaldoTildado();
+    actualizarModoCompactoModal(); // el cobro tildado achica el modal (igual que Pago Mixto)
     $('#fpCobroSaldoDetalle').toggleClass('d-none', !tildado);
     $('#fpSaldoCtaCteTitulo').text(tildado ? TITULO_SALDO_CON_COBRO : TITULO_SALDO_CTACTE);
     $('#lblAtajoCobrarSaldo').text(tildado ? 'Atajo: presioná "C" para quitarlo' : 'Atajo: presioná "C"');
@@ -1263,12 +1265,15 @@ function actualizarSaldoCtaCteFormaPago() {
         return;
     }
     $('#fpCobroSaldoWrap').toggleClass('d-none', !cobroPosible);
+    // En modo compacto el cuadro del saldo y el del cobro van lado a lado (CSS en _FormaPagoModal.cshtml).
+    $box.toggleClass('fp-saldo-con-cobro', cobroPosible);
 
     // Con el cobro tildado Cta. Cte. esta inhabilitado a proposito pero el cuadro tiene que seguir visible.
     const ctaCteDisponible = cobroSaldoTildado() || !$('.btn-forma-pago[data-tipo="CtaCte"]').prop('disabled');
     $('#fpSaldoCtaCte').toggleClass('d-none', !ctaCteDisponible);
     if (!ctaCteDisponible && !cobroPosible) {
         $box.addClass('d-none');
+        actualizarModoCompactoModal();
         return;
     }
 
@@ -1320,6 +1325,7 @@ $('#chkCobrarSaldoFp').on('change', function () {
     limpiarMontosPagoMixto();
     // Recalcula que botones se pueden usar: tildado, Cta. Cte. se inhabilita; destildado, vuelve a las reglas de siempre.
     bloquearFormasPagoNoPreseleccionadas();
+    actualizarModoCompactoModal();
     // Con el importe vacio el cursor va directo al campo para tipear lo que recibe.
     if (tildado) {
         requestAnimationFrame(function () { $('#txtImporteCobroFp').trigger('focus').select(); });

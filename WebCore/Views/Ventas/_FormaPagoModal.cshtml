@@ -545,6 +545,43 @@
         font-size: .72rem;
     }
 
+    #modalFormaPago.pos-modal-compacto .fp-saldo-ctacte-titulo {
+        font-size: .75rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-cobro-saldo {
+        margin-top: 0;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-cobro-titulo {
+        font-size: .8rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-cobro-input {
+        width: 9rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-cobro-queda {
+        margin-top: .15rem;
+        font-size: .85rem;
+    }
+
+    /* Cobro del saldo tildado (2026-10-29): el cuadro del saldo y el del cobro van lado a lado en vez de apilados,
+       para que "Total de la Venta" quede a la vista sin scrollear. forma-pago.js pone fp-saldo-con-cobro en
+       #fpSaldoCtaCteBox cuando el cobro es posible. En celular (<768px) quedan apilados. */
+    @@media (min-width: 768px) {
+        #modalFormaPago.pos-modal-compacto #fpSaldoCtaCteBox.fp-saldo-con-cobro {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+            gap: .5rem;
+            align-items: stretch;
+        }
+
+        #modalFormaPago.pos-modal-compacto #fpSaldoCtaCteBox.fp-saldo-con-cobro.d-none {
+            display: none;
+        }
+    }
+
     /* Mientras el input de descuento tiene el foco (2026-09-07, pedido explicito del usuario --
        ver docs/DECISIONS.md): se invierte el enfasis visual -- el total a cobrar (verde) crece y
        el total original (azul) se achica, para que el usuario mire el numero que realmente

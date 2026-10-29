@@ -1,3 +1,9 @@
+## 2026-10-29 - Modal Forma de Pago: modo compacto también con «El cliente paga ahora»
+
+- **Pedido:** con «El cliente paga ahora» tildado, el cuadro del saldo + el bloque del cobro (importe, Paga todo, «le queda») empujaban «Total de la Venta» fuera de la vista y había que scrollear; con Pago Mixto no pasaba porque ese modo achica el modal.
+- **Qué se decidió:** `forma-pago.js` → `actualizarModoCompactoModal()` suma `cobroSaldoTildado()` a la condición (descuento abierto, Pago Mixto o cobro tildado) y se llama desde `actualizarDetalleCobroSaldo` y desde el cambio del switch. En compacto, el cuadro del saldo y el del cobro van lado a lado en escritorio (`#fpSaldoCtaCteBox.fp-saldo-con-cobro`, CSS en `_FormaPagoModal.cshtml`, `@media (min-width: 768px)`); en celular quedan apilados.
+- **Alternativa descartada:** dejar solo el scroll del modal (`modal-dialog-scrollable`, Batch C): el cajero quedaba sin ver el total ni los botones al cobrar.
+
 ## 2026-10-27 - Unificacion SuperCerdo SM + SL (SQL Server local) y volcado a carnisys (Postgres local, empresa 1)
 
 - **Pedido:** rehacer la base unificada `SuperCerdo` del SQL Server Express local con los backups de hoy (`C:\backups\SuperCerdoSM.bak` / `SuperCerdoSL.bak`, 26/10 18:00) y volcarla a `carnisys` (Postgres local) tocando solo la empresa 1. La fusion del 17/9 no tenia script guardado (solo las tablas `_MergeMapPersonas`/`_MergeMapCorte` y los CSV de `C:\backups`).
