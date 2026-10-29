@@ -415,13 +415,27 @@
         // descendiente, ni siquiera compite en el mismo contexto de apilamiento que #modalFinanzasPOS.
         // Re-parentarlo a body (ultimo hijo) antes de mostrarlo resuelve ambos problemas de una vez
         // -- mismo criterio que compras.js aplica para #modalBuscarPersona/#modalBuscarProducto.
+        //
+        // #modalEmailComprobanteVenta (2026-10-29): F6 > Detalle de venta > Factura / Imprimir > Enviar por email dejaba
+        // la pantalla bloqueada. Es el mismo caso: tambien vive dentro de #modalFinanzasPOS, y como solo se re-parentaba
+        // #modalComprobanteVenta, el email quedaba atrapado en el contexto de apilamiento del modal de detalle y su
+        // propio backdrop (en <body>, z-index mayor) lo tapaba.
+        //
+        // Cada detalle abierto en POS se carga por AJAX y trae su propia copia de estos modales; la copia re-parentada de
+        // un detalle anterior queda suelta en <body> con los mismos IDs. Se borra antes de re-parentar la nueva: si no,
+        // $("#cvEmailDestino") y compania (detalle-venta-comprobante.js, primer match del DOM) leerian la copia vieja.
+        var modalesAReparentar = ["modalComprobanteVenta", "modalEmailComprobanteVenta"];
         document.addEventListener("show.bs.modal", function (evt) {
-            if (!evt.target || evt.target.id !== "modalComprobanteVenta") return;
+            if (!evt.target || modalesAReparentar.indexOf(evt.target.id) === -1) return;
 
             var modalesAbiertos = document.querySelectorAll(".modal.show").length;
             if (modalesAbiertos === 0) return;
 
             if (evt.target.parentNode !== document.body) {
+                // copia estatica: body.children es una coleccion viva y remove() correria los indices
+                Array.prototype.slice.call(document.body.children).forEach(function (el) {
+                    if (el.id === evt.target.id && el !== evt.target) el.remove();
+                });
                 document.body.appendChild(evt.target);
             }
             // El z-index y el backdrop propio sobre los modales abiertos los pone modal-stack.js (2026-10-06, ver docs/DECISIONS.md);

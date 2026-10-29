@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-10-29 - POS (F6) Detalle de venta: «Enviar por email» ya no bloquea la pantalla
+
+- **Pedido:** F6 → Mis ventas → Detalle de venta → Factura / Imprimir → Enviar por email dejaba todo bloqueado.
+- **Cambio:** `WebCore/Views/Ventas/_DetalleVentaCard.cshtml`: el re-parentado a `<body>` al abrir sobre otro modal ahora incluye `#modalEmailComprobanteVenta` (antes solo `#modalComprobanteVenta`) y borra la copia suelta de un detalle anterior. Detalle: `docs/07-operacion-y-soporte/incidencias-frecuentes.md` (2026-10-29).
+- **Verificado:** página de prueba con Bootstrap/jQuery/`custom.css`/`modal-stack.js` del repo y el mismo anidado que el POS: sin el fix el centro del input de email lo tapa `.modal-backdrop`; con el fix el input queda arriba y, al abrir un segundo detalle, hay una sola copia de cada modal y se lee el email del detalle actual.
+- **Sin verificar:** el POS real con login y el envío del mail. Compilación de WebCore no verificable en este momento (errores ajenos en `PuntosExpendioController.cs`, trabajo en curso de otra sesión); el cambio es solo JS, sin sintaxis Razor.
+
 ## 2026-10-29 - POS, modal Forma de Pago: se achica también con «El cliente paga ahora»
 
 - **Pedido:** con el cobro tildado quedaban botones y el total fuera de la vista.

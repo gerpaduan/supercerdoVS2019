@@ -13,6 +13,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-10-29 - POS (F6): «Enviar por email» desde Detalle de venta dejaba la pantalla bloqueada
+
+- **Sintoma**: F6 → Detalle de venta → Factura / Imprimir → Enviar por email: el modal de email se veía oscurecido y no se podía escribir ni cerrar.
+- **Causa**: `#modalEmailComprobanteVenta` vive dentro de `#modalFinanzasPOS` (el detalle se carga por AJAX) y solo se re-parentaba a `<body>` `#modalComprobanteVenta`; el email quedaba atrapado en el apilado del modal de detalle y su propio backdrop lo tapaba.
+- **Resolucion**: `_DetalleVentaCard.cshtml` re-parenta también el modal de email y borra la copia que dejó en `<body>` un detalle anterior (mismos IDs). Si vuelve a pasar con otro modal de esa partial: `document.elementFromPoint` sobre el modal muestra `.modal-backdrop` → falta re-parentarlo.
+
 ## 2026-10-29 - POS: el filtro «Persona» del modal Expendios no traía expendios
 
 - **Sintoma**: al elegir una persona (ej. «COCINA RECONQUISTA») la lista quedaba vacía aunque había expendios con esa «Identificación cliente».
