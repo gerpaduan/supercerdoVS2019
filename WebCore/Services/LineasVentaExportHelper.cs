@@ -9,6 +9,20 @@ using WebCore.Models;
 
 namespace WebCore.Services
 {
+    // Textos que cambian entre un reporte de lineas y otro (Ventas > Lineas, Expendios generados) sobre los
+    // mismos generadores PDF/Excel. Ventas es el valor por defecto: con el no cambia nada de lo que ya salia.
+    public class LineasExportTextos
+    {
+        public string Titulo { get; set; } = LineasVentaExportHelper.Titulo;
+        public string MensajeSinRegistros { get; set; } = LineasVentaExportHelper.MensajeSinVentas;
+        // Etiquetas (de VentaLineasGrupoVm.Campos) que se listan bajo la banda de cada registro, en este orden.
+        public string[] EtiquetasDatos { get; set; } = { "Cliente", "Vendedor", "Forma de pago", "Sucursal", "Nro/comprobante" };
+        // Linea "Filtros: ..." del encabezado. null = se arma desde el modelo con los filtros de Ventas.
+        public string? Filtros { get; set; }
+
+        public static readonly LineasExportTextos Ventas = new LineasExportTextos();
+    }
+
     internal static class LineasVentaExportHelper
     {
         // Cultura fija es-AR (no la del servidor): el archivo muestra "17.800,00" igual en cualquier host.
@@ -60,9 +74,9 @@ namespace WebCore.Services
 
         // Linea gris bajo el encabezado de cada venta. Son los mismos "Campos" que la pantalla oculta tras
         // "Ver detalles"; se toman por etiqueta (ver VentasController.ConstruirModeloLineas) y en este orden.
-        public static string DatosVenta(VentaLineasGrupoVm venta)
+        public static string DatosVenta(VentaLineasGrupoVm venta, string[]? etiquetas = null)
         {
-            string[] etiquetas = { "Cliente", "Vendedor", "Forma de pago", "Sucursal", "Nro/comprobante" };
+            etiquetas ??= LineasExportTextos.Ventas.EtiquetasDatos;
 
             var partes = new List<string>();
             foreach (string etiqueta in etiquetas)

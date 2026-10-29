@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (56 de 98 pantallas)
+## Cobertura (57 de 98 pantallas)
 
 ## Manual del usuario
 
@@ -60,6 +60,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Marcas de productos | Productos | `pantallas/Productos.Marcas.md` | 2026-10-22 |
 | pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-10-22 |
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-10-22 |
+| pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-29 |
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-27 |
 | pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-10-28 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-28 |
@@ -118,7 +119,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **Parametros**: Index
 - **Personas**: Editar, Index
 - **Productos**: AddOrEdit, EmbedGuardado
-- **PuntosExpendio**: ExpendiosGenerados, POS, Sectores
+- **PuntosExpendio**: POS, Sectores
 - **SeleccionUsuario**: Index
 - **Stock**: Index, Lineas
 - **Sucursal**: Editar, Index

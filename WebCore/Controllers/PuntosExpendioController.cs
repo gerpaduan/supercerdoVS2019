@@ -43,6 +43,7 @@ using QuestPDF.Infrastructure;
 using Utilidades;
 using WebCore.Models;
 using WebCore.Models.DTO;
+using WebCore.Services;
 
 namespace WebCore.Controllers
 {
@@ -476,8 +477,105 @@ namespace WebCore.Controllers
             return View("~/Views/PuntosExpendio/ExpendiosGenerados.cshtml");
         }
 
+        // Tope de expendios por consulta. Cada uno carga sus lineas con una consulta propia (getExpedioById): sin tope
+        // un rango largo seria muy lento. Con filtro de persona se filtra ANTES de cargar las lineas, asi que el
+        // tope puede ser mayor. Si se alcanza, la pantalla y los exports avisan (truncado).
+        private const int TopExpendiosGenerados = 300;
+        private const int TopExpendiosGeneradosPorPersona = 5000;
+
+        // Lee los expendios del rango con sus lineas. idsCliente (CSV del selector de personas) deja solo los expendios
+        // de esas personas: los que tienen guardado su id O cuya Identificacion cliente es igual a la identificacion de
+        // la persona (misma regla que ExpendioClientePg; ver ExpendiosGeneradosFiltro.CoincidePersona). truncado =
+        // la consulta llego al tope y puede haber expendios mas viejos sin mostrar.
+        private List<ExpendioGeneradoVm> ObtenerExpendiosGenerados(string fechaDesde, string fechaHasta, string idsCliente, out bool truncado)
+        {
+            DateTime fechaDesdeValue;
+            DateTime fechaHastaValue;
+            DateTime? fechaDesdeFiltro = DateTime.TryParse(fechaDesde, out fechaDesdeValue) ? (DateTime?)fechaDesdeValue : null;
+            DateTime? fechaHastaFiltro = null;
+            if (DateTime.TryParse(fechaHasta, out fechaHastaValue))
+            {
+                fechaHastaFiltro = fechaHastaValue.TimeOfDay == TimeSpan.Zero
+                    ? fechaHastaValue.AddDays(1).AddSeconds(-1)
+                    : fechaHastaValue;
+            }
+
+            // idsCliente viene de la querystring: solo enteros > 0 (ParsearIds). Se resuelven sus identificaciones.
+            var idsPersona = new HashSet<int>(FiltroPickerService.ParsearIds(idsCliente));
+            var identificaciones = new HashSet<string>();
+            foreach (int idPersona in idsPersona)
+            {
+                var persona = _oPersonaN.findById(idPersona);
+                string identificacion = ExpendiosGeneradosFiltro.NormalizarIdentificacion(persona != null ? persona.Identificacion : "");
+                if (identificacion.Length > 0)
+                    identificaciones.Add(identificacion);
+            }
+
+            bool filtraPersona = idsPersona.Count > 0;
+            int top = filtraPersona ? TopExpendiosGeneradosPorPersona : TopExpendiosGenerados;
+            DataTable dt = _oVentaN.obtenerExpendiosEmpresa(top, fechaDesdeFiltro, fechaHastaFiltro);
+            truncado = dt.Rows.Count >= top;
+
+            // expendios.idpersona solo viene en Postgres; en SQL Server la persona se reconoce por identificacion.
+            bool traeIdPersona = dt.Columns.Contains("idpersona");
+            Func<DataRow, int?> leerIdPersona = row =>
+                traeIdPersona && row["idpersona"] != DBNull.Value ? (int?)Convert.ToInt32(row["idpersona"]) : null;
+
+            IEnumerable<DataRow> filas = dt.AsEnumerable();
+            if (filtraPersona)
+            {
+                filas = filas.Where(row => ExpendiosGeneradosFiltro.CoincidePersona(
+                    leerIdPersona(row), Convert.ToString(row["identificacionExpendio"] ?? ""), idsPersona, identificaciones));
+            }
+
+            return filas.Select(row =>
+            {
+                DateTime fechaExpendio = row["fechaExpendio"] != DBNull.Value
+                    ? Convert.ToDateTime(row["fechaExpendio"])
+                    : DateTime.MinValue;
+
+                int idExpendio = row["idExpendio"] != DBNull.Value ? Convert.ToInt32(row["idExpendio"]) : 0;
+                int idVenta = row["idVenta"] != DBNull.Value ? Convert.ToInt32(row["idVenta"]) : 0;
+                var expendio = idExpendio > 0 ? _oVentaN.getExpedioById(idExpendio) : null;
+                var lineas = (expendio != null ? expendio.LineasVenta : null) ?? new List<Entidades.LineaVenta>();
+
+                return new ExpendioGeneradoVm
+                {
+                    FechaExpendio = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss") : "",
+                    Fecha = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("dd/MM/yyyy") : "",
+                    Hora = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("HH:mm") : "",
+                    IdExpendio = idExpendio,
+                    IdentificacionExpendio = Convert.ToString(row["identificacionExpendio"] ?? ""),
+                    NroRemito = ValorString(row, "nroremito"),
+                    Sucursal = Convert.ToString(row["sucursal"] ?? ""),
+                    Sector = Convert.ToString(row["sector"] ?? ""),
+                    Usuario = Convert.ToString(row["vendedor"] ?? ""),
+                    CantItems = Convert.ToString(row["cantItems"] ?? "0"),
+                    TotalKg = row["totalKg"] != DBNull.Value ? Convert.ToDecimal(row["totalKg"]) : 0m,
+                    TotalImporte = row["importe"] != DBNull.Value ? Convert.ToDecimal(row["importe"]) : 0m,
+                    IdVenta = idVenta,
+                    Estado = idVenta > 0 && idVenta != idExpendio ? "Asignado" : "Pendiente",
+                    PdfUrl = idExpendio > 0 ? Url.Action("ImprimirPdf", "PuntosExpendio", new { id = idExpendio }) ?? "" : "",
+                    EmailUrl = idExpendio > 0 ? Url.Action("ObtenerDatosEmailExpendio", "PuntosExpendio", new { idExpendio }) ?? "" : "",
+                    IdPersona = leerIdPersona(row),
+                    Lineas = lineas.Select(l => new ExpendioGeneradoLineaVm
+                    {
+                        Codigo = l.Corte != null ? l.Corte.Codigo : 0,
+                        Producto = l.Corte != null
+                            ? (!string.IsNullOrWhiteSpace(l.Corte.corte) ? l.Corte.corte : l.Corte.CorteDesc) ?? ""
+                            : "",
+                        CantKg = Convert.ToDecimal(l.CantKg),
+                        PrecioKg = Convert.ToDecimal(l.PrecioKg),
+                        Total = Convert.ToDecimal(l.CantKg * l.PrecioKg)
+                    }).ToList()
+                };
+            }).ToList();
+        }
+
+        // Listado que consume la pantalla. Solo filtra por rango de fechas y por persona (idsCliente): el resto de los
+        // filtros se aplican en el navegador sobre lo cargado.
         [HttpGet]
-        public IActionResult ExpendiosGeneradosData(string fechaDesde = null, string fechaHasta = null, int top = 300)
+        public IActionResult ExpendiosGeneradosData(string fechaDesde = null, string fechaHasta = null, string idsCliente = "")
         {
             var user = _usuarioActual;
             if (user.IdSucursal == 0)
@@ -485,68 +583,133 @@ namespace WebCore.Controllers
 
             try
             {
-                DateTime fechaDesdeValue;
-                DateTime fechaHastaValue;
-                DateTime? fechaDesdeFiltro = DateTime.TryParse(fechaDesde, out fechaDesdeValue) ? (DateTime?)fechaDesdeValue : null;
-                DateTime? fechaHastaFiltro = null;
-                if (DateTime.TryParse(fechaHasta, out fechaHastaValue))
-                {
-                    fechaHastaFiltro = fechaHastaValue.TimeOfDay == TimeSpan.Zero
-                        ? fechaHastaValue.AddDays(1).AddSeconds(-1)
-                        : fechaHastaValue;
-                }
-                DataTable dt = _oVentaN.obtenerExpendiosEmpresa(top <= 0 ? 300 : top, fechaDesdeFiltro, fechaHastaFiltro);
-
-                var items = dt.AsEnumerable()
-                    .Select(row =>
-                    {
-                        DateTime fechaExpendio = row["fechaExpendio"] != DBNull.Value
-                            ? Convert.ToDateTime(row["fechaExpendio"])
-                            : DateTime.MinValue;
-
-                        int idExpendio = row["idExpendio"] != DBNull.Value ? Convert.ToInt32(row["idExpendio"]) : 0;
-                        int idVenta = row["idVenta"] != DBNull.Value ? Convert.ToInt32(row["idVenta"]) : 0;
-                        var expendio = idExpendio > 0 ? _oVentaN.getExpedioById(idExpendio) : null;
-                        var lineas = (expendio != null ? expendio.LineasVenta : null) ?? new List<Entidades.LineaVenta>();
-
-                        return new
-                        {
-                            fechaExpendio = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss") : "",
-                            fecha = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("dd/MM/yyyy") : "",
-                            hora = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("HH:mm") : "",
-                            idExpendio = idExpendio,
-                            identificacionExpendio = Convert.ToString(row["identificacionExpendio"] ?? ""),
-                            nroRemito = ValorString(row, "nroremito"),
-                            sucursal = Convert.ToString(row["sucursal"] ?? ""),
-                            sector = Convert.ToString(row["sector"] ?? ""),
-                            usuario = Convert.ToString(row["vendedor"] ?? ""),
-                            cantItems = Convert.ToString(row["cantItems"] ?? "0"),
-                            totalKg = row["totalKg"] != DBNull.Value ? Convert.ToDecimal(row["totalKg"]) : 0m,
-                            totalImporte = row["importe"] != DBNull.Value ? Convert.ToDecimal(row["importe"]) : 0m,
-                            idVenta = idVenta,
-                            estado = idVenta > 0 && idVenta != idExpendio ? "Asignado" : "Pendiente",
-                            pdfUrl = idExpendio > 0 ? Url.Action("ImprimirPdf", "PuntosExpendio", new { id = idExpendio }) : "",
-                            emailUrl = idExpendio > 0 ? Url.Action("ObtenerDatosEmailExpendio", "PuntosExpendio", new { idExpendio }) : "",
-                            lineas = lineas.Select(l => new
-                            {
-                                codigo = l.Corte != null ? l.Corte.Codigo : 0,
-                                producto = l.Corte != null
-                                    ? (!string.IsNullOrWhiteSpace(l.Corte.corte) ? l.Corte.corte : l.Corte.CorteDesc)
-                                    : "",
-                                cantKg = l.CantKg,
-                                precioKg = l.PrecioKg,
-                                total = l.CantKg * l.PrecioKg
-                            }).ToList()
-                        };
-                    })
-                    .ToList();
-
-                return Json(new { ok = true, items = items });
+                var items = ObtenerExpendiosGenerados(fechaDesde, fechaHasta, idsCliente, out bool truncado);
+                return Json(new { ok = true, items = items, truncado = truncado });
             }
             catch (Exception ex)
             {
                 return Json(new { ok = false, mensaje = "No se pudieron consultar los expendios: " + ex.Message });
             }
+        }
+
+        // Exporta a PDF lo que muestra la pantalla (mismo PDF que Ventas > Lineas, con textos de expendios). Recibe el
+        // rango y la persona (los que consulta el servidor) y los filtros en vivo, y aplica exactamente los mismos
+        // filtros que el navegador (ExpendiosGeneradosFiltro). Ver docs/DECISIONS.md 2026-10-29.
+        [HttpGet]
+        public IActionResult ExpendiosGeneradosPdf(string fechaDesde = null, string fechaHasta = null, string idsCliente = "",
+            string estado = "", string sucursal = "", string sector = "", string usuario = "", string texto = "", string producto = "")
+        {
+            var rechazo = RechazarSiNoPuedeConsultarExpendios();
+            if (rechazo != null) return rechazo;
+
+            var reporte = ConstruirReporteExpendiosGenerados(fechaDesde, fechaHasta, idsCliente, new ExpendiosGeneradosFiltros
+            {
+                Estado = estado, Sucursal = sucursal, Sector = sector, Usuario = usuario, Texto = texto, Producto = producto
+            });
+            byte[] pdf = GenerarDocsCore.GenerarPdfLineasVenta(reporte.Modelo, reporte.Sucursal, reporte.Textos);
+            return File(pdf, "application/pdf", NombreArchivoExpendiosGenerados("pdf"));
+        }
+
+        // Idem ExpendiosGeneradosPdf a .xlsx (GenerarExcelCore).
+        [HttpGet]
+        public IActionResult ExpendiosGeneradosExcel(string fechaDesde = null, string fechaHasta = null, string idsCliente = "",
+            string estado = "", string sucursal = "", string sector = "", string usuario = "", string texto = "", string producto = "")
+        {
+            var rechazo = RechazarSiNoPuedeConsultarExpendios();
+            if (rechazo != null) return rechazo;
+
+            var reporte = ConstruirReporteExpendiosGenerados(fechaDesde, fechaHasta, idsCliente, new ExpendiosGeneradosFiltros
+            {
+                Estado = estado, Sucursal = sucursal, Sector = sector, Usuario = usuario, Texto = texto, Producto = producto
+            });
+            byte[] excel = GenerarExcelCore.GenerarExcelLineasVenta(reporte.Modelo, reporte.Sucursal, reporte.Textos);
+            return File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", NombreArchivoExpendiosGenerados("xlsx"));
+        }
+
+        // Mismo gate de la pantalla (Permisos.Venta.NuevaVenta) para los exports; null = puede.
+        private IActionResult RechazarSiNoPuedeConsultarExpendios()
+        {
+            var user = _usuarioActual;
+            if (user.IdSucursal != 0 && _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.NuevaVenta, DateTime.Today, user.Id))
+                return null;
+
+            TempData["AlertType"] = "warning";
+            TempData["AlertTitle"] = "Permisos";
+            TempData["AlertMsg"] = "No tiene permisos para consultar expendios generados.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        // Nombre del archivo exportado: Expendios_generados_yyyyMMdd_HHmm.<extension> (sin datos personales).
+        private static string NombreArchivoExpendiosGenerados(string extension)
+        {
+            return "Expendios_generados_" + DateTime.Now.ToString("yyyyMMdd_HHmm", CultureInfo.InvariantCulture) + "." + extension;
+        }
+
+        // Arma el modelo de los exports con la misma forma que Ventas > Lineas (un "registro" por expendio con sus
+        // lineas) para reutilizar sus generadores de PDF y Excel.
+        private (VentaLineasIndexVm Modelo, LineasExportTextos Textos, string Sucursal) ConstruirReporteExpendiosGenerados(
+            string fechaDesde, string fechaHasta, string idsCliente, ExpendiosGeneradosFiltros filtros)
+        {
+            var expendios = ObtenerExpendiosGenerados(fechaDesde, fechaHasta, idsCliente, out _);
+
+            // Con personas elegidas el texto escrito no se usa (en pantalla el input queda de solo lectura).
+            var idsPersona = FiltroPickerService.ParsearIds(idsCliente);
+            var personas = idsPersona.Count > 0
+                ? new FiltroPickerService(_oPersonaN, _oUsuarioN).ResolverPersonas(idsPersona)
+                : new List<FiltroPickerItem>();
+            if (idsPersona.Count > 0)
+                filtros.Texto = "";
+
+            expendios = ExpendiosGeneradosFiltro.Aplicar(expendios, filtros);
+
+            DateTime desde = DateTime.TryParse(fechaDesde, out var desdeValue) ? desdeValue : DateTime.Today;
+            DateTime hasta = DateTime.TryParse(fechaHasta, out var hastaValue)
+                ? (hastaValue.TimeOfDay == TimeSpan.Zero ? hastaValue.AddDays(1).AddSeconds(-1) : hastaValue)
+                : desde;
+
+            var modelo = new VentaLineasIndexVm { FechaDesde = desde, FechaHasta = hasta };
+            foreach (var expendio in expendios)
+            {
+                var grupo = new VentaLineasGrupoVm
+                {
+                    IdVenta = expendio.IdExpendio,
+                    ResumenCompacto = (expendio.Fecha + " " + expendio.Hora).Trim(),
+                    ResumenSecundario = "Expendio #" + expendio.IdExpendio + "  ·  " + expendio.Estado,
+                    TotalImporte = expendio.TotalImporte,
+                    TotalKg = expendio.TotalKg
+                };
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Cliente", Valor = string.IsNullOrWhiteSpace(expendio.IdentificacionExpendio) ? "Consumidor final" : expendio.IdentificacionExpendio });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Estado", Valor = expendio.Estado });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Sector", Valor = expendio.Sector });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Usuario", Valor = expendio.Usuario });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Sucursal", Valor = expendio.Sucursal });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Nro remito", Valor = expendio.NroRemito });
+
+                foreach (var linea in expendio.Lineas)
+                {
+                    grupo.Lineas.Add(new VentaLineaDetalleVm
+                    {
+                        Codigo = linea.Codigo > 0 ? linea.Codigo.ToString(CultureInfo.InvariantCulture) : "-",
+                        Producto = linea.Producto,
+                        CantidadKg = linea.CantKg,
+                        Precio = linea.PrecioKg,
+                        Total = linea.Total
+                    });
+                }
+
+                modelo.Ventas.Add(grupo);
+            }
+
+            var textos = new LineasExportTextos
+            {
+                Titulo = "Expendios generados",
+                MensajeSinRegistros = "No se encontraron expendios para los filtros seleccionados.",
+                EtiquetasDatos = new[] { "Cliente", "Estado", "Sector", "Usuario", "Sucursal", "Nro remito" },
+                Filtros = ExpendiosGeneradosFiltro.TextoFiltros(filtros, personas.Select(p => p.Nombre))
+            };
+
+            string sucursalNombre = string.IsNullOrWhiteSpace(filtros.Sucursal) ? "Todas" : filtros.Sucursal.Trim();
+            return (modelo, textos, sucursalNombre);
         }
 
         public IActionResult Sectores(string editar = "")

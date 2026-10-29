@@ -37,10 +37,12 @@ namespace WebCore.Services
         // linea gris con los datos de la venta; titulos de columna; una fila por linea), igual que el PDF
         // (GenerarDocsCore.GenerarPdfLineasVenta). Cantidades e importes se escriben como NUMEROS con formato,
         // no como texto, para que se puedan sumar y ordenar. Devuelve los bytes del .xlsx; no tiene efectos secundarios.
-        public static byte[] GenerarExcelLineasVenta(VentaLineasIndexVm model, string sucursalNombre)
+        public static byte[] GenerarExcelLineasVenta(VentaLineasIndexVm model, string sucursalNombre, LineasExportTextos? textos = null)
         {
+            // textos distintos de Ventas (p. ej. Expendios generados, 2026-10-29) reutilizan este mismo Excel.
+            textos ??= LineasExportTextos.Ventas;
             using var libro = new XLWorkbook();
-            var hoja = libro.Worksheets.Add(LineasVentaExportHelper.Titulo);
+            var hoja = libro.Worksheets.Add(textos.Titulo);
 
             hoja.Column(1).Width = 16;
             hoja.Column(2).Width = 44;
@@ -51,14 +53,14 @@ namespace WebCore.Services
             int fila = 1;
 
             // Encabezado del reporte: titulo, periodo/sucursal y filtros activos (si hay).
-            var celdaTitulo = TextoCombinado(hoja, fila++, LineasVentaExportHelper.Titulo);
+            var celdaTitulo = TextoCombinado(hoja, fila++, textos.Titulo);
             celdaTitulo.Style.Font.Bold = true;
             celdaTitulo.Style.Font.FontSize = 14;
 
             TextoCombinado(hoja, fila++, LineasVentaExportHelper.Periodo(model, sucursalNombre))
                 .Style.Font.FontColor = ColorTextoSecundario;
 
-            string filtros = LineasVentaExportHelper.Filtros(model);
+            string filtros = textos.Filtros ?? LineasVentaExportHelper.Filtros(model);
             if (filtros.Length > 0)
                 TextoCombinado(hoja, fila++, filtros).Style.Font.FontColor = ColorTextoSecundario;
 
@@ -66,7 +68,7 @@ namespace WebCore.Services
 
             if (model.Ventas.Count == 0)
             {
-                var sinVentas = TextoCombinado(hoja, fila, LineasVentaExportHelper.MensajeSinVentas);
+                var sinVentas = TextoCombinado(hoja, fila, textos.MensajeSinRegistros);
                 sinVentas.Style.Font.Italic = true;
                 sinVentas.Style.Font.FontColor = ColorTextoSecundario;
             }
@@ -90,7 +92,7 @@ namespace WebCore.Services
                 fila++;
 
                 // Datos de la venta (los que la pantalla oculta tras "Ver detalles").
-                string datosVenta = LineasVentaExportHelper.DatosVenta(venta);
+                string datosVenta = LineasVentaExportHelper.DatosVenta(venta, textos.EtiquetasDatos);
                 var celdaDatos = TextoCombinado(hoja, fila, datosVenta);
                 celdaDatos.Style.Font.FontSize = 9;
                 celdaDatos.Style.Font.FontColor = ColorTextoSecundario;

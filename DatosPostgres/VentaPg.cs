@@ -1441,6 +1441,7 @@ namespace DatosPostgres
                        e.idventa,
                        e.idsucursal,
                        e.idvendedor,
+                       e.idpersona,
                        u.nombre AS vendedor,
                        s.sucursal AS sucursal,
                        COALESCE(SUM(le.cantkg), 0) AS totalkg
@@ -1452,7 +1453,7 @@ namespace DatosPostgres
                   AND (@fechaDesde::timestamp IS NULL OR e.fechaexpendio >= @fechaDesde)
                   AND (@fechaHasta::timestamp IS NULL OR e.fechaexpendio <= @fechaHasta)
                 GROUP BY e.fechaexpendio, e.idexpendio, e.identificacionexpendio, e.sector, e.nroremito,
-                         e.cantitems, e.importe, e.idventa, e.idsucursal, e.idvendedor, u.nombre, s.sucursal
+                         e.cantitems, e.importe, e.idventa, e.idsucursal, e.idvendedor, e.idpersona, u.nombre, s.sucursal
                 ORDER BY e.fechaexpendio DESC, e.idexpendio DESC
                 LIMIT @top;",
                 p =>

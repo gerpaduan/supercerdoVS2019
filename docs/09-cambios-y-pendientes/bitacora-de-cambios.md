@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-10-29 - Expendios generados: filtro por persona, ver solo líneas y exportar a PDF / Excel
+
+- **Pedido:** filtrar por persona con el selector de `/Ventas` (con ✕), ver todas las líneas y agruparlas como en `/Ventas/Lineas`, y exportar a PDF o Excel.
+- **Cambio:** `ExpendiosGenerados.cshtml` (selector F10 / lupa / ✕, botón «Ver solo líneas», PDF y Excel, aviso de tope), `PuntosExpendioController` (`ExpendiosGeneradosData` con `idsCliente`, `ExpendiosGeneradosPdf`, `ExpendiosGeneradosExcel`), `Services/ExpendiosGeneradosFiltro.cs` y `Models/ExpendiosGeneradosVm.cs` nuevos, `LineasExportTextos` para reusar los generadores de Líneas de venta, `e.idpersona` en `VentaPg.obtenerExpendiosEmpresa`. Con *Producto* ahora solo se muestran las líneas que coinciden. Detalle: `docs/DECISIONS.md` (2026-10-29) y `docs/11-manual-de-uso/pantallas/PuntosExpendio.ExpendiosGenerados.md`.
+- **Verificado:** compila y 116 tests pasan; en el navegador con login real y la base local (persona 20 → 12 expendios, ✕ → 34, plana y orden, pantalla = Excel con 19 expendios / 21 líneas, Líneas de venta sin cambios). **Sin verificar:** el PDF a la vista, modo oscuro y celular.
+
 ## 2026-10-29 - POS (F6) Detalle de venta: «Enviar por email» ya no bloquea la pantalla
 
 - **Pedido:** F6 → Mis ventas → Detalle de venta → Factura / Imprimir → Enviar por email dejaba todo bloqueado.

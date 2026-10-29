@@ -18,6 +18,23 @@
         <div>
             <p class="mb-0 text-muted">Consulta general de expendios registrados en la empresa.</p>
         </div>
+        <div class="d-flex flex-wrap mt-2 mt-sm-0" style="gap:.5rem;">
+            @* Alterna entre tarjetas por expendio y una tabla plana con una fila por linea (ordenable), como Ventas > Lineas. *@
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVistaSoloLineasExpendios"
+                    data-texto-plana="Ver solo líneas"
+                    data-texto-agrupada="Ver agrupado por expendio">
+                <i class="fas fa-list mr-1"></i><span class="js-vista-texto">Ver solo líneas</span>
+            </button>
+            @* Exportar PDF / Excel: el href lo reconstruye el script con las fechas y filtros que se ven en pantalla. *@
+            <a class="btn btn-sm btn-outline-danger js-exportar-expendios" id="btnExportarExpendiosPdf" href="@Url.Action("ExpendiosGeneradosPdf", "PuntosExpendio")"
+               title="Exportar a PDF lo que se ve en pantalla">
+                <i class="fas fa-file-pdf mr-1"></i> PDF
+            </a>
+            <a class="btn btn-sm btn-outline-success js-exportar-expendios" id="btnExportarExpendiosExcel" href="@Url.Action("ExpendiosGeneradosExcel", "PuntosExpendio")"
+               title="Exportar a Excel lo que se ve en pantalla">
+                <i class="fas fa-file-excel mr-1"></i> Excel
+            </a>
+        </div>
     </div>
 
     <div class="card shadow-sm mb-3">
@@ -68,12 +85,15 @@
 
             <div class="form-row">
                 <div class="col-12 col-md-3 mb-2 mb-md-0">
-                    <label class="small font-weight-bold mb-1" for="filtroExpendiosCliente">Identificación / Nro remito</label>
-                    <input type="text" class="form-control form-control-sm" id="filtroExpendiosCliente" placeholder="Cliente, identificación o nro de remito" />
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosCliente">Cliente / Nro remito</label>
+                    @* Selector multi-seleccion (filtro-picker.js): F10 / lupa busca personas y filtra por su ID (la X lo quita). Sin
+                       seleccion es texto libre: identificacion del expendio o nro de remito. *@
+                    <input type="text" class="form-control form-control-sm" id="filtroExpendiosCliente" placeholder="Nombre, identificación o nro de remito" autocomplete="off"
+                           data-filtro-picker="cliente" data-filtro-picker-tecla="F10" />
                 </div>
                 <div class="col-12 col-md-3 mb-2 mb-md-0">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosProducto">Producto</label>
-                    <input type="text" class="form-control form-control-sm" id="filtroExpendiosProducto" placeholder="Filtrar por producto" />
+                    <input type="text" class="form-control form-control-sm" id="filtroExpendiosProducto" placeholder="Código o descripción" autocomplete="off" />
                 </div>
                 <div class="col-12 col-md-3 mb-2 mb-md-0">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosUsuario">Usuario</label>
@@ -112,9 +132,20 @@
             <div id="expendiosGeneradosCards" class="expendios-cards">
                 <div class="text-center text-muted py-4">No hay expendios para mostrar.</div>
             </div>
+
+            @* Vista "Ver solo lineas": encabezado y filas los arma el script (se redibuja con cada filtro). *@
+            <div id="expendiosGeneradosPlana" class="table-responsive d-none">
+                <table class="table table-sm table-hover mb-0 lineas-tabla-plana expendios-tabla-plana">
+                    <thead class="thead-light"><tr id="expendiosPlanaEncabezado"></tr></thead>
+                    <tbody id="expendiosPlanaCuerpo"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
+@* Estilos de la tabla plana (encabezados ordenables) compartidos con Ventas > Lineas. *@
+@Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
 
 <style>
     .expendios-cards {
@@ -217,34 +248,60 @@
     .expendio-card-footer strong {
         color: var(--ui-primary);
     }
+
+    .expendios-tabla-plana {
+        font-size: .82rem;
+    }
+
+    .expendios-tabla-plana th,
+    .expendios-tabla-plana td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .expendios-tabla-plana thead th {
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
 </style>
 
 @section Scripts {
+    @* Selector multi-seleccion de Cliente (filtro-picker.js): el modal va ANTES del script del componente (lee de el las URLs). *@
+    <partial name="~/Views/Shared/_FiltroPickerModal.cshtml" />
+    <script src="@Url.Content("~/Scripts/app/filtro-picker.js")" asp-append-version="true"></script>
     <script>
         (function (window, $, document) {
             'use strict';
 
             var config = {
-                url: '@Url.Action("ExpendiosGeneradosData", "PuntosExpendio")'
+                url: '@Url.Action("ExpendiosGeneradosData", "PuntosExpendio")',
+                urlPdf: '@Url.Action("ExpendiosGeneradosPdf", "PuntosExpendio")',
+                urlExcel: '@Url.Action("ExpendiosGeneradosExcel", "PuntosExpendio")',
+                urlEnviarEmail: '@Url.Action("EnviarComprobanteEmailExpendio", "PuntosExpendio")',
+                claveVistaPlana: 'lineasVistaSoloLineas_expendios'
             };
+            var $cliente = $('#filtroExpendiosCliente');
             var cache = [];
+            // Lo que se consulto al servidor: fechas YA aplicadas (no las que estan a medio editar) y personas elegidas.
+            // Los exports viajan con esto, para que el archivo coincida con lo que se ve.
             var fetchState = {
                 fechaDesde: $('#filtroExpendiosFechaDesde').val() || '',
-                fechaHasta: $('#filtroExpendiosFechaHasta').val() || ''
+                fechaHasta: $('#filtroExpendiosFechaHasta').val() || '',
+                ids: ''
             };
+            var vistaPlana = false;
+            var ordenPlana = { clave: 'fecha', dir: 'desc' };
 
+            // ---- Formato ----
             function formatKg(value) {
-                return Number(value || 0).toLocaleString('es-AR', {
-                    minimumFractionDigits: 3,
-                    maximumFractionDigits: 3
-                });
+                return Number(value || 0).toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
             }
 
             function formatMoney(value) {
-                return '$ ' + Number(value || 0).toLocaleString('es-AR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
+                return '$ ' + Number(value || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
 
             function escapeHtml(value) {
@@ -256,6 +313,7 @@
                     .replace(/'/g, '&#39;');
             }
 
+            // Igual que Normalizar de ExpendiosGeneradosFiltro.cs (los filtros se repiten en C# para los exports).
             function normalizeText(value) {
                 return String(value == null ? '' : value).toLowerCase().replace(/\s+/g, ' ').trim();
             }
@@ -281,6 +339,70 @@
                     .text(text);
             }
 
+            // ---- Filtros en vivo ----
+            // IDs elegidos en el selector (filtro-picker.js); '' si el filtro esta en modo texto libre.
+            function idsCliente() {
+                return String($cliente.attr('data-ids') || '');
+            }
+
+            // Texto de Cliente / remito; con personas elegidas el input solo muestra un resumen y no se usa.
+            function textoCliente() {
+                return idsCliente() ? '' : $cliente.val();
+            }
+
+            function valoresFiltros() {
+                return {
+                    texto: textoCliente() || '',
+                    producto: $('#filtroExpendiosProducto').val() || '',
+                    sucursal: $('#filtroExpendiosSucursal').val() || '',
+                    estado: $('#filtroExpendiosEstado').val() || '',
+                    sector: $('#filtroExpendiosSector').val() || '',
+                    usuario: $('#filtroExpendiosUsuario').val() || ''
+                };
+            }
+
+            // Mismas reglas que ExpendiosGeneradosFiltro.Aplicar (C#). Con Producto cada expendio conserva SOLO las
+            // lineas que coinciden (codigo o descripcion) y sus kilos / importe pasan a ser los de esas lineas.
+            function getFilteredItems() {
+                var f = valoresFiltros();
+                var texto = normalizeText(f.texto);
+                var producto = normalizeText(f.producto);
+                var sucursal = normalizeText(f.sucursal);
+                var estado = normalizeText(f.estado);
+                var sector = normalizeText(f.sector);
+                var usuario = normalizeText(f.usuario);
+                var resultado = [];
+
+                cache.forEach(function (item) {
+                    // Busca por identificacion del cliente O por numero de remito (sector REMITOS).
+                    if (texto && normalizeText(item.identificacionExpendio).indexOf(texto) < 0 && normalizeText(item.nroRemito).indexOf(texto) < 0) return;
+                    if (sucursal && normalizeText(item.sucursal) !== sucursal) return;
+                    if (estado && normalizeText(item.estado) !== estado) return;
+                    if (sector && normalizeText(item.sector) !== sector) return;
+                    if (usuario && normalizeText(item.usuario) !== usuario) return;
+
+                    if (!producto) {
+                        resultado.push(item);
+                        return;
+                    }
+
+                    var lineas = (item.lineas || []).filter(function (linea) {
+                        return normalizeText(linea.codigo).indexOf(producto) >= 0 || normalizeText(linea.producto).indexOf(producto) >= 0;
+                    });
+                    if (!lineas.length) return;
+
+                    resultado.push($.extend({}, item, {
+                        lineas: lineas,
+                        cantItems: lineas.length,
+                        totalKg: lineas.reduce(function (acc, l) { return acc + Number(l.cantKg || 0); }, 0),
+                        totalImporte: lineas.reduce(function (acc, l) { return acc + Number(l.total || 0); }, 0)
+                    }));
+                });
+
+                return resultado;
+            }
+
+            // ---- Vista agrupada (una tarjeta por expendio) ----
             function renderDetalle(lineas) {
                 if (!lineas || !lineas.length) {
                     return '<div class="small text-muted py-2">Sin detalle de lineas.</div>';
@@ -356,32 +478,96 @@
                 });
             }
 
-            function getFilteredItems() {
-                var cliente = normalizeText($('#filtroExpendiosCliente').val());
-                var producto = normalizeText($('#filtroExpendiosProducto').val());
-                var sucursal = normalizeText($('#filtroExpendiosSucursal').val());
-                var estado = normalizeText($('#filtroExpendiosEstado').val());
-                var sector = normalizeText($('#filtroExpendiosSector').val());
-                var usuario = normalizeText($('#filtroExpendiosUsuario').val());
+            // ---- Vista "Ver solo lineas" (tabla plana, una fila por linea, ordenable) ----
+            // tipo: 'texto' | 'num' | 'fecha'. valor: lo que se ordena; texto: lo que se muestra.
+            var columnasPlana = [
+                { clave: 'fecha', titulo: 'Fecha', tipo: 'fecha', primerOrden: 'desc', nowrap: true,
+                    valor: function (i) { return i.fechaExpendio || ''; }, texto: function (i) { return (i.fecha || '') + ' ' + (i.hora || ''); } },
+                { clave: 'expendio', titulo: 'Expendio', tipo: 'num',
+                    valor: function (i) { return Number(i.idExpendio || 0); }, texto: function (i) { return '#' + (i.idExpendio || 0); } },
+                { clave: 'estado', titulo: 'Estado', tipo: 'texto',
+                    valor: function (i) { return normalizeText(i.estado); }, texto: function (i) { return i.estado || ''; } },
+                { clave: 'cliente', titulo: 'Cliente', tipo: 'texto',
+                    valor: function (i) { return normalizeText(i.identificacionExpendio); }, texto: function (i) { return i.identificacionExpendio || 'Consumidor final'; } },
+                { clave: 'remito', titulo: 'Nro remito', tipo: 'texto',
+                    valor: function (i) { return normalizeText(i.nroRemito); }, texto: function (i) { return i.nroRemito || ''; } },
+                { clave: 'sector', titulo: 'Sector', tipo: 'texto',
+                    valor: function (i) { return normalizeText(i.sector); }, texto: function (i) { return i.sector || ''; } },
+                { clave: 'usuario', titulo: 'Usuario', tipo: 'texto',
+                    valor: function (i) { return normalizeText(i.usuario); }, texto: function (i) { return i.usuario || ''; } },
+                { clave: 'sucursal', titulo: 'Sucursal', tipo: 'texto',
+                    valor: function (i) { return normalizeText(i.sucursal); }, texto: function (i) { return i.sucursal || ''; } },
+                { clave: 'codigo', titulo: 'Código', tipo: 'num', linea: true,
+                    valor: function (i, l) { return Number(l.codigo || 0); }, texto: function (i, l) { return l.codigo || '-'; } },
+                { clave: 'producto', titulo: 'Producto', tipo: 'texto', linea: true,
+                    valor: function (i, l) { return normalizeText(l.producto); }, texto: function (i, l) { return l.producto || ''; } },
+                { clave: 'kg', titulo: 'Kgs.', tipo: 'num', derecha: true, linea: true,
+                    valor: function (i, l) { return Number(l.cantKg || 0); }, texto: function (i, l) { return formatKg(l.cantKg); } },
+                { clave: 'precio', titulo: 'Precio', tipo: 'num', derecha: true, linea: true,
+                    valor: function (i, l) { return Number(l.precioKg || 0); }, texto: function (i, l) { return formatMoney(l.precioKg); } },
+                { clave: 'total', titulo: 'Total', tipo: 'num', derecha: true, linea: true,
+                    valor: function (i, l) { return Number(l.total || 0); }, texto: function (i, l) { return formatMoney(l.total); } }
+            ];
 
-                return cache.filter(function (item) {
-                    var productoOk = !producto || (item.lineas || []).some(function (linea) {
-                        return normalizeText(linea.producto).indexOf(producto) >= 0;
-                    });
+            function ordenarFilasPlana(filas) {
+                var col = columnasPlana.filter(function (c) { return c.clave === ordenPlana.clave; })[0] || columnasPlana[0];
+                var sentido = ordenPlana.dir === 'asc' ? 1 : -1;
 
-                    // Busca por identificacion del cliente O por numero de remito (sector REMITOS).
-                    if (cliente && normalizeText(item.identificacionExpendio).indexOf(cliente) < 0 && normalizeText(item.nroRemito).indexOf(cliente) < 0) return false;
-                    if (sucursal && normalizeText(item.sucursal) !== sucursal) return false;
-                    if (estado && normalizeText(item.estado) !== estado) return false;
-                    if (sector && normalizeText(item.sector) !== sector) return false;
-                    if (usuario && normalizeText(item.usuario) !== usuario) return false;
-                    if (!productoOk) return false;
-                    return true;
+                filas.sort(function (a, b) {
+                    var va = col.valor(a.item, a.linea);
+                    var vb = col.valor(b.item, b.linea);
+
+                    // Sin dato siempre al final, sea cual sea el sentido.
+                    if (col.tipo !== 'num') {
+                        var vaVacio = va === '' || va === undefined;
+                        var vbVacio = vb === '' || vb === undefined;
+                        if (vaVacio !== vbVacio) return vaVacio ? 1 : -1;
+                    }
+
+                    var cmp = col.tipo === 'num' ? va - vb : (va < vb ? -1 : (va > vb ? 1 : 0));
+                    // Empate: orden original (estable) sin importar el sentido.
+                    return cmp === 0 ? a.idx - b.idx : cmp * sentido;
                 });
             }
 
+            function renderPlana(items) {
+                var filas = [];
+                (items || []).forEach(function (item) {
+                    (item.lineas || []).forEach(function (linea) {
+                        filas.push({ item: item, linea: linea, idx: filas.length });
+                    });
+                });
+                ordenarFilasPlana(filas);
+
+                var head = columnasPlana.map(function (col) {
+                    var activa = col.clave === ordenPlana.clave;
+                    return '<th class="js-plana-ordenable' + (col.derecha ? ' text-right' : '') + '" data-clave="' + col.clave
+                        + '" title="Ordenar por ' + escapeHtml(col.titulo) + '"' + (activa ? ' aria-sort="' + (ordenPlana.dir === 'asc' ? 'ascending' : 'descending') + '"' : '') + '>'
+                        + escapeHtml(col.titulo) + '<span class="js-plana-flecha">' + (activa ? (ordenPlana.dir === 'asc' ? '▲' : '▼') : '') + '</span></th>';
+                }).join('') + '<th></th>';
+                $('#expendiosPlanaEncabezado').html(head);
+
+                if (!filas.length) {
+                    $('#expendiosPlanaCuerpo').html('<tr><td colspan="' + (columnasPlana.length + 1) + '" class="text-center text-muted py-4">No hay lineas para mostrar.</td></tr>');
+                    return;
+                }
+
+                $('#expendiosPlanaCuerpo').html(filas.map(function (fila) {
+                    var celdas = columnasPlana.map(function (col) {
+                        var clases = [];
+                        if (col.derecha) clases.push('text-right');
+                        if (col.nowrap) clases.push('js-plana-nowrap');
+                        return '<td' + (clases.length ? ' class="' + clases.join(' ') + '"' : '') + '>' + escapeHtml(col.texto(fila.item, fila.linea)) + '</td>';
+                    }).join('');
+                    var pdf = fila.item.pdfUrl
+                        ? '<a class="btn btn-sm btn-outline-secondary" href="' + escapeHtml(fila.item.pdfUrl) + '" target="_blank" title="PDF del expendio" aria-label="PDF del expendio"><i class="fas fa-file-pdf"></i></a>'
+                        : '';
+                    return '<tr>' + celdas + '<td class="text-nowrap">' + pdf + '</td></tr>';
+                }).join(''));
+            }
+
+            // ---- Totales y refresco ----
             function renderTotales(items) {
-                var totExpendios = items ? items.length : 0;
                 var totLineas = 0;
                 var totKg = 0;
                 var totImporte = 0;
@@ -392,18 +578,73 @@
                     totImporte += Number(item.totalImporte || 0);
                 });
 
-                $('#totExpendiosCantidad').text(totExpendios.toLocaleString('es-AR'));
+                $('#totExpendiosCantidad').text((items ? items.length : 0).toLocaleString('es-AR'));
                 $('#totExpendiosLineas').text(totLineas.toLocaleString('es-AR'));
                 $('#totExpendiosKg').text(formatKg(totKg));
                 $('#totExpendiosImporte').text(formatMoney(totImporte));
             }
 
-            function applyFilters() {
-                var items = getFilteredItems();
-                renderCards(items);
-                renderTotales(items);
+            function aplicarModoVista() {
+                $('#expendiosGeneradosCards').toggleClass('d-none', vistaPlana);
+                $('#expendiosGeneradosPlana').toggleClass('d-none', !vistaPlana);
+
+                var $boton = $('#btnVistaSoloLineasExpendios');
+                $boton.find('.js-vista-texto').text($boton.attr(vistaPlana ? 'data-texto-agrupada' : 'data-texto-plana'));
+                $boton.find('i').toggleClass('fa-list', !vistaPlana).toggleClass('fa-layer-group', vistaPlana);
+                $boton.attr('aria-pressed', vistaPlana ? 'true' : 'false');
             }
 
+            function applyFilters() {
+                var items = getFilteredItems();
+                if (vistaPlana) renderPlana(items);
+                else renderCards(items);
+                renderTotales(items);
+                actualizarEnlacesExportar();
+            }
+
+            // ---- Exportar a PDF / Excel ----
+            // El archivo respeta lo que se ve: fechas y personas YA consultadas (fetchState) y los filtros en vivo.
+            // El servidor aplica los mismos filtros (ExpendiosGeneradosFiltro) sobre lo que consulta.
+            function urlExportar(urlBase) {
+                var f = valoresFiltros();
+                var params = new URLSearchParams();
+                params.set('fechaDesde', fetchState.fechaDesde);
+                params.set('fechaHasta', fetchState.fechaHasta);
+                params.set('idsCliente', fetchState.ids);
+                params.set('estado', f.estado);
+                params.set('sucursal', f.sucursal);
+                params.set('sector', f.sector);
+                params.set('usuario', f.usuario);
+                params.set('texto', f.texto);
+                params.set('producto', f.producto);
+                return urlBase + '?' + params.toString();
+            }
+
+            function actualizarEnlacesExportar() {
+                $('#btnExportarExpendiosPdf').attr('href', urlExportar(config.urlPdf));
+                $('#btnExportarExpendiosExcel').attr('href', urlExportar(config.urlExcel));
+            }
+
+            $('.js-exportar-expendios').on('click', function (event) {
+                // Sin ningun expendio visible no hay nada que exportar: se avisa y no se descarga.
+                if (!getFilteredItems().length) {
+                    event.preventDefault();
+                    if (window.Swal && typeof window.Swal.fire === 'function') {
+                        window.Swal.fire({
+                            icon: 'info',
+                            title: 'No hay expendios para exportar',
+                            text: 'Ajustá los filtros para que la pantalla muestre al menos un expendio.'
+                        });
+                    } else {
+                        window.alert('No hay expendios para exportar.');
+                    }
+                    return;
+                }
+
+                actualizarEnlacesExportar();
+            });
+
+            // ---- Carga ----
             function setDateHint(visible) {
                 $('#msgFiltroFechaExpendiosGenerados').toggleClass('d-none', !visible);
             }
@@ -419,9 +660,12 @@
 
                 fetchState.fechaDesde = fechaDesde;
                 fetchState.fechaHasta = fechaHasta;
+                fetchState.ids = idsCliente();
                 setDateHint(false);
                 showMessage(null, '');
-                $('#expendiosGeneradosCards').html('<div class="text-center text-muted py-4">Consultando expendios...</div>');
+                var consultando = '<div class="text-center text-muted py-4">Consultando expendios...</div>';
+                $('#expendiosGeneradosCards').html(consultando);
+                $('#expendiosPlanaCuerpo').html('<tr><td colspan="' + (columnasPlana.length + 1) + '" class="text-center text-muted py-4">Consultando expendios...</td></tr>');
 
                 $.ajax({
                     url: config.url,
@@ -430,7 +674,8 @@
                     cache: false,
                     data: {
                         fechaDesde: fechaDesde,
-                        fechaHasta: fechaHasta
+                        fechaHasta: fechaHasta,
+                        idsCliente: fetchState.ids
                     }
                 })
                     .done(function (resp) {
@@ -445,6 +690,8 @@
                         applyFilters();
                         if (!cache.length) {
                             showMessage('info', 'No hay expendios para el rango de fechas seleccionado.');
+                        } else if (resp.truncado) {
+                            showMessage('warning', 'La consulta alcanzó el máximo de expendios que se cargan por vez: puede haber expendios más viejos sin mostrar. Acotá el rango de fechas.');
                         }
                     })
                     .fail(function () {
@@ -476,7 +723,7 @@
                     var destino = window.prompt('Email destino:', resp.email || '');
                     if (!destino) return;
 
-                    $.post('@Url.Action("EnviarComprobanteEmailExpendio", "PuntosExpendio")', {
+                    $.post(config.urlEnviarEmail, {
                         idExpendio: idExpendio,
                         emailDestino: destino,
                         asunto: resp.asunto,
@@ -498,8 +745,41 @@
                 setDateHint(cambioPendiente);
             });
 
+            // Cliente: el texto libre filtra en vivo sobre lo cargado. Elegir (o quitar con la X) personas cambia lo que
+            // se consulta al servidor: el selector dispara "filtropicker:change" tras su evento "input".
+            $cliente.on('filtropicker:change', loadData);
             $('#filtroExpendiosCliente, #filtroExpendiosProducto').on('input', applyFilters);
             $('#filtroExpendiosEstado, #filtroExpendiosSucursal, #filtroExpendiosSector, #filtroExpendiosUsuario').on('change', applyFilters);
+
+            // Orden de la vista plana: primer clic en una columna ordena ascendente (fecha: la mas reciente primero); otro clic invierte.
+            $('#expendiosPlanaEncabezado').on('click', 'th.js-plana-ordenable', function () {
+                var clave = $(this).attr('data-clave');
+                var col = columnasPlana.filter(function (c) { return c.clave === clave; })[0];
+                if (!col) return;
+
+                if (ordenPlana.clave === clave) ordenPlana.dir = ordenPlana.dir === 'asc' ? 'desc' : 'asc';
+                else ordenPlana = { clave: clave, dir: col.primerOrden || 'asc' };
+                applyFilters();
+            });
+
+            $('#btnVistaSoloLineasExpendios').on('click', function () {
+                vistaPlana = !vistaPlana;
+                aplicarModoVista();
+                applyFilters();
+                try {
+                    window.localStorage.setItem(config.claveVistaPlana, vistaPlana ? '1' : '0');
+                } catch (e) {
+                    // Solo es una comodidad (sin storage la proxima vez vuelve a las tarjetas); no se loguea.
+                }
+            });
+
+            // Se recuerda el modo elegido para no volver siempre a las tarjetas.
+            try {
+                vistaPlana = window.localStorage.getItem(config.claveVistaPlana) === '1';
+            } catch (e) {
+                // localStorage no disponible (modo privado, datos bloqueados): arranca en tarjetas.
+            }
+            aplicarModoVista();
 
             loadData();
         })(window, window.jQuery, document);

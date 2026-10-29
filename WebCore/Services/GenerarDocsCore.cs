@@ -1269,9 +1269,11 @@ namespace WebCore.Services
         // datos de la venta (cliente, vendedor, forma de pago...) y la tabla de sus lineas. Cierra con los
         // mismos totales que las tarjetas de la pantalla. Textos y formatos: LineasVentaExportHelper (compartido
         // con el Excel, GenerarExcelCore). Limite conocido: sin tope de filas, igual que la pantalla (que no pagina).
-        public static byte[] GenerarPdfLineasVenta(WebCore.Models.VentaLineasIndexVm model, string sucursalNombre)
+        public static byte[] GenerarPdfLineasVenta(WebCore.Models.VentaLineasIndexVm model, string sucursalNombre, LineasExportTextos? textos = null)
         {
-            string filtros = LineasVentaExportHelper.Filtros(model);
+            // textos distintos de Ventas (p. ej. Expendios generados, 2026-10-29) reutilizan este mismo PDF.
+            textos ??= LineasExportTextos.Ventas;
+            string filtros = textos.Filtros ?? LineasVentaExportHelper.Filtros(model);
             var totales = LineasVentaExportHelper.Totales(model);
 
             var documento = Document.Create(container =>
@@ -1290,14 +1292,14 @@ namespace WebCore.Services
                         col.Item().Column(cabecera =>
                         {
                             cabecera.Spacing(2);
-                            cabecera.Item().Text(LineasVentaExportHelper.Titulo).FontSize(16).Bold();
+                            cabecera.Item().Text(textos.Titulo).FontSize(16).Bold();
                             cabecera.Item().Text(LineasVentaExportHelper.Periodo(model, sucursalNombre)).FontColor(Colors.Grey.Darken2);
                             if (filtros.Length > 0)
                                 cabecera.Item().Text(filtros).FontColor(Colors.Grey.Darken2);
                         });
 
                         if (model.Ventas.Count == 0)
-                            col.Item().Text(LineasVentaExportHelper.MensajeSinVentas).Italic().FontColor(Colors.Grey.Darken1);
+                            col.Item().Text(textos.MensajeSinRegistros).Italic().FontColor(Colors.Grey.Darken1);
 
                         // Una tabla por venta (el "corte" de la pantalla). Se asume al menos una linea por venta:
                         // ConstruirModeloLineas omite las ventas sin lineas.
@@ -1337,7 +1339,7 @@ namespace WebCore.Services
 
                                     // Datos de la venta (los que la pantalla oculta tras "Ver detalles").
                                     h.Cell().ColumnSpan(5).PaddingHorizontal(5).PaddingVertical(2)
-                                        .Text(LineasVentaExportHelper.DatosVenta(venta)).FontSize(8).FontColor(Colors.Grey.Darken2);
+                                        .Text(LineasVentaExportHelper.DatosVenta(venta, textos.EtiquetasDatos)).FontSize(8).FontColor(Colors.Grey.Darken2);
 
                                     // Titulos de columna (las 3 ultimas son numericas: alineadas a la derecha).
                                     string[] titulos = LineasVentaExportHelper.EncabezadosColumnas;
