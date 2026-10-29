@@ -123,9 +123,12 @@
                tipoNormalizado.IndexOf("Cobro", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
+    // "ANULACION:" (anulacion de un egreso) o "ELIMINADO:" (egreso opuesto que genera Negocio.Compra.eliminarCompra al borrar una compra).
     bool EsAnulacion(DataRow row)
     {
-        return Descripcion(row).StartsWith("ANULACION", StringComparison.OrdinalIgnoreCase);
+        string descripcion = Descripcion(row);
+        return descripcion.StartsWith("ANULACION", StringComparison.OrdinalIgnoreCase)
+            || descripcion.StartsWith("ELIMINADO:", StringComparison.OrdinalIgnoreCase);
     }
 
     bool FueReemplazadoPorAnulacion(DataRow row, ISet<string> descripcionesAnuladas)
@@ -194,6 +197,8 @@
     var idsModificables = ViewBag.IdsEgresosModificables as HashSet<int> ?? new HashSet<int>();
     var comprasModificables = ViewBag.ComprasModificables as Dictionary<int, int> ?? new Dictionary<int, int>();
     var descripcionesAnuladas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    // Subconjunto de las anuladas que lo fueron por eliminar la compra (egreso "ELIMINADO:"): el aviso de la fila lo dice.
+    var descripcionesEliminadas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     string sucursalActividad = ViewBag.SucursalActividad as string ?? "";
     var tiposEgresoCajaLookup = ViewBag.TiposEgresoCaja as DataTable;
     // En Mis actividades / Actividades (modoActividades) la columna Detalle se oculta: la fila avisa con una etiqueta
@@ -214,12 +219,14 @@
             }
 
             string descripcion = Descripcion(row);
-            if (descripcion.StartsWith("ANULACION:", StringComparison.OrdinalIgnoreCase))
+            if (descripcion.StartsWith("ANULACION:", StringComparison.OrdinalIgnoreCase) || descripcion.StartsWith("ELIMINADO:", StringComparison.OrdinalIgnoreCase))
             {
-                string descripcionOriginal = descripcion.Substring("ANULACION:".Length).Trim();
+                string descripcionOriginal = descripcion.Substring(descripcion.IndexOf(':') + 1).Trim();
                 if (!string.IsNullOrWhiteSpace(descripcionOriginal))
                 {
                     descripcionesAnuladas.Add(descripcionOriginal);
+                    if (descripcion.StartsWith("ELIMINADO:", StringComparison.OrdinalIgnoreCase))
+                        descripcionesEliminadas.Add(descripcionOriginal);
                 }
             }
         }
@@ -278,7 +285,8 @@
                     int idInt;
                     bool puedeModificarEgreso = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
                     int idCompraRelacionado = int.TryParse(id, out idInt) && comprasModificables.ContainsKey(idInt) ? comprasModificables[idInt] : 0;
-                    bool puedeModificarCompra = idCompraRelacionado > 0;
+                    // Una compra ya eliminada (su egreso quedo marcado como anulado) y el egreso ELIMINADO no se pueden modificar.
+                    bool puedeModificarCompra = idCompraRelacionado > 0 && !esAnulacion && !esHistorico;
                     bool mostrarBotonModificar = (puedeModificarEgreso || puedeModificarCompra) && !string.IsNullOrWhiteSpace(id);
                     string sucursalFila = ValorFlexible(row, "Sucursal", "sucursal");
                     if (string.IsNullOrWhiteSpace(sucursalFila))
@@ -306,7 +314,7 @@
                             @Descripcion(row)
                             @if (esHistorico)
                             {
-                                <div class="small text-muted mt-1">Registro anterior reemplazado por una modificacion.</div>
+                                <div class="small text-muted mt-1">@(descripcionesEliminadas.Contains(Descripcion(row)) ? "Compra eliminada: ver el egreso ELIMINADO." : "Registro anterior reemplazado por una modificacion.")</div>
                             }
                             else if (esEgresoModificado)
                             {
@@ -459,7 +467,7 @@
             int idInt;
             bool puedeModificarEgreso = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
             int idCompraRelacionado = int.TryParse(id, out idInt) && comprasModificables.ContainsKey(idInt) ? comprasModificables[idInt] : 0;
-            bool puedeModificarCompra = idCompraRelacionado > 0;
+            bool puedeModificarCompra = idCompraRelacionado > 0 && !esAnulacion && !esHistorico;
             bool mostrarBotonModificar = (puedeModificarEgreso || puedeModificarCompra) && !string.IsNullOrWhiteSpace(id);
             string sucursalFila = ValorFlexible(row, "Sucursal", "sucursal");
             if (string.IsNullOrWhiteSpace(sucursalFila))
@@ -487,7 +495,7 @@
                     @Descripcion(row)
                     @if (esHistorico)
                     {
-                        <div class="small text-muted mt-1">Registro anterior reemplazado por una modificacion.</div>
+                        <div class="small text-muted mt-1">@(descripcionesEliminadas.Contains(Descripcion(row)) ? "Compra eliminada: ver el egreso ELIMINADO." : "Registro anterior reemplazado por una modificacion.")</div>
                     }
                     else if (esEgresoModificado)
                     {

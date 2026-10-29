@@ -92,6 +92,13 @@ El ticket **no fiscal** (el que dice **X** / «No valido como Factura») imprime
 - **«La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.»**: con la cuenta de producción, la autorización del empleado se perdió (por ejemplo, por mucho tiempo sin usar el POS). Recargá la página y volvé a autorizarte.
 - **«No hay una caja abierta para consultar ventas.»**: el vendedor no tiene una caja abierta ahora (por ejemplo, entró con «venta rápida sin apertura de caja» o un encargado ya le cerró la caja). Es correcto: Mis ventas solo muestra la caja abierta. Las ventas anteriores se ven en el listado de **Ventas**.
 
+## Compras propias desde Mis actividades (F6)
+En **F6 → Mis actividades**, las compras que registraste **desde que abriste tu caja** (la abierta ahora, en tu sucursal) tienen el botón **Modificar**. Abre la compra en el mismo modal y ahí podés **modificarla** (botón **Modificar**, cambiás lo que haga falta y **Guardar compra**) o **eliminarla** (botón rojo **Eliminar**).
+- **No hace falta el permiso «Modificar compra»** para tus propias compras de la caja abierta. Las de otra persona, las de una caja ya cerrada y las de otra sucursal siguen pidiéndolo (sin el permiso la compra no se abre y el sistema avisa «No tiene permisos para operar compras.»). Eliminar pide siempre motivo y usuario y contraseña, igual que en la pantalla completa (ver [Compras.Editar](ayuda:pantalla/Compras.Editar)).
+- Al eliminar desde el POS se vuelve a **Mis actividades** (no se pierde la venta en curso). La compra queda con una fila nueva **ELIMINADO: …** (con el importe en negativo si salió plata de la caja; en $ 0,00 si era en cuenta corriente) y la fila original pasa a «Compra eliminada» sin botón de modificar.
+- Con la cuenta compartida de producción el sistema compara con el operador que se autorizó para Compras.
+- **PENDIENTE de probar con un usuario sin el permiso «Modificar compra»:** en la base de prueba el permiso de crear compras y el de modificarlas vienen juntos, y el login de usuarios que no son admin exige un dispositivo autorizado; lo probado fue con un administrador.
+
 ## Notas
 - Solo el ticket del post-venta ofrece el saldo. La **reimpresión desde el historial**, el **PDF** y el **email** no lo incluyen.
 - El ticket facturado (con CAE) también lo admite: el saldo va después del total fiscal y antes de los datos fiscales.

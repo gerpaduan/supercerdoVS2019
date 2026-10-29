@@ -2,8 +2,8 @@
 // Flujo: boton -> GET vista previa (resumen, lineas, efectos y bloqueos) -> modal con motivo + usuario y contraseña ->
 // POST eliminar. El servidor revalida usuario y contraseña en CADA eliminacion (no hay ventana de "ya me valide") y decide
 // el permiso con la persona que puso la clave. Si el efecto toca una caja ya cerrada, pide confirmar (CajaCerradaConfirm) y
-// reenvia con confirmarCajaCerrada=true. Config: <script type="application/json" id="eliminarRegistroConfig"> del parcial
-// Views/Shared/_EliminarRegistro.cshtml. Depende de: jQuery, Bootstrap 4 (modal) y SweetAlert2.
+// reenvia con confirmarCajaCerrada=true. Config: atributo data-config de <div id="eliminarRegistroConfig"> del parcial
+// Views/Shared/_EliminarRegistro.cshtml (se lee al tocar el boton: dentro del modal del POS el script se carga una sola vez). Depende de: jQuery, Bootstrap 4 (modal) y SweetAlert2.
 // Ver docs/DECISIONS.md "Eliminar compras, stock y movimientos".
 function iniciarEliminarRegistro(window, $) {
     'use strict';
@@ -25,7 +25,24 @@ function iniciarEliminarRegistro(window, $) {
     function leerConfig() {
         var nodo = document.getElementById('eliminarRegistroConfig');
         if (!nodo) return null;
-        try { return JSON.parse(nodo.textContent); } catch (e) { return null; }
+        try { return JSON.parse(nodo.getAttribute('data-config') || ''); } catch (e) { return null; }
+    }
+
+    // Dentro del modal del POS (Bootstrap 5) el modal de eliminar se apila sobre el del POS y el focus trap de este le roba el
+    // foco al de arriba (no se puede escribir el motivo ni la clave). Se desactiva mientras esta abierto y se reactiva al cerrar
+    // (mismo arreglo que compras.js, gestionarFocusTrapModalAbierto).
+    function ajustarFocusTrapSobreModalDelPos($m) {
+        if (cfg.origen !== 'pos' || !window.bootstrap || !window.bootstrap.Modal) return;
+        var elFondo = document.getElementById('modalFinanzasPOS');
+        if (!elFondo) return;
+        $m.on('show.bs.modal', function () {
+            var fondo = window.bootstrap.Modal.getInstance(elFondo);
+            if (fondo && fondo._focustrap && typeof fondo._focustrap.deactivate === 'function') fondo._focustrap.deactivate();
+        });
+        $m.on('hidden.bs.modal', function () {
+            var fondo = window.bootstrap.Modal.getInstance(elFondo);
+            if (fondo && fondo._focustrap && typeof fondo._focustrap.activate === 'function') fondo._focustrap.activate();
+        });
     }
 
     function token() {
@@ -79,6 +96,7 @@ function iniciarEliminarRegistro(window, $) {
 
         $('body').append(html);
         var $m = $('#modalEliminarRegistro');
+        ajustarFocusTrapSobreModalDelPos($m);
         $m.on('input change keyup', '#erMotivo, #erClave, #erUsuario', actualizarEstado);
         $m.on('click', '#erCancelar', function () { if (!enviando) $m.modal('hide'); });
         $m.on('click', '#erConfirmar', function () { enviar(false); });
@@ -196,7 +214,8 @@ function iniciarEliminarRegistro(window, $) {
                 motivo: $('#erMotivo').val(),
                 idUsuarioAutoriza: cfg.esCuentaProduccion ? $('#erUsuario').val() : cfg.idUsuarioSesion,
                 clave: $('#erClave').val(),
-                confirmarCajaCerrada: !!confirmarCajaCerrada
+                confirmarCajaCerrada: !!confirmarCajaCerrada,
+                origen: cfg.origen || ''
             },
             headers: { RequestVerificationToken: token() }
         }).done(function (resp) {
@@ -219,14 +238,23 @@ function iniciarEliminarRegistro(window, $) {
             }
 
             $('#erClave').val('');
-            $('#modalEliminarRegistro').off('hidden.bs.modal').modal('hide');
+            var cierreEnPos = cfg.alEliminar === 'pos-mis-actividades';
+            $('#modalEliminarRegistro').modal('hide');
             Swal.fire({
                 icon: resp.advertencia ? 'warning' : 'success',
                 title: 'Eliminado',
                 text: resp.advertencia || '',
                 timer: resp.advertencia ? undefined : 1500,
                 showConfirmButton: !!resp.advertencia
-            }).then(function () { window.location.href = resp.redirectUrl || cfg.urlRedireccion; });
+            }).then(function () {
+                // En el POS no se navega (se perderia la venta en curso): se recarga Mis actividades en el mismo modal, donde la
+                // compra queda con su egreso "ELIMINADO".
+                if (cierreEnPos && window.POSEgresos && typeof window.POSEgresos.abrirMis === 'function') {
+                    window.POSEgresos.abrirMis();
+                    return;
+                }
+                window.location.href = resp.redirectUrl || cfg.urlRedireccion;
+            });
         }).fail(function (xhr) {
             enviando = false;
             restaurarBoton();
@@ -252,11 +280,12 @@ function iniciarEliminarRegistro(window, $) {
         });
     }
 
-    $(function () {
+    // Delegado en document: dentro del modal del POS este script se carga una sola vez, pero el boton (y su config) se vuelve a
+    // inyectar cada vez que se abre una compra. La config se lee en cada toque.
+    $(document).off('click.eliminarRegistro').on('click.eliminarRegistro', '#btnEliminarRegistro', function () {
+        if ($(this).prop('disabled')) return;
         cfg = leerConfig();
-        var $btn = $('#btnEliminarRegistro');
-        if (!cfg || !$btn.length) return;
-        $btn.on('click', function () { if (!$btn.prop('disabled')) abrir(); });
+        if (cfg) abrir();
     });
 }
 

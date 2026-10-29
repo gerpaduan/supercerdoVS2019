@@ -598,3 +598,373 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         color: #b9d7ff;
     }
 }
+
+/* Layout compacto de escritorio (>=992px), 2026-10-28: ver docs/DECISIONS.md "Compras/Editar compacto".
+   Objetivo: mas campos y mas lineas visibles sin scroll, en la pagina y en los modales del POS y de Cta. Cte.
+   Solo CSS (ids y DOM que usa compras.js no se tocan). El selector arranca con "body .compra-page" para ganarle a
+   ui-refresh.css (body.app-shell .form-control, min-height 2.75rem), que es lo que inflaba los inputs.
+   Minimos de caracteres visibles en la barra de carga (pedidos por el usuario): Codigo 15, Cantidad 7, Precio 9;
+   Producto 39 (el nombre mas largo de la base local de prueba tiene 39). Cada track es minmax(minimo, maximo) en rem. */
+@media (min-width: 992px) {
+    body .compra-page .compra-section-label,
+    body .compra-page .compra-hr-cabecera {
+        display: none;
+    }
+
+    body .compra-page .form-control,
+    body .compra-page select.form-control,
+    body .compra-page .input-group-text {
+        min-height: 2.1rem;
+        border-radius: .55rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+    }
+
+    body .compra-page textarea.form-control {
+        min-height: 3rem;
+    }
+
+    /* Cabecera: Tipo | Sucursal | Fecha | Proveedor | Remito | Cta. cte. en una sola fila. Las dos .row de Bootstrap
+       pasan a display:contents para que sus columnas sean celdas del grid. Sin selector de tipo no hay primera celda. */
+    body .compra-page .compra-cabecera {
+        display: grid;
+        grid-template-columns: minmax(7rem, 8rem) minmax(9rem, 11rem) minmax(12.5rem, 13rem) minmax(16rem, 1fr) minmax(9rem, 12rem) auto;
+        gap: 0 .5rem;
+        align-items: end;
+        margin-bottom: .5rem;
+    }
+
+    body .compra-page .compra-cabecera.compra-cabecera-sin-tipo {
+        grid-template-columns: minmax(9rem, 11rem) minmax(12.5rem, 13rem) minmax(16rem, 1fr) minmax(9rem, 12rem) auto;
+    }
+
+    body .compra-page .compra-cabecera > .row {
+        display: contents;
+    }
+
+    body .compra-page .compra-cabecera > .row > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+
+    body .compra-page .compra-cabecera .form-group {
+        margin-bottom: 0;
+    }
+
+    body .compra-page .compra-cabecera .form-group > label {
+        display: block;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    body .compra-page .compra-proveedor-cuit {
+        margin-left: .35rem;
+    }
+
+    body .compra-page .compra-cabecera .compra-cta-card {
+        height: 2.1rem;
+    }
+
+    /* Barra "Agregar producto / media" con fondo propio, en vez de separarla con una linea. */
+    body .compra-page .compra-linea-panel {
+        background: var(--ui-surface-alt, #f3f4f6);
+        border: 1px solid rgba(0, 0, 0, .06);
+        border-radius: .6rem;
+        padding: .45rem .7rem .55rem;
+        margin-bottom: .5rem;
+    }
+
+    body .compra-page .compra-linea-header {
+        margin-bottom: .35rem !important;
+    }
+
+    body .compra-page .compra-linea-panel h6,
+    body .compra-page .compra-linea-header h6 {
+        margin-bottom: 0 !important;
+    }
+
+    body .compra-page .compra-continua-alert {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .1rem 1.25rem;
+        padding: .2rem .6rem !important;
+        margin-bottom: .4rem !important;
+    }
+
+    /* Fila de carga: Codigo | Producto | Cantidad | Precio | Subtotal. Producto se queda con todo el sobrante. */
+    body .compra-page .compra-carga-row {
+        display: grid;
+        grid-template-columns: minmax(12.5rem, 13rem) minmax(22rem, 1fr) minmax(5.75rem, 7rem) minmax(6rem, 8rem) minmax(7.5rem, 9rem);
+        gap: 0 .5rem;
+        align-items: end;
+        margin: 0 0 .4rem;
+    }
+
+    body .compra-page .compra-carga-row > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+
+    body .compra-page .compra-carga-row .form-group {
+        margin-bottom: 0;
+    }
+
+    /* Modo media: Kg media (>=7 car.) | Precio media (>=9 car.) | [+]. */
+    body .compra-page .compra-media-row {
+        display: grid;
+        grid-template-columns: minmax(6rem, 8rem) minmax(7rem, 9rem) auto;
+        gap: 0 .5rem;
+        justify-content: start;
+        align-items: end;
+        margin: 0;
+    }
+
+    body .compra-page .compra-media-row .form-group {
+        margin-bottom: 0;
+    }
+
+    body .compra-page .compra-media-row > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        padding: 0;
+    }
+
+    /* Ajustes (Desc./Recargo, IVA, Margen): chips en una linea; "Agregar producto" queda al final a la derecha.
+       El DOM es el mismo de siempre: en celular siguen plegados detras del boton "Ajustes". */
+    body .compra-page .compra-ajustes-grid {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem .5rem;
+        margin: 0 !important;
+    }
+
+    body .compra-page .compra-ajustes-grid > [class*="col-"] {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    body .compra-page .compra-ajustes-grid > .compra-agregar-col {
+        margin-left: auto;
+    }
+
+    body .compra-page .compra-ajuste-card {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .25rem .6rem;
+        height: auto !important;
+        padding: .2rem .7rem !important;
+        border-radius: 1rem !important;
+    }
+
+    body .compra-page .compra-ajuste-card > .custom-control {
+        margin-bottom: 0 !important;
+    }
+
+    body .compra-page .compra-ajuste-card > .row {
+        flex-wrap: nowrap;
+        margin: 0;
+    }
+
+    body .compra-page .compra-ajuste-card > .row > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        padding: 0;
+    }
+
+    body .compra-page .compra-ajuste-card .form-control {
+        width: 5.5rem;
+        min-height: 1.75rem;
+        padding: .1rem .45rem;
+    }
+
+    /* Desc./Recargo e IVA: el "Porcentaje" se lee igual con el chip; queda solo para lectores de pantalla. */
+    body .compra-page .compra-ajuste-card > .row .form-group > label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    body .compra-page #panelDescRecargo .form-text {
+        display: none;
+    }
+
+    body .compra-page #panelPrecioVentaMargen {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .25rem .75rem;
+    }
+
+    body .compra-page #panelPrecioVentaMargen > .alert {
+        margin: 0 !important;
+        padding: .15rem .5rem;
+    }
+
+    body .compra-page #panelPrecioVentaMargen .custom-control-inline {
+        margin-right: 0;
+    }
+
+    body .compra-page #panelPrecioVentaMargen > .row {
+        flex-wrap: nowrap;
+        margin: 0 !important;
+        gap: .5rem;
+    }
+
+    body .compra-page #panelPrecioVentaMargen > .row > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        padding: 0;
+    }
+
+    body .compra-page #panelPrecioVentaMargen .form-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 .35rem;
+        margin: 0;
+    }
+
+    body .compra-page #panelPrecioVentaMargen .form-group > label {
+        margin: 0;
+    }
+
+    body .compra-page #panelPrecioVentaMargen .form-group > small {
+        flex: 0 0 100%;
+    }
+
+    /* Tabla con scroll propio y encabezado fijo; la reserva (alto de todo lo que hay arriba y abajo) es menor
+       en el modal del POS, que no tiene la barra superior del layout. */
+    body .compra-page .compra-tabla-wrap {
+        max-height: calc(100vh - var(--compra-tabla-reserva, 28rem));
+        min-height: 6rem;
+        overflow-y: auto;
+        margin-bottom: .5rem !important;
+    }
+
+    body .compra-page.compra-page-pos .compra-tabla-wrap {
+        --compra-tabla-reserva: 26.5rem;
+    }
+
+    body .compra-page .compra-tabla-wrap thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--ui-surface-alt, #f3f4f6);
+    }
+
+    /* Lateral: total grande arriba, items y cantidad en una linea. */
+    body .compra-page .compra-sidebar-stack {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    body .compra-page .compra-sidebar-stack > * + * {
+        margin-top: 0;
+    }
+
+    body .compra-page .compra-totales-box {
+        order: -1;
+        display: flex;
+        flex-wrap: wrap;
+        height: auto;
+        padding: .5rem .7rem !important;
+    }
+
+    body .compra-page .compra-totales-box {
+        justify-content: space-between;
+    }
+
+    body .compra-page .compra-totales-box > div {
+        flex: 0 1 auto;
+        gap: .5rem;
+    }
+
+    body .compra-page .compra-totales-box > .compra-total-principal {
+        order: -1;
+        flex: 0 0 100%;
+        margin: 0 0 .3rem;
+        padding: 0 0 .3rem;
+        border-top: 0;
+        border-bottom: 1px solid rgba(0, 0, 0, .08);
+        font-size: 1.2rem;
+    }
+
+    body .compra-page .compra-medias-box,
+    body .compra-page .compra-observaciones-box {
+        padding: .5rem .7rem !important;
+    }
+
+    body .compra-page .compra-observaciones-box > .d-flex {
+        margin-bottom: .25rem !important;
+    }
+
+    /* Barra de acciones siempre a la vista. */
+    body .compra-page .compra-actions-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        margin-top: .5rem !important;
+        padding: .5rem 0 .1rem;
+        background: var(--ui-surface, #fff);
+    }
+
+    body .compra-page .compra-actions-bar > .mb-2 {
+        margin-bottom: 0 !important;
+    }
+
+    html.dark-mode body .compra-page .compra-linea-panel {
+        background: #16283d;
+        border-color: #2a3b52;
+    }
+
+    html.dark-mode body .compra-page .compra-tabla-wrap thead th {
+        background: #1b2c42;
+    }
+
+    html.dark-mode body .compra-page .compra-actions-bar {
+        background: #132032;
+    }
+
+    html.dark-mode body .compra-page .compra-totales-box > .compra-total-principal {
+        border-bottom-color: #2a3b52;
+    }
+}
+
+/* Proveedor en el modal de compra del POS (2026-10-28): #razonSocial hereda el estilo del campo Cliente del POS (pos.css:
+   calc(1rem + 2pt), 1.02rem + 2pt desde 992 px y .98rem + 2pt debajo). Se le bajan 2 puntos, solo ahi (el modal de cuenta
+   corriente y la pagina no cargan pos.css). La negrita se mantiene. */
+#modalFinanzasPOS .compra-page #razonSocial {
+    font-size: 1rem;
+}
+
+@media (min-width: 992px) {
+    #modalFinanzasPOS .compra-page #razonSocial {
+        font-size: 1.02rem;
+    }
+}
+
+@media (max-width: 991.98px) {
+    #modalFinanzasPOS .compra-page #razonSocial {
+        font-size: .98rem;
+    }
+}

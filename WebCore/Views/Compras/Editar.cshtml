@@ -77,6 +77,7 @@
                     <small class="text-muted">Complete primero sucursal, fecha y proveedor. Luego cargue las líneas.</small>
                 </div>
 
+                <div class="compra-cabecera @(mostrarSelectorTipo ? "" : "compra-cabecera-sin-tipo")">
                 <div class="row compra-datos-principales-row">
                     @if (mostrarSelectorTipo)
                     {
@@ -135,7 +136,7 @@
                 <div class="row compra-datos-secundarios-row">
                     <div class="col-12 col-lg-5">
                         <div class="form-group">
-                            <label for="razonSocial">Proveedor</label>
+                            <label for="razonSocial">Proveedor <small class="text-muted font-weight-normal compra-proveedor-cuit" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small></label>
                             <div class="input-group">
                                 <input type="text" id="razonSocial" class="form-control" value="@Model.ProveedorNombre" placeholder="Seleccione un proveedor" readonly />
                                 <div class="input-group-append">
@@ -147,7 +148,6 @@
                                     </button>
                                 </div>
                             </div>
-                            <small class="form-text text-muted" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small>
                         </div>
                     </div>
                     <div class="col-12 col-lg-3">
@@ -170,12 +170,19 @@
                         </div>
                     </div>
                 </div>
+                </div>
 
-                <hr />
+                <hr class="compra-hr-cabecera" />
 
                 <div id="panelLineaCorte" class="compra-linea-panel" style="@(mostrarMediaInicial ? "display:none;" : null)">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                        <h6 class="font-weight-bold text-uppercase text-muted mb-0">Agregar producto</h6>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 compra-linea-header">
+                        <div class="d-flex flex-wrap align-items-center compra-linea-titulo">
+                            <h6 class="font-weight-bold text-uppercase text-muted mb-0 mr-3">Agregar producto</h6>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="chkCargaContinuaProducto" />
+                                <label class="custom-control-label" for="chkCargaContinuaProducto">Cargar varias veces este producto</label>
+                            </div>
+                        </div>
                         <div class="d-flex flex-wrap align-items-center gap-3">
                             <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
                                 <i class="fas fa-shield-alt mr-1"></i> Activar respaldo automático
@@ -185,15 +192,7 @@
                             </span>
                         </div>
                     </div>
-                    <div class="row align-items-end mb-3">
-                        <div class="col-12 col-lg-8">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="chkCargaContinuaProducto" />
-                                <label class="custom-control-label" for="chkCargaContinuaProducto">Cargar varias veces este producto</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="panelCargaContinuaProducto" class="alert alert-info py-2 px-3 mb-3" style="display:none;">
+                    <div id="panelCargaContinuaProducto" class="alert alert-info py-2 px-3 mb-3 compra-continua-alert" style="display:none;">
                         <div><strong>Producto en carga:</strong> <span id="lblProductoContinuo">-</span></div>
                         <div><strong>Precio compra:</strong> <span id="lblPrecioContinuo">-</span></div>
                     </div>
@@ -219,7 +218,7 @@
                         </div>
                         <audio id="compraBeep" src="@Url.Content("~/Content/sounds/focus-beep.wav")" preload="auto"></audio>
                     </div>
-                    <div class="row">
+                    <div class="row compra-carga-row">
                         <div class="col-12 col-md-3">
                             <div class="form-group">
                                 <label for="txtCodigoProducto">Código</label>
@@ -293,7 +292,7 @@
                                     <div class="col-12">
                                         <div class="form-group mb-0">
                                             <label for="txtDescRecargo">Porcentaje</label>
-                                            <input type="number" id="txtDescRecargo" class="form-control" step="0.01" value="0" />
+                                            <input type="number" id="txtDescRecargo" class="form-control" step="0.01" value="0" title="Negativo descuenta, positivo recarga." />
                                             <small class="form-text text-muted">Negativo descuenta, positivo recarga.</small>
                                         </div>
                                     </div>
@@ -365,12 +364,14 @@
                 </div>
 
                 <div id="panelLineaMediaRes" class="compra-linea-panel" style="@(mostrarMediaInicial ? null : "display:none;")">
-                    <h6 class="font-weight-bold text-uppercase text-muted mb-3">Agregar media</h6>
-                    <div class="custom-control custom-switch mb-3">
-                        <input type="checkbox" class="custom-control-input" id="chkCargaContinuaMedia" />
-                        <label class="custom-control-label" for="chkCargaContinuaMedia">Cargar varias medias con el mismo precio</label>
+                    <div class="d-flex flex-wrap align-items-center mb-3 compra-linea-header">
+                        <h6 class="font-weight-bold text-uppercase text-muted mb-0 mr-3">Agregar media</h6>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="chkCargaContinuaMedia" />
+                            <label class="custom-control-label" for="chkCargaContinuaMedia">Cargar varias medias con el mismo precio</label>
+                        </div>
                     </div>
-                    <div id="panelCargaContinuaMedia" class="alert alert-info py-2 px-3 mb-3" style="display:none;">
+                    <div id="panelCargaContinuaMedia" class="alert alert-info py-2 px-3 mb-3 compra-continua-alert" style="display:none;">
                         <div><strong>Precio media en carga:</strong> <span id="lblPrecioMediaContinuo">-</span></div>
                     </div>
                     <div class="row compra-media-row">
@@ -403,7 +404,7 @@
                 </div>
 
                 <div class="row compra-workspace-row">
-                    <div class="col-12 col-xl-8">
+                    <div class="col-12 col-lg-9">
                 @* Solo celular (<768px): en la lista no hay encabezado "#" para tocar, el orden se elige aca. Usa el mismo
                    estado que el encabezado (compras.js, state.lineasSortAsc; arranca en "ultimos primero"). *@
                 <div class="d-flex d-md-none align-items-center mb-2 compra-lineas-toolbar">
@@ -485,7 +486,7 @@
                 </div>
                     </div>
 
-                    <div class="col-12 col-xl-4">
+                    <div class="col-12 col-lg-3">
                         <div class="compra-sidebar-stack">
                         @if (permiteMediaRes)
                         {
@@ -555,7 +556,9 @@
                                 <i class="fas fa-edit mr-1"></i> Modificar
                             </button>
                         }
-                        @if (!embebido && ViewBag.EliminarRegistro is WebCore.Models.EliminarRegistroVm vmEliminarCompra)
+                        @* Eliminar: pantalla completa y modal del POS (compras propias de la caja, ver ComprasController.CrearBotonEliminar);
+                           no en el modal de la cuenta corriente. *@
+                        @if ((!embebido || Model.DesdePos) && ViewBag.EliminarRegistro is WebCore.Models.EliminarRegistroVm vmEliminarCompra)
                         {
                             <partial name="_EliminarRegistro" model="vmEliminarCompra" />
                         }
@@ -577,6 +580,12 @@
 
 @* asp-append-version (antes "?v=1" fijo): sin esto el celular seguia con el CSS viejo en cache (2026-10-27). *@
 <link rel="stylesheet" href="@Url.Content("~/Content/css/compras-editar.css")" asp-append-version="true" />
+@* En el POS (DesdePos) no hay _Layout, que es quien carga tabla-cards.css: sin esta hoja los textos de apoyo de la lista de lineas
+   (".cc-solo-card", pensados para celular) se ven tambien en desktop (2026-10-28). *@
+@if (Model.DesdePos)
+{
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/tabla-cards.css")" asp-append-version="true" />
+}
 
 <div id="contenedorModalPersonaCompra"></div>
 @if (borradorGenericoHabilitado && !Model.DesdePos)

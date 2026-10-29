@@ -573,6 +573,8 @@ namespace WebCore.Controllers
             // Si ya cargo su conteo el boton dice "Actualizar mi cierre" (modo actualizar).
             ViewBag.MiCierreYaCargado = cierre.CajaCierreCajero.HasValue;
             CargarPermisosEdicionEgresos(dt, false, cierre);
+            // Compras de la propia caja abierta: el boton Modificar abre la compra en el modal del POS (desde ahi tambien se elimina).
+            AgregarComprasModificablesPos(dt, cierre);
 
             return PartialView("~/Views/Cajas/_MisEgresosCaja.cshtml", dt);
         }
@@ -1884,18 +1886,7 @@ namespace WebCore.Controllers
             var vendedorPos = ResolverVendedorEgresoPos(user, desdePos, cierreContexto);
             int idSucursalPos = vendedorPos != null ? vendedorPos.IdSucursal : 0;
 
-            bool puedeEditarEnPos = false;
-            if (desdePos)
-            {
-                var cierrePos = cierreContexto ?? ObtenerCajaAbiertaUsuario(user);
-                puedeEditarEnPos = cierrePos != null &&
-                                   cierrePos.Id > 0 &&
-                                   cierrePos.Sucursal != null &&
-                                   cierrePos.Sucursal.idSucursal > 0 &&
-                                   CajaSigueAbierta(cierrePos) &&
-                                   idSucursalPos > 0 &&
-                                   idSucursalPos == cierrePos.Sucursal.idSucursal;
-            }
+            bool puedeEditarEnPos = desdePos && PuedeEditarEnPos(cierreContexto ?? ObtenerCajaAbiertaUsuario(user), idSucursalPos);
 
             foreach (DataRow row in dt.Rows)
             {
@@ -1923,17 +1914,9 @@ namespace WebCore.Controllers
 
                     if (EgresosCajaPolicy.EsCompra(egreso))
                     {
-                        int idCompraRelacionado = egreso.IdCompra.HasValue && egreso.IdCompra.Value > 0
-                            ? egreso.IdCompra.Value
-                            : (egreso.IdTabla.HasValue ? egreso.IdTabla.Value : 0);
-
-                        if (idCompraRelacionado > 0 &&
-                            (cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)) &&
-                            egreso.Sucursal != null &&
-                            egreso.Sucursal.idSucursal == idSucursalPos)
-                        {
+                        int idCompraRelacionado = IdCompraModificablePos(egreso, cierreContexto, idSucursalPos);
+                        if (idCompraRelacionado > 0)
                             comprasModificables[id] = idCompraRelacionado;
-                        }
 
                         continue;
                     }
@@ -1962,6 +1945,78 @@ namespace WebCore.Controllers
             ViewBag.IdsEgresosModificables = idsModificables;
             ViewBag.PagosModificables = pagosModificables;
             ViewBag.ComprasModificables = comprasModificables;
+        }
+
+        // La caja es la abierta del operador y de su sucursal activa: solo entonces se editan sus movimientos desde el POS.
+        private bool PuedeEditarEnPos(CierreCaja? cierrePos, int idSucursalPos)
+        {
+            return cierrePos != null &&
+                   cierrePos.Id > 0 &&
+                   cierrePos.Sucursal != null &&
+                   cierrePos.Sucursal.idSucursal > 0 &&
+                   CajaSigueAbierta(cierrePos) &&
+                   idSucursalPos > 0 &&
+                   idSucursalPos == cierrePos.Sucursal.idSucursal;
+        }
+
+        // Id de la compra detras de un egreso de caja de tipo compra, o 0 si no se puede modificar desde el POS: tiene que estar
+        // dentro de la caja consultada y en la sucursal del operador.
+        private int IdCompraModificablePos(Entidades.EgresoCaja egreso, CierreCaja? cierreContexto, int idSucursalPos)
+        {
+            if (egreso == null || !EgresosCajaPolicy.EsCompra(egreso))
+                return 0;
+
+            int idCompraRelacionado = egreso.IdCompra.HasValue && egreso.IdCompra.Value > 0
+                ? egreso.IdCompra.Value
+                : (egreso.IdTabla.HasValue ? egreso.IdTabla.Value : 0);
+
+            if (idCompraRelacionado > 0 &&
+                (cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)) &&
+                egreso.Sucursal != null &&
+                egreso.Sucursal.idSucursal == idSucursalPos)
+            {
+                return idCompraRelacionado;
+            }
+
+            return 0;
+        }
+
+        // "Mis actividades" (F6): completa ViewBag.ComprasModificables con las compras de la propia caja abierta (2026-10-28, ver
+        // docs/DECISIONS.md "Compras propias de la caja desde el POS"). Antes esa lista solo se armaba con desdePos=true, que
+        // MisActividadesCaja nunca usa, y el boton Modificar de las compras no aparecia. La vista oculta el boton en las compras ya
+        // eliminadas y en su egreso ELIMINADO; ComprasController revalida todo (creador, sucursal y caja) al abrir, guardar o eliminar.
+        private void AgregarComprasModificablesPos(DataTable dt, CierreCaja cierre)
+        {
+            var comprasModificables = ViewBag.ComprasModificables as Dictionary<int, int> ?? new Dictionary<int, int>();
+            ViewBag.ComprasModificables = comprasModificables;
+
+            if (dt == null || !dt.Columns.Contains("id"))
+                return;
+
+            var vendedorPos = ResolverVendedorEgresoPos(_usuarioActual, true, cierre);
+            int idSucursalPos = vendedorPos != null ? vendedorPos.IdSucursal : 0;
+            if (!PuedeEditarEnPos(cierre, idSucursalPos))
+                return;
+
+            var ids = new List<int>();
+            foreach (DataRow row in dt.Rows)
+            {
+                int id = ValorInt(row, "id");
+                if (id > 0)
+                    ids.Add(id);
+            }
+
+            var egresosPorId = _oCierreN.getEgresosCajaByIds(ids)
+                .Where(x => x != null && x.Id > 0)
+                .GroupBy(x => x.Id)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            foreach (var par in egresosPorId)
+            {
+                int idCompra = IdCompraModificablePos(par.Value, cierre, idSucursalPos);
+                if (idCompra > 0)
+                    comprasModificables[par.Key] = idCompra;
+            }
         }
 
         private bool CajaSigueAbierta(CierreCaja cierre)

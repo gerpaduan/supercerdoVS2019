@@ -11,5 +11,6 @@
         <i class="fas fa-trash-alt mr-1"></i> Eliminar
     </button>
 </span>
-<script type="application/json" id="eliminarRegistroConfig">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))</script>
+@* La config va en un atributo (no en un <script type="application/json">): dentro del modal del POS los <script> se ejecutan como JS. *@
+<div id="eliminarRegistroConfig" class="d-none" data-config="@System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })"></div>
 <script src="@Url.Content("~/Scripts/app/eliminar-registro.js")" asp-append-version="true"></script>

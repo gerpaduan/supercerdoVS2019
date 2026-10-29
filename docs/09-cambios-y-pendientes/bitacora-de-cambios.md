@@ -1,5 +1,21 @@
 # Bitacora de cambios
 
+## 2026-10-28 - Compras desde el POS: modificar y eliminar las propias desde Mis actividades (F6) y fuente del proveedor
+
+- **Pedido:** (1) bajar 2 puntos la fuente del input Proveedor; (2) que el operador, desde Mis actividades del POS, pueda **modificar** las compras que registró desde el comienzo de su caja (no podía); (3) que también pueda **eliminarlas**, con su registro de anulación en los egresos de Mis actividades.
+- **Cambio:** botón **Modificar** en las compras de la caja abierta de F6 (antes nunca aparecía); modificar y eliminar sin el permiso «Modificar compra» solo para compras propias de la caja abierta y de su sucursal (`CompraPropiaCajaPos`); botón **Eliminar** dentro del modal del POS (motivo y usuario + contraseña, como siempre) que vuelve a F6; el egreso opuesto «ELIMINADO: …» se registra siempre, también con monto 0, y F6 lo muestra como anulación («Compra eliminada»). Fuente de Proveedor en el modal del POS: 1,02 / 0,98 rem (−2 pt). Detalle: `docs/DECISIONS.md` (2026-10-28).
+- **Verificado:** compila; `WebCore.Tests` 105 correctos (8 nuevos de la regla de permiso); con login real (usuario temporal administrador, caja propia abierta y 2 compras de prueba, todo borrado después): F6 muestra **Modificar** en ambas, modificar y guardar desde F6, eliminar (se pudo escribir motivo y contraseña sobre el modal del POS) con la compra en efectivo (egreso **-10.000**) y la de cuenta corriente (egreso **$ 0,00**; asiento contrario en la cuenta del proveedor), F6 se recarga con las filas ELIMINADO y sin Modificar; `#razonSocial` en el POS a 16,32 px (1,02 rem).
+- **Sin verificar:** con un usuario **sin** el permiso «Modificar compra» (no admin: el login exige dispositivo seguro; solo cubierto por tests de la regla), cuentas de producción con operador autorizado, y que otra persona no pueda abrir/guardar/eliminar compras ajenas (403) de punta a punta.
+- Manual: `Ventas.POS.md`, `Compras.Editar.md`, `Cajas.EgresosCaja.md`.
+
+## 2026-10-28 - Compras/Editar compacto en escritorio (página, nueva compra del POS y compra desde la cuenta corriente)
+
+- **Pedido:** el mejor diseño posible de Editar compra, en los modales y en la pantalla completa, para ver la mayor cantidad de campos sin scrollear, sin romper nada. Mínimos pedidos: Código 15 caracteres, Producto legible, Precio 9, Cantidad 7.
+- **Cambio:** cabecera en una fila, barra de carga con anchos mínimos, ajustes como fichas, lista de líneas con scroll propio y encabezado fijo, lateral con total grande, barra de acciones siempre visible; modales con header y márgenes más bajos. Solo CSS más reubicar el CUIT y los interruptores «Cargar varias…» (mismos ids). `Compras/Editar` carga `tabla-cards.css` en el POS (la lista mostraba textos de celular). Detalle: `docs/DECISIONS.md` (2026-10-28).
+- **Verificado:** compila (0 errores); con login real (usuario temporal, borrado junto con borradores, avisos y su fila de `loginubicacionlog`): página 1536×864 (nueva compra, Media, compra existente con Modificar que habilita edición), modal del POS (14 líneas, el modal no scrollea) y modal de cuenta corriente (9 líneas visibles, antes 3), 375 px sin cambios, modo oscuro. Largos reales de la base local: producto p95 25 / máx. 39, proveedor p95 55 / máx. 95.
+- **Sin verificar:** guardar una compra (no se guardó ninguna: escribe en la base), 1920×1080 real y 1366×768, F9/F10/escáner, empresa sin selector de tipo (`compra-cabecera-sin-tipo`), los mínimos de caracteres medidos con texto real.
+- Manual: `Compras.Editar.md`.
+
 ## 2026-10-27 - Compras/Editar en celular: ajustes plegables y líneas como lista
 
 - **Pedido**: en celular, líneas de la compra como tarjetas y Desc./Recargo, IVA y Margen detrás de un botón para bajar la altura.

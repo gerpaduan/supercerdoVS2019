@@ -147,6 +147,24 @@ namespace WebCore.Controllers
 
         private static string ClaveSessionOperadorModulo(string modulo) => "OperadorModulo_" + (modulo ?? "");
 
+        // Excepcion de permiso desde el POS (2026-10-28, ver docs/DECISIONS.md "Compras propias de la caja desde el POS"): el operador
+        // puede modificar y eliminar SIN el permiso "Modificar compra" las compras que el mismo registro y que caen en su caja abierta,
+        // de su sucursal. La regla pura esta en CompraPropiaCajaPos; aca se resuelven sus datos. Solo se consulta la caja (base de datos)
+        // cuando lo demas ya coincide, y solo cuando falla el permiso normal.
+        // En cuentas de produccion la caja puede figurar a nombre de la cuenta o del operador: alcanza con que sea de cualquiera de los dos.
+        private bool PuedeOperarCompraPropiaEnPos(bool desdePos, int idCompra, int idCreador, int idSucursalCompra, DateTime fechaCompra,
+            Entidades.Usuario operador, Entidades.Usuario sesion)
+        {
+            if (!desdePos || operador == null || sesion == null || idCompra <= 0) return false;
+            if (!WebCore.Helpers.CompraPropiaCajaPos.PuedeOperarSinPermiso(true, idCompra, idCreador, operador.Id, idSucursalCompra, sesion.IdSucursal, true))
+                return false;
+
+            var sucursal = _oSucursalN.findById(idSucursalCompra);
+            if (sucursal == null || sucursal.IdSucursal <= 0) return false;
+            return _oCierreN.validarCajaAbiertaVendedor(fechaCompra, sucursal, operador)
+                || (sesion.Id != operador.Id && _oCierreN.validarCajaAbiertaVendedor(fechaCompra, sucursal, sesion));
+        }
+
         private void RegistrarOperadorModulo(string modulo, Entidades.Usuario operador)
         {
             HttpContext.Session.SetString(ClaveSessionOperadorModulo(modulo), System.Text.Json.JsonSerializer.Serialize(operador));
@@ -571,7 +589,10 @@ namespace WebCore.Controllers
 
             // Port de Web/Controllers/ComprasController.cs:218-229.
             DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
-            if (!_oUsuarioN.tienePermiso(operador, permiso, fechaPermiso, idCreador))
+            // Compra propia de la caja abierta, desde el POS: se puede abrir sin el permiso (ver PuedeOperarCompraPropiaEnPos).
+            if (!_oUsuarioN.tienePermiso(operador, permiso, fechaPermiso, idCreador)
+                && !(compra != null && PuedeOperarCompraPropiaEnPos(desdePos, compra.IdCompra, idCreador,
+                        compra.Sucursal != null ? compra.Sucursal.IdSucursal : 0, compra.FechaCompra, operador, user)))
             {
                 if (desdePos || enModal)
                     return StatusCode(403, "No tiene permisos para operar compras.");
@@ -603,9 +624,9 @@ namespace WebCore.Controllers
             model.EnModal = enModal;
             CargarViewBags(model, user);
 
-            // Boton Eliminar: solo en la pantalla completa (no dentro del modal del POS ni de la cta cte).
-            if (!desdePos && !enModal)
-                ViewBag.EliminarRegistro = CrearBotonEliminar(compra, user);
+            // Boton Eliminar: pantalla completa y modal del POS (compras propias de la caja); no dentro del modal de la cta cte.
+            if (!enModal)
+                ViewBag.EliminarRegistro = CrearBotonEliminar(compra, user, operador, desdePos);
 
             if (desdePos || enModal)
                 return PartialView("~/Views/Compras/Editar.cshtml", model);
@@ -713,19 +734,29 @@ namespace WebCore.Controllers
 
         // Modelo del boton Eliminar de Compras/Editar, o null si no corresponde mostrarlo (compra nueva o sin permiso).
         // Una sesion normal lo ve solo si puede modificar esa compra; la cuenta de produccion siempre (la persona se valida al confirmar).
-        private WebCore.Models.EliminarRegistroVm? CrearBotonEliminar(Entidades.Compra? compra, Entidades.Usuario user)
+        // Desde el POS (desdePos) tambien lo ve quien opera una compra propia de su caja abierta (sin el permiso, ver PuedeOperarCompraPropiaEnPos);
+        // el VM viaja con origen "pos" y, al terminar, el JS recarga Mis actividades en vez de navegar al listado.
+        private WebCore.Models.EliminarRegistroVm? CrearBotonEliminar(Entidades.Compra? compra, Entidades.Usuario user, Entidades.Usuario operador, bool desdePos)
         {
             if (compra == null || compra.IdCompra <= 0) return null;
 
             int idCreador = compra.CreadoPor != null ? compra.CreadoPor.Id : -1;
             if (!user.EsUsuarioProduccion && !user.Admin
-                && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Compra.ModificarCompra, compra.FechaCompra, idCreador))
+                && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Compra.ModificarCompra, compra.FechaCompra, idCreador)
+                && !PuedeOperarCompraPropiaEnPos(desdePos, compra.IdCompra, idCreador,
+                        compra.Sucursal != null ? compra.Sucursal.IdSucursal : 0, compra.FechaCompra, operador, user))
                 return null;
 
-            return WebCore.Helpers.EliminacionRegistroWeb.CrearVm(
+            var vm = WebCore.Helpers.EliminacionRegistroWeb.CrearVm(
                 Entidades.AuditoriaEliminacion.ModuloCompra, compra.IdCompra, "la compra",
                 Url.Action("PrevisualizarEliminar", "Compras"), Url.Action("Eliminar", "Compras"), Url.Action("Index", "Compras"),
                 user, _oUsuarioN);
+            if (desdePos)
+            {
+                vm.Origen = "pos";
+                vm.AlEliminar = "pos-mis-actividades";
+            }
+            return vm;
         }
 
         [HttpGet]
@@ -742,7 +773,7 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Eliminar(int id, string motivo, int idUsuarioAutoriza, string clave, bool confirmarCajaCerrada = false)
+        public IActionResult Eliminar(int id, string motivo, int idUsuarioAutoriza, string clave, bool confirmarCajaCerrada = false, string origen = "")
         {
             try
             {
@@ -757,8 +788,11 @@ namespace WebCore.Controllers
                 if (vista.Modulo != Entidades.AuditoriaEliminacion.ModuloCompra)
                     return Json(new { ok = false, mensaje = "Este registro no es una compra: se elimina desde Stock." });
 
-                // 2) Permiso de quien puso la clave (el mismo que para modificar la compra, con su limite de fecha).
-                if (!persona.Admin && !_oUsuarioN.tienePermiso(persona, Entidades.Permisos.Compra.ModificarCompra, vista.FechaRegistro, vista.IdUsuarioCreador))
+                // 2) Permiso de quien puso la clave (el mismo que para modificar la compra, con su limite de fecha). Desde el POS
+                // (origen=pos) tambien vale una compra propia de su caja abierta, sin el permiso (ver PuedeOperarCompraPropiaEnPos).
+                bool eliminaDesdePos = EsOrigenPos(NormalizarOrigen(origen));
+                if (!persona.Admin && !_oUsuarioN.tienePermiso(persona, Entidades.Permisos.Compra.ModificarCompra, vista.FechaRegistro, vista.IdUsuarioCreador)
+                    && !PuedeOperarCompraPropiaEnPos(eliminaDesdePos, vista.IdRegistro, vista.IdUsuarioCreador, vista.IdSucursal, vista.FechaRegistro, persona, _usuarioActual))
                     return Json(new { ok = false, mensaje = persona.Nombre + " no tiene permiso para eliminar esta compra (o su fecha queda fuera de lo que su permiso permite)." });
 
                 // 3) Caja ya cerrada: el egreso opuesto cae en la caja actual y la original queda sin ese reverso -> se avisa y se confirma.
@@ -881,7 +915,11 @@ namespace WebCore.Controllers
                 string permisoGuardar = model.IdCompra > 0 ? Entidades.Permisos.Compra.ModificarCompra : Entidades.Permisos.Compra.NuevaCompra;
                 DateTime fechaPermisoGuardar = model.FechaCompra;
                 int idCreadorGuardar = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : operador.Id;
-                if (!_oUsuarioN.tienePermiso(operador, permisoGuardar, fechaPermisoGuardar, idCreadorGuardar))
+                // Compra propia de la caja abierta, desde el POS: se puede guardar sin el permiso (se evalua sobre la compra original;
+                // la fecha nueva la valida validarCajaAbiertaVendedor mas abajo).
+                if (!_oUsuarioN.tienePermiso(operador, permisoGuardar, fechaPermisoGuardar, idCreadorGuardar)
+                    && !(compraActual != null && PuedeOperarCompraPropiaEnPos(desdePos, compraActual.IdCompra, idCreadorGuardar,
+                            compraActual.Sucursal != null ? compraActual.Sucursal.IdSucursal : 0, compraActual.FechaCompra, operador, user)))
                     return Fallo("No tiene permisos para guardar esta compra.");
 
                 Entidades.Persona proveedor = _oPersonaN.findById(model.IdProveedor);

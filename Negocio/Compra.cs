@@ -611,11 +611,13 @@ namespace Negocio
             // Efectos que se van a producir, escritos en la auditoria (se calculan antes: la auditoria se inserta junto con el borrado).
             Entidades.MovCtaCte movVigente = oCtaCteN.getMovCtaCteVigenteDeRegistro(Entidades.MovCtaCte.tablas.Compras, compra.IdCompra);
             Entidades.EgresoCaja egreso = oCierreN.findEgresoCajaPorCompra(compra.IdCompra);
-            bool hayEgresoConMonto = egreso != null && egreso.Id > 0 && egreso.Monto != 0;
+            bool hayEgreso = egreso != null && egreso.Id > 0;
+            bool hayEgresoConMonto = hayEgreso && egreso.Monto != 0;
 
             var efectos = new List<string>();
             if (movVigente != null) efectos.Add("Asiento contrario en la cuenta corriente del proveedor por " + FormatearImporte(Math.Abs(movVigente.Importe)) + ".");
             if (hayEgresoConMonto) efectos.Add("Egreso de caja opuesto por " + FormatearImporte(egreso.Monto) + " con fecha " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + ".");
+            else if (hayEgreso) efectos.Add("Egreso de caja \"ELIMINADO\" sin importe (la compra estaba en cuenta corriente), con fecha " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + ".");
 
             var auditoria = new Entidades.AuditoriaEliminacion
             {
@@ -650,7 +652,7 @@ namespace Negocio
                 {
                     using (TransactionScope scope = new TransactionScope())
                     {
-                        idAuditoria = EjecutarEliminarCompra(compra, auditoria, movVigente != null, hayEgresoConMonto ? egreso : null, usuarioElimino, null);
+                        idAuditoria = EjecutarEliminarCompra(compra, auditoria, movVigente != null, hayEgreso ? egreso : null, usuarioElimino, null);
                         scope.Complete();
                     }
                 }
@@ -658,7 +660,7 @@ namespace Negocio
                 {
                     using (unitOfWork)
                     {
-                        idAuditoria = EjecutarEliminarCompra(compra, auditoria, movVigente != null, hayEgresoConMonto ? egreso : null, usuarioElimino, unitOfWork);
+                        idAuditoria = EjecutarEliminarCompra(compra, auditoria, movVigente != null, hayEgreso ? egreso : null, usuarioElimino, unitOfWork);
                         unitOfWork.Completar();
                     }
                 }
@@ -705,7 +707,8 @@ namespace Negocio
                 oCtaCteN.registrarContraasientoPorEliminacion(Entidades.MovCtaCte.tablas.Compras, compra.IdCompra, usuarioElimino, unitOfWork);
 
             // 3) Caja: egreso opuesto fechado HOY (la caja original puede estar cerrada y no se reescribe). Va ultimo: si falla,
-            // se deshace todo lo anterior.
+            // se deshace todo lo anterior. Se registra SIEMPRE que la compra tenia egreso, tambien con monto 0 (compras en cuenta
+            // corriente): asi "Mis actividades" muestra la anulacion (2026-10-28, ver docs/DECISIONS.md).
             if (egresoAReversar != null)
             {
                 egresoAReversar.Id = 0;

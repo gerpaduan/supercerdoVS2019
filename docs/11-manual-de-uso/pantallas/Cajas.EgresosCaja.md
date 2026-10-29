@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-10-22
+revisada: 2026-10-28
 ---
 
 ## Para qué sirve
@@ -22,6 +22,7 @@ Registrar la **salida de dinero de la caja** (gastos, retiros, etc.) y consultar
 
 ## Mis actividades y Actividades (POS y Cerrar caja)
 - La tabla **no muestra la columna Detalle**: si el registro tiene detalle (o conteo de billetes) aparece la etiqueta **Con detalle** bajo la descripción y el texto se ve **desplegando la fila** (flecha o doble clic). El listado completo de Egresos de caja sí conserva la columna.
+- **Compras eliminadas:** al eliminar una compra hecha desde el POS aparece un egreso **ELIMINADO: …** (importe en negativo, o $ 0,00 si era en cuenta corriente). El egreso original queda con el aviso «Compra eliminada: ver el egreso ELIMINADO» y sin botón de modificar. En **Mis actividades** del POS las compras propias de la caja abierta tienen **Modificar** (ver [Ventas.POS](ayuda:pantalla/Ventas.POS)).
 - **Actividades** (desde Cajas abiertas / Cerrar caja) usa el mismo formato compacto que **Mis actividades** del POS, para que Acciones y el resto de las columnas entren en pantalla.
 - **Mi cierre** (solo en **Mis actividades** del POS, con tu caja abierta): abre una ventana para **contar tu caja** con el contador de billetes y dejar cargado el efectivo que tenés. Guardá con **Guardar mi cierre**. Al guardar aparece el aviso **"Se guardó correctamente el conteo de tu cierre de caja"** con las opciones de comprobante (cerrar, ticket térmico, PDF o mail) y después se cierra la ventana. El encargado lo ve al cerrar tu caja (ver [Cajas abiertas](ayuda:pantalla/Cajas.CajasAbiertas)). No es un egreso: no suma a los egresos ni cambia la diferencia. Solo disponible en empresas con base Postgres.
 - **Modo actualizar:** si ya cargaste tu cierre, el botón pasa a **Actualizar mi cierre** (amarillo) y la ventana dice **Modo actualizar** con el importe y la hora de lo que cargaste antes. Lo que guardes lo reemplaza, y podés hacerlo hasta que el encargado cierre la caja.

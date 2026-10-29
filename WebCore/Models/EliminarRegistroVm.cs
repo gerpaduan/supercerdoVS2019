@@ -17,6 +17,12 @@ namespace WebCore.Models
         // Donde se vuelve despues de eliminar (el registro ya no existe: va al listado).
         public string UrlRedireccion { get; set; } = "";
 
+        // Compras desde el modal del POS (2026-10-28): "pos" viaja al servidor (habilita la excepcion de permiso de las compras
+        // propias de la caja) y AlEliminar = "pos-mis-actividades" hace que, al terminar, se recargue Mis actividades en el mismo
+        // modal en vez de navegar (navegar perderia la venta en curso). Vacios fuera del POS.
+        public string Origen { get; set; } = "";
+        public string AlEliminar { get; set; } = "";
+
         // Cuenta compartida de produccion: la persona real se elige de la lista y pone su clave. Si no, se confirma al usuario de la sesion.
         public bool EsCuentaProduccion { get; set; }
         public int IdUsuarioSesion { get; set; }
