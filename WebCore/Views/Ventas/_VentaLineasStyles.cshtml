@@ -1,0 +1,102 @@
+@*
+    Estilos de _VentaLineas.cshtml (lineas + total de una venta). Partial aparte, sin markup, para incluirla
+    una vez por pantalla desde _DetalleVentaCard.cshtml (detalle completo / modal / DetalleFactura) y desde
+    _VentasExpandible.cshtml (paneles desplegables de los listados), sin repetir el <style> en cada panel.
+    Colores con las variables --ui-* del tema (custom.css), que ya cambian solas en modo oscuro.
+    docs/DECISIONS.md, 2026-10-28 ("Tarjetas expandibles en Ventas").
+*@
+<style>
+    .vl-lineas {
+        color: var(--ui-text, inherit);
+        font-size: .9rem;
+    }
+
+    .vl-titulo {
+        font-size: .75rem;
+        color: var(--ui-text-muted, #6c757d);
+        margin-bottom: .15rem;
+    }
+
+    .vl-linea {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: .75rem;
+        padding: .5rem 0;
+        border-bottom: 1px solid var(--ui-border, #dee2e6);
+    }
+
+    .vl-linea-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .vl-linea-nombre {
+        overflow-wrap: anywhere;
+    }
+
+    .vl-linea-nombre strong {
+        font-weight: 600;
+    }
+
+    .vl-n,
+    .vl-cod,
+    .vl-linea-calc {
+        font-size: .8rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    /* Bonificacion / recargo de la linea: marca chica, no se parte. */
+    .vl-marca {
+        display: inline-block;
+        font-size: .72rem;
+        padding: .05rem .4rem;
+        margin-left: .25rem;
+        border-radius: .35rem;
+        white-space: nowrap;
+        background: var(--ui-warning-soft, rgba(245, 158, 11, .14));
+        color: #7a4a0b;
+    }
+
+    html.dark-mode .vl-marca {
+        color: #f3c97a;
+    }
+
+    /* Subtotal de la linea: nunca se parte en dos renglones (en celular se partia el importe). */
+    .vl-sub {
+        flex: 0 0 auto;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .vl-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding-top: .6rem;
+    }
+
+    .vl-total-etiqueta {
+        font-weight: 600;
+    }
+
+    .vl-total-importe {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #198754;
+        white-space: nowrap;
+    }
+
+    html.dark-mode .vl-total-importe {
+        color: #5fd08a;
+    }
+
+    @@media (max-width: 575.98px) {
+        /* En celular la marca baja a su propio renglon, debajo de "cant x precio". */
+        .vl-marca {
+            display: block;
+            width: max-content;
+            margin: .15rem 0 0 0;
+        }
+    }
+</style>

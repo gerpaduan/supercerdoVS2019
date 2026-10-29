@@ -6,13 +6,29 @@
 - **Cambio:** `forma-pago.js` (modo compacto también con el cobro tildado) y CSS de `_FormaPagoModal.cshtml` (saldo y cobro lado a lado en escritorio). Detalle: `docs/DECISIONS.md` (2026-10-29).
 - **Verificado (login real con usuario de prueba ya borrado, 1030x820):** con el cobro tildado el modal pasa a compacto, saldo y cobro quedan lado a lado y «Total de la Venta» se ve sin scroll; al destildar vuelve al tamaño normal; también entra con Pago Mixto y descuento abiertos. El saldo y el total se simularon por JavaScript (sin caja abierta ni venta real). **Sin verificar:** modo oscuro y celular.
 
+## 2026-10-29 - POS, modal Expendios: el filtro Persona coincide también por Identificación cliente
+
+- **Pedido:** «Persona (cliente del expendio)» no filtraba; tenía que filtrar la columna «Identificación cliente».
+- **Cambio:** `DatosPostgres/ExpendioClientePg.cs`: además del id guardado, trae los expendios cuya identificación es igual a la de la persona elegida (sin mayúsculas/acentos/espacios de los bordes). Texto de ayuda bajo el campo actualizado. Detalle: `docs/DECISIONS.md`.
+- **Verificado:** la consulta en la base local (solo lectura): persona 20 trae los remitos de COCINA RECONQUISTA, 1000020 su presupuesto, 19 ninguno.
+- **Verificado (login real con usuario de prueba ya borrado, 1030x820):** con el cobro tildado el modal pasa a compacto, saldo y cobro quedan lado a lado y «Total de la Venta» se ve sin scroll; al destildar vuelve al tamaño normal; también entra con Pago Mixto y descuento abiertos. El saldo y el total se simularon por JavaScript (sin caja abierta ni venta real). **Sin verificar:** modo oscuro y celular.
+
 ## 2026-10-29 - POS: no se podía finalizar una venta con expendios en SQL Server (Servidor SM)
 
 - **Pedido:** al cargar expendios y guardar la venta en Cta. Cte. daba «Error al finalizar la venta».
 - **Cambio:** `Negocio/Venta.cs`: la leyenda de remitos asociados (lee los expendios) se arma antes de abrir la transacción, en alta y en modificación. Detalle: `docs/DECISIONS.md` y `docs/07-operacion-y-soporte/incidencias-frecuentes.md` (2026-10-29).
 - **Verificado:** error reproducido con un arnés contra el SQL Server local (`getExpedioById` dentro de un `TransactionScope` → `TransactionException`; fuera, OK) y, con el fix, `Negocio.Venta.agregarVenta` con los expendios 35 y 36 llega hasta el INSERT de la venta (el arnés lo frena, no se escribió nada). `Negocio.Tests`: 734 correctos incluido el test nuevo; 1 falla ajena (`EliminarCompra_ConEgresoEnCeroPorCtaCte_NoRegistraEgresoOpuesto`, de Compras: su expectativa contradice la decisión del 2026-10-28 de registrar siempre el egreso opuesto).
-- **Desplegado en Servidor SM el 2026-10-29** (`9a5a05d1` + este fix, nada más; ver `despliegue-y-publicacion.md`). **Sin verificar:** una venta real con expendios guardada en SM (a cargo del usuario) ni en Postgres (no estaba afectado).
+- **Sin verificar:** una venta real guardada en Servidor SM (falta deploy) ni en Postgres (no estaba afectado).
 
+## 2026-10-29 - Cuentas corrientes (página y modal del POS): CUIT en lugar del IdPersona
+
+- **Pedido:** en CtasCtes (con layout o en el modal), ocultar la columna IdPersona, mostrar el CUIT en su lugar y que el buscador busque por CUIT.
+- **Cambio:** `obtenerCtasCtes` (`Datos/CuentaCorriente.cs` y `DatosPostgres/CuentaCorrientePg.cs`) devuelve una columna nueva `CUIT` y su búsqueda en servidor también compara el CUIT sin guiones. La vista ya no muestra IdPersona (sigue en `data-id-persona` para abrir la cuenta) y en el celular el `#id` se reemplazó por «CUIT …». El filtro en vivo (`ctasctes.js`) busca en `data-buscar` (nombre, razón social, CUIT con y sin guiones); un texto de solo dígitos/guiones se compara sin separadores. Antes los dos filtros del input (`oninput`/`onkeyup` y el handler de jQuery) usaban criterios distintos y el último pisaba al otro: ahora usan el mismo. La máscara vacía del escritorio (`"  -        -"`, 25 de 120 cuentas en la base local) se muestra vacía.
+- **Efecto colateral:** el formulario de escritorio `formCtasCtes` (autogenera columnas) va a mostrar también la columna CUIT.
+- **Verificado:** compila (0 errores, WebCore + Datos + DatosPostgres); la query nueva corrida en la base local (solo lectura) y la búsqueda por un pedazo de CUIT sin guiones encuentra la persona con CUIT guardado con guiones; filtro JS con 7 casos en node (nombre, acento, CUIT con/sin guiones, el IdPersona ya no matchea).
+- **Sin verificar:** la pantalla en el navegador con login (página, modal del POS, celular) y la query de SQL Server contra una base real.
+- **Foco del buscador (mismo día):** con layout, al abrir la vista el cursor no quedaba en el buscador ni andaban ↑ ↓ / Enter: `CtasCtesPage.init()` fallaba porque jQuery se carga después de la vista (detalle en `docs/07-operacion-y-soporte/incidencias-frecuentes.md`). Ahora `init()` lee jQuery al ejecutarse y la vista lo llama en `DOMContentLoaded`. Se quitó `formatearSaldo()` de `ctasctes.js`: el saldo ya viene con `N2` del servidor, y con cultura es-AR la función dejaba `12.50` junto a `1.234,50` (antes solo corría en el POS). Verificado en una página de prueba con los archivos reales y el mismo orden de scripts que `_Layout` (foco en el buscador, primera fila seleccionada, ↓ mueve, filtro por CUIT, saldos sin tocar, consola sin errores); **sin verificar** con login.
+- Manual: `Finanzas.CtasCtes.md`.
 
 ## 2026-10-28 - Compras desde el POS: modificar y eliminar las propias desde Mis actividades (F6) y fuente del proveedor
 
@@ -22,6 +38,13 @@
 - **Sin verificar:** con un usuario **sin** el permiso «Modificar compra» (no admin: el login exige dispositivo seguro; solo cubierto por tests de la regla), cuentas de producción con operador autorizado, y que otra persona no pueda abrir/guardar/eliminar compras ajenas (403) de punta a punta.
 - Manual: `Ventas.POS.md`, `Compras.Editar.md`, `Cajas.EgresosCaja.md`.
 
+## 2026-10-28 - Mis actividades (F6) y Actividades de Cajas abiertas: rediseño de escritorio
+
+- **Pedido:** mejorar el diseño del modal en escritorio para que se lea más claro.
+- **Cambio:** línea de contexto en texto plano, filtros como control segmentado, Nuevo egreso como único botón lleno, tarjeta de total, tabla más limpia (fecha/hora en dos renglones, Tipo con pill de color, «Ver detalle», iconos sin borde) y columna Sucursal oculta si todas las filas son de la sucursal del encabezado. **La tarjeta de total la ven solo los administradores** (antes: permiso `VerEgresosCaja`). El celular no cambia.
+- **Verificado:** compila (0 errores). **Sin verificar en el navegador** (login + caja abierta): aspecto, modo oscuro, administrador / no administrador.
+- Decisión: `docs/DECISIONS.md` (2026-10-28). Manual: `Ventas.POS.md`, `Cajas.CajasAbiertas.md`.
+
 ## 2026-10-28 - Compras/Editar compacto en escritorio (página, nueva compra del POS y compra desde la cuenta corriente)
 
 - **Pedido:** el mejor diseño posible de Editar compra, en los modales y en la pantalla completa, para ver la mayor cantidad de campos sin scrollear, sin romper nada. Mínimos pedidos: Código 15 caracteres, Producto legible, Precio 9, Cantidad 7.
@@ -29,6 +52,27 @@
 - **Verificado:** compila (0 errores); con login real (usuario temporal, borrado junto con borradores, avisos y su fila de `loginubicacionlog`): página 1536×864 (nueva compra, Media, compra existente con Modificar que habilita edición), modal del POS (14 líneas, el modal no scrollea) y modal de cuenta corriente (9 líneas visibles, antes 3), 375 px sin cambios, modo oscuro. Largos reales de la base local: producto p95 25 / máx. 39, proveedor p95 55 / máx. 95.
 - **Sin verificar:** guardar una compra (no se guardó ninguna: escribe en la base), 1920×1080 real y 1366×768, F9/F10/escáner, empresa sin selector de tipo (`compra-cabecera-sin-tipo`), los mínimos de caracteres medidos con texto real.
 - Manual: `Compras.Editar.md`.
+
+## 2026-10-28 - Cuenta corriente de una persona (escritorio): Débito / Crédito, resumen y totales
+
+- **Pedido:** mostrar mejor los movimientos en escritorio, igual en la página y en el modal del POS (F2).
+- **Cambio:** columnas Fecha / Operación / Comprobante / Detalle / **Débito** / **Crédito** / Saldo (Importe + Tipo, Obs. y Sucursal dejan de ser columnas: la sucursal va con el id bajo el detalle y las observaciones son un ícono); resumen de 4 tarjetas arriba y fila **Totales del período** al pie. El celular no cambia. Solo `Views/Finanzas/CtaCtePersona.cshtml`.
+- **Verificado:** compila; página y modal del POS a 1024 px (totales y saldo cuadran, también con «Mostrar anulados» en una persona con versiones y eliminado), modo oscuro, desplegable, 375 px idéntico. **Sin verificar:** saldo oculto (usuario sin permiso / cuenta reservada), clic de fila a venta/pago/compra, Escape en el modal, tablet.
+- Decisión: `docs/DECISIONS.md` (2026-10-28). Manual: `Finanzas.CtaCtePersona.md`.
+
+## 2026-10-28 - POS (F2) Cuentas corrientes: el orden por saldo queda dentro del modal
+
+- **Bug**: ordenar por saldo en el modal de Cuentas corrientes del POS navegaba a `/Finanzas/CtasCtes` sin layout (pantalla sin estilos, fuera del POS).
+- **Cambio**: el interceptor `data-pos-ajax` de `Ventas/POS.cshtml` recarga CtasCtes dentro del modal; `Finanzas/CtasCtes.cshtml` ya no navega los links `data-pos-ajax="true"`. Detalle en `docs/07-operacion-y-soporte/incidencias-frecuentes.md`.
+- **Verificado**: compila; en la app con usuario temporal (borrado, con su fila de `loginubicacionlog`), escritorio 1024 px: POS (venta rápida sin caja) → F2 → ordenar por saldo ida y vuelta (el modal se recarga con estilos y la URL del POS no cambia), filtro en vivo y abrir una cuenta después de ordenar; sin errores en consola. **Sin verificar**: celular (375 px), modo oscuro, usuario sin permiso de ver saldos (`***`), Escape tras ordenar.
+- Manual: `Finanzas.CtasCtes.md`.
+
+## 2026-10-28 - Ventas, Facturas y Mis ventas: tarjetas que se despliegan con el detalle; detalle de venta rediseñado
+
+- **Pedido**: ver el detalle de varias ventas sin ir y volver por cada una, y mejorar el detalle de venta (en celular quedaba desordenado).
+- **Cambio**: tocar una tarjeta la despliega (varias a la vez) con líneas, total y comentario, más **Modificar venta**, **Cambiar forma de pago** y **Abrir detalle**; en Facturas muestra datos del comprobante y las líneas de la venta. Al volver del detalle el listado queda con lo mismo desplegado y en el mismo lugar. Detalle de venta rediseñado (cuadrícula de datos, subtotales sin partir, acciones dentro de la tarjeta, apiladas en celular). Endpoints nuevos: `Ventas/DetalleVentaResumen`, `Ventas/DetalleFacturaResumen`.
+- **Verificado**: con login real y datos locales, escritorio / 375 px / modo oscuro, Facturas, Mis ventas con caja abierta real, error y reintento. **Sin verificar**: POS (F6) con cuenta de producción, cuenta corriente reservada, facturar/imprimir tras el rediseño, guardar una modificación. **Pendiente**: «Factura / Imprimir» dentro del panel (ver decisión).
+- Decisión: `docs/DECISIONS.md` (2026-10-28). Manual: `Ventas.Index.md`, `Ventas.Facturas.md`, `Ventas.DetalleVenta.md` (nueva), `Ventas.POS.md`, `Cajas.CajasAbiertas.md`.
 
 ## 2026-10-27 - Compras/Editar en celular: ajustes plegables y líneas como lista
 

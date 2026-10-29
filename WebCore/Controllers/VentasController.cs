@@ -1411,6 +1411,8 @@ namespace WebCore.Controllers
             var ventas = ConvertirVentasResumen(_oVentaN.getVentasVendedorCierreCaja(cierre, false));
 
             ViewBag.DesdePOS = desdePos;
+            // Pestaña de POS de la que vino: el panel desplegable de cada tarjeta calcula las acciones con ese operador.
+            ViewBag.PosInstanceIdMisVentas = posInstanceId ?? "";
             ViewBag.IdCierreActividad = cierre.Id;
             ViewBag.CierreCaja = cierre;
             ViewBag.TotalVisible = ventas.Sum(v => v.TotalImporte);
@@ -1461,6 +1463,19 @@ namespace WebCore.Controllers
             // se evaluan con el VENDEDOR de esa pestaña: con la cuenta de produccion, el operador autorizado y su caja
             // abierta (antes se evaluaban con la cuenta compartida, que nunca tiene caja, y solo quedaba "Imprimir").
             // Mismas reglas que para un usuario normal; ModificarVenta las vuelve a validar al guardar.
+            CargarPermisosAccionesVenta(venta, desdePos, posInstanceId);
+
+            if (modal)
+                return PartialView(venta);
+
+            return View(venta);
+        }
+
+        // Calcula en ViewBag los permisos de "Modificar venta" / "Cambiar forma de pago" de una venta, con el vendedor
+        // que corresponda (el operador de la pestaña POS si desdePos, si no el usuario actual). Lo usan DetalleVenta y
+        // DetalleVentaResumen para que el panel del listado y el detalle completo apliquen exactamente las mismas reglas.
+        private void CargarPermisosAccionesVenta(Entidades.Venta venta, bool desdePos, string posInstanceId)
+        {
             var vendedor = desdePos ? ResolverOperadorPOS(posInstanceId, _usuarioActual) : _usuarioActual;
             var cierreVendedor = ObtenerCierreCajaActual(vendedor);
             ViewBag.PuedeModificarVenta = PuedeModificarUltimaVenta(venta, vendedor, cierreVendedor);
@@ -1469,11 +1484,62 @@ namespace WebCore.Controllers
             ViewBag.MotivoNoPuedeCambiarFormaPago = (bool)ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta, vendedor, cierreVendedor);
             // Los links de modificar llevan la misma pestaña, para que el POS en edicion reconozca al mismo operador.
             ViewBag.PosInstanceIdDetalle = desdePos ? (posInstanceId ?? "") : "";
+        }
 
-            if (modal)
-                return PartialView(venta);
+        // GET: Ventas/DetalleVentaResumen/5 -- panel de solo lectura que se despliega dentro de la tarjeta de los
+        // listados (Ventas, Mis ventas) sin salir de la pantalla (docs/DECISIONS.md, 2026-10-28). Mismos guardas que
+        // DetalleVenta (registro reservado + operador de produccion fuera del modo modal); no exige VerVentas porque
+        // Mis ventas del POS tampoco lo exige y el listado de Ventas ya lo valida en Index. Es un pedido AJAX: los
+        // fallos devuelven un codigo HTTP con mensaje corto (nunca un redirect), que el panel muestra tal cual.
+        [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "id")]
+        public IActionResult DetalleVentaResumen(int id, bool modal = false, bool desdePos = false, string posInstanceId = "", string returnUrl = "")
+        {
+            if (!modal && _usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
+                return StatusCode(401, "La autorización del vendedor venció. Recargá la página e ingresá de nuevo.");
 
-            return View(venta);
+            Entidades.Venta venta = _oVentaN.getVentaById(id);
+            if (venta == null)
+                return NotFound("No se encontró la venta.");
+
+            ViewBag.ModoModal = modal;
+            ViewBag.DesdePOS = desdePos;
+            // returnUrl solo se usa para el link "Abrir detalle": se descarta si no es una ruta local (no open redirect).
+            ViewBag.ReturnUrlDetalle = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? returnUrl
+                : Url.Action("Index", "Ventas");
+            ViewBag.TieneFacturaVenta = _oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
+            ViewBag.IdNotaCreditoVenta = _oVentaN.existeNotaCreditoParaVenta(venta.IdVenta);
+            ViewBag.TieneNotaCreditoVenta = (int)ViewBag.IdNotaCreditoVenta > 0;
+            CargarPermisosAccionesVenta(venta, desdePos, posInstanceId);
+
+            return PartialView("_DetalleVentaResumen", venta);
+        }
+
+        // GET: Ventas/DetalleFacturaResumen/5 -- panel de solo lectura de la tarjeta del listado de Facturas.
+        // Mismos guardas que DetalleFactura (registro reservado de la venta asociada).
+        public IActionResult DetalleFacturaResumen(int id, string returnUrl = "")
+        {
+            var factura = _oVentaN.getFactuElecById(id);
+            if (factura == null || factura.Id <= 0)
+                return NotFound("No se encontró la factura.");
+
+            var venta = factura.Venta ?? _oVentaN.getVentaById(factura.IdVenta);
+            if (venta == null)
+                return NotFound("No se encontró la venta asociada.");
+
+            if (_ctaCteReservada.RegistroOculto(Entidades.RestriccionCtaCteReservada.TablaVentas, venta.IdVenta))
+                return DenegarRegistroReservado();
+
+            var model = new FacturaDetalleVm
+            {
+                Factura = factura,
+                Venta = venta,
+                ReturnUrl = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Facturas", "Ventas"),
+                FacturaAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? ObtenerFacturaAsociadaVenta(venta.IdVenta, !factura.EsPrueba) : null,
+                NotaCreditoAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? null : ObtenerNotaCreditoAsociadaVenta(venta.IdVenta, !factura.EsPrueba)
+            };
+
+            return PartialView("_DetalleFacturaResumen", model);
         }
 
         public IActionResult DetalleFactura(int id, string returnUrl = "")
@@ -4160,8 +4226,10 @@ namespace WebCore.Controllers
         // el comportamiento original. Cambio de query: obtenerUltimosExpendios (ultimosMinutos)
         // -> obtenerExpendiosAvanzado (fechaDesde/fechaHasta reales), metodo nuevo y aditivo en
         // Datos/DatosPostgres -- no se toco el original, que sigue usando la version del original.
-        // 2026-10-04 (ver docs/DECISIONS.md): idPersona > 0 filtra por el cliente real guardado en el
-        // expendio (expendios.idpersona), en SQL; 0 = sin filtro y el camino es exactamente el de siempre.
+        // 2026-10-04 (ver docs/DECISIONS.md): idPersona > 0 filtra en SQL por esa persona; 0 = sin filtro y
+        // el camino es exactamente el de siempre. 2026-10-29: "de esa persona" = expendios guardados con su
+        // id (expendios.idpersona) O cuya Identificacion cliente es igual a la identificacion de la persona
+        // (los expendios con texto libre tienen idpersona NULL).
         [HttpGet]
         public IActionResult BuscarExpendiosPOS(DateTime? fechaDesde = null, DateTime? fechaHasta = null, int idSucursal = 0, string estado = "Pendientes", string texto = "", string idsActuales = "", int idPersona = 0)
         {

@@ -20,6 +20,7 @@ Scripts\webcore-run.cmd                       # clean + build + levanta + abre e
 Scripts\webcore-run.cmd -Incremental          # sin clean (~5 s en vez de ~20-40 s)
 Scripts\webcore-run.cmd -NoBrowser            # no abre el navegador
 Scripts\webcore-run.cmd -Perfil https         # otro perfil de launchSettings.json (por defecto 'http')
+Scripts\webcore-rapido.cmd                    # atajo de doble clic: igual que "webcore-run.cmd -Incremental" (alta 2026-10-28)
 ```
 
 - Orden: (1) detiene el WebCore anterior **de este checkout** (procesos con binarios en `WebCore\bin\`; no toca otros `dotnet`, ni un WebCore de otro checkout: si otro proceso ocupa el puerto, aborta con el nombre y el PID); (2) `dotnet clean` + `dotnet build` de `WebCore\WebCore.csproj` (Debug); (3) `dotnet run --no-build --no-launch-profile` con la URL y las variables de `WebCore\Properties\launchSettings.json` (hoy `http://localhost:5270`, `ASPNETCORE_ENVIRONMENT=Development`); abre el navegador cuando el puerto responde.

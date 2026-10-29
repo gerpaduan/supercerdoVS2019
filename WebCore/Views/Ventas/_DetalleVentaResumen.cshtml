@@ -1,0 +1,84 @@
+@model Entidades.Venta
+@*
+    Panel de solo lectura que se despliega dentro de la tarjeta de una venta en los listados (Ventas/Index,
+    Mis ventas del POS y de Cajas Abiertas). Lo devuelve VentasController.DetalleVentaResumen por AJAX
+    (docs/DECISIONS.md, 2026-10-28, "Tarjetas expandibles en Ventas"). Muestra marcas de factura / nota de
+    credito, comentario completo, lineas y total (_VentaLineas), y las acciones "Modificar venta" /
+    "Cambiar forma de pago" si corresponden (mismas reglas que _DetalleVentaCard: ViewBag.PuedeModificarVenta /
+    PuedeCambiarFormaPago). "Factura / Imprimir" NO va aca: el modal de comprobante usa un id de venta global
+    (window.DetalleVentaComprobanteConfig) y con varios paneles abiertos se mezclarian; se hace desde "Abrir detalle".
+    Sin IDs ni scripts propios: se puede renderizar varias veces en la misma pagina. El comportamiento (abrir
+    detalle, resguardo del aviso de salida del POS) lo pone _VentasExpandible.cshtml por clases / data-*.
+    ViewBag: ModoModal, DesdePOS, PosInstanceIdDetalle, ReturnUrlDetalle, TieneFacturaVenta, IdNotaCreditoVenta.
+*@
+@{
+    bool modoModal = ViewBag.ModoModal != null && (bool)ViewBag.ModoModal;
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    string posInstanceIdDetalle = ViewBag.PosInstanceIdDetalle as string ?? "";
+    string posInstanceIdLinks = desdePos && !string.IsNullOrWhiteSpace(posInstanceIdDetalle) ? posInstanceIdDetalle : null;
+    // Igual que _DetalleVentaCard: desde el POS, al guardar la edicion se vuelve al POS de la misma pestaña.
+    string returnUrlEdicion = desdePos ? Url.Action("POS", "Ventas", new { posInstanceId = posInstanceIdLinks }) : null;
+    string returnUrlDetalle = ViewBag.ReturnUrlDetalle as string ?? "";
+    bool tieneFacturaVenta = ViewBag.TieneFacturaVenta != null && (bool)ViewBag.TieneFacturaVenta;
+    int idNotaCreditoVenta = ViewBag.IdNotaCreditoVenta != null ? (int)ViewBag.IdNotaCreditoVenta : 0;
+    bool puedeModificar = ViewBag.PuedeModificarVenta != null && (bool)ViewBag.PuedeModificarVenta;
+    bool puedeCambiarFormaPago = ViewBag.PuedeCambiarFormaPago != null && (bool)ViewBag.PuedeCambiarFormaPago;
+    string conservarOperador = posInstanceIdLinks != null ? "true" : "false";
+}
+
+<div class="vr-resumen">
+    @if (tieneFacturaVenta || idNotaCreditoVenta > 0)
+    {
+        <div class="vr-marcas">
+            @if (tieneFacturaVenta)
+            {
+                <span class="vr-marca-factura"><i class="fas fa-file-invoice-dollar mr-1"></i>Facturada</span>
+            }
+            @if (idNotaCreditoVenta > 0)
+            {
+                <a href="@Url.Action("DetalleFactura", "Ventas", new { id = idNotaCreditoVenta, returnUrl = returnUrlDetalle })">Nota de crédito asociada: ver detalle</a>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+    {
+        <div class="vr-comentario"><i class="fas fa-sticky-note mr-1"></i>@Model.Observaciones</div>
+    }
+
+    <partial name="_VentaLineas" model="Model" />
+
+    <div class="vr-acciones">
+        @if (puedeModificar)
+        {
+            <a class="btn btn-sm btn-outline-secondary venta-accion-pos"
+               data-conservar-operador="@conservarOperador"
+               href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })">
+                <i class="fas fa-edit"></i> Modificar venta
+            </a>
+        }
+        @if (puedeCambiarFormaPago)
+        {
+            <a class="btn btn-sm btn-outline-secondary venta-accion-pos"
+               data-conservar-operador="@conservarOperador"
+               href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, soloFormaPago = true, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })">
+                <i class="fas fa-sync-alt"></i> Cambiar forma de pago
+            </a>
+        }
+        @if (modoModal)
+        {
+            @* En los modales (Mis ventas) el detalle se abre en el mismo modal: lo resuelve _MisVentas.cshtml al recibir el evento. *@
+            <a class="btn btn-sm btn-outline-primary venta-abrir-detalle" href="#" data-venta-id="@Model.IdVenta">
+                <i class="fas fa-file-alt"></i> Abrir detalle
+            </a>
+        }
+        else
+        {
+            <a class="btn btn-sm btn-outline-primary venta-abrir-detalle"
+               href="@Url.Action("DetalleVenta", "Ventas", new { id = Model.IdVenta, returnUrl = returnUrlDetalle })">
+                <i class="fas fa-file-alt"></i> Abrir detalle
+            </a>
+        }
+    </div>
+    <div class="vr-nota"><i class="fas fa-info-circle"></i> Para facturar, imprimir o enviar por email, abrí el detalle.</div>
+</div>

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Finanzas
 orden: 1
 permiso: Sin permiso propio en el formulario; cambiar la persona requiere permiso de edición de pagos; eliminar requiere ese permiso o que el pago lo hayas cargado vos en tu caja abierta
-revisada: 2026-10-22
+revisada: 2026-10-28
 ---
 ## Para qué sirve
 Registrar un **pago** (entregás dinero a una persona) o un **cobro** (recibís dinero de una persona) y dejar el movimiento en su cuenta corriente. Se abre desde la cuenta corriente de la persona (**Agregar Pago / Cobro**), desde el listado de Pagos o desde el POS.
@@ -28,7 +28,7 @@ Registrar un **pago** (entregás dinero a una persona) o un **cobro** (recibís 
 ## Contador de billetes y conteo
 - El botón de billetes junto al **Importe** (Alt+B) abre el contador. Al aceptar, el **total pasa al Importe** y el detalle del conteo (cuántos billetes de cada valor y las monedas) se guarda en el campo **Conteo de billetes**.
 - **Conteo de billetes** es de **solo lectura**: no se escribe a mano, solo lo llena el contador, y **no se mezcla con Observaciones**. Cada vez que aceptás el contador el conteo se **reemplaza** por el nuevo (si el total es 0 queda vacío).
-- **Limpiar contador** deja el conteo vacío (no toca el importe).
+- **Limpiar contador** deja el conteo vacío (no toca el importe). Solo aparece cuando hay un conteo cargado; con el conteo vacío el campo se compacta a un renglón y el botón se oculta, para no ocupar altura.
 - El botón de billetes se oculta si la forma de pago incluye cheques.
 - Cancelar o cerrar el contador sin aceptar no cambia nada.
 

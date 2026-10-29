@@ -41,8 +41,8 @@
                         }
                     </div>
                 }
-                <span class="mis-actividades-items-badge" title="Cantidad de items mostrados en la tabla">
-                    @cantidadItems item@(cantidadItems == 1 ? "" : "s")
+                <span class="mis-actividades-items-badge" title="Cantidad de movimientos mostrados en la tabla">
+                    @cantidadItems @(cantidadItems == 1 ? "movimiento" : "movimientos")
                 </span>
             </div>
             <div class="egresos-pos-toolbar-actions">
@@ -60,7 +60,7 @@
                 <div class="egresos-actividad-filtros" role="group" aria-label="Filtro de actividades">
                     <button type="button" class="btn btn-sm @(filtroActividad == "todos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="todos">Todos</button>
                     <button type="button" class="btn btn-sm @(filtroActividad == "gastos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="gastos">Egresos de caja</button>
-                    <button type="button" class="btn btn-sm @(filtroActividad == "pagoElectronico" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="pagoElectronico">Pagos electronicos</button>
+                    <button type="button" class="btn btn-sm @(filtroActividad == "pagoElectronico" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="pagoElectronico">Pagos electrónicos</button>
                     <button type="button" class="btn btn-sm @(filtroActividad == "ctaCte" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="ctaCte">Cta Cte</button>
                 </div>
                 <select id="filtroGastoMisActividades" class="form-control form-control-sm @(filtroActividad == "gastos" ? "" : "d-none")" style="width:auto;">
@@ -75,7 +75,7 @@
                 @if (permitirNuevo)
                 {
                     <button type="button" class="btn btn-success" id="btnNuevoEgresoDesdeMis">
-                        <i class="fas fa-plus mr-1"></i> Nuevo Egreso
+                        <i class="fas fa-plus mr-1"></i> Nuevo egreso
                     </button>
                 }
             </div>
@@ -86,7 +86,7 @@
             {
                 <div class="egresos-resumen">
                     <div>
-                        <span class="text-muted">El total corresponde solo a egresos de caja</span>
+                        <span class="text-muted">Total egresos de caja</span>
                         <strong>$ @total.ToString("N2")</strong>
                     </div>
                 </div>
@@ -355,6 +355,199 @@
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .egreso-detalle-collapse > div {
         padding: .75rem !important;
     }
+
+    /* Rediseno desktop (2026-10-28, ver docs/DECISIONS.md): linea de contexto en texto plano, filtros como control segmentado,
+       Nuevo egreso como unico boton lleno, total en tarjeta y tabla con separadores finos. El celular (< 768px) no cambia. */
+    @@media (min-width: 768px) {
+        .mis-actividades-modal .egresos-pos-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            flex-wrap: nowrap;
+            gap: .5rem;
+        }
+
+        .mis-actividades-modal .egresos-pos-toolbar-main {
+            flex: 0 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .3rem;
+        }
+
+        .mis-actividades-modal .mis-actividades-quien {
+            margin-bottom: 0;
+            gap: .3rem;
+        }
+
+        .mis-actividades-modal .mis-actividades-vendedor {
+            font-weight: 600;
+        }
+
+        .mis-actividades-modal .mis-actividades-sucursal-badge,
+        .mis-actividades-modal .mis-actividades-items-badge {
+            margin-top: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            color: #6c7a91;
+            font-weight: 400;
+            font-size: .78rem;
+        }
+
+        .mis-actividades-modal .mis-actividades-sucursal-badge::before,
+        .mis-actividades-modal .mis-actividades-items-badge::before {
+            content: "·";
+            margin-right: .3rem;
+        }
+
+        .mis-actividades-modal .egresos-pos-toolbar-actions {
+            flex: 0 0 auto;
+            justify-content: flex-start;
+            gap: .5rem;
+        }
+
+        .mis-actividades-modal .egresos-actividad-filtros { order: 1; }
+        .mis-actividades-modal #filtroGastoMisActividades { order: 2; }
+        .mis-actividades-modal .egresos-pos-toolbar-actions .custom-switch { order: 3; margin-right: auto; }
+        .mis-actividades-modal #btnMiCierreCaja { order: 4; }
+        .mis-actividades-modal #btnAbrirMisVentasDesdeActividades { order: 5; }
+        .mis-actividades-modal #btnNuevoEgresoDesdeMis { order: 6; }
+
+        .mis-actividades-modal .egresos-actividad-filtros {
+            gap: .15rem;
+            padding: .2rem;
+            border: 0;
+            border-radius: .55rem;
+            background: #eef1f6;
+        }
+
+        .mis-actividades-modal .egresos-actividad-filtros .btn {
+            border: 1px solid transparent;
+            border-radius: .4rem;
+            background: transparent;
+            color: #5a6578;
+            font-weight: 500;
+            box-shadow: none;
+        }
+
+        .mis-actividades-modal .egresos-actividad-filtros .btn.btn-primary {
+            background: #fff;
+            border-color: #d9e2ef;
+            color: #1f2a3c;
+            font-weight: 600;
+        }
+
+        .mis-actividades-modal .egresos-actividad-filtros .btn.btn-outline-primary:hover {
+            background: rgba(255, 255, 255, .6);
+            color: #1f2a3c;
+        }
+
+        .mis-actividades-modal .egresos-resumen {
+            justify-content: flex-start;
+        }
+
+        .mis-actividades-modal .egresos-resumen > div {
+            text-align: left;
+            min-width: 190px;
+            padding: .45rem .8rem;
+        }
+
+        .mis-actividades-modal .egresos-resumen strong {
+            font-size: 1.1rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Tabla de actividades: sin bordes verticales, encabezado discreto. */
+        .mis-actividades-modal .egresos-actividades-tabla .table thead th {
+            border-top: 0;
+            border-bottom: 1px solid #d9e2ef;
+            background: transparent;
+            color: #6c7a91;
+            font-size: .7rem;
+            font-weight: 600;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+        }
+
+        .mis-actividades-modal .egresos-actividades-tabla .table td {
+            border-top: 1px solid #edf0f5;
+        }
+
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-fecha-hora {
+            color: #6c7a91;
+            font-size: .72rem;
+        }
+
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-monto {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill {
+            display: inline-block;
+            padding: .12rem .5rem;
+            border-radius: 999px;
+            font-size: .72rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill-egreso { background: #fdf0d8; color: #7a4a06; }
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill-electronico { background: #e3effc; color: #14508f; }
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill-ctacte { background: #ece9fb; color: #3f3591; }
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill-cobro { background: #e9ece8; color: #3d4a3d; }
+
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-ver-detalle {
+            font-size: .72rem;
+            color: #2f6fb3;
+            text-decoration: none;
+        }
+
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-ver-detalle:hover {
+            text-decoration: underline;
+        }
+
+        /* Acciones: iconos del mismo peso, sin bordes ni relleno (el azul de Modificar queda como color del icono). */
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-acciones .btn {
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            color: #6c7a91;
+            border-radius: .4rem;
+        }
+
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-acciones .btn-modificar-egreso {
+            color: #2f6fb3;
+        }
+
+        .mis-actividades-modal .egresos-actividades-tabla .egreso-acciones .btn:hover {
+            background: #eef1f6;
+            color: #1f2a3c;
+        }
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn.btn-primary {
+        background: #2a3f58;
+        border-color: #436886;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla .table thead th {
+        background: transparent !important;
+        border-color: #2a3b52 !important;
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill-egreso { background: #4a3a1b; color: #f6d58f; }
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill-electronico { background: #1d3a5a; color: #a9d0f7; }
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill-ctacte { background: #2f2d5a; color: #c8c3f5; }
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla .egreso-tipo-pill-cobro { background: #2a3b3a; color: #c5d6c8; }
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla .egreso-ver-detalle,
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla .egreso-acciones .btn-modificar-egreso { color: #8fc5ff; }
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla .egreso-fecha-hora,
+    html.dark-mode .mis-actividades-modal .mis-actividades-sucursal-badge,
+    html.dark-mode .mis-actividades-modal .mis-actividades-items-badge { color: #97a7bd; }
 
     @@media (max-width: 767.98px) {
         .mis-actividades-modal .egresos-pos-toolbar {

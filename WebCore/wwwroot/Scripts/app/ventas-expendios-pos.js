@@ -16,7 +16,8 @@
         let remoteFiltersDirty = false;
 
         // Filtro por persona (2026-10-04, ver docs/DECISIONS.md): { idPersona, nombre } o null.
-        // Viaja al servidor (la busqueda filtra por expendios.idpersona en SQL); estado/texto/sector
+        // Viaja al servidor (la busqueda filtra en SQL por expendios.idpersona o por identificacion cliente
+        // igual a la de la persona, 2026-10-29); estado/texto/sector
         // se siguen filtrando en el navegador.
         let personaFiltro = null;
         // true si "Fecha desde" la ampliamos nosotros al elegir la persona (y no el usuario a mano):
@@ -424,7 +425,8 @@
         // ===== Filtro por persona (2026-10-04, ver docs/DECISIONS.md) =====
         // Buscador incrustado en el propio modal (sin apilar otro modal ni tocar el cliente de la
         // venta) sobre Personas/Listar. Elegir una persona la deja fija y busca en el servidor los
-        // expendios guardados con ese cliente; la X la quita y vuelve a buscar sin ese filtro.
+        // expendios de esa persona (por id guardado o por identificacion cliente igual); la X la quita y
+        // vuelve a buscar sin ese filtro.
         function inicioDelDia(fecha) {
             return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 0, 0, 0, 0);
         }

@@ -79,6 +79,22 @@
         return DateTime.TryParse(Valor(row, columna), out fecha) ? fecha.ToString("dd/MM/yyyy HH:mm") : Valor(row, columna);
     }
 
+    // Parte de la fecha (formato indicado) para la vista de actividades, que muestra fecha y hora en renglones separados.
+    string FechaParte(DataRow row, string columna, string formato)
+    {
+        DateTime fecha;
+        return DateTime.TryParse(Valor(row, columna), out fecha) ? fecha.ToString(formato) : "";
+    }
+
+    // Clase de color del pill de Tipo segun la categoria del movimiento (solo vista de actividades).
+    string ClasePillTipo(DataRow row)
+    {
+        if (EsPagoCobro(row)) return "egreso-tipo-pill-cobro";
+        if (EsCtaCte(row)) return "egreso-tipo-pill-ctacte";
+        if (EsPagoElectronico(row)) return "egreso-tipo-pill-electronico";
+        return "egreso-tipo-pill-egreso";
+    }
+
     // Fecha con segundos (dd/MM/yyyy HH:mm:ss) para la columna Creado, igual que en Elaborados.
     string FechaHora(DataRow row, string columna)
     {
@@ -204,7 +220,18 @@
     // En Mis actividades / Actividades (modoActividades) la columna Detalle se oculta: la fila avisa con una etiqueta
     // "Con detalle" y el texto se ve al desplegar la fila (2026-10-06, ver docs/DECISIONS.md). En el listado completo se mantiene.
     // + la columna Creado (antes de Acciones).
-    int columnasTabla = modoActividades ? 7 : 8;
+    // La columna Sucursal se oculta si todas las filas son de la sucursal que ya dice el encabezado del modal (2026-10-28, ver docs/DECISIONS.md).
+    // En Cajas abiertas / Actividades con filas de otra sucursal sigue apareciendo.
+    bool ocultarSucursal = modoActividades
+        && !string.IsNullOrWhiteSpace(sucursalActividad)
+        && Model != null
+        && Model.Rows.Cast<DataRow>().All(r =>
+        {
+            string sucursalDeFila = ValorFlexible(r, "Sucursal", "sucursal");
+            return string.IsNullOrWhiteSpace(sucursalDeFila)
+                || string.Equals(sucursalDeFila.Trim(), sucursalActividad.Trim(), StringComparison.OrdinalIgnoreCase);
+        });
+    int columnasTabla = (modoActividades ? 7 : 8) - (ocultarSucursal ? 1 : 0);
 
     if (Model != null && Model.Columns.Contains("Monto"))
     {
@@ -247,8 +274,8 @@
     </div>
 }
 
-<div class="table-responsive egresos-tabla-desktop">
-    <table class="table table-sm table-bordered table-hover mb-0">
+<div class="table-responsive egresos-tabla-desktop @(modoActividades ? "egresos-actividades-tabla" : "")">
+    <table class="table table-sm @(modoActividades ? "" : "table-bordered") table-hover mb-0">
         <thead class="thead-light">
             <tr>
                 <th>Fecha</th>
@@ -259,7 +286,10 @@
                 {
                     <th>Detalle</th>
                 }
-                <th>Sucursal</th>
+                @if (!ocultarSucursal)
+                {
+                    <th>Sucursal</th>
+                }
                 <th class="text-nowrap">Creado</th>
                 <th class="text-nowrap">Acciones</th>
             </tr>
@@ -302,14 +332,21 @@
                     bool tieneDetalle = !string.IsNullOrWhiteSpace(detalleTexto) || !string.IsNullOrWhiteSpace(Valor(row, "ConteoBilletes"));
 
                     <tr class="egreso-row @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-id="@id" data-esgasto="@(EsGasto(row, tiposEgresoCajaLookup) ? "1" : "0")">
-                        <td class="text-nowrap">@Fecha(row, "Fecha")</td>
-                        <td>
-                            @Valor(row, "TipoEgresoCaja")
-                            @if (modoActividades)
-                            {
-                                <div class="small text-muted mt-1 d-none">@Categoria(row)</div>
-                            }
-                        </td>
+                        @if (modoActividades)
+                        {
+                            <td class="text-nowrap">
+                                <div>@FechaParte(row, "Fecha", "dd/MM/yyyy")</div>
+                                <div class="egreso-fecha-hora">@FechaParte(row, "Fecha", "HH:mm")</div>
+                            </td>
+                            <td>
+                                <span class="egreso-tipo-pill @ClasePillTipo(row)" title="@Categoria(row)">@Valor(row, "TipoEgresoCaja")</span>
+                            </td>
+                        }
+                        else
+                        {
+                            <td class="text-nowrap">@Fecha(row, "Fecha")</td>
+                            <td>@Valor(row, "TipoEgresoCaja")</td>
+                        }
                         <td>
                             @Descripcion(row)
                             @if (esHistorico)
@@ -322,10 +359,10 @@
                             }
                             @if (modoActividades && tieneDetalle)
                             {
-                                <div class="mt-1"><span class="badge badge-info egreso-tag-detalle" title="Desplegá la fila (flecha) para ver el detalle"><i class="fas fa-info-circle mr-1"></i>Con detalle</span></div>
+                                <div class="mt-1"><a href="#@detalleId" class="egreso-ver-detalle" data-toggle="collapse" data-target="#@detalleId" role="button" aria-expanded="false" aria-controls="@detalleId" title="Desplegá la fila para ver el detalle"><i class="fas fa-chevron-down mr-1"></i>Ver detalle</a></div>
                             }
                         </td>
-                        <td class="text-right text-nowrap">$ @Monto(row)</td>
+                        <td class="text-right text-nowrap egreso-monto">$ @Monto(row)</td>
                         @if (!modoActividades)
                         {
                         <td>
@@ -339,7 +376,10 @@
                             }
                         </td>
                         }
-                        <td>@sucursalFila</td>
+                        @if (!ocultarSucursal)
+                        {
+                            <td>@sucursalFila</td>
+                        }
                         <td class="text-nowrap">
                             @* "Modificado" solo si el egreso se modifico de verdad (esEgresoModificado excluye los tipos
                                que se actualizan solos y los registros reemplazados por una anulacion). *@
@@ -352,7 +392,7 @@
                                 MostrarModificado = esEgresoModificado
                             })
                         </td>
-                        <td class="text-nowrap">
+                        <td class="text-nowrap egreso-acciones">
                             <button type="button"
                                     class="btn btn-sm btn-link text-decoration-none btn-detalle-egreso"
                                     data-toggle="collapse"

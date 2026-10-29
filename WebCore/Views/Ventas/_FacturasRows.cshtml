@@ -6,9 +6,6 @@
    cada scroll). Cada encabezado de grupo lleva data-fecha-grupo="yyyy-MM-dd" para que el JS pueda
    detectar y descartar un encabezado duplicado cuando un dia queda partido justo en el limite de
    una pagina (ver _VentasFacturasFiltrosScripts.cshtml). *@
-@{
-    string urlActual = Context.Request.PathBase.ToString() + Context.Request.Path.ToString() + Context.Request.QueryString.ToString();
-}
 @if (Model != null)
 {
     foreach (var facturaAgrupada in Model.GroupBy(x => (x.Factura != null && x.Factura.FechaEmisionAfip.HasValue ? x.Factura.FechaEmisionAfip.Value : DateTime.MinValue).Date))
@@ -23,7 +20,9 @@
             {
                 var factura = item.Factura;
                 var venta = item.Venta;
-                var detalleUrl = Url.Action("DetalleFactura", "Ventas", new { id = factura.Id, returnUrl = urlActual });
+                // Al tocar la tarjeta se despliega el detalle en el lugar (_VentasExpandible.cshtml); el detalle
+                // completo (DetalleFactura) se abre desde "Abrir detalle" dentro del panel.
+                var resumenUrl = Url.Action("DetalleFacturaResumen", "Ventas", new { id = factura.Id });
                 var tipoComprobante = factura != null ? TipoComprobanteFacturas.ObtenerEtiqueta(factura.CodTipoCbteAfip) : "";
                 if (string.IsNullOrEmpty(tipoComprobante) && factura != null)
                 {
@@ -55,7 +54,12 @@
                     data-cliente="@cliente"
                     data-identificacion="@identificacion"
                     data-vendedor="@vendedor"
-                    onclick="location.href='@detalleUrl'">
+                    data-factura-id="@factura.Id"
+                    data-resumen-url="@resumenUrl"
+                    data-modal="false"
+                    role="button"
+                    tabindex="0"
+                    aria-expanded="false">
                     <div class="venta-icono">
                         <i class="fas fa-file-invoice-dollar fa-2x text-primary"></i>
                     </div>
@@ -99,10 +103,15 @@
                             @((importeVisual > 0 ? "+ " : "") + importeVisual.ToString("C"))
                         </div>
 
+                        @* El chevron va junto a la hora (no como un elemento aparte de la fila): asi no le quita
+                           ancho a la fila y en celular el importe no baja de renglon. *@
                         <div class="text-muted small">
                             @(fechaFactura == DateTime.MinValue ? "" : fechaFactura.ToString("HH:mm")) hs
+                            <i class="fas fa-chevron-down venta-chevron" aria-hidden="true"></i>
                         </div>
                     </div>
+
+                    <div class="venta-detalle-panel" hidden></div>
                 </li>
             }
         }

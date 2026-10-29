@@ -1,0 +1,71 @@
+@model FacturaDetalleVm
+@*
+    Panel de solo lectura de la tarjeta de una factura en Ventas/Facturas. Lo devuelve
+    VentasController.DetalleFacturaResumen por AJAX (docs/DECISIONS.md, 2026-10-28). Muestra los datos del
+    comprobante (monto facturado, % de facturacion, CAE, asociadas, observacion) y las lineas de la venta
+    asociada (_VentaLineas). Sin acciones: todo lo demas se hace desde "Abrir detalle" (DetalleFactura).
+    Sin IDs ni scripts propios. Model.ReturnUrl ya viene validado como ruta local.
+*@
+@{
+    var factura = Model.Factura;
+    var venta = Model.Venta;
+    string returnUrl = Model.ReturnUrl ?? "";
+    var facturaAsociada = Model.FacturaAsociada;
+    var notaCreditoAsociada = Model.NotaCreditoAsociada;
+    decimal importeFacturado = Convert.ToDecimal(factura.ImporteTotal);
+    decimal porcentajeFacturacion = Convert.ToDecimal(factura.PorcentajeFacturacion);
+}
+
+<div class="vr-resumen">
+    <div class="vr-datos">
+        <div class="vr-dato">
+            <div class="vr-dato-etiqueta">Monto facturado</div>
+            <div class="vr-dato-valor">@importeFacturado.ToString("C")</div>
+        </div>
+        <div class="vr-dato">
+            <div class="vr-dato-etiqueta">Porcentaje de facturación</div>
+            <div class="vr-dato-valor">@porcentajeFacturacion.ToString("N2")%</div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(factura.CAE1))
+        {
+            <div class="vr-dato">
+                <div class="vr-dato-etiqueta">CAE</div>
+                <div class="vr-dato-valor">@factura.CAE1</div>
+            </div>
+            <div class="vr-dato">
+                <div class="vr-dato-etiqueta">Vto. CAE</div>
+                <div class="vr-dato-valor">@(!string.IsNullOrWhiteSpace(factura.FecVtoCAE) ? factura.FecVtoCAE : "-")</div>
+            </div>
+        }
+    </div>
+
+    @if (facturaAsociada != null || notaCreditoAsociada != null)
+    {
+        <div class="vr-marcas">
+            @if (facturaAsociada != null)
+            {
+                <a href="@Url.Action("DetalleFactura", "Ventas", new { id = facturaAsociada.Id, returnUrl })">Factura asociada: @(string.Format("{0}-{1}", facturaAsociada.PtoVtaAfip ?? "", facturaAsociada.NroCbteAfip ?? ""))</a>
+            }
+            @if (notaCreditoAsociada != null)
+            {
+                <a href="@Url.Action("DetalleFactura", "Ventas", new { id = notaCreditoAsociada.Id, returnUrl })">Nota de crédito asociada: @(string.Format("{0}-{1}", notaCreditoAsociada.PtoVtaAfip ?? "", notaCreditoAsociada.NroCbteAfip ?? ""))</a>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(factura.Observaciones))
+    {
+        <div class="vr-comentario"><i class="fas fa-sticky-note mr-1"></i>@factura.Observaciones</div>
+    }
+
+    <div class="vr-subtitulo">Venta asociada #@venta.IdVenta</div>
+    <partial name="_VentaLineas" model="venta" />
+
+    <div class="vr-acciones">
+        <a class="btn btn-sm btn-outline-primary venta-abrir-detalle"
+           href="@Url.Action("DetalleFactura", "Ventas", new { id = factura.Id, returnUrl })">
+            <i class="fas fa-file-alt"></i> Abrir detalle
+        </a>
+    </div>
+    <div class="vr-nota"><i class="fas fa-info-circle"></i> Para ver el comprobante completo y sus acciones, abrí el detalle.</div>
+</div>

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 2
 permiso: Venta.VerVentas (sin el permiso se muestra "Acceso denegado")
-revisada: 2026-10-13
+revisada: 2026-10-28
 ---
 ## Para qué sirve
 Ver las **facturas electrónicas emitidas** (con CAE) de un período: factura, nota de crédito, a quién y cuánto. Desde acá también se puede cargar una **nueva factura** sin venta.
@@ -20,6 +20,11 @@ Ver las **facturas electrónicas emitidas** (con CAE) de un período: factura, n
 ## Totales y lista
 - **Cant.** y **Total** son los de **todo el filtro**, no solo de lo que ya se ve. Las notas de crédito **restan**.
 - La lista carga de a 50: al bajar con el scroll se piden las siguientes.
+
+## Ver el detalle de una factura sin salir de la lista
+- Tocá una factura: se **despliega** con el **monto facturado**, el **porcentaje de facturación**, el **CAE** y su vencimiento, la factura o nota de crédito asociada, la observación del comprobante y las **líneas de la venta asociada** con su total. Podés dejar varias desplegadas.
+- **Abrir detalle** abre el detalle completo de la factura en la misma pestaña; con **Volver** la lista queda con las mismas facturas desplegadas y en el mismo lugar (solo las que estaban entre las primeras cargadas; las que se habían cargado al bajar con el scroll vuelven cerradas).
+- El panel no tiene acciones: para ver el comprobante completo y operar, abrí el detalle.
 
 ## Notas
 - PENDIENTE: no se verificó en esta revisión qué permiso muestra la entrada de esta pantalla en el menú ni el detalle del botón **Nueva factura**.

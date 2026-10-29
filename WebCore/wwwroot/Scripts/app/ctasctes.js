@@ -1,4 +1,4 @@
-(function (window, document, $) {
+(function (window, document) {
     "use strict";
 
     function obtenerConfig() {
@@ -15,16 +15,6 @@
             .replace(/[\u00f3\u00f2\u00f6\u00f4]/g, "o")
             .replace(/[\u00fa\u00f9\u00fc\u00fb]/g, "u")
             .replace(/\u00f1/g, "n")
-            .replace(/\s+/g, " ")
-            .trim();
-    }
-
-    function normalizarTexto(texto) {
-        return (texto || "")
-            .toString()
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
             .replace(/\s+/g, " ")
             .trim();
     }
@@ -58,102 +48,56 @@
         window.location.href = url;
     }
 
+    // Decide si una fila coincide con lo escrito. Busca en data-buscar (nombre identif., razon social y CUIT con y sin
+    // guiones, armado en CtasCtes.cshtml); el IdPersona ya no participa (2026-10-29). Si lo escrito parece un CUIT
+    // (solo digitos, guiones, puntos o espacios) tambien se compara sin separadores: "20-1234" encuentra "20123456789".
+    function filaCoincide(fila, filtro) {
+        if (!filtro) return true;
+
+        var textoFila = normalizarTextoBasico(fila.getAttribute("data-buscar") || fila.innerText || fila.textContent || "");
+        if (textoFila.indexOf(filtro) >= 0) return true;
+
+        if (/^[\d\s.\-]+$/.test(filtro)) {
+            var filtroSoloDigitos = filtro.replace(/\D/g, "");
+            return filtroSoloDigitos !== "" && textoFila.indexOf(filtroSoloDigitos) >= 0;
+        }
+
+        return false;
+    }
+
     function filtrarCtasCtesVivo() {
         var input = document.getElementById("txtBuscar");
         var tbody = document.getElementById("tbodyCtas");
-        var tabla = document.getElementById("tablaCtasCtes");
-        if (!input || !tbody || !tabla) return;
+        if (!input || !tbody) return;
 
         var filtro = normalizarTextoBasico(input.value);
-        var headers = tabla.querySelectorAll("thead th");
-        var idxNombreIdentif = -1;
-        var idxRazonSocial = -1;
-
-        for (var i = 0; i < headers.length; i++) {
-            var textoHeader = normalizarTextoBasico(headers[i].innerText || headers[i].textContent || "");
-            if (textoHeader.indexOf("nombre identif") >= 0 || textoHeader.indexOf("identificacion") >= 0) {
-                idxNombreIdentif = i;
-            }
-            if (textoHeader.indexOf("razon social") >= 0) {
-                idxRazonSocial = i;
-            }
-        }
-
         var filas = tbody.getElementsByTagName("tr");
         for (var rowIndex = 0; rowIndex < filas.length; rowIndex++) {
-            var fila = filas[rowIndex];
-            var celdas = fila.getElementsByTagName("td");
-            var textoNombre = idxNombreIdentif >= 0 && celdas[idxNombreIdentif]
-                ? normalizarTextoBasico(celdas[idxNombreIdentif].innerText || celdas[idxNombreIdentif].textContent || "")
-                : "";
-            var textoRazon = idxRazonSocial >= 0 && celdas[idxRazonSocial]
-                ? normalizarTextoBasico(celdas[idxRazonSocial].innerText || celdas[idxRazonSocial].textContent || "")
-                : "";
-            var textoFila = (textoNombre + " " + textoRazon).trim();
-
-            if (!textoFila) {
-                textoFila = normalizarTextoBasico(fila.innerText || fila.textContent || "");
-            }
-
-            fila.style.display = !filtro || textoFila.indexOf(filtro) >= 0 ? "" : "none";
+            filas[rowIndex].style.display = filaCoincide(filas[rowIndex], filtro) ? "" : "none";
         }
     }
 
+    // jQuery se lee al llamar, no al cargar el archivo: con _Layout la vista (y este script) van antes que
+    // jquery.min.js, y capturarlo al cargar dejaba $ undefined, init() fallaba y el buscador no tomaba el foco
+    // (bug 2026-10-29). CtasCtes.cshtml llama a init() recien en DOMContentLoaded si jQuery todavia no esta.
     function init() {
+        var $ = window.jQuery;
+        if (!$) {
+            console.error("CtasCtes: init() sin jQuery cargado; no se activan el foco ni la navegacion con flechas.");
+            return;
+        }
+
         var $txtBuscar = $("#txtBuscar");
         var $tbody = $("#tbodyCtas");
         var $tabla = $("#tablaCtasCtes");
         if (!$txtBuscar.length || !$tbody.length || !$tabla.length) return;
 
-        var indiceNombreIdentif = -1;
-        var indiceRazonSocial = -1;
-
-        function formatearSaldo() {
-            try {
-                var indiceSaldo = -1;
-
-                $tabla.find("thead th").each(function (i) {
-                    if ($(this).text().trim().toLowerCase().startsWith("saldo")) {
-                        indiceSaldo = i;
-                    }
-                });
-
-                if (indiceSaldo < 0) return;
-
-                $tbody.find("tr").each(function () {
-                    var celda = this.children[indiceSaldo];
-                    if (!celda) return;
-
-                    var valor = (celda.innerText || "").replace(",", ".").trim();
-                    if (!isNaN(valor) && valor !== "") {
-                        celda.innerText = parseFloat(valor).toFixed(2);
-                    }
-                });
-            } catch (e) {
-                console.error("Error formateando columna Saldo:", e);
-            }
-        }
+        // El saldo ya viene formateado del servidor (N2 en CtasCtes.cshtml). Aca habia un formatearSaldo() que lo
+        // re-escribia y, con cultura es-AR, dejaba "12.50" junto a "1.234,50": se quito el 2026-10-29.
 
         function filasVisibles() {
             return $tbody.find("tr").filter(function () {
                 return $(this).css("display") !== "none";
-            });
-        }
-
-        function detectarColumnasBusqueda() {
-            indiceNombreIdentif = -1;
-            indiceRazonSocial = -1;
-
-            $tabla.find("thead th").each(function (i) {
-                var texto = normalizarTexto($(this).clone().children().remove().end().text() || "");
-
-                if (texto.includes("nombre identif") || texto.includes("identificacion") || texto.includes("identif.") || texto === "persona") {
-                    indiceNombreIdentif = i;
-                }
-
-                if (texto.includes("razon social")) {
-                    indiceRazonSocial = i;
-                }
             });
         }
 
@@ -177,23 +121,10 @@
             marcarSeleccion($visibles.first());
         }
 
+        // Mismo criterio que filtrarCtasCtesVivo (el oninput/onkeyup del input llama a esa y este handler a esta):
+        // si difirieran, la ultima en correr pisaba a la otra.
         function filtrarCuentas() {
-            var filtro = normalizarTexto($txtBuscar.val() || "");
-
-            $tbody.find("tr").each(function () {
-                var celdas = this.children;
-                var textoNombreIdentif = indiceNombreIdentif >= 0 && celdas[indiceNombreIdentif]
-                    ? normalizarTexto(celdas[indiceNombreIdentif].innerText || celdas[indiceNombreIdentif].textContent || "")
-                    : "";
-                var textoRazonSocial = indiceRazonSocial >= 0 && celdas[indiceRazonSocial]
-                    ? normalizarTexto(celdas[indiceRazonSocial].innerText || celdas[indiceRazonSocial].textContent || "")
-                    : "";
-                var textoBusqueda = (textoNombreIdentif + " " + textoRazonSocial).trim()
-                    || normalizarTexto($(this).text() || "");
-
-                this.style.display = !filtro || textoBusqueda.includes(filtro) ? "" : "none";
-            });
-
+            filtrarCtasCtesVivo();
             asegurarSeleccionVisible();
         }
 
@@ -237,10 +168,7 @@
             setTimeout(intentarFoco, 260);
         }
 
-        formatearSaldo();
-        detectarColumnasBusqueda();
         filtrarCuentas();
-        filtrarCtasCtesVivo();
         enfocarBuscador();
 
         $txtBuscar
@@ -281,4 +209,4 @@
         irACtaCte: irACtaCte,
         filtrarCtasCtesVivo: filtrarCtasCtesVivo
     };
-})(window, document, window.jQuery);
+})(window, document);

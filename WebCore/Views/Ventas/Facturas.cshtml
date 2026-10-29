@@ -199,6 +199,8 @@
 </div>
 
 @Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "facturas")
+@* Tarjetas expandibles: tocar una factura despliega su detalle en el lugar (docs/DECISIONS.md, 2026-10-28). *@
+<partial name="_VentasExpandible" />
 
 @section Scripts {
 <script src="~/Scripts/app/factura-electronica.js" asp-append-version="true"></script>

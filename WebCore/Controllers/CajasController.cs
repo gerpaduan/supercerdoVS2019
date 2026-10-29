@@ -493,7 +493,7 @@ namespace WebCore.Controllers
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
             // Port literal de Web/Controllers/CajasController.cs:189,192 (antes stub "= true" /
             // sin el chequeo de permiso -- mismo batch de Egresos de Caja, 2026-09-10).
-            ViewBag.MostrarResumenMisActividades = _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.VerEgresosCaja, DateTime.Today, -1);
+            ViewBag.MostrarResumenMisActividades = user != null && user.Admin; // tarjeta de total solo para administradores (2026-10-28, ver docs/DECISIONS.md)
             ViewBag.ModoActividades = true;
             // Actividades de Cajas abiertas / Cerrar caja (layout comun, letra mas grande que la del POS): se usa el mismo
             // formato compacto de "Mis actividades" del POS para que la tabla entre sin dejar columnas fuera de la vista.
@@ -558,7 +558,7 @@ namespace WebCore.Controllers
             ViewBag.CierreCaja = cierre;
             ViewBag.TiposEgresoCaja = _oCierreN.obtenerTiposEgresoCaja("", 0);
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
-            ViewBag.MostrarResumenMisActividades = _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.VerEgresosCaja, DateTime.Today, -1);
+            ViewBag.MostrarResumenMisActividades = user != null && user.Admin; // tarjeta de total solo para administradores (2026-10-28, ver docs/DECISIONS.md)
             ViewBag.ModoActividades = true;
             ViewBag.PermitirNuevo = CajaSigueAbierta(cierre) &&
                 user != null &&

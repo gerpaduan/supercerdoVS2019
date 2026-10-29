@@ -1,0 +1,54 @@
+@model Entidades.Venta
+@*
+    Lineas de una venta + total. Compartida por _DetalleVentaCard.cshtml (detalle completo) y por los paneles
+    de los listados (_DetalleVentaResumen.cshtml, _DetalleFacturaResumen.cshtml): un solo formato en todos lados.
+    Solo lectura, sin IDs ni scripts (se puede renderizar muchas veces en la misma pagina). Estilos:
+    _VentaLineasStyles.cshtml. Subtotal = cantidad x precio, igual que antes del rediseno (la bonificacion es
+    informativa, el precio ya viene con ella); total = Model.TotalImporte.
+*@
+@{
+    var lineas = Model.LineasVenta;
+    int cantidadLineas = lineas != null ? lineas.Count() : 0;
+    int numeroLinea = 1;
+}
+
+<div class="vl-lineas">
+    <div class="vl-titulo">@cantidadLineas @(cantidadLineas == 1 ? "artículo" : "artículos")</div>
+
+    @if (lineas != null)
+    {
+        foreach (var linea in lineas)
+        {
+            // Texto de bonificacion / recargo (positivo = bonificacion, negativo = recargo), mismo criterio que el carrito del POS.
+            string marcaBonificacion = linea.Bonificacion == 0
+                ? ""
+                : (linea.Bonificacion > 0
+                    ? $"Bonif. {linea.Bonificacion:0.##}%"
+                    : $"Recargo {Math.Abs(linea.Bonificacion):0.##}%");
+
+            <div class="vl-linea">
+                <div class="vl-linea-info">
+                    <div class="vl-linea-nombre">
+                        <span class="vl-n">#@numeroLinea</span>
+                        <strong>@linea.Corte.CorteDesc</strong>
+                        <span class="vl-cod">cod @linea.Corte.codigo</span>
+                    </div>
+                    <div class="vl-linea-calc">
+                        @linea.CantKg.ToString("0.###") × @linea.PrecioKg.ToString("C")
+                        @if (!string.IsNullOrEmpty(marcaBonificacion))
+                        {
+                            <span class="vl-marca">@marcaBonificacion</span>
+                        }
+                    </div>
+                </div>
+                <div class="vl-sub">@((linea.CantKg * linea.PrecioKg).ToString("C"))</div>
+            </div>
+            numeroLinea++;
+        }
+    }
+
+    <div class="vl-total">
+        <span class="vl-total-etiqueta">Total</span>
+        <span class="vl-total-importe">@Model.TotalImporte.ToString("C")</span>
+    </div>
+</div>

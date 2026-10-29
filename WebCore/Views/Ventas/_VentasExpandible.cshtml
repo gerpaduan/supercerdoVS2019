@@ -1,0 +1,363 @@
+@*
+    Tarjetas expandibles de los listados de ventas (Ventas/Index, Ventas/Facturas, Mis ventas del POS y de
+    Cajas Abiertas). Tocar una tarjeta (.venta-item[data-resumen-url]) despliega un panel de solo lectura
+    (.venta-detalle-panel) con el detalle, cargado por AJAX la primera vez (VentasController.DetalleVentaResumen /
+    DetalleFacturaResumen). Pueden quedar varias abiertas. docs/DECISIONS.md, 2026-10-28.
+
+    JS vanilla y delegado en document, SIN jQuery: en las vistas standalone este script corre dentro de
+    @@RenderBody(), antes de que el layout cargue jQuery (mismo problema documentado en _DetalleVentaCard.cshtml).
+    Es idempotente (window.__ventasExpandibleInit): sirve para filas agregadas por AJAX (scroll infinito de
+    Facturas) y para el modal de Mis ventas, que se vuelve a inyectar cada vez que se abre.
+
+    Contrato de markup (lo arman _TablaVentas.cshtml y _FacturasRows.cshtml):
+      <li class="venta-item" data-venta-id | data-factura-id data-resumen-url data-modal?>
+         ... <i class="venta-chevron"> <div class="venta-detalle-panel" hidden></div>
+    Dentro del panel (lo arman _DetalleVentaResumen / _DetalleFacturaResumen):
+      .venta-abrir-detalle  -> en modal lo resuelve _MisVentas.cshtml; si no es un link normal (misma pestaña).
+      .venta-accion-pos     -> "Modificar venta" / "Cambiar forma de pago": evita el aviso de salida del POS.
+
+    Recuerda las tarjetas abiertas (y el scroll al ir a "Abrir detalle") en sessionStorage por path+query, para que
+    "Volver" desde el detalle completo deje el listado como estaba. Si sessionStorage no anda, todo funciona igual
+    pero sin recordar. No aplica a Mis ventas (modal, sin URL propia).
+*@
+<style>
+    .venta-item[data-resumen-url] {
+        cursor: pointer;
+    }
+
+    .venta-item .venta-chevron {
+        display: inline-block;
+        margin-left: .35rem;
+        font-size: .8rem;
+        color: var(--ui-text-muted, #6c757d);
+        transition: transform .15s;
+    }
+
+    .venta-item.venta-abierta .venta-chevron {
+        transform: rotate(180deg);
+    }
+
+    /* Panel: una "tarjeta dentro de la tarjeta" a todo el ancho de la fila (flex-wrap del .venta-item),
+       sin depender del padding de cada listado. */
+    .venta-item .venta-detalle-panel {
+        flex: 1 0 100%;
+        min-width: 0;
+        margin-top: .5rem;
+        padding: .65rem .8rem .75rem;
+        border: 1px solid var(--ui-border, #dee2e6);
+        border-radius: .5rem;
+        background: var(--ui-surface-alt, #f3f4f6);
+        color: var(--ui-text, inherit);
+        cursor: auto;
+        font-size: .82rem;
+        text-align: left;
+    }
+
+    .venta-item .venta-detalle-panel[hidden] {
+        display: none;
+    }
+
+    .vr-resumen {
+        font-size: .85rem;
+    }
+
+    .vr-cargando,
+    .vr-error {
+        font-size: .8rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    .vr-error {
+        color: #b02a37;
+    }
+
+    html.dark-mode .vr-error {
+        color: #f1959f;
+    }
+
+    .vr-marcas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .25rem .9rem;
+        margin-bottom: .45rem;
+        font-size: .8rem;
+    }
+
+    .vr-marca-factura {
+        font-weight: 600;
+        color: #198754;
+    }
+
+    html.dark-mode .vr-marca-factura {
+        color: #5fd08a;
+    }
+
+    .vr-comentario {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-size: .8rem;
+        color: var(--ui-text-soft, #5f6772);
+        margin-bottom: .45rem;
+    }
+
+    .vr-datos {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+        gap: .4rem .8rem;
+        margin-bottom: .5rem;
+    }
+
+    .vr-dato-etiqueta {
+        font-size: .72rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    .vr-dato-valor {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .vr-subtitulo {
+        font-size: .75rem;
+        color: var(--ui-text-muted, #6c757d);
+        margin: .5rem 0 .1rem;
+    }
+
+    /* Acciones: apiladas a ancho completo en celular (area tactil >= 40px), en fila alineada a la derecha desde 576px. */
+    .vr-acciones {
+        display: grid;
+        gap: .4rem;
+        margin-top: .75rem;
+    }
+
+    .vr-acciones .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+        min-height: 2.5rem;
+    }
+
+    @@media (min-width: 576px) {
+        .vr-acciones {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .vr-acciones .btn {
+            min-height: 0;
+        }
+    }
+
+    .vr-nota {
+        font-size: .72rem;
+        color: var(--ui-text-muted, #6c757d);
+        margin-top: .45rem;
+    }
+</style>
+<partial name="_VentaLineasStyles" />
+
+<script>
+    (function () {
+        if (window.__ventasExpandibleInit) return;
+        window.__ventasExpandibleInit = true;
+
+        var PREFIJO_ABIERTAS = 'ventas-abiertas:';
+        var PREFIJO_SCROLL = 'ventas-scroll:';
+        // Tope de tarjetas que se reabren al volver (cada una es un pedido al servidor).
+        var TOPE_RESTAURAR = 20;
+        var MENSAJE_GENERICO = 'No se pudo cargar el detalle. Probá de nuevo.';
+
+        function claveDePagina(prefijo) {
+            return prefijo + window.location.pathname + window.location.search;
+        }
+
+        // --- sessionStorage: puede no estar disponible (modo privado, datos bloqueados) -> se sigue sin recordar ---
+        function leerAbiertas() {
+            try {
+                var texto = window.sessionStorage.getItem(claveDePagina(PREFIJO_ABIERTAS));
+                var ids = texto ? JSON.parse(texto) : [];
+                return Array.isArray(ids) ? ids.filter(function (id) { return /^\d+$/.test(String(id)); }).map(String) : [];
+            } catch (error) {
+                console.warn('ventas-expandible: no se pudo leer sessionStorage', error);
+                return [];
+            }
+        }
+
+        function guardarAbiertas(ids) {
+            try {
+                window.sessionStorage.setItem(claveDePagina(PREFIJO_ABIERTAS), JSON.stringify(ids.slice(-TOPE_RESTAURAR)));
+            } catch (error) {
+                console.warn('ventas-expandible: no se pudo guardar en sessionStorage', error);
+            }
+        }
+
+        function idDe(item) {
+            return item.dataset.ventaId || item.dataset.facturaId || '';
+        }
+
+        function esModal(item) {
+            return item.dataset.modal === 'true';
+        }
+
+        function persistir(item, abierta) {
+            if (esModal(item)) return;
+            var id = idDe(item);
+            if (!/^\d+$/.test(id)) return;
+            var ids = leerAbiertas().filter(function (otro) { return otro !== id; });
+            if (abierta) ids.push(id);
+            guardarAbiertas(ids);
+        }
+
+        // Mensaje para mostrar en el panel: el del servidor si viene (JSON {msg} o texto corto), si no uno generico.
+        function mensajeDeRespuesta(texto) {
+            try {
+                var json = JSON.parse(texto);
+                if (json && typeof json.msg === 'string' && json.msg) return json.msg;
+            } catch (errorJson) {
+                // No era JSON: se prueba como texto plano.
+            }
+            return texto && texto.length > 0 && texto.length <= 200 && texto.indexOf('<') < 0 ? texto : MENSAJE_GENERICO;
+        }
+
+        // Carga el HTML del panel la primera vez. Devuelve una promesa que siempre se resuelve (el error se muestra en el panel).
+        function cargarPanel(item, panel) {
+            if (panel.dataset.cargado === 'true' || panel.dataset.cargando === 'true') return Promise.resolve();
+
+            var url = item.dataset.resumenUrl;
+            if (!url) return Promise.resolve();
+            if (!esModal(item)) {
+                url += (url.indexOf('?') >= 0 ? '&' : '?')
+                    + 'returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            }
+
+            panel.dataset.cargando = 'true';
+            panel.innerHTML = '<div class="vr-cargando">Cargando detalle…</div>';
+
+            return fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (respuesta) {
+                    // Sesion vencida: el servidor redirige al login y el fetch lo sigue solo (devolveria la pagina de login).
+                    if (respuesta.redirected) throw new Error('Tu sesión venció. Recargá la página.');
+                    if (!respuesta.ok) {
+                        return respuesta.text().then(function (texto) { throw new Error(mensajeDeRespuesta(texto)); });
+                    }
+                    return respuesta.text();
+                })
+                .then(function (html) {
+                    panel.innerHTML = html;
+                    panel.dataset.cargado = 'true';
+                })
+                .catch(function (error) {
+                    console.error('ventas-expandible: no se pudo cargar el detalle de ' + idDe(item), error);
+                    var aviso = document.createElement('div');
+                    aviso.className = 'vr-error';
+                    aviso.textContent = error && error.message ? error.message : MENSAJE_GENERICO;
+                    panel.innerHTML = '';
+                    panel.appendChild(aviso);
+                })
+                .then(function () {
+                    delete panel.dataset.cargando;
+                });
+        }
+
+        // Abre o cierra la tarjeta. abrir === undefined -> alterna. sinPersistir: al restaurar no se vuelve a guardar.
+        function alternar(item, abrir, sinPersistir) {
+            var panel = item.querySelector(':scope > .venta-detalle-panel');
+            if (!panel) return Promise.resolve();
+
+            var abrirFinal = typeof abrir === 'boolean' ? abrir : panel.hidden;
+            panel.hidden = !abrirFinal;
+            item.classList.toggle('venta-abierta', abrirFinal);
+            item.setAttribute('aria-expanded', abrirFinal ? 'true' : 'false');
+            if (!sinPersistir) persistir(item, abrirFinal);
+
+            return abrirFinal ? cargarPanel(item, panel) : Promise.resolve();
+        }
+
+        function guardarScroll(item) {
+            if (esModal(item)) return;
+            try {
+                window.sessionStorage.setItem(claveDePagina(PREFIJO_SCROLL), String(Math.round(window.scrollY)));
+            } catch (error) {
+                console.warn('ventas-expandible: no se pudo guardar el scroll', error);
+            }
+        }
+
+        function leerYBorrarScroll() {
+            try {
+                var clave = claveDePagina(PREFIJO_SCROLL);
+                var texto = window.sessionStorage.getItem(clave);
+                window.sessionStorage.removeItem(clave);
+                var valor = texto === null ? NaN : parseInt(texto, 10);
+                return isNaN(valor) ? null : valor;
+            } catch (error) {
+                console.warn('ventas-expandible: no se pudo leer el scroll', error);
+                return null;
+            }
+        }
+
+        // Al cargar el listado: reabre las tarjetas que estaban abiertas y vuelve al scroll guardado.
+        function restaurar() {
+            var scrollGuardado = leerYBorrarScroll();
+            var pendientes = [];
+
+            leerAbiertas().slice(-TOPE_RESTAURAR).forEach(function (id) {
+                var item = document.querySelector('.venta-item[data-venta-id="' + id + '"][data-resumen-url], .venta-item[data-factura-id="' + id + '"][data-resumen-url]');
+                if (item && !esModal(item)) pendientes.push(alternar(item, true, true));
+            });
+
+            // El scroll se aplica con los paneles ya cargados, para que la altura final sea la de antes.
+            Promise.all(pendientes).then(function () {
+                if (scrollGuardado !== null) window.scrollTo(0, scrollGuardado);
+            });
+        }
+
+        document.addEventListener('click', function (evento) {
+            var destino = evento.target;
+            if (!(destino instanceof Element)) return;
+
+            var abrirDetalle = destino.closest('.venta-abrir-detalle');
+            if (abrirDetalle) {
+                var itemDetalle = abrirDetalle.closest('.venta-item');
+                if (itemDetalle && esModal(itemDetalle)) {
+                    // En el modal el detalle se abre dentro del mismo modal: lo hace _MisVentas.cshtml; aca solo se evita el "#".
+                    evento.preventDefault();
+                } else if (itemDetalle && evento.button === 0 && !evento.ctrlKey && !evento.metaKey && !evento.shiftKey) {
+                    guardarScroll(itemDetalle);
+                }
+                return;
+            }
+
+            var accionPos = destino.closest('.venta-accion-pos');
+            if (accionPos) {
+                // Mismo resguardo que _DetalleVentaCard.cshtml: no mostrar el aviso de "salir de la pagina" del POS
+                // por una navegacion interna intencional, y conservar al operador si va a la misma pestaña de POS.
+                if (typeof window.desactivarAvisoSalidaPOS === 'function') window.desactivarAvisoSalidaPOS();
+                if (accionPos.dataset.conservarOperador === 'true') window.PosConservarOperadorAlSalir = true;
+                return;
+            }
+
+            // Clics dentro del panel (texto, links) no pliegan la tarjeta.
+            if (destino.closest('.venta-detalle-panel')) return;
+
+            var item = destino.closest('.venta-item[data-resumen-url]');
+            if (item) alternar(item);
+        });
+
+        // Teclado: Enter / Espacio sobre la tarjeta (no sobre un link o boton de adentro).
+        document.addEventListener('keydown', function (evento) {
+            if (evento.key !== 'Enter' && evento.key !== ' ') return;
+            var destino = evento.target;
+            if (!(destino instanceof Element) || !destino.matches('.venta-item[data-resumen-url]')) return;
+            evento.preventDefault();
+            alternar(destino);
+        });
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', restaurar);
+        } else {
+            restaurar();
+        }
+    })();
+</script>

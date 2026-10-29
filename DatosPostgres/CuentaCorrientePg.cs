@@ -146,6 +146,8 @@ namespace DatosPostgres
         {
             string orden = string.Equals(ordenSaldo, "ASC", StringComparison.OrdinalIgnoreCase) ? "ASC" : "DESC";
             string texto = "%" + (txtBusqueda ?? "").Trim() + "%";
+            // CUIT sin guiones ni espacios de ambos lados: "20-12345678-9" y "20123456789" encuentran la misma persona.
+            string textoCuit = "%" + (txtBusqueda ?? "").Trim().Replace("-", "").Replace(" ", "") + "%";
 
             // @idPersona se castea explicito (::int) en cada uso: Npgsql no puede inferir el
             // tipo de un parametro DBNull sin contexto cuando idPersona es null (mismo patron
@@ -160,6 +162,7 @@ namespace DatosPostgres
                     p.idpersona AS ""IdPersona"",
                     p.identificacion AS ""Nombre Identif."",
                     p.razonsocial AS ""Razon Social"",
+                    p.cuit AS ""CUIT"",
                     s.saldo AS ""Saldo""
                 FROM saldos s
                 INNER JOIN personas p ON p.idpersona = s.idpersona
@@ -167,7 +170,8 @@ namespace DatosPostgres
                     (@idPersona::int IS NOT NULL AND @idPersona::int <> 0 AND p.idpersona = @idPersona::int)
                     OR (
                         (@idPersona::int IS NULL OR @idPersona::int = 0)
-                        AND (@textoBusqueda = '' OR p.identificacion ILIKE @texto OR p.razonsocial ILIKE @texto)
+                        AND (@textoBusqueda = '' OR p.identificacion ILIKE @texto OR p.razonsocial ILIKE @texto
+                             OR REPLACE(COALESCE(p.cuit, ''), '-', '') ILIKE @textoCuit)
                     )
                 ORDER BY
                     CASE WHEN @ordenSaldo = 'ASC' THEN s.saldo END ASC,
@@ -179,6 +183,7 @@ namespace DatosPostgres
                 p.AddWithValue("idPersona", (object)idPersona ?? DBNull.Value);
                 p.AddWithValue("textoBusqueda", (txtBusqueda ?? "").Trim());
                 p.AddWithValue("texto", texto);
+                p.AddWithValue("textoCuit", textoCuit);
                 p.AddWithValue("ordenSaldo", orden);
             });
         }

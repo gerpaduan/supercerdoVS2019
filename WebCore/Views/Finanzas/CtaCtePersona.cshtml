@@ -62,10 +62,34 @@
         return DateTime.TryParse(valor, out fechaParseada) ? fechaParseada.ToString("dd/MM/yyyy HH:mm") : valor;
     };
 
+    // Totales del periodo para el resumen y el pie de la tabla de escritorio (en celular no se ven). Se suman las filas mostradas,
+    // sin la fila "Saldo anterior" (ID 0, su importe es el saldo de arrastre y no un movimiento): asi saldo anterior + creditos -
+    // debitos = saldo actual. Debito = importe negativo, credito = importe >= 0 (mismo corte que el rotulo Credito/Debito del celular).
+    // fechaDesde llega como yyyy-MM-dd (ver el controller); si no se puede leer, se muestra tal cual.
+    string rotuloFechaDesde = DateTime.TryParseExact(fechaDesde, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime fechaDesdeLeida)
+        ? fechaDesdeLeida.ToString("dd/MM/yyyy")
+        : fechaDesde;
+    decimal saldoAnteriorPeriodo = 0m;
+    decimal totalDebitos = 0m;
+    decimal totalCreditos = 0m;
+    int cantidadDebitos = 0;
+    int cantidadCreditos = 0;
+
     foreach (System.Data.DataRow row in Model.Rows)
     {
         string clave = claveMovimiento(row);
         int id = Convert.ToInt32(row["ID"]);
+
+        if (id == 0)
+        {
+            saldoAnteriorPeriodo = row["Saldo"] == DBNull.Value ? 0m : Convert.ToDecimal(row["Saldo"]);
+        }
+        else
+        {
+            decimal importeMovimiento = Convert.ToDecimal(row["Importe"]);
+            if (importeMovimiento < 0m) { totalDebitos += -importeMovimiento; cantidadDebitos++; }
+            else { totalCreditos += importeMovimiento; cantidadCreditos++; }
+        }
 
         if (esContraasientoEliminado(row))
             clavesPagoEliminado.Add(clave);
@@ -204,26 +228,58 @@
         </div>
     </div>
 
+    @* Resumen del periodo, solo escritorio (en celular el saldo ya esta arriba y los movimientos son una lista). Con el saldo
+       oculto (cuenta reservada / usuario sin permiso) se omiten las tarjetas de saldo. Mismo diseno en la pagina y en el modal del
+       POS: no depende del layout. Ver docs/DECISIONS.md 2026-10-28. *@
+    @if (Model.Rows.Count > 0)
+    {
+        <div class="ctacte-resumen ctacte-solo-desktop">
+            @if (!ocultarSaldo)
+            {
+                <div class="ctacte-resumen-item">
+                    <span class="ctacte-resumen-rotulo">Saldo anterior al @rotuloFechaDesde</span>
+                    <span class="ctacte-resumen-valor">@saldoAnteriorPeriodo.ToString("N2")</span>
+                </div>
+            }
+            <div class="ctacte-resumen-item">
+                <span class="ctacte-resumen-rotulo">Débitos (@cantidadDebitos)</span>
+                <span class="ctacte-resumen-valor ctacte-res-debito">@(totalDebitos > 0m ? "−" : "")@totalDebitos.ToString("N2")</span>
+            </div>
+            <div class="ctacte-resumen-item">
+                <span class="ctacte-resumen-rotulo">Créditos (@cantidadCreditos)</span>
+                <span class="ctacte-resumen-valor ctacte-res-credito">@(totalCreditos > 0m ? "+" : "")@totalCreditos.ToString("N2")</span>
+            </div>
+            @if (!ocultarSaldo)
+            {
+                <div class="ctacte-resumen-item ctacte-resumen-final">
+                    <span class="ctacte-resumen-rotulo">Saldo actual</span>
+                    <span class="ctacte-resumen-valor">@saldo.ToString("N2")</span>
+                </div>
+            }
+        </div>
+    }
+
     @* En celular (<768px) los movimientos son una lista de renglones dentro de una sola tarjeta (tabla-cards.css, variante
        tabla-cards-lista, con la disposicion propia de abajo en el <style>): operacion y tipo con el importe a la derecha; fecha,
        nro. doc. y sucursal con el saldo a la derecha; y el detalle. Mismo HTML que desktop: el click de la fila y el desplegable
-       funcionan igual. Ver docs/DECISIONS.md 2026-10-27. *@
+       funcionan igual. Ver docs/DECISIONS.md 2026-10-27.
+       Escritorio (>=768px, 2026-10-28): Debito y Credito reemplazan a Importe + Tipo; Obs. (icono junto al detalle) y Sucursal
+       (junto al id, debajo del detalle) dejan de ser columnas. Las celdas de celular (ctacte-m-tipo / -importe / -obs / -suc) siguen
+       en el HTML y se ocultan en escritorio (<style> de abajo); las nuevas (cc-solo-tabla) se ocultan en celular. *@
     <div class="card shadow-sm ctacte-panel-card ctacte-movimientos-card">
         <div class="card-body p-2">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm ctacte-table-compact tabla-cards tabla-cards-lista" id="tablaPersona" width="100%" cellspacing="0">
-                    <thead class="thead-dark">
+                <table class="table table-hover table-sm ctacte-table-compact tabla-cards tabla-cards-lista" id="tablaPersona" width="100%" cellspacing="0">
+                    <thead class="ctacte-thead">
                         <tr>
                             <th style="display:none;">ID</th>
                             <th>Fecha</th>
                             <th>Operación</th>
-                            <th>Tipo</th>
-                            <th>Nro.Doc</th>
+                            <th>Comprobante</th>
                             <th>Detalle</th>
-                            <th style="text-align:right;">Importe</th>
-                            <th style="text-align:right;">Saldo</th>
-                            <th class="text-center" title="Tiene observaciones">Obs.</th>
-                            <th>Sucursal</th>
+                            <th class="ctacte-num">Débito</th>
+                            <th class="ctacte-num">Crédito</th>
+                            <th class="ctacte-num">Saldo</th>
                             <th style="width:1%;"></th>
                         </tr>
                     </thead>
@@ -231,7 +287,7 @@
                         @if (Model.Rows.Count == 0)
                         {
                             <tr>
-                                <td colspan="11" class="text-center text-muted py-4">No hay movimientos para mostrar.</td>
+                                <td colspan="8" class="text-center text-muted py-4">No hay movimientos para mostrar.</td>
                             </tr>
                         }
                         @foreach (System.Data.DataRow row in Model.Rows)
@@ -266,7 +322,14 @@
                                 && int.TryParse(Convert.ToString(row["IdTabla"]), out idTablaCompra)
                                 && idTablaCompra > 0;
 
-                            <tr class="js-fila-ctacte @(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "") @(!esVenta && !esPagoEditable && !esCompraEditable ? "ctacte-row-sin-operacion" : "")"
+                            string claveObs = Convert.ToString(row["Tabla"]) + "|" + Convert.ToString(row["IdTabla"]);
+                            string observacionMov = observacionesPorMovimiento.ContainsKey(claveObs) ? observacionesPorMovimiento[claveObs] : "";
+                            bool tieneObs = !string.IsNullOrWhiteSpace(observacionMov);
+                            bool puedeDesplegar = id > 0; // la fila "Saldo Anterior" (id 0) no tiene detalle
+                            bool esSaldoAnterior = id == 0;
+                            decimal saldoMovimiento = row["Saldo"] == DBNull.Value ? 0m : Convert.ToDecimal(row["Saldo"]);
+
+                            <tr class="js-fila-ctacte @(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "") @(esSaldoAnterior ? "ctacte-row-saldo-ant" : "") @(!esVenta && !esPagoEditable && !esCompraEditable ? "ctacte-row-sin-operacion" : "")"
                                 data-es-venta="@(esVenta ? "true" : "false")"
                                 data-id-venta="@idTablaMovimiento"
                                 data-es-pago="@(esPagoEditable ? "true" : "false")"
@@ -278,7 +341,7 @@
                                 <td style="display:none;">@row["ID"]</td>
                                 <td class="ctacte-m-fecha">@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
                                 <td class="@claseColorOperacion ctacte-m-op" style="font-weight:bold;">
-                                    @row["Tabla"]
+                                    <span class="ctacte-chip">@row["Tabla"]</span>
                                     @if (esContraasiento)
                                     {
                                         <span class="badge badge-danger ml-1">ELIMINADO</span>
@@ -299,8 +362,13 @@
                                 <td class="@claseColorOperacion ctacte-m-tipo" style="font-weight:bold;">@tipoImporte</td>
                                 @{ string nroDocFila = tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : ""; }
                                 <td class="ctacte-m-doc @(string.IsNullOrWhiteSpace(nroDocFila) ? "cc-vacio" : "")">@nroDocFila</td>
+                                @* "[ID: n]" solo en celular: en escritorio el id va en la linea gris de abajo ("#n · sucursal"). *@
                                 <td class="ctacte-m-detalle">
-                                    [ID: @row["IdTabla"]] @row["Detalle"]
+                                    <span class="cc-solo-card">[ID: @row["IdTabla"]] </span>@row["Detalle"]
+                                    @if (tieneObs)
+                                    {
+                                        <i class="fas fa-comment-dots text-info cc-solo-tabla ctacte-obs-desktop" title="@observacionMov" aria-label="Tiene observaciones"></i>
+                                    }
                                     @if (esHistorico && esPago)
                                     {
                                         <div class="small text-muted mt-1">Registro anterior anulado por modificación.</div>
@@ -309,15 +377,16 @@
                                     {
                                         <div class="small text-warning mt-1">Verificar cambios del registro original.</div>
                                     }
+                                    @if (!esSaldoAnterior)
+                                    {
+                                        <div class="cc-solo-tabla ctacte-det-sub">#@row["IdTabla"] · @row["Sucursal"]</div>
+                                    }
                                 </td>
                                 <td class="@claseColorOperacion ctacte-m-importe" style="text-align:right; font-weight:bold;">@importeFila.ToString("N2")</td>
-                                <td class="ctacte-m-saldo" style="text-align:right;"><span class="cc-solo-card">saldo </span>@(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))</td>
-                                @{
-                                    string claveObs = Convert.ToString(row["Tabla"]) + "|" + Convert.ToString(row["IdTabla"]);
-                                    string observacionMov = observacionesPorMovimiento.ContainsKey(claveObs) ? observacionesPorMovimiento[claveObs] : "";
-                                    bool tieneObs = !string.IsNullOrWhiteSpace(observacionMov);
-                                    bool puedeDesplegar = id > 0; // la fila "Saldo Anterior" (id 0) no tiene detalle
-                                }
+                                @* Escritorio: el importe se reparte en Debito (importe negativo, sin signo) y Credito; la fila Saldo anterior no es un movimiento. *@
+                                <td class="cc-solo-tabla ctacte-num ctacte-color-negativo">@(!esSaldoAnterior && !importePositivo ? (-importeFila).ToString("N2") : "")</td>
+                                <td class="cc-solo-tabla ctacte-num ctacte-color-positivo">@(!esSaldoAnterior && importePositivo ? importeFila.ToString("N2") : "")</td>
+                                <td class="ctacte-m-saldo ctacte-num @(!ocultarSaldo && saldoMovimiento < 0m ? "ctacte-saldo-neg" : "")" style="text-align:right;"><span class="cc-solo-card">saldo </span>@(ocultarSaldo ? "***" : saldoMovimiento.ToString("N2"))</td>
                                 <td class="text-center ctacte-m-obs @(tieneObs ? "" : "cc-vacio")">
                                     @if (tieneObs)
                                     {
@@ -338,7 +407,7 @@
                             @if (puedeDesplegar)
                             {
                                 <tr class="ctacte-detalle-row d-none" data-detalle-de="@id">
-                                    <td colspan="11" class="bg-light">
+                                    <td colspan="8" class="bg-light">
                                         <div class="row small ctacte-detalle-grid">
                                             <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Fecha</span>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</div>
                                             <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Operación</span>@row["Tabla"] - @tipoImporte</div>
@@ -366,6 +435,19 @@
                             }
                         }
                     </tbody>
+                    @* Pie solo de escritorio: mismos totales que el resumen de arriba (debitos y creditos sin la fila Saldo anterior). *@
+                    @if (Model.Rows.Count > 0)
+                    {
+                        <tfoot class="ctacte-solo-desktop">
+                            <tr>
+                                <td colspan="4">Totales del período</td>
+                                <td class="ctacte-num ctacte-color-negativo">@totalDebitos.ToString("N2")</td>
+                                <td class="ctacte-num ctacte-color-positivo">@totalCreditos.ToString("N2")</td>
+                                <td class="ctacte-num">@(ocultarSaldo ? "***" : saldo.ToString("N2"))</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    }
                 </table>
             </div>
         </div>
@@ -434,6 +516,13 @@
     </div>
 }
 
+@* Embebida en el POS (F2 > cuenta de una persona) el layout es _LayoutPOS, que no carga tabla-cards.css: sin esta linea el modo lista
+   del celular no se aplica. Fuera del POS la carga _Layout. *@
+@if (desdePos)
+{
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/tabla-cards.css")" asp-append-version="true" />
+}
+
 <style>
     .ctacte-page { font-size: .84rem; }
     .ctacte-page .ctacte-panel-card { border: 1px solid #e9ecef; border-radius: .75rem; }
@@ -463,6 +552,17 @@
     .ctacte-obs-icono { white-space: nowrap; cursor: help; }
     .ctacte-compra-body { background: #f4f7fb; }
     .ctacte-page .ctacte-solo-movil { display: none; }
+
+    /* Resumen del periodo (solo escritorio, 2026-10-28): va ANTES del bloque de celular para que su .ctacte-solo-desktop lo oculte alla. */
+    .ctacte-page .ctacte-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .5rem; margin-bottom: .7rem; }
+    .ctacte-page .ctacte-resumen-item { display: flex; flex-direction: column; padding: .45rem .65rem; border-radius: .5rem; background: rgba(127, 127, 127, .09); }
+    .ctacte-page .ctacte-resumen-final { background: rgba(25, 135, 84, .14); }
+    .ctacte-page .ctacte-resumen-rotulo { font-size: .72rem; color: var(--ui-text-muted, #6c757d); }
+    .ctacte-page .ctacte-resumen-valor { font-size: 1.02rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .ctacte-page .ctacte-res-debito { color: red; }
+    .ctacte-page .ctacte-res-credito { color: green; }
+    html.dark-mode .ctacte-page .ctacte-res-debito { color: #ff8a8a; }
+    html.dark-mode .ctacte-page .ctacte-res-credito { color: #6fd38a; }
 
     /* ---- Celular (<768px), 2026-10-27 (ver docs/DECISIONS.md) ----
        Encabezado apilado (nombre arriba, saldo grande abajo), filtros y acciones a lo ancho, y los movimientos como renglones de
@@ -519,6 +619,46 @@
         #tablaPersona .ctacte-det-dup { display: none; }
 
         html.dark-mode #tablaPersona .ctacte-row-modificado td { background-color: transparent; }
+    }
+
+    /* ---- Escritorio (>=768px), 2026-10-28 (ver docs/DECISIONS.md) ----
+       Columnas: Fecha | Operacion | Comprobante | Detalle | Debito | Credito | Saldo | desplegable. Las celdas del celular que sobran
+       (tipo, importe, obs., sucursal) se ocultan: el tipo lo da la columna (Debito/Credito), la sucursal y el id van en una linea gris
+       bajo el detalle y las observaciones son un icono junto al detalle. Los selectores cuelgan de #tablaPersona (no del layout):
+       se ve igual en la pagina y en el modal de Cuentas corrientes del POS, que no carga ui-refresh.css (de ahi los fallbacks de var(--ui-*)). */
+    @@media (min-width: 768px) {
+        #tablaPersona td.ctacte-m-tipo,
+        #tablaPersona td.ctacte-m-importe,
+        #tablaPersona td.ctacte-m-obs,
+        #tablaPersona td.ctacte-m-suc { display: none; }
+
+        #tablaPersona > thead > tr > th { background: transparent !important; color: var(--ui-text-muted, #6c757d) !important; font-size: .74rem; font-weight: 600; letter-spacing: 0; text-transform: none; border: 0; border-bottom: 1px solid var(--ui-border-strong, var(--ui-border, #adb5bd)); padding: .4rem .45rem; }
+        #tablaPersona > tbody, #tablaPersona > tfoot { border-top: 0; }
+        #tablaPersona > tbody > tr > td { border: 0; border-bottom: 1px solid var(--ui-border, #e3e7ec); padding: .42rem .45rem; vertical-align: top; }
+        #tablaPersona > tfoot > tr > td { border: 0; border-top: 1px solid var(--ui-border-strong, var(--ui-border, #adb5bd)); padding: .5rem .45rem; font-weight: 600; }
+
+        #tablaPersona td.ctacte-m-fecha, #tablaPersona td.ctacte-m-doc { white-space: nowrap; }
+        /* Con "Mostrar anulados" el estado (Version anterior, ELIMINADO, ...) va debajo de la etiqueta para no ensanchar la tabla. */
+        #tablaPersona td.ctacte-m-op { white-space: normal; }
+        #tablaPersona td.ctacte-m-op .badge { display: table; margin: .2rem 0 0 !important; white-space: normal; }
+        #tablaPersona td.ctacte-m-doc { font-family: var(--bs-font-monospace, monospace); font-size: .74rem; }
+        #tablaPersona td.ctacte-m-detalle { white-space: normal; overflow-wrap: anywhere; min-width: 8rem; }
+        #tablaPersona tr.ctacte-row-saldo-ant > td.ctacte-m-doc { color: transparent; }
+        #tablaPersona .ctacte-det-sub { font-size: .72rem; color: var(--ui-text-muted, #6c757d); margin-top: .1rem; }
+        #tablaPersona .ctacte-obs-desktop { margin-left: .3rem; cursor: help; }
+        #tablaPersona .ctacte-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        #tablaPersona td.ctacte-num.ctacte-color-negativo, #tablaPersona td.ctacte-num.ctacte-color-positivo { font-weight: 500; }
+        #tablaPersona td.ctacte-saldo-neg { color: red; }
+        html.dark-mode #tablaPersona td.ctacte-saldo-neg,
+        html.dark-mode #tablaPersona td.ctacte-color-negativo { color: #ff8a8a; }
+        html.dark-mode #tablaPersona td.ctacte-color-positivo { color: #6fd38a; }
+
+        /* La operacion va en una etiqueta neutra; el color (verde / rojo) de la celda se hereda. */
+        #tablaPersona .ctacte-chip { display: inline-block; padding: .05rem .5rem; border-radius: .4rem; background: rgba(127, 127, 127, .13); font-size: .74rem; font-weight: 500; }
+        #tablaPersona tr.ctacte-row-saldo-ant .ctacte-chip { display: none; }
+        #tablaPersona tr.ctacte-row-saldo-ant > td { background-color: rgba(127, 127, 127, .09); }
+        #tablaPersona tr.ctacte-row-saldo-ant > td.ctacte-m-detalle { color: var(--ui-text-muted, #6c757d); }
+        #tablaPersona .js-toggle-detalle-ctacte { border: 0; background: none; box-shadow: none; padding: .05rem .35rem; color: var(--ui-text-muted, #6c757d); }
     }
 
     /* Fondos claros fijos de arriba (.ctacte-compra-body, .ctacte-row-modificado): el texto que

@@ -2,8 +2,10 @@
 
 @{
     bool modoModal = ViewBag.ModoModalVentas != null && (bool)ViewBag.ModoModalVentas;
-    string detalleBaseUrl = ViewBag.DetalleVentaBaseUrl as string ?? "";
-    string urlActual = Context.Request.PathBase.ToString() + Context.Request.Path.ToString() + Context.Request.QueryString.ToString();
+    // Mis ventas (modal) llega desde el POS (desdePos + pestaña) o desde Cajas Abiertas: el panel de la tarjeta
+    // necesita lo mismo que el detalle modal para calcular "Modificar venta" / "Cambiar forma de pago".
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    string posInstanceIdMisVentas = ViewBag.PosInstanceIdMisVentas as string ?? "";
 }
 
 <ul id="listaVentas" class="list-group list-group-flush">
@@ -26,12 +28,15 @@
 
                 foreach (var venta in ventaAgrupada)
                 {
-                    var detalleUrl = !string.IsNullOrWhiteSpace(detalleBaseUrl)
-                        ? detalleBaseUrl + "?id=" + venta.IdVenta + "&returnUrl=" + Uri.EscapeDataString(urlActual ?? "")
-                        : Url.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta });
-                    var atributosModal = modoModal
-                        ? $"data-venta-id=\"{venta.IdVenta}\""
-                        : $"onclick=\"location.href='{detalleUrl}'\"";
+                    // Al tocar la tarjeta se despliega el detalle en el lugar (_VentasExpandible.cshtml); el detalle
+                    // completo se abre desde "Abrir detalle" dentro del panel.
+                    var resumenUrl = Url.Action("DetalleVentaResumen", "Ventas", new
+                    {
+                        id = venta.IdVenta,
+                        modal = modoModal,
+                        desdePos = desdePos,
+                        posInstanceId = desdePos ? posInstanceIdMisVentas : ""
+                    });
                     // Mismo formato que BuildFacturaDTO/_TicketHTML.cshtml del original ("Debito |
                     // Efectivo") para que el listado no oculte que la venta se cobro combinando
                     // efectivo con otro medio -- gap encontrado por el usuario probando el batch 3.
@@ -47,7 +52,12 @@
                         data-vendedor="@venta.Vendedor.Nombre.ToLower()"
                         data-id-cliente="@venta.IdPersona"
                         data-id-vendedor="@venta.IdVendedor"
-                        @Html.Raw(atributosModal)>
+                        data-venta-id="@venta.IdVenta"
+                        data-resumen-url="@resumenUrl"
+                        data-modal="@(modoModal ? "true" : "false")"
+                        role="button"
+                        tabindex="0"
+                        aria-expanded="false">
                         <div class="venta-icono">
                             @if (!string.IsNullOrEmpty(venta.FormaPago))
                             {
@@ -110,10 +120,15 @@
                                 @((venta.TotalImporte > 0 ? "+ " : "") + venta.TotalImporte.ToString("C"))
                             </div>
 
+                            @* El chevron va junto a la hora (no como un elemento aparte de la fila): asi no le quita
+                               ancho a la fila y en celular el importe no baja de renglon. *@
                             <div class="text-muted small">
                                 @venta.FechaVenta.ToString("HH:mm") hs
+                                <i class="fas fa-chevron-down venta-chevron" aria-hidden="true"></i>
                             </div>
                         </div>
+
+                        <div class="venta-detalle-panel" hidden></div>
                     </li>
                 }
             }

@@ -8,7 +8,7 @@ permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pant
 revisada: 2026-10-29
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»).** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -86,10 +86,18 @@ El ticket **no fiscal** (el que dice **X** / «No valido como Factura») imprime
 - El ticket **facturado** (con CAE) no cambia: siempre imprime el nombre, los slogans y los datos fiscales.
 - No cambia los PDF ni los demás tickets (recibos de pago o cobro, apertura y cierre de caja).
 
+## Mis actividades (F6)
+Muestra los movimientos de caja del vendedor (egresos, pagos electrónicos y cuenta corriente) de la caja abierta. Arriba dice quién es, la sucursal y cuántos movimientos hay.
+- **Filtros:** **Todos**, **Egresos de caja**, **Pagos electrónicos** y **Cta Cte** (el elegido queda resaltado). A la derecha: **Mis ventas**, **Nuevo egreso** y, si corresponde, **Mi cierre**.
+- **Total egresos de caja:** la tarjeta con el total **la ven solo los administradores**.
+- **Tabla:** fecha y hora en dos renglones, el **Tipo** con un color según la categoría, **Ver detalle** para desplegar la fila, y los iconos de imprimir y modificar. La columna **Sucursal** no aparece si todos los movimientos son de la sucursal del encabezado (el desplegable de cada fila igual la muestra).
+- En el celular el modal se ve como antes (listado de tarjetas).
+- **PENDIENTE:** no se probó este diseño en el navegador con sesión real (aspecto, modo oscuro, administrador y no administrador).
+
 ## Mis ventas (F6)
-**F6** abre **Mis actividades**; ahí el botón **Mis ventas** lista las ventas del vendedor **desde que abrió su caja** (la caja abierta en este momento), agrupadas por día, con buscador por cliente y filtro por forma de pago. Tocar una venta abre su detalle.
+**F6** abre **Mis actividades**; ahí el botón **Mis ventas** lista las ventas del vendedor **desde que abrió su caja** (la caja abierta en este momento), agrupadas por día, con buscador por cliente y filtro por forma de pago. Tocar una venta la **despliega** en el lugar (artículos, total y, si corresponde, **Modificar venta** y **Cambiar forma de pago**) sin salir de la lista; **Abrir detalle** abre el [detalle completo](ayuda:pantalla/Ventas.DetalleVenta) en el mismo modal, donde también está **Factura / Imprimir**. Pueden quedar varias ventas desplegadas a la vez.
 - Con la cuenta compartida de **producción** son las ventas del **empleado que se autorizó** en esa pestaña («Autorizate para operar» o «Cambiar operario»), no las de la cuenta compartida. Si cambiás de operario, Mis ventas muestra las del nuevo.
-- En el detalle de una venta de **tu caja abierta** (en esta sucursal) aparecen **Modificar venta** y **Cambiar Forma de Pago**, también con la cuenta de producción (los usa el empleado autorizado; no hace falta volver a autorizarse). **Modificar venta** además requiere el permiso de modificar ventas. Con la cuenta de producción, al guardar o con **Salir edición** volvés al POS con el mismo empleado autorizado.
+- En el panel desplegado y en el detalle de una venta de **tu caja abierta** (en esta sucursal) aparecen **Modificar venta** y **Cambiar Forma de Pago**, también con la cuenta de producción (los usa el empleado autorizado; no hace falta volver a autorizarse). **Modificar venta** además requiere el permiso de modificar ventas. Con la cuenta de producción, al guardar o con **Salir edición** volvés al POS con el mismo empleado autorizado.
 - **«La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.»**: con la cuenta de producción, la autorización del empleado se perdió (por ejemplo, por mucho tiempo sin usar el POS). Recargá la página y volvé a autorizarte.
 - **«No hay una caja abierta para consultar ventas.»**: el vendedor no tiene una caja abierta ahora (por ejemplo, entró con «venta rápida sin apertura de caja» o un encargado ya le cerró la caja). Es correcto: Mis ventas solo muestra la caja abierta. Las ventas anteriores se ven en el listado de **Ventas**.
 
@@ -99,6 +107,12 @@ En **F6 → Mis actividades**, las compras que registraste **desde que abriste t
 - Al eliminar desde el POS se vuelve a **Mis actividades** (no se pierde la venta en curso). La compra queda con una fila nueva **ELIMINADO: …** (con el importe en negativo si salió plata de la caja; en $ 0,00 si era en cuenta corriente) y la fila original pasa a «Compra eliminada» sin botón de modificar.
 - Con la cuenta compartida de producción el sistema compara con el operador que se autorizó para Compras.
 - **PENDIENTE de probar con un usuario sin el permiso «Modificar compra»:** en la base de prueba el permiso de crear compras y el de modificarlas vienen juntos, y el login de usuarios que no son admin exige un dispositivo autorizado; lo probado fue con un administrador.
+
+## Modal Expendios: filtro «Persona»
+En el modal **Expendios** (AvPag), el campo **Persona (cliente del expendio)** busca por razón social, CUIT o identificación (desde 2 letras). Al elegir una persona de la lista se muestran **solo sus expendios**: los que se guardaron con ese cliente fijo y también los que tienen en **Identificación cliente** el mismo texto que la identificación de la persona (no importan mayúsculas, acentos ni espacios de los bordes).
+- Al elegirla, **Fecha desde** pasa a hace 6 meses (si ya escribiste una fecha a mano se respeta). La **✕** (o Backspace) quita la persona y vuelve a la búsqueda de siempre.
+- Si una persona no trae nada: la **identificación** de la persona debe ser igual a la «Identificación cliente» del expendio (no se compara la razón social, porque personas distintas pueden compartirla).
+- PENDIENTE de probar en el navegador con login (lo verificado fue la consulta contra la base local).
 
 ## Notas
 - Solo el ticket del post-venta ofrece el saldo. La **reimpresión desde el historial**, el **PDF** y el **email** no lo incluyen.

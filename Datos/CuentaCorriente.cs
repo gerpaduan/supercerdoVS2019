@@ -146,6 +146,7 @@ namespace Datos
                     p.idPersona AS IdPersona,
                     p.identificacion AS [Nombre Identif.],
                     p.razonSocial AS [Razon Social],
+                    p.cuit AS CUIT,
                     s.Saldo AS Saldo
                 FROM Saldos s
                 INNER JOIN dbo.Personas p ON p.idPersona = s.idPersona
@@ -163,6 +164,8 @@ namespace Datos
                             @textoBusqueda = ''
                             OR p.identificacion LIKE @texto ESCAPE '\'
                             OR p.razonSocial LIKE @texto ESCAPE '\'
+                            -- CUIT sin guiones de ambos lados: 20-12345678-9 y 20123456789 encuentran la misma persona.
+                            OR REPLACE(ISNULL(p.cuit, ''), '-', '') LIKE @textoCuit ESCAPE '\'
                         )
                     )
                 ORDER BY
@@ -179,6 +182,7 @@ namespace Datos
                     p.Add("@idPersona", SqlDbType.Int).Value = (object)idPersona ?? DBNull.Value;
                     p.Add("@textoBusqueda", SqlDbType.NVarChar, 200).Value = (txtBusqueda ?? "").Trim();
                     p.Add("@texto", SqlDbType.NVarChar, 200).Value = LikePattern(txtBusqueda);
+                    p.Add("@textoCuit", SqlDbType.NVarChar, 200).Value = LikePattern((txtBusqueda ?? "").Replace("-", "").Replace(" ", ""));
                     p.Add("@ordenSaldo", SqlDbType.VarChar, 4).Value = orden;
                 }
             );

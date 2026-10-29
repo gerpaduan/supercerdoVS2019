@@ -5,7 +5,7 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-10-26
+revisada: 2026-10-28
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
@@ -59,6 +59,7 @@ Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consulta
 ## En el celular
 - En pantallas angostas (celular) **Cajas abiertas** y el **Historial de cierres** se ven como **tarjetas**, una debajo de otra, en vez de tablas: no hace falta desplazarse de costado.
 - Cada tarjeta de caja abierta tiene arriba al **vendedor**, después sucursal, inicio y caja inicial, y abajo los botones (**Ventas**, **Actividad**, **Cerrar** y, si hay varias sucursales, **Cambiar sucursal**).
+- **Ventas** abre las ventas de esa caja en una ventana: tocá una venta para **desplegar** sus artículos y total (y **Modificar venta** / **Cambiar forma de pago** si te corresponden); **Abrir detalle** abre el [detalle completo](ayuda:pantalla/Ventas.DetalleVenta) en la misma ventana.
 - Cada tarjeta del historial dice **Caja #número** y muestra los mismos datos que las columnas de la tabla, de a dos por renglón. **Origen del cierre** y **Avisos** solo aparecen si tienen algo. Los botones (**Modificar**, **Reabrir**) quedan al pie.
 - Si los botones no entran a lo ancho de la tarjeta (por ejemplo con el menú lateral abierto), los que sobran pasan al renglón de abajo. En la computadora la pantalla se ve igual que antes.
 
@@ -66,6 +67,7 @@ Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consulta
 - El importe del cajero **no es un egreso**: no cambia el total de EgresosCaja ni la diferencia.
 - El cajero puede corregir su conteo solo **mientras su caja siga abierta**; una vez cerrada queda como lo declaró.
 - Si quien cierra **no tiene el permiso** y se pide usuario y clave de quien lo tiene, hay **5 intentos**: desde el 3.º el mensaje dice cuántos quedan y al 5.º se bloquea 5 minutos (cuenta regresiva en el selector). Ver [intentos de clave al autorizar](ayuda:concepto/intentos-de-clave-al-autorizar).
+- **Actividades** de una caja abierta usa el mismo diseño que **Mis actividades** del POS (ver [Ventas.POS](ayuda:pantalla/Ventas.POS)): la tarjeta con el total la ven solo los administradores y la columna **Sucursal** aparece solo si hay movimientos de otra sucursal.
 - **PENDIENTE:** documentar el cambio de sucursal de una caja y el botón Actividades de este modal.
 - **PENDIENTE:** prueba manual en el navegador con sesión de este flujo (no verificado todavía).
 

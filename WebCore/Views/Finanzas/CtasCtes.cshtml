@@ -11,6 +11,10 @@
     string ordenSaldo = ViewBag.OrdenSaldo ?? "DESC";
     int indiceNombreIdentif = -1;
     int indiceRazonSocial = -1;
+    // IdPersona no se muestra (2026-10-29, pedido del usuario): la fila lo lleva en data-id-persona para navegar
+    // y en su lugar se ve el CUIT. Columnas de Finanzas/obtenerCtasCtes (Datos y DatosPostgres).
+    int indiceIdPersona = Model.Columns.IndexOf("IdPersona");
+    int indiceCuit = Model.Columns.IndexOf("CUIT");
 
     for (int i = 0; i < Model.Columns.Count; i++)
     {
@@ -36,7 +40,7 @@
                 <div class="form-group mr-2 w-100">
                     <!-- w-100 para que ocupe todo -->
                     <div class="input-group w-100">
-                        <input type="text" id="txtBuscar" class="form-control" value="@buscar" placeholder="Buscar por Nombre Identif. y/o Razón social..." oninput="filtrarCtasCtesVivo()" onkeyup="filtrarCtasCtesVivo()">
+                        <input type="text" id="txtBuscar" class="form-control" value="@buscar" placeholder="Buscar por Nombre Identif., Razón social o CUIT..." oninput="filtrarCtasCtesVivo()" onkeyup="filtrarCtasCtesVivo()">
                         <div class="input-group-append">
                             <span class="input-group-text">
                                 <i class="fas fa-search"></i>
@@ -66,7 +70,7 @@
     <!-- GRILLA -->
     @* En celular (<768px) la tabla es una lista de renglones dentro de una sola tarjeta (CSS compartido
        wwwroot/Content/css/tabla-cards.css, variante tabla-cards-lista): persona arriba a la izquierda, razon social y #id debajo,
-       saldo a la derecha (verde / rojo). Mismo HTML que desktop: ctasctes.js filtra y navega igual. Ver docs/DECISIONS.md 2026-10-27. *@
+       saldo a la derecha (verde / rojo). Desde 2026-10-29 el #id se reemplazo por el CUIT. Mismo HTML que desktop: ctasctes.js filtra y navega igual. Ver docs/DECISIONS.md 2026-10-27. *@
     <div class="card shadow ctactes-grid-card @(desdePos ? "" : "ctactes-tabla-card")">
         <div class="card-body">
 
@@ -80,7 +84,7 @@
                                 var col = Model.Columns[i];
                                 bool combinarPersona = indiceNombreIdentif >= 0 && indiceRazonSocial >= 0;
 
-                                if (combinarPersona && i == indiceRazonSocial)
+                                if ((combinarPersona && i == indiceRazonSocial) || i == indiceIdPersona)
                                 {
                                     continue;
                                 }
@@ -118,33 +122,48 @@
                         <tbody id="tbodyCtas">
                         @foreach (System.Data.DataRow row in Model.Rows)
                         {
-                            var idPersona = row[0] != DBNull.Value ? row[0].ToString() : "";
+                            var idPersona = indiceIdPersona >= 0 && row[indiceIdPersona] != DBNull.Value ? row[indiceIdPersona].ToString() : "";
                             var nombreIdentif = indiceNombreIdentif >= 0 && row[indiceNombreIdentif] != DBNull.Value ? row[indiceNombreIdentif].ToString() : "";
                             var razonSocial = indiceRazonSocial >= 0 && row[indiceRazonSocial] != DBNull.Value ? row[indiceRazonSocial].ToString() : "";
-                            <tr onclick="irACtaCte(this)" style="cursor:pointer;" data-id-persona="@idPersona">
+                            var cuit = indiceCuit >= 0 && row[indiceCuit] != DBNull.Value ? (row[indiceCuit].ToString() ?? "").Trim() : "";
+                            @* El escritorio guarda la mascara vacia ("  -        -") cuando no se cargo CUIT: se muestra como vacio. *@
+                            if (cuit.Replace("-", "").Trim() == "") { cuit = ""; }
+                            @* data-buscar: lo que filtra ctasctes.js (nombre, razon social y CUIT con y sin guiones). *@
+                            var textoBuscar = string.Join(" ", nombreIdentif, razonSocial, cuit, cuit.Replace("-", ""));
+                            <tr onclick="irACtaCte(this)" style="cursor:pointer;" data-id-persona="@idPersona" data-buscar="@textoBuscar">
                                 @for (int i = 0; i < Model.Columns.Count; i++)
                                 {
                                     var col = Model.Columns[i];
                                     bool combinarPersona = indiceNombreIdentif >= 0 && indiceRazonSocial >= 0;
 
-                                    if (combinarPersona && i == indiceRazonSocial)
+                                    if ((combinarPersona && i == indiceRazonSocial) || i == indiceIdPersona)
                                     {
                                         continue;
                                     }
 
                                     if (combinarPersona && i == indiceNombreIdentif)
                                     {
+                                        @* En la tarjeta del celular la columna CUIT se oculta: el CUIT va junto a la razon social. *@
+                                        string cuitTarjeta = string.IsNullOrWhiteSpace(cuit) ? "" : "CUIT " + cuit;
                                         <td class="ctacte-persona-cell cc-l-prod">
                                             <div class="ctacte-persona-principal">@nombreIdentif</div>
-                                            @if (!string.IsNullOrWhiteSpace(razonSocial))
+                                            @if (!string.IsNullOrWhiteSpace(razonSocial) && cuitTarjeta != "")
                                             {
-                                                <div class="ctacte-persona-secundaria">@razonSocial<span class="cc-solo-card"> · #@idPersona</span></div>
+                                                <div class="ctacte-persona-secundaria">@razonSocial<span class="cc-solo-card"> · @cuitTarjeta</span></div>
                                             }
-                                            else
+                                            else if (!string.IsNullOrWhiteSpace(razonSocial))
                                             {
-                                                <div class="ctacte-persona-secundaria cc-solo-card">#@idPersona</div>
+                                                <div class="ctacte-persona-secundaria">@razonSocial</div>
+                                            }
+                                            else if (cuitTarjeta != "")
+                                            {
+                                                <div class="ctacte-persona-secundaria cc-solo-card">@cuitTarjeta</div>
                                             }
                                         </td>
+                                    }
+                                    else if (i == indiceCuit)
+                                    {
+                                        <td class="cc-solo-tabla">@cuit</td>
                                     }
                                     else if (string.Equals(col.ColumnName, "Saldo", StringComparison.OrdinalIgnoreCase))
                                     {
@@ -155,8 +174,7 @@
                                     }
                                     else
                                     {
-                                        @* La primera columna es el IdPersona: en la tarjeta va junto a la razon social (#id). *@
-                                        <td class="@(i == 0 ? "cc-solo-tabla" : "")">@row[col]</td>
+                                        <td>@row[col]</td>
                                     }
                                 }
                             </tr>
@@ -170,6 +188,12 @@
 
 </div>
 
+@* Embebida en el POS (modal de F2) el layout es _LayoutPOS, que no carga tabla-cards.css: sin esta linea el modo lista del celular no se aplica.
+   Fuera del POS la carga _Layout. *@
+@if (desdePos)
+{
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/tabla-cards.css")" asp-append-version="true" />
+}
 @* asp-append-version (antes ?v=1 fijo): el navegador del celular no toma el CSS nuevo si la URL no cambia. *@
 <link rel="stylesheet" href="@Url.Content("~/Content/css/ctasctes.css")" asp-append-version="true" />
 <script src="@Url.Content("~/Scripts/app/ctasctes.js")" asp-append-version="true"></script>
@@ -185,6 +209,9 @@
             var link = event.target.closest ? event.target.closest(".ctactes-index-page a[href]") : null;
             if (!link) return;
             if (link.target === "_blank" || link.hasAttribute("download")) return;
+            // Embebida en el POS: los links data-pos-ajax los resuelve el interceptor de POS.cshtml dentro del modal.
+            // Navegar aca sacaba al usuario del POS a la vista sin layout (bug 2026-10-28, orden por saldo).
+            if (link.getAttribute("data-pos-ajax") === "true") return;
 
             var href = link.getAttribute("href") || "";
             if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
@@ -202,9 +229,21 @@
         desdePos: @Html.Raw(desdePos.ToString().ToLower())
     };
 
-    if (window.CtasCtesPage && typeof window.CtasCtesPage.init === "function") {
-        window.CtasCtesPage.init();
-    }
+    // Embebida en el POS jQuery ya esta cargado y se inicia ya. Con _Layout este script corre antes que
+    // jquery.min.js (va al final del body): se espera a DOMContentLoaded, que llega despues de esos scripts.
+    // Sin esto init() fallaba y el buscador no tomaba el foco al abrir la vista (bug 2026-10-29).
+    (function () {
+        function iniciarCtasCtes() {
+            if (window.CtasCtesPage && typeof window.CtasCtesPage.init === "function") {
+                window.CtasCtesPage.init();
+            }
+        }
+        if (window.jQuery) {
+            iniciarCtasCtes();
+        } else {
+            document.addEventListener("DOMContentLoaded", iniciarCtasCtes, { once: true });
+        }
+    })();
 
     // Celular: la cantidad de cuentas de la barra de arriba sigue al filtro en vivo de ctasctes.js (que oculta filas con display:none).
     (function () {

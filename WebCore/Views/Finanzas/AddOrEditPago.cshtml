@@ -320,7 +320,7 @@
 
                 @* Conteo de billetes: solo lectura; lo llena el contador (boton de billetes del Importe) y se imprime
                    despues de las observaciones en el comprobante. "Limpiar contador" lo deja vacio. La altura se ajusta
-                   sola al contenido (ver ajustarAlturaConteo). *@
+                   sola al contenido (ver ajustarAlturaConteo): vacio queda en 1 renglon y sin el boton Limpiar. *@
                 <div class="col-md-6 mb-2 pago-requiere-operacion" id="bloqueConteoBilletes">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <label for="ConteoBilletes" class="mb-0">Conteo de billetes</label>
@@ -955,12 +955,17 @@
         inicializarPagoChequesCuandoListo();
 
         // El conteo de billetes ajusta su alto al contenido (entre 3 y 7 renglones) para que se vea completo sin que
-        // el modal tenga que scrollear. Se recalcula cuando el contador lo llena o lo limpian (eventos input/change).
+        // el modal tenga que scrollear. Vacío se compacta a 1 renglón y sin el botón "Limpiar contador" (no hay nada
+        // que limpiar), para no robar altura al formulario. Se recalcula cuando el contador lo llena o lo limpian
+        // (eventos input/change).
         function ajustarAlturaConteo() {
             var $conteo = $('#ConteoBilletes');
             if (!$conteo.length) return;
-            var renglones = (($conteo.val() || '').toString().split('\n').length);
-            $conteo.attr('rows', Math.min(7, Math.max(3, renglones)));
+            var texto = ($conteo.val() || '').toString();
+            var vacio = texto.trim() === '';
+            var renglones = texto.split('\n').length;
+            $conteo.attr('rows', vacio ? 1 : Math.min(7, Math.max(3, renglones)));
+            $('#btnLimpiarConteoBilletes').toggleClass('d-none', vacio);
         }
         $('#ConteoBilletes').on('input change', ajustarAlturaConteo);
         ajustarAlturaConteo();

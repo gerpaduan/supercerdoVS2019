@@ -2727,6 +2727,26 @@
         color: #ecf2ff !important;
     }
 
+    /* Cuentas corrientes embebidas en el POS (F2, modal #modalFinanzasPOS): en celular las tablas pasan a lista (tabla-cards.css, que
+       las vistas cargan por su cuenta). Esa hoja usa las variables --ui-* de ui-refresh.css, que el POS no carga: en modo oscuro se
+       definen aca, y los importes / saldos recuperan su color (la regla de arriba con !important los pintaba todos del mismo claro). */
+    html.dark-mode #modalFinanzasPOS {
+        --ui-surface: #162538;
+        --ui-border: #2f4d69;
+        --ui-text-muted: #97a7bd;
+        --ui-text-soft: #c5d0df;
+    }
+
+    html.dark-mode body #modalFinanzasPOS .table td.ctacte-color-positivo,
+    html.dark-mode body #modalFinanzasPOS .table td.ctactes-saldo-positivo {
+        color: #6fd38a !important;
+    }
+
+    html.dark-mode body #modalFinanzasPOS .table td.ctacte-color-negativo,
+    html.dark-mode body #modalFinanzasPOS .table td.ctactes-saldo-negativo {
+        color: #ff8a8a !important;
+    }
+
     html.dark-mode body .modal .table-hover tbody tr:hover {
         background: rgba(79, 121, 166, .10) !important;
     }

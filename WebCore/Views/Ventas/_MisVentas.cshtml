@@ -64,6 +64,9 @@
                 </div>
             </div>
         </div>
+
+        @* Tarjetas expandibles: tocar una venta despliega su detalle; "Abrir detalle" lo abre en este mismo modal. *@
+        <partial name="_VentasExpandible" />
     }
 </div>
 
@@ -252,8 +255,11 @@
             .on("input.misVentasFiltro", "#misVentasBuscarCliente", aplicarFiltrosMisVentas)
             .off("change.misVentasFiltro", "#misVentasFormaPago")
             .on("change.misVentasFiltro", "#misVentasFormaPago", aplicarFiltrosMisVentas)
-            .off("click.misVentasDetalle", "#listaVentas .venta-item-modal")
-            .on("click.misVentasDetalle", "#listaVentas .venta-item-modal", function () {
+            // Tocar la tarjeta despliega su detalle (_VentasExpandible.cshtml); el detalle completo, con todas sus
+            // acciones, se abre desde "Abrir detalle" dentro del panel.
+            .off("click.misVentasDetalle", "#listaVentas .venta-abrir-detalle")
+            .on("click.misVentasDetalle", "#listaVentas .venta-abrir-detalle", function (evento) {
+                evento.preventDefault();
                 abrirDetalleVenta($(this).data("venta-id"));
             })
             .off("click.misVentasVolver", "#btnVolverMisActividadesDesdeVentas")

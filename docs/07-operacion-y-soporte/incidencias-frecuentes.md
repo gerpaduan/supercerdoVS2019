@@ -12,12 +12,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - Resolucion
 
 ---
-## 2026-10-29 - Servidor SM: el deploy no entraba por SSH ("Permission denied") por contraseña vencida
 
-- **Sintoma**: `New-SSHSession` a `200.107.107.39:22` con `carnisys-deploy` fallaba con «Permission denied (keyboard-interactive)»; el servidor sí respondía (misma huella ed25519 de siempre) y ofrecía `publickey,password,keyboard-interactive`. El deploy de la mañana anterior había entrado.
-- **Causa**: la contraseña de `carnisys-deploy` (cambiada el 16/09) **expiró el 28/10/2026 12:45**, 42 días después, por la política por defecto de Windows. Se vio con `net user carnisys-deploy` en el servidor (cuenta activa, sin bloqueo).
-- **Resolucion**: renovarla desde una consola de administrador en SM: `Set-LocalUser -Name carnisys-deploy -Password (Read-Host -AsSecureString) -PasswordNeverExpires $true`. Se actualizó `~/hosts/servidorsm.env`. Si vuelve a fallar, mirar primero `net user carnisys-deploy` («La contraseña expira») antes de reintentar claves: cada intento fallido suma al bloqueo.
-- **Riesgo aceptado / pendiente**: la cuenta es administradora, está expuesta a internet (puerto 22) y la contraseña es corta; que no venza reduce la rotación. Alternativa recomendada (regla §4.0 del baseline): entrar por llave y cerrar la contraseña. San Lorenzo tiene su propia cuenta: no se verificó si le pasa lo mismo.
+## 2026-10-29 - POS: el filtro «Persona» del modal Expendios no traía expendios
+
+- **Sintoma**: al elegir una persona (ej. «COCINA RECONQUISTA») la lista quedaba vacía aunque había expendios con esa «Identificación cliente».
+- **Causa**: el filtro buscaba solo por `expendios.idpersona`; los expendios cargados con texto libre lo tienen NULL.
+- **Resolucion**: ahora también trae los que tienen la misma identificación que la persona (`ExpendioClientePg`). Ver `docs/DECISIONS.md` (2026-10-29). Si una persona aún no trae nada, comparar su `identificacion` con el texto del expendio (debe ser igual salvo mayúsculas, acentos y espacios de los bordes).
 
 ## 2026-10-29 - POS (SQL Server): "Error al finalizar la venta" al facturar expendios
 
@@ -25,7 +25,23 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Causa**: `Negocio.Venta` leía los expendios (`getExpedioById`, para la leyenda de remitos) dentro del `TransactionScope`; en SQL Server esa lectura abre conexiones anidadas con el lector abierto, la transacción se promueve a distribuida y .NET la rechaza (`TransactionException`). Postgres no se veía afectado.
 - **Resolucion**: la leyenda se arma antes de abrir la transacción (`agregarVenta` / `modificarVenta`). Ver `docs/DECISIONS.md` (2026-10-29). El detalle de la excepción viaja en el campo `error` de la respuesta de `/Ventas/FinalizarVenta` (pestaña Red del navegador), no en el cartel.
 
+## 2026-10-29 - Cuentas corrientes (con layout): el buscador no tomaba el foco ni andaban las flechas
 
+- **Sintoma**: al abrir `/Finanzas/CtasCtes` desde el menú el cursor no quedaba en el buscador, y las flechas / Enter no movían ni abrían la fila. Desde el POS (F2) sí funcionaba.
+- **Causa**: `_Layout.cshtml` carga `jquery.min.js` después de `RenderBody`; `ctasctes.js` capturaba `window.jQuery` al cargarse (`undefined`) y `CtasCtesPage.init()` fallaba en `$("#txtBuscar")`. En el POS la vista llega por AJAX con jQuery ya cargado.
+- **Resolucion**: `init()` lee `window.jQuery` al ejecutarse y `CtasCtes.cshtml` lo llama en `DOMContentLoaded` si jQuery todavía no está. Cualquier script de una vista con layout que use jQuery fuera de `@section Scripts` tiene el mismo problema.
+
+## 2026-10-28 - POS (F2) Cuentas corrientes: ordenar por saldo sacaba del POS a una pantalla sin estilos
+
+- **Sintoma**: en el modal de Cuentas corrientes del POS, tocar la flecha de orden de **Saldo** dejaba la pestaña en `/Finanzas/CtasCtes?desdePos=true` como página suelta, sin CSS ni layout, fuera del POS.
+- **Causa**: el link de orden tiene `data-pos-ajax="true"`, pero el interceptor de `Ventas/POS.cshtml` solo resolvía links a `/Finanzas/AddOrEditPago`; además el `click` propio de `Finanzas/CtasCtes.cshtml` navegaba de página completa cualquier `<a href>`.
+- **Resolucion**: el interceptor del POS recarga `/Finanzas/CtasCtes` dentro del modal con `POSFinanzas.cargar`, y el handler de `CtasCtes.cshtml` ignora los links `data-pos-ajax="true"`. Todo link nuevo `data-pos-ajax` dentro de `#modalFinanzasPOS` tiene que tener su rama en ese interceptor.
+
+## 2026-10-28 - Botones pegados al borde y de ancho desparejo en el detalle de venta (celular)
+
+- **Sintoma**: en `Ventas/DetalleVenta` los botones (Factura / Imprimir, Modificar venta, Cambiar forma de pago) quedaban chicos y pegados al borde izquierdo; el importe de cada línea se partía en dos renglones.
+- **Causa**: la vista usaba `btn-block`, clase de Bootstrap 4 que **no existe en Bootstrap 5** (el que carga el proyecto), y los botones estaban en un `.row` fuera de `.card-body`; el importe no tenía `white-space: nowrap`.
+- **Resolucion**: botones dentro de la tarjeta con un grid propio (`.dv-acciones`, en `_DetalleVentaCard.cshtml`) y subtotal con `nowrap` (`_VentaLineasStyles.cshtml`). Si otra vista trae `btn-block`, resolverlo igual (ancho 100% en CSS propio), no reintroducir la clase.
 
 ## 2026-10-22 - San Lorenzo: revision de solo lectura tras la intrusion en Servidor SM (sin cambios hechos)
 

@@ -2030,7 +2030,18 @@ else
             // 3506-3518 (Batch 10 de la quinta ronda, 2026-09-10, ver docs/DECISIONS.md).
             $(document).on("click", "#modalFinanzasPOS a[data-pos-ajax='true']", function (e) {
                 var href = $(this).attr("href") || "";
-                if (!href || href.indexOf("/Finanzas/AddOrEditPago") === -1) return;
+                if (!href) return;
+
+                // Orden por saldo de Cuentas Corrientes: se recarga el listado dentro del mismo modal.
+                // Bug 2026-10-28: sin esto el link navegaba de pagina completa a /Finanzas/CtasCtes sin layout
+                // (pantalla sin estilos, fuera del POS).
+                if (href.indexOf("/Finanzas/CtasCtes") !== -1) {
+                    e.preventDefault();
+                    window.POSFinanzas.cargar(href, $(this).attr("data-pos-title") || "Cuentas corrientes");
+                    return;
+                }
+
+                if (href.indexOf("/Finanzas/AddOrEditPago") === -1) return;
 
                 e.preventDefault();
                 window.POSFinanzas.cargarPago(href, $(this).attr("data-pos-title") || "Pago / Cobro");
@@ -2088,7 +2099,9 @@ else
 
                     if (window.POSGuard && !window.POSGuard.startAction("egresos:cargar")) return;
 
-                    var esMisActividades = !!url && url.indexOf("ActividadesCaja") >= 0;
+                    // Mis ventas (MisVentas) usa el mismo ancho y cabecera que Mis actividades (2026-10-28): antes se abria
+                    // al ancho completo del modal grande y desentonaba con la pantalla desde la que se llega (F6).
+                    var esMisActividades = !!url && (url.indexOf("ActividadesCaja") >= 0 || url.indexOf("MisVentas") >= 0);
                     $("#modalFinanzasPOS")
                         .removeClass("modal-compra-pos-layout modal-ctasctes-pos-compacto")
                         .toggleClass("modal-egreso-pos-compacto", compacto === true)

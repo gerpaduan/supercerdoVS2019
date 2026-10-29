@@ -261,7 +261,6 @@
         <div class="card-body p-0">
             @{
                 ViewBag.ModoModalVentas = false;
-                ViewBag.DetalleVentaBaseUrl = Url.Action("DetalleVenta", "Ventas");
             }
             @Html.Partial("~/Views/Ventas/_TablaVentas.cshtml", Model)
         </div>
@@ -269,3 +268,5 @@
 </div>
 
 @Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "ventas")
+@* Tarjetas expandibles: tocar una venta despliega su detalle en el lugar (docs/DECISIONS.md, 2026-10-28). *@
+<partial name="_VentasExpandible" />

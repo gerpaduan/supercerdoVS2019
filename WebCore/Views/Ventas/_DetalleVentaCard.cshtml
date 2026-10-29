@@ -31,7 +31,6 @@
     string returnUrlEdicion = desdePos ? Url.Action("POS", "Ventas", new { posInstanceId = posInstanceIdLinks }) : null;
     int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
     string returnUrlDetalle = ViewBag.ReturnUrlDetalle as string ?? "";
-    var index = 1;
     bool mostrarBotonVolver = modoModal || !string.IsNullOrWhiteSpace(returnUrlDetalle);
     string hrefBotonVolver = (!modoModal && !string.IsNullOrWhiteSpace(returnUrlDetalle)) ? returnUrlDetalle : "#";
     bool tieneFacturaVenta = ViewBag.TieneFacturaVenta != null && (bool)ViewBag.TieneFacturaVenta;
@@ -49,75 +48,151 @@
         : Model.FormaPago;
 }
 
+@* Estilos de las lineas y el total (_VentaLineas.cshtml), compartidos con los paneles de los listados. *@
+<partial name="_VentaLineasStyles" />
+
 <style>
-    .detalle-documento-header .detalle-documento-titulo {
-        font-size: 14px;
+    /* Rediseno 2026-10-28 (docs/DECISIONS.md, "Tarjetas expandibles en Ventas"): encabezado, datos en
+       cuadricula y acciones DENTRO de la card, ordenados igual en celular, tablet y escritorio. Los botones ya
+       no usan "btn-block" (no existe en Bootstrap 5, que es el que carga el proyecto) sino el grid de .dv-acciones. */
+    .dv-header {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .75rem 1rem;
     }
 
-    .detalle-documento-header .badge {
-        font-size: 0.625rem;
+    .dv-volver {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.1rem;
+        height: 2.1rem;
+        padding: 0;
     }
 
-    /* Ver docs/DECISIONS.md, Batch 2 de la quinta ronda: font-weight-bold no existe en el
-       bootstrap.min.css real de este proyecto -- se fija el h5 en peso normal explicito y se usa
-       <strong> (bold real del navegador) solo en el valor, ver el HTML mas abajo. */
-    .detalle-venta-resumen h5 {
-        font-size: 14px;
-        font-weight: 400;
+    .dv-titulo {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: .1rem .75rem;
     }
 
-    .detalle-venta-identificacion {
-        font-size: 14px;
+    .dv-titulo-texto {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ui-primary, #2d5b8f);
+    }
+
+    .dv-fecha {
+        font-size: .85rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    .dv-datos {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: .75rem 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .dv-dato {
+        min-width: 0;
+    }
+
+    .dv-dato-etiqueta {
+        font-size: .75rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    .dv-dato-valor {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .dv-dato-extra {
+        font-size: .8rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    /* Acciones: apiladas a ancho completo en celular (area tactil >= 40px), en fila desde 576px. */
+    .dv-acciones {
+        display: grid;
+        gap: .5rem;
+        padding: .75rem 1rem;
+        border-top: 1px solid var(--ui-border, #dee2e6);
+        background: var(--ui-surface-alt, #f3f4f6);
+        border-radius: 0 0 .35rem .35rem;
+    }
+
+    .dv-accion {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        min-height: 2.5rem;
+    }
+
+    @@media (min-width: 576px) {
+        .dv-acciones {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .dv-accion {
+            min-height: 2.25rem;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .dv-datos {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .dv-dato-cliente {
+            grid-column: 1 / -1;
+        }
     }
 </style>
 
 <div class="card shadow mb-4 w-100 w-md-50 @(modoModal ? "" : "mx-auto") vista-venta @(modoModal ? "vista-venta-modal" : "")">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center detalle-documento-header">
-        <div class="d-flex align-items-center">
-            @if (mostrarBotonVolver)
-            {
-                <a href="@hrefBotonVolver" class="btn btn-sm btn-outline-secondary mr-2" id="btnVolverListadoVentasDetalle">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-            }
-            <h6 class="m-0 font-weight-bold text-primary detalle-documento-titulo">Detalle de Venta</h6>
+    <div class="card-header dv-header">
+        @if (mostrarBotonVolver)
+        {
+            <a href="@hrefBotonVolver" class="btn btn-sm btn-outline-secondary dv-volver" id="btnVolverListadoVentasDetalle" aria-label="Volver">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+        }
+        <div class="dv-titulo">
+            <span class="dv-titulo-texto">Venta #@Model.IdVenta</span>
+            <span class="dv-fecha">@Model.FechaVenta.ToString("dd/MM/yyyy HH:mm")</span>
         </div>
-        <span class="badge badge-info">#@Model.IdVenta</span>
     </div>
 
     <div class="card-body bg-white">
-        <div class="row mb-3 detalle-documento-resumen detalle-venta-resumen">
-            @* Negrita en las variables (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
-               "Batch 2: negrita en Cliente/Tipo Comprobante/Fecha/Forma de pago"). Antes, el
-               font-weight-bold estaba en el <h5> entero (etiqueta + valor) y el valor ademas tenia
-               text-muted (gris) -- las 2 reglas competian, restandole el efecto de negrita al
-               valor. Ahora la etiqueta queda en peso normal (font-weight:400, CSS de arriba) y el
-               valor usa <strong> -- NO la clase "font-weight-bold" (confirmado que no existe en el
-               bootstrap.min.css real de este proyecto, ver el comentario de la regla CSS de
-               arriba), asi que se usa negrita real de <strong> (default del navegador). *@
-            <div class="col-md-6">
-                <h5 class="text-dark">
-                    Cliente: <strong>@razonSocialCliente</strong>
-                </h5>
+        @* Etiqueta chica arriba + valor en negrita (antes eran "Etiqueta: valor" en h5 sueltos, que en celular
+           quedaban desordenados). Nota historica: font-weight-bold no existe en el bootstrap.min.css de este
+           proyecto, por eso el peso se fija en CSS propio (.dv-dato-valor). *@
+        <div class="dv-datos">
+            <div class="dv-dato dv-dato-cliente">
+                <div class="dv-dato-etiqueta">Cliente</div>
+                <div class="dv-dato-valor">@razonSocialCliente</div>
                 @if (mostrarIdentificacionCliente)
                 {
-                    <div class="text-muted detalle-venta-identificacion">Ident: @identificacionCliente</div>
+                    <div class="dv-dato-extra">Ident: @identificacionCliente</div>
                 }
             </div>
-            <div class="col-md-6 text-md-right">
-                <h5 class="text-dark">
-                    <strong>@Model.FechaVenta</strong>
-                </h5>
+            <div class="dv-dato">
+                <div class="dv-dato-etiqueta">Comprobante</div>
+                <div class="dv-dato-valor">@Model.TipoComprobante</div>
             </div>
-            <div class="col-md-6">
-                <h5 class="text-dark">
-                    Tipo Comprobante: <strong>@Model.TipoComprobante</strong>
-                </h5>
-            </div>
-            <div class="col-md-6 text-md-right">
-                <h5 class="text-dark">
-                    Forma de pago: <strong>@formaPagoTexto</strong>
-                </h5>
+            <div class="dv-dato">
+                <div class="dv-dato-etiqueta">Forma de pago</div>
+                <div class="dv-dato-valor">@formaPagoTexto</div>
             </div>
         </div>
 
@@ -140,7 +215,7 @@
 
         @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
         {
-            <div class="alert alert-light border mb-4">
+            <div class="alert alert-light border mb-3">
                 <div class="font-weight-bold text-secondary mb-1">
                     <i class="fas fa-sticky-note mr-2"></i>Comentario
                 </div>
@@ -148,119 +223,50 @@
             </div>
         }
 
-        <div class="venta-lineas bg-white">
-            @foreach (var linea in Model.LineasVenta)
-            {
-                <div class="mb-3">
-                    <div>
-                        #@index <strong>@linea.Corte.CorteDesc</strong> (cod: @linea.Corte.codigo)&nbsp;&nbsp;
-                    </div>
-
-                    @{
-                        // Bonificacion/recargo por linea (quinta ronda de pedidos, 2026-09-10, ver
-                        // docs/DECISIONS.md "Batch 1: bonificacion en las lineas de DetalleVenta").
-                        // Mismo texto/formato que ya usa el carrito del POS (pos-cart.js,
-                        // funcion renderTable) -- texto plano, sin badge propio.
-                        string bonifTexto = linea.Bonificacion == 0
-                            ? ""
-                            : (linea.Bonificacion > 0
-                                ? $" | Bonif:{linea.Bonificacion:0.##}%"
-                                : $" | Recargo:{Math.Abs(linea.Bonificacion):0.##}%");
-                    }
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            &nbsp;&nbsp;&nbsp;&nbsp; @linea.CantKg.ToString("0.###") x @linea.PrecioKg.ToString("C")@bonifTexto
-                        </div>
-
-                        <div class="text-right font-weight-bold">
-                            @((linea.CantKg * linea.PrecioKg).ToString("C"))
-                        </div>
-                    </div>
-                </div>
-                index++;
-            }
-        </div>
-
-        @* Alineacion del total (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
-           "Batch 3: alinear el total a la derecha con los decimales en linea"). Antes el total
-           vivia en un .row.mt-3 > .col aparte, FUERA de .card-body -- .card-body tiene su propio
-           padding-right (Bootstrap default), pero el .row de afuera no, asi que el borde derecho
-           del total quedaba mas a la derecha que el de las lineas (que si estan dentro de
-           .card-body). Moviendolo DENTRO de .card-body, con el mismo ancho/padding que las
-           lineas, el borde derecho coincide. Se saco tambien un triple espacio en blanco literal
-           que quedaba despues del monto (empujaba el ultimo caracter visible mas a la izquierda). *@
-        <div class="text-right mt-3">
-            <h4 class="font-weight-bold mb-0">
-                Total Venta: <span class="text-success">@Model.TotalImporte.ToString("C")</span>
-            </h4>
-        </div>
+        <partial name="_VentaLineas" model="Model" />
     </div>
 
-    <div class="row mt-2">
-        <div class="col">
-            @* Bug real reportado 2026-09-12 (ver docs/DECISIONS.md): SIN data-bs-toggle a proposito.
-               El data-api nativo de Bootstrap (bootstrap.bundle.js, handler de
-               "[data-bs-toggle=modal]") oculta automaticamente CUALQUIER .modal.show antes de
-               abrir el target ("avoid conflict when clicking modal toggler while another one is
-               open") -- con esta vista embebida en POS, eso ocultaba #modalFinanzasPOS (el fondo)
-               ademas de nunca volver a mostrarlo al cerrar el comprobante: pantalla oscura, nada
-               visible, exactamente el bug reportado. Se abre por JS (mismo criterio ya usado para
-               #modalBuscarPersona/#modalBuscarProducto en compras.js) para no pasar por ese
-               data-api. *@
-            <button type="button" class="btn btn-light btn-block text-left mb-2" id="btnFacturaImprimirDetalle">
-                <i class="fas fa-print mr-2"></i> Factura / Imprimir
-            </button>
-        </div>
+    <div class="dv-acciones">
+        @* Bug real reportado 2026-09-12 (ver docs/DECISIONS.md): SIN data-bs-toggle a proposito.
+           El data-api nativo de Bootstrap (bootstrap.bundle.js, handler de
+           "[data-bs-toggle=modal]") oculta automaticamente CUALQUIER .modal.show antes de
+           abrir el target ("avoid conflict when clicking modal toggler while another one is
+           open") -- con esta vista embebida en POS, eso ocultaba #modalFinanzasPOS (el fondo)
+           ademas de nunca volver a mostrarlo al cerrar el comprobante: pantalla oscura, nada
+           visible, exactamente el bug reportado. Se abre por JS (mismo criterio ya usado para
+           #modalBuscarPersona/#modalBuscarProducto en compras.js) para no pasar por ese
+           data-api. *@
+        <button type="button" class="btn btn-outline-secondary dv-accion" id="btnFacturaImprimirDetalle">
+            <i class="fas fa-print"></i> Factura / Imprimir
+        </button>
+        @if (ViewBag.PuedeModificarVenta != null && (bool)ViewBag.PuedeModificarVenta)
+        {
+            @* Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): al modificar una venta
+               desde POS (siempre desdePos=true aca, ver POS.cshtml:1809-1811), al guardar
+               volvia al layout de DetalleVenta en vez de a POS -- forma-pago.js:713 ya lee
+               window.POSModo.returnUrl, pero nadie se lo mandaba. Se pasa returnUrl=POS solo
+               cuando venimos de POS; fuera de POS (pantalla completa de Actividades/Cajas
+               Abiertas) se sigue cayendo al fallback de forma-pago.js (DetalleVenta). *@
+            <a id="btnModificarVentaDetalle"
+               href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })"
+               class="btn btn-outline-secondary dv-accion">
+                <i class="fas fa-edit"></i> Modificar venta
+            </a>
+        }
+        @if (ViewBag.PuedeCambiarFormaPago != null && (bool)ViewBag.PuedeCambiarFormaPago)
+        {
+            <a id="btnCambiarFormaPagoDetalle"
+               href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, soloFormaPago = true, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })"
+               class="btn btn-outline-secondary dv-accion">
+                <i class="fas fa-sync-alt"></i> Cambiar forma de pago
+            </a>
+        }
     </div>
-    @if (ViewBag.PuedeModificarVenta != null && (bool)ViewBag.PuedeModificarVenta)
-    {
-        <div class="row mt-2">
-            <div class="col">
-                @* Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): al modificar una venta
-                   desde POS (siempre desdePos=true aca, ver POS.cshtml:1809-1811), al guardar
-                   volvia al layout de DetalleVenta en vez de a POS -- forma-pago.js:713 ya lee
-                   window.POSModo.returnUrl, pero nadie se lo mandaba. Se pasa returnUrl=POS solo
-                   cuando venimos de POS; fuera de POS (pantalla completa de Actividades/Cajas
-                   Abiertas) se sigue cayendo al fallback de forma-pago.js (DetalleVenta). *@
-                <a id="btnModificarVentaDetalle"
-                   href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })"
-                   class="btn btn-light btn-block text-left mb-2">
-                    <i class="fas fa-edit mr-2"></i> Modificar venta
-                </a>
-            </div>
-        </div>
-    }
-    @if (ViewBag.PuedeCambiarFormaPago != null && (bool)ViewBag.PuedeCambiarFormaPago)
-    {
-        <div class="row mt-2">
-            <div class="col">
-                <a id="btnCambiarFormaPagoDetalle"
-                   href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, soloFormaPago = true, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })"
-                   class="btn btn-light btn-block text-left mb-2">
-                    <i class="fas fa-sync-alt mr-2"></i> Cambiar Forma de Pago
-                </a>
-            </div>
-        </div>
-    }
 </div>
 
 @await Html.PartialAsync("_ModalComprobanteVenta", Model)
 
 <style>
-    .venta-lineas {
-        background-color: var(--ui-surface, #fff);
-        color: var(--ui-text, inherit);
-    }
-
-        .venta-lineas .mb-3 {
-            padding: .5rem 0;
-            border: none;
-        }
-
-        .venta-lineas .font-weight-bold {
-            margin-bottom: .25rem;
-        }
-
     @@media (min-width: 992px) {
         .vista-venta {
             width: 60% !important;
