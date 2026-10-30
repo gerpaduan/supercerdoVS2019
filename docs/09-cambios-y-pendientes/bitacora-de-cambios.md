@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-10-30 - Compras/Editar: Cuenta corriente visible, 13 ítems a la vista, columnas de venta aparte y formato argentino
+
+- **Pedido:** que el interruptor de Cuenta corriente no se salga de la pantalla; ver más productos en la lista (analizar letra −1 pt y filas más bajas, 13 ítems en escritorio); total e importes en formato argentino; P. venta y Margen después del total y marcados como «no es la compra»; Desc./Recargo e IVA después de Precio y Margen en un lugar acorde.
+- **Cambio:** `Views/Compras/Editar.cshtml`, `wwwroot/Content/css/compras-editar.css` y `wwwroot/Scripts/app/compras.js` (`formatNumberAr`, orden de celdas de `renderLineas`). Cuenta corriente `max-content` y cabecera en dos renglones bajo 1270 px; lista de un renglón (filas de 20 px); ajustes y franja de Margen reubicados (cambia el DOM, mismos ids); columnas P. venta/Margen tras Total con marca violeta tenue. Manual: `Compras.Editar.md`. Detalle: `docs/DECISIONS.md` (2026-10-30).
+- **Verificado:** compila (0 errores) y con login real (usuario temporal, borrado junto con borradores, avisos y logins): 1366×768, 1280×690/683/629, 1270, 1200, 1100, 992 y 375 px; modo oscuro; tipo Media; modal de la cuenta corriente; cálculo con descuento/IVA/margen (1000 → 1.149,50, margen 40 % → 1.609,30), Enter Precio→Desc.→IVA→Margen→Agregar y valores enviados (`1149,5`). 13 filas completas con ≥ 685 px de alto (10 con 629).
+- **Sin verificar:** guardar una compra (escribe en la base) y reabrirla, el modal de compra del POS (necesita caja), la cabecera sin selector de tipo, nombres de producto/proveedor de largo real, 1920×1080.
+
 ## 2026-10-30 - Expendios generados: totales con la letra del encabezado de la tabla
 
 - **Pedido:** reducir los totales (Expendios / Líneas / Kgs. / Total) a la misma fuente que el encabezado.

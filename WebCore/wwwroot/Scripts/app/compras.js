@@ -68,6 +68,20 @@
         return toNumber(value).toFixed(2);
     }
 
+    // Formato argentino SOLO PARA MOSTRAR: punto de miles y coma decimal (1.234,50). Se arma a mano y no con
+    // toLocaleString('es-AR') para no depender del motor ni de los idiomas instalados (probado en Chrome: es-AR
+    // agrupa, pero es-ES no agrupa los miles de 4 cifras: "1234,50").
+    // No usar en los campos que se editan ni en valores que despues se leen con toNumber/parseInputNumber
+    // (esos usan formatNumber, que deja "1234.50": con "1.234" toNumber leeria 1,234).
+    function formatNumberAr(value) {
+        var fijo = Math.abs(toNumber(value)).toFixed(2); // "1234.50"
+        var partes = fijo.split('.');
+        var enteros = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        // El signo solo si el numero no se redondea a cero (evita "-0,00").
+        var negativo = toNumber(value) < 0 && fijo !== '0.00';
+        return (negativo ? '-' : '') + enteros + ',' + partes[1];
+    }
+
     function formatDecimalForPost(value) {
         return String(toNumber(value)).replace('.', ',');
     }
@@ -232,8 +246,8 @@
 
     function setCurrentProductPrice($form, price) {
         var formatted = toNumber(price) > 0 ? formatNumber(price) : '';
-        $form.find('#txtPrecioActualProducto').val(formatted);
-        $form.find('#lblPrecioActualProducto').text(formatted || '-');
+        $form.find('#txtPrecioActualProducto').val(formatted); // oculto: se lee con toNumber, queda "1234.50"
+        $form.find('#lblPrecioActualProducto').text(toNumber(price) > 0 ? formatNumberAr(price) : '-'); // solo pantalla
     }
 
     function updatePrecioVentaWarning($form) {
@@ -358,7 +372,7 @@
 
         $form.find('#panelCargaContinuaProducto').toggle(enabled);
         $form.find('#lblProductoContinuo').text(productName || '-');
-        $form.find('#lblPrecioContinuo').text(priceText && toNumber(priceText) > 0 ? formatNumber(priceText) : '-');
+        $form.find('#lblPrecioContinuo').text(priceText && toNumber(priceText) > 0 ? formatNumberAr(priceText) : '-');
     }
 
     function syncContinuousMediaState($form) {
@@ -366,11 +380,12 @@
         var priceText = $.trim($form.find('#txtPrecioMedia').val() || '');
 
         $form.find('#panelCargaContinuaMedia').toggle(enabled);
-        $form.find('#lblPrecioMediaContinuo').text(priceText ? formatNumber(priceText) : '-');
+        $form.find('#lblPrecioMediaContinuo').text(priceText ? formatNumberAr(priceText) : '-');
     }
 
     function updateSubtotalPreview($form) {
-        $form.find('#txtSubtotalLinea').val(formatNumber(getCurrentSubtotal($form)));
+        // Solo lectura (readonly): nadie lo vuelve a leer, se muestra en formato argentino.
+        $form.find('#txtSubtotalLinea').val(formatNumberAr(getCurrentSubtotal($form)));
     }
 
     function syncPrecioVentaMargen($form, source) {
@@ -486,8 +501,8 @@
         });
 
         $form.find('#totalItems').text(state.lineas.length);
-        $form.find('#totalKg').text(formatNumber(totalKg));
-        $form.find('#totalImporte').text(formatNumber(totalImporte));
+        $form.find('#totalKg').text(formatNumberAr(totalKg));
+        $form.find('#totalImporte').text(formatNumberAr(totalImporte));
 
         if (permiteMediaRes($form) && esMediaRes($form)) {
             $form.find('#KgsMedias').val(formatNumber(totalKg));
@@ -515,7 +530,10 @@
         }
 
         // Cada fila sirve para las dos vistas (tabla-cards-lista-edicion, ver tabla-cards.css):
-        // - desktop: las 8 columnas de siempre; las celdas .cc-solo-card no se ven.
+        // - desktop: 8 columnas (#, detalle, cantidad, precio, TOTAL, p. venta, margen, quitar); P. venta y Margen van
+        //   despues del total y con la marca .compra-col-venta porque no forman parte de la compra (actualizan el
+        //   precio de venta). Las celdas .cc-solo-card no se ven. El orden en el DOM no importa en celular: la
+        //   tarjeta ubica cada celda por su clase (.cc-l-*), no por posicion.
         // - celular: renglon de arriba "N · producto" (.cc-l-prod) y total (.cc-l-kg); abajo codigo/tropa con
         //   cantidad × precio (.cc-l-cod); si la linea tiene ajustes, un tercer renglon con ellos (.cc-l-extra);
         //   quitar a la derecha (.cc-l-acc).
@@ -535,14 +553,14 @@
                 var tropa = String(linea.nroTropa || '').trim();
                 html += '<tr data-index="' + index + '">'
                     + '<td class="text-center font-weight-bold cc-vacio">' + numeroLinea + '</td>'
-                    + '<td class="cc-l-prod">' + numeroCard(numeroLinea) + '<strong>Media</strong></td>'
-                    + '<td class="text-right cc-solo-tabla">' + formatNumber(linea.kgMedia) + '</td>'
-                    + '<td class="text-right cc-solo-tabla">' + formatNumber(linea.precioMedia) + '</td>'
-                    + '<td class="text-right cc-solo-tabla">-</td>'
-                    + '<td class="text-right cc-solo-tabla">-</td>'
-                    + '<td class="text-right cc-l-kg">' + formatNumber(totalMedia) + '</td>'
+                    + '<td class="cc-l-prod compra-detalle-cell">' + numeroCard(numeroLinea) + '<strong>Media</strong></td>'
+                    + '<td class="text-right cc-solo-tabla">' + formatNumberAr(linea.kgMedia) + '</td>'
+                    + '<td class="text-right cc-solo-tabla">' + formatNumberAr(linea.precioMedia) + '</td>'
+                    + '<td class="text-right cc-l-kg compra-col-total">' + formatNumberAr(totalMedia) + '</td>'
+                    + '<td class="text-right cc-solo-tabla compra-col-venta compra-col-venta-inicio">-</td>'
+                    + '<td class="text-right cc-solo-tabla compra-col-venta">-</td>'
                     + '<td class="cc-l-cod cc-solo-card">' + (tropa ? 'Tropa ' + escapeHtml(tropa) + ' · ' : '')
-                    + formatNumber(linea.kgMedia) + ' × ' + formatNumber(linea.precioMedia) + '</td>'
+                    + formatNumberAr(linea.kgMedia) + ' × ' + formatNumberAr(linea.precioMedia) + '</td>'
                     + botonQuitar(index)
                     + '</tr>';
             } else {
@@ -550,15 +568,16 @@
                 var extras = describirAjustesLinea(linea);
                 html += '<tr data-index="' + index + '">'
                     + '<td class="text-center font-weight-bold cc-vacio">' + numeroLinea + '</td>'
-                    + '<td class="cc-l-prod">' + numeroCard(numeroLinea) + '<strong>' + escapeHtml(linea.corteNombre || '') + '</strong>'
-                    + '<span class="cc-solo-tabla"><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></span></td>'
-                    + '<td class="text-right cc-solo-tabla">' + formatNumber(linea.cantKgs) + '</td>'
-                    + '<td class="text-right cc-solo-tabla">' + formatNumber(linea.precioKg) + '</td>'
-                    + '<td class="text-right cc-solo-tabla">' + (toNumber(linea.precioVenta) > 0 ? formatNumber(linea.precioVenta) : '-') + '</td>'
-                    + '<td class="text-right cc-solo-tabla">' + (toNumber(linea.margen) !== 0 ? formatNumber(linea.margen) : '-') + '</td>'
-                    + '<td class="text-right cc-l-kg">' + formatNumber(totalCorte) + '</td>'
+                    // Detalle en UN renglon: nombre + codigo al lado (el CSS lo recorta con "..." si no entra).
+                    + '<td class="cc-l-prod compra-detalle-cell">' + numeroCard(numeroLinea) + '<strong>' + escapeHtml(linea.corteNombre || '') + '</strong>'
+                    + '<small class="text-muted cc-solo-tabla">Cód. ' + escapeHtml(linea.codigo || '') + '</small></td>'
+                    + '<td class="text-right cc-solo-tabla">' + formatNumberAr(linea.cantKgs) + '</td>'
+                    + '<td class="text-right cc-solo-tabla">' + formatNumberAr(linea.precioKg) + '</td>'
+                    + '<td class="text-right cc-l-kg compra-col-total">' + formatNumberAr(totalCorte) + '</td>'
+                    + '<td class="text-right cc-solo-tabla compra-col-venta compra-col-venta-inicio">' + (toNumber(linea.precioVenta) > 0 ? formatNumberAr(linea.precioVenta) : '-') + '</td>'
+                    + '<td class="text-right cc-solo-tabla compra-col-venta">' + (toNumber(linea.margen) !== 0 ? formatNumberAr(linea.margen) : '-') + '</td>'
                     + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.codigo || '') + ' · '
-                    + formatNumber(linea.cantKgs) + ' × ' + formatNumber(linea.precioKg) + '</td>'
+                    + formatNumberAr(linea.cantKgs) + ' × ' + formatNumberAr(linea.precioKg) + '</td>'
                     + '<td class="cc-l-extra cc-solo-card' + (extras ? '' : ' cc-vacio') + '">' + escapeHtml(extras) + '</td>'
                     + botonQuitar(index)
                     + '</tr>';
@@ -569,13 +588,13 @@
         recalculate($form);
     }
 
-    // Porcentaje corto para los resumenes del celular: "21" en vez de "21.00", "-5.50" queda igual.
+    // Porcentaje corto para los resumenes del celular: "21" en vez de "21,00", "-5,50" queda igual.
     function formatPorcentajeCorto(value) {
-        return formatNumber(value).replace(/\.00$/, '');
+        return formatNumberAr(value).replace(/,00$/, '');
     }
 
     // Texto con los ajustes guardados en una linea de producto, para la tarjeta del celular
-    // (ej. "Desc. -5% · IVA 21% · P.v. 180.00 · 30%"). Vacio si la linea no tiene ninguno.
+    // (ej. "Desc. -5% · IVA 21% · P.v. 180,00 · 30%"). Vacio si la linea no tiene ninguno.
     function describirAjustesLinea(linea) {
         var partes = [];
         var descRecargo = toNumber(linea.descRecargo);
@@ -586,7 +605,7 @@
             partes.push('IVA ' + formatPorcentajeCorto(linea.ivaCompra) + '%');
         }
         if (toNumber(linea.precioVenta) > 0) {
-            partes.push('P.v. ' + formatNumber(linea.precioVenta));
+            partes.push('P.v. ' + formatNumberAr(linea.precioVenta));
         }
         if (toNumber(linea.margen) !== 0) {
             partes.push(formatPorcentajeCorto(linea.margen) + '%');

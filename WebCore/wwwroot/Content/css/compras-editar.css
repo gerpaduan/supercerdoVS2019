@@ -221,6 +221,42 @@
     background: #fff;
 }
 
+/* Columnas P. venta y Margen de la lista de lineas: NO forman parte de la compra, actualizan el precio de venta del
+   producto. Marca sutil: fondo violeta tenue y linea punteada a la izquierda de la primera. En el encabezado el tinte va
+   como background-image para no perder el fondo opaco del encabezado fijo (sticky). En celular las celdas estan ocultas
+   (.cc-solo-tabla). Total (.compra-col-total) va un poco mas marcado: es el ultimo dato de la compra. */
+.compra-tabla-wrap td.compra-col-venta {
+    background-color: rgba(111, 66, 193, .06);
+    color: #5b4a78;
+}
+
+.compra-tabla-wrap th.compra-col-venta {
+    background-image: linear-gradient(rgba(111, 66, 193, .1), rgba(111, 66, 193, .1));
+    color: #5b3f8c;
+}
+
+.compra-tabla-wrap .compra-col-venta-inicio {
+    border-left: 1px dashed rgba(111, 66, 193, .45);
+}
+
+.compra-tabla-wrap td.compra-col-total {
+    font-weight: 600;
+}
+
+html.dark-mode .compra-page .compra-tabla-wrap td.compra-col-venta {
+    background-color: rgba(167, 139, 250, .1);
+    color: #cdbff0;
+}
+
+html.dark-mode .compra-page .compra-tabla-wrap th.compra-col-venta {
+    background-image: linear-gradient(rgba(167, 139, 250, .16), rgba(167, 139, 250, .16));
+    color: #c4b5fd;
+}
+
+html.dark-mode .compra-page .compra-tabla-wrap .compra-col-venta-inicio {
+    border-left-color: rgba(167, 139, 250, .5);
+}
+
 .compra-meta-box {
     margin-bottom: 0;
     font-size: .78rem;
@@ -505,6 +541,18 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         display: block;
     }
 
+    /* Los campos de Desc./Recargo, IVA y Margen estan en la fila de carga / debajo de los ajustes (no dentro de las fichas):
+       con los "Ajustes" plegados se ocultan igual que las fichas. !important para ganarle al display inline de .toggle(). */
+    .compra-linea-panel:has(.compra-ajustes-grid:not(.compra-ajustes-abierto)) #panelDescRecargo,
+    .compra-linea-panel:has(.compra-ajustes-grid:not(.compra-ajustes-abierto)) #panelIva,
+    .compra-linea-panel:has(.compra-ajustes-grid:not(.compra-ajustes-abierto)) #panelPrecioVentaMargen {
+        display: none !important;
+    }
+
+    #panelPrecioVentaMargen {
+        margin-top: .5rem;
+    }
+
     .compra-ajustes-grid.compra-ajustes-abierto .compra-ajustes-chevron {
         transform: rotate(180deg);
     }
@@ -626,16 +674,44 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
 
     /* Cabecera: Tipo | Sucursal | Fecha | Proveedor | Remito | Cta. cte. en una sola fila. Las dos .row de Bootstrap
        pasan a display:contents para que sus columnas sean celdas del grid. Sin selector de tipo no hay primera celda. */
+    /* La ultima columna (tarjeta Cuenta corriente) es max-content y NO auto: con "auto" y las columnas anteriores ya
+       en su minimo, la tarjeta quedaba en 0 y se salia de la pantalla (2026-10-30). Los minimos de las demas
+       bajaron: la fila necesita ~943 px, o sea ventanas de 1270 px o mas (con el menu lateral); con menos se usa el
+       diseño de dos renglones de mas abajo. */
     body .compra-page .compra-cabecera {
         display: grid;
-        grid-template-columns: minmax(7rem, 8rem) minmax(9rem, 11rem) minmax(12.5rem, 13rem) minmax(16rem, 1fr) minmax(9rem, 12rem) auto;
+        grid-template-columns: minmax(6.5rem, 7.5rem) minmax(8rem, 9.5rem) minmax(12rem, 12.5rem) minmax(13rem, 1fr) minmax(7.5rem, 9rem) max-content;
         gap: 0 .5rem;
         align-items: end;
         margin-bottom: .5rem;
     }
 
     body .compra-page .compra-cabecera.compra-cabecera-sin-tipo {
-        grid-template-columns: minmax(9rem, 11rem) minmax(12.5rem, 13rem) minmax(16rem, 1fr) minmax(9rem, 12rem) auto;
+        grid-template-columns: minmax(8rem, 9.5rem) minmax(12rem, 12.5rem) minmax(13rem, 1fr) minmax(7.5rem, 9rem) max-content;
+    }
+
+    /* Ventana angosta (992-1269 px): la fila unica necesita ~943 px y no entra (con 1100 px la tarjeta Cuenta corriente
+       quedaba FUERA de la ventana). Se parte en dos renglones: Tipo | Sucursal | Fecha | Cuenta corriente, y debajo
+       Proveedor (ancho de los tres primeros) | Remito (ancho de la columna de Cuenta corriente). Como la tabla pierde ~3,5 rem de
+       alto por el segundo renglon, tambien se sube su reserva. */
+    @media (max-width: 1269.98px) {
+        body .compra-page .compra-cabecera {
+            grid-template-columns: minmax(6.5rem, .8fr) minmax(8rem, 1.2fr) minmax(12rem, 1.6fr) max-content;
+            grid-template-areas: "tipo sucursal fecha cta" "proveedor proveedor proveedor remito";
+            row-gap: .35rem;
+        }
+
+        body .compra-page .compra-cabecera.compra-cabecera-sin-tipo {
+            grid-template-columns: minmax(8rem, 1.2fr) minmax(12rem, 1.6fr) max-content;
+            grid-template-areas: "sucursal fecha cta" "proveedor proveedor remito";
+        }
+
+        body .compra-page .compra-cabecera .compra-col-tipo { grid-area: tipo; }
+        body .compra-page .compra-cabecera .compra-col-sucursal { grid-area: sucursal; }
+        body .compra-page .compra-cabecera .compra-col-fecha { grid-area: fecha; }
+        body .compra-page .compra-cabecera .compra-col-proveedor { grid-area: proveedor; }
+        body .compra-page .compra-cabecera .compra-col-remito { grid-area: remito; }
+        body .compra-page .compra-cabecera .compra-cta-col { grid-area: cta; }
     }
 
     body .compra-page .compra-cabecera > .row {
@@ -675,8 +751,8 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         background: var(--ui-surface-alt, #f3f4f6);
         border: 1px solid rgba(0, 0, 0, .06);
         border-radius: .6rem;
-        padding: .45rem .7rem .55rem;
-        margin-bottom: .5rem;
+        padding: .45rem .7rem .4rem;
+        margin-bottom: .4rem;
     }
 
     body .compra-page .compra-linea-header {
@@ -696,21 +772,68 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         margin-bottom: .4rem !important;
     }
 
-    /* Fila de carga: Codigo | Producto | Cantidad | Precio | Subtotal. Producto se queda con todo el sobrante. */
+    /* Fila de carga: Codigo | Producto | Cantidad | Precio | [Desc./Rec. %] | [IVA %] | Subtotal. Los dos campos entre corchetes
+       aparecen solo si su interruptor esta encendido (compras.js los muestra con .toggle(): con grilla de columnas fijas
+       dejarian un hueco, por eso es flex). Cada celda parte de su MINIMO (flex-basis) y crece hasta su maximo; Producto no
+       tiene maximo y se queda con el sobrante. Si la suma de minimos no entra (ambos ajustes + ventana angosta) la ultima
+       celda (Subtotal) baja de renglon en vez de comprimir los campos. */
     body .compra-page .compra-carga-row {
-        display: grid;
-        grid-template-columns: minmax(12.5rem, 13rem) minmax(22rem, 1fr) minmax(5.75rem, 7rem) minmax(6rem, 8rem) minmax(7.5rem, 9rem);
+        display: flex;
+        flex-wrap: wrap;
         gap: 0 .5rem;
-        align-items: end;
+        align-items: flex-end;
         margin: 0 0 .4rem;
     }
 
     body .compra-page .compra-carga-row > [class*="col-"] {
-        flex: none;
         width: auto;
         max-width: none;
         min-width: 0;
         padding: 0;
+    }
+
+    body .compra-page .compra-carga-row > .compra-col-codigo { flex: 1 1 12.5rem; max-width: 13rem; }
+    /* Producto: base 17rem (no 22): el salto de renglon se decide con la base, y con Desc./Rec. + IVA encendidos la suma
+       de bases tiene que entrar en ~1030 px (1366 de ventana). Sin ajustes igual crece hasta ocupar el sobrante. */
+    body .compra-page .compra-carga-row > .compra-col-producto { flex: 1 1 17rem; min-width: 14rem; }
+    body .compra-page .compra-carga-row > .compra-col-cantidad { flex: 1 1 5.75rem; max-width: 7rem; }
+    body .compra-page .compra-carga-row > .compra-col-precio { flex: 1 1 6rem; max-width: 8rem; }
+    body .compra-page .compra-carga-row > .compra-col-desc { flex: 1 1 4.75rem; max-width: 5.5rem; }
+    body .compra-page .compra-carga-row > .compra-col-iva { flex: 1 1 4.25rem; max-width: 5rem; }
+    body .compra-page .compra-carga-row > .compra-col-subtotal { flex: 1 1 7.5rem; max-width: 9rem; }
+
+    body .compra-page .compra-carga-row .form-group > label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    /* Primer renglon del panel "Agregar producto": titulo + "cargar varias veces" (.compra-linea-header) a la izquierda, y
+       a su lado los interruptores de ajustes + boton Agregar (#compraAjustesGrid). Debajo: la fila de carga y, con Margen
+       encendido, su franja. Es solo CSS (grilla del panel): el DOM sigue siendo header, carga, ajustes. */
+    body .compra-page #panelLineaCorte {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        column-gap: .5rem;
+        row-gap: 0;
+        align-items: center;
+    }
+
+    body .compra-page #panelLineaCorte > * {
+        grid-column: 1 / -1;
+        min-width: 0;
+    }
+
+    body .compra-page #panelLineaCorte > .compra-linea-header {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    body .compra-page #panelLineaCorte > #compraAjustesGrid {
+        grid-column: 2;
+        grid-row: 1;
+        margin: 0 0 .35rem !important;
     }
 
     body .compra-page .compra-carga-row .form-group {
@@ -744,7 +867,7 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: .35rem .5rem;
+        gap: .35rem .4rem;
         margin: 0 !important;
     }
 
@@ -766,7 +889,7 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         align-items: center;
         gap: .25rem .6rem;
         height: auto !important;
-        padding: .2rem .7rem !important;
+        padding: .15rem .55rem !important;
         border-radius: 1rem !important;
     }
 
@@ -774,48 +897,54 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         margin-bottom: 0 !important;
     }
 
-    body .compra-page .compra-ajuste-card > .row {
-        flex-wrap: nowrap;
-        margin: 0;
+    /* Ficha con su interruptor encendido: borde de acento (los campos ya no estan dentro de la ficha, se ven en la fila
+       de carga o en la franja de Margen). */
+    body .compra-page .compra-ajuste-card:has(.custom-control-input:checked) {
+        border-color: rgba(13, 110, 253, .55) !important;
     }
 
-    body .compra-page .compra-ajuste-card > .row > [class*="col-"] {
-        flex: none;
-        width: auto;
-        max-width: none;
-        padding: 0;
-    }
-
-    body .compra-page .compra-ajuste-card .form-control {
-        width: 5.5rem;
-        min-height: 1.75rem;
-        padding: .1rem .45rem;
-    }
-
-    /* Desc./Recargo e IVA: el "Porcentaje" se lee igual con el chip; queda solo para lectores de pantalla. */
-    body .compra-page .compra-ajuste-card > .row .form-group > label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-    }
-
+    /* El texto de ayuda de Desc./Recargo queda en el title del campo. */
     body .compra-page #panelDescRecargo .form-text {
         display: none;
     }
 
+    /* Margen / precio de venta: franja propia debajo de la fila de carga (un renglon: precio actual, modo, margen y
+       precio de venta). Es el precio de venta, no el costo: por eso queda aparte del subtotal. */
     body .compra-page #panelPrecioVentaMargen {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: .25rem .75rem;
+        gap: .25rem .9rem;
+        margin: .1rem 0 0;
+        padding: .3rem .6rem;
+        border: 1px solid rgba(13, 110, 253, .25);
+        border-radius: .5rem;
+        background: rgba(13, 110, 253, .05);
+    }
+
+    body .compra-page #panelPrecioVentaMargen::before {
+        content: "Precio de venta";
+        font-size: .68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .01em;
+        color: #1d4f91;
+        white-space: nowrap;
+    }
+
+    body .compra-page #panelPrecioVentaMargen .form-control {
+        width: 6.5rem;
+        min-height: 1.75rem;
+        padding: .1rem .45rem;
     }
 
     body .compra-page #panelPrecioVentaMargen > .alert {
         margin: 0 !important;
-        padding: .15rem .5rem;
+        padding: .1rem .5rem !important;
+        min-height: 0;
+        font-size: .78rem;
+        line-height: 1.3;
+        border-radius: .4rem;
     }
 
     body .compra-page #panelPrecioVentaMargen .custom-control-inline {
@@ -824,8 +953,17 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
 
     body .compra-page #panelPrecioVentaMargen > .row {
         flex-wrap: nowrap;
-        margin: 0 !important;
+        margin: 0 0 0 auto !important;
         gap: .5rem;
+    }
+
+    html.dark-mode body .compra-page #panelPrecioVentaMargen {
+        border-color: #34516d;
+        background: rgba(58, 130, 246, .12);
+    }
+
+    html.dark-mode body .compra-page #panelPrecioVentaMargen::before {
+        color: #cfe3fb;
     }
 
     body .compra-page #panelPrecioVentaMargen > .row > [class*="col-"] {
@@ -853,15 +991,41 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
 
     /* Tabla con scroll propio y encabezado fijo; la reserva (alto de todo lo que hay arriba y abajo) es menor
        en el modal del POS, que no tiene la barra superior del layout. */
+    /* Alto maximo de la lista = alto de la ventana menos la reserva (todo lo que hay arriba y abajo de la tabla).
+       Medido en la pagina completa (2026-10-30, 1366 px de ancho): la tabla empieza a 302 px y debajo quedan 104 px
+       (margenes, barra de acciones, pie) = 406 px = 25.4 rem. La reserva evita el scroll de pagina, que dejaria la barra
+       Guardar/Cancelar fuera de la vista (su "sticky" no actua: #content-wrapper del layout tiene overflow propio).
+       Resultado: filas de 20 px = 13 a la vista con una ventana de ~695 px de alto o mas; con menos, la tabla scrollea
+       por dentro. Si cambia el alto de lo que hay arriba, volver a medir. */
     body .compra-page .compra-tabla-wrap {
-        max-height: calc(100vh - var(--compra-tabla-reserva, 28rem));
+        max-height: calc(100vh - var(--compra-tabla-reserva, 24.7rem));
         min-height: 6rem;
         overflow-y: auto;
-        margin-bottom: .5rem !important;
+        margin-bottom: .25rem !important;
     }
 
+    /* Modal del POS / de la cuenta corriente: sin barra superior del layout (1.5 rem menos de reserva, igual que antes). */
     body .compra-page.compra-page-pos .compra-tabla-wrap {
-        --compra-tabla-reserva: 26.5rem;
+        --compra-tabla-reserva: 23.2rem;
+    }
+
+    /* Con la franja de Margen abierta el panel de carga es mas alto: la tabla cede ese lugar para que no aparezca
+       scroll de pagina (la tabla ya tiene scroll propio). */
+    body .compra-page:has(#chkAplicarPrecioVentaMargen:checked) .compra-tabla-wrap {
+        --compra-tabla-reserva: 27.2rem;
+    }
+
+    body .compra-page.compra-page-pos:has(#chkAplicarPrecioVentaMargen:checked) .compra-tabla-wrap {
+        --compra-tabla-reserva: 25.7rem;
+    }
+
+    /* Ventana angosta (992-1269 px): la cabecera ocupa dos renglones (ver arriba), la tabla cede ese alto. Va DESPUES de las
+       reservas de arriba porque tienen la misma especificidad. */
+    @media (max-width: 1269.98px) {
+        body .compra-page .compra-tabla-wrap { --compra-tabla-reserva: 28.2rem; }
+        body .compra-page.compra-page-pos .compra-tabla-wrap { --compra-tabla-reserva: 26.7rem; }
+        body .compra-page:has(#chkAplicarPrecioVentaMargen:checked) .compra-tabla-wrap { --compra-tabla-reserva: 30.7rem; }
+        body .compra-page.compra-page-pos:has(#chkAplicarPrecioVentaMargen:checked) .compra-tabla-wrap { --compra-tabla-reserva: 29.2rem; }
     }
 
     body .compra-page .compra-tabla-wrap thead th {
@@ -869,6 +1033,61 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         top: 0;
         z-index: 2;
         background: var(--ui-surface-alt, #f3f4f6);
+    }
+
+    /* Lista de items: UN renglon por item y fuente 1 pt menor (13 items a la vista en 1366x629). El detalle absorbe el
+       ancho sobrante y se recorta con "..." (td con width:100% + max-width:0, truco para que la tabla no lo ensanche). */
+    body .compra-page .compra-tabla-wrap .table {
+        font-size: .725rem;
+        margin-bottom: 0;
+    }
+
+    body .compra-page .compra-tabla-wrap .table thead th,
+    body .compra-page .compra-tabla-wrap .table > thead > tr > th {
+        font-size: .66rem !important;
+        line-height: 1.2;
+        padding: .22rem .45rem;
+        /* !important: custom.css fuerza "white-space: normal !important" en todo .table thead th y partia "# ↓" y "P. venta". */
+        white-space: nowrap !important;
+    }
+
+    body .compra-page .compra-tabla-wrap .table thead .js-line-order-toggle {
+        white-space: nowrap;
+        line-height: 1.2;
+    }
+
+    /* Fila de 20 px (height en la celda: manda sobre el contenido; el boton de quitar mide 1rem). */
+    body .compra-page .compra-tabla-wrap .table tbody td {
+        height: 1.25rem;
+        padding: 0 .45rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    body .compra-page .compra-tabla-wrap tbody td.compra-detalle-cell {
+        width: 100%;
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: .725rem;
+        line-height: 1.25;
+    }
+
+    body .compra-page .compra-tabla-wrap tbody td.compra-detalle-cell small {
+        font-size: .66rem;
+        line-height: 1.25;
+        margin-left: .4rem;
+    }
+
+    /* Quitar linea: boton chico, para que no sea el que define el alto de la fila. */
+    body .compra-page .compra-tabla-wrap .table tbody .btn-sm {
+        height: 1rem;
+        min-height: 0;
+        padding: 0 .4rem;
+        font-size: .62rem;
+        line-height: 1;
+        border-radius: .3rem;
     }
 
     /* Lateral: total grande arriba, items y cantidad en una linea. */
@@ -923,8 +1142,8 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         position: sticky;
         bottom: 0;
         z-index: 5;
-        margin-top: .5rem !important;
-        padding: .5rem 0 .1rem;
+        margin-top: .3rem !important;
+        padding: .35rem 0 .1rem;
         background: var(--ui-surface, #fff);
     }
 

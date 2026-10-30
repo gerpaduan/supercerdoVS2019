@@ -34,6 +34,9 @@
     bool mostrarSelectorTipo = Model.EmpresaPropia;
     string tipoCompraInicial = !mostrarSelectorTipo && !Model.EsEdicion ? tipoCortes : (string.IsNullOrWhiteSpace(Model.TipoCompra) ? tipoCortes : Model.TipoCompra);
     bool mostrarMediaInicial = string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase);
+    // Importes y cantidades se MUESTRAN en formato argentino (1.234,50). Es solo para pantalla: los campos que se
+    // editan y lo que se envia al guardar siguen igual (ver compras.js formatNumberAr).
+    var culturaAr = System.Globalization.CultureInfo.GetCultureInfo("es-AR");
 
     // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
     // Embutidos"): cuando esta habilitado (Postgres) reemplaza al borrador local (localStorage) y al
@@ -81,7 +84,7 @@
                 <div class="row compra-datos-principales-row">
                     @if (mostrarSelectorTipo)
                     {
-                        <div class="col-12 col-lg-3">
+                        <div class="col-12 col-lg-3 compra-col-tipo">
                             <div class="form-group">
                                 <label for="TipoCompra">Tipo compra</label>
                                 <select id="TipoCompra" name="TipoCompra" class="form-control">
@@ -96,7 +99,7 @@
                         <input type="hidden" id="TipoCompra" name="TipoCompra" value="@tipoCompraInicial" />
                     }
 
-                    <div class="col-12 col-lg-@(mostrarSelectorTipo ? "3" : "4")">
+                    <div class="col-12 col-lg-@(mostrarSelectorTipo ? "3" : "4") compra-col-sucursal">
                         <div class="form-group">
                             <label for="IdSucursal">Sucursal</label>
                             @if (Model.SucursalEditable)
@@ -119,7 +122,7 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-lg-4">
+                    <div class="col-12 col-lg-4 compra-col-fecha">
                         <div class="form-group">
                             <label for="FechaCompra">Fecha</label>
                             <input type="datetime-local"
@@ -134,7 +137,7 @@
                 </div>
 
                 <div class="row compra-datos-secundarios-row">
-                    <div class="col-12 col-lg-5">
+                    <div class="col-12 col-lg-5 compra-col-proveedor">
                         <div class="form-group">
                             <label for="razonSocial">Proveedor <small class="text-muted font-weight-normal compra-proveedor-cuit" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small></label>
                             <div class="input-group">
@@ -150,7 +153,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-3 compra-col-remito">
                         <div class="form-group">
                             <label for="NroRemito">Nro.Remito/Factura</label>
                             @Html.TextBoxFor(m => m.NroRemito, new { @class = "form-control", id = "NroRemito", maxlength = 100 })
@@ -180,7 +183,7 @@
                             <h6 class="font-weight-bold text-uppercase text-muted mb-0 mr-3">Agregar producto</h6>
                             <div class="custom-control custom-switch">
                                 <input type="checkbox" class="custom-control-input" id="chkCargaContinuaProducto" />
-                                <label class="custom-control-label" for="chkCargaContinuaProducto">Cargar varias veces este producto</label>
+                                <label class="custom-control-label" for="chkCargaContinuaProducto" title="Cargar varias veces este producto: tras agregar queda el mismo producto y precio, solo se pide la cantidad">Cargar varias veces</label>
                             </div>
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-3">
@@ -219,7 +222,7 @@
                         <audio id="compraBeep" src="@Url.Content("~/Content/sounds/focus-beep.wav")" preload="auto"></audio>
                     </div>
                     <div class="row compra-carga-row">
-                        <div class="col-12 col-md-3">
+                        <div class="col-12 col-md-3 compra-col-codigo">
                             <div class="form-group">
                                 <label for="txtCodigoProducto">Código</label>
                                 <div class="input-group">
@@ -233,7 +236,7 @@
                                 <small id="compraScannerMsg" class="text-danger d-none"></small>
                             </div>
                         </div>
-                        <div class="col-12 col-md-3">
+                        <div class="col-12 col-md-3 compra-col-producto">
                             <div class="form-group">
                                 <label for="txtProductoNombre">Producto</label>
                                 <div class="input-group">
@@ -249,20 +252,37 @@
                             </div>
                         </div>
                         @* Celular: Cantidad, Precio y Subtotal en una sola fila (col-4) para bajar la altura (2026-10-27). *@
-                        <div class="col-4 col-md-2">
+                        <div class="col-4 col-md-2 compra-col-cantidad">
                             <div class="form-group">
                                 <label for="txtCantKgs">Cantidad</label>
                                 <input type="number" id="txtCantKgs" class="form-control" min="0" step="0.01" />
                             </div>
                         </div>
-                        <div class="col-4 col-md-2">
+                        <div class="col-4 col-md-2 compra-col-precio">
                             <div class="form-group">
                                 <label for="txtPrecioKg">Precio</label>
                                 @* Monto con MoneyInputMask (compras.js): "." o "," = coma decimal y puntos de miles automaticos. *@
                                 <input type="text" id="txtPrecioKg" class="form-control" inputmode="decimal" autocomplete="off" />
                             </div>
                         </div>
-                        <div class="col-4 col-md-2">
+                        @* Campos de los ajustes (Desc./Recargo e IVA): aparecen en la fila de carga, despues de Precio, cuando se
+                           enciende su interruptor (compras.js los muestra/oculta con .toggle() por id). Orden = orden del calculo
+                           (precio -> descuento/recargo -> IVA -> subtotal) y del Enter (focusNextAfterPrice). En celular
+                           (order-last) van al final de la fila y solo se ven con los "Ajustes" desplegados (ver compras-editar.css). *@
+                        <div id="panelDescRecargo" class="col-6 col-md-2 order-last order-lg-0 compra-col-desc" style="display:none;">
+                            <div class="form-group">
+                                <label for="txtDescRecargo">Desc./Rec. %</label>
+                                <input type="number" id="txtDescRecargo" class="form-control" step="0.01" value="0" title="Negativo descuenta, positivo recarga." />
+                                <small class="form-text text-muted">Negativo descuenta, positivo recarga.</small>
+                            </div>
+                        </div>
+                        <div id="panelIva" class="col-6 col-md-2 order-last order-lg-0 compra-col-iva" style="display:none;">
+                            <div class="form-group">
+                                <label for="txtIvaCompra">IVA %</label>
+                                <input type="number" id="txtIvaCompra" class="form-control" min="0" step="0.01" value="0" />
+                            </div>
+                        </div>
+                        <div class="col-4 col-md-2 compra-col-subtotal">
                             <div class="form-group">
                                 <label for="txtSubtotalLinea">Subtotal</label>
                                 <input type="text" id="txtSubtotalLinea" class="form-control" readonly />
@@ -288,15 +308,6 @@
                                     <input type="checkbox" class="custom-control-input" id="chkAplicarDescRecargo" />
                                     <label class="custom-control-label" for="chkAplicarDescRecargo">Desc./Recargo</label>
                                 </div>
-                                <div id="panelDescRecargo" class="row" style="display:none;">
-                                    <div class="col-12">
-                                        <div class="form-group mb-0">
-                                            <label for="txtDescRecargo">Porcentaje</label>
-                                            <input type="number" id="txtDescRecargo" class="form-control" step="0.01" value="0" title="Negativo descuenta, positivo recarga." />
-                                            <small class="form-text text-muted">Negativo descuenta, positivo recarga.</small>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -305,14 +316,6 @@
                                 <div class="custom-control custom-switch mb-2">
                                     <input type="checkbox" class="custom-control-input" id="chkAplicarIva" />
                                     <label class="custom-control-label" for="chkAplicarIva">IVA</label>
-                                </div>
-                                <div id="panelIva" class="row" style="display:none;">
-                                    <div class="col-12">
-                                        <div class="form-group mb-0">
-                                            <label for="txtIvaCompra">Porcentaje</label>
-                                            <input type="number" id="txtIvaCompra" class="form-control" min="0" step="0.01" value="0" />
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -323,41 +326,45 @@
                                     <input type="checkbox" class="custom-control-input" id="chkAplicarPrecioVentaMargen" />
                                     <label class="custom-control-label" for="chkAplicarPrecioVentaMargen">Margen / precio de venta</label>
                                 </div>
-                                <div id="panelPrecioVentaMargen" style="display:none;">
-                                    <div class="alert alert-light border py-2 px-3 mb-2">
-                                        Precio actual del producto:
-                                        <strong id="lblPrecioActualProducto">-</strong>
-                                    </div>
-                                    <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" id="optMargen" name="modoPrecioVenta" class="custom-control-input" checked />
-                                        <label class="custom-control-label" for="optMargen">Margen %</label>
-                                    </div>
-                                    <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" id="optPrecioVenta" name="modoPrecioVenta" class="custom-control-input" />
-                                        <label class="custom-control-label" for="optPrecioVenta">Nuevo precio venta</label>
-                                    </div>
-                                    <div class="row mt-2">
-                                        <div class="col-12 col-md-4">
-                                            <div class="form-group mb-md-0">
-                                                <label for="txtMargen">Margen</label>
-                                                <input type="number" id="txtMargen" class="form-control" step="0.01" />
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-md-5">
-                                            <div class="form-group mb-0">
-                                                <label for="txtPrecioVenta">Precio venta</label>
-                                                <input type="number" id="txtPrecioVenta" class="form-control" min="0" step="0.01" />
-                                                <small id="lblAdvertenciaPrecioVenta" class="form-text text-danger" style="display:none;">El nuevo precio de venta es menor al precio actual del producto.</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                         <div class="col-12 col-lg-2 d-flex align-items-end justify-content-lg-end compra-agregar-col">
                             <button type="button" class="btn btn-primary mt-2 mt-lg-0" id="btnAgregarLineaCorte">
                                 <i class="fas fa-plus"></i> Agregar producto
                             </button>
+                        </div>
+                    </div>
+
+                    @* Margen / precio de venta: franja propia debajo de la fila de carga (no cambia el costo ni el subtotal: es el precio de
+                       venta del producto, se decide despues de cargar el costo). Era parte de la ficha del interruptor; mismos ids. En
+                       celular se ve solo con los "Ajustes" desplegados (compras-editar.css). *@
+                    <div id="panelPrecioVentaMargen" style="display:none;">
+                        <div class="alert alert-light border py-2 px-3 mb-2">
+                            Precio actual:
+                            <strong id="lblPrecioActualProducto">-</strong>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" id="optMargen" name="modoPrecioVenta" class="custom-control-input" checked />
+                            <label class="custom-control-label" for="optMargen">Margen %</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" id="optPrecioVenta" name="modoPrecioVenta" class="custom-control-input" />
+                            <label class="custom-control-label" for="optPrecioVenta">Nuevo precio venta</label>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12 col-md-4">
+                                <div class="form-group mb-md-0">
+                                    <label for="txtMargen">Margen</label>
+                                    <input type="number" id="txtMargen" class="form-control" step="0.01" />
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-5">
+                                <div class="form-group mb-0">
+                                    <label for="txtPrecioVenta">Precio venta</label>
+                                    <input type="number" id="txtPrecioVenta" class="form-control" min="0" step="0.01" />
+                                    <small id="lblAdvertenciaPrecioVenta" class="form-text text-danger" style="display:none;">El nuevo precio de venta es menor al precio actual del producto.</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -417,12 +424,13 @@
                 </div>
                 @* En celular las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                    las clases de cada celda las pone renderLineas() en compras.js, que reemplaza las filas de Razor al iniciar.
-                   En desktop la tabla no cambia. *@
+                   En desktop: un renglon por item, P. venta y Margen despues del Total con marca propia, numeros en formato
+                   argentino (compras-editar.css, "Compras/Editar: 13 items" en docs/DECISIONS.md). *@
                 <div class="table-responsive mb-3 compra-tabla-wrap">
                     <table class="table table-hover table-sm tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasCompra">
                         <thead class="thead-light">
                             <tr>
-                                <th style="width: 70px;">
+                                <th style="width: 2.8rem;">
                                     <button type="button" class="btn btn-link btn-sm p-0 font-weight-bold text-dark js-line-order-toggle" data-action="toggle-line-order" data-edit-readonly-ignore="true" title="Ordenar por número">
                                         #
                                         <span class="js-line-order-indicator" aria-hidden="true">↓</span>
@@ -431,10 +439,12 @@
                                 <th>Detalle</th>
                                 <th class="text-right">Cantidad</th>
                                 <th class="text-right">Precio</th>
-                                <th class="text-right">P. venta</th>
-                                <th class="text-right">Margen</th>
                                 <th class="text-right">Total</th>
-                                <th style="width: 70px;"></th>
+                                @* P. venta y Margen NO forman parte de la compra: actualizan el precio de venta del producto. Por eso van despues
+                                   del Total y con una marca sutil (fondo tenue + linea punteada, ver compras-editar.css). *@
+                                <th class="text-right compra-col-venta compra-col-venta-inicio" title="No forma parte de la compra: actualiza el precio de venta del producto"><i class="fas fa-tag mr-1" aria-hidden="true"></i>P. venta</th>
+                                <th class="text-right compra-col-venta" title="No forma parte de la compra: margen del nuevo precio de venta">Margen</th>
+                                <th style="width: 2.2rem;"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -449,11 +459,11 @@
                                         <tr>
                                             <td class="text-center font-weight-bold">@numeroLinea</td>
                                             <td class="compra-detalle-cell"><strong>Tropa:</strong> @(string.IsNullOrWhiteSpace(linea.NroTropa) ? "-" : linea.NroTropa)</td>
-                                            <td class="text-right">@linea.KgMedia.ToString("0.00")</td>
-                                            <td class="text-right">@linea.PrecioMedia.ToString("0.00")</td>
-                                            <td class="text-right">-</td>
-                                            <td class="text-right">-</td>
-                                            <td class="text-right">@linea.TotalLinea.ToString("0.00")</td>
+                                            <td class="text-right">@linea.KgMedia.ToString("N2", culturaAr)</td>
+                                            <td class="text-right">@linea.PrecioMedia.ToString("N2", culturaAr)</td>
+                                            <td class="text-right compra-col-total">@linea.TotalLinea.ToString("N2", culturaAr)</td>
+                                            <td class="text-right compra-col-venta compra-col-venta-inicio">-</td>
+                                            <td class="text-right compra-col-venta">-</td>
                                             <td></td>
                                         </tr>
                                     }
@@ -462,14 +472,14 @@
                                         <tr>
                                             <td class="text-center font-weight-bold">@numeroLinea</td>
                                             <td class="compra-detalle-cell">
-                                                <strong>@linea.CorteNombre</strong><br />
-                                                <small class="text-muted">Código: @(linea.Codigo.HasValue ? linea.Codigo.Value.ToString() : "")@(linea.Balanza ? " | Balanza" : "")</small>
+                                                <strong>@linea.CorteNombre</strong>
+                                                <small class="text-muted">Cód. @(linea.Codigo.HasValue ? linea.Codigo.Value.ToString() : "")@(linea.Balanza ? " | Balanza" : "")</small>
                                             </td>
-                                            <td class="text-right">@linea.CantKgs.ToString("0.00")</td>
-                                            <td class="text-right">@linea.PrecioKg.ToString("0.00")</td>
-                                            <td class="text-right">@(linea.PrecioVenta > 0 ? linea.PrecioVenta.ToString("0.00") : "-")</td>
-                                            <td class="text-right">@(linea.Margen != 0 ? linea.Margen.ToString("0.00") : "-")</td>
-                                            <td class="text-right">@linea.TotalLinea.ToString("0.00")</td>
+                                            <td class="text-right">@linea.CantKgs.ToString("N2", culturaAr)</td>
+                                            <td class="text-right">@linea.PrecioKg.ToString("N2", culturaAr)</td>
+                                            <td class="text-right compra-col-total">@linea.TotalLinea.ToString("N2", culturaAr)</td>
+                                            <td class="text-right compra-col-venta compra-col-venta-inicio">@(linea.PrecioVenta > 0 ? linea.PrecioVenta.ToString("N2", culturaAr) : "-")</td>
+                                            <td class="text-right compra-col-venta">@(linea.Margen != 0 ? linea.Margen.ToString("N2", culturaAr) : "-")</td>
                                             <td></td>
                                         </tr>
                                     }
@@ -504,11 +514,11 @@
                             </div>
                             <div class="d-flex justify-content-between">
                                 <span>Total cantidad</span>
-                                <strong id="totalKg">@Model.TotalKg.ToString("0.00")</strong>
+                                <strong id="totalKg">@Model.TotalKg.ToString("N2", culturaAr)</strong>
                             </div>
                             <div class="d-flex justify-content-between compra-total-principal">
                                 <span>Total compra</span>
-                                <strong id="totalImporte">$ @Model.TotalImporte.ToString("0.00")</strong>
+                                <strong id="totalImporte">@Model.TotalImporte.ToString("N2", culturaAr)</strong>
                             </div>
                         </div>
                         <div class="border rounded p-3 bg-white compra-observaciones-box">
