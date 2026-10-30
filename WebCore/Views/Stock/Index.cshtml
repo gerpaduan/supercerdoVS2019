@@ -16,7 +16,11 @@
 }
 
 <div class="container-fluid stock-index-page">
-    <div class="d-flex justify-content-end mb-3">
+    @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila (fechas primero) y debajo una barra con
+       Total Kg, estado, "Ver detalles" y todos los botones (Ingreso ... Ver eliminados); las tarjetas de botones se disuelven
+       (fc-contents). Por debajo de 1200 px conserva el orden de siempre. Estilos en Shared/_FiltrosCompactosStyles. *@
+    <div class="fc-top stock-top">
+    <div class="d-flex justify-content-end mb-3 fc-contents">
         <a class="btn btn-outline-primary stock-btn-lineas" href="@Url.Action("Lineas", "Stock", new { idSucursal = idSucursal, tipoCompra = tipoCompra, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })">
             <i class="fas fa-stream mr-1"></i> Ver lineas
         </a>
@@ -28,7 +32,7 @@
         }
     </div>
 
-    <div class="card shadow-sm mb-3 stock-acciones-card">
+    <div class="card shadow-sm mb-3 stock-acciones-card fc-contents">
         <div class="card-body">
             <div class="stock-acciones-grid">
                 <a class="btn btn-success stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Ingreso Stock" })">
@@ -55,16 +59,16 @@
         </div>
     </div>
 
-    <div class="card shadow-sm mb-3 stock-filtros-card">
+    <div class="card shadow-sm mb-3 stock-filtros-card fc-card">
         <div class="card-body">
             <form method="get" action="@Url.Action("Index", "Stock")">
-                <div class="stock-filtros-stack">
-                    <div id="alertaFiltrosPendientesStock" class="alert alert-warning d-none mb-0" role="alert">
+                <div class="stock-filtros-stack fc-grid">
+                    <div id="alertaFiltrosPendientesStock" class="alert alert-warning d-none mb-0 fc-alerta" role="alert">
                         Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
                     </div>
 
-                    <div class="stock-filtros-row stock-filtros-row-sucursal">
-                        <div class="form-group mb-0">
+                    <div class="stock-filtros-row stock-filtros-row-sucursal fc-fila">
+                        <div class="form-group mb-0 fc-c3">
                             <label class="stock-filtro-label">Sucursal</label>
                             <select name="idSucursal" class="form-control" id="idSucursalStock">
                                 <option value="0" selected="@(idSucursal == 0 ? "selected" : null)">Todas</option>
@@ -75,7 +79,7 @@
                             </select>
                         </div>
 
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-0 fc-c4">
                             <label class="stock-filtro-label">Acción</label>
                             <select name="tipoCompra" class="form-control" id="tipoCompraStock">
                                 <option value="Ver Todos" selected="@(tipoCompra == "Ver Todos" ? "selected" : null)">Todas</option>
@@ -88,35 +92,35 @@
                         </div>
                     </div>
 
-                    <div class="stock-filtros-row stock-filtros-row-fechas">
-                        <div class="form-group mb-0">
+                    <div class="stock-filtros-row stock-filtros-row-fechas fc-fila">
+                        <div class="form-group mb-0 fc-c1">
                             <label class="stock-filtro-label">Desde</label>
                             <input type="date" id="fechaDesde" name="fechaDesde" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
                             @Html.Partial("_AdvertenciaPermisoFecha")
                         </div>
 
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-0 fc-c2">
                             <label class="stock-filtro-label">Hasta</label>
                             <input type="date" name="fechaHasta" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
                         </div>
 
-                        <div class="form-group mb-0 stock-filtro-accion">
+                        <div class="form-group mb-0 stock-filtro-accion fc-c5">
                             <label class="stock-filtro-label d-none d-lg-block">&nbsp;</label>
                             <button type="submit" class="btn btn-primary btn-block" id="btnBuscarStock">
                                 <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                             </button>
                         </div>
                     </div>
-
-                    <div>
-                        <div id="estadoBusquedaStock" class="text-muted small">Resultados actualizados.</div>
-                    </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="row mb-3">
+    @* Estado de la busqueda: vive fuera del form para ocupar un lugar en la barra de escritorio.
+       En escritorio tambien avisa "Cambiaste las fechas" (ahi se oculta la alerta amarilla). *@
+    <div id="estadoBusquedaStock" class="fc-estado text-muted small mb-2">Resultados actualizados.</div>
+
+    <div class="row mb-3 fc-totales">
         <div class="col-12 col-md-4">
             <div class="card border-left-primary shadow-sm h-100 index-total-card">
                 <div class="card-body">
@@ -127,11 +131,12 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-end align-items-center mb-2">
+    <div class="d-flex justify-content-end align-items-center mb-2 fc-vista">
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="switchVistaCompletaStock">
             <label class="custom-control-label" for="switchVistaCompletaStock">Ver detalles</label>
         </div>
+    </div>
     </div>
 
     <div class="card shadow-sm">
@@ -186,11 +191,67 @@
     </div>
 </div>
 
+@Html.Partial("~/Views/Shared/_FiltrosCompactosStyles.cshtml")
+
 <style>
     .stock-acciones-card,
     .stock-filtros-card {
         border: 1px solid #e9ecef;
         border-radius: .75rem;
+    }
+
+    /* Fila unica de escritorio (_FiltrosCompactosStyles): desde, hasta, sucursal, accion, Buscar.
+       minmax: sucursal y accion crecen hasta su maximo y, si el ancho aprieta, bajan al minimo. */
+    .stock-filtros-card {
+        --fc-cols: 8.6rem 8.6rem minmax(8rem, 14rem) minmax(7rem, 10rem) 5.5rem;
+    }
+
+    /* Escritorio: las tarjetas de botones se disuelven y sus botones pasan a la barra (Ingreso ... Ajuste,
+       Ver lineas, Ver eliminados), a la misma altura que Buscar. */
+    @@media (min-width: 1200px) {
+        body.app-shell .stock-top .stock-acciones-card .card-body,
+        body.app-shell .stock-top .stock-acciones-grid {
+            display: contents;
+        }
+
+        body.app-shell .stock-top .stock-action-btn {
+            order: 4;
+            min-height: 1.95rem;
+            padding: .15rem .6rem;
+            font-size: .84rem;
+            white-space: nowrap;
+        }
+
+        body.app-shell .stock-top .stock-btn-lineas {
+            order: 5;
+            min-height: 1.95rem;
+            margin-left: 0 !important;
+            white-space: nowrap;
+        }
+
+        /* La barra de Stock va llena: el aviso de fechas pendientes se cortaba, asi que baja a su propio renglon. */
+        body.app-shell .stock-top > .fc-estado.fc-estado-pendiente {
+            order: 9;
+            flex: 0 0 100%;
+        }
+    }
+
+    /* 1200-1299 px: con el menu lateral quedan ~940 px utiles y la barra (Total Kg, Ver detalles y siete botones)
+       no entra en un renglon: "Ver eliminados" baja al segundo. Se ajusta el relleno para que baje lo menos posible
+       y los dos botones de la derecha se alinean al borde derecho en vez de quedar huerfanos a la izquierda. */
+    @@media (min-width: 1200px) and (max-width: 1299.98px) {
+        body.app-shell .stock-top {
+            column-gap: .5rem;
+        }
+
+        body.app-shell .stock-top .stock-action-btn {
+            padding: .15rem .4rem;
+        }
+
+        body.app-shell .stock-top .stock-btn-lineas {
+            padding: .15rem .4rem;
+            margin-left: auto !important;
+        }
     }
 
     .stock-index-page .card-body {
@@ -498,9 +559,25 @@
                         || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
             }
 
+            var estadoBusqueda = document.getElementById("estadoBusquedaStock");
+            var btnBuscarStock = document.getElementById("btnBuscarStock");
+            var textoEstadoOk = estadoBusqueda ? estadoBusqueda.textContent : "";
+            var textoEstadoPendiente = "Cambiaste las fechas: tocá Buscar para actualizar.";
+
+            // Fechas cambiadas sin aplicar: en pantalla angosta se muestra la alerta amarilla; en escritorio (la
+            // alerta esta oculta por CSS) el aviso es el texto de estado y el boton Buscar en ambar.
             function actualizarAvisoPendiente() {
-                if (!alertaPendiente) return;
-                alertaPendiente.classList.toggle("d-none", !hayFechasPendientes());
+                var pendiente = hayFechasPendientes();
+                if (alertaPendiente) alertaPendiente.classList.toggle("d-none", !pendiente);
+                if (btnBuscarStock) {
+                    btnBuscarStock.classList.toggle("btn-warning", pendiente);
+                    btnBuscarStock.classList.toggle("btn-primary", !pendiente);
+                }
+                if (estadoBusqueda) {
+                    estadoBusqueda.textContent = pendiente ? textoEstadoPendiente : textoEstadoOk;
+                    estadoBusqueda.title = pendiente ? textoEstadoPendiente : "";
+                    estadoBusqueda.classList.toggle("fc-estado-pendiente", pendiente);
+                }
             }
 
             function setBuscandoStock(mensaje) {

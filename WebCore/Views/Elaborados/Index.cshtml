@@ -44,15 +44,19 @@
 
     @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
 
-    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+    @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila (fechas primero) y debajo una barra con
+       totales, estado y "Ver detalles"; por debajo de 1200 px conserva el orden de siempre. Las pestañas quedan fuera
+       (las comparten todas las pantallas de Elaborados). Estilos en Shared/_FiltrosCompactosStyles. *@
+    <div class="fc-top elaborados-top">
+    <div class="card shadow-sm mb-3 elaborados-filtros-card fc-card">
         <div class="card-body">
             <form method="get" action="@Url.Action("Index", "Elaborados")" id="formFiltrosElaborados">
-                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
+                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3 fc-alerta" role="alert">
                     Cambiaste sucursal o fechas. Presioná <strong>Buscar</strong> para actualizar la búsqueda.
                 </div>
 
-                <div class="elaborados-filtros-grid">
-                    <div class="form-group mb-0">
+                <div class="elaborados-filtros-grid fc-grid">
+                    <div class="form-group mb-0 fc-c3">
                         <label class="elaborados-filtro-label" for="idSucursal">Sucursal</label>
                         <select id="idSucursal" name="idSucursal" class="form-control js-filtro-recarga">
                             @foreach (var sucursal in sucursales)
@@ -62,38 +66,38 @@
                         </select>
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c4">
                         <label class="elaborados-filtro-label" for="elaborado">Nombre elaborado</label>
                         <input id="elaborado" name="elaborado" type="text" class="form-control js-filtro-vivo-elaborados" value="@Model.Elaborado" autocomplete="off" />
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c1">
                         <label class="elaborados-filtro-label" for="fechaDesde">Fecha desde</label>
                         <input id="fechaDesde" name="fechaDesde" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
                         @Html.Partial("_AdvertenciaPermisoFecha")
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c2">
                         <label class="elaborados-filtro-label" for="fechaHasta">Fecha hasta</label>
                         <input id="fechaHasta" name="fechaHasta" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
 
-                    <div class="form-group mb-0 elaborados-filtro-accion">
+                    <div class="form-group mb-0 elaborados-filtro-accion fc-c5">
                         <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
-                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarElaborados">
+                        <button type="submit" class="btn btn-primary btn-block" id="btnBuscarElaborados">
                             <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                         </button>
                     </div>
-                </div>
-
-                <div class="mt-2">
-                    <div id="estadoBusquedaElaborados" class="text-muted small">Resultados actualizados.</div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="row mb-3">
+    @* Estado de la busqueda: vive fuera del form para ocupar un lugar en la barra de escritorio.
+       En escritorio tambien avisa "Cambiaste sucursal o fechas" (ahi se oculta la alerta amarilla). *@
+    <div id="estadoBusquedaElaborados" class="fc-estado text-muted small mb-2">Resultados actualizados.</div>
+
+    <div class="row mb-3 fc-totales">
         <div class="col-6 col-md-4">
             <div class="card border-left-primary shadow-sm h-100 elaborados-total-card">
                 <div class="card-body">
@@ -106,7 +110,7 @@
         <div class="col-6 col-md-4">
             <div class="card border-left-primary shadow-sm h-100 elaborados-total-card">
                 <div class="card-body">
-                    <div class="elaborados-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Elaborados mostrados</div>
+                    <div class="elaborados-total-label text-xs font-weight-bold text-primary text-uppercase mb-1"><span class="fc-oculto-escritorio">Elaborados </span>mostrados</div>
                     <div class="elaborados-total-value font-weight-bold text-gray-800" id="lblCantidadElaborados">@cantidadVigentes.ToString("N0", cultura)</div>
                 </div>
             </div>
@@ -119,11 +123,12 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-end align-items-center mb-2">
+    <div class="d-flex justify-content-end align-items-center mb-2 fc-vista">
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="switchVistaCompletaElaborados">
             <label class="custom-control-label" for="switchVistaCompletaElaborados">Ver detalles</label>
         </div>
+    </div>
     </div>
 
     <div class="card shadow-sm">
@@ -134,6 +139,22 @@
 </div>
 
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@Html.Partial("~/Views/Shared/_FiltrosCompactosStyles.cshtml")
+<style>
+    /* Fila unica de escritorio (_FiltrosCompactosStyles): desde, hasta, sucursal, nombre, Buscar. Las fechas llevan
+       hora y segundos (datetime-local), por eso necesitan mas ancho que en el resto de las pantallas. */
+    .elaborados-filtros-card {
+        --fc-cols: 13rem 13rem minmax(8rem, 12rem) minmax(10rem, 1fr) 5.5rem;
+    }
+
+    /* En la barra el aviso de anulados va a continuacion de las tarjetas, sin el margen de arriba de la version angosta. */
+    @@media (min-width: 1200px) {
+        body.app-shell .elaborados-top .elaborados-anuladas-aviso {
+            margin-top: 0;
+            white-space: nowrap;
+        }
+    }
+</style>
 @* Selector de usuario de "Ver fórmula" (mismo modal que Cierre de Caja; ver formula-secreta.js). *@
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
@@ -247,6 +268,29 @@
                     limpiarStorageElaborados();
                 }
             }
+
+            // Sucursal o fechas cambiadas sin aplicar: en pantalla angosta elaborados.js muestra la alerta amarilla; en
+            // escritorio (la alerta esta oculta por CSS) el aviso es el texto de estado y el boton Buscar en ambar.
+            var estadoBusqueda = document.getElementById("estadoBusquedaElaborados");
+            var btnBuscarElaborados = document.getElementById("btnBuscarElaborados");
+            var textoEstadoOk = estadoBusqueda ? estadoBusqueda.textContent : "";
+            var textoEstadoPendiente = "Cambiaste sucursal o fechas: tocá Buscar para actualizar.";
+
+            function marcarFiltrosPendientes() {
+                if (btnBuscarElaborados) {
+                    btnBuscarElaborados.classList.add("btn-warning");
+                    btnBuscarElaborados.classList.remove("btn-primary");
+                }
+                if (estadoBusqueda) {
+                    estadoBusqueda.textContent = textoEstadoPendiente;
+                    estadoBusqueda.title = textoEstadoPendiente;
+                    estadoBusqueda.classList.add("fc-estado-pendiente");
+                }
+            }
+
+            document.querySelectorAll(".js-filtro-recarga").forEach(function (el) {
+                el.addEventListener("change", marcarFiltrosPendientes);
+            });
 
             restoreStateIfNeeded();
             saveState();

@@ -5,10 +5,16 @@ rol: usuario
 modulo: Elaborados
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-10-27
+revisada: 2026-10-30
 ---
 ## Para qué sirve
 Listado de los **elaborados registrados** (por sucursal y fechas) con el total de kilos, la cantidad de elaborados mostrados y un detalle desplegable de cada uno.
+
+## Filtros
+- En la **computadora** todos los filtros van en **una sola fila**, con las fechas primero: **Fecha desde**, **Fecha hasta** (con hora y segundos), **Sucursal**, **Nombre elaborado** y **Buscar**. Las pestañas de Elaborados quedan arriba, como siempre.
+- **Sucursal** y las fechas: al cambiarlas aparece el aviso; tocá **Buscar** para recargar. En la computadora el aviso es el texto *Cambiaste sucursal o fechas: tocá Buscar para actualizar.* de la barra de abajo y el botón **Buscar** se pone **amarillo**; en el celular sigue siendo la alerta amarilla.
+- **Nombre elaborado** filtra la lista mientras escribís (ver las tarjetas de totales).
+- En la computadora, debajo de los filtros hay una barra con **Total Kg**, **Mostrados** (la cantidad de elaborados), el aviso de anulados, el texto de estado (*Resultados actualizados.*) y **Ver detalles**. Si la ventana es angosta, el texto de estado inactivo se oculta.
 
 ## Tarjetas de totales
 - **Total Kg**: suma de la cantidad de los elaborados visibles en la tabla, **sin contar los anulados** (las filas que tienen algo en *Estado*).
@@ -23,7 +29,7 @@ En el detalle de un registro, si el producto tiene una fórmula [secreta](ayuda:
 - **Creado**: fecha y hora de creación y, debajo en gris, quién lo creó. Si el registro se **modificó**, aparece además la etiqueta amarilla *Modificado* con la fecha y hora de la última modificación y, debajo, quién la hizo.
 
 ## Resto de la pantalla
-PENDIENTE: documentar filtros, vista completa, totales y acciones (no verificado contra el código en esta revisión).
+PENDIENTE: documentar la vista completa y las acciones de fila (no verificado contra el código en esta revisión).
 
 ## En el celular
 - En pantallas angostas (celular) cada elaborado se ve como **tarjeta**: arriba el **nombre y el código**, después fecha, sucursal, **cantidad**, quién lo creó, y el estado y las observaciones si los tiene. No hace falta desplazarse de costado.
