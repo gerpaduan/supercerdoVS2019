@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 3
 permiso: Elaborado.IngresoEmbutidoRapido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-10-05
+revisada: 2026-10-30
 ---
 ## Para qué sirve
 Registrar un elaborado (o desarmarlo) cargando **solo la cantidad final**: el sistema calcula los ingredientes con la fórmula del producto y los guarda. Se llega desde *Elaborados → Ingreso rápido* (o *Desarme de elaborado*) eligiendo un producto, o abriendo un registro existente desde el listado.
@@ -20,6 +20,14 @@ Si la fórmula del producto es [secreta](ayuda:concepto/formula-secreta), el pan
 
 ## Teclado digital
 Entre la **cantidad** y la **fórmula calculada** hay un teclado numérico en pantalla (7-9, 4-6, 1-3, 0 y punto; borrar y `*`), siempre visible y solo en pantallas grandes. Escribe en el campo de cantidad. **Enter** del teclado guarda el ingreso (hace lo mismo que Enter en el campo o el botón *Guardar*). No escribe si el campo es de solo lectura: con la balanza leyendo el peso, o cuando se abre un registro en modo vista hasta tocar *Modificar*.
+
+## En la computadora (pantalla de 1200 px o más)
+Igual para **Ingreso rápido** y **Desarme**; pensado para ver todo sin bajar con la rueda, con una fórmula de hasta **10 ingredientes** (ventana de 690 px de alto o más):
+- **Pestañas y botones en un renglón:** las pestañas a la izquierda, **Volver** y **Embutidos sin guardar** a la derecha. La etiqueta *Ingreso rápido* / *Desarme* ya no se muestra (repite la pestaña activa); *Anulado* sí.
+- **Sucursal, Fecha y Usuario** en una fila, con la **fecha siempre completa, con hora y segundos**. Debajo, **Código**, **Elaborado** y **Receta**.
+- Tres bloques: **Cantidad** (a elaborar o a desarmar), **Teclado** (teclas más bajas) y **Fórmula calculada**. La leyenda «La fórmula se calcula automáticamente en vivo» (o «se mostrará en negativo» en el desarme) ya no aparece en pantalla.
+- La tabla de la fórmula muestra **10 ingredientes** de una línea cada uno; con más, tiene su propio scroll con el encabezado fijo.
+- Con el **costeo** (administradores) la pantalla es más alta y puede aparecer el scroll de la página. Con una ventana de menos de 690 px de alto la página scrollea un poco.
 
 ## Salir de un registro existente
 Un registro existente se abre en **modo vista**. Mientras no se toque **Modificar**, se puede salir (Volver, Cancelar o cualquier enlace) sin ningún aviso, porque no hay nada que perder. Al tocar **Modificar**, el aviso de *salir sin guardar* solo aparece si después se cambió algo.

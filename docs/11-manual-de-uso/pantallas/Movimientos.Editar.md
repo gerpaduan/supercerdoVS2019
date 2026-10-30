@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-10-27
+revisada: 2026-10-30
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -32,6 +32,14 @@ La columna **Sugerido** estima lo que conviene mandar: **ventas + uso en elabora
 - Cada vez que el stock se actualiza las sugerencias se **recalculan solas** y la leyenda dice *«Recalculado 11:23 · 3 cambiaron»*. Las celdas cuyo sugerido **cambió** quedan marcadas en ámbar (el tooltip dice el valor anterior); si ese producto ya está en el movimiento, su «en mov.» se pinta en ámbar para que **revises la cantidad**. El movimiento nunca se modifica solo.
 - Con un período **cerrado** (fecha hasta anterior a hoy) las actualizaciones solo releen el stock.
 - Solo con la base de datos nueva (Postgres): con la anterior la columna avisa que no está disponible.
+
+## En la computadora (pantalla de 1200 px o más)
+Pensado para ver más líneas sin bajar con la rueda:
+- **Fecha siempre completa, con la hora**, también con el *Stock destino* al lado (las sucursales ceden lugar antes que la fecha).
+- **Líneas cargadas:** una por renglón, con letra un punto más chica y encabezado fijo. Entran **10 líneas a la vista** con una ventana de 690 px de alto o más (**12 sin Stock destino**); con más, la lista tiene su propio scroll. Con el *Stock destino* abierto entran 9 con 690 px de alto (10 con unos 705 px, estimado: PENDIENTE medirlo); con el teclado digital abierto, menos.
+- **Botones de arriba** (*Volver*, *Stock destino*, *Movimientos sin guardar*) más bajos. El estado de la balanza y su barra van en una sola línea.
+- **Con el Stock destino al lado:** *Resumen* (ítems, unidades y kilos) y *Observaciones* van en **un solo renglón** debajo de la lista (el *Usuario* del resumen no se muestra en este modo), y la **lupa** de buscar en la tabla queda **sobre el encabezado**, a la derecha. El panel del stock ocupa toda la altura disponible, sin segundo scroll.
+- **Teclado digital abierto** (sin stock): *Código* y *Producto* en un renglón, y *Cant.Un.*, *Kgs.* y *+* en el siguiente (**PENDIENTE**: no se verificó en el navegador).
 
 ## En el celular
 - **Agregar producto:** Cant.Un., Kgs. y el botón **+** van en el mismo renglón (con el teclado numérico en pantalla abierto se apilan como antes).

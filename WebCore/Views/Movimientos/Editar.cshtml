@@ -33,7 +33,7 @@
         <button type="button" class="btn btn-sm btn-outline-dark ml-2" data-action="clear-draft">Limpiar borrador</button>
     </div>
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2 mov-barra-botones">
         <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Movimientos")">
             <i class="fas fa-arrow-left mr-1"></i> Volver
         </a>
@@ -81,7 +81,9 @@
                 @Html.HiddenFor(m => m.EmpresaCuit)
                 <div id="lineasHiddenContainer"></div>
 
-                <div class="row">
+                @* mov-fila-datos: en escritorio es una grilla con la columna de Fecha de ancho minimo (se ve completa, con la hora), tambien con el
+                   Stock destino al lado; ver movimientos-compacto.css. *@
+                <div class="row mov-fila-datos">
                     <div class="col-12 col-lg-3">
                         <div class="form-group">
                             <label for="IdSucursalOrigen">Sucursal origen</label>
@@ -124,11 +126,11 @@
                     </div>
                 </div>
 
-                <hr />
+                <hr class="mov-hr" />
 
                 <div class="row mov-fila-principal">
                     <div class="col-12 col-xl-8">
-                        <div class="border rounded p-3 mb-3 movimiento-section-box">
+                        <div class="border rounded p-3 mb-3 movimiento-section-box mov-box-agregar">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 movimiento-section-title">Agregar producto</h6>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
@@ -260,7 +262,7 @@
 
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLines() en movimientos.js. *@
-                        <div class="table-responsive">
+                        <div class="table-responsive mov-tabla-wrap">
                             <table class="table table-bordered table-sm movimiento-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasMovimiento">
                                 <thead class="thead-light">
                                     <tr>
@@ -294,14 +296,14 @@
                                     <span>Total kilos</span>
                                     <strong id="lblTotalKilos">0.000</strong>
                                 </div>
-                                <hr />
-                                <div class="form-group mb-0">
+                                <hr class="mov-resumen-hr" />
+                                <div class="form-group mb-0 mov-resumen-usuario">
                                     <label class="small text-muted mb-1">Usuario</label>
                                     <input type="text" class="form-control form-control-sm" value="@Model.UsuarioNombre" readonly />
                                 </div>
                             </div>
                         </div>
-                        <div class="card movimiento-panel-card mt-3">
+                        <div class="card movimiento-panel-card mt-3 mov-card-observaciones">
                             <div class="card-body">
                                 <div class="form-group mb-0">
                                     <label for="Observaciones">Observaciones</label>
@@ -859,6 +861,8 @@
     <script>window.movimientoStockDestinoConfig = { url: '@Url.Action("ExistenciaPorSucursales", "Stock")' };</script>
     <script src="@Url.Content("~/Scripts/app/movimiento-stock-destino.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
+    @* Escritorio compacto (2026-10-30): va DESPUES de numeric-keypad.css, que comparte con otras pantallas. *@
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/movimientos-compacto.css")" asp-append-version="true" />
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>

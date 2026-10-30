@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-10-30 - Elaborados (Carga, Ingreso rápido, Desarme) y Movimientos/Editar: todo a la vista en escritorio y fecha siempre con hora
+
+- **Pedido:** optimizar las vistas para ver todo sin scrollear salvo con más de ~10 ingredientes; Código y Elaborado arriba de Ingredientes; que la fecha siempre sea visible con la hora; sumar Movimientos/Editar.
+- **Cambio:** hojas nuevas `wwwroot/Content/css/elaborados-compacto.css` y `movimientos-compacto.css` (solo ≥ 1200 px, la fecha desde 992 px) enlazadas en `Carga.cshtml`, `EditarIngresoRapido.cshtml` y `Movimientos/Editar.cshtml`, que además suman clases (mismos ids). En `Carga.cshtml` Observaciones pasó a la fila de los botones. Pestañas y botones en un renglón, fecha de ancho mínimo, tablas de una línea (20 px) con 10 filas a la vista y scroll propio. Manuales: `Elaborados.Carga.md`, `Elaborados.EditarIngresoRapido.md`, `Movimientos.Editar.md`. Detalle: `docs/DECISIONS.md` (2026-10-30).
+- **Verificado:** compila (0 errores) y con login real (usuario temporal, borrado junto con borradores, avisos y logins): 1366×690, con 10 + 10 ingredientes Carga e Ingreso rápido/Desarme sin scroll de página; Movimientos sin stock (12 filas con 15 líneas) y con Stock destino (9 filas); fecha completa a 992/1100/1200 px; teclado desplegado en Carga; modo oscuro; 375 px sin cambios (Carga). Las filas de fórmula se inyectaron en el DOM para medir (el elaborado de prueba tiene 1 ingrediente).
+- **Sin verificar:** guardar (escribe en la base), teclado desplegado en Movimientos sin stock, fórmula secreta, costeo, modo vista/Anulado, Movimientos en celular/tablet, 1920 px.
+
 ## 2026-10-30 - Compras/Editar: Cuenta corriente visible, 13 ítems a la vista, columnas de venta aparte y formato argentino
 
 - **Pedido:** que el interruptor de Cuenta corriente no se salga de la pantalla; ver más productos en la lista (analizar letra −1 pt y filas más bajas, 13 ítems en escritorio); total e importes en formato argentino; P. venta y Margen después del total y marcados como «no es la compra»; Desc./Recargo e IVA después de Precio y Margen en un lugar acorde.

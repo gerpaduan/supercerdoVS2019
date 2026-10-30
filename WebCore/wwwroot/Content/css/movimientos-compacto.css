@@ -1,0 +1,370 @@
+/* Movimientos/Editar en ESCRITORIO compacto (pedido 2026-10-30): mas lineas a la vista sin scroll de pagina, y la fecha siempre completa con la
+   hora (con el Stock destino al lado se leia "30/10/2026 1:"). Funciona con y sin "Stock destino" (.mov-con-stock, lo pone movimiento-stock-destino.js).
+   Solo CSS: ids, names y JS (movimientos.js, movimiento-stock-destino.js, numeric-keypad.js) no cambian. Todo dentro de .movimiento-page.
+   Los selectores arrancan con "body.app-shell" por ui-refresh.css (.form-control con min-height 2.75rem, body.app-shell .card .card-body) y custom.css
+   (".table thead th { white-space: normal !important }"). Detalle y medidas: docs/DECISIONS.md (2026-10-30 "Movimientos compacto"). */
+
+/* ---- Fecha siempre completa, con hora (desde 992 px) ----
+   Origen | Destino | Fecha pasan a grilla con la columna de Fecha de ancho minimo (12 rem entran "30/10/2026 12:14" y el icono del calendario);
+   lo que cede son las sucursales. */
+@media (min-width: 992px) {
+    body.app-shell .movimiento-page .mov-fila-datos {
+        display: grid;
+        grid-template-columns: minmax(6.5rem, 1fr) minmax(6.5rem, 1fr) minmax(12rem, 14rem);
+        gap: 0 .5rem;
+        margin: 0;
+    }
+
+    body.app-shell .movimiento-page .mov-fila-datos label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    body.app-shell .movimiento-page .mov-fila-datos > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+}
+
+@media (min-width: 1200px) {
+    /* ---- Botones de arriba (Volver / Stock destino / Movimientos sin guardar): mas bajos ---- */
+    body.app-shell .movimiento-page .mov-barra-botones {
+        margin-bottom: .4rem !important;
+        gap: .4rem;
+    }
+
+    body.app-shell .movimiento-page .mov-barra-botones .btn {
+        min-height: 1.9rem;
+        padding: .18rem .75rem;
+        font-size: .82rem;
+        border-radius: .5rem;
+    }
+
+    /* ---- Espacios ---- */
+    body.app-shell .movimiento-page .mb-3 {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .movimiento-page .form-group {
+        margin-bottom: .3rem;
+    }
+
+    body.app-shell .movimiento-page .mov-hr {
+        display: none;
+    }
+
+    body.app-shell .movimiento-page .movimiento-panel-card .card-body,
+    body.app-shell .movimiento-page .movimiento-panel-card > .card-body {
+        padding: .45rem .65rem;
+    }
+
+    body.app-shell .movimiento-page .movimiento-section-box {
+        padding: .4rem .6rem !important;
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .movimiento-page .movimiento-section-box .form-group,
+    body.app-shell .movimiento-page .movimiento-producto-row .form-group {
+        margin-bottom: 0;
+    }
+
+    body.app-shell .movimiento-page .movimiento-form-compact .form-control,
+    body.app-shell .movimiento-page .movimiento-section-box .form-control,
+    body.app-shell .movimiento-page .movimiento-panel-card .form-control,
+    body.app-shell .movimiento-page .movimiento-section-box .btn:not(.btn-sm),
+    body.app-shell .movimiento-page .movimiento-panel-card .btn:not(.btn-sm) {
+        min-height: 1.9rem;
+        padding: .18rem .5rem;
+    }
+
+    /* Balanza: estado y barra en una sola linea (antes eran dos bloques de ~45 px). */
+    body.app-shell .movimiento-page #balanzaStatusWrapMovimiento {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: .35rem;
+    }
+
+    body.app-shell .movimiento-page #balanzaStatusWrapMovimiento > .small {
+        margin: 0 !important;
+    }
+
+    body.app-shell .movimiento-page #balanzaStatusWrapMovimiento > .progress {
+        flex: 0 0 140px;
+        margin: 0 !important;
+    }
+
+    /* ---- Lista de lineas: UN renglon por fila (20 px), letra 1 pt menor, encabezado fijo y scroll propio ----
+       Alto = ventana menos la reserva (todo lo que hay arriba y abajo de la tabla); medida en 1366 px de ancho. Con el Stock destino al lado el panel de
+       carga cambia de alto: ver mas abajo. */
+    body.app-shell .movimiento-page .mov-tabla-wrap {
+        max-height: calc(100vh - var(--mov-tabla-reserva, 26.8rem));
+        min-height: 6rem;
+        overflow-y: auto;
+        margin-bottom: .3rem !important;
+    }
+
+    body.app-shell .movimiento-page .movimiento-table-compact {
+        font-size: .725rem;
+        margin-bottom: 0;
+    }
+
+    body.app-shell .movimiento-page .movimiento-table-compact thead th,
+    body.app-shell .movimiento-page .movimiento-table-compact > thead > tr > th {
+        font-size: .64rem !important;
+        line-height: 1.2;
+        padding: .2rem .45rem;
+        /* !important: custom.css fuerza "white-space: normal !important" en todo .table thead th. */
+        white-space: nowrap !important;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--ui-surface-alt, #f3f4f6);
+    }
+
+    body.app-shell .movimiento-page .movimiento-table-compact tbody td {
+        height: 1.25rem;
+        padding: 0 .45rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    body.app-shell .movimiento-page .movimiento-table-compact tbody .btn-sm {
+        height: 1rem;
+        min-height: 0;
+        padding: 0 .4rem;
+        font-size: .62rem;
+        line-height: 1;
+        border-radius: .3rem;
+    }
+
+    body.app-shell .movimiento-page .movimiento-search-toolbar {
+        margin-bottom: .25rem !important;
+    }
+
+    /* ---- Lateral (Resumen / Observaciones / Datos del movimiento) ---- */
+    body.app-shell .movimiento-page .movimiento-summary-card .card-body {
+        padding: .45rem .65rem;
+    }
+
+    body.app-shell .movimiento-page .mov-lateral > .card {
+        margin-top: .4rem !important;
+    }
+
+    body.app-shell .movimiento-page .mov-lateral > .card:first-child {
+        margin-top: 0 !important;
+    }
+
+    /* Observaciones: una linea; al enfocar se agranda (sigue con maxlength=250). El alto inline de la vista (min-height de 2 filas) se pisa. */
+    body.app-shell .movimiento-page .mov-card-observaciones textarea {
+        height: 2rem !important;
+        min-height: 2rem !important;
+        resize: none !important;
+        overflow: hidden;
+        transition: height .15s ease;
+    }
+
+    body.app-shell .movimiento-page .mov-card-observaciones textarea:focus {
+        height: 4.6rem !important;
+    }
+
+    /* ---- Teclado numerico (compartido con Elaborados y Stock): teclas de 2.3 rem en vez de 3 rem, solo aca ---- */
+    body.app-shell .movimiento-page .numeric-keypad-grid {
+        grid-auto-rows: 2.3rem;
+        gap: .3rem;
+    }
+
+    body.app-shell .movimiento-page .numeric-keypad-grid .btn-key,
+    body.app-shell .movimiento-page .numeric-keypad-grid .btn-enter {
+        font-size: .95rem;
+        padding: 0;
+        min-height: 0;
+    }
+
+    body.app-shell .movimiento-page .numeric-keypad-wrap > .card {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .movimiento-page .numeric-keypad-wrap .card-body {
+        padding: .4rem .55rem;
+    }
+
+    body.app-shell .movimiento-page .numeric-keypad-wrap h6 {
+        margin: 0 0 .3rem !important;
+    }
+
+    /* Teclado desplegado: Codigo + Producto en un renglon y Cant. Un. + Kgs. + "+" en el siguiente (numeric-keypad.css los apila a todo el ancho,
+       uno por renglon). SOLO sin el Stock destino: con el stock al lado la columna es angosta y ya lo resuelven las container queries de la
+       vista (Codigo y Producto uno por renglon cuando no entran; con 38/62 Codigo quedaba en ~50 px). */
+    body.app-shell .movimiento-page .mov-layout:not(.mov-con-stock) #movimientoNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .movimiento-producto-row {
+        flex-wrap: wrap;
+    }
+
+    body.app-shell .movimiento-page .mov-layout:not(.mov-con-stock) #movimientoNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .movimiento-producto-row > .movimiento-col-codigo {
+        flex: 0 0 38%;
+        max-width: 38%;
+    }
+
+    body.app-shell .movimiento-page .mov-layout:not(.mov-con-stock) #movimientoNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .movimiento-producto-row > .movimiento-col-producto {
+        flex: 0 0 62%;
+        max-width: 62%;
+    }
+
+    body.app-shell .movimiento-page .mov-layout:not(.mov-con-stock) #movimientoNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .movimiento-producto-row > .movimiento-col-cantidad {
+        flex: 1 1 0;
+        max-width: none;
+    }
+
+    body.app-shell .movimiento-page .mov-layout:not(.mov-con-stock) #movimientoNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .movimiento-producto-row > .movimiento-col-accion {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+    }
+
+    /* ---- Con "Stock destino" al lado ---- */
+    /* El panel de stock ocupa el alto que queda debajo de los botones (antes: 100vh - 7rem y la pagina tambien scrolleaba = doble scroll). */
+    body.app-shell .movimiento-page .mov-layout.mov-con-stock .mov-stock-panel {
+        height: calc(100vh - var(--mov-stock-reserva, 9.5rem));
+        min-height: 22rem;
+    }
+
+    /* Resumen en UNA linea ("Total items 10 · Total unidades 42 · Total kilos 60,000") y sin el Usuario (ya figura en el encabezado del sistema). */
+    body.app-shell .movimiento-page .mov-con-stock .movimiento-summary-card .card-body {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .2rem 1rem;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .movimiento-summary-card h6,
+    body.app-shell .movimiento-page .mov-con-stock .mov-resumen-hr,
+    body.app-shell .movimiento-page .mov-con-stock .mov-resumen-usuario {
+        display: none;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .movimiento-summary-card .d-flex.justify-content-between {
+        gap: .35rem;
+    }
+
+    /* Margenes mas finos solo con el stock al lado (la carga queda debajo de la altura util y cada pixel cuenta). */
+    body.app-shell .movimiento-page .mov-con-stock .mov-fila-datos .form-group {
+        margin-bottom: .2rem;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock #balanzaStatusWrapMovimiento {
+        margin-bottom: .15rem;
+        line-height: 1.1;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock #balanzaStatusWrapMovimiento > .small {
+        font-size: .7rem !important;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .mov-tabla-wrap {
+        margin-bottom: 0 !important;
+        --mov-tabla-reserva: 29.8rem;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock form > .mt-3 {
+        margin-top: .25rem !important;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .mov-card-observaciones textarea {
+        height: 1.8rem !important;
+        min-height: 1.8rem !important;
+    }
+
+    /* Resumen + Observaciones en UN renglon debajo de la tabla: el Resumen ocupa lo que mide su texto y Observaciones el resto. */
+    body.app-shell .movimiento-page .mov-layout.mov-con-stock .mov-lateral {
+        flex-wrap: nowrap;
+        align-items: center;
+        margin-top: .3rem;
+        gap: .4rem;
+    }
+
+    body.app-shell .movimiento-page .mov-layout.mov-con-stock .mov-lateral > .card {
+        flex: 0 0 auto;
+        margin-top: 0 !important;
+    }
+
+    body.app-shell .movimiento-page .mov-layout.mov-con-stock .mov-lateral > .mov-card-observaciones,
+    body.app-shell .movimiento-page .mov-layout.mov-con-stock .mov-lateral > .movimiento-meta-card {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .movimiento-summary-card .card-body {
+        flex-wrap: nowrap;
+        padding: .25rem .6rem;
+        gap: .2rem .55rem;
+        white-space: nowrap;
+        font-size: .72rem;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .movimiento-summary-card .card-body span,
+    body.app-shell .movimiento-page .mov-con-stock .movimiento-summary-card .card-body strong {
+        font-size: .72rem;
+    }
+
+    body.app-shell .movimiento-page .mov-layout.mov-con-stock .mov-lateral > .mov-card-observaciones {
+        flex: 1 1 0;
+        min-width: 9rem;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .mov-card-observaciones .card-body {
+        padding: .25rem .5rem;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .mov-card-observaciones .form-group {
+        display: flex;
+        align-items: flex-start;
+        gap: .5rem;
+        margin: 0;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .mov-card-observaciones label {
+        margin: .4rem 0 0;
+        white-space: nowrap;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .mov-card-observaciones textarea {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    /* La lupa de buscar en la tabla pasa de un renglon propio (~41 px) a quedar SOBRE el encabezado de la tabla, a la derecha (el
+       encabezado de "Accion" deja lugar con padding). Si se abre el buscador, el campo aparece sobre el encabezado mientras se usa. */
+    body.app-shell .movimiento-page .mov-con-stock .movimiento-search-toolbar {
+        height: 0;
+        margin: 0 !important;
+        position: relative;
+        z-index: 3;
+        justify-content: flex-end;
+        align-items: flex-start;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .movimiento-search-toolbar > button {
+        height: 1.35rem;
+        min-height: 0;
+        width: 1.6rem;
+        padding: 0;
+        margin: .95rem .5rem 0 0;
+        font-size: .68rem;
+        line-height: 1;
+    }
+
+    body.app-shell .movimiento-page .mov-con-stock .mov-tabla-wrap thead th:last-child {
+        padding-right: 2.2rem;
+    }
+}
+
+/* ---- Modo oscuro ---- */
+html.dark-mode body.app-shell .movimiento-page .movimiento-table-compact thead th {
+    background: #1b2c42;
+}

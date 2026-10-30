@@ -28,7 +28,7 @@
     modalIngredienteData["MostrarPrecio"] = "false";
 }
 
-<div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="carga">
+<div class="container-fluid px-2 px-md-3 elaborados-page elaborados-compacto" data-elaborados-page="carga">
     <div id="elaboradoCargaDraftBanner" class="alert alert-warning d-none" role="alert">
         Se encontro un borrador local de este elaborado.
         <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
@@ -37,7 +37,7 @@
 
     @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 elaborados-barra-botones">
         <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Elaborados")">
             <i class="fas fa-arrow-left mr-1"></i> Volver
         </a>
@@ -88,7 +88,8 @@
                     </div>
                 }
 
-                <div class="row">
+                @* elaborados-fila-datos: en escritorio es una grilla con la columna de Fecha de ancho minimo (se ve completa, con hora y segundos); ver elaborados-compacto.css. *@
+                <div class="row elaborados-fila-datos @(Model.EsEdicion ? "elaborados-fila-datos-4" : "")">
                     <div class="col-12 col-lg-3">
                         <div class="form-group">
                             <label for="IdSucursal">Sucursal</label>
@@ -138,8 +139,8 @@
 
                 <div class="row">
                     <div class="col-12 col-xl-8">
-                        <div class="border rounded p-3 mb-3 elaborados-section-box">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box elaborados-box-elaborado">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 elaborados-box-cab">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Elaborado</h6>
                             </div>
 
@@ -178,7 +179,7 @@
                             }
                         </div>
 
-                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box elaborados-box-ingredientes">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Ingredientes manuales</h6>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
@@ -283,7 +284,7 @@
 
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLineas() en elaborados-carga.js. En desktop la tabla no cambia. *@
-                        <div class="table-responsive mb-3">
+                        <div class="table-responsive mb-3 elaborados-tabla-wrap">
                             <table class="table table-bordered table-sm elaborados-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasElaborado">
                                 <thead class="thead-light">
                                     <tr>
@@ -306,7 +307,7 @@
                     <div class="col-12 col-xl-4">
                         @* Formula secreta (2026-10-04): receta y formula van ocultas hasta el re-login (elaborados-carga.js).
                            En una carga nueva el JS las muestra/oculta segun lo que devuelva ObtenerFormula. *@
-                        <div class="border rounded p-3 mb-3 elaborados-section-box @(Model.FormulaOculta ? "d-none" : "")" id="bloqueRecetaCarga">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box elaborados-box-receta @(Model.FormulaOculta ? "d-none" : "")" id="bloqueRecetaCarga">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Receta</h6>
                             </div>
@@ -407,23 +408,27 @@
                             </div>
                         </div>
 
-                        <div class="card elaborados-panel-card">
-                            <div class="card-body">
-                                <div class="form-group mb-0">
-                                    <label for="Observaciones">Observaciones</label>
-                                    <textarea id="Observaciones"
-                                              name="Observaciones"
-                                              class="form-control"
-                                              rows="3"
-                                              maxlength="250"
-                                              readonly="@(esAnulado ? "readonly" : null)">@Model.Observaciones</textarea>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
                 <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @* Observaciones (2026-10-30): antes era una tarjeta al pie de la columna de la derecha; en escritorio compacto esa columna
+                       (Receta + Formula + Observaciones) era mas alta que la de la izquierda y obligaba a scrollear. Ahora va en la fila de los
+                       botones, ocupando el ancho que queda a su izquierda. Mismo id/name/maxlength; en celular sigue siendo un bloque de ancho
+                       completo justo arriba de los botones, como antes (ultimo bloque del formulario). *@
+                    <div class="card elaborados-panel-card elaborados-card-observaciones elaborados-obs-bloque">
+                        <div class="card-body">
+                            <div class="form-group mb-0">
+                                <label for="Observaciones">Observaciones</label>
+                                <textarea id="Observaciones"
+                                          name="Observaciones"
+                                          class="form-control"
+                                          rows="3"
+                                          maxlength="250"
+                                          readonly="@(esAnulado ? "readonly" : null)">@Model.Observaciones</textarea>
+                            </div>
+                        </div>
+                    </div>
                     @if (Model.EsEdicion && !esAnulado)
                     {
                         <button type="button"
@@ -584,6 +589,8 @@
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-carga.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
+    @* Escritorio compacto (2026-10-30): va DESPUES de numeric-keypad.css, que comparte con otras pantallas. *@
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/elaborados-compacto.css")" asp-append-version="true" />
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>

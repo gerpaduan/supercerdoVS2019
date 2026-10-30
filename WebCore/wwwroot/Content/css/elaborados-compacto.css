@@ -1,0 +1,374 @@
+/* Elaborados/Carga y Elaborados/EditarIngresoRapido (Ingreso rapido y Desarme) en ESCRITORIO compacto (pedido 2026-10-30):
+   todo a la vista sin scroll de pagina hasta 10 ingredientes; con mas, solo scrollea la tabla.
+   Solo CSS: ids, names y JS (elaborados-carga.js, elaborados-rapido.js, numeric-keypad.js) no cambian. Todo va dentro de
+   .elaborados-compacto (clase que ponen esas dos vistas), asi las otras pestanas de Elaborados no se tocan.
+   Los selectores arrancan con "body.app-shell" porque ui-refresh.css (body.app-shell .card .card-body, .form-control con
+   min-height 2.75rem) y custom.css (".table thead th { white-space: normal !important }") ganan por especificidad.
+   Detalle y medidas: docs/DECISIONS.md (2026-10-30 "Elaborados compacto"). */
+
+/* Observaciones de Carga: vive en la fila de los botones de abajo. Debajo de 1200 px ocupa todo el ancho, arriba de los botones. */
+.elaborados-compacto .elaborados-obs-bloque {
+    flex: 1 1 100%;
+    margin-bottom: .5rem;
+}
+
+/* ---- Fecha siempre completa, con hora y segundos (desde 992 px) ----
+   La fila Sucursal | Fecha | Usuario [| Creado] pasa a grilla con la columna de Fecha de ancho minimo (13.5 rem entran
+   "30/10/2026 12:10:13" y el icono del calendario); lo que cede es Sucursal/Usuario. */
+@media (min-width: 992px) {
+    body.app-shell .elaborados-compacto .elaborados-fila-datos {
+        display: grid;
+        grid-template-columns: minmax(8rem, 1fr) minmax(13.5rem, 15rem) minmax(7rem, 1fr);
+        gap: 0 .5rem;
+        margin: 0;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-fila-datos.elaborados-fila-datos-4 {
+        grid-template-columns: minmax(8rem, 1fr) minmax(13.5rem, 15rem) minmax(7rem, 1fr) minmax(12rem, 1.4fr);
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-fila-datos > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+}
+
+@media (min-width: 1200px) {
+    /* ---- Pestanas + botones (Volver / Embutidos sin guardar) en UN renglon ---- */
+    body.app-shell .elaborados-compacto {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: .75rem;
+        align-items: center;
+    }
+
+    body.app-shell .elaborados-compacto > * {
+        grid-column: 1 / -1;
+        min-width: 0;
+    }
+
+    body.app-shell .elaborados-compacto > .elaborados-tabs-card {
+        grid-column: 1;
+    }
+
+    body.app-shell .elaborados-compacto > .elaborados-barra-botones {
+        grid-column: 2;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: .4rem;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-barra-botones .btn,
+    body.app-shell .elaborados-compacto .elaborados-barra-botones .badge {
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-tabs-card > .card-body {
+        padding: .3rem .55rem !important;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-tabs-nav {
+        flex-wrap: nowrap;
+        gap: .3rem;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-tabs-nav .nav-link {
+        padding: .22rem .7rem;
+        font-size: .8rem;
+        white-space: nowrap;
+    }
+
+    /* La etiqueta "Ingreso rapido" / "Desarme" repite la pestana activa: se oculta. "Anulado" se sigue viendo. */
+    body.app-shell .elaborados-compacto .elaborados-barra-botones .badge-primary,
+    body.app-shell .elaborados-compacto .elaborados-barra-botones .badge-info {
+        display: none;
+    }
+
+    /* ---- Espacios y controles ---- */
+    body.app-shell .elaborados-compacto .mb-3 {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .elaborados-compacto .form-group {
+        margin-bottom: .3rem;
+    }
+
+    body.app-shell .elaborados-compacto .alert {
+        padding: .3rem .6rem;
+        margin-bottom: .4rem;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-panel-card .card-body,
+    body.app-shell .elaborados-compacto .elaborados-panel-card > .card-body {
+        padding: .45rem .65rem;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-section-box {
+        padding: .3rem .6rem !important;
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-form-compact .form-control,
+    body.app-shell .elaborados-compacto .elaborados-section-box .form-control,
+    body.app-shell .elaborados-compacto .elaborados-panel-card .form-control,
+    body.app-shell .elaborados-compacto .elaborados-form-compact .btn:not(.btn-sm),
+    body.app-shell .elaborados-compacto .elaborados-section-box .btn:not(.btn-sm),
+    body.app-shell .elaborados-compacto .elaborados-panel-card .btn:not(.btn-sm) {
+        min-height: 1.9rem;
+        padding: .18rem .5rem;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-section-box .form-group,
+    body.app-shell .elaborados-compacto .elaborados-section-box .form-group.mb-0 {
+        margin-bottom: 0;
+    }
+
+    /* ---- Carga: el titulo "Elaborado" sobra (el campo ya dice Elaborado); el box queda de una linea ---- */
+    body.app-shell .elaborados-compacto .elaborados-box-elaborado > .elaborados-box-cab {
+        display: none !important;
+    }
+
+    /* Balanza: estado y barra en una sola linea (antes eran dos bloques de ~45 px). */
+    body.app-shell .elaborados-compacto #balanzaStatusWrapElaborado {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: .2rem;
+    }
+
+    body.app-shell .elaborados-compacto #balanzaStatusWrapElaborado > .small {
+        margin: 0 !important;
+        font-size: .7rem !important;
+        line-height: 1.1;
+    }
+
+    body.app-shell .elaborados-compacto #balanzaStatusWrapElaborado > .progress {
+        flex: 0 0 140px;
+        margin: 0 !important;
+    }
+
+    /* Receta: titulo y texto en una linea; el texto crece hasta ~3 lineas y despues scrollea. */
+    body.app-shell .elaborados-compacto .elaborados-box-receta {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-box-receta > .d-flex {
+        flex: 0 0 auto;
+        margin: 0 !important;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-box-receta > .elaborados-section-title,
+    body.app-shell .elaborados-compacto .elaborados-box-receta .elaborados-section-title {
+        margin: 0 !important;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-box-receta > .form-group {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    /* Receta (Carga e Ingreso rapido): elaborados-carga.js / elaborados-rapido.js le ponen un alto fijo igual al de su contenido
+       (2 filas minimo); aca se fuerza el alto automatico con un minimo de una linea y un maximo de ~3 (field-sizing: content, Chrome). */
+    body.app-shell .elaborados-compacto textarea.js-auto-receta {
+        height: auto !important;
+        min-height: 2rem !important;
+        max-height: 4.6rem;
+        overflow-y: auto !important;
+        resize: none !important;
+        field-sizing: content;
+    }
+
+    /* Observaciones: una linea con el rotulo al lado, a la izquierda de los botones; al enfocar se agranda (sigue con maxlength=250). */
+    body.app-shell .elaborados-compacto form > .mt-3 > .elaborados-obs-bloque {
+        flex: 1 1 0;
+        min-width: 0;
+        margin: 0 .75rem 0 0 !important;
+        align-self: flex-end;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-card-observaciones .card-body {
+        padding: .12rem .4rem;
+    }
+
+    /* La separacion de abajo de la tabla (mb-3) y la de arriba de los botones se suman: se deja una sola, fina. */
+    body.app-shell .elaborados-compacto .elaborados-tabla-wrap {
+        margin-bottom: .15rem !important;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-card-observaciones .form-group {
+        display: flex;
+        align-items: flex-start;
+        gap: .5rem;
+        margin: 0;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-card-observaciones label {
+        margin: .4rem 0 0;
+        white-space: nowrap;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-card-observaciones textarea {
+        flex: 1 1 0;
+        min-width: 0;
+        height: 1.8rem;
+        min-height: 1.8rem;
+        resize: none;
+        transition: height .15s ease;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-card-observaciones textarea:focus {
+        height: 4.6rem;
+    }
+
+    /* ---- Tablas: UN renglon por fila, 20 px, letra 1 pt menor, 10 filas a la vista y scroll propio con encabezado fijo ---- */
+    body.app-shell .elaborados-compacto .elaborados-tabla-wrap,
+    body.app-shell .elaborados-compacto .formula-elaborado-wrap {
+        max-height: calc(1.55rem + 10 * 1.25rem + 2px);
+        overflow-y: auto;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-table-compact {
+        font-size: .725rem;
+        margin-bottom: 0;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-table-compact thead th,
+    body.app-shell .elaborados-compacto .elaborados-table-compact > thead > tr > th {
+        font-size: .64rem !important;
+        line-height: 1.2;
+        padding: .2rem .45rem;
+        /* !important: custom.css fuerza "white-space: normal !important" en todo .table thead th. */
+        white-space: nowrap !important;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--ui-surface-alt, #f3f4f6);
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-table-compact tbody td {
+        height: 1.25rem;
+        padding: 0 .45rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-table-compact tbody .btn-sm {
+        height: 1rem;
+        min-height: 0;
+        padding: 0 .4rem;
+        font-size: .62rem;
+        line-height: 1;
+        border-radius: .3rem;
+    }
+
+    /* Resumen (formula + totales): sin separadores gruesos. */
+    body.app-shell .elaborados-compacto .elaborados-summary-card hr {
+        margin: .3rem 0;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-summary-card .mt-2 {
+        margin-top: .2rem !important;
+    }
+
+    /* ---- Teclado numerico (compartido con Movimientos y Stock): teclas de 2.3 rem en vez de 3 rem, solo en estas pantallas ---- */
+    body.app-shell .elaborados-compacto .numeric-keypad-grid {
+        grid-auto-rows: 2.3rem;
+        gap: .3rem;
+    }
+
+    body.app-shell .elaborados-compacto .numeric-keypad-grid .btn-key,
+    body.app-shell .elaborados-compacto .numeric-keypad-grid .btn-enter {
+        font-size: .95rem;
+        padding: 0;
+        min-height: 0;
+    }
+
+    body.app-shell .elaborados-compacto .numeric-keypad-wrap > .card {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .elaborados-compacto .numeric-keypad-wrap .card-body {
+        padding: .4rem .55rem;
+    }
+
+    body.app-shell .elaborados-compacto .numeric-keypad-wrap h6 {
+        margin: 0 0 .3rem !important;
+    }
+
+    /* Carga, teclado desplegado: Codigo + Ingrediente en un renglon, Cantidad + "+" en el siguiente (numeric-keypad.css los apila
+       a todo el ancho, uno por renglon). Los selectores llevan el id del bloque para ganarle. */
+    body.app-shell .elaborados-compacto #ingredientesManualesLayout.teclado-desplegado .numeric-keypad-toggle-fields .row {
+        flex-wrap: wrap;
+    }
+
+    body.app-shell .elaborados-compacto #ingredientesManualesLayout.teclado-desplegado .numeric-keypad-toggle-fields .row > .ingrediente-col-codigo {
+        flex: 0 0 38%;
+        max-width: 38%;
+    }
+
+    body.app-shell .elaborados-compacto #ingredientesManualesLayout.teclado-desplegado .numeric-keypad-toggle-fields .row > :nth-child(2) {
+        flex: 0 0 62%;
+        max-width: 62%;
+    }
+
+    body.app-shell .elaborados-compacto #ingredientesManualesLayout.teclado-desplegado .numeric-keypad-toggle-fields .row > .ingrediente-col-cantidad {
+        flex: 1 1 0;
+        max-width: none;
+    }
+
+    body.app-shell .elaborados-compacto #ingredientesManualesLayout.teclado-desplegado .numeric-keypad-toggle-fields .row > .ingrediente-col-accion {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+    }
+
+    /* ---- Ingreso rapido / Desarme ---- */
+    /* La ayuda "La formula se calcula automaticamente en vivo." se oculta (ocupa un renglon); sigue en el manual. */
+    body.app-shell .elaborados-compacto .elaborados-card-cantidad .small.text-muted {
+        display: none !important;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-card-cantidad .card-body > .d-flex {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .elaborados-compacto #CantidadRapida {
+        min-height: 2.5rem;
+        font-size: 1.3rem;
+        padding: .2rem .6rem;
+    }
+
+    body.app-shell .elaborados-compacto #balanzaStatusWrapRapido > .small {
+        margin-top: .35rem !important;
+    }
+
+    body.app-shell .elaborados-compacto #balanzaStatusWrapRapido > .progress {
+        margin-top: .25rem !important;
+    }
+
+    body.app-shell .elaborados-compacto #alertaBalanzaRapido {
+        margin-top: .35rem !important;
+    }
+
+    /* ---- Botones de abajo (Modificar / Guardar / Cancelar): un renglon, a la derecha ---- */
+    body.app-shell .elaborados-compacto form > .mt-3 {
+        margin-top: .15rem !important;
+        justify-content: flex-end;
+    }
+
+    body.app-shell .elaborados-compacto form > .mt-3 .btn {
+        margin-bottom: 0 !important;
+    }
+}
+
+/* ---- Modo oscuro ---- */
+html.dark-mode body.app-shell .elaborados-compacto .elaborados-table-compact thead th {
+    background: #1b2c42;
+}
