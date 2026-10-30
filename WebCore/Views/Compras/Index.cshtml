@@ -34,6 +34,10 @@
         </div>
     }
 
+    @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila y debajo una barra con
+       totales, estado, "Vista completa" y botones. Por debajo de 1200 px es un contenedor de bloque que
+       conserva el orden de siempre (acciones, filtros, totales, vista completa). *@
+    <div class="compras-top">
     <div class="d-flex flex-wrap align-items-center mb-3 compras-acciones-header">
         <a class="btn btn-success mt-2 mt-md-0 compras-btn-accion" href="@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })" id="btnNuevaCompraIndex">
             <i class="fas fa-plus mr-1"></i> Nueva compra
@@ -58,13 +62,13 @@
                     </div>
 
                     <div class="compras-filtros-row compras-filtros-row-fechas">
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-0 compras-f-desde">
                             <label class="compras-filtro-label">Desde</label>
                             <input type="date" id="fechaDesde" name="fechaDesde" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
                             @Html.Partial("_AdvertenciaPermisoFecha")
                         </div>
 
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-0 compras-f-hasta">
                             <label class="compras-filtro-label">Hasta</label>
                             <input type="date" name="fechaHasta" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
                         </div>
@@ -91,7 +95,7 @@
                     </div>
 
                     <div class="compras-filtros-row compras-filtros-row-busqueda">
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-0 compras-f-tipo">
                             <label class="compras-filtro-label">Tipo compra</label>
                             @if (mostrarTipoCompra)
                             {
@@ -108,7 +112,7 @@
                             }
                         </div>
 
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-0 compras-f-proveedor">
                             <label class="compras-filtro-label">Proveedor</label>
                             @* Selector multi-seleccion (filtro-picker.js): F9 busca proveedores; con seleccion filtra por ID exacto
                                (el hidden idsProveedor viaja en el form); sin seleccion, coincidencia por razon social como siempre. *@
@@ -117,20 +121,21 @@
                                    data-ids="@idsProveedor" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(proveedoresSeleccionados)" />
                         </div>
 
-                        <div class="form-group mb-0">
+                        <div class="form-group mb-0 compras-f-descripcion">
                             <label class="compras-filtro-label">Descripcion</label>
                             <input type="text" name="texto" value="@texto" class="form-control" autocomplete="off" placeholder="Proveedor, documento, observaciones..." />
                         </div>
                     </div>
                 </div>
-                <div class="mt-2">
-                    <div id="estadoBusquedaCompras" class="text-muted small">Resultados actualizados.</div>
-                </div>
             </form>
         </div>
     </div>
 
-    <div class="row mb-3">
+    @* Estado de la busqueda: vive fuera del form para ocupar un lugar en la barra de escritorio.
+       En escritorio tambien avisa "Cambiaste las fechas" (ahi se oculta la alerta amarilla). *@
+    <div id="estadoBusquedaCompras" class="compras-estado text-muted small mb-2">Resultados actualizados.</div>
+
+    <div class="row mb-3 compras-totales">
         @if (permiteMediaRes)
         {
             <div class="col-12 col-md-4 mb-2">
@@ -160,11 +165,12 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-end align-items-center mb-2">
+    <div class="d-flex justify-content-end align-items-center mb-2 compras-vista-completa">
         <div class="custom-control custom-switch">
             <input type="checkbox" class="custom-control-input" id="switchVistaCompletaCompras">
             <label class="custom-control-label" for="switchVistaCompletaCompras">Vista completa</label>
         </div>
+    </div>
     </div>
 
     <div class="card shadow-sm">
@@ -302,6 +308,161 @@
         .compras-index-page .tabla-full .table > thead > tr > th {
             font-size: .69rem !important;
         }
+
+        /* ---- Escritorio compacto (pedido 2026-10-30): filtros en UNA fila y debajo una barra con
+           totales, estado, "Vista completa" y botones. Todos los selectores llevan "body.app-shell"
+           porque ui-refresh.css fija min-height 2.75rem en .form-control y gaps/paddings con esa
+           especificidad: sin el prefijo no pisan. ---- */
+        body.app-shell .compras-index-page .compras-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .5rem .75rem;
+            margin-bottom: .6rem;
+        }
+
+        /* Los hijos directos traen margenes de pantalla angosta (mb-2/mb-3): en la barra los maneja el gap. */
+        body.app-shell .compras-index-page .compras-top > * {
+            margin-bottom: 0 !important;
+        }
+
+        body.app-shell .compras-index-page .compras-top > .compras-filtros-card {
+            order: 0;
+            flex: 0 0 100%;
+        }
+
+        body.app-shell .compras-index-page .compras-filtros-card .card-body {
+            padding: .5rem .65rem;
+        }
+
+        /* Fila unica de filtros. Anchos MINIMOS pedidos: fechas siempre completas (8.6rem), proveedor >= 15
+           caracteres (15ch + relleno + botones limpiar/lupa) y descripcion >= 10 (10ch + relleno).
+           "ch" se mide con la letra del propio grid (.84rem, igual que los controles). Lo que sobra
+           se reparte entre Proveedor y Descripcion. */
+        body.app-shell .compras-index-page .compras-filtros-stack {
+            display: grid;
+            grid-template-columns: 8.6rem 8.6rem 7.5rem 6.5rem minmax(calc(15ch + 5.6rem), 1.2fr) minmax(calc(10ch + 1.2rem), 1fr) 5.5rem;
+            gap: .5rem;
+            align-items: start;
+            font-size: .84rem;
+        }
+
+        /* Las tres filas de la version angosta se disuelven: sus campos pasan a ser celdas de la fila unica. */
+        body.app-shell .compras-index-page .compras-filtros-row {
+            display: contents;
+        }
+
+        /* En escritorio el aviso de fechas va en la barra (Buscar ambar + texto de estado), no en una alerta que empuja todo. */
+        body.app-shell .compras-index-page #alertaFiltrosPendientesCompras {
+            display: none !important;
+        }
+
+        body.app-shell .compras-index-page .compras-f-desde { grid-column: 1; grid-row: 1; }
+        body.app-shell .compras-index-page .compras-f-hasta { grid-column: 2; grid-row: 1; }
+        body.app-shell .compras-index-page .compras-filtro-sucursal { grid-column: 3; grid-row: 1; max-width: none; }
+        body.app-shell .compras-index-page .compras-f-tipo { grid-column: 4; grid-row: 1; }
+        body.app-shell .compras-index-page .compras-f-proveedor { grid-column: 5; grid-row: 1; min-width: 0; }
+        body.app-shell .compras-index-page .compras-f-descripcion { grid-column: 6; grid-row: 1; min-width: 0; }
+        body.app-shell .compras-index-page .compras-filtro-accion { grid-column: 7; grid-row: 1; }
+
+        body.app-shell .compras-index-page .compras-filtros-card .compras-filtro-label {
+            font-size: .68rem;
+            margin-bottom: .12rem;
+        }
+
+        /* Misma altura para campos y botones. Buscar conserva su label vacio (&nbsp;) para quedar alineado con el resto. */
+        body.app-shell .compras-index-page .compras-filtros-card .form-control,
+        body.app-shell .compras-index-page .compras-filtros-card .btn {
+            height: 1.95rem;
+            min-height: 1.95rem;
+            font-size: .84rem;
+            padding: .15rem .5rem;
+            border-radius: .5rem;
+            line-height: 1.2;
+        }
+
+        body.app-shell .compras-index-page .compras-filtros-card .filtro-picker-btn {
+            padding: 0 .5rem;
+        }
+
+        /* Barra inferior: totales | estado (flexible) | vista completa | botones. Si no entra, baja de renglon. */
+        body.app-shell .compras-index-page .compras-totales {
+            order: 1;
+            flex-wrap: nowrap;
+            margin: 0 !important;
+        }
+
+        body.app-shell .compras-index-page .compras-totales > [class*="col-"] {
+            flex: 0 0 auto;
+            width: auto;
+            max-width: none;
+            padding: 0 .4rem 0 0;
+        }
+
+        body.app-shell .compras-index-page .compras-totales .index-total-card .card-body {
+            display: flex;
+            align-items: baseline;
+            gap: .45rem;
+            padding: .28rem .65rem;
+        }
+
+        body.app-shell .compras-index-page .compras-totales .index-total-label {
+            margin: 0 !important;
+            white-space: nowrap;
+        }
+
+        body.app-shell .compras-index-page .compras-totales .index-total-value {
+            white-space: nowrap;
+        }
+
+        body.app-shell .compras-index-page .compras-estado {
+            order: 2;
+            flex: 1 1 8rem;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: .78rem !important;
+        }
+
+        body.app-shell .compras-index-page .compras-estado.compras-estado-pendiente {
+            color: #b45309 !important;
+            font-weight: 600;
+        }
+
+        html.dark-mode body.app-shell .compras-index-page .compras-estado.compras-estado-pendiente {
+            color: #fbbf24 !important;
+        }
+
+        body.app-shell .compras-index-page .compras-vista-completa {
+            order: 3;
+            white-space: nowrap;
+            font-size: .84rem;
+        }
+
+        body.app-shell .compras-index-page .compras-acciones-header {
+            order: 4;
+            flex-wrap: nowrap;
+        }
+
+        body.app-shell .compras-index-page .compras-btn-accion {
+            min-height: 1.95rem;
+            white-space: nowrap;
+        }
+    }
+
+    /* Escritorio angosto (1200-1399 px; con el menu lateral quedan ~940 px utiles): totales + vista completa + botones
+       ocupan todo el renglon, asi que el texto de estado inactivo se oculta. El aviso de fechas pendientes
+       si se muestra, en su propio renglon debajo de la barra, mientras dure. */
+    @@media (min-width: 1200px) and (max-width: 1399.98px) {
+        body.app-shell .compras-index-page .compras-estado:not(.compras-estado-pendiente) {
+            display: none;
+        }
+
+        body.app-shell .compras-index-page .compras-estado.compras-estado-pendiente {
+            order: 5;
+            flex: 0 0 100%;
+        }
     }
 
     @@media (min-width: 768px) and (max-width: 1199.98px) {
@@ -425,9 +586,25 @@
                         || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
             }
 
+            var estadoBusqueda = document.getElementById('estadoBusquedaCompras');
+            var btnBuscarCompras = document.getElementById('btnBuscarCompras');
+            var textoEstadoOk = estadoBusqueda ? estadoBusqueda.textContent : "";
+            var textoEstadoPendiente = "Cambiaste las fechas: tocá Buscar para actualizar.";
+
+            // Fechas cambiadas sin aplicar: en pantalla angosta se muestra la alerta amarilla; en escritorio (la
+            // alerta esta oculta por CSS) el aviso es el texto de estado y el boton Buscar en ambar.
             function actualizarAvisoPendiente() {
-                if (!alertaPendiente) return;
-                alertaPendiente.classList.toggle('d-none', !hayFechasPendientes());
+                var pendiente = hayFechasPendientes();
+                if (alertaPendiente) alertaPendiente.classList.toggle('d-none', !pendiente);
+                if (btnBuscarCompras) {
+                    btnBuscarCompras.classList.toggle('btn-warning', pendiente);
+                    btnBuscarCompras.classList.toggle('btn-primary', !pendiente);
+                }
+                if (estadoBusqueda) {
+                    estadoBusqueda.textContent = pendiente ? textoEstadoPendiente : textoEstadoOk;
+                    estadoBusqueda.title = pendiente ? textoEstadoPendiente : "";
+                    estadoBusqueda.classList.toggle('compras-estado-pendiente', pendiente);
+                }
             }
 
             function setBuscandoCompras(mensaje) {
