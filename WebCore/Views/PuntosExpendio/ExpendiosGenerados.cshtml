@@ -13,12 +13,16 @@
     var usuarios = ViewBag.UsuariosExpendio as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
-<div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-3">
-        <div>
+<div class="container-fluid expendios-page">
+    @* Escritorio (>= 1200 px, pedido 2026-10-30, mismo criterio que Compras > Index): filtros en una fila y debajo UNA barra con
+       totales, aviso de fechas y botones (Ver solo lineas / PDF / Excel). Por debajo de 1200 px conserva el orden de siempre.
+       Estilos compartidos en Shared/_FiltrosCompactosStyles; los propios de esta pantalla, mas abajo. *@
+    <div class="fc-top">
+    <div class="d-sm-flex align-items-center justify-content-between mb-3 fc-contents">
+        <div class="fc-oculto-escritorio">
             <p class="mb-0 text-muted">Consulta general de expendios registrados en la empresa.</p>
         </div>
-        <div class="d-flex flex-wrap mt-2 mt-sm-0" style="gap:.5rem;">
+        <div class="d-flex flex-wrap mt-2 mt-sm-0 fc-acciones" style="gap:.5rem;">
             @* Alterna entre tarjetas por expendio y una tabla plana con una fila por linea (ordenable), como Ventas > Lineas. *@
             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVistaSoloLineasExpendios"
                     data-texto-plana="Ver solo líneas"
@@ -37,18 +41,19 @@
         </div>
     </div>
 
-    <div class="card shadow-sm mb-3">
+    <div class="card shadow-sm mb-3 fc-card">
         <div class="card-body">
-            <div class="form-row align-items-end">
-                <div class="col-12 col-md-2 mb-2">
+          <div class="fc-grid expendios-filtros">
+            <div class="form-row align-items-end fc-fila">
+                <div class="col-12 col-md-2 mb-2 ef-fecha">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosFechaDesde">Fecha desde</label>
                     <input type="datetime-local" step="1" class="form-control form-control-sm" id="filtroExpendiosFechaDesde" value="@fechaHoy" />
                 </div>
-                <div class="col-12 col-md-2 mb-2">
+                <div class="col-12 col-md-2 mb-2 ef-fecha">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosFechaHasta">Fecha hasta</label>
                     <input type="datetime-local" step="1" class="form-control form-control-sm" id="filtroExpendiosFechaHasta" value="@fechaHoy" />
                 </div>
-                <div class="col-12 col-md-2 mb-2">
+                <div class="col-12 col-md-2 mb-2 ef-estado">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosEstado">Estado</label>
                     <select class="form-control form-control-sm" id="filtroExpendiosEstado">
                         <option value="">Todos</option>
@@ -56,7 +61,7 @@
                         <option value="Asignado">Asignado</option>
                     </select>
                 </div>
-                <div class="col-12 col-md-2 mb-2">
+                <div class="col-12 col-md-2 mb-2 ef-sucursal">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosSucursal">Sucursal</label>
                     <select class="form-control form-control-sm" id="filtroExpendiosSucursal">
                         <option value="">Todas</option>
@@ -66,7 +71,7 @@
                         }
                     </select>
                 </div>
-                <div class="col-12 col-md-2 mb-2">
+                <div class="col-12 col-md-2 mb-2 ef-sector">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosSector">Sector</label>
                     <select class="form-control form-control-sm" id="filtroExpendiosSector">
                         <option value="">Todos</option>
@@ -76,26 +81,28 @@
                         }
                     </select>
                 </div>
-                <div class="col-12 col-md-2 mb-2">
+                <div class="col-12 col-md-2 mb-2 ef-buscar">
+                    @* Label vacio solo en escritorio: deja a Buscar a la altura de los campos (los demas tienen label). *@
+                    <label class="small font-weight-bold mb-1 d-none d-xl-block">&nbsp;</label>
                     <button type="button" class="btn btn-primary btn-sm btn-block" id="btnBuscarExpendiosGenerados">
                         <i class="fas fa-search mr-1"></i>Buscar
                     </button>
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="col-12 col-md-3 mb-2 mb-md-0">
+            <div class="form-row fc-fila">
+                <div class="col-12 col-md-3 mb-2 mb-md-0 ef-cliente">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosCliente">Cliente / Nro remito</label>
                     @* Selector multi-seleccion (filtro-picker.js): F10 / lupa busca personas y filtra por su ID (la X lo quita). Sin
                        seleccion es texto libre: identificacion del expendio o nro de remito. *@
                     <input type="text" class="form-control form-control-sm" id="filtroExpendiosCliente" placeholder="Nombre, identificación o nro de remito" autocomplete="off"
                            data-filtro-picker="cliente" data-filtro-picker-tecla="F10" />
                 </div>
-                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                <div class="col-12 col-md-3 mb-2 mb-md-0 ef-producto">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosProducto">Producto</label>
                     <input type="text" class="form-control form-control-sm" id="filtroExpendiosProducto" placeholder="Código o descripción" autocomplete="off" />
                 </div>
-                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                <div class="col-12 col-md-3 mb-2 mb-md-0 ef-usuario">
                     <label class="small font-weight-bold mb-1" for="filtroExpendiosUsuario">Usuario</label>
                     <select class="form-control form-control-sm" id="filtroExpendiosUsuario">
                         <option value="">Todos</option>
@@ -105,16 +112,17 @@
                         }
                     </select>
                 </div>
-                <div class="col-12 col-md-3">
-                    <div class="small text-muted pt-4 d-none" id="msgFiltroFechaExpendiosGenerados">
-                        Cambio el rango de fechas. Presione Buscar para actualizar los datos.
-                    </div>
-                </div>
             </div>
+          </div>
         </div>
     </div>
 
-    <div class="card shadow-sm mb-3 expendios-totales-card">
+    @* Aviso de "cambiaste las fechas": vive fuera de la tarjeta para ocupar un lugar en la barra de escritorio (ambar). *@
+    <div class="small text-muted mb-2 d-none fc-estado fc-estado-pendiente" id="msgFiltroFechaExpendiosGenerados">
+        Cambiaste las fechas: tocá Buscar para actualizar.
+    </div>
+
+    <div class="card shadow-sm mb-3 expendios-totales-card fc-totales">
         <div class="card-body py-2">
             <div class="d-flex flex-wrap justify-content-between">
                 <h5 class="text-muted m-0" style="font-weight: 500;">Expendios: <span id="totExpendiosCantidad">0</span></h5>
@@ -123,6 +131,7 @@
                 <h5 class="text-muted m-0" style="font-weight: 500;">Total: <span id="totExpendiosImporte">$ 0,00</span></h5>
             </div>
         </div>
+    </div>
     </div>
 
     <div class="card shadow-sm">
@@ -146,6 +155,7 @@
 
 @* Estilos de la tabla plana (encabezados ordenables) compartidos con Ventas > Lineas. *@
 @Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
+@Html.Partial("~/Views/Shared/_FiltrosCompactosStyles.cshtml")
 
 <style>
     .expendios-cards {
@@ -249,8 +259,14 @@
         color: var(--ui-primary);
     }
 
+    /* Letra de la tabla "Ver solo lineas" (pedido 2026-10-30: mas chica, para que entre sin scroll horizontal).
+       --exp-th-size es la del encabezado y tambien la de los totales. */
+    .expendios-page {
+        --exp-th-size: .69rem;
+    }
+
     .expendios-tabla-plana {
-        font-size: .82rem;
+        font-size: .76rem;
     }
 
     .expendios-tabla-plana th,
@@ -260,17 +276,92 @@
         line-height: 1.15;
     }
 
-    .expendios-tabla-plana thead th {
-        font-size: .72rem;
+    /* Kgs. / Precio / Total en un solo renglon: sin esto "$" quedaba arriba y el importe abajo. */
+    .expendios-tabla-plana td.text-right {
+        white-space: nowrap;
+    }
+
+    /* "body.app-shell #content": ui-refresh.css fija 14px con ese selector en todos los encabezados de tabla; sin igualarlo no pisa. */
+    body.app-shell #content .expendios-tabla-plana thead th {
+        font-size: var(--exp-th-size);
         font-weight: 700;
         letter-spacing: .02em;
         text-transform: uppercase;
     }
 
-    /* Totales (Expendios / Lineas / Kgs. / Total): misma letra que el encabezado de la tabla. 14px = lo que termina
-       aplicando ui-refresh.css ("body.app-shell #content .table thead th"), que le gana a los .72rem de la regla de arriba. */
+    /* Totales (Expendios / Lineas / Kgs. / Total): misma letra que el encabezado de la tabla. */
     .expendios-totales-card h5 {
-        font-size: 14px;
+        font-size: var(--exp-th-size);
+    }
+
+    /* Escritorio (_FiltrosCompactosStyles aporta la barra, la altura de campos y el aviso de fechas). Los filtros no usan la
+       grilla .fc-c1...: son 9 campos y las fechas llevan hora con segundos, asi que en pantallas medianas (con menu lateral
+       quedan ~940 px utiles) no entran en una fila. Con flex + wrap quedan en una fila si entran y pasan a dos si no. */
+    @@media (min-width: 1200px) {
+        body.app-shell .fc-card .expendios-filtros {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        /* Las columnas de la version angosta (col-md-*) pierden su ancho porcentual, relleno y margen. */
+        body.app-shell .fc-card .expendios-filtros .form-row > [class*="col-"] {
+            max-width: none;
+            width: auto;
+            padding: 0;
+            margin-bottom: 0 !important;
+            min-width: 0;
+        }
+
+        /* display:block en TODOS los labels: asi los campos y Buscar (cuyo label es un &nbsp;) quedan a la misma altura. */
+        body.app-shell .fc-card .expendios-filtros label {
+            display: block;
+            font-size: .68rem;
+            margin-bottom: .12rem !important;
+            white-space: nowrap;
+        }
+
+        /* En este CSS "btn-block" no existe: Buscar ocupa todo el ancho de su columna a mano. */
+        body.app-shell .fc-card .expendios-filtros .ef-buscar .btn {
+            display: block;
+            width: 100%;
+        }
+
+        /* Anchos pensados para que, con la pantalla grande, quepan en una fila (~1260 px): las fechas necesitan ~11 rem por la
+           hora con segundos; los selectores, lo justo para su opcion mas larga (PRESUPUESTO / nombres de usuario). */
+        body.app-shell .fc-card .expendios-filtros .ef-fecha { flex: 0 0 11rem; }
+        body.app-shell .fc-card .expendios-filtros .ef-estado { flex: 0 0 6rem; }
+        body.app-shell .fc-card .expendios-filtros .ef-sucursal { flex: 0 0 6.75rem; }
+        body.app-shell .fc-card .expendios-filtros .ef-sector { flex: 0 0 7.5rem; }
+        body.app-shell .fc-card .expendios-filtros .ef-usuario { flex: 0 0 8rem; }
+        body.app-shell .fc-card .expendios-filtros .ef-cliente { flex: 1 1 11rem; }
+        body.app-shell .fc-card .expendios-filtros .ef-producto { flex: 1 1 8rem; }
+        /* Buscar esta en la primera fila del HTML (orden de celular): en escritorio va siempre al final. */
+        body.app-shell .fc-card .expendios-filtros .ef-buscar { flex: 0 0 5.5rem; order: 9; }
+
+        /* Los botones X y lupa del selector de Cliente llevan menos relleno para no ensanchar el campo (igual que en Compras). */
+        body.app-shell .fc-card .filtro-picker-btn {
+            padding: 0 .5rem;
+        }
+
+        /* Totales en linea, uno al lado del otro, sin repartirse todo el ancho. */
+        body.app-shell .expendios-totales-card .card-body > .d-flex {
+            flex-wrap: nowrap;
+            gap: 1rem;
+        }
+
+        /* Botones de la barra (Ver solo lineas / PDF / Excel): a la altura de Buscar y pegados a la derecha. */
+        body.app-shell .fc-top .fc-acciones {
+            order: 4;
+            margin-left: auto;
+            flex-wrap: nowrap !important;
+            margin-top: 0 !important;
+        }
+
+        body.app-shell .fc-top .fc-acciones .btn {
+            font-size: .84rem;
+            padding: .15rem .6rem;
+        }
     }
 </style>
 
@@ -651,8 +742,10 @@
             });
 
             // ---- Carga ----
+            // Fechas cambiadas sin aplicar: se muestra el aviso y Buscar pasa a ambar (en escritorio el aviso va en la barra).
             function setDateHint(visible) {
                 $('#msgFiltroFechaExpendiosGenerados').toggleClass('d-none', !visible);
+                $('#btnBuscarExpendiosGenerados').toggleClass('btn-warning', visible).toggleClass('btn-primary', !visible);
             }
 
             function loadData() {

@@ -1,0 +1,175 @@
+@* Filtros compactos de escritorio (pedido 2026-10-30, mismo criterio que Compras > Index): en pantallas >= 1200 px
+   los filtros van en UNA fila y debajo una barra con totales, estado, "Ver detalles" y botones de accion.
+   Por debajo de 1200 px NO se aplica nada de esto: cada pantalla conserva su layout de siempre.
+
+   Como se usa (ver Movimientos, Stock y Elaborados > Index):
+   - Un contenedor .fc-top envuelve todo lo que va arriba de la tabla.
+   - La tarjeta de filtros lleva .fc-card; dentro, la grilla .fc-grid (sus filas internas llevan .fc-fila y pasan
+     a ser celdas de la fila unica) y cada campo lleva .fc-c1 ... .fc-c7 (columna en escritorio; asi las fechas
+     van primero sin tocar el orden del HTML de celular).
+   - Cada pantalla define --fc-cols (anchos de las columnas) en su propia hoja.
+   - Los bloques de la barra son hijos directos de .fc-top: .fc-estado, .fc-totales (fila de tarjetas), .fc-vista
+     (switch "Ver detalles") y .fc-acciones. .fc-contents disuelve un contenedor para que sus botones entren en la barra.
+   Todos los selectores llevan "body.app-shell" porque ui-refresh.css fija min-height 2.75rem en .form-control y
+   gaps/paddings con esa especificidad: sin el prefijo no pisan. *@
+<style>
+    @@media (min-width: 1200px) {
+        body.app-shell .fc-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .5rem .75rem;
+            margin-bottom: .6rem;
+        }
+
+        /* Los hijos directos traen margenes de pantalla angosta (mb-2/mb-3): en la barra los maneja el gap. */
+        body.app-shell .fc-top > * {
+            margin-bottom: 0 !important;
+        }
+
+        /* Contenedor que se disuelve: sus hijos pasan a ser items de la barra. !important porque algunos traen d-flex. */
+        body.app-shell .fc-contents {
+            display: contents !important;
+        }
+
+        body.app-shell .fc-top > .fc-card {
+            order: 0;
+            flex: 0 0 100%;
+        }
+
+        body.app-shell .fc-card .card-body {
+            padding: .5rem .65rem;
+        }
+
+        /* Fila unica de filtros: --fc-cols la define cada pantalla. */
+        body.app-shell .fc-grid {
+            display: grid;
+            grid-template-columns: var(--fc-cols);
+            gap: .5rem;
+            align-items: start;
+            font-size: .84rem;
+        }
+
+        /* Las filas de la version angosta se disuelven: sus campos pasan a ser celdas de la fila unica. */
+        body.app-shell .fc-fila {
+            display: contents;
+        }
+
+        /* En escritorio el aviso de "cambiaste los filtros" va en la barra (Buscar ambar + texto de estado), no en una alerta que empuja todo. */
+        body.app-shell .fc-alerta {
+            display: none !important;
+        }
+
+        body.app-shell .fc-c1 { grid-column: 1; grid-row: 1; }
+        body.app-shell .fc-c2 { grid-column: 2; grid-row: 1; }
+        body.app-shell .fc-c3 { grid-column: 3; grid-row: 1; min-width: 0; }
+        body.app-shell .fc-c4 { grid-column: 4; grid-row: 1; min-width: 0; }
+        body.app-shell .fc-c5 { grid-column: 5; grid-row: 1; min-width: 0; }
+        body.app-shell .fc-c6 { grid-column: 6; grid-row: 1; min-width: 0; }
+        body.app-shell .fc-c7 { grid-column: 7; grid-row: 1; min-width: 0; }
+
+        body.app-shell .fc-card .form-group > label {
+            font-size: .68rem;
+            margin-bottom: .12rem;
+        }
+
+        /* Misma altura para campos y botones. Buscar conserva su label vacio (&nbsp;) para quedar alineado con el resto. */
+        body.app-shell .fc-card .form-control,
+        body.app-shell .fc-card .btn {
+            height: 1.95rem;
+            min-height: 1.95rem;
+            font-size: .84rem;
+            padding: .15rem .5rem;
+            border-radius: .5rem;
+            line-height: 1.2;
+        }
+
+        /* Switch alineado con la altura de los campos (el pt-2 de la version angosta lo deja mas abajo). */
+        body.app-shell .fc-card .custom-switch {
+            padding-top: .27rem !important;
+        }
+
+        /* Barra inferior: totales | estado (flexible) | switch | botones. Si no entra, baja de renglon. */
+        body.app-shell .fc-top > .fc-totales {
+            order: 1;
+            flex-wrap: nowrap;
+            align-items: center;
+            margin: 0 !important;
+        }
+
+        body.app-shell .fc-totales > [class*="col-"] {
+            flex: 0 0 auto;
+            width: auto;
+            max-width: none;
+            padding: 0 .4rem 0 0;
+        }
+
+        body.app-shell .fc-totales .card-body {
+            display: flex;
+            align-items: baseline;
+            gap: .45rem;
+            padding: .28rem .65rem;
+        }
+
+        body.app-shell .fc-totales .card-body > * {
+            margin: 0 !important;
+            white-space: nowrap;
+        }
+
+        body.app-shell .fc-top > .fc-estado {
+            order: 2;
+            flex: 1 1 8rem;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: .78rem !important;
+        }
+
+        body.app-shell .fc-estado.fc-estado-pendiente {
+            color: #b45309 !important;
+            font-weight: 600;
+        }
+
+        html.dark-mode body.app-shell .fc-estado.fc-estado-pendiente {
+            color: #fbbf24 !important;
+        }
+
+        /* margin-left:auto empuja el bloque al borde derecho cuando el estado esta oculto (1200-1399 px). */
+        body.app-shell .fc-top > .fc-vista {
+            order: 3;
+            margin-left: auto;
+            white-space: nowrap;
+            font-size: .84rem;
+        }
+
+        body.app-shell .fc-top > .fc-acciones {
+            order: 4;
+            margin-left: auto;
+            flex-wrap: nowrap !important;
+        }
+
+        body.app-shell .fc-acciones .btn {
+            min-height: 1.95rem;
+            white-space: nowrap;
+        }
+
+        /* Etiquetas largas de tarjeta: solo se muestran completas en la version angosta. */
+        body.app-shell .fc-oculto-escritorio {
+            display: none;
+        }
+    }
+
+    /* Escritorio angosto (1200-1399 px; con el menu lateral quedan ~940 px utiles): la barra suele ir llena, asi que el
+       texto de estado inactivo se oculta. El aviso de filtros pendientes si se muestra, en su propio renglon debajo. */
+    @@media (min-width: 1200px) and (max-width: 1399.98px) {
+        body.app-shell .fc-estado:not(.fc-estado-pendiente) {
+            display: none;
+        }
+
+        body.app-shell .fc-top > .fc-estado.fc-estado-pendiente {
+            order: 9;
+            flex: 0 0 100%;
+        }
+    }
+</style>

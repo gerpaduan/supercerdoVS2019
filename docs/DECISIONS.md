@@ -1,3 +1,9 @@
+## 2026-10-30 - Expendios generados: filtros compactos y letra de tabla más chica
+
+- **Pedido:** reducir la letra del encabezado y del contenido de la tabla «Ver solo líneas» (no entraba a lo ancho: Total quedaba cortado) y compactar los filtros como en Compras.
+- **Qué se decidió:** la pantalla usa el partial `_FiltrosCompactosStyles` (barra `fc-top` con totales, aviso de fechas y botones Ver solo líneas / PDF / Excel), pero **los filtros van en `flex` con `wrap`, no en la grilla `fc-c1..c7`**: son 9 campos y las fechas llevan hora con segundos (~11 rem), así que con el menú lateral (~940 px útiles) no entran en una fila; con `wrap` pasan solos a dos filas y con pantalla grande quedan en una. El aviso de fechas salió de la tarjeta de filtros hacia la barra (ámbar) y Buscar alterna `btn-warning`/`btn-primary`. Encabezado de tabla `.69rem` y contenido `.76rem`; los totales usan el mismo tamaño del encabezado (variable `--exp-th-size`). El encabezado necesita el selector `body.app-shell #content ...` porque `ui-refresh.css` fija 14 px con ese.
+- **Alternativa descartada:** grilla fija como Stock/Movimientos (daba scroll horizontal o campos ilegibles entre 1200 y 1500 px).
+
 ## 2026-10-29 - Expendios generados: filtro por persona, vista «solo líneas» y exportar a PDF / Excel
 
 - **Pedido:** en `/PuntosExpendio/ExpendiosGenerados`: filtrar por persona con el selector de `/Ventas` (con ✕ para quitar), ver todas las líneas y agruparlas como en `/Ventas/Lineas`, y exportar a PDF o Excel.

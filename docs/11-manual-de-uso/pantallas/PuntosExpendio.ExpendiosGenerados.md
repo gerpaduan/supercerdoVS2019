@@ -11,7 +11,8 @@ revisada: 2026-10-30
 Consultar **todos los expendios** de la empresa de un período (remitos, presupuestos, carnicería…), con sus líneas, de todas las sucursales y usuarios. Se puede ver **una tarjeta por expendio** o **una sola tabla con todas las líneas**, filtrar por cliente (eligiéndolo de una lista), y **exportar a PDF o Excel** lo que se ve.
 
 ## Filtros
-- **Fecha desde / hasta**: al cambiarlas aparece un aviso; tocá **Buscar** para volver a consultar. Es lo único (junto con el cliente elegido) que se consulta al servidor.
+- **Fecha desde / hasta**: al cambiarlas aparece el aviso *Cambiaste las fechas: tocá Buscar para actualizar* y **Buscar** se pone en ámbar; tocá **Buscar** para volver a consultar. Es lo único (junto con el cliente elegido) que se consulta al servidor.
+- **Disposición en pantalla grande (desde 2026-10-30)**: los filtros van en **una sola fila** (si la pantalla es más angosta, por ejemplo con el menú lateral abierto, pasan a dos filas) y debajo hay **una barra** con los totales, el aviso de fechas y los botones *Ver solo líneas*, *PDF* y *Excel*. En celular y pantallas chicas queda como siempre.
 - **Estado** (Pendiente / Asignado), **Sucursal**, **Sector**, **Usuario**, **Producto**: se aplican en el momento sobre lo ya cargado.
 - **Cliente / Nro remito**: se puede **escribir** (busca por letras en la identificación del expendio o en el nro de remito, en el momento) o **elegir de una lista** con la lupa (o **F10**), de a uno o varios: así filtra **exactamente** por esas personas. Ver [cómo funciona el selector](ayuda:concepto/selector-cliente-vendedor-proveedor). La **✕** del campo quita la selección y vuelve a mostrar todos. Elegir o quitar una persona **vuelve a consultar** al servidor.
 - **Producto**: busca por **código o descripción** y deja en cada expendio **solo las líneas de ese producto**; los kilos y el total de la tarjeta y de la barra de totales suman solo esas líneas, y un expendio sin ninguna línea del producto desaparece.
@@ -20,7 +21,7 @@ Consultar **todos los expendios** de la empresa de un período (remitos, presupu
 Los expendios cuyo cliente se guardó con su id **o** cuya *Identificación cliente* es **igual** a la identificación de la persona (sin distinguir mayúsculas ni acentos). Es la misma regla del filtro *Persona* del modal de expendios del POS.
 
 ## Totales
-La barra de arriba suma lo que se ve: **Expendios**, **Líneas**, **Kgs.** y **Total**. Se muestran con la misma letra que los encabezados de la tabla (desde 2026-10-30; antes iban en un tamaño de título).
+La barra de arriba suma lo que se ve: **Expendios**, **Líneas**, **Kgs.** y **Total**. Se muestran con la misma letra que los encabezados de la tabla (desde 2026-10-30; antes iban en un tamaño de título). Ese día también se achicó la letra de la tabla *Ver solo líneas* (encabezado y contenido) para que entre sin desplazarse hacia los costados.
 
 ## Ver solo líneas
 El botón **Ver solo líneas** cambia de una tarjeta por expendio a **una tabla con una fila por línea**; *Ver agrupado por expendio* vuelve a las tarjetas.
