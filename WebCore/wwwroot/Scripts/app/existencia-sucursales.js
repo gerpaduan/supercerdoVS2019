@@ -2,7 +2,7 @@
 //  - Busqueda por AJAX y autoactualizacion (arranca encendida; se posterga si el servidor esta ocupado; al agotar las vueltas
 //    pregunta si seguir).
 //  - Orden por encabezado, filtros de la barra (texto, Estado) y filtros avanzados de seleccion multiple.
-//  - Diseno compacto recordado por navegador, columna Estado, edicion del punto de stock sin salir de la pantalla y exportacion.
+//  - Columna Estado, edicion del punto de stock sin salir de la pantalla y exportacion.
 //  - "Ingresar pedido" (Scripts/app/existencia-pedido.js) se engancha por window.ExistenciaPantalla y por eventos jQuery sobre
 //    #existenciaPage: existencia:tablaCargada, existencia:filtrado, existencia:puntoCambiado y existencia:periodoCambiado ({ origen }).
 // Lee su configuracion de window.ExistenciaConfig (la deja la vista). La tabla la dibuja _TablaExistenciaPorSucursales.cshtml
@@ -35,7 +35,7 @@
     var $switchAuto = $('#switchAutoActualizarExistencia');
     var $switchEstado = $('#switchEstadoStockExistencia');
     var $switchExpandir = $('#switchExpandirExistencia');
-    var $switchCompacto = $('#switchCompactoExistencia');
+    var $switchEditarPunto = $('#switchEditarPuntoExistencia');
     var $lblUltima = $('#lblUltimaActualizacionExistencia');
     var $lblPendiente = $('#lblAvisoPendienteExistencia');
     var $lblEstado = $('#lblEstadoConsultaExistencia');
@@ -679,19 +679,6 @@
         $page.trigger('existencia:tablaCargada'); // el pedido vuelve a poner las cantidades cargadas en la tabla nueva
     }
 
-    // ---------- Compacto ----------
-
-    function iniciarCompacto() {
-        $switchCompacto.prop('checked', $page.hasClass('existencia-compacto'));
-    }
-
-    function cambiarCompacto() {
-        var compacto = $switchCompacto.is(':checked');
-        $page.toggleClass('existencia-compacto', compacto);
-        guardarLS(cfg.popup ? 'existenciaCompactoPopup' : 'existenciaCompacto', compacto ? '1' : '0');
-        ajustarAltoTabla();
-    }
-
     // ---------- Autoactualizacion ----------
 
     function setBuscando(buscando) {
@@ -1149,7 +1136,14 @@
 
     $switchEstado.on('change', function () { aplicarEstadoStockExistencia(); ajustarAltoTabla(); });
     $switchExpandir.on('change', aplicarExpandidoGlobal);
-    $switchCompacto.on('change', cambiarCompacto);
+
+    // "Editar puntos" (solo existe en el HTML con permiso): muestra u oculta los lapices del punto de stock. Arranca apagado y no se
+    // recuerda, para que un punto no se modifique sin querer. Al apagarlo se cierra el editor si estaba abierto.
+    $switchEditarPunto.on('change', function () {
+        var encendido = $(this).is(':checked');
+        $page.toggleClass('ex-editar-pto', encendido);
+        if (!encendido) cerrarEditorPunto();
+    });
 
     $switchAuto.on('change', function () {
         cancelarBusquedaInicial();
@@ -1298,7 +1292,6 @@
 
     // ---------- Arranque ----------
 
-    iniciarCompacto();
     iniciarPeriodo();
     actualizarControlesMovimiento();
     $('.ex-ms').each(function () { actualizarResumenMs($(this)); });

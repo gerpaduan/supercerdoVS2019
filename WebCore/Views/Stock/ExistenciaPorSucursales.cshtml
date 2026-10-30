@@ -4,9 +4,9 @@
 
 @*
     Existencia por sucursales: stock y estado de cada producto, una sucursal por grupo de columnas.
-    Barra de una sola linea (modo compacto, recordado por navegador) con filtros avanzados plegados, tabla ordenable y
+    Barra de una sola linea (diseño siempre compacto) con filtros avanzados plegados, tabla ordenable y
     autoactualizacion encendida desde que se abre. La tabla la arma _TablaExistenciaPorSucursales.cshtml; toda la logica del
-    navegador (orden, filtros, compacto, autoactualizar, editar punto de stock, exportar) esta en
+    navegador (orden, filtros, autoactualizar, editar punto de stock, exportar) esta en
     Scripts/app/existencia-sucursales.js. Reglas y porques: docs/DECISIONS.md 2026-10-19 y
     docs/11-manual-de-uso/pantallas/Stock.ExistenciaPorSucursales.md.
 *@
@@ -49,7 +49,10 @@
     var modalBorradoresData = new ViewDataDictionary(ViewData);
     modalBorradoresData["TituloBorradoresGenerico"] = "Pedidos sin guardar";
 
-    bool todasTildadas = filtro.IdsSucursales == null || filtro.IdsSucursales.Count == 0;
+    // Permiso para editar el punto de stock (lo resuelve StockController). Sin permiso no hay lapices ni el interruptor "Editar puntos".
+    bool puedeEditarPunto = ViewBag.PuedeEditarPunto is bool pep && pep;
+
+    bool todasTildadas =filtro.IdsSucursales == null || filtro.IdsSucursales.Count == 0;
 
     // Desplegables de seleccion multiple de los filtros avanzados (Tipos / Proveedores / Marcas): sin nada tildado = sin filtro.
     var desplegables = new[]
@@ -65,21 +68,8 @@
     };
 }
 
-<div class="container-fluid existencia-sucursales-page@(modoMovimiento ? " ex-modo-mov" : "")" id="existenciaPage">
-    @* Antes de pintar el resto: aplica el modo compacto recordado (sin parpadeo del diseno normal). Mismo criterio que usa el JS
-       de la pantalla; la ventana independiente tiene su propia clave y arranca compacta. *@
-    <script>
-        (function () {
-            try {
-                var esPopup = @(popup ? "true" : "false");
-                var guardado = localStorage.getItem(esPopup ? "existenciaCompactoPopup" : "existenciaCompacto");
-                var compacto = @Html.Raw(modoMovimiento ? "true" : "guardado === null ? esPopup : guardado === \"1\"");
-                if (compacto) document.getElementById("existenciaPage").classList.add("existencia-compacto");
-            } catch (e) {
-                if (@(popup ? "true" : "false")) document.getElementById("existenciaPage").classList.add("existencia-compacto");
-            }
-        })();
-    </script>
+@* El diseño es SIEMPRE compacto (clase fija existencia-compacto): ya no hay interruptor ni preferencia por navegador. *@
+<div class="container-fluid existencia-sucursales-page existencia-compacto@(modoMovimiento ? " ex-modo-mov" : "")" id="existenciaPage">
 
     @if (popup && !modoMovimiento)
     {
@@ -210,13 +200,18 @@
                             <label class="ex-chip-texto" for="switchExpandirExistencia">Expandir</label>
                         </span>
                     </div>
-                    <div class="ex-ctl ex-ctl-chip ex-ctl-compacto">
-                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
-                        <span class="ex-chip" title="Diseño compacto: filas de una línea y barra reducida (se recuerda en este navegador)">
-                            <input type="checkbox" class="ex-chip-input" id="switchCompactoExistencia" />
-                            <label class="ex-chip-texto" for="switchCompactoExistencia"><i class="fas fa-compress-alt mr-1"></i>Compacto</label>
-                        </span>
-                    </div>
+                    @* Solo con permiso (Producto.NuevoCorte). Arranca apagado en cada carga: los lapices del punto de stock no se ven hasta encenderlo,
+                       para no modificar un punto sin querer. No se recuerda entre visitas. *@
+                    @if (puedeEditarPunto)
+                    {
+                        <div class="ex-ctl ex-ctl-chip ex-ctl-editar-punto">
+                            <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                            <span class="ex-chip" title="Mostrar los lápices para editar el punto de stock (apagado, no se puede modificar por error)">
+                                <input type="checkbox" class="ex-chip-input" id="switchEditarPuntoExistencia" />
+                                <label class="ex-chip-texto" for="switchEditarPuntoExistencia"><i class="fas fa-pencil-alt mr-1"></i>Editar puntos</label>
+                            </span>
+                        </div>
+                    }
 
                     <span class="ex-grow"></span>
 
@@ -558,7 +553,9 @@
     .ex-pedido-toggle .ex-chip-input:focus-visible + .ex-pedido-toggle-texto { outline: 3px solid var(--ui-primary, #2d5b8f); outline-offset: 2px; }
     .ex-pedido-toggle .ex-pt-ico-on, .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto .ex-pt-ico-off { display: none; }
     .ex-pedido-toggle .ex-chip-input:checked + .ex-pedido-toggle-texto .ex-pt-ico-on { display: inline-block; }
-    .existencia-compacto .ex-pedido-toggle-texto { min-height: 2.45rem; padding: 0 1rem; font-size: .9rem; }
+    /* 2026-10-30: mismo tamano que los demas botones/chips de la barra (Auto, Estado, Expandir...): alto 1.85rem, letra .78rem, borde fino.
+       Conserva el color (contorno azul / relleno al encender) para que siga destacando. */
+    .existencia-compacto .ex-pedido-toggle-texto { min-height: 1.85rem; padding: 0 .55rem; gap: .35rem; font-size: .78rem; font-weight: 600; border-width: 1px; border-radius: .55rem; }
 
     /* Las columnas del pedido existen siempre en el HTML y se muestran solo con el modo encendido. */
     .ex-col-pedir, .ex-pedido-fin { display: none; }
@@ -630,9 +627,9 @@
     .existencia-compacto .ex-ped-celda { flex-wrap: nowrap; gap: 0 .3rem; }
     /* Ancho minimo = casilla + "≈ N un.": al tipear una cantidad la columna no se ensancha (no se corren las columnas de la derecha). */
     .existencia-compacto .ex-pedir-cell { min-width: 9.2rem; }
-    .existencia-sucursales-page.existencia-compacto input.ex-in-pedir { width: 4.9rem; min-height: 1.45rem; padding: .05rem .35rem; font-size: calc(.78rem + 1pt); line-height: 1.2; }
+    .existencia-sucursales-page.existencia-compacto input.ex-in-pedir { width: 4.9rem; min-height: 1.45rem; padding: .05rem .35rem; font-size: .78rem; line-height: 1.2; }
     .existencia-compacto .ex-ped-hint { flex-wrap: nowrap; }
-    .existencia-compacto .ex-ped-hint .ex-pista, .existencia-compacto .ex-ped-hint .ex-chip-punto { padding: 0 .4rem; font-size: calc(.7rem + 1pt); line-height: .945rem; }
+    .existencia-compacto .ex-ped-hint .ex-pista, .existencia-compacto .ex-ped-hint .ex-chip-punto { padding: 0 .4rem; font-size: .7rem; line-height: .945rem; }
     .existencia-compacto .ex-h-lbl { display: none; }
     .existencia-compacto .ex-tp-eq { display: inline; margin-left: .3rem; }
     /* La fila donde se esta tipeando se resalta de punta a punta: ayuda a seguir producto, stock y estado hasta la casilla. */
@@ -678,10 +675,10 @@
     /* La columna "Sugerido a enviar" existe siempre en el HTML y solo se ve en este modo (como las columnas del pedido). */
     .ex-col-sug { display: none; }
     .ex-modo-mov th.ex-col-sug, .ex-modo-mov td.ex-col-sug { display: table-cell; }
-    /* Sin pedido, sin selector de sucursales (lo fija el movimiento), sin exportar/ventana ni alternar compacto: la pantalla es solo para mirar y elegir. */
+    /* Sin pedido, sin selector de sucursales (lo fija el movimiento), sin exportar/ventana: la pantalla es solo para mirar y elegir. */
     .ex-modo-mov .ex-ctl-pedido, .ex-modo-mov .ex-ctl-borradores, .ex-modo-mov .ex-ctl-sucursales,
-    .ex-modo-mov .ex-ctl-acciones, .ex-modo-mov .ex-ctl-compacto, .ex-modo-mov .ex-ctl-movimiento { display: none !important; }
-    /* El panel es angosto (~la mitad de la pantalla): Cod. y Producto mas cortos que en la pantalla normal (15 y 30 caracteres). */
+    .ex-modo-mov .ex-ctl-acciones, .ex-modo-mov .ex-ctl-movimiento { display: none !important; }
+    /* El panel es angosto (~la mitad de la pantalla): Cod. y Producto mas cortos que en la pantalla normal (15 y 25 caracteres). */
     .ex-modo-mov .tabla-existencia-sucursales { --ex-cod-ch: 9ch; --ex-prod-ch: 22ch; }
     .ex-mov-bloque {
         display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .8rem; margin-top: .35rem; padding: .25rem .5rem;
@@ -772,10 +769,10 @@
 
     /* ---------- Tabla ---------- */
     .ex-tabla-wrap .tabla-full { overflow: auto; }
-    /* Anchos: Cod. y Producto son FIJOS (15 y 30 caracteres) y quedan pegados; Stock, Estado, A pedir y el resto toman el ancho de su
+    /* Anchos: Cod. y Producto son FIJOS (15 y 25 caracteres) y quedan pegados; Stock, Estado, A pedir y el resto toman el ancho de su
        contenido. El ancho que sobra lo absorbe la columna de relleno (.ex-col-relleno, la ultima), asi nada se estira y todo queda
        a la vista sin mover los ojos. Con "width: 100%" la tabla ocupa al menos el ancho disponible y crece (con scroll) si no entra. */
-    .tabla-existencia-sucursales { --ex-cod-ch: 15ch; --ex-prod-ch: 30ch; width: 100%; font-size: .84rem; margin-bottom: 0; }
+    .tabla-existencia-sucursales { --ex-cod-ch: 15ch; --ex-prod-ch: 25ch; width: 100%; font-size: .84rem; margin-bottom: 0; }
     .tabla-existencia-sucursales th,
     .tabla-existencia-sucursales td { vertical-align: middle; padding: .42rem .58rem; line-height: 1.2; }
     .tabla-existencia-sucursales thead th {
@@ -799,7 +796,7 @@
        para que "Producto" quede pegado justo a su derecha. */
     .ex-col-cod, .ex-col-cod-cell { position: sticky; left: 0; z-index: 3; white-space: nowrap; text-align: left; color: var(--ui-text-soft, #5f6772); }
     .ex-col-prod, .ex-col-prod-cell { position: sticky; left: var(--ex-cod-w, 7rem); z-index: 3; box-shadow: inset -1px 0 0 var(--ui-border-strong, #ced4da); }
-    /* El ancho fijo lo da el contenido interno (un bloque de 15 / 30 caracteres): el texto que no entra se corta con "..." y el nombre
+    /* El ancho fijo lo da el contenido interno (un bloque de 15 / 25 caracteres): el texto que no entra se corta con "..." y el nombre
        completo queda en el tooltip. */
     .ex-cod-txt { width: var(--ex-cod-ch); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ex-col-cod-cell, .ex-col-prod-cell { background-color: var(--ui-surface, #fff); }
@@ -827,6 +824,9 @@
     .ex-est-punto { color: #b7791f; }
     .ex-est-ok { color: #198754; }
     .ex-est-sin { color: var(--ui-text-muted, #7a838d); font-weight: 400; }
+    /* Los lapices existen en la tabla (si hay permiso) pero se ven solo con el interruptor "Editar puntos" encendido (clase ex-editar-pto en la pagina). */
+    .ex-btn-pto { display: none; }
+    .ex-editar-pto .ex-btn-pto { display: inline; }
     .ex-btn-pto {
         border: 0; background: transparent; padding: 0 .25rem; margin-left: .15rem; color: var(--ui-text-muted, #7a838d);
         font-size: .72rem; cursor: pointer; line-height: 1;
@@ -881,19 +881,25 @@
     .existencia-compacto .ex-ctl-chip, .existencia-compacto .ex-ctl { justify-content: center; }
     .existencia-compacto .ex-estado-linea { order: 4; padding: .15rem .6rem !important; font-size: .72rem; border-top: 1px solid var(--ui-border, #dee2e6); }
     .existencia-compacto .ex-avanzados { margin-top: .35rem; padding-top: .35rem; }
-    /* Letra de la tabla compacta: +1 pt (era .78rem), SIN cambiar el alto de las filas. El interlineado pasa a una medida fija (.975rem =
-       .78rem x 1,25, lo de antes): la linea de texto mide lo mismo con letra mas grande y el alto lo siguen fijando el boton + y la casilla. */
-    .existencia-compacto .tabla-existencia-sucursales { font-size: calc(.78rem + 1pt); }
+    /* Letra de la tabla compacta: .78rem (2026-10-30: se bajo 1 pt; antes era .78rem + 1pt). El interlineado es una medida fija (.975rem =
+       .78rem x 1,25) para que el alto de las filas no dependa de la letra: lo siguen fijando el boton + y la casilla. */
+    .existencia-compacto .tabla-existencia-sucursales { font-size: .78rem; }
     .existencia-compacto .tabla-existencia-sucursales th,
     .existencia-compacto .tabla-existencia-sucursales td { padding: .1rem .3rem; line-height: .975rem; }
-    /* Los textos chicos de la tabla (unidades, pistas, equivalentes) suben tambien 1 pt, cada uno con su interlineado de antes. */
+    /* Los textos chicos de la tabla (unidades, pistas, equivalentes) usan su tamano propio, cada uno con su interlineado. */
     .existencia-compacto .existencia-unidades,
     .existencia-compacto .ex-ped-eq,
     .existencia-compacto .ex-tp-eq,
     .existencia-compacto .ex-ped-hint .ex-suficiente,
-    .existencia-compacto .ex-btn-pto { font-size: calc(.72rem + 1pt); }
-    .existencia-compacto .ex-precio-cell .ex-sinprecio { font-size: calc(.74rem + 1pt); }
-    .existencia-compacto .tabla-existencia-sucursales thead th { font-size: .66rem; padding-top: .18rem; padding-bottom: .18rem; }
+    .existencia-compacto .ex-btn-pto { font-size: .72rem; }
+    .existencia-compacto .ex-precio-cell .ex-sinprecio { font-size: .74rem; }
+    /* Columna Estado: 1 pt menos que el resto de la tabla (Stock). El "pto N" y el lapiz van con ella (si no, quedarian mas grandes que el estado). */
+    .existencia-compacto .tabla-existencia-sucursales td.ex-col-estado { font-size: calc(.78rem - 1pt); }
+    .existencia-compacto .tabla-existencia-sucursales td.ex-col-estado .existencia-unidades,
+    .existencia-compacto .tabla-existencia-sucursales td.ex-col-estado .ex-btn-pto { font-size: inherit; }
+    /* Encabezados: 1 pt menos que el contenido de Producto (.78rem; 2026-10-30, antes iban a la par). "!important" porque ui-refresh.css fija
+       "body.app-shell #content .table thead th { font-size: 14px }" (con id) y le ganaba a esta regla: el encabezado salia mas grande que el contenido. */
+    .existencia-compacto .tabla-existencia-sucursales thead th { font-size: calc(.78rem - 1pt) !important; padding-top: .18rem; padding-bottom: .18rem; }
     .existencia-compacto .existencia-producto-desc { display: block; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; }
     .existencia-compacto .existencia-unidades { display: inline; margin-left: .3rem; }
     .existencia-compacto .existencia-col-toggle-cell { padding: 0 .3rem; }
@@ -906,7 +912,7 @@
         .ex-ctl-sucursales, .ex-ctl-texto, .ex-ctl-ms { width: 100%; flex: 1 1 100%; }
         /* En pantallas chicas solo "Cod." queda fijo: dos columnas fijas se comerian casi todo el ancho. */
         .ex-col-prod, .ex-col-prod-cell { position: static; }
-        /* En el celular el ancho fijo de 15/30 caracteres sobra: Cod. y Producto toman su contenido hasta un tope. */
+        /* En el celular el ancho fijo de 15/25 caracteres sobra: Cod. y Producto toman su contenido hasta un tope. */
         .ex-cod-txt { width: auto; max-width: 11ch; }
         .existencia-producto-desc, .existencia-compacto .existencia-producto-desc { width: auto; max-width: 15ch; }
     }

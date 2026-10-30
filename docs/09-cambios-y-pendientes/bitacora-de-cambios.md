@@ -6,6 +6,30 @@
 - **Cambio:** solo CSS de `PuntosExpendio/ExpendiosGenerados.cshtml`: `.expendios-totales-card h5 { font-size: 14px }` (antes `h5` = 1,25 rem). 14 px es lo que realmente aplica al encabezado: `ui-refresh.css` (`body.app-shell #content .table thead th`) le gana a los `.72rem` de la vista. Manual: `PuntosExpendio.ExpendiosGenerados.md`.
 - **Verificado:** nada (no compilado ni visto en el navegador; necesita login).
 
+## 2026-10-30 - Existencia por sucursales: «Ingresar pedido» con el tamaño de los demás botones
+
+- **Pedido:** achicar «Ingresar pedido» para que quede igual que Auto, Estado, etc.; además igualar la fuente del encabezado de columnas a la de Producto.
+- **Cambio:** solo CSS de `ExistenciaPorSucursales.cshtml` (`.existencia-compacto .ex-pedido-toggle-texto`: 1,85 rem de alto, letra .78 rem, borde de 1 px). Encabezados de la tabla: `calc(.78rem - 1pt) !important` (1 pt menos que Producto, unos 11,2 px); salían a 14 px porque `ui-refresh.css` (`body.app-shell #content .table thead th`) le ganaba a la regla de la vista. Detalle: `docs/DECISIONS.md` (2026-10-30).
+- **Verificado:** compila con 0 errores (carpeta aparte). **Sin verificar en el navegador** (necesita login).
+- **Ajuste posterior:** el usuario pidió un punto menos en el encabezado de columnas: `font-size: calc(.78rem - 1pt) !important` en `.existencia-compacto .tabla-existencia-sucursales thead th` (1 pt menos que Producto). Sin compilar ni verificar en el navegador.
+
+## 2026-10-30 - Existencia por sucursales: letra 1 pt menor, Producto de 25 caracteres, Estado 1 pt menos que Stock
+
+- **Pedido:** reducir la fuente un punto, Cód. de 15 caracteres como máximo, Producto de 25 y el contenido de Estado 1 punto por debajo de Stock (se aprobó antes un mockup).
+- **Cambio:** solo CSS de `ExistenciaPorSucursales.cshtml` (se quita el `+1pt`, `--ex-prod-ch` 30ch → 25ch, `td.ex-col-estado` con `calc(.78rem - 1pt)`). Detalle: `docs/DECISIONS.md` (2026-10-30) y el manual de la pantalla.
+- **Verificado:** compila con 0 errores (a una carpeta aparte: `WebCore/bin` está bloqueado por un proceso de WebCore en ejecución). **Sin verificar en el navegador** ni el ajuste a 640 px (necesita login).
+
+## 2026-10-30 - Existencia por sucursales: lápices del punto de stock ocultos hasta encender «Editar puntos»
+
+- **Pedido:** que el lápiz de editar el punto de stock no se vea por defecto y un botón lo habilite para quien tiene permiso, para no modificar sin querer.
+- **Cambio:** `ExistenciaPorSucursales.cshtml` (chip «Editar puntos» solo con permiso, CSS que oculta `.ex-btn-pto` salvo con `.ex-editar-pto`) y `existencia-sucursales.js` (interruptor que alterna la clase y cierra el editor). Detalle: `docs/DECISIONS.md` (2026-10-30) y el manual de la pantalla.
+- **Verificado:** compila con 0 errores. **Sin verificar en el navegador** (necesita login).
+
+## 2026-10-30 - Existencia por sucursales: siempre compacta, sin botón «Compacto»
+
+- **Pedido:** que `/Stock/ExistenciaPorSucursales` sea siempre compacta; el botón ya no hace falta.
+- **Cambio:** `ExistenciaPorSucursales.cshtml` (clase `existencia-compacto` fija, se quitan el chip y el script de `localStorage`) y `existencia-sucursales.js` (se quita el manejo del interruptor). Detalle: `docs/DECISIONS.md` (2026-10-30) y `docs/11-manual-de-uso/pantallas/Stock.ExistenciaPorSucursales.md`.
+
 ## 2026-10-29 - Expendios generados: filtro por persona, ver solo líneas y exportar a PDF / Excel
 
 - **Pedido:** filtrar por persona con el selector de `/Ventas` (con ✕), ver todas las líneas y agruparlas como en `/Ventas/Lineas`, y exportar a PDF o Excel.

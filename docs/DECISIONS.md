@@ -8204,3 +8204,29 @@ Se rediseñó `GenerarDocsCore.DibujarEtiqueta` (3 tamaños, mismas proporciones
 - **Por qué:** en SQL Server `Datos.Venta.getExpedioById` abre conexiones anidadas (vendedor, sucursal, líneas y cortes) mientras su lector sigue abierto. Dentro del `TransactionScope` eso promueve la transacción a distribuida y .NET la rechaza (`TransactionException`): en Servidor SM toda venta del POS con expendios terminaba en «Error al finalizar la venta». Reproducido contra el SQL Server local (dentro del scope falla, fuera anda).
 - **Descartado:** reescribir `getExpedioById` de SQL Server sin lecturas anidadas (más superficie, mismo resultado para este uso) y habilitar `TransactionManager.ImplicitDistributedTransactions` (requiere MSDTC en cada servidor y es más lento).
 - **Regla:** dentro de la transacción de una venta no se llaman lecturas de `Datos` que abran conexiones anidadas; lo que haga falta leer se lee antes. Test: `VentaRemitosAsociadosTests.Los_expendios_se_leen_fuera_de_la_transaccion_al_agregar_y_al_modificar`.
+
+## 2026-10-30 - Existencia por sucursales: diseño siempre compacto (se quita el botón «Compacto»)
+
+- **Decisión:** `Stock/ExistenciaPorSucursales` queda siempre en el diseño compacto: `#existenciaPage` lleva la clase `existencia-compacto` fija en el HTML. Se quitaron el chip «Compacto» (`switchCompactoExistencia`), su JS (`iniciarCompacto` / `cambiarCompacto`) y el script en línea que leía `localStorage` (`existenciaCompacto` / `existenciaCompactoPopup`).
+- **Por qué:** pedido del usuario: el diseño normal ya no se usa, así que el botón sobra. Fijar la clase en el HTML evita además el parpadeo del diseño normal al cargar.
+- **Descartado:** dejar el botón oculto o conservar el diseño normal en el CSS. Las reglas de CSS sin prefijo `.existencia-compacto` quedan como están (el diseño normal ya no se ve).
+- **Nota:** quedan en el `localStorage` de cada navegador las claves viejas; no se leen.
+
+## 2026-10-30 - Existencia por sucursales: los lápices del punto de stock se habilitan con un interruptor
+
+- **Decisión:** los lápices de editar el punto de stock arrancan ocultos; con permiso de edición (`PuedeEditarPuntoStock`, el mismo de siempre) aparece en la barra el interruptor «Editar puntos» (`switchEditarPuntoExistencia`) que agrega la clase `ex-editar-pto` a `#existenciaPage` y los muestra. Sin permiso no hay interruptor. Se aplica también al panel de Movimientos/Editar.
+- **Por qué:** pedido del usuario: tener el lápiz siempre a la vista puede llevar a modificar un punto sin querer. El permiso sigue validándose en servidor al guardar (`guardarPuntoUrl`); esto es solo prevención de errores en pantalla.
+- **Descartado:** recordar el estado en `localStorage` (un día que quedó encendido volvería el riesgo) y ocultar los lápices sacándolos del HTML (obligaría a recargar la tabla al alternar).
+
+## 2026-10-30 - Existencia por sucursales: letra 1 pt menor, Producto de 25 caracteres y Estado 1 pt menos que Stock
+
+- **Decisión:** en `ExistenciaPorSucursales.cshtml` se quitó el `+ 1pt` de la letra compacta de la tabla (`.78rem`; también unidades, equivalentes, pistas, precio y casilla «A pedir»), `--ex-prod-ch` pasa de 30ch a 25ch (`--ex-cod-ch` sigue en 15ch) y el contenido de la columna Estado (`td.ex-col-estado`, con su «pto N» y el lápiz) usa `calc(.78rem - 1pt)`, 1 pt por debajo de Stock.
+- **Por qué:** pedido del usuario, para ver más información por pantalla. Revierte el `+1 pt` de la decisión de 2026-10-20 sobre la letra y el ancho de 30 de la de 2026-10-19; el alto de las filas no cambia (interlineado fijo).
+- **Descartado:** tocar los encabezados (`.66rem`, ya chicos) y los anchos del panel de Movimientos (9 y 22 caracteres), que solo heredan la letra nueva.
+
+## 2026-10-30 - Existencia por sucursales: «Ingresar pedido» con el tamaño de los demás botones
+
+- **Decisión:** en compacto, `.ex-pedido-toggle-texto` pasa de 2,45 rem de alto / .9 rem de letra / borde de 2 px a 1,85 rem / .78 rem / 1 px, igual que los chips (Auto, Estado, Expandir). Conserva el color (contorno azul, relleno al encenderlo).
+- **Por qué:** pedido del usuario: el botón grande desentonaba con el resto de la barra. Revierte «no es un chip chico» de 2026-10-19.
+- **Encabezados de columna:** el usuario pidió igualarlos a la fuente de Producto (.78rem). Salían a 14px porque `ui-refresh.css` fija `body.app-shell #content .table thead th { font-size: 14px }` y ganaba a la regla de la vista (.66rem); se fijó `.78rem !important` en `.existencia-compacto .tabla-existencia-sucursales thead th`.
+- **Ajuste posterior (2026-10-30):** el usuario pidió bajar un punto más: los encabezados quedan en `calc(.78rem - 1pt)` (unos 11,2 px, 1 pt menos que Producto y igual que el contenido de Estado).
