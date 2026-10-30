@@ -5,7 +5,7 @@ rol: usuario
 modulo: Punto de Expendio
 orden: 2
 permiso: Venta.NuevaVenta (el mismo que "Nueva venta"); sin él la pantalla y los archivos PDF/Excel redirigen al inicio con un aviso
-revisada: 2026-10-29
+revisada: 2026-10-30
 ---
 ## Para qué sirve
 Consultar **todos los expendios** de la empresa de un período (remitos, presupuestos, carnicería…), con sus líneas, de todas las sucursales y usuarios. Se puede ver **una tarjeta por expendio** o **una sola tabla con todas las líneas**, filtrar por cliente (eligiéndolo de una lista), y **exportar a PDF o Excel** lo que se ve.
@@ -20,7 +20,7 @@ Consultar **todos los expendios** de la empresa de un período (remitos, presupu
 Los expendios cuyo cliente se guardó con su id **o** cuya *Identificación cliente* es **igual** a la identificación de la persona (sin distinguir mayúsculas ni acentos). Es la misma regla del filtro *Persona* del modal de expendios del POS.
 
 ## Totales
-La barra de arriba suma lo que se ve: **Expendios**, **Líneas**, **Kgs.** y **Total**.
+La barra de arriba suma lo que se ve: **Expendios**, **Líneas**, **Kgs.** y **Total**. Se muestran con la misma letra que los encabezados de la tabla (desde 2026-10-30; antes iban en un tamaño de título).
 
 ## Ver solo líneas
 El botón **Ver solo líneas** cambia de una tarjeta por expendio a **una tabla con una fila por línea**; *Ver agrupado por expendio* vuelve a las tarjetas.

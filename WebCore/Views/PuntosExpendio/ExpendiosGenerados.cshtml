@@ -266,6 +266,12 @@
         letter-spacing: .02em;
         text-transform: uppercase;
     }
+
+    /* Totales (Expendios / Lineas / Kgs. / Total): misma letra que el encabezado de la tabla. 14px = lo que termina
+       aplicando ui-refresh.css ("body.app-shell #content .table thead th"), que le gana a los .72rem de la regla de arriba. */
+    .expendios-totales-card h5 {
+        font-size: 14px;
+    }
 </style>
 
 @section Scripts {

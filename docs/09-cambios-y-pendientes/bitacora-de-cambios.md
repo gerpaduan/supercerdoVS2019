@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-10-30 - Expendios generados: totales con la letra del encabezado de la tabla
+
+- **Pedido:** reducir los totales (Expendios / Líneas / Kgs. / Total) a la misma fuente que el encabezado.
+- **Cambio:** solo CSS de `PuntosExpendio/ExpendiosGenerados.cshtml`: `.expendios-totales-card h5 { font-size: 14px }` (antes `h5` = 1,25 rem). 14 px es lo que realmente aplica al encabezado: `ui-refresh.css` (`body.app-shell #content .table thead th`) le gana a los `.72rem` de la vista. Manual: `PuntosExpendio.ExpendiosGenerados.md`.
+- **Verificado:** nada (no compilado ni visto en el navegador; necesita login).
+
 ## 2026-10-29 - Expendios generados: filtro por persona, ver solo líneas y exportar a PDF / Excel
 
 - **Pedido:** filtrar por persona con el selector de `/Ventas` (con ✕), ver todas las líneas y agruparlas como en `/Ventas/Lineas`, y exportar a PDF o Excel.
