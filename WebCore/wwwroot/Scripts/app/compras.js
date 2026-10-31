@@ -109,7 +109,9 @@
         return {
             config: config || {},
             lineas: [],
-            lineasSortAsc: false,
+            // Orden de la tabla de lineas: arranca en "ultimos primero" por # (columna "orden"); ver valorOrdenLineaCompra.
+            sortKey: 'orden',
+            sortDirection: 'desc',
             saving: false,
             personaTimer: null,
             productoTimer: null,
@@ -511,17 +513,42 @@
         }
     }
 
+    // Valor por el que se ordena una linea segun la columna elegida (state.sortKey). "orden" = posicion de carga (la columna #).
+    // Las medias reses no tienen codigo ni nombre propio: se ordenan como "Media" y con codigo vacio.
+    function valorOrdenLineaCompra(linea, indice, clave) {
+        var esMedia = linea.tipoLinea === 'MediaRes';
+        switch (clave) {
+            case 'detalle': return esMedia ? 'media' : String(linea.corteNombre || '').toLowerCase();
+            case 'codigo': return esMedia ? '' : String(linea.codigo || '');
+            case 'cantidad': return toNumber(esMedia ? linea.kgMedia : linea.cantKgs);
+            case 'orden':
+            default: return indice;
+        }
+    }
+
+    // Indices REALES de state.lineas en el orden en que se muestran. No se reordena state.lineas: el indice real es el que usan
+    // el tacho (data-index), el numero de la columna # y los hidden Lineas[i] (el orden guardado es siempre el de carga).
+    function indicesLineasOrdenadas(state) {
+        var factor = state.sortDirection === 'desc' ? -1 : 1;
+        return state.lineas
+            .map(function (linea, indice) { return indice; })
+            .sort(function (a, b) {
+                var resultado = window.OrdenTabla.comparar(
+                    valorOrdenLineaCompra(state.lineas[a], a, state.sortKey),
+                    valorOrdenLineaCompra(state.lineas[b], b, state.sortKey));
+                return (resultado === 0 ? a - b : resultado) * factor;
+            });
+    }
+
     function renderLineas($form) {
         var state = getState($form);
         var $tbody = $form.find('#tablaLineasCompra tbody');
         var html = '';
-        var start = state.lineasSortAsc ? 0 : state.lineas.length - 1;
-        var end = state.lineasSortAsc ? state.lineas.length : -1;
-        var step = state.lineasSortAsc ? 1 : -1;
+        var indicesOrdenados = indicesLineasOrdenadas(state);
 
-        $form.find('.js-line-order-indicator').text(state.lineasSortAsc ? '↑' : '↓');
-        $form.find('.js-line-order-toggle').attr('title', state.lineasSortAsc ? 'Orden ascendente por número' : 'Orden descendente por número');
-        $form.find('#ordenLineasCompra').val(state.lineasSortAsc ? 'asc' : 'desc');
+        // Flecha del encabezado (escritorio) y selector del celular: este solo ofrece "ultimos/primeros primero" por #.
+        window.OrdenTabla.sincronizarEncabezados($form.find('#tablaLineasCompra thead [data-sort-key]'), state);
+        $form.find('#ordenLineasCompra').val(state.sortKey === 'orden' ? state.sortDirection : '');
 
         if (!state.lineas.length) {
             $tbody.html('<tr class="js-empty-row"><td colspan="8" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
@@ -545,7 +572,8 @@
             return '<span class="cc-solo-card compra-card-numero">' + numeroLinea + ' · </span>';
         };
 
-        for (var index = start; index !== end; index += step) {
+        for (var posicion = 0; posicion < indicesOrdenados.length; posicion++) {
+            var index = indicesOrdenados[posicion];
             var linea = state.lineas[index];
             var numeroLinea = index + 1;
             if (linea.tipoLinea === 'MediaRes') {
@@ -1763,14 +1791,19 @@
             scheduleDraft($form);
         });
 
-        $form.on('click.compras', '[data-action="toggle-line-order"]', function () {
-            state.lineasSortAsc = !state.lineasSortAsc;
+        // Clic en un encabezado (#, Detalle, Codigo, Cantidad): ordena; otro clic en el mismo invierte.
+        $form.on('click.compras', '#tablaLineasCompra thead [data-sort-key]', function (e) {
+            e.preventDefault();
+            var clave = String($(this).data('sort-key') || '');
+            if (!clave) return;
+            window.OrdenTabla.alternar(state, clave);
             renderLineas($form);
         });
 
         // Selector de orden del celular (#ordenLineasCompra): mismo estado que el encabezado "#" de desktop.
         $form.on('change.compras', '#ordenLineasCompra', function () {
-            state.lineasSortAsc = $(this).val() === 'asc';
+            state.sortKey = 'orden';
+            state.sortDirection = $(this).val() === 'asc' ? 'asc' : 'desc';
             renderLineas($form);
         });
 

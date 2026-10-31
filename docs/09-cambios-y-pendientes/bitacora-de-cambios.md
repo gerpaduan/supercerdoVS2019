@@ -1,5 +1,18 @@
 # Bitacora de cambios
 
+## 2026-10-31 - Movimientos/Editar: con el Stock destino al lado, Código solo arriba y Producto + cantidades abajo
+
+- **Pedido:** con el stock visible, Código + Producto arriba y Cant. Un. + Kgs. abajo quedaba incómodo.
+- **Cambio:** CSS del bloque `@container (max-width: 36rem)` en `Views/Movimientos/Editar.cshtml`: Código en su propio renglón (ancho acotado a 11 rem) y Producto + Cant. Un. + Kgs. + «+» en el renglón de abajo. Sin cambios de markup ni JS. Con el teclado digital muy angosto (≤ 22 rem) sigue un renglón por grupo. Manual: `Movimientos.Editar.md`.
+- **Verificado:** en una página de prueba estática con el CSS y el markup reales, a 776, 560 y 330 px de ancho de campos: una línea / Código solo arriba y el resto abajo / un renglón por grupo. **Sin verificar:** la pantalla real con login y el stock abierto, el teclado digital abierto y el flujo de carga (Código → Enter → Cant. Un. → Kgs. → «+»).
+
+## 2026-10-31 - Stock/Editar: todo a la vista en escritorio y fecha siempre con hora
+
+- **Pedido:** adaptar `/Stock/Editar` igual que Compras, Elaborados y Movimientos (ver más líneas sin scrollear, fecha completa con hora).
+- **Cambio:** hoja nueva `wwwroot/Content/css/stock-editar-compacto.css` (solo ≥ 1200 px, la fecha desde 992 px) enlazada en `Views/Stock/Editar.cshtml`, que suma clases (mismos ids; `stock.js` sin cambios). Sucursal | Fecha | Acción en una fila, Agregar producto en una línea, líneas de una fila de 20 px (código al lado del producto) con scroll propio y encabezado fijo, teclado abierto en dos renglones, Pesaje y cajas de compra/pesaje vinculado compactas. Manual: `Stock.Editar.md`. Detalle y reservas medidas: `docs/DECISIONS.md` (2026-10-31).
+- **Verificado:** compila (0 errores) y con login real (usuario temporal, borrado al final): 1366×690 sin scroll de página con 14 líneas (11 filas a la vista); 629 px → 8 filas; 829 px → 18; 1080 px → 31; fecha completa a 992/1100/1200/1632 px; teclado abierto; Pesaje nuevo; registros guardados (Cierre y Pesaje); 375 y 1100 px sin cambios.
+- **Sin verificar:** guardar (escribe en la base), compra vinculada recién elegida (reserva estimada), caja de Pesaje vinculado de un Ajuste guardado, teclado en modo edición, modo oscuro, Egreso/Ajuste nuevos. Límite conocido: en un Pesaje ya guardado la página scrollea ~15 px a 690 px de alto.
+
 ## 2026-10-30 - Elaborados (Carga, Ingreso rápido, Desarme) y Movimientos/Editar: todo a la vista en escritorio y fecha siempre con hora
 
 - **Pedido:** optimizar las vistas para ver todo sin scrollear salvo con más de ~10 ingredientes; Código y Elaborado arriba de Ingredientes; que la fecha siempre sea visible con la hora; sumar Movimientos/Editar.

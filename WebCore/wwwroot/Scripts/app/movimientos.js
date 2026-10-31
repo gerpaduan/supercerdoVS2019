@@ -829,12 +829,19 @@
             $(document).trigger('movimiento:lineas', [resumenDeLineas()]);
         }
 
+        // Orden del modal de acumulados (independiente del de la tabla principal). Arranca por codigo y se reinicia cada vez que se abre.
+        var acumuladosOrden = { sortKey: 'codigo', sortDirection: 'asc' };
+
+        // Agrupa las lineas por producto sumando unidades y kilos. "Orden" = posicion de la primera carga de ese producto (columna #);
+        // se cuenta aparte porque Object.keys reordena las claves numericas por valor y no conserva el orden de insercion.
         function buildAcumulados() {
             var map = {};
+            var siguienteOrden = 1;
             state.lines.forEach(function (line) {
                 var key = String(line.IdCorte || '') || String(line.Codigo || '');
                 if (!map[key]) {
                     map[key] = {
+                        Orden: siguienteOrden++,
                         Codigo: line.Codigo,
                         Producto: line.Producto,
                         CantUnidad: 0,
@@ -844,19 +851,32 @@
                 map[key].CantUnidad += toInt(line.CantUnidad);
                 map[key].CantKg += toFloat(line.CantKg);
             });
+            var valorOrden = function (item) {
+                switch (acumuladosOrden.sortKey) {
+                    case 'producto': return String(item.Producto || '').toLowerCase();
+                    case 'cantUnidad': return item.CantUnidad;
+                    case 'cantKg': return item.CantKg;
+                    case 'orden': return item.Orden;
+                    default: return String(item.Codigo || '');
+                }
+            };
+            var factor = acumuladosOrden.sortDirection === 'desc' ? -1 : 1;
             return Object.keys(map).map(function (key) { return map[key]; }).sort(function (a, b) {
-                return String(a.Codigo).localeCompare(String(b.Codigo));
+                var resultado = window.OrdenTabla.comparar(valorOrden(a), valorOrden(b));
+                return (resultado === 0 ? a.Orden - b.Orden : resultado) * factor;
             });
         }
 
         function renderAcumulados() {
             var items = buildAcumulados();
             var html = '';
+            window.OrdenTabla.sincronizarEncabezados($('#tablaAcumuladosMovimiento thead th[data-sort-key]'), acumuladosOrden);
             if (!items.length) {
-                html = '<tr><td colspan="4" class="text-center text-muted">No hay productos cargados.</td></tr>';
+                html = '<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">No hay productos cargados.</td></tr>';
             } else {
                 items.forEach(function (item) {
                     html += '<tr>'
+                        + '<td class="text-center font-weight-bold d-none d-md-table-cell">' + item.Orden + '</td>'
                         + '<td>' + item.Codigo + '</td>'
                         + '<td>' + item.Producto + '</td>'
                         + '<td class="text-right">' + formatInt(item.CantUnidad) + '</td>'
@@ -1075,7 +1095,17 @@
             addCurrentLine();
         });
 
+        // Clic en un encabezado del modal de acumulados: ordena (delegado en document, el modal esta fuera del form).
+        $(document).on('click.movimientoAcumulados', '#tablaAcumuladosMovimiento thead th[data-sort-key]', function () {
+            var clave = String($(this).data('sort-key') || '');
+            if (!clave) return;
+            window.OrdenTabla.alternar(acumuladosOrden, clave);
+            renderAcumulados();
+        });
+
         $('#btnVerAcumulados').on('click', function () {
+            acumuladosOrden.sortKey = 'codigo';
+            acumuladosOrden.sortDirection = 'asc';
             renderAcumulados();
             $('#modalAcumuladosMovimiento').modal('show');
         });

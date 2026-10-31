@@ -1603,3 +1603,61 @@ body.app-shell .filtro-picker-sub {
     font-size: 0.73rem;
     line-height: 1.15;
 }
+
+/* Tablas de items (clase "tabla-items": Elaborados/Carga, Movimientos, Stock, Compras y los modales de acumulados), solo escritorio
+   con mouse. Resalta la fila bajo el cursor para ubicar producto y cantidad. Se pinta con box-shadow inset porque Bootstrap 5.3
+   pone el fondo de cada td con esa sombra (--bs-table-bg-state): pintar solo el tr no se ve. Sin tocar la regla global de .table. */
+@media (hover: hover) and (min-width: 768px) {
+    body.app-shell table.tabla-items tbody tr:not(.js-empty-row):hover > td {
+        box-shadow: inset 0 0 0 9999px rgba(13, 110, 253, 0.1);
+    }
+
+    html.dark-mode body.app-shell table.tabla-items tbody tr:not(.js-empty-row):hover > td {
+        box-shadow: inset 0 0 0 9999px rgba(84, 160, 255, 0.18);
+    }
+}
+
+/* Encabezados ordenables (helper Scripts/app/orden-tabla.js). !important por el "background ... !important" de .table thead th. */
+body.app-shell table.tabla-items thead th[data-sort-key],
+body.app-shell table.tabla-items thead .js-orden-link {
+    cursor: pointer;
+    user-select: none;
+}
+
+body.app-shell table.tabla-items thead th[data-sort-key]:hover {
+    background: rgba(13, 110, 253, 0.08) !important;
+}
+
+body.app-shell table.tabla-items thead th.orden-activa {
+    background: rgba(13, 110, 253, 0.12) !important;
+    color: #0b57c0 !important;
+    box-shadow: inset 0 -2px 0 rgba(13, 110, 253, 0.45);
+}
+
+html.dark-mode body.app-shell table.tabla-items thead th[data-sort-key]:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark-mode body.app-shell table.tabla-items thead th.orden-activa {
+    background: rgba(84, 160, 255, 0.18) !important;
+    color: #d9e9ff !important;
+    box-shadow: inset 0 -2px 0 rgba(149, 197, 255, 0.55);
+}
+
+/* Enlaces de orden dentro de un encabezado (ej. "Detalle · Codigo" de Compras/Editar): se ven como el texto del encabezado. */
+body.app-shell table.tabla-items thead .js-orden-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+body.app-shell table.tabla-items thead .js-orden-link:hover {
+    text-decoration: underline;
+}
+
+body.app-shell table.tabla-items thead .js-orden-link.orden-activa {
+    color: #0b57c0;
+}
+
+html.dark-mode body.app-shell table.tabla-items thead .js-orden-link.orden-activa {
+    color: #d9e9ff;
+}

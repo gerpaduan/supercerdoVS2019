@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.NuevaCompra (alta) y Compra.ModificarCompra (modificar y eliminar); a los usuarios de producción les pide elegir el operador de Compras antes de entrar
-revisada: 2026-10-30
+revisada: 2026-10-31
 alias: Compras.NuevaCompra, Compras.ModificarCompra
 ---
 ## Para qué sirve
@@ -22,6 +22,7 @@ Pensado para ver más campos y más líneas sin bajar con la rueda. Es igual en 
   Con Desc./Recargo e IVA encendidos y una ventana de menos de unos 1300 px, el Subtotal baja a un renglón propio.
 - **Lista de líneas:** una sola línea por producto (el código va al lado del nombre; si el nombre no entra se corta con «…»), con letra un punto más chica. Entran **13 productos a la vista** con una ventana de 685 px de alto o más (745 px o más si la cabecera ocupa dos renglones; en una de 630 px, 10); con más productos la lista tiene su propio scroll con el encabezado fijo, así que el resto de la pantalla no se mueve y los botones de abajo no se esconden. Columnas: #, Detalle, Cantidad, Precio, **Total**, **P. venta** y **Margen**. Estas dos últimas **no forman parte de la compra** (actualizan el precio de venta del producto): van después del Total, con fondo violeta tenue y una línea punteada que las separa.
 - **Números en formato argentino:** punto para los miles y coma para los decimales (1.234,50) en el total de la compra, el total de cantidad, el subtotal, el precio actual del producto y todas las columnas de la lista. Los campos que se escriben no cambian: el Precio ya pone los puntos mientras escribís; Cantidad, Desc./Recargo, IVA y Margen se escriben como siempre. Lo que se guarda es lo mismo de antes.
+- **Fila resaltada y orden:** al pasar el mouse por una fila se pinta de azul tenue. Se ordena tocando los encabezados **#**, **Detalle**, **Código** (los dos enlaces del encabezado Detalle) y **Cantidad**; otro toque invierte el orden y una flecha ↑/↓ marca la columna. Arranca en **# descendente** (lo último cargado arriba). Las medias reses se ordenan como «Media», sin código. El número **#** es el de carga y no cambia al ordenar; quitar una línea quita la correcta y el orden en que se guarda es siempre el de carga.
 - **A la derecha** de la lista: total de la compra (grande), items y cantidad, cantidad de medias reses y observaciones.
 - **Botones de abajo** (Guardar / Modificar / Eliminar / Cancelar) quedan siempre a la vista.
 - En el modal del POS la lista de líneas se ve como en la pantalla completa (antes mostraba, repetidos, los textos pensados para el celular).
@@ -31,7 +32,7 @@ Pensado para ver más campos y más líneas sin bajar con la rueda. Es igual en 
 - Los importes también salen con puntos de miles y coma decimal (1.234,50).
 - **Cantidad, Precio y Subtotal** van en una misma fila.
 - **Productos cargados:** se ven como una lista. Arriba, el número de línea, el producto y el total; abajo, el código con cantidad × precio (en las medias, la tropa con kilos × precio). Si la línea tiene descuento/recargo, IVA, precio de venta o margen, se muestran en un renglón más. El tacho de la derecha quita la línea.
-- **Orden:** arranca con **lo último cargado arriba**; con el selector de la derecha se cambia a «Primeros primero». En la computadora se ordena tocando «#», como siempre.
+- **Orden:** arranca con **lo último cargado arriba**; con el selector de la derecha se cambia a «Primeros primero». En la computadora se ordena tocando los encabezados (ver arriba).
 
 ## Eliminar una compra
 El botón rojo **Eliminar** aparece al abrir una compra **ya guardada** para quien tenga permiso de modificar compras: en la pantalla completa y, desde **F6 → Mis actividades** del POS, en las compras propias de la caja abierta (ver [Ventas.POS](ayuda:pantalla/Ventas.POS)); no dentro de la cuenta corriente del proveedor.

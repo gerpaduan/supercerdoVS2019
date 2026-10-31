@@ -40,7 +40,7 @@
     modalBorradoresData["TituloBorradoresGenerico"] = "Stock sin guardar";
 }
 
-<div class="container-fluid px-2 px-md-3 stock-page stock-form-compact" data-stock-page="1">
+<div class="container-fluid px-2 px-md-3 stock-page stock-form-compact stock-editar-compacto" data-stock-page="1">
     @if (ViewBag.RecuperandoEliminado is string textoRecuperando)
     {
         <div class="alert alert-info py-2 small" role="alert" id="avisoRecuperandoEliminado">
@@ -53,7 +53,7 @@
         <button type="button" class="btn btn-sm btn-outline-dark ml-2" data-action="clear-draft">Limpiar borrador</button>
     </div>
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2 stock-barra-botones">
         <div class="d-flex align-items-center gap-2">
             <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Stock")">
                 <i class="fas fa-arrow-left mr-1"></i> Volver
@@ -92,7 +92,9 @@
                 <div id="lineasHiddenContainer"></div>
                 <div id="pesajesVinculadosHiddenContainer"></div>
 
-                <div class="row">
+                @* stock-fila-datos: en escritorio es una grilla con la columna de Fecha de ancho minimo (se ve completa, con la hora);
+                   ver stock-editar-compacto.css. *@
+                <div class="row stock-fila-datos">
                     <div class="col-12 col-lg-3">
                         <div class="form-group">
                             <label for="IdSucursal">Sucursal</label>
@@ -131,7 +133,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <small class="form-text text-muted">La acción se desbloquea sólo cuando presiona cambiar.</small>
+                            <small class="form-text text-muted stock-hint-accion">La acción se desbloquea sólo cuando presiona cambiar.</small>
                         </div>
                     </div>
                     <div class="col-12 col-xl-4">
@@ -144,7 +146,7 @@
                     </div>
                 </div>
 
-                <div class="row @(esPesaje ? "" : "d-none")" id="bloquePesajeStock">
+                <div class="row stock-fila-pesaje @(esPesaje ? "" : "d-none")" id="bloquePesajeStock">
                         <div class="col-12 col-lg-4">
                             <div class="form-group">
                                 <label for="razonSocial">Proveedor</label>
@@ -214,7 +216,9 @@
                         </div>
                 </div>
 
-                <div class="row">
+                @* stock-fila-vinculada: cajas "Compra vinculada" / "Pesaje vinculado" del modo edicion; en escritorio sus datos van en una sola
+                   linea (stock-editar-compacto.css). *@
+                <div class="row stock-fila-vinculada">
                     <div class="col-12 col-xl-8">
                         @if (Model.EsEdicion && esPesaje)
                         {
@@ -288,9 +292,9 @@
                     </div>
                 </div>
 
-                <hr />
+                <hr class="stock-hr" />
 
-                <div class="row">
+                <div class="row stock-cuerpo">
                     <div class="col-12 col-xl-8">
                         <div class="border rounded p-3 mb-3 stock-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
@@ -419,10 +423,11 @@
 
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLineas() en stock.js. En desktop la tabla no cambia. *@
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-sm stock-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasStock">
+                        <div class="table-responsive stock-tabla-wrap">
+                            <table class="table table-bordered table-sm stock-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasStock">
                                 <thead class="thead-light">
                                     <tr>
+                                        <th class="text-center" style="width:50px;" data-sort-key="orden">#</th>
                                         <th class="stock-th-producto">
                                             <a href="#" class="js-stock-sort" data-sort-key="producto">Producto</a>
                                             <span class="stock-th-sep">·</span>
@@ -451,8 +456,8 @@
                                     <span>Total cantidad</span>
                                     <strong id="totalKg">@Model.TotalKg.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)</strong>
                                 </div>
-                                <hr />
-                                <div class="d-flex flex-wrap align-items-center justify-content-between small text-muted">
+                                <hr class="stock-resumen-hr" />
+                                <div class="d-flex flex-wrap align-items-center justify-content-between small text-muted stock-resumen-pie">
                                     <span class="mr-2">Acción: <strong id="stockAccionActual">@Model.TipoCompra</strong></span>
                                     <span class="d-flex align-items-center mt-2 mt-md-0">
                                         <label class="mb-0 mr-2 text-nowrap">Usuario</label>
@@ -464,7 +469,7 @@
                         <small class="form-text text-muted mt-2" id="txtAyudaCantidad">
                             @(esEgreso ? "En Egreso las cantidades se guardan en negativo (se convierten solas)." : (esAjuste ? "En Ajuste puede ingresar valores positivos o negativos." : ""))
                         </small>
-                        <div class="card stock-panel-card mt-3">
+                        <div class="card stock-panel-card mt-3 stock-card-observaciones">
                             <div class="card-body">
                                 <div class="form-group mb-0">
                                     <label for="Observaciones">Observaciones</label>
@@ -491,7 +496,7 @@
                     </div>
                 </div>
 
-                <div class="mt-3 d-flex flex-wrap align-items-center">
+                <div class="mt-3 d-flex flex-wrap align-items-center stock-acciones">
                     @if (Model.EsEdicion)
                     {
                         <button type="button"
@@ -709,12 +714,13 @@
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 stock-table-compact">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact tabla-items" id="tablaAcumuladosStock">
                         <thead class="thead-light">
                             <tr>
-                                <th style="width:120px;">Código</th>
-                                <th>Producto</th>
-                                <th class="text-right" style="width:120px;">Cantidad</th>
+                                <th class="text-center d-none d-md-table-cell" style="width:50px;" data-sort-key="orden">#</th>
+                                <th style="width:120px;" data-sort-key="codigo">Código</th>
+                                <th data-sort-key="producto">Producto</th>
+                                <th class="text-right" style="width:120px;" data-sort-key="cantidad">Cantidad</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyAcumuladosStock"></tbody>
@@ -1160,8 +1166,10 @@
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/stock.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/stock-editar-compacto.css")" asp-append-version="true" />
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>

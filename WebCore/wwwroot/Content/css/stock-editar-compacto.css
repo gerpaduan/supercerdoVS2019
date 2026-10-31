@@ -1,0 +1,410 @@
+/* Stock/Editar en ESCRITORIO compacto (pedido 2026-10-31): mas lineas a la vista sin scroll de pagina y la fecha siempre completa con la hora.
+   Solo CSS: ids, names y JS (stock.js, numeric-keypad.js, edit-readonly.js) no cambian. Todo dentro de .stock-editar-compacto (clase del contenedor
+   de Views/Stock/Editar.cshtml; Stock/Index tambien usa .stock-page, por eso no se cuelga de esa).
+   Los selectores arrancan con "body.app-shell" por ui-refresh.css (.form-control con min-height 2.75rem, body.app-shell .card .card-body) y custom.css
+   (".table thead th { white-space: normal !important }"). Mismo criterio que movimientos-compacto.css; medidas en docs/DECISIONS.md (2026-10-31). */
+
+/* ---- Fecha siempre completa, con hora (desde 992 px) ----
+   Sucursal | Fecha | Accion pasan a grilla con la columna de Fecha de ancho minimo (12 rem entran "31/10/2026 11:02" y el icono del calendario). */
+@media (min-width: 992px) {
+    body.app-shell .stock-editar-compacto .stock-fila-datos {
+        display: grid;
+        grid-template-columns: minmax(8rem, 1fr) minmax(12rem, 14rem) minmax(14rem, 2fr);
+        gap: 0 .75rem;
+        margin: 0;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-fila-datos > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+
+    /* Columna vacia (col-xl-4 sin contenido) que quedaba de relleno en la fila. */
+    body.app-shell .stock-editar-compacto .stock-fila-datos > [class*="col-"]:empty {
+        display: none;
+    }
+}
+
+@media (min-width: 1200px) {
+    /* ---- Botones de arriba (Volver / Stock sin guardar): mas bajos ---- */
+    body.app-shell .stock-editar-compacto .stock-barra-botones {
+        margin-bottom: .4rem !important;
+        gap: .4rem;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-barra-botones .btn {
+        min-height: 1.9rem;
+        padding: .18rem .75rem;
+        font-size: .82rem;
+        border-radius: .5rem;
+    }
+
+    /* ---- Espacios ---- */
+    body.app-shell .stock-editar-compacto .mb-3 {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .form-group {
+        margin-bottom: .3rem;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-hr {
+        display: none;
+    }
+
+    /* La leyenda "La accion se desbloquea solo cuando presiona cambiar" ocupaba un renglon; el boton Cambiar ya tiene su tooltip. */
+    body.app-shell .stock-editar-compacto .stock-hint-accion {
+        display: none;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-panel-card > .card-body,
+    body.app-shell .stock-editar-compacto .stock-panel-card .card-body {
+        padding: .45rem .65rem;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-section-box {
+        padding: .4rem .6rem !important;
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-section-box .form-group {
+        margin-bottom: 0;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-section-title {
+        margin-bottom: .3rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-form-compact .form-control,
+    body.app-shell .stock-editar-compacto .stock-section-box .form-control,
+    body.app-shell .stock-editar-compacto .stock-panel-card .form-control,
+    body.app-shell .stock-editar-compacto .stock-section-box .btn:not(.btn-sm),
+    body.app-shell .stock-editar-compacto .stock-panel-card .btn:not(.btn-sm) {
+        min-height: 1.9rem;
+        padding: .18rem .5rem;
+    }
+
+    /* Titulo "Agregar producto" + Balanza, Ver acumulados, teclado y (segun la accion) Ver Porc(%) / Productos no cargados: con la columna de 616 px
+       (ventana de 1200) esos botones pasaban a un segundo renglon (+60 px). Menos separacion entre ellos para que entren en una linea. */
+    body.app-shell .stock-editar-compacto .stock-section-box > .d-flex.justify-content-between:first-child {
+        flex-wrap: nowrap;
+        gap: .5rem;
+        margin-bottom: .3rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-section-box > .d-flex.justify-content-between:first-child > .stock-section-title {
+        white-space: nowrap;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-acciones-agregar {
+        gap: .4rem !important;
+        flex-wrap: nowrap;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-acciones-agregar > .custom-control {
+        margin-right: .2rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-acciones-agregar > .btn {
+        white-space: nowrap;
+        padding: .15rem .4rem;
+        font-size: .74rem;
+    }
+
+    /* Balanza: estado y barra en una sola linea (antes eran dos bloques de ~45 px). */
+    body.app-shell .stock-editar-compacto #balanzaStatusWrapStock {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: .35rem;
+    }
+
+    body.app-shell .stock-editar-compacto #balanzaStatusWrapStock > .small {
+        margin: 0 !important;
+    }
+
+    body.app-shell .stock-editar-compacto #balanzaStatusWrapStock > .progress {
+        flex: 0 0 140px;
+        margin: 0 !important;
+    }
+
+    /* ---- Lista de lineas: UN renglon por fila (20 px), letra 1 pt menor, encabezado fijo y scroll propio ----
+       Alto = ventana menos la reserva (todo lo que hay arriba y abajo de la tabla); calibrada midiendo en 1366 px de ancho. */
+    body.app-shell .stock-editar-compacto .stock-tabla-wrap {
+        max-height: calc(100vh - var(--stock-tabla-reserva, 27.2rem));
+        min-height: 6rem;
+        overflow-y: auto;
+        margin-bottom: .3rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-table-compact#tablaLineasStock {
+        font-size: .725rem;
+        margin-bottom: 0;
+    }
+
+    body.app-shell .stock-editar-compacto #tablaLineasStock thead th,
+    body.app-shell .stock-editar-compacto #tablaLineasStock > thead > tr > th {
+        font-size: .64rem !important;
+        line-height: 1.2;
+        padding: .2rem .45rem;
+        /* !important: custom.css fuerza "white-space: normal !important" en todo .table thead th. */
+        white-space: nowrap !important;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--ui-surface-alt, #f3f4f6);
+    }
+
+    body.app-shell .stock-editar-compacto #tablaLineasStock tbody td {
+        height: 1.25rem;
+        padding: 0 .45rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    /* El codigo iba debajo del nombre ("Corte" / "Codigo: 1" = 2 renglones por linea, stock.js renderLineas): pasa al lado, en el mismo renglon.
+       Los <br> de la celda de Producto y de Creado (etiqueta "No contado" / "Pesaje vinculado") se anulan por lo mismo. */
+    body.app-shell .stock-editar-compacto #tablaLineasStock tbody td br {
+        display: none;
+    }
+
+    body.app-shell .stock-editar-compacto #tablaLineasStock tbody .cc-l-prod .cc-solo-tabla {
+        margin-left: .5rem;
+    }
+
+    body.app-shell .stock-editar-compacto #tablaLineasStock tbody .badge {
+        margin: 0 .3rem 0 0 !important;
+        padding: .1rem .3rem;
+        font-size: .6rem;
+        line-height: 1;
+    }
+
+    body.app-shell .stock-editar-compacto #tablaLineasStock tbody .btn-sm {
+        height: 1rem;
+        min-height: 0;
+        padding: 0 .4rem;
+        font-size: .62rem;
+        line-height: 1;
+        border-radius: .3rem;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-search-toolbar {
+        margin-bottom: .25rem !important;
+    }
+
+    /* ---- Lateral (Resumen / Observaciones / Datos del registro) ---- */
+    body.app-shell .stock-editar-compacto .stock-summary-card .card-body {
+        padding: .45rem .65rem;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-lateral > .card {
+        margin-top: .4rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-lateral > .card:first-child {
+        margin-top: 0 !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-resumen-hr {
+        margin: .35rem 0;
+    }
+
+    /* Observaciones: una linea; al enfocar se agranda. El alto inline de la vista (min-height de 2 filas) se pisa. */
+    body.app-shell .stock-editar-compacto .stock-card-observaciones textarea {
+        height: 2rem !important;
+        min-height: 2rem !important;
+        resize: none !important;
+        overflow: hidden;
+        transition: height .15s ease;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-card-observaciones textarea:focus {
+        height: 4.6rem !important;
+    }
+
+    /* ---- Teclado numerico (compartido con Elaborados y Movimientos): teclas de 2.3 rem en vez de 3 rem, solo aca ---- */
+    body.app-shell .stock-editar-compacto .numeric-keypad-grid {
+        grid-auto-rows: 2.3rem;
+        gap: .3rem;
+    }
+
+    body.app-shell .stock-editar-compacto .numeric-keypad-grid .btn-key,
+    body.app-shell .stock-editar-compacto .numeric-keypad-grid .btn-enter {
+        font-size: .95rem;
+        padding: 0;
+        min-height: 0;
+    }
+
+    body.app-shell .stock-editar-compacto .numeric-keypad-wrap > .card {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .numeric-keypad-wrap .card-body {
+        padding: .4rem .55rem;
+    }
+
+    body.app-shell .stock-editar-compacto .numeric-keypad-wrap h6 {
+        margin: 0 0 .3rem !important;
+    }
+
+    /* Teclado cerrado: Codigo | Producto | Cantidad | "+" en una grilla. Con las columnas Bootstrap (3/6/2/1 de 12) y la columna de 616 px de una
+       ventana de 1200, el Codigo (boton del scanner + campo de 13 caracteres, ver min-width inline de la vista) no entraba y el campo caia debajo
+       del boton (+30 px de alto). */
+    body.app-shell .stock-editar-compacto #stockNumericKeypadLayout:not(.teclado-desplegado) .numeric-keypad-toggle-fields .row {
+        display: grid;
+        grid-template-columns: minmax(10.5rem, 11rem) minmax(0, 1fr) minmax(7rem, 7.5rem) auto;
+        gap: 0 .5rem;
+        margin: 0;
+    }
+
+    body.app-shell .stock-editar-compacto #stockNumericKeypadLayout:not(.teclado-desplegado) .numeric-keypad-toggle-fields .row > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+
+    /* Teclado desplegado: Codigo + Producto en un renglon y Cantidad + "+" en el siguiente (numeric-keypad.css apila las 4 columnas a todo
+       el ancho, una por renglon). Las columnas se identifican por posicion: la vista no les pone clase propia. */
+    body.app-shell .stock-editar-compacto #stockNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .row {
+        flex-wrap: wrap;
+    }
+
+    body.app-shell .stock-editar-compacto #stockNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .row > [class*="col-"]:nth-child(1) {
+        flex: 0 0 38%;
+        max-width: 38%;
+    }
+
+    body.app-shell .stock-editar-compacto #stockNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .row > [class*="col-"]:nth-child(2) {
+        flex: 0 0 62%;
+        max-width: 62%;
+    }
+
+    body.app-shell .stock-editar-compacto #stockNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .row > [class*="col-"]:nth-child(3) {
+        flex: 1 1 0;
+        max-width: none;
+    }
+
+    body.app-shell .stock-editar-compacto #stockNumericKeypadLayout.teclado-desplegado .numeric-keypad-toggle-fields .row > [class*="col-"]:nth-child(4) {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+    }
+
+    /* Con el teclado abierto el cuadro de "Agregar producto" crece (el teclado mide ~194 px contra ~60 de los campos): 9.1 rem mas de reserva
+       (medida: 276 px de cuadro contra 130 px sin teclado, a 1366 px de ancho). */
+    body.app-shell .stock-editar-compacto:has(#stockNumericKeypadLayout.teclado-desplegado) .stock-tabla-wrap {
+        --stock-tabla-reserva: 36.3rem;
+    }
+
+    /* ---- Pesaje: fila extra (Proveedor, Cant.Medias, Kgs.Medias y botones de vincular) ----
+       5 rem mas de reserva (medido: 80 px de fila a 1366 px de ancho). El teclado abierto suma sus 9.1 rem encima. */
+    body.app-shell .stock-editar-compacto:has(#bloquePesajeStock:not(.d-none)) .stock-tabla-wrap {
+        --stock-tabla-reserva: 32.2rem;
+    }
+
+    body.app-shell .stock-editar-compacto:has(#bloquePesajeStock:not(.d-none)):has(#stockNumericKeypadLayout.teclado-desplegado) .stock-tabla-wrap {
+        --stock-tabla-reserva: 41.3rem;
+    }
+
+    /* Con una compra vinculada elegida la caja suma 4.8 rem mas (medido: 77 px, ya compactada abajo). */
+    body.app-shell .stock-editar-compacto:has(#bloquePesajeStock:not(.d-none)):has(#stockCompraVinculadaBox:not(.d-none)) .stock-tabla-wrap {
+        --stock-tabla-reserva: 37rem;
+    }
+
+    body.app-shell .stock-editar-compacto:has(#bloquePesajeStock:not(.d-none)):has(#stockCompraVinculadaBox:not(.d-none)):has(#stockNumericKeypadLayout.teclado-desplegado) .stock-tabla-wrap {
+        --stock-tabla-reserva: 46.1rem;
+    }
+
+    /* Caja de "Compra vinculada": titulo y datos (Proveedor / Fecha) en renglones de una linea cada uno, sin los saltos grandes de antes. */
+    body.app-shell .stock-editar-compacto .stock-compra-vinculada-box {
+        padding: .3rem .5rem;
+        margin-top: .3rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-compra-vinculada-box > .small {
+        margin-bottom: .15rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto #stockCompraVinculadaDatos {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0 .5rem;
+        align-items: baseline;
+    }
+
+    body.app-shell .stock-editar-compacto #stockCompraVinculadaDatos > .mt-2 {
+        margin-top: 0 !important;
+    }
+
+    /* Modo edicion: las cajas "Compra vinculada" / "Pesaje vinculado" (ancho 2/3, con cuatro datos en dos renglones) pasan a ancho completo y a UNA
+       linea: Proveedor | Fecha | Cant.Medias | Kgs.Medias. */
+    body.app-shell .stock-editar-compacto .stock-fila-vinculada > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-fila-vinculada .stock-compra-vinculada-box,
+    body.app-shell .stock-editar-compacto .stock-fila-vinculada .stock-pesaje-ajustado-box {
+        padding: .3rem .6rem;
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-fila-vinculada .stock-compra-vinculada-box > .small,
+    body.app-shell .stock-editar-compacto .stock-fila-vinculada .stock-pesaje-ajustado-box > .small {
+        margin-bottom: .1rem !important;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-fila-vinculada .row {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, .7fr) minmax(0, .7fr);
+        gap: 0 .75rem;
+        margin: 0;
+    }
+
+    body.app-shell .stock-editar-compacto .stock-fila-vinculada .row > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        padding: 0;
+        margin: 0 !important;
+    }
+
+    /* Con una de esas cajas visible: la fila suma ~5 rem (medido en el pesaje 11678: caja de 80 px). En el pesaje ademas va la fila de Proveedor.
+       Aun asi, en un registro existente la columna derecha (Resumen + Observaciones + Datos del registro, ~350 px) es mas alta que la tabla:
+       a 690 px de alto la pagina scrollea un poco (limite conocido, ver DECISIONS). */
+    body.app-shell .stock-editar-compacto:has(#bloquePesajeStock:not(.d-none)):has(.stock-fila-vinculada .stock-compra-vinculada-box:not(.d-none)) .stock-tabla-wrap,
+    body.app-shell .stock-editar-compacto:has(.stock-fila-vinculada .stock-pesaje-ajustado-box) .stock-tabla-wrap {
+        --stock-tabla-reserva: 37.3rem;
+    }
+
+    body.app-shell .stock-editar-compacto:has(#bloquePesajeStock:not(.d-none)):has(.stock-fila-vinculada .stock-compra-vinculada-box:not(.d-none)):has(#stockNumericKeypadLayout.teclado-desplegado) .stock-tabla-wrap,
+    body.app-shell .stock-editar-compacto:has(.stock-fila-vinculada .stock-pesaje-ajustado-box):has(#stockNumericKeypadLayout.teclado-desplegado) .stock-tabla-wrap {
+        --stock-tabla-reserva: 46.4rem;
+    }
+
+    /* ---- Acciones de abajo ---- */
+    body.app-shell .stock-editar-compacto .stock-acciones {
+        margin-top: .25rem !important;
+    }
+
+    /* Tambien el contenedor del boton Eliminar (un span con mb-2 propio, partial _EliminarRegistro): sin esto la fila medía 38 px en vez de 30. */
+    body.app-shell .stock-editar-compacto .stock-acciones > * {
+        margin-bottom: 0 !important;
+    }
+
+    /* Resumen: "Accion: Cierre Stock" y "Usuario" quedaban pegados (el mr-2 de Bootstrap 4 no existe en este Bootstrap). */
+    body.app-shell .stock-editar-compacto .stock-resumen-pie {
+        column-gap: .75rem;
+    }
+}
+
+/* ---- Modo oscuro ---- */
+html.dark-mode body.app-shell .stock-editar-compacto #tablaLineasStock thead th {
+    background: #1b2c42;
+}

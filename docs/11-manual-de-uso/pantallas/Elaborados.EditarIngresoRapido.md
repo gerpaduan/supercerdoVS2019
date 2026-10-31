@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 3
 permiso: Elaborado.IngresoEmbutidoRapido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-10-30
+revisada: 2026-10-31
 ---
 ## Para qué sirve
 Registrar un elaborado (o desarmarlo) cargando **solo la cantidad final**: el sistema calcula los ingredientes con la fórmula del producto y los guarda. Se llega desde *Elaborados → Ingreso rápido* (o *Desarme de elaborado*) eligiendo un producto, o abriendo un registro existente desde el listado.
@@ -26,7 +26,7 @@ Igual para **Ingreso rápido** y **Desarme**; pensado para ver todo sin bajar co
 - **Pestañas y botones en un renglón:** las pestañas a la izquierda, **Volver** y **Embutidos sin guardar** a la derecha. La etiqueta *Ingreso rápido* / *Desarme* ya no se muestra (repite la pestaña activa); *Anulado* sí.
 - **Sucursal, Fecha y Usuario** en una fila, con la **fecha siempre completa, con hora y segundos**. Debajo, **Código**, **Elaborado** y **Receta**.
 - Tres bloques: **Cantidad** (a elaborar o a desarmar), **Teclado** (teclas más bajas) y **Fórmula calculada**. La leyenda «La fórmula se calcula automáticamente en vivo» (o «se mostrará en negativo» en el desarme) ya no aparece en pantalla.
-- La tabla de la fórmula muestra **10 ingredientes** de una línea cada uno; con más, tiene su propio scroll con el encabezado fijo.
+- La tabla de la fórmula muestra **10 ingredientes** de una línea cada uno; con más, tiene su propio scroll con el encabezado fijo. Al pasar el mouse por un ingrediente, la fila se pinta de azul tenue.
 - Con el **costeo** (administradores) la pantalla es más alta y puede aparecer el scroll de la página. Con una ventana de menos de 690 px de alto la página scrollea un poco.
 
 ## Salir de un registro existente

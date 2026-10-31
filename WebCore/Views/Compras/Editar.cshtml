@@ -413,7 +413,7 @@
                 <div class="row compra-workspace-row">
                     <div class="col-12 col-lg-9">
                 @* Solo celular (<768px): en la lista no hay encabezado "#" para tocar, el orden se elige aca. Usa el mismo
-                   estado que el encabezado (compras.js, state.lineasSortAsc; arranca en "ultimos primero"). *@
+                   estado que el encabezado (compras.js, state.sortKey / state.sortDirection; arranca en "ultimos primero"). *@
                 <div class="d-flex d-md-none align-items-center mb-2 compra-lineas-toolbar">
                     <span class="font-weight-bold">Productos</span>
                     <select id="ordenLineasCompra" class="form-control form-control-sm compra-orden-celular"
@@ -427,17 +427,18 @@
                    En desktop: un renglon por item, P. venta y Margen despues del Total con marca propia, numeros en formato
                    argentino (compras-editar.css, "Compras/Editar: 13 items" en docs/DECISIONS.md). *@
                 <div class="table-responsive mb-3 compra-tabla-wrap">
-                    <table class="table table-hover table-sm tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasCompra">
+                    <table class="table table-hover table-sm tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasCompra">
                         <thead class="thead-light">
                             <tr>
-                                <th style="width: 2.8rem;">
-                                    <button type="button" class="btn btn-link btn-sm p-0 font-weight-bold text-dark js-line-order-toggle" data-action="toggle-line-order" data-edit-readonly-ignore="true" title="Ordenar por número">
-                                        #
-                                        <span class="js-line-order-indicator" aria-hidden="true">↓</span>
-                                    </button>
+                                @* Encabezados con data-sort-key ordenan la tabla (orden-tabla.js). El codigo va dentro de la celda Detalle, por eso
+                                   Detalle y Codigo son dos enlaces en el mismo encabezado (mismo patron que Stock/Editar). *@
+                                <th style="width: 2.8rem;" data-sort-key="orden">#</th>
+                                <th>
+                                    <a href="#" class="js-orden-link" data-sort-key="detalle">Detalle</a>
+                                    <span aria-hidden="true">·</span>
+                                    <a href="#" class="js-orden-link" data-sort-key="codigo">Código</a>
                                 </th>
-                                <th>Detalle</th>
-                                <th class="text-right">Cantidad</th>
+                                <th class="text-right" data-sort-key="cantidad">Cantidad</th>
                                 <th class="text-right">Precio</th>
                                 <th class="text-right">Total</th>
                                 @* P. venta y Margen NO forman parte de la compra: actualizan el precio de venta del producto. Por eso van despues
@@ -641,6 +642,7 @@
         <script src="@Url.Content("~/Scripts/app/money-input-mask.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
+        <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
@@ -719,6 +721,7 @@
             <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>

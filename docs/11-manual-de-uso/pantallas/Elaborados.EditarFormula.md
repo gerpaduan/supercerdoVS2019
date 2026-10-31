@@ -6,7 +6,7 @@ modulo: Elaborados
 orden: 5
 alias: Elaborados.GuardarFormula
 permiso: Elaborado.IngresoFormula (editar)
-revisada: 2026-10-27
+revisada: 2026-10-31
 ---
 ## Para qué sirve
 Crear o modificar la **fórmula** de un elaborado: sus ingredientes, la proporción de cada uno y la receta. Se llega desde *Elaborados → Fórmulas*.
@@ -26,6 +26,9 @@ Si escribiste un código de ingrediente y no lo agregaste a la tabla (botón +),
 
 ## Resto de la pantalla
 PENDIENTE: documentar ingredientes, porcentaje/unidad, ajuste de fórmula, ingreso rápido, pasos de receta y costeo (no verificado contra el código en esta revisión).
+
+## En la computadora
+- Al pasar el mouse por un ingrediente de la tabla, la fila se pinta de azul tenue.
 
 ## Datos del registro
 - En el celular, **Creado** y **Actualizado** de una fórmula ya guardada se muestran en un bloque compacto de dos columnas, con letra chica; en la computadora siguen los dos campos de siempre.

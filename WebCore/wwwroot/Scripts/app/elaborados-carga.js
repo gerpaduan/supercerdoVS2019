@@ -640,6 +640,11 @@
             $orden.val($orden.find('option[value="' + valor + '"]').length ? valor : '');
         }
 
+        // Flecha y resaltado en el encabezado de la tabla (escritorio); en celular no hay encabezados.
+        function syncEncabezadosLineas() {
+            window.OrdenTabla.sincronizarEncabezados($('#tablaLineasElaborado thead th[data-sort-key]'), state);
+        }
+
         function renderLineas() {
             var html = '';
             var hidden = '';
@@ -663,7 +668,9 @@
             lineasVisibles().forEach(function (item) {
                 var linea = item.linea;
                 var textoBalanza = linea.PesoBalanza ? 'Pesado en balanza' : 'Sin balanza';
+                // # = posicion en el orden de carga (indice real + 1); no cambia al ordenar la tabla.
                 html += '<tr>'
+                    + '<td class="text-center font-weight-bold cc-solo-tabla">' + (item.indiceOriginal + 1) + '</td>'
                     + '<td class="cc-solo-tabla">' + escapeHtml(linea.Codigo) + '</td>'
                     + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.Codigo) + '</td>'
                     + '<td class="cc-l-prod"><strong class="cc-solo-card">' + escapeHtml(linea.Producto) + '</strong><span class="cc-solo-tabla">' + escapeHtml(linea.Producto) + '</span></td>'
@@ -677,12 +684,13 @@
 
             if (!html) {
                 var sinLineas = !state.lineas.length;
-                html = '<tr><td colspan="' + (config.esAdmin ? 6 : 5) + '" class="text-center text-muted">'
+                html = '<tr class="js-empty-row"><td colspan="' + (config.esAdmin ? 7 : 6) + '" class="text-center text-muted">'
                     + (sinLineas ? 'Todavia no agregaste ingredientes manuales.' : 'Sin resultados.') + '</td></tr>';
             }
 
             $('#tablaLineasElaborado tbody').html(html);
             syncOrdenLineas();
+            syncEncabezadosLineas();
             $('#lineasHiddenContainer').html(hidden);
             // Este reemplazo de DOM no dispara input/change -- sin este sync explicito,
             // edit-page-guard.js recien detecta la linea nueva en su polling de 700ms
@@ -964,13 +972,20 @@
             });
         }
 
+        // Orden del modal de acumulados (independiente del de la tabla principal). Arranca por codigo y se reinicia cada vez que se abre.
+        var acumuladosOrden = { sortKey: 'codigo', sortDirection: 'asc' };
+
+        // Agrupa las lineas por producto sumando kilos. "orden" = posicion de la primera carga de ese producto (columna #); se cuenta
+        // aparte porque Object.keys reordena las claves numericas por valor y no conserva el orden de insercion.
         function buildAcumulados() {
             var map = {};
+            var siguienteOrden = 1;
 
             state.lineas.forEach(function (linea) {
                 var key = String(linea.IdCorte || linea.Codigo || '');
                 if (!map[key]) {
                     map[key] = {
+                        orden: siguienteOrden++,
                         codigo: linea.Codigo || '',
                         producto: linea.Producto || '',
                         cantidad: 0
@@ -979,8 +994,13 @@
                 map[key].cantidad += toFloat(linea.CantKg);
             });
 
+            var clave = acumuladosOrden.sortKey;
+            var factor = acumuladosOrden.sortDirection === 'desc' ? -1 : 1;
             return Object.keys(map).map(function (key) { return map[key]; }).sort(function (a, b) {
-                return String(a.codigo).localeCompare(String(b.codigo));
+                var valorA = clave === 'producto' ? String(a.producto).toLowerCase() : (clave === 'codigo' ? String(a.codigo) : a[clave]);
+                var valorB = clave === 'producto' ? String(b.producto).toLowerCase() : (clave === 'codigo' ? String(b.codigo) : b[clave]);
+                var resultado = window.OrdenTabla.comparar(valorA, valorB);
+                return (resultado === 0 ? a.orden - b.orden : resultado) * factor;
             });
         }
 
@@ -988,11 +1008,14 @@
             var items = buildAcumulados();
             var html = '';
 
+            window.OrdenTabla.sincronizarEncabezados($('#tablaAcumuladosElaborado thead th[data-sort-key]'), acumuladosOrden);
+
             if (!items.length) {
-                html = '<tr><td colspan="3" class="text-center text-muted">No hay productos cargados.</td></tr>';
+                html = '<tr class="js-empty-row"><td colspan="4" class="text-center text-muted">No hay productos cargados.</td></tr>';
             } else {
                 items.forEach(function (item) {
                     html += '<tr>'
+                        + '<td class="text-center font-weight-bold cc-solo-tabla">' + item.orden + '</td>'
                         + '<td class="cc-solo-tabla">' + escapeHtml(item.codigo) + '</td>'
                         + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(item.codigo) + '</td>'
                         + '<td class="cc-l-prod">' + escapeHtml(item.producto) + '</td>'
@@ -1244,7 +1267,17 @@
             agregarLinea();
         });
 
+        // Clic en un encabezado del modal: ordena los acumulados (el modal esta fuera del form, por eso delegado en document).
+        $(document).on('click', '#tablaAcumuladosElaborado thead th[data-sort-key]', function () {
+            var clave = String($(this).data('sort-key') || '');
+            if (!clave) return;
+            window.OrdenTabla.alternar(acumuladosOrden, clave);
+            renderAcumulados();
+        });
+
         $('#btnVerAcumuladosElaborado').on('click', function () {
+            acumuladosOrden.sortKey = 'codigo';
+            acumuladosOrden.sortDirection = 'asc';
             renderAcumulados();
             $('#modalAcumuladosElaborado').modal('show');
         });
@@ -1419,6 +1452,14 @@
                     $balanza.prop('checked', true).trigger('change');
                 }
             }
+        });
+
+        // Escritorio: clic en el encabezado ordena la tabla (mismo estado que el selector del celular).
+        $form.on('click', '#tablaLineasElaborado thead th[data-sort-key]', function () {
+            var clave = String($(this).data('sort-key') || '');
+            if (!clave) return;
+            window.OrdenTabla.alternar(state, clave);
+            renderLineas();
         });
 
         // Celular: sin encabezados para tocar, el orden de las lineas se elige con el selector (valor "clave:direccion").

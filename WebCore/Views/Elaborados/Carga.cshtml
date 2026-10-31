@@ -285,12 +285,14 @@
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLineas() en elaborados-carga.js. En desktop la tabla no cambia. *@
                         <div class="table-responsive mb-3 elaborados-tabla-wrap">
-                            <table class="table table-bordered table-sm elaborados-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasElaborado">
+                            @* # y encabezados con data-sort-key: en escritorio ordenan la lista (orden-tabla.js); la celda # es cc-solo-tabla (no se ve en celular). *@
+                            <table class="table table-bordered table-sm elaborados-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasElaborado">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th style="width:110px;">Codigo</th>
-                                        <th>Ingrediente</th>
-                                        <th class="text-right" style="width:120px;">Kilos</th>
+                                        <th style="width:60px;" data-sort-key="orden">#</th>
+                                        <th style="width:110px;" data-sort-key="codigo">Codigo</th>
+                                        <th data-sort-key="producto">Ingrediente</th>
+                                        <th class="text-right" style="width:120px;" data-sort-key="cantKg">Kilos</th>
                                         <th class="text-center" style="width:90px;">Balanza</th>
                                         @if (Model.EsAdmin)
                                         {
@@ -339,7 +341,7 @@
 
                                 <div id="bloqueFormulaCarga" class="@(Model.FormulaOculta ? "d-none" : "")">
                                 <div class="table-responsive formula-elaborado-wrap">
-                                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact tabla-cards tabla-cards-lista" id="tablaFormulaElaborado">
+                                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact tabla-cards tabla-cards-lista tabla-items" id="tablaFormulaElaborado">
                                         <thead>
                                             <tr>
                                                 <th>Ingrediente</th>
@@ -476,12 +478,13 @@
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact tabla-cards tabla-cards-lista">
+                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact tabla-cards tabla-cards-lista tabla-items" id="tablaAcumuladosElaborado">
                         <thead class="thead-light">
                             <tr>
-                                <th style="width:120px;">Codigo</th>
-                                <th>Producto</th>
-                                <th class="text-right" style="width:120px;">Cantidad</th>
+                                <th style="width:60px;" data-sort-key="orden">#</th>
+                                <th style="width:120px;" data-sort-key="codigo">Codigo</th>
+                                <th data-sort-key="producto">Producto</th>
+                                <th class="text-right" style="width:120px;" data-sort-key="cantidad">Cantidad</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyAcumuladosElaborado"></tbody>
@@ -587,6 +590,7 @@
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-carga.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     @* Escritorio compacto (2026-10-30): va DESPUES de numeric-keypad.css, que comparte con otras pantallas. *@

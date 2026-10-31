@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-10-30
+revisada: 2026-10-31
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -15,7 +15,7 @@ Para decidir qué mandar conviene mirar cuánto stock tiene la sucursal **destin
 - Con pantalla de **1200 px o más**: el **stock a la izquierda** y la **carga del movimiento a la derecha**. El botón lo enciende y apaga; se recuerda en este navegador. Con menos ancho no hay lugar para dos columnas: el botón abre el stock en una **ventana independiente**.
 - **↗ (en la cabecera del panel)**: pasa el stock a una ventana independiente (un tercio del ancho de la pantalla) y cierra el panel. **⟳**: actualiza el stock ahora. **✕**: cierra el panel.
 - Es la misma pantalla de [Existencia por sucursales](ayuda:pantalla/Stock.ExistenciaPorSucursales) en modo compacto, solo con la sucursal destino y sin pedido ni exportación. Si **cambiás la sucursal destino** del movimiento, el stock cambia solo a esa sucursal.
-- Con el stock al lado, *Agregar producto* se acomoda al lugar que queda: si no entra en una línea, Código y Producto van arriba y **Cant. Un., Kgs. y +** abajo, siempre juntos (también con el teclado digital abierto).
+- Con el stock al lado, *Agregar producto* se acomoda al lugar que queda: si no entra en una línea, **Código va solo arriba** y abajo van **Producto, Cant. Un., Kgs. y +** en el mismo renglón. Si el teclado digital está abierto y no alcanza el lugar, cada uno pasa a su renglón (Código, Producto, y Cant. Un. + Kgs. + +).
 - Se actualiza **solo cada 15 minutos** (como Existencia por sucursales) y con **⟳** cuando quieras.
 
 ### Cargar un producto desde el stock
@@ -37,6 +37,7 @@ La columna **Sugerido** estima lo que conviene mandar: **ventas + uso en elabora
 Pensado para ver más líneas sin bajar con la rueda:
 - **Fecha siempre completa, con la hora**, también con el *Stock destino* al lado (las sucursales ceden lugar antes que la fecha).
 - **Líneas cargadas:** una por renglón, con letra un punto más chica y encabezado fijo. Entran **10 líneas a la vista** con una ventana de 690 px de alto o más (**12 sin Stock destino**); con más, la lista tiene su propio scroll. Con el *Stock destino* abierto entran 9 con 690 px de alto (10 con unos 705 px, estimado: PENDIENTE medirlo); con el teclado digital abierto, menos.
+- **Fila resaltada y acumulados:** al pasar el mouse por una fila de la tabla se pinta de azul tenue. **Ver acumulados** tiene la columna **#** (orden de primera carga de cada producto) y se ordena tocando **Código**, **Producto**, **Cant.Un.** o **Kilos**; al abrirlo arranca por código.
 - **Botones de arriba** (*Volver*, *Stock destino*, *Movimientos sin guardar*) más bajos. El estado de la balanza y su barra van en una sola línea.
 - **Con el Stock destino al lado:** *Resumen* (ítems, unidades y kilos) y *Observaciones* van en **un solo renglón** debajo de la lista (el *Usuario* del resumen no se muestra en este modo), y la **lupa** de buscar en la tabla queda **sobre el encabezado**, a la derecha. El panel del stock ocupa toda la altura disponible, sin segundo scroll.
 - **Teclado digital abierto** (sin stock): *Código* y *Producto* en un renglón, y *Cant.Un.*, *Kgs.* y *+* en el siguiente (**PENDIENTE**: no se verificó en el navegador).

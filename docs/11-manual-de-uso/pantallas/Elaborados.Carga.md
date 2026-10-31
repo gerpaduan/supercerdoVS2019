@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 2
 permiso: Elaborado.IngresoEmbutido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-10-30
+revisada: 2026-10-31
 ---
 ## Para qué sirve
 Registrar un elaborado cargando **a mano los ingredientes** (con su peso). Los ingredientes de la fórmula marcados como *Auto* se agregan solos al guardar, calculados como porcentaje de lo cargado a mano.
@@ -32,6 +32,9 @@ Pensado para tener todo a la vista sin bajar con la rueda, hasta **10 ingredient
 - **Receta:** una línea (crece hasta tres si el texto es largo). **Observaciones** pasó abajo, a la izquierda de **Guardar** y **Cancelar**, en una línea que se agranda al tocarla.
 - Con el **teclado numérico desplegado** o con el **costeo** (administradores) la pantalla es más alta y puede aparecer el scroll de la página.
 - Con una ventana de menos de 690 px de alto, la página scrollea un poco.
+- **Fila resaltada:** al pasar el mouse por una fila de las tablas (ingredientes, Fórmula y Ver acumulados) se pinta de azul tenue, para seguir el producto con su cantidad.
+- **Columna # y orden:** la tabla de ingredientes tiene una columna **#** con el número de carga (1, 2, 3…, no cambia al ordenar). Tocá el encabezado **#**, **Codigo**, **Ingrediente** o **Kilos** para ordenar de menor a mayor; tocalo otra vez para invertir (la flecha ↑/↓ marca la columna). El orden **no cambia el orden en que se guardan** las líneas.
+- **Ver acumulados:** el modal también tiene **#** (orden en que se cargó por primera vez cada producto) y se ordena tocando **Codigo**, **Producto** o **Cantidad**. Al abrirlo arranca ordenado por **código**.
 
 ## En el celular
 - **Ingredientes cargados:** se ven como una lista. Arriba el ingrediente y los kilos; abajo el código (`Cód. 3`) y el icono de **balanza** (azul = pesado en balanza, gris = no). El botón rojo de la derecha **quita la línea**. Con el **costeo** activado (solo administradores) debajo de cada línea aparece su costo.
@@ -39,7 +42,7 @@ Pensado para tener todo a la vista sin bajar con la rueda, hasta **10 ingredient
 - El selector de orden y la **lupa** **siguen activos en el modo ver** (cuando los campos y la tabla están bloqueados): solo cambian cómo se ven las líneas.
 - El orden en que se ven las líneas **no cambia el orden en que se guardan**: siempre se guardan en el orden en que se cargaron.
 - **Fórmula** y **Ver acumulados** también se muestran como lista (en la fórmula, debajo de cada ingrediente dice *Auto* si se agrega solo al guardar o *Manual*).
-- En la computadora la tabla no tiene selector de orden ni lupa (ver arriba).
+- En la computadora la tabla no tiene selector de orden ni lupa: se ordena tocando los encabezados (ver abajo).
 - **Observaciones** sigue siendo el último bloque, de ancho completo, justo arriba de los botones.
 
 ## Resto de la pantalla

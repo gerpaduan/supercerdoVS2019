@@ -42,27 +42,27 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
 | pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-10-28 |
-| pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-10-30 |
+| pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-10-31 |
 | pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-30 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-14 |
 | pantallas | Registros eliminados | Configuración | `pantallas/RegistrosEliminados.Index.md` | 2026-10-22 |
-| pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-10-30 |
-| pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-10-27 |
+| pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-10-31 |
+| pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-10-31 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-30 |
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-10-27 |
-| pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-30 |
+| pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-31 |
 | pantallas | Ingreso rápido y desarme de elaborado (listado) | Elaborados | `pantallas/Elaborados.IngresoRapido.md` | 2026-10-27 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-14 |
 | pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-10-28 |
 | pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-10-29 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-28 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-10-30 |
-| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-10-30 |
+| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-10-31 |
 | pantallas | Marcas de productos | Productos | `pantallas/Productos.Marcas.md` | 2026-10-22 |
 | pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-10-22 |
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-10-22 |
 | pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-30 |
-| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-27 |
+| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-31 |
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-10-30 |
 | pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-10-28 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-28 |

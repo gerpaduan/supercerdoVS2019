@@ -263,7 +263,7 @@
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLines() en movimientos.js. *@
                         <div class="table-responsive mov-tabla-wrap">
-                            <table class="table table-bordered table-sm movimiento-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion" id="tablaLineasMovimiento">
+                            <table class="table table-bordered table-sm movimiento-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasMovimiento">
                                 <thead class="thead-light">
                                     <tr>
                                         <th style="width:110px;">Código</th>
@@ -386,13 +386,14 @@
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 movimiento-table-compact">
+                    <table class="table table-sm table-bordered mb-0 movimiento-table-compact tabla-items" id="tablaAcumuladosMovimiento">
                         <thead class="thead-light">
                             <tr>
-                                <th style="width:110px;">Código</th>
-                                <th>Producto</th>
-                                <th class="text-right" style="width:110px;">Cant.Un.</th>
-                                <th class="text-right" style="width:110px;">Kilos</th>
+                                <th class="text-center d-none d-md-table-cell" style="width:60px;" data-sort-key="orden">#</th>
+                                <th style="width:110px;" data-sort-key="codigo">Código</th>
+                                <th data-sort-key="producto">Producto</th>
+                                <th class="text-right" style="width:110px;" data-sort-key="cantUnidad">Cant.Un.</th>
+                                <th class="text-right" style="width:110px;" data-sort-key="cantKg">Kilos</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyAcumuladosMovimiento"></tbody>
@@ -424,7 +425,7 @@
        PANTALLA y no por el de este bloque, asi que Cant. Un., Kgs. y el + terminaban cada uno en su renglon. Se acomoda por el ancho REAL de los
        campos (container query sobre .numeric-keypad-toggle-fields), con Cant. Un. + Kgs. + "+" siempre juntos en el mismo renglon:
          - ancho (> 36rem): todo en una linea;
-         - medio (<= 36rem): Codigo + Producto arriba, Cant. Un. + Kgs. + "+" abajo;
+         - medio (<= 36rem, pedido 2026-10-31): Codigo solo arriba (ancho acotado), abajo Producto + Cant. Un. + Kgs. + "+" en el mismo renglon;
          - muy angosto (<= 22rem, teclado abierto): Codigo, Producto y Cant. Un. + Kgs. + "+", un renglon cada uno.
        Los selectores llevan el id del bloque para ganarle a numeric-keypad.css (con el teclado abierto apila cada columna a lo ancho).
        (Intentos descartados: flex-wrap con anchos base dejaba caer el "+" solo abajo; nowrap fijo dejaba Producto en ~70 px a 1200 px.) */
@@ -437,13 +438,13 @@
     .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-btn-add { width: auto; }
     @@container (max-width: 36rem) {
         .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row { flex-wrap: wrap; }
-        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo { flex: 0 0 38%; }
-        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-producto { flex: 0 0 62%; }
-        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-cantidad { flex: 1 1 0; }
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo { flex: 0 0 100%; }
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo > .form-group { max-width: 11rem; }
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-producto { flex: 1 1 0; }
     }
     @@container (max-width: 22rem) {
-        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo,
         .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-producto { flex: 0 0 100%; }
+        .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-cantidad { flex: 1 1 0; }
     }
     .mov-layout.mov-con-stock .mov-lateral { display: flex; flex-wrap: wrap; gap: .75rem; }
     .mov-layout.mov-con-stock .mov-lateral > .card { flex: 1 1 14rem; margin-top: 0 !important; }
@@ -856,6 +857,7 @@
        vista (2026-09-10, hallado investigando un reporte de autenticacion de usuario produccion). *@
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
     <script>window.movimientoStockDestinoConfig = { url: '@Url.Action("ExistenciaPorSucursales", "Stock")' };</script>

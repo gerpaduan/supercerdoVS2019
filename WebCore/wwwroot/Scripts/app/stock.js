@@ -140,7 +140,8 @@
             balanzaClientStarted: false,
             balanzaUltimaLectura: null,
             focusAgregarPendiente: false,
-            sortKey: 'creado',
+            // Escritorio: orden de carga (columna #, indice real + 1); celular: "creado" (su selector solo tiene opciones de creado).
+            sortKey: (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) ? 'creado' : 'orden',
             // En el celular arranca en "ultimos primero": lo recien cargado queda arriba, cerca del formulario (2026-10-27, mismo
             // criterio que Movimientos; en desktop sigue el orden de carga). El orden guardado no depende de esto: los hidden
             // Lineas[i] salen de state.lineas (ver rebuildHiddenInputs).
@@ -783,8 +784,9 @@
                 return { linea: linea, indiceOriginal: index };
             })
             .sort(function (a, b) {
-                var left = getSortValueLinea(a.linea, state.sortKey);
-                var right = getSortValueLinea(b.linea, state.sortKey);
+                // "orden" = posicion en state.lineas (orden de carga); las demas claves salen de la linea.
+                var left = state.sortKey === 'orden' ? a.indiceOriginal : getSortValueLinea(a.linea, state.sortKey);
+                var right = state.sortKey === 'orden' ? b.indiceOriginal : getSortValueLinea(b.linea, state.sortKey);
                 var result;
 
                 if (left === null && right === null) {
@@ -890,7 +892,7 @@
         if (!$tbody.length) return;
 
         if (!state.lineas.length) {
-            $tbody.html('<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
+            $tbody.html('<tr class="js-empty-row"><td colspan="6" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
             recalculate($form);
             rebuildHiddenInputs($form);
             syncSortHeadersStock($form);
@@ -900,7 +902,7 @@
         var visibles = getLineasVisibles($form);
 
         if (!visibles.length) {
-            $tbody.html('<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">Sin resultados para la búsqueda.</td></tr>');
+            $tbody.html('<tr class="js-empty-row"><td colspan="6" class="text-center text-muted">Sin resultados para la búsqueda.</td></tr>');
             recalculate($form);
             rebuildHiddenInputs($form);
             syncSortHeadersStock($form);
@@ -921,6 +923,7 @@
             var textoBalanza = linea.balanza ? 'Pesado en balanza' : 'Sin balanza';
 
             html += '<tr data-index="' + item.indiceOriginal + '">'
+                + '<td class="text-center font-weight-bold cc-solo-tabla">' + (item.indiceOriginal + 1) + '</td>'
                 + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.codigo || '') + '</td>'
                 + '<td class="cc-l-prod"><strong>' + escapeHtml(linea.producto || '') + '</strong>'
                 + '<span class="cc-solo-card">' + etiquetasCelular + '</span>'
@@ -941,14 +944,21 @@
         syncSortHeadersStock($form);
     }
 
+    // Orden del modal de acumulados (independiente del de la tabla principal). Arranca por codigo y se reinicia cada vez que se abre.
+    var acumuladosOrden = { sortKey: 'codigo', sortDirection: 'asc' };
+
+    // Agrupa las lineas por producto sumando cantidad. "orden" = posicion de la primera carga de ese producto (columna #); se cuenta
+    // aparte porque Object.keys reordena las claves numericas por valor y no conserva el orden de insercion.
     function buildAcumulados($form) {
         var state = getState($form);
         var map = {};
+        var siguienteOrden = 1;
 
         $.each(state.lineas, function (_, linea) {
             var key = String(linea.idCorte || linea.codigo || '');
             if (!map[key]) {
                 map[key] = {
+                    orden: siguienteOrden++,
                     codigo: linea.codigo || '',
                     producto: linea.producto || '',
                     cantidad: 0
@@ -957,11 +967,13 @@
             map[key].cantidad += toNumber(linea.cantKgs);
         });
 
+        var clave = acumuladosOrden.sortKey;
+        var factor = acumuladosOrden.sortDirection === 'desc' ? -1 : 1;
         return Object.keys(map).map(function (key) { return map[key]; }).sort(function (a, b) {
-            return String(a.codigo || '').localeCompare(String(b.codigo || ''), undefined, {
-                numeric: true,
-                sensitivity: 'base'
-            });
+            var valorA = clave === 'producto' ? String(a.producto).toLowerCase() : (clave === 'codigo' ? String(a.codigo) : a[clave]);
+            var valorB = clave === 'producto' ? String(b.producto).toLowerCase() : (clave === 'codigo' ? String(b.codigo) : b[clave]);
+            var resultado = window.OrdenTabla.comparar(valorA, valorB);
+            return (resultado === 0 ? a.orden - b.orden : resultado) * factor;
         });
     }
 
@@ -969,11 +981,14 @@
         var items = buildAcumulados($form);
         var html = '';
 
+        window.OrdenTabla.sincronizarEncabezados($('#tablaAcumuladosStock thead th[data-sort-key]'), acumuladosOrden);
+
         if (!items.length) {
-            html = '<tr><td colspan="3" class="text-center text-muted">No hay productos cargados.</td></tr>';
+            html = '<tr class="js-empty-row"><td colspan="4" class="text-center text-muted">No hay productos cargados.</td></tr>';
         } else {
             $.each(items, function (_, item) {
                 html += '<tr>'
+                    + '<td class="text-center font-weight-bold d-none d-md-table-cell">' + item.orden + '</td>'
                     + '<td>' + escapeHtml(item.codigo) + '</td>'
                     + '<td>' + escapeHtml(item.producto) + '</td>'
                     + '<td class="text-right">' + formatNumber(item.cantidad, 3) + '</td>'
@@ -2739,7 +2754,17 @@
             scheduleDraft($form);
         });
 
+        // Clic en un encabezado del modal de acumulados: ordena (el modal esta fuera del form, por eso delegado en document).
+        $(document).on('click.stockAcumulados', '#tablaAcumuladosStock thead th[data-sort-key]', function () {
+            var clave = String($(this).data('sort-key') || '');
+            if (!clave) return;
+            window.OrdenTabla.alternar(acumuladosOrden, clave);
+            renderAcumulados($form);
+        });
+
         $form.on('click.stock', '#btnVerAcumulados', function () {
+            acumuladosOrden.sortKey = 'codigo';
+            acumuladosOrden.sortDirection = 'asc';
             renderAcumulados($form);
             window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
             $('#modalAcumuladosStock').modal('show');
