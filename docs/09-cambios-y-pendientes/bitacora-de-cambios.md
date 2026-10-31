@@ -1,5 +1,18 @@
 # Bitacora de cambios
 
+## 2026-10-31 - Pago/Cobro desde el POS: el importe no se formateaba y podía guardarse multiplicado
+
+- **Síntoma:** POS → Cuentas corrientes → persona → Agregar Pago / Cobro: el importe no mostraba puntos de miles ni coma decimal y se guardaba otro valor (tecleado `1234.50`, guardado `123450`). Fuera del POS funcionaba.
+- **Causa:** `renderConScripts` (`Ventas/POS.cshtml`) saca todos los `<script>` del HTML inyectado, incluido `#moneyInputMaskSrc`. `adjuntarMascaraImporte` (`Finanzas/AddOrEditPago.cshtml`) buscaba ese tag primero y salía sin adjuntar la máscara, aunque el POS ya tenía cargado el módulo. Al guardar, `getRawValue` igual quitaba los puntos, y el punto decimal desaparecía. Por lo mismo, en el POS también se multiplicaba el importe al guardar un pago existente (el campo llega como `1234.50`) o con cheques (`toFixed(2)`).
+- **Cambio:** primero se mira si `window.MoneyInputMask` ya existe y recién después se busca el tag. Manual: `Finanzas.AddOrEditPago.md`.
+- **Verificado:** compila (0 errores). Página de prueba en Edge sin ventana con el `renderConScripts` y el bloque de máscara reales, antes y después, y el cálculo de `ParseFloat` replicado: `1234.50` pasa de guardar 123450 a 1234,5 y se ve `1.234,50`; `1234567` se ve `1.234.567`.
+- **Verificado en el POS real** (login con usuario temporal y caja abierta en la base local, todo borrado al final): POS → Cuentas corrientes → persona → Agregar Pago / Cobro: `1234.50` con teclas reales se ve `1.234,50` y en `pagos` y `movctacte` queda 1234.5. Al reabrir ese cobro se ve `1.234,50`, y tras Modificar + Guardar sigue 1234.5. Un valor escrito por código como lo hace el total de cheques (`1234.50` + evento `input`) también queda bien.
+- **Sin verificar:** un pago real con cheques cargados (solo se simuló la escritura del total).
+- **Pendiente:** los cobros ya guardados con importe multiplicado no se corrigen con este cambio.
+- **Segundo arreglo, mismo día — Efectivo del pago mixto (Efectivo + Cheques):** `#Efectivo` no tenía máscara y mandaba el texto tal cual: `1.234,50` lo leía mal `ParseFloat` y guardaba 0, y `5.000` guardaba 5. Además `pago-cheques.js` calculaba el total con `parseFloat` directo y con `1234,50` perdía los centavos del Importe. Cambio: `Efectivo` lleva `MoneyInputMask`, se envía sin puntos de miles (`efectivoParaEnviar`), el valor inicial se renderiza con coma, la limpieza a 0 al elegir "Cheque" dispara `input`, y `pago-cheques.js` lee el Efectivo como es-AR. Archivos: `AddOrEditPago.cshtml`, `pago-cheques.js`.
+- **Verificado (Efectivo):** página de prueba en Edge sin ventana con el `money-input-mask.js`, `pago-cheques.js` y las funciones de la vista reales, HEAD contra disco, con un cheque de 1.000: pegado `1.234,50` pasa de guardar 0 a 1234,5 (total 2.234,50, antes 1.001,23); pegado `5.000` de 5 a 5000; tipeado `1234,50` ya no pierde los 50 centavos del total; el valor guardado se ve `1.234,50`. Compila (0 errores).
+- **Sin verificar (Efectivo):** guardar un pago mixto real con cheques en la pantalla del POS con login.
+
 ## 2026-10-31 - Tablas compactas (Compras, Elaborados, Movimientos, Stock): letra 1 pt más grande
 
 - **Pedido:** revisar las tablas con la letra chica (11,6 px) y subirla 1 pt; el texto gris claro (como el código) debe quedar 1 pt más chico que la fila. Comparación previa mostrada y aprobada.

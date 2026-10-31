@@ -5,7 +5,7 @@ rol: usuario
 modulo: Finanzas
 orden: 1
 permiso: Sin permiso propio en el formulario; cambiar la persona requiere permiso de edición de pagos; eliminar requiere ese permiso o que el pago lo hayas cargado vos en tu caja abierta
-revisada: 2026-10-28
+revisada: 2026-10-31
 ---
 ## Para qué sirve
 Registrar un **pago** (entregás dinero a una persona) o un **cobro** (recibís dinero de una persona) y dejar el movimiento en su cuenta corriente. Se abre desde la cuenta corriente de la persona (**Agregar Pago / Cobro**), desde el listado de Pagos o desde el POS.
@@ -43,6 +43,7 @@ El comprobante dice **Recibo de pago** o **Recibo de cobro** según la operació
 
 ## Campos
 - **Sucursal, Fecha, N° Recibo, Forma de pago, Importe, Observaciones.** Con *Efectivo + Cheques* se carga además el efectivo y los cheques.
+- **Importe:** se ve siempre en formato argentino: los puntos de miles se ponen solos y tanto la tecla **.** como la **,** escriben la coma de los centavos (por ejemplo, tipeás 1234.50 y queda 1.234,50). Funciona igual dentro y fuera del POS. El campo **Efectivo** del pago *Efectivo + Cheques* se comporta igual, y el Importe suma ese efectivo con los cheques sin perder los centavos.
 - **Conteo de billetes** (solo lectura), descripto arriba; se ve al lado de Observaciones y ajusta su alto al contenido.
 - **Sucursal:** dentro del POS no se elige: es siempre la de la caja del cajero y se muestra como texto bajo el nombre de la persona. Fuera del POS sí se puede elegir.
 

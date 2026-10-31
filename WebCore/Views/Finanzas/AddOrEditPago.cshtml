@@ -263,7 +263,7 @@
                 <div class="col-md-4 mb-3" id="bloqueEfectivo" style="display:none;">
                     <label for="Efectivo">Efectivo (pago mixto)</label>
                     <input type="text" id="Efectivo" class="form-control text-right" inputmode="decimal" autocomplete="off"
-                           value="@(Model.Efectivo > 0 ? Model.Efectivo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                           value="@(Model.Efectivo > 0 ? Model.Efectivo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture).Replace('.', ',') : "")" />
                 </div>
             </div>
 
@@ -638,15 +638,25 @@
         // los puntos de miles se ponen solos ("1.234,50"). Lo hace MoneyInputMask, que se carga aca
         // (ver el <script type="text/plain"> de arriba) porque necesita jQuery ya cargado.
         function adjuntarMascaraImporte() {
-            var origen = document.getElementById('moneyInputMaskSrc');
-            if (!origen) return;
-
+            // Efectivo (pago mixto) lleva la misma mascara que el Importe: antes viajaba tal cual y "1.234,50" lo
+            // leia mal ParseFloat (guardaba 0), y con "1.234" guardaba 1,234 (2026-10-31).
             function adjuntar() {
-                if (window.MoneyInputMask) window.MoneyInputMask.attach('#txtImporte');
+                if (!window.MoneyInputMask) return;
+                window.MoneyInputMask.attach('#txtImporte');
+                window.MoneyInputMask.attach('#Efectivo');
             }
 
+            // Primero ver si el modulo ya esta cargado: en el POS siempre lo esta, y ahi renderConScripts saca
+            // todos los <script> del HTML inyectado, asi que #moneyInputMaskSrc no existe. Bug 2026-10-31: se
+            // buscaba ese tag antes y se salia sin adjuntar la mascara (sin miles, y "1234.50" se guardaba 123450).
             if (window.MoneyInputMask) {
                 adjuntar();
+                return;
+            }
+
+            var origen = document.getElementById('moneyInputMaskSrc');
+            if (!origen) {
+                console.error('AddOrEditPago: no se encontro money-input-mask.js; el importe queda sin formato');
                 return;
             }
 
@@ -667,6 +677,14 @@
             return window.MoneyInputMask
                 ? window.MoneyInputMask.getRawValue('#txtImporte')
                 : ($('#txtImporte').val() || '');
+        }
+
+        // Igual que importeParaEnviar pero para Efectivo; vacio equivale a 0.
+        function efectivoParaEnviar() {
+            var valor = window.MoneyInputMask
+                ? window.MoneyInputMask.getRawValue('#Efectivo')
+                : ($('#Efectivo').val() || '');
+            return valor || '0';
         }
 
         function parseDecimal(value) {
@@ -894,7 +912,8 @@
                 $('#bloqueEfectivo').show();
             } else {
                 $('#bloqueEfectivo').hide();
-                if (esCheque) $('#Efectivo').val('0');
+                // 'input' para que la mascara re-sincronice el valor escrito por codigo (si no, conserva el anterior)
+                if (esCheque) $('#Efectivo').val('0').trigger('input');
             }
 
             if (esCheque && window.PagoCheques) {
@@ -998,7 +1017,7 @@
                 '&SucursalId=' + encodeURIComponent($('#SucursalId').val()) +
                 '&idPersona=' + encodeURIComponent(idPersona) +
                 '&importe=' + encodeURIComponent(importeParaEnviar()) +
-                '&Efectivo=' + encodeURIComponent($('#Efectivo').val() || '0') +
+                '&Efectivo=' + encodeURIComponent(efectivoParaEnviar()) +
                 '&ChequesJson=' + encodeURIComponent($('#ChequesJson').val() || '') +
                 '&returnUrl=' + encodeURIComponent($('#hddReturnUrl').val() || '') +
                 // Faltaba mandar desdePos (Batch 10 de la quinta ronda, 2026-09-10, ver

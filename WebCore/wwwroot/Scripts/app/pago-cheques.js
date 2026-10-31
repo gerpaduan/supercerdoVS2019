@@ -170,7 +170,9 @@
 
             $("#txtTotalCheques").val(totalCheques.toFixed(2));
 
-            var efectivo = parseFloat($("#Efectivo").val() || "") || 0;
+            // #Efectivo lleva MoneyInputMask ("1.234,50") y el server lo renderiza como "1234,50": en los dos casos
+            // los puntos son de miles y la coma es el decimal. parseFloat directo leia solo "1234" y perdia los centavos.
+            var efectivo = parseFloat(($("#Efectivo").val() || "").replace(/\./g, "").replace(",", ".")) || 0;
             if ($("#bloqueCheques").is(":visible")) {
                 // WebCore nombra este campo #txtImporte (no #importe como el original clasico,
                 // ver Web/Views/Finanzas/AddOrEditPago.cshtml:212) -- ya establecido asi en el
