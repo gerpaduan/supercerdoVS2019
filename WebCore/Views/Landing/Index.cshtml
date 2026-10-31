@@ -1,7 +1,7 @@
 ﻿@{
     Layout = null;
     var loginUrl = Url.Action("Index", "Login");
-    var whatsappUrl = "https://wa.me/5493482547897?text=" + Uri.EscapeDataString("Hola, quiero conocer cómo CARNISYS puede adaptarse a mi comercio.");
+    var whatsappUrl = "https://wa.me/5493413396372?text=" + Uri.EscapeDataString("Hola, quiero conocer cómo CARNISYS puede adaptarse a mi comercio.");
 }
 <!doctype html>
 <html lang="es-AR">
@@ -17,7 +17,7 @@
     <meta property="og:title" content="CARNISYS | Agilizá tus ventas con balanza" />
     <meta property="og:description" content="Software simple y completo para gestionar tu comercio desde cualquier lugar." />
     <link rel="icon" type="image/png" href="@Url.Content("~/Content/img/pwa-192.png")" />
-    <link rel="stylesheet" href="@Url.Content("~/Content/css/carnisys-home.css?v=1")" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/carnisys-home.css?v=2")" />
 </head>
 <body class="marketing-home">
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -168,16 +168,9 @@
                         <h2 id="video-title">Mirá CARNISYS en acción</h2>
                         <p>Conocé cómo una venta con balanza puede ser simple y rápida.</p>
                     </div>
-                    @* Al contar con el video definitivo, colocar únicamente su ID de YouTube en data-youtube-id. *@
-                    <div class="video-shell" data-youtube-id="" aria-label="Espacio reservado para el video de presentación de CARNISYS">
-                        <img src="@Url.Content("~/Content/img/carnisys-home-hero.jpg")" alt="Vista previa del video de CARNISYS" width="1536" height="1024" />
-                        <div class="video-overlay">
-                            <button class="video-play" type="button" aria-label="Reproducir video">
-                                <span aria-hidden="true"></span>
-                            </button>
-                            <span>Una venta con balanza, de principio a fin</span>
-                        </div>
-                        <div class="video-note">El video se reproducirá automáticamente y silenciado.</div>
+                    @* Video propio servido desde wwwroot (ver docs/DECISIONS.md 2026-10-31). carnisys-home.js crea el <video>; sin JS queda la imagen. *@
+                    <div class="video-shell" data-video-src="@Url.Content("~/Content/video/carnisys-venta-balanza.mp4")" data-poster="@Url.Content("~/Content/img/carnisys-venta-balanza-poster.jpg")" aria-label="Video de presentación de CARNISYS: una venta con balanza, de principio a fin">
+                        <img src="@Url.Content("~/Content/img/carnisys-venta-balanza-poster.jpg")" alt="Vista previa del video de CARNISYS" width="1280" height="720" loading="lazy" />
                     </div>
                 </div>
             </div>
@@ -380,7 +373,7 @@
                 <div class="contact-actions">
                     <a class="button button-whatsapp" href="@whatsappUrl" target="_blank" rel="noopener noreferrer">Escribime por WhatsApp</a>
                     <a class="contact-detail" href="mailto:carnisys.ok@gmail.com">carnisys.ok@gmail.com</a>
-                    <span class="contact-detail">+54 9 3482 547-897</span>
+                    <span class="contact-detail">+54 9 341 3396372</span>
                 </div>
             </div>
         </section>
@@ -404,7 +397,7 @@
             </div>
             <div>
                 <h2>Contacto</h2>
-                    <a href="@whatsappUrl" target="_blank" rel="noopener noreferrer">+54 9 3482 547-897</a>
+                    <a href="@whatsappUrl" target="_blank" rel="noopener noreferrer">+54 9 341 3396372</a>
                 <a href="mailto:carnisys.ok@gmail.com">carnisys.ok@gmail.com</a>
                 <span>Argentina</span>
             </div>

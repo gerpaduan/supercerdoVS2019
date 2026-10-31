@@ -549,7 +549,8 @@ body.marketing-home {
     opacity: .58;
 }
 
-.video-shell iframe {
+.video-shell iframe,
+.video-shell video {
     position: absolute;
     inset: 0;
     width: 100%;

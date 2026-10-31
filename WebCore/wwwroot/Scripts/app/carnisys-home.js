@@ -34,6 +34,43 @@
         });
     }
 
+    // Video propio: silenciado y en bucle, corre solo mientras se ve (no gasta datos ni CPU fuera de pantalla).
+    var ownVideoShell = document.querySelector(".video-shell[data-video-src]");
+    if (ownVideoShell) {
+        var ownVideo = document.createElement("video");
+        ownVideo.src = ownVideoShell.getAttribute("data-video-src");
+        ownVideo.poster = ownVideoShell.getAttribute("data-poster") || "";
+        ownVideo.muted = true;
+        ownVideo.defaultMuted = true;
+        ownVideo.loop = true;
+        ownVideo.playsInline = true;
+        ownVideo.controls = true;
+        ownVideo.preload = "metadata";
+        ownVideo.setAttribute("aria-label", "Una venta con balanza en CARNISYS, de principio a fin");
+        ownVideoShell.replaceChildren(ownVideo);
+
+        // Con "reducir movimiento" no arranca solo: queda el póster y los controles.
+        var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (!reduceMotion && "IntersectionObserver" in window) {
+            new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) {
+                        ownVideo.pause();
+                        return;
+                    }
+                    var playback = ownVideo.play();
+                    if (playback && playback.catch) {
+                        // Autoplay bloqueado por el navegador: el usuario lo inicia con los controles.
+                        playback.catch(function (error) {
+                            console.info("Autoplay del video no permitido:", error.name);
+                        });
+                    }
+                });
+            }, { threshold: 0.35 }).observe(ownVideoShell);
+        }
+        return;
+    }
+
     var videoShell = document.querySelector(".video-shell[data-youtube-id]");
     if (!videoShell) return;
 
