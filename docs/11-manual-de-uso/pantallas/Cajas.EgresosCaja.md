@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-10-28
+revisada: 2026-10-31
 ---
 
 ## Para qué sirve
@@ -16,8 +16,18 @@ Registrar la **salida de dinero de la caja** (gastos, retiros, etc.) y consultar
 2. Completá **Sucursal, Fecha, Tipo, Descripción y Monto**. **Detalle** es opcional (se activa con el interruptor).
 3. Guardá con **Guardar egreso** (Alt+Enter). Al guardar se abre una ventana para el comprobante (ver abajo).
 
+## En la computadora (pantalla de 1200 px o más)
+Modo compacto del listado de **Egresos de caja** (el que se abre desde el menú, no el del POS ni *Mis actividades*):
+- **Filtros arriba, con las fechas primero** (Desde, Hasta, Sucursal, Usuario, Tipo, Descripción, Gasto y Buscar). En ventanas de menos de ~1550 px van en **dos filas**; desde ~1550 px, en **una sola**. La fecha se ve siempre completa, con hora y segundos.
+- **Una sola barra debajo de los filtros** con **Items y Total** (se recalculan al buscar), el estado de la búsqueda, **Vista completa** y los botones **Nuevo Egreso**, **Calcular comisiones electrónicas** y **Tipos Egresos**. En ventanas de 1200 a 1400 px el texto «Resultados actualizados» no se muestra para dejar lugar a los botones.
+- **Si cambiás las fechas y todavía no buscaste**, no aparece la alerta amarilla de siempre: **Buscar se pone amarillo** y la barra dice *«Cambió la fecha: presioná Buscar para actualizar»*. Al buscar vuelve a lo normal.
+- **Tabla:** una línea por fila (la Descripción baja de renglón solo si es larga). El **Monto** se ve con la **misma letra que las demás columnas** (antes iba más grande y en negrita), en todos los anchos. En **Creado** la fecha y el usuario van en la misma línea (el nombre se corta si es largo; el nombre completo está en la fila desplegable).
+- El **Detalle** de la tabla muestra la primera línea cortada a ~9 rem (el texto completo está en la fila desplegable).
+- Con una ventana de **1200 px** la tabla puede tener scroll horizontal propio (no entran las 8 columnas con el menú lateral abierto).
+- **Celular y tablet (menos de 1200 px):** se ve como antes (en el celular, el texto de estado queda debajo de los filtros).
+
 ## Columna Creado
-- Antes de **Acciones** (en el listado, en **Mis actividades** y en **Actividades**) hay una columna **Creado**: fecha y hora en que se cargó el egreso y, debajo en gris, quién lo cargó.
+- Antes de **Acciones** (en el listado, en **Mis actividades** y en **Actividades**) hay una columna **Creado**: fecha y hora en que se cargó el egreso y, debajo en gris, quién lo cargó (en el listado de escritorio compacto, en la misma línea).
 - Si el egreso se **modificó**, aparece la etiqueta amarilla **Modificado** con la fecha y hora de la modificación y debajo el usuario que lo modificó. No se marca en los movimientos que el sistema actualiza solo (Pago | Cobro, Cta Cte, Pago electrónico) ni en las anulaciones.
 
 ## Mis actividades y Actividades (POS y Cerrar caja)

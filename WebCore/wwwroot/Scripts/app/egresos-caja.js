@@ -201,11 +201,29 @@
             || actuales.fechaHasta !== fechasAplicadasState.fechaHasta;
     }
 
+    var TEXTO_FECHAS_PENDIENTES = "Cambió la fecha: presioná Buscar para actualizar.";
+
     function actualizarAvisoCambioFechas() {
         var $mensaje = $("#mensajeCambioFechasEgresos");
         if (!$mensaje.length) return;
 
-        $mensaje.toggleClass("d-none", !hayCambioFechasPendiente());
+        var pendiente = hayCambioFechasPendiente();
+        $mensaje.toggleClass("d-none", !pendiente);
+
+        // Escritorio (>= 1200 px): la alerta de arriba esta oculta (.fc-alerta); el aviso es Buscar en ambar + el texto de estado de la barra.
+        // En celular se queda la alerta sola (no se duplica el mensaje).
+        if (!window.matchMedia || !window.matchMedia("(min-width: 1200px)").matches) return;
+
+        var $btn = $("#btnBuscarEgresosCaja");
+        var $estado = $("#estadoBusquedaEgresos");
+        $btn.toggleClass("btn-warning", pendiente).toggleClass("btn-primary", !pendiente);
+        $estado.toggleClass("fc-estado-pendiente", pendiente);
+
+        if (pendiente) {
+            $estado.text(TEXTO_FECHAS_PENDIENTES);
+        } else if ($estado.text() === TEXTO_FECHAS_PENDIENTES) {
+            $estado.text("Resultados actualizados.");
+        }
     }
 
     function construirDataFiltros(opciones) {

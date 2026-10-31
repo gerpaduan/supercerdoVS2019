@@ -28,7 +28,11 @@
     }
     else
     {
-        <div class="egresos-actions">
+        @* Bloque superior: en escritorio (>= 1200 px) los filtros van arriba (fechas primero) y debajo UNA barra con Items/Total, estado,
+           "Vista completa" y los botones (Nuevo Egreso ...); la tabla es el ultimo item (#tablaEgresosCaja se disuelve con display:contents para
+           que el resumen entre en la barra). Por debajo de 1200 px conserva el orden de siempre. Estilos: Shared/_FiltrosCompactosStyles + <style> de abajo. *@
+        <div class="fc-top egresos-top">
+        <div class="egresos-actions fc-acciones">
             <button type="button" class="btn btn-success" id="btnNuevoEgresoCaja">
                 <i class="fas fa-plus mr-1"></i> Nuevo Egreso
             </button>
@@ -43,10 +47,10 @@
             }
         </div>
 
-        <form id="formFiltrosEgresos" class="egresos-filtros egresos-filtros-card">
+        <form id="formFiltrosEgresos" class="egresos-filtros egresos-filtros-card fc-card">
             <div class="egresos-filtros-stack">
                 <div class="egresos-filtros-grid">
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 egr-f-sucursal">
                         <label class="egresos-filtro-label">Sucursal</label>
                         <select name="idSucursal" id="filtroSucursalEgreso" class="form-control">
                             <option value="0" selected="@(idSucursal == 0 ? "selected" : null)">Todas</option>
@@ -60,17 +64,17 @@
                         </select>
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 egr-f-desde">
                         <label class="egresos-filtro-label">Desde</label>
                         <input type="datetime-local" step="1" name="fechaDesde" id="filtroDesdeEgreso" value="@fechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 egr-f-hasta">
                         <label class="egresos-filtro-label">Hasta</label>
                         <input type="datetime-local" step="1" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 egr-f-usuario">
                         <label class="egresos-filtro-label">Usuario</label>
                         <select name="idUsuario" id="filtroUsuarioEgreso" class="form-control">
                             @if (usuarios != null)
@@ -84,7 +88,7 @@
                         </select>
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 egr-f-tipo">
                         <label class="egresos-filtro-label">Tipo</label>
                         <select name="idTipoEgresoCaja" id="filtroTipoEgreso" class="form-control">
                             <option value="0">Todos</option>
@@ -100,12 +104,12 @@
                         </select>
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 egr-f-descripcion">
                         <label class="egresos-filtro-label">Descripcion</label>
                         <input type="text" name="descripcion" id="filtroDescripcionEgreso" value="@descripcion" class="form-control" autocomplete="off" />
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 egr-f-gasto">
                         <label class="egresos-filtro-label">Gasto</label>
                         <select name="filtroGasto" id="filtroGastoEgreso" class="form-control">
                             <option value="todos" selected="@(filtroGasto == "todos" ? "selected" : null)">Todos</option>
@@ -122,30 +126,33 @@
                     </div>
                 </div>
 
+                @* fc-alerta: en escritorio el aviso de fechas cambiadas no es esta alerta sino Buscar en ambar + el texto de estado de la barra. *@
                 <div class="egresos-filtros-row">
-                    <div id="mensajeCambioFechasEgresos" class="alert alert-warning py-2 px-3 mb-0 d-none" role="alert">
+                    <div id="mensajeCambioFechasEgresos" class="alert alert-warning py-2 px-3 mb-0 d-none fc-alerta" role="alert">
                         Cambió la fecha. Debe presionar el botón Buscar para actualizar la búsqueda.
                     </div>
-                </div>
-
-                <div class="egresos-filtros-row">
-                    <div id="estadoBusquedaEgresos" class="text-muted small">Resultados actualizados.</div>
                 </div>
             </div>
         </form>
 
-        <div class="d-flex justify-content-end align-items-center mb-2">
+        @* Estado fuera del formulario para que en escritorio entre en la barra (mismo id: egresos-caja.js lo sigue escribiendo). *@
+        <div id="estadoBusquedaEgresos" class="text-muted small egresos-estado fc-estado">Resultados actualizados.</div>
+
+        <div class="d-flex justify-content-end align-items-center mb-2 fc-vista">
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="switchVistaCompletaEgresos">
                 <label class="custom-control-label" for="switchVistaCompletaEgresos">Vista completa</label>
             </div>
         </div>
 
-        <div id="tablaEgresosCaja">
+        <div id="tablaEgresosCaja" class="egresos-tabla-host">
             @Html.Partial("~/Views/Cajas/_EgresosCajaTabla.cshtml", Model)
+        </div>
         </div>
     }
 </div>
+
+@Html.Partial("~/Views/Shared/_FiltrosCompactosStyles.cshtml")
 
 <style>
     .egresos-page {
@@ -330,6 +337,120 @@
             padding: .28rem .56rem;
         }
 
+        /* ---- Modo compacto de escritorio (pedido 2026-10-31; mismo criterio que Compras/Stock > Index) ----
+           Los selectores llevan body.app-shell por ui-refresh.css / custom.css (ver _FiltrosCompactosStyles). */
+
+        /* Fechas primero; el orden del HTML (celular) no cambia: aca se reordena con "order". */
+        body.app-shell .egresos-top .egr-f-desde { order: 1; }
+        body.app-shell .egresos-top .egr-f-hasta { order: 2; }
+        body.app-shell .egresos-top .egr-f-sucursal { order: 3; }
+        body.app-shell .egresos-top .egr-f-usuario { order: 4; }
+        body.app-shell .egresos-top .egr-f-tipo { order: 5; }
+        body.app-shell .egresos-top .egr-f-descripcion { order: 6; }
+        body.app-shell .egresos-top .egr-f-gasto { order: 7; }
+        body.app-shell .egresos-top .egresos-filtro-accion { order: 8; }
+
+        /* El renglon de la alerta de fechas queda vacio en escritorio (la alerta es .fc-alerta): se saca para que no sume el gap. */
+        body.app-shell .egresos-top .egresos-filtros-row { display: none; }
+
+        body.app-shell .egresos-top .egresos-filtros-grid { gap: .4rem .5rem; }
+
+        body.app-shell .egresos-top .egresos-filtros-card { margin-bottom: 0; padding: 0 .65rem; }
+
+        body.app-shell .egresos-top .egresos-filtros-stack { gap: 0; }
+
+        /* Los botones (Nuevo Egreso ...) pasan a la barra, a la altura de Buscar. */
+        body.app-shell .egresos-top .egresos-actions .btn {
+            font-size: .84rem;
+            padding: .15rem .6rem;
+        }
+
+        /* Items / Total: de tarjetas con la etiqueta arriba a una linea "Items 14" como el resto de las barras. #tablaEgresosCaja se
+           disuelve (display:contents) para que el resumen y la tabla sean items de la barra; el resumen va primero y la tabla ocupa todo el ancho. */
+        body.app-shell .egresos-top > .egresos-tabla-host { display: contents; }
+
+        body.app-shell .egresos-top .egresos-tabla-host > .egresos-resumen {
+            order: 1;
+            margin: 0;
+            justify-content: flex-start;
+            gap: .4rem;
+            flex: 0 0 auto;
+        }
+
+        body.app-shell .egresos-top .egresos-tabla-host > .egresos-resumen > div {
+            display: flex;
+            align-items: baseline;
+            gap: .45rem;
+            min-width: 0;
+            padding: .28rem .65rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        body.app-shell .egresos-top .egresos-tabla-host > .egresos-resumen span,
+        body.app-shell .egresos-top .egresos-tabla-host > .egresos-resumen strong {
+            display: inline;
+            margin: 0;
+        }
+
+        body.app-shell .egresos-top .egresos-tabla-host > :not(.egresos-resumen) {
+            order: 10;
+            flex: 0 0 100%;
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        /* Tabla: una linea por fila. "Creado" (fecha y usuario) pasa de dos renglones a uno. */
+        body.app-shell .egresos-page .egresos-tabla-desktop .table th,
+        body.app-shell .egresos-page .egresos-tabla-desktop .table td {
+            padding: .15rem .5rem;
+            line-height: 1.2;
+        }
+
+        body.app-shell .egresos-page .egresos-tabla-desktop .table thead th {
+            padding: .25rem .5rem;
+            white-space: nowrap !important;
+        }
+
+        body.app-shell .egresos-page .egresos-tabla-desktop .celda-creado-fecha,
+        body.app-shell .egresos-page .egresos-tabla-desktop .celda-creado-usuario {
+            display: inline;
+        }
+
+        body.app-shell .egresos-page .egresos-tabla-desktop .celda-creado-usuario {
+            display: inline-block;
+            max-width: 4rem;
+            margin-left: .4rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: bottom;
+        }
+
+        /* Sucursal (6.a columna) en un renglon ("San Lorenzo" se partia). El Tipo (2.a) tambien, hasta 10 rem: "Entregas Dinero" entra en una linea y
+           un tipo muy largo ("Gastos Personales / Nelcy-German") baja a dos. La Descripcion es la que cede y baja de renglon si es larga. El Detalle
+           (resumen de su primera linea) baja de 220 px a 9 rem para que entre la fila sin scroll horizontal. */
+        body.app-shell .egresos-page .egresos-tabla-desktop .table td:nth-child(6) {
+            white-space: nowrap;
+        }
+
+        body.app-shell .egresos-page .egresos-tabla-desktop .table td:nth-child(2) {
+            min-width: 7rem;
+            max-width: 10rem;
+        }
+
+        body.app-shell .egresos-page .egresos-tabla-desktop .table td .text-truncate {
+            max-width: 9rem !important;
+        }
+
+        body.app-shell .egresos-page .egresos-tabla-desktop .table td .btn-sm {
+            height: 1.4rem;
+            min-height: 0;
+            padding: 0 .45rem;
+            font-size: .74rem;
+            line-height: 1;
+        }
+
         .egresos-page .egresos-resumen {
             margin-bottom: .45rem;
         }
@@ -346,6 +467,21 @@
         .egresos-page .egresos-tabla-desktop .table > thead > tr > th {
             font-size: .69rem !important;
         }
+    }
+
+    /* Ventana ancha (>= 1550 px; con el menu lateral quedan ~1300 px utiles): los 8 campos entran en UNA fila. Desde/Hasta de ancho fijo para
+       que se vea la fecha con segundos ("31/10/2026 23:59:59" y el icono del calendario); el resto reparte lo que queda. */
+    @@media (min-width: 1550px) {
+        .egresos-filtros-grid {
+            grid-template-columns: 14.5rem 14.5rem minmax(7rem, 1fr) minmax(7rem, 1fr) minmax(7rem, 1fr) minmax(8rem, 1.4fr) 7.5rem 5.5rem;
+        }
+    }
+
+    /* Importe con la misma letra que las demas columnas (antes 1.2 rem en negrita por custom.css .egreso-monto); numeros alineados en columna. */
+    .egresos-page .egresos-tabla-desktop .egreso-monto {
+        font-size: inherit;
+        font-weight: 400;
+        font-variant-numeric: tabular-nums;
     }
 
     @@media (min-width: 768px) and (max-width: 1199.98px) {

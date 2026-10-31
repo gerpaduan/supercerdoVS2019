@@ -1,5 +1,19 @@
 # Bitacora de cambios
 
+## 2026-10-31 - Tablas compactas (Compras, Elaborados, Movimientos, Stock): letra 1 pt más grande
+
+- **Pedido:** revisar las tablas con la letra chica (11,6 px) y subirla 1 pt; el texto gris claro (como el código) debe quedar 1 pt más chico que la fila. Comparación previa mostrada y aprobada.
+- **Cambio:** `font-size` de la tabla y su encabezado en `stock-editar-compacto.css`, `movimientos-compacto.css`, `elaborados-compacto.css` y `compras-editar.css`: fila 12,9 px, encabezado 11,6–11,9 px, gris 11,6 px. Manuales de Stock, Movimientos y Compras (Editar) ajustados. Detalle: `docs/DECISIONS.md` (2026-10-31).
+- **Verificado:** con login real (usuario temporal, borrado al final) a 1366×690: Stock, Movimientos, Elaborados/Carga y Compras/Editar con la letra nueva, filas de 20 px y las mismas filas a la vista; el gris de Stock y Compras mide 11,6 px; Compras con 14 líneas (13 a la vista, sin scroll de página).
+- **Sin verificar:** Ingreso rápido y Desarme (misma hoja), modo oscuro, 1200 y 1920 px. Con el Stock destino abierto la tabla de Movimientos ya scrolleaba en horizontal.
+
+## 2026-10-31 - Egresos de caja (escritorio): modo compacto e importe con la letra de la tabla
+
+- **Pedido:** aplicar el modo compacto de los otros listados a `/Cajas/EgresosCaja` y que el importe tenga la misma letra que las demás columnas (peso normal, confirmado con un mockup previo).
+- **Cambio:** `Views/Cajas/EgresosCaja.cshtml` (clases `fc-*` y `egresos-top`, orden de campos, CSS compacto) y `wwwroot/Scripts/app/egresos-caja.js` (Buscar ámbar y estado cuando hay fechas sin buscar, solo ≥ 1200 px). Filtros con fechas primero (2 filas, 1 desde ~1550 px), una barra con Items/Total, estado, «Vista completa» y botones, filas de una línea (28 px) y Monto con la letra de la tabla. Manual: `Cajas.EgresosCaja.md`. Detalle: `docs/DECISIONS.md` (2026-10-31).
+- **Verificado:** compila (0 errores) y con login real (usuario temporal, borrado al final): 1366×690, 1632, 1200, 1100 y 375 px; búsqueda por Ajax actualiza Items y Total; aviso de fechas cambiadas; Monto 12.8 px / peso 400 igual que las otras columnas.
+- **Sin verificar:** modo oscuro, filas con «Modificado», «Vista completa» activa y los modales de Nuevo/Modificar egreso (no se tocaron). A 1200 px la tabla scrollea en horizontal.
+
 ## 2026-10-31 - Movimientos/Editar: con el Stock destino al lado, Código solo arriba y Producto + cantidades abajo
 
 - **Pedido:** con el stock visible, Código + Producto arriba y Cant. Un. + Kgs. abajo quedaba incómodo.

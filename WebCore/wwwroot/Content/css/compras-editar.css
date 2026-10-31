@@ -1035,16 +1035,18 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         background: var(--ui-surface-alt, #f3f4f6);
     }
 
-    /* Lista de items: UN renglon por item y fuente 1 pt menor (13 items a la vista en 1366x629). El detalle absorbe el
-       ancho sobrante y se recorta con "..." (td con width:100% + max-width:0, truco para que la tabla no lo ensanche). */
+    /* Lista de items: UN renglon por item (13 items a la vista en 1366x629). El detalle absorbe el
+       ancho sobrante y se recorta con "..." (td con width:100% + max-width:0, truco para que la tabla no lo ensanche).
+       Letra (2026-10-31): fila .808rem (12.9 px) y encabezado .743rem, 1 pt mas que la primera version (.725 / .66) que quedo muy chica;
+       el texto gris (codigo) va 1 pt por debajo de la fila (.725rem). */
     body .compra-page .compra-tabla-wrap .table {
-        font-size: .725rem;
+        font-size: .808rem;
         margin-bottom: 0;
     }
 
     body .compra-page .compra-tabla-wrap .table thead th,
     body .compra-page .compra-tabla-wrap .table > thead > tr > th {
-        font-size: .66rem !important;
+        font-size: .743rem !important;
         line-height: 1.2;
         padding: .22rem .45rem;
         /* !important: custom.css fuerza "white-space: normal !important" en todo .table thead th y partia "# ↓" y "P. venta". */
@@ -1070,12 +1072,12 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         max-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: .725rem;
+        font-size: .808rem;
         line-height: 1.25;
     }
 
     body .compra-page .compra-tabla-wrap tbody td.compra-detalle-cell small {
-        font-size: .66rem;
+        font-size: .725rem;
         line-height: 1.25;
         margin-left: .4rem;
     }

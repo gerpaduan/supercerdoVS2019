@@ -41,7 +41,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Ingreso al sistema | Acceso y seguridad | `pantallas/Login.Index.md` | 2026-10-13 |
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
-| pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-10-28 |
+| pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-10-31 |
 | pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-10-31 |
 | pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-30 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-14 |

@@ -233,14 +233,21 @@
         overflow-y: auto;
     }
 
+    /* Letra (2026-10-31): fila .808rem (12.9 px) y encabezado .723rem, 1 pt mas que la primera version (.725 / .64) que quedo muy chica;
+       el texto gris (costo de la linea con el costeo activo) va 1 pt por debajo de la fila (.725rem). */
     body.app-shell .elaborados-compacto .elaborados-table-compact {
-        font-size: .725rem;
+        font-size: .808rem;
         margin-bottom: 0;
+    }
+
+    body.app-shell .elaborados-compacto .elaborados-table-compact tbody .text-muted,
+    body.app-shell .elaborados-compacto .elaborados-table-compact tbody small {
+        font-size: .725rem !important;
     }
 
     body.app-shell .elaborados-compacto .elaborados-table-compact thead th,
     body.app-shell .elaborados-compacto .elaborados-table-compact > thead > tr > th {
-        font-size: .64rem !important;
+        font-size: .723rem !important;
         line-height: 1.2;
         padding: .2rem .45rem;
         /* !important: custom.css fuerza "white-space: normal !important" en todo .table thead th. */
