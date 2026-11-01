@@ -42,6 +42,10 @@ namespace WebCore.Controllers
 {
     public class StockController : Controller
     {
+        // Cola de los errores de medias/kilos de un Pesaje: guía al usuario al interruptor «Solo productos».
+        // La vista la usa para detectar ese error y resaltar el interruptor (Views/Stock/Editar.cshtml).
+        public const string SugerenciaSoloProductos = " Si este pesaje no es de cortes de media res, active «Solo productos».";
+
         private static readonly string[] TiposStock =
         {
             Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock),
@@ -444,6 +448,15 @@ namespace WebCore.Controllers
                 : (compraActual != null && compraActual.Proveedor != null && compraActual.Proveedor.IdPersona > 0
                     ? compraActual.Proveedor.IdPersona
                     : _param.GetInt(Entidades.ParamKeys.IdIndefinido, 0));
+
+            // «Solo productos»: el proveedor no se pide. Un pesaje nuevo queda con "Indefinido" y uno ya guardado
+            // conserva el que tenía (no se pierde ese dato al activar el interruptor).
+            if (EsPesaje(tipoOperacion) && model.GuardarSinPesaje)
+            {
+                idProveedor = compraActual != null && compraActual.Proveedor != null && compraActual.Proveedor.IdPersona > 0
+                    ? compraActual.Proveedor.IdPersona
+                    : _param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
+            }
             Entidades.Persona proveedor = ResolverProveedor(idProveedor);
             if (proveedor == null || proveedor.IdPersona <= 0)
             {
@@ -570,6 +583,9 @@ namespace WebCore.Controllers
             model.Observaciones = auditoria.Observaciones ?? "";
             model.CantMedias = auditoria.CantMedias;
             model.KgsMedias = auditoria.KgsMedias.HasValue ? (float?)auditoria.KgsMedias.Value : null;
+            // Los vínculos con otros pesajes o compras no se recuperan, así que un pesaje sin medias vuelve como «Solo productos».
+            if (EsPesaje(model.TipoCompra))
+                model.GuardarSinPesaje = (model.CantMedias ?? 0) <= 0 && (model.KgsMedias ?? 0f) <= 0f;
             if (EsPesaje(model.TipoCompra) && auditoria.IdPersona.HasValue)
             {
                 var proveedor = ResolverProveedor(auditoria.IdPersona.Value);
@@ -2109,6 +2125,13 @@ namespace WebCore.Controllers
             if (EsPesaje(compra.TipoCompra))
             {
                 model.PesajesVinculadosIds = _oCompraN.obtenerPesajesVinculadosPorDestino(compra.IdCompra) ?? new List<int>();
+
+                // Un pesaje guardado sin medias ni kilos y sin vínculos es «Solo productos»: se abre con el interruptor
+                // prendido para poder volver a guardarlo. Si tiene vínculos queda apagado (se cargan las medias o se desvincula).
+                bool sinMedias = (compra.CantMedias ?? 0) <= 0 && (compra.KgsMedias ?? 0f) <= 0f;
+                bool sinVinculos = !(compra.IdPesajeAjustado.HasValue && compra.IdPesajeAjustado.Value > 0)
+                    && model.PesajesVinculadosIds.Count == 0;
+                model.GuardarSinPesaje = sinMedias && sinVinculos;
             }
 
             var cortes = (_oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
@@ -2342,14 +2365,30 @@ namespace WebCore.Controllers
 
             if (EsPesaje(model.TipoCompra))
             {
-                if (model.IdProveedor <= 0)
-                    return "Seleccione un proveedor para el pesaje.";
+                if (model.GuardarSinPesaje)
+                {
+                    // «Solo productos»: el pesaje no es de cortes de media res, no lleva proveedor, medias ni kilos.
+                    // Con una compra o pesajes vinculados los botones de vincular quedan ocultos y el vínculo se
+                    // perdería de vista; con un ajuste generado, el ajuste quedaría calculado sobre medias que ya no están.
+                    bool tieneVinculos = (model.IdPesajeAjustado.HasValue && model.IdPesajeAjustado.Value > 0)
+                        || (model.PesajesVinculadosIds != null && model.PesajesVinculadosIds.Count > 0);
+                    if (tieneVinculos)
+                        return "Un pesaje «Solo productos» no puede tener una compra ni pesajes vinculados. Desvincúlelos antes de activarlo.";
 
-                if (!model.GuardarSinPesaje && (!model.CantMedias.HasValue || model.CantMedias.Value <= 0))
-                    return "Ingrese la cantidad de medias para el pesaje.";
+                    if (model.IdCompra > 0 && _oCompraN.getIdAjusteDelPesaje(model.IdCompra) > 0)
+                        return "Este pesaje ya tiene un ajuste generado. Elimine el ajuste antes de activar «Solo productos».";
+                }
+                else
+                {
+                    if (model.IdProveedor <= 0)
+                        return "Seleccione un proveedor para el pesaje.";
 
-                if (!model.GuardarSinPesaje && (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0))
-                    return "Ingrese los kilos de medias para el pesaje.";
+                    if (!model.CantMedias.HasValue || model.CantMedias.Value <= 0)
+                        return "Ingrese la cantidad de medias para el pesaje." + SugerenciaSoloProductos;
+
+                    if (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0)
+                        return "Ingrese los kilos de medias para el pesaje." + SugerenciaSoloProductos;
+                }
             }
 
             return "";

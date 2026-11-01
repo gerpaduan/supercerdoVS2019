@@ -22,10 +22,12 @@
     bool permiteNegativo = esAjuste || esEgreso;
     bool tieneCompraVinculadaPesaje = esPesaje && Model.IdPesajeAjustado.HasValue && Model.IdPesajeAjustado.Value > 0;
     bool compraVinculadaEsPesaje = Model.CompraVinculadaEsPesaje;
-    bool mostrarGuardarSinPesaje = Model.GuardarSinPesaje
-        || ViewData.ModelState.Values
-            .SelectMany(v => v.Errors)
-            .Any(e => string.Equals(e.ErrorMessage, "Ingrese los kilos de medias para el pesaje.", StringComparison.OrdinalIgnoreCase));
+    // «Solo productos» (campo GuardarSinPesaje): pesaje que no es de cortes de media res. Oculta Proveedor, medias, kilos y los botones
+    // de vincular. Si el guardado fallo por faltar medias o kilos, el interruptor se resalta para que el usuario lo encuentre.
+    bool soloProductos = esPesaje && Model.GuardarSinPesaje;
+    bool resaltarSoloProductos = esPesaje && !soloProductos && ViewData.ModelState.Values
+        .SelectMany(v => v.Errors)
+        .Any(e => e.ErrorMessage != null && e.ErrorMessage.EndsWith(WebCore.Controllers.StockController.SugerenciaSoloProductos, StringComparison.Ordinal));
     var modalProductoData = new ViewDataDictionary(ViewData);
     modalProductoData["ModalId"] = "modalBuscarProductoStock";
     modalProductoData["ApiUrl"] = Url.Action("BuscarCorte", "Stock");
@@ -118,7 +120,16 @@
                     </div>
                     <div class="col-12 col-lg-6">
                         <div class="form-group">
-                            <label for="TipoCompraVisual">Acción</label>
+                            @* El interruptor va en el renglon del titulo (solo en Pesaje) para no sumar altura a la fila. *@
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label for="TipoCompraVisual">Acción</label>
+                                <div class="custom-control custom-switch stock-solo-productos mb-2 @(esPesaje ? "" : "d-none") @(resaltarSoloProductos ? "stock-solo-productos-resaltado" : "")"
+                                     id="wrapGuardarSinPesaje"
+                                     title="Activelo si este pesaje no es de cortes de media res: no pide proveedor, medias ni kilos.">
+                                    @Html.CheckBoxFor(m => m.GuardarSinPesaje, new { @class = "custom-control-input", id = "GuardarSinPesaje" })
+                                    <label class="custom-control-label" for="GuardarSinPesaje">Solo productos</label>
+                                </div>
+                            </div>
                             <div class="input-group">
                                 <select id="TipoCompraVisual" class="form-control app-product-highlight stock-action-highlight" disabled>
                                     <option value="Ingreso Stock" selected="@(string.Equals(Model.TipoCompra, "Ingreso Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Ingreso</option>
@@ -146,7 +157,7 @@
                     </div>
                 </div>
 
-                <div class="row stock-fila-pesaje @(esPesaje ? "" : "d-none")" id="bloquePesajeStock">
+                <div class="row stock-fila-pesaje @(esPesaje && !soloProductos ? "" : "d-none")" id="bloquePesajeStock">
                         <div class="col-12 col-lg-4">
                             <div class="form-group">
                                 <label for="razonSocial">Proveedor</label>
@@ -187,13 +198,6 @@
                             <div class="form-group">
                                 <label for="KgsMedias">Kgs.Medias</label>
                                 <input type="text" id="KgsMedias" name="KgsMedias" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" value="@(Model.KgsMedias.HasValue ? Model.KgsMedias.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "")" />
-                                <div class="mt-2 @(mostrarGuardarSinPesaje ? "" : "d-none")" id="wrapGuardarSinPesaje">
-                                    <div class="custom-control custom-switch">
-                                        @Html.CheckBoxFor(m => m.GuardarSinPesaje, new { @class = "custom-control-input", id = "GuardarSinPesaje" })
-                                        <label class="custom-control-label" for="GuardarSinPesaje">Guardar sin pesaje</label>
-                                    </div>
-                                    <small class="form-text text-muted">Guardar Kgs.Medias en 0</small>
-                                </div>
                             </div>
                         </div>
                         @* Celular: los dos botones de vincular van lado a lado (col-6) y a todo el ancho de su columna. stock-btn-vincular
@@ -312,7 +316,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-secondary d-none d-lg-inline-block" id="btnToggleTecladoStock" title="Mostrar/ocultar teclado digital">
                                         <i class="fas fa-keyboard"></i> <i class="fas fa-chevron-down" id="iconoToggleTecladoStock"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-info @(esPesaje ? "" : "d-none")" id="btnVerPorcentajePesaje" data-edit-readonly-ignore="true">
+                                    <button type="button" class="btn btn-sm btn-outline-info @(esPesaje && !soloProductos ? "" : "d-none")" id="btnVerPorcentajePesaje" data-edit-readonly-ignore="true">
                                         <i class="fas fa-percent mr-1"></i> Ver Porc(%)
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-primary @(string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase) ? "" : "d-none")" id="btnProductosNoCargados">
@@ -879,6 +883,16 @@
        partirse en dos renglones en pantallas muy angostas. En desktop no se toca (2026-10-27, pedido: solo responsive). */
     @@media (max-width: 991.98px) {
         .stock-page .stock-btn-vincular { width: 100%; white-space: normal; }
+    }
+
+    /* Interruptor «Solo productos» (Pesaje): se resalta cuando el guardado fallo por faltar medias o kilos, para que se vea donde activarlo. */
+    .stock-page .stock-solo-productos { white-space: nowrap; }
+    .stock-page .stock-solo-productos-resaltado {
+        background: rgba(255, 193, 7, .25);
+        outline: 2px solid #ffc107;
+        border-radius: .4rem;
+        padding-top: .1rem;
+        padding-bottom: .1rem;
     }
 
     /* Celular: acciones de "Agregar producto" (switch Balanza, Ver acumulados, Ver Porc(%), Productos no cargados, respaldo) en una

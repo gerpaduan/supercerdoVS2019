@@ -99,6 +99,8 @@
                         int? mediasOrigen = detalle != null && detalle.CantMediasCompraVinculada.HasValue
                             ? detalle.CantMediasCompraVinculada
                             : (LeerEnteroNullable(row, "cantMedias") ?? (detalle != null && detalle.CantidadMedias > 0 ? (int?)detalle.CantidadMedias : null));
+                        // Sin medias (0 o vacio) es un pesaje «Solo productos»: no se muestran proveedor ni ceros.
+                        bool soloProductosFila = (mediasOrigen ?? 0) <= 0;
                         string proveedorPesaje = TruncarProveedor(proveedorOrigen, 8);
                         string kgsPesaje = kgsOrigen.HasValue ? kgsOrigen.Value.ToString("N0") + " kgs" : "";
                         string mediasPesaje = mediasOrigen.HasValue ? mediasOrigen.Value.ToString() + " Medias Reses" : "";
@@ -119,7 +121,7 @@
                             partesPesaje.Add(mediasPesaje);
                         }
 
-                        resumenPesaje = string.Join(" | ", partesPesaje);
+                        resumenPesaje = soloProductosFila ? "Solo productos" : string.Join(" | ", partesPesaje);
                     }
 
                     <tr>

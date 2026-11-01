@@ -11,6 +11,17 @@ alias: Stock.Nuevo
 ## Para qué sirve
 Cargar un movimiento de stock nuevo (ingreso, egreso, ajuste, cierre, **pesaje**, etc.) o modificar uno ya guardado. Esta página documenta por ahora solo la parte de **vincular y desvincular pesajes**; el resto de la pantalla está pendiente (ver al final).
 
+## Pesaje «Solo productos» (sin medias de res)
+Un **Pesaje** normal pide **Proveedor, Cant.Medias y Kgs.Medias** (sirven para comparar los cortes contra la media res en **Ver Porc(%)** y **Generar ajuste**). Si lo que pesás **no es de cortes de media res**, activá el interruptor **Solo productos**, que está en el renglón del título **Acción** (solo se ve con la acción Pesaje; al pasar el mouse dice para qué sirve).
+- **Al activarlo** se ocultan **Proveedor, Cant.Medias, Kgs.Medias, Vincular compra, Vincular pesajes y Ver Porc(%)**, y el pesaje se guarda sin medias ni kilos. Para guardar solo hace falta cargar los productos.
+- **Proveedor:** un pesaje nuevo queda con el proveedor «Indefinido». Si ya estaba guardado, conserva el proveedor que tenía.
+- **Si intentás guardar sin medias o kilos** y el interruptor está apagado, el mensaje dice *«Si este pesaje no es de cortes de media res, active "Solo productos"»* y el interruptor se resalta en amarillo.
+- **No se puede activar** si el pesaje tiene una **compra o pesajes vinculados** (primero se desvinculan) ni si ya tiene un **ajuste generado** (primero se elimina el ajuste).
+- **Al abrir** un pesaje guardado sin medias ni kilos y sin vínculos, el interruptor aparece **activado**. Si tiene vínculos queda apagado y hay que cargar las medias o desvincular.
+- **En la lista de Stock** estos pesajes muestran *Solo productos* en vez del proveedor y los ceros.
+- Al cambiar la acción a otra distinta de Pesaje, el interruptor se apaga. El borrador también lo recuerda.
+- PENDIENTE: el detalle desplegado de la lista de Stock sigue mostrando el botón **Ver Porc(%)** en estos pesajes; al tocarlo avisa que el pesaje no tiene medias.
+
 ## Vincular y desvincular pesajes
 Aplica cuando el tipo del movimiento es **Pesaje**. El botón **Vincular pesajes** abre una lista de pesajes de la misma sucursal (por defecto, de los últimos 7 días; se puede cambiar con *Fecha desde / Fecha hasta* y el buscador de proveedor).
 
@@ -51,7 +62,7 @@ Pensado para ver más líneas sin bajar con la rueda (la **fecha** de ancho comp
 - **Líneas cargadas:** una por renglón (el **código** va al lado del producto, no debajo), letra de 12,9 px (el texto gris, como el «Código», un punto menos) y encabezado fijo. Con una ventana de **690 px de alto** se ven **11 líneas** (8 con 629 px, 18 con 829 px); con más, la lista tiene su propio scroll y la página no se mueve.
 - **Fila resaltada, # y orden:** al pasar el mouse por una fila se pinta de azul tenue. La tabla tiene una columna **#** (número de carga, no cambia al ordenar) y se ordena tocando **#**, **Producto**, **Código**, **Cantidad** o **Creado**; arranca por **#** ascendente. **Ver acumulados** también tiene **#** (orden de primera carga del producto) y se ordena por **Código**, **Producto** o **Cantidad**; al abrirlo arranca por código. El orden en pantalla no cambia el orden en que se guarda.
 - **Teclado digital abierto:** Código y Producto en un renglón, Cantidad y **+** en el siguiente, y el teclado con teclas más bajas. La lista cede lugar (unas **4 líneas** a 690 px de alto) y scrollea por dentro.
-- **Pesaje:** la fila de **Proveedor, Cant.Medias, Kgs.Medias** y los botones de vincular suma una fila; con 690 px de alto entran unas 7 líneas. La caja **Compra vinculada** (al vincular) y, en un pesaje ya guardado, la caja de datos de la compra o del pesaje, van en pocos renglones. En un **pesaje ya guardado** la página scrollea unos 15 px a 690 px de alto (la columna derecha con Resumen, Observaciones y Datos del registro es más alta que la lista).
+- **Pesaje:** la fila de **Proveedor, Cant.Medias, Kgs.Medias** y los botones de vincular suma una fila (con **Solo productos** activado esa fila se oculta y no suma altura); con 690 px de alto entran unas 7 líneas. La caja **Compra vinculada** (al vincular) y, en un pesaje ya guardado, la caja de datos de la compra o del pesaje, van en pocos renglones. En un **pesaje ya guardado** la página scrollea unos 15 px a 690 px de alto (la columna derecha con Resumen, Observaciones y Datos del registro es más alta que la lista).
 - **Resumen, Observaciones y Datos del registro** quedan a la derecha, más bajos; **Observaciones** es una línea y se agranda al tocarla.
 - Con una ventana de menos de 690 px de alto la lista cede líneas (**8** a 629 px).
 - **PENDIENTE (no medido en el navegador):** la altura exacta con **Compra vinculada** recién elegida, la caja de **Pesaje vinculado** de un **Ajuste** ya guardado, teclado abierto en modo edición y modo oscuro.

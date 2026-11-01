@@ -566,6 +566,27 @@
         showFeedback($form, texto, 8000);
     }
 
+    // «Solo productos» (checkbox #GuardarSinPesaje, campo GuardarSinPesaje del servidor): pesaje que no es de cortes de media res.
+    // Oculta Proveedor, Cant.Medias, Kgs.Medias y los botones de vincular (todos dentro de #bloquePesajeStock) y Ver Porc(%).
+    function esSoloProductos($form) {
+        return stateEsPesaje($form) && $form.find('#GuardarSinPesaje').is(':checked');
+    }
+
+    function syncSoloProductosUi($form) {
+        var esPesaje = stateEsPesaje($form);
+        var soloProductos = esSoloProductos($form);
+        $form.find('#wrapGuardarSinPesaje').toggleClass('d-none', !esPesaje);
+        $form.find('#bloquePesajeStock').toggleClass('d-none', !esPesaje || soloProductos);
+        $form.find('#btnVerPorcentajePesaje').toggleClass('d-none', !esPesaje || soloProductos);
+    }
+
+    // Con una compra o pesajes vinculados los botones de vincular quedarian ocultos y el vinculo fuera de vista:
+    // el interruptor no se deja activar (el servidor valida lo mismo en ValidarModelo).
+    function tieneVinculosPesaje($form) {
+        var idCompraVinculada = parseInt($form.find('#IdPesajeAjustado').val(), 10) || 0;
+        return idCompraVinculada > 0 || getPesajesVinculados($form).length > 0;
+    }
+
     function syncTipoCompraUi($form) {
         var state = getState($form);
         var tipoCompra = $form.find('#TipoCompra').val() || '';
@@ -584,10 +605,13 @@
 
         $form.find('#TipoCompraVisual').val(tipoCompra);
         $form.find('#stockAccionActual').text(tipoCompra);
-        $form.find('#bloquePesajeStock').toggleClass('d-none', !esPesaje);
+        // «Solo productos» solo existe en Pesaje: al cambiar a otra accion se apaga.
+        if (!esPesaje) {
+            $form.find('#GuardarSinPesaje').prop('checked', false);
+        }
         $form.find('#wrapBtnSeleccionarCompraPesaje').toggleClass('d-none', !esPesaje);
         $form.find('#wrapBtnVincularPesaje').toggleClass('d-none', !esPesaje);
-        $form.find('#btnVerPorcentajePesaje').toggleClass('d-none', !esPesaje);
+        syncSoloProductosUi($form);
         $form.find('#btnProductosNoCargados').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
         actualizarContextoNoCargados($form);
         $form.find('#txtAyudaCantidad').text(getAyudaCantidad(tipoCompra));
@@ -655,7 +679,8 @@
         $form.find('#totalItems').text(state.lineas.length);
         $form.find('#totalKg').text(formatNumber(totalKg, 3));
 
-        if (state.config.esPesaje) {
+        // En «Solo productos» no hay Kgs.Medias: no se autocompleta con el total de las lineas.
+        if (state.config.esPesaje && !esSoloProductos($form)) {
             var kgsMediasActual = $.trim($form.find('#KgsMedias').val() || '');
             if (!kgsMediasActual) {
                 $form.find('#KgsMedias').val(formatNumber(totalKg, 2));
@@ -2081,6 +2106,7 @@
             compraVinculadaEstado: $form.find('#stockCompraVinculadaEstado').text() || '',
             cantMedias: $form.find('#CantMedias').val(),
             kgsMedias: $form.find('#KgsMedias').val(),
+            soloProductos: $form.find('#GuardarSinPesaje').is(':checked'),
             currentLine: {
                 id: $form.find('#txtProductoId').val(),
                 codigo: $form.find('#txtCodigoProducto').val(),
@@ -2162,6 +2188,8 @@
             });
             $form.find('#CantMedias').val(draft.cantMedias || '');
             $form.find('#KgsMedias').val(draft.kgsMedias || '');
+            $form.find('#GuardarSinPesaje').prop('checked', draft.soloProductos === true);
+            syncSoloProductosUi($form);
         }
 
         if (draft.currentLine) {
@@ -2675,6 +2703,39 @@
             scheduleDraft($form);
         });
 
+        // Interruptor «Solo productos»: al prenderlo el proveedor vuelve al por defecto ("Indefinido" en un pesaje nuevo, el guardado
+        // en uno existente) y se vacian medias y kilos; el servidor guarda 0/0 (AplicarGuardarSinPesaje). Con vinculos no se activa.
+        $form.on('change.stock', '#GuardarSinPesaje', function () {
+            var $interruptor = $(this);
+
+            if ($interruptor.is(':checked') && tieneVinculosPesaje($form)) {
+                $interruptor.prop('checked', false);
+                var aviso = 'Este pesaje tiene una compra o pesajes vinculados. Desvincúlelos antes de activar «Solo productos».';
+                if (window.Swal && typeof window.Swal.fire === 'function') {
+                    window.Swal.fire({ icon: 'warning', title: 'No se puede activar «Solo productos»', text: aviso });
+                } else {
+                    showFeedback($form, aviso, 6000);
+                }
+                return;
+            }
+
+            if ($interruptor.is(':checked')) {
+                setProveedor($form, {
+                    id: state.config.proveedorDefaultId || 0,
+                    razon: state.config.proveedorDefaultNombre || '',
+                    cuit: state.config.proveedorDefaultCuit || ''
+                });
+                $form.find('#CantMedias').val('');
+                $form.find('#KgsMedias').val('');
+            }
+
+            $form.find('#wrapGuardarSinPesaje').removeClass('stock-solo-productos-resaltado');
+            syncSoloProductosUi($form);
+            recalculate($form);
+            actualizarContextoNoCargados($form);
+            scheduleDraft($form);
+        });
+
         // Usuario de produccion (sala de piso): antes de guardar (submit nativo del form),
         // se elige de un modal quien es el empleado real -- ver
         // Web/Scripts/app/seleccion-usuario-produccion.js. Para cualquier otro usuario, el
@@ -3126,7 +3187,7 @@
                 return;
             }
 
-            if (state.config.esPesaje && e.key === 'F9' && tag !== 'textarea') {
+            if (state.config.esPesaje && !esSoloProductos($form) && e.key === 'F9' && tag !== 'textarea') {
                 e.preventDefault();
                 abrirProveedorModal($form);
                 return;
