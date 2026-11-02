@@ -1,3 +1,11 @@
+## 2026-11-02 - Egresos de caja: «Pago Electronico» se puede elegir en el filtro Tipo, con rango máximo de 31 días
+
+- **Pedido:** para control, ver cada ítem de pago electrónico por fecha (en SM y SL el tipo no aparecía en el filtro Tipo).
+- **Qué se decidió:** el combo Tipo de `Cajas/EgresosCaja` ahora incluye **Pago Electronico** (id 200). «Todos» sigue sin mostrarlos (la exclusión del 2026-08-25 se mantiene para el resto de los casos) y **Cta Cte** (id 100) sigue excluida. Si se elige Pago Electronico y el rango Desde-Hasta supera `MaxDiasPagosElectronicos` (31 días, constante en `CajasController`), el servidor **no consulta** y la pantalla avisa que hay que achicar las fechas. Vale también para la carga ajax.
+- **Por qué con tope:** cada venta no efectiva genera un egreso tipo 200 (SuperCerdo local: ~49 por día de promedio, máximo 214 en un día, más de 84.000 en total); sin tope un rango largo traía decenas de miles de filas.
+- **Alternativas descartadas:** habilitar el tipo sin límite (riesgo de traer toda la historia); recortar el listado en silencio a N filas (un control con filas faltantes sin aviso es peor que no mostrarlo); sacar la exclusión de «Todos» (mezcla miles de filas automáticas con los egresos reales).
+- **Deuda conocida:** hay egresos tipo 200 sin venta asociada (`tabla` NULL, cargados a mano hasta 2026-02, algunos con monto negativo); ahora se ven y no son editables desde esta pantalla (la política manda los pagos electrónicos a Ventas). No se tocaron.
+
 ## 2026-11-02 - Cuenta corriente de una persona: filas desplegables con los ítems de cada venta, compra y pago
 
 - **Pedido:** en `Finanzas/CtaCtePersona`, al desplegar un movimiento mostrar los ítems de la venta o de la compra (y cómo se pagó un cobro), y mejorar el diseño de la lista. Se hizo primero un mockup aprobado.

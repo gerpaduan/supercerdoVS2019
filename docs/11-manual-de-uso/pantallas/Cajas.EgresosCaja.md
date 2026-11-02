@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-10-31
+revisada: 2026-11-02
 ---
 
 ## Para qué sirve
@@ -25,6 +25,12 @@ Modo compacto del listado de **Egresos de caja** (el que se abre desde el menú,
 - El **Detalle** de la tabla muestra la primera línea cortada a ~9 rem (el texto completo está en la fila desplegable).
 - Con una ventana de **1200 px** la tabla puede tener scroll horizontal propio (no entran las 8 columnas con el menú lateral abierto).
 - **Celular y tablet (menos de 1200 px):** se ve como antes (en el celular, el texto de estado queda debajo de los filtros).
+
+## Ver los pagos electrónicos (control)
+- «Todos» **no** lista los pagos electrónicos ni la cuenta corriente: son movimientos que genera el sistema con cada venta y ensuciarían el listado.
+- Para verlos, elegí **Pago Electronico** en **Tipo** y buscá. Muestra un renglón por venta cobrada con débito, crédito, QR o transferencia (la parte en efectivo de un pago mixto no entra).
+- **Rango máximo: 31 días.** Si elegís más, aparece un aviso amarillo y no se muestra nada hasta que achiques las fechas. Para ver solo la cantidad: **Items** y **Total** de la barra.
+- No se modifican desde acá (se cambian desde Ventas). Los que no tienen venta asociada (cargados a mano en el pasado) también se ven y tampoco se pueden editar.
 
 ## Columna Creado
 - Antes de **Acciones** (en el listado, en **Mis actividades** y en **Actividades**) hay una columna **Creado**: fecha y hora en que se cargó el egreso y, debajo en gris, quién lo cargó (en el listado de escritorio compacto, en la misma línea).

@@ -97,7 +97,9 @@
                                 foreach (DataRow row in tipos.Rows)
                                 {
                                     int id = Convert.ToInt32(row["id"]);
-                                    if (id == 0 || id == 100 || id == 200) { continue; }
+                                    // 0 = "Todos" (centinela) y 100 = Cta Cte (reservado, nunca se lista). El 200 (Pago Electronico) se
+                                    // puede elegir para controlar los cobros electronicos, pero solo con rango acotado (ver CajasController.EgresosCaja).
+                                    if (id == 0 || id == 100) { continue; }
                                     <option value="@id" selected="@(id == idTipo ? "selected" : null)">@row["tipoEgresoCaja"]</option>
                                 }
                             }

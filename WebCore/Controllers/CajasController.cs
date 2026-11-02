@@ -1293,8 +1293,23 @@ namespace WebCore.Controllers
 
             CargarViewBagsEgresos(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, filtroGasto, false);
 
-            DataTable dt = _oCierreN.obtenerEgresosCaja(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion ?? "", desde, hasta);
-            dt = ExcluirTiposReservadosEgresosCaja(dt);
+            // Pago Electronico genera una fila por cada venta no efectiva (~50 por dia, mas de 80.000 en total):
+            // solo se consulta con un rango acotado. Si lo pasa no se consulta ni se recorta en silencio (un listado
+            // cortado daria un control equivocado): se avisa para que el usuario achique las fechas.
+            bool filtraPagoElectronico = idTipoEgresoCaja == Entidades.EgresoCaja.idPagoTarjeta;
+            int diasDelRango = (hasta.Date - desde.Date).Days + 1;
+            DataTable dt;
+            if (filtraPagoElectronico && diasDelRango > MaxDiasPagosElectronicos)
+            {
+                ViewBag.AvisoRangoEgresos = "Para ver Pago Electronico el rango no puede superar " + MaxDiasPagosElectronicos +
+                    " dias (elegiste " + diasDelRango + "). Achicá las fechas y buscá de nuevo.";
+                dt = new DataTable();
+            }
+            else
+            {
+                dt = _oCierreN.obtenerEgresosCaja(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion ?? "", desde, hasta);
+                dt = ExcluirTiposReservadosEgresosCaja(dt, filtraPagoElectronico);
+            }
             CargarPermisosEdicionEgresos(dt, false);
 
             if (ajax)
@@ -2423,10 +2438,14 @@ namespace WebCore.Controllers
 
         // Tipos reservados que el sistema inserta solo (reflejo de una venta con forma de pago no
         // efectivo o de un movimiento de cuenta corriente) -- no son egresos de caja reales, nunca
-        // se muestran en este listado.
+        // se muestran en este listado. Excepcion: "Pago Electronico" se muestra si el usuario lo elige
+        // en el filtro Tipo (control de cobros electronicos, con rango acotado por MaxDiasPagosElectronicos).
         private static readonly string[] TiposExcluidosDeEgresosCaja = { "Cta Cte", "Pago Electronico" };
 
-        private DataTable ExcluirTiposReservadosEgresosCaja(DataTable dt)
+        // Maximo de dias del rango Desde-Hasta cuando el filtro Tipo es Pago Electronico (~50 filas por dia).
+        private const int MaxDiasPagosElectronicos = 31;
+
+        private DataTable ExcluirTiposReservadosEgresosCaja(DataTable dt, bool incluirPagoElectronico = false)
         {
             if (dt == null || !dt.Columns.Contains("TipoEgresoCaja"))
                 return dt;
@@ -2435,7 +2454,8 @@ namespace WebCore.Controllers
             foreach (DataRow row in dt.Rows)
             {
                 string tipo = Convert.ToString(row["TipoEgresoCaja"]);
-                bool esReservadoExcluido = TiposExcluidosDeEgresosCaja.Any(t => string.Equals(t, tipo, StringComparison.OrdinalIgnoreCase));
+                bool esReservadoExcluido = TiposExcluidosDeEgresosCaja.Any(t => string.Equals(t, tipo, StringComparison.OrdinalIgnoreCase))
+                    && !(incluirPagoElectronico && string.Equals(tipo, "Pago Electronico", StringComparison.OrdinalIgnoreCase));
                 if (!esReservadoExcluido)
                     resultado.ImportRow(row);
             }
