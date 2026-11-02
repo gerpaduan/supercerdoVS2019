@@ -285,6 +285,32 @@ namespace DatosPostgres
             return result != null && result != DBNull.Value && Convert.ToBoolean(result);
         }
 
+        // Eliminar persona (docs/DECISIONS.md, 2026-11-02). La base NO protege estas referencias (la unica
+        // clave foranea hacia personas es idpropietario), asi que hay que contarlas una por una: un DELETE de
+        // una persona con pagos o ventas no falla y deja esos registros apuntando a nadie. Las tablas con RLS
+        // se cuentan bajo el tenant de _idEmpresa, por eso solo se elimina una persona de la propia empresa.
+        public DataTable registrosAsociados(int idPersona)
+        {
+            return DbPg.DataTable(_connectionString, _idEmpresa, @"
+                SELECT tipo AS ""tipo"", cantidad AS ""cantidad"" FROM (
+                    SELECT 'ventas' AS tipo, COUNT(*) AS cantidad FROM ventas WHERE idpersona = @idPersona
+                    UNION ALL SELECT 'compras', COUNT(*) FROM compras WHERE idproveedor = @idPersona
+                    UNION ALL SELECT 'cortes por proveedor', COUNT(*) FROM corteproveedor WHERE idproveedor = @idPersona
+                    UNION ALL SELECT 'pagos', COUNT(*) FROM pagos WHERE idpersona = @idPersona
+                    UNION ALL SELECT 'movimientos de cuenta corriente', COUNT(*) FROM movctacte WHERE idpersona = @idPersona
+                    UNION ALL SELECT 'expendios', COUNT(*) FROM expendios WHERE idpersona = @idPersona
+                    UNION ALL SELECT 'borradores de venta', COUNT(*) FROM ventaborrador WHERE idpersona = @idPersona
+                    UNION ALL SELECT 'empleados', COUNT(*) FROM empleado WHERE idpersona = @idPersona
+                    UNION ALL SELECT 'titulares fiscales', COUNT(*) FROM titulares_fiscales WHERE idpersona = @idPersona
+                    UNION ALL SELECT 'registros eliminados (auditoria)', COUNT(*) FROM auditoriaeliminaciones WHERE idpersona = @idPersona
+                    UNION ALL SELECT 'cambios de persona en pagos (auditoria)', COUNT(*) FROM auditoriapagos
+                        WHERE idpersonaanterior = @idPersona OR idpersonanueva = @idPersona
+                    UNION ALL SELECT 'marcas a su nombre', COUNT(*) FROM personas WHERE idpropietario = @idPersona
+                ) t
+                WHERE cantidad > 0;",
+                p => p.AddWithValue("idPersona", idPersona));
+        }
+
         public DataTable buscarProveedor(string buscarTexto)
         {
             // Original SQL Server: EXEC buscarProveedor (stored procedure). El SP no existe en

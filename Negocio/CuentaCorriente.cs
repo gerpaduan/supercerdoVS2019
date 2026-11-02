@@ -609,6 +609,26 @@ namespace Negocio
             return observaciones;
         }
 
+        // Resumen de items (cantidad y kilos) de las ventas y compras de la cta cte de la persona, indexado por
+        // "tabla|idTabla" (ej. "Ventas|123"), igual que obtenerObservacionesCtaCte. Los pagos no tienen items y no figuran.
+        public Dictionary<string, ResumenItemsMovimientoCtaCte> obtenerResumenItemsCtaCte(int idPersona, DateTime fechaDesde)
+        {
+            var resumenes = new Dictionary<string, ResumenItemsMovimientoCtaCte>(StringComparer.OrdinalIgnoreCase);
+            DataTable dt = oCtaCteD.obtenerResumenItemsCtaCte(idPersona, fechaDesde);
+            foreach (DataRow fila in dt.Rows)
+            {
+                string tabla = Convert.ToString(fila["tabla"]);
+                resumenes[tabla + "|" + Convert.ToString(fila["idTabla"])] = new ResumenItemsMovimientoCtaCte
+                {
+                    EsCompra = string.Equals(tabla, "Compras", StringComparison.OrdinalIgnoreCase),
+                    Cantidad = fila["cantidad"] == DBNull.Value ? 0 : Convert.ToInt32(fila["cantidad"]),
+                    Medias = fila["medias"] == DBNull.Value ? 0 : Convert.ToInt32(fila["medias"]),
+                    Kg = fila["kg"] == DBNull.Value ? 0m : Convert.ToDecimal(fila["kg"])
+                };
+            }
+            return resumenes;
+        }
+
         public DataTable obtenerPagos(string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             return oCtaCteD.obtenerPagos(texto, fechaDesde, fechaHasta);
@@ -1003,5 +1023,32 @@ namespace Negocio
 
 
         #endregion
+    }
+
+    // Cantidad de items y kilos de una venta o compra, para la linea gris de cada movimiento de la cta cte
+    // de una persona (Finanzas/CtaCtePersona). Lo arma CuentaCorriente.obtenerResumenItemsCtaCte.
+    public sealed class ResumenItemsMovimientoCtaCte
+    {
+        public bool EsCompra { get; set; }
+        // Lineas de la venta o cortes de la compra.
+        public int Cantidad { get; set; }
+        // Medias reses de la compra (siempre 0 en una venta).
+        public int Medias { get; set; }
+        public decimal Kg { get; set; }
+
+        // "3 articulos · 13,35 kg" (venta), "2 productos · 52,5 kg" o "2 medias · 218,5 kg" (compra). "" si no hay items.
+        public string Descripcion(IFormatProvider cultura)
+        {
+            var partes = new List<string>();
+            if (Cantidad > 0)
+                partes.Add(Cantidad + " " + (EsCompra ? (Cantidad == 1 ? "producto" : "productos") : (Cantidad == 1 ? "artículo" : "artículos")));
+            if (Medias > 0)
+                partes.Add(Medias + " " + (Medias == 1 ? "media" : "medias"));
+            if (partes.Count == 0)
+                return "";
+
+            string items = string.Join(" y ", partes);
+            return Kg > 0m ? items + " · " + Kg.ToString("0.###", cultura) + " kg" : items;
+        }
     }
 }

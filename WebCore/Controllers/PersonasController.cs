@@ -62,20 +62,63 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index(string filtro = "")
+        public IActionResult Index(string filtro = "", string iva = "")
         {
-            var model = new PersonaIndexVm { Filtro = filtro ?? "" };
+            var model = new PersonaIndexVm { Filtro = filtro ?? "", Iva = (iva ?? "").Trim() };
 
             DataTable dt = _oPersonaN.buscarPersona(model.Filtro, false) ?? new DataTable();
             model.Items = dt.AsEnumerable()
+                .Where(row => CoincideIva(row, model.Iva))
                 .Select(MapResumen)
                 .OrderBy(x => x.IdEmpresa)
                 .ThenBy(x => x.RazonSocial ?? "")
                 .ThenBy(x => x.Identificacion ?? "")
                 .ToList();
 
+            CargarFiltroIva(model);
+            model.MostrarCtaCte = PuedeMostrarCtaCte();
+
             ViewBag.Title = "Personas";
             return View(model);
+        }
+
+        // Opciones del combo "Condicion IVA" del Index: abreviatura como valor (es lo que comparan las filas del
+        // listado en los dos motores) y la descripcion completa como texto.
+        private void CargarFiltroIva(PersonaIndexVm model)
+        {
+            model.Ivas.Clear();
+
+            DataTable dtIva = _oPersonaN.getIva() ?? new DataTable();
+            foreach (DataRow row in dtIva.Rows)
+            {
+                string abrev = LeerString(row, "abrev");
+                if (string.IsNullOrWhiteSpace(abrev))
+                    continue;
+
+                model.Ivas.Add(new SelectListItem
+                {
+                    Value = abrev,
+                    Text = LeerString(row, "iva"),
+                    Selected = string.Equals(abrev, model.Iva, StringComparison.OrdinalIgnoreCase)
+                });
+            }
+        }
+
+        // Filtro por condicion de IVA en el controller (no en buscarPersona, que usan otras pantallas): "" = todas.
+        private bool CoincideIva(DataRow row, string iva)
+        {
+            return string.IsNullOrWhiteSpace(iva)
+                || string.Equals(LeerString(row, "iva").Trim(), iva.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Icono de cuenta corriente en Acciones: usuario con permiso, o cuenta de produccion (cuenta compartida:
+        // el permiso lo valida el operador que se identifica al entrar a la cuenta corriente).
+        private bool PuedeMostrarCtaCte()
+        {
+            var usuario = _usuarioActual;
+            if (usuario == null) return false;
+            return usuario.EsUsuarioProduccion
+                || _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1);
         }
 
         [HttpGet]
@@ -111,7 +154,7 @@ namespace WebCore.Controllers
             var model = CrearViewModel(persona, true);
             CargarIvas(model);
 
-            ViewBag.Title = "Editar persona";
+            ViewBag.Title = "Ver persona";
             return View(model);
         }
 
@@ -152,6 +195,7 @@ namespace WebCore.Controllers
             model.PuedeGestionarCuentaCorriente = puedeGestionarCuentaCorriente;
             model.PuedeEditarCamposProtegidos = !esEdicion || !tieneMovimientos || esAdministrador;
             model.MensajeRestriccion = ConstruirMensajeRestriccion(tieneMovimientos, esAdministrador);
+            AplicarEstadoEliminar(model, personaOriginal);
 
             float bonificacion = 0f;
             ValidarPersona(model, personaOriginal, tieneMovimientos, esAdministrador, out bonificacion);
@@ -159,7 +203,7 @@ namespace WebCore.Controllers
             if (!ModelState.IsValid)
             {
                 CargarIvas(model);
-                ViewBag.Title = model.EsEdicion ? "Editar persona" : "Nueva persona";
+                ViewBag.Title = model.EsEdicion ? "Ver persona" : "Nueva persona";
                 return View("Editar", model);
             }
 
@@ -198,6 +242,53 @@ namespace WebCore.Controllers
             return RedirectToAction("Index");
         }
 
+        // Eliminar persona (docs/DECISIONS.md, 2026-11-02). Solo desde la ficha (Editar). Las reglas viven en
+        // Negocio.Persona.motivoNoEliminable y se revalidan aca, en el servidor: la pantalla puede estar vieja o
+        // alguien puede postear directo. Admin, de la empresa del usuario y sin ningun registro a su nombre.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Eliminar(int id)
+        {
+            var persona = _oPersonaN.findById(id);
+            if (persona == null || persona.IdPersona <= 0)
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Personas";
+                TempData["AlertMsg"] = "No se encontró la persona a eliminar.";
+                return RedirectToAction("Index");
+            }
+
+            var usuario = _usuarioActual;
+            string motivo;
+            try
+            {
+                motivo = _oPersonaN.eliminarPersonaSiCorresponde(persona, usuario);
+            }
+            catch (Exception ex)
+            {
+                // Se loguea con contexto y se devuelve un mensaje claro en vez de un error 500.
+                System.Diagnostics.Trace.TraceError("Personas.Eliminar - idPersona {0}, usuario {1}: {2}", persona.IdPersona, usuario != null ? usuario.Id : 0, ex);
+                TempData["AlertType"] = "error";
+                TempData["AlertTitle"] = "Personas";
+                TempData["AlertMsg"] = "No se pudo eliminar la persona. Si el problema sigue, avisá a soporte.";
+                return RedirectToAction("Editar", new { id = persona.IdPersona });
+            }
+
+            if (motivo.Length > 0)
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Personas";
+                TempData["AlertMsg"] = motivo;
+                return RedirectToAction("Editar", new { id = persona.IdPersona });
+            }
+
+            System.Diagnostics.Trace.TraceInformation("Personas.Eliminar - idPersona {0} eliminada por usuario {1}", persona.IdPersona, usuario != null ? usuario.Id : 0);
+            TempData["AlertType"] = "success";
+            TempData["AlertTitle"] = "Personas";
+            TempData["AlertMsg"] = "La persona se eliminó correctamente.";
+            return RedirectToAction("Index");
+        }
+
         [HttpGet]
         public IActionResult Buscar()
         {
@@ -205,12 +296,13 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public JsonResult Listar(string filtro)
+        public JsonResult Listar(string filtro, string iva = "")
         {
             filtro = filtro ?? "";
             DataTable dt = _oPersonaN.buscarPersona(filtro, false) ?? new DataTable();
 
             var personas = dt.AsEnumerable()
+                .Where(row => CoincideIva(row, iva))
                 .Select(row => new
                 {
                     idPersona = LeerInt(row, "idPersona"),
@@ -516,6 +608,16 @@ namespace WebCore.Controllers
             return !(idEmpresaUsuario > 0 && idEmpresaPersona == 0);
         }
 
+        // Boton "Eliminar persona" de la ficha: lo ve solo un admin sobre una persona existente; el motivo (si hay)
+        // sale de Negocio.Persona.motivoNoEliminable, la misma regla que revalida Eliminar. Solo consulta la base
+        // cuando el boton se va a mostrar.
+        private void AplicarEstadoEliminar(PersonaEditVm model, Entidades.Persona persona)
+        {
+            var usuario = _usuarioActual;
+            model.MostrarEliminar = model.EsEdicion && usuario != null && usuario.Admin && persona != null && persona.IdPersona > 0;
+            model.MotivoNoEliminable = model.MostrarEliminar ? _oPersonaN.motivoNoEliminable(persona, usuario) : "";
+        }
+
         private PersonaEditVm CrearViewModel(Entidades.Persona persona, bool esEdicion)
         {
             var usuario = _usuarioActual;
@@ -523,7 +625,7 @@ namespace WebCore.Controllers
             bool esAdministrador = usuario != null && usuario.Admin;
             bool puedeGestionarCuentaCorriente = PuedeGestionarCuentaCorriente(usuario);
 
-            return new PersonaEditVm
+            var modelo = new PersonaEditVm
             {
                 IdPersona = persona != null ? persona.IdPersona : 0,
                 EsEdicion = esEdicion,
@@ -547,6 +649,9 @@ namespace WebCore.Controllers
                     ? persona.Bonificacion.ToString("0.##", CultureInfo.InvariantCulture)
                     : "0"
             };
+
+            AplicarEstadoEliminar(modelo, persona);
+            return modelo;
         }
 
         private bool PuedeGestionarCuentaCorriente(Entidades.Usuario usuario)

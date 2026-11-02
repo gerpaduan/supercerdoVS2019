@@ -1093,6 +1093,41 @@ namespace Datos
                 setParams: p => p.Add("@idPersona", SqlDbType.Int).Value = idPersona);
         }
 
+        // Cantidad de items y kilos de las ventas y compras de la cta cte de la persona (ver el contrato).
+        public DataTable obtenerResumenItemsCtaCte(int idPersona, DateTime fechaDesde)
+        {
+            const string sql = @"
+                SELECT 'Ventas' AS tabla, l.idVenta AS idTabla, COUNT(*) AS cantidad, 0 AS medias,
+                       COALESCE(SUM(l.cantKg), 0) AS kg
+                FROM dbo.LineaVenta l
+                WHERE l.idVenta IN (SELECT idTabla FROM dbo.MovCtaCte WHERE idPersona = @idPersona AND tabla = 'Ventas' AND fecha >= @fechaDesde)
+                GROUP BY l.idVenta
+                UNION ALL
+                SELECT 'Compras', x.idCompra, SUM(x.cantidad), SUM(x.medias), COALESCE(SUM(x.kg), 0)
+                FROM (
+                    SELECT idCompra, COUNT(*) AS cantidad, 0 AS medias, SUM(cantKg) AS kg
+                    FROM dbo.CortePorCompra
+                    WHERE idCompra IN (SELECT idTabla FROM dbo.MovCtaCte WHERE idPersona = @idPersona AND tabla = 'Compras' AND fecha >= @fechaDesde)
+                    GROUP BY idCompra
+                    UNION ALL
+                    SELECT idCompra, 0, COUNT(*), SUM(kgMedia)
+                    FROM dbo.MediaRes
+                    WHERE idCompra IN (SELECT idTabla FROM dbo.MovCtaCte WHERE idPersona = @idPersona AND tabla = 'Compras' AND fecha >= @fechaDesde)
+                    GROUP BY idCompra
+                ) x
+                GROUP BY x.idCompra;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idPersona", SqlDbType.Int).Value = idPersona;
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                });
+        }
+
         // Las notificaciones al admin (campana) no existen todavia en SQL Server (etapa 2, mismo criterio
         // que Datos.BorradorGenerico.UpsertNotificacion): no-op. La advertencia queda solo en pantalla.
         public void upsertNotificacion(Entidades.Notificacion notificacion, bool reabrir)

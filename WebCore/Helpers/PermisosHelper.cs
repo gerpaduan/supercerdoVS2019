@@ -74,7 +74,9 @@ namespace WebCore.Helpers
         //
         // 2026-10-22: se suma "DispositivosSeguros" (login de un admin para operar la pantalla, ver
         // DispositivosSegurosController): el operador vive solo mientras se esta en ese controller.
-        private static readonly string[] ControllersConOperadorModuloSesion = { "Compras", "Ventas", "DispositivosSeguros" };
+        // 2026-11-02: se suma "Finanzas" (operador de la cuenta corriente de una persona, ver
+        // FinanzasController.AutorizarModuloCtaCte): vive mientras se navega dentro de Finanzas.
+        private static readonly string[] ControllersConOperadorModuloSesion = { "Compras", "Ventas", "DispositivosSeguros", "Finanzas" };
 
         public static void LimpiarOperadorModuloSiSalioDelModulo(ISession session, string controllerActual)
         {

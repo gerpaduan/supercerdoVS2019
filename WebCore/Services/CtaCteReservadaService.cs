@@ -85,12 +85,30 @@ namespace WebCore.Services
             {
                 if (_esRestringido == null)
                 {
-                    var user = _sesion.UsuarioActual;
                     // tienePermiso devuelve true para Admin de entrada (Negocio/Usuario.cs).
-                    _esRestringido = !_usuarioN.tienePermiso(user, Permisos.Finanza.VerCtasCtes, DateTime.Today, -1);
+                    _esRestringido = !_usuarioN.tienePermiso(UsuarioParaPermisoCtasCtes(), Permisos.Finanza.VerCtasCtes, DateTime.Today, -1);
                 }
                 return _esRestringido.Value;
             }
+        }
+
+        // Con quien se evalua el permiso formCtasCtes. Normalmente el usuario de sesion. Excepcion (2026-11-02, ver
+        // docs/DECISIONS.md): la cuenta compartida de produccion NO es una persona, asi que sin esta regla un operador que
+        // se identifico en Finanzas (AutorizarModuloCtaCte) y tiene el permiso seguia viendo recortadas las cuentas
+        // reservadas. Se usa su permiso SOLO mientras la peticion es del controller Finanzas: el operador caduca al
+        // renderizar otra pantalla (el layout lo limpia al FINAL del request), asi que el primer request a Ventas o
+        // Compras todavia lo veria en Session y no debe heredar el permiso. Sin operador: falla cerrado como siempre.
+        private Usuario UsuarioParaPermisoCtasCtes()
+        {
+            var user = _sesion.UsuarioActual;
+            if (user == null || !user.EsUsuarioProduccion) return user;
+
+            var http = _http.HttpContext;
+            if (http == null || !string.Equals(Convert.ToString(http.Request.RouteValues["controller"]), "Finanzas", StringComparison.OrdinalIgnoreCase))
+                return user;
+
+            var operador = WebCore.Helpers.PermisosHelper.ObtenerOperadorModulo(http.Session, "Finanzas");
+            return operador != null && operador.Id > 0 ? operador : user;
         }
 
         public RestriccionCtaCteReservada ObtenerRestriccion(Usuario operador = null)

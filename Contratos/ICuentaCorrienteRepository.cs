@@ -55,6 +55,12 @@ namespace Contratos
         // Observaciones del registro origen (Pagos/Ventas/Compras) de cada movimiento de la cta cte de
         // una persona. Columnas: tabla, idTabla, observaciones. Solo devuelve los que tienen texto.
         DataTable obtenerObservacionesCtaCte(int idPersona);
+        // Resumen de items de las Ventas y Compras de la cta cte de una persona, para la linea gris de cada
+        // movimiento ("3 articulos · 13,35 kg"). Columnas: tabla ('Ventas'|'Compras'), idTabla, cantidad (lineas
+        // de venta o cortes de la compra), medias (medias reses de la compra, 0 en ventas) y kg (total de kilos).
+        // Una sola consulta por persona; solo devuelve los registros que tienen lineas y movimientos desde fechaDesde
+        // (la fecha del filtro de la pantalla: no tiene sentido resumir todo el historial).
+        DataTable obtenerResumenItemsCtaCte(int idPersona, DateTime fechaDesde);
         // Notificacion al admin (campana). Postgres: tabla notificaciones. SQL Server: no-op (etapa 2,
         // mismo criterio que Datos.BorradorGenerico).
         void upsertNotificacion(Entidades.Notificacion notificacion, bool reabrir);

@@ -318,6 +318,40 @@ namespace Datos
             return existe == 1;
         }
 
+        // Eliminar persona (docs/DECISIONS.md, 2026-11-02): SQL Server solo tiene una clave foranea real
+        // (Ventas.idPersona) mas la de idPropietario, asi que el resto se cuenta a mano. Las tablas que no
+        // existen en todas las bases (SM/SL no recibieron todas las migraciones) se saltean con OBJECT_ID en
+        // vez de romper: una tabla inexistente no tiene registros a nombre de nadie.
+        public DataTable registrosAsociados(int idPersona)
+        {
+            const string sql = @"
+                SET NOCOUNT ON;
+                DECLARE @r TABLE (tipo nvarchar(80), cantidad int);
+                INSERT INTO @r SELECT 'ventas', COUNT(*) FROM dbo.Ventas WHERE idPersona = @idPersona;
+                INSERT INTO @r SELECT 'compras', COUNT(*) FROM dbo.Compras WHERE idProveedor = @idPersona;
+                INSERT INTO @r SELECT 'cortes por proveedor', COUNT(*) FROM dbo.CorteProveedor WHERE idProveedor = @idPersona;
+                INSERT INTO @r SELECT 'pagos', COUNT(*) FROM dbo.Pagos WHERE idPersona = @idPersona;
+                INSERT INTO @r SELECT 'movimientos de cuenta corriente', COUNT(*) FROM dbo.MovCtaCte WHERE idPersona = @idPersona;
+                INSERT INTO @r SELECT 'marcas a su nombre', COUNT(*) FROM dbo.Personas WHERE idPropietario = @idPersona;
+                IF OBJECT_ID('dbo.VentaBorrador', 'U') IS NOT NULL
+                    INSERT INTO @r SELECT 'borradores de venta', COUNT(*) FROM dbo.VentaBorrador WHERE idPersona = @idPersona;
+                IF OBJECT_ID('dbo.AuditoriaEliminaciones', 'U') IS NOT NULL
+                    INSERT INTO @r SELECT 'registros eliminados (auditoria)', COUNT(*) FROM dbo.AuditoriaEliminaciones WHERE idPersona = @idPersona;
+                IF OBJECT_ID('dbo.AuditoriaPagos', 'U') IS NOT NULL
+                    INSERT INTO @r SELECT 'cambios de persona en pagos (auditoria)', COUNT(*) FROM dbo.AuditoriaPagos
+                        WHERE idPersonaAnterior = @idPersona OR idPersonaNueva = @idPersona;
+                IF OBJECT_ID('dbo.WhatsAppEnvios', 'U') IS NOT NULL
+                    INSERT INTO @r SELECT 'envios de WhatsApp', COUNT(*) FROM dbo.WhatsAppEnvios WHERE IdPersona = @idPersona;
+                SELECT tipo, cantidad FROM @r WHERE cantidad > 0;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.AddWithValue("@idPersona", idPersona)
+            );
+        }
+
         public DataTable obtenerProveedores()
         {
             return Db.DataTable(

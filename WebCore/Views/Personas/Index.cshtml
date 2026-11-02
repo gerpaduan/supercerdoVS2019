@@ -2,10 +2,81 @@
 
 @{
     ViewData["Title"] = "Personas";
+    // Despues de ver la cuenta corriente, "volver" regresa a este listado con el mismo filtro.
+    string urlActualPersonas = Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString;
 }
 
 <div class="container-fluid personas-index-page">
     <style>
+        /* Diseno compacto (mismo patron que el resto de los listados de WebCore): todo scopeado a esta pagina. */
+        .personas-index-page {
+            font-size: .9rem;
+        }
+
+        .personas-index-page .personas-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 0 -.25rem .6rem;
+        }
+
+        .personas-index-page .personas-toolbar > * {
+            margin: .15rem .25rem;
+        }
+
+        .personas-index-page .personas-toolbar .personas-toolbar-buscar {
+            flex: 1 1 18rem;
+            min-width: 12rem;
+        }
+
+        .personas-index-page .personas-toolbar .personas-toolbar-iva {
+            flex: 0 0 11rem;
+        }
+
+        .personas-index-page .personas-toolbar .form-control,
+        .personas-index-page .personas-toolbar .btn {
+            font-size: .84rem;
+            min-height: 2.15rem;
+            border-radius: .55rem;
+            padding: .28rem .6rem;
+        }
+
+        .personas-index-page .card-body {
+            padding: 0;
+        }
+
+        .personas-index-page .table {
+            font-size: .81rem;
+        }
+
+        .personas-index-page .table th,
+        .personas-index-page .table td {
+            padding: .3rem .5rem;
+            vertical-align: middle;
+            line-height: 1.15;
+        }
+
+        .personas-index-page .table thead th {
+            font-size: .69rem !important;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+        }
+
+        .personas-index-page .table .btn-sm {
+            font-size: .76rem;
+            padding: .15rem .45rem;
+            line-height: 1.2;
+        }
+
+        .personas-index-page .persona-id-cell {
+            font-size: .74rem;
+        }
+
+        .personas-index-page .badge {
+            font-size: .68rem;
+        }
+
         .persona-global {
             opacity: 1;
         }
@@ -13,62 +84,6 @@
         .persona-global td {
             background-color: var(--ui-surface-alt);
             color: var(--ui-text-soft);
-        }
-
-        .personas-index-page .card-body {
-            padding: .85rem 1rem;
-        }
-
-        .personas-index-page .personas-filtros-card .card-body {
-            padding: .72rem .85rem;
-        }
-
-        .personas-index-page .personas-filtro-label {
-            font-size: .76rem;
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: .18rem;
-        }
-
-        .personas-index-page .personas-filtros-card .form-control,
-        .personas-index-page .personas-filtros-card .btn {
-            font-size: .87rem;
-            min-height: 2.35rem;
-            border-radius: .55rem;
-            padding: .32rem .62rem;
-        }
-
-        .personas-index-page .tabla-full .table,
-        .personas-index-page .table-responsive .table {
-            font-size: .84rem;
-        }
-
-        .personas-index-page .tabla-full .table th,
-        .personas-index-page .tabla-full .table td,
-        .personas-index-page .table-responsive .table th,
-        .personas-index-page .table-responsive .table td {
-            padding: .38rem .5rem;
-            vertical-align: middle;
-            line-height: 1.15;
-        }
-
-        .personas-index-page .tabla-full .table thead th,
-        .personas-index-page .tabla-full .table > thead > tr > th,
-        .personas-index-page .table-responsive .table thead th,
-        .personas-index-page .table-responsive .table > thead > tr > th {
-            font-size: .72rem !important;
-            line-height: 1.05;
-            padding-top: .42rem;
-            padding-bottom: .42rem;
-        }
-
-        .personas-index-page .btn-sm {
-            padding: .18rem .42rem;
-            line-height: 1.15;
-        }
-
-        .personas-index-page .persona-id-cell {
-            font-size: .76rem;
         }
 
         /* Celular: las personas globales (gris) pintan la tarjeta entera y la barra azul va en la tarjeta, no en la 1.a celda
@@ -85,83 +100,46 @@
                 background: transparent;
                 box-shadow: none;
             }
-        }
 
-        @@media (min-width: 1200px) {
-            .personas-index-page .mb-3 {
-                margin-bottom: .85rem !important;
-            }
-
-            .personas-index-page .personas-filtros-card .card-body {
-                padding: .65rem .8rem;
-            }
-
-            .personas-index-page .personas-filtros-card .form-control,
-            .personas-index-page .personas-filtros-card .btn {
-                min-height: 2.15rem;
-                font-size: .84rem;
-                padding: .28rem .56rem;
-            }
-
-            .personas-index-page .tabla-full .table,
-            .personas-index-page .table-responsive .table {
-                font-size: .81rem;
-            }
-
-            .personas-index-page .tabla-full .table thead th,
-            .personas-index-page .tabla-full .table > thead > tr > th,
-            .personas-index-page .table-responsive .table thead th,
-            .personas-index-page .table-responsive .table > thead > tr > th {
-                font-size: .69rem !important;
+            .personas-index-page .personas-toolbar .personas-toolbar-iva {
+                flex: 1 1 100%;
             }
         }
     </style>
 
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-        <div>
-            <div class="text-muted">Alta, consulta y edición de personas del sistema.</div>
-        </div>
-        <a class="btn btn-success mt-2 mt-md-0" href="@Url.Action("Nuevo", "Personas")">
+    @* Una sola fila: busqueda en vivo, condicion de IVA, Limpiar y Nueva persona. Enter tambien envia el formulario (GET). *@
+    <form method="get" action="@Url.Action("Index", "Personas")" id="formFiltrosPersonas" class="personas-toolbar">
+        <input type="text"
+               class="form-control personas-toolbar-buscar"
+               id="txtFiltroPersonas"
+               name="filtro"
+               value="@Model.Filtro"
+               autocomplete="off"
+               aria-label="Buscar persona"
+               placeholder="Buscar por razón social, CUIT o identificación" />
+        <select class="form-control personas-toolbar-iva" id="selFiltroIva" name="iva" aria-label="Condición IVA">
+            <option value="">Todas las condiciones IVA</option>
+            @foreach (var opcion in Model.Ivas)
+            {
+                <option value="@opcion.Value" selected="@opcion.Selected">@opcion.Text</option>
+            }
+        </select>
+        <a href="@Url.Action("Index", "Personas")" class="btn btn-outline-secondary">Limpiar</a>
+        <a class="btn btn-success" href="@Url.Action("Nuevo", "Personas")">
             <i class="fas fa-plus mr-1"></i> Nueva persona
         </a>
-    </div>
-
-    <div class="card shadow-sm mb-3 personas-filtros-card">
-        <div class="card-body">
-            <form method="get" action="@Url.Action("Index", "Personas")" id="formFiltrosPersonas">
-                <div class="form-row align-items-end">
-                    <div class="col-12 col-md-7 col-lg-6 mb-2">
-                        <label class="personas-filtro-label">Buscar</label>
-                        <input type="text"
-                               class="form-control"
-                               id="txtFiltroPersonas"
-                               name="filtro"
-                               value="@Model.Filtro"
-                               autocomplete="off"
-                               placeholder="Razón social, CUIT o identificación" />
-                    </div>
-                    <div class="col-12 col-md-5 col-lg-4 mb-2 d-flex">
-                        <button type="submit" class="btn btn-outline-primary mr-2">
-                            <i class="fas fa-search mr-1"></i> Buscar
-                        </button>
-                        <a href="@Url.Action("Index", "Personas")" class="btn btn-outline-secondary">
-                            Limpiar
-                        </a>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+    </form>
 
     <div class="card shadow-sm">
-        <div class="card-body p-0">
+        <div class="card-body">
             @* En celular (<768px) cada persona se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css): la razon
-               social encabeza la tarjeta y los datos vacios no se muestran. Las filas tambien se arman en renderTabla (JS, mas abajo). *@
+               social encabeza la tarjeta y los datos vacios no se muestran. Las filas tambien se arman en renderTabla (JS, mas abajo):
+               si se cambia el orden de las columnas hay que cambiarlo en los dos lugares. *@
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0 tabla-cards">
                     <thead class="thead-light">
                         <tr>
-                            <th style="width:80px;">ID</th>
+                            <th style="width:64px;">ID</th>
                             <th>Identificación</th>
                             <th>Razón social</th>
                             <th>IVA</th>
@@ -170,7 +148,7 @@
                             <th>Domicilio</th>
                             <th>Ciudad</th>
                             <th>Otros datos</th>
-                            <th style="width:120px;">Acciones</th>
+                            <th style="width:@(Model.MostrarCtaCte ? "128px" : "100px");">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyPersonas">
@@ -191,21 +169,28 @@
                                     <td class="@(!string.IsNullOrWhiteSpace(item.Iva) ? "" : "cc-vacio")" data-label="IVA">@(!string.IsNullOrWhiteSpace(item.Iva) ? item.Iva : "-")</td>
                                     <td class="@(!string.IsNullOrWhiteSpace(item.Cuit) ? "" : "cc-vacio")" data-label="CUIT">@(!string.IsNullOrWhiteSpace(item.Cuit) ? item.Cuit : "-")</td>
                                     <td class="@(!string.IsNullOrWhiteSpace(item.Telefono) ? "" : "cc-vacio")" data-label="Teléfono">@(!string.IsNullOrWhiteSpace(item.Telefono) ? item.Telefono : "-")</td>
-                                    <td class="@(!string.IsNullOrWhiteSpace(item.Ciudad) ? "" : "cc-vacio")" data-label="Ciudad">@(!string.IsNullOrWhiteSpace(item.Ciudad) ? item.Ciudad : "-")</td>
                                     <td class="cc-ancho @(!string.IsNullOrWhiteSpace(item.Domicilio) ? "" : "cc-vacio")" data-label="Domicilio">@(!string.IsNullOrWhiteSpace(item.Domicilio) ? item.Domicilio : "-")</td>
+                                    <td class="@(!string.IsNullOrWhiteSpace(item.Ciudad) ? "" : "cc-vacio")" data-label="Ciudad">@(!string.IsNullOrWhiteSpace(item.Ciudad) ? item.Ciudad : "-")</td>
                                     <td class="cc-ancho @(!string.IsNullOrWhiteSpace(item.OtrosDatos) ? "" : "cc-vacio")" data-label="Otros datos">@(!string.IsNullOrWhiteSpace(item.OtrosDatos) ? item.OtrosDatos : "-")</td>
                                     <td class="text-nowrap cc-acciones">
                                         @if (item.PuedeModificar)
                                         {
                                             <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Personas", new { id = item.IdPersona })">
-                                                Modificar
+                                                Ver persona
                                             </a>
                                         }
                                         else
                                         {
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled="disabled" title="Las personas globales no pueden modificarse desde una empresa.">
-                                                Modificar
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled="disabled" title="Las personas globales no se pueden abrir desde una empresa.">
+                                                Ver persona
                                             </button>
+                                        }
+                                        @if (Model.MostrarCtaCte)
+                                        {
+                                            <a class="btn btn-sm btn-outline-info ml-1" title="Cuenta corriente" aria-label="Cuenta corriente de @item.RazonSocial"
+                                               href="@Url.Action("CtaCtePersona", "Finanzas", new { idPersona = item.IdPersona, returnUrl = urlActualPersonas })">
+                                                <i class="fas fa-file-invoice-dollar"></i>
+                                            </a>
                                         }
                                     </td>
                                 </tr>
@@ -262,10 +247,13 @@
         });
 
         var $input = $("#txtFiltroPersonas");
+        var $iva = $("#selFiltroIva");
         var $tbody = $("#tbodyPersonas");
         var debounceHandle = 0;
         var ultimoFiltro = $input.val() || "";
         var baseEditarUrl = "@Url.Action("Editar", "Personas")";
+        var baseCtaCteUrl = "@Url.Action("CtaCtePersona", "Finanzas")";
+        var mostrarCtaCte = @(Model.MostrarCtaCte ? "true" : "false");
 
         function escapeHtml(texto) {
             return $("<div>").text(texto == null ? "" : texto).html();
@@ -279,6 +267,23 @@
             var clase = $.trim((destacado ? "font-weight-bold " : "") + (clases || "") + (limpio ? "" : " cc-vacio"));
             return "<td" + (clase ? ' class="' + clase + '"' : "") +
                 (etiqueta ? ' data-label="' + etiqueta + '"' : "") + ">" + contenido + "</td>";
+        }
+
+        // Acciones de una fila: "Ver persona" (deshabilitado en las globales) e icono de cuenta corriente si corresponde.
+        function celdaAcciones(item) {
+            var html = '<td class="text-nowrap cc-acciones">';
+            if (item.puedeModificar) {
+                html += '<a class="btn btn-sm btn-outline-primary" href="' + baseEditarUrl + '?id=' + encodeURIComponent(item.idPersona) + '">Ver persona</a>';
+            } else {
+                html += '<button type="button" class="btn btn-sm btn-outline-secondary" disabled="disabled" title="Las personas globales no se pueden abrir desde una empresa.">Ver persona</button>';
+            }
+            if (mostrarCtaCte) {
+                var volver = window.location.pathname + window.location.search;
+                html += '<a class="btn btn-sm btn-outline-info ml-1" title="Cuenta corriente" aria-label="Cuenta corriente de ' + escapeHtml(item.razonSocial) + '" href="' +
+                    baseCtaCteUrl + '?idPersona=' + encodeURIComponent(item.idPersona) + '&returnUrl=' + encodeURIComponent(volver) +
+                    '"><i class="fas fa-file-invoice-dollar"></i></a>';
+            }
+            return html + "</td>";
         }
 
         function renderTabla(items) {
@@ -297,26 +302,24 @@
                 html += valorCelda(item.iva, false, "", "IVA");
                 html += valorCelda(item.cuit, false, "", "CUIT");
                 html += valorCelda(item.telefono, false, "", "Teléfono");
-                html += valorCelda(item.ciudad, false, "", "Ciudad");
                 html += valorCelda(item.domicilio, false, "", "Domicilio", "cc-ancho");
+                html += valorCelda(item.ciudad, false, "", "Ciudad");
                 html += valorCelda(item.otrosDatos, false, "", "Otros datos", "cc-ancho");
-                if (item.puedeModificar) {
-                    html += '<td class="text-nowrap cc-acciones"><a class="btn btn-sm btn-outline-primary" href="' + baseEditarUrl + '?id=' + encodeURIComponent(item.idPersona) + '">Modificar</a></td>';
-                } else {
-                    html += '<td class="text-nowrap cc-acciones"><button type="button" class="btn btn-sm btn-outline-secondary" disabled="disabled" title="Las personas globales no pueden modificarse desde una empresa.">Modificar</button></td>';
-                }
+                html += celdaAcciones(item);
                 html += "</tr>";
             });
 
             $tbody.html(html);
         }
 
+        // Busqueda en vivo: el texto y la condicion de IVA se mandan juntos y se descarta la respuesta si ya cambiaron.
         function cargarPersonasEnVivo() {
             var filtro = $input.val() || "";
-            ultimoFiltro = filtro;
+            var iva = $iva.val() || "";
+            ultimoFiltro = filtro + "|" + iva;
 
-            $.get("@Url.Action("Listar", "Personas")", { filtro: filtro }, function (data) {
-                if (ultimoFiltro !== ($input.val() || "")) return;
+            $.get("@Url.Action("Listar", "Personas")", { filtro: filtro, iva: iva }, function (data) {
+                if (ultimoFiltro !== (($input.val() || "") + "|" + ($iva.val() || ""))) return;
                 renderTabla(data);
             });
         }
@@ -325,6 +328,8 @@
             window.clearTimeout(debounceHandle);
             debounceHandle = window.setTimeout(cargarPersonasEnVivo, 250);
         });
+
+        $iva.on("change", cargarPersonasEnVivo);
     })();
 </script>
 }

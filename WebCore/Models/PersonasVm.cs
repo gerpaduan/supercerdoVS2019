@@ -7,6 +7,12 @@ namespace WebCore.Models
     public class PersonaIndexVm
     {
         public string Filtro { get; set; } = "";
+        // Filtro por condicion de IVA: abreviatura (columna "iva" del listado, la devuelven los dos motores). "" = todas.
+        public string Iva { get; set; } = "";
+        public List<SelectListItem> Ivas { get; set; } = new List<SelectListItem>();
+        // Muestra el icono de cuenta corriente en Acciones: usuario con permiso, o cuenta de produccion (el
+        // permiso lo tiene el operador que se identifica al entrar, ver Finanzas/AutorizarModuloCtaCte).
+        public bool MostrarCtaCte { get; set; }
         public List<PersonaResumenVm> Items { get; set; } = new List<PersonaResumenVm>();
     }
 
@@ -40,6 +46,10 @@ namespace WebCore.Models
         public bool PuedeGestionarCuentaCorriente { get; set; }
         public bool PuedeEditarCamposProtegidos { get; set; }
         public string MensajeRestriccion { get; set; } = "";
+        // Eliminar persona (docs/DECISIONS.md, 2026-11-02): el boton aparece solo para un admin sobre una
+        // persona existente; si hay motivo para no eliminarla se muestra deshabilitado con ese motivo.
+        public bool MostrarEliminar { get; set; }
+        public string MotivoNoEliminable { get; set; } = "";
         public string Identificacion { get; set; } = "";
         public string RazonSocial { get; set; } = "";
         public int? IdIva { get; set; }

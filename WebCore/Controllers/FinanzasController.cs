@@ -545,7 +545,31 @@ namespace WebCore.Controllers
             // PuedeExportarCuentaCorriente/OcultarFiltroFechaDesde segun el modo POS): acá solo se
             // replica el bypass de permiso + ocultar saldo, que es lo unico pedido y verificado --
             // si en el futuro se necesita paridad completa de esos otros campos, es un batch aparte.
-            bool puedeVerCtaCtePersona = _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1);
+            // Cuenta de produccion (usuario compartido): exige un operador autenticado con contrasena antes de
+            // mostrar la cuenta corriente, mismo criterio que Ventas/Compras (docs/DECISIONS.md, 2026-11-02). Fuera
+            // del POS (desdePos tiene su propio operador) y con ese operador se evalua el permiso y la ventana
+            // de dias; el operador caduca al salir de Finanzas (PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo).
+            Entidades.Usuario usuarioConsulta = _usuarioActual;
+            if (!desdePos && _usuarioActual.EsUsuarioProduccion)
+            {
+                var operadorFinanzas = ObtenerOperadorFinanzas();
+                if (operadorFinanzas == null)
+                {
+                    // Un pedido AJAX no puede mostrar la pantalla de autorizacion: se corta con 403.
+                    if (renderParcial)
+                        return StatusCode(403, "Autorizate con tu usuario para ver la cuenta corriente.");
+
+                    return RedirectToAction("AutorizarModuloCtaCte", new
+                    {
+                        returnUrl = Request.PathBase + Request.Path + Request.QueryString,
+                        cancelUrl = DecodeReturnUrlIfNeeded(returnUrl)
+                    });
+                }
+
+                usuarioConsulta = operadorFinanzas;
+            }
+
+            bool puedeVerCtaCtePersona = _oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1);
             if (!desdePos && !puedeVerCtaCtePersona)
             {
                 ViewBag.Seccion = "Cuenta Corriente Persona";
@@ -564,7 +588,7 @@ namespace WebCore.Controllers
             // -- "informar, no fallar en silencio", mismo criterio que el resto del proyecto.
             // null = admin o sin este permiso asignado con limite -- sin restriccion.
             DateTime? fechaMinimaPermitidaCtaCte = WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(
-                _usuarioActual, Entidades.Permisos.Finanza.VerCtaCtePersona);
+                usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona);
             bool fechaRecortadaPorPermiso = fechaMinimaPermitidaCtaCte.HasValue && fechaDesde.Value < fechaMinimaPermitidaCtaCte.Value;
             if (fechaRecortadaPorPermiso)
                 fechaDesde = fechaMinimaPermitidaCtaCte.Value;
@@ -592,6 +616,12 @@ namespace WebCore.Controllers
                 ? new Dictionary<string, string>()
                 : _oCtaCteN.obtenerObservacionesCtaCte(idPersona);
 
+            // Items de cada venta/compra ("3 articulos · 13,35 kg") para la linea gris de la fila. Misma regla que las
+            // observaciones: una persona reservada vista por un usuario restringido no recibe datos de otros registros.
+            ViewBag.ResumenItemsCtaCte = extractoReservado
+                ? new Dictionary<string, Negocio.ResumenItemsMovimientoCtaCte>()
+                : _oCtaCteN.obtenerResumenItemsCtaCte(idPersona, fechaDesde.Value);
+
             ViewBag.IdPersona = idPersona;
             ViewBag.Persona = persona;
             ViewBag.SaldoPersona = saldo;
@@ -612,6 +642,281 @@ namespace WebCore.Controllers
                 return PartialView("~/Views/Finanzas/CtaCtePersona.cshtml", dtMov);
 
             return View("~/Views/Finanzas/CtaCtePersona.cshtml", dtMov);
+        }
+
+        // Detalle (items) de un movimiento de la cuenta corriente de una persona, para el panel que despliega cada fila
+        // de CtaCtePersona. Solo lectura, pedido AJAX: los fallos devuelven un codigo HTTP con un mensaje corto que el
+        // panel muestra tal cual. Aplica las mismas reglas de acceso que CtaCtePersona (operador de produccion, permiso
+        // VerCtaCtePersona y su ventana de dias) y ademas exige que el movimiento sea de ESA persona: el id viene del
+        // navegador y no se confia en el. Las compras muestran precios solo con el permiso VerCompras.
+        [HttpGet]
+        public IActionResult DetalleMovimiento(int idPersona, string tabla, int idTabla, bool desdePos = false)
+        {
+            // 1) Quien consulta: igual que CtaCtePersona (cuenta de produccion = operador autenticado de Finanzas).
+            Entidades.Usuario usuarioConsulta = _usuarioActual;
+            if (!desdePos && _usuarioActual.EsUsuarioProduccion)
+            {
+                usuarioConsulta = ObtenerOperadorFinanzas();
+                if (usuarioConsulta == null)
+                    return StatusCode(403, "Autorizate con tu usuario para ver la cuenta corriente.");
+            }
+
+            if (!desdePos && !_oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1))
+                return StatusCode(403, "No tenés permiso para ver la cuenta corriente.");
+
+            // 2) Solo los tipos que tienen items para mostrar.
+            Entidades.MovCtaCte.tablas tablaMovimiento;
+            if (string.Equals(tabla, Entidades.RestriccionCtaCteReservada.TablaVentas, StringComparison.OrdinalIgnoreCase))
+                tablaMovimiento = Entidades.MovCtaCte.tablas.Ventas;
+            else if (string.Equals(tabla, Entidades.RestriccionCtaCteReservada.TablaCompras, StringComparison.OrdinalIgnoreCase))
+                tablaMovimiento = Entidades.MovCtaCte.tablas.Compras;
+            else if (string.Equals(tabla, Entidades.RestriccionCtaCteReservada.TablaPagos, StringComparison.OrdinalIgnoreCase))
+                tablaMovimiento = Entidades.MovCtaCte.tablas.Pagos;
+            else
+                return BadRequest("Este tipo de movimiento no tiene detalle.");
+
+            if (idPersona <= 0 || idTabla <= 0)
+                return BadRequest("Movimiento inválido.");
+
+            // 3) El movimiento tiene que ser de la persona pedida, y no anterior a la ventana de dias que su permiso deja ver.
+            var movimiento = _oCtaCteN.getMovCtaCteDeRegistro(tablaMovimiento, idTabla);
+            if (movimiento == null || movimiento.Id <= 0 || movimiento.Persona == null || movimiento.Persona.IdPersona != idPersona)
+                return NotFound("El movimiento no pertenece a esta cuenta corriente.");
+
+            DateTime? fechaMinima = WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona);
+            if (fechaMinima.HasValue && movimiento.Fecha < fechaMinima.Value)
+                return StatusCode(403, "No podés ver movimientos anteriores al " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".");
+
+            // 4) Cuenta reservada: el usuario restringido no ve el registro (misma regla que las pantallas de cada registro).
+            if (_ctaCteReservada.RegistroOculto(tabla, idTabla))
+                return DenegarRegistroReservado();
+
+            var modelo = new CtaCteDetalleMovimientoVm { Tabla = tablaMovimiento.ToString() };
+            var cultura = CultureInfo.CurrentCulture;
+
+            switch (tablaMovimiento)
+            {
+                case Entidades.MovCtaCte.tablas.Ventas:
+                {
+                    var oVentaN = WebCore.Infrastructure.NegocioFactory.CrearVenta(_empresa, _param);
+                    var venta = oVentaN.getVentaById(idTabla);
+                    if (venta == null || venta.IdVenta <= 0)
+                        return NotFound("No se encontró la venta.");
+
+                    modelo.Venta = venta;
+                    if (!string.IsNullOrWhiteSpace(venta.FormaPago))
+                        modelo.Notas.Add("Forma de pago: " + venta.FormaPago);
+                    if (oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0)
+                        modelo.Notas.Add("Facturada");
+                    break;
+                }
+
+                case Entidades.MovCtaCte.tablas.Compras:
+                {
+                    var oCompraN = WebCore.Infrastructure.NegocioFactory.CrearCompra(_empresa, _param);
+                    var compra = oCompraN.findById_convertToCompra(idTabla);
+                    if (compra == null || compra.IdCompra <= 0)
+                        return NotFound("No se encontró la compra.");
+
+                    // Precios de costo: solo con el permiso de ver compras, evaluado sobre el mismo usuario que la cuenta corriente.
+                    bool verPrecios = _oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.Compra.VerCompras, compra.FechaCompra, -1);
+
+                    var cortes = oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>();
+                    foreach (var corte in cortes)
+                    {
+                        modelo.Lineas.Add(new CtaCteLineaDetalleVm
+                        {
+                            Nombre = corte.Corte != null ? corte.Corte.CorteDesc : "-",
+                            Codigo = corte.Corte != null ? "cod " + corte.Corte.Codigo : "",
+                            Calculo = TextoCalculoLineaCtaCte((decimal)corte.CantKgs, verPrecios ? (decimal?)corte.precioKgs : null, cultura),
+                            SubtotalTexto = verPrecios ? ((decimal)corte.CantKgs * (decimal)corte.precioKgs).ToString("C", cultura) : ""
+                        });
+                    }
+
+                    // Medias reses (compra de media res): una linea por media, con su tropa si la tiene.
+                    var medias = oCompraN.obtenerMediasPorCompra(compra.IdCompra);
+                    int numeroMedia = 1;
+                    foreach (DataRow media in medias.Rows)
+                    {
+                        decimal kg = media["kgMedia"] != DBNull.Value ? Convert.ToDecimal(media["kgMedia"]) : 0m;
+                        decimal precio = media["precioMedia"] != DBNull.Value ? Convert.ToDecimal(media["precioMedia"]) : 0m;
+                        string tropa = media.Table.Columns.Contains("nroTropa") && media["nroTropa"] != DBNull.Value
+                            ? Convert.ToString(media["nroTropa"]).Trim()
+                            : "";
+                        modelo.Lineas.Add(new CtaCteLineaDetalleVm
+                        {
+                            Nombre = "Media res " + numeroMedia,
+                            Codigo = tropa.Length > 0 ? "tropa " + tropa : "",
+                            Calculo = TextoCalculoLineaCtaCte(kg, verPrecios ? (decimal?)precio : null, cultura),
+                            SubtotalTexto = verPrecios ? (kg * precio).ToString("C", cultura) : ""
+                        });
+                        numeroMedia++;
+                    }
+
+                    // Titulo del panel: "3 productos", "5 medias" o "2 productos y 1 media" (mismo criterio que la linea gris de la fila).
+                    int cantidadMedias = numeroMedia - 1;
+                    var partesTitulo = new List<string>();
+                    if (cortes.Count > 0)
+                        partesTitulo.Add(cortes.Count + (cortes.Count == 1 ? " producto" : " productos"));
+                    if (cantidadMedias > 0)
+                        partesTitulo.Add(cantidadMedias + (cantidadMedias == 1 ? " media" : " medias"));
+                    modelo.TituloLineas = string.Join(" y ", partesTitulo);
+                    if (verPrecios)
+                    {
+                        decimal total = cortes.Sum(c => (decimal)c.CantKgs * (decimal)c.precioKgs);
+                        foreach (DataRow media in medias.Rows)
+                        {
+                            decimal kg = media["kgMedia"] != DBNull.Value ? Convert.ToDecimal(media["kgMedia"]) : 0m;
+                            decimal precio = media["precioMedia"] != DBNull.Value ? Convert.ToDecimal(media["precioMedia"]) : 0m;
+                            total += kg * precio;
+                        }
+                        modelo.TotalTexto = total.ToString("C", cultura);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(compra.TipoCompra))
+                        modelo.Notas.Add("Tipo de compra: " + compra.TipoCompra);
+                    if (!string.IsNullOrWhiteSpace(compra.NroRemito))
+                        modelo.Notas.Add("Remito/Factura: " + compra.NroRemito);
+                    break;
+                }
+
+                default:
+                {
+                    var pago = _oCtaCteN.getPagoById(idTabla);
+                    if (pago == null || pago.Id <= 0)
+                        return NotFound("No se encontró el pago o cobro.");
+
+                    modelo.TituloLineas = "Cómo se pagó";
+                    if (pago.EfectivoDec > 0m)
+                        modelo.Lineas.Add(new CtaCteLineaDetalleVm { Nombre = "Efectivo", SubtotalTexto = pago.EfectivoDec.ToString("C", cultura) });
+
+                    // Cada cheque con su banco y numero; si el pago no trae la lista pero tiene datos de cheque, se muestra uno.
+                    if (pago.Cheques != null && pago.Cheques.Count > 0)
+                    {
+                        foreach (var cheque in pago.Cheques)
+                        {
+                            modelo.Lineas.Add(new CtaCteLineaDetalleVm
+                            {
+                                Nombre = "Cheque " + (cheque.Banco ?? "").Trim(),
+                                Codigo = string.IsNullOrWhiteSpace(cheque.NroCheque) ? "" : "Nº " + cheque.NroCheque.Trim(),
+                                Calculo = cheque.FechaPago > DateTime.MinValue ? "Cobro " + cheque.FechaPago.ToString("dd/MM/yyyy") : "",
+                                SubtotalTexto = ((decimal)cheque.Importe).ToString("C", cultura)
+                            });
+                        }
+                    }
+                    else if (pago.ImporteDec > pago.EfectivoDec)
+                    {
+                        modelo.Lineas.Add(new CtaCteLineaDetalleVm
+                        {
+                            Nombre = string.IsNullOrWhiteSpace(pago.FormaPago) ? "Otro medio" : pago.FormaPago,
+                            Codigo = string.IsNullOrWhiteSpace(pago.NroCheque) ? "" : "Nº " + pago.NroCheque.Trim(),
+                            SubtotalTexto = (pago.ImporteDec - pago.EfectivoDec).ToString("C", cultura)
+                        });
+                    }
+
+                    modelo.TotalTexto = pago.ImporteDec.ToString("C", cultura);
+                    // La forma de pago ya va en los renglones (Efectivo / Cheque / Transferencia): no se repite como nota.
+                    if (!string.IsNullOrWhiteSpace(pago.NroRecibo))
+                        modelo.Notas.Add("Recibo: " + pago.NroRecibo);
+                    break;
+                }
+            }
+
+            return PartialView("~/Views/Finanzas/_CtaCteDetalleMovimiento.cshtml", modelo);
+        }
+
+        // "91 kg × $ 4.250,00" (o "91 kg" sin precio) para un renglon del panel. Los espacios de cada pieza son duros (NBSP):
+        // en celular la linea solo puede partirse en el "×", nunca entre el "$" y el numero ni entre el numero y "kg".
+        private static string TextoCalculoLineaCtaCte(decimal kg, decimal? precioKg, CultureInfo cultura)
+        {
+            string kilos = kg.ToString("0.###", cultura) + " kg";
+            if (!precioKg.HasValue)
+                return kilos;
+
+            return kilos + " × " + precioKg.Value.ToString("C", cultura).Replace(' ', ' ');
+        }
+
+        // ===== Operador de produccion para la cuenta corriente de una persona (docs/DECISIONS.md, 2026-11-02) =====
+        // Mismo patron que ComprasController/VentasController (AutorizarModulo*), duplicado por controller a
+        // proposito: no hay base controller comun en WebCore. El operador vive en Session como
+        // "OperadorModulo_Finanzas" hasta que se renderiza una pantalla de otro modulo.
+        private const string ModuloOperadorFinanzas = "Finanzas";
+
+        private Entidades.Usuario ObtenerOperadorFinanzas()
+        {
+            return WebCore.Helpers.PermisosHelper.ObtenerOperadorModulo(HttpContext.Session, ModuloOperadorFinanzas);
+        }
+
+        // Ver comentario identico en ComprasController.ObtenerSessionIdEstable: ASP.NET Core no manda la cookie
+        // de sesion hasta el primer write, y sin eso el rate-limit por sesion nunca acumula intentos.
+        private string ObtenerSessionIdEstable()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_estable")))
+                HttpContext.Session.SetString("_estable", "1");
+            return HttpContext.Session.Id;
+        }
+
+        [HttpGet]
+        public IActionResult AutorizarModuloCtaCte(string returnUrl, string cancelUrl)
+        {
+            var dt = _oUsuarioN.obtenerUsuarios(true);
+            var usuarios = new List<object>();
+            if (dt != null && dt.Columns.Contains("id") && dt.Columns.Contains("nombre"))
+            {
+                usuarios = dt.AsEnumerable()
+                    .Select(row => new
+                    {
+                        id = row["id"] == DBNull.Value ? 0 : Convert.ToInt32(row["id"]),
+                        nombre = row["nombre"] == DBNull.Value ? "" : Convert.ToString(row["nombre"])
+                    })
+                    .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
+                    .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
+                    .Cast<object>()
+                    .ToList();
+            }
+
+            // Solo rutas locales: el destino viene de la URL y no puede mandar a otro sitio.
+            ViewBag.UsuariosActivosEmpresa = usuarios;
+            ViewBag.ReturnUrlModuloCtaCte = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? returnUrl
+                : Url.Action("CtasCtes", "Finanzas");
+            ViewBag.CancelUrlModuloCtaCte = !string.IsNullOrWhiteSpace(cancelUrl) && Url.IsLocalUrl(cancelUrl)
+                ? cancelUrl
+                : Url.Action("Index", "Home");
+            ViewBag.Title = "Autorizar operador";
+            ViewBag.Seccion = "Cuenta Corriente";
+            return View("~/Views/Finanzas/AutorizarModuloCtaCte.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorModuloCtaCte(int idUsuario, string clave)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos.";
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave))
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            var candidato = _oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (validado == null || !validado.Activo)
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+
+            // La clave era correcta, pero este operador tiene que poder ver la cuenta corriente: si no, no se
+            // registra y el modal se lo dice (no es un intento fallido de clave).
+            if (!_oUsuarioN.tienePermiso(validado, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1))
+                return Json(new { ok = false, msg = "Ese usuario no tiene permiso para ver cuentas corrientes." });
+
+            WebCore.Helpers.PermisosHelper.RegistrarOperadorModulo(HttpContext.Session, ModuloOperadorFinanzas, validado);
+            return Json(new { ok = true, nombre = validado.Nombre });
         }
 
         [HttpGet]

@@ -1,0 +1,60 @@
+@model WebCore.Models.CtaCteDetalleMovimientoVm
+@*
+    Items de un movimiento de la cuenta corriente de una persona (venta, compra o pago/cobro). Lo devuelve
+    FinanzasController.DetalleMovimiento por AJAX al desplegar una fila de CtaCtePersona. Solo lectura, sin IDs ni scripts:
+    el comportamiento lo pone CtaCtePersona.cshtml. Las ventas reusan _VentaLineas; compras y pagos arman sus renglones
+    con las mismas clases vl-* (estilos: Ventas/_VentaLineasStyles.cshtml, incluido una vez en CtaCtePersona).
+*@
+<div class="ctacte-items">
+    @if (Model.Notas.Count > 0)
+    {
+        <div class="ctacte-items-notas">@string.Join(" · ", Model.Notas)</div>
+    }
+
+    @if (Model.Venta != null)
+    {
+        <partial name="~/Views/Ventas/_VentaLineas.cshtml" model="Model.Venta" />
+    }
+    else
+    {
+        <div class="vl-lineas">
+            <div class="vl-titulo">@Model.TituloLineas</div>
+
+            @if (Model.Lineas.Count == 0)
+            {
+                <div class="vl-linea-calc py-2">Sin detalle para mostrar.</div>
+            }
+
+            @foreach (var linea in Model.Lineas)
+            {
+                <div class="vl-linea">
+                    <div class="vl-linea-info">
+                        <div class="vl-linea-nombre">
+                            <strong>@linea.Nombre</strong>
+                            @if (!string.IsNullOrEmpty(linea.Codigo))
+                            {
+                                <span class="vl-cod">@linea.Codigo</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(linea.Calculo))
+                        {
+                            <div class="vl-linea-calc">@linea.Calculo</div>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(linea.SubtotalTexto))
+                    {
+                        <div class="vl-sub">@linea.SubtotalTexto</div>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.TotalTexto))
+            {
+                <div class="vl-total">
+                    <span class="vl-total-etiqueta">Total</span>
+                    <span class="vl-total-importe">@Model.TotalTexto</span>
+                </div>
+            }
+        </div>
+    }
+</div>

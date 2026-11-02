@@ -147,6 +147,21 @@ namespace NegocioTests.Fakes
 
         public DataTable obtenerObservacionesCtaCte(int idPersona) => throw new NotImplementedException();
 
+        // Tabla que devuelve obtenerResumenItemsCtaCte (columnas tabla, idTabla, cantidad, medias, kg); los tests la cargan.
+        public DataTable ResumenItems { get; set; } = CrearTablaResumenItems();
+        public DataTable obtenerResumenItemsCtaCte(int idPersona, DateTime fechaDesde) => ResumenItems;
+
+        public static DataTable CrearTablaResumenItems()
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("tabla", typeof(string));
+            dt.Columns.Add("idTabla", typeof(int));
+            dt.Columns.Add("cantidad", typeof(int));
+            dt.Columns.Add("medias", typeof(int));
+            dt.Columns.Add("kg", typeof(double));
+            return dt;
+        }
+
         public List<Notificacion> Notificaciones { get; } = new List<Notificacion>();
         public void upsertNotificacion(Notificacion notificacion, bool reabrir) => Notificaciones.Add(notificacion);
     }

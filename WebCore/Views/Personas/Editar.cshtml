@@ -2,7 +2,8 @@
 @using System.Linq
 
 @{
-    ViewData["Title"] = Model.EsEdicion ? "Editar persona" : "Nueva persona";
+    // Una persona existente abre en solo lectura (hay que tocar "Modificar"), por eso el titulo es "Ver persona".
+    ViewData["Title"] = Model.EsEdicion ? "Ver persona" : "Nueva persona";
 
     bool protegerCampos = Model.EsEdicion && !Model.PuedeEditarCamposProtegidos;
     bool soloLecturaInicial = Model.EsEdicion;
@@ -55,14 +56,15 @@
                 @Html.HiddenFor(m => m.IdPersona)
                 @Html.HiddenFor(m => m.BonificacionTexto)
 
+                @* Diseno compacto: 3 filas de campos (identificacion, contacto, domicilio y otros datos) en vez de 5. *@
                 <div class="row">
-                    <div class="col-12 col-md-2">
+                    <div class="col-6 col-md-1">
                         <div class="form-group">
                             <label>ID</label>
                             <input type="text" class="form-control" value="@(Model.IdPersona > 0 ? Model.IdPersona.ToString() : "Nuevo")" readonly />
                         </div>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <div class="form-group">
                             <label for="Cuit">CUIT</label>
                             <div class="input-group">
@@ -91,7 +93,7 @@
                             @Html.ValidationMessageFor(m => m.Identificacion, "", new { @class = "text-danger small" })
                         </div>
                     </div>
-                    <div class="col-12 col-md-3">
+                    <div class="col-12 col-md-5">
                         <div class="form-group">
                             <label for="RazonSocial">Razon social / nombre</label>
                             @Html.TextBoxFor(m => m.RazonSocial, protegerCampos
@@ -103,7 +105,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <div class="form-group">
                             <label for="IdIva">Condicion frente al IVA</label>
                             @Html.DropDownListFor(m => m.IdIva, Model.Ivas, "Seleccionar IVA", protegerCampos
@@ -112,31 +114,21 @@
                             @Html.ValidationMessageFor(m => m.IdIva, "", new { @class = "text-danger small" })
                         </div>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <div class="form-group">
                             <label for="Telefono">Telefono</label>
                             @Html.TextBoxFor(m => m.Telefono, new { @class = "form-control js-persona-control", autocomplete = "off", maxlength = "100" })
                             @Html.ValidationMessageFor(m => m.Telefono, "", new { @class = "text-danger small" })
                         </div>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <div class="form-group">
                             <label for="Email">Email</label>
                             @Html.TextBoxFor(m => m.Email, new { @class = "form-control js-persona-control", autocomplete = "off", maxlength = "200", type = "email" })
                             @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
                         </div>
                     </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-12 col-md-5">
-                        <div class="form-group">
-                            <label for="Domicilio">Domicilio</label>
-                            @Html.TextBoxFor(m => m.Domicilio, new { @class = "form-control text-uppercase js-persona-control", autocomplete = "off", maxlength = "200" })
-                            @Html.ValidationMessageFor(m => m.Domicilio, "", new { @class = "text-danger small" })
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <div class="form-group">
                             <label for="Ciudad">Ciudad</label>
                             @Html.TextBoxFor(m => m.Ciudad, new { @class = "form-control text-uppercase js-persona-control", autocomplete = "off", maxlength = "150" })
@@ -146,10 +138,17 @@
                 </div>
 
                 <div class="row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="Domicilio">Domicilio</label>
+                            @Html.TextBoxFor(m => m.Domicilio, new { @class = "form-control text-uppercase js-persona-control", autocomplete = "off", maxlength = "200" })
+                            @Html.ValidationMessageFor(m => m.Domicilio, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
                     @if (Model.PuedeGestionarCuentaCorriente)
                     {
                         <div class="col-12 col-md-3">
-                            <div class="form-group pt-md-4 mt-md-2">
+                            <div class="form-group pt-md-4 mt-md-1">
                                 <div class="custom-control custom-switch">
                                     @Html.CheckBoxFor(m => m.CtaCteReservada, new { @class = "custom-control-input js-persona-control", id = "CtaCteReservada" })
                                     <label class="custom-control-label" for="CtaCteReservada" title="Solo administradores y usuarios con permiso de cuentas corrientes ven los movimientos de esta persona. El resto ve únicamente lo que cargó desde la apertura de su caja.">Cuenta corriente reservada</label>
@@ -157,16 +156,16 @@
                             </div>
                         </div>
                     }
-                    <div class="col-12 col-md-9">
+                    <div class="col-12 @(Model.PuedeGestionarCuentaCorriente ? "col-md-5" : "col-md-8")">
                         <div class="form-group">
                             <label for="OtrosDatos">Otros datos</label>
-                            @Html.TextAreaFor(m => m.OtrosDatos, new { @class = "form-control js-persona-control", rows = "4", maxlength = "4000" })
+                            @Html.TextAreaFor(m => m.OtrosDatos, new { @class = "form-control js-persona-control", rows = "2", maxlength = "4000" })
                             @Html.ValidationMessageFor(m => m.OtrosDatos, "", new { @class = "text-danger small" })
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-3 d-flex flex-wrap align-items-center">
+                <div class="mt-3 d-flex flex-wrap align-items-center persona-acciones">
                     @if (Model.EsEdicion)
                     {
                         <button type="button"
@@ -183,8 +182,37 @@
                     <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Personas")">
                         Cancelar
                     </a>
+
+                    @* Eliminar persona (docs/DECISIONS.md, 2026-11-02): solo admin y solo sobre una persona existente. Si tiene
+                       registros (o no es de esta empresa) queda deshabilitado y se dice por que. El POST va por un formulario
+                       aparte (mas abajo, fuera de #formPersona): no se pueden anidar formularios y asi tampoco cuenta como "guardar". *@
+                    @if (Model.MostrarEliminar)
+                    {
+                        <div class="d-flex align-items-center mb-2 persona-eliminar">
+                            @if (!string.IsNullOrWhiteSpace(Model.MotivoNoEliminable))
+                            {
+                                <small class="text-muted text-md-right mr-2" id="motivoNoEliminarPersona">@Model.MotivoNoEliminable</small>
+                                <button type="button" class="btn btn-outline-danger" disabled="disabled" title="@Model.MotivoNoEliminable">
+                                    <i class="fas fa-trash-alt mr-1"></i> Eliminar persona
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-outline-danger" id="btnEliminarPersona" data-nombre="@Model.RazonSocial">
+                                    <i class="fas fa-trash-alt mr-1"></i> Eliminar persona
+                                </button>
+                            }
+                        </div>
+                    }
                 </div>
             </form>
+
+            @if (Model.MostrarEliminar && string.IsNullOrWhiteSpace(Model.MotivoNoEliminable))
+            {
+                <form asp-controller="Personas" asp-action="Eliminar" method="post" id="formEliminarPersona" class="d-none">
+                    <input type="hidden" name="id" value="@Model.IdPersona" />
+                </form>
+            }
         </div>
     </div>
 </div>
@@ -199,7 +227,21 @@
     }
 
     .persona-page .card-body {
-        padding: .9rem 1rem;
+        padding: .7rem .85rem;
+    }
+
+    .persona-page .persona-page-header {
+        margin-bottom: .5rem !important;
+    }
+
+    .persona-page .persona-eliminar {
+        margin-left: auto;
+    }
+
+    .persona-page .persona-eliminar .text-muted {
+        font-size: .76rem;
+        max-width: 24rem;
+        line-height: 1.2;
     }
 
     .persona-page .form-group label,
@@ -225,17 +267,17 @@
     }
 
     .persona-page textarea.form-control {
-        min-height: 5rem;
+        min-height: 3.4rem;
         resize: vertical;
     }
 
     .persona-page .form-group {
-        margin-bottom: .65rem;
+        margin-bottom: .45rem;
     }
 
     .persona-page .alert {
-        padding: .7rem .85rem;
-        margin-bottom: .75rem;
+        padding: .55rem .8rem;
+        margin-bottom: .6rem;
         border-radius: .65rem;
     }
 
@@ -258,8 +300,8 @@
     }
 
     .persona-page .mt-3.d-flex {
-        margin-top: .85rem !important;
-        padding-top: .85rem;
+        margin-top: .6rem !important;
+        padding-top: .6rem;
         border-top: 1px solid rgba(0, 0, 0, .08);
     }
 
@@ -277,7 +319,7 @@
         }
 
         .persona-page .form-group {
-            margin-bottom: .5rem;
+            margin-bottom: .35rem;
         }
     }
 
@@ -293,6 +335,12 @@
         .persona-page .mt-3.d-flex .btn {
             width: 100%;
             margin-right: 0 !important;
+        }
+
+        .persona-page .persona-eliminar {
+            width: 100%;
+            margin-left: 0;
+            flex-wrap: wrap;
         }
     }
 
@@ -481,6 +529,36 @@
             if ($modify.length) {
                 $modify.on("click", function () {
                     setSoloLectura(false);
+                });
+            }
+
+            // Eliminar persona: confirma y recien ahi envia el formulario aparte (#formEliminarPersona). El servidor
+            // revalida todo (admin, empresa, sin registros); este boton solo existe si hoy se puede eliminar.
+            var $eliminar = $("#btnEliminarPersona");
+            if ($eliminar.length) {
+                $eliminar.on("click", function () {
+                    var nombre = $(this).data("nombre") || "esta persona";
+
+                    function enviarEliminar() {
+                        showNavigationLoading("Eliminando persona...");
+                        document.getElementById("formEliminarPersona").submit();
+                    }
+
+                    if (window.Swal && typeof window.Swal.fire === "function") {
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Eliminar persona",
+                            text: "Se va a eliminar " + nombre + ". Esta acción no se puede deshacer.",
+                            showCancelButton: true,
+                            confirmButtonText: "Eliminar",
+                            cancelButtonText: "Cancelar",
+                            confirmButtonColor: "#dc3545"
+                        }).then(function (resultado) {
+                            if (resultado.isConfirmed) enviarEliminar();
+                        });
+                    } else if (window.confirm("Se va a eliminar " + nombre + ". Esta acción no se puede deshacer.")) {
+                        enviarEliminar();
+                    }
                 });
             }
 

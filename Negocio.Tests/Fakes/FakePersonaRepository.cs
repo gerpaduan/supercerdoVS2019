@@ -30,7 +30,7 @@ namespace NegocioTests.Fakes
 
         public void addOrEditPersona(Entidades.Persona oPersonaE) => throw new NotImplementedException();
         public int addOrEditPersonaConId(Entidades.Persona oPersonaE) => throw new NotImplementedException();
-        public void eliminarPersona(Entidades.Persona oPersonaE) => throw new NotImplementedException();
+        public void eliminarPersona(Entidades.Persona oPersonaE) => PersonasEliminadas.Add(oPersonaE.idPersona);
         // Personas que devuelve findById (los tests de eliminacion de compras necesitan al proveedor).
         public Dictionary<int, Entidades.Persona> PersonasPorId { get; } = new Dictionary<int, Entidades.Persona>();
         public Entidades.Persona findById(int id) => PersonasPorId.TryGetValue(id, out var persona) ? persona : throw new NotImplementedException();
@@ -39,6 +39,19 @@ namespace NegocioTests.Fakes
         public DataTable getIva() => throw new NotImplementedException();
         public int existeCuit(string cuit) => throw new NotImplementedException();
         public bool personaTieneCompras_Ventas(int idPersona) => throw new NotImplementedException();
+
+        // Eliminar persona: registros por tipo que devuelve registrosAsociados y personas eliminadas.
+        public Dictionary<string, int> RegistrosAsociadosPorTipo { get; } = new Dictionary<string, int>();
+        public List<int> PersonasEliminadas { get; } = new List<int>();
+        public DataTable registrosAsociados(int idPersona)
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("tipo", typeof(string));
+            dt.Columns.Add("cantidad", typeof(int));
+            foreach (var par in RegistrosAsociadosPorTipo)
+                dt.Rows.Add(par.Key, par.Value);
+            return dt;
+        }
         public DataTable obtenerProveedores() => throw new NotImplementedException();
         public DataTable obtenerProveedoresConCompras() => throw new NotImplementedException();
         public DataTable existenMarcasParecidas(string buscarTexto, int idMarca) => throw new NotImplementedException();

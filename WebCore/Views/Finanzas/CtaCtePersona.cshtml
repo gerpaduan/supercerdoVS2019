@@ -4,9 +4,10 @@
     Port simplificado de Web/Views/Finanzas/CtaCtePersona.cshtml (1201 lineas en el original) --
     ver docs/10-migracion-aspnet-core/README.md. Se excluyen: el modo "desdePos" (embebido en POS,
     no portado), los atajos de teclado, y el ordenamiento de columnas por click (JS propio del
-    original, no critico). El click en una fila navega a Ventas/DetalleVenta si es una Venta, o
-    a Finanzas/AddOrEditPago si es un Pago no historico (ambos ya portados, ver
-    docs/10-migracion-aspnet-core/PLAN-ADDOREDITPAGO.md) -- las demas filas no son clickeables.
+    original, no critico). El click en una fila la DESPLIEGA (2026-11-02, ver docs/DECISIONS.md): muestra los items
+    de la venta / compra / pago cargados por AJAX (Finanzas/DetalleMovimiento) y, en el panel, el boton "Abrir ..."
+    lleva a Ventas/DetalleVenta (Venta), al modal de Compras/Editar (Compra) o a Finanzas/AddOrEditPago (Pago no
+    historico; ver docs/10-migracion-aspnet-core/PLAN-ADDOREDITPAGO.md) -- las demas filas solo despliegan.
     Boton "Agregar Pago / Cobro" agregado junto con AddOrEditPago (mismo plan).
 *@
 @{
@@ -43,6 +44,10 @@
 
     // Observaciones del registro origen (Pagos/Ventas/Compras), indexadas por "Tabla|IdTabla".
     var observacionesPorMovimiento = ViewBag.ObservacionesCtaCte as Dictionary<string, string> ?? new Dictionary<string, string>();
+
+    // Cantidad de items y kilos de las Ventas/Compras, indexados por "Tabla|IdTabla" (linea gris de cada fila).
+    var resumenItemsPorMovimiento = ViewBag.ResumenItemsCtaCte as Dictionary<string, Negocio.ResumenItemsMovimientoCtaCte>
+        ?? new Dictionary<string, Negocio.ResumenItemsMovimientoCtaCte>();
 
     // Pago eliminado: su contra-asiento tiene Detalle "ELIMINADO - ..." (Negocio.CuentaCorriente.
     // eliminarPagoConContraasiento). El contra-asiento no cuenta como "version actual" del pago: el
@@ -329,6 +334,36 @@
                             bool esSaldoAnterior = id == 0;
                             decimal saldoMovimiento = row["Saldo"] == DBNull.Value ? 0m : Convert.ToDecimal(row["Saldo"]);
 
+                            // Etiqueta de la operacion en singular y con icono. Un Pago es "Cobro" si suma a la cuenta (credito) y
+                            // "Pago" si resta (debito). Otras tablas (Liquidaciones, ...) conservan su nombre.
+                            string etiquetaOperacion;
+                            string iconoOperacion;
+                            switch ((tablaMovimiento ?? "").ToLowerInvariant())
+                            {
+                                case "ventas": etiquetaOperacion = "Venta"; iconoOperacion = "fa-shopping-cart"; break;
+                                case "compras": etiquetaOperacion = "Compra"; iconoOperacion = "fa-truck"; break;
+                                case "pagos": etiquetaOperacion = importePositivo ? "Cobro" : "Pago"; iconoOperacion = "fa-hand-holding-usd"; break;
+                                default: etiquetaOperacion = Convert.ToString(row["Tabla"]); iconoOperacion = "fa-exchange-alt"; break;
+                            }
+
+                            // Linea gris bajo el detalle: "#id · 3 articulos · 13,35 kg · sucursal" (items solo en ventas y compras).
+                            string claveResumenItems = tablaMovimiento + "|" + Convert.ToString(row["IdTabla"]);
+                            string resumenItemsTexto = resumenItemsPorMovimiento.TryGetValue(claveResumenItems, out var resumenItems)
+                                ? resumenItems.Descripcion(System.Globalization.CultureInfo.CurrentCulture)
+                                : "";
+                            string lineaGrisFila = string.Join(" · ", new[] { "#" + Convert.ToString(row["IdTabla"]), resumenItemsTexto, Convert.ToString(row["Sucursal"]) }
+                                .Where(parte => !string.IsNullOrWhiteSpace(parte)));
+
+                            // Items desplegables: solo Ventas / Compras / Pagos, y no en las versiones anteriores ni los contraasientos
+                            // (el detalle que se pide es el del registro vigente y confundiria).
+                            int idRegistroOrigen = 0;
+                            bool tablaConItems = string.Equals(tablaMovimiento, "Ventas", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(tablaMovimiento, "Compras", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(tablaMovimiento, "Pagos", StringComparison.OrdinalIgnoreCase);
+                            bool tieneItems = puedeDesplegar && tablaConItems && !esHistorico && !esContraasiento
+                                && int.TryParse(Convert.ToString(row["IdTabla"]), out idRegistroOrigen) && idRegistroOrigen > 0;
+                            bool puedeAbrirRegistro = esVenta || esPagoEditable || esCompraEditable;
+
                             <tr class="js-fila-ctacte @(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "") @(esSaldoAnterior ? "ctacte-row-saldo-ant" : "") @(!esVenta && !esPagoEditable && !esCompraEditable ? "ctacte-row-sin-operacion" : "")"
                                 data-es-venta="@(esVenta ? "true" : "false")"
                                 data-id-venta="@idTablaMovimiento"
@@ -336,12 +371,13 @@
                                 data-id-pago="@(esPagoEditable ? idTablaPago : 0)"
                                 data-es-compra="@(esCompraEditable ? "true" : "false")"
                                 data-id-compra="@(esCompraEditable ? idTablaCompra : 0)"
-                                style="cursor:@((esVenta || esPagoEditable || esCompraEditable) ? "pointer" : "default");">
+                                data-mov-id="@id"
+                                style="cursor:@(puedeDesplegar ? "pointer" : "default");">
                                 @* Clases ctacte-m-*: ubican cada celda en el renglon del celular (ver <style> de abajo). *@
                                 <td style="display:none;">@row["ID"]</td>
                                 <td class="ctacte-m-fecha">@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
                                 <td class="@claseColorOperacion ctacte-m-op" style="font-weight:bold;">
-                                    <span class="ctacte-chip">@row["Tabla"]</span>
+                                    <span class="ctacte-chip"><i class="fas @iconoOperacion ctacte-chip-icono" aria-hidden="true"></i>@etiquetaOperacion</span>
                                     @if (esContraasiento)
                                     {
                                         <span class="badge badge-danger ml-1">ELIMINADO</span>
@@ -365,6 +401,10 @@
                                 @* "[ID: n]" solo en celular: en escritorio el id va en la linea gris de abajo ("#n · sucursal"). *@
                                 <td class="ctacte-m-detalle">
                                     <span class="cc-solo-card">[ID: @row["IdTabla"]] </span>@row["Detalle"]
+                                    @if (!string.IsNullOrEmpty(resumenItemsTexto))
+                                    {
+                                        <span class="cc-solo-card"> (@resumenItemsTexto)</span>
+                                    }
                                     @if (tieneObs)
                                     {
                                         <i class="fas fa-comment-dots text-info cc-solo-tabla ctacte-obs-desktop" title="@observacionMov" aria-label="Tiene observaciones"></i>
@@ -379,7 +419,7 @@
                                     }
                                     @if (!esSaldoAnterior)
                                     {
-                                        <div class="cc-solo-tabla ctacte-det-sub">#@row["IdTabla"] · @row["Sucursal"]</div>
+                                        <div class="cc-solo-tabla ctacte-det-sub">@lineaGrisFila</div>
                                     }
                                 </td>
                                 <td class="@claseColorOperacion ctacte-m-importe" style="text-align:right; font-weight:bold;">@importeFila.ToString("N2")</td>
@@ -408,27 +448,48 @@
                             {
                                 <tr class="ctacte-detalle-row d-none" data-detalle-de="@id">
                                     <td colspan="8" class="bg-light">
-                                        <div class="row small ctacte-detalle-grid">
-                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Fecha</span>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</div>
-                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Operación</span>@row["Tabla"] - @tipoImporte</div>
-                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Nro.Doc</span>@(tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : "-")</div>
-                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Sucursal</span>@row["Sucursal"]</div>
-                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Importe</span>@importeFila.ToString("N2")</div>
-                                            <div class="col-6 col-md-3 mb-2 ctacte-det-dup"><span class="text-muted d-block">Saldo</span>@(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))</div>
-                                            <div class="col-12 col-md-6 mb-2 ctacte-det-dup"><span class="text-muted d-block">Detalle</span>[ID: @row["IdTabla"]] @row["Detalle"]</div>
-                                            <div class="col-12 mb-2">
-                                                <span class="text-muted d-block">Observaciones</span>
-                                                @if (tieneObs)
+                                        @* Dos cajas: a la izquierda los items del registro (se piden por AJAX la primera vez que se abre la fila,
+                                           ver el script); a la derecha los datos propios del movimiento y el boton para abrir el registro. *@
+                                        <div class="ctacte-det-layout small">
+                                            <div class="ctacte-det-caja ctacte-det-items">
+                                                @if (tieneItems)
                                                 {
-                                                    <div class="ctacte-detalle-obs">@observacionMov</div>
+                                                    <div class="ctacte-det-items-cuerpo"
+                                                         data-url="@Url.Action("DetalleMovimiento", "Finanzas", new { idPersona = ViewBag.IdPersona, tabla = tablaMovimiento, idTabla = idRegistroOrigen, desdePos })">
+                                                        <span class="text-muted">Cargando detalle…</span>
+                                                    </div>
+                                                }
+                                                else if (esHistorico || esContraasiento)
+                                                {
+                                                    <span class="text-muted">Versión anterior del registro: los ítems están en la versión vigente.</span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="text-muted">Sin observaciones</span>
+                                                    <span class="text-muted">Este movimiento no tiene ítems para mostrar.</span>
                                                 }
                                             </div>
-                                            <div class="col-12 col-md-6 mb-1"><span class="text-muted d-block">Creado</span>@(fechaHoraColumna(row, "Creado")) @(string.IsNullOrEmpty(valorColumna(row, "CreadoPor")) ? "" : "por " + valorColumna(row, "CreadoPor"))</div>
-                                            <div class="col-12 col-md-6 mb-1"><span class="text-muted d-block">Actualizado</span>@(string.IsNullOrEmpty(valorColumna(row, "Actualizado")) ? "-" : fechaHoraColumna(row, "Actualizado")) @(string.IsNullOrEmpty(valorColumna(row, "ActualizadoPor")) ? "" : "por " + valorColumna(row, "ActualizadoPor"))</div>
+                                            <div class="ctacte-det-caja ctacte-det-meta">
+                                                <div class="ctacte-det-kv"><span class="text-muted">Sucursal</span><span>@row["Sucursal"]</span></div>
+                                                <div class="ctacte-det-kv"><span class="text-muted">Creado</span><span>@(fechaHoraColumna(row, "Creado")) @(string.IsNullOrEmpty(valorColumna(row, "CreadoPor")) ? "" : "por " + valorColumna(row, "CreadoPor"))</span></div>
+                                                <div class="ctacte-det-kv"><span class="text-muted">Actualizado</span><span>@(string.IsNullOrEmpty(valorColumna(row, "Actualizado")) ? "-" : fechaHoraColumna(row, "Actualizado")) @(string.IsNullOrEmpty(valorColumna(row, "ActualizadoPor")) ? "" : "por " + valorColumna(row, "ActualizadoPor"))</span></div>
+                                                <div class="ctacte-det-obs-bloque">
+                                                    <span class="text-muted d-block">Observaciones</span>
+                                                    @if (tieneObs)
+                                                    {
+                                                        <div class="ctacte-detalle-obs">@observacionMov</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Sin observaciones</span>
+                                                    }
+                                                </div>
+                                                @if (puedeAbrirRegistro)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-primary btn-block mt-2 js-abrir-movimiento">
+                                                        <i class="fas fa-external-link-alt mr-1"></i>@(esVenta ? "Abrir venta" : esCompraEditable ? "Abrir compra" : "Abrir pago / cobro")
+                                                    </button>
+                                                }
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -523,6 +584,9 @@
     <link rel="stylesheet" href="@Url.Content("~/Content/css/tabla-cards.css")" asp-append-version="true" />
 }
 
+@* Estilos de las lineas + total (vl-*) que usa el panel de items de cada fila; los comparte con el detalle de ventas. *@
+<partial name="~/Views/Ventas/_VentaLineasStyles.cshtml" />
+
 <style>
     .ctacte-page { font-size: .84rem; }
     .ctacte-page .ctacte-panel-card { border: 1px solid #e9ecef; border-radius: .75rem; }
@@ -552,6 +616,69 @@
     .ctacte-obs-icono { white-space: nowrap; cursor: help; }
     .ctacte-compra-body { background: #f4f7fb; }
     .ctacte-page .ctacte-solo-movil { display: none; }
+
+    /* Fila desplegable (2026-11-02): items del registro a la izquierda y datos del movimiento a la derecha; en celular apilados.
+       Colores con las variables --ui-* del tema (con fallback claro: el modal del POS no carga ui-refresh.css). */
+    #tablaPersona .ctacte-chip-icono { font-size: .72rem; margin-right: .3rem; }
+    #tablaPersona tr.js-fila-ctacte.ctacte-row-abierta > td { background-color: var(--ui-surface-alt, rgba(127, 127, 127, .07)); }
+    #tablaPersona .ctacte-det-layout { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: .75rem; }
+    #tablaPersona .ctacte-det-caja { min-width: 0; padding: .55rem .7rem; border: 1px solid var(--ui-border, #dee2e6); border-radius: .5rem; background: var(--ui-surface, #fff); color: var(--ui-text, inherit); }
+    #tablaPersona .ctacte-det-kv { display: flex; justify-content: space-between; gap: .6rem; padding: .12rem 0; font-size: .76rem; }
+    #tablaPersona .ctacte-det-kv > span:first-child { flex: 0 0 auto; white-space: nowrap; }
+    #tablaPersona .ctacte-det-kv > span:last-child { text-align: right; overflow-wrap: anywhere; }
+    #tablaPersona .ctacte-det-obs-bloque { margin-top: .45rem; padding-top: .45rem; border-top: 1px solid var(--ui-border, #dee2e6); font-size: .76rem; }
+    #tablaPersona .ctacte-items-notas { font-size: .72rem; color: var(--ui-text-muted, #6c757d); margin-bottom: .25rem; }
+    /* Letra del panel igual que las vistas compactas (2026-11-02): el .vl-* de _VentaLineasStyles trae .9rem para el detalle de ventas;
+       aca se achica solo dentro del panel para no tocar las otras pantallas que lo comparten. */
+    #tablaPersona .ctacte-det-layout .vl-lineas { font-size: .8rem; }
+    #tablaPersona .ctacte-det-layout .vl-linea { padding: .3rem 0; gap: .5rem; }
+    #tablaPersona .ctacte-det-layout .vl-titulo,
+    #tablaPersona .ctacte-det-layout .vl-n,
+    #tablaPersona .ctacte-det-layout .vl-cod,
+    #tablaPersona .ctacte-det-layout .vl-linea-calc { font-size: .72rem; }
+    #tablaPersona .ctacte-det-layout .vl-marca { font-size: .68rem; }
+    #tablaPersona .ctacte-det-layout .vl-total { padding-top: .4rem; }
+    #tablaPersona .ctacte-det-layout .vl-total-importe { font-size: .92rem; }
+    #tablaPersona .ctacte-det-caja { padding: .45rem .65rem; }
+    #tablaPersona .ctacte-det-kv, #tablaPersona .ctacte-det-obs-bloque { font-size: .72rem; }
+    #tablaPersona .ctacte-det-layout .js-abrir-movimiento { font-size: .76rem; padding: .2rem .5rem; }
+    @@media (max-width: 767.98px) {
+        #tablaPersona .ctacte-det-layout { grid-template-columns: minmax(0, 1fr); }
+    }
+    /* Con ventanas angostas la tabla desborda (los textos de Comprobante no cortan linea) y scrollea de costado: el panel no debe
+       heredar ese ancho (la caja de la derecha quedaria fuera de pantalla). Se lo fija al ancho visible del contenedor
+       (unidad cqw) y pegado a la izquierda del scroll. */
+    @@media (min-width: 768px) {
+        .ctacte-movimientos-card .table-responsive { container-type: inline-size; }
+        #tablaPersona .ctacte-det-layout { position: sticky; left: .45rem; width: calc(100cqw - .9rem); }
+    }
+
+    /* Encabezado, buscador y botones compactos en escritorio (2026-11-02): mismos valores que .fc-card de _FiltrosCompactosStyles
+       (altura 1.95rem, letra .84rem, radio .5rem). Cuelgan de #ctactePersonaContainer (el id gana a "body.app-shell .form-control" de
+       ui-refresh.css y tambien vale en el modal del POS, que no carga esa hoja). En celular se conservan los tamanos tactiles. */
+    @@media (min-width: 768px) {
+        #ctactePersonaContainer .ctacte-header-box { padding: .4rem .75rem; margin-bottom: .6rem; }
+        #ctactePersonaContainer .ctacte-header-box h5 { font-size: 1rem; }
+        #ctactePersonaContainer .ctacte-header-box .btn { height: 1.95rem; min-height: 1.95rem; padding: .15rem .55rem; border-radius: .5rem; }
+        #ctactePersonaContainer .ctacte-panel-card { margin-bottom: .6rem !important; }
+        #ctactePersonaContainer .ctacte-panel-card > .card-body { padding: .5rem .65rem; }
+        #ctactePersonaContainer .ctacte-toolbar-row { gap: .4rem .75rem; }
+        #ctactePersonaContainer .ctacte-toolbar-row .form-control,
+        #ctactePersonaContainer .ctacte-toolbar-row .input-group-text,
+        #ctactePersonaContainer .ctacte-toolbar-row .btn { height: 1.95rem; min-height: 1.95rem; font-size: .84rem; padding: .15rem .5rem; line-height: 1.2; }
+        #ctactePersonaContainer .ctacte-toolbar-row .btn { border-radius: .5rem; }
+        #ctactePersonaContainer .ctacte-toolbar-row .input-group > .form-control { border-radius: 0; }
+        #ctactePersonaContainer .ctacte-toolbar-row .input-group-prepend .input-group-text { border-radius: .5rem 0 0 .5rem; }
+        #ctactePersonaContainer .ctacte-toolbar-row .input-group-append .btn { border-radius: 0 .5rem .5rem 0; }
+        #ctactePersonaContainer .ctacte-toolbar-row .ctacte-fecha-group { max-width: 17rem; flex: 0 0 auto; }
+        /* El grupo mide lo que suman sus hijos SIN el gap: si pudiera partirse, el interruptor "Mostrar anulados" bajaba de renglon. */
+        #ctactePersonaContainer .ctacte-toolbar-row .ctacte-filtros-group { flex-wrap: nowrap !important; white-space: nowrap; }
+        #ctactePersonaContainer .ctacte-toolbar-row .ctacte-acciones-row .btn.mr-2 { margin-right: .35rem !important; }
+        #ctactePersonaContainer .ctacte-toolbar-row .custom-switch { font-size: .84rem; padding-top: .1rem; }
+        #ctactePersonaContainer .ctacte-resumen { gap: .4rem; margin-bottom: .5rem; }
+        #ctactePersonaContainer .ctacte-resumen-item { padding: .28rem .6rem; }
+        #ctactePersonaContainer .ctacte-resumen-valor { font-size: .92rem; }
+    }
 
     /* Resumen del periodo (solo escritorio, 2026-10-28): va ANTES del bloque de celular para que su .ctacte-solo-desktop lo oculte alla. */
     .ctacte-page .ctacte-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .5rem; margin-bottom: .7rem; }
@@ -616,7 +743,6 @@
         #tablaPersona > tbody > tr.ctacte-detalle-row { display: block; padding: 0 0 .5rem; }
         #tablaPersona > tbody > tr.js-fila-ctacte:has(+ tr.ctacte-detalle-row:not(.d-none)) { border-bottom: 0; }
         #tablaPersona > tbody > tr.ctacte-detalle-row > td { border-radius: .4rem; padding: .45rem .55rem !important; }
-        #tablaPersona .ctacte-det-dup { display: none; }
 
         html.dark-mode #tablaPersona .ctacte-row-modificado td { background-color: transparent; }
     }
@@ -871,58 +997,131 @@
             if (document.readyState === 'complete') mostrar(); else window.addEventListener('load', mostrar);
         })();
 
-        document.querySelectorAll('.js-toggle-detalle-ctacte').forEach(function (boton) {
-            boton.addEventListener('click', function (e) {
-                e.stopPropagation();
-                var filaDetalle = document.querySelector('.ctacte-detalle-row[data-detalle-de="' + boton.dataset.detalleDe + '"]');
-                if (!filaDetalle) return;
-                var abrir = filaDetalle.classList.contains('d-none');
-                filaDetalle.classList.toggle('d-none', !abrir);
+        // ---- Fila desplegable (2026-11-02, ver docs/DECISIONS.md) ----------------------------------------------
+        // Tocar una fila (o su flecha) despliega el panel: los items se piden la primera vez a Finanzas/DetalleMovimiento
+        // y el boton "Abrir ..." del panel hace lo que antes hacia el click en la fila (venta / compra / pago).
+        var MENSAJE_DETALLE_GENERICO = 'No se pudo cargar el detalle. Probá de nuevo.';
+
+        // Mensaje para mostrar en el panel: el del servidor si viene (JSON {msg} o texto corto), si no uno generico.
+        function mensajeDeRespuestaDetalle(texto) {
+            try {
+                var json = JSON.parse(texto);
+                if (json && typeof json.msg === 'string' && json.msg) return json.msg;
+            } catch (errorJson) {
+                // No era JSON: se prueba como texto plano.
+            }
+            return texto && texto.length > 0 && texto.length <= 200 && texto.indexOf('<') < 0 ? texto : MENSAJE_DETALLE_GENERICO;
+        }
+
+        function cargarItemsMovimiento(filaDetalle) {
+            var cuerpo = filaDetalle.querySelector('.ctacte-det-items-cuerpo');
+            if (!cuerpo || cuerpo.dataset.cargado === 'true' || cuerpo.dataset.cargando === 'true') return;
+
+            cuerpo.dataset.cargando = 'true';
+            fetch(cuerpo.dataset.url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (respuesta) {
+                    // Sesion vencida: el servidor redirige al login y el fetch lo sigue solo (devolveria la pagina de login).
+                    if (respuesta.redirected) throw new Error('Tu sesión venció. Recargá la página.');
+                    if (!respuesta.ok) {
+                        return respuesta.text().then(function (texto) { throw new Error(mensajeDeRespuestaDetalle(texto)); });
+                    }
+                    return respuesta.text();
+                })
+                .then(function (html) {
+                    cuerpo.innerHTML = html;
+                    cuerpo.dataset.cargado = 'true';
+                })
+                .catch(function (error) {
+                    console.error('Cta. Cte.: no se pudo cargar el detalle del movimiento', error);
+                    // Sin marcar "cargado": al volver a abrir la fila se reintenta.
+                    cuerpo.textContent = error && error.message ? error.message : MENSAJE_DETALLE_GENERICO;
+                    cuerpo.classList.add('text-danger');
+                })
+                .then(function () {
+                    delete cuerpo.dataset.cargando;
+                });
+        }
+
+        function alternarDetalleMovimiento(fila) {
+            var filaDetalle = fila.nextElementSibling;
+            if (!filaDetalle || !filaDetalle.classList.contains('ctacte-detalle-row')) return;
+
+            var abrir = filaDetalle.classList.contains('d-none');
+            filaDetalle.classList.toggle('d-none', !abrir);
+            fila.classList.toggle('ctacte-row-abierta', abrir);
+
+            var boton = fila.querySelector('.js-toggle-detalle-ctacte');
+            if (boton) {
                 boton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
                 var icono = boton.querySelector('i');
                 if (icono) {
                     icono.classList.toggle('fa-angle-down', !abrir);
                     icono.classList.toggle('fa-angle-up', abrir);
                 }
-            });
-        });
+            }
 
-        document.querySelectorAll('.js-fila-ctacte').forEach(function (fila) {
+            if (abrir) {
+                cargarItemsMovimiento(filaDetalle);
+                // Con la fila nueva ya pintada: si el panel quedo fuera de pantalla, se lo acerca (sin saltos si ya se ve).
+                if (typeof filaDetalle.scrollIntoView === 'function') {
+                    filaDetalle.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+            }
+        }
+
+        // Abre el registro de origen de la fila: la venta (pantalla de detalle), la compra (modal) o el pago (formulario).
+        function abrirMovimiento(fila) {
             if (fila.dataset.esCompra === 'true') {
-                fila.addEventListener('click', function () { abrirCompra(fila.dataset.idCompra); });
+                abrirCompra(fila.dataset.idCompra);
                 return;
             }
 
             if (fila.dataset.esVenta === 'true') {
-                fila.addEventListener('click', function () {
-                    window.location.href = '@Url.Action("DetalleVenta", "Ventas")?id=' + fila.dataset.idVenta;
-                });
+                window.location.href = '@Url.Action("DetalleVenta", "Ventas")?id=' + fila.dataset.idVenta;
                 return;
             }
 
             if (fila.dataset.esPago === 'true') {
-                fila.addEventListener('click', function () {
-                    var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-                    var url = '@Url.Action("AddOrEditPago", "Finanzas")?idPersona=' + idPersona + '&idPago=' + fila.dataset.idPago + '&returnUrl=' + returnUrl
-                        + (posInstanceIdCtaCte ? '&posInstanceId=' + encodeURIComponent(posInstanceIdCtaCte) : '');
+                var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                var url = '@Url.Action("AddOrEditPago", "Finanzas")?idPersona=' + idPersona + '&idPago=' + fila.dataset.idPago + '&returnUrl=' + returnUrl
+                    + (posInstanceIdCtaCte ? '&posInstanceId=' + encodeURIComponent(posInstanceIdCtaCte) : '');
 
-                    // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): esta fila hacia
-                    // window.location.href directo -- una navegacion de pagina completa que, con
-                    // #modalFinanzasPOS abierto (embebida en POS), disparaba el guard de
-                    // beforeunload de pos-cart.js (cartel "Desea salir del sitio?") y terminaba
-                    // sacando al usuario de POS. El boton "Agregar Pago / Cobro" de esta misma
-                    // vista (arriba) ya evita esto siendo un <a data-pos-ajax="true">, interceptado
-                    // por POS.cshtml para cargar en #modalPagoPOS sin navegar -- se replica ese
-                    // mismo comportamiento aca en vez de duplicar el atributo en un <a> generado
-                    // por JS.
-                    if (desdePosCtaCte && window.POSFinanzas && typeof window.POSFinanzas.cargarPago === 'function') {
-                        window.POSFinanzas.cargarPago(url, 'Pago / Cobro');
-                        return;
-                    }
+                // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): esto hacia
+                // window.location.href directo -- una navegacion de pagina completa que, con
+                // #modalFinanzasPOS abierto (embebida en POS), disparaba el guard de
+                // beforeunload de pos-cart.js (cartel "Desea salir del sitio?") y terminaba
+                // sacando al usuario de POS. El boton "Agregar Pago / Cobro" de esta misma
+                // vista (arriba) ya evita esto siendo un <a data-pos-ajax="true">, interceptado
+                // por POS.cshtml para cargar en #modalPagoPOS sin navegar -- se replica ese
+                // mismo comportamiento aca en vez de duplicar el atributo en un <a> generado
+                // por JS.
+                if (desdePosCtaCte && window.POSFinanzas && typeof window.POSFinanzas.cargarPago === 'function') {
+                    window.POSFinanzas.cargarPago(url, 'Pago / Cobro');
+                    return;
+                }
 
-                    window.location.href = url;
-                });
+                window.location.href = url;
             }
+        }
+
+        document.querySelectorAll('.js-fila-ctacte').forEach(function (fila) {
+            // La fila "Saldo anterior" (id 0) no se despliega.
+            if (!fila.dataset.movId || fila.dataset.movId === '0') return;
+
+            fila.addEventListener('click', function (e) {
+                // Seleccionar texto (para copiarlo) no debe plegar ni desplegar la fila.
+                var seleccion = window.getSelection ? String(window.getSelection()) : '';
+                if (seleccion.length > 0) return;
+                alternarDetalleMovimiento(fila);
+            });
+        });
+
+        document.querySelectorAll('.js-abrir-movimiento').forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                var filaDetalle = boton.closest('tr');
+                var fila = filaDetalle ? filaDetalle.previousElementSibling : null;
+                if (fila && fila.classList.contains('js-fila-ctacte')) abrirMovimiento(fila);
+            });
         });
 
         if (!puedeExportarCuentaCorriente) return;

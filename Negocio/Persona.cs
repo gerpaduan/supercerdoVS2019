@@ -56,6 +56,47 @@ namespace Negocio
             oPersonaD.eliminarPersona(oPersonaE);
         }
 
+        // ===== Eliminar persona (docs/DECISIONS.md, 2026-11-02) =====
+
+        // Devuelve "" si el usuario puede eliminar la persona; si no, el motivo para mostrarle. Reglas:
+        // solo admin; solo personas de SU empresa (una global, idEmpresa = 0, o de otra empresa no); no el
+        // Consumidor Final (el POS lo usa); no una marca (tiene su flujo en Productos); y ningun registro a su
+        // nombre (la base no lo impide: el DELETE de una persona con pagos o ventas deja esos registros huerfanos).
+        public string motivoNoEliminable(Entidades.Persona persona, Entidades.Usuario usuario)
+        {
+            if (persona == null || persona.IdPersona <= 0)
+                return "No se encontró la persona.";
+            if (usuario == null || !usuario.Admin)
+                return "Solo un administrador puede eliminar personas.";
+            if (persona.IdEmpresa != usuario.IdEmpresa)
+                return "Solo se pueden eliminar personas de la empresa en la que estás trabajando.";
+            if (_param != null && esConsumidorFinal(persona))
+                return "No se puede eliminar al Consumidor Final: lo usa el punto de venta.";
+            if (persona.Marca)
+                return "Es una marca: se elimina desde Productos.";
+
+            var registros = oPersonaD.registrosAsociados(persona.IdPersona);
+            if (registros == null || registros.Rows.Count == 0)
+                return "";
+
+            var partes = new System.Collections.Generic.List<string>();
+            foreach (DataRow fila in registros.Rows)
+                partes.Add(System.Convert.ToString(fila["tipo"]) + " (" + System.Convert.ToInt32(fila["cantidad"]) + ")");
+            return "No se puede eliminar: tiene registros a su nombre: " + string.Join(", ", partes) + ".";
+        }
+
+        // Elimina la persona si motivoNoEliminable lo permite. Devuelve "" si la elimino o el motivo si no.
+        // Revalida aca (no confia en lo que la pantalla mostro) y lo hace justo antes del DELETE.
+        public string eliminarPersonaSiCorresponde(Entidades.Persona persona, Entidades.Usuario usuario)
+        {
+            string motivo = motivoNoEliminable(persona, usuario);
+            if (motivo.Length > 0)
+                return motivo;
+
+            oPersonaD.eliminarPersona(persona);
+            return "";
+        }
+
         // ===== Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01) =====
 
         // Ids de las personas marcadas como "cuenta corriente reservada".

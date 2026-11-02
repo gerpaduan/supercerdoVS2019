@@ -16,6 +16,11 @@ namespace Contratos
         DataTable getIva();
         int existeCuit(string cuit);
         bool personaTieneCompras_Ventas(int idPersona);
+
+        // Eliminar persona (docs/DECISIONS.md, 2026-11-02): cuantos registros tiene la persona a su nombre en
+        // cada tabla que la referencia. Columnas "tipo" (texto para mostrar) y "cantidad"; solo filas con cantidad > 0.
+        DataTable registrosAsociados(int idPersona);
+
         DataTable obtenerProveedores();
         DataTable obtenerProveedoresConCompras();
         DataTable existenMarcasParecidas(string buscarTexto, int idMarca);

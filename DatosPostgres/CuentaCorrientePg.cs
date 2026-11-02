@@ -922,6 +922,38 @@ namespace DatosPostgres
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idPersona", idPersona));
         }
 
+        // Cantidad de items y kilos de las ventas y compras de la cta cte de la persona (ver el contrato).
+        // Las compras suman cortes (corteporcompra) y medias reses (mediares): una compra de media res puede tener ambos.
+        public DataTable obtenerResumenItemsCtaCte(int idPersona, DateTime fechaDesde)
+        {
+            const string sql = @"
+                SELECT 'Ventas' AS ""tabla"", l.idventa AS ""idTabla"", COUNT(*)::int AS ""cantidad"", 0 AS ""medias"",
+                       COALESCE(SUM(l.cantkg), 0) AS ""kg""
+                FROM lineaventa l
+                WHERE l.idventa IN (SELECT idtabla FROM movctacte WHERE idpersona = @idPersona AND tabla = 'Ventas' AND fecha >= @fechaDesde)
+                GROUP BY l.idventa
+                UNION ALL
+                SELECT 'Compras', x.idcompra, SUM(x.cantidad)::int, SUM(x.medias)::int, COALESCE(SUM(x.kg), 0)
+                FROM (
+                    SELECT idcompra, COUNT(*) AS cantidad, 0 AS medias, SUM(cantkg) AS kg
+                    FROM corteporcompra
+                    WHERE idcompra IN (SELECT idtabla FROM movctacte WHERE idpersona = @idPersona AND tabla = 'Compras' AND fecha >= @fechaDesde)
+                    GROUP BY idcompra
+                    UNION ALL
+                    SELECT idcompra, 0, COUNT(*), SUM(kgmedia)
+                    FROM mediares
+                    WHERE idcompra IN (SELECT idtabla FROM movctacte WHERE idpersona = @idPersona AND tabla = 'Compras' AND fecha >= @fechaDesde)
+                    GROUP BY idcompra
+                ) x
+                GROUP BY x.idcompra;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("idPersona", idPersona);
+                p.AddWithValue("fechaDesde", fechaDesde);
+            });
+        }
+
         // Misma tabla y SQL que BorradorGenericoPg.UpsertNotificacion (idempotente por idempresa+tipo+refid).
         public void upsertNotificacion(Notificacion notificacion, bool reabrir)
         {
