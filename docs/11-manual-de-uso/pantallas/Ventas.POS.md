@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-10-29
+revisada: 2026-11-02
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -55,6 +55,9 @@ Si con esta venta el cliente **quedaría debiendo** (el cuadro rojo de arriba), 
 1. **Tildalo** (clic o tecla **C**). La venta va **sola a Cta. Cte.** y el botón **Cta. Cte.** queda **inhabilitado** (el cliente está pagando, no es un medio de cobro). El cuadro pasa a decir **«Con esta venta el cliente debe en total»** y el importe es lo que hay que cobrar para dejar la cuenta en cero.
 2. Escribí el **importe que paga** (el cursor ya queda en el campo), o tildá **«Paga todo»** (viene destildado) para cobrar toda la deuda. Debajo se lee qué le queda a la cuenta: **«Le queda debiendo $ X»**, **«La cuenta queda en $ 0,00»** o **«Paga de más: le queda a favor $ X»**.
 3. **Tocá la forma de pago con la que paga** (Efectivo, Débito, Crédito, QR o Transferencia, clic o teclas 1 a 6). **Un clic registra la venta y el cobro**: el cobro queda con esa forma de pago (Débito → cobro en Débito), con su recibo automático, y suma a la caja solo si es Efectivo.
+   - Al tildarlo aparece un **aviso azul** que explica por qué: *la venta y el pago van a la cuenta corriente del cliente; la venta se suma a su deuda y lo que paga ahora se le descuenta*. Por eso Cta. Cte. no se puede elegir: el botón que toques solo indica con qué paga.
+   - **Contar billetes**: el botón **$** a la izquierda del importe (o **Alt+B**) abre el contador de billetes. Al aceptar, el **total contado pasa al importe que paga** y debajo se resume lo contado (*«Billetes contados: 1 x $20.000 · 4 x $2.000 = $ 28.000,00»*). **Volver a contar** abre el contador en blanco; **Quitar** borra el detalle y deja el importe. Con «Paga todo» el botón $ queda inhabilitado.
+   - El **detalle de billetes se guarda en el cobro** (y sale en su comprobante, como en un cobro de F2) **solo si paga en Efectivo, sin Pago Mixto, sin «Paga todo» y con el importe igual a lo contado**. Si cambiás el importe a mano después de contar, el resumen avisa *«El importe ya no coincide con lo contado»* y el detalle no se guarda; con otra forma de pago o con Pago Mixto el importe se mantiene pero el detalle no se guarda.
 4. **Pago Mixto**: activalo antes o después del tilde. Se reparte el **importe que paga** (no el total de la venta) entre Efectivo y el otro medio, y se registran **dos cobros** (uno en Efectivo y otro en el otro medio).
 5. **El modal se achica solo** (igual que con Pago Mixto o con el descuento): botones de forma de pago en una línea y, en escritorio, el cuadro del saldo y el del cobro lado a lado, para que «Total de la Venta» quede a la vista sin scrollear. Al destildar vuelve al tamaño normal.
 

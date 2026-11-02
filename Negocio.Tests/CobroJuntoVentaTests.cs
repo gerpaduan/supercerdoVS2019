@@ -112,6 +112,68 @@ namespace NegocioTests
             Assert.Equal(100.01m, r.Partes[0].Importe + r.Partes[1].Importe);
         }
 
+        // --- Conteo de billetes del cobro (2026-11-02) ---
+
+        private const string ConteoEjemplo = "1 x $20.000 = $ 20.000,00\nTOTAL EFECTIVO: $ 20.000,00";
+
+        [Theory]
+        [InlineData("Efectivo")]
+        [InlineData("efectivo")]
+        public void Conteo_CobroSimpleEnEfectivo_SeGuarda(string forma)
+        {
+            Assert.Equal(ConteoEjemplo, Negocio.CobroJuntoVenta.ConteoAGuardar(ConteoEjemplo, forma, esMixto: false, pagaTodo: false));
+        }
+
+        [Fact]
+        public void Conteo_SeGuardaSinEspaciosSobrantes()
+        {
+            Assert.Equal(ConteoEjemplo, Negocio.CobroJuntoVenta.ConteoAGuardar("  " + ConteoEjemplo + "\n ", "Efectivo", false, false));
+        }
+
+        [Theory]
+        [InlineData("Debito")]
+        [InlineData("Qr")]
+        [InlineData("Transferencia")]
+        [InlineData("CtaCte")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void Conteo_ConOtraFormaDePago_NoSeGuarda(string forma)
+        {
+            Assert.Equal("", Negocio.CobroJuntoVenta.ConteoAGuardar(ConteoEjemplo, forma, false, false));
+        }
+
+        [Fact]
+        public void Conteo_ConPagoMixto_NoSeGuarda()
+        {
+            // En mixto el efectivo es solo una parte del cobro: lo contado no es el importe del cobro.
+            Assert.Equal("", Negocio.CobroJuntoVenta.ConteoAGuardar(ConteoEjemplo, "Efectivo", esMixto: true, pagaTodo: false));
+        }
+
+        [Fact]
+        public void Conteo_ConPagaTodo_NoSeGuarda()
+        {
+            // Con "Paga todo" el importe lo recalcula el servidor: puede no coincidir con lo contado.
+            Assert.Equal("", Negocio.CobroJuntoVenta.ConteoAGuardar(ConteoEjemplo, "Efectivo", esMixto: false, pagaTodo: true));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   \n ")]
+        public void Conteo_Vacio_NoSeGuarda(string conteo)
+        {
+            Assert.Equal("", Negocio.CobroJuntoVenta.ConteoAGuardar(conteo, "Efectivo", false, false));
+        }
+
+        [Fact]
+        public void Conteo_ConTextoDemasiadoLargo_NoSeGuarda()
+        {
+            string largo = new string('x', Negocio.CobroJuntoVenta.MaxLongitudConteoBilletes + 1);
+
+            Assert.Equal("", Negocio.CobroJuntoVenta.ConteoAGuardar(largo, "Efectivo", false, false));
+            Assert.Equal(largo.Substring(1), Negocio.CobroJuntoVenta.ConteoAGuardar(largo.Substring(1), "Efectivo", false, false));
+        }
+
         // --- Saldo con cobros ---
 
         [Fact]

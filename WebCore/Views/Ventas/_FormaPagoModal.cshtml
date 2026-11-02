@@ -140,8 +140,19 @@
                             <div class="fp-cobro-detalle d-none" id="fpCobroSaldoDetalle">
                                 <div class="fp-cobro-fila">
                                     <label for="txtImporteCobroFp" class="fp-cobro-titulo mb-0">Importe que paga</label>
+                                    @* Contador de billetes (2026-11-02, ver docs/DECISIONS.md "Contador de billetes en el cobro junto con
+                                       la venta"): el "$" es el boton que abre #modalCalculadoraBilletes (Alt+B tambien, lo busca por la clase
+                                       js-calculadora-billetes-launch). El total contado NO se carga directo en el importe: va al campo oculto
+                                       #fpImporteContadoFp y forma-pago.js lo pasa al importe (la mascara es-AR del importe no tolera que le
+                                       escriban "40000.00" por fuera). El detalle va a #fpConteoBilletesCobro. Sin modal de impresion. *@
                                     <div class="input-group fp-cobro-input">
-                                        <span class="input-group-text">$</span>
+                                        <button type="button" id="btnContarBilletesCobroFp"
+                                                class="btn btn-outline-success fp-cobro-btn-billetes js-calculadora-billetes-launch"
+                                                data-cb-input="#fpImporteContadoFp"
+                                                data-cb-conteo="#fpConteoBilletesCobro"
+                                                data-cb-sin-post="true"
+                                                title="Contar billetes (Alt+B)"
+                                                aria-label="Contar billetes">$</button>
                                         <input type="text" id="txtImporteCobroFp" class="form-control text-right"
                                                inputmode="decimal" autocomplete="off" placeholder="0,00">
                                     </div>
@@ -149,11 +160,26 @@
                                         <input type="checkbox" class="custom-control-input" id="chkPagaTodoFp">
                                         <label class="custom-control-label" for="chkPagaTodoFp">Paga todo</label>
                                     </div>
+                                    <input type="hidden" id="fpImporteContadoFp">
+                                    <textarea id="fpConteoBilletesCobro" class="d-none" readonly tabindex="-1"></textarea>
                                 </div>
                                 <div class="fp-cobro-queda" id="fpCobroSaldoQueda" role="status"></div>
-                                <div class="fp-cobro-leyenda">Elegí con qué paga: la venta va a Cta. Cte. y el cobro se registra con esa forma de pago (en Pago Mixto, como dos cobros).</div>
+                                <div class="fp-cobro-conteo d-none" id="fpCobroConteoResumen" role="status">
+                                    <div class="fp-cobro-conteo-detalle" id="fpCobroConteoDetalle"></div>
+                                    <div class="fp-cobro-conteo-estado" id="fpCobroConteoEstado"></div>
+                                    <div class="fp-cobro-conteo-acciones">
+                                        <button type="button" class="btn btn-link btn-sm p-0" id="btnRecontarBilletesCobroFp">Volver a contar</button>
+                                        <button type="button" class="btn btn-link btn-sm p-0" id="btnQuitarConteoCobroFp">Quitar</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        @* Por que el pago va a la cuenta corriente (2026-11-02): ocupa todo el ancho bajo los dos cuadros (en la
+                           grilla del modo compacto abarca las dos columnas). Lo llena forma-pago.js (actualizarDetalleCobroSaldo)
+                           con el total de la venta; solo se ve con "El cliente paga ahora" tildado. Reemplaza a la leyenda chica
+                           que el modo compacto ocultaba. *@
+                        <div class="fp-cobro-aviso d-none" id="fpCobroAvisoCtaCte" role="note"></div>
                     </div>
 
                     <!-- TOTAL VENTA -->
@@ -494,10 +520,52 @@
         color: #b45309;
     }
 
-    #modalFormaPago .fp-cobro-leyenda {
-        margin-top: .2rem;
+    #modalFormaPago .fp-cobro-btn-billetes {
+        font-weight: 800;
+        min-width: 2.4rem;
+    }
+
+    /* Aviso "por que va a la cuenta corriente" (2026-11-02): azul informativo, siempre visible con el cobro tildado. */
+    #modalFormaPago .fp-cobro-aviso {
+        margin-top: .4rem;
+        padding: .3rem .6rem;
+        border: 1px solid #9ec5fe;
+        border-left-width: .35rem;
+        border-radius: .5rem;
+        background: #e7f1ff;
+        color: #052c65;
+        font-size: .82rem;
+        line-height: 1.25;
+        text-align: left;
+    }
+
+    /* Resumen del contador de billetes bajo el importe: texto corrido (no una lista) para que el modal no crezca. */
+    #modalFormaPago .fp-cobro-conteo {
+        margin-top: .3rem;
+        padding: .25rem .5rem;
+        border-radius: .4rem;
+        background: #e9f7ef;
+        color: #0f5132;
+        font-size: .78rem;
+        line-height: 1.25;
+    }
+
+    #modalFormaPago .fp-cobro-conteo--aviso {
+        background: #fff3cd;
+        color: #664d03;
+    }
+
+    #modalFormaPago .fp-cobro-conteo-detalle {
+        font-weight: 600;
+    }
+
+    #modalFormaPago .fp-cobro-conteo-acciones {
+        display: flex;
+        gap: .8rem;
+    }
+
+    #modalFormaPago .fp-cobro-conteo-acciones .btn-link {
         font-size: .75rem;
-        color: #6c757d;
     }
 
     html.dark-mode #modalFormaPago .fp-cobro-saldo {
@@ -520,8 +588,20 @@
         color: #fbbf24;
     }
 
-    html.dark-mode #modalFormaPago .fp-cobro-leyenda {
-        color: #9db0c7;
+    html.dark-mode #modalFormaPago .fp-cobro-aviso {
+        background: rgba(96, 165, 250, .12);
+        border-color: #3b6fb0;
+        color: #cfe2ff;
+    }
+
+    html.dark-mode #modalFormaPago .fp-cobro-conteo {
+        background: rgba(115, 224, 194, .12);
+        color: #73e0c2;
+    }
+
+    html.dark-mode #modalFormaPago .fp-cobro-conteo--aviso {
+        background: rgba(251, 191, 36, .14);
+        color: #fbbf24;
     }
 
     /* Modo compacto (bloque de descuento o Pago Mixto abiertos): el cuadro se achica para que el modal siga entrando. */
@@ -529,8 +609,16 @@
         padding: .25rem .5rem;
     }
 
-    #modalFormaPago.pos-modal-compacto .fp-cobro-leyenda {
-        display: none;
+    #modalFormaPago.pos-modal-compacto .fp-cobro-aviso {
+        margin-top: 0;
+        padding: .2rem .5rem;
+        font-size: .76rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .fp-cobro-conteo {
+        margin-top: .15rem;
+        padding: .15rem .4rem;
+        font-size: .72rem;
     }
 
     #modalFormaPago.pos-modal-compacto .fp-saldo-ctacte {
@@ -579,6 +667,11 @@
 
         #modalFormaPago.pos-modal-compacto #fpSaldoCtaCteBox.fp-saldo-con-cobro.d-none {
             display: none;
+        }
+
+        /* El aviso de la cuenta corriente abarca las dos columnas (va bajo los dos cuadros). */
+        #modalFormaPago.pos-modal-compacto #fpSaldoCtaCteBox.fp-saldo-con-cobro > .fp-cobro-aviso {
+            grid-column: 1 / -1;
         }
     }
 

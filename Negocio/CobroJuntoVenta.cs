@@ -66,6 +66,27 @@ namespace Negocio
             return saldo < 0m ? -saldo : 0m;
         }
 
+        // Largo maximo del detalle del contador de billetes que se acepta del navegador. Un conteo completo
+        // (10 denominaciones + monedas + total) ronda los 450 caracteres: el tope solo corta pedidos anomalos.
+        public const int MaxLongitudConteoBilletes = 2000;
+
+        // Detalle del contador de billetes que se guarda en el cobro (2026-11-02): solo un cobro SIMPLE en
+        // Efectivo con importe tipeado/contado. Con "Paga todo" el importe lo recalcula el servidor (no es
+        // lo contado), con pago mixto el efectivo es una parte del cobro y con otra forma de pago no hay
+        // billetes. Devuelve "" cuando no corresponde guardarlo (o si el texto es demasiado largo): el
+        // cobro se registra igual, solo sin detalle. No se confia en lo que diga el navegador.
+        public static string ConteoAGuardar(string conteo, string formaPago, bool esMixto, bool pagaTodo)
+        {
+            string texto = (conteo ?? "").Trim();
+            if (texto.Length == 0 || texto.Length > MaxLongitudConteoBilletes)
+                return "";
+
+            if (esMixto || pagaTodo)
+                return "";
+
+            return string.Equals(NormalizarForma(formaPago), Efectivo, StringComparison.OrdinalIgnoreCase) ? texto : "";
+        }
+
         // Parte el cobro en 1 o 2 cobros reales.
         //  - Sin mixto: un cobro por `importe` con `formaPago`.
         //  - Mixto (`esMixto`): `efectivo` en Efectivo y el resto (`importe - efectivo`) en `formaPago`,

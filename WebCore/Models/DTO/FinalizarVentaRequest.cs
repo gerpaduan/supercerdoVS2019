@@ -55,5 +55,9 @@ namespace WebCore.Models.DTO
 
         // "Paga todo": se cobra lo que el cliente debe despues de esta venta, calculado por el servidor.
         public bool PagaTodo { get; set; }
+
+        // Detalle del contador de billetes con el que se armo el importe (opcional). Solo se guarda en un cobro
+        // simple en Efectivo sin "Paga todo" (Negocio.CobroJuntoVenta.ConteoAGuardar decide).
+        public string ConteoBilletes { get; set; }
     }
 }

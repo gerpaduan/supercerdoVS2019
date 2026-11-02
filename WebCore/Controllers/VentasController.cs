@@ -3923,7 +3923,7 @@ namespace WebCore.Controllers
                         Banco = "",
                         NroCheque = "",
                         TitularCheque = "",
-                        ConteoBilletes = string.Empty,
+                        ConteoBilletes = Negocio.CobroJuntoVenta.ConteoAGuardar(cobro.ConteoBilletes, parte.FormaPago, cobro.EsMixto, cobro.PagaTodo),
                         Cheques = new List<Entidades.Cheque>(),
                         Observaciones = "Cobro junto con la venta #" + idVenta,
                         NroRecibo = _oCtaCteN.getNroReciboAutomatico(venta.Sucursal.idSucursal),

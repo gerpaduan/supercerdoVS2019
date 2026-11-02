@@ -521,6 +521,7 @@ $('#modalFormaPago').on('shown.bs.modal', function () {
     $('#chkCobrarSaldoFp').prop('checked', false);
     $('#chkPagaTodoFp').prop('checked', false);
     $('#txtImporteCobroFp').val('');
+    limpiarConteoCobro(); // el conteo de billetes del cobro tampoco sobrevive a reabrir el modal
     resetPagoMixto();
     window.preCargarFormaPagoActual?.();
 });
@@ -1188,13 +1189,87 @@ function importeCobroFormaPago() {
     return Number.isFinite(importe) && importe > 0 ? importe : 0;
 }
 
+// ---- Contador de billetes en el cobro (2026-11-02, ver docs/DECISIONS.md "Contador de billetes en el cobro junto
+// con la venta") ----
+// El "$" junto al importe abre la calculadora de billetes (calculadora-billetes.js). Al aceptar deja el total en el
+// campo oculto #fpImporteContadoFp y el detalle en #fpConteoBilletesCobro; de ahi el total pasa al importe que paga y
+// el detalle se resume debajo. El detalle solo viaja con el cobro (data.cobroSaldo.conteoBilletes) si sigue valiendo:
+// importe igual a lo contado, cobro simple y en Efectivo (el servidor lo vuelve a verificar: ConteoAGuardar).
+//
+// Total con el que se armo el detalle que hay en pantalla (null = no hay detalle). Si despues el importe se cambia a
+// mano, el detalle deja de valer.
+let importeDelConteoCobro = null;
+// La calculadora se abrio desde este modal: al cerrarse hay que devolver el foco al importe (ella lo manda a
+// #inputCodigo, que queda detras del modal).
+let contadorCobroAbierto = false;
+
+function conteoCobroTexto() {
+    return ($('#fpConteoBilletesCobro').val() || '').trim();
+}
+
+// Detalle listo para enviar: '' si no hay, si el importe ya no coincide con lo contado o si es "Paga todo".
+function conteoCobroVigente() {
+    const conteo = conteoCobroTexto();
+    if (!conteo || importeDelConteoCobro === null) return '';
+    if ($('#chkPagaTodoFp').is(':checked')) return '';
+    return Math.abs(importeCobroFormaPago() - importeDelConteoCobro) < 0.005 ? conteo : '';
+}
+
+// "1 x $20.000 · 4 x $2.000 · Monedas $ 2.000,00" a partir de las lineas del conteo (sin la linea TOTAL: el total
+// se muestra aparte). Lineas del formato de calculadora-billetes.js -> buildDetalleLineas.
+function resumirConteoCobro(conteo) {
+    return conteo.split(/\r?\n/)
+        .map(function (linea) { return linea.trim(); })
+        .filter(function (linea) { return linea && !/^TOTAL/i.test(linea); })
+        .map(function (linea) { return linea.split(' = ')[0].replace(/^Monedas:/, 'Monedas'); })
+        .join(' · ');
+}
+
+function actualizarResumenConteoCobro() {
+    const conteo = conteoCobroTexto();
+    const $resumen = $('#fpCobroConteoResumen');
+    if (!conteo || importeDelConteoCobro === null) {
+        $resumen.addClass('d-none');
+        return;
+    }
+
+    const contado = '$ ' + formatearImporteFormaPago(importeDelConteoCobro);
+    const mixto = $('#chkPagoMixto').is(':checked');
+    const vigente = conteoCobroVigente() !== '';
+    let estado;
+    if (!vigente) {
+        estado = 'El importe ya no coincide con lo contado (' + contado + '): el detalle no se guarda.';
+    } else if (mixto) {
+        estado = 'En Pago Mixto el detalle no se guarda.';
+    } else {
+        estado = 'El detalle se guarda en el cobro si paga en Efectivo (1).';
+    }
+
+    $('#fpCobroConteoDetalle').text('Billetes contados: ' + resumirConteoCobro(conteo) + ' = ' + contado);
+    $('#fpCobroConteoEstado').text(estado);
+    $resumen.toggleClass('fp-cobro-conteo--aviso', !vigente || mixto).removeClass('d-none');
+}
+
+function limpiarConteoCobro() {
+    $('#fpConteoBilletesCobro').val('');
+    $('#fpImporteContadoFp').val('');
+    importeDelConteoCobro = null;
+    actualizarResumenConteoCobro();
+}
+
 function actualizarDetalleCobroSaldo(deuda) {
     const tildado = cobroSaldoTildado();
     actualizarModoCompactoModal(); // el cobro tildado achica el modal (igual que Pago Mixto)
     $('#fpCobroSaldoDetalle').toggleClass('d-none', !tildado);
+    $('#fpCobroAvisoCtaCte').toggleClass('d-none', !tildado);
     $('#fpSaldoCtaCteTitulo').text(tildado ? TITULO_SALDO_CON_COBRO : TITULO_SALDO_CTACTE);
     $('#lblAtajoCobrarSaldo').text(tildado ? 'Atajo: presioná "C" para quitarlo' : 'Atajo: presioná "C"');
     if (!tildado) return;
+
+    // Por que el pago va a la cuenta corriente: la venta queda a Cta. Cte. y el cobro se asienta contra esa deuda.
+    $('#fpCobroAvisoCtaCte').text('La venta ($ ' + formatearImporteFormaPago(totalVentaActual) + ') y el pago van a la cuenta corriente del cliente: ' +
+        'la venta se suma a su deuda y lo que paga ahora se le descuenta. Cta. Cte. queda inhabilitado; ' +
+        'el botón que elijas indica solo con qué paga (en Pago Mixto, como dos cobros).');
 
     const pagaTodo = $('#chkPagaTodoFp').is(':checked');
     const $importe = $('#txtImporteCobroFp');
@@ -1207,6 +1282,8 @@ function actualizarDetalleCobroSaldo(deuda) {
         actualizandoImporteCobro = false;
     }
     $importe.prop('readonly', pagaTodo || ventaEnProceso);
+    // Con "Paga todo" el importe lo pone el sistema: no se cuenta ni se carga a mano.
+    $('#btnContarBilletesCobroFp').prop('disabled', pagaTodo || ventaEnProceso);
     $('#chkCobrarSaldoFp, #chkPagaTodoFp').prop('disabled', ventaEnProceso);
 
     // Lo que le queda a la cuenta del cliente despues de cobrar: es lo que no se puede equivocar.
@@ -1228,6 +1305,7 @@ function actualizarDetalleCobroSaldo(deuda) {
     }
     $('#fpCobroSaldoQueda').removeClass('fp-cobro-queda--debe fp-cobro-queda--favor fp-cobro-queda--aviso')
         .addClass(clase).text(texto);
+    actualizarResumenConteoCobro();
 }
 
 function actualizarSaldoCtaCteFormaPago() {
@@ -1304,7 +1382,10 @@ function armarCobroSaldoFormaPago(formaPago, esMixto, efectivo) {
         return false;
     }
 
-    return { formaPago: formaPago, esMixto: !!esMixto, efectivo: Number(efectivo) || 0, importe: importe, pagaTodo: pagaTodo };
+    // Detalle del contador de billetes: solo en un cobro simple en Efectivo y mientras el importe coincida con lo contado.
+    const conteoBilletes = String(formaPago).toLowerCase() === 'efectivo' && !esMixto && !pagaTodo ? conteoCobroVigente() : '';
+
+    return { formaPago: formaPago, esMixto: !!esMixto, efectivo: Number(efectivo) || 0, importe: importe, pagaTodo: pagaTodo, conteoBilletes: conteoBilletes };
 }
 
 // Monto que hay que repartir en el pago mixto: el total de la venta o, con cobro, el importe que paga el cliente.
@@ -1316,6 +1397,7 @@ function objetivoPagoMixto() {
 // cajero elige si cobra todo o escribe el importe) con el importe vacio, y Cta. Cte. se inhabilita.
 $('#chkCobrarSaldoFp').on('change', function () {
     const tildado = this.checked;
+    limpiarConteoCobro(); // tildado o destildado, el conteo de un cobro anterior no vale
     if (tildado) {
         $('#chkPagaTodoFp').prop('checked', false);
         actualizandoImporteCobro = true;
@@ -1335,6 +1417,7 @@ $('#chkCobrarSaldoFp').on('change', function () {
 // "Paga todo": completa la deuda; destildado, el cajero tipea el importe.
 $('#chkPagaTodoFp').on('change', function () {
     limpiarMontosPagoMixto();
+    if (this.checked) limpiarConteoCobro(); // el importe pasa a ser el de la deuda, no lo contado
     if (!this.checked) {
         // Destildado: el campo arranca vacio (tenia la deuda completa) para que el cajero tipee lo que recibe.
         actualizandoImporteCobro = true;
@@ -1351,6 +1434,55 @@ $('#txtImporteCobroFp').on('input', function () {
     if (actualizandoImporteCobro) return;
     limpiarMontosPagoMixto();
     actualizarSaldoCtaCteFormaPago();
+});
+
+// La calculadora de billetes aplico su resultado (calculadora-billetes.js -> devolverResultado vuelca primero el total y
+// despues el detalle, y dispara 'change' en este ultimo): el total pasa al importe que paga. Si no se conto nada
+// (total 0) el importe queda como estaba y el conteo en blanco.
+$('#fpConteoBilletesCobro').on('change', function () {
+    const total = Math.round(Number(($('#fpImporteContadoFp').val() || '').replace(',', '.')) * 100) / 100;
+    if (!(total > 0) || !conteoCobroTexto()) {
+        limpiarConteoCobro();
+        return;
+    }
+
+    // Se escribe ya formateado y se avisa a la mascara (que resincroniza su estado); el guard evita que el handler
+    // de 'input' de abajo corra con el campo a medio actualizar.
+    const $importe = $('#txtImporteCobroFp');
+    actualizandoImporteCobro = true;
+    $importe.val(formatearImporteFormaPago(total));
+    $importe.get(0)?.dispatchEvent(new Event('input', { bubbles: true }));
+    actualizandoImporteCobro = false;
+
+    importeDelConteoCobro = total;
+    limpiarMontosPagoMixto();
+    actualizarSaldoCtaCteFormaPago();
+});
+
+$(document).on('click', '#btnContarBilletesCobroFp', function () {
+    contadorCobroAbierto = true;
+});
+
+// Volver a contar: la calculadora siempre arranca en blanco (no precarga el conteo anterior).
+$('#btnRecontarBilletesCobroFp').on('click', function () {
+    $('#btnContarBilletesCobroFp').trigger('click');
+});
+
+$('#btnQuitarConteoCobroFp').on('click', function () {
+    limpiarConteoCobro();
+    $('#txtImporteCobroFp').trigger('focus').select();
+});
+
+// Pago Mixto cambia el aviso del resumen ("en Pago Mixto el detalle no se guarda").
+$('#chkPagoMixto').on('change', actualizarResumenConteoCobro);
+
+// Al cerrarse la calculadora (Aceptar o Cerrar) el foco vuelve al importe: ella lo manda a #inputCodigo.
+$(document).on('hidden.bs.modal', '#modalCalculadoraBilletes', function () {
+    if (!contadorCobroAbierto) return;
+    contadorCobroAbierto = false;
+    setTimeout(function () {
+        if ($('#modalFormaPago').hasClass('show')) $('#txtImporteCobroFp').trigger('focus').select();
+    }, 80);
 });
 
 $(document).ready(function () {
