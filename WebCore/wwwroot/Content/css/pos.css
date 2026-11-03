@@ -2956,3 +2956,161 @@
         border-color: rgba(186, 146, 57, .30) !important;
         color: #f7e6b5 !important;
     }
+
+    /* =========================================================
+     TEMA GRIS del POS (tercer estado junto a claro y oscuro; ver docs/DECISIONS.md).
+     Motivo: en algunos monitores el claro (fondo #f8f9fc contra panel #fff, bordes de ~1,3:1) se ve
+     todo blanco y no se distinguen los bloques. Aca hay tres niveles de fondo (base > panel > bloque), TODO
+     en gris (bloques, chips, buscador y teclas numericas incluidos) y el borde sube a ~2:1. El blanco queda
+     solo en #inputCantidad, la casilla donde se escribe la cantidad.
+     Todo va bajo "html.pos-gris" (la clase la pone _LayoutPOS segun localStorage "carnisys-theme" = "gray"),
+     asi que el claro y el oscuro no cambian. Los colores de accion (Finalizar, Enter, borrar) no se tocan.
+     Los modales NO se ajustan: en gris se ven como en claro (deuda aceptada).
+     Paleta: base #e1e6ec | panel #f1f3f6 | bloque y chips #eaedf1 | teclas #e3e7ec (apretada #d5dbe2) | borde #a3b0be.
+     ========================================================= */
+    html.pos-gris {
+        --pos-bg: #f1f3f6;
+        --pos-border: #a3b0be;
+        --posbar-bg: #f1f3f6;
+        --posbar-border: #a3b0be;
+        --pos-gris-base: #e1e6ec;
+        --pos-gris-bloque: #eaedf1;
+        --pos-gris-chip: #eaedf1;
+        --pos-gris-tecla: #e3e7ec;
+        --pos-gris-tecla-activa: #d5dbe2;
+        --pos-gris-borde: #a3b0be;
+    }
+
+    html.pos-gris #pos-container {
+        background-color: var(--pos-gris-base);
+    }
+
+    /* Bloques del panel derecho: un escalon mas claro que el panel y con borde visible. */
+    html.pos-gris #producto-info {
+        background: var(--pos-gris-bloque) !important;
+        border-color: var(--pos-gris-borde) !important;
+        box-shadow: none;
+    }
+
+    html.pos-gris .zona-botones,
+    html.pos-gris .pos-balanza-card {
+        background: var(--pos-gris-bloque);
+        border-color: var(--pos-gris-borde);
+        box-shadow: none;
+    }
+
+    html.pos-gris .pos-product-metric,
+    html.pos-gris .pos-product-metric-cantidad {
+        background: var(--pos-gris-bloque);
+        border-color: var(--pos-gris-borde);
+        box-shadow: none;
+    }
+
+    /* El pie fijo (Finalizar + botones) no debe pintar un parche azulado sobre el panel gris. */
+    html.pos-gris .pos-footer-panel {
+        background: var(--pos-bg);
+        border-top-color: var(--pos-gris-borde);
+        backdrop-filter: none;
+    }
+
+    html.pos-gris .zona-total {
+        background: transparent;
+        border-top-color: var(--pos-gris-borde);
+    }
+
+    /* Bootstrap 5.3 pinta cada celda con --bs-table-bg (blanco): sobre el panel gris la fila "No hay productos
+       agregados" se veria como una franja blanca. Mismo arreglo que ya existe para el oscuro (ver arriba). */
+    html.pos-gris .zona-tabla .table {
+        --bs-table-bg: transparent;
+    }
+
+    /* Carrito: una divisoria entre renglones (en claro no hay; sobre el panel gris ayuda a seguir la fila). */
+    html.pos-gris .tabla-productos td {
+        border-bottom: 1px solid #c9d2dc;
+    }
+
+    html.pos-gris .pos-total-label {
+        color: #6b7a8c;
+    }
+
+    html.pos-gris .pos-sale-summary,
+    html.pos-gris .pos-sale-items {
+        color: #55667a;
+    }
+
+    /* Elementos que en claro llevan un borde casi invisible: pasan al borde del tema. */
+    html.pos-gris .pos-cliente .input-group,
+    html.pos-gris .pos-search-group,
+    html.pos-gris .pos-btn-layout,
+    html.pos-gris .pos-sucursal-chip,
+    html.pos-gris .pos-time-chip,
+    html.pos-gris .pos-brand-subline,
+    html.pos-gris #scannerContainer .card {
+        border-color: var(--pos-gris-borde);
+    }
+
+    /* Chips, buscador y campos de la barra: en claro son blancos o degradan a blanco; aca van en gris. */
+    html.pos-gris .pos-sucursal-chip,
+    html.pos-gris .pos-time-chip,
+    html.pos-gris .pos-brand-subline,
+    html.pos-gris .pos-search-group,
+    html.pos-gris .pos-cliente .input-group,
+    html.pos-gris #scannerContainer .card {
+        background: var(--pos-gris-chip);
+    }
+
+    /* Botones de la barra (Duplicar POS, Salir). Sin :hover para no pisar el hover de Bootstrap ni el azul
+       de #btnDuplicarPOS. */
+    html.pos-gris .pos-btn-layout:not(:hover) {
+        background: var(--pos-gris-chip);
+    }
+
+    /* El razon social va transparente para que se vea el gris del .input-group; la fecha editable es un campo
+       aparte. Ambos llevan !important en claro (#id + !important), por eso se pisan con !important y #id. */
+    html.pos-gris #razonSocial,
+    html.pos-gris #razonSocial[readonly] {
+        background: transparent !important;
+    }
+
+    html.pos-gris #fechaVentaEditable {
+        background: var(--pos-gris-chip) !important;
+        border-color: var(--pos-gris-borde) !important;
+    }
+
+    html.pos-gris .pos-search-group > .form-control {
+        border-left-color: #c3ccd6 !important;
+        border-right-color: #c3ccd6 !important;
+    }
+
+    /* Placeholder mas oscuro: el de claro (#7b8ba0) sobre el chip gris queda cerca de 3:1. */
+    html.pos-gris .pos-search-group > .form-control::placeholder {
+        color: #66768a;
+    }
+
+    html.pos-gris .lbl-precio,
+    html.pos-gris .lbl-subtotal {
+        color: #54657a;
+    }
+
+    /* La unica casilla que queda blanca: donde se escribe la cantidad. */
+    html.pos-gris #inputCantidad {
+        border-color: var(--pos-gris-borde);
+    }
+
+    /* Teclado numerico: teclas grises. Los estados van explicitos porque esta regla (mas especifica) le gana
+       al :active/:focus de claro y al :hover de Bootstrap; sin ellos la tecla no daria respuesta al apretarla. */
+    html.pos-gris .keyboard-grid .btn-light {
+        background-color: var(--pos-gris-tecla);
+        border-color: var(--pos-gris-borde);
+    }
+
+    html.pos-gris .keyboard-grid .btn-light:hover,
+    html.pos-gris .keyboard-grid .btn-light:active,
+    html.pos-gris .keyboard-grid .btn-light:focus {
+        background-color: var(--pos-gris-tecla-activa);
+        border-color: var(--pos-gris-borde);
+    }
+
+    html.pos-gris .fila-item:hover {
+        background: #e3e8ee;
+    }

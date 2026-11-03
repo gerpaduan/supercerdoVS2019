@@ -56,8 +56,13 @@
     <script>
         (function () {
             try {
-                if (localStorage.getItem("carnisys-theme") === "dark") {
+                // Tres temas en el POS: claro (sin clase), gris ("gray" -> pos-gris) y oscuro ("dark" -> dark-mode).
+                // Se aplica aca, antes de pintar, para que no haya parpadeo del tema claro.
+                var tema = localStorage.getItem("carnisys-theme");
+                if (tema === "dark") {
                     document.documentElement.classList.add("dark-mode");
+                } else if (tema === "gray") {
+                    document.documentElement.classList.add("pos-gris");
                 }
             } catch (e) { }
         })();
@@ -318,8 +323,9 @@
                     <i class="far fa-question-circle text-light"></i>
                 </button>
 
-                <a href="#" id="btnToggleTheme" class="nav-link topbar-icon-btn" title="Cambiar tema">
-                    <i id="icoTheme" class="fas fa-moon text-light"></i>
+                @* Rota claro -> gris -> oscuro -> claro; el icono y el title anuncian el PROXIMO tema (los pone setTheme). *@
+                <a href="#" id="btnToggleTheme" class="nav-link topbar-icon-btn" title="Cambiar tema" aria-label="Cambiar tema">
+                    <i id="icoTheme" class="fas fa-adjust text-light"></i>
                 </a>
 
                 <div class="nav-item dropdown no-arrow">
@@ -414,25 +420,52 @@
         (function () {
             const STORAGE_KEY = "carnisys-theme";
 
+            // Orden de rotacion del boton y, para cada tema, que anuncia el boton (el proximo).
+            // "gray" es solo del POS: el resto de la app solo distingue "dark" y trata cualquier otro valor como claro.
+            const NEXT = { light: "gray", gray: "dark", dark: "light" };
+            const NEXT_UI = {
+                light: { icon: "fas fa-adjust", title: "Activar tema gris" },
+                gray: { icon: "fas fa-moon", title: "Activar modo oscuro" },
+                dark: { icon: "fas fa-sun", title: "Activar modo claro" }
+            };
+
+            function currentTheme() {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    return NEXT[saved] ? saved : "light"; // valor desconocido o vacio -> claro
+                } catch (e) {
+                    // sin acceso al storage: se deduce del tema que ya tiene la pagina
+                    if (document.documentElement.classList.contains("dark-mode")) return "dark";
+                    return document.documentElement.classList.contains("pos-gris") ? "gray" : "light";
+                }
+            }
+
             function setTheme(mode) {
                 const isDark = (mode === "dark");
                 document.documentElement.classList.toggle("dark-mode", isDark);
                 document.body.classList.toggle("dark-mode", isDark);
+                document.documentElement.classList.toggle("pos-gris", mode === "gray");
 
+                const ui = NEXT_UI[mode];
                 const ico = document.getElementById("icoTheme");
-                if (ico) ico.className = isDark ? "fas fa-sun" : "fas fa-moon";
+                const btn = document.getElementById("btnToggleTheme");
+                if (ico) ico.className = ui.icon;
+                if (btn) {
+                    btn.title = ui.title;
+                    btn.setAttribute("aria-label", ui.title);
+                }
 
                 try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) { }
             }
 
             document.addEventListener("DOMContentLoaded", function () {
-                setTheme(localStorage.getItem(STORAGE_KEY) || "light");
+                setTheme(currentTheme());
 
                 const btn = document.getElementById("btnToggleTheme");
                 if (btn) {
                     btn.addEventListener("click", function (e) {
                         e.preventDefault();
-                        setTheme((localStorage.getItem(STORAGE_KEY) || "light") === "dark" ? "light" : "dark");
+                        setTheme(NEXT[currentTheme()]);
                     });
                 }
             });

@@ -1540,3 +1540,27 @@ html.dark-mode .pos-expendio-page .pos-topbar-item-caducidad #caducaElExpendio {
         font-size: clamp(.8rem, 2.2vh, 1.5rem) !important;
     }
 }
+
+/* Tema gris del POS (ver pos.css, bloque "TEMA GRIS"): barra superior de Expendios. La clase "pos-gris" la pone
+   _LayoutPOS segun localStorage "carnisys-theme" = "gray"; claro y oscuro no cambian. */
+html.pos-gris .pos-expendio-page .pos-topbar-expendio {
+    background: var(--pos-bg);
+    border-color: var(--pos-gris-borde);
+    box-shadow: none;
+}
+
+html.pos-gris .pos-expendio-page .pos-topbar-item {
+    background: var(--pos-gris-bloque);
+    border-color: var(--pos-gris-borde);
+}
+
+html.pos-gris .pos-expendio-page .pos-topbar-item-cliente {
+    background: var(--pos-gris-chip);
+}
+
+/* En Expendios el carrito y el total son bloques con fondo propio (blanco y degrade celeste): pasan al gris de bloque. */
+html.pos-gris .pos-expendio-page .zona-tabla,
+html.pos-gris .pos-expendio-page .zona-total {
+    background: var(--pos-gris-bloque);
+    border-color: var(--pos-gris-borde);
+}

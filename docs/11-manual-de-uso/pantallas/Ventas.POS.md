@@ -8,7 +8,7 @@ permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pant
 revisada: 2026-11-03
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -116,6 +116,14 @@ En el modal **Expendios** (AvPag), el campo **Persona (cliente del expendio)** b
 - Al elegirla, **Fecha desde** pasa a hace 6 meses (si ya escribiste una fecha a mano se respeta). La **✕** (o Backspace) quita la persona y vuelve a la búsqueda de siempre.
 - Si una persona no trae nada: la **identificación** de la persona debe ser igual a la «Identificación cliente» del expendio (no se compara la razón social, porque personas distintas pueden compartirla).
 - PENDIENTE de probar en el navegador con login (lo verificado fue la consulta contra la base local).
+
+## Tema de colores: claro, gris u oscuro
+El botón de la barra de arriba (a la izquierda de tu nombre) cambia el tema del POS y de Punto de Expendio, en este orden: **claro → gris → oscuro → claro**. El icono muestra el **próximo** tema (medio círculo = pasar a gris, luna = pasar a oscuro, sol = volver a claro).
+- El **gris** sirve cuando el fondo blanco de tu monitor no deja ver las líneas que separan los bloques: el fondo, los bloques, los botones de la barra, el buscador y las **teclas del teclado numérico** son grises, con un borde más marcado que separa cada uno. La única casilla que sigue blanca es la de **Cantidad**, donde se escribe. Las teclas se oscurecen un poco al apretarlas.
+- Se recuerda **en cada computadora y navegador** (no por usuario): al volver a entrar queda el último que elegiste ahí.
+- Los **cuadros emergentes** (modales) se ven como en el tema claro también en el gris.
+- Fuera del POS, el tema gris se ve como el claro; si tocás el botón de tema de otra pantalla estando en gris, pasa a oscuro.
+- PENDIENTE de revisar en el monitor donde se veía todo blanco; lo probado fue el aspecto y el cambio de tema en el navegador de desarrollo.
 
 ## POS bloqueado: «Tu sesión se cerró»
 - Si el POS se bloqueó por inactividad y, mientras tanto, **se cerró la sesión del sistema** (venció, se cerró desde otra pestaña o se inició sesión con otro usuario en el mismo navegador), al tocar **Desbloquear** el POS **no valida la contraseña** y muestra **«Tu sesión se cerró»** en lugar del formulario. Antes mostraba «Contraseña incorrecta.» aunque la clave estuviera bien.
