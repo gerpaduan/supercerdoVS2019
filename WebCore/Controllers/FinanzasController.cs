@@ -107,6 +107,20 @@ namespace WebCore.Controllers
             return operador ?? usuarioSesion;
         }
 
+        // Mismo texto que MisVentas/FinalizarVenta (VentasController) cuando el operador de produccion ya no esta en Session.
+        private const string MensajeOperadorPosVencido = "La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.";
+
+        // True si la cuenta compartida de produccion ya no tiene al operador de esta pestaña de POS en la Session del
+        // servidor (reinicio del servidor, 20 min sin pedidos, o recarga del POS que borro al operador con el
+        // sendBeacon de pagehide, ver Ventas/POS.cshtml). La pantalla del POS puede seguir mostrando al operador, pero
+        // ResolverOperadorPOS ya cae a la cuenta compartida, que nunca tiene caja.
+        private bool OperadorPosVencido(string posInstanceId)
+        {
+            return _usuarioActual != null
+                && _usuarioActual.EsUsuarioProduccion
+                && string.IsNullOrEmpty(HttpContext.Session.GetString("OperadorPOS_" + (posInstanceId ?? "")));
+        }
+
         // Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01). Para un usuario restringido y una
         // persona reservada: saca del extracto los movimientos que no puede ver, saca la fila sintetica
         // "Saldo Anterior" (id 0, suma TODO el historial previo, incluido lo oculto) y anula el saldo
@@ -1233,6 +1247,11 @@ namespace WebCore.Controllers
 
             if (desdePos)
             {
+                // Sin esto la cuenta compartida (sin caja propia) caia al cartel "Debe tener una caja abierta",
+                // que parecia un problema de permisos del operador (2026-11-02, ver docs/DECISIONS.md).
+                if (OperadorPosVencido(posInstanceId))
+                    return StatusCode(403, MensajeOperadorPosVencido);
+
                 var operadorPago = ResolverOperadorPOS(posInstanceId, _usuarioActual);
                 var cierreCajaActual = ObtenerCajaAbiertaUsuario(operadorPago);
                 if (cierreCajaActual == null)
@@ -1418,6 +1437,10 @@ namespace WebCore.Controllers
             Entidades.CierreCaja cierreCajaActual = null;
             if (desdePos)
             {
+                // Mismo criterio que AddOrEditPago (GET): operador perdido de la Session != "sin caja abierta".
+                if (OperadorPosVencido(posInstanceId))
+                    return Json(new { ok = false, mensaje = MensajeOperadorPosVencido });
+
                 cierreCajaActual = ObtenerCajaAbiertaUsuario(ResolverOperadorPOS(posInstanceId, _usuarioActual));
                 if (cierreCajaActual == null)
                 {

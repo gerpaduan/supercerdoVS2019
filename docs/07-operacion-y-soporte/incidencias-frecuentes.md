@@ -19,6 +19,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Causa**: la sesión de login se cerró mientras el POS estaba bloqueado (cookie vencida, logout o login de otro usuario en otra pestaña). `POST /Ventas/DesbloquearPOS` responde 401 (sin sesión), 400 (token antiforgery de otro usuario) o una página que no es JSON, y `pos-bloqueo.js` lo mostraba como error de clave. La clave nunca llegaba a validarse.
 - **Resolucion**: `pos-bloqueo.js` detecta 401, 400 o respuesta no-JSON y muestra «Tu sesión se cerró» con el botón **Volver a iniciar sesión** (`_BloqueoPOS.cshtml`). Para el usuario: tocar ese botón e ingresar de nuevo.
 
+## 2026-11-02 - POS (cuenta de Producción): «No se pudo cargar el formulario de pago» al tocar Agregar Pago / Cobro
+
+- **Sintoma**: en la cuenta corriente de una persona dentro del POS, **Agregar Pago / Cobro** mostraba solo «No se pudo cargar el formulario de pago.», aunque el operador tenía permisos y su caja abierta.
+- **Causa**: la cuenta compartida de Producción había perdido al operador de la Session del servidor (reinicio del servidor, 20 min sin pedidos, o recarga del POS: el `sendBeacon` de `pagehide` puede borrarlo justo después de que la página nueva lo leyó). El POS seguía mostrando «Operador: …», pero `AddOrEditPago` caía a la cuenta compartida, que nunca tiene caja, y devolvía 403 «Debe tener una caja abierta…». El cartel genérico escondía el motivo.
+- **Resolucion**: `FinanzasController.AddOrEditPago` (GET y POST) responde «La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.» y el cartel del POS ahora muestra el mensaje del servidor (o «(error NNN)»). Para el usuario: **Cambiar operario** / recargar el POS y autorizarse de nuevo. Si el mensaje es «Debe tener una caja abierta…», el operador sí está pero no tiene caja abierta en la sucursal.
+
 ## 2026-10-29 - POS (F6): «Enviar por email» desde Detalle de venta dejaba la pantalla bloqueada
 
 - **Sintoma**: F6 → Detalle de venta → Factura / Imprimir → Enviar por email: el modal de email se veía oscurecido y no se podía escribir ni cerrar.

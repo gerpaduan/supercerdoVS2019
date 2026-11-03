@@ -13,6 +13,12 @@
 - **Ajuste del mismo día (pedido del usuario tras ver el mockup):** gris más claro y bloques, chips, buscador, carrito y total de Expendios y **teclas del teclado numérico** también en gris; solo `#inputCantidad` queda blanco. Las teclas tienen estados `:hover`/`:active`/`:focus` explícitos. Paleta y contrastes en `docs/DECISIONS.md`.
 - **Verificado:** build sin errores; Ventas/POS y PuntosExpendio/POS en los 3 temas en WebCore propio, con barrido por script de elementos blancos, tecla con respuesta al mouse y carrito con un producto cargado sin finalizar; el claro y el oscuro conservan los mismos colores calculados. El usuario descartable y el borrador de venta que guardó el POS ya están borrados. **Sin verificar:** el monitor problemático, móvil, modales en gris, SQL Server. Sin deploy ni commit.
 
+## 2026-11-02 - Pago/Cobro desde el POS: mensaje real cuando la cuenta de Producción perdió al operador
+
+- **Pedido:** «No se pudo cargar el formulario de pago» con un operador de Producción que tiene permisos.
+- **Cambio:** ver `docs/DECISIONS.md` (2026-11-02). Archivos: `FinanzasController.cs` (`OperadorPosVencido`, GET y POST de `AddOrEditPago`), `Views/Ventas/POS.cshtml` (cartel de `cargarPago` con el motivo real). Manual: `Finanzas.AddOrEditPago`. Incidencia en `07-operacion-y-soporte/incidencias-frecuentes.md`.
+- **Verificado:** build sin errores; en WebCore propio (puerto 5272, usuarios y caja descartables ya borrados) el formulario carga con operador y, tras borrar al operador de Session, el cartel muestra «La autorización del vendedor venció…». **Sin verificar:** el POST con operador vencido, otras acciones del POS con el mismo patrón (ver DECISIONS), SQL Server.
+
 ## 2026-11-02 - Filtros compactos en Cajas abiertas, Líneas de elaborado y de stock y Home; Ingreso rápido/Desarme con filas altas; Existencia con barra plegable
 
 - **Pedido:** estilo compacto de Compras/Movimientos en `/Home/Index`, `/Cajas/CajasAbiertas`, `/Elaborados/Lineas`, `/Stock/Lineas`; Ingreso rápido y Desarme con tabla a la mitad del ancho y filas altas para elegir con doble clic; Existencia por sucursales con más filas en celular (solo Sucursal y Producto, resto plegado), también en la ventana independiente, con aviso antes de cerrarla. Relevamiento de módulos con letra grande (abajo). Mockup aprobado antes de codificar.

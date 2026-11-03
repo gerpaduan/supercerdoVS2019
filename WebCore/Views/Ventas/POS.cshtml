@@ -1991,8 +1991,24 @@ else
                         success: function (html) {
                             renderConScripts(html, "#contenedorPagoPOS", function () { });
                         },
-                        error: function () {
-                            $("#contenedorPagoPOS").html('<div class="alert alert-danger m-3 mb-0">No se pudo cargar el formulario de pago.</div>');
+                        error: function (xhr) {
+                            // Muestra el motivo real que manda el servidor (ej. 403 "Debe tener una caja abierta...",
+                            // o el rechazo de una cuenta reservada) en vez de un cartel generico que parecia un problema
+                            // de permisos. Solo se muestran textos cortos y sin HTML (una pagina de error 500 no es un
+                            // mensaje); si no hay detalle queda el codigo HTTP. Se arma con .text(): nada se inyecta como HTML.
+                            var detalle = "";
+                            if (xhr && xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.msg)) {
+                                detalle = String(xhr.responseJSON.message || xhr.responseJSON.msg);
+                            } else if (xhr && typeof xhr.responseText === "string" && xhr.responseText.length > 0
+                                && xhr.responseText.length <= 300 && xhr.responseText.indexOf("<") === -1) {
+                                detalle = xhr.responseText;
+                            } else if (xhr && xhr.status) {
+                                detalle = "(error " + xhr.status + ")";
+                            }
+
+                            $("#contenedorPagoPOS").empty().append(
+                                $('<div class="alert alert-danger m-3 mb-0"></div>')
+                                    .text("No se pudo cargar el formulario de pago." + (detalle ? " " + detalle : "")));
                         },
                         complete: function () {
                             window.POSGuard?.endAction("finanzas:cargarPago");
