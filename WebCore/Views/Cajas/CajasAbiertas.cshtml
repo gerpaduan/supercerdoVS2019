@@ -16,11 +16,14 @@
 <div class="container-fluid px-2 px-md-3 cajas-page cajas-form-compact">
     @Html.AntiForgeryToken()
 
-    <div class="card shadow-sm mb-3 cajas-panel-card">
+    @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila (estilos en Shared/_FiltrosCompactosStyles,
+       --fc-cols en el <style> de esta vista); por debajo de 1200 px conserva el orden de siempre. *@
+    <div class="fc-top">
+    <div class="card shadow-sm mb-3 cajas-panel-card fc-card">
         <div class="card-body">
             <form id="formFiltros">
-                <div class="row mb-3">
-                    <div class="col-12 col-md-4 col-xl-3">
+                <div class="cajas-filtros-grid fc-grid">
+                    <div class="form-group mb-0 fc-c1">
                         <label for="idSucursal" class="cajas-filtro-label">Sucursal</label>
                         <select name="idSucursal" id="idSucursal" class="form-control">
                             @if (sucursales.Count > 1)
@@ -36,7 +39,7 @@
                         </select>
                     </div>
 
-                    <div class="col-12 col-md-4 col-xl-3">
+                    <div class="form-group mb-0 fc-c2">
                         <label for="fechaDesde" class="cajas-filtro-label">Fecha desde</label>
                         <input type="date"
                                name="fechaDesde"
@@ -45,7 +48,7 @@
                                class="form-control" />
                     </div>
 
-                    <div class="col-12 col-md-4 col-xl-4">
+                    <div class="form-group mb-0 fc-c3">
                         <label for="buscarVendedor" class="cajas-filtro-label">Vendedor</label>
                         <div class="input-group">
                             <input type="text"
@@ -66,11 +69,14 @@
                 </div>
 
                 @Html.Partial("~/Views/Shared/_AdvertenciaPermisoFecha.cshtml")
-
-                <div id="estadoBusquedaCajasAbiertas" class="text-muted small">Resultados actualizados.</div>
             </form>
         </div>
     </div>
+
+    @* Estado de la busqueda: vive fuera del form para ocupar un lugar en la barra de escritorio. *@
+    <div id="estadoBusquedaCajasAbiertas" class="fc-estado text-muted small mb-3">Resultados actualizados.</div>
+    </div>
+
 
     <div class="card shadow-sm mb-3 cajas-panel-card">
         <div class="card-body">
@@ -105,6 +111,8 @@
             </div>
         </div>
     }
+
+    @Html.Partial("~/Views/Shared/_FiltrosCompactosStyles.cshtml")
 
     <style>
         .cajas-page h6 {
@@ -182,13 +190,29 @@
             margin-bottom: .18rem;
         }
 
-        .cajas-page .cajas-form-compact .form-control,
-        .cajas-page .cajas-form-compact .input-group-text,
-        .cajas-page .cajas-form-compact .btn:not(.btn-sm) {
+        /* Bug corregido (2026-11-02): "cajas-page" y "cajas-form-compact" estan en el MISMO elemento, asi que el selector
+           descendiente ".cajas-page .cajas-form-compact ..." nunca aplicaba y los filtros quedaban en 2.75rem (ui-refresh.css). */
+        .cajas-page.cajas-form-compact .form-control,
+        .cajas-page.cajas-form-compact .input-group-text,
+        .cajas-page.cajas-form-compact .btn:not(.btn-sm) {
             min-height: 2.15rem;
             font-size: .84rem;
             padding: .28rem .56rem;
             border-radius: .52rem;
+        }
+
+        /* Filtros: 1 columna en celular, 3 en tablet; en escritorio (>= 1200 px) los pisa .fc-grid con --fc-cols. */
+        .cajas-page .cajas-filtros-grid {
+            display: grid;
+            gap: .65rem;
+            grid-template-columns: minmax(0, 1fr);
+            --fc-cols: minmax(10rem, 16rem) 9.5rem minmax(14rem, 22rem);
+        }
+
+        @@media (min-width: 768px) and (max-width: 1199.98px) {
+            .cajas-page .cajas-filtros-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
         }
 
         .cajas-page .small,
@@ -223,9 +247,9 @@
                 padding: .72rem .84rem;
             }
 
-            .cajas-page .cajas-form-compact .form-control,
-            .cajas-page .cajas-form-compact .input-group-text,
-            .cajas-page .cajas-form-compact .btn:not(.btn-sm) {
+            .cajas-page.cajas-form-compact .form-control,
+            .cajas-page.cajas-form-compact .input-group-text,
+            .cajas-page.cajas-form-compact .btn:not(.btn-sm) {
                 min-height: 2.02rem;
                 font-size: .81rem;
                 padding: .24rem .5rem;
@@ -251,8 +275,8 @@
                 padding: .65rem .7rem;
             }
 
-            .cajas-page #formFiltros .row > [class*="col-"] {
-                margin-bottom: .45rem;
+            .cajas-page #formFiltros .cajas-filtros-grid {
+                gap: .45rem;
             }
 
             /* En el historial el titulo de la tarjeta es "Caja #id". */

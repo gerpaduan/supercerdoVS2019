@@ -5,10 +5,15 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-10-28
+revisada: 2026-11-02
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
+
+## Filtros
+- En la **computadora** (pantalla de 1200 px o más) **Sucursal**, **Fecha desde** y **Vendedor** (con su botón **Buscar**) van en **una sola fila**, y debajo el texto de estado (*Resultados actualizados.*). En pantallas más angostas se ven uno debajo del otro, como antes.
+- Los campos y el botón **Buscar** de este bloque tienen el mismo tamaño compacto que el resto de las pantallas (antes se veían más grandes por un error de estilo que impedía aplicar el tamaño compacto).
+- El buscador de **Vendedor** filtra mientras escribís; **Buscar** vuelve a consultar.
 
 ## Cómo se usa
 1. Elegí sucursal y buscá al cajero si hace falta.
