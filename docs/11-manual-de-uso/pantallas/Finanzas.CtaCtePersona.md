@@ -18,7 +18,7 @@ Si la sesión es la **cuenta compartida de producción**, al abrir una cuenta co
 - Los permisos y los días que podés ver se toman de **tu usuario**, no de la cuenta compartida.
 - La autorización **vale mientras estés en Finanzas**. Al ir a cualquier otra pantalla (Personas, Ventas…) caduca y hay que identificarse de nuevo.
 - **Cuentas reservadas:** si el usuario con el que te identificaste tiene el permiso **Ctas.Ctes General** (o es administrador), ves la cuenta reservada **completa**: el saldo, todos los movimientos y sus ítems, sin el aviso amarillo. Si solo tiene el permiso de cuenta corriente de una persona, la ves recortada, como cualquier usuario restringido: solo lo que cargó desde la apertura de su caja y sin saldo. Este permiso rige **únicamente dentro de Finanzas**: al abrir una venta o una compra de una cuenta reservada desde acá se vuelve a evaluar con la cuenta compartida y se deniega.
-- **Cancelar** vuelve a la pantalla de donde venías. Abierta desde el POS (F2) no pide esto: el POS ya tiene su propio operador.
+- **Cancelar** vuelve a la pantalla de donde venías. Abierta desde el POS (F2) no pide esto: el POS ya tiene su propio operador, y el permiso que cuenta es **POS - Ctas.Ctes Persona** de ese operador (sin él, «No tenés permiso para ver cuentas corrientes (POS - Ctas.Ctes Persona).»; los días atrás que ves son sus **Días ver**). Ver [POS](Ventas.POS.md).
 
 ## Filtros y acciones
 - **Desde** + **Filtrar**: muestra los movimientos a partir de esa fecha. **Mostrar anulados** suma los registros anulados.

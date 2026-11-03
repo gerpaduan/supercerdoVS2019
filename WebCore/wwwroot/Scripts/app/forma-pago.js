@@ -1551,6 +1551,19 @@ function habilitarYEnfocarInputDescuento() {
 function abrirBloquePorcentajeTotalVenta() {
     if (getModoFormaPagoActual() !== 'finalizacion') return;
 
+    // Sin el permiso "POS - Bonificacion" no se bonifica ni a toda la venta (2026-11-02). POS.cshtml fija
+    // window.POSPuedeBonificar; si la pantalla no lo define (Expendios) no se restringe, como antes.
+    if (window.POSPuedeBonificar === false) {
+        if (window.Swal) {
+            window.Swal.fire({
+                icon: 'warning',
+                title: 'Bonificación',
+                text: 'No tiene permiso para bonificar (POS - Bonificación).'
+            });
+        }
+        return;
+    }
+
     if (hayLineasBonificadasEnCarrito()) {
         if (window.Swal) {
             window.Swal.fire({

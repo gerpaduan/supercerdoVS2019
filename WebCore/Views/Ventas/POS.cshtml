@@ -1336,6 +1336,9 @@ else
                 usuariosActivos: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new System.Collections.Generic.List<object>()))
             };
 
+            // Permiso "POS - Bonificacion" del vendedor activo, para el boton "%" de toda la venta (forma-pago.js).
+            window.POSPuedeBonificar = @(ViewBag.PuedeBonificarPOS != null && (bool)ViewBag.PuedeBonificarPOS ? "true" : "false");
+
             var cfg = window.PosOperadorConfig;
             if (!cfg.esUsuarioProduccion) return;
 
@@ -1657,9 +1660,10 @@ else
                 POSState: window.POSState,
                 soloFormaPago: false,
                 eliminarFisicoLineasPendientes: false,
-                // Bonificar sin restriccion -- mismo criterio que el resto de la migracion
-                // (usuario stub Admin=true, el chequeo de permiso del original siempre da OK).
-                puedeBonificar: true,
+                // Solo con el permiso "POS - Bonificacion" del vendedor activo (2026-11-02, ver docs/DECISIONS.md "POS:
+                // permisos por funcion"). El servidor lo vuelve a exigir en FinalizarVenta/ModificarVenta.
+                puedeBonificar: @(ViewBag.PuedeBonificarPOS != null && (bool)ViewBag.PuedeBonificarPOS ? "true" : "false"),
+                mensajeSinPermisoBonificar: 'No tiene permiso para bonificar (POS - Bonificación).',
                 getProductoSeleccionado: function () { return posProduct.getProductoSeleccionado(); },
                 setProductoSeleccionado: function (value) { return posProduct.setProductoSeleccionado(value); },
                 getPrecioActual: function () { return posProduct.getPrecioActual(); },
@@ -1901,9 +1905,17 @@ else
                                 window.POSFinanzas.marcarProductosEnCarrito();
                             });
                         },
-                        error: function () {
+                        error: function (xhr) {
                             window.POSModalLoading?.hide();
-                            mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
+                            // Muestra el motivo que manda el servidor (ej. 403 sin "POS - Ctas.Ctes Persona", o el operador
+                            // vencido) cuando es un texto corto y sin HTML; si no, queda el cartel generico. Se arma con
+                            // .text(): nada del servidor se inyecta como HTML.
+                            var detalle = xhr && xhr.status === 403 && typeof xhr.responseText === "string" ? xhr.responseText.trim() : "";
+                            if (detalle && detalle.length <= 200 && detalle.indexOf("<") === -1) {
+                                $("#contenedorFinanzasPOS").empty().append($('<div class="alert alert-warning m-3 mb-0"></div>').text(detalle));
+                            } else {
+                                mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
+                            }
                         },
                         complete: function () {
                             window.POSGuard?.endAction("finanzas:cargar");
@@ -1917,7 +1929,10 @@ else
                 // de dejarlo entrar (consulta puntual) con el saldo oculto, igual que ya hace
                 // abrirCtaCtePersona (abajo) desde hace tiempo.
                 abrirCtasCtes: function () {
-                    this.cargar('@Url.Action("CtasCtes", "Finanzas", new { desdePos = true })', "Cuentas corrientes");
+                    // posInstanceId: el servidor valida "POS - Ctas.Ctes Persona" del operador de esta pestana (2026-11-02).
+                    var url = '@Url.Action("CtasCtes", "Finanzas", new { desdePos = true })';
+                    if (window.POSModo && window.POSModo.instanceId) url += '&posInstanceId=' + encodeURIComponent(window.POSModo.instanceId);
+                    this.cargar(url, "Cuentas corrientes");
                 },
 
                 abrirCtaCtePersona: function (idPersona, fechaDesde) {

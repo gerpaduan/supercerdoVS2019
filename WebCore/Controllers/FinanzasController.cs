@@ -121,6 +121,50 @@ namespace WebCore.Controllers
                 && string.IsNullOrEmpty(HttpContext.Session.GetString("OperadorPOS_" + (posInstanceId ?? "")));
         }
 
+        // Cuenta corriente / pagos desde el POS: el que consulta es el OPERADOR de la pestana (no la cuenta compartida
+        // de produccion) y necesita "POS - Ctas.Ctes Persona" (docs/DECISIONS.md, 2026-11-02 "POS: permisos por
+        // funcion"). Devuelve null si puede, o el motivo para responder 403. Los dias ver del permiso los aplica cada
+        // pantalla con PermisosHelper.ObtenerFechaMinimaPermitida.
+        private string ValidarCtaCteDesdePos(string posInstanceId, out Entidades.Usuario operador)
+        {
+            operador = null;
+            if (OperadorPosVencido(posInstanceId)) return MensajeOperadorPosVencido;
+
+            operador = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+            if (!_oUsuarioN.tienePermiso(operador, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1))
+                return "No tenés permiso para ver cuentas corrientes (POS - Ctas.Ctes Persona).";
+
+            return null;
+        }
+
+        // Cargar o modificar un pago/cobro desde el POS (2026-11-02): exige la parte de edicion de "POS - Ctas.Ctes
+        // Persona". Un pago ya guardado se modifica solo si es del propio operador, de su caja abierta
+        // (EsPagoDeMiCajaAbierta) y dentro del limite de fecha: el mas reciente entre el inicio de la caja y los dias
+        // editar del permiso (Negocio.LimiteEdicionCaja). El administrador no tiene limites. null = puede.
+        private string ValidarPermisoPagoDesdePos(Entidades.Pago pagoExistente, DateTime fechaNueva, Entidades.Usuario operador, Entidades.CierreCaja caja, string posInstanceId)
+        {
+            if (operador == null) return MensajeOperadorPosVencido;
+            if (operador.Admin) return null;
+
+            if (!_oUsuarioN.tienePermiso(operador, Entidades.Permisos.Finanza.AddOrEditPago, DateTime.Now, operador.Id))
+                return "No tenés permiso para cargar ni modificar pagos o cobros (POS - Ctas.Ctes Persona).";
+
+            // Alta: la fecha ya se acota a la caja abierta en AddOrEditPagoPost.
+            if (pagoExistente == null) return null;
+
+            if (!EsPagoDeMiCajaAbierta(pagoExistente, posInstanceId))
+                return "Solo podés modificar los pagos y cobros que cargaste desde que abriste tu caja actual.";
+
+            DateTime? minimaPorDias = WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(
+                operador, Entidades.Permisos.Finanza.AddOrEditPago, operador.Id);
+            DateTime? inicioCaja = caja != null ? caja.FechaHoraInicio : null;
+            if (!Negocio.LimiteEdicionCaja.PuedeEditar(pagoExistente.Fecha, inicioCaja, minimaPorDias)
+                || !Negocio.LimiteEdicionCaja.PuedeEditar(fechaNueva, inicioCaja, minimaPorDias))
+                return "Solo podés modificar pagos y cobros desde el inicio de tu caja y dentro de los días que permite tu permiso.";
+
+            return null;
+        }
+
         // Cuenta corriente reservada (docs/DECISIONS.md, 2026-10-01). Para un usuario restringido y una
         // persona reservada: saca del extracto los movimientos que no puede ver, saca la fila sintetica
         // "Saldo Anterior" (id 0, suma TODO el historial previo, incluido lo oculto) y anula el saldo
@@ -178,9 +222,17 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult CtasCtes(string buscar = "", string ordenSaldo = "DESC", bool desdePos = false)
+        public IActionResult CtasCtes(string buscar = "", string ordenSaldo = "DESC", bool desdePos = false, string posInstanceId = "")
         {
             bool renderParcial = desdePos || EsPeticionAjax();
+
+            // Desde el POS (F2) la lista de cuentas corrientes exige "POS - Ctas.Ctes Persona" del operador (2026-11-02).
+            if (desdePos)
+            {
+                string motivoSinAcceso = ValidarCtaCteDesdePos(posInstanceId, out _);
+                if (motivoSinAcceso != null)
+                    return StatusCode(403, motivoSinAcceso);
+            }
 
             // Port de Web/Controllers/FinanzasController.cs:99-134. Bug real (cuarta ronda de
             // pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 4: modal Cuenta Corriente desde
@@ -200,6 +252,7 @@ namespace WebCore.Controllers
 
             ViewBag.Buscar = buscar;
             ViewBag.DesdePOS = desdePos;
+            ViewBag.PosInstanceId = posInstanceId;
             ViewBag.RenderSinLayout = renderParcial;
             ViewBag.OrdenSaldo = ordenSaldo;
             ViewBag.OcultarSaldo = desdePos && !puedeVerCtasCtes;
@@ -564,6 +617,15 @@ namespace WebCore.Controllers
             // del POS (desdePos tiene su propio operador) y con ese operador se evalua el permiso y la ventana
             // de dias; el operador caduca al salir de Finanzas (PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo).
             Entidades.Usuario usuarioConsulta = _usuarioActual;
+            if (desdePos)
+            {
+                // Desde el POS la consulta es del operador de la pestana y exige "POS - Ctas.Ctes Persona" (2026-11-02).
+                string motivoSinAcceso = ValidarCtaCteDesdePos(posInstanceId, out var operadorPos);
+                if (motivoSinAcceso != null)
+                    return StatusCode(403, motivoSinAcceso);
+                usuarioConsulta = operadorPos;
+            }
+
             if (!desdePos && _usuarioActual.EsUsuarioProduccion)
             {
                 var operadorFinanzas = ObtenerOperadorFinanzas();
@@ -664,10 +726,18 @@ namespace WebCore.Controllers
         // VerCtaCtePersona y su ventana de dias) y ademas exige que el movimiento sea de ESA persona: el id viene del
         // navegador y no se confia en el. Las compras muestran precios solo con el permiso VerCompras.
         [HttpGet]
-        public IActionResult DetalleMovimiento(int idPersona, string tabla, int idTabla, bool desdePos = false)
+        public IActionResult DetalleMovimiento(int idPersona, string tabla, int idTabla, bool desdePos = false, string posInstanceId = "")
         {
             // 1) Quien consulta: igual que CtaCtePersona (cuenta de produccion = operador autenticado de Finanzas).
             Entidades.Usuario usuarioConsulta = _usuarioActual;
+            if (desdePos)
+            {
+                string motivoSinAcceso = ValidarCtaCteDesdePos(posInstanceId, out var operadorPos);
+                if (motivoSinAcceso != null)
+                    return StatusCode(403, motivoSinAcceso);
+                usuarioConsulta = operadorPos;
+            }
+
             if (!desdePos && _usuarioActual.EsUsuarioProduccion)
             {
                 usuarioConsulta = ObtenerOperadorFinanzas();
@@ -1254,6 +1324,17 @@ namespace WebCore.Controllers
 
                 var operadorPago = ResolverOperadorPOS(posInstanceId, _usuarioActual);
                 var cierreCajaActual = ObtenerCajaAbiertaUsuario(operadorPago);
+
+                // Un pago NUEVO exige la parte de edicion de "POS - Ctas.Ctes Persona"; abrir uno ya guardado es solo
+                // consulta (se valida al guardar, ver AddOrEditPagoPost). Va antes del aviso de caja: sin permiso el
+                // motivo real es el permiso, no la caja. 2026-11-02.
+                if (idPago <= 0)
+                {
+                    string motivoSinPermiso = ValidarPermisoPagoDesdePos(null, DateTime.Now, operadorPago, cierreCajaActual, posInstanceId);
+                    if (motivoSinPermiso != null)
+                        return StatusCode(403, motivoSinPermiso);
+                }
+
                 if (cierreCajaActual == null)
                     return StatusCode(403, "Debe tener una caja abierta en la sucursal activa para registrar pagos o cobros desde POS.");
             }
@@ -1421,6 +1502,17 @@ namespace WebCore.Controllers
             oPagoE.CreadoPor = oPagoE.Id > 0 ? pagoAnterior.CreadoPor : _usuarioActual;
             oPagoE.ActualizadoPor = oPagoE.Id > 0 ? _usuarioActual : oPagoE.ActualizadoPor;
             oPagoE.FormaPago = oPagoE.FormaPago_.ToString();
+
+            // Desde el POS: permiso de edicion de "POS - Ctas.Ctes Persona" y limite de fecha (2026-11-02, ver
+            // docs/DECISIONS.md "POS: permisos por funcion"). Va antes de validar el resto: si no puede, el motivo es ese.
+            if (desdePos && !OperadorPosVencido(posInstanceId))
+            {
+                var operadorPermisoPago = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+                string motivoSinPermisoPago = ValidarPermisoPagoDesdePos(
+                    pagoAnterior, oPagoE.Fecha, operadorPermisoPago, ObtenerCajaAbiertaUsuario(operadorPermisoPago), posInstanceId);
+                if (motivoSinPermisoPago != null)
+                    return Json(new { ok = false, mensaje = motivoSinPermisoPago });
+            }
 
             var (ok, mensaje) = _oCtaCteN.ValidarPago(oPagoE);
             if (!ok)

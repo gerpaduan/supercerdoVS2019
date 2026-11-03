@@ -29,7 +29,11 @@
             + "?idPersona=" + encodeURIComponent(idPersona)
             + "&fechaDesde=" + encodeURIComponent(fechaDesde)
             + "&returnUrl=" + encodeURIComponent(window.location.pathname + window.location.search)
-            + "&desdePos=" + (config.desdePos ? "true" : "false");
+            + "&desdePos=" + (config.desdePos ? "true" : "false")
+            // Desde el POS el servidor valida "POS - Ctas.Ctes Persona" del operador de esta pestana (2026-11-02).
+            + (config.desdePos && window.POSModo && window.POSModo.instanceId
+                ? "&posInstanceId=" + encodeURIComponent(window.POSModo.instanceId)
+                : "");
     }
 
     function irACtaCte(row) {

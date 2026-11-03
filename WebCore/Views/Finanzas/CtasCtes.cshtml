@@ -59,7 +59,7 @@
         <span id="ctactesCantidadMovil">@Model.Rows.Count cuentas</span>
         @if (!ocultarSaldo)
         {
-            <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos })"
+            <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos, posInstanceId = ViewBag.PosInstanceId as string })"
                data-pos-ajax="@(desdePos ? "true" : "false")"
                data-pos-title="Cuentas corrientes">
                 Saldo: @(ordenSaldo == "ASC" ? "menor primero" : "mayor primero") <i class="fas fa-sort ml-1"></i>
@@ -101,7 +101,7 @@
                                         <!-- Botón ordenar -->
                                         @if (!ocultarSaldo)
                                         {
-                                            <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos })"
+                                            <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos, posInstanceId = ViewBag.PosInstanceId as string })"
                                                class="btn btn-sm btn-light ml-2"
                                                data-pos-ajax="@(desdePos ? "true" : "false")"
                                                data-pos-title="Cuentas corrientes">

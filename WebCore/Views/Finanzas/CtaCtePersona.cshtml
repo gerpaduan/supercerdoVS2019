@@ -455,7 +455,7 @@
                                                 @if (tieneItems)
                                                 {
                                                     <div class="ctacte-det-items-cuerpo"
-                                                         data-url="@Url.Action("DetalleMovimiento", "Finanzas", new { idPersona = ViewBag.IdPersona, tabla = tablaMovimiento, idTabla = idRegistroOrigen, desdePos })">
+                                                         data-url="@Url.Action("DetalleMovimiento", "Finanzas", new { idPersona = ViewBag.IdPersona, tabla = tablaMovimiento, idTabla = idRegistroOrigen, desdePos, posInstanceId = posInstanceIdCtaCte })">
                                                         <span class="text-muted">Cargando detalle…</span>
                                                     </div>
                                                 }
