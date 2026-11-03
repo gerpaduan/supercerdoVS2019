@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (62 de 99 pantallas)
+## Cobertura (64 de 99 pantallas)
 
 ## Manual del usuario
 
@@ -51,11 +51,12 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-30 |
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-10-27 |
 | pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-31 |
-| pantallas | Ingreso rápido y desarme de elaborado (listado) | Elaborados | `pantallas/Elaborados.IngresoRapido.md` | 2026-10-27 |
-| pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-10-14 |
+| pantallas | Ingreso rápido y desarme de elaborado (listado) | Elaborados | `pantallas/Elaborados.IngresoRapido.md` | 2026-11-02 |
+| pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-11-02 |
 | pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-02 |
 | pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-10-29 |
-| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-10-31 |
+| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-02 |
+| pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-02 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-10-30 |
 | pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-10-31 |
 | pantallas | Personas | Personas | `pantallas/Personas.Index.md` | 2026-11-02 |
@@ -65,11 +66,12 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-10-22 |
 | pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-30 |
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-31 |
+| pantallas | Líneas de stock | Stock | `pantallas/Stock.Lineas.md` | 2026-11-02 |
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-10-30 |
 | pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-10-28 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-10-28 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
-| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-02 |
+| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-03 |
 | pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-10-28 |
 
 ## Manual del administrador
@@ -79,12 +81,12 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Dispositivo seguro (qué es y cómo se configura) | Acceso y seguridad | `conceptos/dispositivo-seguro.md` | 2026-10-15 |
 | pantallas | Auditoría de accesos | Acceso y seguridad | `pantallas/AuditoriaLogin.Index.md` | 2026-10-03 |
 | pantallas | Dispositivos seguros | Acceso y seguridad | `pantallas/DispositivosSeguros.Index.md` | 2026-10-22 |
-| pantallas | Cajas abiertas y cierre de caja | Caja | `pantallas/Cajas.CajasAbiertas.md` | 2026-10-28 |
+| pantallas | Cajas abiertas y cierre de caja | Caja | `pantallas/Cajas.CajasAbiertas.md` | 2026-11-02 |
 | pantallas | Certificado ARCA | Facturación | `pantallas/CertificadoArca.Index.md` | 2026-10-12 |
 | pantallas | Titulares de facturación | Facturación | `pantallas/TitularesFiscales.Index.md` | 2026-10-12 |
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
 | pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-10-13 |
-| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-10-30 |
+| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-02 |
 | pantallas | Modificar pedido | Stock | `pantallas/Pedidos.Editar.md` | 2026-10-20 |
 | pantallas | Pedido (detalle) | Stock | `pantallas/Pedidos.Detalle.md` | 2026-10-20 |
 | pantallas | Pedidos | Stock | `pantallas/Pedidos.Index.md` | 2026-10-27 |
@@ -115,7 +117,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **DispositivosSeguros**: AutorizarModulo
 - **Empleados**: Editar, Historial, Index, Vacaciones
 - **Finanzas**: Cheques, Pagos
-- **Home**: Index, Utilidades
+- **Home**: Utilidades
 - **Jornadas**: Fichaje, FichajeConfirmar, Index, MiJornada, MiJornadaProduccion
 - **Liquidaciones**: Index, Nueva, Preview
 - **Movimientos**: Lineas
@@ -124,7 +126,6 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **Productos**: AddOrEdit, EmbedGuardado
 - **PuntosExpendio**: POS, Sectores
 - **SeleccionUsuario**: Index
-- **Stock**: Lineas
 - **Sucursal**: Editar, Index
 - **SucursalesSpike**: Index
 - **SystemAdministration**: EditarSucursal, Sucursales
