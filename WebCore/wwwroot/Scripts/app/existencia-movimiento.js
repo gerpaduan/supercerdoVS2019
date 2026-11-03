@@ -136,6 +136,8 @@
             // Cambio de sucursal destino en el movimiento: la pantalla se recarga con esa sucursal (un destino invalido o igual al actual se ignora).
             var id = parseInt(m.idSucursal, 10);
             if (id > 0 && id !== cfg.idSucursalMovimiento) {
+                // Recarga a proposito: en la ventana independiente el aviso de "cerrar la ventana" no debe saltar.
+                if (pantalla && typeof pantalla.permitirSalida === 'function') pantalla.permitirSalida();
                 window.location.replace(cfg.urlMovimiento + '?popup=true&modo=movimiento&idSucursal=' + id
                     + '&canal=' + encodeURIComponent(cfg.canalMovimiento || ''));
             }

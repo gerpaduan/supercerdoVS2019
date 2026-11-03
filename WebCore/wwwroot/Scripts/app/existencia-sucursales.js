@@ -46,6 +46,9 @@
     var $chkSucursales = $('.chk-sucursal-existencia');
     var $chkTodasSucursales = $('#chkSucursalTodasExistencia');
     var $lblSucursales = $('#lblSucursalesExistencia');
+    var $btnOpciones = $('#btnMasOpcionesExistencia');         // barra plegable: despliega los controles "ex-sec"
+    var $badgeOpciones = $('#badgeOpcionesExistencia');
+    var $lblResumenCompacto = $('#lblResumenCompactoExistencia');   // pie de una linea de la barra plegable
 
     // Modo movimiento (panel de stock del destino): atajos cortos, por defecto 7 dias y su propia clave (no pisa la de la pantalla normal).
     var MODO_MOV = !!cfg.modoMovimiento;
@@ -241,6 +244,7 @@
         var n = contarFiltrosAvanzadosActivos();
         $badgeAvanzados.text(n).toggleClass('d-none', n === 0);
         $btnAvanzados.toggleClass('btn-outline-secondary', n === 0).toggleClass('btn-outline-primary', n > 0);
+        actualizarBadgeOpciones();
     }
 
     function marcarAtajoPeriodo(dias) {
@@ -562,9 +566,14 @@
         var $tf = $contenedor.find('.tabla-full');
         if (!$tf.length) return;
 
-        var arriba = $tf[0].getBoundingClientRect().top + (window.pageYOffset || 0);
-        var abajoPie = $page.hasClass('existencia-compacto') ? ($('.ex-estado-linea').outerHeight(true) || 0) : 0;
-        $tf.css('max-height', Math.max(260, window.innerHeight - arriba - abajoPie - 14) + 'px');
+        if ($page.hasClass('ex-plegable')) {
+            observarTabla($tf);
+            ajustarAltoTablaAlPie($tf[0]);
+        } else {
+            var arriba = $tf[0].getBoundingClientRect().top + (window.pageYOffset || 0);
+            var abajoPie = $page.hasClass('existencia-compacto') ? ($('.ex-estado-linea').outerHeight(true) || 0) : 0;
+            $tf.css('max-height', Math.max(260, window.innerHeight - arriba - abajoPie - 14) + 'px');
+        }
 
         // "Producto" queda fijo justo a la derecha de "Cod.", cuyo ancho depende del codigo mas largo.
         var $tabla = $tf.find('table.tabla-existencia-sucursales');
@@ -575,6 +584,36 @@
         // las dos filas con rowspan y su alto es el de las dos juntas).
         var alto1 = $tf.find('thead tr:first-child')[0].offsetHeight || 0;
         $tf.find('thead tr:nth-child(2) th').css('top', alto1 + 'px');
+    }
+
+    // Barra plegable (celular y ventana independiente): la tabla llega hasta el pie de estado y el pie de la pagina queda justo al borde de la
+    // ventana, sin hueco debajo ni scroll de pagina. Se MIDE en vez de calcular: se quita el tope, se ve cuanto se pasa el documento de la
+    // ventana (pie de pagina, margenes y alto del estado ya estan incluidos) y se recorta la tabla en esa cantidad. Con pocas filas no se pasa
+    // y la tabla queda de su alto natural. Se conserva el desplazamiento de la tabla y de la pagina (quitar el tope los resetearia).
+    var ALTO_MIN_TABLA_PX = 180;
+    var observadorAlto = null;   // ResizeObserver que vuelve a calcular el alto (se crea mas abajo, junto al resize de la ventana)
+    var tablaObservada = null;
+
+    // Sin tope (pocas filas) la tabla crece sola al filtrar, expandir detalles o actualizarse: se observa la <table> misma (no el contenedor
+    // que se acota, asi que fijar el tope no la hace cambiar de tamano ni dispara el calculo de nuevo). La tabla se reemplaza entera en cada
+    // Buscar, por eso se vuelve a enganchar la nueva.
+    function observarTabla($tf) {
+        if (!observadorAlto) return;
+        var tabla = $tf.find('table.tabla-existencia-sucursales')[0];
+        if (!tabla || tabla === tablaObservada) return;
+        if (tablaObservada) observadorAlto.unobserve(tablaObservada);
+        observadorAlto.observe(tabla);
+        tablaObservada = tabla;
+    }
+
+    function ajustarAltoTablaAlPie(tf) {
+        var scrollTabla = tf.scrollTop;
+        var scrollPagina = window.pageYOffset || 0;
+        tf.style.maxHeight = 'none';
+        var sobrante = document.documentElement.scrollHeight - window.innerHeight;
+        if (sobrante > 0) tf.style.maxHeight = Math.max(ALTO_MIN_TABLA_PX, tf.offsetHeight - sobrante) + 'px';
+        tf.scrollTop = scrollTabla;
+        if ((window.pageYOffset || 0) !== scrollPagina) window.scrollTo(0, scrollPagina);
     }
 
     // ---------- Ventana independiente: proponer ensancharla ----------
@@ -1048,7 +1087,85 @@
         });
     }
 
+    // ---------- Barra plegable (celular y ventana independiente) ----------
+    // La vista pone la clase ex-plegable antes de pintar (script inline de la vista); aca se mantiene al cambiar el tamano de la ventana.
+    // Plegada, la barra muestra solo Sucursales, Producto y Buscar; el boton de opciones despliega el resto (controles "ex-sec") y los
+    // filtros avanzados. No se recuerda entre visitas: siempre arranca plegada.
+
+    var mqCelular = window.matchMedia ? window.matchMedia('(max-width: 767.98px)') : null;
+
+    function esPlegable() {
+        return !!cfg.popup || !!(mqCelular && mqCelular.matches);
+    }
+
+    // Cantidad de opciones activas que quedan escondidas con la barra plegada, para que no se pierdan de vista: se muestra en el boton.
+    function actualizarBadgeOpciones() {
+        var n = 0;
+        if (pedidoActivo) n++;
+        if ($claseEstado.val() !== 'todos') n++;
+        if (contarFiltrosAvanzadosActivos() > 0) n++;
+        if ($switchEditarPunto.is(':checked')) n++;
+        $badgeOpciones.text(n).toggleClass('d-none', n === 0 || $page.hasClass('ex-barra-abierta'));
+    }
+
+    function alternarBarra(abrir) {
+        $page.toggleClass('ex-barra-abierta', abrir);
+        $btnOpciones.attr('aria-expanded', abrir ? 'true' : 'false').toggleClass('active', abrir);
+        actualizarBadgeOpciones();
+        ajustarAltoTabla();
+    }
+
+    // Al pasar de celular a escritorio (o al revés) se enciende/apaga el modo; saliendo de el la barra vuelve a mostrarse completa.
+    function aplicarModoPlegable() {
+        var plegable = esPlegable();
+        $page.toggleClass('ex-plegable', plegable);
+        if (plegable) {
+            actualizarBadgeOpciones();
+            ajustarAltoTabla();
+        } else {
+            alternarBarra(false);
+        }
+    }
+
+    // Pie de una linea: "07:13 · Auto 12:53 · 55 productos". Se rearma cada vez que cambia alguno de los textos que lo componen (la vista
+    // oculta los items originales con la barra plegable). Los mensajes de rutina de la consulta se esconden; consultando y errores quedan.
+    var MENSAJE_RUTINA = /^(Consulta actualizada|Autoactualización (activada|desactivada|apagada))/;
+
+    function actualizarResumenCompacto() {
+        var partes = [];
+        var hora = /\d{1,2}:\d{2}/.exec($lblUltima.text());
+        if (hora) partes.push(hora[0]);
+        var auto = $lblAutoChip.text();
+        if ($switchAuto.is(':checked') && auto) partes.push('Auto ' + auto);
+        var cantidad = $lblPie.text().split(' · ')[0];
+        if (cantidad) partes.push(cantidad);
+
+        $lblResumenCompacto.text(partes.join(' · ')).attr('title', [$lblAuto.text(), $lblFechaMinima.text()].filter(Boolean).join(' · '));
+        $lblEstado.toggleClass('ex-estado-rutina', MENSAJE_RUTINA.test($lblEstado.text()));
+    }
+
+    // Ventana independiente: avisa antes de cerrarla o recargarla, para evitar un cierre sin querer (pedido 2026-11-02). _LayoutEmbed no trae el
+    // beforeunload del layout normal, por eso va aca. Solo en la ventana propia (en el panel embebido de Movimientos/Editar, window.top es la
+    // pagina del movimiento). El texto lo pone el navegador (no se puede personalizar) y solo lo muestra si el usuario ya toco la ventana.
+    // La unica salida propia es el cambio de sucursal destino del modo movimiento (existencia-movimiento.js): llama a permitirSalida().
+    var salidaPermitida = false;
+
+    if (cfg.popup && window.top === window) {
+        window.addEventListener('beforeunload', function (e) {
+            if (salidaPermitida) return;
+            e.preventDefault();
+            e.returnValue = '';
+        });
+    }
+
     // ---------- Eventos ----------
+
+    $btnOpciones.on('click', function () { alternarBarra(!$page.hasClass('ex-barra-abierta')); });
+
+    if (mqCelular) {
+        if (mqCelular.addEventListener) mqCelular.addEventListener('change', aplicarModoPlegable);
+        else if (mqCelular.addListener) mqCelular.addListener(aplicarModoPlegable); // navegadores viejos
+    }
 
     $('#btnAbrirVentanaExistencia').on('click', function () {
         // La ventana nace compacta y de un tercio de la pantalla: con Cod. y Producto de ancho fijo, la tabla entra sin desplazar.
@@ -1058,6 +1175,8 @@
     $('#btnPdfExistencia').on('click', function () { exportar('pdf'); });
 
     function alternarPanelAvanzados(abrir) {
+        // Con la barra plegada el panel de filtros queda escondido: abrirlo (ej. el "Cambiar" del pedido) despliega la barra tambien.
+        if (abrir && esPlegable() && !$page.hasClass('ex-barra-abierta')) alternarBarra(true);
         $panelAvanzados.toggleClass('d-none', !abrir);
         $btnAvanzados.attr('aria-expanded', abrir ? 'true' : 'false');
         renderResumenFiltros(); // abierto el panel el resumen se oculta; cerrado vuelve a aparecer (y recalcula el alto de la tabla)
@@ -1132,7 +1251,7 @@
 
     // Filtros visuales de la barra.
     $texto.on('input', function () { actualizarPendiente(); aplicarFiltrosVisuales(); });
-    $claseEstado.on('change', aplicarFiltrosVisuales);
+    $claseEstado.on('change', function () { aplicarFiltrosVisuales(); actualizarBadgeOpciones(); });
 
     $switchEstado.on('change', function () { aplicarEstadoStockExistencia(); ajustarAltoTabla(); });
     $switchExpandir.on('change', aplicarExpandidoGlobal);
@@ -1143,6 +1262,7 @@
         var encendido = $(this).is(':checked');
         $page.toggleClass('ex-editar-pto', encendido);
         if (!encendido) cerrarEditorPunto();
+        actualizarBadgeOpciones();
     });
 
     $switchAuto.on('change', function () {
@@ -1205,6 +1325,30 @@
 
     $(window).on('resize', ajustarAltoTabla);
 
+    // El alto de la tabla depende de lo que hay arriba y abajo (barra, pedido, filtros aplicados, pie de estado) y esos bloques cambian solos
+    // (la barra se pliega, aparece el aviso de filtros, el estado ocupa otra linea): se recalcula cuando alguno cambia de tamano. Ninguno de
+    // los observados contiene a la tabla, asi que achicarla no dispara de nuevo el calculo.
+    if (window.ResizeObserver) {
+        var recalculoPendiente = false;
+        observadorAlto = new ResizeObserver(function () {
+            if (recalculoPendiente) return;
+            recalculoPendiente = true;
+            window.requestAnimationFrame(function () { recalculoPendiente = false; ajustarAltoTabla(); });
+        });
+        $('.ex-barra-wrap, .ex-estado-linea').each(function () { observadorAlto.observe(this); });
+        ajustarAltoTabla(); // engancha la tabla que ya esta en pantalla (si la hay)
+    }
+
+    // Pie de una linea de la barra plegable: se rearma cuando cambia cualquiera de los textos que lo componen.
+    if (window.MutationObserver) {
+        var observadorResumen = new MutationObserver(actualizarResumenCompacto);
+        [$lblUltima, $lblAutoChip, $lblPie, $lblEstado].forEach(function ($el) {
+            if ($el.length) observadorResumen.observe($el[0], { childList: true, characterData: true, subtree: true });
+        });
+    }
+    actualizarResumenCompacto();
+    actualizarBadgeOpciones();
+
     // ---------- API para "Ingresar pedido" (existencia-pedido.js) ----------
 
     // Enciende/apaga el modo pedido: marca la pagina (muestra las columnas A pedir), pausa la autoactualizacion mientras este
@@ -1212,6 +1356,7 @@
     function establecerPedidoActivo(activo) {
         pedidoActivo = !!activo;
         $page.toggleClass('existencia-pedido-on', pedidoActivo);
+        actualizarBadgeOpciones();
         if (pedidoActivo) {
             cancelarBusquedaInicial();
             limpiarTimerAutoActualizacion();
@@ -1279,6 +1424,8 @@
         },
         reaplicarFiltros: aplicarFiltrosVisuales,
         ajustarAlto: ajustarAltoTabla,
+        // El aviso de cierre de la ventana independiente no debe saltar cuando la pantalla se recarga a proposito (ej. cambio de sucursal destino).
+        permitirSalida: function () { salidaPermitida = true; },
         proponerEnsancharVentana: proponerEnsancharVentana,
         hayTabla: function () { return consultaAplicada !== null; },
         periodoDesde: function () { return $periodo.val() || ''; },

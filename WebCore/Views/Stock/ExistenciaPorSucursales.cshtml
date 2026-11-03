@@ -71,6 +71,19 @@
 @* El diseño es SIEMPRE compacto (clase fija existencia-compacto): ya no hay interruptor ni preferencia por navegador. *@
 <div class="container-fluid existencia-sucursales-page existencia-compacto@(modoMovimiento ? " ex-modo-mov" : "")" id="existenciaPage">
 
+    @* Barra plegable (pedido 2026-11-02): en celular (< 768 px) y en la ventana independiente (?popup=true) la barra muestra solo Sucursales,
+       Producto y Buscar; el resto (los controles marcados "ex-sec") queda detras del boton de opciones, para que la tabla gane filas.
+       Esta clase se pone aca, antes de pintar, para que no se vea la barra completa un instante; existencia-sucursales.js la mantiene
+       al cambiar el tamano de la ventana. No se recuerda entre visitas: siempre arranca plegada. *@
+    <script>
+        (function () {
+            var pagina = document.getElementById('existenciaPage');
+            if (pagina && (@(popup ? "true" : "false") || (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches))) {
+                pagina.classList.add('ex-plegable');
+            }
+        })();
+    </script>
+
     @if (popup && !modoMovimiento)
     {
         // _LayoutEmbed no tiene barra superior: el titulo de la pantalla se muestra aca.
@@ -86,7 +99,7 @@
                 <div class="ex-barra">
                     @* Interruptor GRANDE (no un chip chico): al encenderlo cada sucursal gana la columna "A pedir". Apagado = solo contorno,
                        encendido = relleno de color; toda la etiqueta es clickeable. Lo maneja Scripts/app/existencia-pedido.js. *@
-                    <div class="ex-ctl ex-ctl-pedido">
+                    <div class="ex-ctl ex-ctl-pedido ex-sec">
                         <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                         <span class="ex-pedido-toggle">
                             <input type="checkbox" class="ex-chip-input" id="switchPedidoExistencia" />
@@ -101,7 +114,7 @@
                     @if (pedidoBorradorHabilitado)
                     {
                         @* Pedidos que quedaron a medio cargar (corte de luz, cierre del navegador): visible aunque el modo pedido este apagado. *@
-                        <div class="ex-ctl ex-ctl-borradores">
+                        <div class="ex-ctl ex-ctl-borradores ex-sec">
                             <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                             <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresPedido"
                                     title="Pedidos que quedaron a medio cargar (corte de luz, cierre del navegador)">
@@ -149,7 +162,7 @@
                         </div>
                     </div>
 
-                    <div class="ex-ctl">
+                    <div class="ex-ctl ex-ctl-buscar">
                         <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                         <!-- Fecha hasta ya no se elige a mano: siempre se recalcula a la fecha/hora exacta del momento de la
                              busqueda (manual o autoactualizada, ver el submit del form en el script). Viaja oculta. -->
@@ -159,7 +172,16 @@
                         </button>
                     </div>
 
-                    <div class="ex-ctl">
+                    @* Solo se ve con la barra plegable (celular / ventana independiente): despliega los controles marcados "ex-sec". El numerito cuenta lo
+                       que esta activo y escondido (pedido, estado distinto de "todos", filtros avanzados, editar puntos). Lo maneja existencia-sucursales.js. *@
+                    <div class="ex-ctl ex-ctl-opciones">
+                        <button type="button" class="btn btn-outline-secondary" id="btnMasOpcionesExistencia" aria-expanded="false"
+                                title="Más opciones: pedido, estado, filtros, actualización automática y exportar">
+                            <i class="fas fa-ellipsis-h" aria-hidden="true"></i><span id="badgeOpcionesExistencia" class="badge badge-primary ml-1 d-none">0</span>
+                        </button>
+                    </div>
+
+                    <div class="ex-ctl ex-sec">
                         <label class="ex-lbl" for="filtroClaseEstadoExistencia">Estado</label>
                         <select id="filtroClaseEstadoExistencia" class="form-control" title="Mostrar solo los productos con este estado en alguna de las sucursales">
                             <option value="todos">Todos los estados</option>
@@ -169,7 +191,7 @@
                         </select>
                     </div>
 
-                    <div class="ex-ctl">
+                    <div class="ex-ctl ex-sec">
                         <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                         <button type="button" class="btn btn-outline-secondary" id="btnFiltrosAvanzadosExistencia" aria-expanded="false"
                                 aria-controls="panelFiltrosAvanzadosExistencia" title="Tipos, proveedores, marcas y movimiento">
@@ -177,23 +199,23 @@
                         </button>
                     </div>
 
-                    <span class="ex-sep d-none d-lg-block"></span>
+                    <span class="ex-sep ex-sec d-none d-lg-block"></span>
 
-                    <div class="ex-ctl ex-ctl-chip">
+                    <div class="ex-ctl ex-ctl-chip ex-sec">
                         <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                         <span class="ex-chip" title="Actualiza el stock cada @intervaloAutoMinutos minutos, hasta 6 veces">
                             <input type="checkbox" class="ex-chip-input" id="switchAutoActualizarExistencia" />
                             <label class="ex-chip-texto" for="switchAutoActualizarExistencia"><i class="fas fa-sync-alt mr-1"></i>Auto <span id="lblAutoChipExistencia" class="ex-chip-detalle"></span></label>
                         </span>
                     </div>
-                    <div class="ex-ctl ex-ctl-chip">
+                    <div class="ex-ctl ex-ctl-chip ex-sec">
                         <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                         <span class="ex-chip" title="Mostrar la columna Estado (faltante, punto de stock)">
                             <input type="checkbox" class="ex-chip-input" id="switchEstadoStockExistencia" checked />
                             <label class="ex-chip-texto" for="switchEstadoStockExistencia">Estado</label>
                         </span>
                     </div>
-                    <div class="ex-ctl ex-ctl-chip">
+                    <div class="ex-ctl ex-ctl-chip ex-sec">
                         <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                         <span class="ex-chip" title="Expandir el detalle de todos los productos">
                             <input type="checkbox" class="ex-chip-input" id="switchExpandirExistencia" />
@@ -204,7 +226,7 @@
                        para no modificar un punto sin querer. No se recuerda entre visitas. *@
                     @if (puedeEditarPunto)
                     {
-                        <div class="ex-ctl ex-ctl-chip ex-ctl-editar-punto">
+                        <div class="ex-ctl ex-ctl-chip ex-ctl-editar-punto ex-sec">
                             <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                             <span class="ex-chip" title="Mostrar los lápices para editar el punto de stock (apagado, no se puede modificar por error)">
                                 <input type="checkbox" class="ex-chip-input" id="switchEditarPuntoExistencia" />
@@ -213,9 +235,9 @@
                         </div>
                     }
 
-                    <span class="ex-grow"></span>
+                    <span class="ex-grow ex-sec"></span>
 
-                    <div class="ex-ctl ex-ctl-acciones">
+                    <div class="ex-ctl ex-ctl-acciones ex-sec">
                         <label class="ex-lbl d-none d-md-block">&nbsp;</label>
                         <div class="btn-group">
                             <button type="button" class="btn btn-outline-secondary" id="btnExcelExistencia" title="Exportar a Excel lo que se ve (filtros y orden actuales)">
@@ -445,13 +467,17 @@
         </div>
 
         <div class="card-body ex-estado-linea">
-            <span class="ex-estado-item"><span class="text-muted">Actualizado:</span> <strong id="lblUltimaActualizacionExistencia">-</strong></span>
-            <span class="ex-estado-item text-success" id="lblAutoActualizarExistencia">Cada @intervaloAutoMinutos minutos, hasta 6 veces.</span>
+            @* Con la barra plegable (celular / ventana independiente) el pie es UNA linea: se ve este resumen ("07:13 · Auto 12:53 · 55 productos",
+               lo arma existencia-sucursales.js con los mismos datos) y los items marcados "ex-estado-detalle" se ocultan. El aviso de filtros sin
+               aplicar y los mensajes de la consulta que no son de rutina (consultando, errores) siguen a la vista. *@
+            <span class="ex-estado-item ex-solo-plegable text-muted" id="lblResumenCompactoExistencia"></span>
+            <span class="ex-estado-item ex-estado-detalle"><span class="text-muted">Actualizado:</span> <strong id="lblUltimaActualizacionExistencia">-</strong></span>
+            <span class="ex-estado-item ex-estado-detalle text-success" id="lblAutoActualizarExistencia">Cada @intervaloAutoMinutos minutos, hasta 6 veces.</span>
             <span class="ex-estado-item text-warning d-none" id="lblAvisoPendienteExistencia">Hay filtros sin aplicar.</span>
             <span class="ex-estado-item text-muted" id="lblEstadoConsultaExistencia">Presioná Buscar para consultar stock.</span>
-            <span class="ex-estado-item text-muted" id="lblFechaMinimaExistencia"></span>
-            <span class="ex-grow"></span>
-            <span class="ex-estado-item text-muted" id="lblPieExistencia"></span>
+            <span class="ex-estado-item ex-estado-detalle text-muted" id="lblFechaMinimaExistencia"></span>
+            <span class="ex-grow ex-estado-detalle"></span>
+            <span class="ex-estado-item ex-estado-detalle text-muted" id="lblPieExistencia"></span>
         </div>
 
         <div class="p-0 ex-tabla-wrap" id="contenedorTablaExistenciaSucursales">
@@ -648,7 +674,8 @@
     .ex-previa-resumen b { font-variant-numeric: tabular-nums; }
 
     /* Reglas "de celular": solo en dispositivos tactiles angostos. Una ventana de escritorio angosta (la ventana independiente abre en
-       un tercio de la pantalla, ~640 px) conserva el diseno de escritorio: barra compacta y columnas Cod./Producto de ancho fijo. */
+       un tercio de la pantalla, ~640 px) conserva el diseno de escritorio: barra compacta y columnas Cod./Producto de ancho fijo.
+       Excepcion (2026-11-02): la BARRA PLEGABLE (clase ex-plegable, ver el final de esta hoja) si aplica tambien a la ventana independiente. */
     @@media (max-width: 767.98px) and (pointer: coarse) {
         .ex-ctl-pedido { width: 100%; }
         .ex-pedido-toggle, .ex-pedido-toggle-texto { width: 100%; justify-content: center; }
@@ -906,6 +933,29 @@
     /* Ventana angosta (un tercio de la pantalla): se recortan los margenes laterales para que Cod. + Producto + Stock + Estado entren sin desplazar. */
     .existencia-sucursales-page.existencia-compacto { padding-left: 0; padding-right: 0; }
     .app-embed .container-fluid:has(> .existencia-sucursales-page.existencia-compacto) { padding-left: .35rem; padding-right: .35rem; }
+
+    /* ---------- Barra plegable: celular (< 768 px) y ventana independiente (pedido 2026-11-02) ---------- */
+    /* La clase ex-plegable la pone el script inline de la vista (y la mantiene existencia-sucursales.js); ex-barra-abierta, el boton de opciones.
+       Plegada: solo Sucursales, Producto, Buscar y el boton de opciones; los controles "ex-sec" y los filtros avanzados quedan escondidos. Va
+       al final de la hoja para ganar a las reglas del diseno compacto y a las de celular tactil (misma especificidad que ellas, o mas). */
+    .ex-ctl-opciones, .ex-solo-plegable { display: none; }
+    .ex-plegable .ex-ctl-opciones { display: flex; }
+    .ex-plegable .ex-solo-plegable { display: inline; }
+
+    .ex-plegable .ex-barra { align-items: center; }
+    .ex-plegable .ex-barra .ex-ctl-sucursales { order: 1; width: 7.5rem; flex: 0 0 7.5rem; }
+    .ex-plegable .ex-barra .ex-ctl-texto { order: 2; width: auto; flex: 1 1 5rem; min-width: 0; }
+    .ex-plegable .ex-barra .ex-ctl-buscar { order: 3; }
+    .ex-plegable .ex-barra .ex-ctl-opciones { order: 4; }
+    .ex-plegable .ex-barra .ex-sec { order: 10; }
+    .ex-plegable .ex-sep { display: none !important; }
+    .ex-plegable:not(.ex-barra-abierta) .ex-sec,
+    .ex-plegable:not(.ex-barra-abierta) .ex-avanzados { display: none !important; }
+
+    /* Pie de una linea: el resumen "07:13 · Auto 12:53 · 55 productos" reemplaza a los items de detalle. */
+    .ex-plegable .ex-estado-detalle,
+    .ex-plegable .ex-estado-rutina { display: none !important; }
+    .ex-plegable .ex-estado-linea { gap: .1rem .6rem; }
 
     @@media (max-width: 767.98px) and (pointer: coarse) {
         .ex-barra { align-items: stretch; }

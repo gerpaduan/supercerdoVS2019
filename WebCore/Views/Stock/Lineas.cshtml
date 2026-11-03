@@ -8,22 +8,25 @@
 }
 
 <div class="container-fluid px-2 px-md-3" data-lineas-agrupadas-page="stock">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <h4 class="mb-2 mb-md-0">Lineas de stock</h4>
+    @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila y debajo una barra con totales, estado,
+       "Ver detalles" y Volver; por debajo de 1200 px conserva el orden de siempre. El titulo de la pantalla ya lo muestra la
+       barra superior de la app (ViewBag.Title), por eso se quito el h4. Estilos en Shared/_FiltrosCompactosStyles. *@
+    <div class="fc-top stock-lineas-top">
+    <div class="d-flex justify-content-end mb-3 flex-wrap fc-acciones">
         <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Stock", new { idSucursal = Model.IdSucursal, tipoCompra = Model.TipoCompra, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") })">
             <i class="fas fa-arrow-left mr-1"></i> Volver al indice
         </a>
     </div>
 
-    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+    <div class="card shadow-sm mb-3 elaborados-filtros-card fc-card">
         <div class="card-body">
             <form method="get" action="@Url.Action("Lineas", "Stock")" class="js-form-filtros-lineas">
-                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
+                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3 fc-alerta" role="alert">
                     Se modificaron filtros principales. Presioná <strong>Buscar</strong> para recargar los datos.
                 </div>
 
-                <div class="elaborados-filtros-grid lineas-filtros-grid cols-4">
-                    <div class="form-group mb-0">
+                <div class="elaborados-filtros-grid lineas-filtros-grid cols-4 fc-grid">
+                    <div class="form-group mb-0 fc-c3">
                         <label class="elaborados-filtro-label">Sucursal</label>
                         <select name="idSucursal" id="idSucursalStockLineas" class="form-control">
                             <option value="0" selected="@(Model.IdSucursal == 0 ? "selected" : null)">Todas</option>
@@ -33,32 +36,20 @@
                             }
                         </select>
                     </div>
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c1">
                         <label class="elaborados-filtro-label">Fecha desde</label>
                         <input name="fechaDesde" id="fechaDesdeStockLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c2">
                         <label class="elaborados-filtro-label">Fecha hasta</label>
                         <input name="fechaHasta" id="fechaHastaStockLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c4">
                         <label class="elaborados-filtro-label">Producto</label>
                         <input type="text" class="form-control js-filtro-vivo" data-live-filter="producto" value="@Model.Producto" placeholder="Codigo o descripcion" autocomplete="off" />
                     </div>
-                    <div class="form-group mb-0 lineas-filtro-accion">
-                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
-                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarStockLineas">
-                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <div id="estadoBusquedaStockLineas" class="text-muted small">Resultados actualizados.</div>
-                </div>
-
-                <div class="row mt-3">
-                    <div class="col-12 col-md-4 mb-3">
+                    @* Filtro en vivo (sin name: no viaja en el form, lo aplica lineas-agrupadas.js sobre las tarjetas ya cargadas). *@
+                    <div class="form-group mb-0 fc-c5">
                         <label class="elaborados-filtro-label">Tipo de operación</label>
                         <select class="form-control js-filtro-vivo" data-live-filter="tipoOperacion">
                             <option value="">Todos</option>
@@ -69,21 +60,34 @@
                             <option value="ajuste stock" selected="@(Model.TipoCompra == "Ajuste Stock" ? "selected" : null)">Ajuste</option>
                         </select>
                     </div>
+                    <div class="form-group mb-0 lineas-filtro-accion fc-c6">
+                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarStockLineas">
+                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="custom-control custom-switch mt-1">
-                    <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesStock" />
-                    <label class="custom-control-label" for="expandirDetallesStock">Ver detalles</label>
-                </div>
             </form>
         </div>
     </div>
 
-    <div class="lineas-resumen-grid cols-4 mb-3">
+    @* Estado de la busqueda: vive fuera del form para ocupar un lugar en la barra de escritorio, donde tambien avisa "Cambiaste las fechas". *@
+    <div id="estadoBusquedaStockLineas" class="fc-estado text-muted small mb-2">Resultados actualizados.</div>
+
+    <div class="mb-2 fc-vista">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesStock" />
+            <label class="custom-control-label" for="expandirDetallesStock">Ver detalles</label>
+        </div>
+    </div>
+
+    <div class="lineas-resumen-grid cols-4 mb-3 stock-lineas-totales">
         <div class="card border-left-primary shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalKg">0,000</div></div></div>
         <div class="card border-left-success shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total pesos</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalImporte">$ 0,00</div></div></div>
         <div class="card border-left-info shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-info text-uppercase mb-1">Cantidad de lineas</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalLineas">0</div></div></div>
         <div class="card border-left-secondary shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Cantidad de registros</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRegistros">0</div></div></div>
+    </div>
     </div>
 
     <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-server @(Model.Registros != null && Model.Registros.Count > 0 ? "d-none" : "")">No se encontraron registros de stock con lineas para los filtros seleccionados.</div>
@@ -308,6 +312,66 @@
 
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
 @Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
+@Html.Partial("~/Views/Shared/_FiltrosCompactosStyles.cshtml")
+
+<style>
+    /* Fila unica de escritorio (_FiltrosCompactosStyles): desde, hasta (datetime-local con segundos: ancho fijo), sucursal,
+       producto (flexible), tipo de operacion y Buscar. */
+    .stock-lineas-top .elaborados-filtros-card {
+        --fc-cols: 13rem 13rem minmax(6.5rem, 9rem) minmax(8rem, 1fr) 8rem 5.5rem;
+    }
+
+    @@media (min-width: 1200px) {
+        /* Los estilos propios de la pantalla (.container-fluid[data-lineas-agrupadas-page] ...) tienen mas especificidad que
+           los de .fc-*: se repiten aca con un nivel mas para que la barra compacta gane. */
+        body.app-shell .container-fluid[data-lineas-agrupadas-page="stock"] .stock-lineas-top > * {
+            margin-bottom: 0 !important;
+        }
+
+        body.app-shell .container-fluid[data-lineas-agrupadas-page="stock"] .fc-card .card-body {
+            padding: .5rem .65rem;
+        }
+
+        body.app-shell .container-fluid[data-lineas-agrupadas-page="stock"] .fc-card .form-control,
+        body.app-shell .container-fluid[data-lineas-agrupadas-page="stock"] .fc-card .btn {
+            height: 1.95rem;
+            min-height: 1.95rem;
+            font-size: .84rem;
+            padding: .15rem .5rem;
+            line-height: 1.2;
+        }
+
+        /* Volver al indice: misma altura que los campos y botones de la fila de filtros (por defecto un boton mide ~2.4rem). */
+        body.app-shell .container-fluid[data-lineas-agrupadas-page="stock"] .fc-acciones .btn {
+            height: 1.95rem;
+            min-height: 1.95rem;
+            font-size: .84rem;
+            padding: .15rem .6rem;
+            line-height: 1.2;
+        }
+
+        /* Totales: las 4 tarjetas pasan de una grilla de 4 columnas a una fila de chips (etiqueta + valor) en la barra. */
+        body.app-shell .stock-lineas-top > .stock-lineas-totales {
+            order: 1;
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: .4rem;
+        }
+
+        body.app-shell .container-fluid[data-lineas-agrupadas-page="stock"] .stock-lineas-totales .lineas-resumen-card .card-body {
+            display: flex;
+            align-items: baseline;
+            gap: .45rem;
+            padding: .28rem .65rem !important;
+        }
+
+        body.app-shell .stock-lineas-totales .lineas-resumen-card .card-body > * {
+            margin: 0 !important;
+            white-space: nowrap;
+        }
+    }
+</style>
 
 @section Scripts {
     <script>
@@ -353,9 +417,23 @@
                         || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
             }
 
+            var textoEstadoOk = estado ? estado.textContent : '';
+            var textoEstadoPendiente = 'Cambiaste las fechas: tocá Buscar para actualizar.';
+
+            // Fechas cambiadas sin aplicar: en pantalla angosta se muestra la alerta amarilla; en escritorio (la alerta esta
+            // oculta por CSS) el aviso es el texto de estado y el boton Buscar en ambar.
             function actualizarAviso() {
-                if (!alerta) return;
-                alerta.classList.toggle('d-none', !hayFechasPendientes());
+                var pendiente = hayFechasPendientes();
+                if (alerta) alerta.classList.toggle('d-none', !pendiente);
+                if (btnBuscar) {
+                    btnBuscar.classList.toggle('btn-warning', pendiente);
+                    btnBuscar.classList.toggle('btn-outline-primary', !pendiente);
+                }
+                if (estado) {
+                    estado.textContent = pendiente ? textoEstadoPendiente : textoEstadoOk;
+                    estado.title = pendiente ? textoEstadoPendiente : '';
+                    estado.classList.toggle('fc-estado-pendiente', pendiente);
+                }
             }
 
             function setBuscando(mensaje) {
