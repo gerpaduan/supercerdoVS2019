@@ -149,6 +149,16 @@
                 window.location.href = $seleccionar.attr('href');
             }
         });
+        // Teclado: en escritorio la columna con el boton Seleccionar esta oculta, asi que Enter sobre la fila (tabindex=0) la elige.
+        $rows.on('keydown', function (e) {
+            if (e.key !== 'Enter' || $(e.target).closest('a, button, input, textarea, select').length) return;
+
+            var $seleccionar = $(this).find('a.btn').first();
+            if ($seleccionar.length) {
+                e.preventDefault();
+                window.location.href = $seleccionar.attr('href');
+            }
+        });
         aplicarFiltro();
         window.setTimeout(function () { $filtro.trigger('focus'); }, 40);
 

@@ -27,15 +27,18 @@
 
     @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
 
-    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+    @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila y debajo una barra con totales, aviso de
+       anuladas y "Solo ingredientes"; por debajo de 1200 px conserva el orden de siempre. Estilos en Shared/_FiltrosCompactosStyles. *@
+    <div class="fc-top elaborados-top">
+    <div class="card shadow-sm mb-3 elaborados-filtros-card fc-card">
         <div class="card-body">
             <form method="get" action="@Url.Action("Lineas", "Elaborados")" id="formFiltrosLineasElaborados">
-                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
+                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3 fc-alerta" role="alert">
                     Cambiaste sucursal o fechas. Presiona <strong>Buscar</strong> para actualizar la busqueda.
                 </div>
 
-                <div class="elaborados-filtros-grid">
-                    <div class="form-group mb-0">
+                <div class="elaborados-filtros-grid fc-grid">
+                    <div class="form-group mb-0 fc-c3">
                         <label class="elaborados-filtro-label" for="idSucursal">Sucursal</label>
                         <select id="idSucursal" name="idSucursal" class="form-control js-filtro-recarga">
                             @foreach (var sucursal in sucursales)
@@ -45,39 +48,37 @@
                         </select>
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c4">
                         <label class="elaborados-filtro-label" for="descripcion">Descripcion</label>
                         <input id="descripcion" name="descripcion" type="text" class="form-control js-filtro-vivo-lineas" value="@Model.Descripcion" autocomplete="off" />
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c1">
                         <label class="elaborados-filtro-label" for="fechaDesde">Fecha desde</label>
                         <input id="fechaDesde" name="fechaDesde" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
                         @Html.Partial("_AdvertenciaPermisoFecha")
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c2">
                         <label class="elaborados-filtro-label" for="fechaHasta">Fecha hasta</label>
                         <input id="fechaHasta" name="fechaHasta" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
 
-                    <div class="form-group mb-0 elaborados-filtro-accion">
+                    <div class="form-group mb-0 elaborados-filtro-accion fc-c5">
                         <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
                         <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarLineasElaborados">
                             <i class="fas fa-search mr-1"></i> Buscar
                         </button>
                     </div>
                 </div>
-
-                <div class="custom-control custom-switch mt-3">
-                    <input type="checkbox" class="custom-control-input" id="soloIngredientes" />
-                    <label class="custom-control-label" for="soloIngredientes">Filtrar solo ingredientes</label>
-                </div>
             </form>
         </div>
     </div>
 
-    <div class="row mb-3">
+    @* Estado de la busqueda: vive fuera del form para ocupar un lugar en la barra de escritorio, donde tambien avisa "Cambiaste sucursal o fechas". *@
+    <div id="estadoBusquedaLineasElaborados" class="fc-estado text-muted small mb-2">Resultados actualizados.</div>
+
+    <div class="row mb-2 fc-totales">
         <div class="col-6 col-md-4">
             <div class="card border-left-primary shadow-sm h-100 elaborados-total-card elaborados-summary-card">
                 <div class="card-body">
@@ -95,12 +96,20 @@
                 </div>
             </div>
         </div>
-        @* Aviso de anuladas: ni el total de Kg ni el de lineas las cuentan, pero siguen apareciendo en la tabla. *@
-        <div class="col-12">
-            <div id="lblAnuladasExcluidasLineas" class="elaborados-anuladas-aviso text-muted @(cantidadAnuladas > 0 ? "" : "d-none")">
-                <span id="lblAnuladasExcluidasLineasTexto">@(cantidadAnuladas == 1 ? "1 anulada excluida" : cantidadAnuladas.ToString("N0") + " anuladas excluidas") del total de Kg y de lineas.</span>
-            </div>
+    </div>
+
+    @* Aviso de anuladas: ni el total de Kg ni el de lineas las cuentan, pero siguen apareciendo en la tabla. Fuera de la fila de
+       totales para que en escritorio ocupe el lugar flexible de la barra (clase propia, no fc-estado: ese se oculta entre 1200 y 1399 px). *@
+    <div id="lblAnuladasExcluidasLineas" class="elaborados-anuladas-aviso elaborados-anuladas-barra text-muted mb-2 @(cantidadAnuladas > 0 ? "" : "d-none")">
+        <span id="lblAnuladasExcluidasLineasTexto">@(cantidadAnuladas == 1 ? "1 anulada excluida" : cantidadAnuladas.ToString("N0") + " anuladas excluidas") del total de Kg y de lineas.</span>
+    </div>
+
+    <div class="mb-3 fc-vista">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="soloIngredientes" />
+            <label class="custom-control-label" for="soloIngredientes">Filtrar solo ingredientes</label>
         </div>
+    </div>
     </div>
 
     <div class="card shadow-sm elaborados-panel-card">
@@ -185,6 +194,27 @@
 </div>
 
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@Html.Partial("~/Views/Shared/_FiltrosCompactosStyles.cshtml")
+<style>
+    /* Fila unica de escritorio (_FiltrosCompactosStyles): desde, hasta (datetime-local con segundos: ancho fijo), sucursal,
+       descripcion (flexible) y Buscar. */
+    .elaborados-top .elaborados-filtros-card {
+        --fc-cols: 13rem 13rem minmax(8rem, 12rem) minmax(10rem, 1fr) 5.5rem;
+    }
+
+    @@media (min-width: 1200px) {
+        /* El aviso de anuladas ocupa el espacio flexible de la barra, entre los totales y el interruptor. */
+        body.app-shell .elaborados-top > .elaborados-anuladas-barra {
+            order: 2;
+            flex: 1 1 8rem;
+            min-width: 0;
+            margin-top: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+</style>
 @* Selector de usuario de "Ver fórmula" (mismo modal que Cierre de Caja; ver formula-secreta.js). *@
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
@@ -284,6 +314,28 @@
                     limpiarStorageElaborados();
                 }
             }
+
+            // Sucursal o fechas cambiadas sin aplicar: en pantalla angosta elaborados.js muestra la alerta amarilla; en
+            // escritorio (la alerta esta oculta por CSS) el aviso es el texto de estado y el boton Buscar en ambar.
+            var estadoBusqueda = document.getElementById("estadoBusquedaLineasElaborados");
+            var btnBuscarLineas = document.getElementById("btnBuscarLineasElaborados");
+            var textoEstadoPendiente = "Cambiaste sucursal o fechas: tocá Buscar para actualizar.";
+
+            function marcarFiltrosPendientes() {
+                if (btnBuscarLineas) {
+                    btnBuscarLineas.classList.add("btn-warning");
+                    btnBuscarLineas.classList.remove("btn-outline-primary");
+                }
+                if (estadoBusqueda) {
+                    estadoBusqueda.textContent = textoEstadoPendiente;
+                    estadoBusqueda.title = textoEstadoPendiente;
+                    estadoBusqueda.classList.add("fc-estado-pendiente");
+                }
+            }
+
+            document.querySelectorAll(".js-filtro-recarga").forEach(function (el) {
+                el.addEventListener("change", marcarFiltrosPendientes);
+            });
 
             restoreStateIfNeeded();
             saveState();
