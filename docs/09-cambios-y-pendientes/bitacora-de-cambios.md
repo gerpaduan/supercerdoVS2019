@@ -19,6 +19,10 @@
 - **Cambio:** ver `docs/DECISIONS.md` (2026-11-02). Archivos: `FinanzasController.cs` (`OperadorPosVencido`, GET y POST de `AddOrEditPago`), `Views/Ventas/POS.cshtml` (cartel de `cargarPago` con el motivo real). Manual: `Finanzas.AddOrEditPago`. Incidencia en `07-operacion-y-soporte/incidencias-frecuentes.md`.
 - **Verificado:** build sin errores; en WebCore propio (puerto 5272, usuarios y caja descartables ya borrados) el formulario carga con operador y, tras borrar al operador de Session, el cartel muestra «La autorización del vendedor venció…». **Sin verificar:** el POST con operador vencido, otras acciones del POS con el mismo patrón (ver DECISIONS), SQL Server.
 
+## 2026-11-02 - Deploy de WebCore en Servidor SM (2.º del día, commit `39521b56`)
+
+- Publicado `HEAD` = `39521b56` solo en SM (cobro junto con la venta con contador de billetes, Egresos de caja con Pago Electrónico). Tag local `pre-deploy-sm-20261102b`, backup `C:WebCore_backup_20261102b`. Sin migraciones. Verificado por HTTPS, config y `AFIP` intactos, 0 errores en el Event Log. No probado con sesión de producción ni contra SQL Server. Detalle y rollback en `docs/07-operacion-y-soporte/despliegue-y-publicacion.md`.
+
 ## 2026-11-02 - Filtros compactos en Cajas abiertas, Líneas de elaborado y de stock y Home; Ingreso rápido/Desarme con filas altas; Existencia con barra plegable
 
 - **Pedido:** estilo compacto de Compras/Movimientos en `/Home/Index`, `/Cajas/CajasAbiertas`, `/Elaborados/Lineas`, `/Stock/Lineas`; Ingreso rápido y Desarme con tabla a la mitad del ancho y filas altas para elegir con doble clic; Existencia por sucursales con más filas en celular (solo Sucursal y Producto, resto plegado), también en la ventana independiente, con aviso antes de cerrarla. Relevamiento de módulos con letra grande (abajo). Mockup aprobado antes de codificar.
