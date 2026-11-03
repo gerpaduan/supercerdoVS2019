@@ -104,6 +104,46 @@
         padding-bottom: .3rem;
     }
 
+    /* Hero de una linea: cada filtro es "etiqueta + selector" lado a lado. Con min-height 2.75rem de ui-refresh.css el selector
+       se veia mas alto que el hero, por eso se fija la altura compacta con el prefijo body.app-shell. */
+    .dashboard-hero .dashboard-hero-linea {
+        gap: .4rem 1rem;
+    }
+
+    .dashboard-filters {
+        gap: .4rem 1rem;
+    }
+
+    .dashboard-filters .dashboard-filter-item {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .dashboard-filters .dashboard-filter-item label {
+        margin: 0;
+    }
+
+    body.app-shell .dashboard-filters .dashboard-filter-item .custom-select {
+        width: 11rem;
+        min-height: 2rem;
+        height: 2rem;
+        padding-top: .15rem;
+        padding-bottom: .15rem;
+    }
+
+    @@media (max-width: 575.98px) {
+        .dashboard-filters,
+        .dashboard-filters .dashboard-filter-item {
+            width: 100%;
+        }
+
+        body.app-shell .dashboard-filters .dashboard-filter-item .custom-select {
+            width: auto;
+            flex: 1 1 auto;
+        }
+    }
+
     .dashboard-card {
         border: 1px solid var(--dash-line);
         border-radius: .85rem;
@@ -203,10 +243,12 @@
         line-height: 1.15;
     }
 
+    /* "!important": ui-refresh.css fija "body.app-shell #content .table thead th { font-size: 14px }" (con id) y ganaba a esta regla:
+       los encabezados salian mas grandes que el contenido (.84rem). */
     .mini-table thead th {
         border-top: 0;
         color: var(--dash-muted);
-        font-size: .69rem;
+        font-size: .69rem !important;
         text-transform: uppercase;
         letter-spacing: .05em;
         padding-top: .35rem;
@@ -327,33 +369,29 @@
      data-url-movimientos-dashboard="@Url.Action("ObtenerUltimosMovimientosDashboard", "Home")"
      data-url-finanzas="@Url.Action("ObtenerFinanzasDashboard", "Home")">
 
-    <div class="dashboard-hero px-4 px-lg-5 py-4 mb-4">
-        <div class="row align-items-end">
-            <div class="col-lg-7 mb-3 mb-lg-0">
-                <div class="text-uppercase small font-weight-bold" style="letter-spacing:.08em; opacity:.78;">Tablero diario</div>
-                <h1 class="h3 mb-2 font-weight-bold">Resumen del negocio en una sola pantalla</h1>
-            </div>
-            <div class="col-lg-5">
-                <div class="row dashboard-filters">
-                    <div class="col-sm-6 mb-2">
-                        <label class="small text-white-50 mb-1" for="dashboardPeriodo">Periodo</label>
-                        <select id="dashboardPeriodo" class="custom-select">
-                            <option value="hoy" selected="@(Model.PeriodoDefault == "hoy")">Hoy</option>
-                            <option value="7dias" selected="@(Model.PeriodoDefault == "7dias")">Ultimos 7 dias</option>
-                            <option value="mes" selected="@(Model.PeriodoDefault == "mes")">Este mes</option>
-                        </select>
-                    </div>
-                    <div class="col-sm-6 mb-2">
-                        <label class="small text-white-50 mb-1" for="dashboardSucursal">Sucursal</label>
-                        <select id="dashboardSucursal" class="custom-select">
-                            @foreach (var sucursal in Model.Sucursales)
-                            {
-                                <option value="@sucursal.Value" selected="@(sucursal.Value == Model.IdSucursalSeleccionada.ToString())">@sucursal.Text</option>
-                            }
-                        </select>
-                    </div>
+    @* Hero en una sola linea (pedido 2026-11-02): "Tablero diario" + Periodo + Sucursal. Se quitaron el titulo "Resumen del
+       negocio..." y la frase de ayuda para ganar alto; el tablero igual abre en "Hoy" y refresca cada bloque al cambiar filtros. *@
+    <div class="dashboard-hero px-3 px-lg-4 py-2 mb-3">
+        <div class="d-flex flex-wrap align-items-center dashboard-hero-linea">
+            <div class="text-uppercase small font-weight-bold mr-auto" style="letter-spacing:.08em; opacity:.78;">Tablero diario</div>
+            <div class="dashboard-filters d-flex flex-wrap align-items-center">
+                <div class="dashboard-filter-item">
+                    <label class="small text-white-50" for="dashboardPeriodo">Periodo</label>
+                    <select id="dashboardPeriodo" class="custom-select">
+                        <option value="hoy" selected="@(Model.PeriodoDefault == "hoy")">Hoy</option>
+                        <option value="7dias" selected="@(Model.PeriodoDefault == "7dias")">Ultimos 7 dias</option>
+                        <option value="mes" selected="@(Model.PeriodoDefault == "mes")">Este mes</option>
+                    </select>
                 </div>
-                <div class="small text-white-50 mt-2">El tablero abre en “Hoy” y refresca cada bloque al cambiar filtros.</div>
+                <div class="dashboard-filter-item">
+                    <label class="small text-white-50" for="dashboardSucursal">Sucursal</label>
+                    <select id="dashboardSucursal" class="custom-select">
+                        @foreach (var sucursal in Model.Sucursales)
+                        {
+                            <option value="@sucursal.Value" selected="@(sucursal.Value == Model.IdSucursalSeleccionada.ToString())">@sucursal.Text</option>
+                        }
+                    </select>
+                </div>
             </div>
         </div>
     </div>
