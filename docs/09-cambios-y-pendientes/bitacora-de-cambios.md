@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-11-03 - POS bloqueado: aviso claro cuando la sesión se cerró
+
+- **Pedido:** con el POS bloqueado, al querer desbloquear decía que la contraseña era incorrecta cuando en realidad se había caído la sesión; avisar con un mensaje claro.
+- **Cambio:** `wwwroot/Scripts/app/pos-bloqueo.js` (`mostrarSesionCerrada`: 401, 400 o respuesta no-JSON de `DesbloquearPOS`) y `Views/Shared/_BloqueoPOS.cshtml` (bloque «Tu sesión se cerró» con botón **Volver a iniciar sesión**, que reutiliza `recargarMismaInstancia`). Sin cambios en el servidor. Manual: `Ventas.POS`. Incidencia en `07-operacion-y-soporte/incidencias-frecuentes.md`.
+- **Verificado:** build sin errores; `node --check`; contra WebCore propio (puerto 5393, ya apagado) un POST AJAX a `DesbloquearPOS` sin sesión devuelve 401 (sin el header AJAX redirige al login). En el navegador, con un arnés que sirve el `pos-bloqueo.js` y el marcado reales de `_BloqueoPOS.cshtml` contra un endpoint falso: 401, 400 y 200 con HTML muestran «Tu sesión se cerró» (formulario oculto, foco en el botón); clave mal sigue en «Contraseña incorrecta.» y 500 en el aviso de conexión; el botón recarga el mismo POS con `posInstanceId`. **Sin verificar:** el flujo completo con login real (no se creó usuario de prueba), si la venta en curso se recupera tras volver a iniciar sesión, SQL Server. Sin deploy ni commit.
+
 ## 2026-10-31 - Stock/Editar: pesaje «Solo productos» (sin proveedor, medias ni kilos)
 
 - **Pedido:** poder guardar un Pesaje sin Cant.Medias ni Kgs.Medias cuando no es de cortes de media res.

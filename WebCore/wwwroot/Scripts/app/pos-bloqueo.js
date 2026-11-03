@@ -12,6 +12,9 @@
  *  - usuario normal: "Cerrar sesion" (el pagehide del borrador deja constancia de la venta).
  * Mientras esta bloqueado: window.POSBloqueado = true, el resto de la pagina queda inert y se frena el
  * teclado fuera del overlay (incluye los atajos del POS y el lector de codigo de barras).
+ * Sesion cerrada: si mientras estaba bloqueado se cayo la sesion de login (cookie vencida, logout o cambio de usuario en
+ * otra pestana) el servidor no llega a validar la clave (401/400 o una respuesta que no es JSON). En vez de mostrar
+ * "Contrasena incorrecta" se muestra "Tu sesion se cerro" con un boton para volver a iniciar sesion.
  * Riesgo aceptado: es un bloqueo de cliente (ver DECISIONS.md): alguien con las herramientas de desarrollo
  * podria saltarlo. La amenaza que cubre es el companero que pasa por la PC, no un atacante.
  * Config en window.POSBloqueoConfig (la arma _BloqueoPOS.cshtml; sin config no hace nada).
@@ -183,6 +186,18 @@
         timerEspera = setInterval(tick, 1000);
     }
 
+    // La sesion de login ya no es la de esta pagina: la clave ni siquiera se valido, asi que no se la culpa al usuario.
+    // Se reemplaza el formulario por el aviso con el boton para volver a iniciar sesion.
+    function mostrarSesionCerrada() {
+        clearInterval(timerEspera);
+        $('#posBloqueoClave').val('');
+        ocultarError();
+        $('#posBloqueoForm').addClass('d-none');
+        $('#posBloqueoEspera').addClass('d-none');
+        $('#posBloqueoSesion').removeClass('d-none');
+        $('#posBloqueoBtnReingresar').trigger('focus');
+    }
+
     // Recarga el POS conservando la instancia (un reload plano genera un posInstanceId nuevo y, en cuentas de
     // produccion, perderia el operador autorizado). Mismo criterio que recargarConOperadorAutorizado de POS.cshtml.
     function recargarMismaInstancia() {
@@ -222,7 +237,13 @@
                 __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
             }
         }).done(function (resp) {
-            if (resp && resp.ok) {
+            // Una respuesta que no es el JSON del desbloqueo (p. ej. el HTML de la pantalla de login tras un redirect)
+            // significa sesion caida, no clave incorrecta.
+            if (!resp || typeof resp !== 'object') {
+                mostrarSesionCerrada();
+                return;
+            }
+            if (resp.ok) {
                 // Si mientras estaba bloqueado le cerraron la caja, se recarga para que rija el gate de caja normal
                 // (modal de abrir caja) en vez de dejarlo cargar productos y fallar recien al cobrar.
                 if (cfg.validarCaja && cfg.cajaAbiertaAlCargar && resp.cajaAbierta === false) {
@@ -243,7 +264,13 @@
             }
             mostrarError((resp && resp.msg) || 'Contraseña incorrecta.');
             $('#posBloqueoClave').val('').trigger('focus');
-        }).fail(function () {
+        }).fail(function (xhr) {
+            // 401: sin sesion. 400: el token antiforgery de esta pagina es de otro usuario (se inicio sesion con otro
+            // en el mismo navegador). En ambos casos la clave no se llego a validar.
+            if (xhr && (xhr.status === 401 || xhr.status === 400)) {
+                mostrarSesionCerrada();
+                return;
+            }
             mostrarError('No se pudo validar la contraseña. Revisá la conexión e intentá de nuevo.');
         }).always(function () {
             validando = false;
@@ -318,6 +345,7 @@
     $('#posBloqueoForm').on('submit', desbloquear);
     $('#posBloqueoBtnCambiar').on('click', cambiarVendedor);
     $('#posBloqueoBtnSalir').on('click', cerrarSesion);
+    $('#posBloqueoBtnReingresar').on('click', recargarMismaInstancia);
 
     setInterval(chequear, CHEQUEO_MS);
     // Al volver a la pestana (PC suspendida, cambio de ventana) se evalua ya, sin esperar el proximo ciclo.

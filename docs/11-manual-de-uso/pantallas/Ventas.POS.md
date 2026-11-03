@@ -5,10 +5,10 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-02
+revisada: 2026-11-03
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -116,6 +116,12 @@ En el modal **Expendios** (AvPag), el campo **Persona (cliente del expendio)** b
 - Al elegirla, **Fecha desde** pasa a hace 6 meses (si ya escribiste una fecha a mano se respeta). La **✕** (o Backspace) quita la persona y vuelve a la búsqueda de siempre.
 - Si una persona no trae nada: la **identificación** de la persona debe ser igual a la «Identificación cliente» del expendio (no se compara la razón social, porque personas distintas pueden compartirla).
 - PENDIENTE de probar en el navegador con login (lo verificado fue la consulta contra la base local).
+
+## POS bloqueado: «Tu sesión se cerró»
+- Si el POS se bloqueó por inactividad y, mientras tanto, **se cerró la sesión del sistema** (venció, se cerró desde otra pestaña o se inició sesión con otro usuario en el mismo navegador), al tocar **Desbloquear** el POS **no valida la contraseña** y muestra **«Tu sesión se cerró»** en lugar del formulario. Antes mostraba «Contraseña incorrecta.» aunque la clave estuviera bien.
+- El botón **Volver a iniciar sesión** recarga el POS: si la sesión no existe pide el login y vuelve al mismo POS; si hay otra sesión abierta carga el POS de ese usuario.
+- Una contraseña realmente mal sigue mostrando «Contraseña incorrecta.»; sin red o con el servidor caído sigue el aviso «No se pudo validar la contraseña. Revisá la conexión…».
+- PENDIENTE: no se verificó si la venta en curso se recupera después de volver a iniciar sesión.
 
 ## Notas
 - Solo el ticket del post-venta ofrece el saldo. La **reimpresión desde el historial**, el **PDF** y el **email** no lo incluyen.

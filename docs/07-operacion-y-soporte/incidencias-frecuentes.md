@@ -13,6 +13,12 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-03 - POS bloqueado: decía «Contraseña incorrecta» pero la sesión se había cerrado
+
+- **Sintoma**: al desbloquear el POS (bloqueo por inactividad) con la contraseña correcta aparecía «Contraseña incorrecta.» (o «No se pudo validar la contraseña. Revisá la conexión…»).
+- **Causa**: la sesión de login se cerró mientras el POS estaba bloqueado (cookie vencida, logout o login de otro usuario en otra pestaña). `POST /Ventas/DesbloquearPOS` responde 401 (sin sesión), 400 (token antiforgery de otro usuario) o una página que no es JSON, y `pos-bloqueo.js` lo mostraba como error de clave. La clave nunca llegaba a validarse.
+- **Resolucion**: `pos-bloqueo.js` detecta 401, 400 o respuesta no-JSON y muestra «Tu sesión se cerró» con el botón **Volver a iniciar sesión** (`_BloqueoPOS.cshtml`). Para el usuario: tocar ese botón e ingresar de nuevo.
+
 ## 2026-10-29 - POS (F6): «Enviar por email» desde Detalle de venta dejaba la pantalla bloqueada
 
 - **Sintoma**: F6 → Detalle de venta → Factura / Imprimir → Enviar por email: el modal de email se veía oscurecido y no se podía escribir ni cerrar.

@@ -41,6 +41,14 @@
                 <button type="submit" id="posBloqueoBtnDesbloquear" class="btn btn-primary btn-block mt-2">Desbloquear</button>
             </form>
 
+            @* Se muestra en lugar del formulario cuando el desbloqueo detecta que la sesion de login se cerro
+               (pos-bloqueo.js, mostrarSesionCerrada): la clave no llego a validarse, no es un error de contraseña. *@
+            <div id="posBloqueoSesion" class="d-none" role="alert">
+                <p class="pos-bloqueo-texto"><strong>Tu sesión se cerró.</strong></p>
+                <p class="pos-bloqueo-texto">No es un problema de tu contraseña: la sesión del sistema venció o se cerró (por ejemplo, desde otra pestaña). Volvé a iniciar sesión para seguir.</p>
+                <button type="button" id="posBloqueoBtnReingresar" class="btn btn-primary btn-block mt-2">Volver a iniciar sesión</button>
+            </div>
+
             <div id="posBloqueoEspera" class="pos-bloqueo-error d-none" role="alert">
                 Demasiados intentos. Reintentá en <strong id="posBloqueoCuenta">0:00</strong>.
             </div>
