@@ -5,7 +5,7 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-11-02
+revisada: 2026-11-04
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
@@ -41,7 +41,9 @@ Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consulta
 - Esta función solo está en las empresas con base Postgres; en las demás no se ve nada.
 
 ## Historial de cierres
-- Muestra cada cierre con sus importes y quién lo cerró. La columna **Origen del cierre** indica quién cargó el importe de **Caja cierre**:
+- En la **computadora** la tabla tiene **9 columnas** en vez de 15: los datos relacionados comparten celda, uno arriba del otro (el de abajo en gris): **Cajero** (quién inició / quién cerró), **Horario** (inicio / cierre), **Caja inicial** / caja ini sig, **Ventas** / egresos de caja, **Caja cierre** / retirado, **Diferencia**, **Origen del cierre** / avisos y **Acciones**.
+- La tabla está en un **marco con scroll propio** (alto máximo de unos tres cuartos de la pantalla): las barras de desplazamiento quedan siempre a la vista, el **encabezado queda fijo** al bajar y **Id** y **Acciones** quedan pegadas a los costados si la pantalla es angosta y hay que desplazarse de costado.
+- Muestra cada cierre con sus importes y quién lo cerró. El origen del cierre (segunda línea de la última columna de datos, junto a los avisos) indica quién cargó el importe de **Caja cierre**:
   - **Ingresado por el cajero**: coincide con lo que contó el cajero.
   - **Modificado por el encargado**: el cajero declaró otro importe y el encargado cerró con uno distinto (al pasar el mouse se ve lo que declaró el cajero y el detalle de billetes).
   - **Cargado por el encargado**: el cajero no cargó su cierre.
@@ -75,5 +77,6 @@ Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consulta
 - **Actividades** de una caja abierta usa el mismo diseño que **Mis actividades** del POS (ver [Ventas.POS](ayuda:pantalla/Ventas.POS)): la tarjeta con el total la ven solo los administradores y la columna **Sucursal** aparece solo si hay movimientos de otra sucursal.
 - **PENDIENTE:** documentar el cambio de sucursal de una caja y el botón Actividades de este modal.
 - **PENDIENTE:** prueba manual en el navegador con sesión de este flujo (no verificado todavía).
+- Diseño del Historial (9 columnas agrupadas, scroll propio, columnas fijas; 2026-11-04) verificado en el navegador con datos reales (1973 cierres) a 1366, 1024 y 820 px, en modo oscuro y en celular (375 px). **PENDIENTE:** el botón **Reabrir** y el aviso **Modificada** no se vieron en pantalla (no había cierres con esos datos a la vista).
 
 Ver también: [Egresos de caja](ayuda:pantalla/Cajas.EgresosCaja), [mapa de configuraciones](ayuda:referencia/configuraciones)

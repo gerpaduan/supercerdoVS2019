@@ -267,6 +267,90 @@
             }
         }
 
+        /* Historial de cierres en escritorio (pedido 2026-11-04): marco con scroll PROPIO (vertical y horizontal; la barra
+           horizontal queda siempre a la vista en vez de al final de las 93 filas), encabezado fijo y columnas Id / Acciones
+           pegadas a los costados. border-collapse: separate porque con "collapse" los bordes de una celda sticky no se
+           mueven con ella. Los fondos de las celdas fijas son opacos para tapar lo que pasa por debajo al desplazar. */
+        @@media (min-width: 768px) {
+            .cajas-page #tablaResultadoHistorial .cc-historial-scroll {
+                max-height: max(22rem, 75vh);
+                overflow: auto;
+                border: 1px solid var(--ui-border, #d7dce3);
+                border-radius: .6rem;
+            }
+
+            #tablaCierresHistoricos {
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+
+            #tablaCierresHistoricos > tbody > tr > td {
+                border-width: 1px 0 0 0;
+                border-style: solid;
+                border-color: var(--ui-border, #dee2e6);
+                background-color: var(--ui-surface, #fff);
+            }
+
+            #tablaCierresHistoricos > thead > tr > th {
+                position: sticky;
+                top: 0;
+                z-index: 3;
+                border-width: 0 0 1px 0;
+                border-style: solid;
+                border-color: var(--ui-border, #d7dce3);
+                background-color: var(--ui-surface-alt, #f3f4f6);
+                vertical-align: bottom;
+            }
+
+            #tablaCierresHistoricos > thead > tr > th small {
+                display: block;
+                font-size: .62rem;
+                font-weight: 500;
+                letter-spacing: 0;
+                text-transform: none;
+                color: var(--ui-text-muted, #6c757d);
+            }
+
+            #tablaCierresHistoricos > thead > tr > th.cc-col-fija-izq,
+            #tablaCierresHistoricos > thead > tr > th.cc-col-fija-der {
+                z-index: 4;
+            }
+
+            #tablaCierresHistoricos > tbody > tr > td.cc-col-fija-izq,
+            #tablaCierresHistoricos > thead > tr > th.cc-col-fija-izq {
+                position: sticky;
+                left: 0;
+                border-right: 1px solid var(--ui-border, #d7dce3);
+            }
+
+            #tablaCierresHistoricos > tbody > tr > td.cc-col-fija-der,
+            #tablaCierresHistoricos > thead > tr > th.cc-col-fija-der {
+                position: sticky;
+                right: 0;
+                border-left: 1px solid var(--ui-border, #d7dce3);
+            }
+
+            #tablaCierresHistoricos > tbody > tr > td.cc-col-fija-izq,
+            #tablaCierresHistoricos > tbody > tr > td.cc-col-fija-der {
+                z-index: 2;
+            }
+
+            #tablaCierresHistoricos > tbody > tr:hover > td {
+                background-color: var(--ui-surface-alt, #f3f4f6);
+            }
+
+            /* Celdas agrupadas: dos datos relacionados, uno arriba del otro; el de abajo mas tenue. */
+            #tablaCierresHistoricos td.cc-grupo > span {
+                display: block;
+                line-height: 1.25;
+            }
+
+            #tablaCierresHistoricos td.cc-grupo:not(.cc-grupo-libre) > span + span {
+                color: var(--ui-text-muted, #6c757d);
+                font-size: .92em;
+            }
+        }
+
         /* Celular (<768px): Cajas abiertas e Historial de cierres son tablas-tarjeta (tabla-cards.css, clase
            "tabla-cards" en las tablas de los parciales; pedido 2026-10-26). Aca queda solo lo propio de esta vista. */
         @@media (max-width: 767.98px) {
@@ -282,6 +366,45 @@
             /* En el historial el titulo de la tarjeta es "Caja #id". */
             #tablaCierresHistoricos > tbody > tr > td.cc-id::before {
                 content: "Caja #";
+            }
+
+            /* Celdas agrupadas del historial (td.cc-grupo): en la tarjeta la td desaparece (display: contents) y cada
+               <span data-label> es una celda mas de la grilla, con su rotulo, como las celdas sueltas de tabla-cards.css. */
+            #tablaCierresHistoricos > tbody > tr > td.cc-grupo {
+                display: contents;
+            }
+
+            #tablaCierresHistoricos td.cc-grupo > span {
+                display: block;
+                min-width: 0;
+                font-size: .84rem;
+                line-height: 1.25;
+                overflow-wrap: anywhere;
+                text-align: left;
+                white-space: normal;
+            }
+
+            #tablaCierresHistoricos td.cc-grupo > span::before {
+                content: attr(data-label);
+                display: block;
+                margin-bottom: .08rem;
+                font-size: .66rem;
+                font-weight: 600;
+                letter-spacing: .02em;
+                text-transform: uppercase;
+                color: var(--ui-text-muted, #6c757d);
+            }
+
+            #tablaCierresHistoricos td.cc-grupo > span.cc-cabecera {
+                order: -2;
+            }
+
+            #tablaCierresHistoricos td.cc-grupo > span.cc-ancho {
+                grid-column: 1 / -1;
+            }
+
+            #tablaCierresHistoricos td.cc-grupo > span.cc-vacio {
+                display: none;
             }
         }
     </style>

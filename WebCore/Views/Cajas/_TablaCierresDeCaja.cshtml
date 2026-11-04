@@ -82,27 +82,24 @@
     <div class="text-muted small">Histórico por sucursal desde la fecha seleccionada.</div>
 </div>
 
-@* En celular (<768px) cada cierre se muestra como tarjeta: las clases cc-* y los data-label los usa el
-   CSS compartido wwwroot/Content/css/tabla-cards.css (pedido 2026-10-26: sin scroll horizontal). *@
-<div class="table-responsive">
-    <table class="table table-sm table-bordered table-hover mb-0 tabla-cards" id="tablaCierresHistoricos">
+@* Diseño (pedido 2026-11-04): 9 columnas en vez de 15. Las columnas relacionadas comparten celda, una línea arriba de
+   la otra (td.cc-grupo con un <span data-label> por dato). Va dentro de un marco con scroll propio (.cc-historial-scroll,
+   CSS en CajasAbiertas.cshtml): encabezado fijo y columnas Id / Acciones pegadas a los costados. Los cc-* y data-label
+   los usa tabla-cards.css para la tarjeta de celular; en las celdas agrupadas la td pasa a display:contents y cada
+   <span> actúa como una celda de la tarjeta (regla propia en CajasAbiertas.cshtml). *@
+<div class="table-responsive cc-historial-scroll">
+    <table class="table table-sm table-hover mb-0 tabla-cards" id="tablaCierresHistoricos">
         <thead class="thead-light">
             <tr>
-                <th>Id</th>
-                <th>Iniciada por</th>
-                <th>Inicio</th>
-                <th>Cierre</th>
-                <th class="text-right">Caja inicial</th>
-                <th class="text-right">Ventas</th>
-                <th class="text-right">EgresosCaja</th>
-                <th class="text-right">Caja cierre</th>
+                <th class="cc-col-fija-izq">Id</th>
+                <th>Cajero<small>inicia / cierra</small></th>
+                <th>Horario<small>inicio / cierre</small></th>
+                <th class="text-right">Caja inicial<small>/ caja ini sig</small></th>
+                <th class="text-right">Ventas<small>/ egresos caja</small></th>
+                <th class="text-right">Caja cierre<small>/ retirado</small></th>
                 <th class="text-right">Diferencia</th>
-                <th class="text-right">Caja ini sig</th>
-                <th class="text-right">Retirado</th>
-                <th>Cerrada por</th>
-                <th title="Quién cargó el importe de Caja cierre: el cajero (desde Mi cierre) o el encargado">Origen del cierre</th>
-                <th title="Cambios hechos en ventas, compras, pagos o egresos de esta caja después de cerrarla, y reaperturas">Avisos</th>
-                <th>Acciones</th>
+                <th title="Origen del cierre: quién cargó el importe de Caja cierre (el cajero desde Mi cierre, o el encargado). Avisos: cambios hechos en ventas, compras, pagos o egresos de esta caja después de cerrarla, y reaperturas">Origen del cierre<small>/ avisos</small></th>
+                <th class="cc-col-fija-der">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -111,46 +108,61 @@
                 foreach (DataRow row in Model.Rows)
                 {
                     <tr>
-                        <td class="cc-titulo cc-id">@Valor(row, "id")</td>
-                        <td class="cc-cabecera" data-label="Iniciada por">@Valor(row, "Iniciada_Por")</td>
-                        <td data-label="Inicio">@FormatearFecha(row, "Inicio")</td>
-                        <td data-label="Cierre">@FormatearFecha(row, "Cierre")</td>
-                        <td class="text-right" data-label="Caja inicial">@FormatearMonto(row, "Caja_Inicial")</td>
-                        <td class="text-right" data-label="Ventas">@FormatearMonto(row, "Ventas")</td>
-                        <td class="text-right" data-label="EgresosCaja">@FormatearMonto(row, "EgresosCaja")</td>
-                        <td class="text-right" data-label="Caja cierre">@FormatearMonto(row, "Caja_Cierre")</td>
-                        <td class="text-right cc-destacado" data-label="Diferencia">@FormatearMonto(row, "Diferencia")</td>
-                        <td class="text-right" data-label="Caja ini sig">@FormatearMonto(row, "Caja_Ini_Sig")</td>
-                        <td class="text-right" data-label="Retirado">@FormatearMonto(row, "Retirado")</td>
-                        <td class="cc-cabecera" data-label="Cerrada por">@Valor(row, "Cerrada_Por")</td>
-                        @{ var origen = OrigenCierre(row); }
-                        @* cc-vacio: en la tarjeta de celular no se muestra el rotulo de una celda sin contenido. *@
-                        <td class="text-nowrap @(origen.Texto == "" ? "cc-vacio" : "")" data-label="Origen del cierre">
-                            @if (origen.Texto != "")
-                            {
-                                <span class="badge @origen.Clase" title="@origen.Detalle">@origen.Texto</span>
-                            }
-                        </td>
                         @{
+                            var origen = OrigenCierre(row);
                             int cambiosPosteriores = Entero(row, "Cambios_Posteriores");
                             int reaperturas = Entero(row, "Reaperturas");
                             string cambiosFecha = FormatearFecha(row, "Cambios_Posteriores_Fecha");
+                            bool hayAvisos = cambiosPosteriores > 0 || reaperturas > 0;
                         }
-                        <td class="text-nowrap cc-ancho @(cambiosPosteriores == 0 && reaperturas == 0 ? "cc-vacio" : "")" data-label="Avisos">
-                            @if (cambiosPosteriores > 0)
-                            {
-                                <span class="badge badge-danger" title="Se modificaron datos de esta caja después de cerrarla (última vez: @cambiosFecha). El cierre guardado puede estar desactualizado: abrí Modificar para ver el detalle.">
-                                    <i class="fas fa-exclamation-triangle"></i> Modificada (@cambiosPosteriores)
-                                </span>
-                            }
-                            @if (reaperturas > 0)
-                            {
-                                <span class="badge badge-info" title="Esta caja fue reabierta y vuelta a cerrar @reaperturas vez/veces.">
-                                    <i class="fas fa-lock-open"></i> Reabierta (@reaperturas)
-                                </span>
-                            }
+                        <td class="cc-titulo cc-id cc-col-fija-izq">@Valor(row, "id")</td>
+                        @* Celdas agrupadas (td.cc-grupo): 1.er span = línea de arriba, 2.º = línea de abajo (más tenue).
+                           cc-cabecera: en la tarjeta de celular van justo debajo del título. *@
+                        <td class="cc-grupo text-nowrap">
+                            <span class="cc-cabecera" data-label="Iniciada por">@Valor(row, "Iniciada_Por")</span>
+                            <span class="cc-cabecera" data-label="Cerrada por" title="Cerrada por">@Valor(row, "Cerrada_Por")</span>
                         </td>
-                        <td class="text-nowrap cc-acciones">
+                        <td class="cc-grupo text-nowrap">
+                            <span data-label="Inicio">@FormatearFecha(row, "Inicio")</span>
+                            <span data-label="Cierre">@FormatearFecha(row, "Cierre")</span>
+                        </td>
+                        <td class="cc-grupo text-right text-nowrap">
+                            <span data-label="Caja inicial">@FormatearMonto(row, "Caja_Inicial")</span>
+                            <span data-label="Caja ini sig" title="Caja inicial siguiente">@FormatearMonto(row, "Caja_Ini_Sig")</span>
+                        </td>
+                        <td class="cc-grupo text-right text-nowrap">
+                            <span data-label="Ventas">@FormatearMonto(row, "Ventas")</span>
+                            <span data-label="EgresosCaja" title="Egresos de caja">@FormatearMonto(row, "EgresosCaja")</span>
+                        </td>
+                        <td class="cc-grupo text-right text-nowrap">
+                            <span data-label="Caja cierre">@FormatearMonto(row, "Caja_Cierre")</span>
+                            <span data-label="Retirado" title="Retirado">@FormatearMonto(row, "Retirado")</span>
+                        </td>
+                        <td class="text-right cc-destacado text-nowrap" data-label="Diferencia">@FormatearMonto(row, "Diferencia")</td>
+                        @* Origen y avisos: cc-vacio en el span sin contenido (la tarjeta de celular no muestra el rótulo solo). *@
+                        <td class="cc-grupo cc-grupo-libre text-nowrap">
+                            <span class="@(origen.Texto == "" ? "cc-vacio" : "")" data-label="Origen del cierre">
+                                @if (origen.Texto != "")
+                                {
+                                    <span class="badge @origen.Clase" title="@origen.Detalle">@origen.Texto</span>
+                                }
+                            </span>
+                            <span class="cc-ancho @(hayAvisos ? "" : "cc-vacio")" data-label="Avisos">
+                                @if (cambiosPosteriores > 0)
+                                {
+                                    <span class="badge badge-danger" title="Se modificaron datos de esta caja después de cerrarla (última vez: @cambiosFecha). El cierre guardado puede estar desactualizado: abrí Modificar para ver el detalle.">
+                                        <i class="fas fa-exclamation-triangle"></i> Modificada (@cambiosPosteriores)
+                                    </span>
+                                }
+                                @if (reaperturas > 0)
+                                {
+                                    <span class="badge badge-info" title="Esta caja fue reabierta y vuelta a cerrar @reaperturas vez/veces.">
+                                        <i class="fas fa-lock-open"></i> Reabierta (@reaperturas)
+                                    </span>
+                                }
+                            </span>
+                        </td>
+                        <td class="text-nowrap cc-acciones cc-col-fija-der">
                             @if (puedeModificarCierres)
                             {
                                 <button type="button" class="btn btn-warning btn-sm" onclick="abrirModalCerrarCaja(@Valor(row, "id"), true)">
@@ -176,7 +188,7 @@
             else
             {
                 <tr>
-                    <td colspan="15" class="text-center text-muted py-4">No se encontraron cierres de caja para los filtros seleccionados.</td>
+                    <td colspan="9" class="text-center text-muted py-4">No se encontraron cierres de caja para los filtros seleccionados.</td>
                 </tr>
             }
         </tbody>
