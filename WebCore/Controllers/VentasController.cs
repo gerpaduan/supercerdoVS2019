@@ -756,10 +756,148 @@ namespace WebCore.Controllers
                 || _oUsuarioN.tienePermiso(operador, Entidades.Permisos.Venta.VerGetAllLineaVenta, DateTime.Today, -1);
         }
 
+        // ===== Autorizacion provisoria de otro usuario (2026-11-03, ver docs/DECISIONS.md "POS: autorizacion provisoria
+        // de otro usuario") =====
+        // Cuando el operador NO tiene un permiso, otro usuario que si lo tiene puede autorizarle esa accion con su usuario
+        // y clave (AutorizarAccionPOS) hasta que se cierre la ventana de la accion. Solo se mira DESPUES de que el chequeo
+        // del propio operador fallo: con el permiso, nada de esto interviene.
+
+        private Contratos.IAutorizacionPosRepository CrearAutorizacionPosRepo() =>
+            WebCore.Infrastructure.NegocioFactory.CrearAutorizacionPosRepository(_empresa);
+
+        // Quien autorizo esa accion en esa pestana (vigente y con el permiso al dia), o null.
+        private Entidades.Usuario AutorizanteVigente(string posInstanceId, string accion, int idRegistro = 0) =>
+            WebCore.Helpers.AutorizacionProvisoriaPosHelper.Autorizante(HttpContext.Session, _oUsuarioN, posInstanceId, accion, idRegistro);
+
+        // Rechazo que ademas le dice al cliente que puede pedir la autorizacion de otro usuario (campos extra del JSON:
+        // el resto de la respuesta es el de siempre).
+        private object RechazoConAutorizacion(string msg, string accion, int idRegistro = 0) =>
+            new { ok = false, msg, requiereAutorizacion = true, accion, idRegistro };
+
         // "POS - Bonificacion": bonificar precios en la venta (a mano o por porcentaje a todo el carrito).
         private bool PuedeBonificarPOS(Entidades.Usuario operador)
         {
             return operador != null && _oUsuarioN.tienePermiso(operador, Entidades.Permisos.Venta.Bonificar, DateTime.Today, -1);
+        }
+
+        // Con el permiso del operador o con la autorizacion de otro usuario para esa pestana.
+        private bool PuedeBonificarPOS(Entidades.Usuario operador, string posInstanceId) =>
+            PuedeBonificarPOS(operador) || AutorizanteVigente(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionBonificar) != null;
+
+        // Modificar una venta con la autorizacion de otro usuario: la venta tiene que seguir siendo de la caja abierta del
+        // operador, desde su inicio, y los dias editar son los de quien autoriza. Un administrador no tiene limites.
+        private bool VentaAutorizadaParaModificar(Entidades.Venta venta, Entidades.Usuario autorizante, Entidades.Usuario operador, Entidades.CierreCaja cierreOperador)
+        {
+            if (venta == null || autorizante == null) return false;
+            if (autorizante.Admin) return true;
+
+            return VentaPerteneceAlCierreActual(venta, cierreOperador)
+                && _oUsuarioN.tienePermiso(autorizante, Entidades.Permisos.Venta.UltimaVenta, venta.FechaVenta, autorizante.Id);
+        }
+
+        // PuedeModificarUltimaVenta, o la autorizacion vigente de otro usuario para ESTA venta.
+        private bool PuedeModificarVentaOAutorizada(Entidades.Venta venta, Entidades.Usuario operador, Entidades.CierreCaja cierre, string posInstanceId)
+        {
+            if (PuedeModificarUltimaVenta(venta, operador, cierre)) return true;
+            if (venta == null) return false;
+
+            var autorizante = AutorizanteVigente(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta, venta.IdVenta);
+            return VentaAutorizadaParaModificar(venta, autorizante, operador, cierre ?? ObtenerCierreCajaActual(operador));
+        }
+
+        // Cambiar la fecha de una venta: PuedeEditarFechaVenta del operador, o la autorizacion de otro usuario (sus dias
+        // editar). El piso de la apertura de caja lo pone FechaVentaDentroDeVentanaPermitida en el llamador.
+        private bool PuedeEditarFechaVentaOAutorizada(Entidades.Venta venta, DateTime fecha, Entidades.Usuario operador, string posInstanceId)
+        {
+            if (PuedeEditarFechaVenta(venta, fecha, operador)) return true;
+            if (venta == null) return false;
+
+            var autorizante = AutorizanteVigente(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta, venta.IdVenta);
+            return autorizante != null && (autorizante.Admin
+                || _oUsuarioN.tienePermiso(autorizante, Entidades.Permisos.Venta.UltimaVenta, fecha, autorizante.Id));
+        }
+
+        // Autoriza una accion del POS con el usuario y la clave de OTRO usuario que tenga el permiso. La accion vale hasta
+        // que se cierre la ventana que la usa (RevocarAccionPOS / guardado / cierre del POS) y deja constancia en la
+        // auditoria. Mismo limitador por sesion que el resto de los pasos de autorizacion del POS.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarAccionPOS(int idUsuario, string clave, string posInstanceId, string accion, int idRegistro = 0)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos.";
+
+            if (!Negocio.AutorizacionesProvisoriasPos.EsAccionValida(accion) || string.IsNullOrWhiteSpace(posInstanceId)
+                || idUsuario <= 0 || string.IsNullOrWhiteSpace(clave))
+            {
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+            }
+
+            // El operador de la pestana es a quien se autoriza: con la cuenta de produccion tiene que seguir autorizado.
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null)
+                return Json(new { ok = false, msg = "La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario." });
+            var operador = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+
+            var candidato = _oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            var autorizante = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (autorizante == null || !autorizante.Activo)
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            // Clave correcta: se dice por que no sirve (quien esta en la pantalla ya probo ser esa persona con su clave).
+            // Sigue contando como intento fallido.
+            string nombre = string.IsNullOrWhiteSpace(autorizante.Nombre) ? "Ese usuario" : autorizante.Nombre;
+            if (autorizante.Id == operador.Id)
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson("Tiene que autorizar otro usuario, no el mismo operador."));
+
+            if (!WebCore.Helpers.AutorizacionProvisoriaPosHelper.TienePermiso(_oUsuarioN, autorizante, accion))
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(nombre + " tampoco tiene permiso para esta acción. Elegí a un usuario que lo tenga."));
+
+            if (accion == Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta && idRegistro > 0)
+            {
+                var venta = _oVentaN.getVentaById(idRegistro);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "La venta no existe." });
+
+                if (!VentaAutorizadaParaModificar(venta, autorizante, operador, ObtenerCierreCajaActual(operador)))
+                    return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(
+                        nombre + " no puede autorizar esta venta: tiene que ser de la caja abierta del operador y estar dentro de los días que permite su permiso."));
+            }
+
+            try
+            {
+                WebCore.Helpers.AutorizacionProvisoriaPosHelper.Registrar(
+                    HttpContext.Session, CrearAutorizacionPosRepo(), posInstanceId, accion, idRegistro,
+                    operador.Id, autorizante.Id, _usuarioActual.Id);
+            }
+            catch (Exception ex)
+            {
+                // Falla cerrado: sin constancia en la auditoria no se autoriza.
+                _logger.LogError(ex, "No se pudo registrar la autorizacion POS {Accion} de {Autorizante} para {Operador}", accion, autorizante.Id, operador.Id);
+                return Json(new { ok = false, msg = "No se pudo registrar la autorización. Intentá de nuevo o avisá al administrador." });
+            }
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+            return Json(new { ok = true, nombre = autorizante.Nombre });
+        }
+
+        // Fin de una autorizacion: el cliente lo llama al cerrar la ventana de la accion (puede ser con sendBeacon, por eso
+        // sin antiforgery: solo quita, nunca habilita). idRegistro < 0 = cualquier registro de esa accion.
+        [HttpPost]
+        public JsonResult RevocarAccionPOS(string posInstanceId, string accion, int idRegistro = -1)
+        {
+            if (!Negocio.AutorizacionesProvisoriasPos.EsAccionValida(accion))
+                return Json(new { ok = false });
+
+            WebCore.Helpers.AutorizacionProvisoriaPosHelper.Revocar(
+                HttpContext.Session, CrearAutorizacionPosRepo(), posInstanceId, accion,
+                idRegistro >= 0 ? idRegistro : (int?)null, "cerrado");
+            return Json(new { ok = true });
         }
 
         private static string ClaveBonificacion(long codigo, float bonificacion) =>
@@ -772,7 +910,7 @@ namespace WebCore.Controllers
         // puede bonificar pueda igual corregir otra cosa de una venta bonificada. null = permitido, si no el mensaje.
         private string ValidarBonificacionesDelRequest(FinalizarVentaRequest request, Entidades.Usuario operador, IEnumerable<Entidades.LineaVenta> lineasOriginales = null)
         {
-            if (request?.LineasVenta == null || PuedeBonificarPOS(operador)) return null;
+            if (request?.LineasVenta == null || PuedeBonificarPOS(operador, request.PosInstanceId)) return null;
 
             var yaExistentes = new HashSet<string>(
                 (lineasOriginales ?? Enumerable.Empty<Entidades.LineaVenta>())
@@ -831,6 +969,9 @@ namespace WebCore.Controllers
             }
 
             WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+            // Un operador nuevo en la pestana (entrar o "Cambiar operario") no hereda lo que otro usuario le autorizo al
+            // anterior: terminan las autorizaciones provisorias de esa pestana (2026-11-03).
+            WebCore.Helpers.AutorizacionProvisoriaPosHelper.Revocar(HttpContext.Session, CrearAutorizacionPosRepo(), posInstanceId, null, null, "cerrado");
             RegistrarOperadorPOS(posInstanceId, validado);
             return Json(new { ok = true, nombre = validado.Nombre });
         }
@@ -875,6 +1016,8 @@ namespace WebCore.Controllers
         public JsonResult CerrarOperadorPOS(string posInstanceId)
         {
             LimpiarOperadorPOS(posInstanceId);
+            // Al cerrar el POS terminan tambien las autorizaciones provisorias de esa pestana (2026-11-03).
+            WebCore.Helpers.AutorizacionProvisoriaPosHelper.Revocar(HttpContext.Session, CrearAutorizacionPosRepo(), posInstanceId, null, null, "cerrado");
             return Json(new { ok = true });
         }
 
@@ -1465,9 +1608,14 @@ namespace WebCore.Controllers
             }
 
             // "POS - Ultimas Ventas" (ver): sin ese permiso no se listan las ventas propias desde el POS (2026-11-02).
-            if (desdePos && !_oUsuarioN.tienePermiso(ResolverOperadorPOS(posInstanceId, user), Entidades.Permisos.Venta.VerVentasVendedor, DateTime.Today, -1))
+            // Con la autorizacion vigente de otro usuario (hasta cerrar esta ventana) tambien se listan (2026-11-03).
+            if (desdePos && !_oUsuarioN.tienePermiso(ResolverOperadorPOS(posInstanceId, user), Entidades.Permisos.Venta.VerVentasVendedor, DateTime.Today, -1)
+                && AutorizanteVigente(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionMisVentas) == null)
             {
                 ViewBag.Mensaje = "No tenés permiso para ver tus últimas ventas (POS - Últimas Ventas).";
+                // El mensaje trae el boton "Autorizar con otro usuario" (pos-autorizacion.js).
+                ViewBag.AutorizacionAccion = Negocio.AutorizacionesProvisoriasPos.AccionMisVentas;
+                ViewBag.PosInstanceIdMisVentas = posInstanceId ?? "";
                 ViewBag.DesdePOS = desdePos;
                 ViewBag.IdCierreActividad = idCierre;
                 return PartialView("~/Views/Ventas/_MisVentas.cshtml", new List<Entidades.Venta>());
@@ -1552,8 +1700,15 @@ namespace WebCore.Controllers
         {
             var vendedor = desdePos ? ResolverOperadorPOS(posInstanceId, _usuarioActual) : _usuarioActual;
             var cierreVendedor = ObtenerCierreCajaActual(vendedor);
-            ViewBag.PuedeModificarVenta = PuedeModificarUltimaVenta(venta, vendedor, cierreVendedor);
+            ViewBag.PuedeModificarVenta = desdePos
+                ? PuedeModificarVentaOAutorizada(venta, vendedor, cierreVendedor, posInstanceId)
+                : PuedeModificarUltimaVenta(venta, vendedor, cierreVendedor);
             ViewBag.MotivoNoPuedeModificarVenta = (bool)ViewBag.PuedeModificarVenta ? "" : ObtenerMotivoNoPuedeModificarUltimaVenta(venta, vendedor, cierreVendedor);
+            // Operador del POS SIN el permiso de modificar ventas: se le ofrece pedir la autorizacion de otro usuario
+            // (boton "requiere autorizacion"). Con el permiso, todo queda como antes (2026-11-03).
+            ViewBag.PuedeSolicitarAutorizacionModificar = desdePos && !(bool)ViewBag.PuedeModificarVenta
+                && !WebCore.Helpers.AutorizacionProvisoriaPosHelper.TienePermiso(
+                    _oUsuarioN, vendedor, Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta);
             ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta, vendedor, cierreVendedor);
             ViewBag.MotivoNoPuedeCambiarFormaPago = (bool)ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta, vendedor, cierreVendedor);
             // Los links de modificar llevan la misma pestaña, para que el POS en edicion reconozca al mismo operador.
@@ -3475,9 +3630,10 @@ namespace WebCore.Controllers
             ViewBag.OperadorPOSNombre = (user.EsUsuarioProduccion && !requiereOperadorPOS) ? operador.Nombre : null;
             // Bonificar solo con el permiso "POS - Bonificacion" del vendedor activo (el operador autorizado con la
             // cuenta de produccion). Antes el POS dejaba bonificar a cualquiera (2026-11-02).
-            ViewBag.PuedeBonificarPOS = !requiereOperadorPOS && PuedeBonificarPOS(operador);
-            if (user.EsUsuarioProduccion)
-                ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.PuedeBonificarPOS = !requiereOperadorPOS && PuedeBonificarPOS(operador, posInstanceIdNormalizado);
+            // La lista de usuarios tambien sirve al selector de "autorizar con otro usuario" (2026-11-03), que existe para
+            // cualquier usuario del POS, no solo para la cuenta de produccion.
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
 
             // Bloqueo por inactividad del POS (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad"):
             // minutos del vendedor activo (0 = no bloquea; sin operador resuelto tampoco, ver el helper).
@@ -3513,7 +3669,7 @@ namespace WebCore.Controllers
                 // con "user" (la cuenta compartida de produccion) nunca matcheaba -- ObtenerCierreCajaActual
                 // debe recibir el mismo operador que ya se resuelve mas arriba.
                 var cierreEditar = ObtenerCierreCajaActual(operador);
-                bool puedeEditarVenta = !soloFormaPago && PuedeModificarUltimaVenta(ventaEditar, operador, cierreEditar);
+                bool puedeEditarVenta = !soloFormaPago && PuedeModificarVentaOAutorizada(ventaEditar, operador, cierreEditar, posInstanceIdNormalizado);
                 bool puedeCambiarPago = soloFormaPago && PuedeCambiarFormaPago(ventaEditar, operador, cierreEditar);
                 if (!puedeEditarVenta && !puedeCambiarPago)
                 {
@@ -3778,7 +3934,7 @@ namespace WebCore.Controllers
 
                 string errorBonificacion = ValidarBonificacionesDelRequest(request, operador);
                 if (errorBonificacion != null)
-                    return Json(new { ok = false, msg = errorBonificacion });
+                    return Json(RechazoConAutorizacion(errorBonificacion, Negocio.AutorizacionesProvisoriasPos.AccionBonificar));
 
                 if (user.IdSucursal == 0)
                     return Json(new { ok = false, msg = "Seleccione una sucursal antes de finalizar la venta." });
@@ -3907,6 +4063,12 @@ namespace WebCore.Controllers
                         System.Diagnostics.Trace.TraceWarning("No se pudo marcar la venta en curso como finalizada (venta #" + idVenta + "): " + exBorrador.Message);
                     }
                 }
+
+                // Terminada la venta (finalizada o cancelada, las dos pasan por aca) termina la autorizacion provisoria de
+                // otro usuario para bonificar: la proxima venta vuelve a pedirla (2026-11-03).
+                WebCore.Helpers.AutorizacionProvisoriaPosHelper.Revocar(
+                    HttpContext.Session, CrearAutorizacionPosRepo(), request.PosInstanceId,
+                    Negocio.AutorizacionesProvisoriasPos.AccionBonificar, null, "guardado");
 
                 if (conCobroSaldo)
                 {
@@ -4083,7 +4245,11 @@ namespace WebCore.Controllers
                 // Mismo fix que POS() (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md):
                 // la caja se abre a nombre del operador real, hay que buscarla con ese mismo operador.
                 var cierreActual = ObtenerCierreCajaActual(operador);
-                bool tienePermisoAdministrativoVenta = TienePermisoAdministrativoSobreVenta(venta, operador);
+                // Un administrador que autorizo a este operador a modificar ESTA venta la deja sin los limites de caja y de
+                // dias, como si la modificara el administrador (2026-11-03). Cambiar la forma de pago no pide permiso.
+                bool autorizadaPorAdmin = !soloFormaPago
+                    && AutorizanteVigente(request.PosInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta, venta.IdVenta)?.Admin == true;
+                bool tienePermisoAdministrativoVenta = TienePermisoAdministrativoSobreVenta(venta, operador) || autorizadaPorAdmin;
 
                 if (soloFormaPago)
                 {
@@ -4092,8 +4258,16 @@ namespace WebCore.Controllers
                 }
                 else
                 {
-                    if (!PuedeModificarUltimaVenta(venta, operador, cierreActual))
-                        return Json(new { ok = false, msg = "No tiene permisos para modificar esta venta." });
+                    if (!PuedeModificarVentaOAutorizada(venta, operador, cierreActual, request.PosInstanceId))
+                    {
+                        // Solo si es el PERMISO lo que le falta al operador se ofrece la autorizacion de otro usuario;
+                        // si lo tiene y la venta no es de su caja, el rechazo es el de siempre.
+                        bool puedeAutorizar = !WebCore.Helpers.AutorizacionProvisoriaPosHelper.TienePermiso(
+                            _oUsuarioN, operador, Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta);
+                        return Json(puedeAutorizar
+                            ? RechazoConAutorizacion("No tiene permisos para modificar esta venta.", Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta, venta.IdVenta)
+                            : new { ok = false, msg = "No tiene permisos para modificar esta venta." });
+                    }
                 }
 
                 if (request.LineasVenta == null || !request.LineasVenta.Any())
@@ -4102,7 +4276,7 @@ namespace WebCore.Controllers
                 // Bonificar exige "POS - Bonificacion"; las bonificaciones que la venta ya tenia se aceptan (2026-11-02).
                 string errorBonificacionMod = soloFormaPago ? null : ValidarBonificacionesDelRequest(request, operador, venta.LineasVenta);
                 if (errorBonificacionMod != null)
-                    return Json(new { ok = false, msg = errorBonificacionMod });
+                    return Json(RechazoConAutorizacion(errorBonificacionMod, Negocio.AutorizacionesProvisoriasPos.AccionBonificar));
 
                 if (user.IdSucursal == 0 && !tienePermisoAdministrativoVenta)
                     return Json(new { ok = false, msg = "Seleccione una sucursal antes de guardar la venta." });
@@ -4141,8 +4315,9 @@ namespace WebCore.Controllers
 
                 if (!soloFormaPago && request.FechaVenta.HasValue && request.FechaVenta.Value != venta.FechaVenta)
                 {
-                    if (!PuedeEditarFechaVenta(venta, request.FechaVenta.Value, operador))
-                        return Json(new { ok = false, msg = "No tiene permisos para modificar la venta con la fecha seleccionada." });
+                    if (!PuedeEditarFechaVentaOAutorizada(venta, request.FechaVenta.Value, operador, request.PosInstanceId))
+                        return Json(RechazoConAutorizacion("No tiene permisos para modificar la venta con la fecha seleccionada.",
+                            Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta, venta.IdVenta));
 
                     // Item 5 (2026-09-11, ver docs/DECISIONS.md): techo adicional de la ventana de
                     // dias del chip de fecha del POS -- se suma AL LADO de PuedeEditarFechaVenta
@@ -4214,6 +4389,12 @@ namespace WebCore.Controllers
                     cajasCerradasVenta, operador.Id, operador.Nombre,
                     importeVentaOriginal, importeVentaNuevo, formaPagoOriginal, venta.FormaPago,
                     soloFormaPago ? "Cambio de forma de pago desde el detalle de la venta." : "Venta modificada desde el POS.");
+
+                // Guardada la venta, termina la autorizacion provisoria de otro usuario para modificarla (2026-11-03).
+                if (!soloFormaPago)
+                    WebCore.Helpers.AutorizacionProvisoriaPosHelper.Revocar(
+                        HttpContext.Session, CrearAutorizacionPosRepo(), request.PosInstanceId,
+                        Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta, venta.IdVenta, "guardado");
 
                 return Json(new { ok = true, ventaId = venta.IdVenta });
             }

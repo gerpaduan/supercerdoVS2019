@@ -359,6 +359,15 @@ namespace WebCore.Infrastructure
             return new DatosPostgres.ExpendioClientePg(PgConnString, empresa.IdEmpresa);
         }
 
+        // Auditoria de las autorizaciones provisorias del POS (2026-11-03, ver docs/DECISIONS.md). Solo Postgres: en SQL
+        // Server devuelve null y quien lo usa lo trata como "no se puede autorizar" (falla cerrada).
+        public static Contratos.IAutorizacionPosRepository CrearAutorizacionPosRepository(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return null;
+
+            return new DatosPostgres.AutorizacionPosPg(PgConnString, empresa.IdEmpresa);
+        }
+
         // Modulo "Actividades" (solo admin, 2026-09-07, pedido explicito del usuario -- ver
         // docs/DECISIONS.md). Portado a SQL Server el 2026-09-16 (ver docs/DECISIONS.md) -- de las
         // 6 fuentes, "Cambios de precio" queda excluida en SQL Server por falta de historial real

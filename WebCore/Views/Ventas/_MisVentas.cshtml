@@ -15,6 +15,21 @@
     @if (!string.IsNullOrWhiteSpace(mensaje))
     {
         <div class="alert alert-warning m-3">@mensaje</div>
+        @* Sin el permiso: el operador puede pedir la autorizacion de otro usuario (pos-autorizacion.js, 2026-11-03). *@
+        @if (ViewBag.AutorizacionAccion is string accionAutorizar)
+        {
+            string posInstanceAutorizar = ViewBag.PosInstanceIdMisVentas as string ?? "";
+            <div class="mx-3 mb-3">
+                <button type="button" class="btn btn-primary btn-sm js-pos-autorizar"
+                        data-accion="@accionAutorizar"
+                        data-id-registro="0"
+                        data-pos-instance-id="@posInstanceAutorizar"
+                        data-recargar-url="@Url.Action("MisVentas", "Ventas", new { desdePos = true, posInstanceId = posInstanceAutorizar })"
+                        data-recargar-titulo="Mis ventas">
+                    <i class="fas fa-user-check mr-1"></i> Autorizar con otro usuario
+                </button>
+            </div>
+        }
     }
     else
     {

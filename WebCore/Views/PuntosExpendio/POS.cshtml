@@ -736,8 +736,23 @@
                     requierePassword: true,
                     validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId),
                     obligatorio: esInicial
-                }).then(function () {
+                }).then(function (operador) {
                     loginObligatorioPendiente = false;
+                    // Cambio de operario (2026-11-03): aviso de 1 segundo antes de recargar. No aplica al login
+                    // inicial (no es un cambio). 'text' (no 'html') para que el nombre no se interprete como HTML.
+                    if (!esInicial && window.Swal) {
+                        Swal.fire({
+                            title: 'Cambiando de operario',
+                            text: operador && operador.nombre ? 'Pasando a ' + operador.nombre + '…' : 'Un momento…',
+                            timer: 1000,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: function () { Swal.showLoading(); }
+                        }).then(recargarConOperadorAutorizado);
+                        return;
+                    }
                     recargarConOperadorAutorizado();
                 }).catch(function () {
                     if (esInicial) window.location.href = '@Url.Action("Index", "Home")';

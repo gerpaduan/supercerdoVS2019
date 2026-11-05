@@ -132,22 +132,60 @@ namespace WebCore.Controllers
 
             operador = ResolverOperadorPOS(posInstanceId, _usuarioActual);
             if (!_oUsuarioN.tienePermiso(operador, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1))
-                return "No tenés permiso para ver cuentas corrientes (POS - Ctas.Ctes Persona).";
+            {
+                // Autorizacion provisoria de otro usuario (2026-11-03): mientras dure, la consulta se hace con los dias
+                // ver de quien autorizo. Sin ella, el mismo 403 de siempre y un encabezado que le avisa al cliente que
+                // puede pedirla (el cuerpo no cambia).
+                var autorizante = WebCore.Helpers.AutorizacionProvisoriaPosHelper.Autorizante(
+                    HttpContext.Session, _oUsuarioN, posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionCtaCte, 0);
+                if (autorizante == null)
+                {
+                    MarcarPuedePedirAutorizacion(Negocio.AutorizacionesProvisoriasPos.AccionCtaCte, 0);
+                    return "No tenés permiso para ver cuentas corrientes (POS - Ctas.Ctes Persona).";
+                }
+
+                operador = autorizante;
+            }
 
             return null;
+        }
+
+        // Encabezados con los que el 403 le dice al cliente del POS que la accion se puede autorizar con otro usuario.
+        private void MarcarPuedePedirAutorizacion(string accion, int idRegistro)
+        {
+            Response.Headers["X-Pos-Autorizacion"] = accion;
+            Response.Headers["X-Pos-Autorizacion-Id"] = idRegistro.ToString(CultureInfo.InvariantCulture);
         }
 
         // Cargar o modificar un pago/cobro desde el POS (2026-11-02): exige la parte de edicion de "POS - Ctas.Ctes
         // Persona". Un pago ya guardado se modifica solo si es del propio operador, de su caja abierta
         // (EsPagoDeMiCajaAbierta) y dentro del limite de fecha: el mas reciente entre el inicio de la caja y los dias
         // editar del permiso (Negocio.LimiteEdicionCaja). El administrador no tiene limites. null = puede.
-        private string ValidarPermisoPagoDesdePos(Entidades.Pago pagoExistente, DateTime fechaNueva, Entidades.Usuario operador, Entidades.CierreCaja caja, string posInstanceId)
+        //
+        // Autorizacion provisoria de otro usuario (2026-11-03): si el operador NO tiene el permiso y otro usuario que si lo
+        // tiene lo autorizo, rigen los dias editar de quien autorizo; el pago sigue teniendo que ser de la caja del
+        // operador y de su inicio en adelante, salvo que autorice un administrador. puedeAutorizar = el motivo es la
+        // falta del permiso (y no hay autorizacion vigente): el cliente puede pedirla.
+        private string ValidarPermisoPagoDesdePos(Entidades.Pago pagoExistente, DateTime fechaNueva, Entidades.Usuario operador, Entidades.CierreCaja caja, string posInstanceId, out bool puedeAutorizar)
         {
+            puedeAutorizar = false;
             if (operador == null) return MensajeOperadorPosVencido;
             if (operador.Admin) return null;
 
+            Entidades.Usuario autorizante = null;
             if (!_oUsuarioN.tienePermiso(operador, Entidades.Permisos.Finanza.AddOrEditPago, DateTime.Now, operador.Id))
-                return "No tenés permiso para cargar ni modificar pagos o cobros (POS - Ctas.Ctes Persona).";
+            {
+                autorizante = WebCore.Helpers.AutorizacionProvisoriaPosHelper.Autorizante(
+                    HttpContext.Session, _oUsuarioN, posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionPago, pagoExistente?.Id ?? 0);
+                if (autorizante == null)
+                {
+                    puedeAutorizar = true;
+                    return "No tenés permiso para cargar ni modificar pagos o cobros (POS - Ctas.Ctes Persona).";
+                }
+
+                // Alta autorizada: la fecha ya se acota a la caja abierta en AddOrEditPagoPost. Un administrador no tiene limites.
+                if (pagoExistente == null || autorizante.Admin) return null;
+            }
 
             // Alta: la fecha ya se acota a la caja abierta en AddOrEditPagoPost.
             if (pagoExistente == null) return null;
@@ -155,8 +193,10 @@ namespace WebCore.Controllers
             if (!EsPagoDeMiCajaAbierta(pagoExistente, posInstanceId))
                 return "Solo podés modificar los pagos y cobros que cargaste desde que abriste tu caja actual.";
 
+            // Los dias editar son los de quien tiene el permiso: el operador, o quien lo autorizo.
+            var conPermiso = autorizante ?? operador;
             DateTime? minimaPorDias = WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(
-                operador, Entidades.Permisos.Finanza.AddOrEditPago, operador.Id);
+                conPermiso, Entidades.Permisos.Finanza.AddOrEditPago, conPermiso.Id);
             DateTime? inicioCaja = caja != null ? caja.FechaHoraInicio : null;
             if (!Negocio.LimiteEdicionCaja.PuedeEditar(pagoExistente.Fecha, inicioCaja, minimaPorDias)
                 || !Negocio.LimiteEdicionCaja.PuedeEditar(fechaNueva, inicioCaja, minimaPorDias))
@@ -1330,9 +1370,13 @@ namespace WebCore.Controllers
                 // motivo real es el permiso, no la caja. 2026-11-02.
                 if (idPago <= 0)
                 {
-                    string motivoSinPermiso = ValidarPermisoPagoDesdePos(null, DateTime.Now, operadorPago, cierreCajaActual, posInstanceId);
+                    string motivoSinPermiso = ValidarPermisoPagoDesdePos(null, DateTime.Now, operadorPago, cierreCajaActual, posInstanceId, out bool puedeAutorizarPago);
                     if (motivoSinPermiso != null)
+                    {
+                        // El cuerpo es el de siempre; el encabezado le dice al POS que puede pedir la autorizacion de otro usuario.
+                        if (puedeAutorizarPago) MarcarPuedePedirAutorizacion(Negocio.AutorizacionesProvisoriasPos.AccionPago, 0);
                         return StatusCode(403, motivoSinPermiso);
+                    }
                 }
 
                 if (cierreCajaActual == null)
@@ -1509,9 +1553,11 @@ namespace WebCore.Controllers
             {
                 var operadorPermisoPago = ResolverOperadorPOS(posInstanceId, _usuarioActual);
                 string motivoSinPermisoPago = ValidarPermisoPagoDesdePos(
-                    pagoAnterior, oPagoE.Fecha, operadorPermisoPago, ObtenerCajaAbiertaUsuario(operadorPermisoPago), posInstanceId);
+                    pagoAnterior, oPagoE.Fecha, operadorPermisoPago, ObtenerCajaAbiertaUsuario(operadorPermisoPago), posInstanceId, out bool puedeAutorizarPago);
                 if (motivoSinPermisoPago != null)
-                    return Json(new { ok = false, mensaje = motivoSinPermisoPago });
+                    return Json(puedeAutorizarPago
+                        ? (object)new { ok = false, mensaje = motivoSinPermisoPago, requiereAutorizacion = true, accion = Negocio.AutorizacionesProvisoriasPos.AccionPago, idRegistro = pagoAnterior?.Id ?? 0 }
+                        : new { ok = false, mensaje = motivoSinPermisoPago });
             }
 
             var (ok, mensaje) = _oCtaCteN.ValidarPago(oPagoE);
@@ -1651,6 +1697,11 @@ namespace WebCore.Controllers
 
             if (desdePos)
             {
+                // Guardado el pago, termina la autorizacion provisoria de otro usuario para cargar/modificar pagos (2026-11-03).
+                WebCore.Helpers.AutorizacionProvisoriaPosHelper.Revocar(
+                    HttpContext.Session, WebCore.Infrastructure.NegocioFactory.CrearAutorizacionPosRepository(_empresa),
+                    posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionPago, null, "guardado");
+
                 return Json(new
                 {
                     ok = true,

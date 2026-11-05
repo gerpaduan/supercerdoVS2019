@@ -57,6 +57,16 @@
                 <i class="fas fa-edit"></i> Modificar venta
             </a>
         }
+        else if (ViewBag.PuedeSolicitarAutorizacionModificar != null && (bool)ViewBag.PuedeSolicitarAutorizacionModificar)
+        {
+            @* El operador no tiene el permiso de modificar ventas: puede pedir la autorizacion de otro usuario (pos-autorizacion.js, 2026-11-03). *@
+            <a class="btn btn-sm btn-outline-secondary js-pos-modificar-autorizar"
+               data-id-venta="@Model.IdVenta"
+               data-conservar-operador="@conservarOperador"
+               href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, posInstanceId = posInstanceIdLinks, returnUrl = returnUrlEdicion })">
+                <i class="fas fa-user-check"></i> Modificar venta (requiere autorización)
+            </a>
+        }
         @if (puedeCambiarFormaPago)
         {
             <a class="btn btn-sm btn-outline-secondary venta-accion-pos"

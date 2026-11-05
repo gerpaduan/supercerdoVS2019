@@ -955,3 +955,9 @@ psql -h localhost -U postgres -d carnisys -c "drop schema stg cascade"
 ```
 **Rollback**: carnisys -> `pg_restore --clean --if-exists -h localhost -U postgres -d carnisys C:\backups\carnisys_PRE_supercerdo_AAAAMMDD.dump` (con la app detenida); SQL Server -> la base anterior renombrada (`SuperCerdo_old_...`) vuelve a llamarse `SuperCerdo`.
 Corrida 2026-10-27: fuentes `SuperCerdo_SM_20261026` / `SuperCerdo_SL_20261026` (quedaron OFFLINE), respaldo `C:\backups\carnisys_PRE_supercerdo_20261027.dump`.
+
+## Migraciones de permisos del POS (2026-11-02 / 2026-11-03) -- orden de despliegue
+Dos migraciones nuevas en `DatosPostgres/DB-Migrations`, a correr como `carnisys_admin` **antes** de desplegar el codigo:
+- `20261102-Update_formularios_descripcion_permisos_pos.sql`: solo cambia el texto `formularios.descripcion` de los permisos 7, 18, 32, 33 y 34. Reversion: los textos anteriores estan al pie del archivo.
+- `20261103-Create_auditoriaautorizacionespos.sql`: tabla de auditoria de las autorizaciones provisorias del POS (RLS por `idempresa`). Sin ella, autorizar a otro usuario falla cerrado (no se autoriza nada) y el bloque de Actividades se omite con un aviso en el log; el resto del POS no se entera. Reversion: `DROP TABLE auditoriaautorizacionespos;`.
+Config opcional (`WebCore.dll.config` del host, nunca se pisa en un deploy): `Security:AutorizacionPosMinutos` (por defecto 30, entre 1 y 240) = vencimiento de respaldo de una autorizacion si no llega el aviso de cierre de la ventana. Ver `docs/DECISIONS.md` ("POS: permisos por funcion", "POS: autorizacion provisoria de otro usuario").

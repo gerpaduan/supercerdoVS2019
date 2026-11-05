@@ -1554,7 +1554,18 @@ function abrirBloquePorcentajeTotalVenta() {
     // Sin el permiso "POS - Bonificacion" no se bonifica ni a toda la venta (2026-11-02). POS.cshtml fija
     // window.POSPuedeBonificar; si la pantalla no lo define (Expendios) no se restringe, como antes.
     if (window.POSPuedeBonificar === false) {
-        if (window.Swal) {
+        // Con la autorizacion de otro usuario (pos-autorizacion.js, 2026-11-03) se puede seguir; el servidor decide.
+        if (window.PosAutorizacion) {
+            window.PosAutorizacion.pedir({
+                accion: 'Bonificar',
+                idRegistro: 0,
+                motivo: 'El vendedor no tiene permiso para bonificar (POS - Bonificación).'
+            }).then(function (autorizado) {
+                if (!autorizado) return;
+                window.POSPuedeBonificar = true;
+                abrirBloquePorcentajeTotalVenta();
+            });
+        } else if (window.Swal) {
             window.Swal.fire({
                 icon: 'warning',
                 title: 'Bonificación',

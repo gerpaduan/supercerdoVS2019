@@ -160,7 +160,84 @@ namespace WebCore.Services
             if (WebCore.Helpers.PosBorradorSettings.Habilitado)
                 AgregarActividadesPosBorrador(items, desdeConHora, hastaConHora, urlDetalle);
 
+            // Autorizaciones provisorias del POS (otro usuario habilito una accion al operador), solo Postgres.
+            AgregarAutorizacionesPos(items, desdeConHora, hastaConHora);
+
             return items.OrderByDescending(i => i.Fecha).ToList();
+        }
+
+        // "Autorizacion POS" (2026-11-03, ver docs/DECISIONS.md "POS: autorizacion provisoria de otro usuario"): quien
+        // autorizo a quien, que accion y sobre que registro, y como terminó. Una falla de esta consulta (por ejemplo la
+        // migracion todavia sin correr) no debe romper la pantalla de Actividades: se deja el aviso en el log y se omite.
+        private void AgregarAutorizacionesPos(List<Models.ActividadItemVm> items, DateTime desde, DateTime hasta)
+        {
+            try
+            {
+                var repo = WebCore.Infrastructure.NegocioFactory.CrearAutorizacionPosRepository(_empresa);
+                if (repo == null) return;
+
+                foreach (System.Data.DataRow row in repo.ObtenerAutorizaciones(desde, hasta).Rows)
+                {
+                    string operador = NombreOUnUsuario(row["operador"]);
+                    string autorizador = NombreOUnUsuario(row["autorizador"]);
+                    string cuenta = row["cuenta"] == DBNull.Value ? "" : Convert.ToString(row["cuenta"]) ?? "";
+                    string accion = Convert.ToString(row["accion"]) ?? "";
+                    int idRegistro = Convert.ToInt32(row["idregistro"]);
+
+                    string texto = $"{autorizador} autorizó a {operador} a {TextoAccionAutorizacion(accion, idRegistro)}";
+                    if (!string.IsNullOrWhiteSpace(cuenta) && !string.Equals(cuenta, operador, StringComparison.OrdinalIgnoreCase))
+                        texto += $" (cuenta {cuenta})";
+
+                    texto += row["fechafin"] == DBNull.Value
+                        ? " — sin cierre registrado"
+                        : $" — terminó a las {((DateTime)row["fechafin"]):HH:mm} ({TextoMotivoFinAutorizacion(row["motivofin"])})";
+
+                    items.Add(new Models.ActividadItemVm
+                    {
+                        Fecha = (DateTime)row["fecha"],
+                        Tipo = "Autorización POS",
+                        Descripcion = texto,
+                        IdVenta = accion == Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta && idRegistro > 0 ? idRegistro : (int?)null
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("Actividades: no se pudieron leer las autorizaciones del POS: " + ex.Message);
+            }
+        }
+
+        private static string NombreOUnUsuario(object valor) =>
+            valor == DBNull.Value || string.IsNullOrWhiteSpace(Convert.ToString(valor)) ? "Un usuario" : Convert.ToString(valor)!;
+
+        private static string TextoAccionAutorizacion(string accion, int idRegistro)
+        {
+            switch (accion)
+            {
+                case Negocio.AutorizacionesProvisoriasPos.AccionModificarVenta:
+                    return idRegistro > 0 ? $"modificar la venta #{idRegistro}" : "modificar ventas";
+                case Negocio.AutorizacionesProvisoriasPos.AccionBonificar:
+                    return "bonificar en una venta";
+                case Negocio.AutorizacionesProvisoriasPos.AccionCtaCte:
+                    return "ver cuentas corrientes";
+                case Negocio.AutorizacionesProvisoriasPos.AccionPago:
+                    return idRegistro > 0 ? $"modificar el pago o cobro #{idRegistro}" : "cargar un pago o cobro";
+                case Negocio.AutorizacionesProvisoriasPos.AccionMisVentas:
+                    return "ver sus últimas ventas";
+                default:
+                    return accion;
+            }
+        }
+
+        private static string TextoMotivoFinAutorizacion(object motivo)
+        {
+            switch (motivo == DBNull.Value ? "" : Convert.ToString(motivo))
+            {
+                case "guardado": return "se guardó o terminó la venta";
+                case "cerrado": return "se cerró la ventana";
+                case "vencido": return "venció";
+                default: return "terminó";
+            }
         }
 
         // Fuentes nuevas de "Ventas en curso: borrador en servidor y advertencias del POS" (ver

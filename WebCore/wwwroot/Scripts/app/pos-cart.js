@@ -5,8 +5,29 @@
         const POSState = options.POSState;
         const soloFormaPago = options.soloFormaPago === true;
         const eliminarFisicoLineasPendientes = options.eliminarFisicoLineasPendientes === true;
-        const puedeBonificar = options.puedeBonificar !== false;
+        // let (2026-11-03): con la autorizacion de otro usuario pasa a true hasta terminar la venta (ver
+        // pedirAutorizacionBonificar y window.POSBonificarAutorizado).
+        let puedeBonificar = options.puedeBonificar !== false;
         const mensajeSinPermisoBonificar = options.mensajeSinPermisoBonificar || "No tiene permisos para bonificar.";
+        // Opcional: funcion que abre el pedido de autorizacion de otro usuario y devuelve una promesa con true/false. Sin
+        // ella (Puntos de Expendio) queda solo el aviso de siempre.
+        const pedirAutorizacionBonificar = typeof options.pedirAutorizacionBonificar === "function"
+            ? options.pedirAutorizacionBonificar
+            : null;
+
+        // Sin el permiso: en vez de solo avisar, ofrece la autorizacion de otro usuario y, si la dan, repite el click.
+        function sinPermisoBonificar(botonSelector) {
+            if (!pedirAutorizacionBonificar) {
+                showMessage("warning", "Bonificación", mensajeSinPermisoBonificar);
+                return;
+            }
+
+            pedirAutorizacionBonificar().then(function (autorizado) {
+                if (!autorizado) return;
+                puedeBonificar = true;
+                $(botonSelector).trigger("click");
+            });
+        }
         const deshabilitarAvisoSalida = options.deshabilitarAvisoSalida === true;
 
         function fnum(v) {
@@ -825,7 +846,7 @@
                 if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
                 if (!puedeBonificar) {
-                    showMessage("warning", "Bonificación", mensajeSinPermisoBonificar);
+                    sinPermisoBonificar("#btnMostrarBonificar");
                     return;
                 }
                 $("#bloqueBonificar").slideDown(120);
@@ -905,7 +926,7 @@
                 if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
                 if (!puedeBonificar) {
-                    showMessage("warning", "Bonificación", mensajeSinPermisoBonificar);
+                    sinPermisoBonificar("#btnAplicarBonificacion");
                     return;
                 }
 

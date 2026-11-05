@@ -1225,6 +1225,10 @@
         </div>
     </div>
 
+    @* Selector de usuario tambien con la caja abierta: lo usa pos-autorizacion.js para "autorizar con otro usuario"
+       (2026-11-03). La rama de abajo (sin operador resuelto) ya lo incluye. *@
+    @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
     <div id="globalAntiForgeryToken" style="display:none;">
         @Html.AntiForgeryToken()
     </div>
@@ -1245,6 +1249,7 @@ else
        que aca el boton no habria hecho nada (los scripts si se cargan siempre). *@
     @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
     @Html.Partial("~/Views/Shared/_ModalPostComprobante.cshtml")
+    @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
     @* Item 7 (2026-09-11, ver docs/DECISIONS.md): ContinuarSinCajaAbierta es [ValidateAntiForgeryToken] --
        sin este token, la rama de "sin caja real" hoy nunca lo incluia (nadie lo necesitaba antes). *@
     <div id="globalAntiForgeryToken" style="display:none;">
@@ -1315,6 +1320,7 @@ else
     <script src="~/Scripts/app/pos-multi-instance.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-compact.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/seleccion-usuario.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-autorizacion.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/persona-buscar.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/modal-productos.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/factura-electronica.js" asp-append-version="true"></script>
@@ -1333,6 +1339,9 @@ else
                 posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)),
                 urlAutorizar: '@Url.Action("AutorizarOperadorPOS", "Ventas")',
                 urlCerrar: '@Url.Action("CerrarOperadorPOS", "Ventas")',
+                // Autorizacion provisoria de otro usuario (pos-autorizacion.js, 2026-11-03).
+                urlAutorizarAccion: '@Url.Action("AutorizarAccionPOS", "Ventas")',
+                urlRevocarAccion: '@Url.Action("RevocarAccionPOS", "Ventas")',
                 usuariosActivos: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new System.Collections.Generic.List<object>()))
             };
 
@@ -1363,8 +1372,23 @@ else
                     requierePassword: true,
                     validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId),
                     obligatorio: esInicial
-                }).then(function () {
+                }).then(function (operador) {
                     loginObligatorioPendiente = false;
+                    // Cambio de operario (2026-11-03): aviso de 1 segundo antes de recargar. No aplica al login
+                    // inicial (no es un cambio). 'text' (no 'html') para que el nombre no se interprete como HTML.
+                    if (!esInicial && window.Swal) {
+                        Swal.fire({
+                            title: 'Cambiando de operario',
+                            text: operador && operador.nombre ? 'Pasando a ' + operador.nombre + '…' : 'Un momento…',
+                            timer: 1000,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: function () { Swal.showLoading(); }
+                        }).then(recargarConOperadorAutorizado);
+                        return;
+                    }
                     recargarConOperadorAutorizado();
                 }).catch(function () {
                     if (esInicial) window.location.href = '@Url.Action("Index", "Home")';
@@ -1664,6 +1688,19 @@ else
                 // permisos por funcion"). El servidor lo vuelve a exigir en FinalizarVenta/ModificarVenta.
                 puedeBonificar: @(ViewBag.PuedeBonificarPOS != null && (bool)ViewBag.PuedeBonificarPOS ? "true" : "false"),
                 mensajeSinPermisoBonificar: 'No tiene permiso para bonificar (POS - Bonificación).',
+                // Sin el permiso se ofrece la autorizacion de otro usuario, que vale hasta terminar la venta (el servidor la
+                // cierra al finalizar o cancelar; el navegador, al cerrar el POS). 2026-11-03.
+                pedirAutorizacionBonificar: function () {
+                    if (!window.PosAutorizacion) return Promise.resolve(false);
+                    return window.PosAutorizacion.pedir({
+                        accion: 'Bonificar',
+                        idRegistro: 0,
+                        motivo: 'El vendedor no tiene permiso para bonificar (POS - Bonificación).'
+                    }).then(function (ok) {
+                        if (ok) window.POSPuedeBonificar = true;
+                        return ok;
+                    });
+                },
                 getProductoSeleccionado: function () { return posProduct.getProductoSeleccionado(); },
                 setProductoSeleccionado: function (value) { return posProduct.setProductoSeleccionado(value); },
                 getPrecioActual: function () { return posProduct.getPrecioActual(); },
@@ -1912,7 +1949,25 @@ else
                             // .text(): nada del servidor se inyecta como HTML.
                             var detalle = xhr && xhr.status === 403 && typeof xhr.responseText === "string" ? xhr.responseText.trim() : "";
                             if (detalle && detalle.length <= 200 && detalle.indexOf("<") === -1) {
-                                $("#contenedorFinanzasPOS").empty().append($('<div class="alert alert-warning m-3 mb-0"></div>').text(detalle));
+                                var $contenedor = $("#contenedorFinanzasPOS").empty()
+                                    .append($('<div class="alert alert-warning m-3 mb-2"></div>').text(detalle));
+
+                                // Falta el permiso y se puede autorizar con otro usuario (encabezado del 403, 2026-11-03):
+                                // se abre el selector junto con el mensaje y queda el boton por si se cancela.
+                                var autorizable = window.PosAutorizacion && window.PosAutorizacion.leerEncabezado(xhr);
+                                if (autorizable) {
+                                    $contenedor.append(
+                                        $('<button type="button" class="btn btn-primary btn-sm mx-3 mb-3 js-pos-autorizar"></button>')
+                                            .attr({
+                                                "data-accion": autorizable.accion,
+                                                "data-id-registro": autorizable.idRegistro,
+                                                "data-recargar-url": url,
+                                                "data-recargar-titulo": titulo || "",
+                                                "data-motivo": detalle
+                                            })
+                                            .html('<i class="fas fa-user-check mr-1"></i> Autorizar con otro usuario'));
+                                    $contenedor.find(".js-pos-autorizar").trigger("click");
+                                }
                             } else {
                                 mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
                             }
@@ -2021,9 +2076,26 @@ else
                                 detalle = "(error " + xhr.status + ")";
                             }
 
-                            $("#contenedorPagoPOS").empty().append(
-                                $('<div class="alert alert-danger m-3 mb-0"></div>')
+                            var $contenedorPago = $("#contenedorPagoPOS").empty().append(
+                                $('<div class="alert alert-danger m-3 mb-2"></div>')
                                     .text("No se pudo cargar el formulario de pago." + (detalle ? " " + detalle : "")));
+
+                            // Falta el permiso para cargar pagos y se puede autorizar con otro usuario (2026-11-03).
+                            var autorizablePago = window.PosAutorizacion && window.PosAutorizacion.leerEncabezado(xhr);
+                            if (autorizablePago) {
+                                $contenedorPago.append(
+                                    $('<button type="button" class="btn btn-primary btn-sm mx-3 mb-3 js-pos-autorizar"></button>')
+                                        .attr({
+                                            "data-accion": autorizablePago.accion,
+                                            "data-id-registro": autorizablePago.idRegistro,
+                                            "data-recargar-url": url,
+                                            "data-recargar-titulo": titulo || "",
+                                            "data-recargar-modo": "pago",
+                                            "data-motivo": detalle
+                                        })
+                                        .html('<i class="fas fa-user-check mr-1"></i> Autorizar con otro usuario'));
+                                $contenedorPago.find(".js-pos-autorizar").trigger("click");
+                            }
                         },
                         complete: function () {
                             window.POSGuard?.endAction("finanzas:cargarPago");
@@ -2931,6 +3003,9 @@ else
 
             function salirDeEdicionVenta() {
                 var url = urlSalidaEdicionVenta();
+                // Salir de la edicion termina la autorizacion provisoria de otro usuario para modificar esta venta
+                // (guardar ya la termina en el servidor). 2026-11-03.
+                window.PosAutorizacion?.revocar("ModificarVenta", parseInt($("#idVentaEditar").val(), 10) || 0);
                 if (window.PosEsMismaPestana(url)) window.PosConservarOperadorAlSalir = true;
                 window.location.href = url;
             }

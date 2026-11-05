@@ -1051,6 +1051,21 @@
 
                 if (!resp || !resp.ok) {
                     $('#msgErrorPago').removeClass('d-none').text((resp && resp.mensaje) || 'No se pudo guardar el pago.');
+
+                    // El operador no tiene el permiso de editar pagos: se ofrece la autorizacion de otro usuario y, si la
+                    // dan, se vuelve a enviar el mismo pago (2026-11-03, pos-autorizacion.js).
+                    if (resp && resp.requiereAutorizacion && window.PosAutorizacion) {
+                        window.PosAutorizacion.pedir({
+                            accion: resp.accion,
+                            idRegistro: resp.idRegistro || 0,
+                            motivo: resp.mensaje
+                        }).then(function (autorizado) {
+                            if (!autorizado) return;
+                            $('#msgErrorPago').addClass('d-none').text('');
+                            $btn.prop('disabled', true);
+                            enviarPago(datos);
+                        });
+                    }
                     return;
                 }
 

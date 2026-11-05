@@ -69,6 +69,16 @@ namespace Negocio
             return oUsuarioD.getUsuarioById(idUsuario, sinRestriccionDeTenant);
         }
 
+        // Usuario con sus permisos cargados (getUsuarioById no los trae). Lo usa el POS para volver a comprobar, en cada
+        // uso, que quien autorizo a un operador sigue activo y con el permiso (2026-11-03, ver docs/DECISIONS.md).
+        public Entidades.Usuario getUsuarioConPermisos(int idUsuario)
+        {
+            var user = oUsuarioD.getUsuarioById(idUsuario, false);
+            if (user != null)
+                user.Permisos = oUsuarioD.getPermisosUsuario(user.Id);
+            return user;
+        }
+
         public DataTable obtenerUsuariosConTodos(bool soloActivos, bool filtroEmpresa = true)
         {
             dtUsuarios = obtenerUsuarios(soloActivos, filtroEmpresa);

@@ -244,6 +244,9 @@
 
             reset();
             $('#seleccionUsuarioTitulo').text(opciones.titulo || 'Seleccionar usuario');
+            // opciones.aviso (opcional, 2026-11-03): texto fijo arriba del selector, por ejemplo "ZZ no tiene permiso para
+            // modificar ventas" cuando se pide la autorizacion de otro usuario. Los demas usos no lo mandan.
+            if (opciones.aviso) mostrarError(opciones.aviso);
             $('#seleccionUsuarioPasswordWrap').toggleClass('d-none', !requierePassword);
             renderLista('');
 
