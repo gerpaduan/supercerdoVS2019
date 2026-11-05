@@ -90,6 +90,33 @@ namespace WebCore.Helpers
             }
         }
 
+        // 2026-11-03: operador que vive solo mientras se muestra UNA pantalla, no todo el controller. Cajas tiene
+        // muchas vistas (Cajas abiertas, Mi cierre...) y el pedido es que el permiso de ver Egresos de Caja caduque
+        // al cambiar de vista, asi que la regla de arriba (por controller) no alcanza. Se evalua con los mismos
+        // layouts: solo los pedidos que renderizan un layout (navegacion de pagina) la ejecutan; los AJAX de la
+        // propia pantalla (tabla, modales) no pasan por ahi y no lo limpian.
+        public const string ModuloOperadorEgresosCaja = "EgresosCaja";
+
+        private static readonly (string Modulo, string Controller, string Action)[] OperadoresPorPantalla =
+        {
+            (ModuloOperadorEgresosCaja, "Cajas", "EgresosCaja")
+        };
+
+        public static void LimpiarOperadorModuloSiSalioDeLaPantalla(ISession session, string controllerActual, string actionActual)
+        {
+            if (session == null) return;
+
+            foreach (var (modulo, controller, action) in OperadoresPorPantalla)
+            {
+                if (string.IsNullOrEmpty(session.GetString(ClaveSessionOperadorModulo(modulo)))) continue;
+
+                bool sigueEnLaPantalla = string.Equals(controllerActual ?? "", controller, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(actionActual ?? "", action, StringComparison.OrdinalIgnoreCase);
+                if (!sigueEnLaPantalla)
+                    session.Remove(ClaveSessionOperadorModulo(modulo));
+            }
+        }
+
         // Item 7 (2026-09-12, ver docs/DECISIONS.md "gate de caja abierta"): "el permiso para
         // registrar ventas sin apertura de caja termina al salir de la vista del pos venta" --
         // mismo criterio que LimpiarOperadorModuloSiSalioDelModulo de arriba (llamado en cada

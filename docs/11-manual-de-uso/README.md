@@ -18,7 +18,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (64 de 99 pantallas)
+## Cobertura (64 de 100 pantallas)
 
 ## Manual del usuario
 
@@ -41,7 +41,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Ingreso al sistema | Acceso y seguridad | `pantallas/Login.Index.md` | 2026-10-13 |
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
-| pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-11-02 |
+| pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-11-03 |
 | pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-10-31 |
 | pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-30 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-14 |
@@ -112,6 +112,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 ## Pantallas sin ayuda todavia
 
 - **Actividades**: Index
+- **Cajas**: AutorizarModuloEgresosCaja
 - **CodigosBarra**: Editar, Index
 - **Compras**: AutorizarModulo
 - **DispositivosSeguros**: AutorizarModulo

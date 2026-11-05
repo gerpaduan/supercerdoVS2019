@@ -1267,6 +1267,73 @@ namespace WebCore.Controllers
         // Gate de permisos real (Entidades.Permisos.EgresoCaja.*) agregado en la tercera ronda de
         // pedidos (2026-09-10, ver docs/DECISIONS.md) -- antes estas acciones no chequeaban nada.
 
+        // ===== Operador de produccion para ver Egresos de Caja (docs/DECISIONS.md, 2026-11-03) =====
+        // Mismo patron que Compras/Ventas/Finanzas (AutorizarModulo*), duplicado por controller a proposito: no hay
+        // base controller comun en WebCore. El operador vive en Session como "OperadorModulo_EgresosCaja" y caduca
+        // apenas se renderiza otra vista (PermisosHelper.LimpiarOperadorModuloSiSalioDeLaPantalla, desde los layouts):
+        // Cajas tiene muchas vistas, por eso la regla es por pantalla y no por controller.
+        private Entidades.Usuario ObtenerOperadorEgresosCaja()
+        {
+            return WebCore.Helpers.PermisosHelper.ObtenerOperadorModulo(HttpContext.Session, WebCore.Helpers.PermisosHelper.ModuloOperadorEgresosCaja);
+        }
+
+        [HttpGet]
+        public IActionResult AutorizarModuloEgresosCaja(string returnUrl)
+        {
+            var dt = _oUsuarioN.obtenerUsuarios(true);
+            var usuarios = new List<object>();
+            if (dt != null && dt.Columns.Contains("id") && dt.Columns.Contains("nombre"))
+            {
+                usuarios = dt.AsEnumerable()
+                    .Select(row => new { id = ValorInt(row, "id"), nombre = ValorString(row, "nombre") })
+                    .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
+                    .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
+                    .Cast<object>()
+                    .ToList();
+            }
+
+            // Solo rutas locales: el destino viene de la URL y no puede mandar a otro sitio.
+            ViewBag.UsuariosActivosEmpresa = usuarios;
+            ViewBag.ReturnUrlModuloEgresosCaja = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? returnUrl
+                : Url.Action("EgresosCaja", "Cajas");
+            ViewBag.Title = "Autorizar operador";
+            ViewBag.Seccion = "Egresos de Caja";
+            return View("~/Views/Cajas/AutorizarModuloEgresosCaja.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorModuloEgresosCaja(int idUsuario, string clave)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            // Mensaje unico para usuario inexistente o clave mala: no dar pistas.
+            const string mensajeGenerico = "Usuario o contraseña incorrectos.";
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave))
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            var candidato = _oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (validado == null || !validado.Activo)
+                return Json(WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId).ComoRespuestaJson(mensajeGenerico));
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+
+            // La clave era correcta, pero este operador tiene que poder ver egresos de caja: si no, no se registra y
+            // el modal se lo dice (no es un intento fallido de clave).
+            if (!_oUsuarioN.tienePermiso(validado, Entidades.Permisos.EgresoCaja.VerEgresosCaja, DateTime.Today, -1))
+                return Json(new { ok = false, msg = "Ese usuario no tiene permiso para ver egresos de caja." });
+
+            WebCore.Helpers.PermisosHelper.RegistrarOperadorModulo(HttpContext.Session, WebCore.Helpers.PermisosHelper.ModuloOperadorEgresosCaja, validado);
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
         [HttpGet]
         public IActionResult EgresosCaja(int? idSucursal, int idUsuario = -1, int idTipoEgresoCaja = 0, string descripcion = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, string filtroGasto = "todos", bool ajax = false)
         {
@@ -1277,9 +1344,30 @@ namespace WebCore.Controllers
 
             int sucursalSeleccionada = idSucursal ?? 0;
 
+            // Cuenta de produccion (usuario compartido): exige un operador autenticado con contraseña antes de mostrar
+            // los egresos, y el permiso (con su ventana de dias) se evalua contra ese operador. El operador es solo de
+            // consulta: la pantalla no le ofrece cargar ni modificar nada (pedido del usuario, 2026-11-03).
+            // Un pedido AJAX no puede mostrar la pantalla de autorizacion: se corta con 403.
+            Entidades.Usuario usuarioConsulta = _usuarioActual;
+            bool soloLectura = false;
+            if (_usuarioActual.EsUsuarioProduccion)
+            {
+                var operadorEgresos = ObtenerOperadorEgresosCaja();
+                if (operadorEgresos == null)
+                {
+                    if (ajax)
+                        return StatusCode(403, "Tu autorización venció. Recargá la página e ingresá de nuevo con tu usuario.");
+
+                    return RedirectToAction("AutorizarModuloEgresosCaja", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
+                }
+
+                usuarioConsulta = operadorEgresos;
+                soloLectura = true;
+            }
+
             // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
             // Web/Controllers/CajasController.cs:104-112.
-            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.EgresoCaja.VerEgresosCaja, desde, -1))
+            if (!_oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.EgresoCaja.VerEgresosCaja, desde, -1))
             {
                 if (ajax)
                     return StatusCode(403, "No tiene permisos para ver egresos de caja.");
@@ -1292,6 +1380,8 @@ namespace WebCore.Controllers
             }
 
             CargarViewBagsEgresos(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, filtroGasto, false);
+            ViewBag.SoloLectura = soloLectura;
+            ViewBag.OperadorEgresosNombre = soloLectura ? usuarioConsulta.Nombre : "";
 
             // Pago Electronico genera una fila por cada venta no efectiva (~50 por dia, mas de 80.000 en total):
             // solo se consulta con un rango acotado. Si lo pasa no se consulta ni se recorta en silencio (un listado
@@ -1310,7 +1400,17 @@ namespace WebCore.Controllers
                 dt = _oCierreN.obtenerEgresosCaja(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion ?? "", desde, hasta);
                 dt = ExcluirTiposReservadosEgresosCaja(dt, filtraPagoElectronico);
             }
-            CargarPermisosEdicionEgresos(dt, false);
+            // Operador de produccion = solo lectura: ninguna fila ofrece Modificar (no se calcula que es modificable).
+            if (soloLectura)
+            {
+                ViewBag.IdsEgresosModificables = new HashSet<int>();
+                ViewBag.PagosModificables = new Dictionary<int, int>();
+                ViewBag.ComprasModificables = new Dictionary<int, int>();
+            }
+            else
+            {
+                CargarPermisosEdicionEgresos(dt, false);
+            }
 
             if (ajax)
                 return PartialView("~/Views/Cajas/_EgresosCajaTabla.cshtml", dt);

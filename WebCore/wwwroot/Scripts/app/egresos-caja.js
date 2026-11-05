@@ -6,6 +6,8 @@
         gasto: "todos"
     };
     var fechasAplicadasState = null;
+    // Cargar en Lote: { fecha } que deja el guardado en lote para el formulario siguiente (lo toma consumirLote()).
+    var loteSiguiente = null;
 
     function urls() {
         return window.EgresosCajaUrls || {};
@@ -278,6 +280,11 @@
         }).fail(function (xhr) {
             if (xhr && xhr.status === 403) {
                 mostrarPermisoPopup((xhr.responseText || xhr.statusText || "").replace(/<[^>]+>/g, "").trim());
+                // Operador de produccion cuya autorizacion vencio (sesion del servidor): la tabla quedo en "Cargando...";
+                // recargar lleva de nuevo a la pantalla de login en vez de dejarla trabada.
+                if (permisos().soloLectura === true) {
+                    window.setTimeout(function () { window.location.reload(); }, 2500);
+                }
                 return;
             }
 
@@ -786,6 +793,33 @@
                     // atajo de Enter/Escape -- un toast con showConfirmButton:false queda afuera de
                     // ese patch a proposito (ver isSingleConfirmAlert).
                     // Lo que sigue al guardado (volver al listado de la caja / cerrar el modal y refrescar).
+                    // Cargar en Lote (2026-11-03, ver docs/DECISIONS.md): con el interruptor prendido no se ofrece el
+                    // comprobante ni se cierra el modal; se recuerda la fecha y se recarga un egreso nuevo en el mismo modal.
+                    var enLote = $form.find("#egresoCargarLote").is(":checked");
+                    if (enLote) {
+                        loteSiguiente = { fecha: $form.find("[name='fecha']").val() || "" };
+
+                        if (window.Swal && typeof window.Swal.fire === "function") {
+                            window.Swal.fire({
+                                toast: true,
+                                position: "top-end",
+                                icon: "success",
+                                title: "Egreso guardado",
+                                showConfirmButton: false,
+                                timer: 1500,
+                                returnFocus: false
+                            });
+                        }
+
+                        // Refresca el listado de fondo (solo existe en la pantalla de egresos).
+                        if ($("#tablaEgresosCaja").length) {
+                            filtrar();
+                        }
+
+                        abrirFormulario(0);
+                        return;
+                    }
+
                     function continuarTrasGuardar() {
                         if (desdePos && window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
                             window.POSEgresos.abrirMis();
@@ -1219,7 +1253,22 @@
             });
         });
 
+    // Limpia el estado de lote pendiente si el modal se cierra (p. ej. fallo la recarga del formulario).
+    $(document)
+        .off("hidden.bs.modal.egresoCajaLote", "#modalEgresoCaja, #modalFinanzasPOS")
+        .on("hidden.bs.modal.egresoCajaLote", "#modalEgresoCaja, #modalFinanzasPOS", function () {
+            loteSiguiente = null;
+        });
+
+    // Entrega UNA vez el estado de "Cargar en Lote" al formulario recien cargado ({ fecha } o null).
+    function consumirLote() {
+        var pendiente = loteSiguiente;
+        loteSiguiente = null;
+        return pendiente;
+    }
+
     window.EgresosCaja = {
+        consumirLote: consumirLote,
         filtrar: filtrar,
         abrirNuevo: abrirNuevo,
         abrirModificar: abrirModificar,

@@ -17,6 +17,9 @@
     bool sinPermiso = ViewBag.SinPermiso != null && (bool)ViewBag.SinPermiso;
     string mensajePermiso = ViewBag.MensajePermiso as string ?? "No tiene permisos para acceder a esta pantalla.";
     bool puedeVerTipos = ViewBag.PuedeVerTiposEgreso != null && (bool)ViewBag.PuedeVerTiposEgreso;
+    // Operador de una cuenta de produccion (2026-11-03): solo consulta, sin cargar, calcular comisiones ni administrar tipos.
+    bool soloLectura = ViewBag.SoloLectura != null && (bool)ViewBag.SoloLectura;
+    string operadorEgresosNombre = ViewBag.OperadorEgresosNombre as string ?? "";
 }
 
 <div class="egresos-page">
@@ -33,17 +36,26 @@
            que el resumen entre en la barra). Por debajo de 1200 px conserva el orden de siempre. Estilos: Shared/_FiltrosCompactosStyles + <style> de abajo. *@
         <div class="fc-top egresos-top">
         <div class="egresos-actions fc-acciones">
-            <button type="button" class="btn btn-success" id="btnNuevoEgresoCaja">
-                <i class="fas fa-plus mr-1"></i> Nuevo Egreso
-            </button>
-            <button type="button" class="btn btn-outline-success" id="btnCalcularComisionesElectronicas">
-                <i class="fas fa-calculator mr-1"></i> Calcular comisiones electrónicas
-            </button>
-            @if (puedeVerTipos)
+            @if (soloLectura)
             {
-                <button type="button" class="btn btn-outline-primary" id="btnTiposEgresoCaja">
-                    <i class="fas fa-tags mr-1"></i> Tipos Egresos
+                <span class="badge badge-info align-self-center" title="El permiso termina al salir de esta pantalla">
+                    <i class="fas fa-user-shield mr-1"></i>Consulta como @operadorEgresosNombre
+                </span>
+            }
+            else
+            {
+                <button type="button" class="btn btn-success" id="btnNuevoEgresoCaja">
+                    <i class="fas fa-plus mr-1"></i> Nuevo Egreso
                 </button>
+                <button type="button" class="btn btn-outline-success" id="btnCalcularComisionesElectronicas">
+                    <i class="fas fa-calculator mr-1"></i> Calcular comisiones electrónicas
+                </button>
+                @if (puedeVerTipos)
+                {
+                    <button type="button" class="btn btn-outline-primary" id="btnTiposEgresoCaja">
+                        <i class="fas fa-tags mr-1"></i> Tipos Egresos
+                    </button>
+                }
             }
         </div>
 
@@ -631,6 +643,7 @@
         window.EgresosCajaPermisos = {
             sinPermiso: @Html.Raw((sinPermiso ? "true" : "false")),
             mensaje: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mensajePermiso)),
+            soloLectura: @Html.Raw((soloLectura ? "true" : "false")),
             puedeVerTipos: @Html.Raw((ViewBag.PuedeVerTiposEgreso != null && (bool)ViewBag.PuedeVerTiposEgreso ? "true" : "false")),
             puedeEditarTipos: @Html.Raw((ViewBag.PuedeEditarTiposEgreso != null && (bool)ViewBag.PuedeEditarTiposEgreso ? "true" : "false")),
             usuarioAdmin: @Html.Raw((ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin ? "true" : "false"))

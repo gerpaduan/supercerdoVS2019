@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-11-02
+revisada: 2026-11-03
 ---
 
 ## Para qué sirve
@@ -13,8 +13,18 @@ Registrar la **salida de dinero de la caja** (gastos, retiros, etc.) y consultar
 
 ## Cómo se usa
 1. Tocá para crear un egreso nuevo (o **Modificar** en uno existente: se abre en solo lectura).
-2. Completá **Sucursal, Fecha, Tipo, Descripción y Monto**. **Detalle** es opcional (se activa con el interruptor).
+2. Completá **Sucursal, Fecha, Tipo, Descripción y Monto**. **Detalle** es opcional (se activa con el interruptor). Al abrir un egreso nuevo el cursor arranca en **Sucursal** (si el formulario la muestra; en el POS y en el egreso de una caja puntual no hay selector y arranca en Fecha o Tipo). **Enter** pasa al campo siguiente en ese orden (Sucursal, Fecha, Tipo, Descripción, Monto, Detalle); en **Tipo** también, después de elegir la opción.
 3. Guardá con **Guardar egreso** (Alt+Enter). Al guardar se abre una ventana para el comprobante (ver abajo).
+4. **Cargar en Lote** (interruptor a la izquierda de **Guardar egreso**, solo en un egreso nuevo): con el interruptor prendido, al guardar **no** se abre el comprobante ni se cierra la ventana; aparece un aviso corto («Egreso guardado») y vuelve el formulario vacío para el próximo, con la **fecha y hora del último egreso cargado** y el cursor en **Sucursal** (si el formulario la muestra) o, si no, en **Fecha**. Para terminar, cerrá la ventana. Los egresos cargados en lote se pueden imprimir después desde el listado. El interruptor vuelve a quedar apagado cada vez que abrís **Nuevo Egreso**. **PENDIENTE:** el recorrido completo no se probó todavía en el navegador.
+5. El formulario de nuevo egreso y el de **Calcular comisiones electrónicas** usan letra y campos compactos (mismo tamaño que el resto de las pantallas).
+6. **Calcular comisiones electrónicas** tiene dos filas de campos: **Sucursal, Desde, Hasta y Fecha del egreso**; y debajo **Tipo de egreso, % para todas, Aplicar y Recalcular**. Si tu usuario tiene sucursal fija, el campo Sucursal muestra el nombre sin desplegable. **PENDIENTE:** el aspecto en pantalla no se verificó todavía en el navegador.
+
+## Con la cuenta de producción (solo ver)
+- Si entrás con la **cuenta compartida de producción**, al abrir **Egresos de caja** se pide **autorizarte**: elegís tu usuario y escribís tu contraseña. Tu usuario tiene que tener el permiso **Ver egresos de caja**; si no, aparece *«Ese usuario no tiene permiso para ver egresos de caja»*. Si te equivocás de contraseña varias veces, se bloquea por un rato.
+- Una vez adentro es **solo consulta**: se ve el listado y se puede filtrar, desplegar el detalle e **imprimir el comprobante**, pero **no** están **Nuevo Egreso**, **Calcular comisiones electrónicas**, **Tipos Egresos** ni **Modificar**. Arriba aparece *«Consulta como (tu nombre)»*. Los límites de días de tu permiso se aplican a las fechas que puedas ver.
+- **La autorización termina apenas cambiás de pantalla** (cualquier otra, incluso *Cajas abiertas*); para volver hay que autorizarse de nuevo. Si la sesión se vence con la pantalla abierta, al buscar aparece un aviso y la página se recarga para pedir la autorización otra vez.
+- Un usuario común (no la cuenta de producción) entra directo, como siempre.
+- **PENDIENTE:** el recorrido completo (login, tabla y caducidad al navegar) no se probó todavía en el navegador.
 
 ## En la computadora (pantalla de 1200 px o más)
 Modo compacto del listado de **Egresos de caja** (el que se abre desde el menú, no el del POS ni *Mis actividades*):
@@ -46,7 +56,7 @@ Modo compacto del listado de **Egresos de caja** (el que se abre desde el menú,
 
 ## Contador de billetes y conteo
 - El botón de billetes junto al **Monto** (Alt+B) abre el contador. Al aceptar, el **total pasa al Monto** y el detalle del conteo se guarda en el campo **Conteo de billetes**.
-- **Conteo de billetes** es de **solo lectura**, está siempre visible y **no se mezcla con el Detalle**. Cada aceptación del contador **reemplaza** el conteo anterior (si el total es 0 queda vacío).
+- **Conteo de billetes** es de **solo lectura** y **no se mezcla con el Detalle**. Mientras está **vacío** aparece **plegado** (una línea con la etiqueta *vacío*); si tiene datos —al aceptar el contador, o en un egreso que ya lo trae— se **despliega solo**. Se puede abrir o cerrar a mano tocando el encabezado; **Limpiar contador** (visible con el conteo desplegado) lo vacía y lo vuelve a plegar. Cada aceptación del contador **reemplaza** el conteo anterior (si el total es 0 queda vacío).
 - **Limpiar contador** deja el conteo vacío (no toca el monto).
 - Cancelar o cerrar el contador sin aceptar no cambia nada.
 - En el listado, el conteo se ve en la fila desplegable (flecha) de cada egreso. La letra del conteo es 2 pt más chica que la del resto (en el formulario y en el listado).

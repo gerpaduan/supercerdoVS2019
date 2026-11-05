@@ -33,6 +33,7 @@
     // aca -- este layout tambien se renderiza en cada request de POS, asi que sin esta llamada el
     // operador de modulo podia quedar autorizado "de mas" mientras el usuario opera el POS.
     WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Context.Session, controller);
+    WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDeLaPantalla(Context.Session, controller, action);
 
     // Item 7 (2026-09-12, ver docs/DECISIONS.md "gate de caja abierta"): este layout tambien lo
     // usa PuntosExpendio/POS (controller distinto, mismo _LayoutPOS.cshtml) -- si el usuario paso

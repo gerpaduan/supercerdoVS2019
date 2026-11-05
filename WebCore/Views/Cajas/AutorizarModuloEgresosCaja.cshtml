@@ -1,0 +1,52 @@
+@{
+    // Pantalla de login del operador para ver Egresos de Caja desde una cuenta de produccion -- mismo patron que
+    // Views/Compras/AutorizarModulo.cshtml y Views/Finanzas/AutorizarModuloCtaCte.cshtml (docs/DECISIONS.md, 2026-11-03).
+    // El operador es solo de consulta y caduca al salir de Egresos de Caja.
+    ViewBag.Title = "Autorizar operador";
+    ViewBag.Seccion = "Egresos de Caja";
+    string returnUrlModulo = ViewBag.ReturnUrlModuloEgresosCaja as string ?? Url.Action("EgresosCaja", "Cajas");
+}
+
+@Html.AntiForgeryToken()
+
+<div class="container-fluid mt-5">
+    <div class="text-center">
+        <h4 class="text-primary"><i class="fas fa-user-shield mr-1"></i> Autorizate para continuar</h4>
+        <p class="text-gray-500 mb-4">Esta sesión usa la cuenta de producción: identificate con tu usuario y contraseña para ver los egresos de caja.</p>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var usuariosActivos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new System.Collections.Generic.List<object>()));
+            var urlAutorizar = '@Url.Action("AutorizarOperadorModuloEgresosCaja", "Cajas")';
+            var returnUrlModulo = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(returnUrlModulo));
+            var urlInicio = '@Url.Action("Index", "Home")';
+
+            function pedirOperador() {
+                window.SeleccionUsuario.abrir({
+                    titulo: 'Autorizate para ver los egresos de caja',
+                    usuarios: usuariosActivos,
+                    requierePassword: true,
+                    validarUrl: urlAutorizar
+                }).then(function () {
+                    window.location.href = returnUrlModulo;
+                }).catch(function () {
+                    window.location.href = urlInicio;
+                });
+            }
+
+            $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
+                if (!$(this).data('resuelto')) {
+                    window.location.href = urlInicio;
+                }
+            });
+
+            pedirOperador();
+        })();
+    </script>
+}

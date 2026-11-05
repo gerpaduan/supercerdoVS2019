@@ -163,19 +163,38 @@
             @* Conteo de billetes (2026-10-05, ver docs/DECISIONS.md): solo lectura; lo llena el contador (boton de
                billetes del Monto) en vez de volcarse al Detalle, y se imprime despues del detalle en el comprobante.
                "Limpiar contador" lo deja vacio. Siempre visible: se ve de un vistazo que hay un conteo cargado. *@
+            @* (2026-11-03) Plegado mientras esta vacio (ahorra alto en el modal) y desplegado si tiene datos; se abre y
+               se cierra a mano con el encabezado. El textarea sigue en el DOM (plegado con d-none) para que el contador
+               de billetes pueda escribirle y para que el valor viaje al guardar. *@
             <div class="form-group egreso-field egreso-field-conteo">
                 <div class="d-flex justify-content-between align-items-center">
-                    <label for="egresoConteoBilletes" class="mb-1">Conteo de billetes</label>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnLimpiarConteoBilletesEgreso"
+                    <button type="button" class="btn btn-link p-0 text-left egreso-conteo-toggle" id="btnToggleConteoBilletes"
+                            aria-expanded="false" aria-controls="egresoConteoWrap">
+                        <i class="fas fa-chevron-right egreso-conteo-icono" id="iconoConteoBilletes" aria-hidden="true"></i>
+                        Conteo de billetes
+                        <span class="badge badge-light border egreso-conteo-estado" id="estadoConteoBilletes">vacío</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnLimpiarConteoBilletesEgreso"
                             title="Dejar vacío el conteo de billetes">
                         <i class="fas fa-eraser mr-1"></i>Limpiar contador
                     </button>
                 </div>
-                <textarea class="form-control" id="egresoConteoBilletes" name="conteoBilletes" rows="3" readonly tabindex="-1">@(Model != null ? Model.ConteoBilletes : "")</textarea>
+                <div id="egresoConteoWrap" class="d-none">
+                    <textarea class="form-control mt-1" id="egresoConteoBilletes" name="conteoBilletes" rows="3" readonly tabindex="-1">@(Model != null ? Model.ConteoBilletes : "")</textarea>
+                </div>
             </div>
         </div>
 
-        <div class="egreso-form-actions">
+        <div class="egreso-form-actions @(esEdicion ? "" : "egreso-con-lote")">
+            @if (!esEdicion)
+            {
+                @* Cargar en Lote: al guardar, el modal vuelve a mostrar un egreso nuevo (recordando la fecha del ultimo)
+                   en vez de cerrarse; no tiene "name" para que no viaje al servidor (la logica vive en egresos-caja.js). *@
+                <div class="custom-control custom-switch egreso-lote-switch">
+                    <input type="checkbox" class="custom-control-input" id="egresoCargarLote">
+                    <label class="custom-control-label" for="egresoCargarLote" title="Al guardar, vuelve a abrir un egreso nuevo con la misma fecha">Cargar en Lote</label>
+                </div>
+            }
             @if (esEdicion)
             {
                 @* Modo vista: Imprimir (abre el modal de comprobante: cerrar / ticket / PDF / mail) junto a Modificar.
@@ -312,13 +331,47 @@
         }
     }
 
+    /* Encabezado plegable del conteo de billetes: parece un titulo de campo, no un boton. */
+    :is(body, body.app-shell) .egreso-form-wrap .egreso-conteo-toggle.btn {
+        padding-left: 0 !important;
+        padding-right: .25rem !important;
+        color: inherit;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    .egreso-conteo-icono { width: .8rem; font-size: .7rem; margin-right: .2rem; }
+    .egreso-conteo-estado { margin-left: .35rem; font-weight: 400; }
+
+    /* Alta: el interruptor "Cargar en Lote" a la izquierda y "Guardar egreso" ocupando el resto de la fila. */
+    .egreso-form-actions.egreso-con-lote { display: flex; align-items: center; gap: .75rem; }
+    .egreso-form-actions.egreso-con-lote .egreso-lote-switch { flex: none; white-space: nowrap; }
+    .egreso-form-actions.egreso-con-lote .egreso-lote-switch .custom-control-label { font-weight: 500; cursor: pointer; }
+    .egreso-form-actions.egreso-con-lote > .btn { flex: 1 1 auto; width: auto; }
+
     /* Modo vista: Imprimir y Modificar lado a lado, cada uno a mitad de ancho (se ocultan solos con d-none). */
     .egreso-acciones-vista { display: flex; gap: .5rem; margin-bottom: .5rem; }
     .egreso-acciones-vista .btn { flex: 1 1 0; }
 </style>
 
+<partial name="_EgresoFormEstiloCompacto" />
+
 <script>
     (function () {
+        // Cargar en Lote: si el egreso anterior se guardo en lote, egresos-caja.js dejo pendiente { fecha } para este
+        // formulario. Se consume ANTES de bindForm para que el snapshot de "formulario modificado" ya incluya la fecha
+        // recordada (si no, cerrar el modal sin tocar nada pediria confirmacion).
+        var chkLote = document.getElementById("egresoCargarLote");
+        var loteInicial = (chkLote && window.EgresosCaja && typeof window.EgresosCaja.consumirLote === "function")
+            ? window.EgresosCaja.consumirLote()
+            : null;
+        if (loteInicial) {
+            chkLote.checked = true;
+            var campoFecha = document.getElementById("egresoFecha");
+            if (campoFecha && loteInicial.fecha) {
+                campoFecha.value = loteInicial.fecha;
+            }
+        }
+
         if (window.EgresosCaja && typeof window.EgresosCaja.bindForm === "function") {
             window.EgresosCaja.bindForm("#formEgresoCaja");
         }
@@ -581,13 +634,16 @@
                 return;
             }
 
+            // Orden de carga: [Sucursal] > Fecha > Tipo > Descripcion > Monto. Antes, fuera del POS, Enter en Tipo
+            // volvia a Fecha (el campo anterior); ahora siempre sigue a Descripcion.
             if (actual === selectTipo) {
-                focusAndSelect(esDesdePos ? inputDescripcion : inputFecha);
+                focusAndSelect(inputDescripcion);
                 return;
             }
 
             if (actual === inputFecha) {
-                focusAndSelect(esDesdePos ? inputDescripcion : selectTipo);
+                // En el POS el foco arranca en Tipo y Fecha se saltea; en lote arranca en Fecha, asi que de Fecha va a Tipo.
+                focusAndSelect(esDesdePos && !(chkLote && chkLote.checked) ? inputDescripcion : selectTipo);
                 return;
             }
 
@@ -734,10 +790,66 @@
             campo.rows = Math.min(7, Math.max(3, renglones));
         }
 
+        // Conteo plegable: abierto si tiene datos, plegado si esta vacio; el encabezado lo abre/cierra a mano.
+        var campoConteo = document.getElementById("egresoConteoBilletes");
+        var wrapConteo = document.getElementById("egresoConteoWrap");
+        var btnToggleConteo = document.getElementById("btnToggleConteoBilletes");
+        var iconoConteo = document.getElementById("iconoConteoBilletes");
+        var estadoConteo = document.getElementById("estadoConteoBilletes");
+
+        function conteoTieneDatos() {
+            return !!campoConteo && (campoConteo.value || "").trim() !== "";
+        }
+
+        function setConteoAbierto(abierto) {
+            if (!wrapConteo) {
+                return;
+            }
+
+            wrapConteo.classList.toggle("d-none", !abierto);
+            if (iconoConteo) {
+                iconoConteo.classList.toggle("fa-chevron-down", abierto);
+                iconoConteo.classList.toggle("fa-chevron-right", !abierto);
+            }
+            if (btnToggleConteo) {
+                btnToggleConteo.setAttribute("aria-expanded", abierto ? "true" : "false");
+            }
+            // "Limpiar contador" solo tiene sentido con el conteo a la vista.
+            var botonLimpiar = document.getElementById("btnLimpiarConteoBilletesEgreso");
+            if (botonLimpiar) {
+                botonLimpiar.classList.toggle("d-none", !abierto);
+            }
+            if (abierto) {
+                ajustarAlturaConteo();
+            }
+        }
+
+        function sincronizarConteo() {
+            if (estadoConteo) {
+                var conDatos = conteoTieneDatos();
+                estadoConteo.textContent = conDatos ? "con datos" : "vacío";
+                estadoConteo.classList.toggle("badge-info", conDatos);
+                estadoConteo.classList.toggle("badge-light", !conDatos);
+            }
+            setConteoAbierto(conteoTieneDatos());
+        }
+
+        if (btnToggleConteo) {
+            btnToggleConteo.addEventListener("click", function () {
+                setConteoAbierto(wrapConteo.classList.contains("d-none"));
+            });
+        }
+
+        // jQuery (no addEventListener) porque la calculadora dispara sus eventos con $.trigger: al aceptar el
+        // contador el conteo se despliega solo; al limpiarlo vuelve a plegarse.
         if (window.jQuery) {
-            window.jQuery("#egresoConteoBilletes").on("input change", ajustarAlturaConteo);
+            window.jQuery("#egresoConteoBilletes").on("input change", function () {
+                ajustarAlturaConteo();
+                sincronizarConteo();
+            });
         }
         ajustarAlturaConteo();
+        sincronizarConteo();
 
         var btnLimpiarConteo = document.getElementById("btnLimpiarConteoBilletesEgreso");
         if (btnLimpiarConteo) {
@@ -819,7 +931,11 @@
         document.addEventListener("keydown", window.__egresoCajaAltEnterHandler, true);
 
         function enfocarInicialEgreso() {
-            var selector = @Html.Raw(esEdicion ? "\"#btnHabilitarEdicionEgresoCaja\"" : (desdePos ? "\"#idTipoEgresoCaja\"" : "\"#egresoFecha\""));
+            // Alta con selector de sucursal: el foco arranca SIEMPRE ahi (tambien en lote). Sin selector (POS o egreso de
+            // una caja puntual) manda el resto: en lote va a Fecha (tambien en el POS, donde sin lote arranca en Tipo).
+            var selector = (!@Html.Raw(esEdicion ? "true" : "false") && document.getElementById("egresoSucursal"))
+                ? "#egresoSucursal"
+                : loteInicial ? "#egresoFecha" : @Html.Raw(esEdicion ? "\"#btnHabilitarEdicionEgresoCaja\"" : (desdePos ? "\"#idTipoEgresoCaja\"" : "\"#egresoFecha\""));
             var el = document.querySelector(selector);
             if (!el) {
                 return;

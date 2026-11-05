@@ -1,0 +1,52 @@
+@* Estilo compacto compartido por los formularios que se cargan en el modal de egresos de caja
+   (_AddOrEditEgresoCaja y _CalcularComisionesElectronicas): mismo bloque estandar de formularios WebCore
+   (font-size ~0.8-0.9rem) en vez del tamano default de Bootstrap. Todo scopeado a .egreso-form-wrap. El prefijo
+   :is(body, body.app-shell) hace que valga tambien en el layout del POS (sin clase app-shell) y le gane en
+   especificidad a ui-refresh.css / custom.css en el resto. *@
+<style>
+    :is(body, body.app-shell) .egreso-form-wrap { font-size: .9rem; }
+
+    :is(body, body.app-shell) .egreso-form-wrap .form-control,
+    :is(body, body.app-shell) .egreso-form-wrap .input-group-text,
+    :is(body, body.app-shell) .egreso-form-wrap .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    /* Los botones chicos (volver) y el textarea no deben heredar el alto minimo de un input de una linea. */
+    :is(body, body.app-shell) .egreso-form-wrap .btn-sm { min-height: 0 !important; padding: .23rem .5rem !important; font-size: .78rem !important; }
+    :is(body, body.app-shell) .egreso-form-wrap textarea.form-control { min-height: 4.4rem !important; }
+
+    :is(body, body.app-shell) .egreso-form-wrap label,
+    :is(body, body.app-shell) .egreso-form-wrap .custom-control-label { font-size: .8rem; }
+    :is(body, body.app-shell) .egreso-form-wrap .alert,
+    :is(body, body.app-shell) .egreso-form-wrap .small,
+    :is(body, body.app-shell) .egreso-form-wrap .text-muted,
+    :is(body, body.app-shell) .egreso-form-wrap .form-text { font-size: .8rem !important; }
+
+    /* Menos aire entre campos (el formulario de comisiones apila dos filas de campos y una tabla). */
+    :is(body, body.app-shell) .egreso-form-wrap .form-group { margin-bottom: .5rem; }
+
+    /* Grilla de comisiones electronicas */
+    :is(body, body.app-shell) .egreso-form-wrap .card-body { padding: .82rem 1rem; }
+    :is(body, body.app-shell) .egreso-form-wrap .table { font-size: .84rem; }
+    :is(body, body.app-shell) .egreso-form-wrap .table th,
+    :is(body, body.app-shell) .egreso-form-wrap .table td { padding: .42rem .58rem; line-height: 1.15; vertical-align: middle; }
+    :is(body, body.app-shell) .egreso-form-wrap .table thead th { font-size: .72rem !important; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+
+    @@media (min-width: 1200px) {
+        :is(body, body.app-shell) .egreso-form-wrap .form-control,
+        :is(body, body.app-shell) .egreso-form-wrap .input-group-text,
+        :is(body, body.app-shell) .egreso-form-wrap .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+
+        :is(body, body.app-shell) .egreso-form-wrap .btn-sm { min-height: 0 !important; }
+        :is(body, body.app-shell) .egreso-form-wrap .table { font-size: .8rem; }
+        :is(body, body.app-shell) .egreso-form-wrap .table thead th { font-size: .69rem !important; }
+    }
+</style>

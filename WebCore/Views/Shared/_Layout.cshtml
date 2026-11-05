@@ -28,6 +28,9 @@
     // Web/Views/Shared/_LayoutBase.cshtml:19.
     WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Context.Session, controller);
 
+    // Operador que vive solo en una pantalla puntual (Cajas/EgresosCaja, 2026-11-03): caduca al renderizar cualquier otra vista.
+    WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDeLaPantalla(Context.Session, controller, action);
+
     // Item 7 (2026-09-12, ver docs/DECISIONS.md "gate de caja abierta"): "el permiso para
     // registrar ventas sin apertura de caja termina al salir de la vista del pos venta" -- este
     // layout se renderiza en TODA la app excepto POS (que usa _LayoutPOS.cshtml), asi que
