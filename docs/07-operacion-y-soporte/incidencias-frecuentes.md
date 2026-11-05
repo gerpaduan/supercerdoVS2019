@@ -13,6 +13,20 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-04 - Movimientos / Elaborados: al cerrar el aviso «Ingresá una cantidad de kilogramos mayor a cero» el cursor no volvía a Kgs
+
+- **Sintoma**: al tocar **+** sin kilos aparece el aviso; al tocar OK el cursor quedaba en el botón **+** y había que hacer clic en Kgs (Cantidad en Elaborados) para corregir.
+- **Causa**: la validación hacía `.focus()` en el campo mientras el aviso (SweetAlert2) estaba abierto; al cerrarse, SweetAlert2 devuelve el foco a lo que lo tenía antes (`returnFocus`, por defecto activo): el botón **+**.
+- **Resolucion**: `showAlert(icon, title, text, $foco)` en `movimientos.js` y `elaborados-carga.js` abre el aviso con `returnFocus: false` y pone el foco en el campo **después** de cerrarlo (Cant.Un. / Kgs. en Movimientos, Cantidad en Elaborados).
+
+## 2026-11-04 - Movimientos con «Stock destino»: hueco blanco debajo de la tabla del panel de stock
+
+- **Sintoma**: la tabla del stock del destino terminaba ~60 px antes del pie del panel, con espacio vacío debajo.
+- **Causa**: la página del panel (`Stock/ExistenciaPorSucursales` con `_LayoutEmbed`) hereda `body { margin-bottom: 60px }` de `wwwroot/css/site.css` (plantilla default de ASP.NET Core; `_Layout` lo anula desde 2026-09-11, `_LayoutEmbed` no). `ajustarAltoTablaAlPie` (`existencia-sucursales.js`) cuenta ese margen como parte de la página y achica la tabla.
+- **Resolucion**: `ExistenciaPorSucursales.cshtml` anula el margen solo en modo movimiento (`body.app-embed:has(.ex-modo-mov) { margin-bottom: 0 }`). Otras pantallas con `_LayoutEmbed` pueden tener el mismo hueco (no revisado).
+
+---
+
 ## 2026-11-03 - POS bloqueado: decía «Contraseña incorrecta» pero la sesión se había cerrado
 
 - **Sintoma**: al desbloquear el POS (bloqueo por inactividad) con la contraseña correcta aparecía «Contraseña incorrecta.» (o «No se pudo validar la contraseña. Revisá la conexión…»).

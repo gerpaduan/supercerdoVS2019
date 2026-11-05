@@ -699,6 +699,10 @@
     .ex-avanzados.d-none { display: none !important; }
 
     /* ---------- Modo movimiento (panel de stock del destino de Movimientos/Editar) ---------- */
+    /* La tabla llega hasta el pie del panel (pedido 2026-11-04): site.css trae "body { margin-bottom: 60px }" (plantilla default de ASP.NET
+       Core) y _LayoutEmbed no lo anula; ajustarAltoTablaAlPie (existencia-sucursales.js) lo contaba como parte de la pagina y dejaba ~60 px
+       en blanco debajo de la tabla. Solo en este modo: el resto de las ventanas embebidas no cambia. */
+    body.app-embed:has(.ex-modo-mov) { margin-bottom: 0; }
     /* La columna "Sugerido a enviar" existe siempre en el HTML y solo se ve en este modo (como las columnas del pedido). */
     .ex-col-sug { display: none; }
     .ex-modo-mov th.ex-col-sug, .ex-modo-mov td.ex-col-sug { display: table-cell; }
@@ -707,6 +711,14 @@
     .ex-modo-mov .ex-ctl-acciones, .ex-modo-mov .ex-ctl-movimiento { display: none !important; }
     /* El panel es angosto (~la mitad de la pantalla): Cod. y Producto mas cortos que en la pantalla normal (15 y 25 caracteres). */
     .ex-modo-mov .tabla-existencia-sucursales { --ex-cod-ch: 9ch; --ex-prod-ch: 22ch; }
+    /* Producto y Stock con la misma letra que la tabla de lineas del movimiento (14 px; pedido 2026-11-04); el resto de las columnas queda
+       igual. Va en px y no en rem porque esta pagina (_LayoutEmbed) tiene la raiz en 14 px y la del movimiento en 16 px (.875rem = 14 px).
+       El alto de fila no cambia (interlineado fijo de .975rem; medido 31,7 px antes y despues). Producto conserva el ancho en pixeles que tenia
+       con 22ch a .78rem (22 x 10,92 / 14 = 17.2ch): un nombre largo se corta un poco antes (el completo queda en el tooltip). Stock crece ~12 px:
+       por eso el panel del movimiento paso de 34.5 a 35.5 rem (pantalla-trabajo.css). */
+    .ex-modo-mov .tabla-existencia-sucursales td.ex-col-prod-cell,
+    .ex-modo-mov .tabla-existencia-sucursales td.ex-col-stock { font-size: 14px; }
+    .ex-modo-mov .tabla-existencia-sucursales td.ex-col-prod-cell { --ex-prod-ch: 17.2ch; }
     .ex-mov-bloque {
         display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .8rem; margin-top: .35rem; padding: .25rem .5rem;
         border: 1px dashed var(--ui-primary, #2d5b8f); border-radius: .5rem; background: var(--ui-primary-soft, rgba(45, 91, 143, .07)); font-size: .78rem;

@@ -46,7 +46,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-30 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-14 |
 | pantallas | Registros eliminados | Configuración | `pantallas/RegistrosEliminados.Index.md` | 2026-10-22 |
-| pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-10-31 |
+| pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-11-04 |
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-10-31 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-30 |
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-10-27 |
@@ -58,14 +58,14 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-02 |
 | pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-02 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-10-30 |
-| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-10-31 |
+| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-04 |
 | pantallas | Personas | Personas | `pantallas/Personas.Index.md` | 2026-11-02 |
 | pantallas | Ver / modificar persona | Personas | `pantallas/Personas.Editar.md` | 2026-11-02 |
 | pantallas | Marcas de productos | Productos | `pantallas/Productos.Marcas.md` | 2026-10-22 |
 | pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-10-22 |
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-10-22 |
 | pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-30 |
-| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-10-31 |
+| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-04 |
 | pantallas | Líneas de stock | Stock | `pantallas/Stock.Lineas.md` | 2026-11-02 |
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-10-30 |
 | pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-10-28 |
@@ -86,7 +86,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Titulares de facturación | Facturación | `pantallas/TitularesFiscales.Index.md` | 2026-10-12 |
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
 | pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-10-13 |
-| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-02 |
+| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-04 |
 | pantallas | Modificar pedido | Stock | `pantallas/Pedidos.Editar.md` | 2026-10-20 |
 | pantallas | Pedido (detalle) | Stock | `pantallas/Pedidos.Detalle.md` | 2026-10-20 |
 | pantallas | Pedidos | Stock | `pantallas/Pedidos.Index.md` | 2026-10-27 |

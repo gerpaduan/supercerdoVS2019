@@ -5,7 +5,7 @@ rol: admin
 modulo: Stock
 orden: 3
 permiso: Stock.VerStock (PENDIENTE: en WebCore el chequeo está omitido, ver TODO en StockController.ExistenciaPorSucursales)
-revisada: 2026-11-02
+revisada: 2026-11-04
 ---
 ## Para qué sirve
 Ver el **stock actual de cada producto, una sucursal por grupo de columnas**, para comparar sucursales o ver una sola, saber qué falta (contra el **punto de stock**) y exportarlo.
@@ -40,7 +40,7 @@ El botón **Filtros** despliega el panel; si hay filtros activos con el panel ce
 - **Con movimiento** (solo con Postgres): *Solo con al menos [X]*; deja únicamente los productos que **tuvieron movimiento desde la fecha del período hasta ahora** (o hasta la fecha *hasta*, si la agregaste). Medida a elegir: **Salidas (kg/un.)** = lo **vendido más lo que se usó en elaborados** (así un insumo que no se vende pero se gasta en elaborados cuenta como producto con movimiento) o **Días con venta** = en cuántos días distintos se vendió (solo ventas). Con varias sucursales cumple si **alguna** de las mostradas alcanza el mínimo. Sirve para sacar de la vista lo que hace tiempo no se mueve.
 
 ### Modo «stock del destino» (dentro de un movimiento)
-[Nuevo movimiento](ayuda:pantalla/Movimientos.Editar) abre esta misma pantalla como panel de stock de la sucursal **destino** (en un marco de la pantalla o en una ventana independiente). En ese modo: siempre compacta, **solo la sucursal destino**, sin *Ingresar pedido*, exportación, selector de sucursales ni el filtro *Con movimiento*; el **período** (con los atajos 1, 2, 3, 7 y 15 días y la fecha hasta) queda siempre a la vista y hay una columna **Sugerido** (ventas + uso en elaborados del período − stock). El **doble click** en una fila (y el click en el número sugerido) cargan el producto en el movimiento en vez de abrir el detalle, y los productos que el movimiento ya lleva se marcan. Detalle en la página del movimiento.
+[Nuevo movimiento](ayuda:pantalla/Movimientos.Editar) abre esta misma pantalla como panel de stock de la sucursal **destino** (en un marco de la pantalla o en una ventana independiente). En ese modo: siempre compacta, **solo la sucursal destino**, sin *Ingresar pedido*, exportación, selector de sucursales ni el filtro *Con movimiento*; el **período** (con los atajos 1, 2, 3, 7 y 15 días y la fecha hasta) queda siempre a la vista y hay una columna **Sugerido** (ventas + uso en elaborados del período − stock). El **doble click** en una fila (y el click en el número sugerido) cargan el producto en el movimiento en vez de abrir el detalle, y los productos que el movimiento ya lleva se marcan. Detalle en la página del movimiento. En ese modo las columnas **Producto** y **Stock** van con letra más grande (la misma de las líneas del movimiento, sin cambiar el alto de las filas) y, dentro del movimiento, la tabla llega hasta el pie del panel (2026-11-04).
 
 ### Resumen de los filtros aplicados
 Con el panel **Filtros** cerrado, si hay filtros avanzados aplicados aparece **una línea bajo la barra** con un chip por cada uno: `Tipo: Cerdo, Vacuno`, `Proveedor: … +1`, `Marca: …` y `Movimiento ≥ 5 salidas · 28/09 al 05/10` (con las listas largas muestra los dos primeros y «+N»; el tooltip trae todo). Así no perdés de vista **por qué faltan productos**. No repite Sucursales, texto ni Estado (siempre están a la vista en la barra) y no ocupa lugar si no hay filtros ni cuando el panel está abierto.

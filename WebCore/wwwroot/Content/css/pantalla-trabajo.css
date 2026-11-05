@@ -1,0 +1,824 @@
+/* Pantallas de trabajo (Stock/Editar, Movimientos/Editar, Elaborados/Carga) en ESCRITORIO: que la tabla de items llene el alto de la ventana
+   (>= 20 filas a la vista), cabecera siempre visible sin etiquetas, "Agregar producto" en una fila y modo ventana independiente.
+   TODO va dentro de @media (min-width:1200px): por debajo de ese ancho (tablet / celular) no se toca nada del responsive.
+   Se carga DESPUES de la hoja compacta de cada pantalla (stock-editar-compacto / movimientos-compacto / elaborados-compacto) y pisa sus
+   reservas en rem ("--stock-tabla-reserva", "--mov-tabla-reserva", tope fijo de 10 filas de Elaborados): el alto ya no se calcula restando
+   alturas, lo reparte flexbox. Logica y decision en docs/DECISIONS.md (2026-11-04); JS en Scripts/app/pantalla-trabajo.js.
+   Clases que ponen las vistas: .pantalla-trabajo (raiz), .pt-fill (cadena de contenedores que se estiran), .pt-fila-principal (fila con las dos
+   columnas), .pt-col-izq / .pt-col-der, .pt-tabla-wrap, .pt-acciones, .pt-th-* (encabezados). T = la tabla de lineas de cualquiera de las tres. */
+
+/* Boton "Abrir en ventana": oculto a pedido del usuario (2026-11-04); pantalla-trabajo.js no lo crea (MOSTRAR_BOTON_VENTANA). Si se
+   reactiva, solo se ve en escritorio (seccion 3). */
+.pt-btn-ventana {
+    display: none;
+}
+
+@media (min-width: 1200px) {
+
+    /* ---- 1. Alto de la ventana: la pagina deja de scrollear y la tabla toma lo que sobra ---- */
+    body.app-shell:has(.pantalla-trabajo) #content-wrapper {
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+    }
+
+    body.app-shell:has(.pantalla-trabajo) #content-wrapper #content {
+        flex: 1 1 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        /* Ventana mas baja que el minimo de 20 filas: scrollea esta zona (no la pagina), el pie queda a la vista. */
+        overflow-y: auto;
+    }
+
+    body.app-shell:has(.pantalla-trabajo) #content > .topbar {
+        flex: 0 0 auto;
+        margin-bottom: .5rem !important;
+    }
+
+    body.app-shell:has(.pantalla-trabajo) #content > .container-fluid {
+        flex: 1 1 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    body.app-shell .pantalla-trabajo {
+        flex: 1 1 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        /* elaborados-compacto.css le pone align-items:center (era una grilla): en columna flex eso centraba y achicaba la fila de pestanas
+           y las pestanas terminaban encima de "Volver" (2026-11-04). Cada fila ocupa todo el ancho. */
+        align-items: stretch;
+    }
+
+    body.app-shell .pantalla-trabajo > * {
+        flex: 0 0 auto;
+    }
+
+    /* Cadena de contenedores (tarjeta > cuerpo > formulario [> layout]) que se estiran hasta el pie. */
+    body.app-shell .pantalla-trabajo .pt-fill {
+        flex: 1 1 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-fill > :not(.pt-fill):not(.pt-fila-principal) {
+        flex: 0 0 auto;
+    }
+
+    /* Fila con las dos columnas: se estira; la columna izquierda lleva la tabla, la derecha el resumen y los botones. */
+    body.app-shell .pantalla-trabajo .pt-fila-principal {
+        flex: 1 1 0;
+        min-height: 0;
+        flex-wrap: nowrap;
+        margin-bottom: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-col-izq,
+    body.app-shell .pantalla-trabajo .pt-col-der {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    /* Columna izquierda (carga + tabla) toma todo el ancho que sobra; la derecha (resumen, observaciones, botones) mide 21-27 rem segun la ventana. */
+    body.app-shell .pantalla-trabajo .pt-fila-principal > .pt-col-izq {
+        flex: 1 1 0;
+        width: auto;
+        max-width: none;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-fila-principal > .pt-col-der {
+        flex: 0 0 clamp(21rem, 23vw, 27rem);
+        width: clamp(21rem, 23vw, 27rem);
+        max-width: clamp(21rem, 23vw, 27rem);
+    }
+
+    body.app-shell .pantalla-trabajo .pt-col-izq > * {
+        flex: 0 0 auto;
+    }
+
+    /* Avisos de la columna izquierda (pesajes vinculados, feedback, advertencias): una linea fina. */
+    body.app-shell .pantalla-trabajo .pt-col-izq > .alert {
+        padding: .2rem .6rem !important;
+        margin-bottom: .3rem !important;
+        font-size: .82rem;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-col-der {
+        overflow-y: auto;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-col-der > * {
+        flex: 0 0 auto;
+    }
+
+    /* La tabla crece con cada producto hasta ocupar todo el alto libre y recien ahi scrollea. El minimo garantiza 20 filas (o las que haya):
+       encabezado + filas de 1.375 rem; --pt-filas lo mantiene pantalla-trabajo.js. */
+    body.app-shell .pantalla-trabajo .pt-col-izq > .pt-tabla-wrap {
+        flex: 0 1 auto;
+        max-height: none;
+        min-height: calc(1.7rem + min(var(--pt-filas, 0), 20) * 1.375rem);
+        overflow-y: auto;
+        /* Con table-layout fixed y anchos que entran, la tabla nunca es mas ancha que su caja; esto evita la barra horizontal si algun
+           navegador suma un par de pixeles (bordes, barra vertical). Los nombres largos bajan de renglon (overflow-wrap). */
+        overflow-x: hidden;
+        margin-bottom: 0 !important;
+    }
+
+    /* Stock (pedido 2026-11-04): la tabla termina donde empieza el pie "(c) 2026 - CarniSys" y scrollea solo por dentro. Con el minimo de 20
+       filas, en una ventana baja se sumaba el scroll de la zona de trabajo al de la tabla y el usuario se perdia entre los dos. */
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-col-izq > .pt-tabla-wrap {
+        min-height: 6rem;
+    }
+
+    /* Botones (Modificar / Eliminar / Guardar / Cancelar): pantalla-trabajo.js los mueve al pie de la columna derecha. */
+    body.app-shell .pantalla-trabajo .pt-col-der > .pt-acciones {
+        margin-top: auto !important;
+        padding-top: .5rem;
+    }
+
+    /* ---- 2. Tabla de lineas: Producto pegado a Cantidad / Kilos, letra de 14 px, negrita en nombre y cantidades ---- */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap :is(#tablaLineasStock, #tablaLineasMovimiento, #tablaLineasElaborado) {
+        table-layout: fixed;
+        width: 100%;
+        font-size: .875rem;
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap :is(#tablaLineasStock, #tablaLineasMovimiento, #tablaLineasElaborado) tbody td {
+        height: 1.375rem;
+        padding: 0 .45rem;
+        line-height: 1.3;
+        vertical-align: middle;
+    }
+
+    /* Anchos: # y Codigo fijos, Producto de ~30 caracteres, cantidades fijas; el ancho que sobra lo reparten las columnas de despues de las
+       cantidades (Bal / Creado / Balanza / Acccion), asi no queda un hueco vacio al final de la fila y Producto no se separa de la cantidad. */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th:first-child { width: 3rem !important; }
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th.pt-th-cod { width: 5rem !important; }
+    /* Producto: ~30 caracteres. Chrome ignora min()/clamp() con porcentajes en el ancho de columnas de tabla, asi que en una ventana angosta
+       (notebook, o con el stock del destino al lado) se achica por container query sobre el ancho de la tabla, para que entren Creado / Acciones. */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap { container-type: inline-size; }
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th.pt-th-prod { width: var(--pt-ancho-producto, 17rem) !important; }
+    @container (max-width: 899px) {
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th.pt-th-prod { width: 13rem !important; }
+    }
+    /* Movimientos (8 columnas) angosto (con el stock del destino al lado, o ventana de 1200-1300 px): con anchos fijos en rem la suma no
+       entraba y aparecia la barra horizontal (pedido 2026-11-04). Ahi las columnas van en porcentaje y suman 100: con table-layout fixed
+       la tabla no puede pasarse del ancho de su caja. Los encabezados de dos palabras (Permitir ingreso) pueden bajar a un segundo renglon (sin cortar palabras). */
+    @container (max-width: 799px) {
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th:first-child { width: 5% !important; }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-cod { width: 10% !important; }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-prod { width: 27% !important; }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-num { width: 12% !important; }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-resto { width: 11% !important; }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-med { width: 13% !important; }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th:last-child { width: 10% !important; }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th {
+            padding-left: .3rem;
+            padding-right: .3rem;
+        }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-med {
+            white-space: normal !important;
+        }
+    }
+    @container (max-width: 699px) {
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:not(:has(th.pt-th-med)) thead th.pt-th-prod { width: 11rem !important; }
+    }
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th.pt-th-num { width: 7rem !important; text-align: right; }
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th.pt-th-med { width: 9rem !important; }
+    /* La columna "resto" (Creado en Stock, Balanza en Movimientos y Elaborados) absorbe el ancho que sobra; las demas conservan su ancho. */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th.pt-th-resto { width: auto !important; }
+
+    /* Nombre del producto: hasta 30 caracteres en un renglon; si es mas largo sigue debajo (la fila crece solo en ese caso). */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-prod {
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+
+    /* Negrita: producto y cantidades (el codigo gris de Stock queda en peso normal). */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-prod,
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-kg,
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-cant {
+        font-weight: 700;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-prod .text-muted {
+        font-weight: 400;
+    }
+
+    /* Stock arma el nombre con <strong> (stock.js): sobre el 700 de la celda, "bolder" daba 900 y se veia mas grueso que en Movimientos y
+       Elaborados. Misma negrita en las tres (pedido 2026-11-04). */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-prod strong {
+        font-weight: inherit;
+    }
+
+    /* Stock: en cada fila solo el numero del codigo, sin la palabra "Codigo:". */
+    body.app-shell .pantalla-trabajo .pt-lbl-codigo {
+        display: none;
+    }
+
+    /* Filas alternadas para seguir el renglon con la vista (sirve en modo claro y oscuro). */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody tr:nth-child(even) > td {
+        background-color: rgba(127, 127, 127, .07);
+    }
+}
+
+/* ---- 3. Cabecera siempre visible, sin etiquetas (escritorio) ----
+   Sucursal / Fecha / Accion / Proveedor / Cant.Medias / Kgs.Medias (Stock), sucursales y fecha (Movimientos), Sucursal / Fecha / Usuario /
+   Creado (Elaborados): las etiquetas de arriba se ocultan (siguen para lectores de pantalla) y su texto pasa a placeholder / tooltip del campo
+   (pantalla-trabajo.js). Nada cambia de lugar. Reemplaza a la cabecera plegable (2026-11-04: el usuario pidio que los datos se vean siempre). */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo :is(.stock-fila-datos, .stock-fila-pesaje, .mov-fila-datos, .elaborados-fila-datos) label:not(.custom-control-label) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-btn-ventana {
+        display: inline-flex;
+        align-items: center;
+    }
+}
+
+/* ---- 4. "Agregar producto" en UNA fila (teclado numerico cerrado) ----
+   Codigo | Producto | Cantidad | + y, a continuacion, Balanza y los botones solo con icono; el estado de la balanza va al final.
+   Si en una ventana angosta no entra, flex-wrap baja los iconos a un segundo renglon (Producto nunca se achica de ~28 rem).
+   Con el teclado desplegado (.teclado-desplegado) NO se aplica nada de esto: vuelve el cuadro de siempre, mas alto.
+   pantalla-trabajo.js le pone .pt-box-agregar al cuadro y pasa las etiquetas a placeholder. */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) {
+        display: flex !important;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .3rem .5rem;
+        padding: .3rem .5rem !important;
+        margin-bottom: .4rem !important;
+    }
+
+    /* Titulo "Agregar producto" fuera; la cabecera y su grupo de botones se "disuelven" para que sus hijos sean items de la fila. */
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child {
+        display: contents !important;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child > h6 {
+        display: none;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child > .d-flex {
+        display: contents !important;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > .numeric-keypad-toggle-layout {
+        order: 1;
+        flex: 1 1 36rem;
+        min-width: 0;
+    }
+
+    /* Stock: la grilla de campos de stock-editar-compacto.css (Codigo 10.5-11 rem, Cantidad 7-7.5 rem) mas angosta en Codigo y Cantidad. */
+    body.app-shell .stock-editar-compacto .pt-box-agregar #stockNumericKeypadLayout:not(.teclado-desplegado) .numeric-keypad-toggle-fields .row {
+        grid-template-columns: minmax(8.5rem, 9rem) minmax(0, 1fr) minmax(6.5rem, 7rem) auto;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .d-flex > * {
+        order: 2;
+        margin: 0 !important;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > [id^="balanzaStatusWrap"] {
+        order: 3;
+        margin: 0 !important;
+        flex: 0 0 auto;
+    }
+
+    /* Botones del grupo (Ver acumulados, teclado, Ver Porc(%), respaldo...): solo el icono; el texto queda como tooltip (lo pone el JS). */
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .btn {
+        font-size: 0 !important;
+        padding: .2rem .5rem;
+        min-height: 1.9rem;
+        white-space: nowrap;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .btn > i {
+        font-size: .85rem;
+        margin: 0 !important;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .btn > i + i {
+        margin-left: .25rem !important;
+    }
+
+    /* Etiquetas de los campos: ocultas (accesibles para lectores de pantalla); el texto pasa a placeholder. */
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields label:not(.invisible) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields label.invisible {
+        display: none;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row {
+        align-items: center;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .form-group {
+        margin-bottom: 0;
+    }
+
+    /* Advertencia del cuadro (ej. "La cantidad ingresada no es consistente con los kilos...") y "Permitir ingreso": antes entraban como un
+       item mas de la fila y empujaban los campos o quedaban debajo de los botones (pedido 2026-11-04). Ahora van en su propio renglon,
+       arriba, compactos; el ::after fuerza el salto de renglon solo mientras alguno de los dos esta a la vista. */
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > .alert {
+        order: 0;
+        flex: 1 1 auto;
+        margin: 0 !important;
+        padding: .2rem .6rem !important;
+        font-size: .8rem;
+        line-height: 1.25;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > #wrapPermitirIngreso {
+        order: 0;
+        flex: 0 0 auto;
+        margin: 0 !important;
+        font-size: .8rem;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > #wrapPermitirIngreso .form-text {
+        display: inline;
+        margin: 0 0 0 .3rem;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)):has(> .alert:not(.d-none), > #wrapPermitirIngreso:not(.d-none))::after {
+        content: "";
+        order: 0;
+        flex: 0 0 100%;
+        height: 0;
+    }
+
+    /* Estado de la balanza (texto + barrita) en un renglon corto, sin el margen de antes. */
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) [id^="balanzaStatusWrap"] > .small {
+        font-size: 0;
+        white-space: nowrap;
+        margin: 0 !important;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) [id^="balanzaStatusWrap"] > .small > span {
+        font-size: .72rem;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) [id^="balanzaStatusWrap"] > .progress {
+        flex: 0 0 40px !important;
+    }
+}
+
+/* ---- 5. Movimientos con "Stock destino" abierto (.mov-con-stock): panel del stock a la izquierda, carga a la derecha ----
+   Mantiene la grilla de dos columnas de la vista (11fr / 10fr) pero ocupando todo el alto: el panel se estira y la columna de carga reparte
+   su alto igual que sin panel. Resumen / Observaciones / Datos y los botones quedan en una franja debajo de la tabla (no hay columna lateral). */
+@media (min-width: 1200px) {
+    /* Ancho del panel (pedido 2026-11-04): lo justo para su tabla en modo movimiento (Cod. 9ch + Producto 22ch + Stock + Estado + Sugerido + el
+       boton de detalle, mas los margenes de la pagina del panel; medido: ~34 rem; 35.5 rem desde que Producto y Stock del panel van en 14 px). Antes era 11fr / 10fr y la tabla de stock dejaba una
+       columna vacia de ~100 px a la derecha. Con ventanas angostas (1200-1350 px) el panel no pasa de la mitad para que la carga no quede
+       chica. El ancho ganado lo toma la tabla del movimiento. */
+    body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock.pt-fill {
+        display: grid;
+        grid-template-columns: minmax(0, min(var(--pt-mov-ancho-panel-stock, 35.5rem), 50%)) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+        align-items: stretch;
+        gap: .75rem;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock .mov-stock-panel {
+        position: static;
+        height: auto;
+        min-height: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock > .mov-form-col {
+        min-width: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-con-stock .pt-fila-principal {
+        flex-direction: column;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-con-stock .pt-fila-principal > .pt-col-izq {
+        flex: 1 1 0;
+        width: 100%;
+        max-width: 100%;
+        min-height: 0;
+    }
+
+    /* Con el panel al lado no se fuerza el minimo de 20 filas: en una ventana baja (~690 px de alto) no entran y la tabla se dibujaba
+       encima de la franja de Guardar (la grilla tiene alto fijo). La tabla ocupa lo que haya y scrollea por dentro; Guardar queda a la vista. */
+    body.app-shell .pantalla-trabajo .mov-con-stock .pt-col-izq > .pt-tabla-wrap {
+        min-height: 6rem;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-con-stock .pt-fila-principal > .pt-col-der {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 100%;
+        overflow: visible;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: stretch;
+    }
+
+    /* Resumen + Observaciones + Datos siguen en una fila (reglas de movimientos-compacto.css); los botones, que ahora viven en esa franja,
+       entran a la derecha de la misma franja. */
+    body.app-shell .pantalla-trabajo .mov-con-stock .pt-fila-principal > .pt-col-der {
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    /* Con el stock al lado no hay alto para la tarjeta "Datos del movimiento" (mov. origen/destino, creado, actualizado): se oculta mientras
+       el panel esta abierto y vuelve al cerrarlo. */
+    body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock .pt-col-der > .movimiento-meta-card {
+        display: none;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-con-stock .pt-col-der > .pt-acciones {
+        margin: 0 0 0 auto !important;
+        padding-top: 0;
+    }
+
+    /* Lupa de buscar en la tabla: movimientos-compacto.css (2026-10-31) la superponia al encabezado de la tabla y quedaba encima de las
+       columnas (pedido 2026-11-04). Vuelve a su renglon propio arriba de la tabla, igual que sin el panel. */
+    body.app-shell .pantalla-trabajo .mov-con-stock .movimiento-search-toolbar {
+        height: auto;
+        position: static;
+        z-index: auto;
+        justify-content: flex-start;
+        align-items: center;
+        margin: 0 0 .25rem !important;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-con-stock .movimiento-search-toolbar > button {
+        height: auto;
+        width: auto;
+        min-height: 0;
+        padding: .1rem .45rem;
+        margin: 0;
+        font-size: .75rem;
+        line-height: 1.2;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-con-stock .mov-tabla-wrap thead th:last-child {
+        padding-right: .45rem;
+    }
+}
+
+/* ---- 5b. Movimientos con "Stock destino": Balanza, Ver acumulados y teclado en el renglon del Codigo, a la derecha (pedido 2026-11-04) ----
+   Con el panel abierto el cuadro "Agregar producto" queda en dos renglones: Codigo (ancho acotado) con los botones al extremo derecho, y
+   abajo Producto + Cant.Un. + Kgs. + "+". Los botones no se mueven del DOM: el grupo se posiciona sobre el renglon del Codigo, que deja
+   libre el resto del ancho. Con el teclado digital desplegado no se aplica (vuelve el cuadro de siempre). */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo .mov-con-stock .pt-box-agregar:not(:has(.teclado-desplegado)) {
+        position: relative;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-con-stock .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child > .d-flex {
+        display: flex !important;
+        align-items: center;
+        gap: .4rem;
+        position: absolute;
+        top: var(--pt-mov-botones-top, .3rem);
+        right: .5rem;
+        height: var(--pt-mov-botones-alto, 2.1rem);
+        z-index: 2;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock #movimientoNumericKeypadLayout:not(.teclado-desplegado) .movimiento-producto-row {
+        flex-wrap: wrap;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock #movimientoNumericKeypadLayout:not(.teclado-desplegado) .movimiento-producto-row > .movimiento-col-codigo {
+        flex: 0 0 100%;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock #movimientoNumericKeypadLayout:not(.teclado-desplegado) .movimiento-producto-row > .movimiento-col-codigo > .form-group {
+        max-width: 11rem;
+    }
+
+    body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock #movimientoNumericKeypadLayout:not(.teclado-desplegado) .movimiento-producto-row > .movimiento-col-producto {
+        flex: 1 1 0;
+    }
+}
+
+/* ---- 6. Elaborados/Carga: pestanas + botones en un renglon y cuadro "Elaborado" en una fila ---- */
+/* Por debajo de 1200 px el contenedor no existe a efectos de layout: el celular queda como siempre. */
+.pantalla-trabajo .pt-fila-tabs {
+    display: contents;
+}
+
+@media (min-width: 1200px) {
+    /* Las pestanas no se cortan (nowrap): la tarjeta mide al menos lo que ellas y, si no entran junto con los botones, los botones bajan a un
+       segundo renglon. Antes la tarjeta se achicaba y las pestanas se pintaban encima de "Volver" (pedido 2026-11-04). */
+    body.app-shell .pantalla-trabajo .pt-fila-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 .75rem;
+        flex: 0 0 auto;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-fila-tabs > .elaborados-tabs-card {
+        flex: 1 1 auto;
+        min-width: max-content;
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell .pantalla-trabajo .pt-fila-tabs > .elaborados-barra-botones {
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        margin-left: auto;
+        margin-bottom: .4rem !important;
+    }
+
+    /* Cuadro "Elaborado" (codigo + nombre + ultima actualizacion) en UN renglon: sin titulo, etiquetas como placeholder. */
+    body.app-shell .pantalla-trabajo .elaborados-box-elaborado {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .2rem .75rem;
+    }
+
+    body.app-shell .pantalla-trabajo .elaborados-box-elaborado > .elaborados-box-cab {
+        display: none;
+    }
+
+    body.app-shell .pantalla-trabajo .elaborados-box-elaborado > .row {
+        flex: 1 1 24rem;
+        align-items: center;
+        margin: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .elaborados-box-elaborado > .row > .elaborado-col-codigo {
+        flex: 0 0 8.5rem;
+        max-width: 8.5rem;
+        padding-left: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .elaborados-box-elaborado > .row > [class*="col-"]:not(.elaborado-col-codigo) {
+        flex: 1 1 0;
+        max-width: none;
+        padding-right: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .elaborados-box-elaborado .form-group {
+        margin-bottom: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .elaborados-box-elaborado .row label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    body.app-shell .pantalla-trabajo .elaborados-box-elaborado > .small {
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+}
+
+/* ---- 7. Stock con accion Pesaje: al menos 15 productos a la vista (pedido 2026-11-04, maqueta aprobada) ----
+   - Accion: el interruptor "Solo productos" pasa al lado del select y "Cambiar" (antes ocupaba un renglon arriba).
+   - Proveedor (con el CUIT al lado), Cant.Medias, Kgs.Medias, Vincular compra / pesajes (solo icono) y la compra vinculada en UN renglon; si la
+     compra vinculada no entra, baja a un segundo renglon. Cant.Medias y Kgs.Medias muestran su nombre chico adentro del campo.
+   - El estado de la balanza va al renglon de la lupa.
+   pantalla-trabajo.js (prepararPesajeStock) mueve la caja de compra vinculada y el estado de la balanza y pone .pt-pesaje-linea en la raiz solo
+   mientras el bloque de pesaje esta a la vista y la ventana es de 1200 px o mas. Por debajo de 1200 px no cambia nada. */
+@media (min-width: 1200px) {
+    /* Renglon de Sucursal / Fecha / Accion: "Solo productos" a la derecha de "Cambiar". */
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos > :nth-child(3) > .form-group:has(#wrapGuardarSinPesaje:not(.d-none)) {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos > :nth-child(3) > .form-group:has(#wrapGuardarSinPesaje:not(.d-none)) > .input-group {
+        order: 1;
+        flex: 1 1 auto;
+        width: auto;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos > :nth-child(3) > .form-group:has(#wrapGuardarSinPesaje:not(.d-none)) > .d-flex {
+        order: 2;
+        flex: 0 0 auto;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="stock"] #wrapGuardarSinPesaje {
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+
+    /* Renglon del pesaje: Proveedor | Cant.Medias | Kgs.Medias | Vincular compra | Vincular pesajes | compra vinculada. */
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem .5rem;
+        margin: 0 0 .4rem;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock > [class*="col-"] {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+        padding: 0;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock .form-group {
+        margin: 0 !important;
+    }
+
+    /* Proveedor con el CUIT al lado (antes iba en un renglon debajo). */
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock > :first-child {
+        flex: 0 1 31rem;
+        min-width: 22rem;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock > :first-child > .form-group {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock > :first-child .input-group {
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #lblProveedorCuit {
+        flex: 0 0 auto;
+        margin: 0;
+        font-size: .75rem;
+        white-space: nowrap;
+    }
+
+    /* Cant.Medias y Kgs.Medias: el nombre chico adentro del campo, a la izquierda (no suma alto). */
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock > :has(#CantMedias),
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock > :has(#KgsMedias) {
+        flex: 0 0 10rem;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock .form-group:has(#CantMedias),
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock .form-group:has(#KgsMedias) {
+        position: relative;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock label[for="CantMedias"],
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock label[for="KgsMedias"] {
+        position: absolute;
+        left: .55rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: auto;
+        height: auto;
+        margin: 0;
+        clip: auto;
+        overflow: visible;
+        z-index: 3;
+        pointer-events: none;
+        font-size: .62rem;
+        text-transform: uppercase;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #CantMedias,
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #KgsMedias {
+        padding-left: 5.4rem;
+    }
+
+    /* El nombre ya se ve adentro: sin el placeholder repetido. */
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #CantMedias::placeholder,
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #KgsMedias::placeholder {
+        color: transparent;
+    }
+
+    /* Vincular compra / Vincular pesajes: solo el icono (el nombre queda como tooltip). */
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #btnSeleccionarCompraPesaje,
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #btnVincularPesajes {
+        width: auto;
+        font-size: 0;
+        padding: .2rem .6rem;
+        white-space: nowrap;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #btnSeleccionarCompraPesaje > i,
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #btnVincularPesajes > i {
+        font-size: .9rem;
+        margin: 0 !important;
+    }
+
+    /* Compra vinculada en una linea (titulo y datos uno al lado del otro). */
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea #bloquePesajeStock > .pt-vinc-en-linea:not(.d-none) {
+        flex: 1 1 24rem;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: .2rem .9rem;
+        flex-wrap: nowrap;
+        overflow: hidden;
+        white-space: nowrap;
+        margin: 0 !important;
+        padding: .25rem .6rem !important;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .pt-vinc-en-linea > .small {
+        flex: 0 0 auto;
+        margin: 0 !important;
+        font-size: .72rem;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .pt-vinc-en-linea .row,
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .pt-vinc-en-linea #stockCompraVinculadaDatos {
+        display: flex !important;
+        flex-wrap: nowrap;
+        align-items: baseline;
+        gap: .35rem .9rem;
+        margin: 0;
+        min-width: 0;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .pt-vinc-en-linea .row > [class*="col-"] {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+        padding: 0;
+        margin: 0 !important;
+        display: flex;
+        align-items: baseline;
+        gap: .3rem;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .pt-vinc-en-linea #stockCompraVinculadaDatos > * {
+        margin: 0 !important;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .pt-vinc-en-linea .small:not(:first-child),
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .pt-vinc-en-linea .text-muted {
+        font-size: .7rem;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .pt-vinc-en-linea .font-weight-bold {
+        font-size: .82rem;
+    }
+
+    /* La fila de la compra vinculada del registro guardado queda vacia (su caja paso al renglon del proveedor). */
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .stock-fila-vinculada:not(:has(.stock-compra-vinculada-box, .stock-pesaje-ajustado-box)) {
+        display: none;
+    }
+
+    /* Estado de la balanza en el renglon de la lupa. */
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .stock-search-toolbar > .pt-balanza-en-lupa {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        margin-left: .6rem;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .stock-search-toolbar > .pt-balanza-en-lupa > .small {
+        margin: 0 !important;
+        font-size: .72rem;
+        white-space: nowrap;
+    }
+
+    body.app-shell .pantalla-trabajo.pt-pesaje-linea .stock-search-toolbar > .pt-balanza-en-lupa > .progress {
+        flex: 0 0 40px;
+        width: 40px;
+        margin: 0 !important;
+    }
+}

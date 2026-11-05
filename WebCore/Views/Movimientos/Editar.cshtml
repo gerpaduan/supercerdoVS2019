@@ -20,7 +20,7 @@
     modalBorradoresData["TituloBorradoresGenerico"] = "Movimientos sin guardar";
 }
 
-<div class="container-fluid px-2 px-md-3 movimiento-page movimiento-form-compact" data-movimiento-page="1">
+<div class="container-fluid px-2 px-md-3 movimiento-page movimiento-form-compact pantalla-trabajo" data-movimiento-page="1" data-pt="mov">
     @if (ViewBag.RecuperandoEliminado is string textoRecuperando)
     {
         <div class="alert alert-info py-2 small" role="alert" id="avisoRecuperandoEliminado">
@@ -59,7 +59,7 @@
 
     @* Con "Stock destino" encendido (y pantalla >= 1200 px) el contenido pasa a dos columnas: el stock del destino a la izquierda y la carga
        del movimiento a la derecha. El panel es un iframe de Stock/ExistenciaPorSucursales en modo movimiento. *@
-    <div class="mov-layout" id="movLayout">
+    <div class="mov-layout pt-fill" id="movLayout">
         <aside class="mov-stock-panel d-none" id="panelStockDestino" aria-label="Stock de la sucursal destino">
             <div class="mov-stock-cab">
                 <span class="mov-stock-titulo" id="lblTituloStockDestino">Stock de la sucursal destino</span>
@@ -72,10 +72,10 @@
             <div class="mov-stock-aviso d-none" id="avisoStockDestino">Elegí la sucursal destino para ver su stock.</div>
             <iframe id="frameStockDestino" class="mov-stock-frame" title="Stock de la sucursal destino"></iframe>
         </aside>
-        <div class="mov-form-col">
-    <div class="card shadow-sm movimiento-panel-card">
-        <div class="card-body">
-            <form id="formMovimiento" method="post" action="@Url.Action("Guardar", "Movimientos")" novalidate>
+        <div class="mov-form-col pt-fill">
+    <div class="card shadow-sm movimiento-panel-card pt-fill">
+        <div class="card-body pt-fill">
+            <form id="formMovimiento" class="pt-fill" method="post" action="@Url.Action("Guardar", "Movimientos")" novalidate>
                 @Html.AntiForgeryToken()
                 @Html.HiddenFor(m => m.IdMovimiento)
                 @Html.HiddenFor(m => m.EmpresaCuit)
@@ -128,8 +128,8 @@
 
                 <hr class="mov-hr" />
 
-                <div class="row mov-fila-principal">
-                    <div class="col-12 col-xl-8">
+                <div class="row mov-fila-principal pt-fila-principal">
+                    <div class="col-12 col-xl-8 pt-col-izq">
                         <div class="border rounded p-3 mb-3 movimiento-section-box mov-box-agregar">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 movimiento-section-title">Agregar producto</h6>
@@ -262,16 +262,16 @@
 
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLines() en movimientos.js. *@
-                        <div class="table-responsive mov-tabla-wrap">
+                        <div class="table-responsive mov-tabla-wrap pt-tabla-wrap">
                             <table class="table table-bordered table-sm movimiento-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasMovimiento">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th style="width:110px;">Código</th>
-                                        <th>Producto</th>
-                                        <th class="text-right" style="width:8ch;">Cant.Un.</th>
-                                        <th class="text-right" style="width:8ch;">Kilos</th>
-                                        <th class="text-center" style="width:8ch;">Balanza</th>
-                                        <th class="text-center" style="width:8ch;">Permitir ingreso</th>
+                                        <th class="pt-th-cod" style="width:110px;">Código</th>
+                                        <th class="pt-th-prod">Producto</th>
+                                        <th class="text-right pt-th-num" style="width:8ch;">Cant.Un.</th>
+                                        <th class="text-right pt-th-num" style="width:8ch;">Kilos</th>
+                                        <th class="text-center pt-th-resto" style="width:8ch;">Balanza</th>
+                                        <th class="text-center pt-th-med" style="width:8ch;">Permitir ingreso</th>
                                         <th style="width:70px;">Acción</th>
                                     </tr>
                                 </thead>
@@ -280,7 +280,7 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-xl-4 mov-lateral">
+                    <div class="col-12 col-xl-4 mov-lateral pt-col-der">
                         <div class="card bg-light movimiento-panel-card movimiento-summary-card">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-2 movimiento-section-title">Resumen</h6>
@@ -338,7 +338,7 @@
                     </div>
                 </div>
 
-                <div class="mt-3 d-flex flex-wrap align-items-center">
+                <div class="mt-3 d-flex flex-wrap align-items-center pt-acciones">
                     @if (Model.EsEdicion)
                     {
                         <button type="button"
@@ -865,6 +865,8 @@
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     @* Escritorio compacto (2026-10-30): va DESPUES de numeric-keypad.css, que comparte con otras pantallas. *@
     <link rel="stylesheet" href="@Url.Content("~/Content/css/movimientos-compacto.css")" asp-append-version="true" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
+    <script src="@Url.Content("~/Scripts/app/pantalla-trabajo.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>

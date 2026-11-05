@@ -952,7 +952,7 @@
                 + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.codigo || '') + '</td>'
                 + '<td class="cc-l-prod"><strong>' + escapeHtml(linea.producto || '') + '</strong>'
                 + '<span class="cc-solo-card">' + etiquetasCelular + '</span>'
-                + '<span class="cc-solo-tabla"><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></span></td>'
+                + '<span class="cc-solo-tabla"><br><small class="text-muted"><span class="pt-lbl-codigo">Código: </span>' + escapeHtml(linea.codigo || '') + '</small></span></td>'
                 + '<td class="text-right cc-l-kg">' + formatNumber(linea.cantKgs, 3) + '</td>'
                 + '<td class="text-center cc-l-bal cc-l-ultimo"><span class="cc-solo-tabla">' + (linea.balanza ? '*' : '') + '</span>'
                 + '<i class="cc-solo-card fas fa-balance-scale ' + (linea.balanza ? 'text-primary' : 'cc-ico-off') + '" role="img" aria-label="' + textoBalanza + '" title="' + textoBalanza + '"></i></td>'

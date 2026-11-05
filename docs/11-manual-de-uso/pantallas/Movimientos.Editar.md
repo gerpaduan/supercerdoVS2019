@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-10-31
+revisada: 2026-11-04
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -15,7 +15,8 @@ Para decidir qué mandar conviene mirar cuánto stock tiene la sucursal **destin
 - Con pantalla de **1200 px o más**: el **stock a la izquierda** y la **carga del movimiento a la derecha**. El botón lo enciende y apaga; se recuerda en este navegador. Con menos ancho no hay lugar para dos columnas: el botón abre el stock en una **ventana independiente**.
 - **↗ (en la cabecera del panel)**: pasa el stock a una ventana independiente (un tercio del ancho de la pantalla) y cierra el panel. **⟳**: actualiza el stock ahora. **✕**: cierra el panel.
 - Es la misma pantalla de [Existencia por sucursales](ayuda:pantalla/Stock.ExistenciaPorSucursales) en modo compacto, solo con la sucursal destino y sin pedido ni exportación. Si **cambiás la sucursal destino** del movimiento, el stock cambia solo a esa sucursal.
-- Con el stock al lado, *Agregar producto* se acomoda al lugar que queda: si no entra en una línea, **Código va solo arriba** y abajo van **Producto, Cant. Un., Kgs. y +** en el mismo renglón. Si el teclado digital está abierto y no alcanza el lugar, cada uno pasa a su renglón (Código, Producto, y Cant. Un. + Kgs. + +).
+- Con el stock al lado, *Agregar producto* va en dos renglones: **Código** arriba, con **Balanza**, **Ver acumulados** y el teclado al extremo derecho de ese mismo renglón, y abajo **Producto, Cant. Un., Kgs. y +**. Si el teclado digital está abierto y no alcanza el lugar, cada uno pasa a su renglón (Código, Producto, y Cant. Un. + Kgs. + +).
+- En la computadora (1200 px o más) el panel mide **lo justo para su tabla** (unos 570 px; a lo sumo la mitad del ancho). **Producto** y **Stock** se ven con la misma letra que las líneas del movimiento (las demás columnas, más chicas); un nombre largo se corta con «…» y el completo aparece al apoyar el mouse y el resto queda para la carga del movimiento; la tabla del stock llega **hasta el pie del panel**.
 - Se actualiza **solo cada 15 minutos** (como Existencia por sucursales) y con **⟳** cuando quieras.
 
 ### Cargar un producto desde el stock
@@ -34,13 +35,15 @@ La columna **Sugerido** estima lo que conviene mandar: **ventas + uso en elabora
 - Solo con la base de datos nueva (Postgres): con la anterior la columna avisa que no está disponible.
 
 ## En la computadora (pantalla de 1200 px o más)
-Pensado para ver más líneas sin bajar con la rueda:
-- **Fecha siempre completa, con la hora**, también con el *Stock destino* al lado (las sucursales ceden lugar antes que la fecha).
-- **Líneas cargadas:** una por renglón, con letra de 12,9 px (el texto gris, como el «Código», un punto menos) y encabezado fijo. Entran **10 líneas a la vista** con una ventana de 690 px de alto o más (**12 sin Stock destino**); con más, la lista tiene su propio scroll. Con el *Stock destino* abierto entran 9 con 690 px de alto (10 con unos 705 px, estimado: PENDIENTE medirlo); con el teclado digital abierto, menos.
+Pensado para ver **20 líneas o más sin bajar con la rueda**: la lista ocupa todo el alto de la ventana y crece a medida que cargás productos; recién cuando llena la pantalla tiene su propio scroll. En una ventana de 1920 × 860 se ven unas **25 líneas**; en una de 1524 × 686 (Full HD con Windows al 125 %) se ven las 20 bajando un poco (~50 px) dentro de la zona de trabajo. Con el *Stock destino* al lado la lista no fuerza las 20: ocupa lo que haya y scrollea por dentro, así **Guardar** queda siempre a la vista (unas 12 líneas a 1524 × 686).
+- **Datos del movimiento siempre a la vista, sin etiquetas:** sucursal origen (izquierda), sucursal destino (al lado) y fecha se ven siempre, sin la etiqueta de arriba; el nombre de cada campo aparece al apoyar el mouse.
+- **Agregar producto en una fila:** **Código, Producto (con F10), Cant.Un., Kgs. y +**, y a continuación **Balanza**, **Ver acumulados** y el teclado solo con su **icono** (el nombre aparece al apoyar el mouse) y el estado de la balanza. Las etiquetas se ven como texto dentro del campo vacío. La **advertencia** (por ejemplo «La cantidad ingresada no es consistente con los kilos…») y **Permitir ingreso** aparecen en su propio renglón, **arriba** de los campos, sin moverlos ni taparlos. Si falta o es inválido el dato de kilos, al cerrar el aviso el cursor vuelve a **Kgs.** (o a **Cant.Un.** si falta la cantidad). Si la ventana es angosta (por ejemplo con el *Stock destino* abierto), los iconos bajan a un segundo renglón.
+- **Líneas cargadas:** una por renglón, letra de 14 px, encabezado fijo y filas alternadas. El **producto, las unidades y los kilos van en negrita**; el producto tiene lugar para unos **30 caracteres** (más si la tabla es ancha) y las cantidades quedan pegadas a él; si el nombre es más largo sigue en un segundo renglón.
 - **Fila resaltada y acumulados:** al pasar el mouse por una fila de la tabla se pinta de azul tenue. **Ver acumulados** tiene la columna **#** (orden de primera carga de cada producto) y se ordena tocando **Código**, **Producto**, **Cant.Un.** o **Kilos**; al abrirlo arranca por código.
-- **Botones de arriba** (*Volver*, *Stock destino*, *Movimientos sin guardar*) más bajos. El estado de la balanza y su barra van en una sola línea.
-- **Con el Stock destino al lado:** *Resumen* (ítems, unidades y kilos) y *Observaciones* van en **un solo renglón** debajo de la lista (el *Usuario* del resumen no se muestra en este modo), y la **lupa** de buscar en la tabla queda **sobre el encabezado**, a la derecha. El panel del stock ocupa toda la altura disponible, sin segundo scroll.
+- **Botones al pie de la columna derecha:** **Modificar** (o **Guardar movimiento**), **Eliminar** y **Cancelar** están debajo de Resumen, Observaciones y Datos del movimiento, siempre a la vista.
+- **Con el Stock destino al lado:** el panel del stock ocupa toda la altura disponible. *Resumen* (ítems, unidades y kilos), *Observaciones* y los **botones** (Modificar / Guardar, Eliminar, Cancelar) van en **un solo renglón** debajo de la lista; el *Usuario* del resumen y la tarjeta **Datos del movimiento** (mov. origen y destino, creado, actualizado) **no se muestran mientras el panel está abierto** (volvé a tocar **Stock destino** para verlos). La **lupa** de buscar en la tabla va en su renglón, arriba de la tabla (como sin el panel). Las columnas de la tabla se reparten en porcentajes para que entren todas **sin barra horizontal** (Producto, unos 22 caracteres; si es más largo sigue debajo); «Permitir ingreso» puede ir en dos renglones.
 - **Teclado digital abierto** (sin stock): *Código* y *Producto* en un renglón, y *Cant.Un.*, *Kgs.* y *+* en el siguiente (**PENDIENTE**: no se verificó en el navegador).
+- **Abrir en ventana:** El botón **Abrir en ventana** está **oculto por ahora** (pedido del 2026-11-04). La pantalla se sigue pudiendo usar sin menú si se instala como aplicación desde `https://carnisys.com` (*Instalar CarniSys …*; PENDIENTE: no se probó).
 
 ## En el celular
 - **Agregar producto:** Cant.Un., Kgs. y el botón **+** van en el mismo renglón (con el teclado numérico en pantalla abierto se apilan como antes).

@@ -1,9 +1,15 @@
 (function () {
-    function showAlert(icon, title, text) {
+    // $foco (opcional): campo que recibe el foco al CERRAR el aviso. Swal, al cerrarse, devuelve el foco a lo que lo tenia antes (el boton
+    // "+"), asi que un .focus() hecho mientras el aviso esta abierto se perdia (pedido 2026-11-04: volver al campo de kilos).
+    function showAlert(icon, title, text, $foco) {
         if (window.Swal && typeof window.Swal.fire === 'function') {
-            Swal.fire({ icon: icon, title: title, text: text });
+            var aviso = Swal.fire({ icon: icon, title: title, text: text, returnFocus: !$foco });
+            if ($foco && aviso && typeof aviso.then === 'function') {
+                aviso.then(function () { $foco.trigger('focus').trigger('select'); });
+            }
         } else {
             alert(text);
+            if ($foco) $foco.trigger('focus').trigger('select');
         }
     }
 
@@ -933,23 +939,19 @@
                 return false;
             }
             if (($cantUnidad.val() || '').trim() === '') {
-                showAlert('warning', 'Movimiento', 'Ingresá la cantidad.');
-                $cantUnidad.focus().select();
+                showAlert('warning', 'Movimiento', 'Ingresá la cantidad.', $cantUnidad);
                 return false;
             }
             if (($cantKgs.val() || '').trim() === '') {
-                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos mayor a cero.');
-                $cantKgs.focus().select();
+                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos mayor a cero.', $cantKgs);
                 return false;
             }
             if (!parsedCantKg.ok) {
-                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos válida.');
-                $cantKgs.focus().select();
+                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos válida.', $cantKgs);
                 return false;
             }
             if (parsedCantKg.value <= 0) {
-                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos mayor a cero.');
-                $cantKgs.focus().select();
+                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos mayor a cero.', $cantKgs);
                 return false;
             }
             if (!validarRelacionCantidadKilos() && !$permitir.is(':checked')) {

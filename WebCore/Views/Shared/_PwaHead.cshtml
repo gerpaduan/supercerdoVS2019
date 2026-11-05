@@ -2,6 +2,18 @@
    service worker (ver docs/DECISIONS.md 2026-10-13) -- cada apertura carga de red, asi un redeploy se
    ve de inmediato y no hay paginas cacheadas. Url.Content("~/...") resuelve contra el PathBase real
    (SM y San Lorenzo cuelgan de "/CarniSysWeb"). El manifest usa URLs relativas: heredan ese prefijo. *@
-<link rel="manifest" href="@Url.Content("~/manifest.json")" />
+@* Stock, Movimientos y Elaborados tienen su propio manifest (nombre, id y scope propios) para poder instalarse como mini-apps con su ventana y su
+   lugar en la barra de tareas (pantallas de trabajo, docs/DECISIONS.md 2026-11-04). El resto de la app usa el manifest general. *@
+@{
+    var controladorActual = (ViewContext.RouteData.Values["controller"] as string ?? "").ToLowerInvariant();
+    var archivoManifest = controladorActual switch
+    {
+        "stock" => "manifest-stock.json",
+        "movimientos" => "manifest-movimientos.json",
+        "elaborados" => "manifest-elaborados.json",
+        _ => "manifest.json"
+    };
+}
+<link rel="manifest" href="@Url.Content("~/" + archivoManifest)" />
 <link rel="apple-touch-icon" href="@Url.Content("~/Content/img/pwa-192.png")" />
 <meta name="theme-color" content="#062d63" />

@@ -42,7 +42,7 @@
     modalBorradoresData["TituloBorradoresGenerico"] = "Stock sin guardar";
 }
 
-<div class="container-fluid px-2 px-md-3 stock-page stock-form-compact stock-editar-compacto" data-stock-page="1">
+<div class="container-fluid px-2 px-md-3 stock-page stock-form-compact stock-editar-compacto pantalla-trabajo" data-stock-page="1" data-pt="stock">
     @if (ViewBag.RecuperandoEliminado is string textoRecuperando)
     {
         <div class="alert alert-info py-2 small" role="alert" id="avisoRecuperandoEliminado">
@@ -74,8 +74,8 @@
         </span>
     </div>
 
-    <div class="card shadow-sm stock-panel-card">
-        <div class="card-body">
+    <div class="card shadow-sm stock-panel-card pt-fill">
+        <div class="card-body pt-fill">
             @if (!ViewData.ModelState.IsValid)
             {
                 <div class="alert alert-danger">
@@ -83,7 +83,7 @@
                 </div>
             }
 
-            <form id="formStock" method="post" action="@Url.Action("Guardar", "Stock")" novalidate>
+            <form id="formStock" class="pt-fill" method="post" action="@Url.Action("Guardar", "Stock")" novalidate>
                 @Html.AntiForgeryToken()
                 @Html.HiddenFor(m => m.IdCompra)
                 @Html.HiddenFor(m => m.TipoCompra)
@@ -298,8 +298,8 @@
 
                 <hr class="stock-hr" />
 
-                <div class="row stock-cuerpo">
-                    <div class="col-12 col-xl-8">
+                <div class="row stock-cuerpo pt-fila-principal">
+                    <div class="col-12 col-xl-8 pt-col-izq">
                         <div class="border rounded p-3 mb-3 stock-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 stock-section-title">Agregar producto</h6>
@@ -427,19 +427,19 @@
 
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLineas() en stock.js. En desktop la tabla no cambia. *@
-                        <div class="table-responsive stock-tabla-wrap">
+                        <div class="table-responsive stock-tabla-wrap pt-tabla-wrap">
                             <table class="table table-bordered table-sm stock-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasStock">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th class="text-center" style="width:50px;" data-sort-key="orden">#</th>
-                                        <th class="stock-th-producto">
+                                        <th class="text-center pt-th-n" style="width:50px;" data-sort-key="orden">#</th>
+                                        <th class="stock-th-producto pt-th-prod">
                                             <a href="#" class="js-stock-sort" data-sort-key="producto">Producto</a>
                                             <span class="stock-th-sep">·</span>
                                             <a href="#" class="js-stock-sort stock-th-codigo-link" data-sort-key="codigo">Código</a>
                                         </th>
-                                        <th class="text-right" style="width:120px;" data-sort-key="cantidad">Cantidad</th>
+                                        <th class="text-right pt-th-num" style="width:120px;" data-sort-key="cantidad">Cantidad</th>
                                         <th class="text-center" style="width:70px;">bal</th>
-                                        <th style="width:160px;" data-sort-key="creado">Creado</th>
+                                        <th class="pt-th-resto" style="width:160px;" data-sort-key="creado">Creado</th>
                                         <th style="width:70px;">Acción</th>
                                     </tr>
                                 </thead>
@@ -448,7 +448,7 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-xl-4 stock-lateral">
+                    <div class="col-12 col-xl-4 stock-lateral pt-col-der">
                         <div class="card bg-light stock-panel-card stock-summary-card">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-2 stock-section-title">Resumen</h6>
@@ -500,7 +500,7 @@
                     </div>
                 </div>
 
-                <div class="mt-3 d-flex flex-wrap align-items-center stock-acciones">
+                <div class="mt-3 d-flex flex-wrap align-items-center stock-acciones pt-acciones">
                     @if (Model.EsEdicion)
                     {
                         <button type="button"
@@ -1184,6 +1184,8 @@
     <script src="@Url.Content("~/Scripts/app/stock.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/stock-editar-compacto.css")" asp-append-version="true" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
+    <script src="@Url.Content("~/Scripts/app/pantalla-trabajo.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>

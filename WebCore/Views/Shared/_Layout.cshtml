@@ -117,6 +117,30 @@
         })();
     </script>
 
+    @* Modo ventana (pantallas de trabajo Stock / Movimientos / Elaborados, docs/DECISIONS.md 2026-11-04): la pantalla se abrio en una ventana
+       propia ("Abrir en ventana", o la mini-app instalada con ?ventana=1) y se muestra sin menu lateral, barra superior ni pie. Se decide aca,
+       antes de pintar, para evitar el parpadeo. window.name sobrevive a la navegacion dentro de la ventana (Guardar -> listado -> Nuevo), asi
+       no hace falta arrastrar ningun parametro por las URLs. *@
+    <script>
+        (function () {
+            try {
+                var nombre = window.name || "";
+                if (!/^carnisys-trabajo-/.test(nombre) && /[?&]ventana=1(&|$)/.test(location.search)) {
+                    window.name = nombre = "carnisys-trabajo-app";
+                }
+                if (/^carnisys-trabajo-/.test(nombre)) {
+                    document.documentElement.classList.add("modo-ventana");
+                }
+            } catch (e) { }
+        })();
+    </script>
+    <style>
+        html.modo-ventana #accordionSidebar,
+        html.modo-ventana .topbar,
+        html.modo-ventana footer.sticky-footer,
+        html.modo-ventana .pt-btn-ventana { display: none !important; }
+    </style>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     @* Gap real encontrado el 2026-09-04 portando la UI de POS: 68 vistas ya migradas usan clases
        "fas fa-*"/"far fa-*" pero ningun layout de WebCore cargaba Font Awesome -- los iconos no
@@ -219,6 +243,9 @@
            limite del contenedor. */
         footer.sticky-footer {
             flex-shrink: 0;
+            /* Pie mas chico en todo el sistema (pedido 2026-11-04): 3 pt menos de letra (16 px -> 12 px) y renglon ajustado, para devolverle alto al contenido. */
+            font-size: .75rem;
+            line-height: 1.2;
         }
 
         .sidebar {
