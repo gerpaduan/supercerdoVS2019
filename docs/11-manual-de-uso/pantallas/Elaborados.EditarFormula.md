@@ -6,7 +6,7 @@ modulo: Elaborados
 orden: 5
 alias: Elaborados.GuardarFormula
 permiso: Elaborado.IngresoFormula (editar)
-revisada: 2026-10-31
+revisada: 2026-11-07
 ---
 ## Para qué sirve
 Crear o modificar la **fórmula** de un elaborado: sus ingredientes, la proporción de cada uno y la receta. Se llega desde *Elaborados → Fórmulas*.
@@ -23,6 +23,9 @@ Un ingrediente puede cargarse con porcentaje (o unidades) **negativo**, por ejem
 
 ## Código de ingrediente sin agregar
 Si escribiste un código de ingrediente y no lo agregaste a la tabla (botón +), **no se puede guardar la fórmula**: aparece el aviso *"El campo Código tiene un valor sin agregar..."*. Agregá el ingrediente o borrá el código y volvé a guardar.
+
+## Cómo se escriben los números
+En el valor de cada ingrediente (porcentaje o unidades), en el margen y en los precios de costeo, el **punto y la coma son ambos decimales**: `0.01` y `0,01` valen lo mismo (0,01). En esta pantalla **no hay separador de miles**: los números se muestran siempre con coma y dos decimales, sin punto (por ejemplo `1234,50`). Un texto con varios puntos o comas del mismo tipo (`1.234.567`) se toma como miles y se descartan los separadores.
 
 ## Resto de la pantalla
 PENDIENTE: documentar ingredientes, porcentaje/unidad, ajuste de fórmula, ingreso rápido, pasos de receta y costeo (no verificado contra el código en esta revisión).

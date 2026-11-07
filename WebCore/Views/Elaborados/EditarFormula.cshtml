@@ -249,11 +249,11 @@
                             <div class="d-md-none formula-totales-movil">
                                 <div class="d-flex justify-content-between">
                                     <span id="lblTotalPrincipalTextoMovil">@(Model.EscalaUnidad ? "Total unidades" : "Total porcentaje")</span>
-                                    <strong id="lblTotalPorcentajeMovil">@Model.TotalPorcentaje.ToString("N2")</strong>
+                                    <strong id="lblTotalPorcentajeMovil">@Model.TotalPorcentaje.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("es-AR"))</strong>
                                 </div>
                                 <div class="d-flex justify-content-between @(Model.EscalaUnidad ? "d-none" : "")" id="filaTotalSecundarioMovil">
                                     <span>Equivalencia en unidades</span>
-                                    <strong id="lblTotalUnidadesMovil">@Model.TotalUnidades.ToString("N2")</strong>
+                                    <strong id="lblTotalUnidadesMovil">@Model.TotalUnidades.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("es-AR"))</strong>
                                 </div>
                             </div>
                         </div>
@@ -278,11 +278,11 @@
                                     <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Totales</h6>
                                     <div class="d-flex justify-content-between">
                                         <span id="lblTotalPrincipalTexto">@(Model.EscalaUnidad ? "Total unidades" : "Total porcentaje")</span>
-                                        <strong id="lblTotalPorcentaje">@Model.TotalPorcentaje.ToString("N2")</strong>
+                                        <strong id="lblTotalPorcentaje">@Model.TotalPorcentaje.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("es-AR"))</strong>
                                     </div>
                                     <div class="d-flex justify-content-between @(Model.EscalaUnidad ? "d-none" : "")" id="filaTotalSecundario">
                                         <span>Equivalencia en unidades</span>
-                                        <strong id="lblTotalUnidades">@Model.TotalUnidades.ToString("N2")</strong>
+                                        <strong id="lblTotalUnidades">@Model.TotalUnidades.ToString("F2", System.Globalization.CultureInfo.GetCultureInfo("es-AR"))</strong>
                                     </div>
                                 </div>
 
@@ -466,16 +466,36 @@
                 || state.ajustarUnidad
                 || state.lineas.some(function (l) { return l.NoSumaPeso; });
 
+            // Pedido 2026-11-07: en esta vista NO hay separador de miles; el punto y la coma son
+            // ambos decimales ("0.01" y "0,01" valen 0,01). Antes se borraban todos los puntos
+            // (los tomaba como miles) y "0.01" quedaba en 1.
+            // Reglas: un solo separador (. o ,) = decimal; varios del mismo tipo ("1.234.567") = miles
+            // y se descartan; si vienen ambos tipos (texto pegado como "1.234,50" o "1,234.50") el
+            // ultimo es el decimal y el otro se descarta.
             function toNumber(value) {
                 if (value === null || value === undefined) return 0;
                 if (typeof value === "number") return value;
-                value = value.toString().replace(/\./g, '').replace(',', '.');
-                var parsed = parseFloat(value);
+                var texto = value.toString().trim();
+                var ultimoSeparador = Math.max(texto.lastIndexOf('.'), texto.lastIndexOf(','));
+                if (ultimoSeparador >= 0) {
+                    var entera = texto.substring(0, ultimoSeparador);
+                    var decimales = texto.substring(ultimoSeparador + 1);
+                    var cantidadDeSeparadores = (texto.match(/[.,]/g) || []).length;
+                    var mismoTipo = texto.indexOf('.') < 0 || texto.indexOf(',') < 0;
+                    // Varios separadores iguales y ninguno de otro tipo: son miles, no hay decimal.
+                    if (cantidadDeSeparadores > 1 && mismoTipo) {
+                        texto = entera.replace(/[.,]/g, '') + decimales;
+                    } else {
+                        texto = entera.replace(/[.,]/g, '') + '.' + decimales;
+                    }
+                }
+                var parsed = parseFloat(texto);
                 return isNaN(parsed) ? 0 : parsed;
             }
 
+            // Siempre 2 decimales con coma y sin separador de miles (useGrouping: false).
             function formatValue(value) {
-                return (toNumber(value)).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return (toNumber(value)).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
             }
 
             function autoResizeTextarea($textarea) {

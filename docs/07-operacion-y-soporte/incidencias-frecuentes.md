@@ -515,6 +515,11 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Causa**: `CajasController.GuardarEgresoCajaCore` / `CalcularComisionesElectronicas` validaban `validarCajaAbiertaVendedor` contra el usuario de la sesión (la cuenta de producción, que no tiene caja), no contra el dueño de la caja abierta (el operador).
 - **Fix**: `CajasController.ResolverVendedorEgresoPos`: si la sesión es de producción y es desde POS, se usa al dueño de la caja (`idCierre`) para validar caja, sucursal y permisos de edición. Para usuarios normales no cambia nada.
 
+## Elaborados/EditarFormula: al escribir 0.01 (con punto) el ingrediente quedaba en 1 (2026-11-07)
+- **Sintoma**: en `/Elaborados/EditarFormula/0`, escribir `0.01` en el valor del ingrediente lo cargaba como `1`; con `0,01` andaba bien.
+- **Causa**: `toNumber` (JS de `EditarFormula.cshtml`) borraba todos los puntos (los tomaba como separador de miles): `"0.01"` -> `"001"` -> 1. El campo deja tipear punto o coma (`SoloDecimalGuard`) pero nada convertía uno en el otro. El mismo patrón `replace(/\./g,'')` está copiado en otras pantallas (compras.js, pos-forma-pago-precios.js, lineas-agrupadas.js, forma-pago.js, factura-electronica.js, AddOrEditPago.cshtml, calculadora-billetes.js): sin revisar ni corregir.
+- **Fix**: en esa vista el punto y la coma son decimales, sin separador de miles (ver `docs/DECISIONS.md` 2026-11-07). `formatValue` usa `useGrouping: false` y los totales del servidor `F2` es-AR.
+
 ## Egreso de caja registrado dos veces desde Cajas abiertas → Actividades (2026-11-07)
 - **Sintoma**: en San Martín, tras guardar un egreso nuevo desde Actividades de una caja e imprimir el comprobante, el listado de Actividades mostraba el egreso dos veces (dos ids, mismo contenido).
 - **Causa**: el formulario de egreso (`egresos-caja.js`, `bindForm`) no tenía candado de envío: un doble clic, Enter o Alt+Enter con el POST en curso mandaba `GuardarEgresoCaja` dos veces con `id = 0` y el servidor insertaba una fila por cada uno. Imprimir no guarda (solo hace GET). Inferido del código: no se pudo comprobar con las horas de `creado` porque el dato ya estaba corregido.
