@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-11-03
+revisada: 2026-11-07
 ---
 
 ## Para qué sirve
@@ -14,7 +14,7 @@ Registrar la **salida de dinero de la caja** (gastos, retiros, etc.) y consultar
 ## Cómo se usa
 1. Tocá para crear un egreso nuevo (o **Modificar** en uno existente: se abre en solo lectura).
 2. Completá **Sucursal, Fecha, Tipo, Descripción y Monto**. **Detalle** es opcional (se activa con el interruptor). Al abrir un egreso nuevo el cursor arranca en **Sucursal** (si el formulario la muestra; en el POS y en el egreso de una caja puntual no hay selector y arranca en Fecha o Tipo). **Enter** pasa al campo siguiente en ese orden (Sucursal, Fecha, Tipo, Descripción, Monto, Detalle); en **Tipo** también, después de elegir la opción.
-3. Guardá con **Guardar egreso** (Alt+Enter). Al guardar se abre una ventana para el comprobante (ver abajo).
+3. Guardá con **Guardar egreso** (Alt+Enter). Al guardar se abre una ventana para el comprobante (ver abajo). Mientras se guarda, el botón queda deshabilitado: un doble clic o un Enter repetido no carga el egreso dos veces (lo mismo en **Calcular comisiones electrónicas**).
 4. **Cargar en Lote** (interruptor a la izquierda de **Guardar egreso**, solo en un egreso nuevo): con el interruptor prendido, al guardar **no** se abre el comprobante ni se cierra la ventana; aparece un aviso corto («Egreso guardado») y vuelve el formulario vacío para el próximo, con la **fecha y hora del último egreso cargado** y el cursor en **Sucursal** (si el formulario la muestra) o, si no, en **Fecha**. Para terminar, cerrá la ventana. Los egresos cargados en lote se pueden imprimir después desde el listado. El interruptor vuelve a quedar apagado cada vez que abrís **Nuevo Egreso**. **PENDIENTE:** el recorrido completo no se probó todavía en el navegador.
 5. El formulario de nuevo egreso y el de **Calcular comisiones electrónicas** usan letra y campos compactos (mismo tamaño que el resto de las pantallas).
 6. **Calcular comisiones electrónicas** tiene dos filas de campos: **Sucursal, Desde, Hasta y Fecha del egreso**; y debajo **Tipo de egreso, % para todas, Aplicar y Recalcular**. Si tu usuario tiene sucursal fija, el campo Sucursal muestra el nombre sin desplegable. **PENDIENTE:** el aspecto en pantalla no se verificó todavía en el navegador.

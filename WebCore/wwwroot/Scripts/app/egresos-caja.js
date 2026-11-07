@@ -738,6 +738,12 @@
                 var $form = $(this);
                 var $error = $form.find("#egresoCajaError");
                 var desdePos = String($form.data("desde-pos")).toLowerCase() === "true";
+                var $btnGuardar = $form.find("#btnGuardarEgresoCaja");
+
+                // Candado anti doble envio (2026-11-07, ver docs/DECISIONS.md): un doble clic / Enter / Alt+Enter mientras el
+                // POST sigue en curso creaba el egreso DOS veces (el servidor no distingue un reintento de un alta nueva).
+                // Tampoco se guarda de nuevo mientras el modal del comprobante (Imprimir) sigue abierto sobre este formulario.
+                if ($form.data("enviando") === true || $("#modalPostComprobante").hasClass("show")) return;
 
                 $error.addClass("d-none").text("");
                 var idCierreActual = idCierreActividadActual();
@@ -761,20 +767,31 @@
 
                 // Envia el egreso; si el servidor avisa que cae en una caja YA CERRADA (2026-10-06, ver docs/DECISIONS.md)
                 // se pide confirmacion y, si se acepta, se reenvia el mismo formulario con confirmarCajaCerrada=true.
+                // Libera el candado: solo cuando el guardado NO se concreto (error o aviso cancelado), para poder reintentar.
+                function liberarEnvio() {
+                    $form.data("enviando", false);
+                    $btnGuardar.prop("disabled", false);
+                }
+
                 function enviarEgreso(datos) {
+                $form.data("enviando", true);
+                $btnGuardar.prop("disabled", true);
+
                 $.ajax({
                     url: cfg.guardar,
                     type: "POST",
                     data: datos,
                     dataType: "json"
                 }).done(function (resp) {
+                    // Con el aviso de caja cerrada el candado sigue tomado (el aviso es modal); si se cancela se libera.
                     if (window.CajaCerradaConfirm && window.CajaCerradaConfirm.manejar(resp, function () {
                         enviarEgreso(datosEnvio + "&confirmarCajaCerrada=true");
-                    })) {
+                    }, { onCancelar: liberarEnvio })) {
                         return;
                     }
 
                     if (!resp || !resp.ok) {
+                        liberarEnvio();
                         if (resp && resp.mensaje && resp.mensaje.toLowerCase().indexOf("permiso") >= 0) {
                             mostrarPermisoPopup(resp.mensaje);
                         }
@@ -782,6 +799,11 @@
                         return;
                     }
 
+                    // Guardado OK: el candado queda tomado (Guardar deshabilitado) y el formulario se enlaza al egreso recien
+                    // creado: si algo lo reenviara, actualizaria este egreso en vez de crear otro (mismo resguardo que Movimientos).
+                    if (resp.id) {
+                        $form.find("input[type='hidden'][name='id']").val(resp.id);
+                    }
                     $form.data("permitir-salida", true);
 
                     // Pedido real (2026-09-15, ver docs/DECISIONS.md): SweetAlert de exito de 2
@@ -871,6 +893,7 @@
 
                     continuarTrasGuardar();
                 }).fail(function () {
+                    liberarEnvio();
                     mostrarError($error, "No se pudo guardar el egreso de caja.");
                 });
                 }
@@ -997,10 +1020,18 @@
                 var $form = $(this);
                 var $error = $form.find("#comisionesElectronicasError");
                 var desdePos = String($form.data("desde-pos")).toLowerCase() === "true";
+                var $btnGuardar = $form.find("button[type='submit']");
+
+                // Mismo candado anti doble envio que el egreso comun (2026-11-07): un segundo submit con el POST en curso
+                // crearia los egresos de comisiones por duplicado.
+                if ($form.data("enviando") === true) return;
 
                 $error.addClass("d-none").text("");
                 var idCierreActual = idCierreActividadActual();
                 recalcularComisiones($form);
+
+                $form.data("enviando", true);
+                $btnGuardar.prop("disabled", true);
 
                 $.ajax({
                     url: cfg.comisionesGuardar,
@@ -1009,6 +1040,9 @@
                     dataType: "json"
                 }).done(function (resp) {
                     if (!resp || !resp.ok) {
+                        // No se guardo: se libera el candado para poder corregir y reintentar.
+                        $form.data("enviando", false);
+                        $btnGuardar.prop("disabled", false);
                         if (resp && resp.mensaje && resp.mensaje.toLowerCase().indexOf("permiso") >= 0) {
                             mostrarPermisoPopup(resp.mensaje);
                         }
@@ -1054,6 +1088,8 @@
                     $("#modalEgresoCaja").modal("hide");
                     filtrar();
                 }).fail(function () {
+                    $form.data("enviando", false);
+                    $btnGuardar.prop("disabled", false);
                     mostrarError($error, "No se pudo guardar el egreso por comisiones.");
                 });
             })
