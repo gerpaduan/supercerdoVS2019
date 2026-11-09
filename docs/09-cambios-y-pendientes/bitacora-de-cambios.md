@@ -1,5 +1,19 @@
 # Bitacora de cambios
 
+## 2026-11-09 - Manual de uso: cinco videos tutoriales del POS (reemplazan a los clips por acción)
+
+- **Pedido:** un solo video para vender (caja, carga con balanza y lector, formas de pago, pago mixto y todas las opciones de Venta completada con la factura), y otros para cliente y cuenta corriente, F2 y Mis actividades, el recorrido de la pantalla y el egreso de caja; subtítulos más chicos que no tapen los controles.
+- **Cambio:** escenario `tutorial` de `scripts/AyudaMedia` (franja de subtítulos y teclas debajo de la app, balanza y lector simulados, filtros de listas con datos reales, control de fugas); se borraron los escenarios `postventa` y `pos` y sus clips. Videos `WebCore/wwwroot/ayuda/media/Ventas.POS/tutorial-*.mp4` y su sección en `pantallas/Ventas.POS.md`. Detalle en `docs/DECISIONS.md` (2026-11-09). La app no cambia.
+- **Verificado:** los 5 videos revisados por cuadros (sin datos reales a la vista: se encontraron y corrigieron 5 fugas antes de dejarlos); cargan en la ayuda del POS. Base local limpia al final y empresa 1 de nuevo en PROD.
+
+## 2026-11-09 - Manual de uso: videos con voz de la ventana «Venta completada» del POS
+
+- **Pedido:** un tutorial audiovisual por cada acción de cada pantalla, empezando por el post-venta; videos propios en la app (no YouTube), voz TTS + carteles, impresión simulada, datos ficticios, que se vea abrir la caja y los atajos de teclado.
+- **Cambio:** `scripts/AyudaMedia` pasa a escenarios (`Comun/` + `Escenarios/UsuariosIndex.cs`, sin cambios de comportamiento, y `Escenarios/PostVenta.cs`); 5 clips `.mp4` en `WebCore/wwwroot/ayuda/media/Ventas.POS/` (nueva, ticket, pdf, email, factura) y su sección en `docs/11-manual-de-uso/pantallas/Ventas.POS.md`. La app no cambia. Detalle en `docs/DECISIONS.md` (2026-11-09).
+- **Verificado:** generador compila; el escenario `usuarios` produce los mismos 4 archivos; los 5 clips revisados cuadro por cuadro (sin datos reales a la vista) y cargan en `/Ayuda/Ver?tipo=pantalla&clave=Ventas.POS` (readyState 4, 76-93 s); `check-ayuda.ps1` sin avisos de Ventas.POS. Base local limpia después de cada clip.
+- **Factura del video:** con OK del usuario, la empresa 1 de la base LOCAL se pasó a `HOMO` solo para grabar y volvió a `PROD`; la factura de prueba (esprueba) se borró.
+- **Reemplazado (mismo día):** estos clips se cambiaron por los cinco videos tutoriales de la entrada de arriba.
+
 ## 2026-11-03 - POS bloqueado: aviso claro cuando la sesión se cerró
 
 - **Pedido:** con el POS bloqueado, al querer desbloquear decía que la contraseña era incorrecta cuando en realidad se había caído la sesión; avisar con un mensaje claro.

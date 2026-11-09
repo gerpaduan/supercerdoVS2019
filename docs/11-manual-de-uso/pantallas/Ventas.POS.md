@@ -5,10 +5,10 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-03
+revisada: 2026-11-09
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos y los videos tutoriales.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -145,6 +145,56 @@ El botón de la barra de arriba (a la izquierda de tu nombre) cambia el tema del
 - El botón **Volver a iniciar sesión** recarga el POS: si la sesión no existe pide el login y vuelve al mismo POS; si hay otra sesión abierta carga el POS de ese usuario.
 - Una contraseña realmente mal sigue mostrando «Contraseña incorrecta.»; sin red o con el servidor caído sigue el aviso «No se pudo validar la contraseña. Revisá la conexión…».
 - PENDIENTE: no se verificó si la venta en curso se recupera después de volver a iniciar sesión.
+
+## Después de cobrar: la ventana «Venta completada»
+Al cobrar aparece **Venta completada** con cinco opciones. Cada una tiene su **tecla** (el número del botón) y funciona solo mientras el foco no esté en un campo de texto:
+
+| Tecla | Botón | Qué hace |
+|---|---|---|
+| **1** | Nueva venta | Cierra la ventana y deja el POS listo para la próxima venta, sin comprobante. |
+| **2** | Imprimir ticket | Imprime el ticket térmico (58 u 80 mm, con **cambiar** debajo del botón) y pasa solo a una venta nueva. |
+| **3** | Imprimir PDF | Abre el comprobante en PDF (hoja común) y pasa solo a una venta nueva. |
+| **4** | Enviar por email | Abre el envío: email destino, asunto y mensaje (los dos últimos ya vienen completos). Al enviar, pasa a una venta nueva; si cancelás, también. |
+| **5** | Factura electrónica | Abre la factura electrónica de esa venta; con **Registrar factura** (o **Alt+R**) se emite y vuelve a esta ventana con el aviso «Factura registrada correctamente» y su número, para imprimirla o mandarla por email. |
+
+En la factura electrónica, **Alt+R** registra la factura (Enter dentro de sus campos no la registra, a propósito, para no emitirla sin querer).
+
+## Videos tutoriales del punto de venta
+Atajos que muestran los videos (verificados en el código el 2026-11-09):
+- **Código y Enter**: el cursor pasa a la cantidad. Con una **balanza** conectada, el peso entra solo; con el **lector de código de barras**, un producto con código EAN se agrega solo con cantidad 1. **Enter** sobre la cantidad agrega el producto.
+- **Inicio**: el cursor vuelve al código. **F1**: ayuda con todos los atajos. **F2**: cuentas corrientes. **F4**: editar la última línea. **F6**: Mis actividades. **F7**: egreso de caja. **F8**: historial de precios del cliente. **F9**: buscar cliente. **F10**: buscar producto.
+- **Fin**: igual que **Finalizar y cobrar** (no funciona con otra ventana abierta encima).
+- En la forma de pago: **1** a **6** eligen la forma (efectivo, débito, crédito, Cta. Cte., QR, transferencia), **+** activa o desactiva el pago mixto, **/** abre el descuento o recargo al total, **C** tilda «El cliente paga ahora». Con pago mixto, **Fin** confirma.
+- En pagos y cobros de cuenta corriente: **Alt+Enter** guarda. En el egreso de caja: **Alt+B** abre el contador de billetes.
+
+Son de ejemplo: datos ficticios, la balanza, el lector y la impresora están simulados, el email no se envía y las facturas se emitieron en el modo prueba de AFIP (homologación). Debajo de la imagen va el subtítulo y la tecla que se aprieta.
+
+### Vender: caja, productos, formas de pago y «Venta completada»
+Apertura de caja (y la venta rápida sin abrir caja), carga manual, con balanza y con lector, formas de pago y pago mixto, y todas las opciones de **Venta completada**, incluida la factura electrónica con su ticket, PDF y email.
+
+![Video: vender en el punto de venta, de la apertura de caja a la factura](media:Ventas.POS/tutorial-venta.mp4)
+
+### Vender a un cliente con cuenta corriente
+Buscar el cliente (F9) y volver a consumidor final (CF), su saldo, el historial de precios y los presupuestos (F8), cobrar parte de la deuda con la venta («El cliente paga ahora») y el ticket con el saldo.
+
+![Video: venta a un cliente con cuenta corriente y cobro de su saldo](media:Ventas.POS/tutorial-cliente.mp4)
+
+### Cuentas corrientes desde el POS (F2) y Mis actividades (F6)
+Buscar el cliente, ver sus movimientos, registrar un cobro y un pago, y cómo quedan en la caja.
+
+![Video: cuentas corrientes, pagos y cobros desde el punto de venta](media:Ventas.POS/tutorial-ctacte.mp4)
+
+### Recorrido por la pantalla
+Empresa, sucursal, fecha y hora, Duplicar POS, Salir, colores (claro, gris, oscuro), buscador de productos (F10), comentario de la venta, cancelar la venta, ayuda (F1), Mis actividades y Mis ventas.
+
+![Video: recorrido por la pantalla del punto de venta](media:Ventas.POS/tutorial-recorrido.mp4)
+
+### Egreso de caja (F7)
+Tipo, descripción, contador de billetes y detalle.
+
+![Video: registrar un egreso de caja con el contador de billetes](media:Ventas.POS/tutorial-egreso.mp4)
+
+Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el corpus OpenSLR 61 (licencia CC BY-SA 4.0).
 
 ## Notas
 - Solo el ticket del post-venta ofrece el saldo. La **reimpresión desde el historial**, el **PDF** y el **email** no lo incluyen.
