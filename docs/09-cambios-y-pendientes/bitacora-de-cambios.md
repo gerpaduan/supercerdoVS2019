@@ -37,6 +37,11 @@
 - **Datos reales:** la lista de F1 muestra las ventas sin guardar de toda la sucursal (había 5 reales): en la grabación `PosComun` oculta las filas que no son del operador ficticio y los contadores amarillos de Ayuda (cuentan las reales). Simulación: el corte es una recarga sin avisar al servidor; la «otra computadora» borra el carrito del navegador al inicio de la página nueva (el `beforeunload` de `pos-multi-instance.js` lo vuelve a guardar al salir).
 - **Verificado:** video revisado por cuadros (solo la venta ficticia a la vista, subtítulos dentro de la franja, control de fugas sin avisos). Base local con los mismos conteos que antes de grabar.
 
+## 2026-11-10 - Utilidades: acceso rápido al contador de billetes
+
+- **Pedido:** poner el modal contador de billetes en Utilidades para el acceso rápido de cualquier usuario.
+- **Cambio:** `WebCore/Views/Home/Utilidades.cshtml` suma una tarjeta con el botón «Abrir contador» (también Alt+B) que abre el modal global de la calculadora en modo suelto. Doc nueva `pantallas/Home.Utilidades.md`. Además, `calculadora-billetes.js` (`abrirCalculadoraPorAtajo`): Alt+B abre el contador suelto en cualquier pantalla con `_Layout` cuando no hay modales abiertos ni botón propio. Sin cambios de controlador. Pendiente probarlo en navegador (pantallas con muchos atajos, Firefox). Ver `docs/DECISIONS.md` (2026-11-10).
+
 ## 2026-11-09 - Manual de uso: video de Mis ventas (reimprimir, modificar venta, cambiar forma de pago) y regla de subtitulos
 
 - **Pedido:** seguir con el tutorial recomendado tras el de las líneas del carrito: Mis ventas.

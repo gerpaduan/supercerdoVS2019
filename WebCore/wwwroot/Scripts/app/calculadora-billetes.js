@@ -814,7 +814,9 @@
     }
 
     // Alt+B: abre la calculadora desde la pantalla actual. Prioridad: boton de calculadora visible del modal de
-    // arriba (o de la pagina); si no hay ninguno y el POS no tiene modales abiertos, el mismo F3 del POS.
+    // arriba (o de la pagina); si no hay ninguno y el POS no tiene modales abiertos, el mismo F3 del POS; si tampoco es
+    // el POS, abre la calculadora suelta (2026-11-10, ver docs/DECISIONS.md) -- siempre SIN modales abiertos: la
+    // calculadora encima de un modal ajeno rompe el foco (Bootstrap 5 no apila bien los focus traps).
     function abrirCalculadoraPorAtajo() {
         var $tope = modalVisibleDeArriba();
         var $ambito = $tope.length ? $tope : $(document);
@@ -827,6 +829,13 @@
 
         if (!$tope.length && window.posHotkeysHooks && typeof window.posHotkeysHooks.F3 === 'function') {
             window.posHotkeysHooks.F3();
+            return true;
+        }
+
+        // Modo suelto (igual que F3 en el POS): sin campo destino; Aceptar ofrece ticket/PDF/WhatsApp.
+        // Se exige que el markup del modal exista en esta pagina: si falta, open() no mostraria nada.
+        if (!$tope.length && $('#modalCalculadoraBilletes').length) {
+            window.CalculadoraBilletes.open({});
             return true;
         }
 

@@ -12,6 +12,32 @@
         </div>
     </div>
 
+    @* Acceso rapido al contador de billetes (2026-11-10, ver docs/DECISIONS.md): Utilidades es visible para todo
+       usuario, asi que cualquiera cuenta efectivo sin entrar al POS ni a Cajas. El modal (#modalCalculadoraBilletes)
+       y sus scripts ya vienen del _Layout; este boton lo dispara el delegado de calculadora-billetes-targets.js
+       (clase js-calculadora-billetes-launch) y tambien responde a Alt+B. Sin data-cb-input a proposito: es el modo
+       "suelto" (igual que F3 en el POS), no vuelca el total en ningun campo y Aceptar ofrece ticket/PDF/WhatsApp. *@
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm border-left-primary">
+                <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
+                    <div class="mr-3 mb-2 mb-md-0">
+                        <div class="text-xs font-weight-bold text-uppercase text-muted mb-1">Herramienta</div>
+                        <h5 class="mb-1">Contador de billetes</h5>
+                        <p class="text-muted mb-0">Contá el efectivo por denominación y obtené el total. Al aceptar podés imprimir el detalle. Atajo: <kbd>Alt</kbd> + <kbd>B</kbd>.</p>
+                    </div>
+                    <button type="button"
+                            id="btnUtilidadesContadorBilletes"
+                            class="btn btn-primary js-calculadora-billetes-launch"
+                            data-cb-context="utilidades"
+                            title="Contador de billetes (Alt+B)">
+                        <i class="fas fa-money-bill-wave mr-1"></i> Abrir contador
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         @foreach (var item in Model.Agentes)
         {
