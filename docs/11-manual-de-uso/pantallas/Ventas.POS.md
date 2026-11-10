@@ -8,7 +8,7 @@ permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pant
 revisada: 2026-11-10
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -194,6 +194,9 @@ Al cobrar aparece **Venta completada** con cinco opciones. Cada una tiene su **t
 | **5** | Factura electrónica | Abre la factura electrónica de esa venta; con **Registrar factura** (o **Alt+R**) se emite y vuelve a esta ventana con el aviso «Factura registrada correctamente» y su número, para imprimirla o mandarla por email. |
 
 En la factura electrónica, **Alt+R** registra la factura (Enter dentro de sus campos no la registra, a propósito, para no emitirla sin querer).
+
+## Peso inestable de la balanza
+Con un producto pesable y la balanza conectada, si se aprieta **Enter** (o **Agregar**) mientras el peso todavía se mueve, el producto **no se agrega** y aparece debajo de **Cantidad**, en amarillo, «Peso inestable, espere y presione Enter»; el recuadro de Cantidad se marca en amarillo y **el cursor queda en Cantidad**. No se abre ninguna ventana. Cuando la balanza se queda quieta el aviso se borra solo: se vuelve a apretar **Enter** y el producto se agrega. Desde el 2026-11-10 (antes salía una ventana que había que cerrar). Igual en el POS de los puntos de expendio.
 
 ## Videos tutoriales del punto de venta
 Atajos que muestran los videos (verificados en el código el 2026-11-09):

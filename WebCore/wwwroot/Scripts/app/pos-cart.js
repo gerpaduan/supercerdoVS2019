@@ -309,6 +309,12 @@
             if (typeof options.beforeAddProduct === 'function') {
                 const validation = options.beforeAddProduct(productoSeleccionado, cantidad);
                 if (validation && validation.ok === false) {
+                    // inline: el aviso ya quedo junto a Cantidad (ej. peso inestable); sin modal, el cursor
+                    // queda en Cantidad para que el cajero reintente con Enter cuando estabilice.
+                    if (validation.inline === true) {
+                        $("#inputCantidad").trigger("focus");
+                        return;
+                    }
                     showMessage("warning", "No se puede agregar", validation.message || "La línea no cumple las validaciones requeridas.");
                     return;
                 }

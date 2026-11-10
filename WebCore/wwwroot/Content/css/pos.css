@@ -3114,3 +3114,35 @@
     html.pos-gris .fila-item:hover {
         background: #e3e8ee;
     }
+
+    /* =========================================================
+      Aviso de peso inestable debajo de Cantidad (2026-11-10)
+      Reemplaza al modal: lo prende/apaga pos-balanza.js (#avisoCantidadPOS) solo al apretar Enter
+      con la balanza inestable; se apaga solo cuando estabiliza. Vale para Ventas/POS y PuntosExpendio/POS.
+      !important: las reglas de .pos-product-metric-cantidad / #inputCantidad (claro, oscuro, gris)
+      tienen distinta especificidad por pantalla y el aviso tiene que ganarles a todas.
+      ========================================================= */
+    .pos-aviso-cantidad {
+        margin-top: .3rem;
+        text-align: right;
+        font-size: .8rem;
+        font-weight: 600;
+        color: #9a5b00;
+    }
+
+    .pos-aviso-cantidad:empty {
+        display: none;
+    }
+
+    .pos-product-metric-cantidad.pos-cantidad-inestable {
+        border-color: rgba(217, 119, 6, .60) !important;
+    }
+
+    .pos-cantidad-inestable #inputCantidad {
+        border-color: #d97706 !important;
+        box-shadow: 0 0 0 .2rem rgba(217, 119, 6, .20) !important;
+    }
+
+    html.dark-mode .pos-aviso-cantidad {
+        color: #fbbf24;
+    }

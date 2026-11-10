@@ -2,6 +2,8 @@
 // docs/10-migracion-aspnet-core/PLAN-POS-UI.md). Sin cambios de logica -- depende de
 // Scripts/carnisys.balanza.js (tambien portado sin cambios), degrada solo a modo manual si el
 // agente local (http://127.0.0.1:5100) no responde.
+// 2026-11-10: con peso inestable ya no hay modal: el aviso va debajo de Cantidad (#avisoCantidadPOS,
+// presente en Ventas/POS y PuntosExpendio/POS) y el cursor queda en Cantidad para reintentar con Enter.
 (function (window, $) {
     'use strict';
 
@@ -20,7 +22,7 @@
         var mensajes = {
             sinAgente: 'No se detectó el agente local de balanza. Puede continuar con carga manual.',
             desconectada: 'Balanza desconectada',
-            inestable: 'El peso está inestable. Espere a que la balanza estabilice antes de registrar el producto.',
+            inestable: 'Peso inestable, espere y presione Enter',
             pesoCero: 'No se puede registrar un peso menor o igual a cero.'
         };
 
@@ -54,6 +56,23 @@
                 .removeClass('bg-success bg-warning bg-danger bg-secondary')
                 .addClass(css || 'bg-secondary')
                 .css('width', (percent || 0) + '%');
+        }
+
+        // Muestra (msg) o borra ('') el aviso de peso inestable debajo de Cantidad. Devuelve false si la
+        // vista no tiene el contenedor, para que el llamador caiga al modal de siempre.
+        function setAvisoCantidad(msg) {
+            var $aviso = $('#avisoCantidadPOS');
+            if (!$aviso.length) {
+                return false;
+            }
+
+            var texto = String(msg || '');
+            $aviso.empty();
+            if (texto) {
+                $aviso.append($('<i class="fas fa-exclamation-triangle" aria-hidden="true"></i>'), document.createTextNode(' ' + texto));
+            }
+            $aviso.closest('.pos-product-metric-cantidad').toggleClass('pos-cantidad-inestable', !!texto);
+            return true;
         }
 
         function setInputManual(enabled) {
@@ -183,6 +202,7 @@
 
         function onProductoChanged(producto) {
             state.productoActual = producto || null;
+            setAvisoCantidad('');
             state.ultimaLectura = window.CarnisysBalanza ? window.CarnisysBalanza.ultimo() : null;
 
             if (!producto) {
@@ -274,6 +294,7 @@
 
             if (data.conectada !== true) {
                 setEstado('Balanza desconectada', 35, 'bg-warning');
+                setAvisoCantidad('');
                 return;
             }
 
@@ -281,6 +302,8 @@
                 setEstado('Peso inestable', 70, 'bg-warning');
             } else {
                 setEstado('Conectada', 100, 'bg-success');
+                // El aviso solo se prende al apretar Enter (validarAntesDeAgregar); se apaga solo al estabilizar.
+                setAvisoCantidad('');
             }
 
             aplicarLectura(data);
@@ -310,9 +333,14 @@
             }
 
             if (state.ultimaLectura.inestable === true) {
-                return { ok: false, message: mensajes.inestable };
+                // inline: pos-cart no abre modal y deja el foco en Cantidad para reintentar con Enter.
+                // Sin #avisoCantidadPOS en la vista, se mantiene el modal de antes.
+                return setAvisoCantidad(mensajes.inestable)
+                    ? { ok: false, inline: true, message: mensajes.inestable }
+                    : { ok: false, message: mensajes.inestable };
             }
 
+            setAvisoCantidad('');
             return { ok: true };
         }
 
