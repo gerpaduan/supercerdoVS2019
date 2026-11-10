@@ -1,3 +1,10 @@
+## 2026-11-09 - Videos del manual (AyudaMedia): cada frase narrada entra en 2 renglones de subtítulo
+
+- **Regla:** con la franja de subtítulos debajo de la app (80 px, letra de 24, renglones de 78 caracteres), cada frase de un escenario entra en **2 renglones**; si no, se parte en dos frases. Ej.: «Cada forma de pago tiene su número: uno efectivo, dos débito y tres crédito.» + «Cuatro cuenta corriente, cinco QR y seis transferencia. También podés tocar el botón.»
+- **Por qué:** pasó 3 veces (`SinCaja` y `Numeros` del video `venta`, `Reglas` de `misventas`): el tercer renglón se sale de la franja y queda cortado, y solo se nota revisando el video. Se arregla el loop, no la frase (§5.1 del CLAUDE.md): `Grabador.PrepararVocesAsync` corta **antes de grabar** con la lista de frases largas.
+- **Alternativas descartadas:** franja más alta (achica la vista de la app o agranda el video) y letra más chica (el usuario ya la pidió chica el 2026-11-09; más chica se lee mal).
+- **Pendiente:** `tutorial-venta.mp4` todavía tiene las dos frases largas: regenerarlo (la factura del video exige la empresa 1 local en homologación, con OK del usuario).
+
 ## 2026-11-04 - Stock/Editar, Movimientos/Editar y Elaborados/Carga: la tabla llena el alto de la ventana (≥ 20 filas), cabecera sin etiquetas y modo ventana independiente
 
 - **Pedido:** ver al menos 20 líneas antes de scrollear en las tres pantallas de carga (con 853 px de alto eran 4, 12 y 10) y poder tenerlas abiertas a la vez como ventanas propias de la barra de tareas (Stock, Movimientos y Elaborados) para pasar de una a otra sin perder lo cargado.

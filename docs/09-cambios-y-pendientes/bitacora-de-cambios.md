@@ -1,5 +1,26 @@
 # Bitacora de cambios
 
+## 2026-11-10 - Manual de uso: video para recuperar una venta sin guardar
+
+- **Pedido:** video de «ventas sin guardar», cómo se recupera.
+- **Cambio:** tema `borradores` del escenario `tutorial` (`Escenarios/Tutorial.cs`): resguardo automático, «corte de luz» y vuelta en la misma PC (el navegador la restaura), «otra computadora» (campana y F1 → Ver ventas sin guardar, Ver ítems, Descartar, «Figura en uso» → Cargar igual) y cobro. Video `WebCore/wwwroot/ayuda/media/Ventas.POS/tutorial-borradores.mp4` (1:22) y sección «Ventas sin guardar» en `pantallas/Ventas.POS.md`. La app no cambia.
+- **Datos reales:** la lista de F1 muestra las ventas sin guardar de toda la sucursal (había 5 reales): en la grabación `PosComun` oculta las filas que no son del operador ficticio y los contadores amarillos de Ayuda (cuentan las reales). Simulación: el corte es una recarga sin avisar al servidor; la «otra computadora» borra el carrito del navegador al inicio de la página nueva (el `beforeunload` de `pos-multi-instance.js` lo vuelve a guardar al salir).
+- **Verificado:** video revisado por cuadros (solo la venta ficticia a la vista, subtítulos dentro de la franja, control de fugas sin avisos). Base local con los mismos conteos que antes de grabar.
+
+## 2026-11-09 - Manual de uso: video de Mis ventas (reimprimir, modificar venta, cambiar forma de pago) y regla de subtitulos
+
+- **Pedido:** seguir con el tutorial recomendado tras el de las líneas del carrito: Mis ventas.
+- **Cambio:** tema `misventas` del escenario `tutorial` (`Escenarios/Tutorial.cs`); video `WebCore/wwwroot/ayuda/media/Ventas.POS/tutorial-misventas.mp4` (2:02) y su sección en `pantallas/Ventas.POS.md`, con lo que muestran el detalle y el modo edición. `PosComun.MoverYClicAsync` trae el control a la vista con un desplazamiento suave si está fuera (el botón «Abrir detalle» quedaba debajo del borde). Si un paso falla, el escenario deja una captura `tutorial-<tema>-error.png`.
+- **Regla nueva (subtítulos de 2 renglones):** `Grabador.PrepararVocesAsync` corta antes de grabar si una frase pasa de 2 renglones de 78 caracteres. Se encontraron 3 frases así (una nueva y dos del video `venta`, `SinCaja` y `Numeros`, cuyo tercer renglón se sale de la franja); las tres quedaron partidas en dos en el código. **Pendiente:** regenerar `tutorial-venta.mp4` (necesita la empresa 1 local en homologación para la factura, con OK del usuario). Ver `docs/DECISIONS.md` (2026-11-09).
+- **Verificado:** video revisado por cuadros (sin datos reales; control de fugas sin avisos; subtítulos dentro de la franja); reimpresión con la impresora simulada; edición de $ 24.525 a $ 33.425 y cambio de efectivo a Cta. Cte. reflejados en la lista. Base local con los mismos conteos que antes de grabar.
+
+## 2026-11-09 - Manual de uso: video de cantidad, eliminar y bonificaciones del carrito del POS
+
+- **Pedido:** video de las bonificaciones por línea de venta, cambiar la cantidad, eliminar la línea y bonificar todas las líneas del carrito.
+- **Cambio:** tema `lineas` del escenario `tutorial` de `scripts/AyudaMedia` (`Escenarios/Tutorial.cs`); video `WebCore/wwwroot/ayuda/media/Ventas.POS/tutorial-lineas.mp4` (2:23) y sección «Corregir o bonificar un renglón» + el video en `pantallas/Ventas.POS.md`. La app no cambia.
+- **Verificado:** el video revisado por cuadros (sin datos reales; el control de fugas no saltó); totales del video coherentes (12 % por precio, 10 % por porcentaje, 15 % a todos, línea anulada fuera del total, descuento de 10 % a toda la venta = $ 3.655,00). Base local con los mismos conteos que antes de grabar (salvo dos notificaciones de otra sesión).
+- **Defecto encontrado, sin corregir:** `forma-pago.js` (`shown.bs.modal` de `#modalFormaPago`) pone el descuento a toda la venta en cero al reabrir la ventana, pero no oculta `#lblTotalVentaConDescuentoTag`: si se aplicó un descuento y se cerró sin cobrar, al volver a abrirla dice «(con descuento)» con el total sin descuento (el importe cobrado es correcto). Se ve unos segundos en el video. Documentado en `pantallas/Ventas.POS.md`.
+
 ## 2026-11-09 - Manual de uso: cinco videos tutoriales del POS (reemplazan a los clips por acción)
 
 - **Pedido:** un solo video para vender (caja, carga con balanza y lector, formas de pago, pago mixto y todas las opciones de Venta completada con la factura), y otros para cliente y cuenta corriente, F2 y Mis actividades, el recorrido de la pantalla y el egreso de caja; subtítulos más chicos que no tapen los controles.

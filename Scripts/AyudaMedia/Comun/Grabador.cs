@@ -103,9 +103,24 @@ public sealed class Grabador : IAsyncDisposable
     // silencios mientras Piper trabaja. Las frases repetidas se generan una sola vez.
     public async Task PrepararVocesAsync(IEnumerable<string> textos)
     {
+        // Regla (2026-11-09, docs/DECISIONS.md): con franja, cada frase entra en 2 renglones de subtitulo; un tercero
+        // se sale de la franja de 80 px y queda cortado (paso 3 veces). Se corta ANTES de grabar, no al revisar.
+        if (ConFranja)
+        {
+            var largas = textos.Distinct()
+                .Where(t => PartirEnRenglones(t, RenglonSubtitulo).Split('\n').Length > MaxRenglonesSubtitulo)
+                .ToList();
+            if (largas.Count > 0)
+                throw new InvalidOperationException(
+                    $"Frases de mas de {MaxRenglonesSubtitulo} renglones (no entran en la franja; partirlas en dos):\n- " + string.Join("\n- ", largas));
+        }
         foreach (string texto in textos.Distinct())
             _voces[texto] = await SintetizarAsync(texto);
     }
+
+    // Ancho (caracteres) del renglon del subtitulo y renglones que entran en la franja de 80 px con letra de 24.
+    private const int RenglonSubtitulo = 78;
+    private const int MaxRenglonesSubtitulo = 2;
 
     private async Task<(string Wav, TimeSpan Duracion)> SintetizarAsync(string texto)
     {
@@ -221,7 +236,7 @@ public sealed class Grabador : IAsyncDisposable
             double fin = ini + n.DuracionSalida;
             if (i + 1 < _narraciones.Count) fin = Math.Min(fin, _narraciones[i + 1].DesdeSegundos / _velocidadVideo);
             string archivo = $"s{i:D3}.txt";
-            File.WriteAllText(Path.Combine(_carpetaTmp, archivo), PartirEnRenglones(n.Texto, 78), new UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(_carpetaTmp, archivo), PartirEnRenglones(n.Texto, RenglonSubtitulo), new UTF8Encoding(false));
             f.Append($",drawtext={Fuente}:textfile={archivo}:fontsize=24:fontcolor=white:line_spacing=6")
              .Append($":x=({_ancho - AnchoZonaTecla}-text_w)/2:y={_alto}+({_altoBanda}-text_h)/2")
              .Append($":enable='between(t,{Seg(ini)},{Seg(fin)})'");

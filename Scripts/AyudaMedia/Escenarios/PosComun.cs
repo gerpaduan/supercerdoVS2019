@@ -13,6 +13,8 @@ internal static class PosComun
     public const string ClienteEjemplo = "Laura Fernández";
     public const int IdClienteEjemplo = 9000001;
     public const string EmailEjemplo = "laura.fernandez@example.com";
+    // Nombre del usuario de prueba (id 9101, ficticio): unico operador que se deja ver en "Ventas sin guardar".
+    public const string OperadorEjemplo = "Martín Gómez";
     // Velocidades (pedido del usuario, 2026-11-09): voz 1,1x (la genera asi Piper) e imagenes 1,4x.
     public const double VelocidadVoz = 1.1;
     public const double VelocidadVideo = 1.4;
@@ -97,10 +99,21 @@ internal static class PosComun
         // observer marca cada fila apenas entra al DOM, antes de que se pinte (fuga encontrada el 2026-11-09).
         await contexto.AddInitScriptAsync(@"(function () {
             var permitidos = ['" + ClienteEjemplo + @"', 'CONSUMIDOR FINAL'];
+            // Ventas sin guardar (F1): lista las de TODA la sucursal, con usuarios y clientes reales (2026-11-10 habia 5
+            // activas en la sucursal del usuario de prueba). Solo se dejan las del operador ficticio; la fila de items
+            // (la siguiente, oculta hasta 'Ver items') sigue a la suya.
+            var filasBorradores = '#contenedorVentasSinCerrarPOS > .table-responsive > table > tbody > tr';
             function revisar() {
                 document.querySelectorAll('#tablaPersonas tr:not([data-fic-revisada])').forEach(function (tr) {
                     var t = tr.textContent || '';
                     tr.setAttribute('data-fic-revisada', permitidos.some(function (p) { return t.indexOf(p) >= 0; }) ? 'si' : 'no');
+                });
+                document.querySelectorAll(filasBorradores + ':not([data-fic-revisada])').forEach(function (tr) {
+                    var previa = tr.previousElementSibling;
+                    var esDetalle = tr.classList.contains('bg-light') && previa && previa.hasAttribute('data-fic-revisada');
+                    tr.setAttribute('data-fic-revisada', esDetalle
+                        ? previa.getAttribute('data-fic-revisada')
+                        : ((tr.textContent || '').indexOf('" + OperadorEjemplo + @"') >= 0 ? 'si' : 'no'));
                 });
             }
             function ocultarPorDefecto() {
@@ -111,7 +124,12 @@ internal static class PosComun
                 st.textContent = '#tablaPersonas tr:not([data-fic-revisada=""si""]){display:none !important}'
                     + '#tablaCtasCtes tbody tr:not([data-id-persona=""" + IdClienteEjemplo + @"""]){display:none !important}'
                     // Buscador de productos (F10): solo los productos de ejemplo (el catalogo real tiene nombres y precios).
-                    + '#modalBuscarProducto tbody tr:not([data-codigo=""9901""]):not([data-codigo=""9902""]):not([data-codigo=""7790000000010""]){display:none !important}';
+                    + '#modalBuscarProducto tbody tr:not([data-codigo=""9901""]):not([data-codigo=""9902""]):not([data-codigo=""7790000000010""]){display:none !important}'
+                    // Ventas sin guardar (F1): solo las del operador ficticio (ver revisar()).
+                    + '#contenedorVentasSinCerrarPOS > .table-responsive > table > tbody > tr:not([data-fic-revisada=""si""]){display:none !important}'
+                    // Contador amarillo de Ayuda (F1) y de 'Ver ventas sin guardar': cuenta las ventas interrumpidas
+                    // reales de la sucursal, que no se ven en el video (no coincide con lo que se muestra).
+                    + '#badgeVentasSinCerrar, #badgeVentasSinCerrarAyuda{display:none !important}';
                 document.documentElement.appendChild(st);
             }
             ocultarPorDefecto();
@@ -234,6 +252,15 @@ internal static class PosComun
     // Lleva el puntero visible hasta el centro del control (movimiento suave) y hace clic.
     public static async Task MoverYClicAsync(IPage page, string selector)
     {
+        // Si el control quedo fuera de la vista (p. ej. al pie de una ventana con scroll), se lo trae al centro con un
+        // desplazamiento suave, como lo haria una persona; si ya se ve, no se mueve nada.
+        bool desplazado = await page.Locator(selector).First.EvaluateAsync<bool>(@"(e) => {
+            var r = e.getBoundingClientRect();
+            if (r.top >= 0 && r.bottom <= window.innerHeight) return false;
+            e.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return true;
+        }");
+        if (desplazado) await page.WaitForTimeoutAsync(900);
         var caja = await page.Locator(selector).First.BoundingBoxAsync()
             ?? throw new InvalidOperationException($"No se pudo ubicar {selector}.");
         float x = caja.X + caja.Width / 2, y = caja.Y + caja.Height / 2;

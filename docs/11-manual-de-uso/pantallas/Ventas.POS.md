@@ -5,10 +5,10 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-09
+revisada: 2026-11-10
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos y los videos tutoriales.** El resto del POS (carrito, formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -25,6 +25,26 @@ El saldo se consulta al elegir el cliente. Si después cobrás su deuda desde el
 ## Renglones del carrito
 Cada producto agregado muestra, debajo de su nombre, **cantidad x precio** y, a la derecha, el **subtotal**, en formato argentino: punto de miles y coma decimal. Ej.: `2,000 x $ 9.900,00` y `$ 19.800,00` (desde 2026-10-27; antes se veía `2.000 x $ 9900.00`). La cantidad lleva siempre 3 decimales.
 - Es solo cómo se muestra: los campos de la ventana de la línea (precio, subtotal) no cambiaron.
+
+### Ventas sin guardar (corte de luz, navegador cerrado)
+Verificado en el código el 2026-11-10 (`pos-borrador.js`, `VentasController.Borradores.cs`):
+- Mientras hay productos en el carrito, el POS guarda la venta en el navegador y en el sistema; abajo dice **«Venta resguardada»** con la hora.
+- **Misma computadora:** al volver a entrar al POS, la venta aparece sola en el carrito.
+- **Otra computadora, o el navegador no la tiene:** la **campana** de arriba muestra tus ventas sin guardar (con **Cargar al carrito**), y **F1 → Ver ventas sin guardar** lista las de **toda la sucursal**: usuario, inicio, última señal, estado, cliente y total, con **Ver ítems**, **Cargar al carrito** y **Descartar**.
+- **Estado:** «En uso» si tuvo señal en los últimos **5 minutos**; si es tuya se puede cargar igual confirmando «Figura en uso» → **Cargar igual** (típico de un corte de luz). «Interrumpida» se carga directo; si la pestaña se cerró normalmente, queda interrumpida enseguida.
+- Al cargarla avisa «Revisá los precios antes de finalizar: son los de cuando se armó la venta». Para cargar otra, el carrito tiene que estar vacío.
+- **Descartar** pide un motivo, queda registrado y se avisa al administrador. Las ventas de **otro usuario** (cargar o descartar) piden la autorización de un supervisor.
+- Si se abre la caja con ventas sin guardar propias, la apertura avisa que se recuperan desde F1.
+
+### Corregir o bonificar un renglón (ventana «Línea de venta»)
+Se abre tocando el renglón, o con **F4** para el último. Al pie muestra los atajos (verificados en el código el 2026-11-09):
+- **C**: cantidad. Se escribe (o con los botones **−** y **+**) y **Enter** la aplica.
+- **E**: eliminar. Pregunta «¿Eliminar el producto?»: **Enter** = Sí, **N** = No. La línea queda **tachada** (anulada), no suma al total y ya no se puede modificar.
+- **B** o **/**: bonificar. Se escribe el **precio bonificado** y el % se calcula solo. Una segunda **/** tilda **Bonificar por porcentaje** (se escribe el %; negativo = **recargo**) y una tercera **/** tilda **Aplicar a todos los productos**: el mismo % para todo el carrito, que **reemplaza** las bonificaciones que ya tenían. **Enter** aplica. El renglón muestra `Bonif:12%` (o `Recargo:`).
+- Si la línea ya tiene bonificación, la ventana se abre directo en el porcentaje (una sola **/** pasa a «Aplicar a todos»).
+- **Descuento a toda la venta al cobrar**: en la forma de pago, **/** abre el «% descuento a todos los productos», **Enter** lo confirma y se ve el descuento aplicado y el total a cobrar. **Solo** si ningún producto tiene bonificación propia; si no, avisa «Bonificación conjunta no disponible». Cerrar la ventana de la forma de pago lo descarta.
+- Sin el permiso *POS - Bonificacion*, bonificar pide la autorización de otro usuario (ver «Permisos del POS» más abajo).
+- **Defecto conocido (2026-11-09):** si se aplica el descuento a toda la venta y se cierra la forma de pago sin cobrar, al volver a abrirla el total queda bien (sin el descuento), pero debajo sigue diciendo «(con descuento)».
 
 ## Saldo bajo el total del carrito
 Debajo del **Total** del carrito, en letra más chica, aparece el saldo del cliente. **Rojo** si el cliente **debe**, **azul** si tiene **saldo a favor**. Qué dice depende de la forma de pago, porque la venta solo toca la cuenta del cliente si es a **cuenta corriente**:
@@ -101,6 +121,9 @@ Muestra los movimientos de caja del vendedor (egresos, pagos electrónicos y cue
 **F6** abre **Mis actividades**; ahí el botón **Mis ventas** lista las ventas del vendedor **desde que abrió su caja** (la caja abierta en este momento), agrupadas por día, con buscador por cliente y filtro por forma de pago. Tocar una venta la **despliega** en el lugar (artículos, total y, si corresponde, **Modificar venta** y **Cambiar forma de pago**) sin salir de la lista; **Abrir detalle** abre el [detalle completo](ayuda:pantalla/Ventas.DetalleVenta) en el mismo modal, donde también está **Factura / Imprimir**. Pueden quedar varias ventas desplegadas a la vez.
 - Con la cuenta compartida de **producción** son las ventas del **empleado que se autorizó** en esa pestaña («Autorizate para operar» o «Cambiar operario»), no las de la cuenta compartida. Si cambiás de operario, Mis ventas muestra las del nuevo. Al confirmar la clave en «Cambiar operario» aparece 1 segundo un cartel «Cambiando de operario — Pasando a <nombre>…» y la pantalla se recarga (también en el POS de Puntos de Expendio; no aparece en «Autorizate para operar»).
 - En el panel desplegado y en el detalle de una venta de **tu caja abierta** (en esta sucursal) aparecen **Modificar venta** y **Cambiar Forma de Pago**, también con la cuenta de producción (los usa el empleado autorizado; no hace falta volver a autorizarse). **Modificar venta** además requiere el permiso de modificar ventas. Con la cuenta de producción, al guardar o con **Salir edición** volvés al POS con el mismo empleado autorizado.
+- **Abrir detalle** (en el panel desplegado) muestra la venta completa y el botón **Factura / Imprimir**: ticket (58 u 80 mm), PDF, email o factura electrónica de esa venta. Desde el panel no se imprime.
+- **Modificar venta** abre el POS en modo edición: arriba del total dice **«Modificando venta #…»**, los productos que ya estaban mantienen su precio original, el botón verde dice **Guardar cambios** y **Cancelar Venta** pasa a **Salir edición** (vuelve sin cambiar nada). Al cobrar, la forma de pago muestra **«Forma de pago actual»** y **Enter** la mantiene. Al guardar aparece **«Venta actualizada»** y se vuelve al POS (verificado 2026-11-09).
+- **Cambiar forma de pago** abre el POS con **«Cambiando forma de pago #…»** y los productos bloqueados: **Fin** y se elige la nueva forma (por ejemplo **4**, cuenta corriente, si la venta tiene cliente).
 ## Permisos del POS (cuenta de producción y usuario propio)
 Los permisos **POS - …** (Usuarios > Permisos) deciden quién entra al POS y qué puede hacer. Rige el operador autorizado en la pestaña (con la cuenta de producción) o el usuario logueado; el administrador no tiene límites.
 - **Entrar:** alcanza con tener **activo al menos uno** de los cuatro: *POS - Ctas.Ctes Persona*, *POS - Bonificacion*, *POS - Ultimas Ventas* o *POS - Ultimas 5 Ventas Cliente*. Activo = **Días ver** o **Días editar** en 0 o más (−1 es sin permiso). Con ninguno no se entra: con la cuenta de producción el modal dice **«(Nombre) no tiene permisos de POS. Elegí a un usuario que los tenga.»** (la contraseña es correcta) y con un usuario propio aparece Acceso denegado. Con la contraseña mal el mensaje es **«Usuario o contraseña incorrectos.»**. Los dos cuentan como intento fallido para el bloqueo temporal.
@@ -193,6 +216,21 @@ Empresa, sucursal, fecha y hora, Duplicar POS, Salir, colores (claro, gris, oscu
 Tipo, descripción, contador de billetes y detalle.
 
 ![Video: registrar un egreso de caja con el contador de billetes](media:Ventas.POS/tutorial-egreso.mp4)
+
+### Corregir y bonificar los productos del carrito
+Cambiar la cantidad (C), eliminar una línea (F4 y E), el descuento a toda la venta al cobrar (/), bonificar por precio (B) y por porcentaje (/ /), y aplicar el mismo porcentaje a todos los productos.
+
+![Video: cantidad, eliminar y bonificaciones de los renglones del carrito](media:Ventas.POS/tutorial-lineas.mp4)
+
+### Mis ventas: revisar, reimprimir y corregir una venta
+Mis ventas (F6), el panel desplegado, el detalle con **Factura / Imprimir** (reimprimir el ticket), **Modificar venta** (cambiar una cantidad y guardar manteniendo la forma de pago con Enter) y **Cambiar forma de pago** (de efectivo a cuenta corriente), con las reglas de quién puede modificar.
+
+![Video: Mis ventas, reimprimir, modificar una venta y cambiar su forma de pago](media:Ventas.POS/tutorial-misventas.mp4)
+
+### Recuperar una venta sin guardar
+Qué pasa si se corta la luz o se cierra el navegador antes de cobrar: la venta vuelve sola en la misma computadora; si no, se recupera desde la campana o desde F1 → **Ver ventas sin guardar**.
+
+![Video: recuperar una venta que quedó sin guardar](media:Ventas.POS/tutorial-borradores.mp4)
 
 Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el corpus OpenSLR 61 (licencia CC BY-SA 4.0).
 
