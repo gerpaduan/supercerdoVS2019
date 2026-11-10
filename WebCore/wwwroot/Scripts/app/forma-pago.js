@@ -992,9 +992,14 @@ function finalizarVenta(data) {
             const formaPagoParaFactura = payload.cobroSaldo ? payload.cobroSaldo.formaPago : payload.formaPago;
 
             const $fp = $('#modalFormaPago');
+            // Pago mixto con parte en efectivo (de la venta o, con cobro, del cobro): el parametro formasPagoFacturaAutomatica
+            // decide si ese efectivo tambien abre la factura (formaPagoParaFactura es solo la otra parte).
+            const conEfectivo = payload.cobroSaldo
+                ? (payload.cobroSaldo.esMixto === true && Number(payload.cobroSaldo.efectivo) > 0)
+                : (payload.esPagoMixto === true && Number(payload.efectivo) > 0);
             const requiereFacturaAutomatica = window.VentasFacturaModal
                 && typeof window.VentasFacturaModal.requiereFacturaAutomatica === 'function'
-                && window.VentasFacturaModal.requiereFacturaAutomatica(formaPagoParaFactura);
+                && window.VentasFacturaModal.requiereFacturaAutomatica(formaPagoParaFactura, conEfectivo);
 
             // 1) Sacar el foco de adentro ANTES de ocultar (evita el warning)
             $fp.find(':focus').trigger('blur');

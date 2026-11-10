@@ -39,6 +39,10 @@ namespace Entidades
         // ticket (2026-10-19). Ver Negocio.CalculoSaldoCliente.
         public const string SaldoMinimoInformar = "saldoMinimoInformar";
 
+        // Formas de pago que abren la factura electronica al cobrar en el POS (2026-11-10). Ver
+        // WebCore.Helpers.FormasPagoFacturaAutomatica. Sin valor: debito, credito, QR y transferencia.
+        public const string FormasPagoFacturaAutomatica = "formasPagoFacturaAutomatica";
+
         // Sí/No (2026-10-19): con Sí el ticket termico de venta NO fiscal (X) no imprime el nombre ni los
         // slogans de la empresa. Sin valor = No (se imprimen, como siempre). El ticket facturado no cambia.
         // Ver VentasController.OcultarEncabezadoTicketNoFiscal.

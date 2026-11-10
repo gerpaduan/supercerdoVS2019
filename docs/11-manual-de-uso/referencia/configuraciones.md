@@ -3,7 +3,7 @@ titulo: Mapa de configuraciones de la empresa
 rol: admin
 modulo: Referencia
 orden: 1
-revisada: 2026-10-20
+revisada: 2026-11-10
 ---
 # Mapa de configuraciones de la empresa
 
@@ -62,3 +62,16 @@ Cada fila es **un interruptor o valor que cambia el comportamiento del sistema**
 |---|---|---|---|---|
 | **Saldo mínimo a informar** (`saldoMinimoInformar`, en pesos) | Pantalla **Parámetros** (`/Parametros`) | Admin | **100** (vacío = 100) | En el [POS](ayuda:pantalla/Ventas.POS), un cliente cuyo saldo de cuenta corriente sea **igual o menor** a este monto (en deuda o a favor) **no muestra el saldo** debajo del nombre ni se ofrece sumarlo al ticket. Por encima se muestra el saldo exacto. Con **0** se informa cualquier saldo distinto de cero. Pensado para ignorar diferencias de unos pocos pesos que no se cobran. |
 | **Ocultar datos de la empresa en el ticket no fiscal** (`ocultarEncabezadoTicketNoFiscal`, Sí/No) | Pantalla **Parámetros** (`/Parametros`) | Admin | **No** (sin cargar = No) | Con **Sí**, el ticket de venta no fiscal (X) del [POS](ayuda:pantalla/Ventas.POS) no imprime el nombre de la empresa ni los slogans. El ticket facturado (con CAE), los PDF y los demás tickets (recibos, caja) no cambian. En Servidor SM y San Lorenzo (SQL Server) aparece recién al correr su script de alta; si la base no tiene la columna `tipo`, se carga `1` (ocultar) o `0` en vez del casillero. |
+| **Formas de pago que abren la factura al cobrar** (`formasPagoFacturaAutomatica`, casillas) | Pantalla **Parámetros** (`/Parametros`) | Admin | Débito, Crédito, QR y Transferencia (sin cargar = como siempre) | Al cobrar en el [POS](ayuda:pantalla/Ventas.POS) con una forma tildada se abre la factura electrónica de la venta (con certificado de AFIP). Tildar Efectivo = facturar también el efectivo; ninguna = no se abre sola. Cuenta corriente sin cobro nunca la abre; en un pago mixto se abre si alguna de las dos partes está tildada. Solo bases Postgres. |
+| **Código del producto de precio libre** (`codProdGenerico`, entero de hasta 13 dígitos) | Pantalla **Parámetros** (`/Parametros`) | Admin | Vacío (sin producto de precio libre) | Código del producto genérico que el [POS](ayuda:pantalla/Ventas.POS) y el punto de expendio usan para vender un importe suelto: el vendedor escribe el precio y se carga ese producto con ese precio. Con el sufijo `G` y un número se usa el producto de código siguiente. Ver [Parámetros](ayuda:pantalla/Parametros.Index). |
+| **Días hacia atrás por defecto** (`diasLimitFechaDesde`, en días) | Pantalla **Parámetros** (`/Parametros`) | Admin | Según la empresa (ej. 7) | Desde qué fecha arrancan los listados de Stock, Elaborados y Movimientos, y hasta cuántos días atrás se puede llevar la fecha de una venta en el POS. |
+
+> La pantalla **Parámetros** muestra solo los parámetros que usa la web. Los que usa solo la aplicación de escritorio (redondeo y ajuste por tarjeta del POS, pedir usuario al cargar elaborados y movimientos, mayúscula en productos) y los que no lee ninguna pantalla no se listan: siguen en la base y se manejan desde el escritorio. Ver [Parámetros](ayuda:pantalla/Parametros.Index).
+
+## Compras: titular y facturas del proveedor (solo bases Postgres)
+| Configuración | Dónde se cambia | Quién | Por defecto | Efecto |
+|---|---|---|---|---|
+| **Alícuota de IVA que se propone** | Configuración del servidor (`Compras:AlicuotaIvaDefault`) | Quien administra el servidor | **21** | Alícuota preseleccionada al cargar una factura, nota de crédito o débito del proveedor (Compras > *Comprobantes* y la factura del alta). Con ella se calculan neto e IVA desde el total. Un valor inválido se ignora. |
+| **Alícuotas de IVA que se ofrecen** | Configuración del servidor (`Compras:AlicuotasIva`, separadas por `;`) | Quien administra el servidor | **10.5;21;27** | Opciones del selector de IVA al cargar comprobantes, más «A mano» (neto e IVA se escriben). Un valor inválido se ignora. |
+| **Titular propio en compras, pagos y cuenta corriente** | [Titulares fiscales](ayuda:pantalla/TitularesFiscales.Index) | Admin | Se ve solo con **2 o más** titulares | Con un solo titular las pantallas quedan como siempre. Con 2 o más aparecen el selector de titular (compras y pagos a proveedor), las columnas y filtros, y el resumen por titular de la cuenta corriente. |
+| **Control fiscal de la cuenta corriente del proveedor** | Permiso *Pagos* del menú → **Puede editar** (se asigna en [Usuarios](ayuda:pantalla/Usuarios.Index)) | Admin | Solo administrador | Muestra facturado contra pagado bancarizado y en efectivo. «POS - Ctas.Ctes Persona» **no** lo habilita. Ver [cuenta corriente](ayuda:pantalla/Finanzas.CtaCtePersona). |

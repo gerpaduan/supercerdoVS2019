@@ -82,7 +82,7 @@ Si con esta venta el cliente **quedaría debiendo** (el cuadro rojo de arriba), 
 5. **El modal se achica solo** (igual que con Pago Mixto o con el descuento): botones de forma de pago en una línea y, en escritorio, el cuadro del saldo y el del cobro lado a lado, para que «Total de la Venta» quede a la vista sin scrollear. Al destildar vuelve al tamaño normal.
 
 **Cuándo no aparece el interruptor:** cliente sin deuda tras la venta (sin saldo, saldo chico, saldo a favor que alcanza), Consumidor Final, cuenta reservada sin permiso, **sin caja abierta** (el cobro se asienta en la caja), al **modificar una venta** o cambiar solo la forma de pago. Si estando tildado cambia el total (por ejemplo, un descuento con **/**) y ya no queda deuda, se destilda solo.
-- **Factura**: si el cobro es con un medio que exige factura electrónica (Débito, Crédito, QR, Transferencia) se abre la factura, igual que en una venta con ese medio.
+- **Factura**: si el cobro es con una forma de pago que la empresa eligió para facturar (por defecto Débito, Crédito, QR y Transferencia; ver más abajo) se abre la factura, igual que en una venta con ese medio.
 - **«La venta se registró, pero el cobro no»**: la venta quedó en Cta. Cte. y no se pudo guardar el cobro (error del sistema). Cobralo desde **F2 → Cuenta corriente → Agregar Pago/Cobro**.
 - Si el importe no es válido (vacío, mixto que no suma, forma no permitida) el sistema avisa **antes de guardar** y no registra nada.
 

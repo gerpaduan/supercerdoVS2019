@@ -3336,7 +3336,10 @@ else
             // docs/DECISIONS.md): sin esto, VentasFacturaModal.requiereFacturaAutomatica (mas abajo
             // en este archivo) siempre asumia que la empresa tiene certificado AFIP.
             window.POSFacturaElectronicaConfig = {
-                empresaTieneCertificado: @Html.Raw(System.Text.Json.JsonSerializer.Serialize((bool)(ViewBag.EmpresaTieneCertificadoAfip ?? false)))
+                empresaTieneCertificado: @Html.Raw(System.Text.Json.JsonSerializer.Serialize((bool)(ViewBag.EmpresaTieneCertificadoAfip ?? false))),
+                // Formas de pago (nombres normalizados) que abren la factura sola al cobrar; parametro
+                // formasPagoFacturaAutomatica de la empresa. Si falta, el JS usa el default de siempre.
+                formasPagoFacturaAutomatica: @Html.Raw(System.Text.Json.JsonSerializer.Serialize((IEnumerable<string>)ViewBag.FormasPagoFacturaAutomatica))
             };
             if (window.POSFormaPagoActual.formaPago && typeof window.POSState.setFormaPagoPreseleccionada === "function") {
                 window.POSState.setFormaPagoPreseleccionada({
@@ -3898,15 +3901,26 @@ else
                 return cfg.empresaTieneCertificado === true;
             }
 
-            function facturaElectronicaRequeridaPorFormaPagoPOS(formaPago) {
+            // Formas de pago que abren la factura sola (parametro formasPagoFacturaAutomatica). Sin config (vista
+            // que no la define) rige lo de siempre: todo lo electronico, no el efectivo.
+            function formasPagoFacturaAutomaticaPOS() {
+                var cfg = window.POSFacturaElectronicaConfig || null;
+                if (cfg && Array.isArray(cfg.formasPagoFacturaAutomatica)) return cfg.formasPagoFacturaAutomatica;
+                return ['Debito', 'Credito', 'Qr', 'Transferencia'];
+            }
+
+            // conEfectivo: pago mixto con una parte en efectivo (la forma de pago recibida es la otra parte). Cta. Cte.
+            // nunca abre la factura por si sola; el efectivo del mixto la abre solo si Efectivo esta en la lista.
+            function facturaElectronicaRequeridaPorFormaPagoPOS(formaPago, conEfectivo) {
+                if (!empresaTieneCertificadoFacturaElectronicaPOS()) return false;
+
+                var formas = formasPagoFacturaAutomaticaPOS();
                 var normalizada = typeof window.normalizarTipoFormaPago === 'function'
                     ? window.normalizarTipoFormaPago(formaPago)
                     : (formaPago || '');
 
-                return empresaTieneCertificadoFacturaElectronicaPOS()
-                    && !!normalizada
-                    && normalizada !== 'Efectivo'
-                    && normalizada !== 'CtaCte';
+                if (normalizada && normalizada !== 'CtaCte' && formas.indexOf(normalizada) >= 0) return true;
+                return conEfectivo === true && formas.indexOf('Efectivo') >= 0;
             }
 
             window.VentasFacturaModal = window.VentasFacturaModal || {

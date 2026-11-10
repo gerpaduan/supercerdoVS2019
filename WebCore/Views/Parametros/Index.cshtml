@@ -1,5 +1,6 @@
 ﻿@model WebCore.Models.ParametrosEmpresaIndexVm
 @using System.Linq
+@using WebCore.Models
 
 @{
     ViewBag.Title = "Parámetros";
@@ -10,118 +11,188 @@
         .Where(x => !string.IsNullOrWhiteSpace(x))
         .Distinct()
         .ToList();
+
+    // Agrupa por sección de ayuda conservando el índice ORIGINAL de cada item en Model.Items: el binding del POST
+    // (Items[i].Valor, Items[i].ValorBool, ...) depende de ese índice, así que los grupos solo reordenan el HTML.
+    var indicesPorGrupo = Enumerable.Range(0, Model.Items?.Count ?? 0)
+        .GroupBy(i => Model.Items[i].Ayuda?.Grupo ?? ParametroAyudaCatalogo.GrupoOtros)
+        .ToDictionary(g => g.Key, g => g.ToList());
+    var gruposEnOrden = ParametroAyudaCatalogo.OrdenGrupos
+        .Where(g => indicesPorGrupo.ContainsKey(g))
+        .Concat(indicesPorGrupo.Keys.Where(g => !ParametroAyudaCatalogo.OrdenGrupos.Contains(g)))
+        .ToList();
+
+    string IconoGrupo(string grupo) =>
+        grupo == ParametroAyudaCatalogo.GrupoPuntoDeVenta ? "fa-cash-register"
+        : grupo == ParametroAyudaCatalogo.GrupoTickets ? "fa-receipt"
+        : grupo == ParametroAyudaCatalogo.GrupoFechas ? "fa-calendar-alt"
+        : "fa-sliders-h";
 }
 
 <div class="container-fluid parametros-index-page">
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-        <div>
-            <p class="text-muted mb-0">Configuración particular de la empresa actual, basada en el catálogo general del sistema.</p>
+    <form asp-controller="Parametros" asp-action="Guardar" method="post" id="formParametrosEmpresa" novalidate="novalidate">
+        @Html.AntiForgeryToken()
+
+        <div class="d-flex flex-wrap align-items-start justify-content-between mb-3">
+            <p class="text-muted mb-2 mr-3">Valores que cambian cómo funciona el sistema para la empresa actual. Se agrupan según la pantalla donde tienen efecto.</p>
+            <div class="d-flex mb-2">
+                @if (Model.PuedeAdministrar)
+                {
+                    <button type="button"
+                            class="btn btn-primary mr-2"
+                            id="btnHabilitarEdicionParametros"
+                            data-edit-readonly-ignore="true">
+                        <i class="fas fa-edit mr-1"></i> Modificar
+                    </button>
+                }
+                <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Home")">Volver</a>
+            </div>
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            @if (mensajesValidacion.Any())
-            {
-                <div class="alert alert-danger">
-                    <ul class="mb-0 pl-3">
-                        @foreach (var mensaje in mensajesValidacion)
-                        {
-                            <li>@mensaje</li>
-                        }
-                    </ul>
-                </div>
-            }
-
-            @if (!string.IsNullOrWhiteSpace(Model.MensajePermiso))
-            {
-                <div class="alert @(Model.PuedeAdministrar ? "alert-info" : "alert-secondary")">
-                    @Model.MensajePermiso
-                </div>
-            }
-
-            <form asp-controller="Parametros" asp-action="Guardar" method="post" id="formParametrosEmpresa" novalidate="novalidate">
-                @Html.AntiForgeryToken()
-
-                <div class="table-responsive">
-                    <table class="table table-hover table-bordered mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th style="width: 220px;">Parámetro</th>
-                                <th>Descripción</th>
-                                <th style="width: 140px;">Tipo</th>
-                                <th style="width: 260px;">Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (Model.Items == null || Model.Items.Count == 0)
-                            {
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">No hay parámetros configurados para mostrar.</td>
-                                </tr>
-                            }
-                            else
-                            {
-                                for (int i = 0; i < Model.Items.Count; i++)
-                                {
-                                    <tr>
-                                        <td>
-                                            @Html.HiddenFor(m => m.Items[i].IdParametro)
-                                            @Html.HiddenFor(m => m.Items[i].Nombre)
-                                            @Html.HiddenFor(m => m.Items[i].Descripcion)
-                                            @Html.HiddenFor(m => m.Items[i].Tipo)
-                                            @Html.HiddenFor(m => m.Items[i].TipoDescripcion)
-                                            <strong>@Model.Items[i].Nombre</strong>
-                                        </td>
-                                        <td>@Model.Items[i].Descripcion</td>
-                                        <td>
-                                            <span class="badge badge-light border">@Model.Items[i].TipoDescripcion</span>
-                                        </td>
-                                        <td>
-                                            @if (Model.Items[i].Tipo == 2)
-                                            {
-                                                <div class="custom-control custom-switch mt-1">
-                                                    @Html.CheckBoxFor(m => m.Items[i].ValorBool, new { @class = "custom-control-input", id = "Items_" + i + "__ValorBool" })
-                                                    <label class="custom-control-label" for="@("Items_" + i + "__ValorBool")">Activo</label>
-                                                </div>
-                                                @Html.HiddenFor(m => m.Items[i].Valor)
-                                            }
-                                            else
-                                            {
-                                                @Html.TextBoxFor(m => m.Items[i].Valor, new { @class = "form-control", autocomplete = "off" })
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="mt-3 d-flex flex-wrap align-items-center">
-                    @if (Model.PuedeAdministrar)
+        @if (mensajesValidacion.Any())
+        {
+            <div class="alert alert-danger">
+                <ul class="mb-0 pl-3">
+                    @foreach (var mensaje in mensajesValidacion)
                     {
-                        <button type="button"
-                                class="btn btn-primary mr-2 mb-2"
-                                id="btnHabilitarEdicionParametros"
-                                data-edit-readonly-ignore="true">
-                            <i class="fas fa-edit mr-1"></i> Modificar
-                        </button>
-
-                        <button type="submit"
-                                class="btn btn-success mr-2 mb-2 @(Model.SoloLecturaInicial ? "d-none" : "")"
-                                id="btnGuardarParametros">
-                            <i class="fas fa-save mr-1"></i> Guardar
-                        </button>
+                        <li>@mensaje</li>
                     }
+                </ul>
+            </div>
+        }
 
-                    <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Home")">
-                        Volver
-                    </a>
+        @if (!string.IsNullOrWhiteSpace(Model.MensajePermiso))
+        {
+            <div class="alert @(Model.PuedeAdministrar ? "alert-info" : "alert-secondary")">
+                @Model.MensajePermiso
+            </div>
+        }
+
+        @if (Model.Items == null || Model.Items.Count == 0)
+        {
+            <div class="card shadow-sm">
+                <div class="card-body text-center text-muted py-4">No hay parámetros configurados para mostrar.</div>
+            </div>
+        }
+        else
+        {
+            foreach (var grupo in gruposEnOrden)
+            {
+                var indices = indicesPorGrupo[grupo];
+                <div class="card shadow-sm param-group">
+                    <div class="param-group-header">
+                        <i class="fas @IconoGrupo(grupo) mr-2" aria-hidden="true"></i>
+                        <span class="param-group-title">@grupo</span>
+                        <span class="text-muted ml-2">· @indices.Count @(indices.Count == 1 ? "parámetro" : "parámetros")</span>
+                    </div>
+
+                    @foreach (var i in indices)
+                    {
+                        var item = Model.Items[i];
+                        var ayuda = item.Ayuda;
+                        var unidad = ayuda?.Unidad;
+                        var unidadAntes = unidad == "$";
+                        var campoValor = "Items[" + i + "].Valor";
+                        var errorEnValor = ViewData.ModelState.TryGetValue(campoValor, out var estadoValor) && estadoValor.Errors.Count > 0;
+
+                        <div class="param-row">
+                            <div class="param-info">
+                                @Html.HiddenFor(m => m.Items[i].IdParametro)
+                                @Html.HiddenFor(m => m.Items[i].Nombre)
+                                @Html.HiddenFor(m => m.Items[i].Descripcion)
+                                @Html.HiddenFor(m => m.Items[i].Tipo)
+                                @Html.HiddenFor(m => m.Items[i].TipoDescripcion)
+
+                                <div class="param-title">@(ayuda?.Titulo ?? item.Nombre)</div>
+                                @if (!string.IsNullOrWhiteSpace(ayuda?.Explicacion))
+                                {
+                                    <div class="param-desc">@ayuda.Explicacion</div>
+                                }
+                                <div class="param-meta">
+                                    <code>@item.Nombre</code>
+                                    @if (!string.IsNullOrWhiteSpace(ayuda?.Nota))
+                                    {
+                                        <span> · @ayuda.Nota</span>
+                                    }
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Items[i].Valor, "", new { @class = "text-danger param-error" })
+                            </div>
+
+                            <div class="param-value">
+                                @if (ayuda?.Editor == ParametroAyudaCatalogo.EditorFormasPago)
+                                {
+                                    <div class="param-checks">
+                                        @foreach (var (clave, etiqueta) in WebCore.Helpers.FormasPagoFacturaAutomatica.Opciones)
+                                        {
+                                            var idCheck = "Items_" + i + "__Forma_" + clave;
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input" id="@idCheck"
+                                                       name="@("Items[" + i + "].FormasPagoSeleccionadas")" value="@clave"
+                                                       checked="@item.FormasPagoSeleccionadas.Contains(clave)" />
+                                                <label class="custom-control-label" for="@idCheck">@etiqueta</label>
+                                            </div>
+                                        }
+                                    </div>
+                                    @Html.HiddenFor(m => m.Items[i].Valor)
+                                }
+                                else if (item.Tipo == 2)
+                                {
+                                    <div class="custom-control custom-switch">
+                                        @Html.CheckBoxFor(m => m.Items[i].ValorBool, new { @class = "custom-control-input param-switch-input", id = "Items_" + i + "__ValorBool" })
+                                        <label class="custom-control-label param-switch-label" for="@("Items_" + i + "__ValorBool")">@(item.ValorBool ? "Sí" : "No")</label>
+                                    </div>
+                                    @Html.HiddenFor(m => m.Items[i].Valor)
+                                }
+                                else
+                                {
+                                    <div class="param-input-wrap">
+                                        @if (unidadAntes)
+                                        {
+                                            <span class="param-unit">@unidad</span>
+                                        }
+                                        @{
+                                            var atributosValor = new Dictionary<string, object>
+                                            {
+                                                ["class"] = "form-control" + (errorEnValor ? " is-invalid" : ""),
+                                                ["autocomplete"] = "off",
+                                                ["placeholder"] = "Sin configurar"
+                                            };
+                                            // Entero de hasta N digitos: teclado numerico, tope de largo y filtro de no-digitos (el servidor revalida).
+                                            if (ayuda?.EnteroMaxDigitos is int maxDigitos)
+                                            {
+                                                atributosValor["inputmode"] = "numeric";
+                                                atributosValor["maxlength"] = maxDigitos;
+                                                atributosValor["data-solo-digitos"] = "true";
+                                            }
+                                        }
+                                        @Html.TextBoxFor(m => m.Items[i].Valor, atributosValor)
+                                        @if (!unidadAntes && !string.IsNullOrWhiteSpace(unidad))
+                                        {
+                                            <span class="param-unit">@unidad</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
-            </form>
+            }
+        }
+
+        @* Barra de guardado: solo visible en modo edición (se muestra/oculta en onStateChanged). *@
+        <div class="param-bar d-none" id="parametrosBarra">
+            <span id="parametrosContador" class="flex-grow-1">Sin cambios</span>
+            <a class="btn btn-outline-secondary mr-2" href="@Url.Action("Index", "Parametros")" id="btnDescartarParametros">Descartar</a>
+            @if (Model.PuedeAdministrar)
+            {
+                <button type="submit"
+                        class="btn btn-success @(Model.SoloLecturaInicial ? "d-none" : "")"
+                        id="btnGuardarParametros">
+                    <i class="fas fa-save mr-1"></i> Guardar
+                </button>
+            }
         </div>
-    </div>
+    </form>
 </div>
 
 <style>
@@ -129,45 +200,142 @@
         font-size: .9rem;
     }
 
-    .parametros-index-page .card-body {
-        padding: .82rem 1rem;
-    }
-
     .parametros-index-page .alert,
-    .parametros-index-page .text-muted,
-    .parametros-index-page .form-text,
-    .parametros-index-page small {
+    .parametros-index-page .text-muted {
         font-size: .8rem;
     }
 
-    .parametros-index-page .form-control {
+    /* Colores con transparencia: funcionan igual en modo claro y oscuro sin hardcodear paleta. */
+    .parametros-index-page .param-group {
+        margin-bottom: .85rem;
+        overflow: hidden;
+    }
+
+    .parametros-index-page .param-group-header {
+        display: flex;
+        align-items: center;
+        padding: .5rem .9rem;
+        background: rgba(128, 128, 128, .08);
+        border-bottom: 1px solid rgba(128, 128, 128, .22);
+        font-size: .85rem;
+    }
+
+    .parametros-index-page .param-group-header > i {
+        margin-right: .5rem;
+    }
+
+    .parametros-index-page .param-group-title {
+        font-weight: 600;
+    }
+
+    .parametros-index-page .param-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        gap: 1rem;
+        align-items: center;
+        padding: .65rem .9rem;
+        border-bottom: 1px solid rgba(128, 128, 128, .18);
+    }
+
+    .parametros-index-page .param-row:last-child {
+        border-bottom: 0;
+    }
+
+    .parametros-index-page .param-row-changed {
+        background: rgba(255, 193, 7, .14);
+    }
+
+    .parametros-index-page .param-title {
+        font-weight: 600;
+        font-size: .88rem;
+    }
+
+    .parametros-index-page .param-desc {
+        margin-top: .1rem;
+        font-size: .82rem;
+        opacity: .82;
+    }
+
+    .parametros-index-page .param-meta {
+        margin-top: .2rem;
+        font-size: .74rem;
+        opacity: .65;
+    }
+
+    .parametros-index-page .param-meta code {
+        color: inherit;
+        font-size: inherit;
+    }
+
+    .parametros-index-page .param-error {
+        display: block;
+        margin-top: .2rem;
+        font-size: .78rem;
+    }
+
+    .parametros-index-page .param-value {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .parametros-index-page .param-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .parametros-index-page .param-input-wrap .form-control {
+        max-width: 150px;
+        text-align: right;
         font-size: .87rem !important;
-        min-height: 2.3rem !important;
-        padding: .32rem .58rem !important;
+        min-height: 2.15rem !important;
+        padding: .28rem .54rem !important;
     }
 
-    .parametros-index-page .table {
-        font-size: .84rem;
+    .parametros-index-page .param-unit {
+        font-size: .8rem;
+        opacity: .75;
     }
 
-    .parametros-index-page .table th,
-    .parametros-index-page .table td {
-        padding: .42rem .58rem;
-        line-height: 1.15;
-        vertical-align: middle;
+    .parametros-index-page .param-checks {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+        font-size: .85rem;
     }
 
-    .parametros-index-page .table thead th,
-    .parametros-index-page .table > thead > tr > th {
-        font-size: .72rem !important;
-        font-weight: 700;
-        letter-spacing: .02em;
-        text-transform: uppercase;
+    .parametros-index-page .param-switch-label {
+        font-size: .85rem;
+        font-weight: 600;
     }
 
-    .parametros-index-page .badge,
-    .parametros-index-page .custom-control-label {
-        font-size: .76rem;
+    /* Modo lectura: el valor se ve como texto, sin caja de formulario. */
+    .parametros-index-page .edit-readonly-active .param-input-wrap .form-control {
+        background: transparent;
+        border-color: transparent;
+        box-shadow: none;
+        font-weight: 600;
+    }
+
+    .parametros-index-page .edit-readonly-active .param-input-wrap .form-control::placeholder {
+        font-weight: 400;
+        font-style: italic;
+    }
+
+    .parametros-index-page .param-bar {
+        display: flex;
+        align-items: center;
+        padding: .6rem .9rem;
+        border: 1px solid rgba(128, 128, 128, .35);
+        border-radius: .5rem;
+        background: rgba(128, 128, 128, .08);
+        font-size: .85rem;
+    }
+
+    .parametros-index-page .param-bar.d-none {
+        display: none !important;
     }
 
     .parametros-index-page .btn {
@@ -175,33 +343,15 @@
         padding: .34rem .65rem;
     }
 
-    .parametros-index-page .btn.btn-sm {
-        font-size: .76rem;
-        padding: .28rem .5rem;
-    }
-
-    @@media (min-width: 1200px) {
-        .parametros-index-page .mb-3 {
-            margin-bottom: .85rem !important;
+    @@media (max-width: 767.98px) {
+        .parametros-index-page .param-row {
+            grid-template-columns: 1fr;
+            gap: .5rem;
         }
 
-        .parametros-index-page .card-body {
-            padding: .7rem .85rem;
-        }
-
-        .parametros-index-page .form-control {
-            font-size: .84rem !important;
-            min-height: 2.15rem !important;
-            padding: .28rem .54rem !important;
-        }
-
-        .parametros-index-page .table {
-            font-size: .8rem;
-        }
-
-        .parametros-index-page .table thead th,
-        .parametros-index-page .table > thead > tr > th {
-            font-size: .69rem !important;
+        .parametros-index-page .param-value,
+        .parametros-index-page .param-input-wrap {
+            justify-content: flex-start;
         }
     }
 </style>
@@ -209,11 +359,74 @@
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script>
-        window.EditReadOnly && window.EditReadOnly.init({
-            formSelector: "#formParametrosEmpresa",
-            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
-            modifyButtonSelector: "#btnHabilitarEdicionParametros",
-            saveButtonSelector: "#btnGuardarParametros"
-        });
+        (function () {
+            var form = document.getElementById('formParametrosEmpresa');
+            var barra = document.getElementById('parametrosBarra');
+            var contador = document.getElementById('parametrosContador');
+            var descartar = document.getElementById('btnDescartarParametros');
+            if (!form) return;
+
+            // Una fila está "cambiada" si algún input visible difiere del valor con el que se renderizó.
+            function filaCambiada(fila) {
+                var cambiada = false;
+                fila.querySelectorAll('input:not([type=hidden])').forEach(function (el) {
+                    var distinto = el.type === 'checkbox' ? el.checked !== el.defaultChecked : el.value !== el.defaultValue;
+                    if (distinto) cambiada = true;
+                });
+                return cambiada;
+            }
+
+            function refrescarCambios() {
+                var cambios = 0;
+                form.querySelectorAll('.param-row').forEach(function (fila) {
+                    var cambiada = filaCambiada(fila);
+                    fila.classList.toggle('param-row-changed', cambiada);
+                    if (cambiada) cambios++;
+                });
+                if (contador) {
+                    contador.textContent = cambios === 0 ? 'Sin cambios'
+                        : cambios === 1 ? '1 cambio sin guardar'
+                        : cambios + ' cambios sin guardar';
+                }
+            }
+
+            form.addEventListener('input', function (evt) {
+                // Campos de solo dígitos (ej. código del producto de precio libre): se descarta lo que no sea 0-9.
+                var el = evt.target;
+                if (el && el.dataset && el.dataset.soloDigitos === 'true') {
+                    var limpio = el.value.replace(/\D/g, '');
+                    if (limpio !== el.value) el.value = limpio;
+                }
+                refrescarCambios();
+            });
+            form.addEventListener('change', function (evt) {
+                // El texto del switch refleja el estado actual (Sí / No).
+                var el = evt.target;
+                if (el && el.classList.contains('param-switch-input')) {
+                    var etiqueta = form.querySelector('label[for="' + el.id + '"]');
+                    if (etiqueta) etiqueta.textContent = el.checked ? 'Sí' : 'No';
+                }
+                refrescarCambios();
+            });
+
+            // Descartar: se sale a propósito, sin el aviso de "cambios sin guardar".
+            if (descartar) {
+                descartar.addEventListener('click', function () {
+                    var guard = window.jQuery && window.jQuery(form).data('editPageGuardApi');
+                    if (guard && typeof guard.allowNavigation === 'function') guard.allowNavigation();
+                });
+            }
+
+            window.EditReadOnly && window.EditReadOnly.init({
+                formSelector: "#formParametrosEmpresa",
+                soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
+                modifyButtonSelector: "#btnHabilitarEdicionParametros",
+                saveButtonSelector: "#btnGuardarParametros",
+                onStateChanged: function (soloLectura) {
+                    if (barra) barra.classList.toggle('d-none', soloLectura);
+                    refrescarCambios();
+                }
+            });
+        })();
     </script>
 }

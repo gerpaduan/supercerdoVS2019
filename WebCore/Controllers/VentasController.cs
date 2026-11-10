@@ -3606,6 +3606,11 @@ namespace WebCore.Controllers
             // window.POSFacturaElectronicaConfig igual que el clasico.
             ViewBag.EmpresaTieneCertificadoAfip = EmpresaTieneCertificadoFacturaElectronica(user);
 
+            // Formas de pago que abren la factura sola al cobrar (parametro por empresa, 2026-11-10; sin valor
+            // rige lo de siempre: todo lo electronico, no el efectivo). Lo lee POS.cshtml en POSFacturaElectronicaConfig.
+            ViewBag.FormasPagoFacturaAutomatica = WebCore.Helpers.FormasPagoFacturaAutomatica.Parse(
+                _param.GetString(ParamKeys.FormasPagoFacturaAutomatica, ""));
+
             // Alta rapida de producto desde el POS: GuardarRapidoPOS exige Producto.NuevoCorte sobre
             // el usuario de sesion. Se calcula aca (mismo permiso, mismo usuario) para avisarle al
             // cajero al apretar "Si, dar de alta" y no recien al guardar, despues de cargar el

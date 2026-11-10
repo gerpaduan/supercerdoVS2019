@@ -3,11 +3,10 @@
 // general + valor particular por tenant). Usuario/empresa reales via IUsuarioSesionService
 // (login real, ver docs/DECISIONS.md 2026-09-06) -- ya no hay stub hardcodeado.
 //
-// ObtenerEmpresaCuit(usuario) en el original compara Session["Usuario"].Empresa.Cuit contra el
-// mismo CUIT fijo (20306210786) ya verificado real para la empresa del stub en otros controllers
-// de esta migracion (ver Compras/ExistenciaPorSucursales) -- se hardcodea a true en vez de
-// reproducir el chequeo via Session. TODO(claude): al implementarse Batch 4/5 (permisos reales),
-// revisar si este hardcodeo sigue siendo correcto o debe reproducir el chequeo real de CUIT.
+// Rediseno 2026-11-10: la pantalla agrupa los parametros con titulo/explicacion
+// (WebCore/Models/ParametroAyudaCatalogo.cs) y oculta los que la web no usa (ver
+// EsParametroOculto). El antiguo chequeo por CUIT (EsParametroVisibleSoloParaCuitEspecial)
+// quedo sin efecto: sus 5 parametros pasan a estar ocultos para todos.
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -114,13 +113,13 @@ namespace WebCore.Controllers
                 PuedeAdministrar = puedeAdministrar,
                 SoloLecturaInicial = soloLecturaInicial,
                 MensajePermiso = puedeAdministrar
-                    ? "Los parámetros se muestran inicialmente en modo lectura. Presione Modificar para editar y Guardar para aplicar los cambios a su empresa."
+                    ? "Los cambios se aplican solo a su empresa. Presione Modificar para editarlos."
                     : "Puede consultar la configuración vigente de su empresa. Solo un usuario administrador puede modificar estos parámetros."
             };
 
             model.Items = dt.AsEnumerable()
                 .Select(MapItem)
-                .Where(x => DebeMostrarParametro(x != null ? x.Nombre : null, usuario))
+                .Where(x => DebeMostrarParametro(x != null ? x.Nombre : null))
                 .OrderBy(x => x.Nombre ?? "")
                 .ToList();
 
@@ -132,7 +131,7 @@ namespace WebCore.Controllers
             Entidades.Usuario usuario)
         {
             return (items ?? Enumerable.Empty<ParametroEmpresaItemVm>())
-                .Where(x => x != null && DebeMostrarParametro(x.Nombre, usuario));
+                .Where(x => x != null && DebeMostrarParametro(x.Nombre));
         }
 
         private ParametroEmpresaItemVm MapItem(DataRow row)
@@ -140,15 +139,22 @@ namespace WebCore.Controllers
             string valor = row == null || row["valor"] == DBNull.Value ? "" : Convert.ToString(row["valor"]);
             int tipo = row == null || row["tipo"] == DBNull.Value ? TIPO_STRING : Convert.ToInt32(row["tipo"]);
 
+            string nombre = row == null || row["nombre"] == DBNull.Value ? "" : Convert.ToString(row["nombre"]) ?? "";
+            string descripcion = row == null || row["descripcion"] == DBNull.Value ? "" : Convert.ToString(row["descripcion"]) ?? "";
+
             return new ParametroEmpresaItemVm
             {
                 IdParametro = row == null || row["idParametro"] == DBNull.Value ? 0 : Convert.ToInt32(row["idParametro"]),
-                Nombre = row == null || row["nombre"] == DBNull.Value ? "" : Convert.ToString(row["nombre"]) ?? "",
-                Descripcion = row == null || row["descripcion"] == DBNull.Value ? "" : Convert.ToString(row["descripcion"]) ?? "",
+                Nombre = nombre,
+                Descripcion = descripcion,
                 Tipo = tipo,
                 TipoDescripcion = ObtenerTipoDescripcion(tipo),
                 Valor = valor ?? "",
-                ValorBool = EsValorBoolTrue(valor)
+                ValorBool = EsValorBoolTrue(valor),
+                Ayuda = ParametroAyudaCatalogo.Obtener(nombre, descripcion),
+                FormasPagoSeleccionadas = EsFormasPagoFactura(nombre)
+                    ? WebCore.Helpers.FormasPagoFacturaAutomatica.Parse(valor).ToList()
+                    : new List<string>()
             };
         }
 
@@ -187,11 +193,31 @@ namespace WebCore.Controllers
             if (item == null)
                 return "Se detectó un parámetro inválido.";
 
+            // Casillas por forma de pago: el valor se arma con las tildadas (ninguna = "Ninguna").
+            if (EsFormasPagoFactura(item.Nombre))
+            {
+                valorNormalizado = WebCore.Helpers.FormasPagoFacturaAutomatica.Serializar(item.FormasPagoSeleccionadas);
+                return "";
+            }
+
             if (item.Tipo == TIPO_BOOL)
             {
                 valorNormalizado = item.ValorBool ? "1" : "0";
                 return "";
             }
+
+            // Un valor vacio es valido en los numericos: el sistema usa el valor por defecto de cada parametro
+            // (saldoMinimoInformar vacio = 100, codProdGenerico vacio = sin producto de precio libre; los getters de
+            // Negocio.Parametros devuelven el default ante un valor en blanco). Antes un numerico sin cargar rechazaba
+            // el guardado de TODA la pantalla ("Valor invalido (decimal)"), aunque el administrador no lo hubiera tocado.
+            if (valorNormalizado.Length == 0 && item.Tipo != TIPO_STRING)
+                return "";
+
+            // Parametros que son un entero de hasta N digitos (ej. codProdGenerico: se compara con el codigo del POS):
+            // el formato lo fija el catalogo de ayuda, mas estricto que el tipo decimal con el que figura en la base.
+            var ayudaItem = ParametroAyudaCatalogo.Obtener(item.Nombre, item.Descripcion);
+            if (ayudaItem.EnteroMaxDigitos is int maxDigitos)
+                return ParametroAyudaCatalogo.ValidarEntero(valorNormalizado, maxDigitos, out valorNormalizado);
 
             if (item.Tipo == TIPO_INT)
             {
@@ -256,7 +282,13 @@ namespace WebCore.Controllers
             {
                 if (item == null) continue;
                 item.TipoDescripcion = ObtenerTipoDescripcion(item.Tipo);
+                item.Ayuda = ParametroAyudaCatalogo.Obtener(item.Nombre, item.Descripcion);
             }
+        }
+
+        private static bool EsFormasPagoFactura(string? nombre)
+        {
+            return string.Equals(nombre?.Trim(), Entidades.ParamKeys.FormasPagoFacturaAutomatica, StringComparison.OrdinalIgnoreCase);
         }
 
         private bool PuedeAdministrar(Entidades.Usuario usuario)
@@ -264,22 +296,16 @@ namespace WebCore.Controllers
             return usuario != null && usuario.IdEmpresa == _empresa.IdEmpresa && usuario.Admin;
         }
 
-        private static bool DebeMostrarParametro(string? nombreParametro, Entidades.Usuario usuario)
+        // Publico solo para poder testearlo (WebCore.Tests); un metodo estatico no es una accion MVC.
+        public static bool DebeMostrarParametro(string? nombreParametro)
         {
             if (string.IsNullOrWhiteSpace(nombreParametro))
                 return false;
 
-            string nombre = nombreParametro.Trim();
-            if (EsParametroSiempreOculto(nombre))
-                return false;
-
-            if (EsParametroVisibleSoloParaCuitEspecial(nombre))
-                return true; // TODO(claude): ver comentario de cabecera -- CUIT del stub ya verificado real.
-
-            return true;
+            return !EsParametroOculto(nombreParametro.Trim());
         }
 
-        private static bool EsParametroSiempreOculto(string nombreParametro)
+        private static bool EsParametroOculto(string nombreParametro)
         {
             switch (nombreParametro)
             {
@@ -299,21 +325,18 @@ namespace WebCore.Controllers
                 case "porcAjQr":
                 case "porcAjTranf":
                 case "porcAjBilletera":
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        private static bool EsParametroVisibleSoloParaCuitEspecial(string nombreParametro)
-        {
-            switch (nombreParametro)
-            {
+                // Rediseno 2026-11-10: ninguna pantalla de WebCore los lee. Los 5 primeros los usa solo la
+                // app de escritorio (Presentacion/), que el usuario sigue manejando hasta migrarla a WebCore;
+                // los 2 ultimos no los lee nadie. Siguen en la base y conservan su valor (el guardado hace
+                // upsert solo de las filas posteadas). Al migrar una funcion a WebCore: sacar el parametro de
+                // esta lista y darlo de alta en ParametroAyudaCatalogo.
                 case "importeMaxRedondeo":
                 case "limiteKgParaAjuste":
                 case "loginRapidoElaborado":
                 case "loginRapidoMovimiento":
+                case "mayuscula":
                 case "loginRapidoStock":
+                case "minAccesoUltimaVentaVendedor":
                     return true;
                 default:
                     return false;

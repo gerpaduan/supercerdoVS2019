@@ -8595,3 +8595,40 @@ Se rediseñó `GenerarDocsCore.DibujarEtiqueta` (3 tamaños, mismas proporciones
 - Configuración: `Compras:AlicuotaIvaDefault` (21) y `Compras:AlicuotasIva` (`10.5;21;27`), en `App.config`.
 - Deuda: el borrador local de Compras/Editar no guarda los datos de la factura del alta; el cambio de titular de un pago existente se hace por el mismo camino de edición del pago (contra-asiento + asiento nuevo); el modal en celular no se probó en un teléfono real.
 
+## 2026-11-10 - Parámetros: pantalla agrupada con ayuda; se ocultan los que la web no usa
+
+**Pedido:** la pantalla `/Parametros` era una tabla con el nombre técnico, la descripción heredada de la base («1 : Si / 0: No») y una columna Tipo; no se entendía qué hacía cada parámetro.
+
+**Decidido:**
+1. **Los textos de ayuda (título, explicación, grupo, unidad, nota) viven en código:** `WebCore/Models/ParametroAyudaCatalogo.cs`, indexado por el nombre técnico. Un parámetro sin entrada se muestra igual (nombre técnico + descripción de la base, grupo «Otros»), así un alta nueva en el catálogo global no rompe la pantalla. Al sumar un parámetro visible hay que sumar su entrada y su fila en `docs/11-manual-de-uso/referencia/configuraciones.md`.
+2. **Se ocultan en la web los 7 parámetros que ninguna pantalla de WebCore lee** (`ParametrosController.EsParametroOculto`): `importeMaxRedondeo`, `limiteKgParaAjuste`, `loginRapidoElaborado`, `loginRapidoMovimiento`, `mayuscula` (los usa solo la app de escritorio, `Presentacion/`) y `loginRapidoStock`, `minAccesoUltimaVentaVendedor` (no los lee ninguna pantalla). Siguen en la base y **conservan su valor**: `GuardarGrid` (Postgres y SQL Server) hace upsert solo de las filas posteadas. Se gestionan desde el escritorio hasta que esa funcionalidad pase a WebCore; ahí se sacan de la lista y se dan de alta en el catálogo.
+3. **Desaparece el chequeo por CUIT** (`EsParametroVisibleSoloParaCuitEspecial`, siempre `true` en WebCore y con un `TODO(claude)`): sus 5 parámetros pasaron a ocultos, así que ya no tiene efecto.
+4. **Sin cambios en validación, guardado ni permisos:** el POST sigue usando el índice original de `Model.Items`; los grupos solo reordenan el HTML.
+
+**Descartado:** agregar columnas título/grupo/unidad a la tabla `parametros` (migraciones en Postgres y SQL Server por un tema de presentación); mostrar los de escritorio en un grupo plegado (el usuario prefirió ocultarlos).
+
+**Verificado por el relevamiento (2026-11-10):** `codProdGenerico` lo leen `VentasController.BuscarProducto` y `PuntosExpendioController`; `diasLimitFechaDesde` lo leen Stock, Elaborados, Movimientos y la ventana de fecha del POS; `saldoMinimoInformar` y `ocultarEncabezadoTicketNoFiscal`, el POS y el ticket.
+
+**Deuda:** el texto de `codProdGenerico` se apoya en `Negocio/BarcodeInterpreter.InterpretarCodigoGenerico` y no en una prueba con el POS real (hay un `TODO(claude)` en el catálogo y un `PENDIENTE` en el manual).
+
+## 2026-11-10 - Parámetro: qué formas de pago abren la factura al cobrar en el POS
+
+**Pedido:** poder elegir por empresa si el efectivo (y qué otras formas de pago) abre la factura electrónica apenas se cobra en `Ventas/POS`. Hasta hoy la regla estaba fija en `POS.cshtml` (`facturaElectronicaRequeridaPorFormaPagoPOS`): con certificado de AFIP, todo lo que no fuera Efectivo ni CtaCte abría la factura.
+
+**Decidido:**
+1. **Parámetro `formasPagoFacturaAutomatica`** (tipo texto, por empresa, solo Postgres; migración `DatosPostgres/DB-Migrations/20261110d-Insert_parametro_formaspagofacturaautomatica.sql`). Valor: lista de `Efectivo, Debito, Credito, Qr, Transferencia` separada por comas, o `Ninguna`. En la pantalla Parámetros se edita con una casilla por forma de pago (`WebCore/Helpers/FormasPagoFacturaAutomatica.cs`).
+2. **Sin valor = lo de siempre** (Débito, Crédito, QR y Transferencia): desplegar no cambia nada. Un valor con solo nombres desconocidos (editado a mano) también cae al default, para que un error de tipeo no apague la factura. «Ninguna» es un valor explícito.
+3. **Cuenta corriente nunca abre la factura** (sin cobro no hay nada que facturar), por eso no es una casilla.
+4. **Pago mixto:** abre si la forma no efectiva está tildada o si Efectivo está tildado (el JS recibe `conEfectivo` desde `forma-pago.js`). Con cobro a cuenta corriente decide la forma del cobro.
+5. **Sin cambios:** `abrirFacturaVentaModal` sigue ignorando `{ facturaObligatoria: true }` (no tenía efecto antes) y «Cerrar venta sin facturar» sigue disponible siempre; la factura de una venta no facturada se puede hacer con el **5** o desde Mis ventas.
+6. **SQL Server (Servidor SM / San Lorenzo):** sin alta del parámetro (bases offline desde la fusión a carnisys); como no hay valor, el POS usa el default.
+
+**Descartado:** un Sí/No «Facturar todo» (no permite excluir, por ejemplo, QR); mantener la regla fija en el código.
+
+7. **Corrección en la misma sesión (defecto previo):** los parámetros numéricos sin cargar (`codProdGenerico`, `saldoMinimoInformar`) impedían guardar toda la pantalla ("Valor inválido (decimal)"). Ahora un valor vacío es válido en los numéricos, coherente con los getters, que devuelven el default ante un valor en blanco. Entrada en `docs/07-operacion-y-soporte/incidencias-frecuentes.md`.
+
+8. **`codProdGenerico` es un entero de hasta 13 dígitos** (pedido del usuario: se compara con el código que se ingresa en el POS; `corte.codigo` es `bigint`). Se valida en la pantalla Parámetros por catálogo (`ParametroAyuda.EnteroMaxDigitos` + `ParametroAyudaCatalogo.ValidarEntero`: solo 0-9, mayor a cero, vacío válido, se guarda sin ceros a la izquierda) y el campo filtra no-dígitos. **Descartado:** cambiar `parametros.tipo` a 4 (número largo) con una migración: en la base figura como decimal (tipo 1) y el formato lo impone el catálogo sin tocar el esquema; SQL Server tampoco tiene la columna `tipo` en todas las bases.
+
+**Verificado (2026-11-10, copia local con usuario de prueba, ya borrado):** guardar desde la pantalla deja `formasPagoFacturaAutomatica` en la base y los 7 parámetros ocultos intactos; `Ventas/POS` recibe la lista y `requiereFacturaAutomatica` da Efectivo sí, QR no, Cta. Cte. no, mixto sí.
+
+**Deuda:** no se probó una venta real de punta a punta con cada forma de pago (la base local factura contra AFIP real); queda como `PENDIENTE` en el manual.

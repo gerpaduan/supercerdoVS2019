@@ -19,5 +19,12 @@ namespace WebCore.Models
         public string TipoDescripcion { get; set; } = "";
         public string Valor { get; set; } = "";
         public bool ValorBool { get; set; }
+
+        // Texto de ayuda para mostrar la fila (no viaja en el POST; el controller lo completa en cada render).
+        public ParametroAyuda? Ayuda { get; set; }
+
+        // Solo para el parametro formasPagoFacturaAutomatica: claves tildadas (una casilla por forma de pago). Al
+        // guardar, el controller las convierte en el Valor del parametro (FormasPagoFacturaAutomatica.Serializar).
+        public List<string> FormasPagoSeleccionadas { get; set; } = new List<string>();
     }
 }
