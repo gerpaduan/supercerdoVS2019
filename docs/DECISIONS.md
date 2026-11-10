@@ -5,6 +5,19 @@
 - **Alternativas descartadas:** franja más alta (achica la vista de la app o agranda el video) y letra más chica (el usuario ya la pidió chica el 2026-11-09; más chica se lee mal).
 - **Pendiente:** `tutorial-venta.mp4` todavía tiene las dos frases largas: regenerarlo (la factura del video exige la empresa 1 local en homologación, con OK del usuario).
 
+## 2026-11-09 - Movimientos/Editar: Origen / Destino / Fecha con etiqueta a la izquierda y valores en negrita
+
+- **Pedido:** con la cabecera sin etiquetas (2026-11-04) no se distinguía cuál sucursal era origen y cuál destino. Se pidió etiqueta visible sin sumar altura, y negrita en los campos.
+- **Qué se decidió:** en `Movimientos/Editar` las etiquetas pasan a **Origen**, **Destino** y **Fecha**, siempre visibles y en el mismo renglón, a la izquierda del campo (desde 992 px, `movimientos-compacto.css`); los selects y la fecha van en negrita. `.mov-fila-datos` sale de la regla «etiquetas ocultas» de `pantalla-trabajo.css` (sección 3) y de `FILAS_CABECERA` en `pantalla-trabajo.js`; Stock y Elaborados siguen sin etiquetas. Columnas de la grilla: sucursales mín. 9,5 rem, fecha 15,5–17,5 rem (entra la etiqueta).
+- **Alternativa descartada:** etiqueta arriba del campo (suma una línea de alto en una pantalla donde cada píxel de tabla cuenta).
+
+### 2026-11-09 - Movimientos/Editar: columna «Stock origen» en el panel de stock y código en 7 caracteres por renglón
+
+- **Pedido:** ver, junto al stock del destino, cuánto tiene la sucursal que envía (para no comprometer de más), y que el código largo no se salga de su columna: 7 caracteres por renglón y, si no entra (código de barras), dos renglones.
+- **Stock origen:** columna nueva después de «Sugerido» en `_TablaExistenciaPorSucursales.cshtml` (existe siempre, visible solo con `.ex-modo-mov`), en gris sutil. El valor sale de un endpoint aparte, `Stock/StockOrigenMovimiento?idSucursal=` (`ConsultarModeloExistencia` acotada a esa sucursal y sin filtros, misma cifra que Existencia por sucursales), que `existencia-movimiento.js` pide al llegar el stock del destino y al cambiar el origen. `movimiento-stock-destino.js` avisa el origen por el canal (`{ tipo: 'origen', idSucursal, nombre }`, al estar «listo» y en cada cambio). Alternativas descartadas: sumar el origen como 2.ª sucursal de la matriz del panel (activa la columna Total, `idSucursal()` y los colspan, que asumen una sola sucursal) y parsear el HTML de `BuscarExistenciaPorSucursales`. Costo aceptado: una consulta de stock más por actualización (cada 15 min y con ⟳). Sin aviso ámbar cuando lo cargado supera el origen: no se pidió.
+- **Ancho:** el panel pasa de 35,5 a 39 rem (con 35,5 la columna quedaba cortada a 1524 px). Por debajo de 560 px de panel (ventana ~1366): Producto de 17,2 a 11,5 ch y márgenes laterales más finos; por debajo de 520 px (~1280): «27.8 un.» y «pto 18» pasan debajo de su número (las filas ya miden ~31 px por el botón +). Medido sin barra horizontal a 1280, 1366, 1524 y 1920 px.
+- **Código:** `#tablaLineasMovimiento` con columna Código de 4,75 rem (7 dígitos tabulares a 14 px = 58,8 px + relleno; un 8.º baja de renglón) y `overflow-wrap: anywhere`; en el panel, `--ex-cod-ch` 9ch → 7ch con el mismo corte (antes «…»). Con ventana angosta, Producto pasa a `auto` y Acción a 3,4 rem (antes eran % que sumaban 100: el ancho fijo del código los desbordaba). Solo Movimientos; las líneas de Stock y Elaborados no cambian.
+
 ## 2026-11-04 - Stock/Editar, Movimientos/Editar y Elaborados/Carga: la tabla llena el alto de la ventana (≥ 20 filas), cabecera sin etiquetas y modo ventana independiente
 
 - **Pedido:** ver al menos 20 líneas antes de scrollear en las tres pantallas de carga (con 853 px de alto eran 4, 12 y 10) y poder tenerlas abiertas a la vez como ventanas propias de la barra de tareas (Stock, Movimientos y Elaborados) para pasar de una a otra sin perder lo cargado.

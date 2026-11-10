@@ -4,6 +4,7 @@
 // puede independizar (boton de la cabecera). Habla con el panel / ventana por un BroadcastChannel (un canal por pestana: dos movimientos abiertos
 // no se cruzan):
 //   movimiento -> stock:  { tipo: 'lineas', items }  (lo que lleva el movimiento: el stock marca "+N en mov."),
+//                         { tipo: 'origen', idSucursal, nombre }  (sucursal de la que sale la mercaderia: columna "Stock origen"),
 //                         { tipo: 'destino', idSucursal }, { tipo: 'actualizar' }
 //   stock -> movimiento:  { tipo: 'listo' }, { tipo: 'elegir', codigo[, cantidad, pesable] }
 // El otro extremo es existencia-movimiento.js. Depende de movimientos.js (window.MovimientosEdit) y de ventana-independiente.js.
@@ -32,6 +33,7 @@
     var $aviso = $('#avisoStockDestino');
     var $titulo = $('#lblTituloStockDestino');
     var $destino = $('#IdSucursalDestino');
+    var $origen = $('#IdSucursalOrigen');
 
     function leerLS(clave) {
         try { return window.localStorage.getItem(clave); } catch (e) { return null; /* sin almacenamiento: no se recuerda */ }
@@ -95,12 +97,20 @@
         canal.postMessage({ tipo: 'lineas', items: resumen });
     }
 
+    // Sucursal origen del movimiento (id + nombre) para la columna "Stock origen". Sin origen elegido manda id 0 (el stock vacia la columna).
+    function enviarOrigen() {
+        var id = parseInt($origen.val(), 10) || 0;
+        var nombre = id > 0 ? ($origen.find('option:selected').text() || '').trim() : '';
+        canal.postMessage({ tipo: 'origen', idSucursal: id, nombre: nombre });
+    }
+
     canal.onmessage = function (ev) {
         var m = ev && ev.data;
         if (!m || typeof m.tipo !== 'string') return;
 
         if (m.tipo === 'listo') {
             enviarLineas();
+            enviarOrigen();
         } else if (m.tipo === 'elegir') {
             // Input de otra pantalla: solo un codigo entero positivo y, si viene, una cantidad numerica positiva.
             var codigo = parseInt(m.codigo, 10);
@@ -116,6 +126,9 @@
     $(document).on('movimiento:lineas', function (e, resumen) {
         canal.postMessage({ tipo: 'lineas', items: resumen });
     });
+
+    // Al cambiar el origen, el stock (panel o ventana independiente) actualiza la columna "Stock origen".
+    $origen.on('change', enviarOrigen);
 
     // Al cambiar el destino, el stock sigue a esa sucursal. Si el panel esta a la vista se recarga su iframe directamente (no depende de que
     // el iframe ya este escuchando); si el stock esta en una ventana independiente (el panel esta cerrado) se le avisa por el canal y se recarga sola.

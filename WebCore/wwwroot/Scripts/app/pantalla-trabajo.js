@@ -70,7 +70,8 @@
     // ---------- 3. Cabecera siempre visible, sin etiquetas (escritorio) ----------
     // El CSS (seccion 3 de pantalla-trabajo.css) oculta las etiquetas de estas filas; para que se siga sabiendo que es cada campo, el texto
     // de la etiqueta pasa a placeholder (inputs de texto/numero sin placeholder propio) y a tooltip (todos, incluidos select y fecha).
-    var FILAS_CABECERA = '.stock-fila-datos, .stock-fila-pesaje, .mov-fila-datos, .elaborados-fila-datos';
+    // Movimientos (.mov-fila-datos) ya no entra: sus etiquetas Origen / Destino / Fecha se ven siempre, a la izquierda del campo (2026-11-09).
+    var FILAS_CABECERA = '.stock-fila-datos, .stock-fila-pesaje, .elaborados-fila-datos';
 
     function prepararCabecera() {
         $todos(FILAS_CABECERA, root).forEach(function (fila) {

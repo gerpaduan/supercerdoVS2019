@@ -173,12 +173,15 @@
        la tabla no puede pasarse del ancho de su caja. Los encabezados de dos palabras (Permitir ingreso) pueden bajar a un segundo renglon (sin cortar palabras). */
     @container (max-width: 799px) {
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th:first-child { width: 5% !important; }
-        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-cod { width: 10% !important; }
-        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-prod { width: 27% !important; }
+        /* Codigo: ancho fijo (4.75 rem, mas abajo) y no %, para que 7 caracteres entren siempre en un renglon (pedido 2026-11-09); con el % se
+           achicaba. Producto queda "auto": toma lo que sobra, asi el ancho fijo del codigo no provoca barra horizontal (sus nombres largos
+           ya bajan de renglon). */
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-prod { width: auto !important; }
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-num { width: 12% !important; }
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-resto { width: 11% !important; }
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-med { width: 13% !important; }
-        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th:last-child { width: 10% !important; }
+        /* Accion: lo que mide el boton de quitar (~52 px) y no un %: con 10% de una tabla de ~465 px (1280 px de ventana) el boton se salia. */
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th:last-child { width: 3.4rem !important; }
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th {
             padding-left: .3rem;
             padding-right: .3rem;
@@ -190,6 +193,8 @@
     @container (max-width: 699px) {
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:not(:has(th.pt-th-med)) thead th.pt-th-prod { width: 11rem !important; }
     }
+    /* Movimientos: 4.75 rem = 7 digitos (58,8 px a 14 px, tabulares) + el relleno de la celda; un digito mas ya baja al renglon de abajo. */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-cod { width: 4.75rem !important; }
     body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th.pt-th-num { width: 7rem !important; text-align: right; }
     body.app-shell .pantalla-trabajo .pt-tabla-wrap thead th.pt-th-med { width: 9rem !important; }
     /* La columna "resto" (Creado en Stock, Balanza en Movimientos y Elaborados) absorbe el ancho que sobra; las demas conservan su ancho. */
@@ -197,6 +202,16 @@
 
     /* Nombre del producto: hasta 30 caracteres en un renglon; si es mas largo sigue debajo (la fila crece solo en ese caso). */
     body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-prod {
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+
+    /* Movimientos (pedido 2026-11-09): el codigo ocupa el ancho de su columna (5 rem = 7 caracteres en un renglon) y, si es mas largo (un codigo de
+       barras de 13 digitos), se corta y sigue en el renglon de abajo en vez de salirse de la celda y pisar el nombre del producto. */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap #tablaLineasMovimiento tbody td.cc-l-cod {
         white-space: normal !important;
         overflow-wrap: anywhere;
         line-height: 1.15;
@@ -237,7 +252,8 @@
    Creado (Elaborados): las etiquetas de arriba se ocultan (siguen para lectores de pantalla) y su texto pasa a placeholder / tooltip del campo
    (pantalla-trabajo.js). Nada cambia de lugar. Reemplaza a la cabecera plegable (2026-11-04: el usuario pidio que los datos se vean siempre). */
 @media (min-width: 1200px) {
-    body.app-shell .pantalla-trabajo :is(.stock-fila-datos, .stock-fila-pesaje, .mov-fila-datos, .elaborados-fila-datos) label:not(.custom-control-label) {
+    /* Movimientos (.mov-fila-datos) quedo afuera (2026-11-09): muestra Origen / Destino / Fecha a la izquierda del campo (movimientos-compacto.css). */
+    body.app-shell .pantalla-trabajo :is(.stock-fila-datos, .stock-fila-pesaje, .elaborados-fila-datos) label:not(.custom-control-label) {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -401,10 +417,12 @@
     /* Ancho del panel (pedido 2026-11-04): lo justo para su tabla en modo movimiento (Cod. 9ch + Producto 22ch + Stock + Estado + Sugerido + el
        boton de detalle, mas los margenes de la pagina del panel; medido: ~34 rem; 35.5 rem desde que Producto y Stock del panel van en 14 px). Antes era 11fr / 10fr y la tabla de stock dejaba una
        columna vacia de ~100 px a la derecha. Con ventanas angostas (1200-1350 px) el panel no pasa de la mitad para que la carga no quede
-       chica. El ancho ganado lo toma la tabla del movimiento. */
+       chica. El ancho ganado lo toma la tabla del movimiento.
+       2026-11-09: 35.5 -> 39 rem por la columna "Stock origen" (~46 px + margen): con 35.5 rem quedaba cortada contra el borde derecho del panel
+       y habia que desplazar la tabla para verla (medido a 1524 px de ancho). */
     body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock.pt-fill {
         display: grid;
-        grid-template-columns: minmax(0, min(var(--pt-mov-ancho-panel-stock, 35.5rem), 50%)) minmax(0, 1fr);
+        grid-template-columns: minmax(0, min(var(--pt-mov-ancho-panel-stock, 39rem), 50%)) minmax(0, 1fr);
         grid-template-rows: minmax(0, 1fr);
         align-items: stretch;
         gap: .75rem;

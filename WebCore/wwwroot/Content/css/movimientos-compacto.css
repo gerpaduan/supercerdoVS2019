@@ -10,16 +10,30 @@
 @media (min-width: 992px) {
     body.app-shell .movimiento-page .mov-fila-datos {
         display: grid;
-        grid-template-columns: minmax(6.5rem, 1fr) minmax(6.5rem, 1fr) minmax(12rem, 14rem);
+        grid-template-columns: minmax(9.5rem, 1fr) minmax(9.5rem, 1fr) minmax(15.5rem, 17.5rem);
         gap: 0 .5rem;
         margin: 0;
     }
 
+    /* Etiqueta (Origen / Destino / Fecha) a la IZQUIERDA del campo, en el mismo renglon: no suma altura (pedido 2026-11-09). */
+    body.app-shell .movimiento-page .mov-fila-datos .form-group {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
     body.app-shell .movimiento-page .mov-fila-datos label {
+        flex: none;
+        margin: 0;
+        font-weight: 700;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
+    }
+
+    /* Los campos en negrita para que se lea de un vistazo de que sucursal a cual va y con que fecha. */
+    body.app-shell .movimiento-page .mov-fila-datos .form-control {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-weight: 700;
     }
 
     body.app-shell .movimiento-page .mov-fila-datos > [class*="col-"] {

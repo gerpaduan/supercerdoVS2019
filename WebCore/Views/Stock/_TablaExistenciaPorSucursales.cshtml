@@ -5,8 +5,8 @@
 
 @*
     Tabla de Existencia por sucursales (HTML parcial: la carga la vista y la reemplaza el Buscar por AJAX).
-    Columnas: Cod. | Producto | [Stock | Estado | A pedir] por sucursal || ... || [Stock | Estado] Total | Total pedido | $ ult.
-    compra | Importe est. | +. Una fila por producto (mas su detalle expandible). Las columnas del pedido ("A pedir", Total
+    Columnas: Cod. | Producto | [Stock | Estado | A pedir | Sugerido] por sucursal || ... || Stock origen (solo modo movimiento) ||
+    [Stock | Estado] Total | Total pedido | $ ult. compra | Importe est. | +. Una fila por producto (mas su detalle expandible). Las columnas del pedido ("A pedir", Total
     pedido, precio e importe) viajan siempre en el HTML pero estan ocultas hasta que se enciende "Ingresar pedido"
     (existencia-pedido.js las llena: el parcial solo deja el esqueleto y los datos que hacen falta en data-). Todos los
     estilos viven en ExistenciaPorSucursales.cshtml (este parcial es solo HTML): asi no se repiten en cada refresco. El
@@ -37,8 +37,8 @@
     bool puedeEditarPunto = ViewBag.PuedeEditarPunto is bool permiso && permiso;
     // Columnas del <tr>: Cod. + Producto + 3 por sucursal (Stock + Estado + A pedir; Estado y A pedir siguen en el DOM aunque esten
     // ocultas) + 2 del Total + 3 del pedido (Total pedido, $ ult. compra, Importe est.) + el "+".
-    // Cod. + Producto, 4 por sucursal (Stock/Estado/A pedir/Sugerido), Total (2), cierre del pedido (3), boton de detalle (1) y la columna de relleno (1).
-    int totalColumnas = 2 + (columnas.Count * 4) + (mostrarTotal ? 2 : 0) + 3 + 1 + 1;
+    // Cod. + Producto, 4 por sucursal (Stock/Estado/A pedir/Sugerido), Stock origen (1), Total (2), cierre del pedido (3), boton de detalle (1) y la columna de relleno (1).
+    int totalColumnas = 2 + (columnas.Count * 4) + 1 + (mostrarTotal ? 2 : 0) + 3 + 1 + 1;
 }
 
 @if (Model == null || !Model.ConsultaRealizada)
@@ -74,6 +74,9 @@ else
                             </button>
                         </th>
                     }
+                    @* Solo en el modo movimiento (ver la vista): stock de la sucursal ORIGEN del movimiento, para no enviar de mas. Lo llena
+                       existencia-movimiento.js (consulta aparte); el nombre de la sucursal va en .ex-orig-suc. *@
+                    <th rowspan="2" class="ex-col-orig" title="Stock disponible en la sucursal origen del movimiento">Stock origen<small class="ex-orig-suc"></small></th>
                     @if (mostrarTotal)
                     {
                         <th colspan="2" class="ex-grupo ex-grupo-ini ex-grupo-total">Total</th>
@@ -190,6 +193,8 @@ else
                             </td>
                             <td class="text-right ex-col-sug ex-sug-celda @altClase" data-id-corte="@producto.IdCorte" data-id-sucursal="@celda.IdSucursal"></td>
                         }
+                        @* Stock de la sucursal origen (modo movimiento): lo escribe existencia-movimiento.js. *@
+                        <td class="text-right text-nowrap ex-col-orig"></td>
                         @if (mostrarTotal)
                         {
                             <td class="text-right text-nowrap ex-grupo-ini ex-grupo-total font-weight-bold" title="Suma de stock en las sucursales mostradas">

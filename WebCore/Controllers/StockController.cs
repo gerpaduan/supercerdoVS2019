@@ -1165,6 +1165,55 @@ namespace WebCore.Controllers
             }
         }
 
+        // Movimientos/Editar, panel "Stock destino": stock de la sucursal ORIGEN del movimiento por producto (columna "Stock origen", para no
+        // enviar de mas). Es la misma matriz de Existencia por sucursales acotada a esa sucursal y sin filtros, asi la cifra coincide con la
+        // de la pantalla de stock. Solo lectura; cuenta como consulta manual para el guard de carga (nunca se rechaza, pero se mide).
+        // Devuelve { ok, items: [{ idCorte, stock, eq }] }; eq = equivalente en unidades ("≈ 10.8 un.") o null.
+        [HttpGet]
+        public IActionResult StockOrigenMovimiento(int idSucursal = 0)
+        {
+            // idSucursal es input externo: solo una sucursal de esta empresa. Sin esto, un id invalido caeria en "todas las sucursales".
+            var sucursalesEmpresa = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            if (idSucursal <= 0 || !sucursalesEmpresa.Any(s => s.IdSucursal == idSucursal))
+                return Json(new { ok = false, mensaje = "Sucursal origen inválida." });
+
+            WebCore.Helpers.ExistenciaCargaGuard.TryEntrar(false, out _);
+            var cronometro = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                var model = ConsultarModeloExistencia("", new[] { idSucursal }, null, "", 0, 0, 0, false,
+                    null, null, null, false, "", 0, null, null);
+
+                // ConsultarModeloExistencia deja el error en Mensaje y los productos vacios: eso no es "sin stock", es una falla.
+                if (model.Productos == null || (model.Productos.Count == 0 && !string.IsNullOrWhiteSpace(model.Mensaje)))
+                    return Json(new { ok = false, mensaje = string.IsNullOrWhiteSpace(model.Mensaje) ? "No se pudo leer el stock de la sucursal origen." : model.Mensaje });
+
+                var items = new List<object>(model.Productos.Count);
+                foreach (var producto in model.Productos)
+                {
+                    var celda = producto.Celdas.FirstOrDefault(c => c.IdSucursal == idSucursal);
+                    if (celda == null) continue;
+                    items.Add(new
+                    {
+                        idCorte = producto.IdCorte,
+                        stock = Math.Round((double)celda.StockActual, 3),
+                        eq = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)celda.StockActual, (decimal)celda.Promedio, celda.Pesable)
+                    });
+                }
+                return Json(new { ok = true, idSucursal, items });
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "No se pudo leer el stock de la sucursal origen del movimiento.");
+                return Json(new { ok = false, mensaje = "No se pudo leer el stock de la sucursal origen. Intentá de nuevo." });
+            }
+            finally
+            {
+                cronometro.Stop();
+                WebCore.Helpers.ExistenciaCargaGuard.Salir(cronometro.Elapsed);
+            }
+        }
+
         // "Ingresar pedido": precio de la ultima compra de cada producto, para estimar el importe del pedido. Lo pide el navegador una
         // sola vez al encender el modo pedido (no carga esta consulta a quien solo mira stock). Fuente: la ULTIMA COMPRA real de cada
         // producto (lineas de compras tipo Cortes no anuladas: precio por kg, fecha y proveedor de esa compra), no corteproveedor (incompleta);

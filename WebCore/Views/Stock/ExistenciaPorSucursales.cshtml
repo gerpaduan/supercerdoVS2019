@@ -706,11 +706,27 @@
     /* La columna "Sugerido a enviar" existe siempre en el HTML y solo se ve en este modo (como las columnas del pedido). */
     .ex-col-sug { display: none; }
     .ex-modo-mov th.ex-col-sug, .ex-modo-mov td.ex-col-sug { display: table-cell; }
+    /* "Stock origen" (pedido 2026-11-09): stock de la sucursal desde la que se envia, para no comprometer mas mercaderia de la que hay. Va despues de
+       "Sugerido", en gris sutil (dato de referencia, sin negrita) y con el nombre de la sucursal debajo del titulo. Existe siempre en el HTML y solo se
+       ve en este modo. Lo llena existencia-movimiento.js. */
+    .ex-col-orig { display: none; }
+    .ex-modo-mov th.ex-col-orig, .ex-modo-mov td.ex-col-orig { display: table-cell; }
+    .ex-modo-mov .tabla-existencia-sucursales th.ex-col-orig { text-align: right; line-height: 1.1; color: var(--ex-orig-color, #8a94a1); }
+    /* El titulo baja de renglon (Stock / origen / sucursal) para que la columna mida lo que su numero: la regla general lo pone en una sola linea. */
+    .ex-modo-mov .tabla-existencia-sucursales.table thead th.ex-col-orig { white-space: normal; }
+    .ex-modo-mov .tabla-existencia-sucursales th.ex-col-orig small { display: block; font-size: .66rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
+    .ex-modo-mov .tabla-existencia-sucursales td.ex-col-orig { color: var(--ex-orig-color, #8a94a1); font-weight: 400; background-color: var(--ex-orig-fondo, #f7f8fa); }
+    .ex-modo-mov td.ex-col-orig.ex-orig-cero { opacity: .65; }
+    .ex-modo-mov td.ex-col-orig .existencia-unidades { display: none; }
+    html.dark-mode .ex-modo-mov { --ex-orig-color: #8b95a3; --ex-orig-fondo: #232b35; }
     /* Sin pedido, sin selector de sucursales (lo fija el movimiento), sin exportar/ventana: la pantalla es solo para mirar y elegir. */
     .ex-modo-mov .ex-ctl-pedido, .ex-modo-mov .ex-ctl-borradores, .ex-modo-mov .ex-ctl-sucursales,
     .ex-modo-mov .ex-ctl-acciones, .ex-modo-mov .ex-ctl-movimiento { display: none !important; }
     /* El panel es angosto (~la mitad de la pantalla): Cod. y Producto mas cortos que en la pantalla normal (15 y 25 caracteres). */
-    .ex-modo-mov .tabla-existencia-sucursales { --ex-cod-ch: 9ch; --ex-prod-ch: 22ch; }
+    .ex-modo-mov .tabla-existencia-sucursales { --ex-cod-ch: 7ch; --ex-prod-ch: 22ch; }
+    /* Codigo: 7 caracteres por renglon y, si es mas largo (codigo de barras de 13 digitos), sigue en el renglon de abajo (2 renglones) en vez de
+       cortarse con "..." (pedido 2026-11-09). Solo ese producto crece de alto. */
+    .ex-modo-mov .ex-cod-txt { white-space: normal; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.1; }
     /* Producto y Stock con la misma letra que la tabla de lineas del movimiento (14 px; pedido 2026-11-04); el resto de las columnas queda
        igual. Va en px y no en rem porque esta pagina (_LayoutEmbed) tiene la raiz en 14 px y la del movimiento en 16 px (.875rem = 14 px).
        El alto de fila no cambia (interlineado fijo de .975rem; medido 31,7 px antes y despues). Producto conserva el ancho en pixeles que tenia
@@ -719,6 +735,21 @@
     .ex-modo-mov .tabla-existencia-sucursales td.ex-col-prod-cell,
     .ex-modo-mov .tabla-existencia-sucursales td.ex-col-stock { font-size: 14px; }
     .ex-modo-mov .tabla-existencia-sucursales td.ex-col-prod-cell { --ex-prod-ch: 17.2ch; }
+    /* Panel angosto (movimiento en una ventana de ~1366 px o menos: el panel no pasa de la mitad): Producto mas corto y margenes laterales mas
+       finos para que "Stock origen" entre sin desplazar la tabla (pedido 2026-11-09; medido: a 1366 px la tabla pasaba de 519 a 467 px, justo
+       lo que entra). Con ventanas todavia mas chicas (1280 px) sigue habiendo desplazamiento horizontal. El selector lleva .existencia-compacto
+       para ganarle a las celdas compactas (.1rem .3rem), que estan mas abajo en esta hoja. */
+    @@media (max-width: 560px) {
+        .ex-modo-mov .tabla-existencia-sucursales td.ex-col-prod-cell { --ex-prod-ch: 11.5ch; }
+        .ex-modo-mov.existencia-compacto .tabla-existencia-sucursales th,
+        .ex-modo-mov.existencia-compacto .tabla-existencia-sucursales td { padding-left: .22rem; padding-right: .22rem; }
+    }
+    /* Todavia mas angosto (~1280 px): el equivalente en unidades ("27.8 un.") y el punto ("pto 18") pasan debajo de su numero / estado en vez de al
+       lado. Las filas ya miden ~31 px (las fija el boton +), asi que dos renglones de .975rem no las agrandan. */
+    @@media (max-width: 520px) {
+        .ex-modo-mov.existencia-compacto .tabla-existencia-sucursales td.ex-col-stock .existencia-unidades,
+        .ex-modo-mov.existencia-compacto .tabla-existencia-sucursales td.ex-col-estado .existencia-unidades { display: block; margin-left: 0; }
+    }
     .ex-mov-bloque {
         display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .8rem; margin-top: .35rem; padding: .25rem .5rem;
         border: 1px dashed var(--ui-primary, #2d5b8f); border-radius: .5rem; background: var(--ui-primary-soft, rgba(45, 91, 143, .07)); font-size: .78rem;
@@ -1001,7 +1032,9 @@
             modoMovimiento: @(modoMovimiento ? "true" : "false"),
             canalMovimiento: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(canalMovimiento)),
             idSucursalMovimiento: @(ViewBag.IdSucursalMovimiento is int idSucMov ? idSucMov : 0),
-            urlMovimiento: '@Url.Action("ExistenciaPorSucursales", "Stock")'
+            urlMovimiento: '@Url.Action("ExistenciaPorSucursales", "Stock")',
+            // Stock de la sucursal ORIGEN del movimiento (columna "Stock origen"): ver existencia-movimiento.js.
+            urlStockOrigen: '@Url.Action("StockOrigenMovimiento", "Stock")'
         };
 
         // "Ingresar pedido" (existencia-pedido.js): URLs, disponibilidad del motor y config del autoguardado en servidor (borradores).

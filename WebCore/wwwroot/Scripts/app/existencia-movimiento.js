@@ -2,8 +2,10 @@
 // de un iframe de esa pantalla o en una ventana independiente). Lo que agrega a existencia-sucursales.js:
 //  - Columna "Sugerido a enviar" = consumo del periodo (ventas + uso en elaborados, desde / hasta) - stock del destino, con la MISMA regla de
 //    la sugerencia de "Ingresar pedido" (ExistenciaPedidoCalculo.calcularSugerencia, modo "consumo"). Se ve, no se carga sola.
+//  - Columna "Stock origen": stock de la sucursal desde la que se envia (la avisa el movimiento), en gris, para no enviar de mas.
 //  - Mensajes con el movimiento por un BroadcastChannel (mismo origen): doble click en una fila (o click en el sugerido) elige el producto en el
-//    movimiento; el movimiento manda sus lineas (se marcan "+N en mov.") y el cambio de destino (la pantalla se recarga con la nueva sucursal).
+//    movimiento; el movimiento manda sus lineas (se marcan "+N en mov."), su sucursal origen y el cambio de destino (la pantalla se recarga con
+//    la nueva sucursal).
 //  - Recalcula las sugerencias en cada actualizacion del stock (automatica cada 15 min o forzada) y avisa cuantas cambiaron, sin tocar el movimiento.
 //  - Periodo APLICADO vs escrito: los atajos (1, 2, 3, 7, 15 d) se aplican al instante; una fecha escrita a mano queda PENDIENTE (aviso ambar,
 //    sugeridos atenuados y sin click) hasta "Actualizar sugerencias", Enter en la fecha o el ⟳ del movimiento. Asi recorrer fechas dia a dia no
@@ -45,9 +47,15 @@
     var sugBase = null;            // sugerido ANTES de la actualizacion en curso (null = no se compara: primera carga o cambio de periodo a mano)
     var ultimaCuenta = { hora: '', cambiaron: 0 };
     var enMov = {};                // codigo -> { u: unidades, k: kilos } que ya lleva el movimiento
+    var origen = { id: 0, nombre: '' };   // sucursal origen del movimiento (la avisa Movimientos/Editar)
+    var origenStock = {};          // idCorte -> { stock, eq } de la sucursal origen
+    var origenEstado = 'sin';      // sin | cargando | ok | error
+    var secOrigen = 0;
     var canal = null;
 
     var fmtCant = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 3, useGrouping: false });
+    // Mismo formato que la columna Stock de la tabla (3 decimales fijos, separador de miles).
+    var fmtStockOrigen = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 
     // ---------- Utilidades ----------
 
@@ -132,6 +140,8 @@
         if (m.tipo === 'lineas') {
             enMov = sanearLineas(m.items);
             marcarEnMov();
+        } else if (m.tipo === 'origen') {
+            alCambiarOrigen(m);
         } else if (m.tipo === 'destino') {
             // Cambio de sucursal destino en el movimiento: la pantalla se recarga con esa sucursal (un destino invalido o igual al actual se ignora).
             var id = parseInt(m.idSucursal, 10);
@@ -280,6 +290,83 @@
         });
     }
 
+    // ---------- Stock de la sucursal ORIGEN ----------
+    // Columna "Stock origen": cuanto hay en la sucursal desde la que se envia, para no comprometer mas mercaderia de la que tiene. Es una consulta
+    // aparte (Stock/StockOrigenMovimiento, la misma matriz de esta pantalla acotada a la sucursal origen). Se pide cuando llega el stock del
+    // destino (primera carga, Buscar, automatica o forzada) y cuando el movimiento cambia de origen. El dato viene de una pantalla hermana
+    // (input externo): solo se aceptan un id entero positivo y un nombre corto, y el nombre se escribe con .text() (nunca como HTML).
+
+    function textoStockOrigen(valor) {
+        return fmtStockOrigen.format(valor);
+    }
+
+    // Escribe en cada fila el stock de origen que ya se conoce (vacio si todavia no llego) y el nombre de la sucursal en el encabezado.
+    function pintarOrigen() {
+        $contenedor.find('th.ex-col-orig .ex-orig-suc').text(origen.nombre);
+        $contenedor.find('th.ex-col-orig').attr('title', origen.id > 0
+            ? 'Stock disponible en ' + (origen.nombre || 'la sucursal origen') + ' (de donde sale la mercadería)'
+            : 'Elegí la sucursal origen en el movimiento para ver su stock');
+
+        $contenedor.find('tr.existencia-producto-row').each(function () {
+            var td = this.querySelector('td.ex-col-orig');
+            if (!td) return;
+            var item = origen.id > 0 ? origenStock[this.getAttribute('data-id-corte')] : null;
+            td.className = td.className.replace(/\bex-orig-cero\b/g, '').trim();
+            td.removeAttribute('title');
+            if (!item) {
+                td.textContent = origen.id > 0 && origenEstado === 'ok' ? '–' : '';
+                return;
+            }
+            td.textContent = textoStockOrigen(item.stock);
+            if (item.stock <= 0) td.className += ' ex-orig-cero';
+            td.title = 'Stock en ' + (origen.nombre || 'la sucursal origen') + ': ' + textoStockOrigen(item.stock) + (item.eq ? ' (' + item.eq + ')' : '');
+        });
+    }
+
+    function cargarOrigen() {
+        var urlOrigen = cfg.urlStockOrigen;
+        var seq = ++secOrigen;
+        if (!(origen.id > 0) || !urlOrigen) {
+            origenStock = {};
+            origenEstado = 'sin';
+            pintarOrigen();
+            return;
+        }
+        origenEstado = 'cargando';
+        $.ajax({ url: urlOrigen, type: 'GET', data: { idSucursal: origen.id } }).done(function (resp) {
+            if (seq !== secOrigen) return; // llego una respuesta vieja (el movimiento cambio de origen mientras tanto)
+            if (resp && resp.ok && resp.idSucursal === origen.id) {
+                origenStock = {};
+                (resp.items || []).forEach(function (it) {
+                    origenStock[String(it.idCorte)] = { stock: Number(it.stock) || 0, eq: it.eq || '' };
+                });
+                origenEstado = 'ok';
+            } else {
+                origenStock = {};
+                origenEstado = 'error';
+            }
+        }).fail(function () {
+            if (seq !== secOrigen) return;
+            origenStock = {};
+            origenEstado = 'error';
+        }).always(function () {
+            if (seq !== secOrigen) return;
+            pintarOrigen();
+        });
+    }
+
+    // El movimiento avisa su sucursal origen: { tipo: 'origen', idSucursal, nombre }. Con la tabla ya cargada se consulta ahora; si todavia no
+    // hay tabla, la consulta la dispara existencia:tablaCargada (asi la primera carga no pide el origen dos veces).
+    function alCambiarOrigen(m) {
+        var id = parseInt(m.idSucursal, 10);
+        var nombre = typeof m.nombre === 'string' ? m.nombre.replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+        origen = { id: id > 0 ? id : 0, nombre: id > 0 ? nombre : '' };
+        origenStock = {};
+        origenEstado = 'sin';
+        pintarOrigen();
+        if ($contenedor.find('tr.existencia-producto-row').length) cargarOrigen();
+    }
+
     // Pide el consumo del periodo APLICADO (no del escrito: una fecha a mano sin confirmar no se consulta).
     function cargarConsumo() {
         if (!aplicado) aplicado = periodoEscrito();
@@ -343,6 +430,9 @@
     // El stock se actualizo (primera carga, Buscar, automatica o forzada): se recalcula ya con el stock nuevo, con el periodo APLICADO (una fecha
     // escrita y sin confirmar no se aplica sola). El consumo se vuelve a pedir salvo que sea el mismo periodo y este CERRADO (no cambia).
     $page.on('existencia:tablaCargada', function () {
+        // Tabla nueva: se vuelve a escribir el stock de origen que ya se conoce y se lo actualiza junto con el del destino.
+        pintarOrigen();
+        cargarOrigen();
         var cambioPeriodo = false;
         if (!aplicado) {
             aplicado = periodoEscrito();
