@@ -552,6 +552,15 @@
                     <ul id="avisoCambiosCajaDetalle" class="small mb-0 mt-1 pl-3 d-none"></ul>
                 </div>
 
+                @* Advertencia al encargado (2026-11-10, ver docs/DECISIONS.md "Advertencia de egresos modificados por el cajero al
+                   cerrar caja"): el cajero modifico egresos de esta caja. Solo advierte, no bloquea. Plegada por defecto; la llena
+                   renderEgresosModificados con data.egresosModificadosCajero de ObtenerDatosCierre (solo Postgres). *@
+                <div id="avisoEgresosModificados" class="alert alert-warning d-none py-2 mb-2" role="alert">
+                    <div id="avisoEgresosModificadosResumen"></div>
+                    <a href="#" id="btnVerEgresosModificados" class="small">ver detalle</a>
+                    <ul id="avisoEgresosModificadosDetalle" class="small mb-0 mt-1 pl-3 d-none"></ul>
+                </div>
+
                 <form id="formCerrarCaja">
 
                     <input type="hidden" id="Id" name="Id" />
@@ -1350,6 +1359,7 @@
                     }
                     // Conteo del cajero: se muestra y, en una caja abierta, se precarga como Caja Cierre.
                     renderCambiosPosteriores(data);
+                    renderEgresosModificados(data);
                     renderConteoCajero(data);
                     precargarConteoCajero(data);
                     // Caja abierta: se vigila si el cajero cambia su cierre mientras este modal siga abierto.
@@ -1441,6 +1451,54 @@
         $(document).on('click', '#btnVerCambiosCaja', function (e) {
             e.preventDefault();
             const $detalle = $("#avisoCambiosCajaDetalle").toggleClass("d-none");
+            $(this).text($detalle.hasClass("d-none") ? "ver detalle" : "ocultar detalle");
+        });
+
+        // ===== Advertencia: el cajero modifico egresos de esta caja (2026-11-10, ver docs/DECISIONS.md) =====
+        function ocultarEgresosModificados() {
+            $("#avisoEgresosModificados").addClass("d-none");
+            $("#avisoEgresosModificadosResumen").empty();
+            $("#avisoEgresosModificadosDetalle").addClass("d-none").empty();
+            $("#btnVerEgresosModificados").text("ver detalle");
+        }
+
+        // Una linea por modificacion: "Egreso N° · Tipo «descripcion» — cargado ..., modificado ... por X: cambios".
+        // Los textos de los cambios los arma el servidor (WebCore.Helpers.EgresoModificadoCajero); aca todo va con .text().
+        function renderEgresosModificados(data) {
+            // Si el detalle estaba abierto (p. ej. al tocar "Actualizar datos"), se respeta.
+            const estabaAbierto = !$("#avisoEgresosModificadosDetalle").hasClass("d-none");
+            ocultarEgresosModificados();
+            const modificaciones = (data && data.egresosModificadosCajero) ? data.egresosModificadosCajero : [];
+            if (!modificaciones.length) return;
+
+            const egresos = {};
+            modificaciones.forEach(function (m) { egresos[m.idEgreso] = true; });
+            const cantidad = Object.keys(egresos).length;
+
+            $("#avisoEgresosModificadosResumen")
+                .append($("<i>").addClass("fas fa-exclamation-triangle mr-2"))
+                .append($("<strong>").text("El cajero modificó " + cantidad + " " + (cantidad === 1 ? "egreso" : "egresos") + " de caja de esta caja."))
+                .append(document.createTextNode(" Revisá que no haya un error antes de cerrar."));
+
+            const $detalle = $("#avisoEgresosModificadosDetalle");
+            modificaciones.forEach(function (m) {
+                const $li = $("<li>").addClass("mb-1");
+                $li.append($("<strong>").text("Egreso N° " + m.idEgreso + " · " + (m.tipo || "-") + " «" + (m.descripcion || "") + "»"));
+                $li.append(document.createTextNode(" — cargado " + (m.creado || "-") + ", modificado " + (m.modificado || "-") +
+                    " por " + (m.usuario || "el cajero") + ": " + (m.cambios || []).join("; ") + "."));
+                $detalle.append($li);
+            });
+
+            if (estabaAbierto) {
+                $detalle.removeClass("d-none");
+                $("#btnVerEgresosModificados").text("ocultar detalle");
+            }
+            $("#avisoEgresosModificados").removeClass("d-none");
+        }
+
+        $(document).on('click', '#btnVerEgresosModificados', function (e) {
+            e.preventDefault();
+            const $detalle = $("#avisoEgresosModificadosDetalle").toggleClass("d-none");
             $(this).text($detalle.hasClass("d-none") ? "ver detalle" : "ocultar detalle");
         });
 
@@ -1746,6 +1804,8 @@
                     setFormattedValue("#EgresosCaja", data.egresosCaja);
                     precargarConteoCajero(data);
                     renderConteoCajero(data);
+                    // El cajero pudo haber modificado otro egreso mientras el modal estaba abierto.
+                    renderEgresosModificados(data);
                     recalcularCierre();
                 },
                 error: function (xhr) {
@@ -1780,6 +1840,7 @@
             detenerSondeoConteo();
             ocultarAvisoConteoCambio();
             ocultarCambiosPosteriores();
+            ocultarEgresosModificados();
             $("#CajaCierre").data("manual", false);
             $("#conteoCajeroEstado").empty();
             $("#conteoCajeroDetalle").addClass("d-none").text("");

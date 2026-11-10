@@ -281,7 +281,9 @@ namespace WebCore.Controllers
                 fechaConteoCajeroKey = caja.FechaConteoCajero?.Ticks.ToString(),
                 // Avisos del cierre (cambios posteriores al cierre y reaperturas, 2026-10-06): vacio en SQL Server.
                 soportaAuditoriaCierre = _oCierreN.SoportaAuditoriaCierre,
-                cambiosPosteriores = ObtenerCambiosPosterioresCierre(caja.Id)
+                cambiosPosteriores = ObtenerCambiosPosterioresCierre(caja.Id),
+                // Advertencia "El cajero modifico N egresos de caja de esta caja" (2026-11-10): vacio en SQL Server.
+                egresosModificadosCajero = ObtenerEgresosModificadosCajero(caja)
             });
         }
 
@@ -572,7 +574,11 @@ namespace WebCore.Controllers
             ViewBag.UrlMiCierre = Url.Action("MiCierreCaja", "Cajas", new { idCierre });
             // Si ya cargo su conteo el boton dice "Actualizar mi cierre" (modo actualizar).
             ViewBag.MiCierreYaCargado = cierre.CajaCierreCajero.HasValue;
-            CargarPermisosEdicionEgresos(dt, false, cierre);
+            // desdePos=true (2026-11-10, ver docs/DECISIONS.md "Egresos propios desde Mis actividades"): esta accion solo la
+            // abre el POS (F6). Con false caia en la regla de la pantalla admin (solo Admin modifica) y un cajero no admin
+            // -- o el operador de la cuenta de produccion -- no veia Modificar en sus propios egresos. El clasico
+            // (Web/Controllers/CajasController.cs:159) pasaba el desdePos real; el port lo habia dejado fijo en false.
+            CargarPermisosEdicionEgresos(dt, true, cierre);
             // Compras de la propia caja abierta: el boton Modificar abre la compra en el modal del POS (desde ahi tambien se elimina).
             AgregarComprasModificablesPos(dt, cierre);
 
@@ -714,6 +720,67 @@ namespace WebCore.Controllers
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.TraceWarning("No se pudieron leer los avisos del cierre " + idCierre + ": " + ex.Message);
+            }
+
+            return lista;
+        }
+
+        // Advertencia del modal "Cerrar Caja" (2026-11-10, ver docs/DECISIONS.md "Advertencia de egresos modificados por el
+        // cajero al cerrar caja"): cada modificacion que el propio cajero hizo sobre sus egresos de esta caja, con el antes ->
+        // despues. Sin umbral de tiempo: cualquier modificacion del cajero cuenta. Las de otro usuario no. Lista vacia si no
+        // hay soporte (SQL Server), si quien mira no puede cerrar cajas o si falla la lectura: el aviso no debe romper el modal.
+        private List<object> ObtenerEgresosModificadosCajero(CierreCaja caja)
+        {
+            var lista = new List<object>();
+            if (!_oCierreN.SoportaAuditoriaEgresos || caja == null || caja.Id <= 0) return lista;
+
+            // Mismo criterio que ObtenerCambiosPosterioresCierre: el detalle solo lo ve quien puede cerrar cajas.
+            if (ObtenerUsuarioAutorizadoCierre() == null) return lista;
+
+            try
+            {
+                DataTable dt = _oCierreN.obtenerModificacionesEgresosDelCajero(caja);
+                string Texto(DataRow r, string col) => r[col] == DBNull.Value ? "" : (Convert.ToString(r[col]) ?? "");
+                double? Numero(DataRow r, string col) => r[col] == DBNull.Value ? (double?)null : Convert.ToDouble(r[col]);
+                int? Entero(DataRow r, string col) => r[col] == DBNull.Value ? (int?)null : Convert.ToInt32(r[col]);
+                DateTime? FechaHora(DataRow r, string col) => r[col] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(r[col]);
+
+                foreach (DataRow r in dt.Rows)
+                {
+                    var modificacion = new WebCore.Helpers.ModificacionEgresoCaja
+                    {
+                        MontoAnterior = Numero(r, "montoanterior"),
+                        MontoNuevo = Numero(r, "montonuevo"),
+                        IdTipoAnterior = Entero(r, "idtipoanterior"),
+                        IdTipoNuevo = Entero(r, "idtiponuevo"),
+                        TipoAnterior = Texto(r, "tipoanterior"),
+                        TipoNuevo = Texto(r, "tiponuevo"),
+                        FechaAnterior = FechaHora(r, "fechahoraanterior"),
+                        FechaNueva = FechaHora(r, "fechahoranueva"),
+                        IdSucursalAnterior = Entero(r, "idsucursalanterior"),
+                        IdSucursalNueva = Entero(r, "idsucursalnueva"),
+                        SucursalAnterior = Texto(r, "sucursalanterior"),
+                        SucursalNueva = Texto(r, "sucursalnueva"),
+                        DescripcionAnterior = Texto(r, "descripcionanterior"),
+                        DescripcionNueva = Texto(r, "descripcionnueva")
+                    };
+
+                    var cambios = WebCore.Helpers.EgresoModificadoCajero.DescribirCambios(modificacion);
+                    lista.Add(new
+                    {
+                        idEgreso = Convert.ToInt32(r["idegresocaja"]),
+                        tipo = modificacion.TipoNuevo,
+                        descripcion = modificacion.DescripcionNueva,
+                        creado = WebCore.Helpers.EgresoModificadoCajero.FechaCorta(FechaHora(r, "creadoegreso")),
+                        modificado = WebCore.Helpers.EgresoModificadoCajero.FechaCorta(FechaHora(r, "fecha")),
+                        usuario = Texto(r, "usuario"),
+                        cambios = cambios.Count > 0 ? cambios : new List<string> { WebCore.Helpers.EgresoModificadoCajero.SinCambiosRegistrados }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("No se pudieron leer las modificaciones de egresos de la caja " + caja.Id + ": " + ex.Message);
             }
 
             return lista;
@@ -2042,9 +2109,13 @@ namespace WebCore.Controllers
                         continue;
                     }
 
+                    // Solo los egresos que cargo el propio vendedor (el operador, con la cuenta de produccion): mismo
+                    // criterio que EgresosCajaPolicy, para que el boton y el servidor digan lo mismo.
                     if ((cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)) &&
                         egreso.Sucursal != null &&
-                        egreso.Sucursal.idSucursal == idSucursalPos)
+                        egreso.Sucursal.idSucursal == idSucursalPos &&
+                        vendedorPos != null &&
+                        egreso.CreadoPor == vendedorPos.Id)
                     {
                         idsModificables.Add(id);
                     }
@@ -2483,7 +2554,13 @@ namespace WebCore.Controllers
                 }
             }
 
-            egreso = _oCierreN.addOrEditEgresoCaja(egreso);
+            // Modificar un egreso existente deja el antes/despues en auditoriaegresoscaja, en la misma transaccion (2026-11-10,
+            // ver docs/DECISIONS.md "Advertencia de egresos modificados por el cajero al cerrar caja"): el modal Cerrar Caja lo
+            // usa para avisarle al encargado. El autor es "vendedor": con la cuenta compartida de produccion es el operador
+            // (ResolverVendedorEgresoPos), no la cuenta de sesion, asi "lo modifico el cajero" se evalua bien.
+            egreso = egresoAnterior != null
+                ? _oCierreN.modificarEgresoCajaConHistorial(egresoAnterior, egreso, vendedor.Id, vendedor.Nombre)
+                : _oCierreN.addOrEditEgresoCaja(egreso);
 
             // Aviso en el cierre de cada caja afectada (tambien si no pidio confirmacion), fuera de la transaccion del egreso.
             cajaCerradaN.Registrar(
@@ -2759,6 +2836,13 @@ namespace WebCore.Controllers
 
             if (usuario.IdSucursal <= 0 || usuario.IdSucursal != egreso.Sucursal.idSucursal)
                 return Bloqueado("Solo puede modificar egresos de la sucursal activa en la sesion.");
+
+            // Desde el POS cada vendedor modifica solo lo que cargo el (2026-11-10, ver docs/DECISIONS.md "Egresos propios
+            // desde Mis actividades"). Sin esto, cambiando el id a mano se podia editar el egreso de otro vendedor de la
+            // misma sucursal cuya hora cayera dentro de la caja abierta propia. "usuario" ya es el operador con la cuenta
+            // de produccion (ResolverVendedorEgresoPos).
+            if (egreso.CreadoPor != usuario.Id)
+                return Bloqueado("Solo podés modificar egresos de caja que cargaste vos.");
 
             if (validarCajaAbierta == null || !validarCajaAbierta(egreso.Fecha, egreso.Sucursal, usuario))
                 return Bloqueado("La fecha y hora del egreso debe corresponder a una caja abierta del vendedor.");

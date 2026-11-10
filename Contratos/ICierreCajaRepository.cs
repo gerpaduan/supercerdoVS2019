@@ -46,6 +46,15 @@ namespace Contratos
         DataTable obtenerEgresosCaja(int idSucursal, int idUsuario, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta);
         DataTable obtenerEgresosCajaGastosBalance(int idSucursal, DateTime fechaDesde, DateTime fechaHasta);
         DataTable obtenerGastosAgrupadosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal);
+        // Historial de modificaciones de egresos (2026-11-10, ver docs/DECISIONS.md "Advertencia de egresos modificados por
+        // el cajero al cerrar caja"). Solo Postgres: en SQL Server SoportaAuditoriaEgresos es false,
+        // modificarEgresoCajaConHistorial solo guarda el egreso (como siempre) y no hay modificaciones que consultar.
+        bool SoportaAuditoriaEgresos { get; }
+        // Guarda la modificacion de un egreso EXISTENTE (nuevo.Id > 0) y el registro antes/despues en una sola transaccion.
+        Entidades.EgresoCaja modificarEgresoCajaConHistorial(Entidades.EgresoCaja anterior, Entidades.EgresoCaja nuevo, int idUsuarioAutor, string usuarioAutor);
+        // Modificaciones que hizo el propio dueno (idusuario = creadoporegreso = idDueno) de egresos de esa sucursal cuya fecha
+        // antes O despues del cambio cae en [desde, hasta]; la mas vieja primero. Columnas: ver CierreCajaPg.
+        DataTable obtenerModificacionesEgresosDelDueno(int idDueno, int idSucursal, DateTime desde, DateTime hasta);
         // unitOfWork opcional: ver Contratos/IUnitOfWork.cs.
         Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja, Contratos.IUnitOfWork unitOfWork = null);
         Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja);

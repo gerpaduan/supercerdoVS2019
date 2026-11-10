@@ -5,7 +5,7 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-11-04
+revisada: 2026-11-10
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
@@ -55,6 +55,14 @@ Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consulta
 - En el **Historial** la columna **Avisos** muestra **Modificada (N)** en rojo (al pasar el mouse se ve la última vez) y **Reabierta (N)** si la caja se reabrió.
 - Al tocar **Modificar** en ese cierre aparece, arriba, el aviso con el resumen (por ejemplo "2 ventas, 1 pago") y **ver detalle**: quién lo hizo, cuándo y cómo cambió (monto o forma de pago antes → después).
 - Quien hace el cambio ve antes una advertencia (*"Esta caja ya fue cerrada… el cierre va a quedar inconsistente"*) y tiene que confirmar. Si el cambio no toca montos (por ejemplo solo observaciones) se guarda igual y queda registrado.
+
+## El cajero modificó egresos (advertencia al cerrar)
+Desde el 2026-11-10 el cajero puede modificar sus propios egresos de caja desde el POS (**Mis actividades**). Para que el encargado lo controle:
+- Al abrir **Cerrar Caja**, si **el cajero** modificó algún egreso de esa caja aparece, arriba del formulario (donde salen los otros avisos), un recuadro amarillo: **«El cajero modificó N egresos de caja de esta caja.»** Revisá que no haya un error antes de cerrar.
+- **ver detalle** despliega una línea por modificación: número, tipo y descripción del egreso, cuándo se cargó, cuándo y quién lo modificó, y **qué cambió antes → después** (monto, tipo, fecha, sucursal, descripción). Si un egreso se modificó dos veces, aparecen las dos. Si solo cambió el detalle o el conteo de billetes, lo dice así.
+- Sale **siempre** que haya una modificación del cajero, sin importar cuánto tiempo pasó. Las correcciones que hizo **otro usuario** (por ejemplo un administrador) no la disparan.
+- **Es solo una advertencia:** no impide cerrar. El botón de flechas (**Actualizar importes**) también la actualiza.
+- Las modificaciones hechas **antes del 2026-11-10** no quedaron registradas y no aparecen. Las compras modificadas desde Compras no entran en este aviso.
 
 ## Reabrir la última caja de un usuario
 - En el **Historial**, la última caja cerrada de cada usuario (en esa sucursal) tiene el botón **Reabrir** (solo con el permiso de modificar cierres de caja). **Solo se puede reabrir la última**: si el usuario ya abrió una caja nueva o tiene una abierta en esa sucursal, no se puede.

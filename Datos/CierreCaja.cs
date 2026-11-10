@@ -200,6 +200,20 @@ namespace Datos
         // llamadores ni consultan ni registran, asi que SQL Server se comporta exactamente como siempre.
         public bool SoportaAuditoriaCierre => false;
 
+        // Historial de modificaciones de egresos (2026-11-10): solo Postgres. En SQL Server se guarda el egreso como siempre,
+        // sin historial, y no hay modificaciones para advertir al cerrar caja.
+        public bool SoportaAuditoriaEgresos => false;
+
+        public Entidades.EgresoCaja modificarEgresoCajaConHistorial(Entidades.EgresoCaja anterior, Entidades.EgresoCaja nuevo, int idUsuarioAutor, string usuarioAutor)
+        {
+            return addOrEditEgresoCaja(nuevo);
+        }
+
+        public DataTable obtenerModificacionesEgresosDelDueno(int idDueno, int idSucursal, DateTime desde, DateTime hasta)
+        {
+            return new DataTable();
+        }
+
         public DataTable findCierreCerradoQueContiene(int idDueno, int idSucursal, DateTime fecha)
         {
             throw new NotSupportedException("La auditoria de cierres no esta disponible en SQL Server.");

@@ -1027,4 +1027,15 @@ Archivo: `DatosPostgres/DB-Migrations/20261109-Alter_compras_pagos_movctacte_tit
 - Solo Postgres. En SQL Server (SM y San Lorenzo) no hay nada que migrar: las pantallas no muestran titular ni comprobantes.
 - **Rollback:** la migración solo agrega; el código anterior ignora las columnas nuevas y la tabla. Si hubiera que volver el código, no hace falta tocar la base. Antes de correrla en producción: snapshot de la base (regla del ship).
 - Configuración opcional en `App.config`: `Compras:AlicuotaIvaDefault` (21) y `Compras:AlicuotasIva` (`10.5;21;27`).
-- PENDIENTE: no se corrió todavía en la VPS luden ni en la VM de producción; verificado solo en el Postgres local (dos veces, sin errores).
+- Aplicada en la VPS luden el 2026-11-10 (ver el redeploy de esa fecha). PENDIENTE solo en la VM de producción (ya no se usa desde 2026-10-12).
+
+## Historial de modificaciones de egresos de caja (2026-11-10) -- PENDIENTE de desplegar
+
+Cambio: los cajeros (no administradores también) modifican sus propios egresos desde **Mis actividades** del POS. Cada modificación deja el antes/después en `auditoriaegresoscaja` y **Cerrar Caja** advierte al encargado. Ver `docs/DECISIONS.md` (2026-11-10, "Egresos propios desde Mis actividades" y "Advertencia de egresos modificados por el cajero al cerrar caja") y `docs/03-modulos/caja-y-tesoreria.md`.
+
+- **Orden (migración ANTES que el código):** el código nuevo inserta en `auditoriaegresoscaja` al **modificar** un egreso, en la misma transacción que el UPDATE. Sin la tabla **falla Modificar egreso** (en Postgres), y `ObtenerDatosCierre` solo pierde la advertencia (la lectura está protegida).
+- **Postgres (VPS luden y base local):** `DatosPostgres/DB-Migrations/20261110-Create_auditoriaegresoscaja.sql`, como `carnisys_admin` (`docker exec -i carnisys-db-1 psql -U carnisys_admin -d carnisys -v ON_ERROR_STOP=1 --single-transaction < <archivo>`, con `tr -d '\r'` si viene de Windows). Aditiva e idempotente; append-only (`GRANT SELECT, INSERT`). Una sola corrida cubre a todas las empresas (RLS por `idempresa`).
+- **SQL Server (SM y San Lorenzo):** nada que migrar (`SoportaAuditoriaEgresos = false`: se modifica como siempre, sin historial ni advertencia).
+- Restore point recomendado antes de pushear: `git tag pre-auditoria-egresos-20261110`. Respaldo: `pg_dump -Fc` completo de siempre (la migración solo agrega una tabla).
+- **Rollback:** volver al build anterior; la tabla queda sobrante y el código viejo la ignora (las modificaciones registradas dejan de verse). No hace falta tocar la base.
+- Estado 2026-11-10: **aplicada en la base local** (`carnisys`, como `carnisys_admin`; verificado RLS activo, `carnisys_user`/`cs_admin_pg` solo SELECT/INSERT, segunda corrida sin error). PENDIENTE en la VPS luden.

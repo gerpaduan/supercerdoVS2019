@@ -307,6 +307,28 @@ namespace Negocio
             return oCierreD.addOrEditEgresoCaja(oEgresoCaja, unitOfWork);
         }
 
+        // ===== Historial de modificaciones de egresos (2026-11-10, ver docs/DECISIONS.md "Advertencia de egresos modificados
+        // por el cajero al cerrar caja") -- solo Postgres; en SQL Server se guarda como siempre y no hay historial. =====
+        public bool SoportaAuditoriaEgresos => oCierreD.SoportaAuditoriaEgresos;
+
+        // Modificacion de un egreso existente: guarda el egreso y su antes/despues en una sola transaccion. idUsuarioAutor es
+        // quien modifico de verdad (el operador con la cuenta compartida de produccion).
+        public Entidades.EgresoCaja modificarEgresoCajaConHistorial(Entidades.EgresoCaja anterior, Entidades.EgresoCaja nuevo, int idUsuarioAutor, string usuarioAutor)
+        {
+            return oCierreD.modificarEgresoCajaConHistorial(anterior, nuevo, idUsuarioAutor, usuarioAutor);
+        }
+
+        // Modificaciones que el dueno de la caja hizo sobre sus egresos dentro del rango de la caja (abierta: hasta ahora).
+        public DataTable obtenerModificacionesEgresosDelCajero(Entidades.CierreCaja caja)
+        {
+            if (!oCierreD.SoportaAuditoriaEgresos || caja == null || caja.Id <= 0 || caja.FechaHoraInicio == null ||
+                caja.UsuarioInicio == null || caja.UsuarioInicio.Id <= 0 || caja.Sucursal == null || caja.Sucursal.idSucursal <= 0)
+                return new DataTable();
+
+            return oCierreD.obtenerModificacionesEgresosDelDueno(caja.UsuarioInicio.Id, caja.Sucursal.idSucursal,
+                caja.FechaHoraInicio.Value, caja.FechaHoraCierre ?? DateTime.Now);
+        }
+
         public Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja)
         {
             Entidades.EgresoCaja oEgresoCaja = oCierreD.getEgresoCajaById(idEgresoCaja);

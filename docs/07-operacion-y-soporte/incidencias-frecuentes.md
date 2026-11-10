@@ -13,6 +13,14 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-10 - POS / Mis actividades: un cajero que no es administrador no veía «Modificar» en sus egresos de caja
+
+- **Sintoma**: en F6 → Mis actividades solo el administrador tenía el lápiz Modificar en los egresos. Pasaba igual con el operador de la cuenta de producción.
+- **Causa**: `CajasController.MisActividadesCaja` llamaba a `CargarPermisosEdicionEgresos(dt, false, cierre)`. Con `false` se aplica la regla de la pantalla admin (`EgresosCajaPolicy`: fuera del POS solo `Admin`). El Web clásico pasaba el `desdePos` real; el port lo dejó fijo.
+- **Resolucion**: se pasa `true` (la acción solo la abre el POS). La regla del POS ahora también exige que el egreso lo haya cargado el mismo vendedor (`CreadoPor`). Ver `docs/03-modulos/caja-y-tesoreria.md` (2026-11-10).
+
+---
+
 ## 2026-11-04 - Movimientos / Elaborados: al cerrar el aviso «Ingresá una cantidad de kilogramos mayor a cero» el cursor no volvía a Kgs
 
 - **Sintoma**: al tocar **+** sin kilos aparece el aviso; al tocar OK el cursor quedaba en el botón **+** y había que hacer clic en Kgs (Cantidad en Elaborados) para corregir.

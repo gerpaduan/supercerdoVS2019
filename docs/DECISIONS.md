@@ -8640,3 +8640,54 @@ Se rediseñó `GenerarDocsCore.DibujarEtiqueta` (3 tamaños, mismas proporciones
 **Verificado (2026-11-10, copia local con usuario de prueba, ya borrado):** guardar desde la pantalla deja `formasPagoFacturaAutomatica` en la base y los 7 parámetros ocultos intactos; `Ventas/POS` recibe la lista y `requiereFacturaAutomatica` da Efectivo sí, QR no, Cta. Cte. no, mixto sí.
 
 **Deuda:** no se probó una venta real de punta a punta con cada forma de pago (la base local factura contra AFIP real); queda como `PENDIENTE` en el manual.
+
+## 2026-11-10 — Egresos propios desde Mis actividades (POS)
+
+**Qué:** en **F6 → Mis actividades** cualquier vendedor (admin o no, y el operador de la cuenta de producción) modifica los egresos de caja **que cargó él**, de su caja abierta y de la sucursal activa.
+
+- `CajasController.MisActividadesCaja` pasa `desdePos: true` a `CargarPermisosEdicionEgresos`.
+- La regla del POS (`EgresosCajaPolicy.EvaluarModificacion` y la misma rama de `CargarPermisosEdicionEgresos`) exige además `egreso.CreadoPor == vendedor.Id`.
+
+**Por qué:**
+- Con `false` (regresión del port; el clásico `Web/Controllers/CajasController.cs:159` pasaba el `desdePos` real) se aplicaba la regla de la pantalla admin: solo `Admin`.
+- El control de creador cierra un hueco: antes, cambiando el id a mano, un vendedor podía editar el egreso de otro de la misma sucursal cuya hora cayera en su propia caja abierta.
+- Decidido con el usuario (2026-11-10): "solo los propios".
+
+**Descartado:** un permiso nuevo «modificar egresos propios». El acceso al POS y la caja abierta ya acotan el caso, igual que el alta de egresos desde el POS.
+
+## 2026-11-10 — Detalle desplegado de Mis actividades
+
+**Qué:** en `_EgresosCajaTabla.cshtml` (solo `modoActividades`) la fila desplegada es un panel compacto con borde de acento. Estilos en `_MisEgresosCaja.cshtml`.
+
+- Muestra el Detalle (o «Sin detalle cargado») y el Conteo de billetes si hay.
+- «Modificado por … · fecha» sale solo si se modificó. El N° de egreso va chico.
+- Sucursal solo si hay filas de otra sucursal. No repite Creado por / Creado (ya están en la columna).
+- La fila abierta queda resaltada (`:has()`) y el chevron girado (`aria-expanded`).
+
+El listado admin `Cajas/EgresosCaja` no cambia.
+
+**Por qué:** pedido del usuario. El detalle anterior repetía datos de la fila, mostraba campos vacíos y usaba letra grande. Maqueta aprobada en el navegador antes de codificar.
+
+## 2026-11-10 — Advertencia de egresos modificados por el cajero al cerrar caja
+
+**Qué:**
+- **Historial:** tabla `auditoriaegresoscaja` (append-only, RLS) con el antes → después de cada modificación de un egreso (monto, tipo, fecha, descripción, sucursal), escrita en **la misma transacción** que el UPDATE (`CierreCajaPg.modificarEgresoCajaConHistorial`). El autor es el operador real con la cuenta de producción.
+- **Advertencia:** el modal **Cerrar Caja** muestra una alerta amarilla plegada (`#avisoEgresosModificados`, después de `#avisoCambiosCaja`) cuando **el cajero** modificó egresos de esa caja, con una línea por modificación.
+- **No bloquea el cierre.** Solo Postgres.
+
+**Por qué:**
+- Si el cajero puede modificar sus egresos, el encargado tiene que poder detectar un error o una avivada.
+- El UPDATE pisaba los valores: sin historial no había monto anterior que mostrar.
+- Misma transacción: una modificación sin rastro anularía el control.
+
+**Decidido con el usuario (2026-11-10):**
+- Sin umbral de tiempo: se descartó «modificado más de 1 hora después» y el parámetro de minutos, porque avisa siempre que el cajero modificó.
+- Solo cuentan las modificaciones del cajero (las de otro usuario no).
+- No se cambia el diseño ni el orden del modal: se agrega en la zona de avisos.
+
+**Riesgo aceptado / límites:**
+1. Las ediciones anteriores a la migración no tienen historial.
+2. Los egresos que cambian por el circuito de Compras no se registran.
+3. En SQL Server no hay historial ni advertencia.
+4. El historial no guarda el detalle ni el conteo de billetes. Si solo cambió eso, la línea lo dice.
+

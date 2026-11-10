@@ -352,8 +352,111 @@
         line-height: 1;
     }
 
-    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .egreso-detalle-collapse > div {
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .egreso-detalle-collapse > div:not(.egreso-detalle-panel) {
         padding: .75rem !important;
+    }
+
+    /* Detalle desplegado de cada fila (2026-11-10, ver docs/DECISIONS.md "Detalle desplegado de Mis actividades"): panel
+       compacto pegado a su fila, con borde de acento; la fila abierta queda resaltada y la flecha girada. Markup en
+       _EgresosCajaTabla.cshtml (solo modoActividades). */
+    .mis-actividades-modal .egreso-detalle-panel {
+        margin: 0 .4rem .55rem 1.4rem;
+        padding: .5rem .75rem;
+        background: #f8f9fc;
+        border: 1px solid #e3e6f0;
+        border-left: 3px solid #4e73df;
+        border-radius: 0 .5rem .5rem 0;
+        font-size: .78rem;
+        line-height: 1.35;
+    }
+
+    .mis-actividades-modal .egreso-detalle-panel-lbl {
+        font-size: .64rem;
+        font-weight: 600;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        color: #6c7a91;
+    }
+
+    .mis-actividades-modal .egreso-detalle-panel-txt {
+        white-space: pre-line;
+        color: #1f2a3c;
+    }
+
+    .mis-actividades-modal .egreso-detalle-panel-vacio {
+        color: #8c96a5;
+        font-style: italic;
+    }
+
+    .mis-actividades-modal .egreso-detalle-panel-conteo {
+        max-width: 320px;
+        margin-top: .4rem;
+        padding: .35rem .5rem;
+        background: #fff;
+        border: 1px solid #e3e6f0;
+        border-radius: .4rem;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: .7rem;
+        white-space: pre-line;
+    }
+
+    .mis-actividades-modal .egreso-detalle-panel-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .25rem .9rem;
+        margin-top: .4rem;
+        color: #6c7a91;
+        font-size: .7rem;
+    }
+
+    .mis-actividades-modal .egreso-detalle-panel-meta b {
+        color: #4a5568;
+        font-weight: 600;
+    }
+
+    .mis-actividades-modal .egreso-detalle-panel-num {
+        margin-left: auto;
+    }
+
+    /* Sin la doble linea que dejaba el td del renglon de detalle (colapsado o abierto). */
+    .mis-actividades-modal .egresos-actividades-tabla .table .egreso-detalle-row > td {
+        border-top: 0;
+    }
+
+    .mis-actividades-modal .egresos-actividades-tabla tr.egreso-row:has(+ tr.egreso-detalle-row .collapse.show) > td {
+        background: #f6f9fd;
+    }
+
+    .mis-actividades-modal .egresos-actividades-tabla .btn-detalle-egreso i {
+        transition: transform .15s ease;
+    }
+
+    /* Se mira el detalle abierto (.collapse.show) y no aria-expanded: con Bootstrap 5 + bootstrap4-compat.js el
+       aria-expanded de los botones data-toggle no se actualiza. */
+    .mis-actividades-modal .egresos-actividades-tabla tr.egreso-row:has(+ tr.egreso-detalle-row .collapse.show) .btn-detalle-egreso i {
+        transform: rotate(180deg);
+    }
+
+    html.dark-mode .mis-actividades-modal .egreso-detalle-panel {
+        background: #132032;
+        border-color: #2a3b52;
+        border-left-color: #6e96f0;
+    }
+
+    html.dark-mode .mis-actividades-modal .egreso-detalle-panel-txt { color: #e5edf7; }
+    html.dark-mode .mis-actividades-modal .egreso-detalle-panel-lbl,
+    html.dark-mode .mis-actividades-modal .egreso-detalle-panel-meta,
+    html.dark-mode .mis-actividades-modal .egreso-detalle-panel-vacio { color: #97a7bd; }
+    html.dark-mode .mis-actividades-modal .egreso-detalle-panel-meta b { color: #dce6f5; }
+
+    html.dark-mode .mis-actividades-modal .egreso-detalle-panel-conteo {
+        background: #0f172a;
+        border-color: #2a3b52;
+        color: #e5edf7;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-actividades-tabla tr.egreso-row:has(+ tr.egreso-detalle-row .collapse.show) > td {
+        background: #162438;
     }
 
     /* Rediseno desktop (2026-10-28, ver docs/DECISIONS.md): linea de contexto en texto plano, filtros como control segmentado,

@@ -48,6 +48,9 @@ namespace NegocioTests.Fakes
         public DataTable findCierreCerradoQueContiene(int idDueno, int idSucursal, DateTime fecha) => CierreCerradoQueContiene ?? new DataTable();
         public void registrarAuditoriaCierre(AuditoriaCierreCaja auditoria) => AuditoriasRegistradas.Add(auditoria);
         public DataTable obtenerAuditoriaCierre(int idCierre) => throw new NotImplementedException();
+        public bool SoportaAuditoriaEgresos { get; set; } = false;
+        public EgresoCaja modificarEgresoCajaConHistorial(EgresoCaja anterior, EgresoCaja nuevo, int idUsuarioAutor, string usuarioAutor) => addOrEditEgresoCaja(nuevo);
+        public DataTable obtenerModificacionesEgresosDelDueno(int idDueno, int idSucursal, DateTime desde, DateTime hasta) => new DataTable();
         // Egreso de caja de una compra (null = no tiene: devuelve uno vacio, Id 0, como la implementacion real).
         public EgresoCaja EgresoDeCompra { get; set; }
         public EgresoCaja findEgresoCajaPorCompra(int idCompra) => EgresoDeCompra ?? new EgresoCaja();

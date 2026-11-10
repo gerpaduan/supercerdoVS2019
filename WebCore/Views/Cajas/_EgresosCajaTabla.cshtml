@@ -442,6 +442,48 @@
                     </tr>
                     <tr class="egreso-detalle-row">
                         <td colspan="@columnasTabla" class="p-0">
+                            @if (modoActividades)
+                            {
+                                @* Mis actividades / Actividades (2026-11-10, ver docs/DECISIONS.md "Detalle desplegado de Mis actividades"):
+                                   panel compacto pegado a la fila. No repite lo que ya dice la fila (Creado por / Creado) ni el encargado
+                                   (Sucursal, salvo que haya filas de otra sucursal) y no muestra campos vacios. Estilos en _MisEgresosCaja. *@
+                                string conteoActividad = Valor(row, "ConteoBilletes");
+                                string actualizadoActividad = Fecha(row, "Actualizado");
+                                string actualizadoPorActividad = Valor(row, "Actualizado Por");
+                                <div id="@detalleId" class="collapse egreso-detalle-collapse">
+                                    <div class="egreso-detalle-panel">
+                                        <div class="egreso-detalle-panel-lbl">Detalle</div>
+                                        @if (string.IsNullOrWhiteSpace(detalleTexto))
+                                        {
+                                            <div class="egreso-detalle-panel-vacio">Sin detalle cargado</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="egreso-detalle-panel-txt">@detalleTexto</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(conteoActividad))
+                                        {
+                                            <div class="egreso-detalle-panel-conteo"><strong>Conteo de billetes</strong>@("\n" + conteoActividad)</div>
+                                        }
+                                        <div class="egreso-detalle-panel-meta">
+                                            @if (!ocultarSucursal && !string.IsNullOrWhiteSpace(sucursalFila))
+                                            {
+                                                <span><i class="fas fa-store mr-1"></i>@sucursalFila</span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(actualizadoActividad))
+                                            {
+                                                <span><i class="fas fa-pen mr-1"></i>@(string.IsNullOrWhiteSpace(actualizadoPorActividad) ? "Modificado " : "Modificado por ")<b>@actualizadoPorActividad</b> · @actualizadoActividad</span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(id))
+                                            {
+                                                <span class="egreso-detalle-panel-num">Egreso N° @id</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
                             <div id="@detalleId" class="collapse egreso-detalle-collapse">
                                 <div class="p-3 border-top egreso-detalle-wrap">
                                     <div class="egreso-detalle-meta-card">
@@ -486,6 +528,7 @@
                                     </div>
                                 </div>
                             </div>
+                            }
                         </td>
                     </tr>
                 }
@@ -600,8 +643,15 @@
                     <div class="egreso-card-line">Sucursal: @sucursalFila</div>
                     <div class="egreso-card-line">Creado: @Fecha(row, "Creado")</div>
                     <div class="egreso-card-line">Creado por: @Valor(row, "Creado Por")</div>
-                    <div class="egreso-card-line">Actualizado: @Fecha(row, "Actualizado")</div>
-                    <div class="egreso-card-line">Actualizado por: @Valor(row, "Actualizado Por")</div>
+                    @* En Mis actividades / Actividades no se muestran los campos vacios (2026-11-10); el listado completo queda igual. *@
+                    @if (!modoActividades || !string.IsNullOrWhiteSpace(Valor(row, "Actualizado")))
+                    {
+                        <div class="egreso-card-line">Actualizado: @Fecha(row, "Actualizado")</div>
+                    }
+                    @if (!modoActividades || !string.IsNullOrWhiteSpace(Valor(row, "Actualizado Por")))
+                    {
+                        <div class="egreso-card-line">Actualizado por: @Valor(row, "Actualizado Por")</div>
+                    }
                 </div>
             </div>
         }

@@ -841,6 +841,88 @@ namespace DatosPostgres
             return oEgresoCaja;
         }
 
+        #region Historial de modificaciones de egresos (2026-11-10, ver docs/DECISIONS.md)
+
+        public bool SoportaAuditoriaEgresos => true;
+
+        // UPDATE del egreso + INSERT del antes/despues en auditoriaegresoscaja, en UNA transaccion: si el historial falla
+        // no se guarda la modificacion (es un control para el encargado, no puede quedar una modificacion sin rastro).
+        public EgresoCaja modificarEgresoCajaConHistorial(EgresoCaja anterior, EgresoCaja nuevo, int idUsuarioAutor, string usuarioAutor)
+        {
+            if (anterior == null) throw new ArgumentNullException(nameof(anterior));
+            if (nuevo == null) throw new ArgumentNullException(nameof(nuevo));
+            if (nuevo.Id <= 0) throw new ArgumentException("Solo se registra el historial de un egreso existente.", nameof(nuevo));
+
+            const string sqlHistorial = @"
+                INSERT INTO auditoriaegresoscaja (idempresa, idegresocaja, idusuario, usuario, creadoporegreso,
+                    montoanterior, montonuevo, idtipoanterior, idtiponuevo, fechahoraanterior, fechahoranueva,
+                    descripcionanterior, descripcionnueva, idsucursalanterior, idsucursalnueva)
+                VALUES (@idEmpresa, @idEgreso, @idUsuario, @usuario, @creadoPor,
+                    @montoAnterior, @montoNuevo, @idTipoAnterior, @idTipoNuevo, @fechaAnterior, @fechaNueva,
+                    @descripcionAnterior, @descripcionNueva, @idSucursalAnterior, @idSucursalNueva);";
+
+            using (var uow = UnitOfWorkPg.Iniciar(_connectionString, _idEmpresa))
+            {
+                EgresoCaja guardado = addOrEditEgresoCaja(nuevo, uow);
+
+                DbPg.NonQuery(_connectionString, _idEmpresa, sqlHistorial, p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("idEgreso", nuevo.Id);
+                    p.AddWithValue("idUsuario", idUsuarioAutor);
+                    p.AddWithValue("usuario", (object)usuarioAutor ?? DBNull.Value);
+                    p.AddWithValue("creadoPor", anterior.CreadoPor);
+                    p.AddWithValue("montoAnterior", (double)anterior.Monto);
+                    p.AddWithValue("montoNuevo", (double)nuevo.Monto);
+                    p.AddWithValue("idTipoAnterior", anterior.IdTipoEgresoCaja);
+                    p.AddWithValue("idTipoNuevo", nuevo.IdTipoEgresoCaja);
+                    p.AddWithValue("fechaAnterior", anterior.Fecha);
+                    p.AddWithValue("fechaNueva", nuevo.Fecha);
+                    p.AddWithValue("descripcionAnterior", (object)anterior.Descripcion ?? DBNull.Value);
+                    p.AddWithValue("descripcionNueva", (object)nuevo.Descripcion ?? DBNull.Value);
+                    p.AddWithValue("idSucursalAnterior", anterior.Sucursal != null ? (object)anterior.Sucursal.idSucursal : DBNull.Value);
+                    p.AddWithValue("idSucursalNueva", nuevo.Sucursal != null ? (object)nuevo.Sucursal.idSucursal : DBNull.Value);
+                }, uow);
+
+                uow.Completar();
+                return guardado;
+            }
+        }
+
+        // Modificaciones del propio dueno de egresos de esa sucursal cuya fecha anterior o nueva cae en la caja. Se mira la
+        // sucursal anterior o la nueva por el mismo motivo: sacar un egreso de la caja cambiandole fecha o sucursal tambien
+        // tiene que aparecer. La mas vieja primero (asi se leen en orden en el modal).
+        public DataTable obtenerModificacionesEgresosDelDueno(int idDueno, int idSucursal, DateTime desde, DateTime hasta)
+        {
+            const string sql = @"
+                SELECT a.id, a.idegresocaja, a.idusuario, a.usuario, a.fecha, ec.creado AS creadoegreso,
+                       a.montoanterior, a.montonuevo, a.idtipoanterior, a.idtiponuevo,
+                       ta.tipoegresocaja AS tipoanterior, tn.tipoegresocaja AS tiponuevo,
+                       a.fechahoraanterior, a.fechahoranueva, a.descripcionanterior, a.descripcionnueva,
+                       a.idsucursalanterior, a.idsucursalnueva,
+                       sa.sucursal AS sucursalanterior, sn.sucursal AS sucursalnueva
+                FROM auditoriaegresoscaja a
+                LEFT JOIN egresoscaja ec ON ec.id = a.idegresocaja
+                LEFT JOIN tiposegresocaja ta ON ta.id = a.idtipoanterior
+                LEFT JOIN tiposegresocaja tn ON tn.id = a.idtiponuevo
+                LEFT JOIN sucursal sa ON sa.idsucursal = a.idsucursalanterior
+                LEFT JOIN sucursal sn ON sn.idsucursal = a.idsucursalnueva
+                WHERE a.creadoporegreso = @dueno AND a.idusuario = @dueno
+                  AND ((a.idsucursalanterior = @sucursal AND a.fechahoraanterior BETWEEN @desde AND @hasta)
+                    OR (a.idsucursalnueva = @sucursal AND a.fechahoranueva BETWEEN @desde AND @hasta))
+                ORDER BY a.fecha, a.id;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("dueno", idDueno);
+                p.AddWithValue("sucursal", idSucursal);
+                p.AddWithValue("desde", desde);
+                p.AddWithValue("hasta", hasta);
+            });
+        }
+
+        #endregion
+
         public EgresoCaja getEgresoCajaById(int idEgresoCaja)
         {
             const string sql = @"
