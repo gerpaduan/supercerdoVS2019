@@ -20,8 +20,12 @@
         || Model.MostrarFiltroEstadoStock || Model.MostrarFiltroAgrupacionTemporal;
 }
 
-<div class="d-flex flex-wrap align-items-center justify-content-between mt-3">
-    <div>
+@* Renglon "Filtros avanzados + Buscar". En escritorio (>= 1200 px) .fc-fila lo disuelve y cada uno es una celda de la fila unica de
+   filtros del Index (fc-c5 / fc-c6, ver _FiltrosCompactosStyles); por debajo de 1200 px .reportes-fila-acciones (Index.cshtml) lo
+   deja como siempre (switch a la izquierda, Buscar a la derecha). Los labels con &nbsp; solo alinean la fila en escritorio. *@
+<div class="reportes-fila-acciones fc-fila mt-3">
+    <div class="form-group mb-0 fc-c5">
+        <label class="stock-filtro-label d-none d-xl-block">&nbsp;</label>
         @if (hayFiltrosAvanzados)
         {
             <div class="custom-control custom-switch">
@@ -30,14 +34,17 @@
             </div>
         }
     </div>
-    <button type="submit" class="btn btn-primary" id="btnBuscarReporte">
-        <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
-    </button>
+    <div class="form-group mb-0 fc-c6">
+        <label class="stock-filtro-label d-none d-xl-block">&nbsp;</label>
+        <button type="submit" class="btn btn-primary btn-block" id="btnBuscarReporte">
+            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+        </button>
+    </div>
 </div>
 
 @if (hayFiltrosAvanzados)
 {
-    <div class="reportes-filtros-grid reportes-filtros-secundarios mt-2 d-none" id="panelFiltrosAvanzadosReporte">
+    <div class="reportes-filtros-grid reportes-filtros-secundarios reportes-fc-ancho mt-2 d-none" id="panelFiltrosAvanzadosReporte">
         @if (Model.MostrarFiltroTipoProducto)
         {
             <div class="form-group mb-0">
@@ -74,7 +81,7 @@
 
 @if (esReporteBalance)
 {
-    <div class="border-top mt-3 pt-3">
+    <div class="border-top mt-3 pt-3 reportes-fc-ancho">
         <div class="custom-control custom-switch">
             <input type="checkbox"
                    class="custom-control-input filtro-principal"
@@ -91,7 +98,7 @@
 
 @if (esReporteVentasProducto || esReporteProyeccion || esReporteBalance)
 {
-    <div class="border-top mt-3 pt-3">
+    <div class="border-top mt-3 pt-3 reportes-fc-ancho">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
             <div>
                 <div class="font-weight-semibold">Periodos comparativos</div>

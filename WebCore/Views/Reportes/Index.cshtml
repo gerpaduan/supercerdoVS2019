@@ -92,7 +92,11 @@
         <h5 class="reportes-popup-titulo mb-2">Reportes</h5>
     }
 
-    <div class="card shadow-sm mb-3 reportes-filtros-card">
+    @* Bloque superior: en escritorio (>= 1200 px) los filtros van en UNA fila y debajo una barra con el estado, "Mostrar totales"
+       y los botones; los totales (chips) bajan a su propio renglon al activarlos. Por debajo de 1200 px conserva el orden de siempre.
+       Estilos en Shared/_FiltrosCompactosStyles + los de esta pantalla (reportes-top, abajo). *@
+    <div class="fc-top reportes-top">
+    <div class="card shadow-sm mb-3 reportes-filtros-card fc-card">
         <div class="card-body">
             <form id="formReportes" method="get" action="@Url.Action("Index", "Reportes")" autocomplete="off">
                 <input type="hidden" name="buscar" id="buscarReportes" value="true" />
@@ -102,13 +106,16 @@
                     <input type="hidden" name="popup" value="true" />
                 }
 
-                <div class="reportes-filtros-grid">
-                    <div class="form-group mb-0">
+                @* .fc-grid: la grilla de una sola fila de escritorio. Sus filas internas (.fc-fila) se disuelven y cada campo es una celda
+                   (fc-c1..c6); el partial de filtros secundarios (Filtros avanzados + Buscar) aporta fc-c5 y fc-c6. *@
+                <div class="fc-grid">
+                <div class="reportes-filtros-grid fc-fila">
+                    <div class="form-group mb-0 fc-c1">
                         <label class="stock-filtro-label" for="tipoReporte">Tipo de reporte</label>
                         @Html.DropDownList("tipoReporte", Model.TiposReporte, new { @class = "form-control filtro-principal", id = "tipoReporte" })
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c2">
                         <label class="stock-filtro-label" for="fechaDesdeReporte">Fecha desde</label>
                         <input type="datetime-local" id="fechaDesdeReporte" name="fechaDesde" class="form-control filtro-principal @(Model.UsaCierreEnFechaDesde ? "d-none" : "")" value="@Model.FechaDesdeValor" />
                         <select id="fechaDesdeCierreReporte" class="form-control filtro-principal @(!Model.UsaCierreEnFechaDesde ? "d-none" : "")"></select>
@@ -116,7 +123,7 @@
                         <div class="form-control-plaintext small text-muted d-none" id="infoDesdePorSucursal"><i class="fas fa-store mr-1"></i>Cierre de cada sucursal</div>
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c3">
                         <label class="stock-filtro-label" for="fechaHastaReporte">Fecha hasta</label>
                         <div class="input-group @(!Model.UsaCierreEnFechaHasta ? "" : "d-none")" id="fechaHastaDateWrap">
                             <input type="datetime-local" id="fechaHastaReporte" name="fechaHasta" class="form-control filtro-principal" value="@Model.FechaHastaValor" />
@@ -130,7 +137,7 @@
                         <div class="form-control-plaintext small text-muted d-none" id="infoHastaPorSucursal"><i class="fas fa-store mr-1"></i>Cierre de cada sucursal</div>
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-0 fc-c4">
                         <label class="stock-filtro-label" for="btnSucursalesReporte">Sucursales</label>
                         @* Seleccion multiple: una, varias o todas. Los checkboxes (name="idsSucursales") son la seleccion real.
                            El campo oculto #sucursalReporte conserva el contrato de siempre ("id de la sucursal si hay UNA sola,
@@ -161,12 +168,13 @@
                     </div>
                 </div>
 
-                <div class="alert alert-warning py-2 px-3 mb-0 mt-2 d-none" id="cardAvisoPendienteReporte">
+                <div class="alert alert-warning py-2 px-3 mb-0 mt-2 d-none fc-alerta" id="cardAvisoPendienteReporte">
                     <span class="font-weight-semibold">Se modificaron filtros principales. Presiona Buscar para actualizar el reporte con los filtros.</span>
                 </div>
 
-                <div id="reportesFiltrosSecundariosWrap">
+                <div id="reportesFiltrosSecundariosWrap" class="fc-fila">
                     @Html.Partial("~/Views/Reportes/_FiltrosSecundarios.cshtml", Model)
+                </div>
                 </div>
             </form>
         </div>
@@ -179,13 +187,21 @@
         </div>
     }*@
 
-    <div class="d-flex align-items-center mb-3">
-        <div class="custom-control custom-switch mr-3">
-            <input type="checkbox" class="custom-control-input" id="switchMostrarTotalesReporte" />
-            <label class="custom-control-label" for="switchMostrarTotalesReporte">Mostrar totales</label>
+    @* Estado de la busqueda: en escritorio avisa "Cambiaste los filtros" (reportes.js, showPending); por debajo de 1200 px se oculta
+       (ahi esta la alerta amarilla de arriba). *@
+    <div id="estadoBusquedaReportes" class="fc-estado text-muted small mb-2">Resultados actualizados.</div>
+
+    @* .fc-contents: en escritorio este renglon se disuelve y "Mostrar totales" + botones pasan a ser items de la barra fc-top;
+       por debajo de 1200 px es el renglon de siempre. *@
+    <div class="d-flex flex-wrap align-items-center mb-3 fc-contents">
+        <div class="d-flex align-items-center reportes-vista">
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchMostrarTotalesReporte" />
+                <label class="custom-control-label" for="switchMostrarTotalesReporte">Mostrar totales</label>
+            </div>
+            <span class="text-muted small reportes-registros" id="lblTotalRegistrosCompacto">@cantidadRegistrosVisibles registros visibles</span>
         </div>
-        <span class="text-muted" id="lblTotalRegistrosCompacto">@cantidadRegistrosVisibles registros visibles</span>
-        <div class="ms-auto ml-auto d-flex">
+        <div class="ms-auto ml-auto d-flex reportes-acciones">
             @* Exportar a Excel: solo en los reportes de stock con resultados (comparten tabla). reportes.js arma la URL con los filtros y el estado de "Mostrar detalles". *@
             @if (esReporteStockDetalle && Model.ConsultaRealizada && Model.HayResultados)
             {
@@ -208,46 +224,46 @@
     {
         if ((Model.PeriodosBalance ?? new System.Collections.Generic.List<WebCore.Models.ReporteBalancePeriodoVm>()).Count <= 1)
         {
-            <div class="reportes-totales-grid reportes-totales-grid-balance mb-3 d-none">
+            <div class="reportes-totales-grid reportes-totales-grid-balance fc-totales mb-3 d-none">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Total ventas periodo principal</div>
+                        <div class="text-muted small">Total ventas<span class="fc-oculto-escritorio"> periodo principal</span></div>
                         <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? (Model.IncluirVentasCuentaCorrienteBalance ? balancePrincipal.TotalVentas : balancePrincipal.VentasConsumidorFinal) : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
                     </div>
                 </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Total compras periodo principal</div>
+                        <div class="text-muted small">Total compras<span class="fc-oculto-escritorio"> periodo principal</span></div>
                         <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Compras : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
                     </div>
                 </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Total gastos periodo principal</div>
+                        <div class="text-muted small">Total gastos<span class="fc-oculto-escritorio"> periodo principal</span></div>
                         <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Gastos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
                     </div>
                 </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Balance economico periodo principal</div>
+                        <div class="text-muted small">Balance economico<span class="fc-oculto-escritorio"> periodo principal</span></div>
                         <div class="h4 mb-0 font-weight-bold @((balancePrincipal != null && balancePrincipal.BalanceEconomico < 0) ? "text-danger" : "text-success")">@((balancePrincipal != null ? balancePrincipal.BalanceEconomico : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
                     </div>
                 </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Total cobros periodo principal</div>
+                        <div class="text-muted small">Total cobros<span class="fc-oculto-escritorio"> periodo principal</span></div>
                         <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Cobros : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
                     </div>
                 </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Total pagos periodo principal</div>
+                        <div class="text-muted small">Total pagos<span class="fc-oculto-escritorio"> periodo principal</span></div>
                         <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Pagos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
                     </div>
                 </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Dif. cobros/pagos principal</div>
+                        <div class="text-muted small">Dif. cobros/pagos<span class="fc-oculto-escritorio"> principal</span></div>
                         <div class="h4 mb-0 font-weight-bold @((balancePrincipal != null && balancePrincipal.DiferenciaCobrosPagos < 0) ? "text-danger" : "text-success")">@((balancePrincipal != null ? balancePrincipal.DiferenciaCobrosPagos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
                     </div>
                 </div>
@@ -256,19 +272,19 @@
     }
     else
     {
-        <div class="reportes-totales-grid @(esCierreStock ? "reportes-totales-grid-cierre" : "") mb-3 d-none">
+        <div class="reportes-totales-grid @(esCierreStock ? "reportes-totales-grid-cierre" : "") fc-totales mb-3 d-none">
             @if (esCierreStock)
             {
                 @* Cierre Stock: el Faltante tiene signo; sumarlo en una sola cifra compensaria lo que faltó con lo vendido de más. *@
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Faltó mercadería (kg visibles)</div>
+                        <div class="text-muted small">Faltó mercadería<span class="fc-oculto-escritorio"> (kg visibles)</span></div>
                         <div class="h4 mb-0 font-weight-bold reporte-faltante-pos" id="totalFaltoReporte">@Model.Totales.TotalFaltoMercaderia.ToString("N3")</div>
                     </div>
                 </div>
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <div class="text-muted small">Vendido de más (kg visibles)</div>
+                        <div class="text-muted small">Vendido de más<span class="fc-oculto-escritorio"> (kg visibles)</span></div>
                         <div class="h4 mb-0 font-weight-bold reporte-faltante-neg" id="totalVendidoDeMasReporte">@Model.Totales.TotalVendidoDeMas.ToString("N3")</div>
                     </div>
                 </div>
@@ -308,6 +324,8 @@
             </div>
         </div>
     }
+
+    </div>
 
     <div class="card shadow-sm mb-3 reportes-resultado-card">
         <div class="card-body p-0">
@@ -363,6 +381,16 @@
                                 </div>
                                 @if (esCierreStock)
                                 {
+                                    @* Las tres columnas de movimiento (St. inicial, Total Ingresos, Total Egresos) arrancan ocultas: se ven
+                                       poco y ocupan lugar. reportes.js recuerda la eleccion en sessionStorage (reportes_cierre_mov_visibles). *@
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="switchMostrarMovimientosCierre" />
+                                        <label class="custom-control-label" for="switchMostrarMovimientosCierre"
+                                               title="Mostrar las columnas St. inicial, Total Ingresos y Total Egresos">Ver inicial, ingresos y egresos</label>
+                                    </div>
+                                }
+                                @if (esCierreStock)
+                                {
                                     @* Leyenda de la columna Faltante: el color nunca va solo, siempre con icono y texto. *@
                                     <div class="reporte-faltante-leyenda">
                                         <span class="reporte-faltante-leyenda-titulo">Faltante:</span>
@@ -396,9 +424,9 @@
                                         <th class="text-right reporte-detalle-col d-none">Tot. egresos</th>
                                         @if (esCierreStock)
                                         {
-                                            <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-sortable-col" data-sort-key="stockinicial" data-sort-type="number">St. inicial</th>
-                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="totalingresos" data-sort-type="number">Total Ingresos</th>
-                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="totalegresos" data-sort-type="number">Total Egresos</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-cierre-mov-col reporte-sortable-col" data-sort-key="stockinicial" data-sort-type="number">St. inicial</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-cierre-mov-col reporte-sortable-col" data-sort-key="totalingresos" data-sort-type="number">Total Ingresos</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-cierre-mov-col reporte-sortable-col" data-sort-key="totalegresos" data-sort-type="number">Total Egresos</th>
                                             <th class="text-right reporte-stock-resumen-col reporte-sortable-col reporte-col-stockcierre" data-sort-key="stockcierre" data-sort-type="number"
                                                 title="Stock registrado en el cierre de stock (fecha hasta).">
                                                 Stock Cierre
@@ -495,9 +523,9 @@
                                             @{ var equivalenteUnidadesStock = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades(item.StockActual, item.Promedio, item.Pesable); }
                                             @if (esCierreStock)
                                             {
-                                                <td class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial">@item.StockInicial.ToString("N3")</td>
-                                                <td class="text-right reporte-stock-resumen-col">@item.TotalIngresos.ToString("N3")</td>
-                                                <td class="text-right reporte-stock-resumen-col">@item.TotalEgresos.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-cierre-mov-col">@item.StockInicial.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col reporte-cierre-mov-col">@item.TotalIngresos.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col reporte-cierre-mov-col">@item.TotalEgresos.ToString("N3")</td>
                                                 <td class="text-right reporte-stock-resumen-col font-weight-bold reporte-col-stockcierre">@item.StockCierre.ToString("N3")</td>
                                                 // Faltante = stock teorico - Stock Cierre (CierreStockWeb). Se clasifica sobre el valor ya
                                                 // redondeado a 3 decimales (los que se muestran) para que "0,000" nunca salga como falta.
@@ -1082,6 +1110,7 @@
     }
 </div>
 
+@Html.Partial("~/Views/Shared/_FiltrosCompactosStyles.cshtml")
 <style>
     .reportes-page .card-body {
         padding: .85rem 1rem;
@@ -1610,6 +1639,12 @@
     html.dark-mode .reporte-stock-modal-kpi.reporte-faltante-cero strong { color: #7fe0a0; }
 
     #tablaReporteStockActual.reportes-stock-detalles-activos .reporte-stock-resumen-inicial {
+        display: none;
+    }
+
+    /* Cierre Stock: St. inicial / Total Ingresos / Total Egresos ocultos hasta activar #switchMostrarMovimientosCierre
+       (reportes.js agrega .reportes-cierre-mov-visibles). */
+    #tablaReporteStockActual:not(.reportes-cierre-mov-visibles) .reporte-cierre-mov-col {
         display: none;
     }
 
@@ -2171,6 +2206,70 @@
         .reporte-stock-modal-badges {
             grid-template-columns: 1fr;
             width: 100%;
+        }
+    }
+
+    /* ---- Filtros compactos y barra (2026-11-10): mismo criterio que Compras / Elaborados (ver _FiltrosCompactosStyles) ---- */
+    /* Columnas de la fila unica: Tipo | Desde | Hasta (con boton reloj) | Sucursales | Filtros avanzados | Buscar.
+       Las fechas son datetime-local sin segundos. */
+    .reportes-top .reportes-filtros-card {
+        --fc-cols: minmax(10rem, 1.15fr) minmax(10.5rem, 1fr) minmax(12.5rem, 1fr) minmax(7rem, 1fr) 9.5rem 6.2rem;
+    }
+
+    /* "N registros visibles" separado del interruptor (el margen del switch lo pisaba ui-refresh.css). */
+    body.app-shell .reportes-vista .reportes-registros {
+        margin-left: 1rem;
+        white-space: nowrap;
+    }
+
+    @@media (min-width: 1200px) {
+        /* Panel de filtros avanzados, switch de Balance y Periodos comparativos: renglon propio, a todo el ancho. */
+        body.app-shell .reportes-top .reportes-fc-ancho {
+            grid-column: 1 / -1;
+        }
+
+        /* Barra: Mostrar totales (izquierda) | estado (flexible) | botones (derecha). Los chips de totales bajan a su propio renglon. */
+        body.app-shell .reportes-top .reportes-vista {
+            order: 1;
+            white-space: nowrap;
+            font-size: .84rem;
+        }
+
+        body.app-shell .reportes-top .reportes-acciones {
+            order: 4;
+            margin-left: auto;
+            flex-wrap: nowrap !important;
+        }
+
+        body.app-shell .reportes-top .reportes-acciones .btn {
+            min-height: 1.95rem;
+            white-space: nowrap;
+        }
+
+        body.app-shell .reportes-top > .reportes-totales-grid {
+            order: 5;
+            flex: 0 0 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem .5rem;
+        }
+
+        body.app-shell .reportes-top .fc-card #btnBuscarReporte {
+            white-space: nowrap;
+        }
+    }
+
+    /* Por debajo de 1200 px el renglon "Filtros avanzados + Buscar" del partial es el de siempre. */
+    @@media (max-width: 1199.98px) {
+        .reportes-top .reportes-fila-acciones {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .reportes-top .fc-estado {
+            display: none;
         }
     }
 </style>

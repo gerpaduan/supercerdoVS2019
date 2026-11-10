@@ -126,6 +126,13 @@
         var $btnToggleBusquedaProducto = $("#btnToggleBusquedaProductoReporte");
         var $busquedaProducto = $("#busquedaProductoReporte");
         var $switchTotales = $("#switchMostrarTotalesReporte");
+        // Cierre Stock: interruptor de las columnas St. inicial / Total Ingresos / Total Egresos (ocultas por defecto).
+        var $switchMovCierre = $("#switchMostrarMovimientosCierre");
+        var CLAVE_MOV_CIERRE = "reportes_cierre_mov_visibles";
+        // Texto de estado de la barra de escritorio (#estadoBusquedaReportes): "Resultados actualizados." / aviso de filtros sin aplicar.
+        var $estadoBusqueda = $("#estadoBusquedaReportes");
+        var textoEstadoOk = $estadoBusqueda.text();
+        var textoEstadoPendiente = "Cambiaste los filtros: tocá Buscar para actualizar.";
         var $totalesGrid = $(".reportes-totales-grid");
         var $lblTotalRegistrosCompacto = $("#lblTotalRegistrosCompacto");
         var $floatingZone = $("#reportesFloatingZone");
@@ -178,8 +185,16 @@
             return reportType() === "Balance Economico";
         }
 
+        // Filtros sin aplicar: alerta amarilla (pantalla angosta) y, en escritorio (donde la alerta se oculta por CSS), el texto de
+        // estado de la barra + Buscar en ambar. #btnBuscarReporte vive en el partial que se reemplaza por AJAX al cambiar el
+        // tipo de reporte, por eso se busca cada vez (y refreshFiltrosSecundarios vuelve a llamar a esto tras el reemplazo).
         function showPending(show) {
             $pendingCard.toggleClass("d-none", !show);
+            $("#btnBuscarReporte").toggleClass("btn-warning", !!show).toggleClass("btn-primary", !show);
+            $estadoBusqueda
+                .text(show ? textoEstadoPendiente : textoEstadoOk)
+                .attr("title", show ? textoEstadoPendiente : "")
+                .toggleClass("fc-estado-pendiente", !!show);
         }
 
         // Ids de las sucursales tildadas (siempre al menos una, ver syncBranchSelection).
@@ -334,6 +349,41 @@
             $fechaHastaDateWrap.toggleClass("d-none", useClosureTo);
             $fechaHastaCierre.toggleClass("d-none", !useClosureTo);
             syncClosureNames();
+        }
+
+        // Cierre Stock: muestra u oculta St. inicial / Total Ingresos / Total Egresos. La eleccion se recuerda en sessionStorage
+        // (por pestania): Buscar recarga la pagina y sin esto el interruptor volveria a apagarse. El acceso al storage puede fallar
+        // (navegacion privada, datos bloqueados): en ese caso solo se pierde el recuerdo, la pantalla funciona igual.
+        function applyCierreMovMode(persistir) {
+            if (!$switchMovCierre.length) {
+                return;
+            }
+
+            var mostrar = $switchMovCierre.is(":checked");
+            $tablaStock.toggleClass("reportes-cierre-mov-visibles", mostrar);
+
+            if (persistir) {
+                try {
+                    window.sessionStorage.setItem(CLAVE_MOV_CIERRE, mostrar ? "1" : "0");
+                } catch (e) {
+                    console.warn("No se pudo recordar el interruptor de columnas de Cierre Stock.", e);
+                }
+            }
+
+            // El ancho de la tabla cambia: se reposiciona el encabezado flotante.
+            updateFloatingStack();
+        }
+
+        function restoreCierreMovMode() {
+            if (!$switchMovCierre.length) {
+                return;
+            }
+
+            try {
+                $switchMovCierre.prop("checked", window.sessionStorage.getItem(CLAVE_MOV_CIERRE) === "1");
+            } catch (e) {
+                console.warn("No se pudo leer el interruptor de columnas de Cierre Stock.", e);
+            }
         }
 
         function applyDetailsMode() {
@@ -997,6 +1047,8 @@
                 }
 
                 $wrap.html(html);
+                // El Buscar nuevo viene en azul: si habia filtros sin aplicar, vuelve a ambar.
+                showPending(!$pendingCard.hasClass("d-none"));
                 refreshDynamicFilterRefs();
                 restorePeriodRows(periodosCapturados);
                 recalculateAllPeriodRows();
@@ -1478,6 +1530,10 @@
             applyDetailsMode();
         });
 
+        $switchMovCierre.on("change", function () {
+            applyCierreMovMode(true);
+        });
+
         // #panelFiltrosAvanzadosReporte vive dentro de _FiltrosSecundarios.cshtml, que se
         // reemplaza entero por AJAX al cambiar "Tipo de reporte" (refreshFiltrosSecundarios) --
         // por eso el binding es delegado (no un $(...) cacheado) y no necesita re-bindearse.
@@ -1633,6 +1689,8 @@
         syncBranchSelection(null);
         applyReportMode(false);
         applyDetailsMode();
+        restoreCierreMovMode();
+        applyCierreMovMode(false);
         initializePeriodsFromConfig();
         applyLiveFilters();
         renderBalanceCharts();

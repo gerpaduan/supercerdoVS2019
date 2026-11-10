@@ -7,6 +7,13 @@
 - **Verificado:** build limpio, `WebCore.Tests` 193/193 y prueba con login real en un WebCore propio (flujos de listado, ficha y alta, guardado verificado en la base, modo oscuro, celular). Usuarios de prueba borrados.
 - **Pendiente:** capturas y video del manual (`Usuarios.Index`, `Usuarios.Asistente`); el PIN sigue sin mostrarse ni editarse desde el panel (decisión del usuario).
 
+## 2026-11-10 - Reportes: filtros compactos, totales en la barra y columnas de Cierre Stock plegables
+
+- **Pedido:** filtros compactos en todos los reportes (como Compras), ocultar por defecto *St. inicial*, *Total Ingresos* y *Total Egresos* de Cierre Stock con un interruptor, y ordenar la fila de «Mostrar totales».
+- **Cambio:** `Reportes/Index.cshtml` y `_FiltrosSecundarios.cshtml` pasan a la grilla `fc-*` (una fila en ≥ 1200 px, Tipo de reporte primero); barra con *Mostrar totales*, estado, Excel y Abrir en ventana; totales como chips de una línea; aviso de filtros sin aplicar con **Buscar** ámbar; interruptor **Ver inicial, ingresos y egresos** en Cierre Stock (apagado, se recuerda por pestaña). `reportes.js`: `showPending`, `applyCierreMovMode`. Manual: `Reportes.Index.md`. Decisión: ver `DECISIONS.md` (2026-11-10).
+- **Verificado:** compila (0 errores) y `WebCore.Tests` 193/193. **No se vio en el navegador** (sin usuario de prueba).
+- **Pendiente:** probar a 1280/1366/1524 px con menú lateral, oscuro, celular y ventana independiente; confirmar que Buscar conserva el interruptor de columnas y que Exportar a Excel sigue igual.
+
 ## 2026-11-10 - Permisos que no controlaban nada: Productos / Tipos de producto, Etiquetas y reportes
 
 - **Pedido:** que los permisos de `formularios` que el asistente de usuarios ocultó (porque ninguna pantalla los miraba o nunca funcionaban para un no‑admin) controlen lo que dice su nombre.
