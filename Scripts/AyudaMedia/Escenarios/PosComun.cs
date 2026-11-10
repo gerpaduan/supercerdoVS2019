@@ -108,6 +108,10 @@ internal static class PosComun
                     var t = tr.textContent || '';
                     tr.setAttribute('data-fic-revisada', permitidos.some(function (p) { return t.indexOf(p) >= 0; }) ? 'si' : 'no');
                 });
+                // Expendios (AvPag), filtro Persona: la lista sugiere personas reales; solo queda la clienta ficticia.
+                document.querySelectorAll('#expPersonaLista .exp-persona-item:not([data-fic-revisada])').forEach(function (b) {
+                    b.setAttribute('data-fic-revisada', (b.textContent || '').indexOf('" + ClienteEjemplo + @"') >= 0 ? 'si' : 'no');
+                });
                 document.querySelectorAll(filasBorradores + ':not([data-fic-revisada])').forEach(function (tr) {
                     var previa = tr.previousElementSibling;
                     var esDetalle = tr.classList.contains('bg-light') && previa && previa.hasAttribute('data-fic-revisada');
@@ -129,7 +133,11 @@ internal static class PosComun
                     + '#contenedorVentasSinCerrarPOS > .table-responsive > table > tbody > tr:not([data-fic-revisada=""si""]){display:none !important}'
                     // Contador amarillo de Ayuda (F1) y de 'Ver ventas sin guardar': cuenta las ventas interrumpidas
                     // reales de la sucursal, que no se ven en el video (no coincide con lo que se muestra).
-                    + '#badgeVentasSinCerrar, #badgeVentasSinCerrarAyuda{display:none !important}';
+                    + '#badgeVentasSinCerrar, #badgeVentasSinCerrarAyuda{display:none !important}'
+                    // Expendios (AvPag): solo los de ejemplo (9000001 presupuesto, 9000002/9000003 del dia); los reales
+                    // traen identificacion de cliente, vendedor y productos. Y en el filtro Persona, solo la clienta.
+                    + '#tablaExpendiosPOS tbody tr[data-id-expendio]:not([data-id-expendio=""9000001""]):not([data-id-expendio=""9000002""]):not([data-id-expendio=""9000003""]){display:none !important}'
+                    + '#expPersonaLista .exp-persona-item:not([data-fic-revisada=""si""]){display:none !important}';
                 document.documentElement.appendChild(st);
             }
             ocultarPorDefecto();
@@ -252,11 +260,15 @@ internal static class PosComun
     // Lleva el puntero visible hasta el centro del control (movimiento suave) y hace clic.
     public static async Task MoverYClicAsync(IPage page, string selector)
     {
-        // Si el control quedo fuera de la vista (p. ej. al pie de una ventana con scroll), se lo trae al centro con un
-        // desplazamiento suave, como lo haria una persona; si ya se ve, no se mueve nada.
+        // Si el control quedo fuera de la vista (p. ej. al pie de una ventana con scroll propio), se lo trae al centro
+        // con un desplazamiento suave, como lo haria una persona; si ya se ve, no se mueve nada. "Se ve" = esta dentro
+        // de la pantalla Y en su centro esta el propio control (dentro de un modal con scroll, el rectangulo puede caer
+        // en pantalla aunque el control quede tapado por el borde del modal: paso con la calculadora de billetes).
         bool desplazado = await page.Locator(selector).First.EvaluateAsync<bool>(@"(e) => {
             var r = e.getBoundingClientRect();
-            if (r.top >= 0 && r.bottom <= window.innerHeight) return false;
+            var enPantalla = r.top >= 0 && r.bottom <= window.innerHeight;
+            var arriba = enPantalla ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+            if (enPantalla && arriba && (arriba === e || e.contains(arriba))) return false;
             e.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return true;
         }");

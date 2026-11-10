@@ -117,6 +117,13 @@ Muestra los movimientos de caja del vendedor (egresos, pagos electrónicos y cue
 - En el celular el modal se ve como antes (listado de tarjetas).
 - **PENDIENTE:** no se probó este diseño en el navegador con sesión real (aspecto, modo oscuro, administrador y no administrador).
 
+### Mi cierre de caja (conteo del cajero)
+Verificado en el código y grabado el 2026-11-10 (`Cajas/_MiCierreCaja.cshtml`):
+- **Mi cierre** (en Mis actividades) abre «Mi cierre de caja»: **Efectivo contado en caja**, a mano o con el **contador de billetes** (botón del billete), que deja el detalle en **Conteo de billetes**; después **Guardar mi cierre**.
+- Al guardar: «Se guardó correctamente el conteo de tu cierre de caja.» y el comprobante: **1** cerrar sin imprimir, **2** ticket (58 u 80 mm), **3** PDF, **4** mail.
+- **No cierra la caja ni es un egreso**: no saca plata de la caja. El encargado lo ve al cerrar la caja (Cajas → Cajas abiertas).
+- Mientras la caja siga abierta se puede corregir: el botón pasa a **Actualizar mi cierre** y la ventana avisa «Modo actualizar» con el importe y la fecha anteriores. Si se cambia el importe a mano y no coincide con el conteo de billetes, avisa que el conteo se borra y pide un segundo clic.
+
 ## Mis ventas (F6)
 **F6** abre **Mis actividades**; ahí el botón **Mis ventas** lista las ventas del vendedor **desde que abrió su caja** (la caja abierta en este momento), agrupadas por día, con buscador por cliente y filtro por forma de pago. Tocar una venta la **despliega** en el lugar (artículos, total y, si corresponde, **Modificar venta** y **Cambiar forma de pago**) sin salir de la lista; **Abrir detalle** abre el [detalle completo](ayuda:pantalla/Ventas.DetalleVenta) en el mismo modal, donde también está **Factura / Imprimir**. Pueden quedar varias ventas desplegadas a la vez.
 - Con la cuenta compartida de **producción** son las ventas del **empleado que se autorizó** en esa pestaña («Autorizate para operar» o «Cambiar operario»), no las de la cuenta compartida. Si cambiás de operario, Mis ventas muestra las del nuevo. Al confirmar la clave en «Cambiar operario» aparece 1 segundo un cartel «Cambiando de operario — Pasando a <nombre>…» y la pantalla se recarga (también en el POS de Puntos de Expendio; no aparece en «Autorizate para operar»).
@@ -153,7 +160,10 @@ En **F6 → Mis actividades**, las compras que registraste **desde que abriste t
 En el modal **Expendios** (AvPag), el campo **Persona (cliente del expendio)** busca por razón social, CUIT o identificación (desde 2 letras). Al elegir una persona de la lista se muestran **solo sus expendios**: los que se guardaron con ese cliente fijo y también los que tienen en **Identificación cliente** el mismo texto que la identificación de la persona (no importan mayúsculas, acentos ni espacios de los bordes).
 - Al elegirla, **Fecha desde** pasa a hace 6 meses (si ya escribiste una fecha a mano se respeta). La **✕** (o Backspace) quita la persona y vuelve a la búsqueda de siempre.
 - Si una persona no trae nada: la **identificación** de la persona debe ser igual a la «Identificación cliente» del expendio (no se compara la razón social, porque personas distintas pueden compartirla).
-- PENDIENTE de probar en el navegador con login (lo verificado fue la consulta contra la base local).
+- Probado en el navegador con login el 2026-11-10 (video de Expendios): al elegir la persona, **Fecha desde** pasó a 6 meses atrás y apareció su presupuesto de 2 días antes.
+
+### Cobrar expendios (AvPag)
+Verificado en el código y grabado el 2026-11-10 (`ventas-expendios-pos.js`): **AvPag** abre **Expendios** con los de hoy en estado **Pendientes** y el cursor en **Búsqueda** (número de expendio, identificación del cliente o número de remito; filtra mientras escribís). **Enter** carga el primero que coincide; **Cargar** en la fila hace lo mismo. Lo cargado pasa al carrito con **Exp.Nro** en cada producto y deja de figurar en «Pendientes». **Cargar todos los expendios mostrados** carga los visibles juntos (pide confirmar) y **Quitar expendios cargados** saca los de esta venta. Al cobrar, el expendio queda asignado a la venta.
 
 ## Tema de colores: claro, gris u oscuro
 El botón de la barra de arriba (a la izquierda de tu nombre) cambia el tema del POS y de Punto de Expendio, en este orden: **claro → gris → oscuro → claro**. El icono muestra el **próximo** tema (medio círculo = pasar a gris, luna = pasar a oscuro, sol = volver a claro).
@@ -168,6 +178,9 @@ El botón de la barra de arriba (a la izquierda de tu nombre) cambia el tema del
 - El botón **Volver a iniciar sesión** recarga el POS: si la sesión no existe pide el login y vuelve al mismo POS; si hay otra sesión abierta carga el POS de ese usuario.
 - Una contraseña realmente mal sigue mostrando «Contraseña incorrecta.»; sin red o con el servidor caído sigue el aviso «No se pudo validar la contraseña. Revisá la conexión…».
 - PENDIENTE: no se verificó si la venta en curso se recupera después de volver a iniciar sesión.
+
+## Factura que se abre sola al cobrar (débito, crédito, QR, transferencia)
+Verificado en el código y grabado el 2026-11-10 (`POS.cshtml` `facturaElectronicaRequeridaPorFormaPagoPOS`, `factura-electronica.js`): si la empresa tiene certificado de AFIP, las formas de pago que el administrador tildó en el parámetro **Formas de pago que abren la factura al cobrar** (pantalla [Parámetros](ayuda:pantalla/Parametros.Index)) abren la **factura electrónica** de la venta apenas se cobra. **Sin cargar, rige lo de siempre: Débito, Crédito, QR y Transferencia** (no Efectivo). Se puede tildar también **Efectivo** (para facturar todo) o dejar **ninguna** (nada se abre solo). Cuenta corriente sin cobro nunca abre la factura; en un **pago mixto** se abre si alguna de las dos partes está tildada (la parte que no es efectivo, o el efectivo si está tildado). *Rediseño 2026-11-10, no probado en el POS real: PENDIENTE verificar con una venta de cada forma de pago.* **Alt+R** (o **Registrar factura**) la emite y vuelve a «Venta completada» con «Factura registrada correctamente» y su número. **Cerrar venta sin facturar** (o **Supr**, con el foco fuera de un campo) pide confirmar, deja la venta registrada sin factura y pasa a una venta nueva; se puede facturar después desde Mis ventas → Abrir detalle → Factura / Imprimir. Con las formas de pago no tildadas (por defecto efectivo y cuenta corriente) la factura se hace con el **5** de «Venta completada».
 
 ## Después de cobrar: la ventana «Venta completada»
 Al cobrar aparece **Venta completada** con cinco opciones. Cada una tiene su **tecla** (el número del botón) y funciona solo mientras el foco no esté en un campo de texto:
@@ -231,6 +244,21 @@ Mis ventas (F6), el panel desplegado, el detalle con **Factura / Imprimir** (rei
 Qué pasa si se corta la luz o se cierra el navegador antes de cobrar: la venta vuelve sola en la misma computadora; si no, se recupera desde la campana o desde F1 → **Ver ventas sin guardar**.
 
 ![Video: recuperar una venta que quedó sin guardar](media:Ventas.POS/tutorial-borradores.mp4)
+
+### Mi cierre de caja (F6)
+El conteo de cierre del cajero: F6 → Mi cierre, el contador de billetes, guardar e imprimir el ticket del conteo, y cómo corregirlo («Actualizar mi cierre»).
+
+![Video: cargar el cierre de caja con el contador de billetes](media:Ventas.POS/tutorial-cierre.mp4)
+
+### Cobrar los expendios de Punto de Expendio (AvPag)
+AvPag, buscar por número y Enter, Cargar en la fila, el filtro Persona para un presupuesto de días atrás, Cargar todos y Quitar expendios, y el cobro.
+
+![Video: cobrar en la caja los expendios de Punto de Expendio](media:Ventas.POS/tutorial-expendios.mp4)
+
+### Factura con débito, crédito, QR o transferencia
+La factura electrónica que se abre sola al cobrar con débito: registrarla con Alt+R, la opción de cerrar sin facturar y el ticket de la factura.
+
+![Video: la factura electrónica que se abre al cobrar con débito](media:Ventas.POS/tutorial-factura.mp4)
 
 Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el corpus OpenSLR 61 (licencia CC BY-SA 4.0).
 

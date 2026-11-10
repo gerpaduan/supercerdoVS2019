@@ -12,7 +12,7 @@ Fuente de verdad de la ayuda que muestra la app (boton **Ayuda** de la barra sup
 ## Imagenes y videos
 Los archivos viven en `WebCore/wwwroot/ayuda/media/<Controller.Action>/` (NO se embeben en el .dll; viajan con el publish como cualquier estatico). En el `.md`: `![texto alternativo](media:Usuarios.Index/listado.png)`; los `.webm`/`.mp4` salen como `<video controls>` (extension MediaLinks de Markdig). Un clic en una imagen la abre completa en pestana nueva.
 
-Se generan con `scripts/AyudaMedia` (Playwright contra un WebCore local, usuario de la base de DESARROLLO por variables de entorno `AYUDA_MEDIA_USER` / `AYUDA_MEDIA_PASSWORD`; ver cabecera de `scripts/AyudaMedia/Program.cs`): `dotnet run --project scripts/AyudaMedia -- <escenario> [accion]`. Un escenario por pantalla en `scripts/AyudaMedia/Escenarios/`: `usuarios` (capturas con recuadros numerados y clip `.webm` mudo de `Usuarios.Index`) y `tutorial <venta|cliente|ctacte|recorrido|egreso|lineas|misventas|borradores>` (videos `.mp4` del POS con voz, subtitulo y tecla en una franja debajo de la app; `venta` y `recorrido` emiten facturas contra AFIP: solo con la empresa de desarrollo en homologacion, el escenario corta si no ve el modo prueba; `recorrido` usa los pagos, cobros y egresos que dejan `ctacte` y `egreso`). Regla: si cambia la pantalla, se regeneran sus medios en el mismo commit que el `.md`.
+Se generan con `scripts/AyudaMedia` (Playwright contra un WebCore local, usuario de la base de DESARROLLO por variables de entorno `AYUDA_MEDIA_USER` / `AYUDA_MEDIA_PASSWORD`; ver cabecera de `scripts/AyudaMedia/Program.cs`): `dotnet run --project scripts/AyudaMedia -- <escenario> [accion]`. Un escenario por pantalla en `scripts/AyudaMedia/Escenarios/`: `usuarios` (capturas con recuadros numerados y clip `.webm` mudo de `Usuarios.Index`) y `tutorial <venta|cliente|ctacte|recorrido|egreso|lineas|misventas|borradores|cierre|expendios|factura>` (videos `.mp4` del POS con voz, subtitulo y tecla en una franja debajo de la app; `venta` y `recorrido` emiten facturas contra AFIP: solo con la empresa de desarrollo en homologacion, el escenario corta si no ve el modo prueba; `recorrido` usa los pagos, cobros y egresos que dejan `ctacte` y `egreso`). Regla: si cambia la pantalla, se regeneran sus medios en el mismo commit que el `.md`.
 
 Clips con voz (2026-11-09, ver `docs/DECISIONS.md`): voz TTS local con Piper (`AYUDA_MEDIA_PIPER` = ruta a piper.exe, `AYUDA_MEDIA_VOZ` = modelo .onnx; hoy es_AR-daniela-high, CC BY-SA 4.0: citar el origen en la pantalla que la use) y armado con ffmpeg (`AYUDA_MEDIA_FFMPEG`). Herramientas instaladas fuera del repo (PENDIENTE documentar en otra PC: hoy en `C:\Users\FPX\tools\`). Datos ficticios siempre: `AYUDA_MEDIA_FICTICIOS` = JSON fuera del repo con reemplazos texto real -> ficticio (empresa, sucursales, leyendas) que se aplican solo en el navegador que graba; productos de ejemplo cargados antes en la base de desarrollo con `scripts/AyudaMedia/sql/postventa-datos-ejemplo.sql` (el usuario de prueba 9101 se da de alta a mano). El escenario `tutorial` ESCRIBE en la base de desarrollo (caja, ventas, facturas de prueba, pagos, cobros, egresos): `venta` necesita la caja cerrada (correr antes `sql/postventa-limpieza-grabacion.sql`); al final `sql/postventa-limpieza-final.sql`. Control de fugas: el escenario falla si en pantalla aparece un texto real de la tabla de ficticios; los buscadores de clientes (F9), cuentas corrientes (F2) y productos (F10) muestran solo las filas de ejemplo. La impresion es simulada (impresora dibujada con el ticket o el PDF real de la venta, sin la X del encabezado) y el envio de email se responde en el navegador: no sale ningun mail.
 
@@ -20,7 +20,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (64 de 100 pantallas)
+## Cobertura (67 de 101 pantallas)
 
 ## Manual del usuario
 
@@ -34,7 +34,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Intentos de clave al autorizar (POS, Cierre de Caja, Ver fórmula) | Acceso y seguridad | `conceptos/intentos-de-clave-al-autorizar.md` | 2026-10-20 |
 | conceptos | Buscar cliente, vendedor o proveedor en los filtros (F9 / F10) | Conceptos generales | `conceptos/selector-cliente-vendedor-proveedor.md` | 2026-10-13 |
 | conceptos | Menú de usuario (arriba a la derecha) | Conceptos generales | `conceptos/menu-de-usuario.md` | 2026-10-14 |
-| conceptos | Roles y permisos (quién puede hacer qué) | Conceptos generales | `conceptos/roles-y-permisos.md` | 2026-10-22 |
+| conceptos | Roles y permisos (quién puede hacer qué) | Conceptos generales | `conceptos/roles-y-permisos.md` | 2026-11-10 |
 | conceptos | Fórmula secreta | Elaborados | `conceptos/formula-secreta.md` | 2026-10-20 |
 | pantallas | Cambiar contraseña | Acceso y seguridad | `pantallas/Login.ChangePassword.md` | 2026-10-03 |
 | pantallas | Clave rápida (PIN) | Acceso y seguridad | `pantallas/Login.ChangePin.md` | 2026-10-03 |
@@ -44,10 +44,11 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
 | pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-11-07 |
-| pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-10-31 |
-| pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-10-30 |
-| pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-10-14 |
+| pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-11-09 |
+| pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-11-09 |
+| pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-11-09 |
 | pantallas | Registros eliminados | Configuración | `pantallas/RegistrosEliminados.Index.md` | 2026-10-22 |
+| pantallas | Utilidades (contador de billetes y agentes locales) | Configuración | `pantallas/Home.Utilidades.md` | 2026-11-10 |
 | pantallas | Carga / ingreso de elaborado | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-11-04 |
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-11-07 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-10-30 |
@@ -55,17 +56,17 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-10-31 |
 | pantallas | Ingreso rápido y desarme de elaborado (listado) | Elaborados | `pantallas/Elaborados.IngresoRapido.md` | 2026-11-02 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-11-02 |
-| pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-02 |
-| pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-10-29 |
-| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-02 |
+| pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-09 |
+| pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-11-10 |
+| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-09 |
 | pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-02 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-10-30 |
-| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-04 |
+| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-09 |
 | pantallas | Personas | Personas | `pantallas/Personas.Index.md` | 2026-11-02 |
 | pantallas | Ver / modificar persona | Personas | `pantallas/Personas.Editar.md` | 2026-11-02 |
 | pantallas | Marcas de productos | Productos | `pantallas/Productos.Marcas.md` | 2026-10-22 |
-| pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-10-22 |
-| pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-10-22 |
+| pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-11-10 |
+| pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-11-10 |
 | pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-30 |
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-04 |
 | pantallas | Líneas de stock | Stock | `pantallas/Stock.Lineas.md` | 2026-11-02 |
@@ -87,17 +88,19 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Certificado ARCA | Facturación | `pantallas/CertificadoArca.Index.md` | 2026-10-12 |
 | pantallas | Titulares de facturación | Facturación | `pantallas/TitularesFiscales.Index.md` | 2026-10-12 |
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
-| pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-10-13 |
+| pantallas | Parámetros | Mi empresa | `pantallas/Parametros.Index.md` | 2026-11-10 |
+| pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-11-10 |
 | pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-04 |
 | pantallas | Modificar pedido | Stock | `pantallas/Pedidos.Editar.md` | 2026-10-20 |
 | pantallas | Pedido (detalle) | Stock | `pantallas/Pedidos.Detalle.md` | 2026-10-20 |
 | pantallas | Pedidos | Stock | `pantallas/Pedidos.Index.md` | 2026-10-27 |
 | pantallas | Qué pedir | Stock | `pantallas/Reposicion.Index.md` | 2026-10-13 |
 | pantallas | Sugerir puntos de stock | Stock | `pantallas/Reposicion.Puntos.md` | 2026-10-13 |
-| pantallas | Nuevo / Modificar usuario | Usuarios | `pantallas/Usuarios.Editar.md` | 2026-10-15 |
-| pantallas | Permisos del usuario | Usuarios | `pantallas/Usuarios.Permisos.md` | 2026-10-03 |
-| pantallas | Usuarios | Usuarios | `pantallas/Usuarios.Index.md` | 2026-10-22 |
-| referencia | Mapa de configuraciones de la empresa | Referencia | `referencia/configuraciones.md` | 2026-10-20 |
+| pantallas | Asistente de usuarios y permisos | Usuarios | `pantallas/Usuarios.Asistente.md` | 2026-11-10 |
+| pantallas | Nuevo / Modificar usuario | Usuarios | `pantallas/Usuarios.Editar.md` | 2026-11-10 |
+| pantallas | Permisos del usuario | Usuarios | `pantallas/Usuarios.Permisos.md` | 2026-11-10 |
+| pantallas | Usuarios | Usuarios | `pantallas/Usuarios.Index.md` | 2026-11-10 |
+| referencia | Mapa de configuraciones de la empresa | Referencia | `referencia/configuraciones.md` | 2026-11-10 |
 
 ## Manual del super administrador
 
@@ -120,12 +123,10 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **DispositivosSeguros**: AutorizarModulo
 - **Empleados**: Editar, Historial, Index, Vacaciones
 - **Finanzas**: Cheques, Pagos
-- **Home**: Utilidades
 - **Jornadas**: Fichaje, FichajeConfirmar, Index, MiJornada, MiJornadaProduccion
 - **Liquidaciones**: Index, Nueva, Preview
 - **Movimientos**: Lineas
 - **PadronPlataforma**: Index
-- **Parametros**: Index
 - **Productos**: AddOrEdit, EmbedGuardado
 - **PuntosExpendio**: POS, Sectores
 - **SeleccionUsuario**: Index

@@ -14,7 +14,7 @@ namespace AyudaMedia.Escenarios;
 public sealed class Tutorial : IEscenario
 {
     public string Nombre => "tutorial";
-    public string Descripcion => "Ventas.POS: tutorial <venta|cliente|ctacte|egreso|recorrido|lineas|misventas|borradores>  (videos largos con voz)";
+    public string Descripcion => "Ventas.POS: tutorial <venta|cliente|ctacte|egreso|recorrido|lineas|misventas|borradores|cierre|expendios|factura>  (videos largos con voz)";
 
     private const string EanEjemplo = "7790000000010";
     private const string NombreEanEjemplo = "Gaseosa cola 1,5 L";
@@ -70,7 +70,7 @@ public sealed class Tutorial : IEscenario
     public async Task EjecutarAsync(IBrowser browser, Config cfg, IReadOnlyList<string> args)
     {
         string tema = args.Count > 0 ? args[0].ToLowerInvariant() : "";
-        string[] temas = { "venta", "cliente", "ctacte", "egreso", "recorrido", "lineas", "misventas", "borradores" };
+        string[] temas = { "venta", "cliente", "ctacte", "egreso", "recorrido", "lineas", "misventas", "borradores", "cierre", "expendios", "factura" };
         if (!temas.Contains(tema))
             throw new ArgumentException($"Tema del tutorial desconocido. Disponibles: {string.Join(", ", temas)}");
 
@@ -106,10 +106,22 @@ public sealed class Tutorial : IEscenario
         if (tema == "misventas") ventasPrevias = await PrepararMisVentasAsync(page);
         // "borradores" arranca con la caja abierta y una venta a la clienta cargada en el carrito, sin cobrar.
         if (tema == "borradores") await PrepararBorradoresAsync(page);
+        // "cierre" arranca con la caja abierta, dos ventas en efectivo hechas y el POS vacio.
+        if (tema == "cierre") ventasPrevias = await PrepararMisVentasAsync(page);
+        // "expendios" arranca en el POS vacio con la caja abierta (los expendios los crea sql/expendios-datos-ejemplo.sql).
+        if (tema == "expendios") await PosComun.EntrarAlPosAsync(page, null);
+        // "factura" arranca con la caja abierta y dos productos en el carrito.
+        if (tema == "factura")
+        {
+            await PosComun.EntrarAlPosAsync(page, null);
+            await CargarSilencioAsync(page, ("9901", "1.25"), ("9902", "1"));
+            await page.Mouse.MoveAsync(PosComun.AnchoVista / 2f, PosComun.AltoVista / 2f);
+            await page.WaitForTimeoutAsync(800);
+        }
 
         string carpeta = cfg.CarpetaPantalla("Ventas.POS");
         await using var grabador = PosComun.NuevoGrabador(page, voz);
-        await grabador.PrepararVocesAsync(tema switch { "venta" => Frases.Todas, "cliente" => FrasesCliente.Todas, "ctacte" => FrasesCtaCte.Todas, "egreso" => FrasesEgreso.Todas, "lineas" => FrasesLineas.Todas, "misventas" => FrasesMisVentas.Todas, "borradores" => FrasesBorradores.Todas, _ => FrasesRecorrido.Todas });
+        await grabador.PrepararVocesAsync(tema switch { "venta" => Frases.Todas, "cliente" => FrasesCliente.Todas, "ctacte" => FrasesCtaCte.Todas, "egreso" => FrasesEgreso.Todas, "lineas" => FrasesLineas.Todas, "misventas" => FrasesMisVentas.Todas, "borradores" => FrasesBorradores.Todas, "cierre" => FrasesCierre.Todas, "expendios" => FrasesExpendios.Todas, "factura" => FrasesFactura.Todas, _ => FrasesRecorrido.Todas });
         await page.EvaluateAsync("() => sessionStorage.removeItem('__fugaFicticios')");
         await grabador.IniciarAsync();
         await page.WaitForTimeoutAsync(700);
@@ -146,6 +158,19 @@ public sealed class Tutorial : IEscenario
         else if (tema == "borradores")
         {
             idVenta = await GrabarBorradoresAsync(page, grabador);
+        }
+        else if (tema == "cierre")
+        {
+            await GrabarCierreAsync(page, grabador);
+            idVenta = $"{ventasPrevias.Item1} y {ventasPrevias.Item2}";
+        }
+        else if (tema == "expendios")
+        {
+            idVenta = await GrabarExpendiosAsync(page, grabador);
+        }
+        else if (tema == "factura")
+        {
+            idVenta = await GrabarFacturaAsync(page, grabador);
         }
         else if (tema == "misventas")
         {
@@ -1703,6 +1728,305 @@ public sealed class Tutorial : IEscenario
         string idVenta = await PosComun.EsperarPostVentaAsync(page);
         await page.WaitForTimeoutAsync(800);
         await g.NarrarAsync(FrasesBorradores.Listo);
+        await page.WaitForTimeoutAsync(600);
+        return idVenta;
+    }
+
+    // ===================== Tema "cierre": el conteo de cierre del cajero ("Mi cierre", F6) =====================
+    // Verificado en el codigo (2026-11-10, Cajas/_MiCierreCaja.cshtml, _MisEgresosCaja.cshtml, post-comprobante.js):
+    // F6 -> "Mi cierre" abre "Mi cierre de caja": efectivo contado (a mano o con el contador de billetes, que deja el
+    // detalle en "Conteo de billetes") y "Guardar mi cierre". Al guardar sale la ventana del comprobante (1 cerrar,
+    // 2 ticket, 3 PDF, 4 email). No cierra la caja ni es un egreso: el encargado lo ve al cerrar la caja (Cajas >
+    // Cajas abiertas). Mientras la caja siga abierta se corrige: el boton pasa a "Actualizar mi cierre" ("Modo
+    // actualizar"). Si el importe se cambia a mano y no coincide con el conteo, avisa que el conteo se borra.
+
+    private static class FrasesCierre
+    {
+        public const string F6 = "Al terminar el turno, contá tu caja y cargá tu cierre: presioná F6 y tocá Mi cierre.";
+        public const string Ventana = "Escribí el efectivo que contaste en la caja, billetes y monedas.";
+        public const string Contador = "Es más fácil con el contador de billetes: tocá el botón del billete.";
+        public const string Cantidades = "Cargá cuántos billetes tenés de cada uno: el total se calcula solo.";
+        public const string Aceptar = "Tocá Aceptar.";
+        public const string Detalle = "El total pasa al efectivo contado y abajo queda el detalle del conteo.";
+        public const string Guardar = "Tocá Guardar mi cierre.";
+        public const string Comprobante = "Quedó guardado. Podés imprimir el comprobante del conteo: el dos es el ticket.";
+        public const string Corregir = "Si te equivocaste, el botón ahora dice Actualizar mi cierre.";
+        public const string ModoActualizar = "Lo podés corregir las veces que haga falta, hasta que el encargado cierre la caja.";
+        public const string Encargado = "El encargado ve tu conteo al cerrar tu caja, en Cajas abiertas.";
+        public const string NoEgreso = "Tu cierre no saca plata de la caja: no es un egreso, es solo el conteo.";
+        public const string Listo = "Listo. Así se carga el cierre de caja.";
+
+        public static readonly string[] Todas =
+        {
+            F6, Ventana, Contador, Cantidades, Aceptar, Detalle, Guardar, Comprobante, Corregir, ModoActualizar, Encargado,
+            NoEgreso, Listo
+        };
+    }
+
+    // F6 -> espera "Mis actividades" con el boton de mi cierre.
+    private static async Task AbrirMisActividadesAsync(IPage page)
+    {
+        await PosComun.ApretarAsync(page, "F6", "F6");
+        await page.Locator("#btnMiCierreCaja").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        await page.WaitForTimeoutAsync(1500);
+    }
+
+    private static async Task GrabarCierreAsync(IPage page, Grabador g)
+    {
+        // 1) F6 -> Mi cierre.
+        await g.NarrarAsync(FrasesCierre.F6, 100);
+        await AbrirMisActividadesAsync(page);
+        await page.EvaluateAsync("() => marcar(document.getElementById('btnMiCierreCaja'), 1)");
+        await page.WaitForTimeoutAsync(900);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await PosComun.MoverYClicAsync(page, "#btnMiCierreCaja");
+        await page.Locator("#miCierreImporte").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        await page.WaitForTimeoutAsync(1200);
+        await page.EvaluateAsync("() => marcar(document.getElementById('miCierreImporte').closest('.input-group'), 1)");
+        await g.NarrarAsync(FrasesCierre.Ventana);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+
+        // 2) Contador de billetes: 3 x 20.000, 2 x 1.000, 1 x 200 y 1 x 100 = $ 62.300.
+        await page.EvaluateAsync("() => marcar(document.getElementById('btnCalculadoraBilletesMiCierre'), 1)");
+        await g.NarrarAsync(FrasesCierre.Contador, 100);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await PosComun.MoverYClicAsync(page, "#btnCalculadoraBilletesMiCierre");
+        await page.Locator("#modalCalculadoraBilletes").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        await page.WaitForTimeoutAsync(800);
+        await g.NarrarAsync(FrasesCierre.Cantidades, 100);
+        foreach (var (denominacion, cantidad) in new[] { ("20000", "3"), ("1000", "2"), ("200", "1"), ("100", "1") })
+        {
+            await PosComun.MoverYClicAsync(page, $"#modalCalculadoraBilletes input[data-denominacion='{denominacion}']");
+            await page.Keyboard.TypeAsync(cantidad, new KeyboardTypeOptions { Delay = 150 });
+            await page.WaitForTimeoutAsync(500);
+        }
+        await page.WaitForTimeoutAsync(700);
+        await g.NarrarAsync(FrasesCierre.Aceptar, 100);
+        await PosComun.MoverYClicAsync(page, "#btnAceptarCalculadoraBilletes");
+        await page.Locator("#modalCalculadoraBilletes").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10000 });
+        await page.WaitForTimeoutAsync(900);
+        await page.EvaluateAsync("() => { marcar(document.getElementById('miCierreImporte').closest('.input-group'), 1); marcar(document.getElementById('miCierreConteoBilletes'), 2); }");
+        await g.NarrarAsync(FrasesCierre.Detalle);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+
+        // 3) Guardar y ticket del conteo (impresora simulada).
+        await g.NarrarAsync(FrasesCierre.Guardar, 100);
+        await PosComun.MoverYClicAsync(page, "#btnGuardarMiCierre");
+        await page.Locator("#btnPcCerrar").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        await page.WaitForTimeoutAsync(900);
+        await g.NarrarAsync(FrasesCierre.Comprobante, 100);
+        await PosComun.ApretarAsync(page, "2", "2");
+        await page.WaitForFunctionAsync("() => !!window.__impresionEnCurso", null, new PageWaitForFunctionOptions { Timeout = 10000, PollingInterval = 100 });
+        await page.EvaluateAsync("() => window.__impresionEnCurso.then(function () { return null; })");
+        await page.EvaluateAsync("() => { window.__impresionEnCurso = null; }");
+        await page.WaitForFunctionAsync("() => !document.querySelector('.modal.show')", null,
+            new PageWaitForFunctionOptions { Timeout = 15000, PollingInterval = 200 });
+        await page.WaitForTimeoutAsync(800);
+
+        // 4) Corregir: el boton pasa a "Actualizar mi cierre" y la ventana abre en "Modo actualizar".
+        await AbrirMisActividadesAsync(page);
+        await page.EvaluateAsync("() => marcar(document.getElementById('btnMiCierreCaja'), 1)");
+        await g.NarrarAsync(FrasesCierre.Corregir);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await PosComun.MoverYClicAsync(page, "#btnMiCierreCaja");
+        await page.Locator("#miCierreModoActualizar").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        await page.WaitForTimeoutAsync(1000);
+        await page.EvaluateAsync("() => marcar(document.getElementById('miCierreModoActualizar'), 1)");
+        await g.NarrarAsync(FrasesCierre.ModoActualizar);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await g.NarrarAsync(FrasesCierre.Encargado);
+        await g.NarrarAsync(FrasesCierre.NoEgreso);
+        await g.NarrarAsync(FrasesCierre.Listo);
+        await page.WaitForTimeoutAsync(600);
+    }
+
+    // ===================== Tema "expendios": cobrar en la caja lo que se despacho en Punto de Expendio =====================
+    // Verificado en el codigo (2026-11-10, ventas-expendios-pos.js, _ModalExpendiosPOS.cshtml): AvPag (PageDown) abre
+    // "Expendios" con los de hoy, estado "Pendientes" y el cursor en "Busqueda" (numero / identificacion / remito, filtra
+    // al escribir; Enter carga el primero que coincide). "Cargar" en la fila hace lo mismo. Lo cargado deja de figurar en
+    // "Pendientes" y en el carrito muestra "Exp.Nro". Filtro "Persona": busca por cliente y amplia la fecha a 6 meses
+    // (presupuestos). "Cargar todos los expendios mostrados" y "Quitar expendios" (los cargados en esta venta).
+
+    private static class FrasesExpendios
+    {
+        public const string AvPag = "Lo que despacha el carnicero en Punto de Expendio se cobra en la caja: presioná AvPag.";
+        public const string Lista = "Ves los expendios de hoy pendientes de cobrar, con su número, la identificación, el sector y los productos.";
+        public const string Buscar = "Escribí el número del expendio, o la identificación del cliente, y presioná Enter.";
+        public const string Cargado = "El expendio pasa al carrito: cada producto muestra su número de expendio.";
+        public const string Otro = "Si el cliente trae otro, presioná AvPag de nuevo. Ya no aparece el que cargaste.";
+        public const string Clic = "También podés tocar Cargar en la fila.";
+        public const string Persona = "Para un presupuesto de días atrás, buscá a la persona: la búsqueda se amplía a los últimos meses.";
+        public const string Presupuesto = "Aparecen sus expendios y presupuestos pendientes.";
+        public const string Todos = "Cargar todos carga juntos los que se ven, y Quitar expendios saca los que cargaste en esta venta.";
+        public const string Cerrar = "Cerramos sin cargar el presupuesto.";
+        public const string Cobrar = "Cobrá como siempre: Fin y el uno, efectivo.";
+        public const string Asignados = "Los expendios cobrados quedan asignados a esta venta y ya no figuran como pendientes.";
+        public const string Listo = "Listo. Así se cobran los expendios en la caja.";
+
+        public static readonly string[] Todas =
+        {
+            AvPag, Lista, Buscar, Cargado, Otro, Clic, Persona, Presupuesto, Todos, Cerrar, Cobrar, Asignados, Listo
+        };
+    }
+
+    // AvPag -> espera la ventana "Expendios" con la tabla ya cargada (la fila del expendio pedido visible).
+    private static async Task AbrirExpendiosAsync(IPage page, string idEsperado)
+    {
+        await PosComun.ApretarAsync(page, "PageDown", "AvPag");
+        await page.Locator("#modalExpendiosPOS").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        if (idEsperado != null)
+            await page.Locator($"#tablaExpendiosPOS tbody tr.exp-group-header[data-id-expendio='{idEsperado}']").WaitForAsync(
+                new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        await page.WaitForTimeoutAsync(1000);
+    }
+
+    private static async Task<string> GrabarExpendiosAsync(IPage page, Grabador g)
+    {
+        // 1) AvPag y la lista de hoy.
+        await g.NarrarAsync(FrasesExpendios.AvPag, 100);
+        await AbrirExpendiosAsync(page, "9000002");
+        await page.EvaluateAsync("() => marcar(document.getElementById('tablaExpendiosPOS'), 1)");
+        await g.NarrarAsync(FrasesExpendios.Lista);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+
+        // 2) Numero + Enter: carga el expendio 9000002.
+        await page.EvaluateAsync("() => marcar(document.getElementById('expFiltroTexto'), 1)");
+        await g.NarrarAsync(FrasesExpendios.Buscar, 100);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await SeleccionarCampoAsync(page, "expFiltroTexto");
+        await page.Keyboard.TypeAsync("9000002", new KeyboardTypeOptions { Delay = 150 });
+        await page.WaitForTimeoutAsync(900);
+        await PosComun.ApretarAsync(page, "Enter", "Enter");
+        await page.Locator("#modalExpendiosPOS").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 15000 });
+        await page.WaitForFunctionAsync("() => document.querySelectorAll('#tablaItems tr.fila-item').length >= 2", null,
+            new PageWaitForFunctionOptions { Timeout = 10000, PollingInterval = 200 });
+        await page.WaitForTimeoutAsync(700);
+        await page.EvaluateAsync("() => marcar(document.getElementById('tablaItems'), 1)");
+        await g.NarrarAsync(FrasesExpendios.Cargado);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+
+        // 3) Segundo expendio con el boton Cargar.
+        await g.NarrarAsync(FrasesExpendios.Otro, 100);
+        await AbrirExpendiosAsync(page, "9000003");
+        string selCargar = "#tablaExpendiosPOS .btnCargarExpendioPOS[data-id-expendio='9000003']";
+        await page.EvaluateAsync("(s) => marcar(document.querySelector(s), 1)", selCargar);
+        await g.NarrarAsync(FrasesExpendios.Clic, 100);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await PosComun.MoverYClicAsync(page, selCargar);
+        await page.Locator("#modalExpendiosPOS").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 15000 });
+        await page.WaitForFunctionAsync("() => document.querySelectorAll('#tablaItems tr.fila-item').length >= 3", null,
+            new PageWaitForFunctionOptions { Timeout = 10000, PollingInterval = 200 });
+        await page.WaitForTimeoutAsync(900);
+
+        // 4) Filtro Persona: el presupuesto de la clienta (de hace 2 dias); se muestra y no se carga.
+        await AbrirExpendiosAsync(page, null);
+        await page.EvaluateAsync("() => marcar(document.getElementById('expFiltroPersona'), 1)");
+        await g.NarrarAsync(FrasesExpendios.Persona, 100);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await PosComun.MoverYClicAsync(page, "#expFiltroPersona");
+        await page.Keyboard.TypeAsync("Laura", new KeyboardTypeOptions { Delay = 150 });
+        string selPersona = "#expPersonaLista .exp-persona-item[data-fic-revisada='si']";
+        await page.Locator(selPersona).First.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        await page.WaitForTimeoutAsync(600);
+        await PosComun.MoverYClicAsync(page, selPersona);
+        await page.Locator("#tablaExpendiosPOS tbody tr.exp-group-header[data-id-expendio='9000001']").WaitForAsync(
+            new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        await page.WaitForTimeoutAsync(900);
+        await page.EvaluateAsync("() => marcar(document.querySelector(\"#tablaExpendiosPOS tbody tr.exp-group-header[data-id-expendio='9000001']\"), 1)");
+        await g.NarrarAsync(FrasesExpendios.Presupuesto);
+        await page.EvaluateAsync("() => { limpiarMarcas(); marcar(document.getElementById('chkCargarTodosExpendiosPOS').closest('.custom-control'), 1); marcar(document.getElementById('btnQuitarExpendiosPOS'), 2); }");
+        await g.NarrarAsync(FrasesExpendios.Todos);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await g.NarrarAsync(FrasesExpendios.Cerrar, 100);
+        await PosComun.MoverYClicAsync(page, "#modalExpendiosPOS .modal-footer button[data-dismiss='modal']");
+        await page.Locator("#modalExpendiosPOS").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10000 });
+        await page.WaitForTimeoutAsync(700);
+
+        // 5) Cobrar.
+        await g.NarrarAsync(FrasesExpendios.Cobrar, 100);
+        await page.Mouse.MoveAsync(PosComun.AnchoVista / 2f, PosComun.AltoVista - 60, new MouseMoveOptions { Steps = 10 });
+        await page.EvaluateAsync("() => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }");
+        await PosComun.ApretarAsync(page, "End", "Fin");
+        await page.Locator("#modalFormaPago").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
+        await page.WaitForTimeoutAsync(900);
+        await page.EvaluateAsync("() => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }");
+        await PosComun.ApretarAsync(page, "1", "1");
+        string idVenta = await PosComun.EsperarPostVentaAsync(page);
+        await page.WaitForTimeoutAsync(700);
+        await g.NarrarAsync(FrasesExpendios.Asignados);
+        await g.NarrarAsync(FrasesExpendios.Listo);
+        await page.WaitForTimeoutAsync(600);
+        return idVenta;
+    }
+
+    // ===================== Tema "factura": formas de pago que abren la factura electronica sola =====================
+    // Verificado en el codigo (2026-11-10, POS.cshtml facturaElectronicaRequeridaPorFormaPagoPOS, forma-pago.js,
+    // factura-electronica.js): con certificado cargado, toda forma de pago que no sea Efectivo ni CtaCte abre la factura
+    // al cobrar (facturaObligatoria). Alt+R registra; "Cerrar venta sin facturar" (Supr) cierra la venta sin factura y
+    // pasa a una nueva. Escribe en AFIP: solo en homologacion (RegistrarFacturaConAtajoAsync corta sin el banner).
+
+    private static class FrasesFactura
+    {
+        public const string Intro = "Si el cliente paga con débito, crédito, QR o transferencia, la venta lleva factura electrónica.";
+        public const string Fin = "Presioná Fin y elegí la forma de pago: el dos es débito.";
+        public const string SeAbre = "Al cobrar se abre sola la factura de la venta, con el cliente y los importes.";
+        public const string SinFacturar = "Si en ese momento no se puede facturar, Cerrar venta sin facturar, o la tecla Supr, deja la venta registrada.";
+        public const string Despues = "La podés facturar después desde Mis ventas, con Factura o Imprimir.";
+        public const string Lista = "La factura quedó registrada con su número, y la venta sigue como siempre.";
+        public const string Ticket = "El dos imprime el ticket de la factura.";
+        public const string Otras = "Lo mismo pasa con crédito, QR y transferencia, y con la parte que no es efectivo de un pago mixto.";
+        public const string Efectivo = "En efectivo o cuenta corriente no se abre sola: si el cliente la pide, usá el cinco en Venta completada.";
+        public const string Listo = "Listo. Así se factura una venta con tarjeta o transferencia.";
+
+        public static readonly string[] Todas =
+        {
+            Intro, Fin, SeAbre, SinFacturar, Despues, Frases.FacturaEnter, Lista, Ticket, Otras, Efectivo, Listo
+        };
+    }
+
+    private static async Task<string> GrabarFacturaAsync(IPage page, Grabador g)
+    {
+        // 1) Fin -> 2 (debito): la factura se abre sola.
+        await page.EvaluateAsync("() => marcar(document.getElementById('tablaItems'), 1)");
+        await g.NarrarAsync(FrasesFactura.Intro);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+        await g.NarrarAsync(FrasesFactura.Fin, 100);
+        await page.EvaluateAsync("() => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }");
+        await PosComun.ApretarAsync(page, "End", "Fin");
+        await page.Locator("#modalFormaPago").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
+        await page.WaitForTimeoutAsync(900);
+        await page.EvaluateAsync("() => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }");
+        await PosComun.ApretarAsync(page, "2", "2");
+        await page.Locator("#btnRegistrarFactura").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30000 });
+        // Freno: sin el banner de modo prueba (homologacion) no se sigue (RegistrarFacturaConAtajoAsync lo vuelve a mirar).
+        if (await page.Locator("#feBannerModoPrueba").CountAsync() == 0)
+            throw new InvalidOperationException("La factura no esta en modo prueba (homologacion): NO se registra. Poner la empresa de desarrollo en HOMO.");
+        await page.EvaluateAsync("() => { var b = document.getElementById('feBannerModoPrueba'); if (b) b.style.display = 'none'; }");
+        await page.WaitForTimeoutAsync(1200);
+        await page.EvaluateAsync("() => marcar(document.getElementById('feStickyResumen'), 1)");
+        await g.NarrarAsync(FrasesFactura.SeAbre);
+        await page.EvaluateAsync("() => { limpiarMarcas(); marcar(document.getElementById('btnCerrarVentaSinFacturar'), 1); }");
+        await g.NarrarAsync(FrasesFactura.SinFacturar);
+        await g.NarrarAsync(FrasesFactura.Despues);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+
+        // 2) Alt+R registra (homologacion) y vuelve a "Venta completada" con la factura.
+        await RegistrarFacturaConAtajoAsync(page, g);
+        string idVenta = await page.EvaluateAsync<string>("() => String(window.jQuery('#btnPvbTicket').data('venta-id') || '')");
+        await page.EvaluateAsync("() => { var e = document.getElementById('pvbFacturaRegistrada'); if (e) marcar(e, 1); }");
+        await g.NarrarAsync(FrasesFactura.Lista);
+        await page.EvaluateAsync("() => limpiarMarcas()");
+
+        // 3) Ticket de la factura (impresora simulada; el POS pasa solo a una venta nueva).
+        await g.NarrarAsync(FrasesFactura.Ticket, 100);
+        await PosComun.ApretarAsync(page, "2", "2");
+        await page.Mouse.MoveAsync(PosComun.AnchoVista - 120, 140, new MouseMoveOptions { Steps = 20 });
+        await page.WaitForFunctionAsync("() => !!window.__impresionEnCurso", null, new PageWaitForFunctionOptions { Timeout = 15000 });
+        await PosComun.EsperarVentaNuevaAsync(page);
+        await PosComun.EsperarPosListoAsync(page);
+        await g.NarrarAsync(FrasesFactura.Otras);
+        await g.NarrarAsync(FrasesFactura.Efectivo);
+        await g.NarrarAsync(FrasesFactura.Listo);
         await page.WaitForTimeoutAsync(600);
         return idVenta;
     }
