@@ -86,7 +86,7 @@ namespace Negocio
             Entidades.MovCtaCte.tablas tabla, int idTabla, string nroDoc, string detalle, Entidades.MovCtaCte.tipoMov tipoMov, float importe,
             Entidades.Sucursal oSucursalE, DateTime? creado, Entidades.Usuario creadoPor, DateTime? actualizado,
             Entidades.Usuario actualizadoPor, bool crearMovCtaCte, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoE, Entidades.Pago oPagoAnterior,
-            Contratos.IUnitOfWork unitOfWork = null)
+            Contratos.IUnitOfWork unitOfWork = null, int? idTitular = null)
         {
             Entidades.MovCtaCte oMovCtaCte = oCtaCteD.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId, unitOfWork);
 
@@ -174,6 +174,8 @@ namespace Negocio
             oMovCtaCte.CreadoPor = creadoPor;
             oMovCtaCte.Actualizado = actualizado;
             oMovCtaCte.ActualizadoPor = actualizadoPor;
+            // Titular fiscal propio del documento origen (2026-11-09): si el movimiento se actualiza en el lugar, el titular nuevo pisa al viejo.
+            oMovCtaCte.IdTitular = idTitular;
 
             oCtaCteD.addOrEditMovCtaCte(oMovCtaCte, unitOfWork);
 
@@ -656,7 +658,7 @@ namespace Negocio
 
             crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
                  oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
-                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE, oPagoAnterior, unitOfWork);
+                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE, oPagoAnterior, unitOfWork, oPagoE.IdTitular);
         }
 
         // Prefijos con los que se marcan los egresos que REVERSAN a otro (anulacion en edicion / eliminacion de un pago).

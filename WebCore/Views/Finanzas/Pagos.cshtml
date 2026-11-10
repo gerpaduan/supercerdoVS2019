@@ -14,6 +14,11 @@
     string hasta = ViewBag.Hasta as string ?? "";
     string operacion = ViewBag.Operacion as string ?? "";
     bool verEliminados = ViewBag.VerEliminados != null && (bool)ViewBag.VerEliminados;
+    // Titular propio (2026-11-09, solo con 2 o mas titulares): filtro y columna.
+    bool mostrarTitularPago = ViewBag.MostrarTitularPago != null && (bool)ViewBag.MostrarTitularPago;
+    var titularesPago = ViewBag.TitularesPago as List<WebCore.Models.TitularCompraOpcionVm> ?? new List<WebCore.Models.TitularCompraOpcionVm>();
+    int idTitularFiltro = ViewBag.IdTitularFiltro != null ? (int)ViewBag.IdTitularFiltro : 0;
+    int totalColumnasPagos = 8 + (mostrarTitularPago ? 1 : 0);
 
     // Al abrir un pago, "Volver" regresa a este mismo listado con los filtros que estaban aplicados.
     // PathBase incluido: Request.Path solo trae la ruta sin el prefijo de la app ("/CarniSysWeb" en SM/San Lorenzo) y el
@@ -47,6 +52,19 @@
                         <option value="Pago" selected="@(operacion == "Pago" ? "selected" : null)">Solo pagos</option>
                     </select>
                 </div>
+                @if (mostrarTitularPago)
+                {
+                    <div class="form-group col-6 col-md-2 mb-2">
+                        <label for="filtroTitular" class="small mb-1">Titular</label>
+                        <select class="form-control" id="filtroTitular" name="idTitular">
+                            <option value="0" selected="@(idTitularFiltro <= 0 ? "selected" : null)">Todos</option>
+                            @foreach (var t in titularesPago)
+                            {
+                                <option value="@t.IdTitular" selected="@(t.IdTitular == idTitularFiltro ? "selected" : null)">@t.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                }
                 <div class="form-group col-6 col-md-2 mb-2">
                     <div class="custom-control custom-switch mt-4">
                         <input type="checkbox" class="custom-control-input" id="filtroVerEliminados" name="verEliminados" value="true"
@@ -74,6 +92,10 @@
                             <th>Fecha</th>
                             <th>Operación</th>
                             <th>Persona</th>
+                            @if (mostrarTitularPago)
+                            {
+                                <th>Titular</th>
+                            }
                             <th>N° Recibo</th>
                             <th>Forma de pago</th>
                             <th class="text-right">Importe</th>
@@ -85,7 +107,7 @@
                         @if (Model.Rows.Count == 0)
                         {
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">No hay pagos ni cobros para mostrar con estos filtros.</td>
+                                <td colspan="@totalColumnasPagos" class="text-center text-muted py-4">No hay pagos ni cobros para mostrar con estos filtros.</td>
                             </tr>
                         }
                         @foreach (System.Data.DataRow fila in Model.Rows)
@@ -111,6 +133,10 @@
                                         <small class="text-muted d-block">@identifFilaPago</small>
                                     }
                                 </td>
+                                @if (mostrarTitularPago)
+                                {
+                                    <td data-label="Titular">@(fila["titularNombre"] == DBNull.Value ? "" : Convert.ToString(fila["titularNombre"]))</td>
+                                }
                                 <td data-label="N° recibo">@fila["nroRecibo"]</td>
                                 <td data-label="Forma de pago">@fila["formaPago"]</td>
                                 <td class="text-right font-weight-bold @(esEliminado ? "pagos-importe-eliminado" : "")" data-label="Importe">@importe.ToString("N2")</td>

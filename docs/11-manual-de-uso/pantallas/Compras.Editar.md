@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.NuevaCompra (alta) y Compra.ModificarCompra (modificar y eliminar); a los usuarios de producción les pide elegir el operador de Compras antes de entrar
-revisada: 2026-10-31
+revisada: 2026-11-09
 alias: Compras.NuevaCompra, Compras.ModificarCompra
 ---
 ## Para qué sirve
@@ -55,3 +55,10 @@ El botón rojo **Eliminar** aparece al abrir una compra **ya guardada** para qui
 - Si otra persona ya la eliminó, lo avisa y no hace nada más.
 
 Si abrís una compra que ya fue eliminada (por ejemplo desde un link guardado), el sistema te muestra quién la eliminó, cuándo y por qué (los administradores ven el detalle completo).
+
+## Titular y factura del proveedor (desde 2026-11-09; solo bases Postgres)
+- **Cuándo aparece:** en la pantalla completa (no dentro del POS ni del modal de cuenta corriente), en el recuadro *Facturación del proveedor*.
+- **En una compra nueva:** si la empresa tiene 2 o más titulares, elegís **Comprado a nombre de** (por defecto el principal). Tildando **La factura vino con la mercadería** se despliegan los datos de la factura (tipo, punto de venta, número, fecha, total, IVA, neto, otros impuestos) y la compra se guarda ya *facturada*. Si no la tildás, la compra queda **pendiente de factura** y la cargás después. Con un porcentaje de IVA elegido, el neto y el IVA se calculan desde el total; **Igual al total de la compra** copia el total de la compra. Los decimales van con punto o coma, sin separador de miles. Si la factura tiene un dato mal, **la compra se guarda igual** y te avisa que la cargues desde *Comprobantes*.
+- **Al modificar una compra:** el recuadro es de solo lectura (estado de factura, comprobantes y totales: *Total compra*, *Facturado neto*, *Sin factura* o *Facturado de más*). El botón **Comprobantes** abre el modal para cargar, editar o eliminar comprobantes (con motivo), cambiar el titular (pide confirmar si ya hay comprobantes) o marcar **no lleva factura**. **Cargar o cambiar comprobantes no modifica la compra, el stock ni la cuenta corriente** y se puede hacer con la caja cerrada. Necesita el permiso de modificar compras.
+- **Reglas:** una sola factura por compra (si el proveedor manda otra, es otra compra); las notas de crédito y débito necesitan la factura; el mismo número no se carga dos veces para el mismo proveedor; neto + IVA + otros tiene que dar el total. La deuda con el proveedor sigue siendo el **importe de la compra**, no el de la factura.
+- PENDIENTE: el borrador local de esta pantalla no guarda los datos de la factura del alta; la pantalla no se probó en el celular.

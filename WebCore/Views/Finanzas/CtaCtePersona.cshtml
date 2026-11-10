@@ -17,6 +17,13 @@
     bool puedeExportarCuentaCorriente = ViewBag.PuedeExportarCuentaCorriente != null && (bool)ViewBag.PuedeExportarCuentaCorriente;
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
 
+    // Titular propio (2026-11-09, solo Postgres y solo con 2 o mas titulares; ver docs/DECISIONS.md): selector, titular de cada
+    // compra/pago y resumen por titular. null = no aplica y la pantalla queda como siempre. El "Control fiscal" del resumen solo
+    // viene cargado si el usuario puede editar Pagos del menu (lo decide el controller, no esta vista).
+    var titularesCtaCte = ViewBag.TitularesCtaCte as WebCore.Models.CtaCteTitularesVm;
+    bool mostrarTitulares = titularesCtaCte != null && titularesCtaCte.Mostrar && !desdePos;
+    int idTitularFiltro = mostrarTitulares ? titularesCtaCte.IdTitularFiltro : 0;
+
     ViewBag.Title = "Cuenta Corriente";
 
     var personaObj = ViewBag.Persona as Entidades.Persona;
@@ -175,6 +182,27 @@
                             </div>
                         </div>
 
+                        @if (mostrarTitulares)
+                        {
+                            @* Titular propio: filtra el extracto (movimientos, saldo anterior y acumulado). Cambiarlo recarga. *@
+                            <div class="input-group ctacte-titular-group mb-2 mb-md-0 me-md-3" style="width:auto;">
+                                <div class="input-group-prepend"><span class="input-group-text">Titular</span></div>
+                                <select name="idTitular" id="ctacteTitular" class="form-control" onchange="this.form.requestSubmit();">
+                                    <option value="0" selected="@(idTitularFiltro <= 0 ? "selected" : null)">Todos</option>
+                                    @foreach (var t in titularesCtaCte.Titulares)
+                                    {
+                                        <option value="@t.IdTitular" selected="@(t.IdTitular == idTitularFiltro ? "selected" : null)">@t.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+                            @if (titularesCtaCte.PrimeraCompra.HasValue)
+                            {
+                                @* Atajo para el control fiscal: factura y pago pueden caer en meses distintos, conviene mirar todo el periodo. *@
+                                <a class="btn btn-link btn-sm mb-2 mb-md-0 me-md-3" id="lnkDesdeInicioCtaCte"
+                                   href="@Url.Action("CtaCtePersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = titularesCtaCte.PrimeraCompra.Value.Date.ToString("yyyy-MM-dd"), mostrarAnulados, returnUrl = returnUrlCtaCte, idTitular = idTitularFiltro })">Desde el inicio</a>
+                            }
+                        }
+
                         <div class="custom-control custom-switch ctacte-anulados-switch mb-2 mb-md-0">
                             <input type="checkbox"
                                    class="custom-control-input"
@@ -215,11 +243,11 @@
                         </a>
                         @if (puedeExportarCuentaCorriente)
                         {
-                            <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde, mostrarAnulados })"
+                            <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde, mostrarAnulados, idTitular = idTitularFiltro })"
                                class="btn btn-outline-danger mr-2">
                                 <i class="fas fa-file-pdf"></i> PDF
                             </a>
-                            <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde, mostrarAnulados })"
+                            <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde, mostrarAnulados, idTitular = idTitularFiltro })"
                                class="btn btn-outline-success mr-2">
                                 <i class="fas fa-file-excel"></i> Excel
                             </a>
@@ -261,6 +289,103 @@
                     <span class="ctacte-resumen-valor">@saldo.ToString("N2")</span>
                 </div>
             }
+        </div>
+    }
+
+    @* Resumen por titular propio (2026-11-09, solo proveedores con 2 o mas titulares). "Deuda": comprado, pagado y saldo de cada
+       titular; los sub-saldos pueden no cerrar en cero si se pago con un titular lo comprado con otro, el TOTAL es la deuda real.
+       "Control fiscal": solo si el controller lo cargo (admin o quien edita Pagos del menu). Lo pagado bancarizado por encima de
+       lo facturado se marca en rojo; no bloquea nada. *@
+    @if (mostrarTitulares && titularesCtaCte.Resumen != null && !ocultarSaldo)
+    {
+        var resumenTit = titularesCtaCte.Resumen;
+        bool hayOtros = resumenTit.Total.Otros != 0m || resumenTit.Filas.Any(f => f.Otros != 0m);
+        <style>
+            .ctacte-titulares-card { font-size: .8rem; }
+            .ctacte-titulares-card .ctacte-tit-titulo { font-weight: 600; font-size: .85rem; margin-bottom: .25rem; }
+            .ctacte-titulares-card table { font-size: .8rem; margin-bottom: .25rem; }
+            .ctacte-titulares-card th, .ctacte-titulares-card td { padding: .25rem .4rem; }
+            .ctacte-titulares-card .ctacte-tit-total td { font-weight: 700; border-top: 2px solid #dee2e6; }
+            .ctacte-titulares-card .ctacte-tit-rojo { color: #c82333; font-weight: 700; }
+        </style>
+        <div class="card shadow-sm ctacte-panel-card mb-3 ctacte-titulares-card" id="ctacteResumenTitulares">
+            <div class="card-body p-2">
+                <div class="ctacte-tit-titulo">Deuda por titular <span class="text-muted fw-normal">(desde el @rotuloFechaDesde)</span></div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-borderless">
+                        <thead>
+                            <tr class="text-muted">
+                                <th>Titular</th>
+                                <th class="text-end">Saldo anterior</th>
+                                <th class="text-end">Comprado</th>
+                                <th class="text-end">Pagado</th>
+                                @if (hayOtros) { <th class="text-end">Otros</th> }
+                                <th class="text-end">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fila in resumenTit.Filas.Concat(new[] { resumenTit.Total }))
+                            {
+                                bool esTotalTit = ReferenceEquals(fila, resumenTit.Total);
+                                <tr class="@(esTotalTit ? "ctacte-tit-total" : "")">
+                                    <td>@fila.NombreTitular</td>
+                                    <td class="text-end">@fila.SaldoAnterior.ToString("N2")</td>
+                                    <td class="text-end">@fila.Comprado.ToString("N2")</td>
+                                    <td class="text-end">@fila.Pagado.ToString("N2")</td>
+                                    @if (hayOtros) { <td class="text-end">@fila.Otros.ToString("N2")</td> }
+                                    <td class="text-end">@fila.Saldo.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-muted">Los saldos por titular pueden no cerrar en cero si se pagó con un titular lo comprado con otro: el total es la deuda real.</div>
+
+                @if (titularesCtaCte.PuedeVerControlFiscal)
+                {
+                    <hr class="my-2" />
+                    <div class="ctacte-tit-titulo"><i class="fas fa-balance-scale me-1"></i>Control fiscal <span class="text-muted fw-normal">(compras desde el @rotuloFechaDesde)</span></div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless">
+                            <thead>
+                                <tr class="text-muted">
+                                    <th>Titular</th>
+                                    <th class="text-end">Facturado neto</th>
+                                    <th class="text-end">Pagado bancarizado</th>
+                                    <th class="text-end">Facturado − bancarizado</th>
+                                    <th class="text-end">Pagado en efectivo</th>
+                                    <th class="text-end">Sin factura</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fila in resumenTit.Filas.Concat(new[] { resumenTit.Total }))
+                                {
+                                    bool esTotalTit = ReferenceEquals(fila, resumenTit.Total);
+                                    <tr class="@(esTotalTit ? "ctacte-tit-total" : "")">
+                                        <td>@fila.NombreTitular</td>
+                                        <td class="text-end">@fila.FacturadoNeto.ToString("N2")</td>
+                                        <td class="text-end">@fila.PagadoBancarizado.ToString("N2")</td>
+                                        <td class="text-end @(fila.PagadoBancarizadoExcedeFacturado ? "ctacte-tit-rojo" : "")"
+                                            title="@(fila.PagadoBancarizadoExcedeFacturado ? "Lo pagado por medios bancarizados supera lo facturado" : "")">
+                                            @fila.DiferenciaFacturadoBancarizado.ToString("N2")@(fila.PagadoBancarizadoExcedeFacturado ? " ⚠" : "")
+                                        </td>
+                                        <td class="text-end">@fila.PagadoEfectivo.ToString("N2")</td>
+                                        <td class="text-end">@fila.SinFactura.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-muted">
+                        Bancarizado = transferencias, tarjetas, QR y cheques; efectivo incluye el efectivo y "Otro". Si la factura llega en otro mes que el pago,
+                        mirá un período más largo.
+                        @if (titularesCtaCte.PrimeraCompra.HasValue && titularesCtaCte.PrimeraCompra.Value.Date < (DateTime.TryParse(fechaDesde, out var fechaDesdeResumen) ? fechaDesdeResumen.Date : DateTime.MinValue))
+                        {
+                            <span>El atajo <strong>Desde el inicio</strong> trae todo.</span>
+                        }
+                    </div>
+                }
+            </div>
         </div>
     }
 
@@ -351,7 +476,15 @@
                             string resumenItemsTexto = resumenItemsPorMovimiento.TryGetValue(claveResumenItems, out var resumenItems)
                                 ? resumenItems.Descripcion(System.Globalization.CultureInfo.CurrentCulture)
                                 : "";
-                            string lineaGrisFila = string.Join(" · ", new[] { "#" + Convert.ToString(row["IdTabla"]), resumenItemsTexto, Convert.ToString(row["Sucursal"]) }
+                            // Titular propio: solo en compras y pagos (los demas movimientos no lo llevan).
+                            string titularFila = "";
+                            if (mostrarTitulares && !esSaldoAnterior && Model.Columns.Contains("idTitular") && row["idTitular"] != DBNull.Value
+                                && (string.Equals(tablaMovimiento, "Compras", StringComparison.OrdinalIgnoreCase) || esPago))
+                            {
+                                titularesCtaCte.Nombres.TryGetValue(Convert.ToInt32(row["idTitular"]), out titularFila);
+                                titularFila = titularFila ?? "";
+                            }
+                            string lineaGrisFila = string.Join(" · ", new[] { "#" + Convert.ToString(row["IdTabla"]), resumenItemsTexto, titularFila, Convert.ToString(row["Sucursal"]) }
                                 .Where(parte => !string.IsNullOrWhiteSpace(parte)));
 
                             // Items desplegables: solo Ventas / Compras / Pagos, y no en las versiones anteriores ni los contraasientos
@@ -404,6 +537,10 @@
                                     @if (!string.IsNullOrEmpty(resumenItemsTexto))
                                     {
                                         <span class="cc-solo-card"> (@resumenItemsTexto)</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(titularFila))
+                                    {
+                                        <span class="cc-solo-card"> · @titularFila</span>
                                     }
                                     @if (tieneObs)
                                     {
@@ -806,6 +943,7 @@
     (function () {
         var idPersona = @ViewBag.IdPersona;
         var fechaDesde = '@fechaDesde';
+        var idTitularFiltro = @idTitularFiltro;
         var desdePosCtaCte = @Html.Raw(desdePos ? "true" : "false");
         var posInstanceIdCtaCte = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceIdCtaCte));
 
@@ -1139,7 +1277,7 @@
             document.getElementById('ccEmailFormato').value = 'pdf';
             document.getElementById('btnConfirmarEmailCtaCte').disabled = true;
 
-            var params = new URLSearchParams({ idPersona: idPersona, fechaDesde: fechaDesde, mostrarAnulados: mostrarAnuladosActual() });
+            var params = new URLSearchParams({ idPersona: idPersona, fechaDesde: fechaDesde, mostrarAnulados: mostrarAnuladosActual(), idTitular: idTitularFiltro });
             fetch(emailConfigUrl + '?' + params.toString())
                 .then(function (r) { return r.json(); })
                 .then(function (resp) {
@@ -1175,6 +1313,7 @@
                 idPersona: idPersona,
                 fechaDesde: fechaDesde,
                 mostrarAnulados: mostrarAnuladosActual(),
+                idTitular: idTitularFiltro,
                 emailDestino: destino,
                 asunto: asunto,
                 mensaje: mensaje,

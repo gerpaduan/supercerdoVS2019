@@ -215,6 +215,30 @@
                 </div>
             </div>
 
+            @* Titular propio del pago (2026-11-09, solo Postgres y solo con 2 o mas titulares): a nombre de quien de la empresa se
+               paga al proveedor. Solo aplica a pagos (no a cobros): el JS lo oculta con "Cobro" y el servidor lo ignora. *@
+            @{
+                var titularesPago = ViewBag.TitularesPago as List<WebCore.Models.TitularCompraOpcionVm> ?? new List<WebCore.Models.TitularCompraOpcionVm>();
+                int idTitularPrincipalPago = ViewBag.IdTitularPrincipalPago != null ? (int)ViewBag.IdTitularPrincipalPago : 0;
+                int idTitularPago = Model.IdTitular ?? idTitularPrincipalPago;
+            }
+            @if (titularesPago.Count > 0)
+            {
+                <div class="form-row @(Model.AProveedor ? "" : "d-none")" id="filaTitularPago">
+                    <div class="col-md-6 mb-3 pago-requiere-operacion">
+                        <label for="IdTitular">Pagado a nombre de</label>
+                        <select id="IdTitular" name="IdTitular" class="form-control">
+                            @foreach (var t in titularesPago)
+                            {
+                                // Un titular deshabilitado solo se ve si es el del pago (historia); no se puede elegir de nuevo.
+                                if (!t.Seleccionable && t.IdTitular != idTitularPago) { continue; }
+                                <option value="@t.IdTitular" selected="@(t.IdTitular == idTitularPago ? "selected" : null)">@t.Nombre@(t.EsPrincipal ? " (principal)" : "")@(t.Seleccionable ? "" : " (deshabilitado)")</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            }
+
             <div class="form-row">
                 @if (!esNuevo)
                 {
@@ -738,6 +762,13 @@
             $('#AProveedor').val(valor).trigger('change');
         }
 
+        // Titular propio: solo se ve en los pagos a proveedor (no en los cobros).
+        function actualizarFilaTitularPago() {
+            $('#filaTitularPago').toggleClass('d-none', ($('#AProveedor').val() || '').toString() !== 'true');
+        }
+        $('#AProveedor').on('change.titularPago', actualizarFilaTitularPago);
+        actualizarFilaTitularPago();
+
         if (esNuevoPago) {
             $('#AProveedor').on('change', function () {
                 var valor = ($(this).val() || '').toString();
@@ -1012,6 +1043,8 @@
                 ConteoBilletes: $('#ConteoBilletes').val() || '',
                 NroRecibo: $('#NroRecibo').val() || ''
             };
+            // Titular propio del pago (solo existe el selector con 2 o mas titulares y solo vale en pagos a proveedor).
+            if ($('#IdTitular').length && payload.AProveedor) payload.IdTitular = $('#IdTitular').val();
 
             var params = $.param(payload) +
                 '&SucursalId=' + encodeURIComponent($('#SucursalId').val()) +

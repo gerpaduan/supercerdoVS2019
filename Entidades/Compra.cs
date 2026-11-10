@@ -169,6 +169,15 @@ namespace Entidades
         private List<Entidades.MediaRes> lineasMediasReses;
         bool enCtaCte;
 
+        // Titular fiscal propio a nombre del cual se hizo la compra (null = titular principal). Solo Postgres.
+        public int? IdTitular { get; set; }
+
+        // PENDIENTE | FACTURADA | NO_LLEVA (EstadoFacturaCompra); null = compra anterior a la funcionalidad. Solo Postgres.
+        public string EstadoFactura { get; set; }
+
+        // Comprobantes del proveedor (factura y notas de credito/debito). Se completa solo donde se necesita.
+        public List<Entidades.ComprobanteCompra> Comprobantes { get; set; } = new List<Entidades.ComprobanteCompra>();
+
         public bool EnCtaCte
         {
             get { return enCtaCte; }

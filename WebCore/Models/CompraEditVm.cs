@@ -58,6 +58,14 @@ namespace WebCore.Models
 
         public bool EnCtaCte { get; set; }
 
+        // Titular propio de la compra (alta; 2026-11-09, solo Postgres y solo con 2 o mas titulares). En una edicion se cambia desde
+        // el modal Comprobantes, no desde este formulario.
+        public int? IdTitular { get; set; }
+
+        // "La factura vino con la mercaderia": en un alta, los datos de la factura se cargan junto con la compra.
+        public bool ConFacturaProveedor { get; set; }
+        public ComprobanteCompraFormVm FacturaProveedor { get; set; } = new ComprobanteCompraFormVm();
+
         public string NroRemito { get; set; } = "";
 
         public string Observaciones { get; set; } = "";

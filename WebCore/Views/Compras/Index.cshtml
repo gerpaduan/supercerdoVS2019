@@ -21,6 +21,12 @@
     float totalKg = ViewBag.TotalKg != null ? (float)ViewBag.TotalKg : 0f;
     float totalS = ViewBag.TotalS != null ? (float)ViewBag.TotalS : 0f;
     string successMessage = TempData["ComprasSuccessMessage"] as string ?? "";
+    // Comprobantes del proveedor (solo Postgres): filtros Factura y Titular, y modal de comprobantes (2026-11-09, docs/DECISIONS.md).
+    bool comprobantesDisponibles = ViewBag.ComprobantesDisponibles != null && (bool)ViewBag.ComprobantesDisponibles;
+    bool mostrarTitulares = comprobantesDisponibles && ViewBag.MostrarTitulares != null && (bool)ViewBag.MostrarTitulares;
+    string estadoFactura = ViewBag.EstadoFactura as string ?? "";
+    int idTitularFiltro = ViewBag.IdTitularFiltro != null ? (int)ViewBag.IdTitularFiltro : 0;
+    var titularesOpciones = ViewBag.TitularesOpciones as List<WebCore.Models.TitularCompraOpcionVm> ?? new List<WebCore.Models.TitularCompraOpcionVm>();
 }
 
 <div class="container-fluid compras-index-page">
@@ -126,6 +132,36 @@
                             <input type="text" name="texto" value="@texto" class="form-control" autocomplete="off" placeholder="Proveedor, documento, observaciones..." />
                         </div>
                     </div>
+
+                    @if (comprobantesDisponibles)
+                    {
+                        @* Bandeja de facturas: "Pendiente" lista lo que falta facturar. Titular solo con 2 o mas titulares propios. *@
+                        <div class="compras-filtros-row compras-filtros-row-factura">
+                            <div class="form-group mb-0 compras-f-factura">
+                                <label class="compras-filtro-label">Factura</label>
+                                <select name="estadoFactura" id="estadoFacturaCompras" class="form-control">
+                                    <option value="" selected="@(estadoFactura == "" ? "selected" : null)">Todas</option>
+                                    <option value="PENDIENTE" selected="@(estadoFactura == "PENDIENTE" ? "selected" : null)">Pendiente</option>
+                                    <option value="FACTURADA" selected="@(estadoFactura == "FACTURADA" ? "selected" : null)">Facturada</option>
+                                    <option value="NO_LLEVA" selected="@(estadoFactura == "NO_LLEVA" ? "selected" : null)">No lleva factura</option>
+                                    <option value="SIN_DATO" selected="@(estadoFactura == "SIN_DATO" ? "selected" : null)">Sin dato (anteriores)</option>
+                                </select>
+                            </div>
+                            @if (mostrarTitulares)
+                            {
+                                <div class="form-group mb-0 compras-f-titular">
+                                    <label class="compras-filtro-label">Titular</label>
+                                    <select name="idTitular" id="idTitularCompras" class="form-control">
+                                        <option value="0" selected="@(idTitularFiltro <= 0 ? "selected" : null)">Todos</option>
+                                        @foreach (var t in titularesOpciones)
+                                        {
+                                            <option value="@t.IdTitular" selected="@(t.IdTitular == idTitularFiltro ? "selected" : null)">@t.Nombre</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
             </form>
         </div>
@@ -293,6 +329,10 @@
             grid-template-columns: .9fr 1.2fr 1.3fr;
         }
 
+        .compras-filtros-row-factura {
+            grid-template-columns: 1fr 1fr;
+        }
+
         .compras-filtros-card .form-control,
         .compras-filtros-card .btn {
             min-height: 2.15rem;
@@ -364,6 +404,9 @@
         body.app-shell .compras-index-page .compras-f-proveedor { grid-column: 5; grid-row: 1; min-width: 0; }
         body.app-shell .compras-index-page .compras-f-descripcion { grid-column: 6; grid-row: 1; min-width: 0; }
         body.app-shell .compras-index-page .compras-filtro-accion { grid-column: 7; grid-row: 1; }
+        /* Factura y Titular no entran en la fila unica a 1200 px: van en una segunda fila debajo de Desde/Hasta y Sucursal/Tipo. */
+        body.app-shell .compras-index-page .compras-f-factura { grid-column: 1 / span 2; grid-row: 2; }
+        body.app-shell .compras-index-page .compras-f-titular { grid-column: 3 / span 2; grid-row: 2; }
 
         body.app-shell .compras-index-page .compras-filtros-card .compras-filtro-label {
             font-size: .68rem;
@@ -467,7 +510,8 @@
 
     @@media (min-width: 768px) and (max-width: 1199.98px) {
         .compras-filtros-row-fechas,
-        .compras-filtros-row-busqueda {
+        .compras-filtros-row-busqueda,
+        .compras-filtros-row-factura {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
@@ -487,6 +531,20 @@
     @* Selector multi-seleccion de Proveedor: el modal va ANTES del script del componente (lee de el las URLs). *@
     <partial name="~/Views/Shared/_FiltroPickerModal.cshtml" />
     <script src="@Url.Content("~/Scripts/app/filtro-picker.js")" asp-append-version="true"></script>
+    @if (comprobantesDisponibles)
+    {
+        @* Modal "Comprobantes" de cada fila (comprobantes-compra.js). Tras un cambio, la lista se recarga con los mismos filtros. *@
+        <div id="comprobantesCompraConfig" class="d-none" data-config="@System.Text.Json.JsonSerializer.Serialize(new {
+            urlVer = Url.Action("Comprobantes", "Compras"),
+            urlGuardar = Url.Action("GuardarComprobante", "Compras"),
+            urlEliminar = Url.Action("EliminarComprobante", "Compras"),
+            urlSinFactura = Url.Action("MarcarSinFactura", "Compras"),
+            urlCambiarTitular = Url.Action("CambiarTitularCompra", "Compras") })"></div>
+        <script src="@Url.Content("~/Scripts/app/comprobantes-compra.js")" asp-append-version="true"></script>
+        <script>
+            $(document).on('comprobantes-compra:cambio', function () { window.location.reload(); });
+        </script>
+    }
     <script>
         (function () {
             document.addEventListener("keydown", function (event) {
@@ -517,6 +575,8 @@
             var inputSucursal = form ? form.querySelector('select[name="idSucursal"]') : null;
             var inputTipoCompra = form ? form.querySelector('[name="tipoCompra"]') : null;
             var inputTexto = form ? form.querySelector('input[name="texto"]') : null;
+            var inputEstadoFactura = form ? form.querySelector('select[name="estadoFactura"]') : null;
+            var inputTitular = form ? form.querySelector('select[name="idTitular"]') : null;
             // Proveedor: selector multi-seleccion (filtro-picker.js). Con seleccion hay IDs exactos (data-ids) y el
             // input es solo un resumen; sin seleccion, texto libre.
             var inputProveedor = document.getElementById('proveedorCompras');
@@ -570,6 +630,8 @@
                     idSucursal: inputSucursal ? inputSucursal.value : "",
                     tipoCompra: inputTipoCompra ? inputTipoCompra.value : "",
                     texto: inputTexto ? inputTexto.value : "",
+                    estadoFactura: inputEstadoFactura ? inputEstadoFactura.value : "",
+                    idTitular: inputTitular ? inputTitular.value : "",
                     proveedor: picker.getTexto(inputProveedor),
                     idsProveedor: picker.getIds(inputProveedor)
                 };
@@ -645,6 +707,8 @@
                     if (state.idSucursal) params.set("idSucursal", state.idSucursal);
                     if (state.tipoCompra) params.set("tipoCompra", state.tipoCompra);
                     if (state.texto) params.set("texto", state.texto);
+                    if (state.estadoFactura) params.set("estadoFactura", state.estadoFactura);
+                    if (state.idTitular && state.idTitular !== "0") params.set("idTitular", state.idTitular);
                     // El servidor resuelve los nombres de los IDs desde la URL (no hace falta guardarlos aca).
                     if (state.idsProveedor) params.set("idsProveedor", state.idsProveedor);
                     else if (state.proveedor) params.set("proveedor", state.proveedor);
@@ -690,6 +754,8 @@
             if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAvisoPendiente);
             if (inputSucursal) inputSucursal.addEventListener('change', enviarFiltrosEnVivo);
             if (inputTipoCompra) inputTipoCompra.addEventListener('change', enviarFiltrosEnVivo);
+            if (inputEstadoFactura) inputEstadoFactura.addEventListener('change', enviarFiltrosEnVivo);
+            if (inputTitular) inputTitular.addEventListener('change', enviarFiltrosEnVivo);
 
             document.querySelectorAll("#btnNuevaCompraIndex, #btnVerLineasComprasIndex").forEach(function (link) {
                 link.addEventListener("click", function (event) {

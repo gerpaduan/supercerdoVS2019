@@ -38,6 +38,13 @@ namespace Negocio
             return oTitularD.ObtenerPrincipal(idEmpresa);
         }
 
+        // true si la empresa tiene dos o mas titulares (incluye deshabilitados y cancelados: su historia sigue existiendo). Con uno
+        // solo, las pantallas de compras y pagos no muestran nada de titulares (2026-11-09, ver docs/DECISIONS.md).
+        public bool TieneVariosTitulares(int idEmpresa)
+        {
+            return oTitularD.Listar(idEmpresa, false).Count >= 2;
+        }
+
         public int? ObtenerIdTitularDeSucursal(int idSucursal)
         {
             return oTitularD.ObtenerIdTitularDeSucursal(idSucursal);

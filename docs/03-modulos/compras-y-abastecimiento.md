@@ -31,3 +31,14 @@ Con el feature apagado por config (default en SQL Server hasta activarlo), sigue
 - Borra la compra y sus líneas (`corteporcompra` / `mediares`), guarda la foto completa en `auditoriaeliminaciones` + `auditoriaeliminacionlineas`, genera el **asiento contrario** `ELIMINADO - ...` en la cuenta corriente del proveedor si tenía uno vigente, un **egreso de caja opuesto** (fecha de hoy) si el egreso de la compra tenía monto, y recalcula `corteproveedor`. Todo en una transacción. Aviso al admin (campana).
 - Pide motivo (10 a 300 caracteres) y **usuario y contraseña en cada eliminación**. Permiso = `Compra.ModificarCompra` de quien puso la clave. Se bloquea si hay pesajes vinculados a la compra.
 - Detalle y alternativas: `docs/DECISIONS.md` (2026-10-22, «Eliminar compras, stock y movimientos»). Manual: `docs/11-manual-de-uso/pantallas/Compras.Editar.md`, `RegistrosEliminados.Index.md` y el concepto `eliminar-registros`.
+
+## Titular propio y comprobantes del proveedor (2026-11-09)
+
+Solo Postgres. Decisiones y alternativas descartadas: `docs/DECISIONS.md` (2026-11-09, «Compras: titular propio y comprobantes del proveedor»).
+
+- **Datos:** `compras.idtitular` (NULL = principal), `compras.estadofactura` (`PENDIENTE` / `FACTURADA` / `NO_LLEVA`; NULL = anterior a la migración) y la tabla `comprobantescompra` (factura, notas de crédito y de débito con baja lógica y motivo). Una factura activa por compra; las notas exigen la factura. Índice único `(idempresa, idproveedor, tipocomprobante, ptovta, numero)` entre los no eliminados.
+- **La deuda es el importe de la compra:** los comprobantes nunca tocan `movctacte`.
+- **Código:** `Negocio/ComprobanteCompra.cs` (servicio), `Negocio/ValidacionComprobanteCompra.cs` (reglas puras), `Negocio/ResumenCtaCtePorTitular.cs` (resumen por titular), `Negocio/ClasificacionMedioPago.cs` (bancarizado vs efectivo), `DatosPostgres/ComprobanteCompraPg.cs`, `WebCore/Controllers/ComprasController.Comprobantes.cs` (acciones `Comprobantes`, `GuardarComprobante`, `EliminarComprobante`, `MarcarSinFactura`, `CambiarTitularCompra`), vistas `Compras/_ComprobantesCompra*.cshtml` y `wwwroot/Scripts/app/comprobantes-compra.js`.
+- **Pantallas:** Compras/Index (filtros Factura y Titular, columnas, botón *Comprobantes* = bandeja de facturas pendientes), Compras/Editar (titular y «La factura vino con la mercadería» en el alta; bloque de solo lectura y botón *Comprobantes* al editar), Compras/Lineas (Titular).
+- **Al eliminar una compra** sus comprobantes se dan de baja (`CompraPg.EjecutarEliminarCompra`, paso 5).
+- **Configuración:** `Compras:AlicuotaIvaDefault`, `Compras:AlicuotasIva`.

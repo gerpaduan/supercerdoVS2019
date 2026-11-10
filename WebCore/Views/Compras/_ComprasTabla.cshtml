@@ -12,7 +12,12 @@
     // ViewBag.PermiteMediaRes) -- antes se renderizaba siempre sin ningun condicional (gap real).
     bool mostrarTipoCompra = ViewBag.MostrarTipoCompraEnListado != null && (bool)ViewBag.MostrarTipoCompraEnListado;
     bool mostrarMediasReses = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
-    int totalColumnas = 7 + (mostrarTipoCompra ? 1 : 0) + (mostrarMediasReses ? 1 : 0);
+    // Comprobantes del proveedor (solo Postgres): columna Factura y, con 2 o mas titulares propios, columna Titular.
+    // Ver docs/DECISIONS.md (2026-11-09, "Compras: titular propio y comprobantes del proveedor").
+    bool mostrarFactura = ViewBag.ComprobantesDisponibles != null && (bool)ViewBag.ComprobantesDisponibles
+        && dt != null && dt.Columns.Contains("estadoFactura");
+    bool mostrarTitular = mostrarFactura && ViewBag.MostrarTitulares != null && (bool)ViewBag.MostrarTitulares;
+    int totalColumnas = 7 + (mostrarTipoCompra ? 1 : 0) + (mostrarMediasReses ? 1 : 0) + (mostrarFactura ? 1 : 0) + (mostrarTitular ? 1 : 0);
 }
 
 @* En celular (<768px) cada compra se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css):
@@ -34,6 +39,14 @@
                     <th class="text-right">Medias Reses</th>
                 }
                 <th class="text-right">Total</th>
+                @if (mostrarTitular)
+                {
+                    <th>Titular</th>
+                }
+                @if (mostrarFactura)
+                {
+                    <th>Factura</th>
+                }
                 <th>Sucursal</th>
                 <th style="width: 180px;">Acciones</th>
             </tr>
@@ -58,6 +71,17 @@
                     bool anulado = !string.IsNullOrWhiteSpace(estado) && !estado.Equals("Alta", StringComparison.OrdinalIgnoreCase);
                     string detailId = "detCompra_" + idCompra;
 
+                    // Factura del proveedor: solo las compras de cortes o media res la llevan (las operaciones de stock no).
+                    bool admiteComprobantes = mostrarFactura
+                        && Negocio.ValidacionComprobanteCompra.TipoCompraAdmiteComprobantes(row["tipoCompra"] == DBNull.Value ? "" : Convert.ToString(row["tipoCompra"]));
+                    string estadoFactura = admiteComprobantes && row["estadoFactura"] != DBNull.Value ? Convert.ToString(row["estadoFactura"]) : "";
+                    string tipoFactura = admiteComprobantes && row["tipoFactura"] != DBNull.Value ? Convert.ToString(row["tipoFactura"]) : "";
+                    string numeroFactura = admiteComprobantes && row["numeroFactura"] != DBNull.Value ? Convert.ToString(row["numeroFactura"]) : "";
+                    decimal facturadoNeto = admiteComprobantes && row["facturadoNeto"] != DBNull.Value ? Convert.ToDecimal(row["facturadoNeto"]) : 0m;
+                    bool conNotaCredito = admiteComprobantes && row["tieneNC"] != DBNull.Value && Convert.ToBoolean(row["tieneNC"]);
+                    bool conNotaDebito = admiteComprobantes && row["tieneND"] != DBNull.Value && Convert.ToBoolean(row["tieneND"]);
+                    string titularNombre = mostrarTitular && row["titularNombre"] != DBNull.Value ? Convert.ToString(row["titularNombre"]) : "";
+
                     <tr class="@(anulado ? "table-danger" : "")">
                         <td data-label="Fecha">@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
                         <td data-label="Nro. remito/factura">@row["nroRemito"]</td>
@@ -72,6 +96,41 @@
                             <td class="text-right" data-label="Medias reses">@cantMedias</td>
                         }
                         <td class="text-right cc-destacado" data-label="Total">@totalS.ToString("N2")</td>
+                        @if (mostrarTitular)
+                        {
+                            <td data-label="Titular">@(admiteComprobantes ? titularNombre : "")</td>
+                        }
+                        @if (mostrarFactura)
+                        {
+                            <td data-label="Factura" class="compras-col-factura">
+                                @if (admiteComprobantes)
+                                {
+                                    if (estadoFactura == Entidades.EstadoFacturaCompra.Facturada)
+                                    {
+                                        <span class="badge badge-success">Facturada</span>
+                                        <div class="small text-nowrap">@tipoFactura @numeroFactura</div>
+                                        <div class="small text-muted text-nowrap">
+                                            Neto $ @facturadoNeto.ToString("N2")
+                                            @if (conNotaCredito) { <span class="badge badge-danger" title="Tiene nota de crédito">+NC</span> }
+                                            @if (conNotaDebito) { <span class="badge badge-info" title="Tiene nota de débito">+ND</span> }
+                                        </div>
+                                    }
+                                    else if (estadoFactura == Entidades.EstadoFacturaCompra.Pendiente)
+                                    {
+                                        <span class="badge badge-warning">Pendiente</span>
+                                    }
+                                    else if (estadoFactura == Entidades.EstadoFacturaCompra.NoLleva)
+                                    {
+                                        <span class="badge badge-secondary">No lleva</span>
+                                    }
+                                    else
+                                    {
+                                        @* Compra anterior al control de facturas: sin dato (no se llena la lista de pendientes con historia). *@
+                                        <span class="text-muted small">Sin dato</span>
+                                    }
+                                }
+                            </td>
+                        }
                         <td data-label="Sucursal">@row["sucursal"]</td>
                         <td class="text-center text-nowrap cc-acciones">
                             <button type="button"
@@ -82,6 +141,13 @@
                                     title="Ver detalle">
                                 <i class="fas fa-angle-down"></i><span class="cc-solo-card">Detalle</span>
                             </button>
+                            @if (admiteComprobantes && !anulado)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-comprobantes-compra"
+                                        data-id="@idCompra" title="Comprobantes del proveedor (factura, notas de crédito y débito)">
+                                    <i class="fas fa-file-invoice"></i><span class="cc-solo-card">Comprobantes</span>
+                                </button>
+                            }
                             <a class="btn btn-sm btn-outline-primary"
                                href="@Url.Action("ModificarCompra", "Compras", new { id = idCompra, origen = "layout" })"
                                title="Ver compra"

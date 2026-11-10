@@ -636,7 +636,7 @@ namespace WebCore.Controllers
         // ===== CtaCtePersona: extracto de una persona, con exportacion PDF/Excel/email real =====
 
         [HttpGet]
-        public IActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, string returnUrl = "", bool desdePos = false, string posInstanceId = "")
+        public IActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, string returnUrl = "", bool desdePos = false, string posInstanceId = "", int idTitular = 0)
         {
             bool renderParcial = desdePos || EsPeticionAjax();
             // Se reenvia a la vista para armar los links de "nuevo pago"/"editar pago" -- ver
@@ -710,7 +710,12 @@ namespace WebCore.Controllers
                 fechaDesde = fechaMinimaPermitidaCtaCte.Value;
 
             var persona = _oPersonaN.findById(idPersona);
-            DataTable dtMov = _oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesde.Value);
+            // Titular propio (2026-11-09, solo Postgres y solo con 2 o mas titulares): cada movimiento lleva su titular y se puede filtrar
+            // por uno. Dentro del modal del POS la cuenta queda como siempre.
+            bool conTitulares = false;
+            DataTable dtMov = desdePos
+                ? _oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesde.Value)
+                : ObtenerExtractoPersona(idPersona, fechaDesde.Value, idTitular, out conTitulares);
             bool extractoReservado = AplicarReservaAlExtracto(dtMov, idPersona);
 
             if (!mostrarAnulados)
@@ -751,6 +756,10 @@ namespace WebCore.Controllers
             ViewBag.RenderSinLayout = renderParcial;
             ViewBag.DesdePOS = desdePos;
             ViewBag.OcultarSaldo = (desdePos && !puedeVerCtaCtePersona) || extractoReservado;
+            // Resumen por titular y control fiscal. Una cuenta reservada vista por un usuario restringido no lo recibe.
+            ViewBag.TitularesCtaCte = conTitulares
+                ? ArmarTitularesCtaCte(idPersona, fechaDesde.Value, idTitular, usuarioConsulta, extractoReservado, true)
+                : null;
             ViewBag.PuedeExportarCuentaCorriente = true;
             ViewBag.Title = "Cuenta Corriente";
 
@@ -901,6 +910,35 @@ namespace WebCore.Controllers
                         modelo.Notas.Add("Tipo de compra: " + compra.TipoCompra);
                     if (!string.IsNullOrWhiteSpace(compra.NroRemito))
                         modelo.Notas.Add("Remito/Factura: " + compra.NroRemito);
+
+                    // Titular propio y comprobantes del proveedor (2026-11-09, solo Postgres). Los importes de los comprobantes se ven
+                    // solo con el permiso de ver compras, igual que los precios.
+                    var comprobanteN = WebCore.Infrastructure.NegocioFactory.CrearComprobanteCompra(_empresa);
+                    if (comprobanteN != null && Negocio.ValidacionComprobanteCompra.TipoCompraAdmiteComprobantes(compra.TipoCompra))
+                    {
+                        var detalleComprobantes = comprobanteN.ObtenerDetalle(compra.IdCompra);
+                        var titularesDetalle = ListarTitularesPago();
+                        if (titularesDetalle.Count > 0)
+                        {
+                            int idTitularDetalle = detalleComprobantes.IdTitular ?? IdTitularPrincipalPago();
+                            var titularDetalle = titularesDetalle.FirstOrDefault(t => t.IdTitular == idTitularDetalle);
+                            if (titularDetalle != null)
+                                modelo.Notas.Add("Titular: " + titularDetalle.Nombre);
+                        }
+
+                        string estadoDetalle = detalleComprobantes.EstadoFactura == Entidades.EstadoFacturaCompra.Facturada ? "facturada"
+                            : detalleComprobantes.EstadoFactura == Entidades.EstadoFacturaCompra.Pendiente ? "pendiente de factura"
+                            : detalleComprobantes.EstadoFactura == Entidades.EstadoFacturaCompra.NoLleva ? "no lleva factura"
+                            : "";
+                        if (estadoDetalle.Length > 0)
+                            modelo.Notas.Add("Factura: " + estadoDetalle);
+                        if (verPrecios)
+                        {
+                            foreach (var comprobante in detalleComprobantes.Comprobantes)
+                                modelo.Notas.Add(comprobante.TipoComprobante + " " + comprobante.NumeroCompleto + ": " + comprobante.TotalConSigno.ToString("C", cultura)
+                                    + " (neto " + (comprobante.NetoGravado * Entidades.TiposComprobanteCompra.Signo(comprobante.TipoComprobante)).ToString("C", cultura) + ")");
+                        }
+                    }
                     break;
                 }
 
@@ -1044,23 +1082,24 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult ExportarPdfPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false)
+        public IActionResult ExportarPdfPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false, int idTitular = 0)
         {
             DateTime fechaD;
             if (!DateTime.TryParse(fechaDesde, out fechaD))
                 fechaD = DateTime.Today.AddMonths(-1);
 
             string fileName;
-            byte[] pdfBytes = GenerarPdfCuentaCorrienteBytes(idPersona, fechaD, mostrarAnulados, out fileName);
+            // Descarga directa: incluye el control fiscal solo si el usuario tiene el permiso (se decide adentro).
+            byte[] pdfBytes = GenerarPdfCuentaCorrienteBytes(idPersona, fechaD, mostrarAnulados, idTitular, true, out fileName);
             return File(pdfBytes, "application/pdf", fileName);
         }
 
         [HttpGet]
-        public IActionResult ExportarExcelPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false)
+        public IActionResult ExportarExcelPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false, int idTitular = 0)
         {
             DateTime fecha = ParsearFechaCuentaCorriente(fechaDesde);
             string fileName;
-            byte[] buffer = GenerarExcelCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, out fileName);
+            byte[] buffer = GenerarExcelCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, idTitular, true, out fileName);
             return File(buffer, "text/csv", fileName);
         }
 
@@ -1105,7 +1144,7 @@ namespace WebCore.Controllers
         }
 
         [HttpPost]
-        public IActionResult EnviarCuentaCorrienteEmail(int idPersona, string fechaDesde, bool mostrarAnulados, string emailDestino, string asunto, string mensaje, string formato)
+        public IActionResult EnviarCuentaCorrienteEmail(int idPersona, string fechaDesde, bool mostrarAnulados, string emailDestino, string asunto, string mensaje, string formato, int idTitular = 0)
         {
             try
             {
@@ -1142,12 +1181,13 @@ namespace WebCore.Controllers
 
                 if (formatoNormalizado == "excel")
                 {
-                    attachmentBytes = GenerarExcelCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, out fileName);
+                    // El mail sale a un tercero (la persona): NUNCA lleva el control fiscal, aunque quien lo envia tenga el permiso.
+                    attachmentBytes = GenerarExcelCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, idTitular, false, out fileName);
                     contentType = "text/csv";
                 }
                 else
                 {
-                    attachmentBytes = GenerarPdfCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, out fileName);
+                    attachmentBytes = GenerarPdfCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, idTitular, false, out fileName);
                     contentType = "application/pdf";
                 }
 
@@ -1195,7 +1235,7 @@ namespace WebCore.Controllers
         // listado, cambio de persona y eliminacion"). Cada fila abre AddOrEditPago del pago. Los eliminados
         // se muestran con la etiqueta ELIMINADO (nunca se borran). =====
         [HttpGet]
-        public IActionResult Pagos(string texto = "", string desde = "", string hasta = "", string operacion = "", bool verEliminados = true)
+        public IActionResult Pagos(string texto = "", string desde = "", string hasta = "", string operacion = "", bool verEliminados = true, int idTitular = 0)
         {
             bool renderParcial = EsPeticionAjax();
 
@@ -1213,8 +1253,28 @@ namespace WebCore.Controllers
 
             DataTable dt = QuitarFilasOcultas(_oCtaCteN.obtenerPagos(texto ?? "", fechaDesde, fechaHasta), Entidades.RestriccionCtaCteReservada.TablaPagos, "id");
 
+            // Titular propio (2026-11-09, solo Postgres y solo con 2 o mas titulares): columna y filtro. Un titular NULL es el principal
+            // y los cobros no tienen titular (idTitularEfec = 0).
+            var titularesPago = ListarTitularesPago();
+            bool mostrarTitularPago = titularesPago.Count > 0 && dt.Columns.Contains("idTitular");
+            if (mostrarTitularPago)
+            {
+                int principal = IdTitularPrincipalPago();
+                var nombresTitular = titularesPago.ToDictionary(t => t.IdTitular, t => t.Nombre);
+                dt.Columns.Add("idTitularEfec", typeof(int));
+                dt.Columns.Add("titularNombre", typeof(string));
+                foreach (DataRow fila in dt.Rows)
+                {
+                    bool esPago = string.Equals(Convert.ToString(fila["Operacion"]), "Pago", StringComparison.OrdinalIgnoreCase);
+                    int efectivo = !esPago ? 0 : (fila["idTitular"] == DBNull.Value ? principal : Convert.ToInt32(fila["idTitular"]));
+                    fila["idTitularEfec"] = efectivo;
+                    fila["titularNombre"] = efectivo > 0 && nombresTitular.ContainsKey(efectivo) ? nombresTitular[efectivo] : "";
+                }
+            }
+
             // filtros de operacion y eliminados sobre lo ya traido (el repositorio no los conoce)
             var filtros = new List<string>();
+            if (mostrarTitularPago && idTitular > 0) filtros.Add("idTitularEfec = " + idTitular.ToString(CultureInfo.InvariantCulture));
             if (string.Equals(operacion, "Cobro", StringComparison.OrdinalIgnoreCase)) filtros.Add("Operacion = 'Cobro'");
             else if (string.Equals(operacion, "Pago", StringComparison.OrdinalIgnoreCase)) filtros.Add("Operacion = 'Pago'");
             if (!verEliminados) filtros.Add("eliminado = false");
@@ -1226,6 +1286,9 @@ namespace WebCore.Controllers
             ViewBag.Hasta = fechaHasta.ToString("yyyy-MM-dd");
             ViewBag.Operacion = operacion ?? "";
             ViewBag.VerEliminados = verEliminados;
+            ViewBag.TitularesPago = titularesPago;
+            ViewBag.MostrarTitularPago = mostrarTitularPago;
+            ViewBag.IdTitularFiltro = idTitular;
             ViewBag.RenderSinLayout = renderParcial;
             ViewBag.Title = "Pagos y cobros";
 
@@ -1341,6 +1404,32 @@ namespace WebCore.Controllers
             });
         }
 
+        // Opciones del selector de titular de un pago. Vacia = no se muestra (SQL Server o un solo titular).
+        private List<WebCore.Models.TitularCompraOpcionVm> ListarTitularesPago()
+        {
+            var titularN = WebCore.Infrastructure.NegocioFactory.CrearTitularFiscal(_empresa);
+            if (titularN == null || !titularN.TieneVariosTitulares(_empresa.IdEmpresa))
+                return new List<WebCore.Models.TitularCompraOpcionVm>();
+
+            return titularN.Listar(_empresa.IdEmpresa, false)
+                .Select(t => new WebCore.Models.TitularCompraOpcionVm
+                {
+                    IdTitular = t.IdTitular,
+                    Nombre = t.NombreCorto,
+                    EsPrincipal = t.EsPredeterminado,
+                    Seleccionable = t.Habilitado && !t.Revocado
+                })
+                .ToList();
+        }
+
+        // Id del titular principal (el que representa un titular NULL en la base), o 0 si no hay.
+        private int IdTitularPrincipalPago()
+        {
+            var titularN = WebCore.Infrastructure.NegocioFactory.CrearTitularFiscal(_empresa);
+            var principal = titularN != null ? titularN.ObtenerPrincipal(_empresa.IdEmpresa) : null;
+            return principal != null ? principal.IdTitular : 0;
+        }
+
         [HttpGet]
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaPagos, "idPago")]
         public IActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false, string posInstanceId = "")
@@ -1429,6 +1518,10 @@ namespace WebCore.Controllers
             ViewBag.UrlPagosListado = Url.Action("Pagos", "Finanzas");
             ViewBag.UrlEliminarPago = Url.Action("EliminarPago", "Finanzas");
             ViewBag.UrlListarPersonas = Url.Action("Listar", "Personas");
+
+            // Titular propio del pago a proveedor (2026-11-09, solo Postgres y solo con 2 o mas titulares): ver docs/DECISIONS.md.
+            ViewBag.TitularesPago = ListarTitularesPago();
+            ViewBag.IdTitularPrincipalPago = IdTitularPrincipalPago();
 
             Entidades.Pago model;
             if (idPago == 0)
@@ -1520,6 +1613,21 @@ namespace WebCore.Controllers
 
                 oPagoE.AProveedor = saldar.AProveedor;
                 oPagoE.Importe = (float)saldar.Importe;
+            }
+
+            // Titular propio (2026-11-09): solo los pagos a proveedor lo llevan; un cobro no tiene titular. El titular tiene que estar
+            // habilitado y no cancelado (el principal = NULL se guarda como NULL, igual que en Compras).
+            if (!oPagoE.AProveedor)
+            {
+                oPagoE.IdTitular = null;
+            }
+            else
+            {
+                if (oPagoE.IdTitular.HasValue && oPagoE.IdTitular.Value <= 0) oPagoE.IdTitular = null;
+                var comprobanteN = WebCore.Infrastructure.NegocioFactory.CrearComprobanteCompra(_empresa);
+                string errorTitular = comprobanteN != null ? comprobanteN.ErrorSiTitularNoDisponible(oPagoE.IdTitular) : null;
+                if (errorTitular != null)
+                    return Json(new { ok = false, mensaje = errorTitular });
             }
 
             oPagoE.Banco = "";
@@ -2105,9 +2213,81 @@ namespace WebCore.Controllers
             return fecha;
         }
 
-        private DataTable ObtenerMovimientosCuentaCorrienteParaExportacion(int idPersona, DateTime fecha, bool mostrarAnulados)
+        // Extracto de la persona. Con 2 o mas titulares propios (solo Postgres) cada movimiento trae su titular (columna "idTitular") y
+        // se puede filtrar por uno; el saldo anterior y el acumulado salen solo de lo filtrado. Si no, es el extracto de siempre.
+        private DataTable ObtenerExtractoPersona(int idPersona, DateTime desde, int idTitular, out bool conTitulares)
         {
-            DataTable dt = _oCtaCteN.getCtaCteByIdPersona(idPersona, fecha);
+            var repo = WebCore.Infrastructure.NegocioFactory.CrearResumenProveedor(_empresa);
+            conTitulares = repo != null && ListarTitularesPago().Count > 0;
+            if (!conTitulares)
+                return _oCtaCteN.getCtaCteByIdPersona(idPersona, desde);
+
+            DataTable extracto = repo.ObtenerExtractoPorTitular(idPersona, desde, idTitular > 0 ? idTitular : 0);
+            Negocio.ResumenCtaCtePorTitular.AcumularSaldo(extracto);
+            return extracto;
+        }
+
+        // Usuario cuyos permisos valen para consultar la cuenta corriente: en la cuenta de produccion (compartida) es el operador
+        // autenticado de Finanzas; sin operador queda la propia cuenta, que no suma permisos de mas.
+        private Entidades.Usuario UsuarioConsultaCtaCte()
+        {
+            if (_usuarioActual.EsUsuarioProduccion)
+                return ObtenerOperadorFinanzas() ?? _usuarioActual;
+            return _usuarioActual;
+        }
+
+        // Resumen por titular de la cuenta corriente de un proveedor. "Control fiscal" (facturado, pagado bancarizado y en efectivo,
+        // diferencia y sin factura) solo si permitirControlFiscal Y el usuario es admin o puede EDITAR el formulario Pagos del menu
+        // (formPagos): el permiso del POS no cuenta. Sin permiso esos numeros no se leen ni viajan en el modelo.
+        private WebCore.Models.CtaCteTitularesVm ArmarTitularesCtaCte(int idPersona, DateTime desde, int idTitular, Entidades.Usuario usuarioConsulta, bool ocultar, bool permitirControlFiscal)
+        {
+            var vm = new WebCore.Models.CtaCteTitularesVm
+            {
+                Mostrar = true,
+                IdTitularFiltro = idTitular,
+                Titulares = ListarTitularesPago()
+            };
+            vm.Nombres = vm.Titulares.ToDictionary(t => t.IdTitular, t => t.Nombre);
+            // Cuenta reservada vista por un usuario restringido: sin resumen (revelaria saldos).
+            if (ocultar) return vm;
+
+            var repo = WebCore.Infrastructure.NegocioFactory.CrearResumenProveedor(_empresa);
+            if (repo == null) return vm;
+
+            bool puedeControl = permitirControlFiscal
+                && _oUsuarioN.PuedeEditarFormularioPorConsulta(usuarioConsulta, Entidades.Permisos.Finanza.VerPagos);
+            vm.PuedeVerControlFiscal = puedeControl;
+
+            var movimientos = repo.ObtenerMovimientos(idPersona);
+            var compras = movimientos.Where(m => m.Tabla == Negocio.ResumenCtaCtePorTitular.TablaCompras).ToList();
+            // Sin compras la persona no es proveedor: no hay resumen que mostrar.
+            if (compras.Count == 0) return vm;
+
+            vm.PrimeraCompra = compras.Min(m => m.Fecha);
+            var pagos = puedeControl ? repo.ObtenerPagos(idPersona, desde) : new List<Entidades.PagoResumen>();
+            var facturado = puedeControl ? repo.ObtenerFacturado(idPersona, desde) : new List<Entidades.FacturadoResumen>();
+            var resumen = Negocio.ResumenCtaCtePorTitular.Armar(movimientos, pagos, facturado, desde, vm.Nombres, idTitular);
+
+            // Sin permiso se borra todo lo que sale del control fiscal (SinFactura sale de Comprado, que si se ve).
+            if (!puedeControl)
+            {
+                foreach (var fila in resumen.Filas.Concat(new[] { resumen.Total }))
+                {
+                    fila.FacturadoNeto = 0m;
+                    fila.PagadoBancarizado = 0m;
+                    fila.PagadoEfectivo = 0m;
+                    fila.DiferenciaFacturadoBancarizado = 0m;
+                    fila.SinFactura = 0m;
+                    fila.PagadoBancarizadoExcedeFacturado = false;
+                }
+            }
+            vm.Resumen = resumen;
+            return vm;
+        }
+
+        private DataTable ObtenerMovimientosCuentaCorrienteParaExportacion(int idPersona, DateTime fecha, bool mostrarAnulados, int idTitular, out bool conTitulares)
+        {
+            DataTable dt = ObtenerExtractoPersona(idPersona, fecha, idTitular, out conTitulares);
             AplicarReservaAlExtracto(dt, idPersona);
             if (!mostrarAnulados)
                 dt = FiltrarRegistrosRepetidos(dt);
@@ -2116,21 +2296,48 @@ namespace WebCore.Controllers
             return dt;
         }
 
-        private byte[] GenerarExcelCuentaCorrienteBytes(int idPersona, DateTime fecha, bool mostrarAnulados, out string fileName)
+        private byte[] GenerarExcelCuentaCorrienteBytes(int idPersona, DateTime fecha, bool mostrarAnulados, int idTitular, bool incluirControlFiscal, out string fileName)
         {
-            DataTable dt = ObtenerMovimientosCuentaCorrienteParaExportacion(idPersona, fecha, mostrarAnulados);
+            bool conTitulares;
+            DataTable dt = ObtenerMovimientosCuentaCorrienteParaExportacion(idPersona, fecha, mostrarAnulados, idTitular, out conTitulares);
             bool ocultarSaldo = _ctaCteReservada.SaldoOculto(idPersona);
-            string csv = "Fecha;Tabla;Nro.Doc;Detalle;Importe;Saldo;Sucursal\n";
+            var titulares = conTitulares
+                ? ArmarTitularesCtaCte(idPersona, fecha, idTitular, UsuarioConsultaCtaCte(), ocultarSaldo, incluirControlFiscal)
+                : null;
+            string csv = "Fecha;Tabla;Nro.Doc;Detalle;Importe;Saldo;Sucursal" + (conTitulares ? ";Titular" : "") + "\n";
 
             foreach (DataRow r in dt.Rows)
             {
+                // Solo compras y pagos llevan titular propio; el resto de los movimientos (ventas, etc.) no.
+                string tablaFila = Convert.ToString(r["Tabla"]);
+                string titularFila = "";
+                if (conTitulares && (string.Equals(tablaFila, "Compras", StringComparison.OrdinalIgnoreCase) || string.Equals(tablaFila, "Pagos", StringComparison.OrdinalIgnoreCase)))
+                {
+                    int idTitularFila = r["idTitular"] == DBNull.Value ? 0 : Convert.ToInt32(r["idTitular"]);
+                    titulares.Nombres.TryGetValue(idTitularFila, out titularFila);
+                }
+
                 csv += Convert.ToDateTime(r["Fecha"]).ToString("dd/MM/yyyy") + ";" +
                        r["Tabla"] + ";" +
                        r["NroDoc"] + ";" +
                        r["Detalle"] + ";" +
                        Convert.ToDecimal(r["Importe"]).ToString("N2") + ";" +
                        (ocultarSaldo ? "***" : Convert.ToDecimal(r["Saldo"]).ToString("N2")) + ";" +
-                       r["Sucursal"] + "\n";
+                       r["Sucursal"] + (conTitulares ? ";" + titularFila : "") + "\n";
+            }
+
+            // Resumen por titular al pie (con el control fiscal solo si corresponde).
+            if (titulares != null && titulares.Resumen != null)
+            {
+                csv += "\nResumen por titular\n";
+                csv += "Titular;Saldo anterior;Comprado;Pagado;Saldo" + (titulares.PuedeVerControlFiscal ? ";Facturado neto;Pagado bancarizado;Pagado efectivo;Facturado menos bancarizado;Sin factura" : "") + "\n";
+                foreach (var fila in titulares.Resumen.Filas.Concat(new[] { titulares.Resumen.Total }))
+                {
+                    csv += fila.NombreTitular + ";" + fila.SaldoAnterior.ToString("N2") + ";" + fila.Comprado.ToString("N2") + ";" + fila.Pagado.ToString("N2") + ";" + fila.Saldo.ToString("N2");
+                    if (titulares.PuedeVerControlFiscal)
+                        csv += ";" + fila.FacturadoNeto.ToString("N2") + ";" + fila.PagadoBancarizado.ToString("N2") + ";" + fila.PagadoEfectivo.ToString("N2") + ";" + fila.DiferenciaFacturadoBancarizado.ToString("N2") + ";" + fila.SinFactura.ToString("N2");
+                    csv += "\n";
+                }
             }
 
             string persona = ObtenerNombreArchivoPersona(dt, idPersona);
@@ -2138,14 +2345,18 @@ namespace WebCore.Controllers
             return System.Text.Encoding.UTF8.GetBytes(csv);
         }
 
-        private byte[] GenerarPdfCuentaCorrienteBytes(int idPersona, DateTime fecha, bool mostrarAnulados, out string fileName)
+        private byte[] GenerarPdfCuentaCorrienteBytes(int idPersona, DateTime fecha, bool mostrarAnulados, int idTitular, bool incluirControlFiscal, out string fileName)
         {
-            DataTable dtMov = ObtenerMovimientosCuentaCorrienteParaExportacion(idPersona, fecha, mostrarAnulados);
+            bool conTitulares;
+            DataTable dtMov = ObtenerMovimientosCuentaCorrienteParaExportacion(idPersona, fecha, mostrarAnulados, idTitular, out conTitulares);
+            var titulares = conTitulares
+                ? ArmarTitularesCtaCte(idPersona, fecha, idTitular, UsuarioConsultaCtaCte(), _ctaCteReservada.SaldoOculto(idPersona), incluirControlFiscal)
+                : null;
             string persona = dtMov.Rows.Count > 0 ? Convert.ToString(dtMov.Rows[0]["razonSocial"]) : "";
 
             persona = SanitizarNombreArchivo(persona);
             fileName = "CuentaCorriente_" + persona + "_Desde_" + fecha.ToString("yyyy-MM-dd") + ".pdf";
-            return WebCore.Services.GenerarDocsCore.GenerarPdfCtaCtePersona(dtMov, fecha, _ctaCteReservada.SaldoOculto(idPersona));
+            return WebCore.Services.GenerarDocsCore.GenerarPdfCtaCtePersona(dtMov, fecha, _ctaCteReservada.SaldoOculto(idPersona), titulares);
         }
 
         private string ObtenerNombreArchivoPersona(DataTable dt, int idPersona)

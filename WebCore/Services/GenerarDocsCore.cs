@@ -27,7 +27,8 @@ namespace WebCore.Services
         // sintaxis QuestPDF en vez de iTextSharp.
         // ocultarSaldo: persona de cuenta corriente reservada vista por un usuario restringido
         // (docs/DECISIONS.md, 2026-10-01): el saldo acumulado se calculo sobre todo el libro, no se muestra.
-        public static byte[] GenerarPdfCtaCtePersona(DataTable dt, DateTime fechaDesde, bool ocultarSaldo = false)
+        // titulares: resumen por titular propio (2026-11-09, solo con 2 o mas titulares); su "Control fiscal" ya viene filtrado por permiso.
+        public static byte[] GenerarPdfCtaCtePersona(DataTable dt, DateTime fechaDesde, bool ocultarSaldo = false, WebCore.Models.CtaCteTitularesVm titulares = null)
         {
             var culturaAr = new CultureInfo("es-AR");
             string persona = "";
@@ -63,6 +64,16 @@ namespace WebCore.Services
                         });
 
                         col.Item().PaddingTop(4).Text("Desde: " + fechaDesde.ToString("dd/MM/yyyy"));
+
+                        // Resumen por titular propio (solo proveedores con 2 o mas titulares). Con filtro de titular se aclara de cual es el extracto.
+                        if (titulares != null && titulares.Mostrar)
+                        {
+                            string nombreFiltro;
+                            if (titulares.IdTitularFiltro > 0 && titulares.Nombres.TryGetValue(titulares.IdTitularFiltro, out nombreFiltro))
+                                col.Item().Text("Titular: " + nombreFiltro).Bold();
+                            if (titulares.Resumen != null)
+                                col.Item().PaddingTop(4).Element(c => ResumenPorTitularPdf(c, titulares, culturaAr));
+                        }
 
                         col.Item().PaddingTop(6).Table(table =>
                         {
@@ -106,6 +117,64 @@ namespace WebCore.Services
             });
 
             return documento.GeneratePdf();
+        }
+
+        // Tabla "Resumen por titular" del extracto: deuda (comprado, pagado, saldo) y, si el usuario tiene el permiso, control fiscal.
+        private static void ResumenPorTitularPdf(QuestPDF.Infrastructure.IContainer contenedor, WebCore.Models.CtaCteTitularesVm titulares, CultureInfo culturaAr)
+        {
+            bool control = titulares.PuedeVerControlFiscal;
+            var filas = titulares.Resumen.Filas.Concat(new[] { titulares.Resumen.Total }).ToList();
+
+            contenedor.Table(tabla =>
+            {
+                tabla.ColumnsDefinition(c =>
+                {
+                    c.RelativeColumn(2f);
+                    c.RelativeColumn(1.4f);
+                    c.RelativeColumn(1.4f);
+                    c.RelativeColumn(1.4f);
+                    if (control)
+                    {
+                        c.RelativeColumn(1.4f);
+                        c.RelativeColumn(1.4f);
+                        c.RelativeColumn(1.4f);
+                        c.RelativeColumn(1.4f);
+                    }
+                });
+
+                tabla.Header(h =>
+                {
+                    h.Cell().Background("#F0F0F0").Padding(3).Text("Titular").Bold();
+                    h.Cell().Background("#F0F0F0").Padding(3).AlignRight().Text("Comprado").Bold();
+                    h.Cell().Background("#F0F0F0").Padding(3).AlignRight().Text("Pagado").Bold();
+                    h.Cell().Background("#F0F0F0").Padding(3).AlignRight().Text("Saldo").Bold();
+                    if (control)
+                    {
+                        h.Cell().Background("#F0F0F0").Padding(3).AlignRight().Text("Facturado neto").Bold();
+                        h.Cell().Background("#F0F0F0").Padding(3).AlignRight().Text("Pag. bancarizado").Bold();
+                        h.Cell().Background("#F0F0F0").Padding(3).AlignRight().Text("Pag. efectivo").Bold();
+                        h.Cell().Background("#F0F0F0").Padding(3).AlignRight().Text("Fact. - banc.").Bold();
+                    }
+                });
+
+                foreach (var fila in filas)
+                {
+                    bool esTotal = ReferenceEquals(fila, titulares.Resumen.Total);
+                    tabla.Cell().Padding(3).Text(t => { var s = t.Span(fila.NombreTitular); if (esTotal) s.Bold(); });
+                    tabla.Cell().Padding(3).AlignRight().Text(fila.Comprado.ToString("N2", culturaAr));
+                    tabla.Cell().Padding(3).AlignRight().Text(fila.Pagado.ToString("N2", culturaAr));
+                    tabla.Cell().Padding(3).AlignRight().Text(t => { var s = t.Span(fila.Saldo.ToString("N2", culturaAr)); if (esTotal) s.Bold(); });
+                    if (control)
+                    {
+                        tabla.Cell().Padding(3).AlignRight().Text(fila.FacturadoNeto.ToString("N2", culturaAr));
+                        tabla.Cell().Padding(3).AlignRight().Text(fila.PagadoBancarizado.ToString("N2", culturaAr));
+                        tabla.Cell().Padding(3).AlignRight().Text(fila.PagadoEfectivo.ToString("N2", culturaAr));
+                        // En rojo cuando lo pagado bancarizado supera lo facturado (la diferencia queda negativa).
+                        tabla.Cell().Padding(3).AlignRight().Text(fila.DiferenciaFacturadoBancarizado.ToString("N2", culturaAr))
+                            .FontColor(fila.PagadoBancarizadoExcedeFacturado ? Colors.Red.Darken2 : Colors.Black);
+                    }
+                }
+            });
         }
 
         // Port de Web/Controllers/FinanzasController.cs GenerarPdfPago (recibo de pago/cobro de

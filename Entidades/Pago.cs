@@ -22,6 +22,9 @@ namespace Entidades
         }
         public formasPago FormaPago_ { get; set; }
 
+        // Titular fiscal propio del pago (null = titular principal). Solo Postgres.
+        public int? IdTitular { get; set; }
+
 
         private int id;
 

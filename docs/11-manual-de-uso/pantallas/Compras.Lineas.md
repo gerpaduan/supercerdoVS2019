@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.VerCompras (sin el permiso se muestra "Acceso denegado")
-revisada: 2026-10-14
+revisada: 2026-11-09
 ---
 ## Para qué sirve
 Ver **cada compra con sus líneas** (producto, cantidad, precio y total), con una tarjeta por compra, de un período.
@@ -31,3 +31,6 @@ El botón **Ver solo líneas** (debajo de los filtros) cambia la pantalla de una
 ## Notas
 - Al tocar **Buscar** (o cambiar la sucursal) se conserva el proveedor elegido de la lista; el texto escrito en **Proveedor**, **Producto** y **Tipo de compra** se vuelve a empezar.
 - El campo **Proveedor** arranca con lo que se escribió en **Descripción** de Compras (es un comportamiento anterior, no cambió).
+
+## Titular (desde 2026-11-09; solo bases Postgres)
+- Con 2 o más titulares, el detalle de cada compra de cortes o media res muestra **Titular** (a nombre de quién se compró) junto a proveedor, sucursal y tipo.

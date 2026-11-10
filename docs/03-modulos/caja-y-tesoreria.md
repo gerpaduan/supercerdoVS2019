@@ -70,3 +70,11 @@ Documentar aperturas, cierres, movimientos de caja y controles asociados.
 
 ## Eliminar una compra con egreso de caja (2026-10-22)
 Al eliminar una compra cargada desde el POS cuyo egreso de caja tenía monto, `Negocio.Compra.eliminarCompra` registra un **egreso opuesto** (`ELIMINADO: ...`, monto negativo) con la **fecha de hoy**, igual que eliminar un pago. Si la caja original ya está cerrada se pide confirmar (`CajaCerradaConfirm`) y se registra el aviso en el cierre (`AuditoriaCierreCaja`, origen `COMPRA`, acción `ELIMINACION`). Un egreso en $0 (compra a cuenta corriente) no genera nada. Ver `docs/DECISIONS.md` (2026-10-22).
+
+## Titular propio en pagos y cuenta corriente del proveedor (2026-11-09)
+
+Solo Postgres y solo con 2 o más titulares fiscales. Detalle en `docs/DECISIONS.md` (2026-11-09).
+
+- **Pagos:** `pagos.idtitular` (NULL = principal). Finanzas/AddOrEditPago pide «Pagado a nombre de» en los **pagos a proveedor** (un cobro lo ignora y se guarda sin titular); el listado Finanzas/Pagos suma filtro y columna de titular. `movctacte.idtitular` copia el del documento origen (los contra-asientos llevan el del movimiento que anulan).
+- **Cuenta corriente (Finanzas/CtaCtePersona):** filtro **Titular** (saldo anterior y acumulado salen solo de lo filtrado: `IResumenProveedorRepository.ObtenerExtractoPorTitular`), titular de cada compra y pago en la línea gris, atajo **Desde el inicio**, y un bloque **Deuda por titular** (comprado, pagado, saldo; el total es la deuda real) para las personas con compras.
+- **Control fiscal** (facturado contra pagado bancarizado y en efectivo, «Sin factura»): solo administrador o quien edita Pagos del menú (`Usuario.PuedeEditarFormularioPorConsulta(user, Permisos.Finanza.VerPagos)`); se decide en el servidor y el permiso del POS no cuenta. El PDF/CSV por descarga respeta filtro y permiso; el que se **envía por mail** nunca lleva el control fiscal.

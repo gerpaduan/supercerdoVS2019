@@ -199,6 +199,24 @@ namespace WebCore.Infrastructure
             return new Negocio.TitularFiscal(new DatosPostgres.TitularFiscalPg(PgConnString, empresa.IdEmpresa));
         }
 
+        // Comprobantes del proveedor (factura, nota de credito/debito) y titular propio de las compras (2026-11-09, ver
+        // docs/DECISIONS.md). Solo Postgres: en SQL Server devuelve null y las pantallas no muestran nada de esto.
+        public static Negocio.ComprobanteCompra CrearComprobanteCompra(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return null;
+
+            var repo = new DatosPostgres.ComprobanteCompraPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.ComprobanteCompra(repo, CrearTitularFiscal(empresa), empresa.IdEmpresa);
+        }
+
+        // Filas crudas para el resumen por titular de la cuenta corriente de un proveedor. Solo Postgres (null en SQL Server).
+        public static Contratos.IResumenProveedorRepository CrearResumenProveedor(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return null;
+
+            return new DatosPostgres.ComprobanteCompraPg(PgConnString, empresa.IdEmpresa);
+        }
+
         public static Negocio.RegistroJornada CrearRegistroJornada(IEmpresaContext empresa)
         {
             if (!UsarPostgres)

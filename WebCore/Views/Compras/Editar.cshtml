@@ -1,6 +1,7 @@
 ﻿@model WebCore.Models.CompraEditVm
 @using System
 @using System.Collections.Generic
+@using System.Linq
 @using Entidades
 @inject WebCore.Services.IUsuarioSesionService Sesion
 
@@ -174,6 +175,147 @@
                     </div>
                 </div>
                 </div>
+
+                @* Titular propio y factura del proveedor (2026-11-09, solo Postgres; ver docs/DECISIONS.md "Compras: titular propio y
+                   comprobantes del proveedor"). La deuda es el importe de la compra: la factura es solo el dato fiscal y no genera
+                   movimientos de cuenta corriente. En el alta se puede cargar junto con la compra; despues, desde "Comprobantes". *@
+                @if (ViewBag.ComprobantesDisponibles == true)
+                {
+                    bool mostrarTitulares = ViewBag.MostrarTitulares == true;
+                    var titularesOpciones = ViewBag.TitularesOpciones as List<WebCore.Models.TitularCompraOpcionVm> ?? new List<WebCore.Models.TitularCompraOpcionVm>();
+                    var detalleComprobantes = ViewBag.DetalleComprobantes as Entidades.DetalleComprobantesCompra;
+                    int idTitularPrincipal = ViewBag.IdTitularPrincipal != null ? (int)ViewBag.IdTitularPrincipal : 0;
+                    var alicuotasFactura = ViewBag.Alicuotas as decimal[] ?? new decimal[0];
+                    decimal alicuotaDefecto = ViewBag.AlicuotaDefault != null ? (decimal)ViewBag.AlicuotaDefault : 21m;
+                    string alicuotaDefectoTexto = alicuotaDefecto.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                    var tiposFactura = ViewBag.TiposComprobante as IReadOnlyList<string> ?? new List<string>();
+
+                    <div class="compra-factura-bloque border rounded p-2 mb-2" id="compraFacturaBloque">
+                        <div class="compra-section-label mb-1">
+                            <span>Facturación del proveedor</span>
+                        </div>
+
+                        @if (!Model.EsEdicion)
+                        {
+                            @* Alta: titular (solo con 2 o mas) y factura que vino con la mercaderia. *@
+                            <div class="form-row align-items-end">
+                                @if (mostrarTitulares)
+                                {
+                                    <div class="form-group col-12 col-md-4 mb-2">
+                                        <label for="IdTitular">Comprado a nombre de</label>
+                                        <select id="IdTitular" name="IdTitular" class="form-control">
+                                            @foreach (var t in titularesOpciones)
+                                            {
+                                                if (!t.Seleccionable) { continue; }
+                                                bool elegido = Model.IdTitular.HasValue ? t.IdTitular == Model.IdTitular.Value : t.IdTitular == idTitularPrincipal;
+                                                <option value="@t.IdTitular" selected="@(elegido ? "selected" : null)">@t.Nombre@(t.EsPrincipal ? " (principal)" : "")</option>
+                                            }
+                                        </select>
+                                    </div>
+                                }
+                                <div class="form-group col-12 col-md-8 mb-2">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="ConFacturaProveedor" name="ConFacturaProveedor" value="true" checked="@(Model.ConFacturaProveedor ? "checked" : null)" />
+                                        <input type="hidden" name="ConFacturaProveedor" value="false" />
+                                        <label class="custom-control-label" for="ConFacturaProveedor">La factura vino con la mercadería</label>
+                                    </div>
+                                    <small class="text-muted d-block">Si todavía no llegó, dejala sin tildar: la compra queda "pendiente de factura" y la cargás después desde <strong>Comprobantes</strong>.</small>
+                                </div>
+                            </div>
+
+                            <div id="fpBloque" class="d-none">
+                                <div class="form-row">
+                                    <div class="form-group col-12 col-md-4 mb-2">
+                                        <label for="fpTipo">Tipo</label>
+                                        <select id="fpTipo" name="FacturaProveedor.TipoComprobante" class="form-control form-control-sm" disabled>
+                                            @foreach (var tipo in tiposFactura)
+                                            {
+                                                <option value="@tipo" selected="@(tipo == Entidades.TiposComprobanteCompra.FacturaA ? "selected" : null)">@tipo</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-4 col-md-2 mb-2">
+                                        <label for="fpPtoVta">Pto. venta</label>
+                                        <input type="text" inputmode="numeric" maxlength="5" id="fpPtoVta" name="FacturaProveedor.PtoVta" class="form-control form-control-sm fp-entero" placeholder="0003" disabled />
+                                    </div>
+                                    <div class="form-group col-8 col-md-3 mb-2">
+                                        <label for="fpNumero">Número</label>
+                                        <input type="text" inputmode="numeric" maxlength="8" id="fpNumero" name="FacturaProveedor.Numero" class="form-control form-control-sm fp-entero" placeholder="00001902" disabled />
+                                    </div>
+                                    <div class="form-group col-12 col-md-3 mb-2">
+                                        <label for="fpFecha">Fecha</label>
+                                        <input type="date" id="fpFecha" name="FacturaProveedor.Fecha" class="form-control form-control-sm" value="@Model.FechaCompra.ToString("yyyy-MM-dd")" disabled />
+                                    </div>
+                                </div>
+                                <div class="form-row align-items-end">
+                                    <div class="form-group col-6 col-md-3 mb-2">
+                                        <label for="fpTotal">Total de la factura</label>
+                                        <input type="text" inputmode="decimal" id="fpTotal" name="FacturaProveedor.Total" class="form-control form-control-sm text-end fp-importe" placeholder="0.00" disabled />
+                                    </div>
+                                    <div class="form-group col-6 col-md-3 mb-2">
+                                        <label for="fpAlicuota">IVA</label>
+                                        <select id="fpAlicuota" name="FacturaProveedor.AlicuotaIva" class="form-control form-control-sm" disabled>
+                                            @foreach (decimal a in alicuotasFactura)
+                                            {
+                                                string valorAlicuota = a.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                                                <option value="@valorAlicuota" selected="@(valorAlicuota == alicuotaDefectoTexto ? "selected" : null)">@(a == 0m ? "0 % (sin IVA)" : a.ToString("0.##") + " %")</option>
+                                            }
+                                            <option value="">A mano</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-12 col-md-6 mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="fpBtnIgualTotal" title="Pone como total de la factura el total de la compra">
+                                            <i class="fas fa-equals mr-1"></i> Igual al total de la compra
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-4 mb-1">
+                                        <label for="fpNeto">Neto gravado</label>
+                                        <input type="text" inputmode="decimal" id="fpNeto" name="FacturaProveedor.NetoGravado" class="form-control form-control-sm text-end fp-importe" placeholder="0.00" disabled />
+                                    </div>
+                                    <div class="form-group col-4 mb-1">
+                                        <label for="fpIva">IVA $</label>
+                                        <input type="text" inputmode="decimal" id="fpIva" name="FacturaProveedor.Iva" class="form-control form-control-sm text-end fp-importe" placeholder="0.00" disabled />
+                                    </div>
+                                    <div class="form-group col-4 mb-1">
+                                        <label for="fpOtros">Otros impuestos</label>
+                                        <input type="text" inputmode="decimal" id="fpOtros" name="FacturaProveedor.OtrosImpuestos" class="form-control form-control-sm text-end fp-importe" placeholder="0.00" disabled />
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block">Con un porcentaje de IVA elegido, el neto y el IVA se calculan desde el total. Decimales con punto o coma, sin separador de miles. Si la factura tiene algún dato mal, la compra se guarda igual y la cargás después desde <strong>Comprobantes</strong>.</small>
+                            </div>
+                        }
+                        else if (detalleComprobantes != null)
+                        {
+                            @* Edicion: bloque de solo lectura (se refresca solo al cerrar el modal Comprobantes). *@
+                            if (mostrarTitulares)
+                            {
+                                int idTitularCompra = detalleComprobantes.IdTitular ?? idTitularPrincipal;
+                                var titularCompra = titularesOpciones.FirstOrDefault(t => t.IdTitular == idTitularCompra);
+                                <div class="mb-1 small"><span class="text-muted">Comprado a nombre de</span> <strong id="compraTitularNombre">@(titularCompra != null ? titularCompra.Nombre : "-")</strong></div>
+                            }
+                            <div id="compraResumenComprobantes">
+                                @{ ViewData["ConAcciones"] = false; }
+                                @await Html.PartialAsync("~/Views/Compras/_ComprobantesCompraResumen.cshtml", detalleComprobantes)
+                            </div>
+                            @if (Model.IdCompra > 0 && Negocio.ValidacionComprobanteCompra.TipoCompraAdmiteComprobantes(Model.TipoCompra))
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2 btn-comprobantes-compra" data-id="@Model.IdCompra" data-edit-readonly-ignore="true">
+                                    <i class="fas fa-file-invoice me-1"></i> Comprobantes
+                                </button>
+                                <small class="text-muted ms-2">Cargar o cambiar la factura no modifica la compra, el stock ni la cuenta corriente.</small>
+                            }
+                        }
+                    </div>
+
+                    <div id="comprobantesCompraConfig" class="d-none" data-config="@System.Text.Json.JsonSerializer.Serialize(new {
+                        urlVer = Url.Action("Comprobantes", "Compras"),
+                        urlGuardar = Url.Action("GuardarComprobante", "Compras"),
+                        urlEliminar = Url.Action("EliminarComprobante", "Compras"),
+                        urlSinFactura = Url.Action("MarcarSinFactura", "Compras"),
+                        urlCambiarTitular = Url.Action("CambiarTitularCompra", "Compras") })"></div>
+                }
 
                 <hr class="compra-hr-cabecera" />
 
@@ -723,6 +865,10 @@
             <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
+            @if (ViewBag.ComprobantesDisponibles == true)
+            {
+                <script src="@Url.Content("~/Scripts/app/comprobantes-compra.js")" asp-append-version="true"></script>
+            }
             <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
             <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>

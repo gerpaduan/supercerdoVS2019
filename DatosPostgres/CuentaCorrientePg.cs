@@ -313,6 +313,7 @@ namespace DatosPostgres
                 Tipo = GetString(dr, "tipo"),
                 Importe = Convert.ToSingle(dr["importe"]),
                 QuitadoCtaCta = dr["quitadoctacte"] != DBNull.Value && Convert.ToBoolean(dr["quitadoctacte"]),
+                IdTitular = dr["idtitular"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["idtitular"]),
                 // Creado sin guard de NULL: el original (Datos/CuentaCorriente.cs) tampoco lo
                 // guarda -- asume que Creado siempre viene poblado. Se replica igual.
                 Creado = Convert.ToDateTime(dr["creado"]),
@@ -344,8 +345,8 @@ namespace DatosPostgres
             if (oMovCtaCteE.Id == 0)
             {
                 const string sql = @"
-                    INSERT INTO movctacte (idpersona, fecha, tabla, idtabla, nrodoc, detalle, tipo, importe, quitadoctacte, idsucursal, creado, creadopor, idempresa)
-                    VALUES (@idPersona, @fecha, @tabla, @idTabla, @nroDoc, @detalle, @tipo, @importe, @quitadoCtaCte, @idSucursal, now(), @creadoPor, @idEmpresa)
+                    INSERT INTO movctacte (idpersona, fecha, tabla, idtabla, nrodoc, detalle, tipo, importe, quitadoctacte, idsucursal, creado, creadopor, idempresa, idtitular)
+                    VALUES (@idPersona, @fecha, @tabla, @idTabla, @nroDoc, @detalle, @tipo, @importe, @quitadoCtaCte, @idSucursal, now(), @creadoPor, @idEmpresa, @idTitular)
                     RETURNING id;";
 
                 object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sql, p =>
@@ -359,6 +360,7 @@ namespace DatosPostgres
                     p.AddWithValue("tipo", oMovCtaCteE.Tipo ?? "");
                     p.AddWithValue("importe", oMovCtaCteE.Importe);
                     p.AddWithValue("quitadoCtaCte", oMovCtaCteE.QuitadoCtaCta);
+                    p.AddWithValue("idTitular", (object)oMovCtaCteE.IdTitular ?? DBNull.Value);
                     p.AddWithValue("idSucursal", oMovCtaCteE.Sucursal.idSucursal);
                     p.AddWithValue("creadoPor", oMovCtaCteE.CreadoPor.Id);
                     p.AddWithValue("idEmpresa", _idEmpresa);
@@ -371,7 +373,7 @@ namespace DatosPostgres
                     UPDATE movctacte SET
                         idpersona = @idPersona, fecha = @fecha, tabla = @tabla, idtabla = @idTabla, nrodoc = @nroDoc,
                         detalle = @detalle, tipo = @tipo, importe = @importe, quitadoctacte = @quitadoCtaCte,
-                        idsucursal = @idSucursal, actualizado = now(), actualizadopor = @actualizadoPor
+                        idsucursal = @idSucursal, idtitular = @idTitular, actualizado = now(), actualizadopor = @actualizadoPor
                     WHERE id = @id;";
 
                 DbPg.NonQuery(_connectionString, _idEmpresa, sql, p =>
@@ -386,6 +388,7 @@ namespace DatosPostgres
                     p.AddWithValue("tipo", oMovCtaCteE.Tipo ?? "");
                     p.AddWithValue("importe", oMovCtaCteE.Importe);
                     p.AddWithValue("quitadoCtaCte", oMovCtaCteE.QuitadoCtaCta);
+                    p.AddWithValue("idTitular", (object)oMovCtaCteE.IdTitular ?? DBNull.Value);
                     p.AddWithValue("idSucursal", oMovCtaCteE.Sucursal.idSucursal);
                     p.AddWithValue("actualizadoPor", oMovCtaCteE.ActualizadoPor != null ? oMovCtaCteE.ActualizadoPor.Id : -1);
                 }, unitOfWork);
@@ -655,16 +658,16 @@ namespace DatosPostgres
             // 1) Guardar Pago (siempre alta en este piloto -- ver nota mas abajo)
             const string sqlInsert = @"
                 INSERT INTO pagos (nrorecibo, fecha, idpersona, aproveedor, formapago, banco, nrocheque,
-                    titularcheque, importe, efectivo, observaciones, conteobilletes, idsucursal, creado, creadopor, idempresa)
+                    titularcheque, importe, efectivo, observaciones, conteobilletes, idsucursal, creado, creadopor, idempresa, idtitular)
                 VALUES (@nroRecibo, @fecha, @idPersona, @aProveedor, @formaPago, @banco, @nroCheque,
-                    @titularCheque, @importe, @efectivo, @observaciones, @conteoBilletes, @idSucursal, now(), @creadoPor, @idEmpresa)
+                    @titularCheque, @importe, @efectivo, @observaciones, @conteoBilletes, @idSucursal, now(), @creadoPor, @idEmpresa, @idTitular)
                 RETURNING id;";
 
             const string sqlUpdate = @"
                 UPDATE pagos SET nrorecibo=@nroRecibo, fecha=@fecha, idpersona=@idPersona, aproveedor=@aProveedor,
                     formapago=@formaPago, banco=@banco, nrocheque=@nroCheque, titularcheque=@titularCheque,
                     importe=@importe, efectivo=@efectivo, observaciones=@observaciones, conteobilletes=@conteoBilletes,
-                    idsucursal=@idSucursal, actualizado=now(), actualizadopor=@actualizadoPor
+                    idsucursal=@idSucursal, idtitular=@idTitular, actualizado=now(), actualizadopor=@actualizadoPor
                 WHERE id=@id;";
 
             using (var cmd = new NpgsqlCommand(oPagoE.Id == 0 ? sqlInsert : sqlUpdate, con, tx))
@@ -682,6 +685,7 @@ namespace DatosPostgres
                 cmd.Parameters.AddWithValue("observaciones", oPagoE.Observaciones ?? "");
                 cmd.Parameters.AddWithValue("conteoBilletes", oPagoE.ConteoBilletes ?? "");
                 cmd.Parameters.AddWithValue("idSucursal", oPagoE.Sucursal.idSucursal);
+                cmd.Parameters.AddWithValue("idTitular", (object)oPagoE.IdTitular ?? DBNull.Value);
 
                 if (oPagoE.Id == 0)
                 {
@@ -725,7 +729,7 @@ namespace DatosPostgres
                 SELECT
                     p.id, p.fecha, p.idpersona AS ""idPersona"", p.idsucursal AS ""idSucursal"",
                     per.razonsocial AS ""razonSocial"", per.identificacion AS ""identificacion"", p.eliminado AS ""eliminado"",
-                    p.nrorecibo AS ""nroRecibo"", p.importe, p.aproveedor AS ""aProveedor"",
+                    p.nrorecibo AS ""nroRecibo"", p.importe, p.aproveedor AS ""aProveedor"", p.idtitular AS ""idTitular"",
                     CASE p.aproveedor WHEN false THEN 'Cobro' ELSE 'Pago' END AS ""Operacion"",
                     p.formapago AS ""formaPago"", p.efectivo, p.observaciones, p.creado, creadopor.nombre AS ""CreadoPor"",
                     p.actualizado, actualizadopor.nombre AS ""ActualizadoPor""
@@ -842,6 +846,7 @@ namespace DatosPostgres
                 Observaciones = GetString(dr, "observaciones"),
                 ConteoBilletes = GetString(dr, "conteobilletes"),
                 IdSucursal = Convert.ToInt32(dr["idsucursal"]),
+                IdTitular = dr["idtitular"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["idtitular"]),
                 // Creado sin guard de NULL, igual que el original (ver nota en getMovCtaCteBy).
                 Creado = Convert.ToDateTime(dr["creado"]),
                 Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]),

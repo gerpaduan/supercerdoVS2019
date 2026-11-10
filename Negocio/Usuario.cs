@@ -755,6 +755,23 @@ namespace Negocio
             return permisoVer || permisoEditar;
         }
 
+        /// <summary>
+        /// true si el usuario es admin o tiene "Puede editar" en el formulario cuya CONSULTA es nombreFormConsulta (ej. formPagos,
+        /// la fila "Pagos" del menu). No usa tienePermiso a proposito: "Pagos" y "POS - Ctas.Ctes Persona" comparten el
+        /// formulario de edicion formAddOrEditPago, y el permiso del POS no debe habilitar lo que es del menu de Pagos.
+        /// Puede editar = DiasPermitidosEditar &gt;= 0 (igual que la pantalla de permisos). No mira dias ni registros propios.
+        /// </summary>
+        public bool PuedeEditarFormularioPorConsulta(Entidades.Usuario oUser, string nombreFormConsulta)
+        {
+            if (oUser == null) return false;
+            if (oUser.Admin) return true;
+            if (oUser.Permisos == null || string.IsNullOrWhiteSpace(nombreFormConsulta)) return false;
+
+            return oUser.Permisos.Any(p => p != null && p.Formulario != null
+                && string.Equals(p.Formulario.FormConsulta ?? "", nombreFormConsulta, StringComparison.OrdinalIgnoreCase)
+                && p.DiasPermitidosEditar >= 0);
+        }
+
         private bool CoincideIdentificador(Entidades.Usuario user, string usuario)
         {
             return string.Equals((user.User ?? "").Trim(), usuario, StringComparison.OrdinalIgnoreCase)

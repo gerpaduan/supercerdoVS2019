@@ -65,7 +65,7 @@ insert into ref_map values
  ('personas','cheques','recibidode',null), ('personas','cheques','entregadoa',null), ('personas','expendios','idpersona',null),
  ('personas','auditoriaeliminaciones','idpersona',null), ('personas','auditoriapagos','idpersonaanterior',null),
  ('personas','auditoriapagos','idpersonanueva',null), ('personas','ventaborrador','idpersona',null), ('personas','empleado','idpersona',null),
- ('personas','titulares_fiscales','idpersona',null),
+ ('personas','titulares_fiscales','idpersona',null), ('personas','comprobantescompra','idproveedor',null),
  -- ventas
  ('ventas','lineaventa','idventa',null), ('ventas','facturaelectronica','idventa',null), ('ventas','expendios','idventa',null),
  ('ventas','ventaborrador','idventa',null), ('ventas','movctacte','idtabla','t.tabla = ''Ventas'''), ('ventas','egresoscaja','idtabla','t.tabla = ''Ventas'''),
@@ -73,7 +73,7 @@ insert into ref_map values
  ('compras','corteporcompra','idcompra',null), ('compras','mediares','idcompra',null), ('compras','egresoscaja','idcompra',null),
  ('compras','movctacte','idtabla','t.tabla = ''Compras'''), ('compras','egresoscaja','idtabla','t.tabla = ''Compras'''), ('compras','compras','idpesajeajustado',null),
  ('compras','borradorgenerico','idregistro','t.modulo in (''COMPRA'',''STOCK'')'), ('compras','borradorgenerico','idresultado','t.modulo in (''COMPRA'',''STOCK'')'),
- ('compras','auditoriaeliminaciones','idregistro','t.modulo in (''COMPRA'',''STOCK'')'),
+ ('compras','auditoriaeliminaciones','idregistro','t.modulo in (''COMPRA'',''STOCK'')'), ('compras','comprobantescompra','idcompra',null),
  -- pagos
  ('pagos','movctacte','idtabla','t.tabla = ''Pagos'''), ('pagos','egresoscaja','idtabla','t.tabla = ''Pagos'''), ('pagos','auditoriapagos','idpago',null),
  -- productos

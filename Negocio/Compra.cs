@@ -158,6 +158,11 @@ namespace Negocio
             oCompraE.LineasMediasReses = listaMediaRes;
             oCompraE.LineasCortes = listaCortePorCompra;
 
+            // Compra real nueva (cortes o media res): nace con la factura pendiente. Solo la guarda Postgres; en SQL Server se
+            // ignora (2026-11-09, ver docs/DECISIONS.md "Compras: titular propio y comprobantes del proveedor").
+            if (oCompraE.IdCompra == 0 && string.IsNullOrEmpty(oCompraE.EstadoFactura) && ValidacionComprobanteCompra.TipoCompraAdmiteComprobantes(tipoCompra))
+                oCompraE.EstadoFactura = Entidades.EstadoFacturaCompra.Pendiente;
+
             oCompraE.IdCompra = oCompraD.addOrEditCompra(oCompraE, unitOfWork);
 
             if (tipoCompra == Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes))
@@ -258,6 +263,13 @@ namespace Negocio
                 oCompra.Sucursal = oSucN.findById(Convert.ToInt32(row["idSucursal"].ToString()));
                 oCompra.Estado = row["estado"].ToString();
                 oCompra.Observaciones = row["observaciones"].ToString();
+                // Titular propio y estado de factura (2026-11-09, solo Postgres: en SQL Server las columnas no existen).
+                oCompra.IdTitular = row.Table.Columns.Contains("idTitular") && !row["idTitular"].Equals(DBNull.Value)
+                    ? (int?)Convert.ToInt32(row["idTitular"])
+                    : null;
+                oCompra.EstadoFactura = row.Table.Columns.Contains("estadoFactura") && !row["estadoFactura"].Equals(DBNull.Value)
+                    ? row["estadoFactura"].ToString()
+                    : null;
                 oCompra.Creado = row["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(row["creado"].ToString());
                 oCompra.Actualizado = row["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(row["actualizado"]);
                 
@@ -303,7 +315,7 @@ namespace Negocio
             oCtaCteN.crearMovCtaCte(oCompraE.Proveedor, oCompraE.FechaCompra, Entidades.MovCtaCte.tablas.Compras, oCompraE.IdCompra, oCompraE.NroRemito,
                 //detalle, Entidades.MovCtaCte.tipoMov.Credito, oCompraD.getTotalCompra(oCompraE.IdCompra, oCompraE.TipoCompra), oCompraE.Sucursal,
                 detalle, Entidades.MovCtaCte.tipoMov.Credito, oCompraE.getImporteCompra(oCompraE, oCompraE.LineasMediasReses, oCompraE.LineasCortes), oCompraE.Sucursal,
-                oCompraE.Creado, oCompraE.CreadoPor, oCompraE.Actualizado, null, oCompraE.EnCtaCte, null, null, null, unitOfWork);
+                oCompraE.Creado, oCompraE.CreadoPor, oCompraE.Actualizado, null, oCompraE.EnCtaCte, null, null, null, unitOfWork, oCompraE.IdTitular);
         }
 
         public void modificarPrecioMedia(int idCompra, float precioKg)

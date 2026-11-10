@@ -1,0 +1,166 @@
+@* Contenido del modal "Comprobantes de la compra": cabecera de la compra, titular propio (solo con 2 o mas titulares), lista de
+   comprobantes del proveedor (factura, notas de credito y de debito), formulario para agregar o editar uno y totales.
+   Lo devuelve ComprasController.Comprobantes y lo maneja wwwroot/Scripts/app/comprobantes-compra.js (que arma la caja del modal).
+   Solo escribe comprobantes, el estado de factura y el titular: no re-graba la compra, el stock ni la cuenta corriente.
+   Compras: titular propio y comprobantes del proveedor (2026-11-09, ver docs/DECISIONS.md). *@
+@model WebCore.Models.ComprobantesCompraVm
+@using System.Globalization
+
+@{
+    var inv = CultureInfo.InvariantCulture;
+    var detalle = Model.Detalle;
+    string estado = detalle.EstadoFactura ?? "";
+    bool hayComprobantes = detalle.Comprobantes.Count > 0;
+    bool hayFactura = detalle.Comprobantes.Any(c => Entidades.TiposComprobanteCompra.EsFactura(c.TipoComprobante));
+    bool puedeCargar = Model.PuedeEditar && Model.CompraAdmiteComprobantes;
+    // Tipo que se propone al abrir: la factura si todavia no hay; despues, una nota de credito (lo mas comun).
+    string tipoSugerido = hayFactura ? Entidades.TiposComprobanteCompra.NotaCreditoA : Entidades.TiposComprobanteCompra.FacturaA;
+    string alicuotaDefault = Model.AlicuotaDefault.ToString("0.##", inv);
+}
+
+<div class="cc-modal-contenido"
+     data-id-compra="@detalle.IdCompra"
+     data-total-compra="@detalle.TotalCompra.ToString("0.00", inv)"
+     data-fecha-compra="@Model.FechaCompra.ToString("yyyy-MM-dd")"
+     data-alicuota-default="@alicuotaDefault"
+     data-tipo-sugerido="@tipoSugerido"
+     data-titular-actual="@Model.IdTitularActual">
+    @Html.AntiForgeryToken()
+
+    @* Cabecera: de que compra se trata. *@
+    <div class="cc-cabecera mb-2">
+        <div><span class="cc-etiqueta">Proveedor</span> <strong>@Model.Proveedor</strong></div>
+        <div><span class="cc-etiqueta">Remito</span> @(string.IsNullOrWhiteSpace(Model.NroRemito) ? "-" : Model.NroRemito)</div>
+        <div><span class="cc-etiqueta">Fecha</span> @Model.FechaCompra.ToString("dd/MM/yyyy")</div>
+        <div><span class="cc-etiqueta">Compra</span> #@detalle.IdCompra</div>
+    </div>
+
+    @* Titular propio de la compra: solo si la empresa tiene 2 o mas. Cambiarlo no toca importes (ver ComprobanteCompra.CambiarTitular). *@
+    @if (Model.MostrarTitulares)
+    {
+        <div class="d-flex flex-wrap align-items-center mb-2 cc-titular">
+            <label class="cc-etiqueta me-2" for="ccTitular">Comprado a nombre de</label>
+            <select id="ccTitular" class="form-select form-select-sm w-auto" disabled="@(Model.PuedeEditar ? null : "disabled")">
+                @foreach (var t in Model.Titulares)
+                {
+                    bool actual = t.IdTitular == Model.IdTitularActual;
+                    // Un titular deshabilitado solo se ve si es el de la compra (historia); no se puede elegir de nuevo.
+                    if (!t.Seleccionable && !actual) { continue; }
+                    <option value="@t.IdTitular" selected="@(actual ? "selected" : null)">@t.Nombre@(t.EsPrincipal ? " (principal)" : "")@(t.Seleccionable ? "" : " (deshabilitado)")</option>
+                }
+            </select>
+            @if (hayComprobantes)
+            {
+                <small class="text-muted ms-2">Los comprobantes van al CUIT de este titular.</small>
+            }
+        </div>
+    }
+
+    @{ ViewData["ConAcciones"] = puedeCargar; }
+    @await Html.PartialAsync("~/Views/Compras/_ComprobantesCompraResumen.cshtml", detalle)
+
+    @if (!Model.CompraAdmiteComprobantes)
+    {
+        <div class="alert alert-secondary py-2 mt-2 mb-0">Esta operación es de stock, no una compra a un proveedor: no lleva factura.</div>
+    }
+    else if (!Model.PuedeEditar)
+    {
+        <div class="alert alert-secondary py-2 mt-2 mb-0">Para cargar o cambiar comprobantes hace falta el permiso para modificar compras.</div>
+    }
+    else
+    {
+        @* Formulario para agregar un comprobante (o editar uno: el lapiz de la lista lo carga aca). *@
+        <form id="ccForm" class="cc-form mt-3" autocomplete="off" novalidate>
+            <input type="hidden" id="ccIdComprobante" value="0" />
+            <div class="cc-form-titulo mb-1" id="ccFormTitulo">Agregar comprobante</div>
+
+            <div class="form-row">
+                <div class="form-group col-12 col-md-4 mb-2">
+                    <label class="cc-etiqueta" for="ccTipo">Tipo</label>
+                    <select id="ccTipo" class="form-control form-control-sm">
+                        @foreach (var tipo in Model.Tipos)
+                        {
+                            <option value="@tipo" selected="@(tipo == tipoSugerido ? "selected" : null)">@tipo</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group col-4 col-md-2 mb-2">
+                    <label class="cc-etiqueta" for="ccPtoVta">Pto. venta</label>
+                    <input type="text" inputmode="numeric" maxlength="5" id="ccPtoVta" class="form-control form-control-sm cc-entero" placeholder="0003" />
+                </div>
+                <div class="form-group col-8 col-md-3 mb-2">
+                    <label class="cc-etiqueta" for="ccNumero">Número</label>
+                    <input type="text" inputmode="numeric" maxlength="8" id="ccNumero" class="form-control form-control-sm cc-entero" placeholder="00001902" />
+                </div>
+                <div class="form-group col-12 col-md-3 mb-2">
+                    <label class="cc-etiqueta" for="ccFecha">Fecha</label>
+                    <input type="date" id="ccFecha" class="form-control form-control-sm" value="@Model.FechaCompra.ToString("yyyy-MM-dd")" />
+                </div>
+            </div>
+
+            <div class="form-row align-items-end">
+                <div class="form-group col-6 col-md-3 mb-2">
+                    <label class="cc-etiqueta" for="ccTotal">Total</label>
+                    <input type="text" inputmode="decimal" id="ccTotal" class="form-control form-control-sm text-end cc-importe" placeholder="0.00" />
+                </div>
+                <div class="form-group col-6 col-md-3 mb-2">
+                    <label class="cc-etiqueta" for="ccAlicuota">IVA</label>
+                    <select id="ccAlicuota" class="form-control form-control-sm">
+                        @foreach (decimal a in Model.Alicuotas)
+                        {
+                            string valor = a.ToString("0.##", inv);
+                            <option value="@valor" selected="@(valor == alicuotaDefault ? "selected" : null)">@(a == 0m ? "0 % (sin IVA)" : a.ToString("0.##") + " %")</option>
+                        }
+                        <option value="">A mano</option>
+                    </select>
+                </div>
+                <div class="form-group col-12 col-md-6 mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="ccBtnIgualTotal" title="Pone como total del comprobante el total de la compra">
+                        <i class="fas fa-equals me-1"></i> Igual al total de la compra ($ @detalle.TotalCompra.ToString("N2"))
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-4 mb-2">
+                    <label class="cc-etiqueta" for="ccNeto">Neto gravado</label>
+                    <input type="text" inputmode="decimal" id="ccNeto" class="form-control form-control-sm text-end cc-importe" placeholder="0.00" />
+                </div>
+                <div class="form-group col-4 mb-2">
+                    <label class="cc-etiqueta" for="ccIva">IVA $</label>
+                    <input type="text" inputmode="decimal" id="ccIva" class="form-control form-control-sm text-end cc-importe" placeholder="0.00" />
+                </div>
+                <div class="form-group col-4 mb-2">
+                    <label class="cc-etiqueta" for="ccOtros">Otros impuestos</label>
+                    <input type="text" inputmode="decimal" id="ccOtros" class="form-control form-control-sm text-end cc-importe" placeholder="0.00" />
+                </div>
+            </div>
+            <small class="form-text text-muted mt-0 mb-2" id="ccAyudaCalculo">
+                Con un porcentaje de IVA elegido, el neto y el IVA se calculan solos desde el total. Elegí "A mano" para escribirlos.
+                Los decimales van con punto o con coma, sin separador de miles.
+            </small>
+
+            <div id="ccError" class="alert alert-danger py-2 d-none mb-2" role="alert"></div>
+
+            <div class="d-flex flex-wrap">
+                <button type="submit" class="btn btn-sm btn-primary me-2 mb-1" id="ccBtnGuardar">
+                    <i class="fas fa-save me-1"></i> <span id="ccBtnGuardarTexto">Guardar comprobante</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2 mb-1 d-none" id="ccBtnCancelarEdicion">Cancelar edición</button>
+                @if (!hayComprobantes && estado != Entidades.EstadoFacturaCompra.NoLleva)
+                {
+                    <button type="button" class="btn btn-sm btn-outline-secondary mb-1 ms-auto" id="ccBtnNoLleva"
+                            title="Para compras que el proveedor no va a facturar: salen de la lista de pendientes">
+                        <i class="fas fa-ban me-1"></i> Marcar "no lleva factura"
+                    </button>
+                }
+                else if (!hayComprobantes && estado == Entidades.EstadoFacturaCompra.NoLleva)
+                {
+                    <button type="button" class="btn btn-sm btn-outline-secondary mb-1 ms-auto" id="ccBtnVolverPendiente">
+                        <i class="fas fa-undo me-1"></i> Volver a "pendiente de factura"
+                    </button>
+                }
+            </div>
+        </form>
+    }
+</div>

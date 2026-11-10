@@ -49,6 +49,9 @@ namespace Entidades
             return tablaEnum;
         }
 
+        // Titular fiscal propio del documento origen (null = titular principal). Solo Postgres.
+        public int? IdTitular { get; set; }
+
         public float getImporte(float importe, tipoMov tipo)
         {
             switch (tipo)

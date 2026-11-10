@@ -53,7 +53,7 @@ using WebCore.Models;
 
 namespace WebCore.Controllers
 {
-    public class ComprasController : Controller
+    public partial class ComprasController : Controller
     {
         private readonly WebCore.Services.IUsuarioSesionService _sesion;
         private readonly IEmpresaContext _empresa;
@@ -263,7 +263,7 @@ namespace WebCore.Controllers
             return Convert.ToString(row[columna]) ?? "";
         }
 
-        public IActionResult Index(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, string proveedor = "", string idsProveedor = "")
+        public IActionResult Index(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, string proveedor = "", string idsProveedor = "", string estadoFactura = "", int idTitular = 0)
         {
             // Usuario de produccion: exige operador autorizado antes de entrar (Batch 5, ver
             // docs/DECISIONS.md "Login de operador para el modulo Compras"). Port literal de
@@ -298,6 +298,8 @@ namespace WebCore.Controllers
 
             DataTable dt = _oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde, hasta, null) ?? new DataTable();
             dt = FiltrarPorProveedor(dt, seleccionProveedor.Ids, proveedorTexto);
+            // Estado de factura y titular propio de cada compra, y filtros "Factura" y "Titular" (2026-11-09, solo Postgres).
+            dt = AgregarInfoFactura(dt, estadoFactura, idTitular);
             var model = new CompraIndexVm
             {
                 Compras = dt
@@ -316,6 +318,11 @@ namespace WebCore.Controllers
             ViewBag.FechaDesde = desde;
             ViewBag.FechaHasta = hasta;
             ViewBag.PermiteMediaRes = permiteMediaRes;
+            ViewBag.ComprobantesDisponibles = ComprobantesDisponibles;
+            ViewBag.EstadoFactura = estadoFactura ?? "";
+            ViewBag.IdTitularFiltro = idTitular;
+            ViewBag.MostrarTitulares = ComprobantesDisponibles && MostrarTitulares();
+            ViewBag.TitularesOpciones = ComprobantesDisponibles ? ListarTitularesCompra() : new List<WebCore.Models.TitularCompraOpcionVm>();
             ViewBag.MostrarTipoCompraEnListado = MostrarTipoCompraEnListado();
             ViewBag.TotalCantMedias = CalcularTotalCantMedias(dt);
             ViewBag.TotalKg = CalcularTotalKg(dt);
@@ -365,6 +372,11 @@ namespace WebCore.Controllers
                 PermiteMediaRes = permiteMediaRes
             };
 
+            // Titular propio de cada compra (solo con 2 o mas titulares; 2026-11-09).
+            bool mostrarTitulares = ComprobantesDisponibles && MostrarTitulares();
+            var nombresTitular = mostrarTitulares ? ListarTitularesCompra().ToDictionary(t => t.IdTitular, t => t.Nombre) : new Dictionary<int, string>();
+            int idTitularPrincipalLineas = mostrarTitulares ? IdTitularPrincipal() : 0;
+
             foreach (DataRow row in dt.Rows)
             {
                 int idCompra = row["idCompra"] == DBNull.Value ? 0 : Convert.ToInt32(row["idCompra"]);
@@ -408,6 +420,12 @@ namespace WebCore.Controllers
                 grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Sucursal", Valor = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "-" });
                 grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Tipo de compra", Valor = string.IsNullOrWhiteSpace(compra.TipoCompra) ? "-" : compra.TipoCompra });
                 grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Nro/comprobante", Valor = string.IsNullOrWhiteSpace(compra.NroRemito) ? "-" : compra.NroRemito });
+                if (mostrarTitulares && Negocio.ValidacionComprobanteCompra.TipoCompraAdmiteComprobantes(compra.TipoCompra))
+                {
+                    int idTitularCompra = compra.IdTitular ?? idTitularPrincipalLineas;
+                    string nombreTitular;
+                    grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Titular", Valor = nombresTitular.TryGetValue(idTitularCompra, out nombreTitular) ? nombreTitular : "-" });
+                }
 
                 grupo.Lineas.AddRange(lineas);
                 model.Compras.Add(grupo);
@@ -623,6 +641,19 @@ namespace WebCore.Controllers
             model.SubmissionToken = Guid.NewGuid().ToString("N");
             model.EnModal = enModal;
             CargarViewBags(model, user);
+
+            // Titular propio y factura del proveedor (2026-11-09, solo Postgres): selectores y alta de factura en Editar.cshtml.
+            ViewBag.ComprobantesDisponibles = ComprobantesDisponibles && !desdePos && !enModal;
+            if (ComprobantesDisponibles)
+            {
+                ViewBag.MostrarTitulares = MostrarTitulares();
+                ViewBag.TitularesOpciones = ListarTitularesCompra();
+                ViewBag.IdTitularPrincipal = IdTitularPrincipal();
+                ViewBag.AlicuotaDefault = WebCore.Helpers.ComprasComprobantesSettings.AlicuotaIvaDefault;
+                ViewBag.Alicuotas = WebCore.Helpers.ComprasComprobantesSettings.Alicuotas;
+                ViewBag.TiposComprobante = Entidades.TiposComprobanteCompra.Todos;
+                if (compra != null) ViewBag.DetalleComprobantes = ComprobanteN.ObtenerDetalle(compra.IdCompra);
+            }
 
             // Boton Eliminar: pantalla completa y modal del POS (compras propias de la caja); no dentro del modal de la cta cte.
             if (!enModal)
@@ -941,6 +972,15 @@ namespace WebCore.Controllers
                 compra.Observaciones = (model.Observaciones ?? string.Empty).Trim();
                 compra.Sucursal = sucursal;
                 compra.EnCtaCte = model.EnCtaCte;
+                // Titular propio (2026-11-09, solo Postgres). En un alta se toma el elegido y se valida; en una edicion NO se toca
+                // desde aca: se cambia desde el modal Comprobantes, que ademas avisa si la compra ya tiene comprobantes.
+                if (ComprobantesDisponibles && model.IdCompra == 0)
+                {
+                    int? idTitularElegido = model.IdTitular.HasValue && model.IdTitular.Value > 0 ? model.IdTitular : null;
+                    string errorTitular = ComprobanteN.ErrorSiTitularNoDisponible(idTitularElegido);
+                    if (errorTitular != null) return Fallo(errorTitular);
+                    compra.IdTitular = idTitularElegido;
+                }
                 compra.Estado = compraActual != null ? compraActual.Estado ?? "" : "";
                 // Atribucion al operador real, no a la cuenta de produccion -- mismo criterio que
                 // Vendedor/UsuarioInicio en POS (ver docs/DECISIONS.md).
@@ -1064,16 +1104,34 @@ namespace WebCore.Controllers
                     egresoOriginalCompra != null ? (double?)egresoOriginalCompra.Monto : null, null, null, null,
                     desdePos ? "Compra modificada desde el POS (el egreso de caja se actualizó)." : "Compra modificada fuera del POS (el egreso de caja no se tocó).");
 
+                // Factura que llego con la mercadería (2026-11-09): se carga justo despues de guardar la compra. Si falla, la compra ya
+                // quedo guardada (pendiente de factura) y se avisa para cargarla desde Comprobantes.
+                string avisoFactura = "";
+                if (model.IdCompra == 0 && idCompra > 0 && ComprobantesDisponibles && model.ConFacturaProveedor && model.FacturaProveedor != null)
+                {
+                    model.FacturaProveedor.IdCompra = idCompra;
+                    model.FacturaProveedor.IdComprobante = 0;
+                    Entidades.ComprobanteCompra comprobanteInicial;
+                    string errorFactura = ArmarComprobante(model.FacturaProveedor, out comprobanteInicial);
+                    if (errorFactura == null)
+                    {
+                        int idComprobanteInicial;
+                        errorFactura = ComprobanteN.Guardar(comprobanteInicial, operador.Id, out idComprobanteInicial);
+                    }
+                    if (errorFactura != null)
+                        avisoFactura = " La factura no se pudo cargar (" + errorFactura + ") y la compra quedó pendiente de factura: cargala desde Comprobantes.";
+                }
+
                 if (!desdePos && !enModal)
                     TempData["ComprasSuccessMessage"] = model.IdCompra > 0
                         ? "La compra se guardó correctamente."
-                        : "La compra se registró correctamente.";
+                        : "La compra se registró correctamente." + avisoFactura;
 
                 return Json(new
                 {
                     ok = true,
                     idCompra = idCompra,
-                    mensaje = model.IdCompra > 0 ? "La compra se guardó correctamente." : "La compra se registró correctamente.",
+                    mensaje = model.IdCompra > 0 ? "La compra se guardó correctamente." : "La compra se registró correctamente." + avisoFactura,
                     closeModal = desdePos || enModal,
                     redirectUrl = !desdePos && !enModal
                         ? Url.Action("Index", "Compras")

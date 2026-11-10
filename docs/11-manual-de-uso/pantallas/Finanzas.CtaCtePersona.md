@@ -6,7 +6,7 @@ modulo: Finanzas
 orden: 2
 permiso: PENDIENTE (no verificado contra el código en esta revisión)
 alias: Finanzas.AutorizarModuloCtaCte
-revisada: 2026-11-02
+revisada: 2026-11-09
 ---
 
 ## Para qué sirve
@@ -53,3 +53,11 @@ La misma lista se ve en el celular al abrir las cuentas corrientes desde el POS 
 
 ## Resto de la pantalla
 PENDIENTE: documentar permisos, el recorte de fecha por permiso, el uso desde el POS y el envío por mail (no verificado contra el código en esta revisión).
+
+## Titulares y control fiscal del proveedor (desde 2026-11-09; solo bases Postgres, solo con 2 o más titulares)
+- **Titular** (filtro): deja solo los movimientos de ese titular; el **saldo anterior y el saldo acumulado** se calculan solo con lo filtrado. Cada compra y cada pago muestran su titular en la línea gris. Pensado para proveedores: una venta cuenta como del titular principal.
+- **Desde el inicio:** pone la fecha de la primera compra de la persona (el control fiscal usa el mismo período que *Desde*; si la factura llega en otro mes que el pago, conviene mirar más).
+- **Deuda por titular** (personas con compras): saldo anterior, comprado, pagado y saldo de cada titular, con el **total**. Los saldos por titular pueden no cerrar en cero si se pagó con un titular lo comprado con otro; **el total es la deuda real** y coincide con el saldo de arriba.
+- **Control fiscal:** solo lo ven el **administrador** y quien tiene **Puede editar** en *Pagos* del menú (el permiso «POS - Ctas.Ctes Persona» no alcanza). Por titular: *Facturado neto* (facturas + notas de débito − notas de crédito), *Pagado bancarizado* (transferencia, débito, crédito, QR y cheques), *Facturado − bancarizado* (**en rojo con ⚠** si lo pagado bancarizado supera lo facturado; solo avisa, no bloquea nada), *Pagado en efectivo* (efectivo y «Otro») y *Sin factura* (comprado − facturado).
+- **PDF y Excel (CSV):** respetan el filtro de titular, agregan el titular y el resumen, y el control fiscal solo si tenés el permiso. El que se **envía por mail** nunca lleva el control fiscal.
+- PENDIENTE: no se probó en el celular; en el modal del POS esta pantalla queda como siempre (sin titulares).

@@ -1,0 +1,109 @@
+@* Resumen de los comprobantes del proveedor de una compra: estado de factura, lista de comprobantes y totales (total de la
+   compra, facturado neto y sin factura). Lo usan el modal "Comprobantes" (_ComprobantesCompra.cshtml, con botones de editar y
+   borrar) y el bloque de solo lectura de Compras/Editar. Tras un cambio, comprobantes-compra.js vuelve a pedir el modal y copia
+   este bloque (data-cc-resumen) a la pantalla de atras, asi hay un solo dibujo.
+   ViewData["ConAcciones"] = true agrega los botones por comprobante.
+   Compras: titular propio y comprobantes del proveedor (2026-11-09, ver docs/DECISIONS.md). *@
+@model Entidades.DetalleComprobantesCompra
+@using System.Globalization
+
+@{
+    bool conAcciones = ViewData["ConAcciones"] is bool && (bool)ViewData["ConAcciones"];
+    var inv = CultureInfo.InvariantCulture;
+    string estado = Model.EstadoFactura ?? "";
+    string estadoTexto = estado == Entidades.EstadoFacturaCompra.Pendiente ? "Pendiente de factura"
+        : estado == Entidades.EstadoFacturaCompra.Facturada ? "Facturada"
+        : estado == Entidades.EstadoFacturaCompra.NoLleva ? "No lleva factura"
+        : "Sin dato";
+    string estadoClase = estado == Entidades.EstadoFacturaCompra.Pendiente ? "badge-warning"
+        : estado == Entidades.EstadoFacturaCompra.Facturada ? "badge-success"
+        : estado == Entidades.EstadoFacturaCompra.NoLleva ? "badge-secondary"
+        : "badge-light border";
+    // Sin factura: lo que la compra vale de mas que lo facturado. Negativo = se facturo mas de lo comprado.
+    bool facturadoDeMas = Model.SinFactura < 0m;
+}
+
+<div class="cc-resumen" data-cc-resumen data-estado="@estado" data-cantidad="@Model.Comprobantes.Count">
+    <div class="d-flex flex-wrap align-items-center mb-2 cc-resumen-cabecera">
+        <span class="badge @estadoClase cc-estado me-2">@estadoTexto</span>
+        <span class="cc-total-item me-3">Total compra: <strong>$ @Model.TotalCompra.ToString("N2")</strong></span>
+        <span class="cc-total-item me-3">Facturado neto: <strong>$ @Model.FacturadoNeto.ToString("N2")</strong></span>
+        @if (estado != Entidades.EstadoFacturaCompra.NoLleva)
+        {
+            <span class="cc-total-item @(facturadoDeMas ? "text-danger" : "")">
+                @(facturadoDeMas ? "Facturado de más:" : "Sin factura:")
+                <strong>$ @Math.Abs(Model.SinFactura).ToString("N2")</strong>
+            </span>
+        }
+    </div>
+
+    @if (Model.Comprobantes.Count == 0)
+    {
+        <div class="text-muted cc-sin-comprobantes">
+            @(estado == Entidades.EstadoFacturaCompra.NoLleva
+                ? "Esta compra se marcó como que no lleva factura."
+                : "Todavía no se cargó ningún comprobante del proveedor.")
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0 cc-tabla">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Comprobante</th>
+                        <th>Número</th>
+                        <th>Fecha</th>
+                        <th class="text-end">Neto</th>
+                        <th class="text-end">IVA</th>
+                        <th class="text-end">Otros</th>
+                        <th class="text-end">Total</th>
+                        @if (conAcciones)
+                        {
+                            <th class="cc-col-acciones"></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Comprobantes)
+                    {
+                        // La nota de credito resta: se muestra en negativo para que la suma de la columna de el facturado neto.
+                        bool resta = c.TotalConSigno < 0m;
+                        <tr class="@(resta ? "cc-fila-resta" : "")">
+                            <td>@c.TipoComprobante</td>
+                            <td class="text-nowrap">@c.NumeroCompleto</td>
+                            <td class="text-nowrap">@c.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">@c.NetoGravado.ToString("N2")</td>
+                            <td class="text-end">@c.Iva.ToString("N2")</td>
+                            <td class="text-end">@c.OtrosImpuestos.ToString("N2")</td>
+                            <td class="text-end fw-bold @(resta ? "text-danger" : "")">@c.TotalConSigno.ToString("N2")</td>
+                            @if (conAcciones)
+                            {
+                                <td class="text-center text-nowrap cc-col-acciones">
+                                    <button type="button" class="btn btn-sm btn-outline-primary cc-btn-editar" title="Editar comprobante"
+                                            data-id="@c.IdComprobante"
+                                            data-tipo="@c.TipoComprobante"
+                                            data-ptovta="@c.PtoVta"
+                                            data-numero="@c.Numero"
+                                            data-fecha="@c.Fecha.ToString("yyyy-MM-dd")"
+                                            data-alicuota="@(c.AlicuotaIva.HasValue ? c.AlicuotaIva.Value.ToString("0.##", inv) : "")"
+                                            data-neto="@c.NetoGravado.ToString("0.00", inv)"
+                                            data-iva="@c.Iva.ToString("0.00", inv)"
+                                            data-otros="@c.OtrosImpuestos.ToString("0.00", inv)"
+                                            data-total="@c.Total.ToString("0.00", inv)">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger cc-btn-borrar" title="Eliminar comprobante"
+                                            data-id="@c.IdComprobante"
+                                            data-descripcion="@(c.TipoComprobante + " " + c.NumeroCompleto)">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

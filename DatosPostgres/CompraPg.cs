@@ -140,6 +140,18 @@ namespace DatosPostgres
             DbPg.NonQuery(_connectionString, _idEmpresa, "DELETE FROM mediares WHERE idcompra = @idCompra;",
                 p => p.AddWithValue("idCompra", idCompra), unitOfWork);
 
+            // 5) Comprobantes del proveedor de la compra (2026-11-09): baja logica junto con ella. No hay clave foranea (la compra se borra
+            // de verdad) y, sin esto, el numero de la factura quedaria "ocupado" en el indice unico y no se podria volver a cargar si la
+            // compra se recupera desde Eliminados.
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                UPDATE comprobantescompra
+                SET eliminado = true, eliminadopor = @idUsuario, eliminadofecha = now(), motivoeliminacion = 'Compra eliminada'
+                WHERE idcompra = @idCompra AND NOT eliminado;", p =>
+            {
+                p.AddWithValue("idCompra", idCompra);
+                p.AddWithValue("idUsuario", auditoria.IdUsuarioElimino > 0 ? (object)auditoria.IdUsuarioElimino : DBNull.Value);
+            }, unitOfWork);
+
             return idAuditoria;
         }
 
@@ -367,9 +379,9 @@ namespace DatosPostgres
             {
                 const string sqlInsert = @"
                     INSERT INTO compras (nroremito, fechacompra, idproveedor, estado, observaciones, tipocompra, cantmedias, kgsmedias,
-                        idpesajeajustado, enctacte, idsucursal, creado, creadopor, idempresa)
+                        idpesajeajustado, enctacte, idsucursal, creado, creadopor, idempresa, idtitular, estadofactura)
                     VALUES (@nroRemito, @fechaCompra, @idProveedor, @estado, @observaciones, @tipoCompra, @cantMedias, @kgsMedias,
-                        @idPesajeAjustado, @enCtaCte, @idSucursal, now(), @creadoPor, @idEmpresa)
+                        @idPesajeAjustado, @enCtaCte, @idSucursal, now(), @creadoPor, @idEmpresa, @idTitular, @estadoFactura)
                     RETURNING idcompra;";
 
                 Action<NpgsqlParameterCollection> setParamsInsert = p =>
@@ -384,6 +396,8 @@ namespace DatosPostgres
                     p.AddWithValue("kgsMedias", (object)oCompraE.KgsMedias ?? DBNull.Value);
                     p.AddWithValue("idPesajeAjustado", (object)oCompraE.IdPesajeAjustado ?? DBNull.Value);
                     p.AddWithValue("enCtaCte", oCompraE.EnCtaCte);
+                    p.AddWithValue("idTitular", (object)oCompraE.IdTitular ?? DBNull.Value);
+                    p.AddWithValue("estadoFactura", (object)oCompraE.EstadoFactura ?? DBNull.Value);
                     p.AddWithValue("idSucursal", oCompraE.Sucursal.idSucursal);
                     p.AddWithValue("creadoPor", oCompraE.CreadoPor.Id);
                     p.AddWithValue("idEmpresa", _idEmpresa);
@@ -398,7 +412,7 @@ namespace DatosPostgres
             const string sqlUpdate = @"
                 UPDATE compras SET nroremito=@nroRemito, fechacompra=@fechaCompra, idproveedor=@idProveedor, estado=@estado,
                     observaciones=@observaciones, tipocompra=@tipoCompra, cantmedias=@cantMedias, kgsmedias=@kgsMedias,
-                    idpesajeajustado=@idPesajeAjustado, enctacte=@enCtaCte, idsucursal=@idSucursal, actualizado=now(), actualizadopor=@actualizadoPor
+                    idpesajeajustado=@idPesajeAjustado, enctacte=@enCtaCte, idsucursal=@idSucursal, idtitular=@idTitular, actualizado=now(), actualizadopor=@actualizadoPor
                 WHERE idcompra=@idCompra;";
 
             DbPg.NonQuery(_connectionString, _idEmpresa, sqlUpdate, p =>
@@ -414,6 +428,7 @@ namespace DatosPostgres
                 p.AddWithValue("kgsMedias", (object)oCompraE.KgsMedias ?? DBNull.Value);
                 p.AddWithValue("idPesajeAjustado", (object)oCompraE.IdPesajeAjustado ?? DBNull.Value);
                 p.AddWithValue("enCtaCte", oCompraE.EnCtaCte);
+                    p.AddWithValue("idTitular", (object)oCompraE.IdTitular ?? DBNull.Value);
                 p.AddWithValue("idSucursal", oCompraE.Sucursal.idSucursal);
                 p.AddWithValue("actualizadoPor", oCompraE.ActualizadoPor != null ? oCompraE.ActualizadoPor.Id : 0);
             }, unitOfWork);
@@ -434,9 +449,9 @@ namespace DatosPostgres
 
             const string sqlInsert = @"
                 INSERT INTO compras (nroremito, fechacompra, idproveedor, estado, observaciones, tipocompra, cantmedias, kgsmedias,
-                    idpesajeajustado, enctacte, idsucursal, creado, creadopor, idempresa)
+                    idpesajeajustado, enctacte, idsucursal, creado, creadopor, idempresa, idtitular, estadofactura)
                 VALUES (@nroRemito, @fechaCompra, @idProveedor, @estado, @observaciones, @tipoCompra, @cantMedias, @kgsMedias,
-                    @idPesajeAjustado, @enCtaCte, @idSucursal, now(), @creadoPor, @idEmpresa)
+                    @idPesajeAjustado, @enCtaCte, @idSucursal, now(), @creadoPor, @idEmpresa, @idTitular, @estadoFactura)
                 RETURNING idcompra;";
 
             object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sqlInsert, p =>
@@ -451,6 +466,8 @@ namespace DatosPostgres
                 p.AddWithValue("kgsMedias", (object)oCompraE.KgsMedias ?? DBNull.Value);
                 p.AddWithValue("idPesajeAjustado", (object)oCompraE.IdPesajeAjustado ?? DBNull.Value);
                 p.AddWithValue("enCtaCte", oCompraE.EnCtaCte);
+                    p.AddWithValue("idTitular", (object)oCompraE.IdTitular ?? DBNull.Value);
+                    p.AddWithValue("estadoFactura", (object)oCompraE.EstadoFactura ?? DBNull.Value);
                 p.AddWithValue("idSucursal", oCompraE.Sucursal.idSucursal);
                 p.AddWithValue("creadoPor", oCompraE.CreadoPor.Id);
                 p.AddWithValue("idEmpresa", _idEmpresa);
@@ -466,7 +483,7 @@ namespace DatosPostgres
             DbPg.NonQuery(_connectionString, _idEmpresa, @"
                 UPDATE compras SET nroremito=@nroRemito, fechacompra=@fechaCompra, idproveedor=@idProveedor, estado=@estado,
                     observaciones=@observaciones, tipocompra=@tipoCompra, cantmedias=@cantMedias, kgsmedias=@kgsMedias,
-                    idpesajeajustado=@idPesajeAjustado, enctacte=@enCtaCte, idsucursal=@idSucursal, actualizado=now(), actualizadopor=@actualizadoPor
+                    idpesajeajustado=@idPesajeAjustado, enctacte=@enCtaCte, idsucursal=@idSucursal, idtitular=@idTitular, actualizado=now(), actualizadopor=@actualizadoPor
                 WHERE idcompra=@idCompra;", p =>
             {
                 p.AddWithValue("idCompra", oCompraE.IdCompra);
@@ -480,6 +497,7 @@ namespace DatosPostgres
                 p.AddWithValue("kgsMedias", (object)oCompraE.KgsMedias ?? DBNull.Value);
                 p.AddWithValue("idPesajeAjustado", (object)oCompraE.IdPesajeAjustado ?? DBNull.Value);
                 p.AddWithValue("enCtaCte", oCompraE.EnCtaCte);
+                    p.AddWithValue("idTitular", (object)oCompraE.IdTitular ?? DBNull.Value);
                 p.AddWithValue("idSucursal", oCompraE.Sucursal.idSucursal);
                 p.AddWithValue("actualizadoPor", oCompraE.ActualizadoPor.Id);
             });
