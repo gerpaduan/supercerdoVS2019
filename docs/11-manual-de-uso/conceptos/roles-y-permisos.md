@@ -3,7 +3,7 @@ titulo: Roles y permisos (quién puede hacer qué)
 rol: usuario
 modulo: Conceptos generales
 orden: 1
-revisada: 2026-10-22
+revisada: 2026-11-10
 ---
 # Roles y permisos
 
@@ -20,12 +20,12 @@ En CarniSys hay cuatro tipos de usuario. Lo que ves en el menú y lo que podés 
 Lo ve **todo usuario**. Los no administradores (incluido el de producción) ven solo dos ítems: **Utilidades** (descarga de los agentes de impresora y balanza que hay que instalar en cada PC) y **Dispositivos seguros** (al entrar piden usuario y contraseña de un administrador, que queda activo hasta salir de la pantalla; ver [Dispositivos seguros](ayuda:pantalla/DispositivosSeguros.Index)). El resto de Configuración es solo para administradores.
 
 ## Cómo funcionan los permisos de un usuario común
-En [Permisos del usuario](ayuda:pantalla/Usuarios.Permisos) hay una fila por módulo con:
+Los permisos se eligen con el [asistente de usuarios y permisos](ayuda:pantalla/Usuarios.Asistente) (paso a paso, agrupados por módulo, con perfiles para empezar y la opción de copiar los de otro usuario). La grilla completa es la [vista avanzada](ayuda:pantalla/Usuarios.Permisos), con una fila por módulo y:
 - **Puede ver / Días ver:** si puede consultar y hasta cuántos días hacia atrás (0 = solo hoy).
 - **Puede editar / Días editar:** si puede modificar registros y de hasta cuántos días atrás.
 - **Alcance:** *Propios* (solo lo que cargó él) o *Todos*.
 
-Si un usuario entra a una pantalla sin permiso, ve **"Acceso denegado"**. Además, **"Puede operar POS"** (en [Editar usuario](ayuda:pantalla/Usuarios.Editar)) le da el permiso mínimo para vender.
+Si un usuario entra a una pantalla sin permiso, ve **"Acceso denegado"**. Además, **"Puede operar POS"** (en [Editar usuario](ayuda:pantalla/Usuarios.Editar)) tilda *Ventas → Puede editar* (registrar ventas), pero **no alcanza para entrar al punto de venta**: para eso hacen falta los permisos «POS - …» (se dan en el asistente de permisos).
 
 > Mostrar u ocultar un ítem del menú **no es** el control de seguridad: el permiso se verifica siempre en el servidor.
 

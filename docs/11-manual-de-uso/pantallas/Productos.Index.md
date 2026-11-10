@@ -4,8 +4,8 @@ titulo: Productos
 rol: usuario
 modulo: Productos
 orden: 1
-permiso: Producto.ModificarPrecios para cambiar precios (el botón $ de cada fila y "Precios por selección" quedan deshabilitados sin él)
-revisada: 2026-10-22
+permiso: Producto.ModificarPrecios para cambiar precios (el botón $ de cada fila y "Precios por selección" quedan deshabilitados sin él); Producto.NuevoCorte para crear, editar y eliminar; Etiqueta.Etiquetas para Etiquetas (PDF)
+revisada: 2026-11-10
 ---
 
 ## Para qué sirve
@@ -44,6 +44,8 @@ Cosas a tener en cuenta:
 - Cada precio se guarda de a uno. Al guardarlo (por *Modificar precio* o por selección) el producto queda con la **fecha y el usuario de última modificación** (se ven en el detalle del producto). El sistema **no guarda cuál era el precio anterior**.
 
 ## Etiquetas
+Requiere el permiso **Etiquetas de productos**: sin él el botón queda deshabilitado (y el servidor tampoco genera el PDF).
+
 **Etiquetas (PDF)** (Alt + E) funciona igual: tildás los productos, elegís el tamaño (chica, mediana o grande) y **Generar etiquetas** descarga un PDF con una etiqueta por producto. Cada etiqueta lleva el nombre arriba, el precio grande en formato argentino (por ejemplo 9.900 con los centavos chicos), el código de barras con su número, la unidad (precio por kg o por unidad) y la fecha de emisión al pie; no lleva logo. Al generar el PDF ya no aparece el aviso del navegador de abandonar el sitio.
 
 ## Catálogo global: importar sin precio

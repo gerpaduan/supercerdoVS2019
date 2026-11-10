@@ -1,0 +1,297 @@
+@model WebCore.Models.UsuarioAsistenteVm
+@using System.Text.Json
+
+@*
+    Ficha y alta de usuarios (rediseno 2026-11-10, ver docs/DECISIONS.md "Rediseno de Usuarios" y "Asistente de usuarios y permisos").
+    - Usuario existente (Model.EsEdicion): ficha con pestanas Datos / Ingreso y seguridad / Permisos, un solo guardado y una barra
+      flotante de "cambios sin guardar".
+    - Usuario nuevo: asistente de 3 pasos (quien es, que puede hacer, revisar).
+    Los permisos se dibujan desde el JSON del final (catalogo + estado actual) y solo muestran los controles con efecto real.
+    Comportamiento: wwwroot/Scripts/app/usuarios-asistente.js. Manual: docs/11-manual-de-uso/pantallas/Usuarios.Asistente.md.
+*@
+
+@{
+    bool ficha = Model.EsEdicion;
+    ViewBag.Title = ficha ? "Modificar usuario" : "Nuevo usuario";
+
+    var jsonOpciones = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    // El JSON va dentro de un <script type="application/json">: el serializador escapa < y > por defecto, no puede cerrar la etiqueta.
+    string datosJson = JsonSerializer.Serialize(new
+    {
+        modulos = Model.Modulos,
+        perfiles = Model.Perfiles,
+        copiar = Model.UsuariosParaCopiar.Select(x => new { id = x.Value, texto = x.Text })
+    }, jsonOpciones);
+
+    string etiquetaTipo = Model.TipoUsuario == "admin" ? "Administrador" : Model.TipoUsuario == "produccion" ? "Producción" : "Empleado";
+    string claseTipo = Model.TipoUsuario == "admin" ? "ok" : Model.TipoUsuario == "produccion" ? "warn" : "pri";
+}
+
+<link rel="stylesheet" href="@Url.Content("~/Content/css/usuarios.css")" asp-append-version="true" />
+
+<div class="container-fluid usr-page" id="usrApp"
+     data-modo="@(ficha ? "ficha" : "alta")"
+     data-paso-inicial="@Model.PasoInicial"
+     data-url-validar="@Url.Action("ValidarDatosAsistente", "Usuarios")"
+     data-url-copiar="@Url.Action("PermisosParaCopiar", "Usuarios")">
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <div class="usr-crumb"><a class="usr-link" href="@Url.Action("Index", "Usuarios")">Usuarios</a> › @(ficha ? Model.Nombre : "Nuevo")</div>
+            <h1 class="h5 mb-0 font-weight-bold">@(ficha ? "Modificar usuario" : "Nuevo usuario")</h1>
+        </div>
+        <div class="mt-2 mt-md-0">
+            @if (ficha)
+            {
+                <a class="usr-btn usr-btn-sm mr-1" href="@Url.Action("Permisos", "Usuarios", new { id = Model.Id })"
+                   title="La grilla completa con todos los permisos, días y alcances">Vista avanzada de permisos</a>
+            }
+            <a class="usr-btn usr-btn-sm" href="@Url.Action("Index", "Usuarios")"><i class="fas fa-arrow-left"></i> Volver al listado</a>
+        </div>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger" role="alert">
+            @Html.ValidationSummary(false)
+        </div>
+    }
+
+    @if (ficha)
+    {
+        <div class="usr-card mb-3">
+            <div class="usr-cab">
+                <div class="quien">
+                    <span class="usr-avatar grande" style="background:@WebCore.Helpers.UsuarioPresentacion.ColorAvatar(Model.Id)" aria-hidden="true">@WebCore.Helpers.UsuarioPresentacion.Iniciales(Model.Nombre)</span>
+                    <div>
+                        <h2>@Model.Nombre</h2>
+                        <div class="usr-crumb">@Model.Usuario@(string.IsNullOrWhiteSpace(Model.Email) ? "" : " · " + Model.Email)@(string.IsNullOrWhiteSpace(Model.SucursalNombre) ? "" : " · Sucursal " + Model.SucursalNombre)</div>
+                        <div class="chips">
+                            <span class="usr-chip @claseTipo" id="usrChipTipo">@etiquetaTipo</span>
+                            @if (Model.Activo) { <span class="usr-chip ok"><span class="usr-dot"></span> Activo</span> }
+                            else { <span class="usr-chip"><span class="usr-dot"></span> Inactivo</span> }
+                            <span class="usr-chip" id="usrChipPos">No entra al POS</span>
+                            <span class="usr-chip">@(Model.TienePin ? "PIN configurado" : "Sin PIN")</span>
+                            @if (Model.Bloqueado) { <span class="usr-chip bad">Bloqueado</span> }
+                            else if (Model.BloqueadoNoSeguro) { <span class="usr-chip warn">Bloqueo parcial</span> }
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap" style="gap:.4rem">
+                    @if (Model.Bloqueado || Model.BloqueadoNoSeguro)
+                    {
+                        <button type="submit" form="usrFormDesbloquear" class="usr-btn" onclick="return confirm('¿Desbloquear esta cuenta?');">Desbloquear</button>
+                    }
+                    @if (Model.TienePin)
+                    {
+                        <button type="submit" form="usrFormQuitarPin" class="usr-btn" title="Elimina la clave rápida (PIN): el usuario sigue entrando con su contraseña y puede crear otro"
+                                onclick="return confirm('¿Quitar la clave rápida de este usuario? Seguirá ingresando con su contraseña.');">Quitar PIN</button>
+                    }
+                </div>
+            </div>
+            <div class="usr-tabs" id="usrTabs" role="tablist">
+                <button type="button" role="tab" data-tab="datos">Datos</button>
+                <button type="button" role="tab" data-tab="ingreso">Ingreso y seguridad</button>
+                <button type="button" role="tab" data-tab="permisos">Permisos <span class="cnt" id="usrCntPerm">0</span></button>
+            </div>
+        </div>
+    }
+
+    <form asp-controller="Usuarios" asp-action="GuardarAsistente" method="post" id="formAsistente" novalidate="novalidate" autocomplete="off">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        @{
+            // Datos del usuario: se usan igual en la pestana "Datos" de la ficha y en el paso 1 del alta.
+        }
+        @if (ficha)
+        {
+            @* ===== Pestana Datos ===== *@
+            <div class="usr-tab usr-card" data-pane="datos">
+                <div class="usr-sec">
+                    <h3>Datos del usuario</h3>
+                    <div class="alert alert-danger d-none" data-errores-generales role="alert"></div>
+                    <div class="usr-grid2">
+                        <div>
+                            <label class="usr-lbl" asp-for="Nombre">Nombre</label>
+                            <input asp-for="Nombre" class="usr-input" maxlength="150" />
+                            <div class="usr-bad-txt" data-error-de="Nombre"></div>
+                        </div>
+                        <div>
+                            <label class="usr-lbl" asp-for="Usuario">Usuario (para ingresar)</label>
+                            <input asp-for="Usuario" class="usr-input" maxlength="100" />
+                            <div class="usr-bad-txt" data-error-de="Usuario"></div>
+                        </div>
+                        <div>
+                            <label class="usr-lbl" asp-for="Email">Email</label>
+                            <input asp-for="Email" type="email" class="usr-input" maxlength="200" />
+                            <div class="usr-bad-txt" data-error-de="Email"></div>
+                        </div>
+                        <div>
+                            <label class="usr-lbl" asp-for="IdSucursalUser">Sucursal</label>
+                            <select asp-for="IdSucursalUser" asp-items="Model.Sucursales" class="usr-input">
+                                <option value="0">Sin sucursal por defecto</option>
+                            </select>
+                            <div class="usr-bad-txt" data-error-de="IdSucursalUser"></div>
+                        </div>
+                        <div>
+                            <label class="usr-lbl" asp-for="Clave">Clave nueva</label>
+                            <div class="usr-pass">
+                                <input asp-for="Clave" type="password" class="usr-input" autocomplete="new-password" placeholder="Dejala vacía para mantener la actual" />
+                                <button type="button" class="usr-ojo" aria-label="Mostrar u ocultar la clave" title="Mostrar u ocultar">👁</button>
+                            </div>
+                            <div class="usr-help">Mínimo 8 caracteres, con letra, número y un carácter especial. Sin espacios.</div>
+                            <div class="usr-bad-txt" data-error-de="Clave"></div>
+                        </div>
+                        <div>
+                            <span class="usr-lbl">Tipo de usuario</span>
+                            <div class="usr-seg" id="usrSegTipo" role="radiogroup" aria-label="Tipo de usuario">
+                                <label><input type="radio" name="TipoUsuario" value="empleado" @(Model.TipoUsuario == "empleado" ? "checked" : "") />Empleado</label>
+                                <label><input type="radio" name="TipoUsuario" value="admin" @(Model.TipoUsuario == "admin" ? "checked" : "") />Administrador</label>
+                                <label><input type="radio" name="TipoUsuario" value="produccion" @(Model.TipoUsuario == "produccion" ? "checked" : "") />Producción</label>
+                            </div>
+                            <div class="usr-help">Cambiarlo cambia qué permisos aplican: un administrador no necesita permisos; una cuenta de producción (PC compartida de un sector) nunca tiene Ventas, Finanzas, Fórmulas ni Empleados.</div>
+                            <div class="usr-bad-txt" data-error-de="TipoUsuario"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ===== Pestana Ingreso y seguridad ===== *@
+            <div class="usr-tab usr-card" data-pane="ingreso">
+                <div class="usr-sec">
+                    <h3>Ingreso y seguridad</h3>
+                    <partial name="_UsuarioIngreso" model="Model" />
+                    <div class="usr-opt">
+                        <div>
+                            <b>Clave rápida (PIN)</b>
+                            <div class="d">La configura el propio usuario desde el menú de su usuario. Si la olvidó, entra con su contraseña y crea una nueva; también podés quitársela con el botón «Quitar PIN» de arriba.</div>
+                        </div>
+                        @if (Model.TienePin)
+                        {
+                            <span class="usr-chip">Configurado@(Model.PinActualizadoUtc.HasValue ? " · " + Model.PinActualizadoUtc.Value.ToLocalTime().ToString("dd/MM/yyyy") : "")</span>
+                        }
+                        else
+                        {
+                            <span class="usr-chip">Sin PIN</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @* ===== Pestana Permisos ===== *@
+            <div class="usr-tab" data-pane="permisos"><div id="usrEditor"></div></div>
+        }
+        else
+        {
+            <div class="usr-card">
+                <div class="usr-pasos" id="usrPasos" aria-label="Pasos para crear el usuario">
+                    <div class="usr-paso" data-paso-ind="1"><span class="n">1</span>Quién es</div><div class="usr-paso-sep"></div>
+                    <div class="usr-paso" data-paso-ind="2"><span class="n">2</span>Qué puede hacer</div><div class="usr-paso-sep"></div>
+                    <div class="usr-paso" data-paso-ind="3"><span class="n">3</span>Revisar y crear</div>
+                </div>
+
+                @* ===== Paso 1: tipo + datos ===== *@
+                <div class="usr-paso-cuerpo" data-paso-cuerpo="1">
+                    <div class="usr-sec">
+                        <h3>Tipo de usuario</h3>
+                        <div class="usr-bad-txt" data-error-de="TipoUsuario"></div>
+                        <div class="usr-tipos" id="usrTipos">
+                            <label class="usr-tipo"><input type="radio" name="TipoUsuario" value="empleado" @(Model.TipoUsuario == "empleado" ? "checked" : "") />
+                                <div><b>Empleado con permisos</b><span>Solo puede lo que le des en el paso siguiente. Es lo habitual.</span></div></label>
+                            <label class="usr-tipo"><input type="radio" name="TipoUsuario" value="admin" @(Model.TipoUsuario == "admin" ? "checked" : "") />
+                                <div><b>Administrador</b><span>Puede hacer todo en su empresa, sin permisos. No le aplican el horario laboral ni el dispositivo seguro y no usa PIN.</span></div></label>
+                            <label class="usr-tipo"><input type="radio" name="TipoUsuario" value="produccion" @(Model.TipoUsuario == "produccion" ? "checked" : "") />
+                                <div><b>Cuenta de producción (PC compartida)</b><span>Para la PC de un sector, usada por varios operarios: al guardar se elige quién lo hizo. Nunca tiene Ventas, Finanzas, Fórmulas ni Empleados.</span></div></label>
+                        </div>
+
+                        <h3 style="margin-top:1.2rem">Datos</h3>
+                        <div class="alert alert-danger d-none" data-errores-generales role="alert"></div>
+                        <div class="usr-grid2">
+                            <div>
+                                <label class="usr-lbl" asp-for="Nombre">Nombre</label>
+                                <input asp-for="Nombre" class="usr-input" maxlength="150" />
+                                <div class="usr-bad-txt" data-error-de="Nombre"></div>
+                            </div>
+                            <div>
+                                <label class="usr-lbl" asp-for="Usuario">Usuario (para ingresar)</label>
+                                <input asp-for="Usuario" class="usr-input" maxlength="100" />
+                                <div class="usr-bad-txt" data-error-de="Usuario"></div>
+                            </div>
+                            <div>
+                                <label class="usr-lbl" asp-for="Email">Email</label>
+                                <input asp-for="Email" type="email" class="usr-input" maxlength="200" />
+                                <div class="usr-bad-txt" data-error-de="Email"></div>
+                            </div>
+                            <div>
+                                <label class="usr-lbl" asp-for="IdSucursalUser">Sucursal</label>
+                                <select asp-for="IdSucursalUser" asp-items="Model.Sucursales" class="usr-input">
+                                    <option value="0">Sin sucursal por defecto</option>
+                                </select>
+                                <div class="usr-bad-txt" data-error-de="IdSucursalUser"></div>
+                            </div>
+                            <div>
+                                <label class="usr-lbl" asp-for="Clave">Clave inicial</label>
+                                <div class="usr-pass">
+                                    <input asp-for="Clave" type="password" class="usr-input" autocomplete="new-password" />
+                                    <button type="button" class="usr-ojo" aria-label="Mostrar u ocultar la clave" title="Mostrar u ocultar">👁</button>
+                                </div>
+                                <div class="usr-help">Mínimo 8 caracteres, con letra, número y un carácter especial. Sin espacios.</div>
+                                <div class="usr-bad-txt" data-error-de="Clave"></div>
+                            </div>
+                        </div>
+                        <details style="margin-top:1rem" @(Model.RequiereDispositivoSeguro || Model.PermitirLoginFueraSucursal ? "open" : "")>
+                            <summary style="cursor:pointer;font-weight:700;color:var(--usr-muted)">Opciones de ingreso (opcional): dispositivo seguro, fuera de sucursal, inactividad</summary>
+                            <partial name="_UsuarioIngreso" model="Model" />
+                        </details>
+                    </div>
+                </div>
+
+                @* ===== Paso 2: permisos ===== *@
+                <div class="usr-paso-cuerpo" data-paso-cuerpo="2">
+                    <div style="padding:1rem"><div id="usrEditor"></div></div>
+                </div>
+
+                @* ===== Paso 3: resumen ===== *@
+                <div class="usr-paso-cuerpo" data-paso-cuerpo="3">
+                    <div class="usr-resumen-final" id="usrResumenFinal"></div>
+                </div>
+
+                <div class="usr-pie">
+                    <button type="button" class="usr-btn" id="usrAtras"><i class="fas fa-arrow-left"></i> Atrás</button>
+                    <div class="d-flex" style="gap:.4rem">
+                        <a class="usr-btn usr-btn-ghost" href="@Url.Action("Index", "Usuarios")">Cancelar</a>
+                        <button type="button" class="usr-btn usr-btn-primary" id="usrSiguiente">Siguiente <i class="fas fa-arrow-right"></i></button>
+                        <button type="submit" class="usr-btn usr-btn-success" id="usrCrear"><i class="fas fa-save"></i> Crear usuario</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div id="usrPermisosPost" class="d-none"></div>
+
+        @if (ficha)
+        {
+            <div class="usr-savebar" id="usrSavebar" role="status" aria-live="polite">
+                <span id="usrSaveTxt">Sin cambios</span>
+                <button type="button" class="usr-btn" id="usrDescartar">Descartar</button>
+                <button type="submit" class="usr-btn usr-btn-primary" id="usrGuardar">Guardar cambios</button>
+            </div>
+        }
+    </form>
+
+    @if (ficha)
+    {
+        @* Acciones del encabezado: formularios aparte (no se pueden anidar en el formulario principal); los botones los referencian con form="...". *@
+        <form id="usrFormDesbloquear" asp-controller="Usuarios" asp-action="DesbloquearUsuario" method="post" class="d-none"><input type="hidden" name="id" value="@Model.Id" /></form>
+        <form id="usrFormQuitarPin" asp-controller="Usuarios" asp-action="QuitarPin" method="post" class="d-none"><input type="hidden" name="id" value="@Model.Id" /></form>
+    }
+
+    <div class="usr-toast" id="usrToast" role="status" aria-live="polite"></div>
+</div>
+
+<script id="asistenteDatos" type="application/json">@Html.Raw(datosJson)</script>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/usuarios-asistente.js")" asp-append-version="true"></script>
+}

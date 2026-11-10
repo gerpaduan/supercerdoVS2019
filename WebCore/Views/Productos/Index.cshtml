@@ -4,7 +4,9 @@
     ViewBag.Title = "Productos";
 
     var modo = Context.Request.Query["modo"].ToString().ToLower();
-    bool modoEtiquetas = (modo == "etiquetas");
+    // Sin el permiso "Etiquetas Productos" (formEtiquetas), ?modo=etiquetas cae a la grilla normal (el servidor igual lo valida).
+    bool puedeGenerarEtiquetas = ViewBag.PuedeGenerarEtiquetas != null && (bool)ViewBag.PuedeGenerarEtiquetas;
+    bool modoEtiquetas = (modo == "etiquetas") && puedeGenerarEtiquetas;
 
     var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
     var sucursalIdSeleccionada = (ViewBag.SucursalId != null) ? (int)ViewBag.SucursalId : 0;
@@ -73,9 +75,10 @@
 
                 <a id="lnkEtiquetas"
                    data-hotkey="e"
-                   class="btn btn-outline-secondary"
-                   href="@Url.Action("Index", "Productos", new { modo = "etiquetas" })"
-                   title="Atajo: Alt + E">
+                   class="btn btn-outline-secondary @(puedeGenerarEtiquetas ? "" : "disabled")"
+                   href="@(puedeGenerarEtiquetas ? Url.Action("Index", "Productos", new { modo = "etiquetas" }) : "#")"
+                   title="Atajo: Alt + E"
+                   @(puedeGenerarEtiquetas ? "" : "aria-disabled=true tabindex=-1")>
                     <i class="fas fa-barcode mr-1"></i> <span class="atajo-letra">E</span>tiquetas (PDF)
                 </a>
 

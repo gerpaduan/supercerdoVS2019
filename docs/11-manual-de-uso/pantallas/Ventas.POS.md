@@ -18,7 +18,7 @@ Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
 **No aparece** cuando:
 - el cliente es **Consumidor Final** o **no tiene movimientos** en su cuenta corriente;
 - el saldo es **chico**: hasta el monto de la configuración [Saldo mínimo a informar](ayuda:referencia/configuraciones) (viene en **$100**; vale para deudas y para saldos a favor). Por encima de ese monto se muestra el saldo exacto, sin redondear;
-- el cliente tiene la **cuenta corriente reservada** y tu usuario no tiene permiso de Cuentas corrientes (los administradores y quienes tienen ese permiso sí lo ven).
+- el cliente tiene la **cuenta corriente reservada** y tu usuario no tiene el permiso **Ver cuentas corrientes reservadas** (los administradores y quienes lo tienen sí lo ven).
 
 El saldo se consulta al elegir el cliente. Si después cobrás su deuda desde el POS (**F2**) sin cambiar de cliente, el renglón no se refresca hasta que lo elijas de nuevo.
 

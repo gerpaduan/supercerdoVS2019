@@ -299,6 +299,20 @@ namespace WebCore.Controllers
 
             DataTable dt = _oCtaCteN.obtenerCtasCtes(buscar, null, ordenSaldo);
 
+            // 2026-11-10: las cuentas reservadas figuran en el listado, pero quien no tiene "Ver cuentas corrientes
+            // reservadas" no ve su saldo (la vista muestra "Reservada"). Con permiso (o Admin) el set queda vacio.
+            var personasSaldoOculto = new HashSet<int>();
+            if (_ctaCteReservada.EsRestringido && dt != null && dt.Columns.Contains("IdPersona"))
+            {
+                foreach (DataRow fila in dt.Rows)
+                {
+                    if (fila["IdPersona"] == DBNull.Value) continue;
+                    int idPersonaFila = Convert.ToInt32(fila["IdPersona"]);
+                    if (_ctaCteReservada.SaldoOculto(idPersonaFila)) personasSaldoOculto.Add(idPersonaFila);
+                }
+            }
+            ViewBag.PersonasSaldoOculto = personasSaldoOculto;
+
             ViewBag.Title = "Cuentas Corrientes";
             if (renderParcial)
                 return PartialView("~/Views/Finanzas/CtasCtes.cshtml", dt);
@@ -686,7 +700,11 @@ namespace WebCore.Controllers
             }
 
             bool puedeVerCtaCtePersona = _oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1);
-            if (!desdePos && !puedeVerCtaCtePersona)
+            // 2026-11-10: fuera del POS tambien alcanza "Cuentas corrientes" (VerCtasCtes): entrar a la cuenta de una
+            // persona no exige un permiso "POS - ...". Desde el POS sigue mandando "POS - Ctas.Ctes Persona" (ya validado arriba).
+            bool puedeVerCuentaFueraDelPos = puedeVerCtaCtePersona
+                || _oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1);
+            if (!desdePos && !puedeVerCuentaFueraDelPos)
             {
                 ViewBag.Seccion = "Cuenta Corriente Persona";
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
@@ -703,8 +721,11 @@ namespace WebCore.Controllers
             // mas viejo que la ventana permitida, se acota (no se le muestra igual) y se informa
             // -- "informar, no fallar en silencio", mismo criterio que el resto del proyecto.
             // null = admin o sin este permiso asignado con limite -- sin restriccion.
-            DateTime? fechaMinimaPermitidaCtaCte = WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(
-                usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona);
+            // Fuera del POS la ventana es la mas amplia de los dos permisos otorgados; desde el POS, solo la del POS.
+            DateTime? fechaMinimaPermitidaCtaCte = desdePos
+                ? WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona)
+                : WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitidaEntre(usuarioConsulta,
+                    Entidades.Permisos.Finanza.VerCtaCtePersona, Entidades.Permisos.Finanza.VerCtasCtes);
             bool fechaRecortadaPorPermiso = fechaMinimaPermitidaCtaCte.HasValue && fechaDesde.Value < fechaMinimaPermitidaCtaCte.Value;
             if (fechaRecortadaPorPermiso)
                 fechaDesde = fechaMinimaPermitidaCtaCte.Value;
@@ -794,7 +815,9 @@ namespace WebCore.Controllers
                     return StatusCode(403, "Autorizate con tu usuario para ver la cuenta corriente.");
             }
 
-            if (!desdePos && !_oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1))
+            if (!desdePos
+                && !_oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1)
+                && !_oUsuarioN.tienePermiso(usuarioConsulta, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1))
                 return StatusCode(403, "No tenés permiso para ver la cuenta corriente.");
 
             // 2) Solo los tipos que tienen items para mostrar.
@@ -816,7 +839,10 @@ namespace WebCore.Controllers
             if (movimiento == null || movimiento.Id <= 0 || movimiento.Persona == null || movimiento.Persona.IdPersona != idPersona)
                 return NotFound("El movimiento no pertenece a esta cuenta corriente.");
 
-            DateTime? fechaMinima = WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona);
+            DateTime? fechaMinima = desdePos
+                ? WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(usuarioConsulta, Entidades.Permisos.Finanza.VerCtaCtePersona)
+                : WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitidaEntre(usuarioConsulta,
+                    Entidades.Permisos.Finanza.VerCtaCtePersona, Entidades.Permisos.Finanza.VerCtasCtes);
             if (fechaMinima.HasValue && movimiento.Fecha < fechaMinima.Value)
                 return StatusCode(403, "No podés ver movimientos anteriores al " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".");
 
@@ -1074,7 +1100,8 @@ namespace WebCore.Controllers
 
             // La clave era correcta, pero este operador tiene que poder ver la cuenta corriente: si no, no se
             // registra y el modal se lo dice (no es un intento fallido de clave).
-            if (!_oUsuarioN.tienePermiso(validado, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1))
+            if (!_oUsuarioN.tienePermiso(validado, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1)
+                && !_oUsuarioN.tienePermiso(validado, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1))
                 return Json(new { ok = false, msg = "Ese usuario no tiene permiso para ver cuentas corrientes." });
 
             WebCore.Helpers.PermisosHelper.RegistrarOperadorModulo(HttpContext.Session, ModuloOperadorFinanzas, validado);

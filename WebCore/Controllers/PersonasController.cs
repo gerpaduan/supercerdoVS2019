@@ -8,7 +8,7 @@
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06) -- ya no hay stub hardcodeado. El "usuario actual" no es solo un gate de acceso:
-// alimenta reglas de negocio reales (EsAdministrador, PuedeGestionarCuentaCorriente,
+// alimenta reglas de negocio reales (EsAdministrador, PuedeVerCtaCteReservada,
 // PuedeModificarPersona) que afectan que se guarda.
 using System;
 using System.Data;
@@ -117,8 +117,10 @@ namespace WebCore.Controllers
         {
             var usuario = _usuarioActual;
             if (usuario == null) return false;
+            // 2026-11-10: tambien alcanza "Cuentas corrientes" (VerCtasCtes), no solo el permiso "POS - Ctas.Ctes Persona".
             return usuario.EsUsuarioProduccion
-                || _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1);
+                || _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1)
+                || _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1);
         }
 
         [HttpGet]
@@ -186,13 +188,13 @@ namespace WebCore.Controllers
 
             bool tieneMovimientos = esEdicion && _oPersonaN.personaTieneCompras_Ventas(model.IdPersona);
             bool esAdministrador = usuario != null && usuario.Admin;
-            bool puedeGestionarCuentaCorriente = PuedeGestionarCuentaCorriente(usuario);
+            bool puedeVerCtaCteReservada = PuedeVerCtaCteReservada(usuario);
 
             model.EsEdicion = esEdicion;
             model.SoloLecturaInicial = false;
             model.TieneMovimientos = tieneMovimientos;
             model.EsAdministrador = esAdministrador;
-            model.PuedeGestionarCuentaCorriente = puedeGestionarCuentaCorriente;
+            model.PuedeGestionarCuentaCorriente = puedeVerCtaCteReservada;
             model.PuedeEditarCamposProtegidos = !esEdicion || !tieneMovimientos || esAdministrador;
             model.MensajeRestriccion = ConstruirMensajeRestriccion(tieneMovimientos, esAdministrador);
             AplicarEstadoEliminar(model, personaOriginal);
@@ -221,7 +223,7 @@ namespace WebCore.Controllers
             // Persona.CtaCte ya no se edita (queda en la base sin efecto funcional). Cuenta corriente
             // reservada: solo la cambia un autorizado (admin / formCtasCtes); sin permiso se conserva
             // el valor original, y una persona nueva sin permiso nace sin reservar.
-            personaGuardar.CtaCteReservada = puedeGestionarCuentaCorriente
+            personaGuardar.CtaCteReservada = puedeVerCtaCteReservada
                 ? model.CtaCteReservada
                 : (esEdicion && personaOriginal != null && personaOriginal.IdPersona > 0 && personaOriginal.CtaCteReservada);
             personaGuardar.Bonificacion = bonificacion;
@@ -349,10 +351,10 @@ namespace WebCore.Controllers
                 // El POS oculta el historial de precios si el cliente es de cuenta corriente reservada
                 // y el usuario no es admin / no tiene formCtasCtes (el limite real lo aplica
                 // VentasController.HistorialPreciosCliente). No se expone el flag crudo.
-                historialPreciosOculto = persona.CtaCteReservada && !PuedeGestionarCuentaCorriente(_usuarioActual),
+                historialPreciosOculto = persona.CtaCteReservada && !PuedeVerCtaCteReservada(_usuarioActual),
                 // El POS muestra la etiqueta "Reservada"; cuentaReservadaLimitada avisa que ve solo lo propio.
                 cuentaReservada = persona.CtaCteReservada,
-                cuentaReservadaLimitada = persona.CtaCteReservada && !PuedeGestionarCuentaCorriente(_usuarioActual)
+                cuentaReservadaLimitada = persona.CtaCteReservada && !PuedeVerCtaCteReservada(_usuarioActual)
             });
         }
 
@@ -384,7 +386,7 @@ namespace WebCore.Controllers
 
             var usuario = _usuarioActual;
             bool esAdministrador = usuario != null && usuario.Admin;
-            bool puedeGestionarCuentaCorriente = PuedeGestionarCuentaCorriente(usuario);
+            bool puedeVerCtaCteReservada = PuedeVerCtaCteReservada(usuario);
 
             float bonificacion;
             ValidarPersona(model, new Entidades.Persona(), tieneMovimientos: false, esAdministrador: esAdministrador, out bonificacion);
@@ -411,7 +413,7 @@ namespace WebCore.Controllers
                 Domicilio = NormalizarTexto(model.Domicilio, true),
                 Ciudad = NormalizarTexto(model.Ciudad, true),
                 otrosDatos = (model.OtrosDatos ?? "").Trim(),
-                CtaCteReservada = puedeGestionarCuentaCorriente && model.CtaCteReservada,
+                CtaCteReservada = puedeVerCtaCteReservada && model.CtaCteReservada,
                 Bonificacion = bonificacion,
                 tipo = "",
                 Marca = false
@@ -623,7 +625,7 @@ namespace WebCore.Controllers
             var usuario = _usuarioActual;
             bool tieneMovimientos = esEdicion && persona != null && persona.IdPersona > 0 && _oPersonaN.personaTieneCompras_Ventas(persona.IdPersona);
             bool esAdministrador = usuario != null && usuario.Admin;
-            bool puedeGestionarCuentaCorriente = PuedeGestionarCuentaCorriente(usuario);
+            bool puedeVerCtaCteReservada = PuedeVerCtaCteReservada(usuario);
 
             var modelo = new PersonaEditVm
             {
@@ -632,7 +634,7 @@ namespace WebCore.Controllers
                 SoloLecturaInicial = esEdicion,
                 TieneMovimientos = tieneMovimientos,
                 EsAdministrador = esAdministrador,
-                PuedeGestionarCuentaCorriente = puedeGestionarCuentaCorriente,
+                PuedeGestionarCuentaCorriente = puedeVerCtaCteReservada,
                 PuedeEditarCamposProtegidos = !esEdicion || !tieneMovimientos || esAdministrador,
                 MensajeRestriccion = ConstruirMensajeRestriccion(tieneMovimientos, esAdministrador),
                 Identificacion = persona != null ? persona.Identificacion : "",
@@ -654,13 +656,16 @@ namespace WebCore.Controllers
             return modelo;
         }
 
-        private bool PuedeGestionarCuentaCorriente(Entidades.Usuario usuario)
+        private bool PuedeVerCtaCteReservada(Entidades.Usuario usuario)
         {
             // Port de Web/Controllers/PersonasController.cs:550-554 (2026-09-09, Batch B, ver
             // docs/DECISIONS.md "Batch B: permisos reales + operador de produccion"). Antes solo
             // chequeaba Admin -- la rama de permiso puntual (Permisos.Finanza.VerCtasCtes) quedo
             // sin portar mientras WebCore no tenia sesion real; ya la tiene.
-            return usuario != null && (usuario.Admin || _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1));
+            // 2026-11-10: este permiso se separo de "Cuentas corrientes" (VerCtasCtes): ahora es el de "Ver cuentas
+            // corrientes reservadas" (VerCtaCteReservada). Decide si se ve la casilla "Cuenta corriente reservada" y si el POS
+            // muestra el historial de precios de un cliente reservado.
+            return usuario != null && (usuario.Admin || _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtaCteReservada, DateTime.Today, -1));
         }
 
         private void CargarIvas(PersonaEditVm model)

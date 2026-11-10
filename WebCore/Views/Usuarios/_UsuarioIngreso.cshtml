@@ -1,0 +1,45 @@
+@model WebCore.Models.UsuarioAsistenteVm
+
+@* Interruptores de ingreso y seguridad de un usuario (ficha: pestana "Ingreso y seguridad"; alta: bloque "Opciones de ingreso").
+   Rediseno 2026-11-10, ver docs/DECISIONS.md "Rediseno de Usuarios". *@
+
+<div class="usr-opt">
+    <div>
+        <b>Activo</b>
+        <div class="d">Un usuario inactivo no puede ingresar.</div>
+    </div>
+    <label class="usr-switch" aria-label="Activo">
+        <input asp-for="Activo" type="checkbox" />
+        <span class="t"></span>
+    </label>
+</div>
+<div class="usr-opt">
+    <div>
+        <b>Requiere dispositivo seguro</b>
+        <div class="d">Solo puede ingresar desde un dispositivo autorizado. Si en <em>Mi Empresa</em> está activado «Exigir dispositivo seguro», ya se le exige a todos los no administradores. No aplica a administradores.</div>
+    </div>
+    <label class="usr-switch" aria-label="Requiere dispositivo seguro">
+        <input asp-for="RequiereDispositivoSeguro" type="checkbox" />
+        <span class="t"></span>
+    </label>
+</div>
+<div class="usr-opt">
+    <div>
+        <b>Permitir ingreso fuera de la sucursal</b>
+        <div class="d">Saltea el control de ubicación (GPS) que algunas sucursales tienen para el ingreso.</div>
+    </div>
+    <label class="usr-switch" aria-label="Permitir ingreso fuera de la sucursal">
+        <input asp-for="PermitirLoginFueraSucursal" type="checkbox" />
+        <span class="t"></span>
+    </label>
+</div>
+<div class="usr-opt">
+    <div>
+        <b>Cerrar la sesión por inactividad</b>
+        <div class="d">Tras estos minutos sin actividad se avisa y luego se cierra la sesión. <strong>0 = nunca.</strong> Las cuentas de producción nunca se bloquean.</div>
+        <div class="usr-bad-txt" data-error-de="MinutosInactividad"></div>
+    </div>
+    <div class="usr-ctrl">
+        <input asp-for="MinutosInactividad" type="number" min="0" max="1440" aria-label="Minutos de inactividad" style="width:5rem" /> min
+    </div>
+</div>

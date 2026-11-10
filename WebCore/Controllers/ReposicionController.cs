@@ -250,7 +250,7 @@ namespace WebCore.Controllers
         // Cargar puntos de stock: el mismo permiso que ya exige Productos para editarlos.
         private bool TienePermisoEditarPuntos(Entidades.Usuario? user)
         {
-            return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+            return _oUsuarioN.tienePermisoEdicion(user, Entidades.Permisos.Producto.NuevoCorte);
         }
 
         // Solo ids de sucursales de esta empresa. Todas tildadas o ninguna = "todas" (lista vacía).

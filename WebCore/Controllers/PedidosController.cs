@@ -61,7 +61,7 @@ namespace WebCore.Controllers
         private bool PuedeModificar(Entidades.Usuario? user)
         {
             if (user == null || !user.Activo) return false;
-            return user.Admin || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, DateTime.Today, -1);
+            return user.Admin || _oUsuarioN.tienePermisoEdicion(user, Entidades.Permisos.Stock.AddOrEditStock);
         }
 
         // Mismo criterio que Stock/Movimientos/Elaborados: con una cuenta de produccion y una persona elegida, el pedido queda a nombre de esa persona.

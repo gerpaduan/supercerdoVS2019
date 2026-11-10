@@ -245,7 +245,7 @@
                                 }
                                 <label class="custom-control-label" for="PuedeOperarPOS">Puede operar POS</label>
                             </div>
-                            <small class="form-text text-muted">Otorga el permiso mínimo necesario para usar POS Venta / POS Expendio.</small>
+                            <small class="form-text text-muted">Tilda «Ventas: editar» (registrar ventas). No alcanza para entrar al POS: para eso hacen falta los permisos «POS - …» (en Permisos).</small>
                             @if (Model.SoloLectura)
                             {
                                 @Html.HiddenFor(m => m.PuedeOperarPOS)

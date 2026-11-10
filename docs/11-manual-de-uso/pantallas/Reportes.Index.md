@@ -4,13 +4,15 @@ titulo: Reportes
 rol: admin
 modulo: Reportes
 orden: 1
-permiso: Stock.VerStock (sin el permiso se muestra "Acceso denegado")
-revisada: 2026-10-13
+permiso: un permiso por tipo de reporte (Reporte.StockActual, CierreStock, StockRetroactivo, ProyeccionVentasVsStock, VentasPorProducto, BalanceEconomico; sin ninguno se muestra "Acceso denegado")
+revisada: 2026-11-10
 ---
 ## Para qué sirve
 Consultar **stock, ventas y balance** de una, varias o todas las sucursales. Se elige el **tipo de reporte**, las **fechas** y las **sucursales**, y se toca **Buscar**.
 
 ## Tipos de reporte
+El selector muestra **solo los tipos que tu usuario tiene permitidos** (cada uno es un permiso aparte en *Usuarios → Permisos*, módulo Reportes; el permiso **Stock** ya no los habilita). *Días ver* de ese permiso limita hasta cuántos días atrás podés poner la fecha «desde». Si pedís un tipo que no tenés, se muestra el primero que sí; sin ninguno, «Acceso denegado».
+
 - **Stock Actual**: el stock de cada producto desde el último cierre de stock hasta ahora.
 - **Cierre Stock**: lo ocurrido entre dos cierres de stock y el stock al cierre.
 - **Stock Retroactivo**: el stock desde el último cierre hasta la fecha que elijas.
@@ -65,4 +67,4 @@ En la fila de **Mostrar totales**, a la derecha, aparece el botón verde **Expor
 - Las columnas son las de la tabla: código, producto, (sucursal), St. inicial, Total ingresos, Total egresos, Stock Cierre y Faltante (Cierre Stock) o Stock actual, Punto stock y Estado. Con el switch **Mostrar detalles** activo se suman las de ingresos y egresos desglosados.
 - Cantidades en **números** (se pueden sumar, ordenar y filtrar; la hoja trae filtro automático y encabezado fijo). El *Faltante* lleva signo y color (rojo: faltó mercadería, ámbar: vendido de más, verde: coincide).
 - Las filas con *Stock Actual* se calculan **al momento de exportar** (igual que al buscar). Los otros reportes (Ventas por Producto, Proyección, Balance) no tienen exportación.
-- Pide el mismo permiso que ver el reporte (Stock > Ver stock). Solo lectura. Código: `ReportesController.ExportarStockExcel`, `Services/ExcelReporteStock.cs`.
+- Pide el permiso del reporte que se exporta (Stock Actual, Cierre Stock o Stock Retroactivo). Solo lectura. Código: `ReportesController.ExportarStockExcel`, `Services/ExcelReporteStock.cs`.

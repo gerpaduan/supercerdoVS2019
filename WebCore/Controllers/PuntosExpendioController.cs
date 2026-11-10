@@ -330,7 +330,7 @@ namespace WebCore.Controllers
             // Alta rapida de producto desde el POS: GuardarRapidoPOS exige Producto.NuevoCorte sobre el
             // usuario de sesion. Se calcula aca (mismo permiso, mismo usuario) para avisar al cajero al
             // apretar "Si, dar de alta" y no recien al guardar. El server igual revalida al guardar.
-            ViewBag.PuedeAltaRapidaProducto = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+            ViewBag.PuedeAltaRapidaProducto = _oUsuarioN.tienePermisoEdicion(user, Entidades.Permisos.Producto.NuevoCorte);
             ViewBag.IdSucursalPOS = user.IdSucursal;
             ViewBag.IdUsuarioPOS = user.Id;
             ViewBag.PosModoInstancia = modoPosNormalizado;

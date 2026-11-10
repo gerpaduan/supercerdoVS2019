@@ -756,6 +756,20 @@ namespace Negocio
         }
 
         /// <summary>
+        /// true si el usuario es admin o tiene "Puede editar" (dias editar &gt;= 0) en el formulario cuya clave de EDICION es
+        /// nombreFormEdicion (ej. formNuevoCorte, formModificarPrecios). Es el chequeo de "modificar" para las pantallas que no
+        /// comparan contra el creador de un registro (Productos, Tipos de producto, Pedidos): tienePermiso con idCreador = -1
+        /// solo mira la clave de CONSULTA, por eso esas claves de edicion nunca coincidian y solo un Admin podia (2026-11-10,
+        /// ver docs/DECISIONS.md "Permisos que no controlaban nada"). Pasa el id del propio usuario como creador, asi que el
+        /// alcance "solo propios" no lo bloquea, y DateTime.Today como fecha, asi que cualquier "dias editar" &gt;= 0 alcanza.
+        /// </summary>
+        public bool tienePermisoEdicion(Entidades.Usuario oUser, string nombreFormEdicion)
+        {
+            if (oUser == null) return false;
+            return tienePermiso(oUser, nombreFormEdicion, DateTime.Today, oUser.Id);
+        }
+
+        /// <summary>
         /// true si el usuario es admin o tiene "Puede editar" en el formulario cuya CONSULTA es nombreFormConsulta (ej. formPagos,
         /// la fila "Pagos" del menu). No usa tienePermiso a proposito: "Pagos" y "POS - Ctas.Ctes Persona" comparten el
         /// formulario de edicion formAddOrEditPago, y el permiso del POS no debe habilitar lo que es del menu de Pagos.

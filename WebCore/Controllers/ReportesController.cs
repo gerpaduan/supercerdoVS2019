@@ -5,9 +5,9 @@
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06). Permiso real portado 2026-09-09 (Batch B, ver docs/DECISIONS.md "Batch B:
-// permisos reales + operador de produccion"): Permisos.Stock.VerStock via _oUsuarioN.tienePermiso
-// (unico permiso que chequea este controller en clasico -- no existe Permisos.Reporte.*, los
-// nombres "Stock Actual"/"Balance Economico"/etc. son tipos de reporte, no permisos). NO portado
+// permisos reales + operador de produccion"): en clasico el unico permiso era Permisos.Stock.VerStock. Desde
+// 2026-11-10 cada tipo de reporte exige su propia fila de `formularios` (Permisos.Reporte.*, idform 25-30) via
+// WebCore.Helpers.PermisosReportes (docs/DECISIONS.md "Permisos que no controlaban nada"). NO portado
 // (deliberado, UX-only): AjustarFechaSiNoTienePermiso/ConfigurarAdvertenciaFechaEnVivo (recortan
 // el filtro de fecha en silencio en vez de bloquear -- ver mismo criterio en MovimientosController.cs).
 // ObtenerIdEmpresaSesion() (que en el original cae a Session["Usuario"] o a empresa) se simplifica
@@ -21,6 +21,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Utilidades;
+using WebCore.Helpers;
 using WebCore.Models;
 
 namespace WebCore.Controllers
@@ -91,12 +92,16 @@ namespace WebCore.Controllers
             DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
             DateTime hasta = fechaHasta ?? DateTime.Now;
 
-            // Port de Web/Controllers/ReportesController.cs:79-84.
-            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, desde, -1))
+            // Permiso por tipo de reporte (filas 25-30 de `formularios`, 2026-11-10; antes todos se habilitaban con "Stocks").
+            // Si el tipo pedido (por defecto Stock Actual) no esta permitido, se muestra el primero que si lo esta; sin ninguno,
+            // acceso denegado.
+            var tipoPermitido = ResolverTipoReportePermitido(user, tipoReporte, desde);
+            if (tipoPermitido == null)
             {
                 ViewBag.Seccion = "Reportes";
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
             }
+            tipoReporte = tipoPermitido;
 
             // Sucursales tildadas (idsSucursales) o, en enlaces viejos, la unica de idSucursal (0 = todas).
             // Los defaults de siempre (sucursal del usuario / "Todas" en Ventas por Producto) viven en el helper.
@@ -166,7 +171,7 @@ namespace WebCore.Controllers
 
         // Exporta a Excel (.xlsx) el reporte de stock que muestra la pantalla (Stock Actual, Cierre Stock o Stock
         // Retroactivo; mismos parametros que Index mas "detalles" = columnas de ingresos/egresos desglosados).
-        // Mismo permiso que Index (Stock.VerStock), solo lectura. Aplica el filtro de estado en el servidor, porque en
+        // Mismo permiso que Index (el del tipo de reporte que se exporta), solo lectura. Aplica el filtro de estado en el servidor, porque en
         // pantalla ese filtro se hace en vivo con JS sobre las filas ya cargadas.
         [HttpGet]
         public IActionResult ExportarStockExcel(
@@ -191,7 +196,8 @@ namespace WebCore.Controllers
             DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
             DateTime hasta = fechaHasta ?? DateTime.Now;
 
-            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, desde, -1))
+            // Permiso del tipo de reporte que se exporta (2026-11-10: antes, Stocks para los tres).
+            if (!PermisosReportes.Permite(_oUsuarioN, user, tipo, desde))
             {
                 ViewBag.Seccion = "Reportes";
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
@@ -244,7 +250,7 @@ namespace WebCore.Controllers
 
             // Port de Web/Controllers/ReportesController.cs:180-185 -- fallo distinto de Index:
             // sin permiso, no bloquea con AccesoDenegado, devuelve la parcial vacia.
-            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, desde, -1))
+            if (!PermisosReportes.Permite(_oUsuarioN, user, tipoReporte, desde))
                 return PartialView("~/Views/Reportes/_FiltrosSecundarios.cshtml", new ReportesViewModel());
 
             // Misma resolucion de sucursales que Index (la parcial solo la usa para armar el modelo base).
@@ -284,6 +290,11 @@ namespace WebCore.Controllers
             string[] periodoComparativoDesde = null,
             int[] idsSucursales = null)
         {
+            // Esta serie alimenta el grafico del reporte "Ventas por Producto": exige el permiso de ese reporte (2026-11-10;
+            // antes no chequeaba nada).
+            if (!PermisosReportes.Permite(_oUsuarioN, _usuarioActual, TipoReporteVentasProducto, fechaDesde))
+                return Json(new { error = "No tenés permisos para ver este reporte." });
+
             // Una sucursal o todas: la consulta de siempre (una sola). Varias tildadas: una por sucursal y se suman
             // las series punto a punto (los buckets del periodo son los mismos para todas).
             var idsConsulta = ResolverIdsConsultaSerie(idSucursal, idsSucursales);
@@ -401,6 +412,16 @@ namespace WebCore.Controllers
             });
         }
 
+        // Tipo de reporte a mostrar: el pedido si el usuario lo tiene permitido, si no el primero permitido; null si no tiene
+        // ninguno (acceso denegado). `desde` es la fecha "desde" del filtro: los dias "ver" de cada fila la limitan.
+        private string ResolverTipoReportePermitido(Entidades.Usuario user, string tipoPedido, DateTime desde)
+        {
+            string tipo = string.IsNullOrWhiteSpace(tipoPedido) ? TipoReporteStockActual : tipoPedido.Trim();
+            if (PermisosReportes.Permite(_oUsuarioN, user, tipo, desde))
+                return tipo;
+            return PermisosReportes.TiposPermitidos(_oUsuarioN, user, desde).FirstOrDefault();
+        }
+
         private ReportesViewModel CrearModeloBase(
             Entidades.Usuario user,
             string tipoReporte,
@@ -431,6 +452,7 @@ namespace WebCore.Controllers
                 NotaReporte = "Los filtros secundarios se aplican en vivo sobre los datos ya cargados. Los cierres se adaptan según el tipo de reporte, siguiendo el comportamiento del sistema de escritorio."
             };
 
+            // Solo los tipos de reporte que el usuario tiene permitidos (filas 25-30 de `formularios`, 2026-11-10).
             model.TiposReporte = new List<SelectListItem>
             {
                 CrearItemReporte(TipoReporteStockActual, model.TipoReporteSeleccionado),
@@ -439,7 +461,9 @@ namespace WebCore.Controllers
                 CrearItemReporte(TipoReporteProyeccion, model.TipoReporteSeleccionado),
                 CrearItemReporte(TipoReporteVentasProducto, model.TipoReporteSeleccionado),
                 CrearItemReporte(TipoReporteBalance, model.TipoReporteSeleccionado)
-            };
+            }
+            .Where(item => PermisosReportes.Permite(_oUsuarioN, user, item.Value, fechaDesde))
+            .ToList();
 
             bool requiereCatalogoCortes =
                 string.Equals(model.TipoReporteSeleccionado, TipoReporteStockActual, StringComparison.OrdinalIgnoreCase) ||

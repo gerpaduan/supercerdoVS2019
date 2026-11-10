@@ -5,7 +5,7 @@ rol: usuario
 modulo: Productos
 orden: 3
 permiso: Producto.VerTiposProducto para ver la pantalla; Producto.AddOrEditTipoProducto para crear, modificar o eliminar tipos
-revisada: 2026-10-22
+revisada: 2026-11-10
 ---
 
 ## Para qué sirve

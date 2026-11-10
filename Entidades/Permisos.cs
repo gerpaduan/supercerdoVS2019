@@ -63,6 +63,10 @@ namespace Entidades
             public const string AddOrEditPago = "formAddOrEditPago";
             public const string VerCtasCtes = "formCtasCtes";
             public const string VerCtaCtePersona = "formCtaCtePersona";
+            // Interruptor aparte de VerCtasCtes (2026-11-10): quien lo tiene ve completas las cuentas corrientes
+            // "reservadas" (Persona.CtaCteReservada) y puede marcar/desmarcar una persona como reservada.
+            // Admin pasa siempre (tienePermiso). Ver docs/DECISIONS.md (2026-11-10).
+            public const string VerCtaCteReservada = "formCtaCteReservada";
         }
 
         public static class Movimiento

@@ -1277,7 +1277,7 @@ namespace WebCore.Controllers
         {
             try
             {
-                return _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+                return _oUsuarioN.tienePermisoEdicion(_usuarioActual, Entidades.Permisos.Producto.NuevoCorte);
             }
             catch (Exception ex)
             {

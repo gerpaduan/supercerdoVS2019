@@ -12,7 +12,8 @@ namespace WebCore.Services
     //
     // Una persona con Persona.CtaCteReservada = true tiene sus movimientos (ventas, compras,
     // cobros, pagos y movimientos de cta cte) visibles solo para un usuario "autorizado" (admin o
-    // con el permiso formCtasCtes). Cualquier otro usuario es "restringido": sigue pudiendo
+    // con el permiso formCtaCteReservada, "Ver cuentas corrientes reservadas"; hasta 2026-11-10 era
+    // formCtasCtes, que ahora es solo "entrar a Cuentas corrientes"). Cualquier otro usuario es "restringido": sigue pudiendo
     // venderle/cobrarle/pagarle, pero solo ve lo que cargo el mismo desde la apertura de su
     // caja. Este servicio concentra esa regla para que los controllers no la dupliquen:
     //   - ObtenerRestriccion: null si el usuario es autorizado; si no, {operador, apertura de caja}.
@@ -21,7 +22,7 @@ namespace WebCore.Services
     // Todo se cachea por request (instancia scoped).
     public interface ICtaCteReservadaService
     {
-        // true si el usuario de sesion NO es admin ni tiene formCtasCtes.
+        // true si el usuario de sesion NO es admin ni tiene formCtaCteReservada.
         bool EsRestringido { get; }
 
         // null si el usuario es autorizado (no hay nada que ocultar). Si es restringido devuelve
@@ -86,13 +87,13 @@ namespace WebCore.Services
                 if (_esRestringido == null)
                 {
                     // tienePermiso devuelve true para Admin de entrada (Negocio/Usuario.cs).
-                    _esRestringido = !_usuarioN.tienePermiso(UsuarioParaPermisoCtasCtes(), Permisos.Finanza.VerCtasCtes, DateTime.Today, -1);
+                    _esRestringido = !_usuarioN.tienePermiso(UsuarioParaPermisoCtasCtes(), Permisos.Finanza.VerCtaCteReservada, DateTime.Today, -1);
                 }
                 return _esRestringido.Value;
             }
         }
 
-        // Con quien se evalua el permiso formCtasCtes. Normalmente el usuario de sesion. Excepcion (2026-11-02, ver
+        // Con quien se evalua el permiso formCtaCteReservada. Normalmente el usuario de sesion. Excepcion (2026-11-02, ver
         // docs/DECISIONS.md): la cuenta compartida de produccion NO es una persona, asi que sin esta regla un operador que
         // se identifico en Finanzas (AutorizarModuloCtaCte) y tiene el permiso seguia viendo recortadas las cuentas
         // reservadas. Se usa su permiso SOLO mientras la peticion es del controller Finanzas: el operador caduca al

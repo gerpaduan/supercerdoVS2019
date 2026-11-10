@@ -4,6 +4,8 @@
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
     bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
     bool ocultarSaldo = ViewBag.OcultarSaldo != null && (bool)ViewBag.OcultarSaldo;
+    // Personas con cuenta reservada cuyo saldo no puede ver este usuario (2026-11-10): se muestran como "Reservada".
+    var personasSaldoOculto = ViewBag.PersonasSaldoOculto as HashSet<int> ?? new HashSet<int>();
 
     ViewBag.Title = "Cuentas Corrientes";
 
@@ -169,8 +171,9 @@
                                     {
                                         decimal saldoFila = row[col] == DBNull.Value ? 0m : Convert.ToDecimal(row[col]);
                                         @* Color del saldo (verde / rojo) solo en celular, ver ctasctes.css; con el saldo oculto no se colorea. *@
-                                        string claseSaldo = ocultarSaldo ? "" : (saldoFila > 0 ? "ctactes-saldo-positivo" : (saldoFila < 0 ? "ctactes-saldo-negativo" : ""));
-                                        <td class="cc-l-kg ctactes-saldo @claseSaldo">@(ocultarSaldo ? "***" : saldoFila.ToString("N2"))</td>
+                                        bool saldoReservado = !ocultarSaldo && int.TryParse(idPersona, out var idPersonaNumero) && personasSaldoOculto.Contains(idPersonaNumero);
+                                        string claseSaldo = (ocultarSaldo || saldoReservado) ? "" : (saldoFila > 0 ? "ctactes-saldo-positivo" : (saldoFila < 0 ? "ctactes-saldo-negativo" : ""));
+                                        <td class="cc-l-kg ctactes-saldo @claseSaldo">@(ocultarSaldo ? "***" : saldoReservado ? "Reservada" : saldoFila.ToString("N2"))</td>
                                     }
                                     else
                                     {

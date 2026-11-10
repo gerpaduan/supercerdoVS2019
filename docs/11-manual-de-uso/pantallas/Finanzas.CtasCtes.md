@@ -4,11 +4,16 @@ titulo: Cuentas corrientes
 rol: usuario
 modulo: Finanzas
 orden: 1
-permiso: PENDIENTE (no verificado contra el código en esta revisión)
-revisada: 2026-10-29
+permiso: Finanza.VerCtasCtes (Cuentas corrientes)
+revisada: 2026-11-10
 ---
 ## Para qué sirve
 Ver las **cuentas corrientes** de todas las personas con su **saldo**, buscar una y abrirla. Tocar (o hacer clic en) una persona abre su [cuenta corriente](Finanzas.CtaCtePersona.md).
+
+## Quién puede entrar
+Los administradores y quienes tienen el permiso **Cuentas corrientes** (se da en [Permisos del usuario](ayuda:pantalla/Usuarios.Asistente), módulo Finanzas; su *Días ver* limita hasta cuántos días atrás ve los movimientos de cada persona). Quien no lo tiene ve «Acceso denegado».
+
+Las personas con **cuenta corriente reservada** figuran en la lista, pero quien no tiene el permiso **Ver cuentas corrientes reservadas** ve **«Reservada»** en lugar del saldo.
 
 ## Buscar y ordenar
 - Al abrir la pantalla el cursor queda en el cuadro de búsqueda. Con las flechas ↑ ↓ elegís una persona y con **Enter** abrís su cuenta.

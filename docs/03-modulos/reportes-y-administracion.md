@@ -14,3 +14,5 @@ Centralizar reportes, configuraciones y procesos administrativos.
 - Parametros y filtros
 - Configuraciones sensibles
 - Permisos
+  - **Asistente de usuarios y permisos (2026-11-10)**: `Usuarios/Asistente` (`UsuariosController.Asistente/ValidarDatosAsistente/PermisosParaCopiar/GuardarAsistente`) crea o modifica un usuario en 4 pasos. El catálogo de qué controles tiene efecto en cada permiso, los perfiles y las claves bloqueadas para producción viven en `WebCore/Helpers/CatalogoPermisos.cs`; la traducción fila guardada ↔ estado en `WebCore/Helpers/AsistentePermisosMapper.cs`. La grilla anterior (`Usuarios/Permisos`) es la vista avanzada. Reglas y hallazgos: `docs/DECISIONS.md` (2026-11-10).
+  - **Cuentas corrientes (2026-11-10)**: `formCtasCtes` (idform 17) = entrar al listado y a la cuenta de cualquier persona; `formCtaCteReservada` (idform 9003) = ver completas las cuentas reservadas (`CtaCteReservadaService`, `PersonasController.PuedeVerCtaCteReservada`).

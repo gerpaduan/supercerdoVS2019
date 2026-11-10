@@ -183,6 +183,37 @@ namespace WebCore.Helpers
             return DateTime.Today.AddDays(-dias).Date;
         }
 
+        // 2026-11-10: variante de ObtenerFechaMinimaPermitida para pantallas que aceptan MAS DE UN permiso de ver (ej. la
+        // cuenta corriente de una persona: "Cuentas corrientes" o "POS - Ctas.Ctes Persona"). Solo cuentan los permisos
+        // OTORGADOS (DiasPermitidosVer >= 0): uno sin otorgar no debe volver "sin limite" a uno otorgado con limite. Gana la
+        // ventana mas amplia (la fecha minima mas vieja). null = admin, o ningun permiso otorgado (el llamador ya valido el
+        // acceso antes con tienePermiso). "Todo el historial" se guarda como un numero grande de dias, no como -1.
+        public static DateTime? ObtenerFechaMinimaPermitidaEntre(Entidades.Usuario user, params string[] permisos)
+        {
+            if (user == null || user.Admin) return null;
+            return FechaMinimaMasAmplia(user.Permisos, permisos, DateTime.Today);
+        }
+
+        // Parte pura de ObtenerFechaMinimaPermitidaEntre (recibe "hoy" para poder probarla).
+        public static DateTime? FechaMinimaMasAmplia(IEnumerable<Entidades.PermisosUsuarios>? permisosUsuario, string[]? permisos, DateTime hoy)
+        {
+            if (permisosUsuario == null || permisos == null || permisos.Length == 0) return null;
+
+            int? maxDias = null;
+            foreach (var fila in permisosUsuario)
+            {
+                if (fila == null || fila.Formulario == null || fila.DiasPermitidosVer < 0) continue;
+
+                bool coincide = permisos.Any(p => string.Equals(fila.Formulario.FormConsulta ?? string.Empty,
+                    (p ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase));
+                if (!coincide) continue;
+
+                if (!maxDias.HasValue || fila.DiasPermitidosVer > maxDias.Value) maxDias = fila.DiasPermitidosVer;
+            }
+
+            return maxDias.HasValue ? hoy.AddDays(-maxDias.Value).Date : (DateTime?)null;
+        }
+
         // Port de Web/Controllers/MovimientosController.cs:174-181 (mismo gate en Stock/
         // Elaborados) -- si la sesion es la cuenta de produccion y todavia no se identifico quien
         // esta operando (idUsuarioCreador<=0), redirige a la pantalla compartida "SeleccionUsuario"

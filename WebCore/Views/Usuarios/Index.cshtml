@@ -1,301 +1,200 @@
 @model WebCore.Models.UsuarioIndexVm
 
-@{
-    ViewBag.Title = "Usuarios";
+@*
+    Listado de usuarios (rediseno 2026-11-10, ver docs/DECISIONS.md "Rediseno de Usuarios"): una columna "Usuario" con nombre, usuario y
+    email; tipo y estado como etiquetas; filtros como botones con su cantidad; la fila abre la ficha y las acciones secundarias van
+    en el menu de la derecha. Manual: docs/11-manual-de-uso/pantallas/Usuarios.Index.md.
+*@
+
+@functions {
+    private static string Tipo(WebCore.Models.UsuarioResumenVm u) => u.Admin ? "admin" : u.EsProduccion ? "prod" : "empleado";
 }
 
-<div class="container-fluid usuarios-index-page">
+@{
+    ViewBag.Title = "Usuarios";
+    var items = Model.Items ?? new List<WebCore.Models.UsuarioResumenVm>();
+    int cActivos = items.Count(u => u.Activo);
+    int cAdmin = items.Count(u => u.Admin);
+    int cProd = items.Count(u => u.EsProduccion);
+    int cBloq = items.Count(u => u.Bloqueado || u.BloqueadoNoSeguro);
+    int cInact = items.Count(u => !u.Activo);
+}
+
+<link rel="stylesheet" href="@Url.Content("~/Content/css/usuarios.css")" asp-append-version="true" />
+
+<div class="container-fluid usr-page" id="usrListado">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <div class="usr-crumb">Configuración</div>
+            <h1 class="h5 mb-0 font-weight-bold">Usuarios</h1>
+        </div>
         @if (Model.PuedeAdministrar)
         {
-            <a class="btn btn-primary mt-2 mt-md-0" href="@Url.Action("Editar", "Usuarios")">
-                <i class="fas fa-plus mr-1"></i> Crear usuario nuevo
-            </a>
+            <a class="usr-btn usr-btn-primary mt-2 mt-md-0" href="@Url.Action("Asistente", "Usuarios")"><i class="fas fa-plus"></i> Nuevo usuario</a>
         }
     </div>
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body py-3">
-            <div class="row align-items-end">
-                <div class="col-12 col-lg-4 mb-2 mb-lg-0">
-                    <label for="filtroUsuarios" class="font-weight-bold mb-1">Buscar usuario</label>
-                    <div class="input-group">
-                        <input type="text" id="filtroUsuarios" class="form-control" placeholder="Buscar por id, nombre, usuario o email" autocomplete="off" />
-                        <div class="input-group-append">
-                            <span class="input-group-text">
-                                <i class="fas fa-search"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-4 col-lg-2">
-                    <label for="filtroAdmin" class="font-weight-bold mb-1">Administrador</label>
-                    <select id="filtroAdmin" class="form-control custom-select">
-                        <option value="">Todos</option>
-                        <option value="1">Sí</option>
-                        <option value="0">No</option>
-                    </select>
-                </div>
-                <div class="col-4 col-lg-2">
-                    <label for="filtroActivo" class="font-weight-bold mb-1">Activo</label>
-                    @* Por defecto solo se muestran los activos (pedido del usuario, 2026-10-22). *@
-                    <select id="filtroActivo" class="form-control custom-select">
-                        <option value="">Todos</option>
-                        <option value="1" selected>Sí</option>
-                        <option value="0">No</option>
-                    </select>
-                </div>
-                <div class="col-4 col-lg-2">
-                    <label for="filtroBloqueado" class="font-weight-bold mb-1">Bloqueado</label>
-                    <select id="filtroBloqueado" class="form-control custom-select">
-                        <option value="">Todos</option>
-                        <option value="total">Sí</option>
-                        <option value="parcial">Parcial</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-                <div class="col-12 col-lg-2 mt-2 mt-lg-0 text-lg-right">
-                    <button type="button" id="limpiarFiltros" class="btn btn-sm btn-outline-secondary">Limpiar filtros</button>
-                </div>
-            </div>
-            <div class="mt-2">
-                <span id="contadorUsuarios" class="text-muted small"></span>
+    <div class="usr-card">
+        <div class="usr-tools">
+            <input type="search" class="usr-input" id="usrBuscar" placeholder="Buscar por nombre, usuario o email…" autocomplete="off" aria-label="Buscar usuario" />
+            @* Por defecto solo se muestran los activos (pedido del usuario, 2026-10-22). *@
+            <div class="usr-filtros" id="usrFiltros" role="group" aria-label="Filtrar usuarios">
+                <button type="button" data-f="todos">Todos<b>@items.Count</b></button>
+                <button type="button" data-f="activo" class="on">Activos<b>@cActivos</b></button>
+                <button type="button" data-f="admin">Administradores<b>@cAdmin</b></button>
+                <button type="button" data-f="prod">Producción<b>@cProd</b></button>
+                <button type="button" data-f="bloq">Bloqueados<b>@cBloq</b></button>
+                <button type="button" data-f="inact">Inactivos<b>@cInact</b></button>
             </div>
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered mb-0" id="tablaUsuarios">
-                    <thead class="thead-light">
-                        <tr>
-                            <th style="width:70px;">ID</th>
-                            <th>Nombre</th>
-                            <th>Usuario</th>
-                            <th style="width:90px;">Admin</th>
-                            <th style="width:90px;">Activo</th>
-                            <th style="width:100px;">Bloqueado</th>
-                            <th>Email</th>
-                            <th style="width:130px;">ID Sucursal User</th>
-                            <th style="width:110px;">ID Empresa</th>
-                            <th style="width:220px;">Acciones</th>
+        <div class="table-responsive">
+            <table class="usr-lst" id="usrTabla">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th class="h-sm">Sucursal</th>
+                        <th class="h-sm">Ingreso</th>
+                        <th style="width:1%"><span class="sr-only">Acciones</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in items)
+                    {
+                        string urlFicha = Url.Action("Asistente", "Usuarios", new { id = u.Id }) ?? "#";
+                        string buscar = ((u.Nombre ?? "") + " " + (u.Usuario ?? "") + " " + (u.Email ?? "")).ToLowerInvariant();
+                        <tr class="usr-fila-lst" data-tipo="@Tipo(u)" data-activo="@(u.Activo ? "1" : "0")"
+                            data-bloq="@(u.Bloqueado || u.BloqueadoNoSeguro ? "1" : "0")" data-buscar="@buscar"
+                            data-url="@(Model.PuedeAdministrar ? urlFicha : "")">
+                            <td>
+                                <div class="usr-celda">
+                                    <span class="usr-avatar" style="background:@WebCore.Helpers.UsuarioPresentacion.ColorAvatar(u.Id)" aria-hidden="true">@WebCore.Helpers.UsuarioPresentacion.Iniciales(u.Nombre)</span>
+                                    <div>
+                                        <div class="n">@u.Nombre</div>
+                                        <div class="s">@u.Usuario@(string.IsNullOrWhiteSpace(u.Email) ? "" : " · " + u.Email)</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if (u.Admin) { <span class="usr-chip ok">Administrador</span> }
+                                else if (u.EsProduccion) { <span class="usr-chip warn">Producción</span> }
+                                else { <span class="usr-chip pri">Empleado</span> }
+                            </td>
+                            <td>
+                                @if (u.Activo) { <span class="usr-chip ok"><span class="usr-dot"></span> Activo</span> }
+                                else { <span class="usr-chip"><span class="usr-dot"></span> Inactivo</span> }
+                                @if (u.Bloqueado) { <span class="usr-chip bad" title="Cuenta bloqueada por intentos fallidos">Bloqueado</span> }
+                                else if (u.BloqueadoNoSeguro) { <span class="usr-chip warn" title="Bloqueado solo para ingresos desde dispositivos no autorizados">Bloqueo parcial</span> }
+                            </td>
+                            <td class="h-sm">@(string.IsNullOrWhiteSpace(u.SucursalNombre) ? "—" : u.SucursalNombre)</td>
+                            <td class="h-sm">
+                                <div class="usr-iconos">
+                                    @if (u.EntraAlPos) { <span class="usr-chip" title="Puede entrar al punto de venta">POS</span> }
+                                    @if (u.TienePin) { <span class="usr-chip" title="Tiene clave rápida (PIN)">PIN</span> }
+                                    @if (u.RequiereDispositivoSeguro) { <span class="usr-chip" title="Solo puede ingresar desde un dispositivo autorizado">Disp. seguro</span> }
+                                </div>
+                            </td>
+                            <td>
+                                @if (Model.PuedeAdministrar)
+                                {
+                                    <div class="usr-kebab">
+                                        <button type="button" class="usr-btn usr-btn-sm usr-menu-btn" aria-label="Acciones de @u.Nombre" aria-haspopup="true" aria-expanded="false">⋯</button>
+                                        <div class="usr-menu" role="menu">
+                                            <a href="@urlFicha" role="menuitem">Modificar</a>
+                                            <a href="@(urlFicha)#permisos" role="menuitem">Permisos</a>
+                                            @if (u.Bloqueado || u.BloqueadoNoSeguro)
+                                            {
+                                                <form asp-controller="Usuarios" asp-action="DesbloquearUsuario" method="post">
+                                                    <input type="hidden" name="id" value="@u.Id" />
+                                                    <button type="submit" role="menuitem" onclick="return confirm('¿Desbloquear esta cuenta?');">Desbloquear</button>
+                                                </form>
+                                            }
+                                            @if (u.TienePin)
+                                            {
+                                                <form asp-controller="Usuarios" asp-action="QuitarPin" method="post">
+                                                    <input type="hidden" name="id" value="@u.Id" />
+                                                    <button type="submit" role="menuitem" class="bad" onclick="return confirm('¿Quitar la clave rápida de este usuario? Seguirá ingresando con su contraseña.');">Quitar PIN</button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model.Items == null || Model.Items.Count == 0)
-                        {
-                            <tr>
-                                <td colspan="10" class="text-center text-muted py-4">No hay usuarios para mostrar.</td>
-                            </tr>
-                        }
-                        else
-                        {
-                            foreach (var item in Model.Items)
-                            {
-                                <tr class="js-usuario-row"
-                                    data-admin="@(item.Admin ? "1" : "0")"
-                                    data-activo="@(item.Activo ? "1" : "0")"
-                                    data-bloqueado="@(item.Bloqueado ? "total" : item.BloqueadoNoSeguro ? "parcial" : "no")"
-                                    data-search="@((item.Id + " " + (item.Nombre ?? "") + " " + (item.Usuario ?? "") + " " + (item.Email ?? "") + " " + item.IdEmpresa + " " + item.IdSucursalUser).ToLowerInvariant())">
-                                    <td>@item.Id</td>
-                                    <td>@item.Nombre</td>
-                                    <td>@item.Usuario</td>
-                                    <td class="text-center">
-                                        <span class="badge @(item.Admin ? "badge-success" : "badge-secondary")">@(item.Admin ? "Sí" : "No")</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge @(item.Activo ? "badge-primary" : "badge-dark")">@(item.Activo ? "Sí" : "No")</span>
-                                    </td>
-                                    <td class="text-center">
-                                        @if (item.Bloqueado)
-                                        {
-                                            <span class="badge badge-danger">Sí</span>
-                                        }
-                                        else if (item.BloqueadoNoSeguro)
-                                        {
-                                            <span class="badge badge-warning" title="Bloqueado solo para ingresos desde dispositivos no autorizados">Parcial</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge badge-secondary">No</span>
-                                        }
-                                    </td>
-                                    <td>@item.Email</td>
-                                    <td>
-                                        @item.IdSucursalUser
-                                        @if (!string.IsNullOrWhiteSpace(item.SucursalNombre))
-                                        {
-                                            <div class="small text-muted">@item.SucursalNombre</div>
-                                        }
-                                    </td>
-                                    <td>@item.IdEmpresa</td>
-                                    <td>
-                                        @if (Model.PuedeAdministrar)
-                                        {
-                                            <a class="btn btn-sm btn-outline-primary mr-1 mb-1" href="@Url.Action("Editar", "Usuarios", new { id = item.Id })">
-                                                Modificar
-                                            </a>
-                                            <a class="btn btn-sm btn-outline-secondary mb-1" href="@Url.Action("Permisos", "Usuarios", new { id = item.Id })">
-                                                Ver permisos
-                                            </a>
-                                            if (item.Bloqueado || item.BloqueadoNoSeguro)
-                                            {
-                                                <form asp-controller="Usuarios" asp-action="DesbloquearUsuario" method="post" class="d-inline">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="id" value="@item.Id" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger mb-1" onclick="return confirm('¿Desbloquear esta cuenta?');">
-                                                        Desbloquear
-                                                    </button>
-                                                </form>
-                                            }
-                                            if (item.TienePin)
-                                            {
-                                                <form asp-controller="Usuarios" asp-action="QuitarPin" method="post" class="d-inline">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="id" value="@item.Id" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-warning mb-1" title="Elimina la clave rápida (PIN) de este usuario" onclick="return confirm('¿Quitar la clave rápida de este usuario? Seguirá ingresando con su contraseña.');">
-                                                        Quitar PIN
-                                                    </button>
-                                                </form>
-                                            }
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                </tbody>
+            </table>
         </div>
+        <div class="usr-vacio" id="usrVacio" hidden>No hay usuarios que coincidan con la búsqueda y el filtro.</div>
     </div>
 </div>
-
-<style>
-    .usuarios-index-page .card-body {
-        padding: .82rem 1rem;
-    }
-
-    .usuarios-index-page .font-weight-bold.mb-1 {
-        font-size: .76rem;
-        font-weight: 600 !important;
-        color: #495057;
-        margin-bottom: .18rem !important;
-    }
-
-    .usuarios-index-page .form-control,
-    .usuarios-index-page .input-group-text {
-        font-size: .87rem !important;
-        min-height: 2.3rem !important;
-        padding: .32rem .58rem !important;
-    }
-
-    .usuarios-index-page #contadorUsuarios {
-        font-size: .8rem;
-    }
-
-    .usuarios-index-page #tablaUsuarios {
-        font-size: .84rem;
-    }
-
-    .usuarios-index-page #tablaUsuarios th,
-    .usuarios-index-page #tablaUsuarios td {
-        padding: .42rem .58rem;
-        line-height: 1.15;
-        vertical-align: middle;
-    }
-
-    .usuarios-index-page #tablaUsuarios thead th,
-    .usuarios-index-page #tablaUsuarios > thead > tr > th {
-        font-size: .72rem !important;
-        font-weight: 700;
-        letter-spacing: .02em;
-        text-transform: uppercase;
-    }
-
-    .usuarios-index-page #tablaUsuarios .btn {
-        font-size: .78rem;
-        padding: .23rem .5rem;
-    }
-
-    .usuarios-index-page #tablaUsuarios .badge {
-        font-size: .7rem;
-    }
-
-    @@media (min-width: 1200px) {
-        .usuarios-index-page .mb-3 {
-            margin-bottom: .85rem !important;
-        }
-
-        .usuarios-index-page .card-body {
-            padding: .7rem .85rem;
-        }
-
-        .usuarios-index-page .form-control,
-        .usuarios-index-page .input-group-text {
-            font-size: .84rem !important;
-            min-height: 2.15rem !important;
-            padding: .28rem .56rem !important;
-        }
-
-        .usuarios-index-page #tablaUsuarios {
-            font-size: .8rem;
-        }
-
-        .usuarios-index-page #tablaUsuarios thead th,
-        .usuarios-index-page #tablaUsuarios > thead > tr > th {
-            font-size: .69rem !important;
-        }
-    }
-</style>
 
 @section Scripts {
     <script>
         (function () {
-            var $filtro = $('#filtroUsuarios');
-            var $rows = $('#tablaUsuarios tbody .js-usuario-row');
-            var $contador = $('#contadorUsuarios');
-            var $admin = $('#filtroAdmin');
-            var $activo = $('#filtroActivo');
-            var $bloqueado = $('#filtroBloqueado');
+            var filas = Array.prototype.slice.call(document.querySelectorAll('#usrTabla tbody .usr-fila-lst'));
+            var buscar = document.getElementById('usrBuscar');
+            var vacio = document.getElementById('usrVacio');
+            var filtro = 'activo'; // por defecto solo activos
 
-            // Una fila se ve si cumple el texto Y cada select (valor vacio = sin filtro).
-            // Bloqueado distingue "total" de "parcial" (bloqueo solo en dispositivos no autorizados),
-            // igual que la columna Bloqueado de la tabla.
-            function aplicarFiltro() {
-                var texto = ($filtro.val() || '').toLowerCase().trim();
-                var admin = String($admin.val() || '');
-                var activo = String($activo.val() || '');
-                var bloqueado = String($bloqueado.val() || '');
+            function pasa(fila) {
+                switch (filtro) {
+                    case 'activo': return fila.getAttribute('data-activo') === '1';
+                    case 'admin': return fila.getAttribute('data-tipo') === 'admin';
+                    case 'prod': return fila.getAttribute('data-tipo') === 'prod';
+                    case 'bloq': return fila.getAttribute('data-bloq') === '1';
+                    case 'inact': return fila.getAttribute('data-activo') === '0';
+                    default: return true;
+                }
+            }
+
+            function aplicar() {
+                var texto = (buscar.value || '').toLowerCase().trim();
                 var visibles = 0;
-
-                $rows.each(function () {
-                    var $row = $(this);
-                    var search = String($row.data('search') || '');
-                    var visible = (!texto || search.indexOf(texto) >= 0)
-                        && (!admin || String($row.attr('data-admin')) === admin)
-                        && (!activo || String($row.attr('data-activo')) === activo)
-                        && (!bloqueado || String($row.attr('data-bloqueado')) === bloqueado);
-                    $row.toggleClass('d-none', !visible);
+                filas.forEach(function (fila) {
+                    var visible = pasa(fila) && (!texto || (fila.getAttribute('data-buscar') || '').indexOf(texto) >= 0);
+                    fila.hidden = !visible;
                     if (visible) visibles++;
                 });
-
-                $contador.text(visibles + ' de ' + $rows.length + ' usuario(s)');
+                vacio.hidden = visibles > 0;
             }
 
-            // "Limpiar filtros" vuelve al estado inicial de la pantalla (solo activos).
-            function limpiarFiltros() {
-                $filtro.val('');
-                $admin.val('');
-                $activo.val('1');
-                $bloqueado.val('');
-                aplicarFiltro();
-            }
+            buscar.addEventListener('input', aplicar);
+            document.getElementById('usrFiltros').addEventListener('click', function (e) {
+                var boton = e.target.closest('button[data-f]');
+                if (!boton) return;
+                filtro = boton.getAttribute('data-f');
+                document.querySelectorAll('#usrFiltros button').forEach(function (b) { b.classList.toggle('on', b === boton); });
+                aplicar();
+            });
 
-            $filtro.on('input', aplicarFiltro);
-            $admin.add($activo).add($bloqueado).on('change', aplicarFiltro);
-            $('#limpiarFiltros').on('click', limpiarFiltros);
-            aplicarFiltro();
+            // La fila abre la ficha; el menu de la derecha (y sus botones) no.
+            function cerrarMenus() {
+                document.querySelectorAll('.usr-menu.on').forEach(function (m) {
+                    m.classList.remove('on');
+                    var b = m.parentElement.querySelector('.usr-menu-btn');
+                    if (b) b.setAttribute('aria-expanded', 'false');
+                });
+            }
+            document.addEventListener('click', function (e) {
+                var boton = e.target.closest('.usr-menu-btn');
+                if (boton) {
+                    var menu = boton.nextElementSibling;
+                    var abierto = menu.classList.contains('on');
+                    cerrarMenus();
+                    if (!abierto) { menu.classList.add('on'); boton.setAttribute('aria-expanded', 'true'); }
+                    return;
+                }
+                if (e.target.closest('.usr-menu')) return;
+                cerrarMenus();
+                var fila = e.target.closest('.usr-fila-lst');
+                if (fila && fila.getAttribute('data-url')) window.location.href = fila.getAttribute('data-url');
+            });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrarMenus(); });
+
+            aplicar();
         })();
     </script>
 }

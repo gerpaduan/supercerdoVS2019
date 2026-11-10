@@ -3610,7 +3610,7 @@ namespace WebCore.Controllers
             // el usuario de sesion. Se calcula aca (mismo permiso, mismo usuario) para avisarle al
             // cajero al apretar "Si, dar de alta" y no recien al guardar, despues de cargar el
             // formulario. El server igual revalida al guardar.
-            ViewBag.PuedeAltaRapidaProducto = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+            ViewBag.PuedeAltaRapidaProducto = _oUsuarioN.tienePermisoEdicion(user, Entidades.Permisos.Producto.NuevoCorte);
 
             // Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md): el operador real
             // se resuelve por posInstanceId, no por modulo (cada pestaña de POS es independiente).

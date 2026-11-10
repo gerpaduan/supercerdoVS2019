@@ -14,9 +14,9 @@ Registrar mantenimiento, consultas, condiciones comerciales y relaciones operati
 
 ## Cuenta corriente reservada
 
-Una persona (cliente, proveedor o empleado) puede marcarse como "Cuenta corriente reservada" (`Persona.CtaCteReservada`, `personas.ctactereservada` / `Personas.ctaCteReservada`; switch en `Personas/Editar` y en el alta rapida, visible solo para admin o `formCtasCtes`). Decision y alcance completos en `docs/DECISIONS.md` (2026-10-01).
+Una persona (cliente, proveedor o empleado) puede marcarse como "Cuenta corriente reservada" (`Persona.CtaCteReservada`, `personas.ctactereservada` / `Personas.ctaCteReservada`; switch en `Personas/Editar` y en el alta rapida, visible solo para admin o `formCtaCteReservada`). Decision y alcance completos en `docs/DECISIONS.md` (2026-10-01). Desde 2026-11-10 el permiso es `formCtaCteReservada` ("Ver cuentas corrientes reservadas", idform 9003); `formCtasCtes` ("Cuentas corrientes", idform 17) paso a significar solo entrar al listado y a la cuenta de una persona (`docs/DECISIONS.md`, 2026-11-10).
 
-- **Autorizado** (admin o `formCtasCtes`): ve todo.
+- **Autorizado** (admin o `formCtaCteReservada`): ve todo.
 - **Restringido** (cualquier otro): puede venderle, cobrarle y pagarle desde el POS y la persona aparece en los buscadores, pero solo ve los registros que creo el mismo (Ventas `idvendedor`; Pagos/MovCtaCte `creadopor`) con `creado >=` hora de apertura de su caja abierta. Sin caja abierta no ve nada reservado. El extracto no muestra saldo (`***`). **Compras y Stock (incluido Pesaje) NO se ocultan** (cambio 2026-10-15, ver `docs/DECISIONS.md`): quien tiene acceso a esas pantallas ve y edita todos sus registros, sea o no reservado el proveedor; la reserva es solo para la cuenta corriente.
 - Avisos: el restringido ve una alerta en el extracto y en cobro/pago, la etiqueta "Reservada" en el POS y una nota en los listados; el autorizado ve la etiqueta "Reservada" junto al nombre (detalle en `docs/DECISIONS.md`, 2026-10-01).
 - Los empleados nacen reservados (`EmpleadoPg.Agregar`); el admin lo puede destildar.

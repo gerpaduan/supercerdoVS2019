@@ -16,7 +16,7 @@ Ver los datos de una persona, **modificarlos**, cargar una **nueva** o **elimina
 - La ficha tiene tres filas: **ID, CUIT, Identificación y Razón social**; **Condición frente al IVA, Teléfono, Email y Ciudad**; **Domicilio, Cuenta corriente reservada y Otros datos**.
 - La lupa junto al CUIT **busca en AFIP/ARCA** (11 dígitos) y completa identificación, razón social, domicilio, ciudad e IVA.
 - Razón social, CUIT, Identificación e IVA quedan **bloqueados** si la persona ya tiene compras o ventas; solo un administrador puede cambiarlos. El aviso de arriba lo explica.
-- **Cuenta corriente reservada** solo aparece para el administrador y para quien tiene permiso de cuentas corrientes.
+- **Cuenta corriente reservada** solo aparece para el administrador y para quien tiene el permiso **Ver cuentas corrientes reservadas**.
 - Una persona global (gris en el listado) no se puede abrir desde una empresa.
 
 ## Eliminar persona
