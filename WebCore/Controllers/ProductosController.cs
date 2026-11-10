@@ -190,6 +190,13 @@ namespace WebCore.Controllers
             var sucursales = _oSucursalN.findAll();
 
             ViewBag.Sucursales = sucursales;
+            // Punto de stock real de cada producto en cada sucursal (cortepuntostocksucursal), para el detalle de la
+            // grilla: Corte.PuntoStock es solo el valor general del producto y no refleja lo cargado por sucursal.
+            // Forma: idSucursal -> (idCorte -> puntoStock). Una consulta por sucursal, sin SQL nuevo.
+            var puntosStockPorSucursal = new Dictionary<int, Dictionary<int, int>>();
+            foreach (var sucursal in sucursales ?? new List<Entidades.Sucursal>())
+                puntosStockPorSucursal[sucursal.IdSucursal] = _oCortePuntoStockSucursalN.FindPorSucursal(sucursal.IdSucursal);
+            ViewBag.PuntosStockPorSucursal = puntosStockPorSucursal;
             ViewBag.SucursalId = SucursalId;
             ViewBag.Tipos = ObtenerListaTipos();
             ViewBag.Marcas = ObtenerListaMarcas();
@@ -434,6 +441,22 @@ namespace WebCore.Controllers
                     IndependienteEfectivo = excepciones.TryGetValue(s.IdSucursal, out var ov) ? ov.independiente : entity.Independiente != 0,
                     EnCierreStockEfectivo = excepciones.TryGetValue(s.IdSucursal, out var ov2) ? ov2.enCierreStock : entity.EnCierreStock
                 }).ToList();
+            }
+
+            // Punto de stock real por sucursal del producto (solo lectura en la tarjeta "Stock y estado"). Reusa
+            // FindPorSucursal (idcorte -> punto, una consulta por sucursal): no hay metodo por producto y alcanza
+            // para la cantidad de sucursales; si hubiera muchas, conviene agregar uno al repositorio.
+            if (id > 0)
+            {
+                var sucursalesPuntoStock = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+                ViewBag.PuntosStockSucursalProducto = sucursalesPuntoStock
+                    .Select(s => new WebCore.Models.PuntoStockSucursalProductoVm
+                    {
+                        SucursalNombre = s.SucursalNombre,
+                        // Sin fila para la sucursal = 0 (mismo criterio que Cierre de Stock y el detalle del Index).
+                        PuntoStock = _oCortePuntoStockSucursalN.FindPorSucursal(s.IdSucursal).TryGetValue(id, out var punto) ? punto : 0
+                    })
+                    .ToList();
             }
 
             return View("AddOrEdit", vm);

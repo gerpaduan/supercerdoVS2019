@@ -9,6 +9,9 @@
     bool modoEtiquetas = (modo == "etiquetas") && puedeGenerarEtiquetas;
 
     var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
+    // Punto de stock por sucursal (idSucursal -> idCorte -> punto): lo que se muestra en el detalle del producto.
+    var puntosStockPorSucursal = ViewBag.PuntosStockPorSucursal as Dictionary<int, Dictionary<int, int>>
+        ?? new Dictionary<int, Dictionary<int, int>>();
     var sucursalIdSeleccionada = (ViewBag.SucursalId != null) ? (int)ViewBag.SucursalId : 0;
     bool puedeEditarProducto = ViewBag.PuedeEditarProducto != null && (bool)ViewBag.PuedeEditarProducto;
     bool puedeModificarPreciosProducto = ViewBag.PuedeModificarPreciosProducto != null && (bool)ViewBag.PuedeModificarPreciosProducto;
@@ -513,108 +516,118 @@
                             }
                             <td colspan="@colspan" class="p-0">
                                 <div id="@detailsId" class="collapse">
-                                    <div class="p-3 bg-light border-top">
-                                        <div class="row">
-                                            <div class="col-lg-6">
-                                                <div class="mb-2">
-                                                    <span class="font-weight-bold">@item.CorteDesc</span>
-                                                </div>
-                                                <div class="mb-2">
-                                                    <span class="text-muted">Tipo:</span>
-                                                    <span class="font-weight-bold">@item.Tipo</span>
-                                                </div>
+                                    @* Detalle del producto (2026-11-10): chips de estado + tarjetas por tema + pie con ID/ultima modificacion.
+                                       Solo cambia el contenido: el JS depende de .tr-detalles y .collapse (ver script mas abajo). *@
+                                    <div class="pd">
+                                        <div class="pd-chips">
+                                            @if (item.Habilitado)
+                                            {
+                                                <span class="pd-chip pd-ok"><i class="fas fa-check-circle"></i>Habilitado</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="pd-chip pd-off"><i class="fas fa-ban"></i>No habilitado</span>
+                                            }
+                                            @if (item.Pesable)
+                                            {
+                                                <span class="pd-chip pd-inf"><i class="fas fa-weight-hanging"></i>Pesable</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="pd-chip"><i class="fas fa-cube"></i>Por unidad</span>
+                                            }
+                                            @if (item.EnCierreStock)
+                                            {
+                                                <span class="pd-chip pd-inf"><i class="fas fa-clipboard-check"></i>En cierre de stock</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="pd-chip"><i class="fas fa-minus-circle"></i>Fuera de cierre de stock</span>
+                                            }
+                                        </div>
 
-                                                <div class="mb-2">
-                                                    <span class="text-muted">Marca:</span>
-                                                    <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.MarcaNombre) ? item.MarcaNombre : "-")</span>
+                                        <div class="pd-grid">
+                                            <section class="pd-card">
+                                                <h6><i class="fas fa-tag"></i> Clasificación</h6>
+                                                <dl>
+                                                    <div><dt>Tipo</dt><dd>@item.Tipo</dd></div>
+                                                    <div><dt>Marca</dt><dd>@(!string.IsNullOrWhiteSpace(item.MarcaNombre) ? item.MarcaNombre : "-")</dd></div>
+                                                    <div><dt>Alícuota IVA</dt><dd>@item.AlicuotaIva</dd></div>
+                                                </dl>
+                                            </section>
 
-                                                </div>
-
-                                                <div class="mb-2">
-                                                    <span class="text-muted">Alícuota IVA:</span>
-                                                    <span class="font-weight-bold">@item.AlicuotaIva</span>
-                                                </div>
-
-                                                <div class="mb-2">
-                                                    <span class="text-muted">Pesable:</span>
-                                                    <span class="font-weight-bold">@(item.Pesable ? "Sí" : "No")</span>
-                                                </div>
-
-                                                <div class="mb-2">
-                                                    <span class="text-muted">Habilitado:</span>
-                                                    <span class="font-weight-bold">@(item.Habilitado ? "Sí" : "No")</span>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-lg-6">
-
-                                                <div class="mb-2">
-                                                    <span class="text-muted">Punto stock:</span>
-                                                    <span class="font-weight-bold">@item.PuntoStock</span>
-                                                </div>
-
-                                                <div class="mb-2">
-                                                    <span class="text-muted">En cierre stock:</span>
-                                                    <span class="font-weight-bold">@(item.EnCierreStock ? "Sí" : "No")</span>
-                                                </div>
-
-                                                <div class="mb-2">
-                                                    <span class="text-muted">Promedio:</span>
-                                                    <span class="font-weight-bold">@item.Promedio</span>
-                                                </div>
-                                            </div>
+                                            @{
+                                                // Punto de stock por sucursal; sin fila para una sucursal = 0 (mismo criterio que Cierre de Stock).
+                                                var puntosItem = sucursales
+                                                    .Select(s => new
+                                                    {
+                                                        Nombre = s.SucursalNombre,
+                                                        Valor = puntosStockPorSucursal.TryGetValue(s.IdSucursal, out var porCorte)
+                                                                && porCorte.TryGetValue(item.idCorte, out var v) ? v : 0
+                                                    })
+                                                    .ToList();
+                                                bool puntoDistintoPorSucursal = puntosItem.Select(p => p.Valor).Distinct().Count() > 1;
+                                            }
+                                            <section class="pd-card">
+                                                <h6>
+                                                    <i class="fas fa-boxes"></i> Stock
+                                                    @if (puntoDistintoPorSucursal)
+                                                    {
+                                                        <span class="pd-tag">distinto por sucursal</span>
+                                                    }
+                                                </h6>
+                                                <dl>
+                                                    @if (puntoDistintoPorSucursal)
+                                                    {
+                                                        foreach (var p in puntosItem)
+                                                        {
+                                                            <div><dt>Punto stock · @p.Nombre</dt><dd>@p.Valor</dd></div>
+                                                        }
+                                                    }
+                                                    else if (puntosItem.Count > 0)
+                                                    {
+                                                        <div>
+                                                            <dt>Punto stock</dt>
+                                                            <dd>@puntosItem[0].Valor@(puntosItem.Count > 1 ? Html.Raw(" <span class=\"pd-sub\">en todas las sucursales</span>") : null)</dd>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div><dt>Punto stock</dt><dd>@item.PuntoStock</dd></div>
+                                                    }
+                                                    <div><dt>Promedio</dt><dd>@item.Promedio</dd></div>
+                                                </dl>
+                                            </section>
 
                                             @if (!string.IsNullOrWhiteSpace(item.CorteMaestroNombre))
                                             {
                                                 var esPres = item.Presentacion;
 
-                                                <div class="col-lg-6">
-                                                    <div class="mb-2">
-
+                                                <section class="pd-card">
+                                                    <h6><i class="fas fa-sitemap"></i> Origen</h6>
+                                                    <dl>
                                                         @if (esPres)
                                                         {
-                                                            <div class="mb-2">
-
-                                                                <span class="text-muted">Presentación:</span>
-                                                                <span class="font-weight-bold">@item.CorteMaestroNombre</span>
-                                                            </div>
-                                                            <span class="text-muted">Unidades:</span>
-                                                            <span class="font-weight-bold">
-                                                                @item.getCantPresentacion(item.PorcentajeHueso)
-                                                            </span>
+                                                            <div><dt>Presentación</dt><dd>@item.CorteMaestroNombre</dd></div>
+                                                            <div><dt>Unidades</dt><dd>@item.getCantPresentacion(item.PorcentajeHueso)</dd></div>
                                                         }
                                                         else
                                                         {
-                                                            <div class="mb-2">
-
-                                                                <span class="text-muted">Corte Maestro:</span>
-                                                                <span class="font-weight-bold">@item.CorteMaestroNombre</span>
-                                                            </div>
-                                                            <span class="text-muted">%:</span>
-                                                            <span class="font-weight-bold">
-                                                                @item.Porcentaje
-                                                            </span>
+                                                            <div><dt>Corte Maestro</dt><dd>@item.CorteMaestroNombre</dd></div>
+                                                            <div><dt>%</dt><dd>@item.Porcentaje</dd></div>
+                                                            <div><dt>% Hueso</dt><dd>@item.PorcentajeHueso</dd></div>
                                                         }
-                                                    </div>
-
-                                                    @if (!esPres)
-                                                    {
-                                                        <div class="mb-2">
-                                                            <span class="text-muted">% Hueso:</span>
-                                                            <span class="font-weight-bold">@item.PorcentajeHueso</span>
-                                                        </div>
-                                                    }
-                                                </div>
+                                                    </dl>
+                                                </section>
                                             }
-
                                         </div>
 
-                                        <div class="mt-2 text-muted small">
-                                            ID: <b>@item.idCorte</b>
+                                        <div class="pd-foot">
+                                            <span>ID <b>@item.idCorte</b></span>
                                             @* Ultima modificacion (edicion del producto o cambio de precio): corte.actualizado + corte.actualizadopor.
                                                Sin fecha = nunca modificado; sin usuario = se modifico por un proceso sin usuario (ej. una compra). *@
-                                            <span class="ml-3">
-                                                Últ. modificación:
+                                            <span>
+                                                Últ. modificación
                                                 <b>@(item.Actualizado.HasValue ? item.Actualizado.Value.ToString("dd/MM/yyyy HH:mm:ss") : "-")</b>
                                                 @if (item.Actualizado.HasValue && !string.IsNullOrWhiteSpace(item.ActualizadoPorNombre))
                                                 {
@@ -3517,6 +3530,114 @@
     .productos-wrap .btn {
         font-size: .82rem;
     }
+
+    /* ===== Detalle del producto (panel desplegable de cada fila) =====
+       Chips de estado + tarjetas por tema + pie. Mismo tamaño de letra que la tabla (.8-.9rem).
+       Borde izquierdo azul: liga visualmente el panel con la fila que lo abrió. */
+    .tabla-productos .pd {
+        padding: .7rem .85rem .75rem;
+        border-top: 1px solid var(--ui-border, #e3e7ee);
+        border-left: 3px solid #0d6efd;
+        font-size: .9rem;
+    }
+
+    .pd-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        margin-bottom: .6rem;
+    }
+
+    .pd-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        font-size: .72rem;
+        font-weight: 700;
+        padding: .14rem .55rem;
+        border-radius: 999px;
+        background: #eceff4;
+        color: #5b6478;
+    }
+
+    .pd-chip i { font-size: .62rem; }
+    .pd-chip.pd-ok  { background: #e3f4ea; color: #198754; }
+    .pd-chip.pd-off { background: #fbe5e7; color: #b02a37; }
+    .pd-chip.pd-inf { background: #e4edfd; color: #0b5ed7; }
+
+    .pd-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: .55rem;
+    }
+
+    .pd-card {
+        background: var(--ui-surface, #fff);
+        border: 1px solid var(--ui-border, #e3e7ee);
+        border-radius: .55rem;
+        padding: .5rem .7rem;
+    }
+
+    .pd-card h6 {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        margin: 0 0 .3rem;
+        font-size: .66rem;
+        font-weight: 800;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: #6b7385;
+    }
+
+    .pd-card dl { margin: 0; }
+
+    .pd-card dl > div {
+        display: flex;
+        justify-content: space-between;
+        gap: .6rem;
+        padding: .18rem 0;
+        font-size: .8rem;
+        border-bottom: 1px dashed rgba(128, 138, 160, .25);
+    }
+
+    .pd-card dl > div:last-child { border-bottom: 0; }
+    .pd-card dt { font-weight: 400; color: #6b7385; }
+    .pd-card dd { margin: 0; font-weight: 700; text-align: right; }
+
+    .pd-foot {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .25rem .9rem;
+        margin-top: .55rem;
+        font-size: .72rem;
+        color: #6b7385;
+    }
+
+    .pd-tag {
+        margin-left: auto;
+        font-size: .64rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: none;
+        padding: .05rem .5rem;
+        border-radius: 999px;
+        background: #fff3cd;
+        color: #8a6100;
+    }
+
+    .pd-sub {
+        margin-left: .25rem;
+        font-size: .7rem;
+        font-weight: 400;
+        color: #6b7385;
+    }
+
+    html.dark-mode .pd-tag { background: rgba(255, 193, 7, .2); color: #ffd666; }
+    html.dark-mode .pd-chip { background: rgba(148, 163, 184, .18); color: #cbd5e1; }
+    html.dark-mode .pd-chip.pd-ok  { background: rgba(25, 135, 84, .25); color: #7ddba8; }
+    html.dark-mode .pd-chip.pd-off { background: rgba(220, 53, 69, .25); color: #f1a1a9; }
+    html.dark-mode .pd-chip.pd-inf { background: rgba(13, 110, 253, .25); color: #9ec5fe; }
 
     .tabla-full {
         width: 100%;

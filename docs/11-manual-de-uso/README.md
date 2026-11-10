@@ -20,7 +20,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (67 de 101 pantallas)
+## Cobertura (68 de 101 pantallas)
 
 ## Manual del usuario
 
@@ -64,6 +64,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-09 |
 | pantallas | Personas | Personas | `pantallas/Personas.Index.md` | 2026-11-02 |
 | pantallas | Ver / modificar persona | Personas | `pantallas/Personas.Editar.md` | 2026-11-02 |
+| pantallas | Alta y edición de un producto | Productos | `pantallas/Productos.AddOrEdit.md` | 2026-11-10 |
 | pantallas | Marcas de productos | Productos | `pantallas/Productos.Marcas.md` | 2026-10-22 |
 | pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-11-10 |
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-11-10 |
@@ -127,7 +128,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **Liquidaciones**: Index, Nueva, Preview
 - **Movimientos**: Lineas
 - **PadronPlataforma**: Index
-- **Productos**: AddOrEdit, EmbedGuardado
+- **Productos**: EmbedGuardado
 - **PuntosExpendio**: POS, Sectores
 - **SeleccionUsuario**: Index
 - **Sucursal**: Editar, Index

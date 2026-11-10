@@ -24,25 +24,26 @@
     .producto-edit-page .form-control,
     .producto-edit-page .form-select,
     .producto-edit-page select.form-control {
-        min-height: 2.6rem;
-        font-size: .87rem;
+        /* !important: ui-refresh.css fija body.app-shell .form-control en 2.75rem y gana por especificidad */
+        min-height: 2.3rem !important;
+        font-size: .87rem !important;
         border-radius: .55rem;
-        padding: .32rem .62rem;
+        padding: .32rem .58rem !important;
     }
 
     .producto-edit-page .btn:not(.btn-sm) {
-        min-height: 2.6rem;
-        font-size: .87rem;
+        min-height: 2.3rem !important;
+        font-size: .87rem !important;
         border-radius: .55rem;
-        padding: .32rem .7rem;
+        padding: .32rem .7rem !important;
     }
 
     .producto-edit-page .form-label,
     .producto-edit-page .form-check-label {
-        font-size: .76rem;
+        font-size: .8rem;
         font-weight: 600;
         color: #495057;
-        margin-bottom: .32rem;
+        margin-bottom: .2rem;
     }
 
     .producto-edit-page .small,
@@ -58,11 +59,11 @@
 
     .producto-edit-page .input-group > .btn,
     .producto-edit-page .input-group > .form-control {
-        min-height: 2.6rem;
+        min-height: 2.3rem !important;
     }
 
     .producto-edit-card {
-        padding: .9rem 1rem !important;
+        padding: .82rem 1rem !important;
         border-radius: .75rem;
     }
 
@@ -70,18 +71,18 @@
         font-size: .82rem;
         line-height: 1.05;
         letter-spacing: .03em;
-        margin-bottom: .8rem !important;
+        margin-bottom: .6rem !important;
     }
 
     html:not(.dark-mode) body .form-switch {
-        padding-left: 3rem;
+        padding-left: 2.6rem;
     }
 
     html:not(.dark-mode) body .form-switch .form-check-input {
-        width: 2.55rem;
-        height: 1.35rem;
+        width: 2.1rem;
+        height: 1.1rem;
         margin-top: 0.1rem;
-        margin-left: -3rem;
+        margin-left: -2.6rem;
         vertical-align: top;
         cursor: pointer;
         border: 1px solid #b8c2d1;
@@ -89,8 +90,8 @@
         background-color: #dfe6ef;
         background-image: radial-gradient(circle, #ffffff 0 42%, transparent 43%);
         background-repeat: no-repeat;
-        background-position: left 0.14rem center;
-        background-size: 1rem 1rem;
+        background-position: left 0.12rem center;
+        background-size: .8rem .8rem;
         -webkit-appearance: none;
         appearance: none;
         box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
@@ -100,7 +101,7 @@
     html:not(.dark-mode) body .form-switch .form-check-input:checked {
         background-color: #4e73df;
         border-color: #4e73df;
-        background-position: right 0.14rem center;
+        background-position: right 0.12rem center;
         box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(78, 115, 223, 0.12);
     }
 
@@ -128,7 +129,7 @@
     html:not(.dark-mode) body .form-switch .form-check-input:disabled:checked {
         background-color: #4e73df;
         border-color: #4e73df;
-        background-position: right 0.14rem center;
+        background-position: right 0.12rem center;
         box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(78, 115, 223, 0.12);
     }
 
@@ -138,11 +139,22 @@
     }
 
     .producto-edit-page .row.g-3 {
-        row-gap: .8rem !important;
+        row-gap: .55rem !important;
     }
 
     .producto-edit-page .form-check.form-switch {
-        margin-bottom: .55rem !important;
+        margin-bottom: .4rem !important;
+    }
+
+    /* Interruptores de Stock y estado en una sola fila (el aviso de cierre de stock ocupa su propia linea) */
+    .producto-edit-page .producto-switches {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 1.4rem;
+    }
+
+    .producto-edit-page .producto-switches > small {
+        flex: 0 0 100%;
     }
 
     .producto-edit-page .btn-guardar-destacado,
@@ -152,9 +164,104 @@
         font-size: .84rem;
     }
 
+    /* Ancho del formulario: una sola columna acotada en pantallas chicas, dos columnas (7/5) desde 1200px. */
+    .producto-edit-col {
+        max-width: 920px;
+        margin-left: 0;
+    }
+
+    @@media (min-width: 1200px) {
+        .producto-edit-col {
+            max-width: 1400px;
+        }
+    }
+
+    .producto-chip-lectura {
+        font-size: .7rem;
+        font-weight: 700;
+        padding: .1rem .55rem;
+        border-radius: 999px;
+        background: #eceff4;
+        color: #5b6478;
+    }
+
+    html.dark-mode .producto-chip-lectura {
+        background: rgba(148, 163, 184, .18);
+        color: #cbd5e1;
+    }
+
+    /* Modo lectura (edit-readonly.js pone .edit-readonly-active en el form y .edit-readonly-field en cada campo):
+       el dato se lee como ficha (texto oscuro, sin caja gris). Mismo criterio que Parametros/Index.
+       Al tocar Modificar la clase desaparece y vuelven las cajas editables. */
+    .producto-edit-page .edit-readonly-active .producto-chip-lectura {
+        display: inline-block !important;
+    }
+
+    .producto-edit-page .edit-readonly-active .producto-edit-card {
+        background: var(--ui-surface, #fff) !important;
+    }
+
+    .producto-edit-page .edit-readonly-active .form-control.edit-readonly-field,
+    .producto-edit-page .edit-readonly-active select.edit-readonly-field {
+        background: transparent !important;
+        border-color: transparent !important;
+        border-bottom: 1px solid var(--ui-border, #e1e5ec) !important;
+        border-radius: 0 !important;
+        padding-left: 0 !important;
+        font-weight: 700;
+        color: var(--ui-text, #2b3140) !important;
+        -webkit-appearance: none;
+        appearance: none;
+        opacity: 1;
+    }
+
+    .producto-edit-page .edit-readonly-active .input-group > .btn,
+    .producto-edit-page .edit-readonly-active .form-check-label {
+        opacity: 1;
+    }
+
+    .producto-edit-page .edit-readonly-active #btnScanner,
+    .producto-edit-page .edit-readonly-active #btnBuscarMarca,
+    .producto-edit-page .edit-readonly-active #btnLimpiarMarca,
+    .producto-edit-page .edit-readonly-active #btnBuscarCorteMaestro,
+    .producto-edit-page .edit-readonly-active #btnLimpiarCorteMaestro {
+        display: none;
+    }
+
+    .producto-puntos-stock {
+        background: var(--ui-surface, #fff);
+        border: 1px solid var(--ui-border, #e3e7ee);
+        border-radius: .5rem;
+        padding: .25rem .6rem;
+    }
+
+    .producto-puntos-stock > div {
+        display: flex;
+        justify-content: space-between;
+        padding: .16rem 0;
+        font-size: .8rem;
+        border-bottom: 1px dashed rgba(128, 138, 160, .25);
+    }
+
+    .producto-puntos-stock > div:last-child { border-bottom: 0; }
+    .producto-puntos-stock span { color: #6b7385; }
+
     @@media (min-width: 992px) {
         .producto-edit-card {
-            padding: .85rem .95rem !important;
+            padding: .72rem .9rem !important;
+        }
+    }
+
+    @@media (min-width: 1200px) {
+        .producto-edit-page .form-control,
+        .producto-edit-page .form-select,
+        .producto-edit-page select.form-control,
+        .producto-edit-page .btn:not(.btn-sm),
+        .producto-edit-page .input-group > .btn,
+        .producto-edit-page .input-group > .form-control {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
         }
     }
 </style>
@@ -162,7 +269,7 @@
 <div class="container-fluid px-2 px-md-3 producto-edit-page">
 
     <div class="row">
-        <div class="col-12 col-lg-7">
+        <div class="col-12 producto-edit-col">
 
             <form asp-controller="Productos" asp-action="Guardar" method="post" id="frmCorte" autocomplete="off">
                 @Html.AntiForgeryToken()
@@ -199,6 +306,10 @@
                      data-recargar="@(!esEdicion && productoGuardadoContinuo ? "1" : "0")">
                 </div>
 
+                @* Dos columnas en pantallas anchas (>=1200px): izquierda Datos + Maestro, derecha Stock + Jerarquia.
+                   En pantallas chicas todo queda en una columna, en el orden de siempre de lectura. *@
+                <div class="row producto-edit-row">
+                    <div class="col-12 col-xl-7">
                 <!-- =========================
                  1) DATOS PRINCIPALES
                  ========================= -->
@@ -206,7 +317,9 @@
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <h5 class="mb-0 producto-edit-section-title">Datos del producto</h5>
                         <div class="d-flex flex-wrap align-items-center justify-content-end gap-3">
-                            <span class="text-muted @(esEdicion ? "" : "d-none")">ID: <b>@Model.IdCorte</b></span>
+                            <span class="producto-chip-lectura d-none" id="chipSoloLectura"><i class="fas fa-lock"></i> Solo lectura</span>
+                            @* Nivel (jerarquia de maestros): dato tecnico de solo lectura, antes ocupaba un input entero en "Stock y estado". *@
+                            <span class="text-muted @(esEdicion ? "" : "d-none")">ID: <b>@Model.IdCorte</b> &middot; Nivel: <b>@Model.Nivel</b></span>
                             @if (!embed)
                             {
                                 <div class="form-check form-switch mb-0 text-end producto-focus-switch">
@@ -303,75 +416,6 @@
                 </div>
 
                 <!-- =========================
-                 2) STOCK Y ESTADO (debajo)
-                 ========================= -->
-                <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
-                    <h5 class="mb-3 producto-edit-section-title">Stock y estado</h5>
-
-                    <div class="row g-3">
-
-
-                        <div class="col-12">
-                            <div class="form-check form-switch mb-2 producto-focus-switch">
-                                @Html.CheckBoxFor(m => m.Pesable, new { @class = "form-check-input", id = "swPesable" })
-                                <label class="form-check-label" for="swPesable">Pesable</label>
-                            </div>
-
-                            <div class="form-check form-switch mb-2 producto-focus-switch">
-                                @Html.CheckBoxFor(m => m.Habilitado, new { @class = "form-check-input", id = "swHabilitado" })
-                                <label class="form-check-label" for="swHabilitado">Habilitado</label>
-                            </div>
-
-                            <!-- Oculto a proposito: este flag ahora se activa/desactiva solo desde
-                                 /Elaborados/EditarFormula (interruptor "Ingreso Rapido", ver
-                                 docs/DECISIONS.md 2026-08-22) -- se sigue posteando su valor actual
-                                 sin cambios al guardar el producto desde esta pantalla. -->
-                            <div class="form-check form-switch mb-2 producto-focus-switch d-none">
-                                @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
-                                <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
-                            </div>
-
-                            <div class="form-check form-switch mb-2 producto-focus-switch">
-                                @Html.CheckBoxFor(m => m.EnCierreStock, new { @class = "form-check-input", id = "swCierre" })
-                                <label class="form-check-label" for="swCierre">En cierre stock</label>
-                            </div>
-                            <small id="avisoCierreStockSinIndependiente" class="text-warning mt-n1 mb-2 d-none">
-                                Este producto no va a aparecer en el reporte de Cierre de Stock hasta que actives "Independiente" (sección Producto Maestro / Presentación).
-                            </small>
-                        </div>
-
-                        <div class="col-12 col-md-6 @(esEdicion ? "d-none" : "")">
-                            <label class="form-label">
-                                Punto Stock (número entero)
-                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoPuntoStock" title="¿Para qué sirve este valor?" tabindex="-1">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
-                            </label>
-                            @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">Promedio</label>
-                            @Html.TextBoxFor(m => m.Promedio, new { @class = "form-control", placeholder = "0,00" })
-                        </div>
-
-                        
-                        <div class="col-12 col-md-6 @(esEdicion ? "" : "d-none")">
-                        
-                            
-                            
-                                <label class="form-label">Nivel (solo edición)</label>
-                                <input class="form-control" value="@Model.Nivel" readonly />
-                        
-                        
-                            
-                        </div>
-
-
-                    </div>
-                </div>
-
-                <!-- =========================
                  3) CORTE MAESTRO / PRESENTACIÓN (debajo)
                  ========================= -->
                 <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
@@ -446,6 +490,85 @@
 
                     </div>
                 </div>
+                    </div>
+                    <div class="col-12 col-xl-5">
+                <!-- =========================
+                 2) STOCK Y ESTADO (debajo)
+                 ========================= -->
+                <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
+                    <h5 class="mb-3 producto-edit-section-title">Stock y estado</h5>
+
+                    <div class="row g-3">
+
+
+                        <div class="col-12 producto-switches">
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
+                                @Html.CheckBoxFor(m => m.Pesable, new { @class = "form-check-input", id = "swPesable" })
+                                <label class="form-check-label" for="swPesable">Pesable</label>
+                            </div>
+
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
+                                @Html.CheckBoxFor(m => m.Habilitado, new { @class = "form-check-input", id = "swHabilitado" })
+                                <label class="form-check-label" for="swHabilitado">Habilitado</label>
+                            </div>
+
+                            <!-- Oculto a proposito: este flag ahora se activa/desactiva solo desde
+                                 /Elaborados/EditarFormula (interruptor "Ingreso Rapido", ver
+                                 docs/DECISIONS.md 2026-08-22) -- se sigue posteando su valor actual
+                                 sin cambios al guardar el producto desde esta pantalla. -->
+                            <div class="form-check form-switch mb-2 producto-focus-switch d-none">
+                                @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
+                                <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
+                            </div>
+
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
+                                @Html.CheckBoxFor(m => m.EnCierreStock, new { @class = "form-check-input", id = "swCierre" })
+                                <label class="form-check-label" for="swCierre">En cierre stock</label>
+                            </div>
+                            <small id="avisoCierreStockSinIndependiente" class="text-warning mt-n1 mb-2 d-none">
+                                Este producto no va a aparecer en el reporte de Cierre de Stock hasta que actives "Independiente" (sección Producto Maestro / Presentación).
+                            </small>
+                        </div>
+
+                        <div class="col-12 col-md-6 @(esEdicion ? "d-none" : "")">
+                            <label class="form-label">
+                                Punto Stock (número entero)
+                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoPuntoStock" title="¿Para qué sirve este valor?" tabindex="-1">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </label>
+                            @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">Promedio</label>
+                            @Html.TextBoxFor(m => m.Promedio, new { @class = "form-control", placeholder = "0,00" })
+                        </div>
+
+                        @* Punto de stock real por sucursal (cortepuntostocksucursal), solo lectura. Solo en edicion: en el alta el
+                           valor general de arriba es el que se siembra en todas las sucursales. Se cambia desde Productos > boton de stock. *@
+                        @{
+                            var puntosStockSucursal = ViewBag.PuntosStockSucursalProducto as List<WebCore.Models.PuntoStockSucursalProductoVm>;
+                        }
+                        @if (esEdicion && puntosStockSucursal != null && puntosStockSucursal.Count > 0)
+                        {
+                            <div class="col-12 col-md-6" id="boxPuntoStockSucursales">
+                                <label class="form-label">Punto de stock por sucursal</label>
+                                <div class="producto-puntos-stock">
+                                    @foreach (var punto in puntosStockSucursal)
+                                    {
+                                        <div><span>@punto.SucursalNombre</span><b>@punto.PuntoStock</b></div>
+                                    }
+                                </div>
+                                <small class="text-muted d-block mt-1">Se cambia desde Productos, botón <i class="fas fa-warehouse"></i> de la fila.</small>
+                            </div>
+                        }
+
+                        
+
+
+                    </div>
+                </div>
 
                 @{
                     var jerarquiaSucursales = ViewBag.JerarquiaSucursales as List<WebCore.Models.CorteJerarquiaSucursalItemVm>;
@@ -458,9 +581,8 @@
                     <div class="p-3 rounded bg-light border mb-3 producto-edit-card" id="cardJerarquiaSucursal">
                         <h5 class="mb-3 producto-edit-section-title">Jerarquía por sucursal</h5>
                         <small class="text-muted d-block mb-2">
-                            Por defecto todas las sucursales usan la configuración de arriba (Independiente /
-                            Producto maestro). Acá podés marcar una excepción puntual para que una sucursal
-                            trate este producto como independiente, sin afectar a las demás.
+                            Por defecto todas las sucursales usan la configuración del producto. Acá marcás una
+                            excepción puntual para una sucursal, sin afectar a las demás.
                         </small>
 
                         <div class="list-group" id="listaJerarquiaSucursal" data-id-corte="@Model.IdCorte">
@@ -500,6 +622,9 @@
                         </div>
                     </div>
                 }
+                    </div>
+                </div>
+
 
                 <!-- =========================
                  4) BOTONERA (fija al pie)
@@ -522,16 +647,16 @@
                                 <span class="shortcut-letter">S</span>iguiente
                             </button>
                             <button type="button"
-                                    class="btn btn-secondary @(esEdicion ? "" : "d-none")"
+                                    class="btn btn-primary @(esEdicion ? "" : "d-none")"
                                     id="btnHabilitarEdicionProducto"
                                     data-edit-readonly-ignore="true"
                                     title="Alt+M">
-                                <span class="shortcut-letter">M</span>odificar
+                                <i class="fas fa-pen mr-1"></i><span class="shortcut-letter">M</span>odificar
                             </button>
                             <button type="submit" name="accion" value="guardar" class="btn btn-primary btn-guardar-destacado @(esEdicion ? "d-none" : "")" id="btnGuardarProducto" title="@(esEdicion ? "Alt+G o Alt+C" : "Alt+C o Alt+G")">
                                 @if (esEdicion)
                                 {
-                                    <span><span class="shortcut-letter">G</span>uardar cambios</span>
+                                    <span><i class="fas fa-save mr-1"></i><span class="shortcut-letter">G</span>uardar cambios</span>
                                 }
                                 else
                                 {
@@ -666,8 +791,8 @@
         if (!barra) return;
 
         // Busca la columna que contiene el formulario/botonera
-        const contenedor = barra.closest('.col-12.col-lg-7')
-            || document.querySelector('#frmCorte')?.closest('.col-12.col-lg-7');
+        const contenedor = barra.closest('.producto-edit-col')
+            || document.querySelector('#frmCorte')?.closest('.producto-edit-col');
 
         if (!contenedor) return;
 
