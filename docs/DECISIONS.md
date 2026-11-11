@@ -8715,3 +8715,11 @@ El listado admin `Cajas/EgresosCaja` no cambia.
 3. En SQL Server no hay historial ni advertencia.
 4. El historial no guarda el detalle ni el conteo de billetes. Si solo cambió eso, la línea lo dice.
 
+## 2026-11-10 — Dashboard: totales y actividades más claros
+
+**Qué se decidió** (pedido del usuario, con maqueta HTML aprobada antes de codificar):
+- Los 6 KPIs de `Home/Index` pasan a 2 bloques: **Ventas** (total vendido destacado, operaciones, clientes, ticket promedio; el período y la sucursal se muestran una sola vez en el encabezado) y **Cuentas corrientes** (a cobrar / a pagar, rotulado «Saldo actual · no depende del filtro»). Se descartó seguir con 6 tarjetas iguales: mezclaban datos del período con saldos globales y «Ventas del dia» era falso con 7 días o el mes.
+- Los montos de los totales van **sin centavos** y sin cortes de línea; el importe exacto queda en el tooltip. Es una preferencia de legibilidad (los saldos de 8 cifras se partían en 3 líneas). Las tablas del tablero siguen con centavos. Arrancan en «—» hasta que llega el dato.
+- La lista de Actividades lleva icono por tipo, hora relativa («20:06», «ayer 17:10», «08/11 11:05»), advertencias del POS en ámbar y **agrupa repetidos consecutivos** (mismo tipo y descripción) en una fila con «×N». El endpoint `ObtenerUltimasActividadesDashboard` manda hasta 20 items (antes 10) y suma `fechaIso` y `esAdvertencia` (campos aditivos); la lista sigue mostrando 10 filas.
+
+**Límites:** el detalle de las advertencias (modal de `/Actividades`) no se abre desde el dashboard; se ve en «Ver todas». No se verificó en pantalla con login (el usuario no quiso crear el usuario de prueba); compila y la maqueta se probó en escritorio, celular y modo oscuro.

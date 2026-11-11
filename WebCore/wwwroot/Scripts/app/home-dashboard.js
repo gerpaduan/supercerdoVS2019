@@ -66,6 +66,24 @@
         return '$ ' + number.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    // Totales del tablero (2026-11-10, ver docs/DECISIONS.md "Dashboard: totales y actividades"): sin centavos para que
+    // los montos grandes entren en una linea; el importe exacto con centavos queda en el tooltip (title).
+    // absoluto=true para el saldo a cobrar, que el backend devuelve negativo (mismo criterio que formatMoneyAbs).
+    function setKpiMoney(kpi, value, absoluto) {
+        var number = Number(value || 0);
+        if (absoluto) {
+            number = Math.abs(number);
+        }
+
+        $('[data-kpi="' + kpi + '"]')
+            .text('$ ' + number.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }))
+            .attr('title', formatMoney(number));
+    }
+
+    function formatCount(value) {
+        return Number(value || 0).toLocaleString('es-AR');
+    }
+
     function formatKg(value) {
         var number = Number(value || 0);
         return number.toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' kg';
@@ -148,12 +166,12 @@
                 }
 
                 var data = response.data;
-                $('[data-kpi="ventasTotales"]').text(formatMoney(data.ventasTotales));
-                $('[data-kpi="cantidadVentas"]').text(data.cantidadVentas || 0);
-                $('[data-kpi="cantidadClientes"]').text(data.cantidadClientes || 0);
-                $('[data-kpi="promedioPorVenta"]').text(formatMoney(data.promedioPorVenta));
-                $('[data-kpi="saldoACobrar"]').text(formatMoneyAbs(data.saldoACobrar));
-                $('[data-kpi="saldoAPagar"]').text(formatMoney(data.saldoAPagar));
+                setKpiMoney('ventasTotales', data.ventasTotales, false);
+                $('[data-kpi="cantidadVentas"]').text(formatCount(data.cantidadVentas));
+                $('[data-kpi="cantidadClientes"]').text(formatCount(data.cantidadClientes));
+                setKpiMoney('promedioPorVenta', data.promedioPorVenta, false);
+                setKpiMoney('saldoACobrar', data.saldoACobrar, true);
+                setKpiMoney('saldoAPagar', data.saldoAPagar, false);
                 $('[data-kpi-meta="periodo"]').text((data.periodoEtiqueta || 'Hoy') + ' · ' + (data.sucursalEtiqueta || 'Todas'));
             });
     }
@@ -359,11 +377,97 @@
             });
     }
 
+    // Tipo de actividad -> [icono Font Awesome, color del circulo] (2026-11-10). Los textos salen de
+    // WebCore/Services/ActividadesFeedService.cs; los subtipos de compra (Cortes, Media Res, Ingreso Stock...)
+    // no estan en el mapa y caen en ACTIVIDAD_ICONO_DEFAULT. Las advertencias del POS usan siempre el icono de alerta.
+    var ACTIVIDAD_ICONOS = {
+        'Precio': ['fa-tag', 'is-blue'],
+        'Venta anulada': ['fa-ban', 'is-red'],
+        'Precio modificado en venta': ['fa-percent', 'is-red'],
+        'Egreso de caja': ['fa-money-bill-wave', 'is-gray'],
+        'Movimiento': ['fa-truck', 'is-gray'],
+        'Elaborado': ['fa-flask', 'is-gray'],
+        'Autorización POS': ['fa-user-shield', 'is-blue']
+    };
+    var ACTIVIDAD_ICONO_DEFAULT = ['fa-shopping-cart', 'is-gray'];
+    var ACTIVIDAD_ICONO_ADVERTENCIA = ['fa-exclamation-triangle', 'is-warn'];
+    // Filas visibles despues de agrupar repetidos; el backend manda algunas de mas (ver
+    // HomeController.ObtenerUltimasActividadesDashboard) para que el agrupado no deje la lista corta.
+    var ACTIVIDADES_FILAS_VISIBLES = 10;
+
+    function pad2(n) {
+        return (n < 10 ? '0' : '') + n;
+    }
+
+    // "20:06" si es de hoy, "ayer 17:10", si no "08/11 11:05". fechaIso viene sin zona (hora local del servidor,
+    // la misma que usa el resto del sistema). Si no se puede leer, cae al texto "dd/MM HH:mm" que manda el backend.
+    function horaRelativaActividad(item) {
+        var match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(item.fechaIso || '');
+        if (!match) {
+            return item.fecha || '-';
+        }
+
+        var fecha = new Date(+match[1], +match[2] - 1, +match[3]);
+        var ahora = new Date();
+        var hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+        var dias = Math.round((hoy - fecha) / 86400000);
+        var hhmm = match[4] + ':' + match[5];
+
+        if (dias === 0) {
+            return hhmm;
+        }
+        if (dias === 1) {
+            return 'ayer ' + hhmm;
+        }
+        return match[3] + '/' + match[2] + ' ' + hhmm;
+    }
+
+    // Junta actividades consecutivas con el mismo tipo y descripcion (la lista ya viene ordenada por fecha desc):
+    // queda la mas reciente con un contador. Caso real: varias "Sesion cerrada con venta en curso" iguales seguidas.
+    function agruparActividadesRepetidas(items) {
+        var agrupadas = [];
+        $.each(items, function (_, item) {
+            var anterior = agrupadas[agrupadas.length - 1];
+            if (anterior && anterior.tipo === item.tipo && anterior.descripcion === item.descripcion) {
+                anterior.veces++;
+                return;
+            }
+            agrupadas.push($.extend({ veces: 1 }, item));
+        });
+        return agrupadas;
+    }
+
+    // Arma una fila. La descripcion se escapa siempre; si la actividad es de una venta, el "#idVenta" del texto pasa a
+    // ser el link a DetalleVenta (si el texto no lo contiene, se agrega un link "Ver venta" al final).
+    function renderActividad(item) {
+        var icono = item.esAdvertencia ? ACTIVIDAD_ICONO_ADVERTENCIA : (ACTIVIDAD_ICONOS[item.tipo] || ACTIVIDAD_ICONO_DEFAULT);
+        var descripcion = escapeHtml(item.descripcion || '-');
+
+        if (item.detalleUrl && item.idVenta) {
+            var marca = '#' + item.idVenta;
+            var link = '<a href="' + escapeHtml(item.detalleUrl) + '">';
+            descripcion = descripcion.indexOf(marca) >= 0
+                ? descripcion.replace(marca, link + marca + '</a>')
+                : descripcion + ' ' + link + 'Ver venta</a>';
+        }
+
+        return '' +
+            '<div class="act-item' + (item.esAdvertencia ? ' is-warn' : '') + '">' +
+            '<span class="act-ico ' + icono[1] + '"><i class="fas ' + icono[0] + '"></i></span>' +
+            '<div class="act-body">' +
+            '<div class="act-tipo">' + escapeHtml(item.tipo || '-') +
+            (item.veces > 1 ? '<span class="act-veces" title="Se repitió ' + item.veces + ' veces seguidas">×' + item.veces + '</span>' : '') +
+            '</div>' +
+            '<div class="act-desc">' + descripcion + '</div>' +
+            '</div>' +
+            '<span class="act-hora">' + escapeHtml(horaRelativaActividad(item)) + '</span>' +
+            '</div>';
+    }
+
     // Item 4 de la segunda ronda de pedidos (2026-09-10, ver docs/DECISIONS.md "Batch 8:
-    // Actividades en el dashboard") -- ultimas 10 actividades (mezcla de 6 fuentes heterogeneas,
-    // ver HomeController.ObtenerUltimasActividadesDashboard/ActividadesFeedService). Lista simple
-    // (no tabla, el contenedor es un <div>), cada item con fecha + badge de tipo + descripcion,
-    // linkeando a DetalleVenta cuando corresponde.
+    // Actividades en el dashboard") -- ultimas actividades (mezcla de fuentes heterogeneas,
+    // ver HomeController.ObtenerUltimasActividadesDashboard/ActividadesFeedService). Rediseño 2026-11-10: icono por
+    // tipo, hora relativa, advertencias resaltadas y repetidos consecutivos agrupados (renderActividad).
     function cargarActividades(token) {
         if (!puedeVerDashboard || !urls.actividades) {
             return $.Deferred().resolve().promise();
@@ -382,22 +486,7 @@
                     return;
                 }
 
-                var filas = $.map(response.data, function (item) {
-                    var descripcion = escapeHtml(item.descripcion || '-');
-                    if (item.detalleUrl) {
-                        descripcion = '<a href="' + escapeHtml(item.detalleUrl) + '">' + descripcion + '</a>';
-                    }
-
-                    return '' +
-                        '<div class="dashboard-actividad-item d-flex align-items-start py-2 border-bottom">' +
-                        '<div class="mr-3 text-muted small" style="white-space:nowrap;">' + escapeHtml(item.fecha || '-') + '</div>' +
-                        '<div class="flex-grow-1">' +
-                        '<span class="badge badge-light mr-2">' + escapeHtml(item.tipo || '-') + '</span>' +
-                        '<span>' + descripcion + '</span>' +
-                        '</div>' +
-                        '</div>';
-                }).join('');
-
+                var filas = $.map(agruparActividadesRepetidas(response.data).slice(0, ACTIVIDADES_FILAS_VISIBLES), renderActividad).join('');
                 $('#dashboardActividadesLista').html(filas);
             });
     }

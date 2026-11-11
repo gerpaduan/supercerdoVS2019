@@ -59,7 +59,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-09 |
 | pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-11-10 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-09 |
-| pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-02 |
+| pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-10 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-10-30 |
 | pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-09 |
 | pantallas | Personas | Personas | `pantallas/Personas.Index.md` | 2026-11-02 |

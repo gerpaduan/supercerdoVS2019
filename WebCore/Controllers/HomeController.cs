@@ -284,6 +284,9 @@ public class HomeController : Controller
     // por consistencia con la firma pero NO filtra -- ninguno de los 6 repositorios de origen del
     // feed de Actividades acepta ese parametro (limitacion heredada del modulo completo, no un
     // bug nuevo de este endpoint).
+    // Tope de items que se mandan al bloque Actividades (la lista muestra 10 despues de agrupar repetidos).
+    private const int ActividadesDashboardMaximo = 20;
+
     [HttpGet]
     public JsonResult ObtenerUltimasActividadesDashboard(string periodo = "hoy", int? idSucursal = null)
     {
@@ -294,12 +297,17 @@ public class HomeController : Controller
 
             var filtro = CrearFiltroDashboard(periodo, idSucursal);
             var feed = new WebCore.Services.ActividadesFeedService(_empresa, _param);
+            // Se mandan ActividadesDashboardMaximo items aunque la lista muestre 10: home-dashboard.js junta los
+            // repetidos consecutivos y sin margen quedaria corta. fechaIso (hora local, sin zona) es para la hora
+            // relativa ("ayer 17:10") y esAdvertencia para resaltar las advertencias del POS (2026-11-10).
             var items = feed.ObtenerActividades(filtro.FechaDesde, filtro.FechaHasta)
                 .OrderByDescending(x => x.Fecha)
-                .Take(10)
+                .Take(ActividadesDashboardMaximo)
                 .Select(x => new
                 {
                     fecha = x.Fecha.ToString("dd/MM HH:mm"),
+                    fechaIso = x.Fecha.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture),
+                    esAdvertencia = x.EsAdvertencia,
                     tipo = x.Tipo,
                     descripcion = x.Descripcion,
                     idVenta = x.IdVenta,

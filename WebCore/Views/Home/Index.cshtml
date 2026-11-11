@@ -19,6 +19,7 @@
         --dash-soft: #f4f7fa;
         --dash-good: #2f9e67;
         --dash-bad: #b94a48;
+        --dash-warn: #c27c12;
         font-size: .93rem;
     }
 
@@ -30,6 +31,11 @@
 
     html.dark-mode .dashboard-shell {
         --dash-ink: #9fd0ff;
+        --dash-line: rgba(116, 145, 185, 0.22);
+        --dash-muted: #97a7bd;
+        --dash-good: #5fd39a;
+        --dash-bad: #ff9a9a;
+        --dash-warn: #ffbf7a;
     }
 
     .dashboard-hero {
@@ -160,40 +166,245 @@
         padding: .85rem .95rem;
     }
 
-    .dashboard-kpi {
-        height: 100%;
-        background: #fff;
+    /* Encabezado liviano de las tarjetas nuevas (totales y actividades, 2026-11-10): titulo a la izquierda, alcance o
+       link a la derecha, sin la franja de .card-header. */
+    .dashboard-card-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: .25rem .75rem;
+        padding: .75rem .95rem .25rem;
     }
 
-    .dashboard-kpi .kpi-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: .75rem;
+    .dashboard-head-link {
+        font-size: .78rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--dash-cool);
+    }
+
+    html.dark-mode .dashboard-head-link {
+        color: var(--dash-ink);
+    }
+
+    /* Bloque "Ventas": 4 cifras en una grilla, separadas por una linea vertical; el total va mas grande.
+       Montos sin centavos y sin cortes de linea (el exacto va en el tooltip, lo pone home-dashboard.js). */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: 1.35fr repeat(3, 1fr);
+        padding: .35rem .95rem .9rem;
+    }
+
+    .kpi-grid .kpi {
+        min-width: 0;
+        padding: .2rem .9rem;
+        border-left: 1px solid var(--dash-line);
+    }
+
+    .kpi-grid .kpi:first-child {
+        border-left: 0;
+        padding-left: 0;
+    }
+
+    .dashboard-kpi-card .kpi-label {
+        color: var(--dash-muted);
+        font-size: .74rem;
+    }
+
+    .dashboard-kpi-card .kpi-value {
+        color: var(--dash-ink);
+        font-size: 1.3rem;
+        font-weight: 800;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dashboard-kpi-card .kpi.is-main .kpi-value {
+        font-size: 1.75rem;
+    }
+
+    .dashboard-kpi-card .kpi-meta {
+        color: var(--dash-muted);
+        font-size: .72rem;
+    }
+
+    /* Bloque "Cuentas corrientes": filas etiqueta <-> monto (verde = nos deben, rojo = debemos). */
+    .ctacte-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding: .55rem .95rem;
+        border-top: 1px solid var(--dash-line);
+    }
+
+    .ctacte-row:first-child {
+        border-top: 0;
+    }
+
+    .ctacte-ico {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: rgba(45, 106, 138, 0.1);
-        color: var(--dash-cool);
-        font-size: .9rem;
+        font-size: .8rem;
+        flex: none;
     }
 
-    .dashboard-kpi .kpi-label {
+    .ctacte-ico.is-in {
+        background: rgba(47, 158, 103, 0.13);
+        color: var(--dash-good);
+    }
+
+    .ctacte-ico.is-out {
+        background: rgba(185, 74, 72, 0.12);
+        color: var(--dash-bad);
+    }
+
+    .ctacte-nombre {
+        font-size: .84rem;
+        font-weight: 600;
+    }
+
+    .ctacte-nombre small {
+        display: block;
+        font-weight: 400;
         color: var(--dash-muted);
-        font-size: .74rem;
-        text-transform: uppercase;
-        letter-spacing: .05em;
+        font-size: .72rem;
     }
 
-    .dashboard-kpi .kpi-value {
+    .ctacte-monto {
         color: var(--dash-ink);
-        font-size: 1.35rem;
-        font-weight: 700;
-        line-height: 1.1;
+        font-size: 1.15rem;
+        font-weight: 800;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
     }
 
-    .dashboard-kpi .kpi-meta {
+    /* Lista de Actividades (2026-11-10): icono por tipo, tipo en chico arriba, descripcion abajo y hora a la derecha.
+       Las advertencias del POS van en ambar; los repetidos consecutivos se juntan con un chip "xN". */
+    .act-list {
+        padding: .2rem .5rem .5rem;
+    }
+
+    .act-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .7rem;
+        padding: .55rem .45rem;
+        border-top: 1px solid var(--dash-line);
+    }
+
+    .act-item:first-child {
+        border-top: 0;
+    }
+
+    .act-item.is-warn {
+        background: rgba(194, 124, 18, 0.06);
+        border-left: 3px solid var(--dash-warn);
+        padding-left: .55rem;
+    }
+
+    .act-ico {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .8rem;
+        flex: none;
+    }
+
+    .act-ico.is-blue { background: rgba(45, 106, 138, 0.12); color: var(--dash-cool); }
+    .act-ico.is-red { background: rgba(185, 74, 72, 0.12); color: var(--dash-bad); }
+    .act-ico.is-gray { background: var(--ui-surface-alt, #f3f4f6); color: var(--dash-muted); }
+    .act-ico.is-warn { background: rgba(194, 124, 18, 0.15); color: var(--dash-warn); }
+
+    .act-body {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .act-tipo {
         color: var(--dash-muted);
-        font-size: .78rem;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+
+    .act-item.is-warn .act-tipo {
+        color: var(--dash-warn);
+    }
+
+    .act-desc {
+        font-size: .86rem;
+        line-height: 1.35;
+    }
+
+    .act-desc a {
+        color: var(--dash-cool);
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .act-veces {
+        display: inline-block;
+        margin-left: .35rem;
+        padding: 0 .4rem;
+        border-radius: 999px;
+        background: rgba(194, 124, 18, 0.18);
+        color: var(--dash-warn);
+        font-size: .68rem;
+        font-weight: 800;
+    }
+
+    .act-hora {
+        color: var(--dash-muted);
+        font-size: .76rem;
+        white-space: nowrap;
+        padding-top: .1rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    html.dark-mode .act-item.is-warn { background: rgba(251, 146, 60, 0.08); }
+    html.dark-mode .act-ico.is-blue { background: rgba(159, 208, 255, 0.12); color: var(--dash-ink); }
+    html.dark-mode .act-desc a { color: var(--dash-ink); }
+
+    @@media (max-width: 991.98px) {
+        .kpi-grid {
+            grid-template-columns: 1fr 1fr;
+            row-gap: .6rem;
+        }
+
+        .kpi-grid .kpi:nth-child(3) {
+            border-left: 0;
+            padding-left: 0;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .kpi-grid .kpi.is-main {
+            grid-column: 1 / -1;
+        }
+
+        .kpi-grid .kpi:nth-child(2),
+        .kpi-grid .kpi:nth-child(4) {
+            border-left: 0;
+            padding-left: 0;
+        }
+
+        .kpi-grid .kpi:nth-child(3) {
+            border-left: 1px solid var(--dash-line);
+            padding-left: .9rem;
+        }
     }
 
     .balance-scale-card {
@@ -408,76 +619,62 @@
         </div>
     }
 
+    @* Totales en dos bloques (pedido 2026-11-10, ver docs/DECISIONS.md "Dashboard: totales y actividades"): antes eran 6
+       tarjetas iguales que mezclaban lo del periodo (ventas) con saldos globales (cta. cte.) y repetian el periodo en una
+       sola. Ahora "Ventas" lleva el periodo/sucursal una vez en el encabezado y "Cuentas corrientes" aclara que es el
+       saldo actual (no depende del filtro). Los data-kpi siguen iguales: home-dashboard.js los llena. Arrancan en "—"
+       para que un tablero que tarda no parezca un dia sin ventas. *@
     <div class="row" id="dashboardKpis">
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card dashboard-card dashboard-kpi">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="kpi-label">Ventas</span>
-                        <span class="kpi-icon"><i class="fas fa-dollar-sign"></i></span>
+        <div class="col-xl-8 mb-4">
+            <div class="card dashboard-card dashboard-kpi-card h-100">
+                <div class="dashboard-card-head">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-cash-register mr-1"></i> Ventas</h6>
+                    <span class="dashboard-subtle" data-kpi-meta="periodo">Hoy</span>
+                </div>
+                <div class="kpi-grid">
+                    <div class="kpi is-main">
+                        <div class="kpi-label">Total vendido</div>
+                        <div class="kpi-value" data-kpi="ventasTotales">—</div>
                     </div>
-                    <div class="kpi-value" data-kpi="ventasTotales">$ 0,00</div>
-                    <div class="kpi-meta" data-kpi-meta="periodo">Hoy</div>
+                    <div class="kpi">
+                        <div class="kpi-label">Operaciones</div>
+                        <div class="kpi-value" data-kpi="cantidadVentas">—</div>
+                        <div class="kpi-meta">ventas cerradas</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Clientes</div>
+                        <div class="kpi-value" data-kpi="cantidadClientes">—</div>
+                        <div class="kpi-meta">atendidos</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Ticket promedio</div>
+                        <div class="kpi-value" data-kpi="promedioPorVenta">—</div>
+                        <div class="kpi-meta">por venta</div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card dashboard-card dashboard-kpi">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="kpi-label">Ventas del dia</span>
-                        <span class="kpi-icon"><i class="fas fa-receipt"></i></span>
-                    </div>
-                    <div class="kpi-value" data-kpi="cantidadVentas">0</div>
-                    <div class="kpi-meta">Operaciones registradas</div>
+        <div class="col-xl-4 mb-4">
+            <div class="card dashboard-card dashboard-kpi-card h-100">
+                <div class="dashboard-card-head">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-balance-scale mr-1"></i> Cuentas corrientes</h6>
+                    <span class="dashboard-subtle">Saldo actual · no depende del filtro</span>
                 </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card dashboard-card dashboard-kpi">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="kpi-label">Clientes</span>
-                        <span class="kpi-icon"><i class="fas fa-user-friends"></i></span>
+                <div class="pb-1">
+                    <div class="ctacte-row">
+                        <div class="d-flex align-items-center">
+                            <span class="ctacte-ico is-in mr-2"><i class="fas fa-arrow-down"></i></span>
+                            <span class="ctacte-nombre">A cobrar<small>lo que nos deben</small></span>
+                        </div>
+                        <span class="ctacte-monto" data-kpi="saldoACobrar">—</span>
                     </div>
-                    <div class="kpi-value" data-kpi="cantidadClientes">0</div>
-                    <div class="kpi-meta">Atendidos en el periodo</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card dashboard-card dashboard-kpi">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="kpi-label">Ticket promedio</span>
-                        <span class="kpi-icon"><i class="fas fa-chart-line"></i></span>
+                    <div class="ctacte-row">
+                        <div class="d-flex align-items-center">
+                            <span class="ctacte-ico is-out mr-2"><i class="fas fa-arrow-up"></i></span>
+                            <span class="ctacte-nombre">A pagar<small>lo que debemos</small></span>
+                        </div>
+                        <span class="ctacte-monto" data-kpi="saldoAPagar">—</span>
                     </div>
-                    <div class="kpi-value" data-kpi="promedioPorVenta">$ 0,00</div>
-                    <div class="kpi-meta">Promedio por venta</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card dashboard-card dashboard-kpi">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="kpi-label">Cta. cte. a cobrar</span>
-                        <span class="kpi-icon"><i class="fas fa-hand-holding-usd"></i></span>
-                    </div>
-                    <div class="kpi-value" data-kpi="saldoACobrar">$ 0,00</div>
-                    <div class="kpi-meta">Saldo actual global</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card dashboard-card dashboard-kpi">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="kpi-label">Cta. cte. a pagar</span>
-                        <span class="kpi-icon"><i class="fas fa-file-invoice-dollar"></i></span>
-                    </div>
-                    <div class="kpi-value" data-kpi="saldoAPagar">$ 0,00</div>
-                    <div class="kpi-meta">Saldo actual global</div>
                 </div>
             </div>
         </div>
@@ -494,18 +691,13 @@
     <div class="row">
         <div class="col-xl-8 mb-4">
             <div class="card dashboard-card h-100">
-                <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center">
-                    <div>
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <a href="@Url.Action("Index", "Actividades")" class="text-primary text-decoration-none">
-                                Actividades <i class="fas fa-arrow-right fa-xs ml-1"></i>
-                            </a>
-                        </h6>
-                        <div class="dashboard-subtle">Últimos cambios de precio, ventas anuladas o bonificadas, egresos, movimientos, compras y fórmulas.</div>
-                    </div>
-                    <span class="badge badge-light">Últimas 10</span>
+                @* Encabezado compacto (2026-11-10): el link a la pantalla completa pasa a "Ver todas" a la derecha (antes era
+                   el titulo, poco descubrible). La lista la arma home-dashboard.js (cargarActividades). *@
+                <div class="dashboard-card-head">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list-ul mr-1"></i> Actividades <span class="dashboard-subtle font-weight-normal">· últimas 10</span></h6>
+                    <a href="@Url.Action("Index", "Actividades")" class="dashboard-head-link">Ver todas <i class="fas fa-arrow-right fa-xs"></i></a>
                 </div>
-                <div class="card-body" id="dashboardActividadesLista">
+                <div class="act-list" id="dashboardActividadesLista">
                     <div class="dashboard-subtle text-center py-3">Cargando...</div>
                 </div>
             </div>
