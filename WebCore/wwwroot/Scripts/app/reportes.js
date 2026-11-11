@@ -195,6 +195,8 @@
                 .text(show ? textoEstadoPendiente : textoEstadoOk)
                 .attr("title", show ? textoEstadoPendiente : "")
                 .toggleClass("fc-estado-pendiente", !!show);
+            // Linea de resumen de los filtros plegados (< 1200 px): mismo aviso, para que no parezca aplicado lo que no lo esta.
+            $("#resumenFiltrosReporte .rfr-pendiente").toggleClass("d-none", !show);
         }
 
         // Ids de las sucursales tildadas (siempre al menos una, ver syncBranchSelection).
@@ -1049,6 +1051,8 @@
                 $wrap.html(html);
                 // El Buscar nuevo viene en azul: si habia filtros sin aplicar, vuelve a ambar.
                 showPending(!$pendingCard.hasClass("d-none"));
+                // El partial nuevo trae su propio boton "Ocultar filtros" (sin la clase que lo muestra).
+                syncBotonPlegarFiltros();
                 refreshDynamicFilterRefs();
                 restorePeriodRows(periodosCapturados);
                 recalculateAllPeriodRows();
@@ -1637,7 +1641,7 @@
 
             showPending(false);
             $("#buscarReportes").val("true");
-            $("#btnBuscarReporte").prop("disabled", true).find(".btn-buscar-texto").text("Cargando...");
+            $("#btnBuscarReporte, #btnBuscarResumenReporte").prop("disabled", true).find(".btn-buscar-texto").text("Cargando...");
         });
 
         // Boton "Abrir en ventana": abre esta misma pantalla en una ventana independiente (sin menus) con los
@@ -1686,6 +1690,107 @@
             window.location.href = config.exportarStockExcelUrl + "?" + params.toString();
         });
 
+        // ---- Filtros plegados (< 1200 px, pedido 2026-11-10) ----
+        // La vista pone .reportes-filtros-plegados en .reportes-page antes de pintar si ya hubo una busqueda; el CSS solo la
+        // respeta por debajo de 1200 px. Aca se arma el texto del resumen y se abre / pliega a pedido.
+        var $paginaReportes = $(".reportes-page");
+        var $resumenFiltros = $("#resumenFiltrosReporte");
+
+        // "2026-10-19T07:35" (datetime-local) -> "19/10 07:35". El año se omite: el resumen tiene que entrar en un renglon.
+        function formatFechaCortaResumen(value) {
+            var date = parseLocalDate(value);
+            if (!date || isNaN(date.getTime())) {
+                return "-";
+            }
+
+            return String(date.getDate()).padStart(2, "0") + "/" + String(date.getMonth() + 1).padStart(2, "0") + " "
+                + String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
+        }
+
+        // Texto de una fecha del resumen segun el control que este visible: "cierre de cada sucursal" (stock con 2+ sucursales),
+        // el texto del cierre elegido, o la fecha libre. Si no se ve ninguno de los dos primeros, se usa la fecha libre.
+        function textoFechaResumen($fecha, $cierre, $infoPorSucursal) {
+            if (!$infoPorSucursal.hasClass("d-none")) {
+                return "cierre de cada sucursal"; // renderResumenFiltros compara contra este texto
+            }
+
+            if (!$cierre.hasClass("d-none")) {
+                return $.trim($cierre.find("option:selected").text()) || "-";
+            }
+
+            return formatFechaCortaResumen($fecha.val());
+        }
+
+        // Arma la linea "Tipo · desde → hasta · sucursales [· filtros avanzados] [· periodos]" con lo que hay en los controles.
+        // Los filtros avanzados son en vivo (ocultan filas de la tabla): si quedan detras del plegado hay que avisar que estan puestos.
+        function renderResumenFiltros() {
+            if (!$resumenFiltros.length) {
+                return;
+            }
+
+            var tipo = reportType();
+            var desde = textoFechaResumen($fechaDesdeDate, $fechaDesdeCierre, $infoDesdePorSucursal);
+            // Stock Actual siempre reporta "a este momento" (el submit pisa la fecha hasta con la hora actual).
+            var hasta = tipo === "Stock Actual"
+                ? "ahora"
+                : textoFechaResumen($fechaHastaDate, $fechaHastaCierre, $infoHastaPorSucursal);
+
+            // Cierre Stock con 2+ sucursales: las dos puntas son "cierre de cada sucursal"; se dice una sola vez.
+            var porSucursal = "cierre de cada sucursal";
+            var rango = desde === porSucursal && hasta === porSucursal
+                ? "del anteúltimo al último cierre de cada sucursal"
+                : desde + " → " + hasta;
+            var sucursales = $.trim($lblSucursales.text());
+            var partes = [
+                $.trim($tipoReporte.find("option:selected").text()) || tipo,
+                rango,
+                sucursales === "Todas" ? "Todas las sucursales" : sucursales
+            ];
+
+            var avanzadosActivos = $("#panelFiltrosAvanzadosReporte select.filtro-vivo").filter(function () {
+                return this.selectedIndex > 0;
+            }).length;
+            if (avanzadosActivos > 0) {
+                partes.push(avanzadosActivos === 1 ? "1 filtro avanzado" : avanzadosActivos + " filtros avanzados");
+            }
+
+            var periodos = $("#listaPeriodosComparativos .reportes-periodo-comparativo").length;
+            if (periodos > 0) {
+                partes.push(periodos === 1 ? "1 período comparativo" : periodos + " períodos comparativos");
+            }
+
+            var texto = partes.join(" · ");
+            $resumenFiltros.find(".rfr-texto").text(texto);
+            // El texto se corta con "..." en ventanas angostas: el tooltip lo muestra completo.
+            $("#btnEditarFiltrosReporte").attr("title", texto + " — tocá para cambiar los filtros");
+        }
+
+        // Pliega (true) o abre (false) la tarjeta de filtros. Dispara resize para que la zona flotante recalcule su posicion.
+        function setFiltrosPlegados(plegados) {
+            if (plegados) {
+                renderResumenFiltros();
+            }
+
+            $paginaReportes.toggleClass("reportes-filtros-plegados", !!plegados);
+            $("#btnEditarFiltrosReporte").attr("aria-expanded", plegados ? "false" : "true");
+            $(window).trigger("resize");
+        }
+
+        // "Ocultar filtros" solo tiene sentido si hay una busqueda a la que volver. El boton vive en el partial que se
+        // reemplaza por AJAX: por eso esta funcion se vuelve a llamar despues de cada reemplazo (ver mas abajo).
+        function syncBotonPlegarFiltros() {
+            $("#btnPlegarFiltrosReporte").toggleClass("rfr-disponible", !!config.consultaRealizada);
+        }
+
+        $(document).on("click", "#btnEditarFiltrosReporte", function () {
+            setFiltrosPlegados(false);
+        });
+
+        $(document).on("click", "#btnPlegarFiltrosReporte", function () {
+            setFiltrosPlegados(true);
+        });
+
+        syncBotonPlegarFiltros();
         syncBranchSelection(null);
         applyReportMode(false);
         applyDetailsMode();
@@ -1693,6 +1798,8 @@
         applyCierreMovMode(false);
         initializePeriodsFromConfig();
         applyLiveFilters();
+        // Despues de armar fechas/cierres, sucursales y periodos: el resumen refleja la busqueda recien cargada.
+        renderResumenFiltros();
         renderBalanceCharts();
         updateFloatingStack();
 

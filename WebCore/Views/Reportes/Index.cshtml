@@ -84,7 +84,8 @@
     });
 }
 
-<div class="container-fluid reportes-page">
+@* reportes-filtros-plegados: ver el comentario "Filtros plegados" mas abajo. *@
+<div class="container-fluid reportes-page @(Model.ConsultaRealizada ? "reportes-filtros-plegados" : "")">
 
     @if (popup)
     {
@@ -95,9 +96,28 @@
     @* Bloque superior: en escritorio (>= 1200 px) los filtros van en UNA fila y debajo una barra con el estado, "Mostrar totales"
        y los botones; los totales (chips) bajan a su propio renglon al activarlos. Por debajo de 1200 px conserva el orden de siempre.
        Estilos en Shared/_FiltrosCompactosStyles + los de esta pantalla (reportes-top, abajo). *@
+    @* Filtros plegados (pedido 2026-11-10): por debajo de 1200 px, despues de Buscar, la tarjeta de filtros se pliega a UNA linea de
+       resumen para que la tabla gane alto (con Windows al 125 % una ventana de escritorio angosta ya cae en el layout de celular).
+       La clase .reportes-filtros-plegados la pone el servidor en .reportes-page cuando hubo busqueda, sin mirar el ancho: el CSS solo la
+       respeta dentro del media query (max-width: 1199.98px), asi que en >= 1200 px no hace nada y si se achica la ventana se pliega sola.
+       reportes.js arma el resumen y la alterna. No se recuerda entre visitas: cada busqueda vuelve a plegar. *@
+
     <div class="fc-top reportes-top">
     <div class="card shadow-sm mb-3 reportes-filtros-card fc-card">
         <div class="card-body">
+            @* Linea de resumen de los filtros plegados (solo < 1200 px). Fuera del <form>: el boton Buscar lo envia con form="formReportes".
+               Toda la linea abre los filtros; el texto lo arma reportes.js (renderResumenFiltros). *@
+            <div class="reportes-filtros-resumen" id="resumenFiltrosReporte">
+                <button type="button" class="rfr-abrir" id="btnEditarFiltrosReporte" title="Mostrar los filtros para cambiarlos" aria-expanded="false" aria-controls="formReportes">
+                    <i class="fas fa-chevron-right rfr-icono" aria-hidden="true"></i>
+                    <span class="rfr-texto"></span>
+                    <span class="rfr-pendiente d-none" title="Cambiaste filtros y todavía no tocaste Buscar: lo que se ve es la última búsqueda">⚠ sin aplicar</span>
+                    <span class="rfr-editar"><i class="fas fa-pen mr-1" aria-hidden="true"></i>Filtros</span>
+                </button>
+                <button type="submit" form="formReportes" class="btn btn-primary btn-sm" id="btnBuscarResumenReporte" title="Volver a buscar con estos filtros">
+                    <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+                </button>
+            </div>
             <form id="formReportes" method="get" action="@Url.Action("Index", "Reportes")" autocomplete="off">
                 <input type="hidden" name="buscar" id="buscarReportes" value="true" />
                 @if (popup)
@@ -2271,6 +2291,106 @@
         .reportes-top .fc-estado {
             display: none;
         }
+
+        /* Filtros plegados: la tarjeta queda en una linea (resumen + Buscar) y la tabla sube. "body.app-shell" porque
+           ui-refresh.css fija el padding de .card-body con esa especificidad (ver _FiltrosCompactosStyles). */
+        body.app-shell .reportes-filtros-plegados .reportes-filtros-card .card-body {
+            padding: .35rem .6rem;
+        }
+
+        .reportes-filtros-plegados #formReportes {
+            display: none;
+        }
+
+        .reportes-filtros-plegados .reportes-filtros-resumen {
+            display: flex;
+        }
+
+        body.app-shell .reportes-filtros-plegados .reportes-filtros-card {
+            margin-bottom: .5rem !important;
+        }
+
+        body.app-shell .reportes-filtros-plegados .reportes-top > .fc-contents {
+            margin-bottom: .5rem !important;
+        }
+
+        /* "Ocultar filtros": solo cuando hay una busqueda a la que volver (lo muestra reportes.js). */
+        .reportes-top .btn-plegar-filtros.rfr-disponible {
+            display: inline-block;
+        }
+    }
+
+    /* ---- Resumen de filtros plegados (solo < 1200 px, ver el bloque de arriba) ---- */
+    .reportes-filtros-resumen {
+        display: none;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .reportes-filtros-resumen .rfr-abrir {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        border: 1px dashed var(--ui-primary, #2d5b8f);
+        border-radius: .5rem;
+        background: var(--ui-primary-soft, rgba(45, 91, 143, .07));
+        padding: .2rem .55rem;
+        font-size: .82rem;
+        text-align: left;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    .reportes-filtros-resumen .rfr-icono {
+        color: var(--ui-primary, #2d5b8f);
+        font-size: .7rem;
+    }
+
+    /* El resumen se corta con "..." en una sola linea: la idea es que ocupe un renglon aunque la ventana sea muy angosta. */
+    .reportes-filtros-resumen .rfr-texto {
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .reportes-filtros-resumen .rfr-pendiente {
+        color: #b45309;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .reportes-filtros-resumen .rfr-pendiente.d-none {
+        display: none !important;
+    }
+
+    .reportes-filtros-resumen .rfr-editar {
+        color: var(--ui-primary, #2d5b8f);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .reportes-filtros-resumen #btnBuscarResumenReporte {
+        flex: 0 0 auto;
+        min-height: 1.95rem;
+        font-size: .82rem;
+        white-space: nowrap;
+    }
+
+    html.dark-mode .reportes-filtros-resumen .rfr-pendiente {
+        color: #fbbf24;
+    }
+
+    html.dark-mode .reportes-filtros-resumen .rfr-icono,
+    html.dark-mode .reportes-filtros-resumen .rfr-editar {
+        color: #8fb8e8;
+    }
+
+    .reportes-top .btn-plegar-filtros {
+        display: none;
     }
 </style>
 

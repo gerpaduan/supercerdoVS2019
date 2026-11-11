@@ -8657,6 +8657,14 @@ Se rediseñó `GenerarDocsCore.DibujarEtiqueta` (3 tamaños, mismas proporciones
 
 **Verificado (2026-11-10, base local con usuario de prueba 9101, ya borrado; build limpia de HEAD + estos cambios en 127.0.0.1:5272):** Mis ventas desde Cajas Abiertas a 1524×686 y 375 px (filas de 54 px, barra de 48 px, importe en el mismo renglón en celular, sin scroll horizontal), filtro por forma de pago, «Abrir detalle» en el modal (el detalle completo conserva su Total), modo oscuro; panel nuevo en `Ventas/Index` y `Ventas/Facturas` («Total venta · N art.»). **No verificado:** Mis ventas abierto desde el POS (F6): el usuario de prueba no tiene caja abierta; usa los mismos partials.
 
+## 2026-11-10 - Reportes: filtros plegados a una línea en pantalla angosta (< 1200 px)
+
+**Qué:** en `Reportes/Index`, por debajo de 1200 px y después de Buscar, la tarjeta de filtros se pliega a una línea de resumen («Tipo · desde → hasta · sucursales [· N filtros avanzados] [· N períodos comparativos]») con **Filtros** (la abre) y **Buscar** (repite la consulta). Abierta tras una búsqueda muestra **Ocultar filtros**. No se recuerda entre visitas: cada búsqueda vuelve a plegar; sin búsqueda previa arranca abierta. En ≥ 1200 px no cambia nada (fila única compacta de `_FiltrosCompactosStyles`).
+
+**Por qué:** con Windows al 125 % una ventana de escritorio de ~950 px físicos mide ~760 px CSS y cae en el layout de celular: los filtros apilados ocupaban ~380 px y la tabla arrancaba a mitad de pantalla. La clase `reportes-filtros-plegados` la pone el servidor en `.reportes-page` cuando hubo búsqueda, sin mirar el ancho, y el CSS solo la respeta dentro de `@media (max-width: 1199.98px)`: en escritorio ancho no hace nada, no hay salto al pintar y si se achica la ventana se pliega sola (primera versión con script inline que miraba el ancho al cargar: descartada, al achicar después quedaban abiertos). Los filtros avanzados son en vivo y quedan ocultos al plegar: por eso el resumen avisa cuántos hay puestos, y muestra «⚠ sin aplicar» si se cambiaron filtros sin buscar.
+
+**Descartado:** grilla densa siempre visible (2–3 columnas con campos chicos): ganaba ~200 px contra ~330 del plegado. Llevarlo a todas las pantallas con filtros compactos: queda para después, Reportes es el piloto.
+
 ## 2026-11-10 — Egresos propios desde Mis actividades (POS)
 
 **Qué:** en **F6 → Mis actividades** cualquier vendedor (admin o no, y el operador de la cuenta de producción) modifica los egresos de caja **que cargó él**, de su caja abierta y de la sucursal activa.

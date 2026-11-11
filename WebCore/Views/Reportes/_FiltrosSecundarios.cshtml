@@ -34,6 +34,12 @@
             </div>
         }
     </div>
+    @* "Ocultar filtros" (< 1200 px): vuelve a plegar la tarjeta a la linea de resumen. Solo se ve si ya hay una busqueda hecha
+       (reportes.js le pone .rfr-disponible); en escritorio no existe (d-xl-none), alli los filtros ya van en una sola fila. *@
+    <button type="button" class="btn btn-link btn-sm ms-auto me-2 ml-auto mr-2 d-xl-none btn-plegar-filtros" id="btnPlegarFiltrosReporte"
+            title="Plegar los filtros a una línea para que la tabla tenga más lugar">
+        <i class="fas fa-chevron-up mr-1" aria-hidden="true"></i>Ocultar filtros
+    </button>
     <div class="form-group mb-0 fc-c6">
         <label class="stock-filtro-label d-none d-xl-block">&nbsp;</label>
         <button type="submit" class="btn btn-primary btn-block" id="btnBuscarReporte">
