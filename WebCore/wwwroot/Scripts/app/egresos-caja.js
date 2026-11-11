@@ -299,7 +299,8 @@
         });
     }
 
-    function abrirFormulario(id) {
+    // opciones.volverAlPos: se reenvia a POSEgresos.cargarEnModal para conservar "F7 vuelve al POS" al recargar el formulario (Cargar en Lote).
+    function abrirFormulario(id, opciones) {
         var cfg = urls();
         if (!cfg.nuevo) return;
 
@@ -312,7 +313,7 @@
         }
 
         if (estaEnPos() && window.POSEgresos && typeof window.POSEgresos.cargarEnModal === "function") {
-            window.POSEgresos.cargarEnModal(urlFormulario, esEdicion ? "Modificar Egreso de Caja" : "Nuevo Egreso de Caja", true);
+            window.POSEgresos.cargarEnModal(urlFormulario, esEdicion ? "Modificar Egreso de Caja" : "Nuevo Egreso de Caja", true, opciones);
             return;
         }
 
@@ -739,6 +740,9 @@
                 var $error = $form.find("#egresoCajaError");
                 var desdePos = String($form.data("desde-pos")).toLowerCase() === "true";
                 var $btnGuardar = $form.find("#btnGuardarEgresoCaja");
+                // Abierto con F7 desde el POS: al terminar el comprobante se vuelve directo al POS, sin abrir Mis actividades
+                // (2026-11-11, ver docs/DECISIONS.md). Se lee ahora: POSEgresos.volverAlPos cambia con cada carga de modal.
+                var volverAlPos = desdePos && !!window.POSEgresos && window.POSEgresos.volverAlPos === true;
 
                 // Candado anti doble envio (2026-11-07, ver docs/DECISIONS.md): un doble clic / Enter / Alt+Enter mientras el
                 // POST sigue en curso creaba el egreso DOS veces (el servidor no distingue un reintento de un alta nueva).
@@ -838,12 +842,18 @@
                             filtrar();
                         }
 
-                        abrirFormulario(0);
+                        abrirFormulario(0, { volverAlPos: volverAlPos });
                         return;
                     }
 
                     function continuarTrasGuardar() {
-                        if (desdePos && window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
+                        // F7: queda el POS listo para la proxima venta. permitir-salida ya esta en true (no salta el confirm de cambios).
+                        if (volverAlPos) {
+                            $("#modalFinanzasPOS").modal("hide");
+                            return;
+                        }
+
+                        if (desdePos &&window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
                             window.POSEgresos.abrirMis();
                             return;
                         }

@@ -240,7 +240,7 @@ Empresa, sucursal, fecha y hora, Duplicar POS, Salir, colores (claro, gris, oscu
 ![Video: recorrido por la pantalla del punto de venta](media:Ventas.POS/tutorial-recorrido.mp4)
 
 ### Egreso de caja (F7)
-Tipo, descripción, contador de billetes y detalle.
+Tipo, descripción, contador de billetes y detalle. Al guardar aparece el comprobante (cerrar sin imprimir, ticket, PDF o mail) y, al terminar, **el POS queda listo para la próxima venta**: con F7 no se abre Mis actividades (sí se abre si el egreso se carga con el botón **Nuevo egreso** desde Mis actividades).
 
 ![Video: registrar un egreso de caja con el contador de billetes](media:Ventas.POS/tutorial-egreso.mp4)
 

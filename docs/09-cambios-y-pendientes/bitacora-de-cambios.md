@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-11-11 - F7 «Nuevo egreso» vuelve directo al POS
+
+- **Pedido:** con F7 en el POS, después de guardar el egreso y elegir en el comprobante (imprimir o cerrar) se abría Mis actividades; debe quedar el POS listo para la próxima venta. Sin aviso extra: el comprobante ya dice «Egreso guardado».
+- **Cambio:** `POSEgresos.volverAlPos` (`POS.cshtml`; solo F7 lo activa) y `continuarTrasGuardar()` de `egresos-caja.js` cierra el modal de finanzas en vez de abrir Mis actividades. El botón «Nuevo egreso» de Mis actividades y «Modificar» no cambian. Ver `docs/DECISIONS.md` (2026-11-11).
+- **Verificado:** sintaxis de `egresos-caja.js`. **No se vio en el navegador** (sin usuario de prueba).
+- **Pendiente:** probar F7 → guardar → comprobante → cerrar (queda el POS) y F6 → Nuevo egreso (vuelve a Mis actividades). El egreso por comisiones electrónicas desde el POS sigue abriendo Mis actividades.
+
 ## 2026-11-10 - Rediseño de Usuarios (listado, ficha con pestañas, alta en 3 pasos)
 
 - **Pedido:** rediseñar las pantallas de usuarios para mejor UX; se aprobó antes una maqueta HTML interactiva.

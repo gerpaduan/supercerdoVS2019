@@ -2207,16 +2207,24 @@ else
             };
 
             window.POSEgresos = {
-                cargarEnModal: function (url, titulo, compacto) {
+                // Ultimo parametro "opciones" (2026-11-11, ver docs/DECISIONS.md): { volverAlPos: true } lo manda solo F7.
+                // Con ese flag, al terminar el comprobante de un egreso guardado se cierra este modal y queda el POS
+                // (egresos-caja.js, continuarTrasGuardar) en vez de abrir Mis actividades. Cualquier otra carga
+                // (Mis actividades, modificar, Mis ventas) llega sin opciones y lo deja en false.
+                volverAlPos: false,
+
+                cargarEnModal: function (url, titulo, compacto, opciones) {
                     if (window.EgresosCaja && typeof window.EgresosCaja.formDirty === "function" && window.EgresosCaja.formDirty()) {
                         window.EgresosCaja.confirmarSalidaCambios(function () {
                             window.EgresosCaja.permitirSalida();
-                            window.POSEgresos.cargarEnModal(url, titulo, compacto);
+                            window.POSEgresos.cargarEnModal(url, titulo, compacto, opciones);
                         });
                         return;
                     }
 
                     if (window.POSGuard && !window.POSGuard.startAction("egresos:cargar")) return;
+
+                    window.POSEgresos.volverAlPos = !!(opciones && opciones.volverAlPos === true);
 
                     // Mis ventas (MisVentas) usa el mismo ancho y cabecera que Mis actividades (2026-10-28): antes se abria
                     // al ancho completo del modal grande y desentonaba con la pantalla desde la que se llega (F6).
@@ -2267,8 +2275,8 @@ else
                     this.cargarEnModal(url, "Mis actividades", false);
                 },
 
-                abrirNuevo: function () {
-                    this.cargarEnModal(window.EgresosCajaUrls.nuevo, "Nuevo Egreso de Caja", true);
+                abrirNuevo: function (opciones) {
+                    this.cargarEnModal(window.EgresosCajaUrls.nuevo, "Nuevo Egreso de Caja", true, opciones);
                 }
             };
 
@@ -2325,7 +2333,8 @@ else
             };
 
             window.posHotkeysHooks.F7 = function () {
-                window.POSEgresos.abrirNuevo();
+                // F7 vuelve directo al POS tras guardar (el boton "Nuevo egreso" de Mis actividades, no).
+                window.POSEgresos.abrirNuevo({ volverAlPos: true });
             };
 
             // Historial de precios de cliente (F8), 2026-09-06 (retomado -- ver docs/DECISIONS.md).

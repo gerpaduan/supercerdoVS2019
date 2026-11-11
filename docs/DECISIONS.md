@@ -8744,3 +8744,11 @@ El listado admin `Cajas/EgresosCaja` no cambia.
 3. Solo Postgres con `PosBorrador:Habilitado`: sin borrador en servidor el corte funciona pero la venta solo queda en el respaldo local del mismo equipo.
 4. No se verificó en el navegador con login real (la prueba end-to-end con usuario de prueba queda pendiente de la autorización del usuario); compila y pasan los tests de `Recuperar`.
 
+## 2026-11-11 — F7 «Nuevo egreso» vuelve directo al POS tras el comprobante
+
+**Pedido:** con F7 en el POS, después de guardar el egreso y elegir en el comprobante (imprimir o cerrar) se abría Mis actividades; estorba, hay que seguir con la próxima venta.
+**Qué se decidió:** `window.POSEgresos.volverAlPos` (POS.cshtml): `cargarEnModal(url, titulo, compacto, opciones)` lo fija con `opciones.volverAlPos`, y solo el atajo F7 lo manda en `true` (`abrirNuevo({ volverAlPos: true })`). En `egresos-caja.js`, `bindForm` lo lee al enviar y `continuarTrasGuardar()` cierra `#modalFinanzasPOS` en vez de `POSEgresos.abrirMis()`. Cualquier otra carga de modal lo resetea a `false`, así que el botón «Nuevo egreso» dentro de Mis actividades y «Modificar» siguen volviendo a Mis actividades. Con «Cargar en lote» el flag se reenvía al recargar el formulario.
+**Sin aviso Swal extra:** el modal del comprobante ya dice «Egreso guardado» (decisión del usuario).
+**Descartado:** decidir por el origen del clic leyendo el DOM/`document.activeElement` (frágil); un parámetro en la URL de `NuevoEgresoCaja` (el servidor no necesita saberlo).
+**Límite:** el egreso por «Calcular comisiones electrónicas» desde el POS sigue abriendo Mis actividades (no es F7).
+**Verificado:** sintaxis de `egresos-caja.js` (`node --check`). Sin verificar en el navegador con login real (pendiente de usuario de prueba).
