@@ -704,6 +704,8 @@
             // seguir en false justo despues de agregar un ingrediente.
             window.EditPageGuard && window.EditPageGuard.sync();
             $('#lblTotalManual').text(formatKg(totalManual));
+            // Resumen en la cabecera del sector "2 Ingredientes" (solo se ve en escritorio).
+            $('#lblResumenIngredientes').text(state.lineas.length + (state.lineas.length === 1 ? ' ingrediente' : ' ingredientes') + ' · ' + formatKg(totalManual) + ' kg');
             recalcularFormula();
         }
 
@@ -725,7 +727,8 @@
                     html += '<tr>'
                         + '<td class="cc-l-prod">' + item.Producto + '</td>'
                         + '<td class="text-right cc-l-kg">' + formatKg(item.Kgs) + '</td>'
-                        + '<td class="text-center cc-solo-tabla">' + formatBool(item.AgregarAuto) + '</td>'
+                        // Escritorio: chip "Auto" (verde) o "Manual" (borde azul) en vez de Si/No, para distinguir de un vistazo que ingredientes se agregan solos.
+                        + '<td class="text-center cc-solo-tabla"><span class="pt-chip ' + (item.AgregarAuto ? 'pt-chip-auto' : 'pt-chip-manual') + '">' + (item.AgregarAuto ? 'Auto' : 'Manual') + '</span></td>'
                         + '<td class="cc-l-cod cc-solo-card" title="' + (item.AgregarAuto ? 'Se agrega solo al guardar' : 'No se agrega solo') + '">' + (item.AgregarAuto ? 'Auto' : 'Manual') + '</td>'
                         + (config.esAdmin ? renderCostoCeldaProduccion(item, index, 'formula') : '')
                         + '</tr>';
@@ -981,23 +984,36 @@
         // Orden del modal de acumulados (independiente del de la tabla principal). Arranca por codigo y se reinicia cada vez que se abre.
         var acumuladosOrden = { sortKey: 'codigo', sortDirection: 'asc' };
 
+        // Columna "Veces" y detalle por carga del modal (helper acumulados-detalle.js). Se redibuja al abrir/cerrar un detalle o filtrar.
+        var acumuladosDetalle = window.AcumuladosDetalle.crear({
+            modal: '#modalAcumuladosElaborado',
+            tabla: '#tablaAcumuladosElaborado',
+            alCambiar: function () { renderAcumulados(); }
+        });
+
         // Agrupa las lineas por producto sumando kilos. "orden" = posicion de la primera carga de ese producto (columna #); se cuenta
         // aparte porque Object.keys reordena las claves numericas por valor y no conserva el orden de insercion.
+        // "veces" = en cuantos items esta el producto y "cargas" = cada una, con su # de la tabla principal (indice + 1).
         function buildAcumulados() {
             var map = {};
             var siguienteOrden = 1;
 
-            state.lineas.forEach(function (linea) {
+            state.lineas.forEach(function (linea, indice) {
                 var key = String(linea.IdCorte || linea.Codigo || '');
                 if (!map[key]) {
                     map[key] = {
+                        clave: key,
                         orden: siguienteOrden++,
                         codigo: linea.Codigo || '',
                         producto: linea.Producto || '',
-                        cantidad: 0
+                        cantidad: 0,
+                        veces: 0,
+                        cargas: []
                     };
                 }
                 map[key].cantidad += toFloat(linea.CantKg);
+                map[key].veces++;
+                map[key].cargas.push({ item: indice + 1, cantidad: toFloat(linea.CantKg) });
             });
 
             var clave = acumuladosOrden.sortKey;
@@ -1013,20 +1029,32 @@
         function renderAcumulados() {
             var items = buildAcumulados();
             var html = '';
+            // Repetidos = productos cargados en mas de un item; "Solo repetidos" muestra unicamente esos.
+            var repetidos = items.filter(function (item) { return item.veces > 1; });
+            var visibles = acumuladosDetalle.soloRepetidos() ? repetidos : items;
 
             window.OrdenTabla.sincronizarEncabezados($('#tablaAcumuladosElaborado thead th[data-sort-key]'), acumuladosOrden);
+            acumuladosDetalle.pintarResumen(items.length, state.lineas.length, repetidos.length);
 
-            if (!items.length) {
-                html = '<tr class="js-empty-row"><td colspan="4" class="text-center text-muted">No hay productos cargados.</td></tr>';
+            if (!visibles.length) {
+                html = '<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">'
+                    + acumuladosDetalle.textoVacio('No hay productos cargados.') + '</td></tr>';
             } else {
-                items.forEach(function (item) {
-                    html += '<tr>'
+                visibles.forEach(function (item) {
+                    // Columna del detalle desplegable: cada carga y, al pie, el total (igual a la fila acumulada).
+                    var columnasDetalle = [
+                        { titulo: 'Cantidad', valor: function (carga) { return formatKg(carga.cantidad); }, total: formatKg(item.cantidad) }
+                    ];
+                    // Celular (tarjeta): "Veces" va junto al codigo; en la tabla de escritorio tiene su propia columna (cc-solo-tabla).
+                    html += '<tr' + acumuladosDetalle.atributosFila(item.clave, item.veces) + '>'
                         + '<td class="text-center font-weight-bold cc-solo-tabla">' + item.orden + '</td>'
                         + '<td class="cc-solo-tabla">' + escapeHtml(item.codigo) + '</td>'
-                        + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(item.codigo) + '</td>'
+                        + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(item.codigo) + ' &nbsp;' + acumuladosDetalle.vecesHtml(item.veces) + '</td>'
                         + '<td class="cc-l-prod">' + escapeHtml(item.producto) + '</td>'
                         + '<td class="text-right cc-l-kg">' + formatKg(item.cantidad) + '</td>'
-                        + '</tr>';
+                        + '<td class="text-center text-nowrap cc-solo-tabla">' + acumuladosDetalle.vecesHtml(item.veces) + '</td>'
+                        + '</tr>'
+                        + acumuladosDetalle.filaDetalle(item.clave, item.producto, item.veces, item.cargas, columnasDetalle, 6);
                 });
             }
 
@@ -1283,6 +1311,7 @@
         $('#btnVerAcumuladosElaborado').on('click', function () {
             acumuladosOrden.sortKey = 'codigo';
             acumuladosOrden.sortDirection = 'asc';
+            acumuladosDetalle.reiniciar();
             renderAcumulados();
             $('#modalAcumuladosElaborado').modal('show');
         });

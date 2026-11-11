@@ -56,10 +56,16 @@
     </div>
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2 stock-barra-botones">
-        <div class="d-flex align-items-center gap-2">
-            <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Stock")">
-                <i class="fas fa-arrow-left mr-1"></i> Volver
-            </a>
+        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Stock")">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+        @* Derecha (2026-11-11): estado del ajuste, «Stock sin guardar» y pantalla completa, juntos en el extremo derecho (como en Elaborados/Carga
+           y Movimientos/Editar). Antes «Stock sin guardar» iba pegado a Volver. *@
+        <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 ml-auto">
+            <span id="stockEstadoAjusteBadge"
+                  class="badge badge-pill @(string.Equals(Model.Estado, "Actualizado", StringComparison.OrdinalIgnoreCase) ? "badge-success" : "badge-warning") px-3 py-2 @(!esPesaje || string.IsNullOrWhiteSpace(Model.Estado) ? "d-none" : "")">
+                Ajuste: <span id="stockEstadoAjusteTexto">@Model.Estado</span>
+            </span>
             @if (borradorGenericoHabilitado)
             {
                 <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresStock">
@@ -67,11 +73,12 @@
                     <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
                 </button>
             }
+            @* Pantalla completa: alterna como F11. Icono y tooltip los mantiene pantalla-completa.js; se oculta si el navegador no soporta la API. *@
+            <button type="button" class="btn btn-outline-secondary" id="btnPantallaCompleta"
+                    title="F11 · Pantalla completa" aria-label="Pantalla completa (F11)" aria-pressed="false">
+                <i class="fas fa-expand"></i>
+            </button>
         </div>
-        <span id="stockEstadoAjusteBadge"
-              class="badge badge-pill @(string.Equals(Model.Estado, "Actualizado", StringComparison.OrdinalIgnoreCase) ? "badge-success" : "badge-warning") px-3 py-2 @(!esPesaje || string.IsNullOrWhiteSpace(Model.Estado) ? "d-none" : "")">
-            Ajuste: <span id="stockEstadoAjusteTexto">@Model.Estado</span>
-        </span>
     </div>
 
     <div class="card shadow-sm stock-panel-card pt-fill">
@@ -300,6 +307,12 @@
 
                 <div class="row stock-cuerpo pt-fila-principal">
                     <div class="col-12 col-xl-8 pt-col-izq">
+                        @* Franja del bloque (2026-11-11): solo escritorio (pantalla-trabajo.css, seccion 9). Rotula el cuadro donde se ingresa cada
+                           producto, con fondo y borde azules. En celular no se ve: ahi sigue el titulo h6 de siempre. *@
+                        <div class="pt-sec-head pt-sec-agregar">
+                            <span class="pt-sec-tit">Agregar producto</span>
+                            <span class="pt-sec-sub">uno por uno: código, producto y cantidad</span>
+                        </div>
                         <div class="border rounded p-3 mb-3 stock-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 stock-section-title">Agregar producto</h6>
@@ -717,19 +730,26 @@
                 </button>
             </div>
             <div class="modal-body">
+                @* Resumen + filtro "Solo repetidos" y columna "Veces" con detalle por carga: acumulados-detalle.js (docs/DECISIONS.md, 2026-11-11). *@
+                <div class="acum-barra">
+                    <span class="js-acum-resumen"></span>
+                    <label><input type="checkbox" class="js-acum-solo-rep"> Solo repetidos</label>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 stock-table-compact tabla-items" id="tablaAcumuladosStock">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact tabla-items tabla-acumulados" id="tablaAcumuladosStock">
                         <thead class="thead-light">
                             <tr>
-                                <th class="text-center d-none d-md-table-cell" style="width:50px;" data-sort-key="orden">#</th>
-                                <th style="width:120px;" data-sort-key="codigo">Código</th>
+                                <th class="text-center d-none d-md-table-cell" style="width:40px;" data-sort-key="orden">#</th>
+                                <th style="width:80px;" data-sort-key="codigo">Código</th>
                                 <th data-sort-key="producto">Producto</th>
-                                <th class="text-right" style="width:120px;" data-sort-key="cantidad">Cantidad</th>
+                                <th class="text-right" style="width:90px;" data-sort-key="cantidad">Cantidad</th>
+                                <th class="text-center" style="width:84px;" data-sort-key="veces" title="En cuántos ítems de la tabla está cargado este producto">Veces</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyAcumuladosStock"></tbody>
                     </table>
                 </div>
+                <div class="acum-pie">Clic en una fila para ver cada carga. Ámbar = el producto está en más de un ítem (posible carga duplicada).</div>
             </div>
         </div>
     </div>
@@ -1064,7 +1084,7 @@
     }
 
     .modal-acumulados-stock-compact {
-        max-width: 420px;
+        max-width: 520px; /* era 420: la columna "Veces" necesita lugar */
     }
 
     @@media (min-width: 1200px) {
@@ -1181,11 +1201,13 @@
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/acumulados-detalle.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/stock.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/stock-editar-compacto.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
     <script src="@Url.Content("~/Scripts/app/pantalla-trabajo.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/pantalla-completa.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>

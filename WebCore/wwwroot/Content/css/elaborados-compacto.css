@@ -37,7 +37,7 @@
 }
 
 @media (min-width: 1200px) {
-    /* ---- Pestanas + botones (Volver / Embutidos sin guardar) en UN renglon ---- */
+    /* ---- Pestanas + botones (Volver / Elaborados sin guardar) en UN renglon ---- */
     body.app-shell .elaborados-compacto {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;

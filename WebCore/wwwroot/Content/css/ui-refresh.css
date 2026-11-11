@@ -1661,3 +1661,196 @@ body.app-shell table.tabla-items thead .js-orden-link.orden-activa {
 html.dark-mode body.app-shell table.tabla-items thead .js-orden-link.orden-activa {
     color: #d9e9ff;
 }
+
+/* Modales de acumulados (Movimientos/Editar, Stock/Editar y Elaborados/Carga; clase "tabla-acumulados" + helper Scripts/app/acumulados-detalle.js).
+   - Encabezado compacto: letra chica y poco alto. "!important" porque cada pantalla trae su regla compacta propia y "#content .table thead th"
+     fija 14px con id.
+   - Columna "Veces" (ultima): globito con en cuantos items esta cargado el producto; 2 o mas = ambar (posible carga duplicada).
+   - Al tocar la fila se despliega .acum-detalle con una linea por carga (Item = # de la tabla principal).
+   El fondo ambar se pinta con box-shadow inset por el mismo motivo que el resaltado de .tabla-items (Bootstrap 5.3 pinta cada td). */
+body.app-shell table.tabla-acumulados thead th {
+    padding: 0.22rem 0.45rem !important;
+    font-size: 0.7rem !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.acum-barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--ui-text-muted, #6c757d);
+}
+
+.acum-barra label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    cursor: pointer;
+    color: var(--ui-text, #212529);
+}
+
+.acum-aviso {
+    color: #8a5a00;
+    font-weight: 600;
+}
+
+.acum-pie {
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    color: var(--ui-text-muted, #6c757d);
+}
+
+body.app-shell table.tabla-acumulados tbody tr.acum-fila {
+    cursor: pointer;
+}
+
+body.app-shell table.tabla-acumulados tbody tr.acum-fila:focus-visible {
+    outline: 2px solid rgba(13, 110, 253, 0.55);
+    outline-offset: -2px;
+}
+
+body.app-shell table.tabla-acumulados tbody tr.acum-fila.rep > td,
+body.app-shell table.tabla-acumulados tbody tr.acum-detalle.rep > td {
+    box-shadow: inset 0 0 0 9999px rgba(240, 195, 109, 0.16);
+}
+
+body.app-shell table.tabla-acumulados tbody tr.acum-fila.rep:hover > td {
+    box-shadow: inset 0 0 0 9999px rgba(240, 195, 109, 0.32);
+}
+
+/* Fila de detalle: gris muy suave y sin el resaltado azul de .tabla-items (no es una fila para elegir). */
+body.app-shell table.tabla-acumulados tbody tr.acum-detalle > td,
+body.app-shell table.tabla-acumulados tbody tr.acum-detalle:hover > td {
+    padding: 0.35rem 0.6rem 0.45rem 2rem;
+    box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.035);
+}
+
+body.app-shell table.tabla-acumulados tbody tr.acum-detalle.rep > td,
+body.app-shell table.tabla-acumulados tbody tr.acum-detalle.rep:hover > td {
+    box-shadow: inset 0 0 0 9999px rgba(240, 195, 109, 0.16);
+}
+
+.acum-veces {
+    display: inline-block;
+    min-width: 2.1rem;
+    padding: 0.02rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(108, 117, 125, 0.16);
+    color: var(--ui-text, #495057);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.acum-veces.rep {
+    background: #fff6dd;
+    color: #8a5a00;
+    box-shadow: inset 0 0 0 1px #f0c36d;
+}
+
+.acum-chev {
+    display: inline-block;
+    margin-left: 0.35rem;
+    font-size: 0.65rem;
+    color: var(--ui-text-muted, #6c757d);
+    transition: transform 0.12s;
+}
+
+tr.acum-fila.abierta .acum-chev {
+    transform: rotate(90deg);
+}
+
+.acum-det-tit {
+    margin-bottom: 0.2rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--ui-text-muted, #6c757d);
+}
+
+table.acum-det {
+    min-width: 17rem;
+    max-width: 100%;
+    border: 1px solid var(--ui-border, #dee2e6);
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 4px;
+    background: var(--ui-surface, #fff);
+    font-size: 0.8rem;
+}
+
+table.acum-det th,
+table.acum-det td {
+    padding: 0.13rem 0.5rem;
+    border-bottom: 1px solid var(--ui-border, #dee2e6);
+    font-variant-numeric: tabular-nums;
+}
+
+table.acum-det th {
+    background: var(--ui-table-head, #f1f3f6);
+    font-size: 0.66rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+table.acum-det tfoot td {
+    background: var(--ui-table-head, #f1f3f6);
+    font-weight: 700;
+}
+
+table.acum-det tbody tr:last-child td,
+table.acum-det tfoot td {
+    border-bottom: 0;
+}
+
+.acum-det-item {
+    color: #0b57c0;
+    font-weight: 700;
+}
+
+html.dark-mode .acum-aviso {
+    color: #f0b429;
+}
+
+html.dark-mode .acum-veces.rep {
+    background: rgba(240, 180, 41, 0.18);
+    color: #f0b429;
+    box-shadow: inset 0 0 0 1px rgba(240, 180, 41, 0.55);
+}
+
+html.dark-mode .acum-det-item {
+    color: #95c5ff;
+}
+
+html.dark-mode body.app-shell table.tabla-acumulados tbody tr.acum-detalle > td,
+html.dark-mode body.app-shell table.tabla-acumulados tbody tr.acum-detalle:hover > td {
+    box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.04);
+}
+
+/* Celular con tarjetas (Elaborados/Carga, tabla-cards-lista): la fila de detalle ocupa todo el ancho de la tarjeta y la repetida
+   se tine entera (la fila es una grilla, el fondo lo pone el tr). */
+@media (max-width: 767.98px) {
+    body.app-shell table.tabla-acumulados.tabla-cards > tbody > tr.acum-detalle > td {
+        grid-column: 1 / -1;
+        padding: 0 !important;
+        box-shadow: none;
+    }
+
+    body.app-shell table.tabla-acumulados.tabla-cards > tbody > tr.acum-fila.rep,
+    body.app-shell table.tabla-acumulados.tabla-cards > tbody > tr.acum-detalle.rep {
+        background: rgba(240, 195, 109, 0.16);
+    }
+
+    body.app-shell table.tabla-acumulados.tabla-cards > tbody > tr.acum-fila.rep > td,
+    body.app-shell table.tabla-acumulados.tabla-cards > tbody > tr.acum-detalle.rep > td {
+        box-shadow: none;
+    }
+}

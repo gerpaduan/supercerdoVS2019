@@ -972,24 +972,33 @@
     // Orden del modal de acumulados (independiente del de la tabla principal). Arranca por codigo y se reinicia cada vez que se abre.
     var acumuladosOrden = { sortKey: 'codigo', sortDirection: 'asc' };
 
+    // Columna "Veces" y detalle por carga del modal (helper acumulados-detalle.js). Se crea en bindEvents, cuando ya hay $form para redibujar.
+    var acumuladosDetalle = null;
+
     // Agrupa las lineas por producto sumando cantidad. "orden" = posicion de la primera carga de ese producto (columna #); se cuenta
     // aparte porque Object.keys reordena las claves numericas por valor y no conserva el orden de insercion.
+    // "veces" = en cuantos items esta el producto y "cargas" = cada una, con su # de la tabla principal (indice + 1).
     function buildAcumulados($form) {
         var state = getState($form);
         var map = {};
         var siguienteOrden = 1;
 
-        $.each(state.lineas, function (_, linea) {
+        $.each(state.lineas, function (indice, linea) {
             var key = String(linea.idCorte || linea.codigo || '');
             if (!map[key]) {
                 map[key] = {
+                    clave: key,
                     orden: siguienteOrden++,
                     codigo: linea.codigo || '',
                     producto: linea.producto || '',
-                    cantidad: 0
+                    cantidad: 0,
+                    veces: 0,
+                    cargas: []
                 };
             }
             map[key].cantidad += toNumber(linea.cantKgs);
+            map[key].veces++;
+            map[key].cargas.push({ item: indice + 1, cantidad: toNumber(linea.cantKgs) });
         });
 
         var clave = acumuladosOrden.sortKey;
@@ -1005,19 +1014,30 @@
     function renderAcumulados($form) {
         var items = buildAcumulados($form);
         var html = '';
+        // Repetidos = productos cargados en mas de un item; "Solo repetidos" muestra unicamente esos.
+        var repetidos = $.grep(items, function (item) { return item.veces > 1; });
+        var visibles = acumuladosDetalle.soloRepetidos() ? repetidos : items;
 
         window.OrdenTabla.sincronizarEncabezados($('#tablaAcumuladosStock thead th[data-sort-key]'), acumuladosOrden);
+        acumuladosDetalle.pintarResumen(items.length, (getState($form).lineas || []).length, repetidos.length);
 
-        if (!items.length) {
-            html = '<tr class="js-empty-row"><td colspan="4" class="text-center text-muted">No hay productos cargados.</td></tr>';
+        if (!visibles.length) {
+            html = '<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">'
+                + acumuladosDetalle.textoVacio('No hay productos cargados.') + '</td></tr>';
         } else {
-            $.each(items, function (_, item) {
-                html += '<tr>'
+            $.each(visibles, function (_, item) {
+                // Columna del detalle desplegable: cada carga y, al pie, el total (igual a la fila acumulada).
+                var columnasDetalle = [
+                    { titulo: 'Cantidad', valor: function (carga) { return formatNumber(carga.cantidad, 3); }, total: formatNumber(item.cantidad, 3) }
+                ];
+                html += '<tr' + acumuladosDetalle.atributosFila(item.clave, item.veces) + '>'
                     + '<td class="text-center font-weight-bold d-none d-md-table-cell">' + item.orden + '</td>'
                     + '<td>' + escapeHtml(item.codigo) + '</td>'
                     + '<td>' + escapeHtml(item.producto) + '</td>'
                     + '<td class="text-right">' + formatNumber(item.cantidad, 3) + '</td>'
-                    + '</tr>';
+                    + '<td class="text-center text-nowrap">' + acumuladosDetalle.vecesHtml(item.veces) + '</td>'
+                    + '</tr>'
+                    + acumuladosDetalle.filaDetalle(item.clave, item.producto, item.veces, item.cargas, columnasDetalle, 5);
             });
         }
 
@@ -2815,6 +2835,13 @@
             scheduleDraft($form);
         });
 
+        // Veces / detalle por carga / "Solo repetidos" del modal de acumulados (el modal esta fuera del form: el helper delega en document).
+        acumuladosDetalle = window.AcumuladosDetalle.crear({
+            modal: '#modalAcumuladosStock',
+            tabla: '#tablaAcumuladosStock',
+            alCambiar: function () { renderAcumulados($form); }
+        });
+
         // Clic en un encabezado del modal de acumulados: ordena (el modal esta fuera del form, por eso delegado en document).
         $(document).on('click.stockAcumulados', '#tablaAcumuladosStock thead th[data-sort-key]', function () {
             var clave = String($(this).data('sort-key') || '');
@@ -2826,6 +2853,7 @@
         $form.on('click.stock', '#btnVerAcumulados', function () {
             acumuladosOrden.sortKey = 'codigo';
             acumuladosOrden.sortDirection = 'asc';
+            acumuladosDetalle.reiniciar();
             renderAcumulados($form);
             window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
             $('#modalAcumuladosStock').modal('show');

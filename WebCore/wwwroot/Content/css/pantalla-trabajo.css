@@ -840,3 +840,447 @@
         margin: 0 !important;
     }
 }
+
+/* ---- 8. Elaborados/Carga: sectores identificables (pedido 2026-11-11) ----
+   Un operador nuevo no sabia que cargaba en cada cuadro. Solo escritorio (>= 1200 px), solo Carga (data-pt="elab"); el celular no cambia.
+   - "1 Elaborado" (azul) y "2 Ingredientes" (verde): cabecera de una linea sobre cada cuadro + borde y fondo del color del sector.
+   - Etiquetas de los campos siempre visibles (antes eran solo placeholder y desaparecian al escribir).
+   - Tabla de ingredientes: ocupa todo el alto libre de la columna izquierda (scrollea por dentro), borde y encabezado en verde.
+   - Formula: nombre y kilos en negrita, punto verde por fila y chip Auto / Manual.
+   Observaciones y botones no se tocan (siguen al pie de la columna derecha). Decision y medidas: docs/DECISIONS.md (2026-11-11). */
+.pantalla-trabajo[data-pt="elab"] .pt-sec-head {
+    display: none;
+}
+
+/* Paleta compartida por Elaborados/Carga (data-pt="elab") y Movimientos/Editar (data-pt="mov", seccion 9). El azul (--pt-prod*) rotula el
+   cuadro de carga: en claro es el azul de Elaborados; en oscuro el celeste oscuro que se aprobo el 2026-11-11 (antes #6ea3ee). El verde
+   (--pt-ing*) solo lo usa Elaborados. --pt-prod-on es el color del texto sobre la franja azul; --pt-sec-texto, sobre la verde. */
+.pantalla-trabajo[data-pt="elab"],
+.pantalla-trabajo[data-pt="mov"],
+.pantalla-trabajo[data-pt="stock"] {
+    --pt-prod: #2b5fa8;
+    --pt-prod-soft: #eaf1fb;
+    --pt-prod-ink: #1d4580;
+    --pt-prod-line: #2b5fa8;
+    --pt-prod-on: #fff;
+    --pt-ing: #1f8a62;
+    --pt-ing-soft: #e8f6ef;
+    --pt-ing-ink: #166a4b;
+    --pt-sec-texto: #fff;
+}
+
+/* Sucursal y Fecha en negrita (pedido 2026-11-11): son los dos datos que el operador confirma antes de cargar. */
+.pantalla-trabajo[data-pt="elab"] #IdSucursal,
+.pantalla-trabajo[data-pt="elab"] #FechaEmbutido {
+    font-weight: 700;
+}
+
+html.dark-mode .pantalla-trabajo[data-pt="elab"],
+html.dark-mode .pantalla-trabajo[data-pt="mov"],
+html.dark-mode .pantalla-trabajo[data-pt="stock"] {
+    --pt-prod: #29506e;
+    --pt-prod-soft: #15222d;
+    --pt-prod-ink: #d5ecfd;
+    --pt-prod-line: #3a6a8f;
+    --pt-prod-on: #d5ecfd;
+    --pt-ing: #4cc39a;
+    --pt-ing-soft: #16302a;
+    --pt-ing-ink: #8fe0c0;
+    --pt-sec-texto: #0d1216;
+}
+
+@media (min-width: 1200px) {
+    /* Cabecera de sector: franja de una linea pegada al cuadro de abajo. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-head {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .15rem .6rem;
+        border-radius: .5rem .5rem 0 0;
+        color: var(--pt-sec-texto);
+        font-size: .78rem;
+        line-height: 1.3;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-prod { background: var(--pt-prod); color: var(--pt-prod-on); }
+    html.dark-mode body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-prod .pt-sec-num { background: rgba(255, 255, 255, .2); }
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-ing { background: var(--pt-ing); }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-num {
+        flex: 0 0 auto;
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: .72rem;
+        background: rgba(255, 255, 255, .3);
+    }
+
+    html.dark-mode body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-num { background: rgba(0, 0, 0, .25); }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-tit {
+        font-weight: 800;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-sub {
+        opacity: .92;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-sec-info {
+        margin-left: auto;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* Cuadros de cada sector: borde del color, fondo suave y esquinas de arriba rectas (la cabecera las tapa). .border / .rounded de
+       Bootstrap llevan !important, por eso aca tambien. margin-top: 0 pega el cuadro a su cabecera. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-box-elaborado,
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-box-ingredientes {
+        margin-top: 0 !important;
+        border-width: 2px !important;
+        border-style: solid !important;
+        border-radius: 0 0 .5rem .5rem !important;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-box-elaborado {
+        border-color: var(--pt-prod-line) !important;
+        background: var(--pt-prod-soft);
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-box-ingredientes {
+        border-color: var(--pt-ing) !important;
+        background: var(--pt-ing-soft);
+    }
+
+    /* Nombre del elaborado elegido: se destaca (es el resultado de la carga). */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #txtElaboradoNombre {
+        font-weight: 800;
+        color: var(--pt-prod-ink);
+    }
+
+    /* Etiquetas visibles. Las reglas que las ocultaban (secciones 4 y 6 de este archivo) tienen una clase menos que estas. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-box-elaborado .row label,
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields label:not(.invisible) {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0 0 .1rem;
+        padding: 0;
+        overflow: visible;
+        clip: auto;
+        white-space: nowrap;
+        border: 0;
+        font-size: .66rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ui-text-muted, #6b7785);
+    }
+
+    /* Con la etiqueta arriba, el placeholder repetido sobra. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] :is(#txtCodigoElaborado, #txtElaboradoNombre, #txtCodigoIngrediente, #txtIngredienteNombre, #txtKgIngrediente)::placeholder {
+        color: transparent;
+    }
+
+    /* Campos y botones de cada fila alineados por abajo (con etiqueta, el centrado vertical los desparejaba). */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-box-elaborado > .row,
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row {
+        align-items: flex-end;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) {
+        align-items: flex-end;
+    }
+
+    /* Tabla de ingredientes: toma todo el alto libre de la columna izquierda y scrollea por dentro (antes crecia con cada producto y dejaba
+       un vacio abajo). El minimo de 6 rem evita que en una ventana baja se pise con el pie. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-col-izq > .pt-tabla-wrap {
+        flex: 1 1 0;
+        min-height: 6rem;
+        border: 2px solid var(--pt-ing);
+        border-radius: .5rem;
+        background: var(--ui-surface, transparent);
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaLineasElaborado thead th {
+        background: var(--pt-ing-soft);
+        color: var(--pt-ing-ink);
+        border-bottom: 2px solid var(--pt-ing);
+    }
+
+    /* ---- Formula (columna derecha): nombre y kilos en negrita para identificar cada ingrediente de un vistazo ---- */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-summary-card {
+        border: 2px solid var(--pt-ing);
+    }
+
+    /* Pedido 2026-11-11: la formula NUNCA scrollea (ni horizontal ni vertical): todos los ingredientes y las tres columnas a la vista. Sin tope
+       de alto (elaborados-compacto.css lo limitaba a 10 filas) y sin overflow; si la formula es larga crece la PAGINA (ver "Pagina larga"). */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .formula-elaborado-wrap {
+        border: 1px solid var(--pt-ing);
+        border-radius: .4rem;
+        max-height: none;
+        overflow: visible;
+    }
+
+    /* Columnas fijas (Kgs y Auto) y el nombre toma el resto, bajando de renglon si es largo en vez de empujar las columnas y generar scroll. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado thead th:nth-child(2) { width: 5.4rem; text-align: right; }
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado thead th:nth-child(3) { width: 4.6rem; }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado tbody td.cc-l-prod {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+
+    /* Costeo de administrador abierto: la columna Costo (190 px) no entra en una tabla fija. Ahi se vuelve a permitir el scroll horizontal
+       (unico caso; deuda conocida, ver docs/DECISIONS.md 2026-11-11). */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .formula-elaborado-wrap:has(#colCostoFormulaCarga:not(.d-none)) {
+        overflow-x: auto;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .formula-elaborado-wrap:has(#colCostoFormulaCarga:not(.d-none)) #tablaFormulaElaborado {
+        table-layout: auto;
+        min-width: 34rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado thead th {
+        background: var(--pt-ing-soft);
+        color: var(--pt-ing-ink);
+        border-bottom: 2px solid var(--pt-ing);
+    }
+
+    /* Misma tipografia que la tabla de ingredientes (seccion 2 de este archivo): letra de .875 rem (14 px), cifras tabulares, filas de 1.375 rem,
+       relleno de .45 rem y negrita 700 en nombre y kilos (antes .9 rem y 800). */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado {
+        font-size: .875rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado tbody td {
+        height: 1.375rem;
+        padding-left: .45rem;
+        padding-right: .45rem;
+        line-height: 1.3;
+        vertical-align: middle;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado tbody td.cc-l-prod,
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado tbody td.cc-l-kg {
+        font-weight: 700;
+    }
+
+    /* Filas alternadas: el mismo tono que la tabla de ingredientes, para seguir el renglon con la vista (claro y oscuro). */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado tbody tr:nth-child(even) > td {
+        background-color: rgba(127, 127, 127, .07);
+    }
+
+    /* Punto verde antes del nombre: el mismo color del sector Ingredientes. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado tbody td.cc-l-prod::before {
+        content: "";
+        display: inline-block;
+        width: .5rem;
+        height: .5rem;
+        border-radius: 50%;
+        background: var(--pt-ing);
+        margin-right: .4rem;
+    }
+
+    /* Chip Auto (se agrega solo al guardar) / Manual (hay que cargarlo a mano). */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-chip {
+        display: inline-block;
+        padding: 0 .5rem;
+        border-radius: 999px;
+        font-size: .68rem;
+        font-weight: 700;
+        line-height: 1.2rem;
+        border: 1px solid var(--pt-ing);
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-chip-auto {
+        background: var(--pt-ing);
+        color: var(--pt-sec-texto);
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-chip-manual {
+        border-color: var(--pt-prod-line);
+        color: var(--pt-prod-ink);
+    }
+
+    /* "Total manual" lleva el punto verde de los ingredientes. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-summary-card .d-flex:has(> #lblTotalManual) > span::before {
+        content: "\25CF  ";
+        color: var(--pt-ing);
+    }
+
+    /* ---- Fórmula completa (pedido 2026-11-11) ----
+       1) Columna derecha mas ancha (31 % de la ventana, 25-34 rem; antes 23 %, 21-27 rem) para que Ingrediente / Kgs / Auto entren sin scroll.
+          La izquierda cede el ancho: la tabla de ingredientes baja Producto de 17 a 13 rem y compacta Codigo, # y Kilos. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-fila-principal > .pt-col-der {
+        flex: 0 0 clamp(25rem, 31vw, 34rem);
+        width: clamp(25rem, 31vw, 34rem);
+        max-width: clamp(25rem, 31vw, 34rem);
+    }
+
+    .pantalla-trabajo[data-pt="elab"] {
+        --pt-ancho-producto: 13rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th:first-child { width: 2.6rem !important; }
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-cod { width: 4.2rem !important; }
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-num { width: 5.8rem !important; }
+
+    /*    2) Pagina larga: si la formula tiene muchos ingredientes, crece la PAGINA (scrollea la zona de trabajo) en vez de scrollear la tabla.
+          La cadena de contenedores deja de repartirse el alto de la ventana (flex 1 1 0) y pasa a "1 0 auto": ocupa al menos lo que le queda
+          pero nunca menos que su contenido. Con pocos ingredientes todo sigue entrando en la ventana y la tabla de la izquierda llena el alto.
+          Si la formula no entra, Observaciones y Guardar quedan mas abajo (hay que bajar la pagina), pedido del usuario. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"],
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-fill {
+        flex: 1 0 auto;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-fila-principal {
+        flex: 1 0 auto;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-col-der {
+        overflow: visible;
+    }
+
+    /*    3) Botones de arriba (Volver / Elaborados sin guardar) mas compactos: letra y relleno de btn-sm, una sola linea de ~1.7 rem. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-barra-botones .btn {
+        min-height: 0;
+        height: 1.75rem;
+        padding: 0 .6rem;
+        font-size: .8rem;
+        line-height: 1;
+        border-radius: .4rem;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-barra-botones .btn .fas {
+        font-size: .75rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-barra-botones .badge {
+        font-size: .68rem;
+        padding: .15rem .4rem;
+    }
+
+    /* ---- Fila de carga de ingredientes en UNA linea (pedido 2026-11-11) ----
+       Codigo | Ingrediente (F10) | Cantidad | + y, a su derecha en la MISMA linea, Balanza | Ver acumulados | teclado digital (como en la
+       vista anterior). Antes los campos pedian 36 rem y con la columna derecha mas ancha los botones bajaban a otra linea. Ahora los campos
+       piden 22 rem y las columnas Bootstrap pierden su margen lateral de 15 px (4 columnas = ~120 px de aire). Si la ventana igual no alcanza
+       (< ~1300 px), el wrap normal deja Balanza junto a los campos y Ver acumulados / teclado bajan. Con el teclado desplegado no aplica. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) > .numeric-keypad-toggle-layout {
+        flex: 1 1 25rem;
+        min-width: 25rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row {
+        flex-wrap: nowrap;
+        margin-left: -.25rem;
+        margin-right: -.25rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row > [class*="col-"] {
+        padding-left: .25rem;
+        padding-right: .25rem;
+        width: auto;
+    }
+
+    /* Codigo: 15 caracteres visibles (codigos de barras de hasta 13-14 digitos): 15 digitos de Nunito 12.96 px = 117 px + relleno + borde.
+       Cantidad: al menos 8 caracteres visibles ("8888,888" = 57 px). Medidos con measureText sobre la fuente real el 2026-11-11.
+       Relleno lateral de ambos campos de .5 rem a .35 rem para ganar ~5 px cada uno. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row > .ingrediente-col-codigo {
+        flex: 0 0 9rem;
+        max-width: 9rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #txtCodigoIngrediente,
+    body.app-shell .pantalla-trabajo[data-pt="elab"] #txtKgIngrediente {
+        padding-left: .35rem;
+        padding-right: .35rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row > :nth-child(2) {
+        flex: 1 1 0;
+        max-width: none;
+        min-width: 8rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row > .ingrediente-col-cantidad {
+        flex: 0 0 5.5rem;
+        max-width: 5.5rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row > .ingrediente-col-accion {
+        flex: 0 0 auto;
+        max-width: none;
+    }
+
+    /* Balanza (interruptor) y botones con icono: pegados entre si, alineados con la base de los campos. */
+    body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .custom-control {
+        margin: 0 .1rem .3rem 0 !important;
+        white-space: nowrap;
+    }
+}
+
+/* ---- 9. Movimientos/Editar y Stock/Editar: el bloque donde se ingresa cada producto, identificado (pedido 2026-11-11, variante A) ----
+   Franja de una linea "AGREGAR PRODUCTO" + fondo y borde azules sobre el cuadro de carga (.mov-box-agregar en Movimientos; el unico
+   .stock-section-box de la columna izquierda en Stock). Colores de la paleta de la seccion 8 (azul de Elaborados en claro, celeste oscuro en modo
+   oscuro). Solo escritorio (>= 1200 px): en celular sigue el titulo h6 de siempre.
+   No cambia el contenido del cuadro ni su acomodo en una fila (seccion 4) ni el panel de Stock destino (secciones 5 y 5b). */
+.pantalla-trabajo:is([data-pt="mov"], [data-pt="stock"]) .pt-sec-head {
+    display: none;
+}
+
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo:is([data-pt="mov"], [data-pt="stock"]) .pt-sec-head {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .15rem .6rem;
+        border-radius: .5rem .5rem 0 0;
+        background: var(--pt-prod);
+        color: var(--pt-prod-on);
+        font-size: .78rem;
+        line-height: 1.3;
+    }
+
+    body.app-shell .pantalla-trabajo:is([data-pt="mov"], [data-pt="stock"]) .pt-sec-tit {
+        font-weight: 800;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+    }
+
+    body.app-shell .pantalla-trabajo:is([data-pt="mov"], [data-pt="stock"]) .pt-sec-sub {
+        opacity: .92;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* .border / .rounded de Bootstrap llevan !important, por eso aca tambien. margin-top: 0 pega el cuadro a su franja. */
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-box-agregar,
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-col-izq > .stock-section-box {
+        margin-top: 0 !important;
+        border: 2px solid var(--pt-prod-line) !important;
+        border-radius: 0 0 .5rem .5rem !important;
+        background: var(--pt-prod-soft);
+    }
+}

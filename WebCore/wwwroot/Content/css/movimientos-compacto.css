@@ -22,10 +22,11 @@
         gap: .4rem;
     }
 
+    /* Etiqueta en peso normal (pedido 2026-11-11): antes 700, igual que el valor del campo, y se perdia con el contenido; el valor sigue en negrita. */
     body.app-shell .movimiento-page .mov-fila-datos label {
         flex: none;
         margin: 0;
-        font-weight: 700;
+        font-weight: 400;
         white-space: nowrap;
     }
 

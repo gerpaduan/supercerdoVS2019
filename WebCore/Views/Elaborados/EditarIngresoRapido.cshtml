@@ -13,7 +13,7 @@
     // con el borrador en servidor cuando esta habilitado (Postgres); en SQL Server sigue sin nada.
     bool borradorGenericoHabilitado = WebCore.Helpers.BorradorGenericoSettings.Habilitado;
     var modalBorradoresData = new ViewDataDictionary(ViewData);
-    modalBorradoresData["TituloBorradoresGenerico"] = "Embutidos sin guardar";
+    modalBorradoresData["TituloBorradoresGenerico"] = "Elaborados sin guardar";
 }
 
 <div class="container-fluid px-2 px-md-3 elaborados-page elaborados-compacto" data-elaborados-page="ingreso-rapido-edicion">
@@ -26,7 +26,7 @@
         @if (borradorGenericoHabilitado)
         {
             <button type="button" class="btn btn-outline-secondary mb-2" id="btnVerBorradoresElaborados">
-                <i class="fas fa-clock-rotate-left mr-1"></i> Embutidos sin guardar
+                <i class="fas fa-clock-rotate-left mr-1"></i> Elaborados sin guardar
                 <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
             </button>
         }

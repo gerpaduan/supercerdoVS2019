@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-11-11 - Acumulados: «Veces», detalle por carga y «Solo repetidos»
+
+- **Pedido:** en «Ver acumulados» de Movimientos, Stock y Elaborados, encabezado más compacto y una columna que diga en cuántos ítems está cargado cada producto, para detectar cargas duplicadas, con el detalle de cada carga.
+- **Cambio:** helper nuevo `acumulados-detalle.js` (incluido en `Movimientos/Editar`, `Stock/Editar` y `Elaborados/Carga`); `movimientos.js`, `stock.js` y `elaborados-carga.js` (`buildAcumulados` / `renderAcumulados` / apertura del modal); estilos `.tabla-acumulados` y `.acum-*` en `ui-refresh.css`; el modal de Stock se ensancha a 520 px. Manual: `Movimientos.Editar`, `Stock.Editar` y `Elaborados.Carga`. Decisión en `DECISIONS.md`.
+- **Verificado:** sintaxis de los 4 JS y un arnés HTML con los estilos reales (escritorio y tarjeta). **Sin verificar:** las 3 pantallas con datos y login reales, modo oscuro y tablet.
+- **Pendiente:** probar en cada pantalla con un producto cargado 2 veces (abrir detalle, ordenar por Veces, Solo repetidos, que el total coincida) y correr `scripts/check-ayuda.ps1` antes del deploy. Las capturas del manual de estos modales quedaron viejas.
+
 ## 2026-11-11 - F7 «Nuevo egreso» vuelve directo al POS
 
 - **Pedido:** con F7 en el POS, después de guardar el egreso y elegir en el comprobante (imprimir o cerrar) se abría Mis actividades; debe quedar el POS listo para la próxima venta. Sin aviso extra: el comprobante ya dice «Egreso guardado».

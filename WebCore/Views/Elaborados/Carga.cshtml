@@ -13,7 +13,7 @@
     // respaldo por captura de pantalla de esta pantalla.
     bool borradorGenericoHabilitado = WebCore.Helpers.BorradorGenericoSettings.Habilitado;
     var modalBorradoresData = new ViewDataDictionary(ViewData);
-    modalBorradoresData["TituloBorradoresGenerico"] = "Embutidos sin guardar";
+    modalBorradoresData["TituloBorradoresGenerico"] = "Elaborados sin guardar";
 
     var modalElaboradoData = new ViewDataDictionary(ViewData);
     modalElaboradoData["ModalId"] = "modalBuscarElaborado";
@@ -47,10 +47,16 @@
         @if (borradorGenericoHabilitado)
         {
             <button type="button" class="btn btn-outline-secondary mb-2" id="btnVerBorradoresElaborados">
-                <i class="fas fa-clock-rotate-left mr-1"></i> Embutidos sin guardar
+                <i class="fas fa-clock-rotate-left mr-1"></i> Elaborados sin guardar
                 <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
             </button>
         }
+        @* Pantalla completa (2026-11-11): alterna como F11. El titulo (tooltip) y el icono los mantiene pantalla-completa.js; se oculta
+           solo si el navegador no soporta la API. *@
+        <button type="button" class="btn btn-outline-secondary mb-2" id="btnPantallaCompleta"
+                title="F11 · Pantalla completa" aria-label="Pantalla completa (F11)" aria-pressed="false">
+            <i class="fas fa-expand"></i>
+        </button>
         @if (esAnulado)
         {
             <span class="badge badge-danger px-3 py-2 text-uppercase mb-2">Anulado</span>
@@ -143,6 +149,14 @@
 
                 <div class="row pt-fila-principal">
                     <div class="col-12 col-xl-8 pt-col-izq">
+                        @* Cabeceras de sector (2026-11-11): solo escritorio (pantalla-trabajo.css, seccion 8). Rotulan "1 Elaborado" (azul) y
+                           "2 Ingredientes" (verde) para que quien recien empieza sepa que carga en cada cuadro. En celular no se ven: ahi
+                           siguen los titulos h6 de siempre. *@
+                        <div class="pt-sec-head pt-sec-prod">
+                            <span class="pt-sec-num">1</span>
+                            <span class="pt-sec-tit">Elaborado</span>
+                            <span class="pt-sec-sub">lo que vas a fabricar (producto final)</span>
+                        </div>
                         <div class="border rounded p-3 mb-3 elaborados-section-box elaborados-box-elaborado">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 elaborados-box-cab">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Elaborado</h6>
@@ -153,13 +167,13 @@
                             <div class="row align-items-end">
                                 <div class="col-12 col-md-3 col-lg-2 elaborado-col-codigo">
                                     <div class="form-group">
-                                        <label for="txtCodigoElaborado">Codigo</label>
+                                        <label for="txtCodigoElaborado">Código</label>
                                         <input type="number" id="txtCodigoElaborado" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" readonly="@(esAnulado ? "readonly" : null)" />
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-9 col-lg-10">
                                     <div class="form-group">
-                                        <label for="txtElaboradoNombre">Elaborado</label>
+                                        <label for="txtElaboradoNombre">Nombre del elaborado</label>
                                         <div class="input-group">
                                             <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
                                             <input type="hidden" id="txtElaboradoTipo" />
@@ -183,6 +197,13 @@
                             }
                         </div>
 
+                        <div class="pt-sec-head pt-sec-ing">
+                            <span class="pt-sec-num">2</span>
+                            <span class="pt-sec-tit">Ingredientes</span>
+                            <span class="pt-sec-sub">con lo que se fabrica</span>
+                            @* Cantidad de ingredientes y kilos cargados: lo actualiza renderLineas() en elaborados-carga.js. *@
+                            <span class="pt-sec-info" id="lblResumenIngredientes">0 ingredientes · 0,000 kg</span>
+                        </div>
                         <div class="border rounded p-3 mb-3 elaborados-section-box elaborados-box-ingredientes">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Ingredientes manuales</h6>
@@ -222,7 +243,7 @@
                                     <div class="row align-items-end">
                                         <div class="col-12 col-md-4 col-lg-3 ingrediente-col-codigo">
                                             <div class="form-group">
-                                                <label for="txtCodigoIngrediente">Codigo</label>
+                                                <label for="txtCodigoIngrediente">Código</label>
                                                 <input type="number" id="txtCodigoIngrediente" class="form-control" min="0" step="1" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
                                             </div>
                                         </div>
@@ -246,7 +267,7 @@
                                         </div>
                                         <div class="col-12 col-md-4 col-lg-2 ingrediente-col-cantidad">
                                             <div class="form-group">
-                                                <label for="txtKgIngrediente">Cantidad</label>
+                                                <label for="txtKgIngrediente">Cantidad (kg)</label>
                                                 <input type="text" id="txtKgIngrediente" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
                                             </div>
                                         </div>
@@ -481,19 +502,26 @@
                 </button>
             </div>
             <div class="modal-body">
+                @* Resumen + filtro "Solo repetidos" y columna "Veces" con detalle por carga: acumulados-detalle.js (docs/DECISIONS.md, 2026-11-11). *@
+                <div class="acum-barra">
+                    <span class="js-acum-resumen"></span>
+                    <label><input type="checkbox" class="js-acum-solo-rep"> Solo repetidos</label>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact tabla-cards tabla-cards-lista tabla-items" id="tablaAcumuladosElaborado">
+                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact tabla-cards tabla-cards-lista tabla-items tabla-acumulados" id="tablaAcumuladosElaborado">
                         <thead class="thead-light">
                             <tr>
-                                <th style="width:60px;" data-sort-key="orden">#</th>
-                                <th style="width:120px;" data-sort-key="codigo">Codigo</th>
+                                <th style="width:50px;" data-sort-key="orden">#</th>
+                                <th style="width:100px;" data-sort-key="codigo">Codigo</th>
                                 <th data-sort-key="producto">Producto</th>
-                                <th class="text-right" style="width:120px;" data-sort-key="cantidad">Cantidad</th>
+                                <th class="text-right" style="width:110px;" data-sort-key="cantidad">Cantidad</th>
+                                <th class="text-center" style="width:92px;" data-sort-key="veces" title="En cuántos ítems de la tabla está cargado este producto">Veces</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyAcumuladosElaborado"></tbody>
                     </table>
                 </div>
+                <div class="acum-pie">Clic en una fila para ver cada carga. Ámbar = el producto está en más de un ítem (posible carga duplicada).</div>
             </div>
         </div>
     </div>
@@ -595,7 +623,9 @@
     <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/acumulados-detalle.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-carga.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/pantalla-completa.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     @* Escritorio compacto (2026-10-30): va DESPUES de numeric-keypad.css, que comparte con otras pantallas. *@
     <link rel="stylesheet" href="@Url.Content("~/Content/css/elaborados-compacto.css")" asp-append-version="true" />

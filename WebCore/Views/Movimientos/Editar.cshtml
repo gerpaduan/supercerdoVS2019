@@ -55,6 +55,12 @@
                 <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
             </button>
         }
+        @* Pantalla completa (2026-11-11): alterna como F11, igual que en Elaborados/Carga. Icono y tooltip los mantiene pantalla-completa.js;
+           se oculta solo si el navegador no soporta la API. *@
+        <button type="button" class="btn btn-outline-secondary" id="btnPantallaCompleta"
+                title="F11 · Pantalla completa" aria-label="Pantalla completa (F11)" aria-pressed="false">
+            <i class="fas fa-expand"></i>
+        </button>
     </div>
 
     @* Con "Stock destino" encendido (y pantalla >= 1200 px) el contenido pasa a dos columnas: el stock del destino a la izquierda y la carga
@@ -130,6 +136,12 @@
 
                 <div class="row mov-fila-principal pt-fila-principal">
                     <div class="col-12 col-xl-8 pt-col-izq">
+                        @* Franja del bloque (2026-11-11): solo escritorio (pantalla-trabajo.css, seccion 9). Rotula el cuadro donde se ingresa cada producto,
+                           con fondo y borde celestes sutiles. En celular no se ve: ahi sigue el titulo h6 de siempre. *@
+                        <div class="pt-sec-head pt-sec-agregar">
+                            <span class="pt-sec-tit">Agregar producto</span>
+                            <span class="pt-sec-sub">uno por uno: código, producto y cantidad</span>
+                        </div>
                         <div class="border rounded p-3 mb-3 movimiento-section-box mov-box-agregar">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 movimiento-section-title">Agregar producto</h6>
@@ -385,20 +397,27 @@
                 </button>
             </div>
             <div class="modal-body">
+                @* Resumen + filtro "Solo repetidos" y columna "Veces" con detalle por carga: acumulados-detalle.js (docs/DECISIONS.md, 2026-11-11). *@
+                <div class="acum-barra">
+                    <span class="js-acum-resumen"></span>
+                    <label><input type="checkbox" class="js-acum-solo-rep"> Solo repetidos</label>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0 movimiento-table-compact tabla-items" id="tablaAcumuladosMovimiento">
+                    <table class="table table-sm table-bordered mb-0 movimiento-table-compact tabla-items tabla-acumulados" id="tablaAcumuladosMovimiento">
                         <thead class="thead-light">
                             <tr>
-                                <th class="text-center d-none d-md-table-cell" style="width:60px;" data-sort-key="orden">#</th>
-                                <th style="width:110px;" data-sort-key="codigo">Código</th>
+                                <th class="text-center d-none d-md-table-cell" style="width:50px;" data-sort-key="orden">#</th>
+                                <th style="width:90px;" data-sort-key="codigo">Código</th>
                                 <th data-sort-key="producto">Producto</th>
-                                <th class="text-right" style="width:110px;" data-sort-key="cantUnidad">Cant.Un.</th>
-                                <th class="text-right" style="width:110px;" data-sort-key="cantKg">Kilos</th>
+                                <th class="text-right" style="width:90px;" data-sort-key="cantUnidad">Cant.Un.</th>
+                                <th class="text-right" style="width:100px;" data-sort-key="cantKg">Kilos</th>
+                                <th class="text-center" style="width:92px;" data-sort-key="veces" title="En cuántos ítems de la tabla está cargado este producto">Veces</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyAcumuladosMovimiento"></tbody>
                     </table>
                 </div>
+                <div class="acum-pie">Clic en una fila para ver cada carga. Ámbar = el producto está en más de un ítem (posible carga duplicada).</div>
             </div>
         </div>
     </div>
@@ -858,6 +877,7 @@
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/acumulados-detalle.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
     <script>window.movimientoStockDestinoConfig = { url: '@Url.Action("ExistenciaPorSucursales", "Stock")' };</script>
@@ -867,6 +887,7 @@
     <link rel="stylesheet" href="@Url.Content("~/Content/css/movimientos-compacto.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
     <script src="@Url.Content("~/Scripts/app/pantalla-trabajo.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/pantalla-completa.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>

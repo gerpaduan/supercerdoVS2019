@@ -838,30 +838,48 @@
         // Orden del modal de acumulados (independiente del de la tabla principal). Arranca por codigo y se reinicia cada vez que se abre.
         var acumuladosOrden = { sortKey: 'codigo', sortDirection: 'asc' };
 
+        // Columna "Veces" y detalle por carga del modal (helper acumulados-detalle.js). Se redibuja al abrir/cerrar un detalle o filtrar.
+        var acumuladosDetalle = window.AcumuladosDetalle.crear({
+            modal: '#modalAcumuladosMovimiento',
+            tabla: '#tablaAcumuladosMovimiento',
+            alCambiar: function () { renderAcumulados(); }
+        });
+
         // Agrupa las lineas por producto sumando unidades y kilos. "Orden" = posicion de la primera carga de ese producto (columna #);
         // se cuenta aparte porque Object.keys reordena las claves numericas por valor y no conserva el orden de insercion.
+        // "Veces" = en cuantos items esta el producto y "Cargas" = cada una, con su # de la tabla principal (__ordenIngreso; si faltara, su posicion).
         function buildAcumulados() {
             var map = {};
             var siguienteOrden = 1;
-            state.lines.forEach(function (line) {
+            state.lines.forEach(function (line, indice) {
                 var key = String(line.IdCorte || '') || String(line.Codigo || '');
                 if (!map[key]) {
                     map[key] = {
+                        Clave: key,
                         Orden: siguienteOrden++,
                         Codigo: line.Codigo,
                         Producto: line.Producto,
                         CantUnidad: 0,
-                        CantKg: 0
+                        CantKg: 0,
+                        Veces: 0,
+                        Cargas: []
                     };
                 }
                 map[key].CantUnidad += toInt(line.CantUnidad);
                 map[key].CantKg += toFloat(line.CantKg);
+                map[key].Veces++;
+                map[key].Cargas.push({
+                    item: toInt(line.__ordenIngreso) || (indice + 1),
+                    un: toInt(line.CantUnidad),
+                    kg: toFloat(line.CantKg)
+                });
             });
             var valorOrden = function (item) {
                 switch (acumuladosOrden.sortKey) {
                     case 'producto': return String(item.Producto || '').toLowerCase();
                     case 'cantUnidad': return item.CantUnidad;
                     case 'cantKg': return item.CantKg;
+                    case 'veces': return item.Veces;
                     case 'orden': return item.Orden;
                     default: return String(item.Codigo || '');
                 }
@@ -876,18 +894,30 @@
         function renderAcumulados() {
             var items = buildAcumulados();
             var html = '';
+            // Repetidos = productos cargados en mas de un item; "Solo repetidos" muestra unicamente esos.
+            var repetidos = items.filter(function (item) { return item.Veces > 1; });
+            var visibles = acumuladosDetalle.soloRepetidos() ? repetidos : items;
             window.OrdenTabla.sincronizarEncabezados($('#tablaAcumuladosMovimiento thead th[data-sort-key]'), acumuladosOrden);
-            if (!items.length) {
-                html = '<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">No hay productos cargados.</td></tr>';
+            acumuladosDetalle.pintarResumen(items.length, state.lines.length, repetidos.length);
+            if (!visibles.length) {
+                html = '<tr class="js-empty-row"><td colspan="6" class="text-center text-muted">'
+                    + acumuladosDetalle.textoVacio('No hay productos cargados.') + '</td></tr>';
             } else {
-                items.forEach(function (item) {
-                    html += '<tr>'
+                visibles.forEach(function (item) {
+                    // Columnas del detalle desplegable: cada carga y, al pie, el total (igual a la fila acumulada).
+                    var columnasDetalle = [
+                        { titulo: 'Cant.Un.', valor: function (carga) { return formatInt(carga.un); }, total: formatInt(item.CantUnidad) },
+                        { titulo: 'Kilos', valor: function (carga) { return formatKg(carga.kg); }, total: formatKg(item.CantKg) }
+                    ];
+                    html += '<tr' + acumuladosDetalle.atributosFila(item.Clave, item.Veces) + '>'
                         + '<td class="text-center font-weight-bold d-none d-md-table-cell">' + item.Orden + '</td>'
                         + '<td>' + item.Codigo + '</td>'
                         + '<td>' + item.Producto + '</td>'
                         + '<td class="text-right">' + formatInt(item.CantUnidad) + '</td>'
                         + '<td class="text-right">' + formatKg(item.CantKg) + '</td>'
-                        + '</tr>';
+                        + '<td class="text-center text-nowrap">' + acumuladosDetalle.vecesHtml(item.Veces) + '</td>'
+                        + '</tr>'
+                        + acumuladosDetalle.filaDetalle(item.Clave, item.Producto, item.Veces, item.Cargas, columnasDetalle, 6);
                 });
             }
             $('#tbodyAcumuladosMovimiento').html(html);
@@ -1108,6 +1138,7 @@
         $('#btnVerAcumulados').on('click', function () {
             acumuladosOrden.sortKey = 'codigo';
             acumuladosOrden.sortDirection = 'asc';
+            acumuladosDetalle.reiniciar();
             renderAcumulados();
             $('#modalAcumuladosMovimiento').modal('show');
         });
