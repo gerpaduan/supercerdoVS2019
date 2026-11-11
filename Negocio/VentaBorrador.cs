@@ -117,8 +117,12 @@ namespace Negocio
         // OTRO usuario nunca se toma: espera el umbral aunque haya supervisor.
         // Devuelve null y el motivo en "error" si no se puede.
         // nombreSupervisor: nombre de quien autorizo con su clave (null/vacio = sin autorizacion).
+        // traspasoPorCajaCerrada (2026-11-11, ver docs/DECISIONS.md "Vigilancia de caja del POS"): cambio de turno. El
+        // llamador ya verifico que el dueno de la venta NO tiene caja abierta y que quien la toma SI; en ese caso otro
+        // cajero la puede tomar sin supervisor (la venta tiene que estar interrumpida igual: una en uso nunca se toma).
         public Entidades.VentaBorrador Recuperar(int idBorrador, int idOperadorActual, int idUsuarioSesionActual,
-            int idUsuarioActor, string nombreSupervisor, int minutosSinLatido, bool tomarSiEstaEnUso, out string error)
+            int idUsuarioActor, string nombreSupervisor, int minutosSinLatido, bool tomarSiEstaEnUso, out string error,
+            bool traspasoPorCajaCerrada = false)
         {
             error = null;
             bool autorizadoPorSupervisor = !string.IsNullOrWhiteSpace(nombreSupervisor);
@@ -138,7 +142,7 @@ namespace Negocio
                 return null;
             }
 
-            if (!esDelOperador && !autorizadoPorSupervisor)
+            if (!esDelOperador && !autorizadoPorSupervisor && !traspasoPorCajaCerrada)
             {
                 error = "Esa venta es de otro usuario: hace falta la autorización de un supervisor.";
                 return null;
@@ -175,7 +179,9 @@ namespace Negocio
                     ? (tomaEnUso
                         ? "Recuperada por su dueño estando en uso (última señal hace " + borrador.SegundosSinLatido.ToString(CultureInfo.InvariantCulture) + " s); lo confirmó en pantalla."
                         : "Recuperada por su dueño.")
-                    : "Tomada por otro usuario con autorización de " + nombreSupervisor + ". Dueño original: " + (nombreDueno ?? ("#" + duenoOriginal.ToString(CultureInfo.InvariantCulture))) + "."
+                    : (autorizadoPorSupervisor
+                        ? "Tomada por otro usuario con autorización de " + nombreSupervisor + ". Dueño original: " + (nombreDueno ?? ("#" + duenoOriginal.ToString(CultureInfo.InvariantCulture))) + "."
+                        : "Tomada por otro usuario sin supervisor: la caja del dueño original (" + (nombreDueno ?? ("#" + duenoOriginal.ToString(CultureInfo.InvariantCulture))) + ") ya estaba cerrada (cambio de turno).")
             });
 
             borrador.IdOperador = idOperadorActual;

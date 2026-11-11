@@ -13,6 +13,14 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-11 - POS: se registró una venta con la caja ya cerrada desde otra terminal
+
+- **Sintoma**: se cerró la caja de un cajero desde otra PC y su POS (abierto, última actividad antes del cierre) dejó cargar y **registrar una venta más**; recién después saltó el modal de abrir caja. La venta quedó fuera de caja y el cierre inconsistente.
+- **Causa**: (1) `VentasController.FinalizarVenta` dejaba vender sin caja a quien tuviera el permiso `PuedeOperarSinCajaYEditarFecha` (Admin o «modificar venta») sin la confirmación explícita «operar sin caja»; (2) el POS solo validaba la caja al cargar y al desbloquear, nunca mientras estaba abierto.
+- **Resolucion**: `FinalizarVenta` exige permiso **y** bypass explícito (`TieneBypassCajaActivo`) y responde `cajaCerrada:true`; el POS revisa la caja cada 15 s (`pos-caja-vigilante.js` + `EstadoCajaPOS`), corta, resguarda la venta y pide abrir caja. Otro cajero puede tomarla en el cambio de turno. Ver `docs/DECISIONS.md` «Vigilancia de caja del POS». Si ya hay ventas registradas con la caja cerrada de antes del cambio, quedan fuera del cierre: PENDIENTE de revisar caso por caso.
+
+---
+
 ## 2026-11-10 - POS / Mis actividades: un cajero que no es administrador no veía «Modificar» en sus egresos de caja
 
 - **Sintoma**: en F6 → Mis actividades solo el administrador tenía el lápiz Modificar en los egresos. Pasaba igual con el operador de la cuenta de producción.

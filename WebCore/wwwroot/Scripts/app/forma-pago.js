@@ -914,6 +914,22 @@ function finalizarVenta(data) {
                 return;
             }
 
+            // La caja del vendedor ya esta cerrada (se la cerraron desde otra terminal): en vez del error generico, el POS
+            // corta la venta, la resguarda y pide abrir caja de nuevo (pos-caja-vigilante.js). Se libera el estado "en
+            // proceso" como en cualquier rechazo; el corte vuelve a marcar POSFinalizandoVenta para frenar los latidos.
+            if (!resp.ok && resp.cajaCerrada === true && window.POSCajaVigilante) {
+                window.POSFinalizandoVenta = false;
+                window.POSVentaFinalizada = false;
+                setEstadoVentaEnProceso(false);
+                window.POSGuard?.endAction('venta:finalizar');
+                if (data.omitirPostVenta) {
+                    window.POSCancelacionEnCurso = false;
+                    $(document).trigger('ventaCancelacion:error');
+                }
+                window.POSCajaVigilante.cortarPorCajaCerrada();
+                return;
+            }
+
             if (!resp.ok) {
                 Swal.fire({
                     icon: 'error',

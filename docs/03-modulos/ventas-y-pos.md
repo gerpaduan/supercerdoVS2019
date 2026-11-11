@@ -110,6 +110,21 @@ borrador en servidor y advertencias del POS", 2026-09-21). Resumen operativo:
   la pise (ver `docs/DECISIONS.md` 2026-10-04). Las de otro usuario siguen esperando el umbral.
 - **Al cerrar la caja** con una venta en curso del dueño de esa caja, se avisa y hace falta confirmar;
   si se confirma, queda registrado (evento + notificación al admin) y la venta sigue recuperable.
+  Desde 2026-11-11 el aviso muestra por cada venta el inicio, la última actividad y **EN USO AHORA** /
+  **Sin actividad** (`CajasController.CerrarCaja`, campos `ultimaActividad`, `sinActividad`, `enUso`)
+  para que el encargado decida si espera.
+- **Vigilancia de caja del POS (2026-11-11, `docs/DECISIONS.md` "Vigilancia de caja del POS").**
+  `pos-caja-vigilante.js` (config `window.POSCajaVigilanteConfig`, la arma `Views/Ventas/POS.cshtml` solo con
+  caja real abierta al cargar) llama a `VentasController.EstadoCajaPOS` cada `PosCajaVigilante:Segundos`
+  (default 15). Si la caja ya no está abierta, o `FinalizarVenta` responde `cajaCerrada:true`, corta: bloquea
+  teclado/lector, resguarda con `POSDraft.save()` + `POSBorrador.guardarAhora({cierrePestana:true})` (la venta
+  queda *interrumpida* al instante), cartel sin cierre y recarga la misma instancia → modal de abrir caja.
+  `FinalizarVenta` ya no deja vender sin caja con solo el permiso `PuedeOperarSinCajaYEditarFecha`: exige además
+  el bypass explícito (`TieneBypassCajaActivo`); `POS()` lo borra de la Session si hay caja real.
+  **Cambio de turno:** una venta interrumpida cuyo dueño ya no tiene caja abierta la toma cualquier cajero con
+  caja abierta de la sucursal sin supervisor (`Negocio.VentaBorrador.Recuperar(..., traspasoPorCajaCerrada)`,
+  evento `RECUPERADA` con el detalle); `ListarBorradoresPOS` marca esas filas con `tomableSinSupervisor` y
+  devuelve `ventaLocalTomadaPor` para que el POS del dueño descarte su carrito local ya tomado.
 - **Advertencia "producto pesado sin agregar"**: si un producto queda en pantalla con peso/cantidad
   estable más de `PosBorrador:SegundosProductoSinAgregar` segundos (config, default 7) y sale sin
   agregarse al carrito, se registra en `ventaproductosinagregar` como advertencia silenciosa (el

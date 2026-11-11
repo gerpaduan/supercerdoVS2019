@@ -5,7 +5,7 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-11-10
+revisada: 2026-11-11
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
@@ -63,6 +63,14 @@ Desde el 2026-11-10 el cajero puede modificar sus propios egresos de caja desde 
 - Sale **siempre** que haya una modificación del cajero, sin importar cuánto tiempo pasó. Las correcciones que hizo **otro usuario** (por ejemplo un administrador) no la disparan.
 - **Es solo una advertencia:** no impide cerrar. El botón de flechas (**Actualizar importes**) también la actualiza.
 - Las modificaciones hechas **antes del 2026-11-10** no quedaron registradas y no aparecen. Las compras modificadas desde Compras no entran en este aviso.
+
+## Ventas en curso al cerrar (¿espero o cierro?)
+Al confirmar el cierre, si el cajero tiene una venta sin terminar aparece **«Hay ventas en curso»** (desde el 2026-11-11 con más datos para decidir):
+- Por cada venta: cajero, total, cantidad de ítems, **cuándo la empezó** y su **última actividad** («hace 40 s»).
+- **EN USO AHORA** (rojo): el cajero la está armando en este momento. Conviene **esperar** a que la termine; el botón dice **Esperar**.
+- **Sin actividad** (gris): quedó abandonada (cerró el navegador, se cortó la luz…).
+- **Cerrar igual:** queda registrado y se le avisa al administrador. El POS del cajero se corta solo (le avisa que la caja fue cerrada) y la venta queda **resguardada**: la retoma él al abrir caja de nuevo, o quien tome el turno desde **F1 → Ver ventas sin guardar** en el POS.
+- Este aviso solo ve ventas **con productos cargados**. Si el cajero tiene el POS abierto y vacío, no sale; igual el POS se corta solo cuando le cierran la caja.
 
 ## Reabrir la última caja de un usuario
 - En el **Historial**, la última caja cerrada de cada usuario (en esa sucursal) tiene el botón **Reabrir** (solo con el permiso de modificar cierres de caja). **Solo se puede reabrir la última**: si el usuario ya abrió una caja nueva o tiene una abierta en esa sucursal, no se puede.

@@ -190,6 +190,51 @@ namespace NegocioTests
             Assert.Empty(repo.Eventos);
         }
 
+        // ---- Cambio de turno: el dueno ya no tiene caja abierta (traspasoPorCajaCerrada, 2026-11-11) ----
+
+        [Fact]
+        public void Venta_interrumpida_de_otro_sin_supervisor_se_rechaza()
+        {
+            var (negocio, repo, _) = NuevoVenta(OtroOperador, UmbralMinutos * 60 + 1);
+
+            var r = negocio.Recuperar(3, Operador, SesionActual, Operador, null, UmbralMinutos, false, out string error);
+
+            Assert.Null(r);
+            Assert.Contains("supervisor", error);
+            Assert.False(repo.Tomado);
+        }
+
+        [Fact]
+        public void Venta_interrumpida_de_otro_por_caja_cerrada_se_toma_sin_supervisor_y_queda_auditada()
+        {
+            var (negocio, repo, borrador) = NuevoVenta(OtroOperador, UmbralMinutos * 60 + 1);
+            borrador.NombreOperador = "Agustina";
+
+            var r = negocio.Recuperar(3, Operador, SesionActual, Operador, null, UmbralMinutos, false, out string error,
+                traspasoPorCajaCerrada: true);
+
+            Assert.NotNull(r);
+            Assert.Null(error);
+            Assert.True(repo.Tomado);
+            Assert.Equal(Operador, r.IdOperador);
+            Assert.Single(repo.Eventos);
+            Assert.Contains("Agustina", repo.Eventos[0].Detalle);
+            Assert.Contains("cambio de turno", repo.Eventos[0].Detalle);
+        }
+
+        [Fact]
+        public void Venta_en_uso_de_otro_no_se_toma_ni_con_traspaso_por_caja_cerrada()
+        {
+            var (negocio, repo, _) = NuevoVenta(OtroOperador, 60);
+
+            var r = negocio.Recuperar(3, Operador, SesionActual, Operador, null, UmbralMinutos, false, out string error,
+                traspasoPorCajaCerrada: true);
+
+            Assert.Null(r);
+            Assert.Contains("en uso", error);
+            Assert.False(repo.Tomado);
+        }
+
         // ===================== Repositorios falsos =====================
         // Solo implementan lo que usa Recuperar; el resto lanza NotImplementedException a proposito (si un
         // test nuevo lo necesita, que falle fuerte en vez de devolver datos inventados).

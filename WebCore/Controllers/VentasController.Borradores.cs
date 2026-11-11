@@ -53,6 +53,38 @@ namespace WebCore.Controllers
             return false;
         }
 
+        // Cambio de turno (2026-11-11, ver docs/DECISIONS.md "Vigilancia de caja del POS"): true si el dueno de la venta ya
+        // NO tiene caja abierta en la sucursal de la sesion. Ante cualquier falla de la consulta responde false (se sigue
+        // exigiendo supervisor: ante la duda, la regla estricta de siempre).
+        private bool DuenoSinCajaAbierta(int idDueno)
+        {
+            try
+            {
+                return idDueno > 0 && ObtenerCierreCajaActual(new Entidades.Usuario { Id = idDueno }) == null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("No se pudo consultar la caja del dueno " + idDueno + " de la venta sin cerrar: " + ex.Message);
+                return false;
+            }
+        }
+
+        // true si "operador" puede tomar esa venta SIN supervisor: el dueno ya no tiene caja abierta y quien la toma si.
+        // La condicion de venta interrumpida (no en uso) la sigue exigiendo Negocio.VentaBorrador.Recuperar.
+        private bool PuedeTomarPorCajaCerrada(Entidades.VentaBorrador borrador, Entidades.Usuario operador)
+        {
+            if (!DuenoSinCajaAbierta(borrador.IdOperador)) return false;
+            try
+            {
+                return ObtenerCierreCajaActual(operador) != null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceWarning("No se pudo consultar la caja del operador " + operador.Id + " al tomar una venta sin cerrar: " + ex.Message);
+                return false;
+            }
+        }
+
         // ------------------------------------------------------------------------------------
         // Guardado del carrito y latido
         // ------------------------------------------------------------------------------------
@@ -247,7 +279,26 @@ namespace WebCore.Controllers
                     ? negocio.ObtenerIdVentaSiYaFinalizada(request.ClientIdLocal.Value)
                     : null;
 
+                // Si el carrito local de esta pestana ya lo tomo OTRO cajero (cambio de turno: recuperada desde una caja
+                // nueva), el navegador lo descarta para no registrar la misma venta dos veces (ver pos-borrador.js).
+                string? ventaLocalTomadaPor = null;
+                if (request?.ClientIdLocal != null && request.ClientIdLocal != Guid.Empty)
+                {
+                    var delCarritoLocal = negocio.ObtenerPorClientId(request.ClientIdLocal.Value);
+                    if (delCarritoLocal != null && delCarritoLocal.Estado == Entidades.VentaBorrador.EstadoActiva
+                        && delCarritoLocal.IdSucursal == user.IdSucursal && delCarritoLocal.IdOperador != operador.Id)
+                    {
+                        ventaLocalTomadaPor = string.IsNullOrWhiteSpace(delCarritoLocal.NombreOperador)
+                            ? ("el usuario #" + delCarritoLocal.IdOperador)
+                            : delCarritoLocal.NombreOperador;
+                    }
+                }
+
                 var lista = negocio.ListarSucursal(user.IdSucursal, WebCore.Helpers.PosBorradorSettings.DiasRetencionFinalizadas);
+
+                // Cambio de turno: la caja de cada dueno distinto se consulta una sola vez; la del operador, tambien.
+                var duenoSinCajaPorId = new Dictionary<int, bool>();
+                bool? operadorConCaja = null;
 
                 var pendientes = new List<object>();
                 int interrumpidas = 0;
@@ -262,11 +313,30 @@ namespace WebCore.Controllers
                     bool enUso = Negocio.VentaBorrador.EstaEnUso(borrador, minutos);
                     if (!enUso) interrumpidas++;
 
+                    bool esMia = borrador.IdOperador == operador.Id;
+                    // Solo para las ajenas e interrumpidas: "Caja cerrada, podes tomarla" (la regla real la aplica
+                    // RecuperarBorradorPOS al tomarla).
+                    bool tomableSinSupervisor = false;
+                    if (!esMia && !enUso)
+                    {
+                        if (!duenoSinCajaPorId.TryGetValue(borrador.IdOperador, out bool duenoSinCaja))
+                        {
+                            duenoSinCaja = DuenoSinCajaAbierta(borrador.IdOperador);
+                            duenoSinCajaPorId[borrador.IdOperador] = duenoSinCaja;
+                        }
+                        if (duenoSinCaja)
+                        {
+                            operadorConCaja ??= PuedeTomarPorCajaCerrada(borrador, operador);
+                            tomableSinSupervisor = operadorConCaja.Value;
+                        }
+                    }
+
                     pendientes.Add(new
                     {
                         id = borrador.Id,
                         operador = string.IsNullOrWhiteSpace(borrador.NombreOperador) ? ("Usuario #" + borrador.IdOperador) : borrador.NombreOperador,
-                        esMia = borrador.IdOperador == operador.Id,
+                        esMia,
+                        tomableSinSupervisor,
                         estado = enUso ? "En uso" : "Interrumpida",
                         puedeCargar = !enUso,
                         // Propia y "en uso": se puede cargar igual con confirmacion (corte de luz/cuelgue, sin esperar el umbral).
@@ -286,7 +356,8 @@ namespace WebCore.Controllers
                     ok = true,
                     pendientes,
                     interrumpidas,
-                    ventaLocalFinalizada
+                    ventaLocalFinalizada,
+                    ventaLocalTomadaPor
                 });
             }
             catch (Exception ex)
@@ -327,11 +398,18 @@ namespace WebCore.Controllers
                 if (existente == null || existente.IdSucursal != user.IdSucursal || existente.Estado != Entidades.VentaBorrador.EstadoActiva)
                     return Json(new { ok = false, msg = "Esa venta ya no está disponible." });
 
-                if (!ResolverAutorizacionSupervisor(existente, operador, request.Supervisor, out string? nombreSupervisor, out JsonResult? respuesta))
+                // Cambio de turno (2026-11-11, ver docs/DECISIONS.md "Vigilancia de caja del POS"): una venta cuyo dueno ya
+                // no tiene caja abierta la puede tomar otro cajero CON caja abierta, sin supervisor.
+                bool traspasoPorCajaCerrada = existente.IdOperador != operador.Id && PuedeTomarPorCajaCerrada(existente, operador);
+
+                string? nombreSupervisor = null;
+                if (!traspasoPorCajaCerrada
+                    && !ResolverAutorizacionSupervisor(existente, operador, request.Supervisor, out nombreSupervisor, out JsonResult? respuesta))
                     return respuesta!;
 
                 var borrador = negocio.Recuperar(request.Id, operador.Id, user.Id, operador.Id, nombreSupervisor,
-                    WebCore.Helpers.PosBorradorSettings.MinutosSinLatidoInterrumpida, request.ConfirmarEnUso, out string? error);
+                    WebCore.Helpers.PosBorradorSettings.MinutosSinLatidoInterrumpida, request.ConfirmarEnUso, out string? error,
+                    traspasoPorCajaCerrada);
                 if (borrador == null) return Json(new { ok = false, msg = error });
 
                 return Json(new

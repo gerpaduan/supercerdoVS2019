@@ -3,7 +3,7 @@ titulo: Mapa de configuraciones de la empresa
 rol: admin
 modulo: Referencia
 orden: 1
-revisada: 2026-11-10
+revisada: 2026-11-11
 ---
 # Mapa de configuraciones de la empresa
 
@@ -64,6 +64,7 @@ Cada fila es **un interruptor o valor que cambia el comportamiento del sistema**
 | **Ocultar datos de la empresa en el ticket no fiscal** (`ocultarEncabezadoTicketNoFiscal`, Sí/No) | Pantalla **Parámetros** (`/Parametros`) | Admin | **No** (sin cargar = No) | Con **Sí**, el ticket de venta no fiscal (X) del [POS](ayuda:pantalla/Ventas.POS) no imprime el nombre de la empresa ni los slogans. El ticket facturado (con CAE), los PDF y los demás tickets (recibos, caja) no cambian. En Servidor SM y San Lorenzo (SQL Server) aparece recién al correr su script de alta; si la base no tiene la columna `tipo`, se carga `1` (ocultar) o `0` en vez del casillero. |
 | **Formas de pago que abren la factura al cobrar** (`formasPagoFacturaAutomatica`, casillas) | Pantalla **Parámetros** (`/Parametros`) | Admin | Débito, Crédito, QR y Transferencia (sin cargar = como siempre) | Al cobrar en el [POS](ayuda:pantalla/Ventas.POS) con una forma tildada se abre la factura electrónica de la venta (con certificado de AFIP). Tildar Efectivo = facturar también el efectivo; ninguna = no se abre sola. Cuenta corriente sin cobro nunca la abre; en un pago mixto se abre si alguna de las dos partes está tildada. Solo bases Postgres. |
 | **Código del producto de precio libre** (`codProdGenerico`, entero de hasta 13 dígitos) | Pantalla **Parámetros** (`/Parametros`) | Admin | Vacío (sin producto de precio libre) | Código del producto genérico que el [POS](ayuda:pantalla/Ventas.POS) y el punto de expendio usan para vender un importe suelto: el vendedor escribe el precio y se carga ese producto con ese precio. Con el sufijo `G` y un número se usa el producto de código siguiente. Ver [Parámetros](ayuda:pantalla/Parametros.Index). |
+| **Cada cuánto el POS revisa que su caja siga abierta** (`PosCajaVigilante:Segundos`, en segundos) | Configuración del servidor (App.config) | Quien administra el servidor | **15** (entre 5 y 300) | Si le cierran la caja al cajero desde otra computadora, su [POS](ayuda:pantalla/Ventas.POS) lo detecta en ese plazo, corta la venta, la resguarda y pide abrir caja de nuevo. |
 | **Días hacia atrás por defecto** (`diasLimitFechaDesde`, en días) | Pantalla **Parámetros** (`/Parametros`) | Admin | Según la empresa (ej. 7) | Desde qué fecha arrancan los listados de Stock, Elaborados y Movimientos, y hasta cuántos días atrás se puede llevar la fecha de una venta en el POS. |
 
 > La pantalla **Parámetros** muestra solo los parámetros que usa la web. Los que usa solo la aplicación de escritorio (redondeo y ajuste por tarjeta del POS, pedir usuario al cargar elaborados y movimientos, mayúscula en productos) y los que no lee ninguna pantalla no se listan: siguen en la base y se manejan desde el escritorio. Ver [Parámetros](ayuda:pantalla/Parametros.Index).

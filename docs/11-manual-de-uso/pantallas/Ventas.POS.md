@@ -5,10 +5,10 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-10
+revisada: 2026-11-11
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -180,6 +180,15 @@ El botón de la barra de arriba (a la izquierda de tu nombre) cambia el tema del
 - El botón **Volver a iniciar sesión** recarga el POS: si la sesión no existe pide el login y vuelve al mismo POS; si hay otra sesión abierta carga el POS de ese usuario.
 - Una contraseña realmente mal sigue mostrando «Contraseña incorrecta.»; sin red o con el servidor caído sigue el aviso «No se pudo validar la contraseña. Revisá la conexión…».
 - PENDIENTE: no se verificó si la venta en curso se recupera después de volver a iniciar sesión.
+
+## Si te cierran la caja con el POS abierto
+Si el encargado cierra tu caja desde otra computadora, el POS lo detecta solo (revisa cada **15 segundos**, y también al volver a la ventana) y **corta la venta**:
+- Aparece el cartel **«La caja fue cerrada»**, que no se puede cerrar con Esc ni tocando afuera, y el teclado y el lector de códigos quedan frenados. Si estabas cobrando y justo se cerró, el cobro **no se registra** y aparece el mismo cartel.
+- La venta en curso **queda resguardada**. Con **Entendido** el POS se recarga y te pide **abrir la caja de nuevo**.
+- Al abrir la caja nueva, la venta **vuelve sola al carrito** en esa misma computadora. Si no aparece, está en **F1 → Ver ventas sin guardar**.
+- **Cambio de turno:** si otro cajero abre su caja, en **F1 → Ver ventas sin guardar** ve tu venta con la marca **«caja cerrada»** y la puede **cargar al carrito sin pedir supervisor** (queda registrado quién la tomó). Descartarla sí pide supervisor. Si la tomó otro, tu POS limpia su copia para no registrarla dos veces.
+- **Nadie puede registrar ventas con la caja cerrada**, tampoco un administrador: solo se puede vender sin caja si en el modal de apertura se tildó a propósito «continuar sin caja abierta» (usuarios con permiso de modificar ventas).
+- PENDIENTE: no se verificó en pantalla con un usuario real; el tiempo de revisión se cambia en la configuración del servidor `PosCajaVigilante:Segundos` (ver [configuraciones](ayuda:referencia/configuraciones)).
 
 ## Factura que se abre sola al cobrar (débito, crédito, QR, transferencia)
 Verificado en el código y grabado el 2026-11-10 (`POS.cshtml` `facturaElectronicaRequeridaPorFormaPagoPOS`, `factura-electronica.js`): si la empresa tiene certificado de AFIP, las formas de pago que el administrador tildó en el parámetro **Formas de pago que abren la factura al cobrar** (pantalla [Parámetros](ayuda:pantalla/Parametros.Index)) abren la **factura electrónica** de la venta apenas se cobra. **Sin cargar, rige lo de siempre: Débito, Crédito, QR y Transferencia** (no Efectivo). Se puede tildar también **Efectivo** (para facturar todo) o dejar **ninguna** (nada se abre solo). Cuenta corriente sin cobro nunca abre la factura; en un **pago mixto** se abre si alguna de las dos partes está tildada (la parte que no es efectivo, o el efectivo si está tildado). *Rediseño 2026-11-10, no probado en el POS real: PENDIENTE verificar con una venta de cada forma de pago.* **Alt+R** (o **Registrar factura**) la emite y vuelve a «Venta completada» con «Factura registrada correctamente» y su número. **Cerrar venta sin facturar** (o **Supr**, con el foco fuera de un campo) pide confirmar, deja la venta registrada sin factura y pasa a una venta nueva; se puede facturar después desde Mis ventas → Abrir detalle → Factura / Imprimir. Con las formas de pago no tildadas (por defecto efectivo y cuenta corriente) la factura se hace con el **5** de «Venta completada».

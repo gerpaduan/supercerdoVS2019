@@ -8723,3 +8723,24 @@ El listado admin `Cajas/EgresosCaja` no cambia.
 - La lista de Actividades lleva icono por tipo, hora relativa («20:06», «ayer 17:10», «08/11 11:05»), advertencias del POS en ámbar y **agrupa repetidos consecutivos** (mismo tipo y descripción) en una fila con «×N». El endpoint `ObtenerUltimasActividadesDashboard` manda hasta 20 items (antes 10) y suma `fechaIso` y `esAdvertencia` (campos aditivos); la lista sigue mostrando 10 filas.
 
 **Límites:** el detalle de las advertencias (modal de `/Actividades`) no se abre desde el dashboard; se ve en «Ver todas». No se verificó en pantalla con login (el usuario no quiso crear el usuario de prueba); compila y la maqueta se probó en escritorio, celular y modo oscuro.
+
+## 2026-11-11 — Vigilancia de caja del POS: si cierran la caja, el POS corta, resguarda la venta y otro cajero puede tomarla
+
+**Problema (caso real):** se cerró la caja de un cajero desde otra PC (20:30), su POS siguió abierto (última actividad 20:15) y **registró una venta más**; recién tras guardar saltó el modal de abrir caja. Dos causas:
+1. `VentasController.FinalizarVenta` dejaba vender con la caja cerrada a quien tuviera el *permiso* `PuedeOperarSinCajaYEditarFecha` (Admin o «modificar venta»), sin la confirmación explícita «operar sin caja» que `POS()` sí exige (`TieneBypassCajaActivo`). La venta quedaba fuera de caja y el cierre inconsistente.
+2. El POS solo validaba la caja al cargar y al desbloquear tras inactividad; mientras estaba abierto no se enteraba.
+
+**Qué se decidió:**
+- `FinalizarVenta` exige permiso **y** bypass explícito para vender sin caja real (`puedeOperarSinCajaEnCurso = permiso && TieneBypassCajaActivo`). Sin eso responde `{ ok:false, cajaCerrada:true }`. `POS()` borra el bypass de la Session cuando hay caja real abierta (un bypass viejo no puede reutilizarse cuando la cierren). **Cambio de comportamiento sobre permisos, pedido por el usuario.**
+- Vigilante en el POS (`pos-caja-vigilante.js` + `VentasController.EstadoCajaPOS`): cada `PosCajaVigilante:Segundos` (default 15, rango 5–300) pregunta si la caja del vendedor sigue abierta. Si no: bloquea teclado/lector, resguarda la venta (`POSDraft.save` + `POSBorrador.guardarAhora({cierrePestana:true})`, que la deja *interrumpida* de inmediato), muestra un cartel que no se puede cerrar y recarga → modal de abrir caja. También se dispara si `FinalizarVenta` devuelve `cajaCerrada`. Solo con caja **real** abierta al cargar; no en edición de ventas ni con «operar sin caja». Un fallo de red/sesión nunca corta la venta (se reintenta).
+- **Cambio de turno:** una venta *interrumpida* cuyo dueño **ya no tiene caja abierta** la puede tomar **cualquier cajero con caja abierta** de la sucursal **sin supervisor** (`Negocio.VentaBorrador.Recuperar(..., traspasoPorCajaCerrada)`). Queda auditado en el evento `RECUPERADA` («la caja del dueño original (X) ya estaba cerrada»). Si el dueño tiene caja abierta, sigue exigiendo supervisor. Si el carrito local del dueño ya fue tomado por otro cajero, su POS lo descarta al cargar (`ventaLocalTomadaPor`) para no registrar la venta dos veces.
+- Aviso al cerrar caja (`CajasController.CerrarCaja` → `CajasAbiertas.cshtml`): cada venta en curso muestra inicio, última actividad y **EN USO AHORA** / **Sin actividad**; con alguna en uso el botón pasa a «Esperar».
+
+**Por qué polling y no push:** no hay canal servidor→navegador en el POS; un `fetch` liviano cada 15 s por POS abierto es barato y suficiente (el servidor igual rechaza al guardar).
+**Descartado:** registrar «presencia» de POS abiertos sin carrito para avisarlos al cerrar (más estado en el servidor); el aviso de cierre no puede cubrir el caso real, porque el POS estaba sin carrito cuando cerraron.
+**Riesgos aceptados / límites:**
+1. Ventana de hasta N segundos entre el cierre y el corte; el cobro en ese lapso lo frena el servidor.
+2. El traspaso sin supervisor permite que cualquier cajero con caja abierta tome una venta interrumpida de un dueño sin caja; es la regla pedida y queda auditada. Descartar una venta ajena sigue pidiendo supervisor.
+3. Solo Postgres con `PosBorrador:Habilitado`: sin borrador en servidor el corte funciona pero la venta solo queda en el respaldo local del mismo equipo.
+4. No se verificó en el navegador con login real (la prueba end-to-end con usuario de prueba queda pendiente de la autorización del usuario); compila y pasan los tests de `Recuperar`.
+

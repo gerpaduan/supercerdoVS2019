@@ -1090,6 +1090,26 @@ namespace WebCore.Controllers
             return Json(new { ok = true, cajaAbierta });
         }
 
+        // Vigilancia de caja del POS (2026-11-11, ver docs/DECISIONS.md "Vigilancia de caja del POS"): el POS
+        // (pos-caja-vigilante.js) pregunta cada tanto si la caja del vendedor sigue abierta, para cortar la venta si se la
+        // cerraron desde otra terminal. Solo lectura. Mismo criterio de "hay caja" que POS() y DesbloquearPOS: caja real
+        // en la sucursal de la sesion, o el "operar sin caja" confirmado. indeterminado = no se puede juzgar (cuenta de
+        // produccion cuyo operador vencio en la Session): el cliente no corta nada y FinalizarVenta ya lo cubre con
+        // requiereOperador.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult EstadoCajaPOS(string posInstanceId)
+        {
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null)
+                return Json(new { ok = true, indeterminado = true });
+
+            var vendedor = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+            bool cajaReal = ObtenerCierreCajaActual(vendedor) != null;
+            bool bypassActivo = PuedeOperarSinCajaYEditarFecha(vendedor) && TieneBypassCajaActivo(vendedor.Id);
+
+            return Json(new { ok = true, cajaAbierta = cajaReal || bypassActivo });
+        }
+
         // Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): antes, tener el
         // permiso PuedeOperarSinCajaYEditarFecha saltaba en silencio el modal de apertura de caja
         // -- el usuario entraba directo a POS con solo un banner de advertencia, sin ninguna
@@ -3751,6 +3771,12 @@ namespace WebCore.Controllers
             var cierre = ObtenerCierreCajaActual(operador);
             bool cajaAbierta = cierre != null;
 
+            // Con caja real abierta se descarta el "operar sin caja" que haya quedado en la Session de una visita anterior:
+            // si no, cuando despues le cierren la caja, FinalizarVenta lo tomaria como confirmacion vigente y dejaria
+            // registrar ventas contra la caja cerrada (2026-11-11, ver docs/DECISIONS.md "Vigilancia de caja del POS").
+            if (cajaAbierta)
+                HttpContext.Session.Remove(ClaveSessionBypassCaja(operador.Id));
+
             // Item 5 (2026-09-07, ver docs/DECISIONS.md): usuario con permiso de "modificar venta"
             // puede operar el POS aunque no tenga caja abierta, y editar la fecha de la venta en
             // curso -- ver PuedeOperarSinCajaYEditarFecha. Chequeado contra el operador real, no
@@ -3990,10 +4016,13 @@ namespace WebCore.Controllers
                     ? request.FechaVenta.Value
                     : fechaCreacion;
 
-                // Bypass de caja cerrada (item 5 original, 2026-09-07 -- ver docs/DECISIONS.md):
-                // sigue gateado por PuedeOperarSinCajaYEditarFecha, sin cambios -- el rediseño de
-                // Batch 6 (2026-09-11) solo afecta la fecha de la venta (arriba), no este bypass.
-                bool puedeOperarSinCajaEnCurso = PuedeOperarSinCajaYEditarFecha(operador);
+                // Bypass de caja cerrada (item 5 original, 2026-09-07 -- ver docs/DECISIONS.md): el permiso
+                // (PuedeOperarSinCajaYEditarFecha) NO alcanza. Hace falta ademas la confirmacion explicita de "operar
+                // sin caja" que se tilda en el modal de apertura (TieneBypassCajaActivo), igual que en POS() y
+                // DesbloquearPOS. Antes solo se miraba el permiso: un admin o un usuario con "modificar venta" al que le
+                // cerraban la caja desde otra terminal seguia registrando ventas contra una caja cerrada
+                // (2026-11-11, ver docs/DECISIONS.md "Vigilancia de caja del POS").
+                bool puedeOperarSinCajaEnCurso = PuedeOperarSinCajaYEditarFecha(operador) && TieneBypassCajaActivo(operador.Id);
 
                 // Cobro junto con la venta (2026-10-21): la venta va SIEMPRE a cuenta corriente (lo que el cliente
                 // paga se registra aparte como cobro, con la forma de pago elegida) y sin pago mixto en la venta.
@@ -4031,7 +4060,8 @@ namespace WebCore.Controllers
                 // editada no puede "colarse" en una caja que ya no esta abierta ahora.
                 bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(fechaCreacion, venta.Sucursal, operador);
                 if (!cajaAbierta && !puedeOperarSinCajaEnCurso)
-                    return Json(new { ok = false, msg = "La caja ha sido cerrada." });
+                    // cajaCerrada: el POS corta la venta, la resguarda y pide abrir caja de nuevo (pos-caja-vigilante.js).
+                    return Json(new { ok = false, cajaCerrada = true, msg = "La caja ha sido cerrada." });
 
                 List<Entidades.LineaVenta> lineasVenta = ConstruirLineasVentaDesdeRequest(request);
                 CompletarAnulacionesVenta(lineasVenta);

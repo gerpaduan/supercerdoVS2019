@@ -392,6 +392,12 @@
 
             var tdUsuario = el('td', null, p.operador);
             if (p.esMia) tdUsuario.appendChild(el('span', 'badge badge-info ml-1', 'mía'));
+            // Cambio de turno: la caja de su dueño ya está cerrada, así que quien tiene caja abierta la toma sin supervisor.
+            if (p.tomableSinSupervisor) {
+                var marcaTraspaso = el('span', 'badge badge-light border ml-1', 'caja cerrada');
+                marcaTraspaso.title = 'La caja de ' + p.operador + ' ya está cerrada: podés tomarla sin supervisor';
+                tdUsuario.appendChild(marcaTraspaso);
+            }
             tr.appendChild(tdUsuario);
             tr.appendChild(el('td', 'text-nowrap', p.inicio));
             // Fecha y hora reales de la ultima senal (ya incluye el cierre de pestana); sin "hace N d".
@@ -603,6 +609,24 @@
             actualizarBadge(resp.interrumpidas || 0);
             pintarCampanaPropia(resp);
 
+            // Cambio de turno: otro cajero ya tomó esta venta desde su caja nueva. El carrito local se descarta para no
+            // registrarla dos veces (la fuente de verdad es la venta que ahora es del otro cajero).
+            if (resp.ventaLocalTomadaPor) {
+                window.desactivarAvisoSalidaPOS?.();
+                window.POSDraft?.clear?.();
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Esa venta ya la tomó otro cajero',
+                    text: 'La venta que había en pantalla fue recuperada por ' + resp.ventaLocalTomadaPor
+                        + ' desde su caja. Se limpió el carrito para no registrarla dos veces.',
+                    allowOutsideClick: false
+                }).then(function () {
+                    window.PosNavegandoInternoPOS = true;
+                    window.location.reload();
+                });
+                return;
+            }
+
             if (resp.ventaLocalFinalizada) {
                 window.desactivarAvisoSalidaPOS?.();
                 window.POSDraft?.clear?.();
@@ -660,7 +684,10 @@
     // Guarda YA el carrito en el servidor (sin esperar el debounce) y resuelve true si el servidor lo tiene
     // (o si no hay nada que resguardar). Lo usa el bloqueo por inactividad (pos-bloqueo.js) antes de dejar
     // el POS a otro vendedor: si resuelve false, la venta NO esta a salvo y no hay que descartar el respaldo local.
-    function guardarAhora() {
+    // opciones.cierrePestana: ademas deja la venta "interrumpida" de inmediato en el servidor (el evento CIERRE_PESTANA va
+    // despues del guardado), para que se pueda recuperar sin esperar el umbral de latido. Lo usa el corte por caja cerrada
+    // (pos-caja-vigilante.js): el POS se recarga con PosNavegandoInternoPOS y el pagehide no avisa solo.
+    function guardarAhora(opciones) {
         if (!habilitado) return Promise.resolve(false);
 
         var snap = snapshotActual();
@@ -672,6 +699,7 @@
             posInstanceId: posInstanceId(),
             idSucursalPOS: idSucursalPOS(),
             soloLatido: false,
+            cierrePestana: !!(opciones && opciones.cierrePestana),
             payload: snap
         }).then(function (resp) {
             // cerrado = el servidor ya cerro ese carrito; ajeno = pertenece a otro operador: en ambos casos

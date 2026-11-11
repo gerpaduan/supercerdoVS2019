@@ -1313,6 +1313,20 @@ else
         };
     </script>
     <script src="~/Scripts/app/pos-borrador.js" asp-append-version="true"></script>
+    @* Vigilancia de caja (2026-11-11, ver docs/DECISIONS.md "Vigilancia de caja del POS"): cada tanto pregunta si la caja
+       sigue abierta y, si se la cerraron desde otra terminal, corta la venta, la resguarda y pide abrir caja de nuevo. Solo
+       con caja REAL abierta al cargar (no con "operar sin caja") y fuera de la edicion de ventas; sin config no hace nada. *@
+    @if (cajaAbierta && Model != null && !requiereOperadorPOS && !esEdicionVenta && !advertenciaCajaCerrada)
+    {
+        <script>
+            window.POSCajaVigilanteConfig = {
+                segundos: @WebCore.Helpers.PosCajaVigilanteSettings.Segundos,
+                posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)),
+                urlEstado: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("EstadoCajaPOS", "Ventas")))
+            };
+        </script>
+        <script src="~/Scripts/app/pos-caja-vigilante.js" asp-append-version="true"></script>
+    }
     <script src="~/Scripts/app/pos-producto-pendiente.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes-targets.js" asp-append-version="true"></script>

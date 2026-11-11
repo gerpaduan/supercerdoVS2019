@@ -1992,19 +1992,33 @@
                     // registrado y el cajero podra recuperarlas al abrir una caja nueva).
                     if (!resp.ok && resp.requiereConfirmacion) {
                         const escapar = function (t) { return $("<div>").text(t == null ? "" : String(t)).html(); };
-                        const filas = (resp.ventasEnCurso || []).map(function (v) {
+                        const ventas = resp.ventasEnCurso || [];
+                        // enUso: el carrito sigue latiendo ahora (hay alguien armando la venta); si no, quedo abandonada.
+                        const hayEnUso = ventas.some(function (v) { return v.enUso === true; });
+                        const filas = ventas.map(function (v) {
+                            const estado = v.enUso === true
+                                ? ' <span class="badge badge-danger">EN USO AHORA</span>'
+                                : ' <span class="badge badge-secondary">Sin actividad</span>';
                             return "<li>" + escapar(v.operador || "Cajero") + ": <b>$ " + escapar(v.total) + "</b> (" +
-                                escapar(v.cantLineas) + " ítem(s)), iniciada el " + escapar(v.inicio) + "</li>";
+                                escapar(v.cantLineas) + " ítem(s)), iniciada el " + escapar(v.inicio) + estado +
+                                (v.ultimaActividad ? "<br><small class=\"text-muted\">Última actividad: " + escapar(v.ultimaActividad) +
+                                    (v.sinActividad ? " (" + escapar(v.sinActividad) + ")" : "") + "</small>" : "") + "</li>";
                         }).join("");
+
+                        const consejo = hayEnUso
+                            ? '<b>Hay una venta en uso en este momento</b>: conviene esperar a que la termine. Si cerrás igual, ' +
+                              'el POS del cajero se corta solo y la venta queda <b>resguardada</b> para registrarla con una caja nueva ' +
+                              '(la retoma el mismo cajero o quien tome el turno).'
+                            : 'Si cerrás igual, queda <b>registrado</b> y se le avisa al administrador. La venta queda resguardada y se ' +
+                              'puede recuperar al abrir una caja nueva (el mismo cajero o quien tome el turno).';
 
                         Swal.fire({
                             icon: 'warning',
                             title: 'Hay ventas en curso',
-                            html: '<div class="text-left">Esta caja tiene ventas sin finalizar:<ul class="mt-2">' + filas + '</ul>' +
-                                'Si cerrás igual, queda <b>registrado</b> y se le avisa al administrador. El cajero podrá recuperar los datos al abrir una caja nueva.</div>',
+                            html: '<div class="text-left">Esta caja tiene ventas sin finalizar:<ul class="mt-2">' + filas + '</ul>' + consejo + '</div>',
                             showCancelButton: true,
                             confirmButtonText: 'Cerrar igual',
-                            cancelButtonText: 'Volver',
+                            cancelButtonText: hayEnUso ? 'Esperar' : 'Volver',
                             confirmButtonColor: '#e74a3b'
                         }).then(function (r) {
                             if (r.isConfirmed) guardarCierreCaja(true);

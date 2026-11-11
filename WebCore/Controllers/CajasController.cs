@@ -352,6 +352,7 @@ namespace WebCore.Controllers
                 if (ventasEnCursoAlCerrar.Count > 0 && !confirmarVentaEnCurso)
                 {
                     var culturaAr = System.Globalization.CultureInfo.GetCultureInfo("es-AR");
+                    int minutosSinLatido = WebCore.Helpers.PosBorradorSettings.MinutosSinLatidoInterrumpida;
                     return Json(new
                     {
                         ok = false,
@@ -361,7 +362,12 @@ namespace WebCore.Controllers
                             operador = b.NombreOperador,
                             total = b.Total.ToString("N2", culturaAr),
                             cantLineas = b.CantLineas,
-                            inicio = b.Creado.ToString("dd/MM/yyyy HH:mm:ss", culturaAr)
+                            inicio = b.Creado.ToString("dd/MM/yyyy HH:mm:ss", culturaAr),
+                            // Para que el encargado decida si espera o cierra (2026-11-11, ver docs/DECISIONS.md
+                            // "Vigilancia de caja del POS"): ultima senal del carrito y si sigue vivo ahora.
+                            ultimaActividad = b.UltimoLatido.ToString("dd/MM/yyyy HH:mm:ss", culturaAr),
+                            sinActividad = TextoTiempoSinActividad(b.SegundosSinLatido),
+                            enUso = Negocio.VentaBorrador.EstaEnUso(b, minutosSinLatido)
                         })
                     });
                 }
@@ -403,6 +409,16 @@ namespace WebCore.Controllers
                 ok = true,
                 mensaje = modoModificacion ? "El cierre de caja se actualizó correctamente." : result.Mensaje
             });
+        }
+
+        // "hace 40 s" / "hace 3 min" / "hace 2 h" / "hace 1 d": mismo formato que "Ver ventas sin guardar" del POS
+        // (VentasController.TextoSinLatido), para el aviso de ventas en curso al cerrar caja.
+        private static string TextoTiempoSinActividad(int segundos)
+        {
+            if (segundos < 60) return "hace " + Math.Max(segundos, 0) + " s";
+            if (segundos < 3600) return "hace " + (segundos / 60) + " min";
+            if (segundos < 86400) return "hace " + (segundos / 3600) + " h";
+            return "hace " + (segundos / 86400) + " d";
         }
 
         [HttpGet]
