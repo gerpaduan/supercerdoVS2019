@@ -3,7 +3,8 @@
     Panel de solo lectura de la tarjeta de una factura en Ventas/Facturas. Lo devuelve
     VentasController.DetalleFacturaResumen por AJAX (docs/DECISIONS.md, 2026-10-28). Muestra los datos del
     comprobante (monto facturado, % de facturacion, CAE, asociadas, observacion) y las lineas de la venta
-    asociada (_VentaLineas). Sin acciones: todo lo demas se hace desde "Abrir detalle" (DetalleFactura).
+    asociada (_VentaLineas, sin su total: el total de la venta va en el pie junto a "Abrir detalle",
+    docs/DECISIONS.md 2026-11-10). Sin acciones: todo lo demas se hace desde "Abrir detalle" (DetalleFactura).
     Sin IDs ni scripts propios. Model.ReturnUrl ya viene validado como ruta local.
 *@
 @{
@@ -14,6 +15,9 @@
     var notaCreditoAsociada = Model.NotaCreditoAsociada;
     decimal importeFacturado = Convert.ToDecimal(factura.ImporteTotal);
     decimal porcentajeFacturacion = Convert.ToDecimal(factura.PorcentajeFacturacion);
+    // Las lineas van sin su total: el total de la venta asociada se muestra en el pie (_VentasExpandible.cshtml).
+    var viewDataLineas = new ViewDataDictionary(ViewData) { ["VentaLineasSinTotal"] = true };
+    int cantidadLineas = venta.LineasVenta != null ? venta.LineasVenta.Count() : 0;
 }
 
 <div class="vr-resumen">
@@ -59,13 +63,19 @@
     }
 
     <div class="vr-subtitulo">Venta asociada #@venta.IdVenta</div>
-    <partial name="_VentaLineas" model="venta" />
+    <partial name="_VentaLineas" model="venta" view-data="viewDataLineas" />
 
-    <div class="vr-acciones">
-        <a class="btn btn-sm btn-outline-primary venta-abrir-detalle"
-           href="@Url.Action("DetalleFactura", "Ventas", new { id = factura.Id, returnUrl })">
-            <i class="fas fa-file-alt"></i> Abrir detalle
-        </a>
+    <div class="vr-pie">
+        <div class="vr-pie-total">
+            <span class="vr-pie-total-etiqueta">Total venta · @cantidadLineas art.</span>
+            <span class="vr-pie-total-importe">@venta.TotalImporte.ToString("C")</span>
+        </div>
+        <div class="vr-acciones">
+            <a class="btn btn-sm btn-outline-primary venta-abrir-detalle"
+               href="@Url.Action("DetalleFactura", "Ventas", new { id = factura.Id, returnUrl })">
+                <i class="fas fa-file-alt"></i> Abrir detalle
+            </a>
+        </div>
     </div>
     <div class="vr-nota"><i class="fas fa-info-circle"></i> Para ver el comprobante completo y sus acciones, abrí el detalle.</div>
 </div>

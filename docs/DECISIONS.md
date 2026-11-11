@@ -8641,6 +8641,22 @@ Se rediseñó `GenerarDocsCore.DibujarEtiqueta` (3 tamaños, mismas proporciones
 
 **Deuda:** no se probó una venta real de punta a punta con cada forma de pago (la base local factura contra AFIP real); queda como `PENDIENTE` en el manual.
 
+## 2026-11-10 - Mis ventas y paneles desplegables de Ventas / Facturas: diseño compacto
+
+**Pedido:** que Mis ventas (modal del POS y de Cajas Abiertas) ocupe menos altura, sobre todo en computadora: el total del panel desplegado se veía más grande que el importe de la fila, los botones iban solos en un renglón a la derecha y cada artículo ocupaba dos renglones. Se aprobó primero con maqueta HTML (antes/después: el modal de ejemplo, 3 ventas con 2 desplegadas, pasó de ~1166 px a ~525 px).
+
+**Decidido:**
+1. **Pie del panel** (`.vr-pie`, estilos en `_VentasExpandible.cshtml`): desde 576 px, botones a la izquierda y «Total · N art.» a la derecha en un mismo renglón, con el total al **mismo tamaño que el importe de la fila** (antes 1,15 rem). En celular el total queda arriba y los botones apilados a ancho completo (área táctil ≥ 40 px), como antes.
+2. **Total fuera de `_VentaLineas` solo en los paneles:** flag opcional `ViewData["VentaLineasSinTotal"]`, que pasan `_DetalleVentaResumen` y `_DetalleFacturaResumen`. Sin el flag (`_DetalleVentaCard`, detalle completo) se renderiza igual que siempre.
+3. **Líneas de un renglón** desde 576 px, solo dentro de `.venta-detalle-panel` y sin tocar el markup: `.vl-linea-info` en flex (nombre + cod | cant × precio + bonificación) y `.vl-sub` en columna fija de 6,5 rem. El título «N artículos» se oculta en el panel (va en el pie). `_VentaLineasStyles.cshtml` no cambia.
+4. **Alcance:** el panel compacto aplica a todos los listados que usan `_VentasExpandible` (Mis ventas, `Ventas/Index`, `Ventas/Facturas`; elegido por el usuario). La barra y las filas compactas son **solo de Mis ventas**: cantidad y total pasan a la izquierda de los filtros (mismos ids `misVentasCantidad` / `misVentasTotal`, el JS de filtros no cambia), controles de 2 rem, y con `modoModal` `_TablaVentas` arma la fila en dos renglones (comprobante · cliente / caja · idVenta). `Ventas/Index` conserva su fila.
+
+5. **Encontrado al probar:** en Cajas Abiertas el modal se inyecta en `#contenedorActividadesCaja`, que conserva `text-center text-muted` del aviso de carga, y las filas salían centradas y grises; `.mis-ventas-modal` fija `text-align: left` y el color de texto del tema. El resumen dice «1 venta» / «N ventas» (`#misVentasCantidadEtiqueta`, también al filtrar).
+
+**Descartado:** botones en una columna a la derecha de las líneas (variante B de la maqueta): con un solo artículo la columna queda más alta que las líneas y no ahorra altura.
+
+**Verificado (2026-11-10, base local con usuario de prueba 9101, ya borrado; build limpia de HEAD + estos cambios en 127.0.0.1:5272):** Mis ventas desde Cajas Abiertas a 1524×686 y 375 px (filas de 54 px, barra de 48 px, importe en el mismo renglón en celular, sin scroll horizontal), filtro por forma de pago, «Abrir detalle» en el modal (el detalle completo conserva su Total), modo oscuro; panel nuevo en `Ventas/Index` y `Ventas/Facturas` («Total venta · N art.»). **No verificado:** Mis ventas abierto desde el POS (F6): el usuario de prueba no tiene caja abierta; usa los mismos partials.
+
 ## 2026-11-10 — Egresos propios desde Mis actividades (POS)
 
 **Qué:** en **F6 → Mis actividades** cualquier vendedor (admin o no, y el operador de la cuenta de producción) modifica los egresos de caja **que cargó él**, de su caja abierta y de la sucursal activa.

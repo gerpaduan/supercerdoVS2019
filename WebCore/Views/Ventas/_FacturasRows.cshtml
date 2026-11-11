@@ -98,8 +98,10 @@
                     </div>
 
                     <div class="venta-total">
+                        @* data-valor con punto decimal (cultura invariante): lo suma con parseFloat el filtro de
+                           _VentasFacturasFiltrosScripts; con es-AR se perdian los centavos (2026-11-10). *@
                         <div class="importe @(importeVisual < 0 ? "text-danger font-weight-bold" : "")"
-                             data-valor="@importeVisual">
+                             data-valor="@importeVisual.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                             @((importeVisual > 0 ? "+ " : "") + importeVisual.ToString("C"))
                         </div>
 

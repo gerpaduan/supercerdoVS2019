@@ -538,3 +538,8 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 - **Sintoma**: en la pantalla Parámetros, al tocar Guardar aparecía «Valor inválido (decimal) para: …» por parámetros que el administrador no había tocado, y no se guardaba nada (ni lo que sí había cambiado).
 - **Causa**: `ParametrosController.ValidarYNormalizarValor` exigía un número válido en todo parámetro numérico, y `codProdGenerico` y `saldoMinimoInformar` están sin cargar por diseño (vacío = sin producto de precio libre / 100). Pasaba desde el alta de `saldoMinimoInformar` (2026-10-19).
 - **Fix**: un valor vacío es válido en los numéricos (los getters de `Negocio.Parametros` ya devuelven el valor por defecto ante un valor en blanco). Un texto no numérico sigue rechazándose.
+
+## Mis ventas / Ventas / Facturas: el total filtrado pierde los centavos (2026-11-10)
+- **Sintoma**: al filtrar por cliente o forma de pago (y en Ventas/Index aun sin filtrar, porque el total lo recalcula el JS), el total quedaba redondeado para abajo: 9 ventas de una caja daban $ 13.240,00 en vez de $ 13.244,81; dos ventas de $ 18.334,00 y $ 42.872,28 daban «Total: $ 61.206,00».
+- **Causa**: `_TablaVentas.cshtml` y `_FacturasRows.cshtml` escribian `data-valor` con la cultura es-AR («508,76») y `_MisVentas.cshtml` y `_VentasFacturasFiltrosScripts.cshtml` lo sumaban con `parseFloat`, que corta en la coma (508).
+- **Fix**: `data-valor` con `CultureInfo.InvariantCulture` («508.76»), igual que `_CalcularComisionesElectronicas.cshtml`. Regla: todo numero que lea el JS desde un `data-*` se escribe en cultura invariante; el texto visible sigue en es-AR.

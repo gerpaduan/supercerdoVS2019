@@ -87,21 +87,45 @@
                         </div>
 
                         <div class="venta-info">
-                            <div class="venta-tipo-persona font-weight-bold">
-                                @venta.TipoComprobante - @formaPagoTexto
-                            </div>
-                            @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
+                            @if (modoModal)
+                            {
+                                // Mis ventas (modal) compacto: comprobante + cliente en un renglon y caja + id en otro
+                                // (docs/DECISIONS.md, 2026-11-10). Ventas/Index conserva el formato de abajo.
+                                bool mostrarCliente = !Entidades.Persona.esConsumidorFinal(venta.Persona);
+                                bool mostrarIdentificacion = mostrarCliente && venta.Persona != null && venta.Persona.TieneIdentificacionDistinta();
+                                <div class="venta-linea-principal">
+                                    <span class="venta-comprobante">@venta.TipoComprobante - @formaPagoTexto</span>
+                                    @if (mostrarCliente)
+                                    {
+                                        <span>· a @venta.Persona.razonSocial</span>
+                                    }
+                                </div>
+                                <div class="venta-id">
+                                    @if (mostrarIdentificacion)
+                                    {
+                                        @venta.Persona.Identificacion<text> · </text>
+                                    }
+                                    Caja: @venta.Vendedor.Nombre · idVenta @venta.IdVenta
+                                </div>
+                            }
+                            else
                             {
                                 <div class="venta-tipo-persona font-weight-bold">
-                                    a @venta.Persona.razonSocial
+                                    @venta.TipoComprobante - @formaPagoTexto
                                 </div>
-                                @if (venta.Persona != null && venta.Persona.TieneIdentificacionDistinta())
+                                @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
                                 {
-                                    <div class="venta-id">@venta.Persona.Identificacion</div>
+                                    <div class="venta-tipo-persona font-weight-bold">
+                                        a @venta.Persona.razonSocial
+                                    </div>
+                                    @if (venta.Persona != null && venta.Persona.TieneIdentificacionDistinta())
+                                    {
+                                        <div class="venta-id">@venta.Persona.Identificacion</div>
+                                    }
                                 }
+                                <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
+                                <div class="venta-id">idVenta @venta.IdVenta</div>
                             }
-                            <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
-                            <div class="venta-id">idVenta @venta.IdVenta</div>
                             @if (!string.IsNullOrWhiteSpace(venta.Observaciones))
                             {
                                 <div class="venta-obs" title="@venta.Observaciones">
@@ -115,8 +139,11 @@
                         </div>
 
                         <div class="venta-total">
+                            @* data-valor con punto decimal (cultura invariante): lo suman con parseFloat los filtros de
+                               Mis ventas y de Ventas/Index; con la cultura es-AR salia "508,76" y parseFloat cortaba en
+                               la coma, perdiendo los centavos del total filtrado (2026-11-10). *@
                             <div class="importe @(venta.TotalImporte <= 0 ? "text-danger font-weight-bold" : "")"
-                                 data-valor="@venta.TotalImporte">
+                                 data-valor="@venta.TotalImporte.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                                 @((venta.TotalImporte > 0 ? "+ " : "") + venta.TotalImporte.ToString("C"))
                             </div>
 

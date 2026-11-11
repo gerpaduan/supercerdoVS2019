@@ -5,9 +5,12 @@
     Solo lectura, sin IDs ni scripts (se puede renderizar muchas veces en la misma pagina). Estilos:
     _VentaLineasStyles.cshtml. Subtotal = cantidad x precio, igual que antes del rediseno (la bonificacion es
     informativa, el precio ya viene con ella); total = Model.TotalImporte.
+    ViewData["VentaLineasSinTotal"] = true omite el total: lo usan los paneles desplegables, que lo muestran en su
+    pie junto a los botones (docs/DECISIONS.md, 2026-11-10). Sin el flag se renderiza como siempre.
 *@
 @{
     var lineas = Model.LineasVenta;
+    bool sinTotal = ViewData["VentaLineasSinTotal"] is bool omitirTotal && omitirTotal;
     int cantidadLineas = lineas != null ? lineas.Count() : 0;
     int numeroLinea = 1;
 }
@@ -47,8 +50,11 @@
         }
     }
 
-    <div class="vl-total">
-        <span class="vl-total-etiqueta">Total</span>
-        <span class="vl-total-importe">@Model.TotalImporte.ToString("C")</span>
-    </div>
+    @if (!sinTotal)
+    {
+        <div class="vl-total">
+            <span class="vl-total-etiqueta">Total</span>
+            <span class="vl-total-importe">@Model.TotalImporte.ToString("C")</span>
+        </div>
+    }
 </div>

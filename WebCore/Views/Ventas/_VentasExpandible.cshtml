@@ -13,6 +13,8 @@
       <li class="venta-item" data-venta-id | data-factura-id data-resumen-url data-modal?>
          ... <i class="venta-chevron"> <div class="venta-detalle-panel" hidden></div>
     Dentro del panel (lo arman _DetalleVentaResumen / _DetalleFacturaResumen):
+      _VentaLineas sin su total (ViewData VentaLineasSinTotal) + .vr-pie = .vr-pie-total + .vr-acciones
+      (pie compacto: botones a la izquierda y total a la derecha desde 576px; docs/DECISIONS.md, 2026-11-10).
       .venta-abrir-detalle  -> en modal lo resuelve _MisVentas.cshtml; si no es un link normal (misma pestaña).
       .venta-accion-pos     -> "Modificar venta" / "Cambiar forma de pago": evita el aviso de salida del POS.
 
@@ -42,8 +44,8 @@
     .venta-item .venta-detalle-panel {
         flex: 1 0 100%;
         min-width: 0;
-        margin-top: .5rem;
-        padding: .65rem .8rem .75rem;
+        margin-top: .35rem;
+        padding: .4rem .65rem .5rem;
         border: 1px solid var(--ui-border, #dee2e6);
         border-radius: .5rem;
         background: var(--ui-surface-alt, #f3f4f6);
@@ -123,37 +125,126 @@
         margin: .5rem 0 .1rem;
     }
 
-    /* Acciones: apiladas a ancho completo en celular (area tactil >= 40px), en fila alineada a la derecha desde 576px. */
-    .vr-acciones {
+    /* Lineas de la venta (_VentaLineas) compactas SOLO dentro del panel: el detalle completo (_DetalleVentaCard)
+       conserva el formato de _VentaLineasStyles. Desde 576px cada linea ocupa un renglon: nombre + cod a la
+       izquierda, "cant x precio" a la derecha y el subtotal en una columna fija para que queden alineados.
+       En celular quedan como en el detalle (dos renglones). docs/DECISIONS.md, 2026-11-10. */
+    .venta-detalle-panel .vl-lineas {
+        font-size: .85rem;
+    }
+
+    /* La cantidad de articulos va en el pie ("Total · N art."), no como titulo aparte. */
+    .venta-detalle-panel .vl-titulo {
+        display: none;
+    }
+
+    .venta-detalle-panel .vl-linea {
+        padding: .2rem 0;
+    }
+
+    .venta-detalle-panel .vl-n,
+    .venta-detalle-panel .vl-cod,
+    .venta-detalle-panel .vl-linea-calc {
+        font-size: .78rem;
+    }
+
+    @@media (min-width: 576px) {
+        .venta-detalle-panel .vl-linea {
+            align-items: baseline;
+        }
+
+        .venta-detalle-panel .vl-linea-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 1rem;
+        }
+
+        .venta-detalle-panel .vl-linea-calc {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .venta-detalle-panel .vl-sub {
+            flex: 0 0 6.5rem;
+            text-align: right;
+        }
+    }
+
+    /* Pie del panel: total (mismo tamano que el importe de la fila, antes era mas grande) + acciones.
+       En celular: total arriba y botones apilados a ancho completo (area tactil >= 40px).
+       Desde 576px: una sola fila, botones a la izquierda y total a la derecha. */
+    .vr-pie {
         display: grid;
         gap: .4rem;
-        margin-top: .75rem;
+        margin-top: .4rem;
+    }
+
+    .vr-pie-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: .6rem;
+    }
+
+    .vr-pie-total-etiqueta {
+        font-size: .78rem;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    .vr-pie-total-importe {
+        font-size: .875rem;
+        font-weight: 600;
+        color: #198754;
+        white-space: nowrap;
+    }
+
+    html.dark-mode .vr-pie-total-importe {
+        color: #5fd08a;
+    }
+
+    .vr-acciones {
+        display: grid;
+        gap: .35rem;
     }
 
     .vr-acciones .btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: .4rem;
+        gap: .35rem;
         min-height: 2.5rem;
     }
 
     @@media (min-width: 576px) {
+        .vr-pie {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .vr-pie-total {
+            order: 2;
+            justify-content: flex-end;
+        }
+
         .vr-acciones {
             display: flex;
             flex-wrap: wrap;
-            justify-content: flex-end;
+            justify-content: flex-start;
         }
 
         .vr-acciones .btn {
             min-height: 0;
+            padding: .15rem .55rem;
+            font-size: .8rem;
         }
     }
 
     .vr-nota {
-        font-size: .72rem;
+        font-size: .7rem;
         color: var(--ui-text-muted, #6c757d);
-        margin-top: .45rem;
+        margin-top: .2rem;
     }
 </style>
 <partial name="_VentaLineasStyles" />

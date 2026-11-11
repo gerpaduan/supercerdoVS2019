@@ -33,8 +33,20 @@
     }
     else
     {
+        @* Barra compacta: el resumen (cantidad y total de lo filtrado) va a la izquierda de los filtros, en vez de
+           un bloque aparte debajo (docs/DECISIONS.md, 2026-11-10). Los ids los actualiza aplicarFiltrosMisVentas. *@
         <div class="egresos-pos-toolbar mis-ventas-filtros">
             <div class="mis-ventas-filtros-campos">
+                <div class="mis-ventas-resumen">
+                    @{ int cantidadVentas = (Model ?? new List<Entidades.Venta>()).Count; }
+                    <span id="misVentasCantidad">@cantidadVentas</span>
+                    <span id="misVentasCantidadEtiqueta">@(cantidadVentas == 1 ? "venta" : "ventas")</span>
+                    @if (mostrarTotalMisVentas)
+                    {
+                        <span class="mis-ventas-resumen-sep">·</span>
+                        <strong id="misVentasTotal">@total.ToString("C")</strong>
+                    }
+                </div>
                 <div class="form-group mis-ventas-filtro-cliente mb-2 mb-md-0">
                     <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
@@ -58,21 +70,7 @@
             </div>
         </div>
 
-        <div class="px-3 pb-3">
-            <div class="egresos-resumen">
-                <div>
-                    <span class="text-muted">Cant.</span>
-                    <strong id="misVentasCantidad">@((Model ?? new List<Entidades.Venta>()).Count)</strong>
-                </div>
-                @if (mostrarTotalMisVentas)
-                {
-                    <div>
-                        <span class="text-muted">Total</span>
-                        <strong id="misVentasTotal">@total.ToString("C")</strong>
-                    </div>
-                }
-            </div>
-
+        <div class="px-2 pb-2">
             <div class="card shadow-sm ventas-card w-100">
                 <div class="card-body p-0">
                     @Html.Partial("~/Views/Ventas/_TablaVentas.cshtml", Model)
@@ -105,10 +103,6 @@
     .egresos-pos-toolbar .btn {
         min-height: 2.65rem;
         border-radius: .55rem;
-    }
-
-    .egresos-resumen {
-        font-size: 1rem;
     }
 
     .venta-item-modal { cursor: pointer; }
@@ -206,6 +200,123 @@
         }
     }
 
+    /* --- Modal compacto (docs/DECISIONS.md, 2026-11-10): menos altura con la misma informacion. --- */
+
+    /* En Cajas Abiertas el modal se inyecta dentro de #contenedorActividadesCaja, que conserva las clases
+       text-center text-muted del aviso de carga: sin esto las filas salian centradas y grises. */
+    .mis-ventas-modal {
+        text-align: left;
+        color: var(--ui-text, #3a3b45);
+    }
+
+    /* Barra: sin el margen/padding de 1rem de .egresos-pos-toolbar (custom.css) y controles de ~2rem. */
+    .mis-ventas-modal .mis-ventas-filtros {
+        margin: .5rem .5rem .5rem;
+        padding: .45rem .65rem;
+    }
+
+    .mis-ventas-modal .mis-ventas-filtros .form-control,
+    .mis-ventas-modal .mis-ventas-filtros .btn,
+    .mis-ventas-modal .mis-ventas-filtros .input-group-text {
+        min-height: 2rem;
+        height: 2rem;
+        font-size: .82rem;
+        border-radius: .4rem;
+    }
+
+    .mis-ventas-modal .mis-ventas-filtros .btn {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .mis-ventas-modal .mis-ventas-filtros-campos {
+        gap: .5rem;
+    }
+
+    /* Resumen "N ventas · $ total" a la izquierda: ocupa el espacio libre y empuja los filtros a la derecha. */
+    .mis-ventas-resumen {
+        flex: 1 1 auto;
+        color: #858796;
+        white-space: nowrap;
+    }
+
+    .mis-ventas-resumen strong {
+        color: #212529;
+        font-size: .95rem;
+    }
+
+    html.dark-mode .mis-ventas-resumen {
+        color: #97a7bd;
+    }
+
+    html.dark-mode .mis-ventas-resumen strong {
+        color: #e3eaf3;
+    }
+
+    .mis-ventas-modal #listaVentas .fecha-grupo {
+        padding: .25rem .75rem;
+        font-size: .8rem;
+    }
+
+    .mis-ventas-modal .venta-item {
+        padding: .4rem .75rem;
+    }
+
+    /* Icono de forma de pago chico y de ancho fijo (el markup comparte fa-2x con Ventas/Index). */
+    .mis-ventas-modal .venta-icono {
+        flex: 0 0 1.75rem;
+        margin-right: .4rem;
+        text-align: center;
+    }
+
+    .mis-ventas-modal .venta-icono .fa-2x {
+        font-size: 1.25rem;
+    }
+
+    /* Base 0 (no auto): con tipo + cliente en un renglon, auto hacia bajar el importe de renglon en celular. */
+    .mis-ventas-modal .venta-info {
+        flex: 1 1 0;
+        line-height: 1.3;
+    }
+
+    .mis-ventas-modal .venta-linea-principal {
+        overflow-wrap: anywhere;
+    }
+
+    .mis-ventas-modal .venta-comprobante {
+        font-weight: 700;
+    }
+
+    .mis-ventas-modal .venta-id {
+        font-size: .78rem;
+    }
+
+    @@media (max-width: 576px) {
+        .mis-ventas-modal .venta-linea-principal {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .mis-ventas-modal .mis-ventas-resumen,
+        .mis-ventas-modal .mis-ventas-filtro-cliente {
+            flex: 1 1 100%;
+        }
+
+        /* Forma de pago y Volver comparten renglon en celular. */
+        .mis-ventas-modal .mis-ventas-filtro-forma-pago {
+            flex: 1 1 0;
+            width: auto;
+        }
+
+        .mis-ventas-modal .mis-ventas-filtro-volver {
+            flex: 0 0 auto;
+            width: auto;
+        }
+    }
+
     html.dark-mode .mis-ventas-filtros {
         background: #132032;
     }
@@ -249,6 +360,7 @@
             });
 
             $("#misVentasCantidad").text(cant);
+            $("#misVentasCantidadEtiqueta").text(cant === 1 ? "venta" : "ventas");
             $("#misVentasTotal").text(total.toLocaleString("es-AR", { style: "currency", currency: "ARS" }));
         }
 
