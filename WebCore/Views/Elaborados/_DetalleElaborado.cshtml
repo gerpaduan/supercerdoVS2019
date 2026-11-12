@@ -11,172 +11,127 @@
 }
 else
 {
-    var elaborado = !string.IsNullOrWhiteSpace(Model.Elaborado) ? Model.Elaborado : "-";
-    var codigo = Model.Codigo > 0 ? Model.Codigo.ToString() : "-";
-    var observaciones = !string.IsNullOrWhiteSpace(Model.Observaciones) ? Model.Observaciones : "-";
-    var receta = !string.IsNullOrWhiteSpace(Model.Receta) ? Model.Receta : "-";
-    var usuarioCreacion = !string.IsNullOrWhiteSpace(Model.UsuarioCreacion) ? Model.UsuarioCreacion : "-";
-    var fechaCreacion = Model.FechaCreacion.HasValue ? Model.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
-    var usuarioActualizacion = !string.IsNullOrWhiteSpace(Model.UsuarioActualizacion) ? Model.UsuarioActualizacion : "-";
-    var fechaActualizacion = Model.FechaActualizacion.HasValue ? Model.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
     var sucursal = !string.IsNullOrWhiteSpace(Model.Sucursal) ? Model.Sucursal : "-";
-    var estado = !string.IsNullOrWhiteSpace(Model.Estado) ? Model.Estado : "-";
+    var tieneObservaciones = !string.IsNullOrWhiteSpace(Model.Observaciones);
+    var tieneReceta = !string.IsNullOrWhiteSpace(Model.Receta);
+    var tieneEstado = !string.IsNullOrWhiteSpace(Model.Estado);
+    var fechaCreacion = Model.FechaCreacion.HasValue ? Model.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "";
+    var fechaActualizacion = Model.FechaActualizacion.HasValue ? Model.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "";
+    bool fueModificado = !string.IsNullOrWhiteSpace(Model.UsuarioActualizacion) || fechaActualizacion != "";
+    bool hayIngredientes = Model.IngredientesUtilizados != null && Model.IngredientesUtilizados.Count > 0;
+    float totalKgs = 0f;
+    if (hayIngredientes)
+    {
+        foreach (var ing in Model.IngredientesUtilizados) { totalKgs += ing.Kgs; }
+    }
 
-    @* Celular (<768px, 2026-10-27): se oculta la tarjeta de datos del registro (abajo) porque repite lo de la tarjeta del
-       elaborado; aca quedan solo las observaciones (si hay). La receta NO: solo se usa en las cargas (pedido del usuario).
-       Los ingredientes son una lista compacta (tabla-cards-lista). En desktop no cambia nada. *@
-    if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+    @* Celular (<768px, 2026-10-27): la franja de chips (abajo) se oculta porque repite lo de la tarjeta del elaborado; aca quedan solo
+       las observaciones (si hay). La receta NO: solo se usa en las cargas (pedido del usuario). Los ingredientes son una lista compacta
+       (tabla-cards-lista). *@
+    if (tieneObservaciones)
     {
         <div class="cc-nota-detalle"><span><i class="fas fa-comment-alt"></i>@Model.Observaciones</span></div>
     }
 
-    <div class="row elaborado-detalle-layout">
-        <div class="col-12 col-xl-8 order-2 order-xl-1">
-            @* Formula secreta (2026-10-04): con la formula visible (hay elevacion) se ofrece "Ocultar". *@
-            @if (Model.FormulaSecreta && !Model.FormulaOculta)
-            {
-                <div class="text-right mb-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary js-ocultar-formula-detalle" data-id-corte="@Model.IdCorte">
-                        <i class="fas fa-eye-slash mr-1"></i> Ocultar fórmula
-                    </button>
-                </div>
-            }
-            <div class="table-responsive mt-3 mt-xl-0">
-                <table class="table table-sm table-bordered mb-0 elaborado-detalle-tabla tabla-cards tabla-cards-lista">
-                    <thead class="thead-light">
-                        <tr>
-                            <th style="width:120px;">Codigo</th>
-                            <th>Producto</th>
-                            <th class="text-right" style="width:120px;">Kgs</th>
-                            <th class="text-center" style="width:90px;">Balanza</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @* Con la fórmula oculta se listan solo los ingredientes cargados a mano; los de la
-                           fórmula secreta quedan resumidos en la fila del candado (ver ConstruirDetalleElaborado). *@
-                        @if (Model.IngredientesUtilizados != null)
-                        {
-                            foreach (var linea in Model.IngredientesUtilizados)
-                            {
-                                <tr>
-                                    <td class="cc-l-cod"><span class="cc-solo-card">Cód. </span>@(linea.Codigo > 0 ? linea.Codigo.ToString() : "-")</td>
-                                    <td class="cc-l-prod">@(!string.IsNullOrWhiteSpace(linea.Producto) ? linea.Producto : "-")</td>
-                                    <td class="text-right cc-l-kg">@linea.Kgs.ToString("N3", cultura)</td>
-                                    @* Balanza: en celular un icono (azul = pesado en balanza, gris tenue = no); en desktop Si / No. *@
-                                    <td class="text-center cc-l-bal cc-l-ultimo">
-                                        <span class="cc-solo-tabla">@(linea.PesoBalanza ? "Si" : "No")</span>
-                                        <i class="cc-solo-card fas fa-balance-scale @(linea.PesoBalanza ? "text-primary" : "cc-ico-off")" role="img"
-                                           aria-label="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"
-                                           title="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"></i>
-                                    </td>
-                                </tr>
-                            }
-                        }
-
-                        @if (Model.FormulaOculta)
-                        {
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">
-                                    <i class="fas fa-lock mr-1"></i> Ingredientes de la fórmula secreta ocultos.
-                                    <button type="button" class="btn btn-sm btn-outline-primary ml-2 js-ver-formula-detalle" data-id-embutido="@Model.Id">
-                                        <i class="fas fa-key mr-1"></i> Ver fórmula
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                        else if (Model.IngredientesUtilizados == null || Model.IngredientesUtilizados.Count == 0)
-                        {
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">No se encontraron ingredientes utilizados.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="col-12 col-xl-4 order-1 order-xl-2">
-            <div class="elaborado-detalle-meta-card">
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@Model.Id</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Elaborado:</span> <span class="font-weight-bold">@elaborado</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Codigo:</span> <span class="font-weight-bold">@codigo</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@observaciones</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Receta:</span> <span class="font-weight-bold">@receta</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Quien lo creo:</span> <span class="font-weight-bold">@usuarioCreacion</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Fecha de creacion:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Quien lo actualizo:</span> <span class="font-weight-bold">@usuarioActualizacion</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Fecha de actualizacion:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Sucursal:</span> <span class="font-weight-bold">@sucursal</span></div>
-                <div class="elaborado-detalle-meta-row mb-0"><span class="text-muted">Estado:</span> <span class="font-weight-bold">@estado</span></div>
-            </div>
-        </div>
+    @* Desktop (2026-11-12, tabla-compacta.css): franja de chips con lo esencial en lugar de la tarjeta lateral de datos
+       (el elaborado y su codigo ya estan en la fila de arriba). *@
+    <div class="det-head">
+        <span class="det-chip chip-id"><i class="fas fa-hashtag"></i><b>@Model.Id</b></span>
+        @if (tieneEstado)
+        {
+            <span class="det-chip chip-out"><i class="fas fa-ban"></i><b>@Model.Estado</b></span>
+        }
+        <span class="det-chip" title="Sucursal"><i class="fas fa-store"></i><b>@sucursal</b></span>
+        @if (tieneReceta)
+        {
+            <span class="det-chip"><i class="fas fa-book"></i><span class="k">Receta</span> <b>@Model.Receta</b></span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.UsuarioCreacion) || fechaCreacion != "")
+        {
+            <span class="det-chip"><i class="fas fa-user-plus"></i><span class="k">Creó</span> <b>@(!string.IsNullOrWhiteSpace(Model.UsuarioCreacion) ? Model.UsuarioCreacion : "-")</b> <span class="k">@fechaCreacion</span></span>
+        }
+        @if (fueModificado)
+        {
+            <span class="det-chip chip-mod"><i class="fas fa-pen"></i><span class="k">Modificó</span> <b>@(!string.IsNullOrWhiteSpace(Model.UsuarioActualizacion) ? Model.UsuarioActualizacion : "-")</b> <span class="k">@fechaActualizacion</span></span>
+        }
     </div>
 
-    <style>
-        .elaborado-detalle-layout {
-            align-items: flex-start;
-        }
+    @if (tieneObservaciones)
+    {
+        <div class="det-obs"><i class="fas fa-comment-alt"></i><div>@Model.Observaciones</div></div>
+    }
 
-        .elaborado-detalle-meta-card {
-            border: 1px solid #dee2e6;
-            border-radius: .5rem;
-            background: #fff;
-            padding: .85rem .95rem;
-        }
+    @* Formula secreta (2026-10-04): con la formula visible (hay elevacion) se ofrece "Ocultar". *@
+    @if (Model.FormulaSecreta && !Model.FormulaOculta)
+    {
+        <div class="mb-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary js-ocultar-formula-detalle" data-id-corte="@Model.IdCorte">
+                <i class="fas fa-eye-slash mr-1"></i> Ocultar fórmula
+            </button>
+        </div>
+    }
 
-        .elaborado-detalle-meta-row {
-            margin-bottom: .45rem;
-            line-height: 1.2;
-        }
+    @* Ingredientes: columnas compactas (Cód. 15 · Producto 25 · Kgs 8, ver tabla-compacta.css) y total al pie. *@
+    <div class="det-lineas elaborado-detalle-lineas">
+        <table class="table table-sm mb-0 tabla-cards tabla-cards-lista">
+            <thead>
+                <tr>
+                    <th class="tc-cod">Cód.</th>
+                    <th class="tc-prod">Ingrediente utilizado</th>
+                    <th class="text-right tc-kg">Kgs</th>
+                    <th class="text-center tc-ico">Balanza</th>
+                </tr>
+            </thead>
+            <tbody>
+                @* Con la fórmula oculta se listan solo los ingredientes cargados a mano; los de la
+                   fórmula secreta quedan resumidos en la fila del candado (ver ConstruirDetalleElaborado). *@
+                @if (Model.IngredientesUtilizados != null)
+                {
+                    foreach (var linea in Model.IngredientesUtilizados)
+                    {
+                        <tr>
+                            <td class="cc-l-cod tc-cod"><span class="cc-solo-card">Cód. </span>@(linea.Codigo > 0 ? linea.Codigo.ToString() : "-")</td>
+                            <td class="cc-l-prod tc-prod">@(!string.IsNullOrWhiteSpace(linea.Producto) ? linea.Producto : "-")</td>
+                            <td class="text-right cc-l-kg tc-kg">@linea.Kgs.ToString("N3", cultura)</td>
+                            @* Balanza: icono (azul = pesado en balanza, gris tenue = no). *@
+                            <td class="text-center cc-l-bal cc-l-ultimo tc-ico">
+                                <i class="fas fa-balance-scale @(linea.PesoBalanza ? "text-primary" : "cc-ico-off")" role="img"
+                                   aria-label="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"
+                                   title="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"></i>
+                            </td>
+                        </tr>
+                    }
+                }
 
-        .elaborado-detalle-tabla thead th {
-            font-size: .76rem;
-            padding-top: .3rem;
-            padding-bottom: .3rem;
-        }
-
-        html.dark-mode .elaborado-detalle-meta-card,
-        body.dark-mode .elaborado-detalle-meta-card {
-            background: #111827;
-            border-color: #374151;
-            color: #f3f4f6;
-        }
-
-        html.dark-mode .elaborado-detalle-meta-card .text-muted,
-        body.dark-mode .elaborado-detalle-meta-card .text-muted {
-            color: #9ca3af !important;
-        }
-
-        html.dark-mode .elaborado-detalle-tabla,
-        body.dark-mode .elaborado-detalle-tabla {
-            color: #f3f4f6;
-        }
-
-        html.dark-mode .elaborado-detalle-tabla td,
-        html.dark-mode .elaborado-detalle-tabla th,
-        body.dark-mode .elaborado-detalle-tabla td,
-        body.dark-mode .elaborado-detalle-tabla th {
-            border-color: #374151;
-        }
-
-        html.dark-mode .elaborado-detalle-tabla thead.thead-light th,
-        body.dark-mode .elaborado-detalle-tabla thead.thead-light th {
-            background-color: #1f2937;
-            color: #e5e7eb;
-            border-color: #374151;
-        }
-
-        @@media (max-width: 767.98px) {
-            .elaborado-detalle-meta-card {
-                display: none;
+                @if (Model.FormulaOculta)
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            <i class="fas fa-lock mr-1"></i> Ingredientes de la fórmula secreta ocultos.
+                            <button type="button" class="btn btn-sm btn-outline-primary ml-2 js-ver-formula-detalle" data-id-embutido="@Model.Id">
+                                <i class="fas fa-key mr-1"></i> Ver fórmula
+                            </button>
+                        </td>
+                    </tr>
+                }
+                else if (!hayIngredientes)
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No se encontraron ingredientes utilizados.</td>
+                    </tr>
+                }
+            </tbody>
+            @if (hayIngredientes && !Model.FormulaOculta)
+            {
+                @* Total de los ingredientes mostrados (con la formula oculta seria parcial: no se muestra). Solo desktop. *@
+                <tfoot>
+                    <tr>
+                        <td colspan="2">Total ingredientes · @Model.IngredientesUtilizados.Count línea@(Model.IngredientesUtilizados.Count == 1 ? "" : "s")</td>
+                        <td class="tc-kg">@totalKgs.ToString("N3", cultura)</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
             }
-        }
-
-        @@media (min-width: 1200px) {
-            .elaborado-detalle-meta-card {
-                position: sticky;
-                top: .25rem;
-            }
-        }
-    </style>
+        </table>
+    </div>
 }

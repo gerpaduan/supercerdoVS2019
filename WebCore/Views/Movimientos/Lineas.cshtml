@@ -9,10 +9,11 @@
 }
 
 <div class="container-fluid px-2 px-md-3" data-lineas-agrupadas-page="movimientos">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <h4 class="mb-2 mb-md-0">Lineas de movimiento</h4>
-        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Movimientos", new { idSucursalOrigen = Model.IdSucursalOrigen, idSucursalDestino = Model.IdSucursalDestino, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") })">
-            <i class="fas fa-arrow-left mr-1"></i> Volver al indice
+    @* El titulo "Lineas de movimiento" ya figura en la barra superior (ViewBag.Title): se quito el subtitulo repetido y el boton Volver
+       quedo chico (2026-11-11). *@
+    <div class="d-flex justify-content-end align-items-center mb-2">
+        <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", "Movimientos", new { idSucursalOrigen = Model.IdSucursalOrigen, idSucursalDestino = Model.IdSucursalDestino, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") })">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
         </a>
     </div>
 
@@ -69,9 +70,19 @@
                     </div>
                 </div>
 
-                <div class="custom-control custom-switch mt-1">
-                    <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesMovimientos" />
-                    <label class="custom-control-label" for="expandirDetallesMovimientos">Ver detalles</label>
+                <div class="d-flex align-items-center flex-wrap mt-1" style="gap:.75rem;">
+                    @* "Ver detalles" solo aplica a la vista agrupada (en la vista plana ya se ven todos los datos): lineas-agrupadas.js lo oculta. *@
+                    <div class="custom-control custom-switch mr-3 js-detalles-switch-wrap">
+                        <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesMovimientos" />
+                        <label class="custom-control-label" for="expandirDetallesMovimientos">Ver detalles</label>
+                    </div>
+                    @* Alterna entre tarjetas por movimiento y una tabla plana con una fila por linea (ordenable). Ver lineas-agrupadas.js. *@
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVistaSoloLineas"
+                            data-clave-vista="movimientos"
+                            data-texto-plana="Ver solo líneas"
+                            data-texto-agrupada="Ver agrupado por movimiento">
+                        <i class="fas fa-list mr-1"></i><span class="js-vista-texto">Ver solo líneas</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -87,13 +98,17 @@
     <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-server @(Model.Movimientos != null && Model.Movimientos.Count > 0 ? "d-none" : "")">No se encontraron movimientos con lineas para los filtros seleccionados.</div>
     <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-client d-none">No hay resultados con el filtro en vivo.</div>
 
+    @* Vista agrupada (tarjeta por movimiento). Se oculta el CONTENEDOR y no las tarjetas: otras partes de la pantalla
+       consultan `.js-registro-card:not(.d-none)` para saber si hay resultados. *@
+    <div class="js-vista-agrupada">
     @if (Model.Movimientos != null)
     {
         foreach (var movimiento in Model.Movimientos)
         {
             var campoEstado = movimiento.Campos.FirstOrDefault(x => x.Etiqueta == "Estado");
             var estado = campoEstado != null ? campoEstado.Valor : "";
-            <div class="card shadow-sm mb-3 linea-registro-card js-registro-card" data-estado="@estado">
+            <div class="card shadow-sm mb-3 linea-registro-card js-registro-card" data-estado="@estado"
+                 data-fecha="@movimiento.Fecha.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)">
                 <div class="card-header bg-white">
                     <div class="d-flex justify-content-between align-items-start flex-wrap">
                         <div>
@@ -123,6 +138,7 @@
                                 <th>Producto</th>
                                 <th class="text-right">Cantidad / kg</th>
                                 <th class="text-right">Total unidades</th>
+                                <th class="text-center">Balanza</th>
                                 <th>Observación línea</th>
                             </tr>
                         </thead>
@@ -134,6 +150,7 @@
                                     <td>@linea.Producto</td>
                                     <td class="text-right">@linea.CantidadKgTexto</td>
                                     <td class="text-right">@linea.CantidadUnidadTexto</td>
+                                    <td class="text-center">@(linea.Balanza ? "Sí" : "No")</td>
                                     <td>@linea.Observacion</td>
                                 </tr>
                             }
@@ -143,6 +160,18 @@
             </div>
         }
     }
+    </div>
+
+    @* Vista plana ("Ver solo líneas"): una fila por línea. La arma lineas-agrupadas.js a partir de las tarjetas de arriba
+       (encabezado y filas se generan en el navegador); empieza oculta. *@
+    <div class="card shadow-sm js-vista-plana d-none">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 elaborados-table-compact lineas-tabla-plana">
+                <thead class="thead-light"><tr class="js-plana-encabezado"></tr></thead>
+                <tbody class="js-plana-cuerpo"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <style>

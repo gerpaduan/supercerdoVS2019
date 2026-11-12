@@ -423,11 +423,15 @@
                 // los valores guardados en la linea no cambian (ver fmtMoneda).
                 const cantNum = parseCant(l.cant);
                 const cantTexto = isFinite(cantNum) ? fmtCant(cantNum) : String(l.cant ?? "");
+                // Etiqueta con el codigo, pegada al nombre (pedido 2026-11-12). Solo se dibuja si la linea trae codigo:
+                // antes se imprimia "(cod: undefined)" cuando faltaba.
+                const codigoLinea = (l.codigo === undefined || l.codigo === null) ? "" : String(l.codigo).trim();
+                const etiquetaCodigo = codigoLinea ? `<span class="pos-linea-cod">cód ${codigoLinea}</span>` : "";
                 $tbody.append(`
                     <tr data-id="${l.index}" class="fila-item ${claseAnulada}">
                         <td>
-                            <div class="fw-bold">
-                                #${posicion + 1} <strong>${l.producto}</strong> (cod: ${l.codigo})
+                            <div class="fw-bold pos-linea-nombre">
+                                <span class="pos-linea-num">#${posicion + 1}</span><strong class="pos-linea-prod">${l.producto}</strong>${etiquetaCodigo}
                             </div>
                             ${detalleExpendio}
                             <div class="d-flex justify-content-between item-detalle">

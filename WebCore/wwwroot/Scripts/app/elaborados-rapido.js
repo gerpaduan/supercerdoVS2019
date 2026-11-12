@@ -114,49 +114,110 @@
         return normalizarBalanzaPayload(data).conectada === true;
     }
 
+    // Quita tildes y pasa a minusculas para que "chicharron" encuentre "Chicharrón".
+    function normalizarTexto(value) {
+        return String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    }
+
+    // Marca con <mark> la primera coincidencia de `termino` dentro de `texto`. Devuelve nodos DOM (no HTML) para
+    // no inyectar el nombre del producto como marcado. `termino` ya viene normalizado; como normalizar no cambia
+    // el largo de la cadena para letras con tilde precompuestas, los indices valen sobre el texto original.
+    function resaltarEn(elemento, texto, termino) {
+        var $el = $(elemento);
+        var idx = termino ? normalizarTexto(texto).indexOf(termino) : -1;
+        if (idx < 0) {
+            $el.text(texto);
+            return;
+        }
+        $el.empty()
+            .append(document.createTextNode(texto.substring(0, idx)))
+            .append($('<mark>').text(texto.substring(idx, idx + termino.length)))
+            .append(document.createTextNode(texto.substring(idx + termino.length)));
+    }
+
     function initLista() {
         var $page = $('[data-elaborados-page="ingreso-rapido-lista"]');
         if (!$page.length) return;
 
-        var $rows = $('#tablaIngresoRapidoLista tbody .js-rapido-row');
+        var $rows = $('#grillaIngresoRapido .js-rapido-row');
         var $filtro = $('#filtroRapidoTexto');
         var $sinResultados = $('#sinResultadosRapidos');
+        var $contador = $('#contadorRapidos');
+        var $grilla = $('#grillaIngresoRapido');
+        var visibles = [];   // tarjetas que cumplen el filtro, en orden de pantalla
+        var activo = 0;      // indice (dentro de `visibles`) de la tarjeta resaltada: es la que abre Enter
+
+        function pintarActivo() {
+            $rows.removeClass('rapido-activa');
+            if (visibles.length) {
+                var $actual = $(visibles[activo]).addClass('rapido-activa');
+                // Mantener a la vista la tarjeta resaltada cuando se navega con flechas por una lista larga.
+                if ($actual[0] && $actual[0].scrollIntoView) $actual[0].scrollIntoView({ block: 'nearest' });
+            }
+        }
 
         function aplicarFiltro() {
-            var texto = ($filtro.val() || '').toLowerCase().trim();
-            var visibles = 0;
+            var bruto = ($filtro.val() || '').trim();
+            var texto = normalizarTexto(bruto);
+            visibles = [];
 
             $rows.each(function () {
                 var $row = $(this);
-                var codigo = String($row.data('codigo') || '').toLowerCase();
-                var producto = String($row.data('producto') || '').toLowerCase();
-                var visible = !texto || codigo.indexOf(texto) >= 0 || producto.indexOf(texto) >= 0;
+                var codigo = String($row.data('codigo') || '');
+                var producto = String($row.data('producto') || '');
+                var visible = !texto || normalizarTexto(codigo).indexOf(texto) >= 0 || normalizarTexto(producto).indexOf(texto) >= 0;
 
                 $row.toggleClass('d-none', !visible);
-                if (visible) visibles++;
+                if (visible) {
+                    visibles.push(this);
+                    resaltarEn($row.find('.js-rapido-nombre'), producto, texto);
+                    resaltarEn($row.find('.js-rapido-cod'), codigo, texto);
+                }
             });
 
-            $sinResultados.toggleClass('d-none', visibles > 0);
+            activo = 0; // al cambiar el filtro el resaltado vuelve al primero: Enter abre siempre "el primero"
+            $sinResultados.toggleClass('d-none', visibles.length > 0);
+            $('#sinResultadosRapidosTexto').text(bruto);
+            $contador.text(visibles.length + ' de ' + $rows.length);
+            pintarActivo();
+        }
+
+        // Cantidad de columnas reales de la grilla (cambia con el ancho): las flechas arriba/abajo saltan una fila.
+        function columnasGrilla() {
+            var plantilla = window.getComputedStyle($grilla[0]).gridTemplateColumns || '';
+            return Math.max(1, plantilla.split(' ').filter(Boolean).length);
+        }
+
+        function abrirActivo() {
+            if (!visibles.length) return;
+            var href = $(visibles[activo]).attr('href');
+            if (href) window.location.href = href;
         }
 
         $filtro.on('input', aplicarFiltro);
-        $rows.on('dblclick', function (e) {
-            var $target = $(e.target);
-            if ($target.closest('a, button, input, textarea, select, label').length) return;
-
-            var $seleccionar = $(this).find('a.btn').first();
-            if ($seleccionar.length) {
-                window.location.href = $seleccionar.attr('href');
+        $filtro.on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                abrirActivo();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                $filtro.val('');
+                aplicarFiltro();
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                if (!visibles.length) return;
+                e.preventDefault();
+                var paso = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : (e.key === 'ArrowDown' ? columnasGrilla() : -columnasGrilla());
+                activo = Math.max(0, Math.min(visibles.length - 1, activo + paso));
+                pintarActivo();
             }
         });
-        // Teclado: en escritorio la columna con el boton Seleccionar esta oculta, asi que Enter sobre la fila (tabindex=0) la elige.
-        $rows.on('keydown', function (e) {
-            if (e.key !== 'Enter' || $(e.target).closest('a, button, input, textarea, select').length) return;
-
-            var $seleccionar = $(this).find('a.btn').first();
-            if ($seleccionar.length) {
-                e.preventDefault();
-                window.location.href = $seleccionar.attr('href');
+        // Enter sobre una tarjeta enfocada con Tab ya lo resuelve el navegador (es un enlace). Al pasar el mouse
+        // por una tarjeta el resaltado la sigue, para que no haya dos tarjetas "marcadas" a la vez.
+        $rows.on('mouseenter', function () {
+            var pos = visibles.indexOf(this);
+            if (pos >= 0 && pos !== activo) {
+                activo = pos;
+                pintarActivo();
             }
         });
         aplicarFiltro();
@@ -897,8 +958,73 @@
             state.borradorGenerico && state.borradorGenerico.abrirModalBorradores();
         });
 
+        // ---- Aviso de "ya abierto en otra pestaña" (documento-abierto.js, ver docs/DECISIONS.md 2026-11-12 g) ----
+        // Paquete de trabajo = {draft, clientId}: lo que viaja de una pestaña a otra al "traer" un Nuevo o una modificacion.
+        function obtenerPaquete() {
+            var conServidor = state.borradorGenerico && state.borradorGenerico.estaHabilitado();
+            return { draft: buildDraft(), clientId: conServidor ? state.borradorGenerico.getClientId() : null };
+        }
+
+        // Aplica un paquete recibido: toma el clientId del borrador en servidor y carga el formulario. aplicarDraft no programa el
+        // guardado del borrador: se programa aca para que el borrador del servidor quede con los datos recibidos.
+        function aplicarPaquete(paquete) {
+            if (!paquete || !paquete.draft) throw new Error('El paquete de trabajo no trae borrador.');
+            if (paquete.clientId && state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                state.borradorGenerico.adoptarClientId(paquete.clientId);
+            }
+            aplicarDraft(paquete.draft);
+            state.borradorGenerico && state.borradorGenerico.programarGuardado();
+        }
+
+        // Esta pestaña entrego su trabajo a otra: se frena el borrador y se deja salir sin el aviso del navegador.
+        function alCederTrabajo() {
+            if (state.borradorGenerico) state.borradorGenerico.soltar();   // sin avisar al servidor: la otra pestaña retomo el mismo borrador
+            permitirSalidaSinAdvertencia();
+        }
+
+        var documento = null;
+        if (config.documentoAbierto && window.DocumentoAbierto) {
+            var nombreElaborado = (config.borradorGenerico && config.borradorGenerico.elaboradoNombre) || 'Elaborado';
+            // modoLista: el aviso lista TODOS los elaborados abiertos con "Traer este"; solo se puede traer el del mismo elaborado y modo.
+            documento = window.DocumentoAbierto.crear({
+                modulo: 'EMBUTIDO_RAPIDO',
+                idUsuario: config.documentoAbierto.idUsuario,
+                grupo: '',
+                modoLista: true,
+                urls: config.documentoAbierto.urls,
+                textos: { singular: config.esDesarme ? 'desarme' : 'ingreso rápido', plural: config.esDesarme ? 'desarmes' : 'ingresos rápidos' },
+                compatibilidad: function () { return (config.idCorte || 0) + ':' + (config.esDesarme ? 'desarme' : 'ingreso'); },
+                resumen: function () {
+                    var parsed = parseDecimal($cantidad.val());
+                    var cantidad = parsed.ok && parsed.value > 0;
+                    return {
+                        cantLineas: cantidad ? 1 : 0,
+                        etiqueta: nombreElaborado + (config.esDesarme ? ' (desarme)' : ''),
+                        detalle: cantidad ? formatKg(parsed.value) + ' kg' : 'sin cantidad'
+                    };
+                },
+                obtenerPaquete: obtenerPaquete,
+                aplicarPaquete: aplicarPaquete,
+                alCeder: alCederTrabajo
+            });
+            // Un Nuevo se registra y avisa; la edicion de uno guardado se chequea al tocar "Modificar" (antesDeModificar).
+            if (idEmbutidoActual() <= 0 && !config.esAnulado) documento.anunciarNuevo();
+        }
+
         window.ElaboradosRapido = window.ElaboradosRapido || {};
         window.ElaboradosRapido.syncPrimaryAction = syncPrimaryAction;
+        // "Modificar" de uno ya guardado: antes de pasar a edicion se chequea que otra pestaña no lo este modificando.
+        // `habilitar` es la funcion de edit-readonly.js que pasa a edicion; si no se llama, queda en solo lectura.
+        window.ElaboradosRapido.antesDeModificar = function (habilitar) {
+            var idEmbutido = idEmbutidoActual();
+            if (!documento || idEmbutido <= 0) {
+                habilitar();
+                return;
+            }
+            documento.tomarEdicion(idEmbutido).then(function (puede) {
+                if (puede) habilitar();
+            });
+        };
         syncPrimaryAction();
     }
 

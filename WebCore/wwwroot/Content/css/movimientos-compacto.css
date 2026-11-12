@@ -390,3 +390,481 @@
 html.dark-mode body.app-shell .movimiento-page .movimiento-table-compact thead th {
     background: #1b2c42;
 }
+
+/* ---- Tiempo de envio y hora de carga por linea (2026-11-11, docs/DECISIONS.md "Movimientos: tiempo de envio, llegada y hora de carga por
+   linea") ----
+   Regla de diseno: NO le quita ancho ni alto a nada de lo existente (la fila Origen / Destino / Fecha y las columnas de la tabla quedan igual;
+   medido en la maqueta con estos mismos CSS, 1366 y 375 px, con y sin el Stock destino). Solo reglas nuevas para clases nuevas. */
+
+/* "Envio (min)" (solo en un movimiento nuevo): vive en la franja de botones, antes de Guardar. */
+.movimiento-page .mov-envio-accion {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.movimiento-page .mov-envio-accion label {
+    margin: 0;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+body.app-shell .movimiento-page .mov-envio-accion .mov-envio-input {
+    width: 3.9rem;
+    text-align: right;
+}
+
+.movimiento-page .mov-envio-unidad {
+    font-size: .76rem;
+    color: var(--ui-text-muted, #6c757d);
+    white-space: nowrap;
+}
+
+/* Escritorio sin el stock al lado: los botones viven al pie de la columna derecha (pantalla-trabajo.js, ~310 px) y Envio + Guardar + Cancelar
+   no entran en un renglon; Envio va en el suyo, arriba (alto que ya estaba libre: la columna derecha no crece). Con el stock al lado entra
+   en la misma franja. */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo .mov-layout:not(.mov-con-stock) .pt-col-der > .pt-acciones > .mov-envio-accion {
+        flex: 0 0 100%;
+    }
+}
+
+/* Con el stock al lado pantalla-trabajo.css le saca el margen a los hijos de la franja: separacion propia para que "min" no toque Guardar. */
+body.app-shell .pantalla-trabajo .pt-acciones > .mov-envio-accion {
+    margin-right: .6rem !important;
+}
+
+/* Hora de carga de cada linea. Escritorio: en el tooltip del # y, en modo ver (tabla bloqueada, tacho inutilizable), la columna Accion
+   muestra la hora (movimientos.js agrega .mov-solo-ver a la tabla). Celular: dentro de la tarjeta de la linea (td.cc-l-hora). */
+body.app-shell .movimiento-page #tablaLineasMovimiento td.cc-l-acc .mov-acc-hora-txt {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    body.app-shell .movimiento-page #tablaLineasMovimiento.mov-solo-ver td.cc-l-acc {
+        text-align: center;
+    }
+
+    body.app-shell .movimiento-page #tablaLineasMovimiento.mov-solo-ver td.cc-l-acc .mov-acc-hora-txt {
+        display: inline;
+        color: var(--ui-text-muted, #6c757d);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    body.app-shell .movimiento-page #tablaLineasMovimiento.mov-solo-ver td.cc-l-acc .js-remove-line {
+        display: none;
+    }
+}
+
+/* Linea cargada otro dia que el guardado: ambar (mismo criterio que Compras / Stock, tabla-cards.css). */
+body.app-shell .movimiento-page #tablaLineasMovimiento td.cc-l-acc .mov-acc-hora-txt.mov-hora-otro-dia {
+    color: #a8650a;
+}
+
+html.dark-mode body.app-shell .movimiento-page #tablaLineasMovimiento td.cc-l-acc .mov-acc-hora-txt.mov-hora-otro-dia {
+    color: #f0b429;
+}
+
+@media (max-width: 767.98px) {
+    /* contain: inline-size -> la hora no ensancha las columnas de la tarjeta (sin esto el nombre del producto perdia ~4 px y bajaba un renglon
+       mas); usa el ancho que ya dejan Cant. + Kilos del renglon de arriba. Reloj + hora entre el codigo y los iconos. */
+    table.tabla-cards.tabla-cards-lista-edicion#tablaLineasMovimiento > tbody > tr > td.cc-l-hora {
+        grid-area: 2 / 2 / 3 / 4;
+        contain: inline-size;
+    }
+}
+
+/* ===== Carga de productos mas legible, foco verde y barra de botones (pedido 2026-11-12, maqueta aprobada) =====
+   Ninguna regla cambia tamanos, margenes ni espacios: solo peso de letra, color, fondo y box-shadow (la sombra no ocupa lugar). Verificado
+   midiendo todos los controles con y sin estas reglas. Variables propias (--foco-verde...) para claro y oscuro; despues se repite en Stock,
+   Elaborados, etc. */
+.pantalla-trabajo[data-pt="mov"] {
+    --foco-verde: #16a34a;
+    --foco-verde-suave: rgba(22, 163, 74, .32);
+    --foco-verde-fondo: #f2fcf5;
+    --bal-fondo: #e7f8ee;
+    --bal-borde: #5fbf86;
+    --bal-texto: #0b5a2c;
+}
+
+html.dark-mode .pantalla-trabajo[data-pt="mov"] {
+    --foco-verde: #4ade80;
+    --foco-verde-suave: rgba(74, 222, 128, .38);
+    --foco-verde-fondo: #12281b;
+    --bal-fondo: #12281b;
+    --bal-borde: #2f8f58;
+    --bal-texto: #9af0bd;
+}
+
+/* Texto fuerte: codigo, cantidad de unidades y kilos (el producto ya es negrita). */
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-box-agregar .movimiento-input-codigo,
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-box-agregar .movimiento-input-cantidad {
+    font-weight: 800;
+    color: var(--ui-text, #1f2937);
+}
+
+/* Kgs. con la balanza activa: de solo lectura, pero no "apagado" (antes quedaba gris como un campo bloqueado). Fondo y borde verdes + icono de
+   balanza a la derecha (el padding derecho no cambia el tamano del campo). */
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-box-agregar .movimiento-input-cantidad[readonly] {
+    background-color: var(--bal-fondo);
+    color: var(--bal-texto);
+    border-color: var(--bal-borde);
+    opacity: 1;
+    padding-right: 1.9rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 2v10M3 4.5h10M3 4.5L1.2 9.5h3.6zM13 4.5l-1.8 5h3.6zM5 14h6' stroke='%232f9e5f' fill='none' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .45rem center;
+    background-size: 1rem 1rem;
+}
+
+/* Foco verde (2026-11-12): borde + aura verdes en cualquier campo de la pantalla (tambien el Kgs. de solo lectura). */
+body.app-shell .pantalla-trabajo[data-pt="mov"] :is(input.form-control, select.form-control, textarea.form-control, .custom-select):focus {
+    border-color: var(--foco-verde) !important;
+    box-shadow: 0 0 0 .24rem var(--foco-verde-suave) !important;
+    outline: 0;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] :is(input.form-control, select.form-control, textarea.form-control):focus:not([readonly]) {
+    background-color: var(--foco-verde-fondo);
+}
+
+/* La etiqueta del campo con foco tambien se pinta (solo color: mismo peso y tamano). */
+body.app-shell .pantalla-trabajo[data-pt="mov"] .form-group:focus-within > label {
+    color: var(--foco-verde);
+}
+
+/* Barra de botones: Volver (e Imprimir) a la izquierda; Stock destino, Movimientos sin guardar, ventana y pantalla completa agrupados a la
+   derecha. Solo cambia de lugar: los botones conservan su tamano (los estiliza .mov-barra-botones .btn). El gap iguala al de la barra. */
+.mov-barra-grupo-der {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin-left: auto;
+}
+
+@media (min-width: 1200px) {
+    body.app-shell .movimiento-page .mov-barra-grupo-der {
+        gap: .4rem;
+    }
+}
+
+/* Letra de Agregar producto 1 punto mas grande en escritorio (2026-11-12): Codigo, Producto, Cant.Un. y Kgs. (antes 12.96 px; el producto 14.72 px).
+   1 pt = 1.333 px, sumado con calc() sobre el tamano que ya tenian. Los campos NO crecen: el alto queda en el min-height de 1.9rem porque el
+   interlineado se fija en 1.3 (con el 1.5 de Bootstrap el producto, ya mas grande, pasaba del minimo y el campo ganaba ~1.4 px de alto).
+   Solo >= 1200 px (en el celular no cambia). */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-box-agregar :is(.movimiento-input-codigo, .movimiento-input-cantidad) {
+        font-size: calc(.81rem + 1pt);
+        line-height: 1.3;
+    }
+
+    /* !important: el tamano del producto (.app-product-highlight / .movimiento-producto-highlight) ya viene con !important (.92rem). */
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-box-agregar .movimiento-producto-highlight {
+        font-size: calc(.92rem + 1pt) !important;
+        line-height: 1.3;
+    }
+}
+
+/* Interruptor de balanza a icono (2026-11-12): icono de balanza con «Balanza» en chiquito, verde cuando esta activada y gris cuando no. Es mas angosto que
+   el interruptor con su etiqueta (~46 px contra ~90 px), asi el teclado digital y Ver acumulados quedan en el MISMO renglon que los campos. El alto
+   (1.9rem) es el de los demas botones de la fila. El checkbox sigue en la pagina (invisible pero enfocable con el teclado). */
+.pantalla-trabajo[data-pt="mov"] {
+    --bal-on: #198754;
+    --bal-on-fondo: rgba(25, 135, 84, .1);
+    --bal-off: #8a94a3;
+    --bal-off-borde: #c4cad3;
+}
+
+html.dark-mode .pantalla-trabajo[data-pt="mov"] {
+    --bal-on: #4ade80;
+    --bal-on-fondo: rgba(74, 222, 128, .12);
+    --bal-off: #7d8aa0;
+    --bal-off-borde: #3a4a63;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-balanza-toggle {
+    position: relative;
+    display: inline-flex;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-balanza-chk {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    pointer-events: none;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-balanza-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.7rem;
+    height: 1.9rem;
+    margin: 0;
+    padding: .05rem .3rem;
+    box-sizing: border-box;
+    border: 1px solid var(--bal-off-borde);
+    border-radius: .8rem;
+    background: transparent;
+    /* !important: ui-refresh.css pinta todos los <label> con color: var(--ui-text) !important. */
+    color: var(--bal-off) !important;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-balanza-btn > i {
+    font-size: .95rem;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-balanza-txt {
+    margin-top: .12rem;
+    font-size: .56rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-balanza-chk:checked + .mov-balanza-btn {
+    color: var(--bal-on) !important;
+    border-color: var(--bal-on);
+    background: var(--bal-on-fondo);
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-balanza-chk:focus-visible + .mov-balanza-btn {
+    box-shadow: 0 0 0 .2rem var(--foco-verde-suave);
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-balanza-chk:disabled + .mov-balanza-btn {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* Fila de Agregar producto en escritorio (2026-11-12): Balanza, Ver acumulados y el teclado digital quedan en el MISMO renglon que los campos y alineados
+   con ellos. (1) align-self:flex-end: la columna del "+" mide ~48 px (arrastra una etiqueta invisible) y los iconos, centrados, quedaban ~9 px mas arriba que
+   los campos; abajo coinciden con el borde inferior de los campos. (2) Los tres se juntan (-.25rem entre si) y el grupo de campos pasa de 36 a 34 rem de base
+   (crece igual con lugar): sin esto el teclado bajaba al segundo renglon en ventanas de ~1366 px con el menu lateral (a costa de ~45 px del Producto en esa
+   ventana; con mas ancho no cambia nada). Sin el Stock destino al lado (con el panel, el cuadro tiene su propio acomodo en dos renglones). */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-layout:not(.mov-con-stock) .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .d-flex > * {
+        align-self: flex-end;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-layout:not(.mov-con-stock) .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .d-flex > * + * {
+        margin-left: -.25rem !important;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-layout:not(.mov-con-stock) .pt-box-agregar:not(:has(.teclado-desplegado)) > .numeric-keypad-toggle-layout {
+        flex-basis: 34rem;
+    }
+}
+
+/* Boton Permitir ingreso (2026-11-12): reemplaza al checkbox + "Presione + para registrar". Vive dentro de la columna de Cant.Un., arriba del input, y
+   aparece solo cuando la cantidad no coincide con los kilos. Un clic (o la tecla +) registra la linea igual. En escritorio (etiquetas ocultas) flota
+   sobre el input con position:absolute para no agregar alto a la fila de campos; el cartel se angosta hasta el boton (movimientos.js, ajustarAnchoCartel). */
+.pantalla-trabajo[data-pt="mov"] {
+    --perm-fondo: #f5a623;
+    --perm-fondo-hover: #e8970f;
+    --perm-borde: #c27d0a;
+    --perm-texto: #2b1d00;
+}
+
+html.dark-mode .pantalla-trabajo[data-pt="mov"] {
+    --perm-fondo: #d98e12;
+    --perm-fondo-hover: #eba22a;
+    --perm-borde: #f2b84b;
+    --perm-texto: #1d1300;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir {
+    margin: 0 0 .25rem;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    width: 100%;
+    min-height: 1.9rem;
+    padding: .15rem .5rem;
+    border: 1px solid var(--perm-borde);
+    background: var(--perm-fondo);
+    color: var(--perm-texto) !important;
+    font-size: .8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir-btn:hover,
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir-btn:focus {
+    background: var(--perm-fondo-hover);
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir-btn:focus-visible {
+    box-shadow: 0 0 0 .2rem var(--foco-verde-suave);
+}
+
+body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir-tecla {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 .2rem;
+    border: 1px solid var(--perm-borde);
+    border-radius: .25rem;
+    background: rgba(255, 255, 255, .85);
+    color: var(--perm-texto);
+    font-family: inherit;
+    font-size: .75rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+@media (max-width: 1199.98px) {
+    /* Menos de 1200 px (y celular): la columna de Cant.Un. es angosta (~100 px) y el boton va en el flujo sobre el input: el atajo no se muestra
+       y el texto puede partirse en dos renglones en vez de salirse de la columna. */
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir-tecla {
+        display: none;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir-btn {
+        white-space: normal;
+        font-size: .72rem;
+        line-height: 1.1;
+    }
+}
+
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-box-agregar:not(:has(.teclado-desplegado)) .movimiento-col-cantidad .form-group {
+        position: relative;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-box-agregar:not(:has(.teclado-desplegado)) .mov-permitir {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        z-index: 2;
+        margin: 0 0 .3rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-box-agregar:not(:has(.teclado-desplegado)) .mov-permitir-btn {
+        width: auto;
+        min-width: 10.5rem;
+    }
+
+    /* Con el boton a la vista el renglon del cartel mide lo que el boton, para que no se salga del cuadro por arriba. */
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-layout:not(.mov-con-stock) .pt-box-agregar:not(:has(.teclado-desplegado)):has(.mov-permitir:not(.d-none)) > .alert {
+        display: flex;
+        align-items: center;
+        min-height: 2.2rem;
+    }
+
+    /* Con el Stock destino abierto el cuadro de carga es angosto y reparte los campos en dos renglones: el boton flotante taparia los iconos del
+       renglon de arriba. Ahi va en el flujo, sobre Cant.Un., sin partirse y dejando que sobresalga hacia la derecha; la fila crece solo mientras se ve. */
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-layout.mov-con-stock .pt-box-agregar:not(:has(.teclado-desplegado)) .mov-permitir {
+        position: static;
+        margin: 0 0 .25rem;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-layout.mov-con-stock .pt-box-agregar:not(:has(.teclado-desplegado)) .mov-permitir-btn {
+        width: max-content;
+        min-width: 0;
+    }
+}
+
+/* Ventana independiente angosta (2026-11-12): ventana-angosta.js hace que la ventana de un tercio del ancho use el diseno de escritorio (reglas @media
+   y matchMedia evaluadas como 1366 px) y le agrega .mov-con-stock a .mov-layout para repetir el acomodo de la columna de carga con el Stock destino
+   abierto. El panel del stock no existe en esa ventana (queda con d-none): la grilla de dos columnas pasa a una sola, y el boton Stock destino no se
+   muestra (sin lugar para el panel; igual que cuando la ventana era angosta). */
+html.ventana-angosta body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock.pt-fill {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+html.ventana-angosta #btnStockDestino {
+    display: none !important;
+}
+
+/* Ventana angosta: ajustes de ancho (2026-11-12). Con ~500 px de ancho el diseno de escritorio necesita tres retoques para no salirse ni partir palabras:
+   (1) Origen / Destino / Fecha: la etiqueta pasa arriba del campo, en chico, para que los tres entren en un renglon;
+   (2) tabla: anchos fijos justos por columna (encabezados chicos, boton de quitar mas chico) y Producto toma lo que sobra;
+   (3) pie: Resumen, Observaciones y botones, cada uno en su renglon. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-fila-datos {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 0 .4rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-fila-datos .form-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-fila-datos label {
+    font-size: .62rem;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--text-muted, #6b7686);
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-fila-datos .form-control {
+    height: 1.9rem;
+    padding: .1rem .4rem;
+    font-size: .8rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap #tablaLineasMovimiento {
+    font-size: .8rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap #tablaLineasMovimiento thead th {
+    padding: .2rem .25rem !important;
+    font-size: .62rem !important;
+    letter-spacing: 0 !important;
+    line-height: 1.15;
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+    white-space: normal !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap #tablaLineasMovimiento tbody td {
+    padding: 0 .25rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th:first-child { width: 1.6rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-cod { width: 4.1rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-prod { width: auto !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-num:nth-child(4) { width: 3.4rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-num:nth-child(5) { width: 4.3rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-resto { width: 3.3rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-med { width: 3.5rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th:last-child { width: 2.9rem !important; }
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] #tablaLineasMovimiento .js-remove-line {
+    padding: .1rem .35rem;
+    font-size: .7rem;
+    line-height: 1.2;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-col-der > .mov-card-observaciones {
+    flex: 1 1 100%;
+    margin-top: .2rem !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-col-der > .pt-acciones {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    margin: .2rem 0 0 !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap {
+    overflow-x: hidden !important;
+}

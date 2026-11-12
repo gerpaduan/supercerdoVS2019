@@ -179,7 +179,8 @@
                         imprimirUrl: resp.imprimirUrl,
                         imprimirPayloadUrl: resp.imprimirPayloadUrl,
                         whatsappTexto: resp.whatsappTexto,
-                        stayOnPage: true
+                        stayOnPage: true,
+                        titulo: 'Imprimir movimiento'
                     });
                 })
                 .fail(function () {
@@ -279,12 +280,22 @@
         function syncReadOnlyUi() {
             var hayProducto = toInt($productoId.val()) > 0;
             $('#tablaLineasMovimiento .js-remove-line').prop('disabled', !!state.readOnly);
+            // En modo ver (solo lectura) el tacho no se puede usar: en escritorio esa columna muestra la hora de carga de cada linea.
+            $('#tablaLineasMovimiento').toggleClass('mov-solo-ver', !!state.readOnly);
+            $('#tablaLineasMovimiento thead th').last().text(state.readOnly ? 'Hora' : 'Acción');
             $cantKgs.prop('readonly', !!($balanza.is(':checked') && balanzaDisponible && !balanzaManualDesactivada && (!hayProducto || productoEsPesable())));
             syncPrimaryAction();
         }
 
+        // Aviso de "ya abierto en otra pestaña" (documento-abierto.js): se arma mas abajo, antes de aplicarTraspaso().
+        var documento = null;
+
+        // Clave del borrador local. Un Nuevo usa una clave POR PESTAÑA (movimiento_draft_new_<instancia>) para que dos Nuevo abiertos no
+        // se pisen; un movimiento existente conserva su clave por id.
         function getDraftKey() {
-            return config.draftKey || '';
+            var base = config.draftKey || '';
+            if (documento && base && base.slice(-4) === '_new') return documento.claveBorradorLocal(base);
+            return base;
         }
 
         function readDraft() {
@@ -318,6 +329,8 @@
                 idSucursalOrigen: $('#IdSucursalOrigen').val(),
                 idSucursalDestino: $('#IdSucursalDestino').val(),
                 fechaMovimiento: $('#FechaMovimiento').val(),
+                fechaManual: $fechaManual.val() === 'true',
+                tiempoEnvioMinutos: $envioMinutos.length ? $envioMinutos.val() : '',
                 observaciones: $observaciones.val(),
                 currentLine: {
                     id: $productoId.val(),
@@ -344,7 +357,8 @@
             }
 
             try {
-                window.localStorage.setItem(key, JSON.stringify(buildDraft()));
+                // guardadoEn: documento-abierto.js lo usa para elegir el borrador mas reciente que dejo una pestaña cerrada.
+                window.localStorage.setItem(key, JSON.stringify($.extend({}, buildDraft(), { guardadoEn: Date.now() })));
             } catch (err) {
             }
         }
@@ -414,6 +428,55 @@
 
         function clearWarning() {
             $warning.addClass('d-none').text('');
+        }
+
+        // ---- Hora de carga de cada linea y tiempo de envio (2026-11-11, ver docs/DECISIONS.md "Movimientos: tiempo de envio, llegada y
+        // hora de carga por linea") ----
+        function dos(n) { return (n < 10 ? '0' : '') + n; }
+
+        // Hora actual de la PC como "dd/MM/yyyy HH:mm" (mismo formato que la hora de carga de Stock). El servidor la lee con
+        // MovimientoTiempos.LeerCreadoLinea y la corrige si el reloj de la PC estaba adelantado.
+        function fechaHoraActualTexto() {
+            var d = new Date();
+            return dos(d.getDate()) + '/' + dos(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + dos(d.getHours()) + ':' + dos(d.getMinutes());
+        }
+
+        // Datos para mostrar la hora de carga de una linea ("dd/MM/yyyy HH:mm", vacio en las lineas anteriores al cambio).
+        // otroDia = se cargo otro dia que el guardado del movimiento (solo en edicion: config.fechaReferenciaCarga, "yyyy-MM-dd"); se
+        // marca en ambar y el detalle va en el tooltip (mismo criterio que Compras/Stock, Helpers/HoraLineaDetalle.cs).
+        function datosHoraLinea(creadoTexto) {
+            var m = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(String(creadoTexto || '').trim());
+            if (!m) return { hora: '', titulo: '', otroDia: false };
+            var hora = m[4] + ':' + m[5];
+            var ref = String(config.fechaReferenciaCarga || '');
+            return {
+                hora: hora,
+                titulo: 'Cargado el ' + m[1] + '/' + m[2] + '/' + m[3] + ' a las ' + hora,
+                otroDia: ref !== '' && (m[3] + '-' + m[2] + '-' + m[1]) !== ref
+            };
+        }
+
+        var $envioMinutos = $('#TiempoEnvioMinutos');   // solo existe en un movimiento nuevo
+        var $fechaManual = $('#FechaManual');
+
+        function fechaLocalIso(d) {
+            return d.getFullYear() + '-' + dos(d.getMonth() + 1) + '-' + dos(d.getDate()) + 'T' + dos(d.getHours()) + ':' + dos(d.getMinutes());
+        }
+
+        function envioMinutos() {
+            var max = toInt($envioMinutos.attr('max')) || 1440;
+            return Math.min(Math.max(toInt($envioMinutos.val()), 0), max);
+        }
+
+        // Movimiento nuevo: la Fecha muestra la llegada estimada (ahora + tiempo de envio). Es solo una vista previa: al guardar el
+        // servidor la vuelve a calcular con SU reloj (MovimientoTiempos.CalcularLlegada). Si el usuario tipeo la fecha a mano no se toca.
+        function actualizarLlegadaEstimada() {
+            if (!$envioMinutos.length || $fechaManual.val() === 'true') return;
+            $('#FechaMovimiento').val(fechaLocalIso(new Date(Date.now() + envioMinutos() * 60000)));
+        }
+
+        function marcarFechaManual(manual) {
+            $fechaManual.val(manual ? 'true' : 'false');
         }
 
         function ensureLineMetadata(line, fallbackOrder) {
@@ -588,7 +651,19 @@
 
             $('#IdSucursalOrigen').val(draft.idSucursalOrigen || $('#IdSucursalOrigen').val());
             $('#IdSucursalDestino').val(draft.idSucursalDestino || $('#IdSucursalDestino').val());
-            $('#FechaMovimiento').val(draft.fechaMovimiento || $('#FechaMovimiento').val());
+            if ($envioMinutos.length) {
+                // Movimiento nuevo: la fecha del borrador solo vale si se tipeo a mano; si no, es la llegada estimada de AHORA.
+                if (draft.tiempoEnvioMinutos !== undefined && draft.tiempoEnvioMinutos !== '') $envioMinutos.val(draft.tiempoEnvioMinutos);
+                if (draft.fechaManual === true && draft.fechaMovimiento) {
+                    $('#FechaMovimiento').val(draft.fechaMovimiento);
+                    marcarFechaManual(true);
+                } else {
+                    marcarFechaManual(false);
+                    actualizarLlegadaEstimada();
+                }
+            } else {
+                $('#FechaMovimiento').val(draft.fechaMovimiento || $('#FechaMovimiento').val());
+            }
             $observaciones.val(draft.observaciones || '');
 
             if (draft.currentLine) {
@@ -609,6 +684,141 @@
             autoResizeObservaciones();
             scheduleDraft();
         }
+
+        // ---- Traspaso a la ventana independiente (2026-11-12, ver docs/DECISIONS.md) ----
+        // Antes, "Abrir en ventana" con productos cargados avisaba "cambios sin guardar" y no abria. Ahora lo cargado VIAJA a la ventana nueva:
+        // pantalla-trabajo.js llama a window.PantallaTrabajoTraspaso. preparar() deja el formulario (el mismo borrador que se guarda en
+        // localStorage / servidor) en una clave temporal de localStorage y la ventana nueva la recibe por ?traspaso=<clave> y la aplica (aplicarTraspaso);
+        // alAbrirOk() suelta esta pestana (sin avisar al servidor: la ventana retoma el mismo borrador, ver BorradorGenerico.soltar) y la deja
+        // salir sin el aviso del navegador. Solo en un movimiento NUEVO: uno ya guardado se abre en solo lectura y habria que pasar por "Modificar".
+        var PREFIJO_TRASPASO = 'carnisys-traspaso-mov-';
+        var VIGENCIA_TRASPASO_MS = 24 * 60 * 60 * 1000;   // una clave que quedo sin usar (ventana que no abrio) se limpia al dia siguiente
+
+        function limpiarTraspasosViejos() {
+            try {
+                var ahora = Date.now();
+                for (var i = window.localStorage.length - 1; i >= 0; i--) {
+                    var k = window.localStorage.key(i);
+                    if (!k || k.indexOf(PREFIJO_TRASPASO) !== 0) continue;
+                    var creado = toInt(k.substring(PREFIJO_TRASPASO.length).split('-')[0]);
+                    if (!creado || ahora - creado > VIGENCIA_TRASPASO_MS) window.localStorage.removeItem(k);
+                }
+            } catch (err) { }
+        }
+
+        function aplicarTraspaso() {
+            var params = new URLSearchParams(window.location.search);
+            var clave = params.get('traspaso') || '';
+            if (clave.indexOf(PREFIJO_TRASPASO) !== 0) return;
+
+            var crudo = null;
+            try {
+                crudo = window.localStorage.getItem(clave);
+                window.localStorage.removeItem(clave);   // se usa una sola vez: recargar la ventana no vuelve a pisar lo que se cargue
+            } catch (err) { }
+
+            // La clave sale de la URL para que un F5 no la arrastre.
+            if (window.history && window.history.replaceState) {
+                params.delete('traspaso');
+                var consulta = params.toString();
+                window.history.replaceState(null, '', window.location.pathname + (consulta ? '?' + consulta : '') + window.location.hash);
+            }
+
+            var paquete = null;
+            try { paquete = crudo ? JSON.parse(crudo) : null; } catch (err) { paquete = null; }
+            if (!paquete || !paquete.draft || state.readOnly || toInt($('#IdMovimiento').val()) > 0) return;
+
+            aplicarPaquete(paquete);
+
+            if (window.Swal && typeof window.Swal.fire === 'function') {
+                window.Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Pasó lo que tenías cargado a esta ventana.', showConfirmButton: false, timer: 3500 });
+            }
+        }
+
+        // Paquete de trabajo = {draft, clientId}: lo que viaja a la ventana independiente (arriba) y a otra pestaña (documento-abierto.js).
+        function obtenerPaquete() {
+            var conServidor = state.borradorGenerico && state.borradorGenerico.estaHabilitado();
+            return { draft: buildDraft(), clientId: conServidor ? state.borradorGenerico.getClientId() : null };
+        }
+
+        // Aplica un paquete recibido: toma el clientId del borrador en servidor (asi la otra pestaña y esta no generan dos borradores) y
+        // carga el formulario. applyDraft vuelve a programar el guardado del borrador con el clientId adoptado.
+        function aplicarPaquete(paquete) {
+            if (!paquete || !paquete.draft) throw new Error('El paquete de trabajo no trae borrador.');
+            if (paquete.clientId && state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                state.borradorGenerico.adoptarClientId(paquete.clientId);
+            }
+            applyDraft(paquete.draft);
+            hideDraftBanner();
+        }
+
+        // Esta pestaña entrego su trabajo a otra (documento-abierto.js): se frena todo lo que guarda y se deja salir sin el aviso del navegador.
+        function alCederTrabajo() {
+            window.clearTimeout(state.draftTimer);
+            if (state.borradorGenerico) {
+                state.borradorGenerico.soltar();   // sin avisar al servidor: la otra pestaña retomo el mismo borrador
+            } else {
+                // Con borrador local la otra pestaña ya lo guardo en SU clave: el de esta quedaria como un borrador viejo que ofrecer.
+                try { window.localStorage.removeItem(getDraftKey()); } catch (err) { console.warn('No se pudo limpiar el borrador local al ceder el trabajo', err); }
+            }
+            $('form').each(function () {
+                var api = $(this).data('editPageGuardApi');
+                if (api && typeof api.allowNavigation === 'function') api.allowNavigation();
+            });
+            if (typeof window.desactivarProteccionSalida === 'function') window.desactivarProteccionSalida();
+            else window.__protegerSalida = false;
+        }
+
+        function crearDocumentoAbierto() {
+            var cfgDoc = config.documentoAbierto;
+            if (!cfgDoc || !window.DocumentoAbierto) return null;
+            return window.DocumentoAbierto.crear({
+                modulo: 'MOVIMIENTO',
+                idUsuario: cfgDoc.idUsuario,
+                grupo: '',
+                urls: cfgDoc.urls,
+                textos: { singular: 'movimiento', plural: 'movimientos' },
+                resumen: function () { return { cantLineas: (state.lines || []).length }; },
+                obtenerPaquete: obtenerPaquete,
+                aplicarPaquete: aplicarPaquete,
+                alCeder: alCederTrabajo
+            });
+        }
+
+        window.PantallaTrabajoTraspaso = {
+            hayCambios: function () {
+                return !state.readOnly && toInt($('#IdMovimiento').val()) <= 0 &&
+                    (state.lines.length > 0 || $.trim($observaciones.val() || '') !== '');
+            },
+            // Devuelve la clave del traspaso, o null si no se pudo (movimiento ya guardado, o localStorage no disponible): ahi se mantiene el aviso de siempre.
+            preparar: function () {
+                if (state.readOnly || toInt($('#IdMovimiento').val()) > 0) return null;
+                limpiarTraspasosViejos();
+                try {
+                    var clave = PREFIJO_TRASPASO + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+                    var conServidor = state.borradorGenerico && state.borradorGenerico.estaHabilitado();
+                    window.localStorage.setItem(clave, JSON.stringify({
+                        draft: buildDraft(),
+                        clientId: conServidor ? state.borradorGenerico.getClientId() : null
+                    }));
+                    return clave;
+                } catch (err) {
+                    return null;
+                }
+            },
+            // La ventana nueva ya se abrio: esta pestana se va al listado sin guardar ni avisar nada.
+            alAbrirOk: function () {
+                window.clearTimeout(state.draftTimer);
+                if (state.borradorGenerico) state.borradorGenerico.soltar();
+                // En el modo con localStorage el borrador queda en su clave (la misma que usa la ventana nueva): no se borra.
+                $('form').each(function () {
+                    var api = $(this).data('editPageGuardApi');
+                    if (api && typeof api.allowNavigation === 'function') api.allowNavigation();
+                });
+                if (typeof window.desactivarProteccionSalida === 'function') window.desactivarProteccionSalida();
+                else window.__protegerSalida = false;
+            }
+        };
 
         function focusCodigo() {
             setTimeout(function () {
@@ -728,11 +938,19 @@
             });
         }
 
-        function intentarActivarBalanza() {
+        // Foco al campo de kilos con el valor seleccionado. Funciona tambien con la balanza activa (campo de solo lectura): ahi el operador ve el
+        // peso a la vista y Enter registra la linea (opcion C del recorrido con Enter, 2026-11-12).
+        function enfocarKilos() {
+            $cantKgs.trigger('focus').trigger('select');
+        }
+
+        // enfocar (opcional): lo pide el atajo * para que el foco quede en Kgs. cuando termina la verificacion (asincrona) de la balanza.
+        function intentarActivarBalanza(enfocar) {
             verificarBalanza(function (disponible) {
                 if (!disponible) {
                     $balanza.prop('checked', false);
-                    showAlert('warning', 'Balanza', 'No hay balanza conectada.');
+                    // Sin balanza el * igual deja el foco en Kgs. (se tipea a mano); el aviso lo devuelve a ese campo al cerrarse.
+                    showAlert('warning', 'Balanza', 'No hay balanza conectada.', enfocar ? $cantKgs : undefined);
                     return;
                 }
 
@@ -743,6 +961,7 @@
                     $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
                 }
                 syncReadOnlyUi();
+                if (enfocar) enfocarKilos();
             });
         }
 
@@ -770,8 +989,10 @@
                     var orden = toInt(line.__ordenIngreso);
                     var textoBalanza = line.PesoBalanza ? 'Pesado en balanza' : 'Sin balanza';
                     var textoIngreso = line.PermitirIngreso ? 'Ingreso permitido: línea autorizada aunque los kilos no coincidían' : 'Ingreso normal';
+                    var horaLinea = datosHoraLinea(line.CreadoTexto);
+                    var tituloHora = 'Ítem ' + orden + (horaLinea.hora ? ' · ' + horaLinea.titulo : ' · sin hora de carga (anterior al cambio)');
                     html += '<tr>'
-                        + '<td class="text-center font-weight-bold cc-solo-tabla">' + orden + '</td>'
+                        + '<td class="text-center font-weight-bold cc-solo-tabla" title="' + tituloHora + '">' + orden + '</td>'
                         + '<td class="cc-l-cod"><span class="cc-solo-card">#' + orden + ' · Cód. </span>' + line.Codigo + '</td>'
                         + '<td class="cc-l-prod">' + line.Producto + '</td>'
                         + '<td class="text-right cc-l-cant">' + mostrarCantUnidad + (mostrarCantUnidad ? '<span class="cc-solo-card"> un.</span>' : '') + '</td>'
@@ -780,7 +1001,10 @@
                         + '<i class="cc-solo-card fas fa-balance-scale ' + (line.PesoBalanza ? 'text-primary' : 'cc-ico-off') + '" role="img" aria-label="' + textoBalanza + '" title="' + textoBalanza + '"></i></td>'
                         + '<td class="text-center cc-l-ing"><span class="cc-solo-tabla">' + (line.PermitirIngreso ? 'Sí' : 'No') + '</span>'
                         + '<i class="cc-solo-card fas fa-user-shield ' + (line.PermitirIngreso ? 'text-success' : 'cc-ico-off') + '" role="img" aria-label="' + textoIngreso + '" title="' + textoIngreso + '"></i></td>'
-                        + '<td class="cc-l-acc"><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + item.originalIndex + '" title="Quitar línea" aria-label="Quitar línea"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
+                        + '<td class="cc-l-hora cc-solo-card' + (horaLinea.otroDia ? ' cc-l-hora-otro-dia' : '') + (horaLinea.hora === '' ? ' cc-vacio' : '') + '" title="' + horaLinea.titulo + '">'
+                        + (horaLinea.hora ? '<i class="far fa-clock"></i>' + horaLinea.hora : '') + '</td>'
+                        + '<td class="cc-l-acc"><span class="cc-solo-tabla mov-acc-hora-txt' + (horaLinea.otroDia ? ' mov-hora-otro-dia' : '') + '" title="' + tituloHora + '">' + (horaLinea.hora || '—') + '</span>'
+                        + '<button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + item.originalIndex + '" title="Quitar línea" aria-label="Quitar línea"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
                         + '</tr>';
                 }
             });
@@ -798,6 +1022,7 @@
                 hidden += '<input type="hidden" name="Lineas[' + index + '].CantKg" value="' + formatDecimalForPost(line.CantKg) + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].PesoBalanza" value="' + (line.PesoBalanza ? 'true' : 'false') + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].PermitirIngreso" value="' + (line.PermitirIngreso ? 'true' : 'false') + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].CreadoTexto" value="' + (line.CreadoTexto || '') + '" />';
             });
 
             if (!html) {
@@ -870,6 +1095,7 @@
                 map[key].Veces++;
                 map[key].Cargas.push({
                     item: toInt(line.__ordenIngreso) || (indice + 1),
+                    hora: datosHoraLinea(line.CreadoTexto).hora,
                     un: toInt(line.CantUnidad),
                     kg: toFloat(line.CantKg)
                 });
@@ -906,6 +1132,7 @@
                 visibles.forEach(function (item) {
                     // Columnas del detalle desplegable: cada carga y, al pie, el total (igual a la fila acumulada).
                     var columnasDetalle = [
+                        { titulo: 'Hora', valor: function (carga) { return carga.hora || '—'; }, total: '' },
                         { titulo: 'Cant.Un.', valor: function (carga) { return formatInt(carga.un); }, total: formatInt(item.CantUnidad) },
                         { titulo: 'Kilos', valor: function (carga) { return formatKg(carga.kg); }, total: formatKg(item.CantKg) }
                     ];
@@ -923,6 +1150,17 @@
             $('#tbodyAcumuladosMovimiento').html(html);
         }
 
+        // En escritorio el boton "Permitir ingreso" flota arriba de Cant.Un. (CSS, position:absolute) sobre el renglon del cartel: el cartel se
+        // angosta hasta el borde izquierdo del boton para no quedar tapado. Fuera de escritorio el boton va en la columna y el cartel usa todo el ancho.
+        function ajustarAnchoCartel() {
+            $warning.css('max-width', '');
+            if ($permitirWrap.hasClass('d-none') || $warning.hasClass('d-none')) return;
+            if ($permitirWrap.css('position') !== 'absolute') return;
+            var limite = $permitirWrap[0].getBoundingClientRect().left - $warning[0].getBoundingClientRect().left - 8;
+            if (limite > 160) $warning.css('max-width', limite + 'px');
+        }
+        $(window).on('resize', ajustarAnchoCartel);
+
         function validarRelacionCantidadKilos() {
             var promedio = toFloat($productoPromedio.val());
             var cantUnidad = toInt($cantUnidad.val());
@@ -937,7 +1175,12 @@
             var limitSuperior = promedio * (cantUnidad + 1);
             if (!(limitInferior < cantKg && cantKg < limitSuperior)) {
                 $permitirWrap.removeClass('d-none');
-                showWarning('La cantidad ingresada no es consistente con los kilos del producto. Revisá la línea o habilitá permitir ingreso.');
+                // 2026-11-12: el cartel dice cuanto deberia pesar (mismo rango de la regla de arriba) y que hacer, en vez del aviso generico.
+                var kg = function (valor) { return valor.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); };
+                showWarning(cantUnidad + (cantUnidad === 1 ? ' un. debería' : ' un. deberían') + ' pesar entre ' + kg(Math.max(limitInferior, 0)) + ' y '
+                    + kg(limitSuperior) + ' kg (promedio ' + kg(promedio) + ' c/u) y cargaste ' + kg(cantKg)
+                    + ' kg. Corregí uno o tocá «Permitir ingreso».');
+                ajustarAnchoCartel();
                 return false;
             }
 
@@ -956,7 +1199,8 @@
                 CantUnidad: toInt($cantUnidad.val()),
                 CantKg: toFloat($cantKgs.val()),
                 PesoBalanza: $balanza.is(':checked') && productoEsPesable(),
-                PermitirIngreso: $permitir.is(':checked')
+                PermitirIngreso: $permitir.is(':checked'),
+                CreadoTexto: fechaHoraActualTexto()
             }, state.lineSequence + 1);
         }
 
@@ -1089,6 +1333,26 @@
             });
         }
 
+        // Resumen que muestra el modal "Movimiento guardado" (ver modal-postmovimiento.js): sucursales, items y kilos y la fecha. Sale de lo que ya
+        // esta cargado en la pantalla. esAlta + tiempo de envio > 0: la fecha se presenta como "Llega ..." (llegada estimada, ver Editar.cshtml).
+        function armarResumenModal(esAlta) {
+            var totalKilos = 0;
+            state.lines.forEach(function (line) { totalKilos += toFloat(line.CantKg); });
+
+            var fecha = String($('#FechaMovimiento').val() || '');   // yyyy-MM-ddTHH:mm
+            var partes = fecha.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/);
+            var minutosEnvio = esAlta && $envioMinutos.length ? Math.max(toInt($envioMinutos.val()), 0) : 0;
+
+            return {
+                ruta: $.trim($('#IdSucursalOrigen option:selected').text()) + ' → ' + $.trim($('#IdSucursalDestino option:selected').text()),
+                items: state.lines.length,
+                kilos: formatKg(totalKilos),
+                fecha: partes ? partes[3] + '/' + partes[2] + '/' + partes[1] + ' ' + partes[4] : '',
+                etiquetaFecha: minutosEnvio > 0 ? 'Llega' : 'Fecha',
+                minutosEnvio: minutosEnvio
+            };
+        }
+
         function openPrintOptions() {
             // El guard mira config.pdfUrl (no imprimirUrl): en un movimiento nuevo sin guardar
             // ambos vienen vacios y no hay nada que imprimir todavia. imprimirUrl/
@@ -1104,7 +1368,9 @@
                 imprimirUrl: config.imprimirUrl,
                 imprimirPayloadUrl: config.imprimirPayloadUrl,
                 whatsappTexto: config.whatsappTexto,
-                stayOnPage: true
+                stayOnPage: true,
+                titulo: 'Imprimir movimiento',
+                resumen: armarResumenModal(false)
             });
         }
 
@@ -1120,9 +1386,12 @@
         // "Enter" (o el "Sig./Ir" del teclado tactil en mobile, que en la
         // mayoria de los navegadores dispara el mismo evento) sobre Kgs
         // agrega el producto, igual que tocar el boton +.
+        // Recorrido con Enter (2026-11-12, opcion C): Codigo -> Cant.Un. -> Kgs. (con la balanza se ve el peso, solo lectura) -> Enter registra y el
+        // foco vuelve a Codigo. El boton + ya no es una parada del teclado (queda para clic / tactil). Antes, con la balanza activa este Enter solo
+        // pasaba el foco al +, y con el campo editable otro manejador le sacaba el foco a + de inmediato (el foco llegaba a Codigo solo por el
+        // setTimeout de focusCodigo): ahora hay un solo manejador.
         $cantKgs.on('keydown.movimientoAgregar', function (e) {
             if (e.key !== 'Enter') return;
-            if ($(this).prop('readonly')) return;
             e.preventDefault();
             addCurrentLine();
         });
@@ -1251,13 +1520,6 @@
             }
         });
 
-        $cantKgs.on('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                $('#btnAgregarProducto').focus();
-            }
-        });
-
         $('#btnAgregarProducto').on('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1274,6 +1536,11 @@
 
         $('#txtCantKgs, #chkPermitirIngreso').on('input change', function () {
             validarRelacionCantidadKilos();
+        });
+
+        // Boton "Permitir ingreso" (2026-11-12): un clic registra la linea igual (misma accion que la tecla +).
+        $('#btnPermitirIngreso').on('click', function () {
+            registrarConPermitirIngreso();
         });
 
         $observaciones.on('input', autoResizeObservaciones);
@@ -1342,11 +1609,30 @@
                 e.preventDefault();
                 if ($balanza.is(':checked')) {
                     $balanza.prop('checked', false).trigger('change');
+                    // 2026-11-12: el foco va siempre a Kgs. (al desactivar queda editable para tipear el peso).
+                    enfocarKilos();
                 } else {
-                    intentarActivarBalanza();
+                    intentarActivarBalanza(true);
                 }
             }
         });
+
+        // Tiempo de envio (movimiento nuevo): al cambiarlo se recalcula la llegada estimada; si antes se habia tipeado la fecha a mano,
+        // vuelve a ser automatica (gana lo ultimo que toco el usuario). Tipear la Fecha la deja manual: ya no se suman minutos.
+        $envioMinutos.on('input change', function () {
+            marcarFechaManual(false);
+            actualizarLlegadaEstimada();
+            scheduleDraft();
+        });
+        if ($envioMinutos.length) {
+            $('#FechaMovimiento').on('input change', function () {
+                marcarFechaManual(true);
+                scheduleDraft();
+            });
+            actualizarLlegadaEstimada();
+            // La vista previa avanza con el reloj mientras el usuario carga productos (el servidor recalcula al guardar).
+            setInterval(actualizarLlegadaEstimada, 30000);
+        }
 
         $('#formMovimiento').on('submit', function (e) {
             e.preventDefault();
@@ -1373,6 +1659,8 @@
             function guardarMovimientoReal() {
                 state.saving = true;
                 state.enviando = true;
+                // Alta (todavia sin id) o modificacion: el resumen del modal "Movimiento guardado" presenta la fecha como llegada solo en el alta.
+                var esAlta = toInt($('#IdMovimiento').val()) <= 0;
 
                 $.ajax({
                     url: $form.attr('action'),
@@ -1393,10 +1681,16 @@
                     var idGuardado = toInt(resp.movimientoId);
                     if (idGuardado > 0) {
                         $('#IdMovimiento').val(idGuardado);
+                        if (resp.fechaMovimiento) {
+                            $('#FechaMovimiento').val(resp.fechaMovimiento);
+                            marcarFechaManual(true);
+                        }
                         config.pdfUrl = resp.pdfUrl || config.pdfUrl;
                         config.imprimirUrl = resp.imprimirUrl || config.imprimirUrl;
                         config.imprimirPayloadUrl = resp.imprimirPayloadUrl || config.imprimirPayloadUrl;
                         config.whatsappTexto = resp.whatsappTexto || config.whatsappTexto;
+                        // Un Nuevo recien guardado pasa a ser la edicion de ese movimiento (si la persona se queda en la pantalla).
+                        if (documento) documento.convertirAEdicion(idGuardado);
                     }
 
                     if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
@@ -1405,7 +1699,7 @@
                         clearDraft();
                     }
                     if (window.PostMovimientoModal && typeof window.PostMovimientoModal.open === 'function') {
-                        window.PostMovimientoModal.open(resp);
+                        window.PostMovimientoModal.open($.extend({}, resp, { resumen: armarResumenModal(esAlta) }));
                     } else {
                         showAlert('success', 'Movimiento', resp.mensaje || 'El movimiento se guardó correctamente.');
                         window.location.href = resp.redirectUrl || config.redirectUrl || '/Movimientos';
@@ -1461,11 +1755,28 @@
         verificarBalanzaInicial();
         autoResizeObservaciones();
         syncPrimaryAction();
+        // El documento se arma ANTES de aplicarTraspaso(): desde ahi el borrador local ya usa la clave de esta pestaña.
+        documento = crearDocumentoAbierto();
+        // Llega desde "Abrir en ventana": la pestaña de origen se esta yendo, no corresponde avisar de ella.
+        var vieneDeTraspaso = /[?&]traspaso=/.test(window.location.search);
+        var esNuevoActivo = !state.readOnly && toInt($('#IdMovimiento').val()) <= 0;
+
         if (state.borradorGenerico) {
             state.borradorGenerico.actualizarBadgeInicial();
-        } else if (readDraft()) {
-            showDraftBanner();
         }
+        aplicarTraspaso();
+
+        // Un Nuevo se registra y avisa si hay otros abiertos en otras pestañas (traer / cargar aparte / volver). El cartel de
+        // "restaurar borrador local" espera a esa respuesta: primero se adopta el borrador que dejo una pestaña ya cerrada.
+        var anuncio = (documento && esNuevoActivo)
+            ? documento.anunciarNuevo({ sinAviso: vieneDeTraspaso })
+            : Promise.resolve({ accion: 'seguir' });
+        anuncio.then(function (resultado) {
+            if (resultado.accion === 'listado' || resultado.accion === 'traido') return;
+            if (state.borradorGenerico || vieneDeTraspaso) return;
+            if (documento && esNuevoActivo) documento.adoptarBorradorHuerfano(config.draftKey);
+            if (readDraft()) showDraftBanner();
+        });
         focusCodigo();
 
         window.MovimientosEdit = window.MovimientosEdit || {};
@@ -1474,6 +1785,18 @@
             syncReadOnlyUi();
         };
         window.MovimientosEdit.syncPrimaryAction = syncPrimaryAction;
+        // "Modificar" de un movimiento ya guardado: antes de pasar a edicion se chequea que otra pestaña no lo este modificando
+        // (documento-abierto.js). `habilitar` es la funcion de edit-readonly.js que pasa a edicion; si no se llama, queda en solo lectura.
+        window.MovimientosEdit.antesDeModificar = function (habilitar) {
+            var idMovimiento = toInt($('#IdMovimiento').val());
+            if (!documento || idMovimiento <= 0) {
+                habilitar();
+                return;
+            }
+            documento.tomarEdicion(idMovimiento).then(function (puede) {
+                if (puede) habilitar();
+            });
+        };
         // Para el panel de stock del destino: carga un producto como si se hubiera elegido en el buscador (codigo -> busca el producto -> foco en
         // la cantidad). Con `cantidad` (el sugerido a enviar) la deja puesta: kilos si el producto es por peso, unidades si no; no agrega la
         // linea (el usuario confirma con +). Sin permiso de edicion no hace nada.

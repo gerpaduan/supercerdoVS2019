@@ -149,6 +149,8 @@
 
     // Si la ventana se achica por debajo de lo que permiten dos columnas, el panel se cierra (sin olvidar la eleccion: vuelve al agrandarla).
     $(window).on('resize', function () {
+        // Ventana independiente angosta (ventana-angosta.js): .mov-con-stock se usa solo por su acomodo y el panel no existe; no se toca.
+        if (window.__ventanaAngosta) return;
         if (panelVisible() && window.innerWidth < ANCHO_DOS_COLUMNAS_PX) mostrarPanel(false, false);
         else if (!panelVisible() && leerLS(CLAVE_PANEL) === '1' && window.innerWidth >= ANCHO_DOS_COLUMNAS_PX) mostrarPanel(true, false);
     });

@@ -205,8 +205,10 @@
     }
 
     // ---------------------------------------------------------------------------------------------
-    // Vista "Ver solo lineas" (Compras y Ventas): tabla plana con una fila por linea, ordenable.
-    // Solo se activa si la pantalla tiene el boton #btnVistaSoloLineas (Stock y Movimientos no lo tienen).
+    // Vista "Ver solo lineas" (Compras, Ventas y Movimientos): tabla plana con una fila por linea, ordenable.
+    // Solo se activa si la pantalla tiene el boton #btnVistaSoloLineas (Stock no lo tiene). Compras y Ventas comparten columnas
+    // (cantidad, precio, total); Movimientos (data-clave-vista="movimientos", 2026-11-11) tiene las suyas: cantidad, unidades,
+    // balanza y observacion de la linea.
     // La fuente de datos son las tarjetas de siempre: la tabla se arma UNA vez (la primera vez que se activa) y despues
     // solo se sincroniza su visibilidad con los filtros en vivo y se reordena; las tarjetas no se ocultan (los exports
     // las consultan), se oculta su contenedor .js-vista-agrupada.
@@ -233,7 +235,30 @@
         return campos;
     }
 
+    // Pantalla de Movimientos: no tiene "Creado" ni precios; la linea trae unidades, balanza y observacion. La observacion del
+    // movimiento (cabecera) se deja afuera para no ensanchar la tabla: se ve en "Ver registro".
+    function definirColumnasVistaPlanaMovimientos(camposCabecera) {
+        var columnas = [{ clave: 'fecha', texto: 'Fecha', tipo: 'fecha', primerOrden: 'desc' }];
+
+        camposCabecera.forEach(function (campo) {
+            var etiqueta = campo.etiqueta.toLowerCase();
+            if (etiqueta === 'fecha' || etiqueta === 'observaciones') return;
+            columnas.push({ clave: 'campo:' + campo.etiqueta, texto: campo.etiqueta, tipo: 'texto', etiquetaCampo: campo.etiqueta });
+        });
+
+        columnas.push({ clave: 'codigo', texto: 'Código', tipo: 'codigo' });
+        columnas.push({ clave: 'producto', texto: 'Producto', tipo: 'texto' });
+        columnas.push({ clave: 'kg', texto: 'Cantidad / kg', tipo: 'num', derecha: true });
+        columnas.push({ clave: 'unidades', texto: 'Total unidades', tipo: 'num', derecha: true });
+        columnas.push({ clave: 'balanza', texto: 'Balanza', tipo: 'texto' });
+        columnas.push({ clave: 'observacion', texto: 'Observación línea', tipo: 'texto' });
+        columnas.push({ clave: 'acciones', texto: '', tipo: 'acciones' });
+        return columnas;
+    }
+
     function definirColumnasVistaPlana(camposCabecera) {
+        if (vistaPlana && vistaPlana.modo === 'movimientos') return definirColumnasVistaPlanaMovimientos(camposCabecera);
+
         var columnas = [
             { clave: 'fecha', texto: 'Fecha', tipo: 'fecha', primerOrden: 'desc' },
             { clave: 'creado', texto: 'Creado', tipo: 'fecha', primerOrden: 'desc' }
@@ -272,26 +297,51 @@
 
             Array.prototype.forEach.call(card.querySelectorAll('.js-linea-row'), function (row) {
                 var celdas = row.children;
-                var textos = {
-                    fecha: porEtiqueta['Fecha'] || '',
-                    creado: creadoTexto,
-                    codigo: celdas[0] ? celdas[0].textContent.trim() : '',
-                    producto: celdas[1] ? celdas[1].textContent.trim() : '',
-                    kg: celdas[2] ? celdas[2].textContent.trim() : '',
-                    precio: celdas[3] ? celdas[3].textContent.trim() : '',
-                    total: celdas[4] ? celdas[4].textContent.trim() : ''
-                };
+                var textos;
+                var orden;
 
-                // Valores para ordenar: fechas en ISO (se comparan como texto), numeros reales, textos sin mayusculas.
-                var orden = {
-                    fecha: card.getAttribute('data-fecha') || '',
-                    creado: card.getAttribute('data-creado') || '',
-                    codigo: textos.codigo,
-                    producto: normalizarTexto(textos.producto),
-                    kg: parseDecimal(row.getAttribute('data-kg')),
-                    precio: parseDecimal(row.getAttribute('data-precio')),
-                    total: parseDecimal(row.getAttribute('data-total'))
-                };
+                if (vistaPlana.modo === 'movimientos') {
+                    // Celdas de la linea de un movimiento: codigo, producto, cantidad / kg, total unidades, balanza, observacion.
+                    textos = {
+                        fecha: porEtiqueta['Fecha'] || '',
+                        codigo: celdas[0] ? celdas[0].textContent.trim() : '',
+                        producto: celdas[1] ? celdas[1].textContent.trim() : '',
+                        kg: celdas[2] ? celdas[2].textContent.trim() : '',
+                        unidades: celdas[3] ? celdas[3].textContent.trim() : '',
+                        balanza: celdas[4] ? celdas[4].textContent.trim() : '',
+                        observacion: celdas[5] ? celdas[5].textContent.trim() : ''
+                    };
+                    orden = {
+                        fecha: card.getAttribute('data-fecha') || '',
+                        codigo: textos.codigo,
+                        producto: normalizarTexto(textos.producto),
+                        kg: parseDecimal(row.getAttribute('data-kg')),
+                        unidades: parseDecimal(row.getAttribute('data-unidades')),
+                        balanza: normalizarTexto(textos.balanza),
+                        observacion: normalizarTexto(textos.observacion)
+                    };
+                } else {
+                    textos = {
+                        fecha: porEtiqueta['Fecha'] || '',
+                        creado: creadoTexto,
+                        codigo: celdas[0] ? celdas[0].textContent.trim() : '',
+                        producto: celdas[1] ? celdas[1].textContent.trim() : '',
+                        kg: celdas[2] ? celdas[2].textContent.trim() : '',
+                        precio: celdas[3] ? celdas[3].textContent.trim() : '',
+                        total: celdas[4] ? celdas[4].textContent.trim() : ''
+                    };
+
+                    // Valores para ordenar: fechas en ISO (se comparan como texto), numeros reales, textos sin mayusculas.
+                    orden = {
+                        fecha: card.getAttribute('data-fecha') || '',
+                        creado: card.getAttribute('data-creado') || '',
+                        codigo: textos.codigo,
+                        producto: normalizarTexto(textos.producto),
+                        kg: parseDecimal(row.getAttribute('data-kg')),
+                        precio: parseDecimal(row.getAttribute('data-precio')),
+                        total: parseDecimal(row.getAttribute('data-total'))
+                    };
+                }
 
                 var celdasHtml = columnas.map(function (col) {
                     if (col.tipo === 'acciones') {
@@ -441,7 +491,12 @@
         var boton = page.querySelector('#btnVistaSoloLineas');
         if (!boton) return;
 
-        vistaPlana = { activa: false, construida: false, filas: [], columnas: [], cuerpo: null, encabezado: null, orden: { clave: 'fecha', dir: 'desc' } };
+        vistaPlana = {
+            activa: false, construida: false, filas: [], columnas: [], cuerpo: null, encabezado: null,
+            // "movimientos" tiene columnas propias (ver definirColumnasVistaPlanaMovimientos); Compras y Ventas usan las de siempre.
+            modo: boton.getAttribute('data-clave-vista') || '',
+            orden: { clave: 'fecha', dir: 'desc' }
+        };
 
         boton.addEventListener('click', function () {
             var activa = !vistaPlana.activa;

@@ -363,6 +363,14 @@
             formulaSecreta: @(Model.FormulaSecreta ? "true" : "false"),
             formulaOculta: @(Model.FormulaOculta ? "true" : "false"),
             idCorte: @Model.IdElaborado,
+            // Aviso de "ya abierto en otra pestaña" (documento-abierto.js, ver docs/DECISIONS.md 2026-11-12 g).
+            documentoAbierto: {
+                idUsuario: @Sesion.UsuarioActual.Id,
+                urls: {
+                    listado: '@Url.Action("Index", "Elaborados")',
+                    nuevo: '@Url.Action("EditarIngresoRapido", "Elaborados", new { idElaborado = Model.IdElaborado, esDesarme = Model.EsDesarme })'
+                }
+            },
             formulaUrls: {
                 autorizar: '@Url.Action("AutorizarVerFormula", "Elaborados")',
                 ocultar: '@Url.Action("OcultarFormula", "Elaborados")',
@@ -402,6 +410,7 @@
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/documento-abierto.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
@@ -430,6 +439,14 @@
             soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
             modifyButtonSelector: "#btnHabilitarEdicionIngresoRapido",
             saveButtonSelector: "#btnGuardarIngresoRapido",
+            // Antes de pasar a edicion se chequea que otra pestaña no lo este modificando (documento-abierto.js).
+            beforeModify: function (habilitar) {
+                if (window.ElaboradosRapido && typeof window.ElaboradosRapido.antesDeModificar === "function") {
+                    window.ElaboradosRapido.antesDeModificar(habilitar);
+                } else {
+                    habilitar();
+                }
+            },
             onStateChanged: function (readOnly) {
                 if (window.ElaboradosRapido && typeof window.ElaboradosRapido.syncPrimaryAction === "function") {
                     window.ElaboradosRapido.syncPrimaryAction();

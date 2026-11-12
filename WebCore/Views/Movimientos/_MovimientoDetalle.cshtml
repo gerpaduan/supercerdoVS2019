@@ -1,125 +1,139 @@
 @model WebCore.Models.MovimientoDetalleVm
 
 @{
-    var observaciones = !string.IsNullOrWhiteSpace(Model.Observaciones) ? Model.Observaciones : "-";
-    var creadoPor = !string.IsNullOrWhiteSpace(Model.CreadoPor) ? Model.CreadoPor : "-";
-    var fechaCreacion = Model.Creado.HasValue ? Model.Creado.Value.ToString("dd/MM/yyyy HH:mm") : "-";
-    var actualizadoPor = !string.IsNullOrWhiteSpace(Model.ActualizadoPor) ? Model.ActualizadoPor : "-";
-    var fechaActualizacion = Model.Actualizado.HasValue ? Model.Actualizado.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+    var tieneObservaciones = !string.IsNullOrWhiteSpace(Model.Observaciones);
+    var fechaCreacion = Model.Creado.HasValue ? Model.Creado.Value.ToString("dd/MM/yyyy HH:mm") : "";
+    var fechaActualizacion = Model.Actualizado.HasValue ? Model.Actualizado.Value.ToString("dd/MM/yyyy HH:mm") : "";
+    bool fueModificado = !string.IsNullOrWhiteSpace(Model.ActualizadoPor) || fechaActualizacion != "";
+    bool hayLineas = Model.Lineas != null && Model.Lineas.Count > 0;
+    int totalUnidades = 0;
+    float totalKilos = 0f;
+    if (hayLineas)
+    {
+        foreach (var l in Model.Lineas) { totalUnidades += l.CantUnidad; totalKilos += l.CantKg; }
+    }
 }
 
-@* Observaciones: en celular la tarjeta de datos del registro se oculta, asi que se muestran aca solo si hay texto. *@
-@if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+@* Observaciones: en celular la franja de chips (abajo) se oculta, asi que se muestran aca solo si hay texto. *@
+@if (tieneObservaciones)
 {
     <div class="movimiento-detalle-obs"><i class="fas fa-comment-alt mr-1"></i>@Model.Observaciones</div>
 }
 
-<div class="row movimiento-detalle-layout">
-    <div class="col-12 col-xl-8 order-2 order-xl-1">
-        @* En celular (<768px) las lineas se muestran como una lista compacta dentro de una tarjeta (CSS compartido
-           wwwroot/Content/css/tabla-cards.css, variante tabla-cards-lista): producto y kilos arriba, codigo y unidades abajo, y
-           Balanza / Permitir ingreso como iconos (en desktop siguen siendo columnas con Si/No). *@
-        <div class="table-responsive mt-3 mt-xl-0">
-            <table class="table table-sm table-bordered mb-0 tabla-cards tabla-cards-lista">
-                <thead class="thead-light">
-                    <tr>
-                        <th style="width:110px;">Código</th>
-                        <th>Producto</th>
-                        <th class="text-right" style="width:110px;">Cantidad</th>
-                        <th class="text-right" style="width:110px;">Kilos</th>
-                        <th class="text-center" style="width:90px;">Balanza</th>
-                        <th class="text-center" style="width:120px;">Permitir ingreso</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Lineas == null || Model.Lineas.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center text-muted">No hay líneas para este movimiento.</td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var linea in Model.Lineas)
-                        {
-                            <tr>
-                                <td class="cc-l-cod"><span class="cc-solo-card">Cód. </span>@linea.Codigo</td>
-                                <td class="cc-l-prod">@linea.Producto</td>
-                                <td class="text-right cc-l-cant">@linea.CantUnidad<span class="cc-solo-card"> un.</span></td>
-                                <td class="text-right cc-l-kg">@linea.CantKg.ToString("N3")<span class="cc-solo-card"> kg</span></td>
-                                @* Balanza: en celular un icono (azul = pesado en balanza, gris tenue = no); en desktop Si/No. *@
-                                <td class="text-center cc-l-bal">
-                                    <span class="cc-solo-tabla">@(linea.PesoBalanza ? "Sí" : "No")</span>
-                                    <i class="cc-solo-card fas fa-balance-scale @(linea.PesoBalanza ? "text-primary" : "cc-ico-off")" role="img"
-                                       aria-label="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"
-                                       title="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"></i>
-                                </td>
-                                @* Permitir ingreso: el operador forzo la linea aunque los kilos no coincidian con las unidades
-                                   (movimientos.js, validarRelacionCantidadKilos). Icono verde = autorizado, gris tenue = normal. *@
-                                <td class="text-center cc-l-ing">
-                                    <span class="cc-solo-tabla">@(linea.PermitirIngreso ? "Sí" : "No")</span>
-                                    <i class="cc-solo-card fas fa-user-shield @(linea.PermitirIngreso ? "text-success" : "cc-ico-off")" role="img"
-                                       aria-label="@(linea.PermitirIngreso ? "Ingreso permitido: línea autorizada aunque los kilos no coincidían" : "Ingreso normal")"
-                                       title="@(linea.PermitirIngreso ? "Ingreso permitido: línea autorizada aunque los kilos no coincidían" : "Ingreso normal")"></i>
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
+@* Desktop (2026-11-12, tabla-compacta.css): franja de chips (ID, de donde sale -> a donde entra, quien creo / modifico) en lugar
+   de la tarjeta lateral de datos; las observaciones, si hay, en un recuadro amarillo. *@
+<div class="det-head">
+    <span class="det-chip chip-id"><i class="fas fa-hashtag"></i><b>@Model.IdMovimiento</b></span>
+    @if (!string.IsNullOrWhiteSpace(Model.Origen))
+    {
+        <span class="det-chip chip-out" title="Origen: sale mercadería"><i class="fas fa-sign-out-alt"></i><span class="k">Sale de</span> <b>@Model.Origen</b></span>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Origen) && !string.IsNullOrWhiteSpace(Model.Destino))
+    {
+        <i class="fas fa-long-arrow-alt-right text-muted"></i>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Destino))
+    {
+        <span class="det-chip chip-in" title="Destino: ingresa mercadería"><i class="fas fa-sign-in-alt"></i><span class="k">Entra a</span> <b>@Model.Destino</b></span>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.CreadoPor) || fechaCreacion != "")
+    {
+        <span class="det-chip"><i class="fas fa-user-plus"></i><span class="k">Creó</span> <b>@(!string.IsNullOrWhiteSpace(Model.CreadoPor) ? Model.CreadoPor : "-")</b> <span class="k">@fechaCreacion</span></span>
+    }
+    @if (fueModificado)
+    {
+        <span class="det-chip chip-mod"><i class="fas fa-pen"></i><span class="k">Modificó</span> <b>@(!string.IsNullOrWhiteSpace(Model.ActualizadoPor) ? Model.ActualizadoPor : "-")</b> <span class="k">@fechaActualizacion</span></span>
+    }
+</div>
 
-    <div class="col-12 col-xl-4 order-1 order-xl-2">
-        <div class="movimiento-detalle-meta-card">
-            <div class="movimiento-detalle-meta-row"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@Model.IdMovimiento</span></div>
-            <div class="movimiento-detalle-meta-row"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@observaciones</span></div>
-            <div class="movimiento-detalle-meta-row"><span class="text-muted">Quien lo creo:</span> <span class="font-weight-bold">@creadoPor</span></div>
-            <div class="movimiento-detalle-meta-row"><span class="text-muted">Fecha de creacion:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
-            <div class="movimiento-detalle-meta-row"><span class="text-muted">Quien lo actualizo:</span> <span class="font-weight-bold">@actualizadoPor</span></div>
-            <div class="movimiento-detalle-meta-row mb-0"><span class="text-muted">Fecha de actualizacion:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
-        </div>
-    </div>
+@if (tieneObservaciones)
+{
+    <div class="det-obs"><i class="fas fa-comment-alt"></i><div>@Model.Observaciones</div></div>
+}
+
+@* Lineas: columnas compactas (Cód. 15 · Producto 25 · Unidades 8 · Kilos 8, ver tabla-compacta.css) y total al pie.
+   En celular (<768px) las lineas son una lista compacta dentro de una tarjeta (tabla-cards.css, variante tabla-cards-lista):
+   producto y kilos arriba, codigo y unidades abajo, y Balanza / Permitir ingreso como iconos. *@
+<div class="det-lineas movimiento-detalle-lineas">
+    <table class="table table-sm mb-0 tabla-cards tabla-cards-lista">
+        <thead>
+            <tr>
+                <th class="tc-cod">Cód.</th>
+                <th class="tc-prod">Producto</th>
+                <th class="text-right tc-un">Unidades</th>
+                <th class="text-right tc-kg">Kilos</th>
+                <th class="text-center tc-ico">Balanza</th>
+                <th class="text-center tc-ico" title="Línea autorizada aunque los kilos no coincidían con las unidades">Ingreso permitido</th>
+                <th class="tc-hora" title="Fecha y hora en que se cargó la línea al movimiento">Cargada</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!hayLineas)
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted">No hay líneas para este movimiento.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var linea in Model.Lineas)
+                {
+                    // Hora de carga de la linea (2026-11-11): escritorio, fecha y hora; celular, solo la hora (o fecha y hora en ambar si fue otro dia
+                    // que el guardado del movimiento). Vacia en las lineas anteriores al cambio. Mismo criterio que el detalle de Stock y Compras.
+                    var horaLinea = WebCore.Helpers.HoraLineaDetalle.Formatear(linea.CreadoTexto, Model.Creado);
+                    <tr>
+                        <td class="cc-l-cod tc-cod"><span class="cc-solo-card">Cód. </span>@linea.Codigo</td>
+                        <td class="cc-l-prod tc-prod">@linea.Producto</td>
+                        <td class="text-right cc-l-cant tc-un">@linea.CantUnidad<span class="cc-solo-card"> un.</span></td>
+                        <td class="text-right cc-l-kg tc-kg">@linea.CantKg.ToString("N3")<span class="cc-solo-card"> kg</span></td>
+                        @* Balanza: icono (azul = pesado en balanza, gris tenue = no). *@
+                        <td class="text-center cc-l-bal tc-ico">
+                            <i class="fas fa-balance-scale @(linea.PesoBalanza ? "text-primary" : "cc-ico-off")" role="img"
+                               aria-label="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"
+                               title="@(linea.PesoBalanza ? "Pesado en balanza" : "Sin balanza")"></i>
+                        </td>
+                        @* Permitir ingreso: el operador forzo la linea aunque los kilos no coincidian con las unidades
+                           (movimientos.js, validarRelacionCantidadKilos). Icono verde = autorizado, gris tenue = normal. *@
+                        <td class="text-center cc-l-ing tc-ico">
+                            <i class="fas fa-user-shield @(linea.PermitirIngreso ? "text-success" : "cc-ico-off")" role="img"
+                               aria-label="@(linea.PermitirIngreso ? "Ingreso permitido: línea autorizada aunque los kilos no coincidían" : "Ingreso normal")"
+                               title="@(linea.PermitirIngreso ? "Ingreso permitido: línea autorizada aunque los kilos no coincidían" : "Ingreso normal")"></i>
+                        </td>
+                        <td class="cc-l-hora tc-hora @(horaLinea.OtroDia ? "cc-l-hora-otro-dia" : "") @(horaLinea.Texto == "" ? "cc-vacio" : "")">
+                            <span class="cc-solo-tabla">@(!string.IsNullOrWhiteSpace(linea.CreadoTexto) ? linea.CreadoTexto : "-")</span>
+                            <span class="cc-solo-card" title="@(horaLinea.OtroDia ? "Cargada otro día que el movimiento" : "Hora de carga")"><i class="far fa-clock"></i>@horaLinea.Texto</span>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+        @if (hayLineas)
+        {
+            @* Total: suma de las columnas Unidades y Kilos (solo desktop; en celular el pie se oculta). *@
+            <tfoot>
+                <tr>
+                    <td colspan="2">Total · @Model.Lineas.Count línea@(Model.Lineas.Count == 1 ? "" : "s")</td>
+                    <td class="tc-un">@totalUnidades.ToString("N0")</td>
+                    <td class="tc-kg">@totalKilos.ToString("N3")</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+        }
+    </table>
 </div>
 
 <style>
-    .movimiento-detalle-layout {
-        align-items: flex-start;
-    }
-
-    .movimiento-detalle-meta-card {
-        border: 1px solid #dee2e6;
-        border-radius: .5rem;
-        background: #fff;
-        padding: .85rem .95rem;
-    }
-
-    .movimiento-detalle-meta-row {
-        margin-bottom: .45rem;
-        line-height: 1.2;
-    }
-
-    html.dark-mode .movimiento-detalle-meta-card,
-    body.dark-mode .movimiento-detalle-meta-card {
-        background: #111827;
-        border-color: #374151;
-        color: #f3f4f6;
-    }
-
-    html.dark-mode .movimiento-detalle-meta-card .text-muted,
-    body.dark-mode .movimiento-detalle-meta-card .text-muted {
-        color: #9ca3af !important;
-    }
-
     .movimiento-detalle-obs {
         display: none;
     }
 
-    /* Celular: la tarjeta de datos del registro (id, creo, actualizo) se oculta: el id ya va junto a la fecha del movimiento
-       y el resto no lo busca el usuario ahi. Las observaciones, si hay, salen arriba de las lineas. */
+    /* Celular: la franja de chips se oculta (el id ya va junto a la fecha del movimiento). Las observaciones, si hay, salen arriba de las lineas. */
     @@media (max-width: 767.98px) {
-        .movimiento-detalle-meta-card {
-            display: none;
+        /* La hora de carga va en el renglon de abajo de la tarjeta, entre el codigo y los iconos (con dos iconos, Balanza y Permitir ingreso,
+           el area por defecto de .cc-l-hora de tabla-cards.css pisaria al de balanza). contain: la hora no ensancha las columnas de la tarjeta. */
+        .movimiento-detalle-lineas table.tabla-cards.tabla-cards-lista > tbody > tr > td.cc-l-hora {
+            grid-area: 2 / 2 / 3 / 4;
+            contain: inline-size;
         }
 
         .movimiento-detalle-obs i {
@@ -131,13 +145,6 @@
             margin-bottom: .6rem;
             font-size: .82rem;
             color: var(--ui-text-soft, #5f6772);
-        }
-    }
-
-    @@media (min-width: 1200px) {
-        .movimiento-detalle-meta-card {
-            position: sticky;
-            top: .25rem;
         }
     }
 </style>

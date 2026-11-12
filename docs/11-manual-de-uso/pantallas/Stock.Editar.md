@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-11-11
+revisada: 2026-11-12
 alias: Stock.Nuevo
 ---
 ## Para qué sirve
@@ -48,6 +48,12 @@ El botón rojo **Eliminar** aparece al abrir un movimiento **ya guardado** (ingr
 - **Ajuste de stock y Cierre de stock:** solo administradores. Un **cierre** es el punto de partida del cálculo: al eliminarlo cambia el stock de la sucursal desde el cierre anterior (la ventana lo avisa).
 - Un **Pesaje** con pesajes vinculados o con un **ajuste generado** no se puede eliminar: primero se desvinculan o se elimina el ajuste. Al eliminar un **ajuste**, el pesaje que ajustaba vuelve a «No realizado».
 - No se puede deshacer desde el sistema.
+
+## Si el movimiento ya está abierto en otra pestaña (2026-11-12)
+Si en esta computadora y en este navegador ya tenés un movimiento de stock abierto en otra pestaña o ventana, la pantalla te avisa antes de dejarte pisar lo que cargaste.
+- **Nuevo movimiento:** solo avisa si el otro nuevo es de **la misma acción** (por ejemplo, dos «Egreso Stock»). Un «Egreso Stock» y un «Cierre Stock» abiertos a la vez no se avisan entre sí. Si **cambiás la acción** dentro de la pantalla, se vuelve a chequear con la acción nueva. Con **uno** abierto (y con algo cargado) elegís: **Traer a esta pestaña**, **Cargar otro nuevo aparte** o **Volver al listado**. Con **dos o más** no se puede traer ninguno: buscalos entre tus pestañas.
+- **Modificar uno ya guardado:** mirarlo en dos pestañas no avisa; el aviso aparece al tocar **Modificar** si otra pestaña ya lo está modificando (**Traer la modificación a esta pestaña**, **Cargar uno nuevo aparte** o **Volver al listado**). Si cerrás el aviso, queda en solo lectura.
+- La pestaña que entrega el trabajo **no se cierra sola**: queda tapada con un botón **Ir al listado**. Solo detecta pestañas del **mismo navegador** de esta computadora.
 
 ## Resto de la pantalla
 PENDIENTE: documentar los datos del encabezado, la carga de productos (código, balanza, teclado numérico), Productos no cargados, Acumulados, Ver porcentaje de cortes y Generar ajuste, Vincular compra, borradores y las reglas por tipo de movimiento (no verificado contra el código en esta revisión).

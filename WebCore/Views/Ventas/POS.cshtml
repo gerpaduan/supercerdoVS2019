@@ -491,13 +491,19 @@
                                             <div class="mb-3 pos-product-metric pos-product-metric-cantidad">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <label class="lbl-cantidad">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                                                    <input id="inputCantidad" class="form-control" autocomplete="off" inputmode="decimal" disabled>
+                                                    @* Wrapper: aloja el icono de balanza (visible solo si la cantidad viene de la balanza, ver pos-balanza.js) *@
+                                                    <span class="pos-cantidad-campo">
+                                                        <span class="pos-cantidad-icono-balanza" title="Cantidad leída de la balanza" aria-hidden="true">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16"/><path d="M12 8.5V12"/><rect x="3.5" y="12" width="17" height="8" rx="2"/><rect x="8" y="14.5" width="8" height="3" rx=".6"/></svg>
+                                                        </span>
+                                                        <input id="inputCantidad" class="form-control" autocomplete="off" inputmode="decimal" disabled>
+                                                    </span>
                                                 </div>
                                                 @* Aviso de peso inestable (lo maneja pos-balanza.js; reemplaza al modal, 2026-11-10) *@
                                                 <div id="avisoCantidadPOS" class="pos-aviso-cantidad" role="status" aria-live="polite"></div>
                                             </div>
 
-                                            <div class="mb-3 pos-product-metric">
+                                            <div class="mb-3 pos-product-metric pos-product-metric-subtotal">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <label class="lbl-subtotal">Subtotal</label>
                                                     <h4 id="prodSubtotal" class="fw-bold text-muted m-0">

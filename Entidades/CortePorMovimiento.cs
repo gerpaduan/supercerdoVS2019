@@ -12,6 +12,15 @@ namespace Entidades
         private Corte corte;
         private float cantKg;
         private bool permitirIngreso;
+        private DateTime? creado;
+
+        // Momento en que el operador agrego la linea al movimiento (cortepormovimiento.creado). El inicio del movimiento es la
+        // hora de su primera linea. Null en las lineas anteriores a la columna y en SQL Server (todavia sin esa columna).
+        public DateTime? Creado
+        {
+            get { return creado; }
+            set { creado = value; }
+        }
 
         public bool PermitirIngreso
         {

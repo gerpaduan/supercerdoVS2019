@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-10-30
+revisada: 2026-11-12
 ---
 ## Para qué sirve
 Ver los **movimientos de stock** de un período (ingresos, egresos, cierres, pesajes y ajustes) por sucursal, con el total de kilos, y cargar uno nuevo.
@@ -24,6 +24,12 @@ Ver los **movimientos de stock** de un período (ingresos, egresos, cierres, pes
 - **Total Kg**: de lo que muestra la lista.
 - **Ver detalles** despliega el detalle de todos los movimientos.
 - PENDIENTE: el detalle de cada columna, de las acciones de fila y del modal *Ver Porcentaje Cortes* (pesajes) no se revisó en esta versión.
+
+## Lista y detalle en la computadora (desde el 2026-11-12)
+- **Columnas compactas**: la tabla ya no se estira al ancho de la pantalla; *Fecha*, *Sucursal*, *Acción* y *Cantidad* quedan juntas para no mover la vista de un lado a otro. Si un texto no entra en su columna, baja al renglón siguiente (el resumen del pesaje ya no se corta con «...»).
+- **Fecha**, **Sucursal** y **Cantidad** se ven en negrita, igual que la **Acción**.
+- **Detalles** abre arriba una franja con el número de registro, la sucursal, la acción, quién lo creó y, si se cambió, quién lo modificó (**Ver Porc(%)** a la derecha en los pesajes). Las observaciones salen en un recuadro amarillo y la compra, el pesaje o el ajuste vinculados en cajas.
+- Debajo, las líneas con *Cód.* (15 caracteres), *Producto* (25), *Cantidad / kg* (8), el icono de **balanza** y la hora de carga; al pie, el **Total** de los kilos de las líneas.
 
 ## En el celular
 - En pantallas angostas (celular y tablet) la pantalla se ve como antes: **Ver lineas** y **Ver eliminados** arriba, los cinco botones de acción en un recuadro, filtros apilados y, debajo, el **Total Kg** y **Ver detalles**.

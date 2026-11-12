@@ -43,24 +43,28 @@
                 <i class="fas fa-print mr-1"></i> Imprimir
             </button>
         }
-        @* Stock de la sucursal destino al lado del movimiento (solo escritorio): movimiento-stock-destino.js. *@
-        <button type="button" class="btn btn-outline-primary d-none d-lg-inline-block" id="btnStockDestino" aria-pressed="false"
-                title="Ver el stock de la sucursal destino mientras armás el movimiento">
-            <i class="fas fa-warehouse mr-1"></i> Stock destino
-        </button>
-        @if (borradorGenericoHabilitado)
-        {
-            <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresMovimientos">
-                <i class="fas fa-clock-rotate-left mr-1"></i> Movimientos sin guardar
-                <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
+        @* Grupo de la derecha (2026-11-12): Volver (e Imprimir) quedan a la izquierda y el resto agrupado al otro extremo. El boton "Abrir en
+           ventana" lo agrega pantalla-trabajo.js en este mismo grupo, antes de la pantalla completa. *@
+        <div class="mov-barra-grupo-der">
+            @* Stock de la sucursal destino al lado del movimiento (solo escritorio): movimiento-stock-destino.js. *@
+            <button type="button" class="btn btn-outline-primary d-none d-lg-inline-block" id="btnStockDestino" aria-pressed="false"
+                    title="Ver el stock de la sucursal destino mientras armás el movimiento">
+                <i class="fas fa-warehouse mr-1"></i> Stock destino
             </button>
-        }
-        @* Pantalla completa (2026-11-11): alterna como F11, igual que en Elaborados/Carga. Icono y tooltip los mantiene pantalla-completa.js;
-           se oculta solo si el navegador no soporta la API. *@
-        <button type="button" class="btn btn-outline-secondary" id="btnPantallaCompleta"
-                title="F11 · Pantalla completa" aria-label="Pantalla completa (F11)" aria-pressed="false">
-            <i class="fas fa-expand"></i>
-        </button>
+            @if (borradorGenericoHabilitado)
+            {
+                <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresMovimientos">
+                    <i class="fas fa-clock-rotate-left mr-1"></i> Movimientos sin guardar
+                    <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
+                </button>
+            }
+            @* Pantalla completa (2026-11-11): alterna como F11, igual que en Elaborados/Carga. Icono y tooltip los mantiene pantalla-completa.js;
+               se oculta solo si el navegador no soporta la API. *@
+            <button type="button" class="btn btn-outline-secondary" id="btnPantallaCompleta"
+                    title="F11 · Pantalla completa" aria-label="Pantalla completa (F11)" aria-pressed="false">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
     </div>
 
     @* Con "Stock destino" encendido (y pantalla >= 1200 px) el contenido pasa a dos columnas: el stock del destino a la izquierda y la carga
@@ -121,6 +125,7 @@
                                    id="FechaMovimiento"
                                    name="FechaMovimiento"
                                    class="form-control"
+                                   title="@(Model.EsEdicion ? "Fecha del movimiento (llegada)" : "Llegada estimada: hora actual + tiempo de envío. Si la cambiás a mano, no se suman los minutos.")"
                                    value="@Model.FechaMovimiento.ToString("yyyy-MM-ddTHH:mm")" />
                         </div>
                     </div>
@@ -146,9 +151,14 @@
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 movimiento-section-title">Agregar producto</h6>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
-                                    <div class="custom-control custom-switch mr-2">
-                                        <input type="checkbox" class="custom-control-input" id="chkBalanzaLinea" checked />
-                                        <label class="custom-control-label" for="chkBalanzaLinea">Balanza</label>
+                                    @* Balanza (2026-11-12): el interruptor pasa a un icono de balanza con la palabra «Balanza» en chiquito: verde = activada, gris =
+                                       desactivada. Sigue siendo el MISMO checkbox (#chkBalanzaLinea, movimientos.js lo lee y lo cambia igual); el label lo dibuja como
+                                       boton. La tecla * la activa o desactiva (movimientos.js). *@
+                                    <div class="mov-balanza-toggle mr-2">
+                                        <input type="checkbox" class="mov-balanza-chk" id="chkBalanzaLinea" checked />
+                                        <label class="mov-balanza-btn" for="chkBalanzaLinea" title="Balanza: tocá para activarla o desactivarla (tecla *)">
+                                            <i class="fas fa-balance-scale" aria-hidden="true"></i><span class="mov-balanza-txt">Balanza</span>
+                                        </label>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados" data-edit-readonly-ignore="true">
                                         <i class="fas fa-layer-group mr-1"></i> Ver acumulados
@@ -216,6 +226,18 @@
                                         <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad">
                                             <div class="form-group">
                                                 <label for="txtCantUnidad">Cant.Un.</label>
+                                                @* Permitir ingreso (2026-11-12): boton de un clic arriba de Cant.Un. (antes un checkbox aparte + apretar "+"). Aparece solo si la
+                                                   cantidad no coincide con los kilos (movimientos.js, validarRelacionCantidadKilos). El clic, o la tecla +, registra la linea
+                                                   igual. #chkPermitirIngreso sigue siendo el dato (borrador, payload de la linea) pero queda oculto. *@
+                                                <div class="mov-permitir d-none" id="wrapPermitirIngreso">
+                                                    <input type="checkbox" class="d-none" id="chkPermitirIngreso" tabindex="-1" aria-hidden="true" />
+                                                    <button type="button" class="btn btn-warning btn-sm mov-permitir-btn" id="btnPermitirIngreso"
+                                                            title="Registrar la línea igual, con estos valores (clic o tecla +)">
+                                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                                        <span class="mov-permitir-txt">Permitir ingreso</span>
+                                                        <kbd class="mov-permitir-tecla" aria-hidden="true">+</kbd>
+                                                    </button>
+                                                </div>
                                                 <input type="number" id="txtCantUnidad" class="form-control movimiento-input-cantidad" min="0" step="1" />
                                             </div>
                                         </div>
@@ -238,12 +260,6 @@
 
                                 @{ ViewBag.NumericKeypadId = "numericKeypadMovimiento"; }
                                 @Html.Partial("~/Views/Shared/_NumericKeypad.cshtml")
-                            </div>
-
-                            <div class="custom-control custom-checkbox mb-3 d-none" id="wrapPermitirIngreso">
-                                <input type="checkbox" class="custom-control-input" id="chkPermitirIngreso" />
-                                <label class="custom-control-label" for="chkPermitirIngreso">Permitir ingreso</label>
-                                <small class="form-text text-muted">Presione <strong>+</strong> para registrar.</small>
                             </div>
 
                         </div>
@@ -340,7 +356,7 @@
                                         {
                                             new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Mov. origen", Valor = Model.IdMovimientoOrigen },
                                             new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Mov. destino", Valor = Model.IdMovimientoDestino },
-                                            new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Creado", Valor = Model.Creado, Detalle = Model.CreadoPor },
+                                            new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Creado", Valor = Model.Creado, Detalle = Model.CreadoPor + (string.IsNullOrEmpty(Model.InicioCarga) ? "" : " · desde " + Model.InicioCarga) },
                                             new WebCore.Models.DatoRegistroCompactoItem { Etiqueta = "Actualizado", Valor = Model.Actualizado, Detalle = Model.ActualizadoPor }
                                         }
                                     })
@@ -372,6 +388,19 @@
                     @if (ViewBag.EliminarRegistro is WebCore.Models.EliminarRegistroVm vmEliminarMovimiento)
                     {
                         <partial name="_EliminarRegistro" model="vmEliminarMovimiento" />
+                    }
+                    @if (!Model.EsEdicion)
+                    {
+                        @* Tiempo de envio (2026-11-11): minutos que tarda el traslado. Al guardar, la Fecha del movimiento queda en la hora actual +
+                           estos minutos (WebCore.Helpers.MovimientoTiempos). Va en la franja de botones para no cambiar el ancho de ningun campo. *@
+                        <div class="mov-envio-accion mr-2 mb-2" title="Minutos que tarda el traslado. Al guardar, la Fecha del movimiento queda en la hora actual más estos minutos.">
+                            <label for="TiempoEnvioMinutos">Envío</label>
+                            <input type="number" id="TiempoEnvioMinutos" name="TiempoEnvioMinutos" class="form-control mov-envio-input"
+                                   value="@Model.TiempoEnvioMinutos" min="0" max="@WebCore.Helpers.MovimientoTiempos.MinutosEnvioMaximo" step="1"
+                                   inputmode="numeric" autocomplete="off" />
+                            <span class="mov-envio-unidad">min</span>
+                        </div>
+                        <input type="hidden" id="FechaManual" name="FechaManual" value="false" />
                     }
                     <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarMovimiento">
                         <i class="fas fa-save mr-1"></i> Guardar movimiento
@@ -829,6 +858,15 @@
             whatsappTexto: '@(Model.EsEdicion ? System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode("Movimiento " + Model.IdMovimiento + " - " + Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }, Context.Request.Scheme)) : "")',
             balanzaUrl: 'http://localhost:5100/peso',
             soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
+            fechaReferenciaCarga: '@Model.FechaReferenciaCarga',
+            // Aviso de "ya abierto en otra pestaña" (documento-abierto.js, ver docs/DECISIONS.md 2026-11-12).
+            documentoAbierto: {
+                idUsuario: @Sesion.UsuarioActual.Id,
+                urls: {
+                    listado: '@Url.Action("Index", "Movimientos")',
+                    nuevo: '@Url.Action("Nuevo", "Movimientos")'
+                }
+            },
             borradorGenerico: {
                 habilitado: @(borradorGenericoHabilitado ? "true" : "false"),
                 modulo: 'MOVIMIENTO',
@@ -878,6 +916,7 @@
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/acumulados-detalle.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/documento-abierto.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
     <script>window.movimientoStockDestinoConfig = { url: '@Url.Action("ExistenciaPorSucursales", "Stock")' };</script>
@@ -960,6 +999,14 @@
             soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
             modifyButtonSelector: "#btnHabilitarEdicionMovimiento",
             saveButtonSelector: "#btnGuardarMovimiento",
+            // Antes de pasar a edicion se chequea que otra pestaña no lo este modificando (documento-abierto.js).
+            beforeModify: function (habilitar) {
+                if (window.MovimientosEdit && typeof window.MovimientosEdit.antesDeModificar === "function") {
+                    window.MovimientosEdit.antesDeModificar(habilitar);
+                } else {
+                    habilitar();
+                }
+            },
             onStateChanged: function (readOnly) {
                 if (window.MovimientosEdit && typeof window.MovimientosEdit.setReadOnly === "function") {
                     window.MovimientosEdit.setReadOnly(readOnly);

@@ -66,6 +66,14 @@
                     document.documentElement.classList.add("pos-gris");
                 }
             } catch (e) { }
+            try {
+                // Atenuador de brillo (por dispositivo; ver bloque "ATENUADOR" de pos.css). Tambien antes de pintar.
+                var aten = parseInt(localStorage.getItem("carnisys-pos-atenuacion"), 10);
+                if (aten === 10 || aten === 20 || aten === 30) {
+                    document.documentElement.classList.add("pos-atenuado");
+                    document.documentElement.style.setProperty("--pos-atenuacion", String(aten / 100));
+                }
+            } catch (e) { /* sin acceso al storage (modo privado o bloqueado): se queda sin atenuar */ }
         })();
     </script>
 
@@ -329,6 +337,13 @@
                     <i id="icoTheme" class="fas fa-adjust text-light"></i>
                 </a>
 
+                @* Brillo de pantalla (2026-11-11): rota 100 -> 90 -> 80 -> 70 -> 100 %. Oscurece todo el POS con una capa
+                   (pos.css, bloque "ATENUADOR"); se guarda por dispositivo. El title y el badge los pone setAtenuacion. *@
+                <a href="#" id="btnBrilloPOS" class="nav-link topbar-icon-btn position-relative" title="Brillo de pantalla" aria-label="Brillo de pantalla">
+                    <i class="fas fa-lightbulb text-light"></i>
+                    <span id="brilloPOSBadge" class="pos-brillo-badge d-none"></span>
+                </a>
+
                 <div class="nav-item dropdown no-arrow">
                     <a class="nav-link dropdown-toggle text-white" href="#" id="posUserDropdown" role="button"
                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -467,6 +482,62 @@
                     btn.addEventListener("click", function (e) {
                         e.preventDefault();
                         setTheme(NEXT[currentTheme()]);
+                    });
+                }
+            });
+        })();
+
+        // Atenuador de brillo del POS: porcentaje de oscurecimiento 0/10/20/30 guardado por dispositivo en
+        // localStorage "carnisys-pos-atenuacion". El preload del <head> ya lo aplico antes de pintar; aca se
+        // sincroniza el boton y se rota con cada clic. Independiente del tema (vale en claro, gris y oscuro).
+        (function () {
+            const STORAGE_KEY = "carnisys-pos-atenuacion";
+            const NIVELES = [0, 10, 20, 30];
+
+            // Devuelve el nivel guardado; valor desconocido, vacio o storage inaccesible -> lo que ya tiene la pagina.
+            function nivelActual() {
+                try {
+                    const guardado = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+                    return NIVELES.indexOf(guardado) >= 0 ? guardado : 0;
+                } catch (e) {
+                    const css = parseFloat(document.documentElement.style.getPropertyValue("--pos-atenuacion"));
+                    const nivel = Math.round((isNaN(css) ? 0 : css) * 100);
+                    return NIVELES.indexOf(nivel) >= 0 ? nivel : 0;
+                }
+            }
+
+            // Aplica el nivel a la capa, actualiza boton/badge y lo guarda.
+            function setAtenuacion(nivel) {
+                const raiz = document.documentElement;
+                raiz.classList.toggle("pos-atenuado", nivel > 0);
+                if (nivel > 0) raiz.style.setProperty("--pos-atenuacion", String(nivel / 100));
+                else raiz.style.removeProperty("--pos-atenuacion");
+
+                const brillo = 100 - nivel;
+                const texto = "Brillo de pantalla: " + brillo + " %. Tocá para cambiar";
+                const btn = document.getElementById("btnBrilloPOS");
+                const badge = document.getElementById("brilloPOSBadge");
+                if (btn) {
+                    btn.title = texto;
+                    btn.setAttribute("aria-label", texto);
+                }
+                if (badge) {
+                    badge.textContent = String(brillo);
+                    badge.classList.toggle("d-none", nivel === 0);
+                }
+
+                try { localStorage.setItem(STORAGE_KEY, String(nivel)); } catch (e) { /* sin storage: el nivel vale solo para esta carga */ }
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                setAtenuacion(nivelActual());
+
+                const btn = document.getElementById("btnBrilloPOS");
+                if (btn) {
+                    btn.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        const i = NIVELES.indexOf(nivelActual());
+                        setAtenuacion(NIVELES[(i + 1) % NIVELES.length]);
                     });
                 }
             });

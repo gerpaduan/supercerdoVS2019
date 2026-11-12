@@ -228,8 +228,15 @@
             $ingredienteKg.prop('readonly', soloLectura || !!config.esAnulado);
         }
 
+        // Aviso de "ya abierto en otra pestaña" (documento-abierto.js): se arma al final de initCarga.
+        var documento = null;
+
+        // Clave del borrador local. Un Nuevo (clave terminada en ":new") usa una clave POR PESTAÑA para que dos Nuevo abiertos no se
+        // pisen; una edicion conserva su clave por id.
         function getDraftKey() {
-            return config.draftKey || '';
+            var base = config.draftKey || '';
+            if (documento && /:new$/.test(base)) return documento.claveBorradorLocal(base);
+            return base;
         }
 
         function readDraft() {
@@ -292,7 +299,8 @@
             var key = getDraftKey();
             if (!key || !window.localStorage || state.guardando) return;
             try {
-                window.localStorage.setItem(key, JSON.stringify(buildDraft()));
+                // guardadoEn: documento-abierto.js lo usa para elegir el borrador mas reciente que dejo una pestaña cerrada.
+                window.localStorage.setItem(key, JSON.stringify($.extend({}, buildDraft(), { guardadoEn: Date.now() })));
             } catch (err) {
             }
         }
@@ -1605,9 +1613,70 @@
         syncPrimaryAction();
         if (state.borradorGenerico) {
             state.borradorGenerico.actualizarBadgeInicial();
-        } else if (readDraft()) {
-            showDraftBanner();
         }
+
+        // ---- Aviso de "ya abierto en otra pestaña" (documento-abierto.js, ver docs/DECISIONS.md 2026-11-12 g) ----
+        // Paquete de trabajo = {draft, clientId}: lo que viaja de una pestaña a otra al "traer" un Nuevo o una modificacion.
+        function obtenerPaquete() {
+            var conServidor = state.borradorGenerico && state.borradorGenerico.estaHabilitado();
+            return { draft: buildDraft(), clientId: conServidor ? state.borradorGenerico.getClientId() : null };
+        }
+
+        // Aplica un paquete recibido: toma el clientId del borrador en servidor (asi las dos pestañas no generan dos borradores) y carga el
+        // formulario. applyDraft vuelve a programar el guardado del borrador con el clientId adoptado.
+        function aplicarPaquete(paquete) {
+            if (!paquete || !paquete.draft) throw new Error('El paquete de trabajo no trae borrador.');
+            if (paquete.clientId && state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                state.borradorGenerico.adoptarClientId(paquete.clientId);
+            }
+            applyDraft(paquete.draft);
+            hideDraftBanner();
+        }
+
+        // Esta pestaña entrego su trabajo a otra: se frena todo lo que guarda y se deja salir sin el aviso del navegador.
+        function alCederTrabajo() {
+            window.clearTimeout(state.draftTimer);
+            if (state.borradorGenerico) {
+                state.borradorGenerico.soltar();   // sin avisar al servidor: la otra pestaña retomo el mismo borrador
+            } else {
+                // Con borrador local la otra pestaña ya lo guardo en SU clave: el de esta quedaria como un borrador viejo que ofrecer.
+                try { window.localStorage.removeItem(getDraftKey()); } catch (err) { console.warn('No se pudo limpiar el borrador local al ceder el trabajo', err); }
+            }
+            var api = $form.data('editPageGuardApi');
+            if (api && typeof api.allowNavigation === 'function') api.allowNavigation();
+            if (typeof window.desactivarProteccionSalida === 'function') window.desactivarProteccionSalida();
+            else window.__protegerSalida = false;
+        }
+
+        // modoLista: el aviso lista TODOS los elaborados abiertos (nombre, nuevo/edicion, ingredientes) con "Traer este" por fila.
+        if (config.documentoAbierto && window.DocumentoAbierto) {
+            documento = window.DocumentoAbierto.crear({
+                modulo: 'EMBUTIDO_CARGA',
+                idUsuario: config.documentoAbierto.idUsuario,
+                grupo: '',
+                modoLista: true,
+                urls: config.documentoAbierto.urls,
+                textos: { singular: 'elaborado', plural: 'elaborados' },
+                resumen: function () {
+                    return { cantLineas: (state.lineas || []).length, etiqueta: ($elaboradoNombre.val() || '').trim() };
+                },
+                obtenerPaquete: obtenerPaquete,
+                aplicarPaquete: aplicarPaquete,
+                alCeder: alCederTrabajo
+            });
+        }
+
+        // Un Nuevo se registra y avisa si hay otros abiertos en otras pestañas (traer / cargar aparte / volver). La edicion de un
+        // elaborado guardado se chequea al tocar "Modificar" (antesDeModificar). El cartel de "restaurar borrador local" espera a esa
+        // respuesta: primero se adopta el borrador que dejo una pestaña ya cerrada.
+        var esNuevoActivo = !config.esEdicion && !config.esAnulado;
+        var anuncio = (documento && esNuevoActivo) ? documento.anunciarNuevo() : Promise.resolve({ accion: 'seguir' });
+        anuncio.then(function (resultado) {
+            if (resultado.accion === 'listado' || resultado.accion === 'traido') return;
+            if (state.borradorGenerico) return;
+            if (documento && esNuevoActivo) documento.adoptarBorradorHuerfano(config.draftKey);
+            if (readDraft()) showDraftBanner();
+        });
 
         $page.on('click.elaboradosDraft', '[data-action="restore-draft"]', function () {
             var draft = readDraft();
@@ -1626,6 +1695,18 @@
         });
         window.ElaboradosCarga = window.ElaboradosCarga || {};
         window.ElaboradosCarga.syncPrimaryAction = syncPrimaryAction;
+        // "Modificar" de un elaborado ya guardado: antes de pasar a edicion se chequea que otra pestaña no lo este modificando
+        // (documento-abierto.js). `habilitar` es la funcion de edit-readonly.js que pasa a edicion; si no se llama, queda en solo lectura.
+        window.ElaboradosCarga.antesDeModificar = function (habilitar) {
+            var idEmbutido = toInt($('#IdEmbutido').val());
+            if (!documento || idEmbutido <= 0) {
+                habilitar();
+                return;
+            }
+            documento.tomarEdicion(idEmbutido).then(function (puede) {
+                if (puede) habilitar();
+            });
+        };
     }
 
     $(function () {

@@ -577,6 +577,10 @@
             estaHabilitado: function () { return habilitado; },
             getClientId: getClientId,
             adoptarClientId: adoptarClientId,
+            // "Soltar" (2026-11-12): esta pestana le pasa el formulario a otra ventana (Abrir en ventana independiente, movimientos.js). Deja de
+            // guardar, de latir y de avisar el cierre de pestana (pagehide), SIN avisarle nada al servidor: la ventana nueva retoma el mismo
+            // clientId (adoptarClientId) y el servidor ve un unico borrador que sigue vivo, no uno "interrumpido".
+            soltar: deshabilitar,
             reiniciar: reiniciar,
             programarGuardado: programarGuardado,
             marcarFinalizado: marcarFinalizado,

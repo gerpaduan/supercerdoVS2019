@@ -52,18 +52,20 @@
 @* En celular (<768px) cada movimiento de stock se muestra como tarjeta (CSS compartido wwwroot/Content/css/tabla-cards.css):
    la accion encabeza la tarjeta y la fila de detalle desplegable queda pegada debajo (cc-fila-detalle). *@
 <div class="table-responsive tabla-full">
-    <table class="table table-bordered table-hover mb-0 tabla-cards">
+    @* tc-indice (tabla-compacta.css, 2026-11-12): en desktop la tabla se pega a su contenido y Fecha/Sucursal/Acción/Cantidad
+       reservan ancho en caracteres (ahi la clase tc-* va en el th Y en cada td). Fecha y Sucursal usan la fuente fuerte de Acción. *@
+    <table class="table table-bordered table-hover mb-0 tabla-cards tc-indice">
         <thead class="thead-light">
             <tr>
-                <th style="width: 80px;">ID</th>
-                <th>Fecha</th>
-                <th>Sucursal</th>
-                <th>Acción</th>
-                <th class="text-right">Cantidad</th>
-                <th class="text-center" style="width: 70px;">Obs.</th>
+                <th>ID</th>
+                <th class="tc-fecha">Fecha</th>
+                <th class="tc-suc">Sucursal</th>
+                <th class="tc-prod">Acción</th>
+                <th class="text-right tc-cant">Cantidad</th>
+                <th class="text-center">Obs.</th>
                 <th>Ajuste</th>
-                <th style="width: 170px;">Creado</th>
-                <th style="width: 220px;">Acciones</th>
+                <th>Creado</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -127,9 +129,9 @@
                     <tr>
                         @* En la tarjeta de celular el ID va tenue en el titulo (cc-titulo-linea, abajo): esta celda solo se ve en desktop. *@
                         <td class="stock-id-cell font-weight-bold cc-solo-tabla" data-label="ID">@idCompra</td>
-                        <td data-label="Fecha">@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
-                        <td data-label="Sucursal">@row["sucursal"]</td>
-                        <td class="cc-titulo">
+                        <td class="col-clave tc-fecha" data-label="Fecha">@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                        <td class="col-clave tc-suc" data-label="Sucursal">@row["sucursal"]</td>
+                        <td class="cc-titulo tc-prod">
                             <div class="stock-accion-titulo cc-titulo-linea">@row["tipoCompra"]<span class="cc-solo-card cc-titulo-extra" title="Número de registro">#@idCompra</span></div>
                             @if (!string.IsNullOrWhiteSpace(resumenPesaje))
                             {
@@ -176,7 +178,7 @@
                                 }
                             }
                         </td>
-                        <td class="text-right cc-destacado" data-label="Cantidad">@cantKg.ToString("N2")</td>
+                        <td class="text-right cc-destacado col-clave tc-cant tc-num" data-label="Cantidad">@cantKg.ToString("N2")</td>
                         <td class="text-center @(detalle != null && !string.IsNullOrWhiteSpace(detalle.Observaciones) ? "" : "cc-vacio")" data-label="Observaciones">
                             @if (detalle != null && !string.IsNullOrWhiteSpace(detalle.Observaciones))
                             {
@@ -252,23 +254,22 @@
         max-width: 220px;
     }
 
+    /* Desktop (2026-11-12): el resumen del pesaje baja de renglon en vez de cortarse con "..." (columnas compactas, tabla-compacta.css). */
+    @@media (min-width: 768px) {
+        .stock-accion-resumen {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            max-width: none;
+            overflow-wrap: anywhere;
+        }
+    }
+
     .stock-id-cell {
         font-size: .76rem;
     }
 
     .stock-accion-titulo {
         font-weight: 700;
-    }
-
-    .stock-relacionado-box {
-        border-radius: 0.5rem;
-        padding: 0.9rem 1rem;
-        border: 1px solid rgba(0, 123, 255, 0.18);
-        background: rgba(0, 123, 255, 0.06);
-    }
-
-    .stock-relacionado-pesaje {
-        border-color: rgba(23, 162, 184, 0.24);
-        background: rgba(23, 162, 184, 0.08);
     }
 </style>

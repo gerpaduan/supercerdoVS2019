@@ -69,6 +69,12 @@ namespace WebCore.Models
                     "Días hacia atrás por defecto",
                     "Desde qué fecha arrancan los listados de Stock, Elaborados y Movimientos, y hasta cuántos días atrás se puede llevar la fecha de una venta en el POS.",
                     GrupoFechas, "días", "Ejemplo: 7 = la última semana."),
+
+                // 2026-11-11: lo lee MovimientosController (CrearModeloNuevo y Guardar) via Helpers/MovimientoTiempos.
+                ["minutosEnvioMovimiento"] = new ParametroAyuda(
+                    "Tiempo de envío de un movimiento",
+                    "Minutos que tarda un traslado entre sucursales. Al guardar un movimiento nuevo, su fecha queda en la hora actual más estos minutos (la llegada estimada) y recién a esa hora cuenta en el stock de las dos sucursales. En cada movimiento se puede ajustar antes de guardar. Con 0 la fecha es la hora en que se guarda.",
+                    GrupoFechas, "min", "Si queda vacío se usa 0. Máximo 1440 (un día)."),
             };
 
         /// <summary>

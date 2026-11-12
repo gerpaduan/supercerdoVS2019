@@ -98,22 +98,25 @@
             @* En celular (<768px) cada movimiento se muestra como tarjeta (CSS compartido
                wwwroot/Content/css/tabla-cards.css): la fecha encabeza la tarjeta y el detalle desplegable queda pegado debajo. *@
             <div class="table-responsive">
-                <table class="table table-hover mb-0 tabla-cards" id="tablaMovimientos">
+                @* tc-indice (tabla-compacta.css, 2026-11-12): en desktop la tabla se pega a su contenido y las columnas reservan ancho en
+                   caracteres (la clase tc-* va en el th Y en cada td). Fecha, Origen y Destino en fuente fuerte; Origen en rojo (sale
+                   mercaderia) y Destino en verde (ingresa). *@
+                <table class="table table-hover mb-0 tabla-cards tc-indice" id="tablaMovimientos">
                     <thead class="thead-dark">
                         <tr>
-                            <th style="width:140px;">Fecha movimiento</th>
-                            <th>Origen</th>
+                            <th class="tc-fecha">Fecha movimiento</th>
+                            <th class="tc-suc">Origen</th>
                             @if (Model.MostrarColumnasInternas)
                             {
-                                <th style="width:100px;">De origen</th>
-                                <th style="width:120px;">Estado</th>
+                                <th>De origen</th>
+                                <th>Estado</th>
                             }
-                            <th>Destino</th>
-                            <th class="text-right" style="width:120px;">Total unidad</th>
-                            <th class="text-right" style="width:120px;">Total kilos</th>
-                            <th class="text-center" style="width:70px;">Obs.</th>
-                            <th style="width:170px;">Creado</th>
-                            <th style="width:150px;">Acciones</th>
+                            <th class="tc-suc">Destino</th>
+                            <th class="text-right tc-cant">Total unidad</th>
+                            <th class="text-right tc-cant">Total kilos</th>
+                            <th class="text-center">Obs.</th>
+                            <th>Creado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -130,16 +133,16 @@
                             foreach (var movimiento in Model.Movimientos)
                             {
                                 <tr data-movimiento-row="@movimiento.IdMovimiento">
-                                    <td class="cc-titulo cc-titulo-flex">@movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")<span class="cc-solo-card cc-titulo-extra" title="Número de movimiento">#@movimiento.IdMovimiento</span></td>
-                                    <td data-label="Origen">@movimiento.Origen</td>
+                                    <td class="cc-titulo cc-titulo-flex col-clave tc-fecha">@movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")<span class="cc-solo-card cc-titulo-extra" title="Número de movimiento">#@movimiento.IdMovimiento</span></td>
+                                    <td class="tc-suc" data-label="Origen"><span class="mov-origen" title="Sale mercadería de aquí"><i class="fas fa-sign-out-alt"></i>@movimiento.Origen</span></td>
                                     @if (Model.MostrarColumnasInternas)
                                     {
                                         <td data-label="De origen">@(string.IsNullOrWhiteSpace(movimiento.DeOrigen) ? "-" : movimiento.DeOrigen)</td>
                                         <td data-label="Estado">@movimiento.Estado</td>
                                     }
-                                    <td data-label="Destino">@movimiento.Destino</td>
-                                    <td class="text-right" data-label="Total unidad">@movimiento.TotalUnidad.ToString("N0")</td>
-                                    <td class="text-right" data-label="Total kilos">@movimiento.TotalKilos.ToString("N3")</td>
+                                    <td class="tc-suc" data-label="Destino"><span class="mov-destino" title="Ingresa mercadería aquí"><i class="fas fa-sign-in-alt"></i>@movimiento.Destino</span></td>
+                                    <td class="text-right tc-cant tc-num" data-label="Total unidad">@movimiento.TotalUnidad.ToString("N0")</td>
+                                    <td class="text-right col-clave tc-cant tc-num" data-label="Total kilos">@movimiento.TotalKilos.ToString("N3")</td>
                                     <td class="text-center @(movimiento.TieneObservaciones ? "" : "cc-vacio")" data-label="Observaciones">
                                         @if (movimiento.TieneObservaciones)
                                         {

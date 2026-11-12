@@ -1235,6 +1235,7 @@
     <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/documento-abierto.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script>
@@ -1256,6 +1257,14 @@
                 pesajesVinculadosExistentes: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PesajesVinculadosIds ?? new List<int>())),
                 tipoCompra: "@Model.TipoCompra",
                 draftKey: "@Model.DraftKey",
+                // Aviso de "ya abierto en otra pestaña" (documento-abierto.js, ver docs/DECISIONS.md 2026-11-12 g).
+                documentoAbierto: {
+                    idUsuario: @Sesion.UsuarioActual.Id,
+                    urls: {
+                        listado: "@Url.Action("Index", "Stock")",
+                        nuevo: "@Url.Action("Nuevo", "Stock", new { tipoCompra = Model.TipoCompra })"
+                    }
+                },
                 permiteCantidadNegativa: @(permiteNegativo ? "true" : "false"),
                 esEgreso: @(esEgreso ? "true" : "false"),
                 esPesaje: @(esPesaje ? "true" : "false"),
@@ -1299,6 +1308,14 @@
                 soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
                 modifyButtonSelector: "#btnHabilitarEdicionStock",
                 saveButtonSelector: "#btnGuardarStock",
+                // Antes de pasar a edicion se chequea que otra pestaña no la este modificando (documento-abierto.js).
+                beforeModify: function (habilitar) {
+                    if (window.StockUI && typeof window.StockUI.antesDeModificar === "function") {
+                        window.StockUI.antesDeModificar($("#formStock"), habilitar);
+                    } else {
+                        habilitar();
+                    }
+                },
                 onStateChanged: function (readOnly, $form) {
                     if (window.StockUI && typeof window.StockUI.syncPrimaryAction === "function") {
                         window.StockUI.syncPrimaryAction($form);

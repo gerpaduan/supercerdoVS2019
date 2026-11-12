@@ -75,13 +75,22 @@
             return true;
         }
 
+        // Marca el bloque de Cantidad cuando el valor viene de la balanza: el CSS muestra ahi el icono de balanza
+        // (.pos-cantidad-icono-balanza). No se usa [readonly] como indicador porque pos-keyboard.js tambien lo
+        // pone en pantallas tactiles.
+        function marcarCantidadDeBalanza(activa) {
+            $('.pos-product-metric-cantidad').toggleClass('pos-cantidad-balanza', !!activa);
+        }
+
         function setInputManual(enabled) {
+            marcarCantidadDeBalanza(false);
             $('#inputCantidad')
                 .prop('disabled', !enabled)
                 .prop('readonly', false);
         }
 
         function setInputBalanza() {
+            marcarCantidadDeBalanza(true);
             $('#inputCantidad')
                 .prop('disabled', false)
                 .prop('readonly', true);
@@ -218,6 +227,7 @@
                     return;
                 }
 
+                marcarCantidadDeBalanza(false);
                 $('#inputCantidad').val('').prop('disabled', true).prop('readonly', false);
                 return;
             }

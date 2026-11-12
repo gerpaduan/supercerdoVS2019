@@ -8,47 +8,86 @@
     funcionando (el boton/id/handler NO se borraron) pero queda OCULTO (d-none) a pedido explicito
     del usuario -- su atajo numerico se retiro (ver modal-postmovimiento.js) para no mostrar un
     atajo de una accion invisible.
+
+    Diseño (2026-11-12, pedido del usuario): igual al modal de post-venta del POS (Ventas/_ModalPostVentaBasico.cshtml): encabezado con tilde,
+    letra compacta, botones en columna con numero e icono y la linea "Tamaño: 80mm · cambiar". La opcion 1 es "Cerrar sin imprimir" (hace lo
+    de siempre: cerrar y volver al listado, o solo cerrar si el modal se abrio con "Imprimir" desde un movimiento ya guardado). Arriba un resumen
+    (sucursales, items, kilos y fecha) que completa modal-postmovimiento.js con lo que le pasa movimientos.js; sin resumen queda oculto.
+    Los ids de los botones no cambiaron (los usa modal-postmovimiento.js).
 *@
-<div class="modal fade" id="modalPostMovimiento" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
-        <div class="modal-content">
+<div class="modal fade" id="modalPostMovimiento" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postventa-compact">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title mb-0">Movimiento guardado</h5>
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-check-circle mr-2"></i><span id="lblPostMovimientoTitulo">Movimiento guardado</span>
+                </h5>
             </div>
             <div class="modal-body text-center">
-                <p class="mb-3" style="font-size:1.05rem;">Que deseas hacer ahora?</p>
-
-                <button class="btn btn-secondary btn-lg btn-block mb-2" id="btnPostMovimientoNoImprimir" type="button">
-                    <span class="badge badge-light mr-2">1</span>
-                    Continuar
-                </button>
-
-                <div class="d-flex mb-2">
-                    <button class="btn btn-outline-primary btn-lg flex-grow-1 mr-2" id="btnPostMovimientoImprimir" type="button">
-                        <span class="badge badge-primary mr-2">2</span>
-                        <span id="lblMovimientoTicketAccion">Imprimir</span>
-                    </button>
-                    <button class="btn btn-outline-secondary btn-lg" id="btnCambiarTicketMovimiento" type="button" title="Cambiar tamaño de ticket">
-                        Cambiar
-                    </button>
+                <div id="bloquePostMovimientoResumen" class="d-none">
+                    <p class="mb-1" id="lblPostMovimientoRuta"></p>
+                    <h3 class="mb-1" id="lblPostMovimientoTotales"></h3>
+                    <div class="small text-muted mb-3" id="lblPostMovimientoFecha"></div>
                 </div>
-                <div class="collapse mb-2" id="bloqueTicketOpcionesMovimiento">
-                    <div class="card card-body p-2">
-                        <button class="btn btn-outline-primary btn-block mb-2 btnTicketMovimientoOpt" type="button" data-mm="58">Ticket 58 mm</button>
-                        <button class="btn btn-outline-primary btn-block btnTicketMovimientoOpt" type="button" data-mm="80">Ticket 80 mm</button>
+
+                <div class="d-flex flex-column" style="gap:.5rem;">
+                    <button type="button" class="btn btn-success" id="btnPostMovimientoNoImprimir">
+                        <span class="badge badge-light mr-1">1</span>
+                        <i class="fas fa-times-circle mr-1"></i>Cerrar sin imprimir
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnPostMovimientoImprimir">
+                        <span class="badge badge-light mr-1">2</span>
+                        <i class="fas fa-receipt mr-1"></i><span id="lblMovimientoTicketAccion">Imprimir ticket</span>
+                    </button>
+                    <div class="small text-muted" id="movTicketMedidaInfo" style="margin-top:-.35rem;">
+                        Tamaño: <span id="movTicketMedidaTexto">sin elegir</span> ·
+                        <a href="#" id="btnCambiarTicketMovimiento" title="Cambiar tamaño de ticket">cambiar</a>
                     </div>
+                    <div class="collapse" id="bloqueTicketOpcionesMovimiento">
+                        <div class="card card-body p-2">
+                            <button class="btn btn-outline-primary btn-block mb-2 btnTicketMovimientoOpt" type="button" data-mm="58">Ticket 58 mm</button>
+                            <button class="btn btn-outline-primary btn-block btnTicketMovimientoOpt" type="button" data-mm="80">Ticket 80 mm</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" id="btnPostMovimientoPdf">
+                        <span class="badge badge-light mr-1">3</span>
+                        <i class="fas fa-file-pdf mr-1"></i>Generar PDF
+                    </button>
+                    <button type="button" class="btn btn-outline-success d-none" id="btnPostMovimientoWhatsapp">
+                        <span class="badge badge-light mr-1">4</span>
+                        <i class="fab fa-whatsapp mr-1"></i>Enviar a WhatsApp
+                    </button>
                 </div>
-
-                <button class="btn btn-dark btn-lg btn-block mb-2" id="btnPostMovimientoPdf" type="button">
-                    <span class="badge badge-light mr-2">3</span>
-                    Generar PDF
-                </button>
-
-                <button class="btn btn-success btn-lg btn-block d-none" id="btnPostMovimientoWhatsapp" type="button">
-                    <span class="badge badge-light mr-2">4</span>
-                    <i class="fab fa-whatsapp mr-2"></i>Enviar a WhatsApp
-                </button>
             </div>
         </div>
     </div>
 </div>
+
+@* Mismas reglas que .modal-postventa-compact de Ventas/_ModalPostVentaBasico.cshtml (alli viven dentro de ese parcial y esta pantalla no lo carga). *@
+<style>
+    .modal-postventa-compact {
+        font-size: .86rem;
+    }
+
+    .modal-postventa-compact .modal-title {
+        font-size: 1rem;
+    }
+
+    .modal-postventa-compact .btn {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .5rem;
+    }
+
+    /* Items y kilos en verde y en negrita. Sin las clases .text-success / .font-weight-bold a proposito: ui-refresh.css las pisa con
+       color: var(--ui-text) !important (por eso el total del modal de la venta queda oscuro). */
+    #lblPostMovimientoTotales {
+        color: #198754;
+        font-weight: 700;
+    }
+
+    html.dark-mode #lblPostMovimientoTotales {
+        color: #73e0c2;
+    }
+</style>

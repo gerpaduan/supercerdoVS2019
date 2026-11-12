@@ -9,10 +9,10 @@ namespace WebCore.Tests
 {
     public class ParametrosAyudaTests
     {
-        // Los 4 parametros que WebCore realmente lee (relevamiento del 2026-11-10).
+        // Los parametros que WebCore realmente lee (relevamiento del 2026-11-10 + minutosEnvioMovimiento, 2026-11-11).
         private static readonly string[] VisiblesEnWeb =
         {
-            "saldoMinimoInformar", "codProdGenerico", "ocultarEncabezadoTicketNoFiscal", "diasLimitFechaDesde"
+            "saldoMinimoInformar", "codProdGenerico", "ocultarEncabezadoTicketNoFiscal", "diasLimitFechaDesde", "minutosEnvioMovimiento"
         };
 
         // Solo escritorio (5) + sin uso (2): siguen en la base pero no se muestran en la web.

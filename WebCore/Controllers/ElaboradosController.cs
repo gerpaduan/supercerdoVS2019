@@ -1651,7 +1651,7 @@ namespace WebCore.Controllers
             var tabs = new List<ElaboradoTabVm>
             {
                 new ElaboradoTabVm { Titulo = "Elaborados", Action = "Index", Activo = string.Equals(activeAction, "Index", StringComparison.OrdinalIgnoreCase) },
-                new ElaboradoTabVm { Titulo = "Carga / ingreso", Action = "Carga", Activo = string.Equals(activeAction, "Carga", StringComparison.OrdinalIgnoreCase) },
+                new ElaboradoTabVm { Titulo = "Nuevo Elaborado", Action = "Carga", Activo = string.Equals(activeAction, "Carga", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Ingreso rapido", Action = "IngresoRapido", Activo = string.Equals(activeAction, "IngresoRapido", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Formulas", Action = "Formulas", Activo = string.Equals(activeAction, "Formulas", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Desarme de elaborado", Action = "Desarme", Activo = string.Equals(activeAction, "Desarme", StringComparison.OrdinalIgnoreCase) },

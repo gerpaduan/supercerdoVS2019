@@ -150,7 +150,9 @@
             // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
             // Embutidos"): instancia de BorradorGenerico.crear() cuando esta habilitado, o null
             // cuando no (ahi se sigue con localStorage/CapturaRespaldo de siempre).
-            borradorGenerico: null
+            borradorGenerico: null,
+            // Aviso de "ya abierto en otra pestaña" (documento-abierto.js): se arma en StockUI.init, null si el script no esta.
+            documento: null
         };
     }
 
@@ -2100,8 +2102,17 @@
         }
     }
 
+    // Clave del borrador local. Un Nuevo (clave terminada en "_0", sin id todavia) usa una clave POR PESTAÑA para que dos Nuevo abiertos
+    // no se pisen (documento-abierto.js); una compra existente conserva su clave por id.
+    function getDraftKey($form) {
+        var base = $form.find('#DraftKey').val();
+        var state = getState($form);
+        if (base && state && state.documento && /_0$/.test(base)) return state.documento.claveBorradorLocal(base);
+        return base;
+    }
+
     function readDraft($form) {
-        var key = $form.find('#DraftKey').val();
+        var key = getDraftKey($form);
         if (!key || !window.localStorage) return null;
         try {
             var raw = window.localStorage.getItem(key);
@@ -2145,10 +2156,11 @@
     }
 
     function saveDraft($form) {
-        var key = $form.find('#DraftKey').val();
+        var key = getDraftKey($form);
         if (!key || !window.localStorage) return;
         try {
-            window.localStorage.setItem(key, JSON.stringify(buildDraft($form)));
+            // guardadoEn: documento-abierto.js lo usa para elegir el borrador mas reciente que dejo una pestaña cerrada.
+            window.localStorage.setItem(key, JSON.stringify($.extend({}, buildDraft($form), { guardadoEn: Date.now() })));
         } catch (err) {
         }
     }
@@ -2179,7 +2191,7 @@
     }
 
     function clearDraft($form) {
-        var key = $form.find('#DraftKey').val();
+        var key = getDraftKey($form);
         if (!key || !window.localStorage) return;
         window.localStorage.removeItem(key);
         $form.closest('.stock-page').find('#stockDraftBanner').addClass('d-none');
@@ -2797,6 +2809,8 @@
 
             // Solo si la accion realmente cambio: ajusta el signo de las lineas ya cargadas y avisa (ver aplicarSignoALineas).
             if (String(tipoAnterior).toLowerCase() !== String(tipoNuevo).toLowerCase()) {
+                // La accion separa los Nuevo entre si: se re-registra en la accion nueva y avisa si ya hay otro de esa accion abierto.
+                if (state.documento) state.documento.cambiarGrupo(grupoDeAccion($form));
                 var resultado = aplicarSignoALineas($form, tipoNuevo);
                 if (resultado.cantidad > 0) {
                     renderLineas($form);
@@ -3286,7 +3300,81 @@
         });
     }
 
+    // ---- Aviso de "ya abierto en otra pestaña" (documento-abierto.js, ver docs/DECISIONS.md 2026-11-12 g) ----
+    // Paquete de trabajo = {draft, clientId}: lo que viaja de una pestaña a otra al "traer" un Nuevo o una modificacion.
+    function obtenerPaquete($form) {
+        var state = getState($form);
+        var conServidor = state.borradorGenerico && state.borradorGenerico.estaHabilitado();
+        return { draft: buildDraft($form), clientId: conServidor ? state.borradorGenerico.getClientId() : null };
+    }
+
+    // Aplica un paquete recibido: toma el clientId del borrador en servidor (asi las dos pestañas no generan dos borradores) y carga el
+    // formulario. applyDraft vuelve a programar el guardado del borrador con el clientId adoptado.
+    function aplicarPaquete($form, paquete) {
+        var state = getState($form);
+        if (!paquete || !paquete.draft) throw new Error('El paquete de trabajo no trae borrador.');
+        if (paquete.clientId && state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+            state.borradorGenerico.adoptarClientId(paquete.clientId);
+        }
+        applyDraft($form, paquete.draft);
+        hideDraftBanner($form);
+    }
+
+    // Esta pestaña entrego su trabajo a otra: se frena todo lo que guarda y se deja salir sin el aviso del navegador.
+    function alCederTrabajo($form) {
+        var state = getState($form);
+        window.clearTimeout(state.draftTimer);
+        if (state.borradorGenerico) {
+            state.borradorGenerico.soltar();   // sin avisar al servidor: la otra pestaña retomo el mismo borrador
+        } else {
+            // Con borrador local la otra pestaña ya lo guardo en SU clave: el de esta quedaria como un borrador viejo que ofrecer.
+            try { window.localStorage.removeItem(getDraftKey($form)); } catch (err) { console.warn('No se pudo limpiar el borrador local al ceder el trabajo', err); }
+        }
+        var api = $form.data('editPageGuardApi');
+        if (api && typeof api.allowNavigation === 'function') api.allowNavigation();
+        if (typeof window.desactivarProteccionSalida === 'function') window.desactivarProteccionSalida();
+        else window.__protegerSalida = false;
+    }
+
+    // La accion (Ingreso, Egreso, Cierre...) separa los Nuevo: uno de «Egreso Stock» no avisa por otro de «Cierre Stock».
+    function grupoDeAccion($form) {
+        return String(getState($form).config.tipoCompra || '').toLowerCase();
+    }
+
+    function crearDocumentoAbierto($form, config) {
+        var cfgDoc = config.documentoAbierto;
+        if (!cfgDoc || !window.DocumentoAbierto) return null;
+        return window.DocumentoAbierto.crear({
+            modulo: 'STOCK',
+            idUsuario: cfgDoc.idUsuario,
+            grupo: grupoDeAccion($form),
+            etiquetaGrupo: function () { return getState($form).config.tipoCompra || ''; },
+            urls: cfgDoc.urls,
+            textos: { singular: 'movimiento de stock', plural: 'movimientos de stock', rotuloGrupo: 'con la acción «{grupo}»' },
+            resumen: function () {
+                return { cantLineas: (getState($form).lineas || []).filter(function (l) { return !!l; }).length };
+            },
+            obtenerPaquete: function () { return obtenerPaquete($form); },
+            aplicarPaquete: function (paquete) { aplicarPaquete($form, paquete); },
+            alCeder: function () { alCederTrabajo($form); }
+        });
+    }
+
     window.StockUI = window.StockUI || {
+        // "Modificar" de una compra ya guardada: antes de pasar a edicion se chequea que otra pestaña no la este modificando.
+        // `habilitar` es la funcion de edit-readonly.js que pasa a edicion; si no se llama, queda en solo lectura.
+        antesDeModificar: function ($form, habilitar) {
+            var state = getState($form);
+            var idCompra = parseInt($form.find('#IdCompra').val(), 10) || 0;
+            if (!state || !state.documento || idCompra <= 0) {
+                habilitar();
+                return;
+            }
+            state.documento.tomarEdicion(idCompra).then(function (puede) {
+                if (puede) habilitar();
+            });
+        },
+
         init: function (config) {
             var $form = $(config && config.formSelector ? config.formSelector : '#formStock');
             if (!$form.length) return;
@@ -3309,9 +3397,20 @@
 
             if (state.borradorGenerico) {
                 state.borradorGenerico.actualizarBadgeInicial();
-            } else if (readDraft($form)) {
-                showDraftBanner($form);
             }
+
+            // Un Nuevo (sin id) se registra y avisa si hay otro de la misma accion abierto en otra pestaña (traer / cargar aparte /
+            // volver). El cartel de "restaurar borrador local" espera a esa respuesta: primero se adopta el borrador que dejo una pestaña
+            // ya cerrada. La edicion de una compra guardada se chequea al tocar "Modificar" (antesDeModificar).
+            state.documento = crearDocumentoAbierto($form, config);
+            var esNuevo = (parseInt($form.find('#IdCompra').val(), 10) || 0) <= 0;
+            var anuncio = (state.documento && esNuevo) ? state.documento.anunciarNuevo() : Promise.resolve({ accion: 'seguir' });
+            anuncio.then(function (resultado) {
+                if (resultado.accion === 'listado' || resultado.accion === 'traido') return;
+                if (state.borradorGenerico) return;
+                if (state.documento && esNuevo) state.documento.adoptarBorradorHuerfano($form.find('#DraftKey').val());
+                if (readDraft($form)) showDraftBanner($form);
+            });
 
             $form.find('#txtCodigoProducto').focus();
         }

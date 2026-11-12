@@ -114,8 +114,10 @@ public sealed class DarkModeTests
         await btn.ClickAsync();
         await page.WaitForTimeoutAsync(800);
 
-        var metaCard = page.Locator(".stock-detalle-meta-card").First;
-        Assert.True(await metaCard.CountAsync() > 0, "No se cargo el panel de detalle (.stock-detalle-meta-card)");
+        // 2026-11-12: la tarjeta lateral de datos (.stock-detalle-meta-card) se reemplazo por la franja de chips y la tabla de
+        // lineas (.det-lineas, tabla-compacta.css); el test sigue verificando que el panel del detalle no quede blanco en oscuro.
+        var metaCard = page.Locator(".det-lineas").First;
+        Assert.True(await metaCard.CountAsync() > 0, "No se cargo el panel de detalle (.det-lineas)");
 
         var bg = await metaCard.EvaluateAsync<string>("el => getComputedStyle(el).backgroundColor");
         Assert.NotEqual("rgb(255, 255, 255)", bg);

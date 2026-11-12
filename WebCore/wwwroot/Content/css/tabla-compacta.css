@@ -1,0 +1,242 @@
+/* Columnas compactas + detalle desplegable (solo desktop, >=768px): el dato queda pegado al producto para que la vista
+   no viaje de un lado al otro. En celular no cambia nada (ahi mandan las tarjetas de tabla-cards.css).
+   Decision y medidas: docs/DECISIONS.md (2026-11-12, "Columnas compactas"). Usado por Stock, Movimientos y Elaborados.
+
+   Anchos reservados en caracteres (ch); si el texto no entra baja a la linea siguiente (no se corta ni se ensancha):
+       Codigo 15 · Producto 25 · Cantidad/unidades 8 · Kilos 8   (Fecha 16 · Sucursal/Origen/Destino 22: medidas propias)
+   Los numeros no se parten: un kilo de 3 decimales ("2.310,000", 9 caracteres) hace crecer la columna lo justo.
+   OJO: "ch" se mide con la fuente del elemento que lleva el ancho; el <th> es mas chico que el <td>, asi que la clase
+   de ancho va en el <th> Y en cada <td> de la columna (gana el ancho de la celda de datos).
+
+   --- TABLA PRINCIPAL (listado): <table class="... tc-indice"> y en th/td: tc-fecha | tc-suc | tc-prod | tc-cant.
+       Los numeros llevan ademas .tc-num (no se parten).
+   --- LINEAS DEL DETALLE: <div class="det-lineas"><table class="... tabla-cards tabla-cards-lista"> y en th/td:
+       tc-cod | tc-prod | tc-un | tc-kg | tc-ico. Pie opcional <tfoot class="det-total">.
+   --- DETALLE: .det-head (chips), .det-chip, .det-obs (observaciones), .det-vinc (cajas vinculadas). */
+
+:root {
+    --tc-pad-idx: 1rem;       /* padding horizontal de una celda del listado (.5rem x 2) */
+    --tc-pad-det: 1.2rem;     /* padding horizontal de una celda de las lineas del detalle (.6rem x 2) */
+    --tc-out: #c0392b;        /* Origen: sale mercaderia */
+    --tc-out-bg: #fdecea;
+    --tc-in: #1e8449;         /* Destino: ingresa mercaderia */
+    --tc-in-bg: #e8f6ee;
+    --tc-chip-bg: #f1f3f5;
+    --tc-chip-id-bg: #343a40;
+    --tc-mod-bg: #fff3cd;
+    --tc-mod-fg: #664d03;
+    --tc-obs-bg: #fff8e1;
+    --tc-obs-bd: #f0c36d;
+    --tc-obs-ic: #b7791f;
+    --tc-zebra: rgba(0, 0, 0, .02);
+}
+
+html.dark-mode,
+body.dark-mode {
+    --tc-out: #ff8a80;
+    --tc-out-bg: #4a2320;
+    --tc-in: #6fdc9b;
+    --tc-in-bg: #173a29;
+    --tc-chip-bg: #2b3646;
+    --tc-chip-id-bg: #4b5563;
+    --tc-mod-bg: #4a3f12;
+    --tc-mod-fg: #fde68a;
+    --tc-obs-bg: #3d3416;
+    --tc-obs-bd: #8a6d1d;
+    --tc-obs-ic: #f0b429;
+    --tc-zebra: rgba(255, 255, 255, .03);
+}
+
+/* Origen / Destino de Movimientos (todos los tamaños: tambien se ve en la tarjeta de celular). */
+.mov-origen,
+.mov-destino {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .12rem .5rem;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.mov-origen { color: var(--tc-out); background: var(--tc-out-bg); }
+.mov-destino { color: var(--tc-in); background: var(--tc-in-bg); }
+.mov-origen i,
+.mov-destino i { font-size: .72rem; }
+
+/* Columna clave del listado: la misma fuente fuerte que "Accion" en Stock (700, al tamaño de la tabla). */
+.col-clave { font-weight: 700; }
+
+@media (min-width: 768px) {
+    /* ===== Listado: pegado a su contenido, no estirado al ancho de la pantalla ===== */
+    table.tc-indice {
+        width: auto;
+        min-width: 62rem;
+    }
+
+    table.tc-indice .tc-fecha { width: calc(16ch + var(--tc-pad-idx)); }
+    table.tc-indice .tc-fecha.tc-fecha-seg { width: calc(20ch + var(--tc-pad-idx)); } /* fecha con segundos (dd/MM/yyyy HH:mm:ss, 19 caracteres), ej. Elaborados */
+    table.tc-indice .tc-suc { width: calc(22ch + var(--tc-pad-idx)); }
+    table.tc-indice .tc-prod { width: calc(25ch + var(--tc-pad-idx)); }
+    table.tc-indice .tc-cant { width: calc(8ch + var(--tc-pad-idx)); }
+
+    table.tc-indice > tbody > tr:not(.cc-fila-detalle) > td { overflow-wrap: anywhere; }
+    table.tc-indice > tbody > tr > td.tc-num { overflow-wrap: normal; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    /* El detalle abierto (fila de ancho completo) no ensancha las columnas de arriba. */
+    table.tc-indice > tbody > tr.cc-fila-detalle > td { contain: inline-size; }
+
+    /* ===== Lineas del detalle ===== */
+    .det-lineas {
+        display: inline-block;
+        max-width: 100%;
+        overflow-x: auto;
+        background: var(--ui-surface, #fff);
+        border: 1px solid var(--ui-border, #dee2e6);
+        border-radius: .5rem;
+    }
+
+    .det-lineas > table {
+        width: auto;
+        margin: 0;
+        font-size: .8rem;
+        color: var(--ui-text, inherit);
+        border: 0;
+        background: transparent;
+    }
+
+    .det-lineas > table > thead > tr > th {
+        padding: .4rem .6rem;
+        border: 0;
+        border-bottom: 1px solid var(--ui-border, #dee2e6);
+        background: transparent;
+        color: var(--ui-text-muted, #6c757d);
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .det-lineas > table > tbody > tr > td {
+        padding: .32rem .6rem;
+        border: 0;
+        border-top: 1px solid var(--ui-border, #dee2e6);
+        vertical-align: middle;
+        background: transparent;
+    }
+
+    .det-lineas > table > tbody > tr:first-child > td { border-top: 0; }
+    .det-lineas > table > tbody > tr:nth-child(even) > td { background: var(--tc-zebra); }
+
+    .det-lineas .tc-cod { width: calc(15ch + var(--tc-pad-det)); overflow-wrap: anywhere; color: var(--ui-text-muted, #6c757d); font-variant-numeric: tabular-nums; }
+    .det-lineas th.tc-cod { color: inherit; }
+    .det-lineas .tc-prod { width: calc(25ch + var(--tc-pad-det)); overflow-wrap: anywhere; line-height: 1.2; }
+    .det-lineas td.tc-prod { font-weight: 600; }
+    .det-lineas .tc-un,
+    .det-lineas .tc-kg { width: calc(8ch + var(--tc-pad-det)); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .det-lineas td.tc-kg { font-weight: 700; }
+    .det-lineas .tc-ico { width: 1%; text-align: center; white-space: nowrap; }
+    .det-lineas .tc-hora { width: 1%; white-space: nowrap; color: var(--ui-text-muted, #6c757d); font-size: .74rem; }
+
+    .det-lineas > table > tfoot > tr > td {
+        padding: .42rem .6rem;
+        border: 0;
+        border-top: 2px solid var(--ui-border, #dee2e6);
+        background: var(--tc-chip-bg);
+        font-weight: 800;
+    }
+
+    .det-lineas > table > tfoot .tc-un,
+    .det-lineas > table > tfoot .tc-kg { font-size: .86rem; }
+
+    /* ===== Franja de chips del detalle (reemplaza la tarjeta de 6-11 filas) ===== */
+    .det-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .4rem .5rem;
+        margin-bottom: .7rem;
+    }
+
+    .det-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .22rem .6rem;
+        border-radius: .4rem;
+        background: var(--tc-chip-bg);
+        color: var(--ui-text, inherit);
+        font-size: .76rem;
+        line-height: 1.2;
+    }
+
+    .det-chip i { color: var(--ui-text-muted, #6c757d); font-size: .72rem; }
+    .det-chip .k { color: var(--ui-text-muted, #6c757d); }
+    .det-chip b { font-weight: 700; }
+    .det-chip.chip-id { background: var(--tc-chip-id-bg); color: #fff; }
+    .det-chip.chip-id i { color: #fff; }
+    .det-chip.chip-mod { background: var(--tc-mod-bg); color: var(--tc-mod-fg); }
+    .det-chip.chip-mod i,
+    .det-chip.chip-mod .k { color: var(--tc-mod-fg); opacity: .8; }
+    .det-chip.chip-out { background: var(--tc-out-bg); color: var(--tc-out); }
+    .det-chip.chip-out i,
+    .det-chip.chip-out .k { color: var(--tc-out); }
+    .det-chip.chip-in { background: var(--tc-in-bg); color: var(--tc-in); }
+    .det-chip.chip-in i,
+    .det-chip.chip-in .k { color: var(--tc-in); }
+
+    .det-spacer { flex: 1 1 auto; }
+
+    /* Observaciones: recuadro amarillo. */
+    .det-obs {
+        display: flex;
+        align-items: flex-start;
+        gap: .55rem;
+        margin-bottom: .7rem;
+        padding: .5rem .75rem;
+        border-left: 4px solid var(--tc-obs-bd);
+        border-radius: .3rem;
+        background: var(--tc-obs-bg);
+        font-size: .82rem;
+    }
+
+    .det-obs i { margin-top: .15rem; color: var(--tc-obs-ic); }
+
+    /* Cajas vinculadas (Stock: compra vinculada, pesaje asociado, ajuste relacionado). */
+    .det-vinc {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-bottom: .7rem;
+    }
+
+    .det-vinc .det-caja {
+        flex: 1 1 260px;
+        padding: .4rem .7rem;
+        border: 1px solid rgba(23, 162, 184, .35);
+        border-radius: .4rem;
+        background: rgba(23, 162, 184, .08);
+        font-size: .78rem;
+    }
+
+    .det-vinc .det-caja .t { font-size: .68rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: #117a8b; }
+    .det-vinc .det-caja .r { font-weight: 600; }
+    .det-vinc .det-caja.caja-ok { border-color: rgba(40, 167, 69, .4); background: rgba(40, 167, 69, .08); }
+    .det-vinc .det-caja.caja-ok .t { color: var(--tc-in); }
+
+    html.dark-mode .det-vinc .det-caja .t,
+    body.dark-mode .det-vinc .det-caja .t { color: #7dd3e0; }
+}
+
+/* Celular: el listado y las lineas son tarjetas (tabla-cards.css); la franja de chips y el pie de totales sobran. */
+@media (max-width: 767.98px) {
+    .det-head,
+    .det-obs,
+    .det-lineas > table > tfoot { display: none; }
+
+    .det-solo-desk { display: none !important; }
+    .det-vinc { display: block; }
+    .det-vinc .det-caja { margin-bottom: .5rem; padding: .55rem .7rem; border: 1px solid rgba(23, 162, 184, .35); border-radius: .5rem; background: rgba(23, 162, 184, .08); font-size: .8rem; }
+    .det-vinc .det-caja .t { font-size: .68rem; font-weight: 700; text-transform: uppercase; }
+    .det-vinc .det-caja .f { display: none; }
+}

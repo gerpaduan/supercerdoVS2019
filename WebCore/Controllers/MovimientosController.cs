@@ -123,6 +123,7 @@ namespace WebCore.Controllers
                         Producto = linea.Corte != null ? linea.Corte.CorteDesc : "-",
                         CantidadKgTexto = linea.CantKg.ToString("N3"),
                         CantidadUnidadTexto = linea.CantUnidad.ToString("N0"),
+                        Balanza = linea.PesoBalanza,
                         Observacion = ConstruirObservacionLineaMovimiento(linea),
                         CantidadKg = Convert.ToDecimal(linea.CantKg),
                         CantidadUnidad = Convert.ToDecimal(linea.CantUnidad)
@@ -142,6 +143,7 @@ namespace WebCore.Controllers
                     ResumenCompacto = movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"),
                     ResumenSecundario = (movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre : "-") + " -> " + (movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre : "-"),
                     EditUrl = Url.Action("Editar", "Movimientos", new { id = movimiento.IdMovimiento }),
+                    Fecha = movimiento.FechaMovimiento,
                     TotalKg = lineas.Sum(x => x.CantidadKg),
                     TotalUnidades = lineas.Sum(x => x.CantidadUnidad)
                 };
@@ -461,6 +463,8 @@ namespace WebCore.Controllers
             var model = new MovimientoDetalleVm
             {
                 IdMovimiento = id,
+                Origen = movimiento != null && movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre ?? "" : "",
+                Destino = movimiento != null && movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre ?? "" : "",
                 Observaciones = movimiento != null ? movimiento.Observaciones ?? "" : "",
                 Creado = movimiento != null ? movimiento.Creado : null,
                 CreadoPor = movimiento != null && movimiento.CreadoPor != null ? movimiento.CreadoPor.Nombre ?? "" : "",
@@ -484,6 +488,12 @@ namespace WebCore.Controllers
                 // permiso usa SIEMPRE el usuario de sesion real (asi funciona SoloRegistrosPropios
                 // sin cambios); el creador que efectivamente queda grabado se resuelve DESPUES,
                 // con el id elegido en la pantalla de SeleccionUsuario (cuenta de produccion).
+                // Movimiento NUEVO sin fecha tipeada a mano (2026-11-11): la fecha es la llegada estimada = hora de guardado + tiempo de
+                // envio. Se calcula ANTES del chequeo de permiso para validar la fecha real que va a quedar. En edicion no se recalcula.
+                DateTime ahora = DateTime.Now;
+                if (model != null && model.IdMovimiento <= 0 && !model.FechaManual)
+                    model.FechaMovimiento = WebCore.Helpers.MovimientoTiempos.CalcularLlegada(ahora, model.TiempoEnvioMinutos);
+
                 DateTime fechaPermisoGuardar = model?.FechaMovimiento ?? DateTime.Today;
                 if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, fechaPermisoGuardar, user.Id))
                 {
@@ -538,7 +548,10 @@ namespace WebCore.Controllers
                         CantUnidad = linea.CantUnidad,
                         CantKg = linea.CantKg,
                         PesoBalanza = linea.PesoBalanza,
-                        PermitirIngreso = linea.PermitirIngreso
+                        PermitirIngreso = linea.PermitirIngreso,
+                        // Hora de carga de la linea: la de la pantalla (corregida si el reloj de la PC estaba adelantado); en edicion
+                        // las lineas que ya existian conservan la suya.
+                        Creado = WebCore.Helpers.MovimientoTiempos.ResolverCreadoLinea(linea.CreadoTexto, linea.IdCorteMovimiento, ahora)
                     };
 
                     _oCorteN.agregarCortePorMovimiento(item);
@@ -548,6 +561,8 @@ namespace WebCore.Controllers
                 {
                     ok = true,
                     movimientoId = idMovimiento,
+                    // Fecha que quedo guardada (llegada estimada en un movimiento nuevo): la pantalla reemplaza su vista previa por esta.
+                    fechaMovimiento = entidad.FechaMovimiento.ToString("yyyy-MM-dd'T'HH:mm"),
                     mensaje = model.IdMovimiento > 0 ? "El movimiento se guardó correctamente." : "El movimiento se registró correctamente.",
                     redirectUrl = Url.Action("Index", "Movimientos"),
                     pdfUrl = Url.Action("ImprimirPdf", "Movimientos", new { id = idMovimiento }),
@@ -735,6 +750,7 @@ namespace WebCore.Controllers
                 EmpresaCuit = ObtenerEmpresaCuit(user),
                 MostrarColumnasInternas = ObtenerEmpresaCuit(user) == CuitColumnasInternas,
                 FechaMovimiento = DateTime.Now,
+                TiempoEnvioMinutos = WebCore.Helpers.MovimientoTiempos.LimitarMinutos(_param.GetInt(Entidades.ParamKeys.MinutosEnvioMovimiento, 0)),
                 UsuarioNombre = user != null ? user.Nombre : "",
                 IdSucursalOrigen = idSucursalActual
             };
@@ -757,10 +773,18 @@ namespace WebCore.Controllers
 
             var lineas = _oCorteN.cargarCortesPorMovimiento(id, false) ?? new List<Entidades.CortePorMovimiento>();
 
+            // Inicio = hora de la primera linea cargada. Se compara contra el dia del guardado: si fue otro dia, se muestra con fecha.
+            DateTime? inicio = WebCore.Helpers.MovimientoTiempos.CalcularInicio(lineas.Select(l => l.Creado));
+            string inicioTexto = inicio.HasValue
+                ? WebCore.Helpers.HoraLineaDetalle.Formatear(FormatearFechaHora(inicio.Value), movimiento.Creado).Texto
+                : "";
+
             return new MovimientoEditVm
             {
                 IdMovimiento = movimiento.IdMovimiento,
                 EsEdicion = true,
+                InicioCarga = inicioTexto,
+                FechaReferenciaCarga = movimiento.Creado.HasValue ? movimiento.Creado.Value.ToString("yyyy-MM-dd") : "",
                 EmpresaCuit = ObtenerEmpresaCuit(user),
                 MostrarColumnasInternas = ObtenerEmpresaCuit(user) == CuitColumnasInternas,
                 IdSucursalOrigen = movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.IdSucursal : 0,
@@ -903,15 +927,11 @@ namespace WebCore.Controllers
                 || (descripcion ?? "").IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        // Observacion de una linea en Lineas: "Permite ingreso" si el operador forzo la linea. El peso por balanza ya no va aca: tiene su
+        // propia columna "Balanza" (2026-11-11).
         private static string ConstruirObservacionLineaMovimiento(Entidades.CortePorMovimiento linea)
         {
-            var partes = new List<string>();
-            if (linea != null && linea.PesoBalanza)
-                partes.Add("Peso balanza");
-            if (linea != null && linea.PermitirIngreso)
-                partes.Add("Permite ingreso");
-
-            return partes.Count == 0 ? "-" : string.Join(" | ", partes);
+            return linea != null && linea.PermitirIngreso ? "Permite ingreso" : "-";
         }
 
         private MovimientoLineaVm MapLinea(Entidades.CortePorMovimiento linea)
@@ -928,7 +948,8 @@ namespace WebCore.Controllers
                 CantUnidad = linea.CantUnidad,
                 CantKg = linea.CantKg,
                 PesoBalanza = linea.PesoBalanza,
-                PermitirIngreso = linea.PermitirIngreso
+                PermitirIngreso = linea.PermitirIngreso,
+                CreadoTexto = linea.Creado.HasValue ? FormatearFechaHora(linea.Creado.Value) : ""
             };
         }
 

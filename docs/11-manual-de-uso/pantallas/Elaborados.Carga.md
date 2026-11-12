@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 2
 permiso: Elaborado.IngresoEmbutido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-11
+revisada: 2026-11-12
 ---
 ## Para qué sirve
 Registrar un elaborado cargando **a mano los ingredientes** (con su peso). Los ingredientes de la fórmula marcados como *Auto* se agregan solos al guardar, calculados como porcentaje de lo cargado a mano.
@@ -50,6 +50,13 @@ Pensado para ver **muchos ingredientes sin bajar con la rueda**: la tabla de ing
 - **Fórmula** y **Ver acumulados** también se muestran como lista (en la fórmula, debajo de cada ingrediente dice *Auto* si se agrega solo al guardar o *Manual*).
 - En la computadora la tabla no tiene selector de orden ni lupa: se ordena tocando los encabezados (ver abajo).
 - **Observaciones** sigue siendo el último bloque, de ancho completo, justo arriba de los botones.
+
+## Si ya tenés elaborados abiertos en otras pestañas (2026-11-12)
+Al abrir una **carga nueva**, si en este navegador ya tenés otras abiertas, aparece un aviso con la **lista** de lo que tenés abierto: nombre del elaborado, si es **nuevo** o **edición #número**, y cuántas líneas tiene.
+- Cada carga **nueva con algo cargado** trae su botón **Traer este**: el trabajo pasa a esta pestaña y la otra queda tapada con un botón **Ir al listado**. Las ediciones y las cargas vacías se listan pero no se pueden traer.
+- Además podés **Cargar otro nuevo aparte** (esta carga es independiente) o **Volver al listado**.
+- **Modificar uno ya guardado:** el aviso aparece al tocar **Modificar** si otra pestaña ya lo está modificando (**Traer la modificación a esta pestaña**, **Cargar uno nuevo aparte** o **Volver al listado**).
+- Solo detecta pestañas del **mismo navegador** de esta computadora.
 
 ## Resto de la pantalla
 PENDIENTE: documentar sucursal, fecha, búsqueda de elaborado e ingredientes, balanza, observaciones, modificar/anular y costeo (no verificado contra el código en esta revisión).

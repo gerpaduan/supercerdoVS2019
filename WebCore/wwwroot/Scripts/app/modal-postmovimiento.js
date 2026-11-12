@@ -1,3 +1,4 @@
+// Diseño del modal igual al de post-venta del POS (2026-11-12, ver _ModalPostMovimiento.cshtml): opcion 1 "Cerrar sin imprimir", resumen arriba.
 // Version reducida de Web/Scripts/app/modal-postmovimiento.js -- sin la UI de estado/config del
 // agente local (indicador "Impresion local activa", "Configurar impresora", ver
 // _ModalPostMovimiento.cshtml). Mantiene "Generar PDF" y "Enviar a WhatsApp" (oculto, ver abajo).
@@ -37,11 +38,28 @@
         try { window.localStorage.setItem(KEY_TICKET_MM, String(mm)); } catch (e) { }
     }
 
+    // Linea "Tamaño: 80mm · cambiar" debajo del boton de ticket (mismo diseño que el modal de post-venta del POS). El boton siempre dice
+    // "Imprimir ticket"; sin tamaño recordado la linea dice "sin elegir · elegir" y el boton despliega las opciones 58 / 80 mm.
     function actualizarTextoTicket() {
         var mm = getUltimoTicketMm();
-        var $lbl = $('#lblMovimientoTicketAccion');
-        if (!mm) $lbl.text('Imprimir');
-        else $lbl.text('Imprimir (' + mm + ' mm)');
+        $('#movTicketMedidaTexto').text(mm ? mm + 'mm' : 'sin elegir');
+        $('#btnCambiarTicketMovimiento').text(mm ? 'cambiar' : 'elegir');
+    }
+
+    // Resumen de arriba del modal (sucursales, items, kilos, fecha). Sin resumen (impresion desde el listado) el bloque queda oculto.
+    function mostrarResumen(resumen) {
+        var $bloque = $('#bloquePostMovimientoResumen');
+        if (!resumen) {
+            $bloque.addClass('d-none');
+            return;
+        }
+        var items = parseInt(resumen.items, 10) || 0;
+        $('#lblPostMovimientoRuta').text(resumen.ruta || '');
+        $('#lblPostMovimientoTotales').text(items + (items === 1 ? ' ítem' : ' ítems') + ' · ' + (resumen.kilos || '0,000') + ' kg');
+        var fecha = resumen.fecha ? resumen.etiquetaFecha + ' ' + resumen.fecha : '';
+        if (fecha && resumen.minutosEnvio > 0) fecha += ' (envío ' + resumen.minutosEnvio + ' min)';
+        $('#lblPostMovimientoFecha').text(fecha);
+        $bloque.removeClass('d-none');
     }
 
     function getBloqueTicketCollapse() {
@@ -169,6 +187,9 @@
             state.stayOnPage = !!resp.stayOnPage;
             state.accionElegida = false;
             abierto = true;
+            // Titulo: "Movimiento guardado" al guardar; al imprimir uno ya existente (listado o movimiento abierto) movimientos.js pasa otro.
+            $('#lblPostMovimientoTitulo').text(resp.titulo || 'Movimiento guardado');
+            mostrarResumen(resp.resumen);
             actualizarTextoTicket();
             var collapse = getBloqueTicketCollapse();
             if (collapse) collapse.hide();
@@ -221,7 +242,8 @@
             if (collapse) collapse.show();
         });
 
-        $('#btnCambiarTicketMovimiento').on('click', function () {
+        $('#btnCambiarTicketMovimiento').on('click', function (e) {
+            e.preventDefault();   // es un enlace (#): no debe cambiar la URL
             var collapse = getBloqueTicketCollapse();
             if (collapse) collapse.toggle();
         });

@@ -142,7 +142,7 @@
         });
 
         if ($modify.length) {
-            $modify.off('click.editReadonly').on('click.editReadonly', function () {
+            function habilitarEdicion() {
                 $form.data('editReadonlyJustUnlocked', true);
                 setReadOnly(false);
                 // Al habilitar la edicion se toma una nueva "foto" limpia del formulario: los campos que
@@ -155,6 +155,17 @@
                 window.setTimeout(function () {
                     $form.removeData('editReadonlyJustUnlocked');
                 }, 0);
+            }
+
+            $modify.off('click.editReadonly').on('click.editReadonly', function () {
+                // Gancho opcional (2026-11-12): la pantalla puede frenar la habilitacion (p.ej. el registro ya se esta modificando en otra
+                // pestaña, ver documento-abierto.js). Recibe la funcion que habilita; si no la llama, la pantalla sigue en solo lectura.
+                // Sin el gancho el comportamiento es el de siempre.
+                if (typeof settings.beforeModify === 'function') {
+                    settings.beforeModify(habilitarEdicion);
+                    return;
+                }
+                habilitarEdicion();
             });
         }
 

@@ -164,6 +164,8 @@
     <link rel="stylesheet" href="~/Content/css/ui-refresh.css" asp-append-version="true" />
     @* Tablas a tarjetas en celular (clase "tabla-cards"): despues de ui-refresh.css para ganarle al marco de .table-responsive. *@
     <link rel="stylesheet" href="~/Content/css/tabla-cards.css" asp-append-version="true" />
+    @* Columnas compactas del listado y detalle desplegable de Stock/Movimientos/Elaborados (solo desktop; ver docs/DECISIONS.md 2026-11-12). *@
+    <link rel="stylesheet" href="~/Content/css/tabla-compacta.css" asp-append-version="true" />
     @* Bloque compacto de datos del registro (Movimientos/Stock/Elaborados Editar): _DatosRegistroCompacto.cshtml. *@
     <link rel="stylesheet" href="~/Content/css/datos-registro.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -554,6 +556,9 @@
             } catch (e) { }
         })();
     </script>
+    @* Ventana independiente de Movimientos a 1/3 del ancho: aplica el diseno de escritorio en una ventana angosta (ver el encabezado del script).
+       Va SINCRONO y al final del head para correr despues de las hojas de estilo y antes de pintar; sale solo si no es esa ventana. *@
+    <script src="~/Scripts/app/ventana-angosta.js" asp-append-version="true"></script>
 </head>
 <body id="page-top" class="app-shell">
     <div id="wrapper">

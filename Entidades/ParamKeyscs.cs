@@ -31,6 +31,10 @@ namespace Entidades
         public const string LoginRapidoStock = "loginRapidoStock";
 
         public const string DiasLimitFechaDesde = "diasLimitFechaDesde";
+
+        // Minutos que tarda un movimiento entre sucursales (2026-11-11): al guardar un movimiento nuevo, su fecha queda en la hora
+        // actual mas estos minutos. Ver WebCore.Helpers.MovimientoTiempos.
+        public const string MinutosEnvioMovimiento = "minutosEnvioMovimiento";
         public const string ImporteMaxRedondeo = "importeMaxRedondeo";
         public const string IdPagoCobroEgresoCaja = "idPagoCobroEgresoCaja";
         public const string CodProdGenerico = "codProdGenerico";

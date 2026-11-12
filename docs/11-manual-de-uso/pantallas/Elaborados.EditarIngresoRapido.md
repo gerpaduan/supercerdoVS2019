@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 3
 permiso: Elaborado.IngresoEmbutidoRapido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-10-31
+revisada: 2026-11-12
 ---
 ## Para qué sirve
 Registrar un elaborado (o desarmarlo) cargando **solo la cantidad final**: el sistema calcula los ingredientes con la fórmula del producto y los guarda. Se llega desde *Elaborados → Ingreso rápido* (o *Desarme de elaborado*) eligiendo un producto, o abriendo un registro existente desde el listado.
@@ -31,6 +31,12 @@ Igual para **Ingreso rápido** y **Desarme**; pensado para ver todo sin bajar co
 
 ## Salir de un registro existente
 Un registro existente se abre en **modo vista**. Mientras no se toque **Modificar**, se puede salir (Volver, Cancelar o cualquier enlace) sin ningún aviso, porque no hay nada que perder. Al tocar **Modificar**, el aviso de *salir sin guardar* solo aparece si después se cambió algo.
+
+## Si ya tenés ingresos rápidos o desarmes abiertos en otras pestañas (2026-11-12)
+Al abrir un **ingreso rápido o desarme nuevo**, si en este navegador ya tenés otros abiertos, aparece un aviso con la **lista**: nombre del elaborado, si es nuevo o edición, y la cantidad cargada.
+- **Traer este** solo aparece en los que son del **mismo elaborado y del mismo modo** (ingreso o desarme) y ya tienen cantidad: el trabajo pasa a esta pestaña y la otra queda tapada con un botón **Ir al listado**.
+- También podés **Cargar otro nuevo aparte** o **Volver al listado**. Al tocar **Modificar** en uno ya guardado, si otra pestaña lo está modificando, el aviso te deja traer esa modificación.
+- Solo detecta pestañas del **mismo navegador** de esta computadora.
 
 ## Resto de la pantalla
 PENDIENTE: documentar sucursal, fecha, balanza, desarme, modificar/anular y costeo (no verificado contra el código en esta revisión).

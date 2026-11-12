@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-10-30
+revisada: 2026-11-12
 ---
 ## Para qué sirve
 Listado de los **elaborados registrados** (por sucursal y fechas) con el total de kilos, la cantidad de elaborados mostrados y un detalle desplegable de cada uno.
@@ -36,4 +36,8 @@ PENDIENTE: documentar la vista completa y las acciones de fila (no verificado co
 - Al pie están **Ver** y **Detalles** (abre debajo de la tarjeta el detalle del elaborado). Los elaborados anulados se ven con la tarjeta en amarillo y los desarmes en celeste.
 - Arriba a la derecha del nombre, en gris, va el **número del registro**.
 - **Detalles** en el celular: no se muestra el recuadro de datos del registro. Arriba de los ingredientes aparecen las **observaciones** (si hay); la receta no, porque solo se usa en las cargas. Cada ingrediente muestra el producto y los kilos arriba, y abajo el código y el icono de **balanza** (azul = pesado en balanza, gris = no). Si la fórmula es secreta y está oculta, queda el renglón con el candado y **Ver fórmula**.
-- En la computadora la pantalla se ve igual que antes.
+- En la computadora (desde el 2026-11-12):
+  - **Columnas compactas**: la tabla ya no se estira al ancho de la pantalla; *Fecha*, *Sucursal*, *Elaborado* y *Cantidad* quedan juntas. Si un texto no entra en su columna, baja al renglón siguiente.
+  - **Fecha**, **Sucursal**, el **nombre del elaborado** (el código queda en gris, más chico) y la **Cantidad** se ven en negrita.
+  - **Detalles** abre arriba una franja con el número de registro, el estado (si está anulado), la sucursal, la receta, quién lo creó y, si se cambió, quién lo modificó; las observaciones salen en un recuadro amarillo.
+  - Debajo, los ingredientes con *Cód.* (15 caracteres), *Ingrediente utilizado* (25), *Kgs* (8) y el icono de **balanza**; al pie, el **Total** de los kilos (no aparece con la fórmula secreta oculta, porque sería parcial).

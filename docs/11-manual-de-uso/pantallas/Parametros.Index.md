@@ -26,6 +26,7 @@ Ver y cambiar los **valores que ajustan cómo funciona el sistema para tu empres
 - **Ocultar datos de la empresa en el ticket no fiscal** (`ocultarEncabezadoTicketNoFiscal`, Sí/No): con **Sí**, el ticket X del POS no imprime el nombre de la empresa ni los slogans. El ticket facturado, los PDF y los demás tickets no cambian. Sin cargar = **No**.
 
 **Fechas y listados**
+- **Tiempo de envío de un movimiento** (`minutosEnvioMovimiento`, en minutos): al guardar un movimiento nuevo entre sucursales, su fecha queda en la hora actual más estos minutos (la llegada estimada). Sin cargar = 0 (la fecha es la hora en que se guarda); máximo 1440. En cada movimiento se puede ajustar. Ver [Movimientos](ayuda:pantalla/Movimientos.Editar).
 - **Días hacia atrás por defecto** (`diasLimitFechaDesde`, en días): desde qué fecha arrancan los listados de Stock, Elaborados y Movimientos (ej. 7 = la última semana), y hasta cuántos días atrás se puede llevar la fecha de una venta en el POS.
 
 ## Reglas

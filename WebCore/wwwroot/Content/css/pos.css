@@ -350,7 +350,7 @@
     }
 
     .pos-sale-summary {
-        font-size: .82rem;
+        font-size: calc(.82rem + 1px); /* +1 punto (pedido 2026-11-12) */
         line-height: 1.2;
         text-align: right;
         margin-top: .12rem;
@@ -358,7 +358,7 @@
     }
 
     .pos-sale-items {
-        font-size: .82rem;
+        font-size: calc(.82rem + 1px); /* +1 punto (pedido 2026-11-12) */
         line-height: 1.2;
         text-align: left;
         margin-top: .12rem;
@@ -553,10 +553,7 @@
         font-weight: 700;
     }
 
-    .pos-search-group:focus-within {
-        border-color: #8eb3dd;
-        box-shadow: 0 0 0 0.14rem rgba(79, 121, 166, .14), 0 12px 24px rgba(15, 23, 42, .07);
-    }
+    /* El foco del buscador de codigo (verde) vive en el bloque "FOCO VERDE" del final del archivo. */
 
     #btnBuscarPersona {
         background: #61758a;
@@ -714,10 +711,6 @@
         color: #8ea2ba;
     }
 
-    html.dark-mode .pos-search-group:focus-within {
-        border-color: #4f79a6;
-        box-shadow: 0 0 0 0.14rem rgba(79, 121, 166, .18), 0 14px 28px rgba(2, 6, 23, .26);
-    }
 
 
     @media (min-width: 992px) {
@@ -892,13 +885,13 @@
     }
 
     .pos-sale-summary {
-        font-size: .86rem;
+        font-size: calc(.86rem + 1px); /* +1 punto (pedido 2026-11-12) */
         line-height: 1.2;
         text-align: right;
     }
 
     .pos-sale-items {
-        font-size: .86rem;
+        font-size: calc(.86rem + 1px); /* +1 punto (pedido 2026-11-12) */
         line-height: 1.2;
         text-align: left;
     }
@@ -1846,8 +1839,8 @@
         }
 
         #inputCantidad {
-            font-size: clamp(1.3rem, 2.6vh, 2.2rem) !important;
-            min-height: clamp(48px, 7vh, 76px) !important;
+            font-size: var(--pos-campo-fs) !important;
+            min-height: var(--pos-campo-h) !important;
         }
 
         .btn-agregar-pos {
@@ -2109,11 +2102,11 @@
                 line-height: 1.1;
             }
 
-            .producto-resumen #inputCantidad {
+            /* El item de la grilla es el wrapper del campo (lleva el icono de balanza), no el input. */
+            .producto-resumen .pos-cantidad-campo {
                 grid-area: cantidad;
                 justify-self: start;
                 width: 100%;
-
             }
 
             .producto-resumen #prodSubtotal {
@@ -2150,23 +2143,20 @@
         text-align: right !important;
         direction: ltr;
         max-width: 190px;
-        min-height: 52px;
+        min-height: var(--pos-campo-h);
         padding: .35rem .85rem;
         border-radius: .8rem;
         border: 1px solid #b8c6d8;
         background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
         box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 8px 18px rgba(30, 41, 59, .08);
         color: #18324d;
-        font-size: 1.6rem;
+        font-size: var(--pos-campo-fs);
         font-weight: 700;
         letter-spacing: .02em;
         line-height: 1.1;
     }
 
-    #inputCantidad:focus {
-        border-color: #4f79a6;
-        box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .18), 0 12px 24px rgba(79, 121, 166, .16);
-    }
+    /* El foco de #inputCantidad y de #inputCodigo (verde) vive en el bloque "FOCO VERDE" del final del archivo. */
 
     #inputCantidad:disabled,
     #inputCantidad[readonly] {
@@ -2297,8 +2287,8 @@
         }
 
         #inputCantidad {
-            min-height: 48px;
-            font-size: 1.45rem;
+            min-height: var(--pos-campo-h);
+            font-size: var(--pos-campo-fs);
         }
 
         #msgBalanzaPOS {
@@ -2341,8 +2331,8 @@
         }
 
         #inputCantidad {
-            font-size: 1.25rem;
-            min-height: 42px;
+            font-size: var(--pos-campo-fs);
+            min-height: var(--pos-campo-h);
         }
 
         /* Selector con la misma especificidad que la regla que deja el
@@ -2491,12 +2481,9 @@
         box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
     }
 
-    html.dark-mode .pos-page #inputCodigo:focus,
-    html.dark-mode .pos-page #inputCantidad:focus,
     html.dark-mode .pos-page #razonSocial:focus,
     html.dark-mode .pos-page #fechaVentaEditable:focus,
-    html.dark-mode .pos-page .pos-cliente .form-control:focus,
-    html.dark-mode .pos-page .input-group-lg > .form-control:focus {
+    html.dark-mode .pos-page .pos-cliente .form-control:focus {
         background: #132032 !important;
         background-color: #132032 !important;
         background-image: none !important;
@@ -2961,24 +2948,32 @@
      TEMA GRIS del POS (tercer estado junto a claro y oscuro; ver docs/DECISIONS.md).
      Motivo: en algunos monitores el claro (fondo #f8f9fc contra panel #fff, bordes de ~1,3:1) se ve
      todo blanco y no se distinguen los bloques. Aca hay tres niveles de fondo (base > panel > bloque), TODO
-     en gris (bloques, chips, buscador y teclas numericas incluidos) y el borde sube a ~2:1. El blanco queda
-     solo en #inputCantidad, la casilla donde se escribe la cantidad.
+     en gris (bloques, chips, buscador y teclas numericas incluidos) y bordes oscuros.
+     2026-11-11: la primera paleta (panel #f1f3f6, ~89 % de luminancia) seguia viendose blanca en monitores
+     ubicados por debajo de la vista del cajero (los paneles TN lavan los claros vistos desde arriba); paso a
+     "gris medio" (~57 %). Para atenuar todavia mas esta el atenuador de brillo (bloque "ATENUADOR", abajo).
      Todo va bajo "html.pos-gris" (la clase la pone _LayoutPOS segun localStorage "carnisys-theme" = "gray"),
      asi que el claro y el oscuro no cambian. Los colores de accion (Finalizar, Enter, borrar) no se tocan.
      Los modales NO se ajustan: en gris se ven como en claro (deuda aceptada).
-     Paleta: base #e1e6ec | panel #f1f3f6 | bloque y chips #eaedf1 | teclas #e3e7ec (apretada #d5dbe2) | borde #a3b0be.
+     Paleta: base #b4bcc6 | panel #c5ccd4 | bloque y chips #d0d6dd | teclas #c2c9d1 (apretada #a9b2bd) | borde #5f6b7a.
+     La unica casilla clara es #inputCantidad (#f4f6f8: blanco puro encandila sobre el gris medio).
      ========================================================= */
     html.pos-gris {
-        --pos-bg: #f1f3f6;
-        --pos-border: #a3b0be;
-        --posbar-bg: #f1f3f6;
-        --posbar-border: #a3b0be;
-        --pos-gris-base: #e1e6ec;
-        --pos-gris-bloque: #eaedf1;
-        --pos-gris-chip: #eaedf1;
-        --pos-gris-tecla: #e3e7ec;
-        --pos-gris-tecla-activa: #d5dbe2;
-        --pos-gris-borde: #a3b0be;
+        --pos-bg: #c5ccd4;
+        --pos-border: #5f6b7a;
+        --posbar-bg: #c5ccd4;
+        --posbar-border: #5f6b7a;
+        --pos-gris-base: #b4bcc6;
+        --pos-gris-bloque: #d0d6dd;
+        --pos-gris-chip: #d0d6dd;
+        --pos-gris-tecla: #c2c9d1;
+        --pos-gris-tecla-activa: #a9b2bd;
+        --pos-gris-borde: #5f6b7a;
+        /* Etiquetas y textos secundarios: oscuros para no perder contraste sobre el gris medio. */
+        --pos-gris-etiqueta: #334050;
+        /* Casillas donde se escribe dentro de modales, SweetAlert y panel de ayuda (no Cantidad). */
+        --pos-gris-casilla: #d9dee4;
+        --pos-gris-casilla-lectura: #c9d0d8;
     }
 
     html.pos-gris #pos-container {
@@ -3026,16 +3021,22 @@
 
     /* Carrito: una divisoria entre renglones (en claro no hay; sobre el panel gris ayuda a seguir la fila). */
     html.pos-gris .tabla-productos td {
-        border-bottom: 1px solid #c9d2dc;
+        border-bottom: 1px solid #9aa5b1;
     }
 
     html.pos-gris .pos-total-label {
-        color: #6b7a8c;
+        color: var(--pos-gris-etiqueta);
+    }
+
+    /* El verde del total (#0f766e, pos-expendio.css) queda en 3,4:1 sobre el panel gris medio: un tono mas oscuro (5,3:1). */
+    html.pos-gris .pos-total-value,
+    html.pos-gris .pos-total-con-saldo-value {
+        color: #0a5650;
     }
 
     html.pos-gris .pos-sale-summary,
     html.pos-gris .pos-sale-items {
-        color: #55667a;
+        color: var(--pos-gris-etiqueta);
     }
 
     /* Elementos que en claro llevan un borde casi invisible: pasan al borde del tema. */
@@ -3078,23 +3079,32 @@
     }
 
     html.pos-gris .pos-search-group > .form-control {
-        border-left-color: #c3ccd6 !important;
-        border-right-color: #c3ccd6 !important;
+        border-left-color: #8994a2 !important;
+        border-right-color: #8994a2 !important;
     }
 
-    /* Placeholder mas oscuro: el de claro (#7b8ba0) sobre el chip gris queda cerca de 3:1. */
+    /* Placeholder mas oscuro: el de claro (#7b8ba0) sobre el chip gris medio queda por debajo de 3:1. */
     html.pos-gris .pos-search-group > .form-control::placeholder {
-        color: #66768a;
+        color: #485565;
     }
 
     html.pos-gris .lbl-precio,
     html.pos-gris .lbl-subtotal {
-        color: #54657a;
+        color: var(--pos-gris-etiqueta);
     }
 
-    /* La unica casilla que queda blanca: donde se escribe la cantidad. */
+    /* Cantidad: desde el 2026-11-12 lleva el mismo gris que el campo de Codigo (--pos-gris-chip); antes era casi
+       blanca (#f4f6f8). Con foco se "prende" en verde luminoso (bloque "FOCO VERDE" del final). Deshabilitada o
+       bloqueada por la balanza, un escalon mas oscura. !important + [readonly]: pos-expendio.css la fuerza a #fff
+       !important en todos sus estados. */
     html.pos-gris #inputCantidad {
         border-color: var(--pos-gris-borde);
+        background: var(--pos-gris-chip) !important;
+    }
+
+    html.pos-gris #inputCantidad:disabled,
+    html.pos-gris #inputCantidad[readonly] {
+        background: #c4ccd4 !important;
     }
 
     /* Teclado numerico: teclas grises. Los estados van explicitos porque esta regla (mas especifica) le gana
@@ -3112,7 +3122,406 @@
     }
 
     html.pos-gris .fila-item:hover {
-        background: #e3e8ee;
+        background: #b9c1ca;
+    }
+
+    /* Boton CF (Consumidor Final) junto al buscador de cliente: en claro es #e7ebf0, que sobre el gris medio quedaba
+       como una mancha casi blanca (pedido del usuario 2026-11-11). Gris mas oscuro que el chip del cliente, texto 6,9:1. */
+    html.pos-gris #btnConsumidorFinal {
+        background: #aab3be;
+        border-color: var(--pos-gris-borde);
+        color: #1f2a36;
+    }
+
+    html.pos-gris #btnConsumidorFinal:hover,
+    html.pos-gris #btnConsumidorFinal:focus {
+        background: #9aa4b0;
+        border-color: var(--pos-gris-borde);
+        color: #1f2a36;
+    }
+
+    /* Boton Agregar (a la venta): en claro es verde palido #e7f6ee y, deshabilitado, #e9ecef; ambos casi blancos
+       sobre el gris medio (pedido del usuario 2026-11-11). Habilitado: verde apagado con texto 6:1; deshabilitado:
+       gris un escalon mas oscuro que el bloque, texto 5:1. */
+    html.pos-gris .btn-agregar-pos {
+        background: #a6cfb7;
+        border-color: var(--pos-gris-borde);
+        color: #0f4d2b;
+        box-shadow: none;
+    }
+
+    html.pos-gris .btn-agregar-pos:not(:disabled):hover {
+        background: #94c3a7;
+        border-color: var(--pos-gris-borde);
+        color: #0b3f23;
+    }
+
+    html.pos-gris .btn-agregar-pos:disabled {
+        background: #bcc4cd;
+        border-color: #7a8695;
+        color: #3e4a58;
+    }
+
+    /* =========================================================
+     TEMA GRIS: MODALES, SWEETALERT Y PANEL DE AYUDA (2026-11-11; ver docs/DECISIONS.md)
+     Antes los modales quedaban como en claro (blancos) sobre la pantalla gris. A diferencia del bloque
+     "MODALES DARK - POS", aca el texto sigue oscuro: solo se oscurecen las SUPERFICIES claras.
+     - contenido del modal / SweetAlert / panel: gris de bloque; encabezado, tarjetas y tablas: gris de panel.
+     - casillas donde se escribe: --pos-gris-casilla #d9dee4, apenas mas claro que el modal (se distinguen por el
+       borde); solo lectura --pos-gris-casilla-lectura #c9d0d8. Primero eran casi blancas (#f4f6f8) y el usuario
+       las vio con "mucho ruido" (2026-11-11). Cantidad, en la pantalla principal, sigue #f4f6f8.
+     - encabezados y botones de color (primary, success, warning, danger, info, dark) NO se tocan.
+     Solo bajo html.pos-gris: claro y oscuro no cambian (verificado por script contra los colores previos).
+     ========================================================= */
+    html.pos-gris body .modal .modal-content,
+    html.pos-gris body .swal2-popup,
+    html.pos-gris #panelAyuda {
+        background-color: var(--pos-gris-bloque) !important;
+        border-color: var(--pos-gris-borde) !important;
+    }
+
+    html.pos-gris body .modal .modal-header:not(.bg-primary):not(.bg-success):not(.bg-warning):not(.bg-danger):not(.bg-info):not(.bg-dark),
+    html.pos-gris #panelAyuda .offcanvas-header {
+        background-color: var(--pos-bg) !important;
+        border-bottom-color: var(--pos-gris-borde) !important;
+    }
+
+    html.pos-gris body .modal .modal-footer {
+        border-top-color: var(--pos-gris-borde);
+    }
+
+    /* Cuerpos de modal pintados de blanco por la vista (ej. Ventas/POS.cshtml:
+       "#modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-body { background-color:#fff }"): transparentes
+       para que se vea el gris del .modal-content. Con #id para ganarle a esas reglas. */
+    html.pos-gris body .modal .modal-body,
+    html.pos-gris #modalFinanzasPOS .modal-body,
+    html.pos-gris #modalPagoPOS .modal-body,
+    html.pos-gris #modalVentasSinCerrarPOS .modal-body {
+        background-color: transparent;
+    }
+
+    /* Casillas donde se escribe: gris apenas mas claro que el modal, con borde marcado. Sin !important a proposito,
+       para no pisar resaltados de estado (is-invalid, bg-warning). */
+    html.pos-gris body .modal .form-control,
+    html.pos-gris body .modal .form-select,
+    html.pos-gris body .modal .custom-select,
+    html.pos-gris body .swal2-popup .form-control,
+    html.pos-gris body .swal2-popup .swal2-input,
+    html.pos-gris body .swal2-popup .swal2-textarea,
+    html.pos-gris body .swal2-popup .swal2-select,
+    html.pos-gris #panelAyuda .form-control {
+        background-color: var(--pos-gris-casilla);
+        border-color: #8994a2;
+    }
+
+    /* Casillas de tilde y switches sin tildar: mismo gris de casilla. Con :not(:checked) para no tapar el azul de tildado. */
+    html.pos-gris body .modal .custom-control-input:not(:checked),
+    html.pos-gris body .modal .form-check-input:not(:checked),
+    html.pos-gris body .swal2-popup .form-check-input:not(:checked) {
+        background-color: var(--pos-gris-casilla);
+        border-color: #8994a2;
+    }
+
+    html.pos-gris body .modal .form-control[readonly],
+    html.pos-gris body .modal .form-control:disabled,
+    html.pos-gris body .modal .form-select:disabled,
+    html.pos-gris body .modal .custom-select:disabled,
+    html.pos-gris body .swal2-popup .form-control[readonly],
+    html.pos-gris body .swal2-popup .form-control:disabled {
+        background-color: var(--pos-gris-casilla-lectura);
+    }
+
+    /* Variables de color de las pantallas que se cargan dentro del modal generico (ej. Nueva compra, compras-editar.css:
+       --ui-surface en la barra inferior, --ui-surface-alt en "Agregar producto", --ui-input-bg). En gris, los del tema. */
+    html.pos-gris body .modal,
+    html.pos-gris body .swal2-popup {
+        --ui-surface: var(--pos-bg);
+        --ui-surface-alt: var(--pos-bg);
+        --ui-input-bg: var(--pos-gris-casilla);
+        --ui-border: var(--pos-gris-borde);
+    }
+
+    /* Nueva compra (F5): contenedor de la tabla blanco (compras-editar.css .compra-tabla-wrap). */
+    html.pos-gris body .modal .compra-tabla-wrap {
+        background: var(--pos-bg);
+    }
+
+    /* Nueva compra: Producto (.app-product-highlight, celeste casi blanco con !important en custom.css) y Subtotal
+       (#txtSubtotalLinea, #eef5ff): al gris de casilla / solo lectura. El borde azul de resaltado se conserva. */
+    html.pos-gris body .modal .app-product-highlight,
+    html.pos-gris body .modal .app-product-highlight[readonly] {
+        background-color: var(--pos-gris-casilla) !important;
+    }
+
+    html.pos-gris body .modal #txtSubtotalLinea {
+        background-color: var(--pos-gris-casilla-lectura);
+    }
+
+    /* Factura electronica (_FacturaElectronica.cshtml): resumen fijo y tarjetas blancas (.fe-sticky-resumen,
+       .fe-card-compact) al gris de panel. */
+    html.pos-gris #modalFacturaElectronica .fe-sticky-resumen,
+    html.pos-gris #modalFacturaElectronica .fe-card-compact {
+        background: var(--pos-bg);
+        border-color: var(--pos-gris-borde);
+    }
+
+    /* Factura: etiquetas del resumen (#52606d) y titulos verdes de las tarjetas (#2f6f44) quedan en 3,7-4:1 sobre el
+       gris; etiqueta del tema y el mismo verde mas oscuro (5,4:1). */
+    html.pos-gris #modalFacturaElectronica .fe-sticky-resumen-label {
+        color: var(--pos-gris-etiqueta);
+    }
+
+    html.pos-gris #modalFacturaElectronica .fe-card-title {
+        color: #1d5530;
+    }
+
+    html.pos-gris body .modal .input-group-text,
+    html.pos-gris body .swal2-popup .input-group-text {
+        background-color: var(--pos-bg);
+        border-color: #8994a2;
+    }
+
+    /* Tablas: Bootstrap 5.3 pinta cada celda con --bs-table-bg (blanco); se deja ver el gris del modal. */
+    html.pos-gris body .modal .table,
+    html.pos-gris body .swal2-popup .table,
+    html.pos-gris #panelAyuda .table {
+        --bs-table-bg: transparent;
+        --bs-table-hover-bg: rgba(0, 0, 0, .07);
+        --bs-table-striped-bg: rgba(0, 0, 0, .035);
+        --bs-table-border-color: #9aa5b1;
+    }
+
+    html.pos-gris body .modal .table thead th,
+    html.pos-gris body .modal .thead-light th,
+    html.pos-gris body .swal2-popup .table thead th {
+        background-color: var(--pos-bg);
+    }
+
+    /* Tarjetas, listas y fondos "claros" de Bootstrap dentro de modales y SweetAlert (bg-light/bg-white llevan
+       !important en Bootstrap, por eso aca tambien). */
+    html.pos-gris body .modal .card,
+    html.pos-gris body .modal .list-group-item,
+    html.pos-gris body .modal .bg-white,
+    html.pos-gris body .modal .modal-body .bg-light,
+    html.pos-gris body .swal2-popup .card,
+    html.pos-gris body .swal2-popup .list-group-item,
+    html.pos-gris body .swal2-popup .bg-white,
+    html.pos-gris body .swal2-popup .bg-light {
+        background-color: var(--pos-bg) !important;
+        border-color: var(--pos-gris-borde);
+    }
+
+    html.pos-gris body .modal .card-header,
+    html.pos-gris body .swal2-popup .card-header {
+        background-color: var(--pos-gris-tecla);
+        border-bottom-color: var(--pos-gris-borde);
+    }
+
+    html.pos-gris body .modal .badge-light,
+    html.pos-gris body .modal .badge.bg-light,
+    html.pos-gris body .swal2-popup .badge-light {
+        background-color: var(--pos-gris-tecla) !important;
+        color: #1f2a36 !important;
+    }
+
+    html.pos-gris body .modal .btn-light,
+    html.pos-gris body .swal2-popup .btn-light {
+        background-color: var(--pos-gris-tecla);
+        border-color: var(--pos-gris-borde);
+        color: #1f2a36;
+    }
+
+    html.pos-gris body .modal .btn-light:hover,
+    html.pos-gris body .modal .btn-light:focus,
+    html.pos-gris body .modal .btn-light:active,
+    html.pos-gris body .swal2-popup .btn-light:hover {
+        background-color: var(--pos-gris-tecla-activa);
+        border-color: var(--pos-gris-borde);
+        color: #1f2a36;
+    }
+
+    html.pos-gris body .modal .btn-outline-secondary,
+    html.pos-gris body .swal2-popup .btn-outline-secondary {
+        border-color: var(--pos-gris-borde);
+    }
+
+    /* text-muted / text-secondary de Bootstrap (#6c757d, !important) y el subtitulo del modal de atajos bajan a ~3,2:1
+       sobre el gris: se usa la etiqueta del tema (7,2:1). */
+    html.pos-gris body .modal .text-muted,
+    html.pos-gris body .swal2-popup .text-muted,
+    html.pos-gris #panelAyuda .text-muted,
+    html.pos-gris body .modal .text-secondary,
+    html.pos-gris body .swal2-popup .text-secondary,
+    html.pos-gris #modalAyudaPOS .pos-help-subtitle {
+        color: var(--pos-gris-etiqueta) !important;
+    }
+
+    /* Iconos de SweetAlert: sus colores pastel (ej. advertencia #f8bb86) quedan en 1,1-1,9:1 sobre el gris y casi no se
+       ven. Variantes mas oscuras del mismo tono (~3-3,6:1, minimo para iconos). */
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-warning {
+        border-color: #a65a16;
+        color: #a65a16;
+    }
+
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-info {
+        border-color: #1b7fa6;
+        color: #1b7fa6;
+    }
+
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-question {
+        border-color: #4f7a8c;
+        color: #4f7a8c;
+    }
+
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-error {
+        border-color: #c23b3b;
+    }
+
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-error [class^="swal2-x-mark-line"] {
+        background-color: #c23b3b;
+    }
+
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-success {
+        border-color: #367a25;
+    }
+
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-success .swal2-success-ring {
+        border-color: rgba(54, 122, 37, .45);
+    }
+
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-success [class^="swal2-success-line"] {
+        background-color: #367a25;
+    }
+
+    /* SweetAlert2 pinta detras del icono de exito unos "circular-line" y un "fix" con el fondo del popup (blanco) para
+       tapar parte del anillo: en gris se verian como manchas blancas. */
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-success [class^="swal2-success-circular-line"],
+    html.pos-gris body .swal2-popup .swal2-icon.swal2-success .swal2-success-fix {
+        background-color: var(--pos-gris-bloque) !important;
+    }
+
+    /* Botones outline-secondary en reposo: su texto #6c757d queda en 3,2:1 sobre el gris. Sin tocar hover/activo
+       (Bootstrap los pinta con fondo gris oscuro y texto blanco). */
+    html.pos-gris body .modal .btn-outline-secondary:not(:hover):not(:active):not(.active),
+    html.pos-gris body .swal2-popup .btn-outline-secondary:not(:hover):not(:active):not(.active),
+    html.pos-gris #panelAyuda .btn-outline-secondary:not(:hover):not(:active):not(.active) {
+        color: var(--pos-gris-etiqueta);
+        border-color: var(--pos-gris-borde);
+    }
+
+    /* Links (azul #0d6efd, 3,1:1) y codigo (#924632, 4,0:1) del panel de ayuda y de los modales: un tono mas oscuro. */
+    html.pos-gris body .modal a:not(.btn),
+    html.pos-gris body .swal2-popup a:not(.btn),
+    html.pos-gris #panelAyuda a:not(.btn) {
+        color: #0b4fb3;
+    }
+
+    html.pos-gris #panelAyuda code,
+    html.pos-gris body .modal code {
+        color: #7a3426;
+    }
+
+    /* Textos de color de Bootstrap (!important) sobre el gris: el azul, verde y rojo quedan en ~3:1 y el celeste y el
+       amarillo, ilegibles. El mismo tono, mas oscuro (>= 4,5:1 sobre el bloque). Solo texto: botones y fondos de color
+       no se tocan. */
+    html.pos-gris body .modal .text-primary,
+    html.pos-gris body .swal2-popup .text-primary {
+        color: #0b4fb3 !important;
+    }
+
+    html.pos-gris body .modal .text-success,
+    html.pos-gris body .swal2-popup .text-success {
+        color: #0f5c38 !important;
+    }
+
+    html.pos-gris body .modal .text-danger,
+    html.pos-gris body .swal2-popup .text-danger {
+        color: #a52834 !important;
+    }
+
+    html.pos-gris body .modal .text-info,
+    html.pos-gris body .swal2-popup .text-info {
+        color: #095a6c !important;
+    }
+
+    html.pos-gris body .modal .text-warning,
+    html.pos-gris body .swal2-popup .text-warning {
+        color: #6b4f00 !important;
+    }
+
+    /* Botones outline de color en reposo (ej. "Ticket" de la calculadora, "Quitar expendios", "Configurar agente"): el
+       texto y el borde de Bootstrap quedan en 1,3-3:1 sobre el gris. Mismo tono mas oscuro; hover/activo sin cambios. */
+    html.pos-gris body .modal .btn-outline-primary:not(:hover):not(:active):not(.active),
+    html.pos-gris body .swal2-popup .btn-outline-primary:not(:hover):not(:active):not(.active) {
+        color: #0b4fb3;
+        border-color: #0b4fb3;
+    }
+
+    html.pos-gris body .modal .btn-outline-success:not(:hover):not(:active):not(.active),
+    html.pos-gris body .swal2-popup .btn-outline-success:not(:hover):not(:active):not(.active) {
+        color: #0f5c38;
+        border-color: #0f5c38;
+    }
+
+    html.pos-gris body .modal .btn-outline-danger:not(:hover):not(:active):not(.active),
+    html.pos-gris body .swal2-popup .btn-outline-danger:not(:hover):not(:active):not(.active) {
+        color: #a52834;
+        border-color: #a52834;
+    }
+
+    html.pos-gris body .modal .btn-outline-info:not(:hover):not(:active):not(.active),
+    html.pos-gris body .swal2-popup .btn-outline-info:not(:hover):not(:active):not(.active) {
+        color: #095a6c;
+        border-color: #095a6c;
+    }
+
+    html.pos-gris body .modal .btn-outline-warning:not(:hover):not(:active):not(.active),
+    html.pos-gris body .swal2-popup .btn-outline-warning:not(:hover):not(:active):not(.active) {
+        color: #6b4f00;
+        border-color: #6b4f00;
+    }
+
+    /* Cuentas corrientes (F2) dentro del POS: el segundo renglon de cada persona (#6b7280, ctasctes.css) queda en 3:1. */
+    html.pos-gris #modalFinanzasPOS .ctacte-persona-secundaria {
+        color: var(--pos-gris-etiqueta);
+    }
+
+    /* Numero de fila de los buscadores (Buscar producto F10, Buscar persona): #adb5bd queda en 1,4:1 sobre el gris;
+       con el borde del tema, 3,7:1 (sigue siendo un dato secundario). Con #id: las vistas lo fijan con #id. */
+    html.pos-gris #modalBuscarProducto .col-numero-cell,
+    html.pos-gris #modalBuscarPersona .col-numero-cell {
+        color: var(--pos-gris-borde);
+    }
+
+    /* Modal de atajos (F1, _ModalAyudaPOS.cshtml): tarjetas blancas y teclas "keycap" con estilo propio. */
+    html.pos-gris #modalAyudaPOS .pos-help-action {
+        background: var(--pos-bg);
+        border-color: var(--pos-gris-borde);
+        border-left-color: var(--pos-help-accent);
+    }
+
+    html.pos-gris #modalAyudaPOS .pos-help-action:hover,
+    html.pos-gris #modalAyudaPOS .pos-help-action:focus {
+        background: var(--pos-gris-tecla-activa);
+        border-color: var(--pos-help-accent);
+    }
+
+    html.pos-gris #modalAyudaPOS .pos-help-key {
+        background: var(--pos-gris-tecla);
+        border-color: var(--pos-gris-borde);
+        color: #1f2a36;
+    }
+
+    /* Paneles de custom.css que se abren dentro de SweetAlert (Mis actividades, Mis ventas, Nuevo egreso):
+       fondo claro fijo (#fff/#f8f9fc). Misma lista que cubre el oscuro mas abajo. */
+    html.pos-gris .egresos-filtros,
+    html.pos-gris .egresos-pos-toolbar,
+    html.pos-gris .egreso-form-wrap,
+    html.pos-gris .egreso-form-head,
+    html.pos-gris .egreso-card,
+    html.pos-gris .egresos-resumen > div {
+        background: var(--pos-bg) !important;
+        border-color: var(--pos-gris-borde) !important;
     }
 
     /* =========================================================
@@ -3145,4 +3554,432 @@
 
     html.dark-mode .pos-aviso-cantidad {
         color: #fbbf24;
+    }
+
+    /* =========================================================
+      ATENUADOR de brillo del POS (2026-11-11; ver docs/DECISIONS.md)
+      Capa negra semitransparente encima de TODO (modales, SweetAlert y panel de ayuda incluidos) para
+      monitores que, aun en gris o en oscuro, se ven demasiado brillantes desde la posicion del cajero.
+      La opacidad sale de --pos-atenuacion (0 / .1 / .2 / .3), que pone _LayoutPOS en <html> segun
+      localStorage "carnisys-pos-atenuacion" (por dispositivo, como el tema). Vale en los 3 temas.
+      pointer-events:none: los clics y el tacto pasan a traves de la capa.
+      Fixed sobre body: body no tiene transform/filter, asi que la capa cubre la ventana entera.
+      ========================================================= */
+    body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: #000;
+        opacity: var(--pos-atenuacion, 0);
+        pointer-events: none;
+        z-index: 2147483647;
+    }
+
+    /* Sin atenuacion no hace falta la capa (evita una capa compuesta de pantalla completa para nada). */
+    html:not(.pos-atenuado) body::after {
+        content: none;
+    }
+
+    /* Impresion (ticket por iframe o Ctrl+P): nunca oscurecida. */
+    @media print {
+        body::after {
+            content: none !important;
+        }
+    }
+
+    /* Indicador del boton de brillo en la barra: muestra el % actual cuando es menor a 100. */
+    .pos-brillo-badge {
+        position: absolute;
+        top: 2px;
+        right: -4px;
+        font-size: .6rem;
+        line-height: 1;
+        padding: .15rem .25rem;
+        border-radius: .4rem;
+        background: #fbbf24;
+        color: #3b2a00;
+        font-weight: 700;
+    }
+
+    /* =========================================================
+       CODIGO = CANTIDAD, FOCO VERDE, ICONO DE BALANZA, SUBTOTAL, PIE DEL TOTAL Y ETIQUETA DE CODIGO
+       (pedido del usuario 2026-11-12; ver docs/DECISIONS.md).
+       Va al final y con "html body .pos-page ..." (y la variante "html.dark-mode body ...") porque las reglas
+       viejas de claro/oscuro/gris y las de pos-expendio.css (que carga despues) usan !important con selectores
+       de id: con un elemento mas de especificidad no dependemos del orden de carga.
+       ========================================================= */
+
+    /* ---- Variables: tamaño de los campos Codigo y Cantidad (una sola fuente de verdad) ----
+       --pos-campo-fs / --pos-campo-h llevan los mismos valores que tenia Cantidad en cada contexto; #inputCodigo
+       y #inputCantidad los usan los dos. Si hay que cambiar el tamaño, se cambia aca. */
+    .pos-page {
+        --pos-campo-fs: 1.6rem;
+        --pos-campo-h: 52px;
+        --pos-sub-fs: 1.6rem;
+        /* foco verde (claro): el verde de Movimientos (--pt-ing de pantalla-trabajo.css) */
+        --pos-foco: #1f8a62;
+        --pos-foco-aro: rgba(31, 138, 98, .42);
+        --pos-foco-grosor: 3px;
+        --pos-foco-brillo: 0 0 0 0 transparent; /* sin resplandor: solo el gris lo lleva */
+        --pos-foco-fondo: #f1faf5;
+        --pos-foco-fondo-q: #f1faf5;
+        --pos-foco-tinta: #166a4b;
+        /* Subtotal: tono neutro (nunca verde: el verde es solo del foco) */
+        --pos-sub-fondo: #e6ebf2;
+        --pos-sub-borde: #223449;
+        --pos-sub-texto: #16263a;
+    }
+
+    @media (min-width: 992px) {
+        .pos-page {
+            --pos-campo-fs: clamp(1.3rem, 2.6vh, 2.2rem);
+            --pos-campo-h: clamp(48px, 7vh, 76px);
+            --pos-sub-fs: clamp(1.35rem, 2.7vh, 2.3rem);
+        }
+
+        /* Expendio reparte el alto sin scroll: Cantidad usa clamp(1.05rem, 2.4vh, 2rem) y el campo de Codigo
+           acompaña con alto proporcional a la letra. */
+        .pos-page.pos-expendio-page {
+            --pos-campo-fs: clamp(1.05rem, 2.4vh, 2rem);
+            --pos-campo-h: calc(var(--pos-campo-fs) + 1.1rem);
+            --pos-sub-fs: clamp(1.15rem, 2.5vh, 2rem);
+        }
+    }
+
+    @media (max-width: 991.98px) {
+        .pos-page {
+            --pos-campo-fs: 1.45rem;
+            --pos-campo-h: 48px;
+            --pos-sub-fs: 1.35rem;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .pos-page {
+            --pos-campo-fs: 1.25rem;
+            --pos-campo-h: 42px;
+        }
+    }
+
+    /* ---- Variables del foco y del Subtotal por tema ---- */
+    html.pos-gris .pos-page {
+        /* gris (pedido del usuario 2026-11-12): verde mas luminoso (borde #0f7a50, 3,3:1 contra el panel, aro de 4 px
+           en verde vivo y resplandor) y campo con foco en un gris verdoso claro, igual en Codigo y Cantidad. */
+        --pos-foco: #0f7a50;
+        --pos-foco-aro: rgba(46, 204, 113, .55);
+        --pos-foco-brillo: 0 0 14px 3px rgba(46, 204, 113, .5);
+        --pos-foco-grosor: 4px;
+        --pos-foco-fondo: #e7f4ed;
+        --pos-foco-fondo-q: #e7f4ed;
+        --pos-foco-tinta: #0b4a30;
+        --pos-sub-fondo: #b3bbc6;
+        --pos-sub-borde: #1f2a36;
+        --pos-sub-texto: #111827;
+    }
+
+    html.dark-mode .pos-page {
+        --pos-foco: #4cc39a;
+        --pos-foco-aro: rgba(76, 195, 154, .45);
+        --pos-foco-fondo: #16302a;
+        --pos-foco-fondo-q: #16302a;
+        --pos-foco-tinta: #8fe0c0;
+        --pos-sub-fondo: #1e2f45;
+        --pos-sub-borde: #c9d6e6;
+        --pos-sub-texto: #f4f8ff;
+    }
+
+    /* ---- Codigo: mismo tamaño, peso y espaciado que Cantidad ---- */
+    html body .pos-page #inputCodigo {
+        font-size: var(--pos-campo-fs) !important;
+        font-weight: 700 !important;
+        letter-spacing: .02em;
+        line-height: 1.1;
+        min-height: var(--pos-campo-h) !important;
+    }
+
+    /* ---- Foco verde en Codigo (el aro va en el contenedor, que ya recorta con overflow:hidden) y en Cantidad ---- */
+    html body .pos-page .pos-search-group:focus-within,
+    html.dark-mode body .pos-page .pos-search-group:focus-within {
+        border-color: var(--pos-foco) !important;
+        box-shadow: 0 0 0 var(--pos-foco-grosor) var(--pos-foco-aro), var(--pos-foco-brillo) !important;
+        background: var(--pos-foco-fondo) !important;
+    }
+
+    /* El input toma el fondo del contenedor (transparente) y su propio contorno interno no se pinta de azul */
+    html body .pos-page .pos-search-group:focus-within #inputCodigo,
+    html.dark-mode body .pos-page .pos-search-group:focus-within #inputCodigo {
+        background: transparent !important;
+        border-color: var(--pos-foco) !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+    html body .pos-page #inputCantidad:focus,
+    html.dark-mode body .pos-page #inputCantidad:focus {
+        border-color: var(--pos-foco) !important;
+        box-shadow: 0 0 0 var(--pos-foco-grosor) var(--pos-foco-aro), var(--pos-foco-brillo) !important;
+        background: var(--pos-foco-fondo-q) !important;
+        background-image: none !important;
+        outline: none !important;
+    }
+
+    /* La etiqueta "Cantidad" toma el verde del foco (en mobile esta oculta) */
+    html body .pos-page .pos-product-metric-cantidad:focus-within .lbl-cantidad {
+        color: var(--pos-foco-tinta) !important;
+        font-weight: 700;
+    }
+
+    /* ---- Cantidad con icono de balanza ----
+       El wrapper .pos-cantidad-campo aloja el icono (el input no admite pseudo-elementos). Se muestra solo con la
+       clase .pos-cantidad-balanza, que pone pos-balanza.js cuando el valor viene de la balanza. */
+    .pos-cantidad-campo {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 190px;
+        font-size: var(--pos-campo-fs);
+    }
+
+    .pos-cantidad-campo > #inputCantidad {
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: none;
+    }
+
+    .pos-cantidad-icono-balanza {
+        position: absolute;
+        left: .45em;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1em;
+        height: 1em;
+        display: none;
+        color: #4b5d73;
+        pointer-events: none;
+    }
+
+    .pos-cantidad-icono-balanza svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .pos-cantidad-balanza .pos-cantidad-icono-balanza {
+        display: block;
+    }
+
+    .pos-cantidad-balanza #inputCantidad {
+        padding-left: calc(var(--pos-campo-fs) * 1.7);
+    }
+
+    html.pos-gris .pos-cantidad-icono-balanza {
+        color: #334050;
+    }
+
+    html.dark-mode .pos-cantidad-icono-balanza {
+        color: #9db0c7;
+    }
+
+    /* Expendio: el campo es mas angosto; con balanza se ensancha para que entren el icono y el numero */
+    .pos-expendio-page .pos-cantidad-campo {
+        max-width: 118px;
+    }
+
+    .pos-expendio-page .pos-cantidad-balanza .pos-cantidad-campo {
+        max-width: 150px;
+    }
+
+    @media (max-width: 767.98px) {
+        .pos-expendio-page .pos-cantidad-campo,
+        .pos-expendio-page .pos-cantidad-balanza .pos-cantidad-campo {
+            max-width: none;
+        }
+    }
+
+    /* ---- Subtotal mas notable: fila con borde y fondo neutros, valor grande y en negrita ---- */
+    html body .pos-page .pos-product-metric.pos-product-metric-subtotal {
+        background: var(--pos-sub-fondo) !important;
+        border: 1.5px solid var(--pos-sub-borde) !important;
+    }
+
+    html body .pos-page .pos-product-metric-subtotal .lbl-subtotal {
+        color: var(--pos-sub-texto);
+        font-weight: 700;
+    }
+
+    html body .pos-page .producto-resumen #prodSubtotal,
+    html body .pos-page #prodSubtotal {
+        font-size: var(--pos-sub-fs) !important;
+        font-weight: 700 !important;
+        color: var(--pos-sub-texto) !important;
+    }
+
+    /* ---- Pie del total ("3 items activos" y "5,000 kgs | 1 unidad"): mas contraste que el text-muted ---- */
+    html body .pos-page .pos-sale-items,
+    html body .pos-page .pos-sale-summary {
+        color: #2b3d52 !important;
+        font-weight: 600;
+    }
+
+    html.pos-gris body .pos-page .pos-sale-items,
+    html.pos-gris body .pos-page .pos-sale-summary {
+        color: #1f2a36 !important;
+    }
+
+    html.dark-mode body .pos-page .pos-sale-items,
+    html.dark-mode body .pos-page .pos-sale-summary {
+        color: #d5e1f0 !important;
+    }
+
+    /* ---- Lineas de venta: "#N  Nombre  [cod X]" con la etiqueta de codigo pegada al nombre ----
+       El nombre se corta con "…" si no entra; la etiqueta nunca se achica, asi el codigo siempre se ve. */
+    .pos-linea-nombre {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        min-width: 0;
+    }
+
+    .pos-linea-num {
+        flex: 0 0 auto;
+        font-size: .8rem;
+        font-weight: 400;
+        color: #627489;
+    }
+
+    .pos-linea-prod {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pos-linea-cod {
+        flex: 0 0 auto;
+        font-family: ui-monospace, Consolas, "Courier New", monospace;
+        font-size: .74rem;
+        font-weight: 700;
+        line-height: 1.3;
+        padding: .05rem .45rem;
+        border-radius: .4rem;
+        background: #e6ebf2;
+        color: #223449;
+    }
+
+    html.pos-gris .pos-linea-num {
+        color: #334050;
+    }
+
+    html.pos-gris .pos-linea-cod {
+        background: #a9b2bd;
+        color: #1f2a36;
+    }
+
+    html.dark-mode .pos-linea-num {
+        color: #9db0c7;
+    }
+
+    html.dark-mode .pos-linea-cod {
+        background: #1e2f45;
+        color: #d5e1f0;
+    }
+
+    /* El aro de foco de Codigo (hasta 4px) sobresale del contenedor, que recorta con overflow; este aire arriba evita que se corte. */
+    html body .pos-page .pos-workbench-scroll {
+        padding-top: 5px;
+    }
+
+    /* ---- Carrito: "cantidad x precio" y total de la linea en un negro mas fuerte; nombre un poco mas chico ----
+       (pedido del usuario 2026-11-12). Con #tablaItems en el selector para ganarle a .item-detalle (gris #444) y a
+       la regla oscura con !important sin depender del orden. En el tema oscuro "mas fuerte" es un blanco mas fuerte. */
+    html body .pos-page #tablaItems .item-detalle,
+    html.pos-gris body .pos-page #tablaItems .item-detalle {
+        color: #05080c !important;
+        font-weight: 500;
+    }
+
+    html body .pos-page #tablaItems .item-detalle > .fw-bold,
+    html.pos-gris body .pos-page #tablaItems .item-detalle > .fw-bold {
+        color: #000 !important;
+        font-weight: 700;
+        font-size: calc(1em + .5px);
+    }
+
+    html.dark-mode body .pos-page #tablaItems .item-detalle {
+        color: #f6f9ff !important;
+    }
+
+    html.dark-mode body .pos-page #tablaItems .item-detalle > .fw-bold {
+        color: #fff !important;
+    }
+
+    /* Nombre del producto: la negrita baja de 16 a 15 px (el codigo y el #N tienen su propio tamaño). */
+    .pos-linea-nombre {
+        font-size: .9375rem;
+    }
+
+    /* ---- Gris: borde de Cantidad mas marcado (pedido del usuario 2026-11-12: "se pierde entre el gris") ----
+       pos-expendio.css (que tambien carga en Ventas/POS) le fuerza un borde celeste palido #bac8f3 !important que
+       sobre el gris casi no se ve. En gris pasa a 2px pizarra oscuro (#2f3b4a, ~7,6:1 contra el campo). Con foco
+       manda el verde (por eso :not(:focus)); deshabilitado, un gris medio para que se note que no se escribe. */
+    html.pos-gris body .pos-page #inputCantidad {
+        border-width: 2px !important;
+        border-style: solid !important;
+    }
+
+    html.pos-gris body .pos-page #inputCantidad:not(:focus) {
+        border-color: #2f3b4a !important;
+    }
+
+    html.pos-gris body .pos-page #inputCantidad:disabled:not(:focus) {
+        border-color: #6b7684 !important;
+    }
+
+    /* ---- Nombre del producto en Segoe UI Semibold (opcion A del mockup, elegida por el usuario 2026-11-12) ----
+       Carrito: semibold 600 en un gris muy oscuro en vez de bold 700 negro (bajaba el "ruido" visual).
+       Panel derecho (#prodNombre): semibold mas grande (~27 px en 1366x768) para que sea lo primero que se lee.
+       Familia explicita: el POS no fija ninguna y usa la de sistema de Bootstrap (Segoe UI en Windows); se nombra
+       para asegurar el peso 600 real de Segoe UI. Selectores con "html body" para ganarle a .fw-bold (!important) y
+       a las reglas de tamaño con !important de pos.css/pos-expendio.css sin depender del orden. */
+    html body .pos-page #tablaItems .pos-linea-prod {
+        font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-weight: 600;
+        /* Una pizca mas de negrita (2026-11-12): Segoe UI solo tiene 600 y 700, asi que entre medio se engrosa el
+           trazo 0,35px. Para volver al semibold puro, sacar esta linea. */
+        -webkit-text-stroke: .35px currentColor;
+        color: #1f2a36;
+    }
+
+    html.dark-mode body .pos-page #tablaItems .pos-linea-prod {
+        color: #dbe5f3;
+    }
+
+    html body .pos-page #prodNombre {
+        font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-weight: 600 !important;
+        letter-spacing: -.01em;
+    }
+
+    /* Color fuerte solo con un producto cargado; el texto de espera ("Info producto...") queda como estaba. */
+    html body .pos-page #prodNombre.pos-campo-cargado {
+        color: #0f172a !important;
+    }
+
+    html.dark-mode body .pos-page #prodNombre.pos-campo-cargado {
+        color: #f4f8ff !important;
+    }
+
+    /* Tamaño solo en escritorio; en mobile el nombre comparte renglon con el precio y conserva su tamaño. */
+    @media (min-width: 992px) {
+        html body .pos-page #prodNombre {
+            font-size: clamp(1.4rem, 3.5vh, 2.6rem) !important;
+            line-height: 1.15 !important;
+        }
+
+        /* Expendio reparte el alto sin scroll: un escalon menos para no achicar de mas el bloque de producto. */
+        html body .pos-page.pos-expendio-page .producto-resumen #prodNombre {
+            font-size: clamp(1.2rem, 3vh, 2.2rem) !important;
+        }
     }

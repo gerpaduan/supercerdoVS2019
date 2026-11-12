@@ -5,10 +5,10 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-11
+revisada: 2026-11-12
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -25,6 +25,15 @@ El saldo se consulta al elegir el cliente. Si después cobrás su deuda desde el
 ## Renglones del carrito
 Cada producto agregado muestra, debajo de su nombre, **cantidad x precio** y, a la derecha, el **subtotal**, en formato argentino: punto de miles y coma decimal. Ej.: `2,000 x $ 9.900,00` y `$ 19.800,00` (desde 2026-10-27; antes se veía `2.000 x $ 9900.00`). La cantidad lleva siempre 3 decimales.
 - Es solo cómo se muestra: los campos de la ventana de la línea (precio, subtotal) no cambiaron.
+- Desde el 2026-11-12, el **código** del producto va en una etiqueta chica pegada al nombre: `#1 Cabeza [cód 2]` (antes `#1 Cabeza (cod: 2)`). El `#1` es el número de línea y se ve apagado. Si el nombre es muy largo se corta con «…», pero la etiqueta del código siempre se ve. Lo mismo vale en Punto de Expendio. También desde el 2026-11-12, «cantidad x precio» y el total de cada línea se ven en un negro más fuerte (en el tema oscuro, en un blanco más fuerte) y la negrita del nombre es un poco más chica. Además, el nombre del producto se ve en **semi-negrita** (menos pesado que la negrita) en el carrito, y en el panel de la derecha, cuando buscás por código, es **más grande** para que sea lo primero que se lee.
+
+## Campos Código y Cantidad, foco y Subtotal
+Desde el 2026-11-12, en el POS y en Punto de Expendio:
+- **Código** tiene la misma letra que **Cantidad** (mismo tamaño y negrita), en cualquier tamaño de pantalla. En Punto de Expendio la caja de Cantidad es más alta porque llena su tarjeta; la letra es igual.
+- El campo que tiene el cursor (**Código** o **Cantidad**) se marca con un **contorno verde grueso** y el campo se aclara un poco, así se ve de lejos dónde se va a escribir. En el tema gris el verde es más luminoso (con un resplandor suave) y el campo se aclara a un gris verdoso; ahí, **Cantidad** en reposo tiene el mismo gris que **Código**, no un casi blanco, con un **borde oscuro más grueso** para que no se pierda. La etiqueta «Cantidad» también se pinta de verde mientras el cursor está ahí. El verde se usa solo para esto.
+- Cuando la cantidad **viene de la balanza** (el campo queda bloqueado mostrando el peso), aparece el **dibujo de una balanza** dentro de Cantidad, a la izquierda. Al pasar a cantidad manual (tecla `*`) desaparece. PENDIENTE: se probó simulando el estado, no con una balanza real conectada.
+- **Subtotal** se ve más grande, en negrita y en una fila con borde oscuro (no verde). En el celular se agranda solo el valor.
+- Debajo del **Total**, los textos «N ítems activos» y «X kgs | Y unidad» se ven más oscuros y en semi-negrita (en el tema oscuro, más claros) y con la letra un punto más grande, para leerse mejor.
 
 ### Ventas sin guardar (corte de luz, navegador cerrado)
 Verificado en el código el 2026-11-10 (`pos-borrador.js`, `VentasController.Borradores.cs`):
@@ -169,11 +178,18 @@ Verificado en el código y grabado el 2026-11-10 (`ventas-expendios-pos.js`): **
 
 ## Tema de colores: claro, gris u oscuro
 El botón de la barra de arriba (a la izquierda de tu nombre) cambia el tema del POS y de Punto de Expendio, en este orden: **claro → gris → oscuro → claro**. El icono muestra el **próximo** tema (medio círculo = pasar a gris, luna = pasar a oscuro, sol = volver a claro).
-- El **gris** sirve cuando el fondo blanco de tu monitor no deja ver las líneas que separan los bloques: el fondo, los bloques, los botones de la barra, el buscador y las **teclas del teclado numérico** son grises, con un borde más marcado que separa cada uno. La única casilla que sigue blanca es la de **Cantidad**, donde se escribe. Las teclas se oscurecen un poco al apretarlas.
+- El **gris** sirve cuando el fondo claro cansa la vista o no deja ver las líneas que separan los bloques, por ejemplo en un monitor que queda más abajo que tus ojos. Desde el 2026-11-11 es un **gris medio**, bastante más oscuro que antes. El fondo, los bloques, los botones de la barra, el buscador y las **teclas del teclado numérico** son grises, con bordes oscuros que separan cada uno. Los botones **CF** y **Agregar** también son grises (Agregar en verde apagado cuando se puede usar). La única casilla clara es la de **Cantidad**, donde se escribe. Las teclas se oscurecen al apretarlas.
 - Se recuerda **en cada computadora y navegador** (no por usuario): al volver a entrar queda el último que elegiste ahí.
-- Los **cuadros emergentes** (modales) se ven como en el tema claro también en el gris.
+- Desde el 2026-11-11, los **cuadros emergentes** (Forma de pago, Buscar producto, Expendios, Comentario, avisos y confirmaciones, Nuevo egreso, etc.) y el **panel de ayuda** también se ven en gris. Las casillas donde se escribe son de un gris apenas más claro, con borde oscuro (en la pantalla principal, desde el 2026-11-12, Cantidad tiene el mismo gris que el campo Código), y los botones y avisos de color (verde de cobrar, rojo, amarillo) no cambian.
 - Fuera del POS, el tema gris se ve como el claro; si tocás el botón de tema de otra pantalla estando en gris, pasa a oscuro.
-- PENDIENTE de revisar en el monitor donde se veía todo blanco; lo probado fue el aspecto y el cambio de tema en el navegador de desarrollo.
+- PENDIENTE de revisar en el monitor real del local; lo probado fue el aspecto en el navegador de desarrollo.
+
+## Brillo de pantalla
+El botón con la **lamparita**, a la izquierda del botón de tema, oscurece toda la pantalla del POS y de Punto de Expendio. Cada vez que lo tocás baja un escalón: **100 % → 90 % → 80 % → 70 % → 100 %**. Cuando el brillo está por debajo de 100, la lamparita muestra el porcentaje en un recuadro amarillo.
+- Sirve con los tres temas (claro, gris u oscuro) y oscurece también los cuadros emergentes. Los botones se siguen tocando igual.
+- Se recuerda **en cada computadora y navegador**, igual que el tema.
+- El ticket y cualquier impresión salen siempre con el brillo normal.
+- Si el monitor también tiene botón de brillo, conviene probar primero bajándolo ahí. Si queda por debajo de la vista, inclinarlo hacia arriba, hacia el cajero, también ayuda.
 
 ## POS bloqueado: «Tu sesión se cerró»
 - Si el POS se bloqueó por inactividad y, mientras tanto, **se cerró la sesión del sistema** (venció, se cerró desde otra pestaña o se inició sesión con otro usuario en el mismo navegador), al tocar **Desbloquear** el POS **no valida la contraseña** y muestra **«Tu sesión se cerró»** en lugar del formulario. Antes mostraba «Contraseña incorrecta.» aunque la clave estuviera bien.

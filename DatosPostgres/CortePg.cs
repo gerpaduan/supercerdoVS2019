@@ -1697,8 +1697,8 @@ namespace DatosPostgres
             if (cortePorMovimiento == null) throw new ArgumentNullException(nameof(cortePorMovimiento));
 
             DbPg.NonQuery(_connectionString, _idEmpresa, @"
-                INSERT INTO cortepormovimiento (idmovimientos, idcorte, cantkg, cantunidad, pesobalanza, permitiringreso, idempresa)
-                VALUES (@idMovimiento, @idCorte, @cantKg, @cantUnidad, @pesoBalanza, @permitirIngreso, @idEmpresa);", p =>
+                INSERT INTO cortepormovimiento (idmovimientos, idcorte, cantkg, cantunidad, pesobalanza, permitiringreso, creado, idempresa)
+                VALUES (@idMovimiento, @idCorte, @cantKg, @cantUnidad, @pesoBalanza, @permitirIngreso, @creado, @idEmpresa);", p =>
             {
                 p.AddWithValue("idMovimiento", cortePorMovimiento.Movimientos.IdMovimiento);
                 p.AddWithValue("idCorte", cortePorMovimiento.Corte.IdCorte);
@@ -1706,6 +1706,8 @@ namespace DatosPostgres
                 p.AddWithValue("cantUnidad", cortePorMovimiento.CantUnidad);
                 p.AddWithValue("pesoBalanza", cortePorMovimiento.PesoBalanza);
                 p.AddWithValue("permitirIngreso", cortePorMovimiento.PermitirIngreso ? 1 : 0);
+                // Hora en que se cargo la linea en pantalla (2026-11-11); NULL si el llamador no la informa.
+                p.AddWithValue("creado", cortePorMovimiento.Creado.HasValue ? (object)cortePorMovimiento.Creado.Value : DBNull.Value);
                 p.AddWithValue("idEmpresa", _idEmpresa);
             });
         }
@@ -1830,7 +1832,7 @@ namespace DatosPostgres
             if (!acumulado)
             {
                 return DbPg.Reader(_connectionString, _idEmpresa, @"
-                    SELECT cpm.idcortemovimiento, c.idcorte, c.codigo, c.corte, cpm.cantkg, cpm.cantunidad, cpm.pesobalanza, cpm.permitiringreso
+                    SELECT cpm.idcortemovimiento, c.idcorte, c.codigo, c.corte, cpm.cantkg, cpm.cantunidad, cpm.pesobalanza, cpm.permitiringreso, cpm.creado
                     FROM cortepormovimiento cpm
                     INNER JOIN corte c ON cpm.idcorte = c.idcorte
                     WHERE cpm.idmovimientos = @idMovimiento;",
@@ -1841,7 +1843,9 @@ namespace DatosPostgres
                         CantKg = GetFloat(dr, "cantkg"),
                         CantUnidad = (int)GetLong(dr, "cantunidad"),
                         PesoBalanza = GetBool(dr, "pesobalanza"),
-                        PermitirIngreso = GetBool(dr, "permitiringreso")
+                        PermitirIngreso = GetBool(dr, "permitiringreso"),
+                        // NULL en las lineas anteriores a la columna (2026-11-11).
+                        Creado = dr["creado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["creado"])
                     },
                     p => p.AddWithValue("idMovimiento", idMovimiento));
             }

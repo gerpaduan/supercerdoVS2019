@@ -222,9 +222,17 @@
     // se ve como una ventana mas en la barra de tareas. Una por pantalla (nombre fijo): asi se puede tener Stock, Movimientos y Elaborados abiertos
     // a la vez y pasar de una a otra con Alt+Tab o desde la barra de tareas.
     var NOMBRE_VENTANA = 'carnisys-trabajo-' + pantalla;
-    // Boton "Abrir en ventana" oculto a pedido del usuario (2026-11-04). El modo ventana sigue funcionando (mini-apps con ?ventana=1);
-    // para volver a mostrar el boton, poner true.
-    var MOSTRAR_BOTON_VENTANA = false;
+    // Boton "Abrir en ventana": oculto a pedido del usuario el 2026-11-04 y vuelto a mostrar el 2026-11-12 SOLO en Movimientos (en Stock y
+    // Elaborados sigue oculto; el modo ventana funciona igual con las mini-apps ?ventana=1). Para sumar otra pantalla, agregar su data-pt aca.
+    var PANTALLAS_CON_BOTON_VENTANA = ['mov'];
+    var MOSTRAR_BOTON_VENTANA = PANTALLAS_CON_BOTON_VENTANA.indexOf(pantalla) >= 0;
+    // Tamano de la ventana (2026-11-12, pedido del usuario): UN TERCIO del ancho disponible de la pantalla y todo el alto, solo en escritorio
+    // (el boton no existe en celular). Piso de 480 px para monitores chicos (con menos no entran los campos) y nunca mas que la pantalla.
+    // Por debajo de 1200 px el diseno de escritorio lo aplica ventana-angosta.js (antes: 60 % con piso de 1200 px).
+    var VENTANA_ANCHO_FRACCION = 1 / 3;
+    var VENTANA_ANCHO_MIN_PX = 480;
+    // Nombre de la pantalla para el titulo de la ventana (se ve en la barra de titulo y al pasar el mouse por la barra de tareas).
+    var NOMBRE_PANTALLA = { mov: 'Movimientos', stock: 'Stock', elab: 'Elaborados' }[pantalla] || '';
     var enModoVentana = document.documentElement.classList.contains('modo-ventana');
 
     function avisar(texto, icono) {
@@ -235,15 +243,23 @@
         }
     }
 
+    var AVISO_CAMBIOS_SIN_GUARDAR = 'Esta pantalla tiene cambios sin guardar. Guardalos o cancelalos antes de abrirla en una ventana.';
+
     function abrirEnVentana() {
-        // El borrador de esta pestana no viaja a la ventana nueva: con cambios sin guardar no se abre (edit-page-guard.js marca __protegerSalida).
-        if (window.__protegerSalida) {
-            avisar('Esta pantalla tiene cambios sin guardar. Guardalos o cancelalos antes de abrirla en una ventana.', 'warning');
+        // Con cambios sin guardar (edit-page-guard.js marca __protegerSalida): si la pantalla sabe pasarle lo cargado a la ventana nueva
+        // (window.PantallaTrabajoTraspaso: hoy Movimientos, solo en un movimiento nuevo) se abre igual y lo cargado viaja; si no, el borrador de
+        // esta pestana no puede viajar y no se abre.
+        var traspaso = window.PantallaTrabajoTraspaso || null;
+        var hayCambios = window.__protegerSalida === true || !!(traspaso && traspaso.hayCambios());
+        if (hayCambios && !traspaso) {
+            avisar(AVISO_CAMBIOS_SIN_GUARDAR, 'warning');
             return;
         }
         var disponibleAncho = (window.screen && (window.screen.availWidth || window.screen.width)) || 1280;
         var disponibleAlto = (window.screen && (window.screen.availHeight || window.screen.height)) || 800;
-        var caracteristicas = 'popup=yes,left=0,top=0,width=' + disponibleAncho + ',height=' + disponibleAlto + ',resizable=yes,scrollbars=yes';
+        var ancho = Math.min(disponibleAncho, Math.max(VENTANA_ANCHO_MIN_PX, Math.round(disponibleAncho * VENTANA_ANCHO_FRACCION)));
+        var izquierda = Math.max(0, Math.round((disponibleAncho - ancho) / 2));
+        var caracteristicas = 'popup=yes,left=' + izquierda + ',top=0,width=' + ancho + ',height=' + disponibleAlto + ',resizable=yes,scrollbars=yes';
 
         // Si ya hay una ventana de esta pantalla se la trae al frente SIN recargarla (no se pierde lo que tenga cargado). window.open con el
         // mismo nombre devuelve esa ventana; si no existia, abre una en blanco que se navega enseguida.
@@ -261,8 +277,19 @@
         }
         var url = new URL(window.location.href);
         url.searchParams.set('ventana', '1');
+        if (hayCambios) {
+            // Lo cargado viaja en una clave temporal de localStorage (misma PC y navegador); si la pantalla no puede prepararlo, no se abre.
+            var clave = traspaso.preparar();
+            if (!clave) {
+                try { ventana.close(); } catch (e) { }
+                avisar(AVISO_CAMBIOS_SIN_GUARDAR, 'warning');
+                return;
+            }
+            url.searchParams.set('traspaso', clave);
+        }
         ventana.location.href = url.toString();
         ventana.focus();
+        if (hayCambios) traspaso.alAbrirOk();
         // La pestana original vuelve al listado del modulo: el trabajo sigue en la ventana nueva.
         var volver = $1('[class*="-barra-botones"] a[href]', root);
         if (volver) window.location.href = volver.href;
@@ -280,16 +307,32 @@
             icono.href = base + 'Content/img/ventanas/' + (pantalla === 'mov' ? 'movimientos' : pantalla === 'elab' ? 'elaborados' : 'stock') + '.svg';
             document.head.appendChild(icono);
         }
+        // En la ventana independiente el titulo lleva el nombre de la pantalla al principio ("Movimientos · Nuevo Movimiento - CarniSys").
+        if (enModoVentana && NOMBRE_PANTALLA && document.title.indexOf(NOMBRE_PANTALLA + ' · ') !== 0) {
+            document.title = NOMBRE_PANTALLA + ' · ' + document.title;
+        }
         if (enModoVentana || !MOSTRAR_BOTON_VENTANA) return;
         var barra = $1('[class*="-barra-botones"]', root);
         if (!barra) return;
         var b = document.createElement('button');
         b.type = 'button';
+        b.setAttribute('data-edit-readonly-ignore', 'true');
+        b.addEventListener('click', abrirEnVentana);
+        var grupoDerecho = $1('.mov-barra-grupo-der', barra);
+        if (grupoDerecho) {
+            // Movimientos: solo icono, igual que pantalla completa, a su lado (a la izquierda de ella).
+            b.className = 'btn btn-outline-secondary pt-btn-ventana';
+            b.title = 'Abrir en una ventana independiente (sin menú lateral ni barra superior)';
+            b.setAttribute('aria-label', 'Abrir en ventana independiente');
+            b.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+            var pantallaCompleta = $1('#btnPantallaCompleta', grupoDerecho);
+            if (pantallaCompleta) grupoDerecho.insertBefore(b, pantallaCompleta);
+            else grupoDerecho.appendChild(b);
+            return;
+        }
         b.className = 'btn btn-outline-primary pt-btn-ventana';
         b.title = 'Abrir esta pantalla en una ventana independiente (queda como una ventana más en la barra de tareas)';
-        b.setAttribute('data-edit-readonly-ignore', 'true');
         b.innerHTML = '<i class="fas fa-external-link-alt mr-1"></i> Abrir en ventana';
-        b.addEventListener('click', abrirEnVentana);
         var grupo = barra.firstElementChild && barra.firstElementChild.tagName === 'DIV' ? barra.firstElementChild : barra;
         grupo.appendChild(b);
     }

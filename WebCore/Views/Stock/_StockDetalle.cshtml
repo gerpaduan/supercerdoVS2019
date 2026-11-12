@@ -2,7 +2,7 @@
 @using System
 
 @functions {
-    // Resumen en un renglon de la compra vinculada / pesaje asociado para la tarjeta de celular:
+    // Resumen en un renglon de la compra vinculada / pesaje asociado:
     // "Proveedor · 11 medias · 504,00 kg" (se omite lo que no tenga dato).
     string StockRelacionadoResumen(string proveedor, int? medias, float? kgs)
     {
@@ -28,26 +28,30 @@ else if (Model == null)
 }
 else
 {
-    var referenciaPesaje = Model.IdPesajeRelacionado.HasValue ? Model.IdPesajeRelacionado.Value.ToString() : "";
-    var referenciaAjuste = Model.IdAjusteRelacionado.HasValue ? Model.IdAjusteRelacionado.Value.ToString() : "";
-    var observaciones = !string.IsNullOrWhiteSpace(Model.Observaciones) ? Model.Observaciones : "-";
-    var usuarioCreacion = !string.IsNullOrWhiteSpace(Model.UsuarioCreacion) ? Model.UsuarioCreacion : "-";
-    var fechaCreacion = Model.FechaCreacion.HasValue ? Model.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
-    var usuarioActualizacion = !string.IsNullOrWhiteSpace(Model.UsuarioActualizacion) ? Model.UsuarioActualizacion : "-";
-    var fechaActualizacion = Model.FechaActualizacion.HasValue ? Model.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+    var observaciones = Model.Observaciones;
+    var tieneObservaciones = !string.IsNullOrWhiteSpace(observaciones);
     var sucursalDetalle = !string.IsNullOrWhiteSpace(Model.Sucursal) ? Model.Sucursal : "-";
     var tipoDetalle = !string.IsNullOrWhiteSpace(Model.TipoCompra) ? Model.TipoCompra : "-";
+    var fechaCreacion = Model.FechaCreacion.HasValue ? Model.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "";
+    var fechaActualizacion = Model.FechaActualizacion.HasValue ? Model.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "";
+    bool fueModificado = !string.IsNullOrWhiteSpace(Model.UsuarioActualizacion) || fechaActualizacion != "";
+    bool hayLineas = Model.Lineas != null && Model.Lineas.Count > 0;
+    decimal totalKg = 0m;
+    if (hayLineas)
+    {
+        foreach (var l in Model.Lineas) { totalKg += l.CantidadKg; }
+    }
 
-    @* Celular (<768px, 2026-10-27): se oculta la tarjeta de datos del registro (abajo) porque repite lo de la tarjeta del
-       movimiento; aca quedan las observaciones (si hay) y el boton Ver Porc(%) de los pesajes (mismo handler delegado por
-       clase en Stock/Index.cshtml). Las lineas son una lista compacta (tabla-cards-lista). En desktop no cambia nada. *@
-    if (!string.IsNullOrWhiteSpace(Model.Observaciones) || Model.EsPesaje)
+    @* Celular (<768px, 2026-10-27): la franja de chips (abajo) se oculta porque repite lo de la tarjeta del movimiento; aca quedan
+       las observaciones (si hay) y el boton Ver Porc(%) de los pesajes (mismo handler delegado por clase en Stock/Index.cshtml).
+       Las lineas son una lista compacta (tabla-cards-lista). *@
+    if (tieneObservaciones || Model.EsPesaje)
     {
         <div class="cc-nota-detalle">
             <span>
-                @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+                @if (tieneObservaciones)
                 {
-                    <i class="fas fa-comment-alt"></i>@Model.Observaciones
+                    <i class="fas fa-comment-alt"></i>@observaciones
                 }
             </span>
             @if (Model.EsPesaje)
@@ -59,78 +63,85 @@ else
         </div>
     }
 
-    <div class="row stock-detalle-layout">
-        <div class="col-12 col-xl-8 order-2 order-xl-1">
+    @* Desktop (2026-11-12, tabla-compacta.css): franja de chips con lo esencial en lugar de la tarjeta lateral de datos. *@
+    <div class="det-head">
+        <span class="det-chip chip-id"><i class="fas fa-hashtag"></i><b>@Model.IdCompra</b></span>
+        <span class="det-chip" title="Sucursal"><i class="fas fa-store"></i><b>@sucursalDetalle</b></span>
+        <span class="det-chip" title="Acción"><i class="fas fa-tag"></i><b>@tipoDetalle</b></span>
+        @if (!string.IsNullOrWhiteSpace(Model.UsuarioCreacion) || fechaCreacion != "")
+        {
+            <span class="det-chip"><i class="fas fa-user-plus"></i><span class="k">Creó</span> <b>@(!string.IsNullOrWhiteSpace(Model.UsuarioCreacion) ? Model.UsuarioCreacion : "-")</b> <span class="k">@fechaCreacion</span></span>
+        }
+        @if (fueModificado)
+        {
+            <span class="det-chip chip-mod"><i class="fas fa-pen"></i><span class="k">Modificó</span> <b>@(!string.IsNullOrWhiteSpace(Model.UsuarioActualizacion) ? Model.UsuarioActualizacion : "-")</b> <span class="k">@fechaActualizacion</span></span>
+        }
+        <span class="det-spacer"></span>
+        @if (Model.EsPesaje)
+        {
+            <button type="button" class="btn btn-sm btn-outline-info btn-ver-porcentaje-pesaje-index" data-id-compra="@Model.IdCompra">
+                <i class="fas fa-percent mr-1"></i> Ver Porc(%)
+            </button>
+        }
+    </div>
+
+    @if (tieneObservaciones)
+    {
+        <div class="det-obs"><i class="fas fa-comment-alt"></i><div>@observaciones</div></div>
+    }
+
+    @* Cajas vinculadas: compra / pesaje padre, pesaje asociado (ajuste), ajuste relacionado y pesajes hijos. *@
+    @if ((Model.EsPesaje && Model.IdCompraVinculada.HasValue && Model.IdCompraVinculada.Value > 0)
+        || (Model.EsAjuste && Model.IdPesajeRelacionado.HasValue && Model.IdPesajeRelacionado.Value > 0)
+        || (Model.EsPesaje && Model.IdAjusteRelacionado.HasValue)
+        || (Model.EsPesaje && Model.PesajesHijosVinculadosIds != null && Model.PesajesHijosVinculadosIds.Count > 0))
+    {
+        <div class="det-vinc">
             @if (Model.EsPesaje && Model.IdCompraVinculada.HasValue && Model.IdCompraVinculada.Value > 0)
             {
-                <div class="stock-relacionado-box @(Model.CompraVinculadaEsPesaje ? "stock-relacionado-pesaje-padre" : "stock-relacionado-compra") mt-3">
-                    <div class="small text-uppercase font-weight-bold mb-2">@(Model.CompraVinculadaEsPesaje ? "Pesaje padre vinculado #" : "Compra vinculada #")@Model.IdCompraVinculada.Value</div>
+                <div class="det-caja">
+                    <div class="t">@(Model.CompraVinculadaEsPesaje ? "Pesaje padre vinculado #" : "Compra vinculada #")@Model.IdCompraVinculada.Value</div>
                     @if (!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada))
                     {
-                        <div class="font-weight-bold">@Model.EstadoCompraVinculada</div>
+                        <div class="r">@Model.EstadoCompraVinculada</div>
                     }
                     else
                     {
-                        <div class="stock-relacionado-resumen">@StockRelacionadoResumen(Model.ProveedorCompraVinculada, Model.CantMediasCompraVinculada, Model.KgsCompraVinculada)</div>
-                        <div class="row stock-relacionado-grid">
-                            <div class="col-12 col-md-3 mb-2 mb-md-0">
-                                <div class="text-muted">Fecha de compra</div>
-                                <div class="font-weight-bold">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
-                            </div>
-                            <div class="col-12 col-md-4 mb-2 mb-md-0">
-                                <div class="text-muted">Proveedor</div>
-                                <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(Model.ProveedorCompraVinculada) ? Model.ProveedorCompraVinculada : "-")</div>
-                            </div>
-                            <div class="col-6 col-md-2">
-                                <div class="text-muted">Cant.Medias</div>
-                                <div class="font-weight-bold">@(Model.CantMediasCompraVinculada.HasValue ? Model.CantMediasCompraVinculada.Value.ToString() : "-")</div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="text-muted">Kgs.Medias</div>
-                                <div class="font-weight-bold">@(Model.KgsCompraVinculada.HasValue ? Model.KgsCompraVinculada.Value.ToString("N2") : "-")</div>
-                            </div>
-                        </div>
+                        <div class="r">@StockRelacionadoResumen(Model.ProveedorCompraVinculada, Model.CantMediasCompraVinculada, Model.KgsCompraVinculada)</div>
+                        <div class="f text-muted">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "")</div>
                     }
                 </div>
             }
 
             @if (Model.EsAjuste && Model.IdPesajeRelacionado.HasValue && Model.IdPesajeRelacionado.Value > 0)
             {
-                <div class="stock-relacionado-box stock-relacionado-pesaje mt-3">
-                    <div class="small text-uppercase font-weight-bold mb-2">Pesaje asociado #@Model.IdPesajeRelacionado.Value</div>
+                <div class="det-caja">
+                    <div class="t">Pesaje asociado #@Model.IdPesajeRelacionado.Value</div>
                     @if (!string.IsNullOrWhiteSpace(Model.EstadoPesajeRelacionado))
                     {
-                        <div class="font-weight-bold">@Model.EstadoPesajeRelacionado</div>
+                        <div class="r">@Model.EstadoPesajeRelacionado</div>
                     }
                     else
                     {
-                        <div class="stock-relacionado-resumen">@StockRelacionadoResumen(Model.ProveedorPesajeRelacionado, Model.CantMediasPesajeRelacionado, Model.KgsPesajeRelacionado)</div>
-                        <div class="row stock-relacionado-grid">
-                            <div class="col-12 col-md-3 mb-2 mb-md-0">
-                                <div class="text-muted">Fecha del pesaje</div>
-                                <div class="font-weight-bold">@(Model.FechaPesajeRelacionado.HasValue ? Model.FechaPesajeRelacionado.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
-                            </div>
-                            <div class="col-12 col-md-4 mb-2 mb-md-0">
-                                <div class="text-muted">Proveedor</div>
-                                <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(Model.ProveedorPesajeRelacionado) ? Model.ProveedorPesajeRelacionado : "-")</div>
-                            </div>
-                            <div class="col-6 col-md-2">
-                                <div class="text-muted">Cant.Medias</div>
-                                <div class="font-weight-bold">@(Model.CantMediasPesajeRelacionado.HasValue ? Model.CantMediasPesajeRelacionado.Value.ToString() : "-")</div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="text-muted">Kgs.Medias</div>
-                                <div class="font-weight-bold">@(Model.KgsPesajeRelacionado.HasValue ? Model.KgsPesajeRelacionado.Value.ToString("N2") : "-")</div>
-                            </div>
-                        </div>
+                        <div class="r">@StockRelacionadoResumen(Model.ProveedorPesajeRelacionado, Model.CantMediasPesajeRelacionado, Model.KgsPesajeRelacionado)</div>
+                        <div class="f text-muted">@(Model.FechaPesajeRelacionado.HasValue ? Model.FechaPesajeRelacionado.Value.ToString("dd/MM/yyyy HH:mm") : "")</div>
                     }
+                </div>
+            }
+
+            @* El ajuste relacionado ya se ve como etiqueta "Aj. #" en la tarjeta de celular: la caja es solo de desktop. *@
+            @if (Model.EsPesaje && Model.IdAjusteRelacionado.HasValue)
+            {
+                <div class="det-caja caja-ok det-solo-desk">
+                    <div class="t">Ajuste relacionado</div>
+                    <div class="r">Aj. #@Model.IdAjusteRelacionado.Value</div>
                 </div>
             }
 
             @if (Model.EsPesaje && Model.PesajesHijosVinculadosIds != null && Model.PesajesHijosVinculadosIds.Count > 0)
             {
-                <div class="stock-relacionado-box stock-relacionado-hijos mt-3">
-                    <div class="small text-uppercase font-weight-bold mb-2">Pesajes vinculados a este (@Model.PesajesHijosVinculadosIds.Count)</div>
+                <div class="det-caja">
+                    <div class="t">Pesajes vinculados a este (@Model.PesajesHijosVinculadosIds.Count)</div>
                     <div>
                         @foreach (var idHijo in Model.PesajesHijosVinculadosIds)
                         {
@@ -139,147 +150,63 @@ else
                     </div>
                 </div>
             }
+        </div>
+    }
 
-            <div class="table-responsive mt-3 mt-xl-0">
-                <table class="table table-sm table-hover mb-0 stock-detalle-tabla tabla-cards tabla-cards-lista">
-                    <thead class="thead-light">
+    @* Lineas: columnas compactas (Cód. 15 · Producto 25 · Kg 8, ver tabla-compacta.css) y total al pie. *@
+    <div class="det-lineas">
+        <table class="table table-sm mb-0 tabla-cards tabla-cards-lista">
+            <thead>
+                <tr>
+                    <th class="tc-cod">Cód.</th>
+                    <th class="tc-prod">Producto</th>
+                    <th class="text-right tc-kg">Cantidad / kg</th>
+                    <th class="text-center tc-ico">Balanza</th>
+                    <th class="tc-hora">Cargada</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!hayLineas)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No hay lineas para este movimiento.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var linea in Model.Lineas)
+                    {
+                        var horaLinea = WebCore.Helpers.HoraLineaDetalle.Formatear(linea.CreadoTexto, Model.FechaCompra);
                         <tr>
-                            <th>Codigo producto</th>
-                            <th>Producto</th>
-                            <th class="text-right">Cantidad / kg</th>
-                            <th class="text-center">Balanza</th>
-                            <th>Creado</th>
+                            <td class="cc-l-cod tc-cod"><span class="cc-solo-card">Cód. </span>@linea.Codigo</td>
+                            <td class="cc-l-prod tc-prod">@linea.Producto</td>
+                            <td class="text-right cc-l-kg tc-kg">@linea.CantidadKgTexto</td>
+                            @* Balanza: en celular un icono (azul = pesado en balanza, gris tenue = no); en desktop tambien icono. *@
+                            <td class="text-center cc-l-bal cc-l-ultimo tc-ico">
+                                <i class="fas fa-balance-scale @(linea.Balanza ? "text-primary" : "cc-ico-off")" role="img"
+                                   aria-label="@(linea.Balanza ? "Pesado en balanza" : "Sin balanza")"
+                                   title="@(linea.Balanza ? "Pesado en balanza" : "Sin balanza")"></i>
+                            </td>
+                            @* Creado: en celular solo la hora, o fecha y hora en ambar si la linea se cargo otro dia que el registro. *@
+                            <td class="cc-l-hora tc-hora @(horaLinea.OtroDia ? "cc-l-hora-otro-dia" : "") @(horaLinea.Texto == "" ? "cc-vacio" : "")">
+                                <span class="cc-solo-tabla">@(!string.IsNullOrWhiteSpace(linea.CreadoTexto) ? linea.CreadoTexto : "-")</span>
+                                <span class="cc-solo-card" title="@(horaLinea.OtroDia ? "Cargada otro día que el registro" : "Hora de carga")"><i class="far fa-clock"></i>@horaLinea.Texto</span>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model.Lineas == null || Model.Lineas.Count == 0)
-                        {
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">No hay lineas para este movimiento.</td>
-                            </tr>
-                        }
-                        else
-                        {
-                            foreach (var linea in Model.Lineas)
-                            {
-                                var horaLinea = WebCore.Helpers.HoraLineaDetalle.Formatear(linea.CreadoTexto, Model.FechaCompra);
-                                <tr>
-                                    <td class="cc-l-cod"><span class="cc-solo-card">Cód. </span>@linea.Codigo</td>
-                                    <td class="cc-l-prod">@linea.Producto</td>
-                                    <td class="text-right cc-l-kg">@linea.CantidadKgTexto</td>
-                                    @* Balanza: en celular un icono (azul = pesado en balanza, gris tenue = no); en desktop Si / -. *@
-                                    <td class="text-center cc-l-bal cc-l-ultimo">
-                                        <span class="cc-solo-tabla">@(linea.Balanza ? "Si" : "-")</span>
-                                        <i class="cc-solo-card fas fa-balance-scale @(linea.Balanza ? "text-primary" : "cc-ico-off")" role="img"
-                                           aria-label="@(linea.Balanza ? "Pesado en balanza" : "Sin balanza")"
-                                           title="@(linea.Balanza ? "Pesado en balanza" : "Sin balanza")"></i>
-                                    </td>
-                                    @* Creado: en celular solo la hora, o fecha y hora en ambar si la linea se cargo otro dia que el registro. *@
-                                    <td class="cc-l-hora @(horaLinea.OtroDia ? "cc-l-hora-otro-dia" : "") @(horaLinea.Texto == "" ? "cc-vacio" : "")">
-                                        <span class="cc-solo-tabla">@(!string.IsNullOrWhiteSpace(linea.CreadoTexto) ? linea.CreadoTexto : "-")</span>
-                                        <span class="cc-solo-card" title="@(horaLinea.OtroDia ? "Cargada otro día que el registro" : "Hora de carga")"><i class="far fa-clock"></i>@horaLinea.Texto</span>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="col-12 col-xl-4 order-1 order-xl-2">
-            <div class="stock-detalle-meta-card">
-                <div class="stock-detalle-meta-row"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@Model.IdCompra</span></div>
-                @if (Model.EsPesaje)
-                {
-                    <div class="stock-detalle-meta-row">
-                        <button type="button"
-                                class="btn btn-sm btn-outline-info btn-ver-porcentaje-pesaje-index"
-                                data-id-compra="@Model.IdCompra">
-                            <i class="fas fa-percent mr-1"></i> Ver Porc(%)
-                        </button>
-                    </div>
+                    }
                 }
-                @if (Model.EsPesaje && Model.IdAjusteRelacionado.HasValue)
-                {
-                    <div class="stock-detalle-meta-row">
-                        <span class="text-muted">Referencia:</span>
-                        <span class="badge badge-pill badge-success ml-2">Aj. #@referenciaAjuste</span>
-                    </div>
-                }
-                else if (Model.EsAjuste && Model.IdPesajeRelacionado.HasValue)
-                {
-                    <div class="stock-detalle-meta-row">
-                        <span class="text-muted">Referencia:</span>
-                        <span class="badge badge-pill badge-info ml-2">Pesaje #@referenciaPesaje</span>
-                    </div>
-                }
-                <div class="stock-detalle-meta-row"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@observaciones</span></div>
-                <div class="stock-detalle-meta-row"><span class="text-muted">Quien lo creo:</span> <span class="font-weight-bold">@usuarioCreacion</span></div>
-                <div class="stock-detalle-meta-row"><span class="text-muted">Fecha de creacion:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
-                <div class="stock-detalle-meta-row"><span class="text-muted">Quien lo actualizo:</span> <span class="font-weight-bold">@usuarioActualizacion</span></div>
-                <div class="stock-detalle-meta-row"><span class="text-muted">Fecha de actualizacion:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
-                <div class="stock-detalle-meta-row"><span class="text-muted">Sucursal:</span> <span class="font-weight-bold">@sucursalDetalle</span></div>
-                <div class="stock-detalle-meta-row mb-0"><span class="text-muted">Accion:</span> <span class="font-weight-bold">@tipoDetalle</span></div>
-            </div>
-        </div>
+            </tbody>
+            @if (hayLineas)
+            {
+                @* Total: suma de lo que muestra la columna (solo desktop; en celular el pie se oculta). *@
+                <tfoot>
+                    <tr>
+                        <td colspan="2">Total · @Model.Lineas.Count línea@(Model.Lineas.Count == 1 ? "" : "s")</td>
+                        <td class="tc-kg">@totalKg.ToString("N3")</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
     </div>
-
-    <style>
-        .stock-detalle-layout {
-            align-items: flex-start;
-        }
-
-        .stock-detalle-meta-card {
-            border: 1px solid var(--ui-border, #dee2e6);
-            border-radius: .5rem;
-            background: var(--ui-surface, #fff);
-            color: var(--ui-text, inherit);
-            padding: .85rem .95rem;
-        }
-
-        .stock-detalle-meta-row {
-            margin-bottom: .45rem;
-            line-height: 1.2;
-        }
-
-        .stock-detalle-tabla thead th {
-            font-size: .76rem;
-            padding-top: .3rem;
-            padding-bottom: .3rem;
-        }
-
-        .stock-relacionado-resumen {
-            display: none;
-        }
-
-        @@media (max-width: 767.98px) {
-            .stock-detalle-meta-card,
-            .stock-relacionado-grid {
-                display: none;
-            }
-
-            .stock-relacionado-resumen {
-                display: block;
-                font-size: .8rem;
-            }
-
-            /* Con el contenedor adelante: la regla base de .stock-relacionado-box vive en _StockTabla.cshtml y no hay que
-               depender del orden en que se cargan los estilos. */
-            .stock-detalle-layout .stock-relacionado-box {
-                padding: .55rem .7rem;
-            }
-
-            .stock-detalle-layout .stock-relacionado-box > .small {
-                margin-bottom: .2rem !important;
-            }
-        }
-
-        @@media (min-width: 1200px) {
-            .stock-detalle-meta-card {
-                position: sticky;
-                top: .25rem;
-            }
-        }
-    </style>
 }
