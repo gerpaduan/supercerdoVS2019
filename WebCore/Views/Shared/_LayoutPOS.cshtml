@@ -74,6 +74,13 @@
                     document.documentElement.style.setProperty("--pos-atenuacion", String(aten / 100));
                 }
             } catch (e) { /* sin acceso al storage (modo privado o bloqueado): se queda sin atenuar */ }
+            try {
+                // Tamaño de letra del carrito (por dispositivo; ver variable --pos-carrito-extra en pos.css). Tambien antes de pintar.
+                var fuenteCarrito = parseInt(localStorage.getItem("carnisys-pos-fuente-carrito"), 10);
+                if (fuenteCarrito === 1 || fuenteCarrito === 2 || fuenteCarrito === 3) {
+                    document.documentElement.style.setProperty("--pos-carrito-extra", String(fuenteCarrito));
+                }
+            } catch (e) { /* sin acceso al storage: el carrito queda con su tamaño normal */ }
         })();
     </script>
 
@@ -354,6 +361,13 @@
                     <span id="brilloPOSBadge" class="pos-brillo-badge d-none"></span>
                 </a>
 
+                @* Tamaño de letra del carrito (2026-11-13): rota normal -> +1 -> +2 -> +3 px sobre nombre, cantidad x precio y
+                   total de cada linea. Se guarda por dispositivo (mismo patron que el brillo). El title y el badge los pone setFuenteCarrito. *@
+                <a href="#" id="btnFuenteCarritoPOS" class="nav-link topbar-icon-btn position-relative" title="Tamaño de letra del carrito" aria-label="Tamaño de letra del carrito">
+                    <i class="fas fa-text-height text-light"></i>
+                    <span id="fuenteCarritoPOSBadge" class="pos-brillo-badge d-none"></span>
+                </a>
+
                 <div class="nav-item dropdown no-arrow">
                     <a class="nav-link dropdown-toggle text-white" href="#" id="posUserDropdown" role="button"
                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -548,6 +562,59 @@
                         e.preventDefault();
                         const i = NIVELES.indexOf(nivelActual());
                         setAtenuacion(NIVELES[(i + 1) % NIVELES.length]);
+                    });
+                }
+            });
+        })();
+
+        // Tamaño de letra del carrito: px extra 0/1/2/3 guardados por dispositivo en localStorage
+        // "carnisys-pos-fuente-carrito". El preload del <head> ya lo aplico antes de pintar; aca se sincroniza el
+        // boton y se rota con cada clic. Solo toca la variable --pos-carrito-extra, que lee pos.css.
+        (function () {
+            const STORAGE_KEY = "carnisys-pos-fuente-carrito";
+            const NIVELES = [0, 1, 2, 3];
+
+            // Devuelve el nivel guardado; valor desconocido, vacio o storage inaccesible -> lo que ya tiene la pagina.
+            function nivelActual() {
+                try {
+                    const guardado = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+                    return NIVELES.indexOf(guardado) >= 0 ? guardado : 0;
+                } catch (e) {
+                    const css = parseInt(document.documentElement.style.getPropertyValue("--pos-carrito-extra"), 10);
+                    return NIVELES.indexOf(css) >= 0 ? css : 0;
+                }
+            }
+
+            // Aplica el nivel a la variable de CSS, actualiza boton/badge y lo guarda.
+            function setFuenteCarrito(nivel) {
+                const raiz = document.documentElement;
+                if (nivel > 0) raiz.style.setProperty("--pos-carrito-extra", String(nivel));
+                else raiz.style.removeProperty("--pos-carrito-extra");
+
+                const texto = "Letra del carrito: " + (nivel === 0 ? "normal" : "+" + nivel + " px") + ". Tocá para cambiar";
+                const btn = document.getElementById("btnFuenteCarritoPOS");
+                const badge = document.getElementById("fuenteCarritoPOSBadge");
+                if (btn) {
+                    btn.title = texto;
+                    btn.setAttribute("aria-label", texto);
+                }
+                if (badge) {
+                    badge.textContent = "+" + nivel;
+                    badge.classList.toggle("d-none", nivel === 0);
+                }
+
+                try { localStorage.setItem(STORAGE_KEY, String(nivel)); } catch (e) { /* sin storage: el nivel vale solo para esta carga */ }
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                setFuenteCarrito(nivelActual());
+
+                const btn = document.getElementById("btnFuenteCarritoPOS");
+                if (btn) {
+                    btn.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        const i = NIVELES.indexOf(nivelActual());
+                        setFuenteCarrito(NIVELES[(i + 1) % NIVELES.length]);
                     });
                 }
             });

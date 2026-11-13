@@ -3898,6 +3898,9 @@
     html.pos-gris body .pos-page #tablaItems .item-detalle {
         color: #05080c !important;
         font-weight: 500;
+        /* Tamaño de letra elegible (2026-11-13): .84rem es el que gana hoy (pos-expendio.css carga despues de pos.css y
+           pisa el .95rem de .item-detalle) mas el nivel 0-3 px del boton de la barra (--pos-carrito-extra, _LayoutPOS). */
+        font-size: calc(.84rem + var(--pos-carrito-extra, 0) * 1px);
     }
 
     html body .pos-page #tablaItems .item-detalle > .fw-bold,
@@ -3917,7 +3920,7 @@
 
     /* Nombre del producto: la negrita baja de 16 a 15 px (el codigo y el #N tienen su propio tamaño). */
     .pos-linea-nombre {
-        font-size: .9375rem;
+        font-size: calc(.9375rem + var(--pos-carrito-extra, 0) * 1px); /* + nivel 0-3 px elegido en la barra */
     }
 
     /* ---- Gris: borde de Cantidad mas marcado (pedido del usuario 2026-11-12: "se pierde entre el gris") ----

@@ -8,7 +8,7 @@ permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pant
 revisada: 2026-11-13
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -190,6 +190,13 @@ El botón con la **lamparita**, a la izquierda del botón de tema, oscurece toda
 - Se recuerda **en cada computadora y navegador**, igual que el tema.
 - El ticket y cualquier impresión salen siempre con el brillo normal.
 - Si el monitor también tiene botón de brillo, conviene probar primero bajándolo ahí. Si queda por debajo de la vista, inclinarlo hacia arriba, hacia el cajero, también ayuda.
+
+## Tamaño de letra del carrito
+El botón **«Aa» con flecha vertical** (ícono de altura de texto), a la derecha de la lamparita del brillo, agranda la letra de cada línea del carrito: **nombre del producto, «cantidad x precio» y total de la línea**. Cada vez que lo tocás sube un escalón: **normal → +1 → +2 → +3 → normal** (en píxeles). Cuando está agrandado, el botón muestra el nivel en un recuadro amarillo (+1, +2 o +3).
+- Se recuerda **en cada computadora y navegador**, igual que el tema y el brillo; no sigue al usuario si cambia de equipo.
+- No cambia el código de la línea ni el «#N», ni el total grande del pie.
+- Con letra más grande entran menos líneas a la vista y hay que desplazar el carrito antes.
+- PENDIENTE: no se probó en el monitor real del local; el tamaño normal que se toma como base sale de la hoja de estilos, no se midió en pantalla.
 
 ## POS bloqueado: «Tu sesión se cerró»
 - Si el POS se bloqueó por inactividad y, mientras tanto, **se cerró la sesión del sistema** (venció, se cerró desde otra pestaña o se inició sesión con otro usuario en el mismo navegador), al tocar **Desbloquear** el POS **no valida la contraseña** y muestra **«Tu sesión se cerró»** en lugar del formulario. Antes mostraba «Contraseña incorrecta.» aunque la clave estuviera bien.

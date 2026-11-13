@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-11-13 - POS: botón de tamaño de letra del carrito (normal, +1, +2, +3 px)
+
+- **Pedido:** las líneas del carrito se veían chicas y borrosas en escritorio; el usuario pidió poder agrandar nombre, cantidad, precio y total, y que cada usuario elija su tamaño desde el POS.
+- **Cambio:** `Views/Shared/_LayoutPOS.cshtml`: preload de `carnisys-pos-fuente-carrito` en el `<head>`, botón `#btnFuenteCarritoPOS` (con badge) y `setFuenteCarrito`. `wwwroot/Content/css/pos.css`: `.pos-linea-nombre` y `#tablaItems .item-detalle` toman `calc(base + var(--pos-carrito-extra, 0) * 1px)`. Manual: `Ventas.POS` (sección «Tamaño de letra del carrito»). Detalle en `docs/DECISIONS.md` (2026-11-13).
+- **Pendiente:** no se probó en el POS real (requiere login); `Ventas.POS`: confirmar el tamaño base medido en pantalla; el botón también aparece en Punto de Expendio (layout compartido) y allí solo afecta a las líneas que usen esas reglas; `scripts/check-ayuda.ps1` antes del deploy.
+
 ## 2026-11-13 - Movimientos, Stock y Elaborados: modo solo lectura claro al ver un registro guardado
 
 - **Pedido:** el usuario no se daba cuenta de que estaba en modo lectura e intentaba escribir un código en el campo bloqueado.
@@ -55,6 +61,7 @@
 - **Después (mismo día):** la ventana independiente de Movimientos, Stock y Elaborados se **cierra sola al guardar**, después de cerrar el modal / aviso (`ventana-trabajo.js` nuevo, `_Layout.cshtml`, `modal-postmovimiento.js`, `elaborados-carga.js`, `stock.js`; `docs/DECISIONS.md` 2026-11-13 c).
 - **Después (mismo día):** Ingreso rápido / Desarme nuevo abre con el cursor en «Cantidad a elaborar» (`elaborados-rapido.js`; `docs/DECISIONS.md` 2026-11-13 d).
 - **Después (mismo día):** en la ventana independiente de Movimientos se puede abrir el **Stock destino al lado** de la carga: botón Stock destino (solo icono) y botón **Ensanchar** que lleva la ventana a ~1.160 px (sin ensanche automático; avisa y ofrece abrir el stock en otra ventana si no entra) (`movimiento-stock-destino.js`, `movimientos-compacto.css`; `docs/DECISIONS.md` 2026-11-13 e).
+- **Después (mismo día):** Elaborados: scroll siempre de la página (la tabla de ingredientes, la Fórmula y su tabla no scrollean por dentro, en pantalla grande y en la ventana independiente); en la ventana de 700 px o más Receta y Fórmula van a la derecha de la carga; la Fórmula pasó de verde a gris (`pantalla-trabajo.css`, `pt-entrada.css`, `ventana-angosta.js`; `docs/DECISIONS.md` 2026-11-13 f).
 - **Pendiente:** abrir la ventana emergente real en el monitor del usuario; Elaborados con la cuenta de producción; modo oscuro y Pesaje en la ventana; unificar `pt-entrada.css` con `movimientos-compacto.css`.
 
 ## 2026-11-12 - Stock / Movimientos / Elaborados: columnas compactas, fuente fuerte, Origen/Destino con color y detalle en franja de chips

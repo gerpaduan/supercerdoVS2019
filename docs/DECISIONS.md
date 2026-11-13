@@ -1,3 +1,12 @@
+## 2026-11-13 - POS: tamaño de letra del carrito elegible por dispositivo
+
+- **Pedido:** letra del carrito chica/borrosa en escritorio; el usuario quiere agrandarla 1, 2 o 3 px y que se pueda elegir desde el POS.
+- **Qué se decidió:** botón rotativo en la barra del POS (`_LayoutPOS.cshtml`, junto al de brillo) normal → +1 → +2 → +3, guardado en `localStorage` `carnisys-pos-fuente-carrito` y aplicado antes de pintar en la variable CSS `--pos-carrito-extra`. `pos.css` suma esa variable (en px) al tamaño de `.pos-linea-nombre` (base .9375rem) y de `#tablaItems .item-detalle` (base .84rem; el total de la línea hereda de ese). Las bases son los valores que ganan hoy por cascada (`pos-expendio.css` carga después de `pos.css` y pisa el .95rem de `.item-detalle`), no medidos en pantalla.
+- **Por qué así:** mismo patrón que el brillo (2026-11-11): sin base de datos ni backend, sin parpadeo. El usuario eligió «por equipo» y «botón que rota».
+- **Alternativas descartadas:** guardarlo por usuario en la base (columna/endpoint nuevos, cambio de schema); menú desplegable con las 4 opciones (más código, sin precedente en la barra).
+- **Límite conocido:** no sigue al usuario entre equipos. Si hace falta, migrar a preferencia por usuario. El trazo extra del nombre (`-webkit-text-stroke .35px`, 2026-11-12) y los tamaños con decimales (p. ej. .84rem = 13,44 px) quedan sin tocar y pueden contribuir a la sensación de borroso.
+- **Archivos:** `WebCore/Views/Shared/_LayoutPOS.cshtml`, `WebCore/wwwroot/Content/css/pos.css`, `docs/11-manual-de-uso/pantallas/Ventas.POS.md`.
+
 ## 2026-11-13 - Utilidades: instaladores de las mini-apps Stock, Movimientos y Elaborados
 
 - **Pedido:** poder instalar las mini-apps PWA (manifests de 2026-11-04, punto 7) desde Utilidades.
