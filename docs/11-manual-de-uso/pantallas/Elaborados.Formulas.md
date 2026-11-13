@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 4
 permiso: Elaborado.VerFormulas (ver) / Elaborado.IngresoFormula (crear, modificar, eliminar)
-revisada: 2026-10-27
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Ver el listado de **fórmulas** de los elaborados y, si tenés permiso de ingresar fórmulas, crearlas, modificarlas o eliminarlas.

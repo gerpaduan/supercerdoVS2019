@@ -6,7 +6,7 @@ modulo: Elaborados
 orden: 5
 alias: Elaborados.GuardarFormula
 permiso: Elaborado.IngresoFormula (editar)
-revisada: 2026-11-07
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Crear o modificar la **fórmula** de un elaborado: sus ingredientes, la proporción de cada uno y la receta. Se llega desde *Elaborados → Fórmulas*.

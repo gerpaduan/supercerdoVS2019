@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 3
 permiso: PENDIENTE (no se revisó el permiso exacto para entrar)
-revisada: 2026-11-11
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Ver **cada movimiento entre sucursales con sus líneas** (producto, cantidad, unidades y si se pesó en balanza), con una tarjeta por movimiento, de un período. Se llega desde [Movimientos](ayuda:pantalla/Movimientos.Index) con **Ver lineas**, que lleva las sucursales y fechas ya aplicadas.

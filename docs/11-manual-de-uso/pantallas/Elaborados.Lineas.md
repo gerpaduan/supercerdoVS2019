@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 6
 permiso: PENDIENTE
-revisada: 2026-11-02
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Listado de **cada ingrediente utilizado** en los elaborados registrados (una fila por ingrediente de cada registro), por sucursal y fechas.

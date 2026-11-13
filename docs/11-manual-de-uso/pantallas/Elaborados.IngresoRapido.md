@@ -6,7 +6,7 @@ modulo: Elaborados
 orden: 2
 alias: Elaborados.Desarme
 permiso: PENDIENTE (no verificado contra el código en esta revisión)
-revisada: 2026-11-12
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Elegir el producto que vas a registrar con **Ingreso rápido** o a desarmar con **Desarme de elaborado**. Es la misma pantalla para los dos; cambia la etiqueta (*Modo ingreso rapido* / *Modo desarme*) y el color del botón. Al elegir un producto se abre la carga de ese producto (ver [Ingreso rápido y desarme de elaborado](Elaborados.EditarIngresoRapido.md)).
