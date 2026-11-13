@@ -10,7 +10,7 @@
 <div class="container-fluid px-2 px-md-3" data-movimientos-index="1" data-detalle-url="@Url.Action("Detalle", "Movimientos")" data-imprimir-info-url="@Url.Action("ImprimirInfo", "Movimientos")">
     @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila (fechas primero) y debajo una barra
        con el estado y los botones; por debajo de 1200 px conserva el orden de siempre. Estilos en Shared/_FiltrosCompactosStyles. *@
-    <div class="fc-top">
+    <div class="fc-top fc-angosto">
     <div class="d-flex flex-wrap align-items-center mb-3 gap-2 movimientos-acciones-header fc-acciones">
         <a class="btn btn-success movimientos-btn-accion" href="@Url.Action("Nuevo", "Movimientos")" id="btnNuevoMovimientoIndex">
             <i class="fas fa-plus mr-1"></i> Nuevo movimiento

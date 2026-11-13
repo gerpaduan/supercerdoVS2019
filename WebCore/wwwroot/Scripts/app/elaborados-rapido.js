@@ -1026,6 +1026,24 @@
             });
         };
         syncPrimaryAction();
+
+        // Foco inicial (2026-11-13, pedido del usuario): al abrir un Ingreso rapido / Desarme NUEVO el cursor queda en "Cantidad a elaborar" (el elaborado ya
+        // viene elegido de la pantalla anterior). Se reintenta unos segundos porque otros scripts (borradores, aviso de documento abierto, chequeo de la
+        // balanza) le sacaban el foco despues de cargar; con la balanza activa el campo es de solo lectura pero igual recibe el cursor (Enter guarda).
+        // Deja de insistir si el usuario ya toco algo, si hay un cartel / modal abierto o si es un registro existente o anulado.
+        if (idEmbutidoActual() <= 0 && !config.esAnulado && $cantidad.length) {
+            var usuarioTocoAlgo = false;
+            ['mousedown', 'keydown', 'touchstart'].forEach(function (evento) {
+                document.addEventListener(evento, function () { usuarioTocoAlgo = true; }, true);
+            });
+            [0, 150, 400, 800, 1500, 2500].forEach(function (ms) {
+                window.setTimeout(function () {
+                    if (usuarioTocoAlgo || $cantidad.prop('disabled') || !$cantidad.is(':visible')) return;
+                    if (document.querySelector('.modal.show, .swal2-container')) return;
+                    if (document.activeElement !== $cantidad[0]) $cantidad.focus().select();
+                }, ms);
+            });
+        }
     }
 
     $(function () {

@@ -38,6 +38,46 @@
         </div>
     </div>
 
+    @* Instaladores de mini-apps (2026-11-13, ver docs/DECISIONS.md): Stock, Movimientos y Elaborados se instalan como aplicacion propia (ventana + icono
+       en la barra de tareas). El navegador solo ofrece instalar desde una pagina que enlaza el manifest de esa app, asi que cada boton abre la pantalla
+       con ?instalar=1 en una pestana nueva y alli pwa-instalar.js (cargado por _PwaHead) muestra la barra con "Instalar". Los manifests y el scope viven
+       en wwwroot/manifest-*.json. Si se agrega otra mini-app: manifest propio + entrada en _PwaHead + una fila aca. *@
+    @{
+        var miniApps = new[]
+        {
+            new { Nombre = "Stock", Descripcion = "Carga y modificación de stock en su propia ventana.", Icono = "fa-boxes", Controlador = "Stock" },
+            new { Nombre = "Movimientos", Descripcion = "Movimientos de stock entre sucursales en su propia ventana.", Icono = "fa-truck-loading", Controlador = "Movimientos" },
+            new { Nombre = "Elaborados", Descripcion = "Carga y fórmulas de elaborados (embutidos) en su propia ventana.", Icono = "fa-industry", Controlador = "Elaborados" }
+        };
+    }
+    <div class="card shadow-sm mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Aplicaciones instalables</h6>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">Instalá estas pantallas como aplicaciones: cada una abre en su propia ventana y tiene su ícono en la barra de tareas. Al tocar «Instalar» se abre la pantalla y arriba aparece el botón que confirma la instalación. Solo funciona desde <strong>https://carnisys.com</strong> con Chrome o Edge.</p>
+            <div class="row">
+                @foreach (var app in miniApps)
+                {
+                    <div class="col-12 col-md-4 mb-3 mb-md-0">
+                        <div class="border rounded p-3 h-100 d-flex flex-column">
+                            <h5 class="mb-1"><i class="fas @app.Icono mr-1 text-primary"></i> @app.Nombre</h5>
+                            <p class="text-muted mb-3">@app.Descripcion</p>
+                            <div class="mt-auto">
+                                <a class="btn btn-primary btn-sm"
+                                   href="@Url.Action("Index", app.Controlador, new { instalar = 1 })"
+                                   target="_blank" rel="noopener"
+                                   id="btnUtilidadesInstalar@(app.Nombre)">
+                                    <i class="fas fa-download mr-1"></i> Instalar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         @foreach (var item in Model.Agentes)
         {

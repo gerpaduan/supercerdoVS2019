@@ -1,5 +1,37 @@
 # Bitacora de cambios
 
+## 2026-11-13 - Movimientos, Stock y Elaborados: modo solo lectura claro al ver un registro guardado
+
+- **Pedido:** el usuario no se daba cuenta de que estaba en modo lectura e intentaba escribir un código en el campo bloqueado.
+- **Cambio:** `pantalla-trabajo.js` (sección 7) y `pantalla-trabajo.css` (sección 10): el cuadro «Agregar producto» se esconde en modo ver, aparece el chip «Solo lectura» y un botón Modificar arriba (dispara el original de abajo), una franja de aviso aloja Ver acumulados / Ver Porc, se suelta el foco del campo bloqueado y, al tipear o usar el lector de código de barras, sale un aviso y Modificar late. `edit-readonly.js` no se tocó. Detalle en `docs/DECISIONS.md` (2026-11-13 f) y en el manual de las tres pantallas.
+- **Pendiente:** probarlo en las pantallas reales (solo se verificó en una maqueta con el CSS/JS reales de Stock); no cubre `Elaborados/EditarIngresoRapido`; `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-13 - Utilidades: instaladores de las mini-apps Stock, Movimientos y Elaborados
+
+- **Pedido:** agregar en Utilidades los instaladores de PWA de Stock, Movimientos y Elaborados.
+- **Cambio:** sección «Aplicaciones instalables» en `Views/Home/Utilidades.cshtml`; cada «Instalar» abre la pantalla con `?instalar=1` y `wwwroot/Scripts/app/pwa-instalar.js` (cargado desde `_PwaHead`) muestra la barra con el botón que dispara el aviso nativo de instalación. Detalle y límites: `docs/DECISIONS.md` (2026-11-13). Manual: `pantallas/Home.Utilidades.md`.
+- **Pendiente:** probar la instalación real en `https://carnisys.com` (en SM / San Lorenzo no se puede); `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-13 - Movimientos, Stock y Elaborados: botones y filtros compactos en ventana angosta con mouse
+
+- **Pedido:** en modo escritorio con la pantalla angosta, que botones y filtros ocupen menos altura para dar lugar a la tabla.
+- **Cambio:** `Views/Shared/_FiltrosCompactosStyles.cshtml` (bloque «Escritorio ANGOSTO», opt-in con `.fc-angosto`), clase agregada en `Movimientos/Index`, `Stock/Index` (más una regla propia para los botones de acción) y `Elaborados/Index`. El alto del bloque superior baja de ~300-570 px a ~125-165 px. Detalle y límites: `docs/DECISIONS.md` (2026-11-13). Manual: secciones «En una ventana angosta con mouse» de `Movimientos.Index.md`, `Stock.Index.md` y `Elaborados.Index.md`.
+- **Ampliación (Stock en ventana independiente):** `tabla-compacta.css` suma un bloque para la lista en escritorio angosto (columnas más angostas, ID/Fecha/Creado sin partirse, letra .8rem); es solo CSS, se ve con recargar. Detalle en `docs/DECISIONS.md`.
+- **Pendiente:** recompilar y reiniciar WebCore para ver los últimos retoques (las vistas `.cshtml` se compilan); revisar modo oscuro y la ventana independiente real; `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-13 - POS: el carrito ya no desaparece detrás de los carteles de advertencia
+
+- **Pedido:** al aparecer un modal de advertencia (ej. «Hay una venta en curso») desaparecía todo el fondo: carrito e ingreso de producto.
+- **Causa:** SweetAlert2 v11 (`heightAuto` por defecto) agrega `swal2-height-auto` a `<html>` y `<body>` con `height: auto !important` mientras hay un cartel abierto; `_LayoutPOS.cshtml` depende de `height: 100%` (body → `#pos-layout-content` → `.pos-page`) con `overflow: hidden`, y el contenido colapsaba.
+- **Cambio:** `Views/Shared/_LayoutPOS.cshtml`: regla `html.swal2-height-auto, html body.swal2-height-auto { height: 100% !important }` (mayor especificidad que la de la librería, que se inyecta después). Alcanza a todos los carteles del POS. No se tocó el Web clásico (tiene el mismo problema).
+- **Verificado:** maqueta estática en el navegador integrado (misma cadena de alturas + SweetAlert2@11 de la CDN, 1280×720): sin la regla el área del carrito pasa de 686 px a 18 px con el cartel abierto; con la regla se mantiene en 686 px durante el cartel y al cerrarlo. **Pendiente:** probarlo en el POS real con login (cartel de salida con venta en curso, forma de pago, calculadora).
+
+## 2026-11-13 - POS: aviso más claro al salir con una venta en curso
+
+- **Pedido:** el modal «No puede salir con una venta en curso / Debe presionar "Cancelar Venta"» no decía que cancelar descarta la venta ni que se puede guardarla antes de salir.
+- **Cambio:** `Views/Ventas/POS.cshtml` (`mostrarBloqueoSalidaPOS`): título «Hay una venta en curso» y texto que explica que Cancelar Venta pierde los datos y que, para conservarla, hay que guardarla primero. Solo textos, sin cambio de lógica. Manual: `Ventas.POS.md` (sección «Salir del POS con una venta en curso»).
+- **Verificado:** texto contra el código. **Pendiente:** verlo en pantalla con el POS real.
+
 ## 2026-11-12 - Elaborados: pestaña «Nuevo Elaborado» y selección de Ingreso rápido / Desarme con tarjetas
 
 - **Pedido:** (1) la pestaña «Carga / ingreso» pasa a llamarse «Nuevo Elaborado»; (2) mejorar la selección de Ingreso rápido: Enter elige el primero y mejor visual de los elaborados.
@@ -20,6 +52,9 @@
 - **Pedido:** aplicar a Nuevo Stock y Nuevo Elaborado lo de Nuevo Movimiento (campos fuertes con foco verde, balanza como icono con `*` que deja el cursor en Cantidad, ventana independiente a un tercio del ancho), Código como columna propia de 14 caracteres con orden por todos los encabezados, «Kilos» → «Cantidad» en Elaborados, y mostrar usuario y operador en la ventana.
 - **Cambio:** `pt-entrada.css` (nuevo), `ventana-angosta.js`, `pantalla-trabajo.js`, `stock.js`, `elaborados-carga.js`, `Stock/Editar.cshtml`, `Elaborados/Carga.cshtml`, `Movimientos/Editar.cshtml`, `Shared/_QuienOpera.cshtml` (nuevo), `pantalla-trabajo.css`, `MovimientosController.cs` (el campo Usuario muestra al operador en producción). Ver `docs/DECISIONS.md` 2026-11-13.
 - **Después (mismo día):** al abrir un registro nuevo el cursor queda en Código en Movimientos, Stock y Elaborados (el del cuadro «Elaborado»); el Código del elaborado con el estilo del de los ingredientes; Sucursal y Fecha de Stock en negrita como Elaborados (`pantalla-trabajo.js`, `pt-entrada.css`, `Carga.cshtml`; `docs/DECISIONS.md` 2026-11-13 b).
+- **Después (mismo día):** la ventana independiente de Movimientos, Stock y Elaborados se **cierra sola al guardar**, después de cerrar el modal / aviso (`ventana-trabajo.js` nuevo, `_Layout.cshtml`, `modal-postmovimiento.js`, `elaborados-carga.js`, `stock.js`; `docs/DECISIONS.md` 2026-11-13 c).
+- **Después (mismo día):** Ingreso rápido / Desarme nuevo abre con el cursor en «Cantidad a elaborar» (`elaborados-rapido.js`; `docs/DECISIONS.md` 2026-11-13 d).
+- **Después (mismo día):** en la ventana independiente de Movimientos se puede abrir el **Stock destino al lado** de la carga: botón Stock destino (solo icono) y botón **Ensanchar** que lleva la ventana a ~1.160 px (sin ensanche automático; avisa y ofrece abrir el stock en otra ventana si no entra) (`movimiento-stock-destino.js`, `movimientos-compacto.css`; `docs/DECISIONS.md` 2026-11-13 e).
 - **Pendiente:** abrir la ventana emergente real en el monitor del usuario; Elaborados con la cuenta de producción; modo oscuro y Pesaje en la ventana; unificar `pt-entrada.css` con `movimientos-compacto.css`.
 
 ## 2026-11-12 - Stock / Movimientos / Elaborados: columnas compactas, fuente fuerte, Origen/Destino con color y detalle en franja de chips

@@ -1,6 +1,8 @@
 @* Filtros compactos de escritorio (pedido 2026-10-30, mismo criterio que Compras > Index): en pantallas >= 1200 px
    los filtros van en UNA fila y debajo una barra con totales, estado, "Ver detalles" y botones de accion.
-   Por debajo de 1200 px NO se aplica nada de esto: cada pantalla conserva su layout de siempre.
+   Por debajo de 1200 px NO se aplica nada de esto: cada pantalla conserva su layout de siempre, salvo las que agregan la clase
+   .fc-angosto a su .fc-top (Movimientos, Stock y Elaborados > Index): en escritorio con mouse y menos de 1200 px usan el bloque
+   "Escritorio ANGOSTO" del final de esta hoja (renglones compactos).
 
    Como se usa (ver Movimientos, Stock y Elaborados > Index):
    - Un contenedor .fc-top envuelve todo lo que va arriba de la tabla.
@@ -156,6 +158,245 @@
 
         /* Etiquetas largas de tarjeta: solo se muestran completas en la version angosta. */
         body.app-shell .fc-oculto-escritorio {
+            display: none;
+        }
+    }
+
+    /* ---- Escritorio ANGOSTO (2026-11-13, docs/DECISIONS.md "Filtros compactos en escritorio angosto") ----
+       Ventana del navegador o ventana independiente de menos de 1200 px con mouse (hover + pointer fine: el celular y la tablet NO entran y
+       siguen con el layout de siempre). Objetivo: que botones y filtros ocupen poca altura (~135 px en vez de ~600) y la tabla gane lugar.
+       Es OPT-IN: solo actua en las pantallas cuyo .fc-top lleva ademas la clase .fc-angosto (Movimientos, Stock y Elaborados > Index), porque
+       las demas pantallas que usan esta plantilla (Reportes, Cajas, Expendios, Lineas) tienen otra estructura y no se verificaron aca.
+       Diferencia con >= 1200 px: los filtros NO van en una sola fila (no entran) sino en renglones que se acomodan solos (flex-wrap): las
+       filas .fc-fila (Origen/Destino, Desde/Hasta/Buscar) siguen siendo un renglon cada una y la etiqueta va a la izquierda del campo, no arriba.
+       No cambia ningun id, name ni JS: el aviso de fechas pendientes (Buscar ambar + texto de estado) ya es independiente del ancho. */
+    @@media (max-width: 1199.98px) and (hover: hover) and (pointer: fine) {
+        body.app-shell .fc-top.fc-angosto {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .35rem .5rem;
+            margin-bottom: .45rem;
+        }
+
+        /* Los hijos directos traen margenes de pantalla angosta (mb-2/mb-3): en la barra los maneja el gap. */
+        body.app-shell .fc-top.fc-angosto > * {
+            margin-bottom: 0 !important;
+        }
+
+        /* Contenedor que se disuelve: sus botones pasan a ser items de la barra. */
+        body.app-shell .fc-top.fc-angosto .fc-contents {
+            display: contents !important;
+        }
+
+        body.app-shell .fc-top.fc-angosto > .fc-card {
+            flex: 0 0 100%;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-card .card-body {
+            padding: .4rem .5rem;
+        }
+
+        /* Grilla de filtros: renglones que se acomodan solos. Las .fc-fila son un renglon cada una (todo el ancho). */
+        body.app-shell .fc-top.fc-angosto .fc-grid {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .35rem .5rem;
+            font-size: .84rem;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-fila {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .35rem .5rem;
+            flex: 1 1 100%;
+        }
+
+        /* El aviso de filtros pendientes va en la barra (Buscar ambar + texto de estado), no en una alerta que empuja todo. */
+        body.app-shell .fc-top.fc-angosto .fc-alerta {
+            display: none !important;
+        }
+
+        /* Cada campo: etiqueta a la izquierda (chica, en mayusculas) y control que ocupa el resto del renglon. */
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group {
+            display: flex;
+            flex: 1 1 9rem;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .3rem;
+            min-width: 0;
+            margin: 0;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group > label {
+            flex: none;
+            margin: 0;
+            font-size: .64rem;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group > .form-control {
+            flex: 1 1 4.5rem;
+            min-width: 0;
+        }
+
+        /* Fechas: piso de ancho para que entren "dd/mm/aaaa" y el icono del calendario (con hora y segundos, mas). */
+        body.app-shell .fc-top.fc-angosto .fc-card input[type="date"] {
+            min-width: 7.4rem;
+        }
+
+        /* Fecha con hora y segundos (Elaborados): necesita ~11.6 rem y el campo no entra al lado de su etiqueta; la etiqueta pasa arriba. */
+        body.app-shell .fc-top.fc-angosto .fc-card input[type="datetime-local"] {
+            min-width: 11.6rem;
+        }
+
+        /* Listas desplegables dentro de un renglon (.fc-fila: Origen/Destino, Sucursal/Accion): piso de ancho para leer el nombre junto a la etiqueta. */
+        body.app-shell .fc-top.fc-angosto .fc-fila > .form-group:has(> select) {
+            flex-basis: 11rem;
+        }
+
+        /* Grillas planas, sin .fc-fila (Elaborados: sucursal, nombre, desde, hasta, Buscar): los campos son hijos directos de .fc-grid y se
+           reparten el ancho; con el campo ya angosto la etiqueta va ARRIBA (una linea chica) para que se lea y entren 3 por renglon. */
+        body.app-shell .fc-top.fc-angosto .fc-grid > .form-group {
+            flex: 1 1 9rem;
+            flex-direction: column;
+            align-items: stretch;
+            gap: .1rem;
+        }
+
+        /* En columna el flex-basis del control seria un ALTO: se anula (alto fijo de 1.95rem, ancho completo). */
+        body.app-shell .fc-top.fc-angosto .fc-grid > .form-group > .form-control {
+            flex: 0 0 auto;
+            width: 100%;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-grid > .form-group:has(> input[type="text"]) {
+            flex: 1.5 1 10rem;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-grid > .form-group:has(> input[type="datetime-local"]) {
+            flex: 1 1 11.6rem;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-grid > .form-group:has(> .btn) {
+            align-self: flex-end;
+        }
+
+        /* Misma altura para campos y botones (igual que en escritorio ancho). */
+        body.app-shell .fc-top.fc-angosto .fc-card .form-control,
+        body.app-shell .fc-top.fc-angosto .fc-card .btn {
+            height: 1.95rem;
+            min-height: 1.95rem;
+            font-size: .84rem;
+            padding: .15rem .5rem;
+            border-radius: .5rem;
+            line-height: 1.2;
+        }
+
+        /* Grupo del boton Buscar: su etiqueta vacia (&nbsp;) sobra en el renglon; el boton ocupa lo que mide. */
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group:has(> .btn) {
+            flex: 0 0 auto;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group:has(> .btn) > label {
+            display: none !important;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group > .btn {
+            width: auto;
+        }
+
+        /* Grupo del interruptor ("Ver detalles / Expandir todos"): sin etiqueta propia (el interruptor ya dice que hace), alineado al centro. */
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group:has(> .custom-switch) {
+            flex: 0 0 auto;
+        }
+
+        /* !important: la etiqueta trae .d-block (display: block !important). */
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group:has(> .custom-switch) > label {
+            display: none !important;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-card .custom-switch {
+            padding-top: 0 !important;
+            white-space: nowrap;
+        }
+
+        /* Aviso de permiso de fecha (partial _AdvertenciaPermisoFecha): ocupa un renglon propio dentro del grupo. */
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group > :not(label):not(.form-control):not(.btn):not(.custom-switch) {
+            flex: 0 0 100%;
+        }
+
+        /* Botones de accion de arriba (Nuevo / Lineas / Eliminados): un solo renglon, mas bajos. */
+        body.app-shell .fc-top.fc-angosto > .fc-acciones {
+            flex: 1 1 100%;
+            flex-wrap: wrap;
+            gap: .35rem;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-acciones .btn {
+            flex: 1 1 auto;
+            width: auto;
+            min-height: 1.95rem;
+            margin-left: 0 !important;
+            padding: .15rem .5rem;
+            font-size: .8rem;
+            white-space: nowrap;
+        }
+
+        /* Totales (fila de tarjetas): inline y chicos. El aviso de ancho completo (col-12) baja a su propio renglon. */
+        body.app-shell .fc-top.fc-angosto > .fc-totales {
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 0 !important;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-totales > [class*="col-"]:not(.col-12) {
+            flex: 0 0 auto;
+            width: auto;
+            max-width: none;
+            padding: 0 .4rem 0 0;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-totales .card-body {
+            display: flex;
+            align-items: baseline;
+            gap: .45rem;
+            padding: .28rem .65rem;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-totales .card-body > * {
+            margin: 0 !important;
+            white-space: nowrap;
+        }
+
+        body.app-shell .fc-top.fc-angosto > .fc-vista {
+            margin-left: auto;
+            white-space: nowrap;
+            font-size: .84rem;
+        }
+
+        /* Estado de la busqueda: inactivo se oculta (ahorra un renglon; el boton Buscar ya muestra "Cargando..."); el aviso de fechas
+           pendientes (JS le pone .fc-estado-pendiente) se ve en su propio renglon. */
+        body.app-shell .fc-top.fc-angosto > .fc-estado:not(.fc-estado-pendiente) {
+            display: none;
+        }
+
+        body.app-shell .fc-top.fc-angosto > .fc-estado.fc-estado-pendiente {
+            flex: 0 0 100%;
+            color: #b45309 !important;
+            font-weight: 600;
+            font-size: .78rem !important;
+        }
+
+        html.dark-mode body.app-shell .fc-top.fc-angosto > .fc-estado.fc-estado-pendiente {
+            color: #fbbf24 !important;
+        }
+
+        /* Etiquetas largas de tarjeta: solo se muestran completas en la version angosta de celular. */
+        body.app-shell .fc-top.fc-angosto .fc-oculto-escritorio {
             display: none;
         }
     }

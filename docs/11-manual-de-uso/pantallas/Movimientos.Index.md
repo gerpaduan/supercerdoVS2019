@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-11-12
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Ver los **movimientos de mercadería entre sucursales** de un período (origen, destino, totales) y abrir el detalle de cada uno.
@@ -31,6 +31,11 @@ Columnas: *Fecha movimiento*, *Origen*, *De origen* y *Estado* (solo donde corre
 - **Fecha**, **Origen** y **Destino** se ven en negrita. El **Origen** va en **rojo** con una flecha de salida (de ahí sale la mercadería) y el **Destino** en **verde** con una flecha de entrada (ahí ingresa). Los *Total kilos* también van en negrita.
 - **Detalle** abre arriba una franja con el número, *Sale de* (rojo) → *Entra a* (verde), quién lo creó y, si se cambió, quién lo modificó. Las observaciones salen en un recuadro amarillo.
 - Debajo, las líneas con *Cód.* (15 caracteres), *Producto* (25), *Unidades* (8), *Kilos* (8), los iconos de **balanza** y de **ingreso permitido** y la hora de carga; al pie, el **Total** de unidades y kilos.
+
+## En una ventana angosta con mouse (desde el 2026-11-13)
+- Si usás la computadora con el navegador o la ventana independiente **angostos** (menos de 1200 píxeles de ancho), los botones y filtros ocupan **poca altura** para dejar lugar a la lista: *Nuevo movimiento*, *Ver lineas* y *Ver eliminados* quedan en un solo renglón; *Sucursal origen* y *destino* en otro; y *Fecha desde*, *Fecha hasta*, *Expandir todos* y *Buscar* en el siguiente (si el ancho no alcanza, el último baja de renglón). La etiqueta de cada campo va a su izquierda.
+- El aviso «Cambiaste las fechas: tocá Buscar para actualizar.» aparece solo cuando hay fechas sin aplicar (y *Buscar* se pone ámbar). Los atajos Alt+N y Alt+V siguen igual.
+- En celular y tablet (pantalla táctil) no cambia nada: se ve como en la sección siguiente.
 
 ## En el celular
 - En pantallas angostas (celular y tablet) la pantalla se ve como antes: botones arriba, filtros apilados y el estado (*Resultados actualizados.*) debajo del recuadro de filtros. Cada movimiento se ve como **tarjeta**: la fecha arriba (con el número de movimiento) y **Ver**, **Imprimir** y **Detalle** al pie.

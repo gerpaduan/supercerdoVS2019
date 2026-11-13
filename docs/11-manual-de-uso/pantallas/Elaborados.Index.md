@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-11-12
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Listado de los **elaborados registrados** (por sucursal y fechas) con el total de kilos, la cantidad de elaborados mostrados y un detalle desplegable de cada uno.
@@ -30,6 +30,10 @@ En el detalle de un registro, si el producto tiene una fórmula [secreta](ayuda:
 
 ## Resto de la pantalla
 PENDIENTE: documentar la vista completa y las acciones de fila (no verificado contra el código en esta revisión).
+
+## En una ventana angosta con mouse (desde el 2026-11-13)
+- Con el navegador o la ventana independiente **angostos** (menos de 1200 píxeles) y mouse, los filtros (*Sucursal*, *Nombre elaborado*, *Fecha desde*, *Fecha hasta* y *Buscar*) se acomodan en dos renglones compactos, con la etiqueta arriba de cada campo, y *Total Kg*, *mostrados* y *Ver detalles* quedan en una sola línea. Así la lista gana lugar.
+- El aviso de filtros sin aplicar sale solo cuando hace falta (y *Buscar* se pone ámbar). En celular y tablet no cambia nada.
 
 ## En el celular
 - En pantallas angostas (celular) cada elaborado se ve como **tarjeta**: arriba el **nombre y el código**, después fecha, sucursal, **cantidad**, quién lo creó, y el estado y las observaciones si los tiene. No hace falta desplazarse de costado.

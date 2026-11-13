@@ -1013,6 +1013,8 @@
     <script src="~/Scripts/app/ayuda.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/sin-rueda-numerica.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @* Ventana independiente: se cierra sola al guardar (Movimientos / Stock / Elaborados). Antes de los avisos de abajo (layoutAlertClosed). *@
+    <script src="~/Scripts/app/ventana-trabajo.js" asp-append-version="true"></script>
     @if (esAdmin && WebCore.Helpers.PosBorradorSettings.Habilitado)
     {
         @* Modal global de detalle de advertencias (lo abre la campana y /Actividades) + token antiforgery

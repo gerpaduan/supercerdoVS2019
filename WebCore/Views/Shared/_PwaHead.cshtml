@@ -17,3 +17,5 @@
 <link rel="manifest" href="@Url.Content("~/" + archivoManifest)" />
 <link rel="apple-touch-icon" href="@Url.Content("~/Content/img/pwa-192.png")" />
 <meta name="theme-color" content="#062d63" />
+@* Instalador de mini-apps: solo actua con ?instalar=1 (tarjetas de Utilidades). Va en el head para capturar beforeinstallprompt antes de que se dispare. *@
+<script src="~/Scripts/app/pwa-instalar.js" asp-append-version="true"></script>

@@ -138,9 +138,16 @@
         if (state.stayOnPage) {
             return;
         }
-        if (state.redirectUrl) {
-            window.location.href = state.redirectUrl;
+        var irAlListado = function () {
+            if (state.redirectUrl) {
+                window.location.href = state.redirectUrl;
+            }
+        };
+        // Ventana independiente (2026-11-13): tras cerrar el modal la ventana se cierra sola; si el navegador no deja, vuelve al listado como antes.
+        if (window.VentanaTrabajo && window.VentanaTrabajo.cerrarVentana(irAlListado)) {
+            return;
         }
+        irAlListado();
     }
 
     function abrirNuevaVentana(url) {

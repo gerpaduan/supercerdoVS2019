@@ -19,7 +19,7 @@
     @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila (fechas primero) y debajo una barra con
        Total Kg, estado, "Ver detalles" y todos los botones (Ingreso ... Ver eliminados); las tarjetas de botones se disuelven
        (fc-contents). Por debajo de 1200 px conserva el orden de siempre. Estilos en Shared/_FiltrosCompactosStyles. *@
-    <div class="fc-top stock-top">
+    <div class="fc-top fc-angosto stock-top">
     <div class="d-flex justify-content-end mb-3 fc-contents">
         <a class="btn btn-outline-primary stock-btn-lineas" href="@Url.Action("Lineas", "Stock", new { idSucursal = idSucursal, tipoCompra = tipoCompra, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })">
             <i class="fas fa-stream mr-1"></i> Ver lineas
@@ -233,6 +233,26 @@
         body.app-shell .stock-top > .fc-estado.fc-estado-pendiente {
             order: 9;
             flex: 0 0 100%;
+        }
+    }
+
+    /* Escritorio angosto (< 1200 px con mouse, 2026-11-13; ver el bloque homonimo de _FiltrosCompactosStyles): las tarjetas de botones se
+       disuelven y sus botones (Ingreso ... Ajuste, Ver lineas, Ver eliminados) quedan en renglones compactos arriba de los filtros. */
+    @@media (max-width: 1199.98px) and (hover: hover) and (pointer: fine) {
+        body.app-shell .stock-top.fc-angosto .stock-acciones-card .card-body,
+        body.app-shell .stock-top.fc-angosto .stock-acciones-grid {
+            display: contents;
+        }
+
+        body.app-shell .stock-top.fc-angosto .stock-action-btn,
+        body.app-shell .stock-top.fc-angosto .stock-btn-lineas {
+            flex: 1 1 auto;
+            width: auto;
+            min-height: 1.95rem;
+            margin-left: 0 !important;
+            padding: .15rem .5rem;
+            font-size: .8rem;
+            white-space: nowrap;
         }
     }
 

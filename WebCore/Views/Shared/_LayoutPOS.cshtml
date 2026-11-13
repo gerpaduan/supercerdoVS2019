@@ -239,6 +239,16 @@
             margin: 0;
         }
 
+        /* SweetAlert2 v11 (heightAuto por defecto) le agrega "swal2-height-auto" al elemento html y al body mientras hay un cartel
+           abierto, con "height: auto !important". Este layout depende de la cadena height:100% (body -> #pos-layout-content
+           -> .pos-page) con overflow hidden, asi que el carrito y el ingreso de producto colapsaban y desaparecian detras del
+           cartel. Se vuelve a fijar 100%; el selector "html body.…" tiene mas especificidad que el de la libreria, que se
+           inyecta en el head despues de este bloque de estilos (con igual especificidad ganaria ella). */
+        html.swal2-height-auto,
+        html body.swal2-height-auto {
+            height: 100% !important;
+        }
+
         #pos-layout-content {
             display: flex;
             flex-direction: column;

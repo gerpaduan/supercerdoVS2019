@@ -3123,6 +3123,9 @@
         });
 
         $form.on('submit.stock', function () {
+            // Ventana independiente (2026-11-13): el aviso de guardado sale en el listado (otra pagina); la marca le dice a ventana-trabajo.js que
+            // cierre la ventana cuando ese aviso se cierre.
+            if (window.VentanaTrabajo) window.VentanaTrabajo.marcarGuardado();
             detenerLecturaBalanza($form);
             rebuildHiddenInputs($form);
             var kgsMedias = $form.find('#KgsMedias');

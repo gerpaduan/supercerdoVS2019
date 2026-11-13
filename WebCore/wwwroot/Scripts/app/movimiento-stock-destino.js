@@ -24,6 +24,17 @@
     var NOMBRE_VENTANA = 'stockDestinoMovimiento';
     var FRACCION_VENTANA = 1 / 3;
 
+    // Ventana independiente angosta (ventana-angosta.js, 2026-11-13): el stock al lado SOLO cuando la ventana es lo bastante ancha, y la ventana NO se
+    // ensancha sola: lo hace el usuario con el boton "Ensanchar" (o arrastrando el borde). Ancho necesario = panel + carga minima + separacion.
+    var enVentanaAngosta = window.__ventanaAngosta === true;
+    var PANEL_REM = 39;                 // ancho del panel (pantalla-trabajo.css, --pt-mov-ancho-panel-stock)
+    var CARGA_MIN_PX = 480;             // lo minimo que necesita la carga (diseno angosto de movimientos-compacto.css)
+    var SEPARACION_Y_MARGENES_PX = 52;  // hueco entre columnas (12 px) + margenes de la pagina
+    var ESPERA_MEDIR_VENTANA_MS = 400;  // el navegador aplica el cambio de tamano un instante despues del resizeTo
+    var $btnEnsanchar = null;
+    var tamanoOriginal = null;          // { ancho, izquierda } de la ventana antes de ensancharla
+    var abrirPanelAlEnsanchar = false;  // el usuario eligio "Ensanchar la ventana" desde el aviso: al estar ancha se abre el panel
+
     var canalId = 'm' + Math.random().toString(36).slice(2, 12);   // solo letras y numeros (el servidor lo valida igual)
     var canal = new window.BroadcastChannel(PREFIJO_CANAL + canalId);
 
@@ -56,7 +67,8 @@
         return (cfg.url || '') + '?popup=true&modo=movimiento&idSucursal=' + id + '&canal=' + encodeURIComponent(canalId);
     }
 
-    function panelVisible() { return $layout.hasClass('mov-con-stock'); }
+    // En la ventana angosta .mov-con-stock queda fija (es su acomodo); el panel abierto se marca con .mov-stock-abierto.
+    function panelVisible() { return $layout.hasClass(enVentanaAngosta ? 'mov-stock-abierto' : 'mov-con-stock'); }
 
     // ---------- Panel ----------
 
@@ -73,7 +85,8 @@
     }
 
     function mostrarPanel(mostrar, recordar) {
-        $layout.toggleClass('mov-con-stock', mostrar);
+        if (!enVentanaAngosta) $layout.toggleClass('mov-con-stock', mostrar);
+        $layout.toggleClass('mov-stock-abierto', mostrar);
         $panel.toggleClass('d-none', !mostrar);
         $boton.attr('aria-pressed', mostrar ? 'true' : 'false').toggleClass('active', mostrar);
         if (mostrar) cargarFrame();
@@ -88,6 +101,98 @@
         // El stock pasa a la ventana: el panel se cierra para no consultarlo dos veces.
         if (panelVisible()) mostrarPanel(false, false);
         window.abrirVentanaIndependiente(urlStock(id), NOMBRE_VENTANA, { anchoFraccionPantalla: FRACCION_VENTANA });
+    }
+
+    // ---------- Ventana angosta: boton Ensanchar ----------
+
+    function remPx() { return parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16; }
+
+    // Ancho interior que necesita la ventana para ver el stock al lado de la carga.
+    function anchoNecesarioPx() { return Math.round(PANEL_REM * remPx() + CARGA_MIN_PX + SEPARACION_Y_MARGENES_PX); }
+
+    function anchoPantallaPx() { return (window.screen && (window.screen.availWidth || window.screen.width)) || 0; }
+
+    // Marco de la ventana (bordes y barra de titulo laterales): lo que separa el ancho exterior del interior.
+    function marcoPx() { return Math.max(0, window.outerWidth - window.innerWidth); }
+
+    function entraEnPantalla() {
+        var disponible = anchoPantallaPx();
+        return disponible <= 0 || anchoNecesarioPx() + marcoPx() <= disponible;
+    }
+
+    // Cuanto mas ancha tiene que quedar la ventana para que entren el stock y la carga, en % del ancho de hoy.
+    function porcentajeParaEnsanchar() {
+        return Math.max(0, Math.round((anchoNecesarioPx() / Math.max(window.innerWidth, 1) - 1) * 100));
+    }
+
+    function cambiarAncho(anchoExterior, izquierda) {
+        try {
+            window.resizeTo(anchoExterior, window.outerHeight);
+            window.moveTo(izquierda, window.screenY || 0);
+        } catch (e) {
+            console.error('No se pudo cambiar el tamano de la ventana', e);
+        }
+    }
+
+    // Ensancha lo justo para que entren los dos (tope: el ancho de la pantalla) y, si se saldria por la derecha, corre la ventana a la izquierda.
+    function ensancharVentana() {
+        var disponible = anchoPantallaPx();
+        var origen = (window.screen && window.screen.availLeft) || 0;
+        var objetivo = anchoNecesarioPx() + marcoPx();
+        if (disponible > 0) objetivo = Math.min(objetivo, disponible);
+        var izquierda = window.screenX || 0;
+        if (disponible > 0 && izquierda + objetivo > origen + disponible) izquierda = Math.max(origen, origen + disponible - objetivo);
+        if (!tamanoOriginal) tamanoOriginal = { ancho: window.outerWidth, izquierda: window.screenX || 0 };
+        var anchoAntes = window.outerWidth;
+
+        cambiarAncho(objetivo, izquierda);
+
+        window.setTimeout(function () {
+            if (window.outerWidth <= anchoAntes) {
+                abrirPanelAlEnsanchar = false;
+                avisar('No se pudo ensanchar sola', 'Ensanchá la ventana arrastrando el borde: para ver el stock al lado necesita unos ' + anchoNecesarioPx() + ' px de ancho.');
+            }
+            actualizarBotonEnsanchar();
+        }, ESPERA_MEDIR_VENTANA_MS);
+    }
+
+    function restaurarVentana() {
+        abrirPanelAlEnsanchar = false;
+        if (!tamanoOriginal) return;
+        cambiarAncho(tamanoOriginal.ancho, tamanoOriginal.izquierda);
+        tamanoOriginal = null;
+    }
+
+    function actualizarBotonEnsanchar() {
+        if (!$btnEnsanchar) return;
+        var ancha = window.innerWidth >= anchoNecesarioPx();
+        $btnEnsanchar.find('i').attr('class', 'fas ' + (ancha ? 'fa-compress-arrows-alt' : 'fa-arrows-alt-h'));
+        var titulo = ancha ? 'Volver al ancho de antes' : 'Ensanchar la ventana para ver el stock al lado (' + porcentajeParaEnsanchar() + ' % más ancha)';
+        $btnEnsanchar.attr({ title: titulo, 'aria-label': titulo });
+    }
+
+    // «Stock destino» con la ventana demasiado angosta: no se ensancha sola; se le pregunta al usuario.
+    function preguntarEnsanchar() {
+        if (!(window.Swal && typeof window.Swal.fire === 'function')) { abrirVentana(); return; }
+        var cabe = entraEnPantalla();
+        var texto = cabe
+            ? 'Para ver el stock al lado de la carga la ventana tiene que medir unos ' + anchoNecesarioPx() + ' px (hoy ' + window.innerWidth + ' px: ' +
+              porcentajeParaEnsanchar() + ' % más ancha).'
+            : 'Tu pantalla no alcanza para ver el stock al lado de la carga (hacen falta unos ' + (anchoNecesarioPx() + marcoPx()) + ' px). Podés abrirlo en otra ventana.';
+        window.Swal.fire({
+            title: 'El stock no entra con este ancho',
+            text: texto,
+            icon: 'info',
+            showConfirmButton: cabe,
+            confirmButtonText: 'Ensanchar la ventana',
+            showDenyButton: true,
+            denyButtonText: 'Abrir en otra ventana',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar'
+        }).then(function (r) {
+            if (r.isConfirmed) { abrirPanelAlEnsanchar = true; ensancharVentana(); }
+            else if (r.isDenied) abrirVentana();
+        });
     }
 
     // ---------- Mensajes ----------
@@ -140,6 +245,11 @@
 
     $boton.on('click', function () {
         if (panelVisible()) { mostrarPanel(false, true); return; }
+        if (enVentanaAngosta) {
+            if (window.innerWidth >= anchoNecesarioPx()) mostrarPanel(true, true);
+            else preguntarEnsanchar();
+            return;
+        }
         if (window.innerWidth >= ANCHO_DOS_COLUMNAS_PX) mostrarPanel(true, true);
         else abrirVentana();
     });
@@ -149,13 +259,34 @@
 
     // Si la ventana se achica por debajo de lo que permiten dos columnas, el panel se cierra (sin olvidar la eleccion: vuelve al agrandarla).
     $(window).on('resize', function () {
-        // Ventana independiente angosta (ventana-angosta.js): .mov-con-stock se usa solo por su acomodo y el panel no existe; no se toca.
-        if (window.__ventanaAngosta) return;
+        // Ventana independiente angosta: el panel se cierra si la ventana vuelve a quedar angosta y se abre solo si el usuario eligio
+        // «Ensanchar la ventana» desde el aviso; el boton Ensanchar refleja el ancho de hoy.
+        if (enVentanaAngosta) {
+            var cabe = window.innerWidth >= anchoNecesarioPx();
+            if (panelVisible() && !cabe) mostrarPanel(false, false);
+            else if (!panelVisible() && cabe && abrirPanelAlEnsanchar) { abrirPanelAlEnsanchar = false; mostrarPanel(true, true); }
+            actualizarBotonEnsanchar();
+            return;
+        }
         if (panelVisible() && window.innerWidth < ANCHO_DOS_COLUMNAS_PX) mostrarPanel(false, false);
         else if (!panelVisible() && leerLS(CLAVE_PANEL) === '1' && window.innerWidth >= ANCHO_DOS_COLUMNAS_PX) mostrarPanel(true, false);
     });
 
     // ---------- Arranque ----------
+
+    if (enVentanaAngosta) {
+        // Boton «Ensanchar» (solo icono) a la izquierda de pantalla completa. Un clic ensancha lo justo para que entren el stock y la carga; si la
+        // ventana ya esta ancha, la vuelve al tamano de antes.
+        $btnEnsanchar = $('<button type="button" class="btn btn-outline-secondary" id="btnEnsancharVentana" data-edit-readonly-ignore="true"><i class="fas fa-arrows-alt-h"></i></button>');
+        var $pantallaCompleta = $('#btnPantallaCompleta');
+        if ($pantallaCompleta.length) $btnEnsanchar.insertBefore($pantallaCompleta);
+        else $('.mov-barra-grupo-der').append($btnEnsanchar);
+        $btnEnsanchar.on('click', function () {
+            if (window.innerWidth >= anchoNecesarioPx()) restaurarVentana();
+            else ensancharVentana();
+        });
+        actualizarBotonEnsanchar();
+    }
 
     if (leerLS(CLAVE_PANEL) === '1' && window.innerWidth >= ANCHO_DOS_COLUMNAS_PX) mostrarPanel(true, false);
 })(window.jQuery, window);

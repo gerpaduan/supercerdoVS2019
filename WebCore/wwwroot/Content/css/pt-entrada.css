@@ -574,3 +574,32 @@ html.ventana-angosta body.app-shell .pantalla-trabajo [id^="btnVerBorradores"].b
 .pantalla-trabajo[data-pt="stock"] #FechaCompra {
     font-weight: 700;
 }
+
+/* --- Ingreso rapido / Desarme (Elaborados/EditarIngresoRapido): foco verde en los campos (2026-11-13) ---
+   Misma regla que el resto de las pantallas de trabajo: borde + aura verdes en cualquier campo con el cursor (tambien «Cantidad a elaborar» cuando es de
+   solo lectura por la balanza). Esta pantalla no es una .pantalla-trabajo, por eso se engancha en su propio data-elaborados-page. */
+[data-elaborados-page="ingreso-rapido-edicion"] {
+    --foco-verde: #16a34a;
+    --foco-verde-suave: rgba(22, 163, 74, .32);
+    --foco-verde-fondo: #f2fcf5;
+}
+
+html.dark-mode [data-elaborados-page="ingreso-rapido-edicion"] {
+    --foco-verde: #4ade80;
+    --foco-verde-suave: rgba(74, 222, 128, .38);
+    --foco-verde-fondo: #12281b;
+}
+
+body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] :is(input.form-control, select.form-control, textarea.form-control, .custom-select):focus {
+    border-color: var(--foco-verde) !important;
+    box-shadow: 0 0 0 .24rem var(--foco-verde-suave) !important;
+    outline: 0;
+}
+
+body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] :is(input.form-control, select.form-control, textarea.form-control):focus:not([readonly]) {
+    background-color: var(--foco-verde-fondo);
+}
+
+body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .form-group:focus-within > label {
+    color: var(--foco-verde);
+}

@@ -3299,8 +3299,9 @@ else
             function mostrarBloqueoSalidaPOS() {
                 Swal.fire({
                     icon: "warning",
-                    title: "No puede salir con una venta en curso",
-                    text: 'Debe presionar "Cancelar Venta".'
+                    title: "Hay una venta en curso",
+                    // Aclara que Cancelar Venta descarta la venta y que la alternativa es guardarla antes de salir.
+                    text: 'Si presiona "Cancelar Venta" se pierden los datos de esta venta. Si quiere conservarla, guárdela primero y recién después salga.'
                 });
             }
 

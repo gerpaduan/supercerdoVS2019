@@ -5,10 +5,13 @@ rol: usuario
 modulo: Elaborados
 orden: 3
 permiso: Elaborado.IngresoEmbutidoRapido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-12
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Registrar un elaborado (o desarmarlo) cargando **solo la cantidad final**: el sistema calcula los ingredientes con la fórmula del producto y los guarda. Se llega desde *Elaborados → Ingreso rápido* (o *Desarme de elaborado*) eligiendo un producto, o abriendo un registro existente desde el listado.
+
+## Cursor al abrir (2026-11-13)
+Al abrir un Ingreso rápido o un Desarme **nuevo**, el cursor queda en **Cantidad a elaborar** (o *a desarmar*): escribís (o llega el peso de la balanza) y **Enter guarda**. Si el registro ya existe o está anulado, no se mueve. El sistema insiste unos segundos porque otras partes de la pantalla le sacaban el foco al cargar; deja de insistir apenas tocás algo.
 
 ## Fórmula secreta
 Si la fórmula del producto es [secreta](ayuda:concepto/formula-secreta), el panel **Fórmula calculada** no muestra ingredientes ni porcentajes y la **Receta** está oculta. Se ve el aviso *"La fórmula de este elaborado es secreta. Los ingredientes se calculan y se descuentan automáticamente al guardar"* y el botón **Ver fórmula**.

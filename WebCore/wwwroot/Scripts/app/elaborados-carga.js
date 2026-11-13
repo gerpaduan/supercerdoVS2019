@@ -29,6 +29,13 @@
         var destination = redirectUrl || '/Elaborados';
         permitirSalidaSinAdvertencia();
 
+        // Ventana independiente (2026-11-13): al cerrar el aviso la ventana se cierra sola; si el navegador no deja, va al listado como antes.
+        var irADestino = function () {
+            var irAlListado = function () { window.location.href = destination; };
+            if (window.VentanaTrabajo && window.VentanaTrabajo.cerrarVentana(irAlListado)) return;
+            irAlListado();
+        };
+
         if (window.Swal && typeof window.Swal.fire === 'function') {
             Swal.fire({
                 icon: 'success',
@@ -40,15 +47,11 @@
                 confirmButtonText: 'OK',
                 allowOutsideClick: false,
                 returnFocus: false
-            }).then(function () {
-                window.location.href = destination;
-            });
+            }).then(irADestino);
             return;
         }
 
-        window.setTimeout(function () {
-            window.location.href = destination;
-        }, 2000);
+        window.setTimeout(irADestino, 2000);
     }
 
     function parseDecimal(value) {

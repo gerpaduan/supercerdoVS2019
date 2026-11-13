@@ -228,6 +228,44 @@ body.dark-mode {
     body.dark-mode .det-vinc .det-caja .t { color: #7dd3e0; }
 }
 
+/* ===== Listado en escritorio ANGOSTO (2026-11-13): ventana independiente o navegador de 768-1199 px con mouse =====
+   Con los anchos de arriba (min-width 62rem, Sucursal 22 y Accion 25 caracteres) la tabla de Stock no entraba: el ID se partia digito por
+   digito ("10 04 81 3"), la fecha de Creado en 3 renglones y quedaba scroll horizontal. Aca la tabla pierde el piso de ancho, Sucursal y
+   Accion reservan menos, y el ID y la fecha de Creado no se parten (el usuario va debajo, como siempre). Aplica a todo .tc-indice
+   (Stock, Movimientos, Elaborados); celular y tablet (sin mouse) conservan lo de arriba. */
+@media (min-width: 768px) and (max-width: 1199.98px) and (hover: hover) and (pointer: fine) {
+    :root { --tc-pad-idx: .76rem; }   /* celdas con .38rem de cada lado en vez de .5rem (ver abajo) */
+
+    table.tc-indice { min-width: 0; }
+    table.tc-indice .tc-suc { width: calc(13ch + var(--tc-pad-idx)); }
+    table.tc-indice .tc-prod { width: calc(14ch + var(--tc-pad-idx)); }
+
+    /* Letra .04 rem menor que la de escritorio ancho (.84 rem): sin esto la tabla de Stock pasa ~20 px del ancho de una ventana de 930 px
+       y aparece el scroll horizontal. !important por el font-size que fija cada pantalla (ej. .stock-index-page .tabla-full .table). */
+    table.tc-indice.table { font-size: .8rem !important; }
+
+    /* !important: cada pantalla fija el padding de sus celdas con mas especificidad (ej. .stock-index-page .tabla-full .table td). */
+    table.tc-indice > thead > tr > th,
+    table.tc-indice > tbody > tr > td {
+        padding-left: .38rem !important;
+        padding-right: .38rem !important;
+    }
+
+    /* Sucursal / Origen / Destino en una sola linea (con 13 caracteres entran "San Lorenzo" y "San Martín"). */
+    table.tc-indice > tbody > tr > td.tc-suc {
+        overflow-wrap: normal;
+        white-space: nowrap;
+    }
+
+    /* El ID y la fecha de Creado no se parten: ganan el ancho que necesitan (nowrap pisa el overflow-wrap: anywhere de las celdas). */
+    table.tc-indice > tbody > tr > td.stock-id-cell,
+    table.tc-indice > tbody > tr > td.tc-fecha:not(.tc-fecha-seg),
+    table.tc-indice > tbody > tr > td .celda-creado-fecha {
+        overflow-wrap: normal;
+        white-space: nowrap;
+    }
+}
+
 /* Celular: el listado y las lineas son tarjetas (tabla-cards.css); la franja de chips y el pie de totales sobran. */
 @media (max-width: 767.98px) {
     .det-head,

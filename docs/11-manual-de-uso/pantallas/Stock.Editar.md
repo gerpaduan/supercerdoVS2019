@@ -61,6 +61,16 @@ PENDIENTE: documentar los datos del encabezado, la carga de productos (código, 
 ## Datos del registro
 - En la pantalla de un registro ya guardado, **Creado** y **Actualizado** (con el usuario debajo de cada fecha) se muestran en un bloque compacto de dos columnas, con letra chica, para ocupar poca altura.
 
+## Modo solo lectura: cómo se ve que no se puede editar (2026-11-13)
+Al abrir un movimiento **ya guardado** la pantalla queda en **modo ver** y lo deja claro:
+- Arriba aparece la etiqueta gris **Solo lectura** y, a su lado, un botón azul **Modificar** (el mismo que el de abajo a la derecha; los dos hacen lo mismo).
+- El cuadro **Agregar producto** (Código, Producto, Cantidad, balanza, teclado) **no se muestra**: no hay dónde escribir. En su lugar queda una franja que dice *«Estás viendo este registro. Para cambiarlo, presioná Modificar»* y los botones que siguen funcionando en modo ver (**Ver acumulados**, **Ver Porc(%)**).
+- **Cambiar** la acción y su leyenda tampoco se muestran en modo ver.
+- Si igual intentás escribir (letras o números, por ejemplo con el lector de código de barras), sale un aviso *«Estás viendo este registro…»* y el botón **Modificar** late dos veces. El aviso no se repite antes de 3 segundos.
+- Al tocar **Modificar** vuelve el cuadro de carga y la etiqueta desaparece. Un movimiento **nuevo** no pasa por modo ver.
+- Si no tenés permiso para modificar, la etiqueta se ve igual, el botón **Modificar** queda apagado y el aviso dice solo *«Estás viendo este registro en modo lectura.»*
+- Lo hace `pantalla-trabajo.js` (sección 7) y `pantalla-trabajo.css` (sección 10), igual en Movimientos y Elaborados. **Verificado** solo en una maqueta con el CSS y el JS reales (Stock); PENDIENTE probarlo en las pantallas reales (también Movimientos con Stock destino y Elaborados).
+
 ## En la computadora (pantalla de 1200 px o más)
 Pensado para ver **20 líneas o más sin bajar con la rueda**: la tabla ocupa todo el alto de la ventana y crece a medida que cargás productos (en un alta nueva arranca chica); recién cuando llena la pantalla tiene su propio scroll. La página no se mueve. La tabla **termina donde empieza el pie** («© 2026 - CarniSys») y, cuando no entran todas las líneas, scrollea **solo por dentro**: la página no se mueve, así no hay dos barras de scroll. En una ventana de 1920 × 860 se ven unas **25 líneas** en un alta y unas **16** en una de 1524 × 686 (Full HD con Windows al 125 %). En un pesaje ya guardado con compra y pesajes vinculados la cabecera ocupa más y entran menos líneas a la vista.
 - **Datos del registro siempre a la vista, sin etiquetas:** Sucursal, Fecha, Acción, Proveedor, Cant.Medias y Kgs.Medias se ven siempre, en su lugar de siempre, sin la etiqueta de arriba (para ganar altura). El nombre de cada campo aparece al apoyar el mouse y, en Cant.Medias y Kgs.Medias, como texto dentro del campo vacío. «Solo productos», los botones de vincular y las cajas de compra o pesaje vinculado no cambian.
@@ -80,6 +90,7 @@ Pensado para ver **20 líneas o más sin bajar con la rueda**: la tabla ocupa to
 ## Abrir en una ventana independiente (computadora)
 El botón con el icono ↗ (arriba a la derecha, antes de *Pantalla completa*; solo con 1200 px o más) abre el stock en **otra ventana del navegador** sin menú lateral, sin barra superior y sin pie (el título empieza con **«Stock ·»**). Vuelve a estar visible desde el 2026-11-13 (estaba oculto desde el 2026-11-04) y es **el mismo comportamiento que Movimientos**:
 - **Tamaño:** **un tercio del ancho de la pantalla y todo el alto** (piso de 480 px); se abre centrada. Mismo diseño compacto que Movimientos: Sucursal / Fecha / Acción en un renglón con la etiqueta chica arriba, el cuadro azul **Agregar producto** en dos renglones, la tabla sin la columna *Creado* (la hora queda en el tooltip) y debajo Resumen (ítems y cantidad), Observaciones y los botones. «Stock sin guardar» queda como icono con el número.
+- **Se cierra sola al guardar (2026-11-13):** en la ventana independiente, después de guardar y cerrar el aviso «El movimiento de stock se registró correctamente» (sale en el listado y se cierra solo a los 2 s o con OK), la ventana **se cierra automáticamente** (antes volvía al listado dentro de la misma ventana). Si el navegador no deja cerrarla (por ejemplo, una pestaña común abierta con `?ventana=1`), se va al listado como antes.
 - **Quién opera:** como no hay barra superior, la barra de la pantalla muestra al lado de *Volver* el **usuario con sesión** y, si es la **cuenta de producción**, una etiqueta amarilla **«Operador: <nombre>»** con el operador elegido antes de entrar.
 - Si ya hay una ventana abierta de esta pantalla, se la trae al frente. Con cambios sin guardar el botón avisa y no abre (Movimientos sí puede pasar lo cargado).
 

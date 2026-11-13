@@ -781,14 +781,29 @@ body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-permitir-tecla {
 
 /* Ventana independiente angosta (2026-11-12): ventana-angosta.js hace que la ventana de un tercio del ancho use el diseno de escritorio (reglas @media
    y matchMedia evaluadas como 1366 px) y le agrega .mov-con-stock a .mov-layout para repetir el acomodo de la columna de carga con el Stock destino
-   abierto. El panel del stock no existe en esa ventana (queda con d-none): la grilla de dos columnas pasa a una sola, y el boton Stock destino no se
-   muestra (sin lugar para el panel; igual que cuando la ventana era angosta). */
-html.ventana-angosta body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock.pt-fill {
+   abierto. El panel del stock queda cerrado (d-none) hasta que el usuario lo pide con «Stock destino» (2026-11-13): sin el panel la grilla es de una
+   sola columna; con el panel abierto (.mov-stock-abierto, lo pone movimiento-stock-destino.js solo si la ventana es lo bastante ancha) vuelven las dos
+   columnas, con el panel en su ancho completo (39 rem: el tope de la mitad del ancho de escritorio lo dejaria angosto) y la carga a la derecha, en el
+   diseno angosto de mas abajo. «Stock destino» queda solo con el icono para no ocupar la barra. */
+html.ventana-angosta body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock.pt-fill:not(.mov-stock-abierto) {
     grid-template-columns: minmax(0, 1fr);
 }
 
-html.ventana-angosta #btnStockDestino {
-    display: none !important;
+html.ventana-angosta body.app-shell .pantalla-trabajo .mov-layout.mov-con-stock.pt-fill.mov-stock-abierto {
+    grid-template-columns: 39rem minmax(0, 1fr);
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo #btnStockDestino,
+html.ventana-angosta body.app-shell .pantalla-trabajo #btnEnsancharVentana {
+    font-size: 0;
+    padding-left: .55rem;
+    padding-right: .55rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo #btnStockDestino > i,
+html.ventana-angosta body.app-shell .pantalla-trabajo #btnEnsancharVentana > i {
+    font-size: .85rem;
+    margin: 0 !important;
 }
 
 /* Ventana angosta: ajustes de ancho (2026-11-12). Con ~500 px de ancho el diseno de escritorio necesita tres retoques para no salirse ni partir palabras:

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-11-12
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Ver los **movimientos de stock** de un período (ingresos, egresos, cierres, pesajes y ajustes) por sucursal, con el total de kilos, y cargar uno nuevo.
@@ -30,6 +30,11 @@ Ver los **movimientos de stock** de un período (ingresos, egresos, cierres, pes
 - **Fecha**, **Sucursal** y **Cantidad** se ven en negrita, igual que la **Acción**.
 - **Detalles** abre arriba una franja con el número de registro, la sucursal, la acción, quién lo creó y, si se cambió, quién lo modificó (**Ver Porc(%)** a la derecha en los pesajes). Las observaciones salen en un recuadro amarillo y la compra, el pesaje o el ajuste vinculados en cajas.
 - Debajo, las líneas con *Cód.* (15 caracteres), *Producto* (25), *Cantidad / kg* (8), el icono de **balanza** y la hora de carga; al pie, el **Total** de los kilos de las líneas.
+
+## En una ventana angosta con mouse (desde el 2026-11-13)
+- Con el navegador o la ventana independiente **angostos** (menos de 1200 píxeles) y mouse, los botones (*Ver lineas*, *Ver eliminados*, *Ingreso*, *Egreso*, *Cierre*, *Pesaje*, *Ajuste*) pasan a renglones compactos y los filtros (*Sucursal* y *Acción*, *Desde*, *Hasta* y *Buscar*) también, con la etiqueta a la izquierda del campo. *Total Kg* y *Ver detalles* quedan en una sola línea. Así la lista gana lugar.
+- La **lista** también se ajusta: las columnas reservan menos ancho, la letra es un poco menor y el *ID*, la *Fecha* y la fecha de *Creado* no se parten en varios renglones. En una ventana de ~930 píxeles de ancho entra sin barra de desplazamiento horizontal.
+- El aviso de fechas sin aplicar sale solo cuando hace falta (y *Buscar* se pone ámbar). En celular y tablet no cambia nada.
 
 ## En el celular
 - En pantallas angostas (celular y tablet) la pantalla se ve como antes: **Ver lineas** y **Ver eliminados** arriba, los cinco botones de acción en un recuadro, filtros apilados y, debajo, el **Total Kg** y **Ver detalles**.

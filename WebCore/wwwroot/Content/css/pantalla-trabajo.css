@@ -1339,3 +1339,141 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
         background: var(--pt-prod-soft);
     }
 }
+
+/* ---- 10. Modo solo lectura (pedido 2026-11-13) ----
+   Al VER un registro guardado (edit-readonly.js deja .edit-readonly-active en el <form>) el cuadro "Agregar producto" no tiene nada que hacer:
+   se esconde (visibility + alto 0, NO display:none: jQuery lo sigue contando como visible y el foco inicial de edit-readonly.js al tocar
+   "Modificar" cae en el mismo campo de siempre). Chip, boton Modificar y franja de aviso los crea pantalla-trabajo.js (seccion 7) y se ven con
+   .pt-solo-lectura en la raiz. Vale en todos los anchos; los selectores llevan body.app-shell para ganarle a las reglas de escritorio de arriba. */
+.pt-lectura-chip,
+.pt-lectura-modificar,
+.pt-lectura-barra {
+    display: none;
+}
+
+/* El doble .pt-box-agregar sube la especificidad: las reglas del cuadro (Stock / Movimientos) traen su propio border !important. */
+body.app-shell .pantalla-trabajo[data-pt] form.edit-readonly-active .pt-box-agregar.pt-box-agregar {
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    flex: 0 0 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-width: 0 !important;
+    overflow: hidden !important;
+}
+
+body.app-shell .pantalla-trabajo form.edit-readonly-active .pt-sec-agregar {
+    display: none !important;
+}
+
+/* Stock: "Cambiar" la accion y su leyenda no se pueden usar en modo ver; la leyenda ("se desbloquea al presionar cambiar") confunde con Modificar. */
+body.app-shell .pantalla-trabajo form.edit-readonly-active #btnHabilitarTipoCompra,
+body.app-shell .pantalla-trabajo form.edit-readonly-active .stock-hint-accion {
+    display: none !important;
+}
+
+body.app-shell .pantalla-trabajo form.edit-readonly-active #TipoCompraVisual {
+    border-top-right-radius: .25rem;
+    border-bottom-right-radius: .25rem;
+}
+
+/* Los campos bloqueados no muestran el halo de "listo para escribir" ni el cursor de texto. */
+body.app-shell .pantalla-trabajo form.edit-readonly-active .edit-readonly-field {
+    cursor: default;
+}
+
+body.app-shell .pantalla-trabajo form.edit-readonly-active .edit-readonly-field:disabled {
+    cursor: not-allowed;
+}
+
+body.app-shell .pantalla-trabajo form.edit-readonly-active .form-control:focus {
+    box-shadow: none !important;
+}
+
+.pt-solo-lectura .pt-lectura-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .3rem .7rem;
+    border: 1px solid #94a3b8;
+    border-radius: 1rem;
+    background: #e2e8f0;
+    color: #1e293b;
+    font-size: .8rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+/* En Elaborados la barra tiene mb-2 en sus botones: el chip se alinea igual. */
+.pt-solo-lectura[data-pt="elab"] .pt-lectura-chip {
+    margin-bottom: .5rem;
+}
+
+.pt-solo-lectura .pt-lectura-modificar {
+    display: inline-flex;
+    align-items: center;
+}
+
+.pt-solo-lectura[data-pt="elab"] .pt-lectura-modificar {
+    margin-bottom: .5rem;
+}
+
+.pt-solo-lectura .pt-lectura-barra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-bottom: .5rem;
+    padding: .35rem .75rem;
+    border: 1px solid #cbd5e1;
+    border-left: 4px solid #64748b;
+    border-radius: .4rem;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: .85rem;
+}
+
+.pt-lectura-texto > i {
+    margin-right: .25rem;
+}
+
+.pt-lectura-acciones {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+@keyframes pt-lectura-pulso {
+    0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, .65); }
+    70% { box-shadow: 0 0 0 .6rem rgba(0, 123, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+}
+
+/* Late dos veces cuando el usuario intenta escribir en modo ver (pantalla-trabajo.js, avisarModoLectura). */
+.pt-lectura-pulso {
+    animation: pt-lectura-pulso .6s ease-out 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pt-lectura-pulso {
+        animation: none;
+        outline: 3px solid rgba(0, 123, 255, .6);
+    }
+}
+
+html.dark-mode .pt-solo-lectura .pt-lectura-chip {
+    border-color: #64748b;
+    background: #334155;
+    color: #e2e8f0;
+}
+
+html.dark-mode .pt-solo-lectura .pt-lectura-barra {
+    border-color: #475569;
+    border-left-color: #94a3b8;
+    background: #1e293b;
+    color: #cbd5e1;
+}
