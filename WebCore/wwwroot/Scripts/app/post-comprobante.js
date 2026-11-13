@@ -6,6 +6,7 @@
 //
 // PostComprobanteModal.open({
 //   titulo, mensaje,                       // textos del encabezado y de la pregunta (opcionales)
+//   resumen,                               // [{ etiqueta, valor }] filas de datos bajo el mensaje (opcional)
 //   ticketUrl, ticketPayloadUrl,           // HTML del ticket y payload del agente; se les agrega &mm=58|80
 //   pdfUrl,                                // PDF del comprobante (se abre en pestaña nueva)
 //   emailDatosUrl,                         // GET -> { ok, email, asunto, mensaje, msg }
@@ -191,6 +192,15 @@
 
             $('#pcTitulo').text(opciones.titulo || 'Guardado');
             $('#pcMensaje').text(opciones.mensaje || '¿Qué querés hacer ahora?');
+
+            // Resumen opcional: se arma con .text() (los valores vienen del servidor/usuario, nunca como HTML).
+            var $resumen = $('#pcResumen').empty();
+            var filas = $.isArray(opciones.resumen) ? opciones.resumen : [];
+            filas.forEach(function (fila) {
+                $('<dt class="col-5 mb-1"></dt>').text(fila.etiqueta).appendTo($resumen);
+                $('<dd class="col-7 mb-1"></dd>').text(fila.valor).appendTo($resumen);
+            });
+            $resumen.toggleClass('d-none', filas.length === 0);
             $('#btnPcTicket, #btnPcPdf, #btnPcEmail').prop('disabled', false);
             $('#btnPcTicket').toggleClass('d-none', !opciones.ticketUrl);
             $('#btnPcPdf').toggleClass('d-none', !opciones.pdfUrl);

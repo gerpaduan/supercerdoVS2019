@@ -225,6 +225,10 @@ En la factura electrónica, **Alt+R** registra la factura (Enter dentro de sus c
 ## Peso inestable de la balanza
 Con un producto pesable y la balanza conectada, si se aprieta **Enter** (o **Agregar**) mientras el peso todavía se mueve, el producto **no se agrega** y aparece debajo de **Cantidad**, en amarillo, «Peso inestable, espere y presione Enter»; el recuadro de Cantidad se marca en amarillo y **el cursor queda en Cantidad**. No se abre ninguna ventana. Cuando la balanza se queda quieta el aviso se borra solo: se vuelve a apretar **Enter** y el producto se agrega. Desde el 2026-11-10 (antes salía una ventana que había que cerrar). Igual en el POS de los puntos de expendio.
 
+## Apertura de caja: datos que se muestran (2026-11-12)
+- **Ventana «Apertura de Caja»** (aparece al entrar al POS sin caja abierta): muestra **Usuario operador**, **Sucursal**, **Fecha y hora** y el campo **Caja inicial** para cargar el monto. El operador es quien queda como responsable de la caja (con la cuenta de producción, el operador elegido, no la cuenta compartida).
+- **Ventana «Caja abierta»** (después de tocar **Abrir Caja**): repite como resumen **Usuario operador**, **Sucursal**, **Fecha y hora** y **Caja inicial**, y ofrece imprimir el ticket de apertura.
+
 ## Videos tutoriales del punto de venta
 Atajos que muestran los videos (verificados en el código el 2026-11-09):
 - **Código y Enter**: el cursor pasa a la cantidad. Con una **balanza** conectada, el peso entra solo; con el **lector de código de barras**, un producto con código EAN se agrega solo con cantidad 1. **Enter** sobre la cantidad agrega el producto.

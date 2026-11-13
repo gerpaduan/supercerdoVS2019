@@ -3808,6 +3808,9 @@ namespace WebCore.Controllers
             // el chip de fecha ahora es universal (click-to-reveal), ya no depende de un permiso.
             ViewBag.DiasLimitFechaVentaPOS = _param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0);
             ViewBag.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
+            // Operador que figura en el modal "Apertura de Caja": la caja se abre a su nombre (CajasController.AbrirCaja
+            // usa ResolverOperadorPOS), no al de la cuenta compartida de produccion.
+            ViewBag.OperadorAperturaNombre = operador?.Nombre ?? user.Nombre ?? "";
             ViewBag.IdSucursalPOS = user.IdSucursal;
             ViewBag.IdUsuarioPOS = user.Id;
             ViewBag.PosModoInstancia = modoPosNormalizado;

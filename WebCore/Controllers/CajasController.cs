@@ -1336,6 +1336,11 @@ namespace WebCore.Controllers
                 {
                     ok = true,
                     id = idCierreNuevo,
+                    // Resumen que muestra el modal "Caja abierta" (post-comprobante.js, opcion resumen).
+                    operador = operador?.Nombre ?? "",
+                    sucursal = nuevoCierre.Sucursal?.SucursalNombre ?? "",
+                    fecha = fechaApertura.ToString("dd/MM/yyyy HH:mm"),
+                    cajaInicial = cajaInicio_,
                     ticketUrl = Url.Action("ImprimirTicketApertura", "Cajas", new { idCierre = idCierreNuevo }),
                     ticketPayloadUrl = Url.Action("ImprimirTicketAperturaPayload", "Cajas", new { idCierre = idCierreNuevo })
                 });

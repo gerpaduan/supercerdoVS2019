@@ -1560,6 +1560,12 @@ else
                                     window.PostComprobanteModal.open({
                                         titulo: "Caja abierta",
                                         mensaje: "La caja se abrió correctamente. ¿Querés imprimir el ticket de apertura?",
+                                        resumen: [
+                                            { etiqueta: "Usuario operador", valor: r.operador || "-" },
+                                            { etiqueta: "Sucursal", valor: r.sucursal || "-" },
+                                            { etiqueta: "Fecha y hora", valor: r.fecha || fechaHora },
+                                            { etiqueta: "Caja inicial", valor: "$ " + Number(r.cajaInicial || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+                                        ],
                                         ticketUrl: r.ticketUrl,
                                         ticketPayloadUrl: r.ticketPayloadUrl,
                                         id: r.id,
