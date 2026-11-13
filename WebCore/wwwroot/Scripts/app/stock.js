@@ -184,6 +184,14 @@
         }, 20);
     }
 
+    // Cantidad con el foco SIEMPRE (2026-11-13, igual que Kgs. en Movimientos): con la balanza activa el campo es de solo lectura y focusCantidadManual no
+    // lo enfoca, pero igual tiene que recibir el cursor para que Enter registre la linea (Codigo, Enter -> Cantidad, Enter -> registra).
+    function enfocarCantidad($form) {
+        window.setTimeout(function () {
+            $form.find('#txtCantKgs').focus().select();
+        }, 20);
+    }
+
     function focusAgregarLinea($form) {
         window.setTimeout(function () {
             $form.find('#btnAgregarLineaStock').focus();
@@ -795,6 +803,8 @@
                 return String(linea.codigo || '').toLowerCase();
             case 'cantidad':
                 return toNumber(linea.cantKgs);
+            case 'balanza':
+                return linea.balanza ? 1 : 0;
             case 'creado':
             default:
                 var fecha = parseCreadoTexto(linea.creadoTexto);
@@ -919,7 +929,7 @@
         if (!$tbody.length) return;
 
         if (!state.lineas.length) {
-            $tbody.html('<tr class="js-empty-row"><td colspan="6" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
+            $tbody.html('<tr class="js-empty-row"><td colspan="7" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
             recalculate($form);
             rebuildHiddenInputs($form);
             syncSortHeadersStock($form);
@@ -929,7 +939,7 @@
         var visibles = getLineasVisibles($form);
 
         if (!visibles.length) {
-            $tbody.html('<tr class="js-empty-row"><td colspan="6" class="text-center text-muted">Sin resultados para la búsqueda.</td></tr>');
+            $tbody.html('<tr class="js-empty-row"><td colspan="7" class="text-center text-muted">Sin resultados para la búsqueda.</td></tr>');
             recalculate($form);
             rebuildHiddenInputs($form);
             syncSortHeadersStock($form);
@@ -951,10 +961,11 @@
 
             html += '<tr data-index="' + item.indiceOriginal + '">'
                 + '<td class="text-center font-weight-bold cc-solo-tabla">' + (item.indiceOriginal + 1) + '</td>'
-                + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.codigo || '') + '</td>'
+                // Codigo (2026-11-13): columna propia tambien en escritorio (antes solo en la tarjeta del celular, y en escritorio iba debajo del nombre).
+                // "Cód. " solo en la tarjeta del celular; en la tabla va el numero solo.
+                + '<td class="cc-l-cod"><span class="cc-solo-card">Cód. </span>' + escapeHtml(linea.codigo || '') + '</td>'
                 + '<td class="cc-l-prod"><strong>' + escapeHtml(linea.producto || '') + '</strong>'
-                + '<span class="cc-solo-card">' + etiquetasCelular + '</span>'
-                + '<span class="cc-solo-tabla"><br><small class="text-muted"><span class="pt-lbl-codigo">Código: </span>' + escapeHtml(linea.codigo || '') + '</small></span></td>'
+                + '<span class="cc-solo-card">' + etiquetasCelular + '</span></td>'
                 + '<td class="text-right cc-l-kg">' + formatNumber(linea.cantKgs, 3) + '</td>'
                 + '<td class="text-center cc-l-bal cc-l-ultimo"><span class="cc-solo-tabla">' + (linea.balanza ? '*' : '') + '</span>'
                 + '<i class="cc-solo-card fas fa-balance-scale ' + (linea.balanza ? 'text-primary' : 'cc-ico-off') + '" role="img" aria-label="' + textoBalanza + '" title="' + textoBalanza + '"></i></td>'
@@ -2321,7 +2332,8 @@
         $form.find('#txtCantKgs').val(normalized.pesoDisplay || normalized.pesoTexto || formatNumber(normalized.peso, 3));
         if (state.focusAgregarPendiente) {
             state.focusAgregarPendiente = false;
-            focusAgregarLinea($form);
+            // Antes el foco iba al boton "+"; ahora queda en Cantidad (de solo lectura con la balanza) y Enter registra la linea.
+            enfocarCantidad($form);
         }
     }
 
@@ -2417,6 +2429,7 @@
                 window.CarnisysBalanza.activar();
             }
             aplicarLecturaBalanza($form, data);
+            if (allowFocusManual) enfocarCantidad($form);
         });
     }
 
@@ -3105,6 +3118,8 @@
             }
             syncBalanzaStatusVisibility($form);
             syncCantidadReadonly($form);
+            // Tocar el icono de la balanza deja el cursor en Cantidad (igual que la tecla *).
+            enfocarCantidad($form);
         });
 
         $form.on('submit.stock', function () {
@@ -3253,8 +3268,10 @@
 
             if (e.key === '*' && tag !== 'textarea') {
                 e.preventDefault();
+                // 2026-11-13: la tecla * activa o desactiva la balanza y el foco va SIEMPRE a Cantidad (activar lo hace al terminar de verificar).
                 if ($form.find('#chkBalanzaLinea').is(':checked')) {
                     desactivarBalanzaManual($form);
+                    enfocarCantidad($form);
                 } else {
                     activarBalanzaManual($form);
                 }

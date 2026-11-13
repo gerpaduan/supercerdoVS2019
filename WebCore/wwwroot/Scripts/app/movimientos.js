@@ -826,7 +826,8 @@
                 var input = $codigo.get(0);
                 if (input && typeof input.setSelectionRange === 'function') {
                     var end = ($codigo.val() || '').toString().length;
-                    input.setSelectionRange(end, end);
+                    // El Codigo es <input type="number">: ahi setSelectionRange lanza InvalidStateError (el foco ya quedo puesto); no es un error real.
+                    try { input.setSelectionRange(end, end); } catch (e) { /* tipo sin seleccion */ }
                 }
             }, 30);
         }

@@ -1,0 +1,576 @@
+/* Carga de productos mas legible, foco verde, icono de balanza y tabla con Codigo propio en Stock/Editar y Elaborados/Carga (2026-11-13).
+   Es el mismo estilo que ya tiene Movimientos/Editar desde 2026-11-12 (movimientos-compacto.css, bloque "Carga de productos mas legible..."), repetido
+   aca para las otras dos pantallas de trabajo (.pantalla-trabajo[data-pt="stock" | "elab"]). Detalle y decisiones: docs/DECISIONS.md (2026-11-13).
+   Clases que ponen las vistas: .pt-input-codigo / .pt-input-cantidad (campos Codigo y Cantidad del cuadro de carga), .pt-balanza-toggle /
+   .pt-balanza-chk / .pt-balanza-btn / .pt-balanza-txt (icono de balanza; el checkbox sigue siendo el de siempre), .pt-th-cod (columna Codigo). */
+
+.pantalla-trabajo[data-pt="stock"],
+.pantalla-trabajo[data-pt="elab"] {
+    --foco-verde: #16a34a;
+    --foco-verde-suave: rgba(22, 163, 74, .32);
+    --foco-verde-fondo: #f2fcf5;
+    --bal-fondo: #e7f8ee;
+    --bal-borde: #5fbf86;
+    --bal-texto: #0b5a2c;
+    --bal-on: #198754;
+    --bal-on-fondo: rgba(25, 135, 84, .1);
+    --bal-off: #8a94a3;
+    --bal-off-borde: #c4cad3;
+}
+
+html.dark-mode .pantalla-trabajo[data-pt="stock"],
+html.dark-mode .pantalla-trabajo[data-pt="elab"] {
+    --foco-verde: #4ade80;
+    --foco-verde-suave: rgba(74, 222, 128, .38);
+    --foco-verde-fondo: #12281b;
+    --bal-fondo: #12281b;
+    --bal-borde: #2f8f58;
+    --bal-texto: #9af0bd;
+    --bal-on: #4ade80;
+    --bal-on-fondo: rgba(74, 222, 128, .12);
+    --bal-off: #7d8aa0;
+    --bal-off-borde: #3a4a63;
+}
+
+/* Texto fuerte en Codigo y Cantidad (el nombre del producto ya es negrita). */
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) :is(.pt-box-agregar, .elaborados-box-elaborado) :is(.pt-input-codigo, .pt-input-cantidad) {
+    font-weight: 800;
+    color: var(--ui-text, #1f2937);
+}
+
+/* Cantidad con la balanza activa: de solo lectura pero bien visible (fondo y borde verdes + icono de balanza a la derecha), no "apagado". */
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-box-agregar .pt-input-cantidad[readonly] {
+    background-color: var(--bal-fondo);
+    color: var(--bal-texto);
+    border-color: var(--bal-borde);
+    opacity: 1;
+    padding-right: 1.9rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 2v10M3 4.5h10M3 4.5L1.2 9.5h3.6zM13 4.5l-1.8 5h3.6zM5 14h6' stroke='%232f9e5f' fill='none' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .45rem center;
+    background-size: 1rem 1rem;
+}
+
+/* Foco verde: borde + aura verdes en cualquier campo de la pantalla (tambien el de solo lectura); la etiqueta del campo tambien se pinta. */
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) :is(input.form-control, select.form-control, textarea.form-control, .custom-select):focus {
+    border-color: var(--foco-verde) !important;
+    box-shadow: 0 0 0 .24rem var(--foco-verde-suave) !important;
+    outline: 0;
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) :is(input.form-control, select.form-control, textarea.form-control):focus:not([readonly]) {
+    background-color: var(--foco-verde-fondo);
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .form-group:focus-within > label {
+    color: var(--foco-verde);
+}
+
+/* Letra 1 punto mas grande en el cuadro de carga (solo escritorio), igual que Movimientos. El alto no cambia (interlineado fijo en 1.3). */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) :is(.pt-box-agregar, .elaborados-box-elaborado) :is(.pt-input-codigo, .pt-input-cantidad) {
+        font-size: calc(.81rem + 1pt);
+        line-height: 1.3;
+    }
+}
+
+/* Icono de balanza: verde activada / gris desactivada, con «Balanza» en chiquito. El checkbox queda invisible pero enfocable con el teclado. */
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-balanza-toggle {
+    position: relative;
+    display: inline-flex;
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-balanza-chk {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    pointer-events: none;
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-balanza-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.7rem;
+    height: 1.9rem;
+    margin: 0;
+    padding: .05rem .3rem;
+    box-sizing: border-box;
+    border: 1px solid var(--bal-off-borde);
+    border-radius: .8rem;
+    background: transparent;
+    /* !important: ui-refresh.css pinta todos los <label> con color: var(--ui-text) !important. */
+    color: var(--bal-off) !important;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-balanza-btn > i {
+    font-size: .95rem;
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-balanza-txt {
+    margin-top: .12rem;
+    font-size: .56rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-balanza-chk:checked + .pt-balanza-btn {
+    color: var(--bal-on) !important;
+    border-color: var(--bal-on);
+    background: var(--bal-on-fondo);
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-balanza-chk:focus-visible + .pt-balanza-btn {
+    box-shadow: 0 0 0 .2rem var(--foco-verde-suave);
+}
+
+body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-balanza-chk:disabled + .pt-balanza-btn {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* Tabla de lineas en escritorio: Codigo propio de 14 caracteres (14 digitos a 14 px, tabulares = ~109 px + relleno de la celda = 7.9 rem). Si el codigo es
+   mas largo (codigo de barras de 15+ digitos) sigue en el renglon de abajo en vez de pisar el nombre. Producto queda a continuacion, pegado a Cantidad. */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-tabla-wrap thead th.pt-th-cod {
+        width: 7.9rem !important;
+    }
+
+    body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-tabla-wrap tbody td.cc-l-cod {
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+
+    /* Encabezados ordenables: se ve que se puede hacer clic (Stock y Elaborados ya cambian la flecha y el resaltado al ordenar). */
+    body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-tabla-wrap thead th[data-sort-key] {
+        cursor: pointer;
+        user-select: none;
+    }
+}
+
+/* Fila de Agregar producto en escritorio: el icono de Balanza + Ver acumulados + teclado digital quedan en el MISMO renglon que los campos (como en Movimientos).
+   El grupo de campos baja su base de 36 a 32 rem (crece igual si hay lugar): con el interruptor de balanza (~90 px) ya se pasaba por poco en ventanas de
+   ~1366 px con el menu lateral y el teclado bajaba a un segundo renglon. Con el teclado desplegado no se aplica (vuelve el cuadro de siempre). */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-box-agregar:not(:has(.teclado-desplegado)) > .numeric-keypad-toggle-layout {
+        flex-basis: 32rem;
+    }
+
+    body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .d-flex > * {
+        align-self: flex-end;
+    }
+}
+
+/* Stock: con Codigo propio la tabla tiene una columna mas; para que Creado siga mostrando la fecha y hora completas (16 caracteres, ~137 px) se ajustan
+   #, Cantidad, Bal y Accion (medido a 1366 px con el menu lateral y el resumen a la derecha: la tabla mide ~720 px). */
+@media (min-width: 1200px) {
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:first-child { width: 2.5rem !important; }
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th.pt-th-num { width: 6.2rem !important; }
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:nth-child(5) { width: 3.5rem !important; }
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:last-child { width: 3.5rem !important; }
+}
+
+/* ===== Ventana independiente angosta (1/3 del ancho) de Stock y Elaborados (2026-11-13) =====
+   ventana-angosta.js hace que esa ventana use el diseno de escritorio (reglas @media y matchMedia evaluadas como 1366 px). Aca se acomoda lo que el
+   escritorio da por supuesto con ~1000 px de ancho: las dos columnas (carga + tabla / resumen) pasan a una sola y el resumen, Observaciones y los botones
+   quedan en una franja bajo la tabla (igual que Movimientos con el Stock destino abierto). Solo html.ventana-angosta. */
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-fila-principal {
+    flex-direction: column;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-fila-principal > .pt-col-izq {
+    flex: 1 1 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-col-izq > .pt-tabla-wrap {
+    min-height: 6rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-fila-principal > .pt-col-der {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-col-der > .pt-acciones {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    margin: .2rem 0 0 !important;
+    padding-top: 0;
+}
+
+/* --- Stock en la ventana angosta --- */
+/* Sucursal / Fecha / Accion en un renglon, con la etiqueta chica arriba de cada campo (el CSS de escritorio las oculta y las pasa a placeholder). */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 0 .4rem;
+    margin: 0;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos > [class*="col-"] {
+    flex: none;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    padding: 0;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos > [class*="col-"]:empty {
+    display: none;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos label:not(.custom-control-label) {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    border: 0;
+    font-size: .62rem;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--text-muted, #6b7686);
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos .form-control {
+    height: 1.9rem;
+    padding: .1rem .4rem;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+/* «Cambiar» queda solo con el icono y se saca el aviso de que la accion esta bloqueada (no hay lugar). */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-action-button {
+    font-size: 0;
+    padding: .1rem .45rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-action-button > i {
+    font-size: .8rem;
+    margin: 0 !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-hint-accion {
+    display: none;
+}
+
+/* Tabla: sin la columna Creado (la hora de carga queda en el tooltip del #) y anchos justos; Producto toma lo que sobra. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] #tablaLineasStock :is(thead th:nth-child(6), tbody td:nth-child(6)) {
+    display: none;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-tabla-wrap {
+    overflow-x: hidden !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-tabla-wrap table thead th {
+    padding: .2rem .25rem !important;
+    font-size: .62rem !important;
+    letter-spacing: 0 !important;
+    line-height: 1.15;
+    word-break: normal;
+    overflow-wrap: normal;
+    white-space: normal !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-tabla-wrap table tbody td {
+    padding: 0 .25rem !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:first-child { width: 1.6rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th.pt-th-cod { width: 4.9rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th.pt-th-prod { width: auto !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th.pt-th-num { width: 4.6rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:nth-child(5) { width: 2.6rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:last-child { width: 2.9rem !important; }
+
+html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-tabla-wrap tbody .btn-sm {
+    padding: .1rem .35rem;
+    font-size: .7rem;
+    line-height: 1.2;
+}
+
+/* Pie: Resumen en un renglon (items y cantidad), Observaciones y botones cada uno en el suyo. El usuario ya se ve en la barra de arriba. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-summary-card {
+    flex: 1 1 100%;
+    margin: 0 !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-summary-card .card-body {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: .25rem .7rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-summary-card .card-body > :is(h6, hr, .stock-resumen-pie) {
+    display: none;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-summary-card .card-body > .d-flex {
+    gap: .35rem;
+    font-size: .8rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-col-der > #txtAyudaCantidad:empty {
+    display: none;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-card-observaciones {
+    flex: 1 1 100%;
+    margin: .2rem 0 0 !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-card-observaciones .card-body {
+    display: flex;
+    align-items: center;
+    padding: .25rem .6rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-card-observaciones .form-group {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-card-observaciones textarea {
+    min-height: 1.9rem !important;
+    flex: 1 1 auto;
+}
+
+/* Stock en la ventana angosta (ajustes): campos de carga con Producto ancho, campos de la cabecera alineados abajo y Resumen en una sola linea. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-fila-datos {
+    align-items: end;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row {
+    grid-template-columns: 6.8rem minmax(0, 1fr) 5rem auto;
+    column-gap: .35rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-summary-card .card-body > :is(h6, hr, .stock-resumen-pie) {
+    display: none !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .stock-summary-card .card-body > .d-flex {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+/* --- Botones «... sin guardar» en la ventana angosta (Movimientos, Stock y Elaborados): solo icono y numero (el nombre queda en el tooltip) para dejar
+   lugar al usuario / operador en la barra. --- */
+html.ventana-angosta body.app-shell .pantalla-trabajo [id^="btnVerBorradores"] {
+    font-size: 0;
+    padding-left: .55rem;
+    padding-right: .55rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo [id^="btnVerBorradores"] > i {
+    font-size: .85rem;
+    margin: 0 !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo [id^="btnVerBorradores"] > .badge {
+    font-size: .7rem;
+    margin-left: .3rem !important;
+}
+
+/* --- Elaborados en la ventana angosta --- */
+/* Sin pestañas (la ventana es para cargar un elaborado); la barra queda en un renglon y sus botones sin el margen de abajo. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-fila-tabs > .elaborados-tabs-card {
+    display: none;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-barra-botones {
+    flex-wrap: nowrap;
+    margin-bottom: .4rem !important;
+    gap: .4rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-barra-botones .btn {
+    margin-bottom: 0 !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-barra-grupo-der {
+    flex-wrap: nowrap;
+    gap: .4rem;
+}
+
+/* Sucursal / Fecha (/ Creado) en un renglon con la etiqueta chica arriba; el Usuario no se muestra: ya esta en la barra de arriba. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-fila-datos {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-template-columns: none;
+    gap: 0 .4rem;
+    margin: 0;
+    align-items: end;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-fila-datos > [class*="col-"] {
+    flex: none;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    padding: 0;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-fila-datos > [class*="col-"]:nth-child(3):not(:last-child),
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-fila-datos:not(.elaborados-fila-datos-4) > [class*="col-"]:nth-child(3) {
+    display: none;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-fila-datos label:not(.custom-control-label) {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    border: 0;
+    font-size: .62rem;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--text-muted, #6b7686);
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-fila-datos .form-control {
+    height: 1.9rem;
+    padding: .1rem .4rem;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+/* Cuadros «1 Elaborado» y «2 Ingredientes»: sin etiquetas (el texto ya esta como placeholder de cada campo) y los campos en una grilla de una fila. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] :is(.elaborados-box-elaborado, .elaborados-box-ingredientes) .form-group > label:not(.custom-control-label):not(.invisible) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] :is(.elaborados-box-elaborado, .elaborados-box-ingredientes) .form-group {
+    margin-bottom: 0;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-box-elaborado .row {
+    display: grid;
+    grid-template-columns: 6.8rem minmax(0, 1fr);
+    column-gap: .35rem;
+    margin: 0;
+    align-items: end;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-box-elaborado .row > [class*="col-"] {
+    flex: none;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    padding: 0;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row {
+    display: grid;
+    grid-template-columns: 6.8rem minmax(0, 1fr) 5rem auto;
+    column-gap: .35rem;
+    margin: 0;
+    align-items: end;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-box-agregar:not(:has(.teclado-desplegado)) .numeric-keypad-toggle-fields .row > [class*="col-"] {
+    flex: none;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    padding: 0;
+}
+
+/* Tabla: Cod / Ingrediente (toma lo que sobra) / Cantidad / Balanza / Accion; sin la columna Costo (solo administradores, ya oculta). */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th:first-child { width: 1.6rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-cod { width: 4.9rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-prod { width: auto !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-num { width: 4.6rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-resto { width: 3.3rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th:last-child { width: 2.9rem !important; }
+
+/* Pie: Receta, Formula (totales), Observaciones y botones cada uno en su renglon y compactos. La tabla de la formula queda con altura limitada. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-col-der > :is(#bloqueRecetaCarga, .elaborados-summary-card, .elaborados-card-observaciones, .elaborados-obs-bloque) {
+    flex: 1 1 100%;
+    margin: 0 0 .25rem !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] #bloqueRecetaCarga {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .25rem .6rem !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] #bloqueRecetaCarga > .d-flex {
+    margin: 0 !important;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] #bloqueRecetaCarga > .form-group {
+    flex: 1 1 auto;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] #bloqueRecetaCarga textarea {
+    min-height: 1.9rem !important;
+    height: 1.9rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-summary-card .card-body {
+    padding: .3rem .7rem;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] #bloqueFormulaCarga {
+    max-height: 8rem;
+    overflow-y: auto;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] #adminCosteoCargaWrap {
+    display: none;
+}
+
+/* Sin etiquetas en la ventana angosta: el placeholder (que pantalla-trabajo.css pone transparente porque en escritorio la etiqueta siempre se ve) vuelve a verse. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] :is(#txtCodigoElaborado, #txtElaboradoNombre, #txtCodigoIngrediente, #txtIngredienteNombre, #txtKgIngrediente)::placeholder {
+    color: #a3acb9;
+    opacity: 1;
+}
+
+/* Botones «... sin guardar» compactos: mas especificidad que el .btn del tema (en Elaborados el boton lleva mb-2 y texto largo). */
+html.ventana-angosta body.app-shell .pantalla-trabajo [id^="btnVerBorradores"].btn {
+    font-size: 0;
+}
+
+/* Sucursal y Fecha de Stock en negrita, igual que en Elaborados y Movimientos (pantalla-trabajo.css, pedido 2026-11-11 para Elaborados): son los dos datos que
+   el operador confirma antes de cargar. Pedido 2026-11-13. */
+.pantalla-trabajo[data-pt="stock"] #IdSucursal,
+.pantalla-trabajo[data-pt="stock"] #FechaCompra {
+    font-weight: 700;
+}

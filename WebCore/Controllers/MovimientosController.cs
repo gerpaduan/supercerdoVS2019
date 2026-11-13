@@ -252,6 +252,12 @@ namespace WebCore.Controllers
                 model.PuedeHabilitarEdicion = true;
             }
 
+            // Quien esta operando ahora (2026-11-13): con la cuenta de produccion, el operador real elegido antes de entrar y no "User Produccion"
+            // (mismo criterio que Stock y Elaborados, docs/DECISIONS.md 2026-08-28). Lo muestra el campo Usuario y la barra de la ventana independiente
+            // (_QuienOpera.cshtml). Con un usuario comun no cambia nada.
+            if (user.EsUsuarioProduccion)
+                model.UsuarioNombre = ResolverUsuarioCreador(idUsuarioCreador, user)?.Nombre ?? model.UsuarioNombre;
+
             ViewBag.Title = model.EsEdicion ? "Modificar Movimiento" : "Nuevo Movimiento";
             ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;

@@ -5,7 +5,7 @@
    en un contenedor angosto, sin duplicar CSS. Se hace de dos maneras:
      1) las reglas @media de las hojas de estilo se reescriben (CSSMediaRule.media.mediaText);
      2) window.matchMedia se envuelve, asi el JS que decide por ancho (pantalla-trabajo.js, esEscritorio) coincide con el CSS.
-   Solo corre si: la pagina esta en modo ventana (clase html.modo-ventana, script del <head> de _Layout.cshtml), es Movimientos/Editar|Nuevo, la
+   Solo corre si: la pagina esta en modo ventana (clase html.modo-ventana, script del <head> de _Layout.cshtml), es Movimientos, Stock o Elaborados (Editar / Nuevo / Carga), la
    ventana mide menos de 1200 px y el dispositivo es de escritorio (mouse). Se carga SINCRONO al final del <head>, antes de pintar.
    Limite conocido: se decide al cargar; si despues se achica una ventana ancha, no se activa hasta recargar. */
 (function () {
@@ -19,9 +19,10 @@
     if (!matchMediaOriginal) return;
 
     var enModoVentana = document.documentElement.classList.contains('modo-ventana');
-    var esPantallaMovimiento = /\/Movimientos\/(Editar|Nuevo)(\/|$|\?)/i.test(location.pathname);
+    // Movimientos (2026-11-12) y, desde 2026-11-13, Stock y Elaborados (Nuevo / Modificar).
+    var esPantallaDeTrabajo = /\/(Movimientos\/(Editar|Nuevo)|Stock\/(Editar|Nuevo)|Elaborados\/Carga)(\/|$|\?)/i.test(location.pathname);
     var esEscritorioReal = matchMediaOriginal('(hover: hover) and (pointer: fine)').matches;
-    if (!enModoVentana || !esPantallaMovimiento || !esEscritorioReal || window.innerWidth >= ANCHO_ESCRITORIO_PX) return;
+    if (!enModoVentana || !esPantallaDeTrabajo || !esEscritorioReal || window.innerWidth >= ANCHO_ESCRITORIO_PX) return;
 
     window.__ventanaAngosta = true;
     document.documentElement.classList.add('ventana-angosta');

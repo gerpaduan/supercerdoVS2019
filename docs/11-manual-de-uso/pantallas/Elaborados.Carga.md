@@ -1,11 +1,11 @@
 ---
 pantalla: Elaborados.Carga
-titulo: Carga / ingreso de elaborado
+titulo: Nuevo Elaborado (carga manual)
 rol: usuario
 modulo: Elaborados
 orden: 2
 permiso: Elaborado.IngresoEmbutido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-12
+revisada: 2026-11-13
 ---
 ## Para qué sirve
 Registrar un elaborado cargando **a mano los ingredientes** (con su peso). Los ingredientes de la fórmula marcados como *Auto* se agregan solos al guardar, calculados como porcentaje de lo cargado a mano.
@@ -37,9 +37,11 @@ Pensado para ver **muchos ingredientes sin bajar con la rueda**: la tabla de ing
 - **Receta y Fórmula** a la derecha; **Observaciones** y los botones (**Modificar** o **Guardar**, **Anular**, **Cancelar**) quedan **al pie de la columna derecha**, siempre a la vista. **Observaciones** es una línea y se agranda al tocarla.
 - Con el **costeo** (administradores) la columna derecha es más alta y puede aparecer un scroll dentro de ella.
 - **Fila resaltada:** al pasar el mouse por una fila de las tablas (ingredientes, Fórmula y Ver acumulados) se pinta de azul tenue, para seguir el producto con su cantidad.
-- **Columna # y orden:** la tabla de ingredientes tiene una columna **#** con el número de carga (1, 2, 3…, no cambia al ordenar). Tocá el encabezado **#**, **Codigo**, **Ingrediente** o **Kilos** para ordenar de menor a mayor; tocalo otra vez para invertir (la flecha ↑/↓ marca la columna). El orden **no cambia el orden en que se guardan** las líneas.
+- **Balanza como icono:** el interruptor pasó a un **icono de balanza con «Balanza» en chiquito**, **verde** si está activada y **gris** si no (se toca, o con la tecla **`*`**, que la activa o desactiva y **deja el cursor en Cantidad**; tocar el icono hace lo mismo). Con la balanza activa, **Cantidad** queda de solo lectura pero bien visible (fondo verde con el peso); **Código y Cantidad** van en negrita y **todo campo con el cursor se marca con borde verde**. **Enter**: Código ↵ pasa a Cantidad y Cantidad ↵ **registra la línea** y vuelve a Código. En el celular el icono sigue oculto, como antes.
+- **Cursor al abrir (2026-11-13):** al abrir un registro **nuevo** el cursor queda en el **Código del cuadro «1 Elaborado»** (el producto final; con Enter pasa a los ingredientes). Si el registro ya existe (o la pantalla está en modo ver) no se mueve. El sistema insiste unos segundos porque otras partes de la pantalla (borradores, avisos) le sacaban el foco al cargar; deja de insistir apenas tocás algo. El Código del elaborado tiene el mismo estilo que el de los ingredientes (negrita, foco verde).
+- **Columna # y orden:** la tabla de ingredientes tiene una columna **#** con el número de carga (1, 2, 3…, no cambia al ordenar), **Código** (reserva **14 caracteres**), **Ingrediente** (pegado a Cantidad), **Cantidad** (antes *Kilos*), **Balanza** y **Acción**. Tocá cualquier encabezado (menos Acción) para ordenar de menor a mayor: **#**, **Código**, **Ingrediente**, **Cantidad** o **Balanza**; tocalo otra vez para invertir (la flecha ↑/↓ marca la columna). El orden **no cambia el orden en que se guardan** las líneas.
 - **Ver acumulados:** el modal también tiene **#** (orden en que se cargó por primera vez cada producto) y se ordena tocando **Codigo**, **Producto**, **Cantidad** o **Veces**. Al abrirlo arranca ordenado por **código**. En el modal, la columna **Veces** (la última) dice en cuántos ítems de la tabla está cargado ese producto: **×1** en gris es lo normal; **×2 o más** va en ámbar con ⚠ (posible carga duplicada). Tocando la fila (o con Enter) se despliegan las cargas una por una, con su **Ítem #** de la tabla principal, y al pie el total, que coincide con la fila. Arriba hay un resumen («N productos distintos en M ítems · ⚠ X repetidos») y el tilde **Solo repetidos** deja únicamente los repetidos. Al abrir el modal todo arranca cerrado y sin filtro. En celular, "Veces" va junto al código de cada tarjeta.
-- **Abrir en ventana:** El botón **Abrir en ventana** está **oculto por ahora** (pedido del 2026-11-04). La pantalla se sigue pudiendo usar sin menú si se instala como aplicación desde `https://carnisys.com` (*Instalar CarniSys …*; PENDIENTE: no se probó).
+- **Abrir en ventana (2026-11-13):** el botón con el icono ↗ (arriba a la derecha, antes de *Pantalla completa*; solo con 1200 px o más) abre el elaborado en **otra ventana del navegador** sin menú lateral ni barra superior (antes estaba oculto desde el 2026-11-04). Mide **un tercio del ancho de la pantalla y todo el alto** (piso de 480 px). Mismo diseño compacto que Movimientos: sin las pestañas, Sucursal / Fecha en un renglón con la etiqueta chica arriba (el Usuario no se repite: ya está en la barra), los cuadros **1 Elaborado** y **2 Ingredientes** con los campos en una fila, la tabla con columnas justas y debajo Receta, la Fórmula (con la tabla acotada a ~8 rem de alto y su scroll; sin «Mostrar costeo»), Observaciones y los botones. «Elaborados sin guardar» queda como icono con el número. **Quién opera:** la barra muestra el **usuario con sesión** y, si es la cuenta de producción, **«Operador: <nombre>»**.
 - **PENDIENTE (no medido):** modo oscuro y la tabla con el costeo de administrador abierto.
 
 ## En el celular

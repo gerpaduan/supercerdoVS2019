@@ -13,6 +13,61 @@
     display: none;
 }
 
+/* Quien opera (2026-11-13, _QuienOpera.cshtml): usuario con sesion y, con la cuenta de produccion, el operador real de la carga. Solo en la ventana
+   independiente (html.modo-ventana), que no tiene la barra superior con el nombre del usuario. Va en la barra de la pantalla, entre Volver y los botones de
+   la derecha; si no entra, se corta con «...» (el nombre completo queda en el tooltip). */
+.pt-quien {
+    display: none;
+}
+
+html.modo-ventana .pt-quien {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    padding: 0 .25rem;
+    font-size: .78rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--ui-text-muted, #4a5568);
+}
+
+html.modo-ventana .pt-quien > i {
+    flex: none;
+    color: var(--ui-text-muted, #6b7686);
+}
+
+html.modo-ventana .pt-quien-cuenta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 800;
+    color: var(--ui-text, #1f2937);
+}
+
+html.modo-ventana .pt-quien-operador {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: .05rem .5rem;
+    border: 1px solid #f0d38a;
+    border-radius: .8rem;
+    background: #fff4d6;
+    color: #6b4e00;
+}
+
+html.modo-ventana .pt-quien-operador > i {
+    color: #8a5a00;
+}
+
+html.dark-mode.modo-ventana .pt-quien-operador {
+    border-color: #7a5d12;
+    background: #3a2f10;
+    color: #f5d98a;
+}
+
 @media (min-width: 1200px) {
 
     /* ---- 1. Alto de la ventana: la pagina deja de scrollear y la tabla toma lo que sobra ---- */

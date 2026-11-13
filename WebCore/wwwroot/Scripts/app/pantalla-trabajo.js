@@ -224,7 +224,8 @@
     var NOMBRE_VENTANA = 'carnisys-trabajo-' + pantalla;
     // Boton "Abrir en ventana": oculto a pedido del usuario el 2026-11-04 y vuelto a mostrar el 2026-11-12 SOLO en Movimientos (en Stock y
     // Elaborados sigue oculto; el modo ventana funciona igual con las mini-apps ?ventana=1). Para sumar otra pantalla, agregar su data-pt aca.
-    var PANTALLAS_CON_BOTON_VENTANA = ['mov'];
+    // 2026-11-13: tambien Stock y Elaborados (el usuario pidio el mismo estilo que Movimientos en las tres).
+    var PANTALLAS_CON_BOTON_VENTANA = ['mov', 'stock', 'elab'];
     var MOSTRAR_BOTON_VENTANA = PANTALLAS_CON_BOTON_VENTANA.indexOf(pantalla) >= 0;
     // Tamano de la ventana (2026-11-12, pedido del usuario): UN TERCIO del ancho disponible de la pantalla y todo el alto, solo en escritorio
     // (el boton no existe en celular). Piso de 480 px para monitores chicos (con menos no entran los campos) y nunca mas que la pantalla.
@@ -318,23 +319,39 @@
         b.type = 'button';
         b.setAttribute('data-edit-readonly-ignore', 'true');
         b.addEventListener('click', abrirEnVentana);
-        var grupoDerecho = $1('.mov-barra-grupo-der', barra);
-        if (grupoDerecho) {
-            // Movimientos: solo icono, igual que pantalla completa, a su lado (a la izquierda de ella).
-            b.className = 'btn btn-outline-secondary pt-btn-ventana';
-            b.title = 'Abrir en una ventana independiente (sin menú lateral ni barra superior)';
-            b.setAttribute('aria-label', 'Abrir en ventana independiente');
-            b.innerHTML = '<i class="fas fa-external-link-alt"></i>';
-            var pantallaCompleta = $1('#btnPantallaCompleta', grupoDerecho);
-            if (pantallaCompleta) grupoDerecho.insertBefore(b, pantallaCompleta);
-            else grupoDerecho.appendChild(b);
-            return;
+        // Las tres pantallas: solo icono, igual que pantalla completa, a su lado (a la izquierda de ella). Elaborados tiene un mb-2 en sus botones.
+        b.className = 'btn btn-outline-secondary pt-btn-ventana' + (pantalla === 'elab' ? ' mb-2' : '');
+        b.title = 'Abrir en una ventana independiente (sin menú lateral ni barra superior)';
+        b.setAttribute('aria-label', 'Abrir en ventana independiente');
+        b.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+        var pantallaCompleta = $1('#btnPantallaCompleta', barra);
+        if (pantallaCompleta && pantallaCompleta.parentNode) pantallaCompleta.parentNode.insertBefore(b, pantallaCompleta);
+        else barra.appendChild(b);
+    }
+
+    // ---------- 6. Foco inicial ----------
+    // Al abrir un registro NUEVO el cursor queda en el campo Codigo (2026-11-13): Movimientos y Stock en el Codigo del producto; Elaborados en el
+    // Codigo del cuadro "Elaborado" (el producto final; despues del Enter pasa a los ingredientes). Se reintenta unas veces durante los primeros
+    // segundos porque otros scripts de la pagina (borradores, avisos, reacomodo de la pantalla) le sacaban el foco despues de cargar. Se deja de
+    // insistir apenas el usuario toca algo, si hay un cartel / modal abierto, si el campo es de solo lectura (modo ver) o si ya trae un valor
+    // (registro existente).
+    var CAMPO_FOCO_INICIAL = { mov: '#txtCodigoProducto', stock: '#txtCodigoProducto', elab: '#txtCodigoElaborado' }[pantalla];
+    var REINTENTOS_FOCO_MS = [0, 150, 400, 800, 1500, 2500];
+
+    function prepararFocoInicial() {
+        var campo = CAMPO_FOCO_INICIAL ? document.querySelector(CAMPO_FOCO_INICIAL) : null;
+        if (!campo) return;
+        var usuarioTocoAlgo = false;
+        ['mousedown', 'keydown', 'touchstart'].forEach(function (evento) {
+            document.addEventListener(evento, function () { usuarioTocoAlgo = true; }, true);
+        });
+        function intentar() {
+            if (usuarioTocoAlgo || campo.disabled || campo.readOnly || campo.value) return;
+            if (campo.offsetParent === null) return; // oculto
+            if (document.querySelector('.modal.show, .swal2-container')) return; // no se le roba el foco a un cartel abierto
+            if (document.activeElement !== campo) campo.focus();
         }
-        b.className = 'btn btn-outline-primary pt-btn-ventana';
-        b.title = 'Abrir esta pantalla en una ventana independiente (queda como una ventana más en la barra de tareas)';
-        b.innerHTML = '<i class="fas fa-external-link-alt mr-1"></i> Abrir en ventana';
-        var grupo = barra.firstElementChild && barra.firstElementChild.tagName === 'DIV' ? barra.firstElementChild : barra;
-        grupo.appendChild(b);
+        REINTENTOS_FOCO_MS.forEach(function (ms) { window.setTimeout(intentar, ms); });
     }
 
     // ---------- arranque ----------
@@ -346,6 +363,7 @@
     prepararPesajeStock();
     ubicarAcciones();
     actualizarFilas();
+    prepararFocoInicial();
     function alCambiarAncho() {
         ubicarAcciones();
         ubicarPesajeStock();

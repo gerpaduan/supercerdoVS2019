@@ -1,0 +1,24 @@
+@model string
+@inject WebCore.Services.IUsuarioSesionService Sesion
+@* Quien esta operando (2026-11-13): la ventana independiente (modo-ventana) no tiene barra superior, asi que el usuario con sesion y, si es la
+   cuenta de produccion, el operador real de esta carga se muestran en la barra de la pantalla. Fuera de la ventana independiente no se ve
+   (pantalla-trabajo.css: .pt-quien). Model = nombre del operador de la carga (Model.UsuarioNombre de Stock / Movimientos / Elaborados; con
+   produccion es el operador elegido antes de entrar, ver docs/DECISIONS.md 2026-08-28). *@
+@{
+    var cuenta = Sesion.UsuarioActual;
+    string operador = (Model ?? "").Trim();
+    bool esProduccion = cuenta != null && cuenta.EsUsuarioProduccion;
+    // Con produccion el operador es otra persona que la cuenta; si todavia no se eligio (vacio o igual a la cuenta) no se muestra.
+    bool mostrarOperador = esProduccion && operador.Length > 0 && !string.Equals(operador, cuenta.Nombre ?? "", StringComparison.OrdinalIgnoreCase);
+}
+@if (cuenta != null)
+{
+    <div class="pt-quien" title="@(esProduccion ? "Cuenta de producción: la carga queda a nombre del operador" : "Usuario con sesión iniciada")">
+        <i class="fas fa-user-circle" aria-hidden="true"></i>
+        <span class="pt-quien-cuenta">@cuenta.Nombre</span>
+        @if (mostrarOperador)
+        {
+            <span class="pt-quien-operador"><i class="fas fa-user-check" aria-hidden="true"></i> Operador: <b>@operador</b></span>
+        }
+    </div>
+}

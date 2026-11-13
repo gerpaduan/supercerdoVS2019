@@ -464,7 +464,7 @@ namespace WebCore.Controllers
             // Costeo (solo Usuario.Admin), ver docs/DECISIONS.md pedido 2026-09-21.
             model.EsAdmin = user.Admin;
 
-            ViewBag.Title = model.EsEdicion ? "Modificar elaborado" : "Carga / ingreso de elaborado";
+            ViewBag.Title = model.EsEdicion ? "Modificar elaborado" : "Nuevo Elaborado";
             ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();

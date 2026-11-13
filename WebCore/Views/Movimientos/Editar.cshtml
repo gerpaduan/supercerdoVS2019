@@ -43,6 +43,7 @@
                 <i class="fas fa-print mr-1"></i> Imprimir
             </button>
         }
+        @Html.Partial("~/Views/Shared/_QuienOpera.cshtml", Model.UsuarioNombre)
         @* Grupo de la derecha (2026-11-12): Volver (e Imprimir) quedan a la izquierda y el resto agrupado al otro extremo. El boton "Abrir en
            ventana" lo agrega pantalla-trabajo.js en este mismo grupo, antes de la pantalla completa. *@
         <div class="mov-barra-grupo-der">
@@ -53,8 +54,8 @@
             </button>
             @if (borradorGenericoHabilitado)
             {
-                <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresMovimientos">
-                    <i class="fas fa-clock-rotate-left mr-1"></i> Movimientos sin guardar
+                <button type="button" class="btn btn-outline-secondary" id="btnVerBorradoresMovimientos" title="Movimientos sin guardar">
+                    <i class="fas fa-history mr-1"></i> Movimientos sin guardar
                     <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
                 </button>
             }
@@ -925,6 +926,7 @@
     @* Escritorio compacto (2026-10-30): va DESPUES de numeric-keypad.css, que comparte con otras pantallas. *@
     <link rel="stylesheet" href="@Url.Content("~/Content/css/movimientos-compacto.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/pt-entrada.css")" asp-append-version="true" />
     <script src="@Url.Content("~/Scripts/app/pantalla-trabajo.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/pantalla-completa.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>

@@ -3,8 +3,8 @@
 ## 2026-11-12 - Elaborados: pestaña «Nuevo Elaborado» y selección de Ingreso rápido / Desarme con tarjetas
 
 - **Pedido:** (1) la pestaña «Carga / ingreso» pasa a llamarse «Nuevo Elaborado»; (2) mejorar la selección de Ingreso rápido: Enter elige el primero y mejor visual de los elaborados.
-- **Cambio:** `Controllers/ElaboradosController.cs` (título de la pestaña), `Views/Elaborados/IngresoRapido.cshtml` (grilla de tarjetas y estilos), `wwwroot/Scripts/app/elaborados-rapido.js` (`initLista`: filtro sin tildes, resaltado, Enter, flechas, Esc). Manual: `Elaborados.IngresoRapido.md`. Detalle: `docs/DECISIONS.md` (2026-11-12, «Ingreso rápido y Desarme (listado)»).
-- **Verificado:** compila; arnés estático en el navegador integrado (escritorio y celular). **Pendiente:** probar con login en la aplicación real (incluido Desarme y el modo oscuro). El título de la pantalla de carga sigue diciendo «Carga / ingreso de elaborado».
+- **Cambio:** `Controllers/ElaboradosController.cs` y `Views/Elaborados/Carga.cshtml` (título de la pestaña y de la pantalla), `Views/Elaborados/IngresoRapido.cshtml` (grilla de tarjetas y estilos), `wwwroot/Scripts/app/elaborados-rapido.js` (`initLista`: filtro sin tildes, resaltado, Enter, flechas, Esc). Manual: `Elaborados.IngresoRapido.md`. Detalle: `docs/DECISIONS.md` (2026-11-12, «Ingreso rápido y Desarme (listado)»).
+- **Verificado:** compila; arnés estático en el navegador integrado (escritorio y celular). **Pendiente:** probar con login en la aplicación real (incluido Desarme y el modo oscuro). El título de la pantalla de carga (barra superior y pestaña del navegador) también pasó a «Nuevo Elaborado» el mismo día.
 
 ## 2026-11-12 - Movimientos: aviso si el mismo movimiento (o un Nuevo) ya está abierto en otra pestaña
 
@@ -14,6 +14,13 @@
 - **Después (mismo día): Stock y Elaborados.** Stock avisa solo si el otro Nuevo es **de la misma acción** (si se cambia la acción en la pantalla se vuelve a chequear); Elaborados (Carga e Ingreso rápido/Desarme) **lista** lo abierto con «Traer este» por fila. `documento-abierto.js` suma `cambiarGrupo`, `modoLista`, `compatibilidad` y el detalle por fila; el bloqueo de una edición ya no depende del grupo. Tocados: `stock.js`, `elaborados-carga.js`, `elaborados-rapido.js` y las vistas `Stock/Editar`, `Elaborados/Carga`, `Elaborados/EditarIngresoRapido`. Manual: `Stock.Editar.md`, `Elaborados.Carga.md`, `Elaborados.EditarIngresoRapido.md`.
 - **Verificado (Stock y Elaborados):** pantalla real con usuario de prueba (borrado) y 3 a 4 pestañas (misma acción y acciones distintas, cambio de acción, Traer, Modificar con conflicto en Stock; lista con «Traer este» en Carga y en Ingreso rápido).
 - **Pendiente:** POS (el detector de `pos-multi-instance.js` parece no bloquear la 2.ª pestaña: confirmar en el navegador); *Modificar* con conflicto en Carga e Ingreso rápido; pestaña suspendida; instalación como app; correr `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-13 - Stock y Elaborados: mismo estilo que Movimientos, ventana a 1/3 y quién opera
+
+- **Pedido:** aplicar a Nuevo Stock y Nuevo Elaborado lo de Nuevo Movimiento (campos fuertes con foco verde, balanza como icono con `*` que deja el cursor en Cantidad, ventana independiente a un tercio del ancho), Código como columna propia de 14 caracteres con orden por todos los encabezados, «Kilos» → «Cantidad» en Elaborados, y mostrar usuario y operador en la ventana.
+- **Cambio:** `pt-entrada.css` (nuevo), `ventana-angosta.js`, `pantalla-trabajo.js`, `stock.js`, `elaborados-carga.js`, `Stock/Editar.cshtml`, `Elaborados/Carga.cshtml`, `Movimientos/Editar.cshtml`, `Shared/_QuienOpera.cshtml` (nuevo), `pantalla-trabajo.css`, `MovimientosController.cs` (el campo Usuario muestra al operador en producción). Ver `docs/DECISIONS.md` 2026-11-13.
+- **Después (mismo día):** al abrir un registro nuevo el cursor queda en Código en Movimientos, Stock y Elaborados (el del cuadro «Elaborado»); el Código del elaborado con el estilo del de los ingredientes; Sucursal y Fecha de Stock en negrita como Elaborados (`pantalla-trabajo.js`, `pt-entrada.css`, `Carga.cshtml`; `docs/DECISIONS.md` 2026-11-13 b).
+- **Pendiente:** abrir la ventana emergente real en el monitor del usuario; Elaborados con la cuenta de producción; modo oscuro y Pesaje en la ventana; unificar `pt-entrada.css` con `movimientos-compacto.css`.
 
 ## 2026-11-12 - Stock / Movimientos / Elaborados: columnas compactas, fuente fuerte, Origen/Destino con color y detalle en franja de chips
 

@@ -619,6 +619,7 @@
                 case 'producto': return String(linea.Producto || '').toLowerCase();
                 case 'codigo': return String(linea.Codigo || '').toLowerCase();
                 case 'cantKg': return toFloat(linea.CantKg);
+                case 'balanza': return linea.PesoBalanza ? 1 : 0;
                 case 'orden':
                 default: return indice;
             }
@@ -974,11 +975,19 @@
             syncIngredienteReadonly();
         }
 
+        // Cantidad (kg) con el foco SIEMPRE (2026-11-13, igual que Kgs. en Movimientos): tambien con la balanza activa (campo de solo lectura),
+        // para que Enter registre el ingrediente.
+        function enfocarKg() {
+            setTimeout(function () { $ingredienteKg.focus().select(); }, 20);
+        }
+
         function intentarLeerBalanza() {
             verificarBalanza(function (disponible, data) {
                 if (!disponible) {
                     $balanza.prop('checked', false);
+                    syncIngredienteReadonly();
                     showAlert('warning', 'Balanza', 'No hay balanza conectada.');
+                    enfocarKg();
                     return;
                 }
 
@@ -986,6 +995,7 @@
                     window.CarnisysBalanza.activar();
                 }
                 aplicarLecturaBalanza(data);
+                enfocarKg();
             });
         }
 
@@ -1454,6 +1464,8 @@
             }
             syncBalanzaStatusVisibility();
             syncIngredienteReadonly();
+            // Tocar el icono de la balanza deja el cursor en Cantidad (igual que la tecla *).
+            enfocarKg();
         });
 
         $(document).on('keydown.elaboradosCarga', function (e) {
@@ -1488,11 +1500,9 @@
 
             if (e.key === '*') {
                 e.preventDefault();
-                if ($balanza.is(':checked')) {
-                    $balanza.prop('checked', false);
-                } else {
-                    $balanza.prop('checked', true).trigger('change');
-                }
+                // 2026-11-13: antes, al desactivar solo se destildaba (sin 'change': el campo seguia de solo lectura). Ahora ambos casos pasan por
+                // 'change' (que sincroniza el solo-lectura y deja el cursor en Cantidad).
+                $balanza.prop('checked', !$balanza.is(':checked')).trigger('change');
             }
         });
 
