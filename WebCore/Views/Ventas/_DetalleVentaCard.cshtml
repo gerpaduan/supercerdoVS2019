@@ -196,6 +196,11 @@
             </div>
         </div>
 
+        @* Desglose de la forma de pago (2026-11-14): si fue mixta, cuanto en efectivo y cuanto en el otro medio. *@
+        <div class="mb-3">
+            <partial name="_FormaPagoDesglose" model="Model" />
+        </div>
+
         @if (tieneFacturaVenta || tieneNotaCreditoVenta)
         {
             <div class="alert alert-light border mb-3">

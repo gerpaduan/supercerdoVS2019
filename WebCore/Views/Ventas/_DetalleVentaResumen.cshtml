@@ -51,6 +51,9 @@
 
     <partial name="_VentaLineas" model="Model" view-data="viewDataLineas" />
 
+    @* Forma de pago: medio y, si fue mixta, cuanto en efectivo y cuanto en el otro medio (2026-11-14). *@
+    <partial name="_FormaPagoDesglose" model="Model" />
+
     @* Pie: total a la derecha y acciones a la izquierda desde 576px (estilos en _VentasExpandible.cshtml). *@
     <div class="vr-pie">
         <div class="vr-pie-total">

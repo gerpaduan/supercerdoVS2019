@@ -91,6 +91,108 @@
         color: #5fd08a;
     }
 
+    /* Bloque "Forma de pago" (_FormaPagoDesglose.cshtml, 2026-11-14): medio de pago y, si fue mixto, efectivo + otro medio. */
+    .fp {
+        margin: .5rem 0 .1rem;
+        padding: .45rem .6rem;
+        border: 1px solid var(--ui-border, #dee2e6);
+        border-radius: .5rem;
+        background: var(--ui-surface, #fff);
+        color: var(--ui-text, inherit);
+        font-size: .85rem;
+    }
+
+    .fp-tit {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        margin-bottom: .25rem;
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    .fp-tag {
+        padding: 0 .5rem;
+        border-radius: 99px;
+        font-size: .68rem;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0;
+        background: var(--ui-warning-soft, rgba(245, 158, 11, .14));
+        color: #7a4a0b;
+    }
+
+    html.dark-mode .fp-tag {
+        color: #f3c97a;
+    }
+
+    .fp-barra {
+        display: flex;
+        height: 6px;
+        margin: .3rem 0 .2rem;
+        border-radius: 99px;
+        overflow: hidden;
+        background: var(--ui-border, #e9ecef);
+    }
+
+    .fp-barra i {
+        display: block;
+    }
+
+    .fp-barra-otro {
+        background: #6c757d;
+    }
+
+    .fp-barra-efvo {
+        background: #198754;
+    }
+
+    .fp-fila {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .12rem 0;
+    }
+
+    .fp-ic {
+        flex: 0 0 1.4rem;
+        text-align: center;
+    }
+
+    .fp-n {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .fp-aclaracion {
+        color: var(--ui-text-muted, #6c757d);
+        font-size: .8rem;
+    }
+
+    .fp-i {
+        flex: 0 0 auto;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .fp-total {
+        margin-top: .2rem;
+        padding-top: .3rem;
+        border-top: 1px dashed var(--ui-border, #dee2e6);
+        color: var(--ui-text-muted, #6c757d);
+    }
+
+    .fp-total .fp-i {
+        color: #198754;
+    }
+
+    html.dark-mode .fp-total .fp-i {
+        color: #5fd08a;
+    }
+
     @@media (max-width: 575.98px) {
         /* En celular la marca baja a su propio renglon, debajo de "cant x precio". */
         .vl-marca {

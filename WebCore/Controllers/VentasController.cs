@@ -2755,6 +2755,8 @@ namespace WebCore.Controllers
                     IdVenta = ObtenerValor(row, "idVenta", 0),
                     FechaVenta = ObtenerValor(row, "fechaVenta", DateTime.MinValue),
                     FormaPago = ObtenerValor(row, "formaPago", ""),
+                    // Sin esto la tarjeta de Mis ventas decia solo "Transferencia" en una venta mixta (2026-11-14).
+                    PagoMixtoEfectivo = ObtenerValor(row, "pagoMixtoEfectivo", 0f),
                     TipoComprobante = ObtenerTipoComprobante(row),
                     Observaciones = ObtenerValor(row, "observaciones", ""),
                     TotalImporte = ObtenerValor(row, "totalS", 0f),

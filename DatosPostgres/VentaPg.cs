@@ -645,7 +645,7 @@ namespace DatosPostgres
         {
             const string sql = @"
                 SELECT v.idventa, v.fechaventa, v.idvendedor, u.nombre, v.nroremito, v.idpersona, p.razonsocial,
-                    v.idsucursal, s.sucursal, v.formapago, v.tipocomprobante, v.observaciones, v.creado, v.actualizado,
+                    v.idsucursal, s.sucursal, v.formapago, v.pagomixtoefectivo, v.tipocomprobante, v.observaciones, v.creado, v.actualizado,
                     v.estado, SUM(l.cantkg) AS totalkg, SUM(l.cantkg * l.preciokg) AS totals
                 FROM lineaventa l
                 INNER JOIN ventas v ON l.idventa = v.idventa
@@ -656,7 +656,7 @@ namespace DatosPostgres
                   AND (v.nroremito ILIKE @textoLike OR p.razonsocial ILIKE @textoLike)
                   AND (@soloAnulados = false OR (@soloAnulados = true AND l.cantkg < 0))
                 GROUP BY v.idventa, v.fechaventa, v.idvendedor, u.nombre, v.nroremito, v.idpersona, p.razonsocial,
-                    v.idsucursal, s.sucursal, v.formapago, v.tipocomprobante, v.observaciones, v.creado, v.actualizado, v.estado
+                    v.idsucursal, s.sucursal, v.formapago, v.pagomixtoefectivo, v.tipocomprobante, v.observaciones, v.creado, v.actualizado, v.estado
                 ORDER BY v.fechaventa DESC;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>

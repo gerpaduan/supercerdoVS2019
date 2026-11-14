@@ -43,7 +43,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Ingreso al sistema | Acceso y seguridad | `pantallas/Login.Index.md` | 2026-10-13 |
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
-| pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-11-07 |
+| pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-11-14 |
 | pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-11-09 |
 | pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-11-09 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-11-09 |
@@ -73,10 +73,10 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-13 |
 | pantallas | Líneas de stock | Stock | `pantallas/Stock.Lineas.md` | 2026-11-02 |
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-11-13 |
-| pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-10-28 |
+| pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-11-14 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-11-10 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
-| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-13 |
+| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-14 |
 | pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-11-10 |
 
 ## Manual del administrador

@@ -264,6 +264,9 @@ Buscar el cliente, ver sus movimientos, registrar un cobro y un pago, y cómo qu
 ### Salir del POS con una venta en curso
 Si hay productos cargados y tocás **Salir** (o intentás cerrar el POS), no te deja salir y muestra el aviso **«Hay una venta en curso»**: si presionás **Cancelar Venta** se pierden los datos de esa venta; para conservarla, guardala primero y recién después salí. (Texto verificado contra el código 2026-11-13; PENDIENTE probarlo en pantalla.)
 
+### Forma de pago en Mis ventas y venta vinculada en Mis actividades
+En **Mis ventas** (F6), la tarjeta de una venta mixta ahora dice, por ejemplo, **Transferencia | Efectivo**, y al desplegarla aparece el bloque **Forma de pago** con cuánto fue en efectivo y cuánto en el otro medio. En **Mis actividades**, las filas **Pago Electronico** y **Cta Cte** muestran la etiqueta **Venta N** y, al desplegar la fila, la venta vinculada con sus productos y el botón **Abrir detalle** (ver [Cajas.EgresosCaja](ayuda:pantalla/Cajas.EgresosCaja)). (Verificado contra el código 2026-11-14; PENDIENTE probarlo en pantalla.)
+
 ### Duplicar POS con la cuenta de producción
 Si entrás con la cuenta compartida de producción y ya te autorizaste como operario, al tocar **Duplicar POS** el duplicado se abre directo con **el mismo operario**, sin volver a pedir la identificación (también en el POS de Puntos de Expendio). Si en el POS original la autorización ya venció, el duplicado sí pide autorizarse. Con **Cambiar operario** en el duplicado cambiás solo el operario del duplicado; el original conserva el suyo. Las autorizaciones provisorias de otro usuario no se pasan al duplicado. (Verificado contra el código 2026-11-14; PENDIENTE probarlo en pantalla.)
 

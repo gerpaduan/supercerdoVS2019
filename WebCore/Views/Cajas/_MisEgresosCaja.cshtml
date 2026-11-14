@@ -418,6 +418,50 @@
         margin-left: auto;
     }
 
+    /* Venta vinculada de Pago Electronico / Cta Cte (2026-11-14, docs/DECISIONS.md "Forma de pago y venta vinculada"): etiqueta
+       en la fila y panel de la venta dentro del detalle desplegado. El panel lo carga _EgresosCajaTabla.cshtml por AJAX. */
+    .mis-actividades-modal .egreso-venta-chip {
+        display: inline-block;
+        margin-left: .35rem;
+        padding: 0 .5rem;
+        border-radius: 99px;
+        background: #e7f1ff;
+        color: #0a58ca;
+        font-size: .68rem;
+        font-weight: 600;
+        white-space: nowrap;
+        vertical-align: baseline;
+    }
+
+    .mis-actividades-modal .egreso-venta-vinculada {
+        margin-top: .5rem;
+        padding: .4rem .6rem .5rem;
+        background: #fff;
+        border: 1px solid #e3e6f0;
+        border-radius: .5rem;
+    }
+
+    .mis-actividades-modal .egreso-venta-vinculada-cab {
+        margin-bottom: .15rem;
+        font-size: .64rem;
+        font-weight: 600;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        color: #6c7a91;
+    }
+
+    html.dark-mode .mis-actividades-modal .egreso-venta-chip {
+        background: rgba(110, 150, 240, .18);
+        color: #9db9f5;
+    }
+
+    html.dark-mode .mis-actividades-modal .egreso-venta-vinculada {
+        background: #0f172a;
+        border-color: #2a3b52;
+    }
+
+    html.dark-mode .mis-actividades-modal .egreso-venta-vinculada-cab { color: #97a7bd; }
+
     /* Sin la doble linea que dejaba el td del renglon de detalle (colapsado o abierto). */
     .mis-actividades-modal .egresos-actividades-tabla .table .egreso-detalle-row > td {
         border-top: 0;

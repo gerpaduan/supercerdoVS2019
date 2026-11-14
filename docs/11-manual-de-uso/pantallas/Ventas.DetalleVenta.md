@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 4
 permiso: a los usuarios de producción les pide elegir el operador de Ventas antes de entrar (no en el modal de Mis ventas); las acciones Modificar venta y Cambiar forma de pago aparecen solo si corresponden (ver abajo). PENDIENTE: no se verificó el permiso de menú de esta pantalla.
-revisada: 2026-10-28
+revisada: 2026-11-14
 ---
 ## Para qué sirve
 Ver **una venta completa**: a quién, cuándo, con qué forma de pago, cada artículo y el total, y desde ahí **facturar o imprimir**, **modificarla** o **cambiarle la forma de pago**. También se ve dentro de otras pantallas: **Mis ventas** (modal del POS y de Cajas Abiertas) y, debajo de la factura, en el [detalle de la factura](ayuda:pantalla/Ventas.Facturas).
@@ -17,6 +17,7 @@ Ver **una venta completa**: a quién, cuándo, con qué forma de pago, cada art�
 ## Qué muestra
 - **Encabezado**: flecha de volver, **Venta #número** y la fecha y hora.
 - **Cliente**, **Comprobante** y **Forma de pago** (si se cobró combinando efectivo con otro medio aparece, por ejemplo, «Debito | Efectivo»).
+- **Desglose de la forma de pago** (desde el 2026-11-14): debajo de esos datos hay un bloque **Forma de pago** con el medio y su importe. Si la venta fue **mixta** lleva la etiqueta **Pago mixto**, una barra proporcional y una línea por cada medio (por ejemplo, Transferencia $ 26.500,75 y Efectivo $ 1.000,25) con el **Total cobrado**. En cuenta corriente muestra «Cuenta corriente · a <cliente>». El mismo bloque aparece al desplegar la tarjeta de la venta en **Mis ventas**, **Ventas** y **Cajas abiertas**. (Verificado contra el código 2026-11-14; PENDIENTE probarlo en pantalla.)
 - **Factura asociada: sí** y el link a la **nota de crédito**, si la venta las tiene.
 - **Comentario** de la venta, si lo tiene.
 - **Artículos**: cada uno con número, nombre y código, **cantidad × precio** y el **subtotal** a la derecha. Si tiene bonificación o recargo aparece como una marca (**Bonif. 27,07%** / **Recargo x%**) junto a la cuenta. Abajo, el **Total**.

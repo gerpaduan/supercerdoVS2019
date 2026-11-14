@@ -1007,7 +1007,8 @@ namespace DatosPostgres
                 SELECT ec.id, ec.fechahora AS ""Fecha"", te.tipoegresocaja AS ""TipoEgresoCaja"",
                     ec.descripcion AS ""Descripcion"", ec.detalle AS ""Detalle"", ec.conteobilletes AS ""ConteoBilletes"", ROUND(CAST(ec.monto AS numeric), 2) AS ""Monto"",
                     te.esgasto AS ""Gasto"", s.sucursal AS ""Sucursal"", ec.creado AS ""Creado"", cp.nombre AS ""Creado Por"",
-                    ec.actualizado AS ""Actualizado"", ap.nombre AS ""Actualizado Por""
+                    ec.actualizado AS ""Actualizado"", ap.nombre AS ""Actualizado Por"",
+                    ec.tabla AS ""Tabla"", ec.idtabla AS ""IdTabla""
                 FROM egresoscaja ec
                 INNER JOIN tiposegresocaja te ON ec.idtipoegresocaja = te.id
                 LEFT JOIN sucursal s ON s.idsucursal = ec.idsucursal

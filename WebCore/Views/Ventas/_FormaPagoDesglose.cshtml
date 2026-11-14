@@ -1,0 +1,89 @@
+@model Entidades.Venta
+@*
+    Bloque "Forma de pago" de una venta (2026-11-14, docs/DECISIONS.md "Forma de pago y venta vinculada"): el medio de pago y,
+    si la venta fue mixta (Venta.PagoMixtoEfectivo > 0 con un medio distinto de Efectivo), cuanto se cobro en efectivo y cuanto
+    en el otro medio. Solo lectura, sin IDs ni scripts. Lo usan _DetalleVentaResumen (panel de los listados y de Mis actividades)
+    y _DetalleVentaCard (detalle completo). Estilos (.fp-*): _VentaLineasStyles.cshtml.
+    Importes: el efectivo es PagoMixtoEfectivo; el otro medio es TotalImporte - efectivo (misma cuenta que arma el egreso
+    "Pago Electronico" en Negocio.Venta.egresoCajaPagoTarjeta).
+*@
+@{
+    string formaPago = (Model.FormaPago ?? "").Trim();
+    float total = Model.TotalImporte;
+    float efectivo = Model.PagoMixtoEfectivo;
+    bool esEfectivoPuro = string.Equals(formaPago, "Efectivo", StringComparison.OrdinalIgnoreCase);
+    bool esMixto = !esEfectivoPuro && formaPago.Length > 0 && efectivo > 0;
+    float otroMedio = Math.Max(0f, total - efectivo);
+    // Porcentaje del efectivo para la barra (acotado a 0-100 por si el efectivo supera al total).
+    double pctEfectivo = total > 0 ? Math.Min(100d, Math.Max(0d, efectivo / (double)total * 100d)) : 0d;
+
+    // Nombre legible e icono segun el medio (los valores son los de Entidades.Venta.FormaPagoEnum).
+    (string Nombre, string Icono, string Color) Medio(string valor)
+    {
+        switch ((valor ?? "").Trim().ToLowerInvariant())
+        {
+            case "efectivo": return ("Efectivo", "fa-money-bill-wave", "text-success");
+            case "debito": return ("Débito", "fa-credit-card", "text-info");
+            case "credito": return ("Crédito", "fa-credit-card", "text-info");
+            case "qr": return ("QR", "fa-qrcode", "text-primary");
+            case "ctacte": return ("Cuenta corriente", "fa-university", "text-warning");
+            case "transferencia": return ("Transferencia", "fa-exchange-alt", "text-secondary");
+            default: return (valor ?? "", "fa-money-check", "text-muted");
+        }
+    }
+
+    var medioPrincipal = Medio(formaPago);
+    var medioEfectivo = Medio("Efectivo");
+    bool esCtaCte = string.Equals(formaPago, "CtaCte", StringComparison.OrdinalIgnoreCase);
+    string clienteCtaCte = esCtaCte && Model.Persona != null && !Entidades.Persona.esConsumidorFinal(Model.Persona)
+        ? (Model.Persona.razonSocial ?? "")
+        : "";
+}
+
+@if (formaPago.Length > 0)
+{
+    <div class="fp">
+        <div class="fp-tit">
+            Forma de pago
+            @if (esMixto)
+            {
+                <span class="fp-tag">Pago mixto</span>
+            }
+        </div>
+        @if (esMixto)
+        {
+            <div class="fp-barra" aria-hidden="true">
+                <i class="fp-barra-otro" style="width:@((100d - pctEfectivo).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%"></i><i class="fp-barra-efvo" style="width:@(pctEfectivo.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%"></i>
+            </div>
+            <div class="fp-fila">
+                <span class="fp-ic"><i class="fas @medioPrincipal.Icono @medioPrincipal.Color"></i></span>
+                <span class="fp-n">@medioPrincipal.Nombre</span>
+                <span class="fp-i">@otroMedio.ToString("C")</span>
+            </div>
+            <div class="fp-fila">
+                <span class="fp-ic"><i class="fas @medioEfectivo.Icono @medioEfectivo.Color"></i></span>
+                <span class="fp-n">@medioEfectivo.Nombre</span>
+                <span class="fp-i">@efectivo.ToString("C")</span>
+            </div>
+            <div class="fp-fila fp-total">
+                <span class="fp-ic"></span>
+                <span class="fp-n">Total cobrado</span>
+                <span class="fp-i">@total.ToString("C")</span>
+            </div>
+        }
+        else
+        {
+            <div class="fp-fila">
+                <span class="fp-ic"><i class="fas @medioPrincipal.Icono @medioPrincipal.Color"></i></span>
+                <span class="fp-n">
+                    @medioPrincipal.Nombre
+                    @if (clienteCtaCte.Length > 0)
+                    {
+                        <span class="fp-aclaracion">· a @clienteCtaCte</span>
+                    }
+                </span>
+                <span class="fp-i">@total.ToString("C")</span>
+            </div>
+        }
+    </div>
+}

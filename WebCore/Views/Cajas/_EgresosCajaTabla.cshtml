@@ -139,6 +139,20 @@
                tipoNormalizado.IndexOf("Cobro", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
+    // Venta vinculada (2026-11-14, ver docs/DECISIONS.md "Forma de pago y venta vinculada"): el egreso "Pago Electronico" / "Cta Cte"
+    // de una venta guarda tabla = "Ventas" e idtabla = nro de venta (Negocio.Venta.egresoCajaPagoTarjeta). Devuelve ese nro, o 0 si
+    // la fila no tiene venta vinculada (otros tipos, o la consulta no trae las columnas: p. ej. el motor SQL Server).
+    int IdVentaVinculada(DataRow row)
+    {
+        if (!EsPagoElectronico(row) && !EsCtaCte(row))
+            return 0;
+        if (!string.Equals(Valor(row, "Tabla"), "Ventas", StringComparison.OrdinalIgnoreCase))
+            return 0;
+
+        int idVenta;
+        return int.TryParse(Valor(row, "IdTabla"), NumberStyles.Integer, CultureInfo.InvariantCulture, out idVenta) && idVenta > 0 ? idVenta : 0;
+    }
+
     // "ANULACION:" (anulacion de un egreso) o "ELIMINADO:" (egreso opuesto que genera Negocio.Compra.eliminarCompra al borrar una compra).
     bool EsAnulacion(DataRow row)
     {
@@ -216,7 +230,11 @@
     // Subconjunto de las anuladas que lo fueron por eliminar la compra (egreso "ELIMINADO:"): el aviso de la fila lo dice.
     var descripcionesEliminadas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     string sucursalActividad = ViewBag.SucursalActividad as string ?? "";
+    // Caja de la Actividad (Cajas abiertas): el "Abrir detalle" de la venta vinculada la necesita para abrir el detalle en ese modal.
+    int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
     var tiposEgresoCajaLookup = ViewBag.TiposEgresoCaja as DataTable;
+    // Hay al menos una fila con venta vinculada: recien ahi se incluyen los estilos/scripts del panel de venta (abajo de todo).
+    bool hayVentasVinculadas = modoActividades && Model != null && Model.Rows.Cast<DataRow>().Any(r => IdVentaVinculada(r) > 0);
     // En Mis actividades / Actividades (modoActividades) la columna Detalle se oculta: la fila avisa con una etiqueta
     // "Con detalle" y el texto se ve al desplegar la fila (2026-10-06, ver docs/DECISIONS.md). En el listado completo se mantiene.
     // + la columna Creado (antes de Acciones).
@@ -335,7 +353,9 @@
                     string tipoModificacion = puedeModificarCompra ? "compra" : "egreso";
                     string detalleTexto = Valor(row, "Detalle");
                     // El conteo de billetes tambien se ve al desplegar la fila: cuenta como "tiene detalle" para la etiqueta.
-                    bool tieneDetalle = !string.IsNullOrWhiteSpace(detalleTexto) || !string.IsNullOrWhiteSpace(Valor(row, "ConteoBilletes"));
+                    int idVentaVinculada = modoActividades ? IdVentaVinculada(row) : 0;
+                    // La venta vinculada tambien se ve al desplegar la fila: cuenta como "tiene detalle" para la etiqueta.
+                    bool tieneDetalle = !string.IsNullOrWhiteSpace(detalleTexto) || !string.IsNullOrWhiteSpace(Valor(row, "ConteoBilletes")) || idVentaVinculada > 0;
 
                     <tr class="egreso-row @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-id="@id" data-esgasto="@(EsGasto(row, tiposEgresoCajaLookup) ? "1" : "0")">
                         @if (modoActividades)
@@ -355,6 +375,10 @@
                         }
                         <td>
                             @Descripcion(row)
+                            @if (idVentaVinculada > 0)
+                            {
+                                <span class="egreso-venta-chip" title="Este movimiento corresponde a la venta @idVentaVinculada: desplegá la fila para verla">Venta @idVentaVinculada</span>
+                            }
                             @if (esHistorico)
                             {
                                 <div class="small text-muted mt-1">@(descripcionesEliminadas.Contains(Descripcion(row)) ? "Compra eliminada: ver el egreso ELIMINADO." : "Registro anterior reemplazado por una modificacion.")</div>
@@ -464,6 +488,16 @@
                                         @if (!string.IsNullOrWhiteSpace(conteoActividad))
                                         {
                                             <div class="egreso-detalle-panel-conteo"><strong>Conteo de billetes</strong>@("\n" + conteoActividad)</div>
+                                        }
+                                        @if (idVentaVinculada > 0)
+                                        {
+                                            @* Se carga al desplegar la fila (script del final): Ventas/DetalleVentaResumen, el mismo panel de Mis ventas. *@
+                                            <div class="egreso-venta-vinculada" data-id-venta="@idVentaVinculada" data-id-cierre="@idCierreActividad">
+                                                <div class="egreso-venta-vinculada-cab">Venta vinculada #@idVentaVinculada</div>
+                                                <div class="egreso-venta-vinculada-cuerpo venta-detalle-panel">
+                                                    <div class="vr-cargando">Se carga al desplegar…</div>
+                                                </div>
+                                            </div>
                                         }
                                         <div class="egreso-detalle-panel-meta">
                                             @if (!ocultarSucursal && !string.IsNullOrWhiteSpace(sucursalFila))
@@ -652,8 +686,121 @@
                     {
                         <div class="egreso-card-line">Actualizado por: @Valor(row, "Actualizado Por")</div>
                     }
+                    @if (modoActividades && IdVentaVinculada(row) > 0)
+                    {
+                        int idVentaVinculadaCard = IdVentaVinculada(row);
+                        <div class="egreso-venta-vinculada" data-id-venta="@idVentaVinculadaCard" data-id-cierre="@idCierreActividad">
+                            <div class="egreso-venta-vinculada-cab">Venta vinculada #@idVentaVinculadaCard</div>
+                            <div class="egreso-venta-vinculada-cuerpo venta-detalle-panel">
+                                <div class="vr-cargando">Se carga al desplegar…</div>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
         }
     }
 </div>
+
+@if (hayVentasVinculadas)
+{
+    @* Venta vinculada de Pago Electronico / Cta Cte (2026-11-14, docs/DECISIONS.md "Forma de pago y venta vinculada"): el panel de la
+       venta (Ventas/DetalleVentaResumen, el mismo de Mis ventas) se carga por AJAX la primera vez que se despliega la fila. Los
+       estilos del panel (.vr-*, .vl-*, .fp-*) y los clics de "Modificar venta" / "Cambiar forma de pago" los pone _VentasExpandible. *@
+    <partial name="~/Views/Ventas/_VentasExpandible.cshtml" />
+
+    <script>
+        (function () {
+            // Idempotente: este parcial se vuelve a inyectar al abrir el modal y al filtrar por tipo.
+            if (window.__egresoVentaVinculadaInit) return;
+            window.__egresoVentaVinculadaInit = true;
+
+            var URL_RESUMEN = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("DetalleVentaResumen", "Ventas")));
+            var URL_DETALLE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("DetalleVenta", "Ventas")));
+            var MENSAJE_GENERICO = 'No se pudo cargar la venta. Probá de nuevo.';
+
+            // En el POS (F6) el panel se pide con el operador de esta pestaña, igual que Mis ventas; fuera del POS (Cajas abiertas) no.
+            function enPos() {
+                return !!(window.POSVentas && typeof window.POSVentas.abrirDetalle === 'function');
+            }
+
+            // Mensaje a mostrar: el del servidor si viene corto (texto o JSON {msg}); si no, uno generico.
+            function mensajeDeRespuesta(texto) {
+                try {
+                    var json = JSON.parse(texto);
+                    if (json && typeof json.msg === 'string' && json.msg) return json.msg;
+                } catch (errorJson) {
+                    // No era JSON: se prueba como texto plano.
+                }
+                return texto && texto.length > 0 && texto.length <= 200 && texto.indexOf('<') < 0 ? texto : MENSAJE_GENERICO;
+            }
+
+            function cargar(caja) {
+                var cuerpo = caja.querySelector('.egreso-venta-vinculada-cuerpo');
+                if (!cuerpo || caja.dataset.cargado === 'true' || caja.dataset.cargando === 'true') return;
+
+                var url = URL_RESUMEN + '?id=' + encodeURIComponent(caja.dataset.idVenta)
+                    + '&modal=true&desdePos=' + (enPos() ? 'true' : 'false')
+                    + '&posInstanceId=' + encodeURIComponent((window.POSModo && window.POSModo.instanceId) || '');
+
+                caja.dataset.cargando = 'true';
+                cuerpo.innerHTML = '<div class="vr-cargando">Cargando venta…</div>';
+
+                fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (respuesta) {
+                        // Sesion vencida: el servidor redirige al login y el fetch lo sigue solo (devolveria la pagina de login).
+                        if (respuesta.redirected) throw new Error('Tu sesión venció. Recargá la página.');
+                        if (!respuesta.ok) {
+                            return respuesta.text().then(function (texto) { throw new Error(mensajeDeRespuesta(texto)); });
+                        }
+                        return respuesta.text();
+                    })
+                    .then(function (html) {
+                        cuerpo.innerHTML = html;
+                        caja.dataset.cargado = 'true';
+                    })
+                    .catch(function (error) {
+                        console.error('egreso-venta-vinculada: no se pudo cargar la venta ' + caja.dataset.idVenta, error);
+                        var aviso = document.createElement('div');
+                        aviso.className = 'vr-error';
+                        aviso.textContent = error && error.message ? error.message : MENSAJE_GENERICO;
+                        cuerpo.innerHTML = '';
+                        cuerpo.appendChild(aviso);
+                    })
+                    .then(function () {
+                        delete caja.dataset.cargando;
+                    });
+            }
+
+            // Bootstrap 5 dispara show.bs.collapse nativo (burbujea hasta document) al desplegar la fila de Mis actividades.
+            document.addEventListener('show.bs.collapse', function (evento) {
+                var destino = evento.target;
+                if (!(destino instanceof Element)) return;
+                destino.querySelectorAll('.egreso-venta-vinculada').forEach(cargar);
+            });
+
+            // "Abrir detalle" de la venta vinculada: en el POS y en Cajas abiertas se abre dentro del mismo modal (como Mis ventas);
+            // en otro contexto, navega al detalle completo.
+            document.addEventListener('click', function (evento) {
+                var destino = evento.target;
+                if (!(destino instanceof Element)) return;
+                var boton = destino.closest('.egreso-venta-vinculada .venta-abrir-detalle');
+                if (!boton) return;
+
+                evento.preventDefault();
+                var idVenta = parseInt(boton.dataset.ventaId, 10) || 0;
+                if (idVenta <= 0) return;
+
+                var caja = boton.closest('.egreso-venta-vinculada');
+                var idCierre = parseInt(caja && caja.dataset.idCierre, 10) || 0;
+                if (enPos()) {
+                    window.POSVentas.abrirDetalle(idVenta);
+                } else if (idCierre > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirDetalleVenta === 'function') {
+                    window.CajasAbiertas.abrirDetalleVenta(idVenta, idCierre);
+                } else {
+                    window.location.href = URL_DETALLE + '?id=' + encodeURIComponent(idVenta);
+                }
+            });
+        })();
+    </script>
+}

@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-11-14 - Forma de pago en el detalle de la venta y venta vinculada en Mis actividades
+
+- **Pedido:** ver la forma de pago (y, si es mixta, cuánto en efectivo y cuánto en el otro medio) en el detalle de la venta, y en Mis actividades el detalle de los pagos electrónicos con la venta vinculada.
+- **Cambio:** parcial `_FormaPagoDesglose` en el panel y el detalle completo de la venta; en Mis actividades/Actividades, etiqueta «Venta N» y panel de la venta vinculada al desplegar la fila (Pago Electronico y Cta Cte); la consulta de egresos trae `Tabla`/`IdTabla`; la tarjeta de Mis ventas ahora dice «Transferencia | Efectivo» en ventas mixtas (la consulta no traía el efectivo). Detalle en `docs/DECISIONS.md` (2026-11-14). Manual: `Ventas.DetalleVenta`, `Ventas.POS`, `Cajas.EgresosCaja`.
+- **Verificado:** compila (0 errores).
+- **Pendiente:** no se probó en pantalla (hace falta una venta mixta y un usuario de prueba en la base local). Con el motor SQL Server no aparece la venta vinculada. Falta deploy.
+
 ## 2026-11-14 - POS: Duplicar POS sin volver a identificarse y hover de «Cambiar operario»
 
 - **Pedido:** (1) en tema claro y gris, al pasar el mouse por «Cambiar operario» la letra se perdía; (2) con la cuenta de producción, «Duplicar POS» volvía a pedir la identificación.
