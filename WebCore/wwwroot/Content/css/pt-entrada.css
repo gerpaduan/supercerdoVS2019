@@ -548,9 +548,79 @@ html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborado
     padding: .3rem .7rem;
 }
 
+/* Scroll SIEMPRE de la pagina (pedido 2026-11-13): ni la formula ni su tabla ni la tabla de ingredientes scrollean por dentro. Las columnas y la
+   tabla miden lo que mide su contenido (antes se repartian el alto de la ventana y la tabla scrolleaba) y la zona de trabajo (#content) scrollea. */
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-fila-principal > .pt-col-izq {
+    flex: 0 0 auto;
+}
+
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-col-izq > .pt-tabla-wrap {
+    flex: 0 0 auto;
+    max-height: none;
+}
+
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] #bloqueFormulaCarga {
-    max-height: 8rem;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
+}
+
+/* Ventana de ~700 px o mas (html.ventana-ancha, ventana-angosta.js): Receta, Formula, Observaciones y botones vuelven a la DERECHA de la carga, como en
+   pantalla grande. Debajo de ese ancho la carga no entra al lado y quedan en una franja bajo la tabla. La columna derecha mide 17 rem: la formula
+   (Ingrediente / Kgs / Auto) entra sin scroll y la carga conserva ~430 px en una ventana de 730. */
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-fila-principal {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-fila-principal > .pt-col-izq {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+}
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-fila-principal > .pt-col-der {
+    flex: 0 0 17rem;
+    width: 17rem;
+    max-width: 17rem;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+}
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-col-der > :is(#bloqueRecetaCarga, .elaborados-summary-card, .elaborados-card-observaciones, .elaborados-obs-bloque) {
+    flex: 0 0 auto;
+}
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] #bloqueRecetaCarga {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .15rem;
+}
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-col-der > .pt-acciones {
+    flex: 0 0 auto;
+}
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-summary-card .card-body {
+    padding: .3rem .5rem;
+}
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado {
+    font-size: .8rem;
+}
+
+/* !important: los encabezados de la vista traen width inline (100 px / 70 px) que le dejaban ~40 px al nombre en esta columna angosta. */
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado thead th:nth-child(2) { width: 4rem !important; }
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado thead th:nth-child(3) { width: 3.4rem !important; }
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado tbody td {
+    padding-left: .3rem;
+    padding-right: .3rem;
+}
+
+html.ventana-angosta.ventana-ancha body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado .pt-chip {
+    padding: 0 .35rem;
+    font-size: .62rem;
 }
 
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] #adminCosteoCargaWrap {

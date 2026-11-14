@@ -14,6 +14,7 @@
     var ANCHO_VIRTUAL_PX = 1366;   // ancho con el que se evaluan las consultas (escritorio comun; >= 1200 y < 1400)
     var ANCHO_ESCRITORIO_PX = 1200; // desde este ancho el diseno de escritorio ya aplica solo
     var PX_POR_REM = 16;
+    var ANCHO_DOS_COLUMNAS_PX = 700; // desde este ancho real Elaborados puede poner Formula / Receta a la derecha de la carga (html.ventana-ancha)
 
     var matchMediaOriginal = window.matchMedia ? window.matchMedia.bind(window) : null;
     if (!matchMediaOriginal) return;
@@ -26,6 +27,14 @@
 
     window.__ventanaAngosta = true;
     document.documentElement.classList.add('ventana-angosta');
+
+    // html.ventana-ancha: la ventana mide >= ANCHO_DOS_COLUMNAS_PX reales (se actualiza al redimensionar). Lo usa pt-entrada.css para decidir si
+    // la columna derecha de Elaborados va al lado de la carga o debajo.
+    function marcarVentanaAncha() {
+        document.documentElement.classList.toggle('ventana-ancha', window.innerWidth >= ANCHO_DOS_COLUMNAS_PX);
+    }
+    marcarVentanaAncha();
+    window.addEventListener('resize', marcarVentanaAncha);
 
     // Cada (min-width: N) / (max-width: N) se reemplaza por algo siempre verdadero o siempre falso, segun ANCHO_VIRTUAL_PX.
     function reescribirConsulta(texto) {

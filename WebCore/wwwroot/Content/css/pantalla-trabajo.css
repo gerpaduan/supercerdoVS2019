@@ -922,6 +922,11 @@ html.dark-mode.modo-ventana .pt-quien-operador {
     --pt-ing-soft: #e8f6ef;
     --pt-ing-ink: #166a4b;
     --pt-sec-texto: #fff;
+    /* Formula (Elaborados, pedido 2026-11-13): gris neutro, para que no se confunda con el sector verde de Ingredientes. */
+    --pt-formula: #7b8794;
+    --pt-formula-soft: #f1f3f6;
+    --pt-formula-ink: #4a5563;
+    --pt-formula-on: #fff;
 }
 
 /* Sucursal y Fecha en negrita (pedido 2026-11-11): son los dos datos que el operador confirma antes de cargar. */
@@ -942,6 +947,10 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
     --pt-ing-soft: #16302a;
     --pt-ing-ink: #8fe0c0;
     --pt-sec-texto: #0d1216;
+    --pt-formula: #7d8b99;
+    --pt-formula-soft: #1d242b;
+    --pt-formula-ink: #c4cdd6;
+    --pt-formula-on: #0d1216;
 }
 
 @media (min-width: 1200px) {
@@ -1056,9 +1065,12 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
 
     /* Tabla de ingredientes: toma todo el alto libre de la columna izquierda y scrollea por dentro (antes crecia con cada producto y dejaba
        un vacio abajo). El minimo de 6 rem evita que en una ventana baja se pise con el pie. */
+    /* Pedido 2026-11-13: en Elaborados el scroll es SIEMPRE el de la pagina, nunca el de esta tabla. "flex: 1 0 auto": llena el alto libre
+       (sin hueco abajo) pero no se achica por debajo de su contenido; si hay muchos ingredientes crece la tabla y scrollea la pagina. */
     body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-col-izq > .pt-tabla-wrap {
-        flex: 1 1 0;
+        flex: 1 0 auto;
         min-height: 6rem;
+        max-height: none;
         border: 2px solid var(--pt-ing);
         border-radius: .5rem;
         background: var(--ui-surface, transparent);
@@ -1072,13 +1084,13 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
 
     /* ---- Formula (columna derecha): nombre y kilos en negrita para identificar cada ingrediente de un vistazo ---- */
     body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-summary-card {
-        border: 2px solid var(--pt-ing);
+        border: 2px solid var(--pt-formula);
     }
 
     /* Pedido 2026-11-11: la formula NUNCA scrollea (ni horizontal ni vertical): todos los ingredientes y las tres columnas a la vista. Sin tope
        de alto (elaborados-compacto.css lo limitaba a 10 filas) y sin overflow; si la formula es larga crece la PAGINA (ver "Pagina larga"). */
     body.app-shell .pantalla-trabajo[data-pt="elab"] .formula-elaborado-wrap {
-        border: 1px solid var(--pt-ing);
+        border: 1px solid var(--pt-formula);
         border-radius: .4rem;
         max-height: none;
         overflow: visible;
@@ -1113,9 +1125,9 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
     }
 
     body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado thead th {
-        background: var(--pt-ing-soft);
-        color: var(--pt-ing-ink);
-        border-bottom: 2px solid var(--pt-ing);
+        background: var(--pt-formula-soft);
+        color: var(--pt-formula-ink);
+        border-bottom: 2px solid var(--pt-formula);
     }
 
     /* Misma tipografia que la tabla de ingredientes (seccion 2 de este archivo): letra de .875 rem (14 px), cifras tabulares, filas de 1.375 rem,
@@ -1143,14 +1155,14 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
         background-color: rgba(127, 127, 127, .07);
     }
 
-    /* Punto verde antes del nombre: el mismo color del sector Ingredientes. */
+    /* Punto gris antes del nombre (era verde, el color del sector Ingredientes: se confundian; pedido 2026-11-13). */
     body.app-shell .pantalla-trabajo[data-pt="elab"] #tablaFormulaElaborado tbody td.cc-l-prod::before {
         content: "";
         display: inline-block;
         width: .5rem;
         height: .5rem;
         border-radius: 50%;
-        background: var(--pt-ing);
+        background: var(--pt-formula);
         margin-right: .4rem;
     }
 
@@ -1162,12 +1174,12 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
         font-size: .68rem;
         font-weight: 700;
         line-height: 1.2rem;
-        border: 1px solid var(--pt-ing);
+        border: 1px solid var(--pt-formula);
     }
 
     body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-chip-auto {
-        background: var(--pt-ing);
-        color: var(--pt-sec-texto);
+        background: var(--pt-formula);
+        color: var(--pt-formula-on);
     }
 
     body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-chip-manual {
@@ -1175,10 +1187,10 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
         color: var(--pt-prod-ink);
     }
 
-    /* "Total manual" lleva el punto verde de los ingredientes. */
+    /* "Total manual" lleva el punto gris de la formula. */
     body.app-shell .pantalla-trabajo[data-pt="elab"] .elaborados-summary-card .d-flex:has(> #lblTotalManual) > span::before {
         content: "\25CF  ";
-        color: var(--pt-ing);
+        color: var(--pt-formula);
     }
 
     /* ---- Fórmula completa (pedido 2026-11-11) ----
