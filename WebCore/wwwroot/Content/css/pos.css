@@ -383,6 +383,13 @@
         color: #fff !important;
     }
 
+    /* Mismo problema en "Cambiar operario" (2026-11-14): btn-outline-secondary pasa el texto a blanco en :hover pero el degrade
+       de .pos-btn-layout seguia tapando el fondo, en claro y en gris (texto blanco sobre blanco). Gris de Bootstrap solido. */
+    #btnCambiarOperadorPOS.btn-outline-secondary:hover {
+        background: #6c757d !important;
+        color: #fff !important;
+    }
+
     .pos-cliente .form-control,
     #razonSocial,
     #fechaVentaEditable {

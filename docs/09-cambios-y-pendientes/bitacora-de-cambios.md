@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-11-14 - POS: Duplicar POS sin volver a identificarse y hover de «Cambiar operario»
+
+- **Pedido:** (1) en tema claro y gris, al pasar el mouse por «Cambiar operario» la letra se perdía; (2) con la cuenta de producción, «Duplicar POS» volvía a pedir la identificación.
+- **Cambio:** `pos.css`: regla de hover para `#btnCambiarOperadorPOS`. `VentasController.POS` y `PuntosExpendioController.POS`: parámetro `originalInstanceId` + `HeredarOperadorDelOriginalPOS` (el duplicado hereda al operador del original). Detalle en `docs/DECISIONS.md` (2026-11-14). Manual: `Ventas.POS` (sección «Duplicar POS»).
+- **Verificado:** compila (0 errores).
+- **Pendiente:** no se probó en pantalla (hover en claro/gris y duplicado con cuenta de producción; hace falta un usuario de producción de prueba en la base local). Falta deploy.
+
 ## 2026-11-14 - Ícono de pestaña por sección
 
 - **Pedido:** ícono de CarniSys en la pestaña y uno propio por sección (Elaborados, Movimientos, POS…).

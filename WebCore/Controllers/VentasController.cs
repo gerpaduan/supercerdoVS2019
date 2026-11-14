@@ -723,6 +723,22 @@ namespace WebCore.Controllers
             HttpContext.Session.Remove(ClaveSessionOperadorPOS(posInstanceId));
         }
 
+        // "Duplicar POS" con la cuenta de produccion (2026-11-14): el duplicado nace con un posInstanceId nuevo y, sin esto,
+        // volveria a pedir la identificacion del operario. Si el original (originalInstanceId, que pos-multi-instance.js manda en
+        // la URL del duplicado) ya tiene operador autorizado en ESTA sesion, el duplicado lo hereda. No hereda autorizaciones
+        // provisorias (siguen por pestana) y, si el duplicado ya tiene operador propio o el original no tiene, no hace nada.
+        private void HeredarOperadorDelOriginalPOS(string modoPos, string posInstanceIdDuplicado, string originalInstanceId)
+        {
+            if (!string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase)) return;
+            if (string.IsNullOrWhiteSpace(originalInstanceId)) return;
+            string idOriginal = originalInstanceId.Trim();
+            if (string.Equals(idOriginal, posInstanceIdDuplicado, StringComparison.Ordinal)) return;
+            if (ObtenerOperadorPOS(posInstanceIdDuplicado) != null) return;
+
+            var operadorOriginal = ObtenerOperadorPOS(idOriginal);
+            if (operadorOriginal != null) RegistrarOperadorPOS(posInstanceIdDuplicado, operadorOriginal);
+        }
+
         private bool TieneBypassCajaActivo(int idOperador)
         {
             return HttpContext.Session.GetString(ClaveSessionBypassCaja(idOperador)) == "1";
@@ -3601,7 +3617,7 @@ namespace WebCore.Controllers
         // ModificarVenta) -- solo cambia el texto del banner y bloquea la UI de productos en la
         // vista (ver aplicarModoSoloFormaPago en POS.cshtml).
         [WebCore.Helpers.ProtegerRegistroReservado(Entidades.RestriccionCtaCteReservada.TablaVentas, "idVentaEditar")]
-        public IActionResult POS(string modoPos = "original", string posInstanceId = "", int idVentaEditar = 0, bool soloFormaPago = false, string returnUrl = "")
+        public IActionResult POS(string modoPos = "original", string posInstanceId = "", int idVentaEditar = 0, bool soloFormaPago = false, string returnUrl = "", string originalInstanceId = "")
         {
             // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): al modificar una venta desde
             // POS, al guardar se redirigia al layout de DetalleVenta en vez de volver a POS --
@@ -3640,6 +3656,8 @@ namespace WebCore.Controllers
             // Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md): el operador real
             // se resuelve por posInstanceId, no por modulo (cada pestaña de POS es independiente).
             // Port literal de Web/Controllers/VentasController.cs:789-808.
+            if (user.EsUsuarioProduccion)
+                HeredarOperadorDelOriginalPOS(modoPos, posInstanceIdNormalizado, originalInstanceId);
             var operador = ResolverOperadorPOS(posInstanceIdNormalizado, user);
             bool requiereOperadorPOS = user.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceIdNormalizado) == null;
             // Sin ningun permiso "POS - ..." activo no hay acceso al POS (2026-11-02). Con la cuenta de produccion el

@@ -1,3 +1,12 @@
+## 2026-11-14 - Duplicar POS hereda al operario (cuenta de producción)
+
+- **Pedido:** con la cuenta compartida de producción, al tocar «Duplicar POS» el duplicado volvía a pedir la identificación; tiene que abrir directo con el mismo operario.
+- **Qué se decidió:** `VentasController.POS` y `PuntosExpendioController.POS` reciben `originalInstanceId` (la URL del duplicado ya lo manda, `pos-multi-instance.js` `buildDuplicateUrl`) y, si `modoPos=duplicado`, el duplicado no tiene operador y el original sí, copian al operador del original a la clave de Session del duplicado (`HeredarOperadorDelOriginalPOS`). Un operador por pestaña sigue igual: «Cambiar operario» en el duplicado solo cambia el duplicado.
+- **Por qué así:** el operador vive en Session bajo `OperadorPOS_<posInstanceId>` y el duplicado nace con otro id. Es la misma sesión (misma cookie) donde el operario ya validó su clave, así que no se amplía ningún permiso; las autorizaciones provisorias de otro usuario NO se heredan (siguen por pestaña). Si el original perdió al operador (venció), el duplicado pide login como siempre.
+- **Alternativas descartadas:** pasar el operador por URL/token (más superficie, hace falta firmarlo); un único operador por usuario+sucursal (rompe «un operador por pestaña»).
+- **Se corrigió de paso:** hover de «Cambiar operario» en temas claro y gris (texto blanco sobre el degradé blanco de `.pos-btn-layout`): regla `#btnCambiarOperadorPOS.btn-outline-secondary:hover` en `pos.css`, mismo arreglo que `#btnDuplicarPOS` (2026-09-07).
+- **Archivos:** `WebCore/Controllers/VentasController.cs`, `WebCore/Controllers/PuntosExpendioController.cs`, `WebCore/wwwroot/Content/css/pos.css`.
+
 ## 2026-11-14 - Ícono de pestaña por sección (favicon)
 
 - **Pedido:** que la pestaña muestre el ícono de CarniSys y que cambie según la sección: Elaborados, Movimientos, POS, etc.

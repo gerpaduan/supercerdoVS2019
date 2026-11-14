@@ -108,6 +108,21 @@ namespace WebCore.Controllers
             HttpContext.Session.Remove(ClaveSessionOperadorPOS(posInstanceId));
         }
 
+        // "Duplicar POS" con la cuenta de produccion (2026-11-14): el duplicado hereda al operador ya autorizado del original
+        // (originalInstanceId viene en la URL del duplicado) para no volver a pedir la identificacion. Ver el helper gemelo en
+        // VentasController.HeredarOperadorDelOriginalPOS.
+        private void HeredarOperadorDelOriginalPOS(string modoPos, string posInstanceIdDuplicado, string originalInstanceId)
+        {
+            if (!string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase)) return;
+            if (string.IsNullOrWhiteSpace(originalInstanceId)) return;
+            string idOriginal = originalInstanceId.Trim();
+            if (string.Equals(idOriginal, posInstanceIdDuplicado, StringComparison.Ordinal)) return;
+            if (ObtenerOperadorPOS(posInstanceIdDuplicado) != null) return;
+
+            var operadorOriginal = ObtenerOperadorPOS(idOriginal);
+            if (operadorOriginal != null) RegistrarOperadorPOS(posInstanceIdDuplicado, operadorOriginal);
+        }
+
         // Ver comentario identico en VentasController.ObtenerSessionIdEstable -- ASP.NET Core
         // Session no manda el Set-Cookie hasta el primer write, asi que sin esto el rate-limit
         // por sesion nunca acumula.
@@ -273,7 +288,7 @@ namespace WebCore.Controllers
         // usuario activo puede operar Expendio (Web/Controllers/BaseController.cs:328-330). Sin
         // AsegurarSucursalUsuario (no aplica: la sucursal del usuario logueado ya es fija).
         [HttpGet]
-        public IActionResult POS(string sector = "", string modoPos = "original", string posInstanceId = "")
+        public IActionResult POS(string sector = "", string modoPos = "original", string posInstanceId = "", string originalInstanceId = "")
         {
             var user = _usuarioActual;
 
@@ -289,6 +304,7 @@ namespace WebCore.Controllers
             bool requiereOperadorPOS = false;
             if (user.EsUsuarioProduccion)
             {
+                HeredarOperadorDelOriginalPOS(modoPosNormalizado, posInstanceIdNormalizado, originalInstanceId);
                 operador = ObtenerOperadorPOS(posInstanceIdNormalizado);
                 requiereOperadorPOS = operador == null;
                 ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();

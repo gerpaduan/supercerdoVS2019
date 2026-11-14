@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-13
+revisada: 2026-11-14
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -263,6 +263,9 @@ Buscar el cliente, ver sus movimientos, registrar un cobro y un pago, y cómo qu
 
 ### Salir del POS con una venta en curso
 Si hay productos cargados y tocás **Salir** (o intentás cerrar el POS), no te deja salir y muestra el aviso **«Hay una venta en curso»**: si presionás **Cancelar Venta** se pierden los datos de esa venta; para conservarla, guardala primero y recién después salí. (Texto verificado contra el código 2026-11-13; PENDIENTE probarlo en pantalla.)
+
+### Duplicar POS con la cuenta de producción
+Si entrás con la cuenta compartida de producción y ya te autorizaste como operario, al tocar **Duplicar POS** el duplicado se abre directo con **el mismo operario**, sin volver a pedir la identificación (también en el POS de Puntos de Expendio). Si en el POS original la autorización ya venció, el duplicado sí pide autorizarse. Con **Cambiar operario** en el duplicado cambiás solo el operario del duplicado; el original conserva el suyo. Las autorizaciones provisorias de otro usuario no se pasan al duplicado. (Verificado contra el código 2026-11-14; PENDIENTE probarlo en pantalla.)
 
 ### Recorrido por la pantalla
 Empresa, sucursal, fecha y hora, Duplicar POS, Salir, colores (claro, gris, oscuro), buscador de productos (F10), comentario de la venta, cancelar la venta, ayuda (F1), Mis actividades y Mis ventas.
