@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-11-14 - Ícono de pestaña por sección
+
+- **Pedido:** ícono de CarniSys en la pestaña y uno propio por sección (Elaborados, Movimientos, POS…).
+- **Cambio:** `_PwaHead.cshtml` emite `<link rel="icon">` según el controlador (mapa en `docs/DECISIONS.md`, 2026-11-14); 7 SVG nuevos en `Content/img/ventanas/`; `favicon.ico` regenerado (era un ícono genérico); `pantalla-trabajo.js` ya no pone el ícono por JS.
+- **Verificado:** compila (0 errores); con sesión iniciada en el WebCore local, el `<link rel="icon">` de cada sección sale con el SVG correcto (Stock, Reposición, Pedidos, Movimientos, Elaborados, Ventas/POS, Puntos de Expendio, Compras, Finanzas, Cajas, Personas, Productos, Códigos de barra, Reportes) y Home/Usuarios/Parametros/Login con el triángulo; en la ventana independiente de Movimientos y Elaborados (con `pantalla-trabajo.js` activo) el ícono sigue siendo el propio; los 10 SVG y el `.ico` dan 200 con el tipo correcto y se distinguen a 16 px.
+- **Pendiente:** no se vio la pestaña real del navegador de escritorio (se leyó el `<link>` del DOM, no el ícono pintado en la pestaña). Safari de escritorio no muestra SVG en la pestaña (ve el triángulo general). Falta deploy.
+
 ## 2026-11-13 - POS: botón de tamaño de letra del carrito (normal, +1, +2, +3 px)
 
 - **Pedido:** las líneas del carrito se veían chicas y borrosas en escritorio; el usuario pidió poder agrandar nombre, cantidad, precio y total, y que cada usuario elija su tamaño desde el POS.

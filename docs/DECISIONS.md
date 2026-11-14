@@ -1,3 +1,12 @@
+## 2026-11-14 - Ícono de pestaña por sección (favicon)
+
+- **Pedido:** que la pestaña muestre el ícono de CarniSys y que cambie según la sección: Elaborados, Movimientos, POS, etc.
+- **Qué se decidió:** el ícono lo emite el servidor en `Views/Shared/_PwaHead.cshtml` (parcial común a `_Layout`, `_LayoutPOS` y Login), con la misma `switch` por controlador que ya elegía el manifest. Mapa: `stock`/`reposicion`/`pedidos` → stock; `movimientos`; `elaborados`; `ventas`/`puntosexpendio` → pos; `compras`; `finanzas`; `cajas`; `personas`; `productos`/`codigosbarra` → productos; `reportes`. Cualquier otro controlador (Home, Login, Usuarios, Parametros…) usa el triángulo de CarniSys (`pwa-192.png`). SVG en `Content/img/ventanas/` (7 nuevos, mismo estilo que los 3 de las mini-apps). Siempre con `~/` (PathBase `/CarniSysWeb`) y `asp-append-version`; `favicon.ico` queda de respaldo para navegadores sin SVG.
+- **Por qué así:** antes ningún layout declaraba ícono: el navegador pedía `/favicon.ico` en la raíz del dominio, que bajo `/CarniSysWeb` no existe, y solo Stock/Movimientos/Elaborados lo ponían por JS y solo en modo ventana. Con el ícono en el servidor no hay parpadeo y hay una sola fuente de verdad: se quitó el bloque que lo reemplazaba en `pantalla-trabajo.js` (`prepararVentana`).
+- **Se corrigió de paso:** `wwwroot/favicon.ico` era un ícono genérico de documento; se regeneró (16/32/48 px) desde `pwa-192.png`.
+- **Alternativas descartadas:** PNG por sección (solo harían falta para Safari de escritorio, que no muestra SVG en la pestaña: ahí se ve el triángulo general); un ícono por cada controlador del menú (más para dibujar y a 16 px no se distinguen).
+- **Archivos:** `WebCore/Views/Shared/_PwaHead.cshtml`, `WebCore/wwwroot/Scripts/app/pantalla-trabajo.js`, `WebCore/wwwroot/favicon.ico`, `WebCore/wwwroot/Content/img/ventanas/{pos,compras,finanzas,cajas,personas,productos,reportes}.svg`.
+
 ## 2026-11-13 - POS: tamaño de letra del carrito elegible por dispositivo
 
 - **Pedido:** letra del carrito chica/borrosa en escritorio; el usuario quiere agrandarla 1, 2 o 3 px y que se pueda elegir desde el POS.

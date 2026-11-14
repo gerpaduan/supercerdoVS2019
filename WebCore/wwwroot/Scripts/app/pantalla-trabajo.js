@@ -298,17 +298,7 @@
     }
 
     function prepararVentana() {
-        // Icono propio de cada pantalla (se ve en la ventana y en las pestanas): ver Content/img/ventanas.
-        var script = document.currentScript || $1('script[src*="pantalla-trabajo.js"]');
-        var base = script && script.src ? script.src.replace(/Scripts\/app\/pantalla-trabajo\.js.*$/, '') : '';
-        if (base) {
-            $todos('link[rel~="icon"]').forEach(function (l) { l.parentNode.removeChild(l); });
-            var icono = document.createElement('link');
-            icono.rel = 'icon';
-            icono.type = 'image/svg+xml';
-            icono.href = base + 'Content/img/ventanas/' + (pantalla === 'mov' ? 'movimientos' : pantalla === 'elab' ? 'elaborados' : 'stock') + '.svg';
-            document.head.appendChild(icono);
-        }
+        // El icono de la pestana lo pone el servidor en _PwaHead.cshtml (uno por seccion, ver Content/img/ventanas); aca ya no se toca.
         // En la ventana independiente el titulo lleva el nombre de la pantalla al principio ("Movimientos · Nuevo Movimiento - CarniSys").
         if (enModoVentana && NOMBRE_PANTALLA && document.title.indexOf(NOMBRE_PANTALLA + ' · ') !== 0) {
             document.title = NOMBRE_PANTALLA + ' · ' + document.title;

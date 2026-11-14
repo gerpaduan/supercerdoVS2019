@@ -13,6 +13,34 @@
         "elaborados" => "manifest-elaborados.json",
         _ => "manifest.json"
     };
+
+    // Icono de la pestana segun la seccion (mismo agrupado que el sidebar de _Layout.cshtml). null = icono general de CarniSys (el triangulo).
+    // Los SVG viven en Content/img/ventanas; los de stock/movimientos/elaborados son los mismos de las mini-apps instalables.
+    var iconoSeccion = controladorActual switch
+    {
+        "stock" or "reposicion" or "pedidos" => "stock",
+        "movimientos" => "movimientos",
+        "elaborados" => "elaborados",
+        "ventas" or "puntosexpendio" => "pos",
+        "compras" => "compras",
+        "finanzas" => "finanzas",
+        "cajas" => "cajas",
+        "personas" => "personas",
+        "productos" or "codigosbarra" => "productos",
+        "reportes" => "reportes",
+        _ => null
+    };
+}
+@* Icono de la pestana: .ico de respaldo (navegadores sin SVG) y despues el SVG de la seccion, que el navegador prefiere. Con ~/ para respetar el
+   PathBase (el /favicon.ico de la raiz del dominio no existe bajo /CarniSysWeb); asp-append-version evita que un icono nuevo quede pegado en el navegador. *@
+<link rel="icon" href="~/favicon.ico" sizes="32x32" asp-append-version="true" />
+@if (iconoSeccion != null)
+{
+    <link rel="icon" type="image/svg+xml" href="~/Content/img/ventanas/@(iconoSeccion).svg" asp-append-version="true" />
+}
+else
+{
+    <link rel="icon" type="image/png" href="~/Content/img/pwa-192.png" asp-append-version="true" />
 }
 <link rel="manifest" href="@Url.Content("~/" + archivoManifest)" />
 <link rel="apple-touch-icon" href="@Url.Content("~/Content/img/pwa-192.png")" />
