@@ -1189,3 +1189,277 @@ html.dark-mode .compra-page .btn-outline-primary:focus {
         font-size: .98rem;
     }
 }
+
+/* El nombre del proveedor es de solo lectura (se elige con la lupa) y el tema lo pintaba en gris
+   atenuado (--ui-text-muted). Se fuerza un color de maximo contraste en claro y en oscuro para que
+   se lea bien. El ID gana en especificidad a "body.app-shell .form-control[readonly]" de ui-refresh.css.
+   Va fuera de los @media a proposito: aplica en cualquier ancho. */
+body .compra-page #razonSocial {
+    color: #000;
+    font-weight: 600;
+}
+
+html.dark-mode body .compra-page #razonSocial {
+    color: #f8fafc;
+}
+
+/* ---- Corregir una linea ya cargada (2026-11-14, ver docs/DECISIONS.md) ----
+   Lapiz junto al tacho + panel debajo de la fila (una <tr class="cc-fila-detalle compra-fila-editor"> con un solo td). Letra compacta
+   (~0.8-0.9 rem, regla de las vistas WebCore). El panel no es una ventana flotante: dentro del modal del POS no se apilan modales. */
+#tablaLineasCompra td.compra-col-acciones {
+    white-space: nowrap;
+}
+
+#tablaLineasCompra td.compra-col-acciones .compra-editar-linea {
+    margin-right: .25rem;
+}
+
+/* En modo "ver" de una compra guardada no se corrige nada: hay que apretar Modificar. */
+form.edit-readonly-active #tablaLineasCompra .compra-editar-linea {
+    display: none;
+}
+
+#tablaLineasCompra tbody tr[data-index] {
+    cursor: pointer;
+}
+
+#tablaLineasCompra tbody tr.compra-fila-sel > td {
+    background-color: rgba(0, 123, 255, .12);
+}
+
+html.dark-mode #tablaLineasCompra tbody tr.compra-fila-sel > td {
+    background-color: rgba(76, 154, 255, .2);
+}
+
+/* Fila(s) recien cambiada(s): destello que se apaga solo (la clase queda hasta el proximo repintado, la animacion corre una vez). */
+@keyframes compra-fila-cambiada-destello {
+    from { background-color: rgba(40, 167, 69, .3); }
+    to { background-color: transparent; }
+}
+
+#tablaLineasCompra tbody tr.compra-fila-cambiada > td {
+    animation: compra-fila-cambiada-destello 2.5s ease-out 1;
+}
+
+/* La fila del panel no es una linea: sin el resaltado al pasar el mouse ni el cursor de seleccion. */
+#tablaLineasCompra tbody tr.compra-fila-editor,
+#tablaLineasCompra tbody tr.compra-fila-editor:hover > td {
+    cursor: default;
+    background: transparent;
+}
+
+#tablaLineasCompra tbody tr.compra-fila-editor > td {
+    padding: .35rem .25rem .5rem !important;
+    text-align: left !important;
+    white-space: normal !important;
+}
+
+.compra-editor {
+    padding: .55rem .7rem;
+    border: 1px solid #7fb2f0;
+    border-radius: .5rem;
+    background: #fff;
+    font-size: .85rem;
+    line-height: 1.35;
+    text-align: left;
+}
+
+html.dark-mode .compra-editor {
+    background: #132032;
+    border-color: #2f5f9e;
+}
+
+.compra-editor-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .75rem;
+    margin-bottom: .45rem;
+}
+
+.compra-editor-head .text-muted {
+    font-size: .75rem;
+}
+
+.compra-editor-campos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .6rem;
+}
+
+.compra-editor-campos label {
+    display: block;
+    margin-bottom: .1rem;
+    font-size: .75rem;
+    color: #6c757d;
+}
+
+.compra-editor-campos .form-control {
+    width: 7.5rem;
+    height: 1.9rem;
+    padding: .15rem .5rem;
+    font-size: .85rem;
+    text-align: right;
+}
+
+.compra-editor-total {
+    margin-left: auto;
+    text-align: right;
+}
+
+.compra-editor-total small {
+    display: block;
+    font-size: .75rem;
+    color: #6c757d;
+}
+
+.compra-editor-total b {
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.compra-editor-sug-fila {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0;
+    padding: .15rem 0;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.compra-editor-sug-fila input {
+    margin: 0;
+}
+
+.compra-editor-error {
+    min-height: 0;
+    margin-top: .3rem;
+    font-size: .8rem;
+}
+
+.compra-editor-error:empty {
+    display: none;
+}
+
+.compra-editor-avisos {
+    margin-top: .4rem;
+    font-size: .78rem;
+    color: #6c757d;
+}
+
+.compra-editor-avisos > div {
+    display: flex;
+    gap: .4rem;
+    margin-top: .1rem;
+}
+
+.compra-editor-avisos i {
+    margin-top: .15rem;
+}
+
+.compra-editor-botones {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin-top: .5rem;
+}
+
+@media (max-width: 767.98px) {
+    /* Celular: la ultima columna de la tarjeta lleva lapiz y tacho, asi que pasa de 2.2rem fijos a lo que ocupen. */
+    #tablaLineasCompra.tabla-cards-lista-edicion > tbody > tr {
+        grid-template-columns: minmax(4.5rem, 1fr) auto auto 1.1rem 1.1rem auto;
+    }
+
+    #tablaLineasCompra.tabla-cards-lista-edicion > tbody > tr > td.cc-l-acc {
+        display: flex;
+        gap: .35rem;
+        align-items: center;
+    }
+
+    #tablaLineasCompra td.compra-col-acciones .compra-editar-linea {
+        margin-right: 0;
+    }
+
+    .compra-editor-head {
+        flex-direction: column;
+        gap: .1rem;
+    }
+
+    .compra-editor-total {
+        margin-left: 0;
+        flex-basis: 100%;
+        text-align: left;
+    }
+}
+
+/* Botones del panel: no se parten letra por letra en pantallas angostas (celular con el menu lateral abierto). */
+.compra-editor-botones {
+    flex-wrap: wrap;
+}
+
+.compra-editor-botones .btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+    /* Celular: la tarjeta de la linea es una grilla; la seleccion se pinta en toda la tarjeta, no celda por celda. */
+    #tablaLineasCompra tbody tr.compra-fila-sel {
+        background-color: rgba(0, 123, 255, .12);
+    }
+
+    #tablaLineasCompra tbody tr.compra-fila-sel > td {
+        background-color: transparent;
+    }
+
+    html.dark-mode #tablaLineasCompra tbody tr.compra-fila-sel {
+        background-color: rgba(76, 154, 255, .2);
+    }
+
+    html.dark-mode #tablaLineasCompra tbody tr.compra-fila-sel > td {
+        background-color: transparent;
+    }
+
+    .compra-editor-botones .btn {
+        flex: 1 1 auto;
+    }
+}
+/* ---- Modo ver: franja en lugar del bloque "Agregar producto/media" (2026-11-14) ----
+   Mismo criterio que pantalla-trabajo.css (seccion 10): el bloque se esconde con visibility + alto 0 y NO con display:none, para que
+   jQuery lo siga contando como visible y el foco que edit-readonly.js da al tocar "Modificar" caiga en el mismo campo de siempre.
+   El doble .compra-linea-panel sube la especificidad sobre las reglas del bloque (fondo, borde y modo oscuro). */
+.compra-lectura-barra {
+    display: none;
+}
+
+body .compra-page form.edit-readonly-active .compra-linea-panel.compra-linea-panel {
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-width: 0 !important;
+    overflow: hidden !important;
+}
+
+body .compra-page form.edit-readonly-active .compra-lectura-barra {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    padding: .35rem .75rem;
+    border: 1px solid #cbd5e1;
+    border-left: 4px solid #64748b;
+    border-radius: .4rem;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: .85rem;
+}
+
+html.dark-mode body .compra-page form.edit-readonly-active .compra-lectura-barra {
+    border-color: #475569;
+    border-left-color: #94a3b8;
+    background: #1e293b;
+    color: #cbd5e1;
+}

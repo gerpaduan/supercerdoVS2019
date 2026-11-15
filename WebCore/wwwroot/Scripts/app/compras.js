@@ -112,6 +112,11 @@
             // Orden de la tabla de lineas: arranca en "ultimos primero" por # (columna "orden"); ver valorOrdenLineaCompra.
             sortKey: 'orden',
             sortDirection: 'desc',
+            // Editor de una linea ya cargada (precio y cantidad, ver "Corregir una linea" mas abajo): null = cerrado, o
+            // { index, fase: 'editar'|'sugerir', cant, precio, error, nuevaCant, nuevoPrecio, iguales, marcados, enfocar }.
+            editor: null,
+            // Indices (reales) de las lineas recien cambiadas: renderLineas les pone .compra-fila-cambiada una vez y lo limpia.
+            filasCambiadas: null,
             saving: false,
             personaTimer: null,
             productoTimer: null,
@@ -340,6 +345,19 @@
         var readOnly = $form.hasClass('edit-readonly-active');
 
         if (readOnly) {
+            // El bloque "Agregar producto/media" se esconde en modo ver (franja, ver compras-editar.css): si un campo suyo tenia el foco
+            // (el Codigo, que se enfoca al cargar) se lo suelta para que no quede el cursor en un campo que ya no se ve. Tambien se cierra
+            // el panel de correccion de una linea.
+            var activo = document.activeElement;
+            if (activo && $form[0].contains(activo) && $(activo).closest('.compra-linea-panel').length) {
+                activo.blur();
+            }
+            var estadoVer = getState($form);
+            if (estadoVer && estadoVer.editor) {
+                estadoVer.editor = null;
+                renderLineas($form);
+            }
+
             $modify
                 .html('<i class="fas fa-edit mr-1"></i> Modificar')
                 .toggleClass('d-none', false)
@@ -550,6 +568,12 @@
         window.OrdenTabla.sincronizarEncabezados($form.find('#tablaLineasCompra thead [data-sort-key]'), state);
         $form.find('#ordenLineasCompra').val(state.sortKey === 'orden' ? state.sortDirection : '');
 
+        // El editor apunta a un indice real: si la linea ya no existe (se vaciaron las lineas, se cambio el tipo de compra,
+        // se recupero un borrador), se cierra en vez de editar otra linea.
+        if (state.editor && !state.lineas[state.editor.index]) {
+            state.editor = null;
+        }
+
         if (!state.lineas.length) {
             $tbody.html('<tr class="js-empty-row"><td colspan="8" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
             recalculate($form);
@@ -565,8 +589,19 @@
         //   cantidad × precio (.cc-l-cod); si la linea tiene ajustes, un tercer renglon con ellos (.cc-l-extra);
         //   quitar a la derecha (.cc-l-acc).
         //   Las columnas sueltas (#, cantidad, precio, p. venta, margen) se ocultan con .cc-vacio / .cc-solo-tabla.
+        // Acciones de la linea: lapiz (corregir precio y cantidad, ver "Corregir una linea") y tacho (quitar).
+        // El lapiz se oculta por CSS cuando la compra esta en modo "ver" (form.edit-readonly-active).
         var botonQuitar = function (index) {
-            return '<td class="text-right cc-l-acc"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '" title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>';
+            return '<td class="text-right cc-l-acc compra-col-acciones">'
+                + '<button type="button" class="btn btn-sm btn-outline-primary compra-editar-linea" data-action="edit-line" data-index="' + index + '" title="Corregir precio o cantidad" aria-label="Corregir precio o cantidad"><i class="fas fa-pen"></i></button>'
+                + '<button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '" title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>';
+        };
+        // Apertura de la fila: marca la que se esta corrigiendo (.compra-fila-sel) y las que acaban de cambiar.
+        var abrirFila = function (index) {
+            var clases = [];
+            if (state.editor && state.editor.index === index) clases.push('compra-fila-sel');
+            if (state.filasCambiadas && state.filasCambiadas.indexOf(index) >= 0) clases.push('compra-fila-cambiada');
+            return '<tr data-index="' + index + '"' + (clases.length ? ' class="' + clases.join(' ') + '"' : '') + '>';
         };
         var numeroCard = function (numeroLinea) {
             return '<span class="cc-solo-card compra-card-numero">' + numeroLinea + ' · </span>';
@@ -579,7 +614,7 @@
             if (linea.tipoLinea === 'MediaRes') {
                 var totalMedia = toNumber(linea.kgMedia) * toNumber(linea.precioMedia);
                 var tropa = String(linea.nroTropa || '').trim();
-                html += '<tr data-index="' + index + '">'
+                html += abrirFila(index)
                     + '<td class="text-center font-weight-bold cc-vacio">' + numeroLinea + '</td>'
                     + '<td class="cc-l-prod compra-detalle-cell">' + numeroCard(numeroLinea) + '<strong>Media</strong></td>'
                     + '<td class="text-right cc-solo-tabla">' + formatNumberAr(linea.kgMedia) + '</td>'
@@ -594,7 +629,7 @@
             } else {
                 var totalCorte = toNumber(linea.totalLinea || (linea.cantKgs * linea.precioKg));
                 var extras = describirAjustesLinea(linea);
-                html += '<tr data-index="' + index + '">'
+                html += abrirFila(index)
                     + '<td class="text-center font-weight-bold cc-vacio">' + numeroLinea + '</td>'
                     // Detalle en UN renglon: nombre + codigo al lado (el CSS lo recorta con "..." si no entra).
                     + '<td class="cc-l-prod compra-detalle-cell">' + numeroCard(numeroLinea) + '<strong>' + escapeHtml(linea.corteNombre || '') + '</strong>'
@@ -610,9 +645,16 @@
                     + botonQuitar(index)
                     + '</tr>';
             }
+
+            // El panel de correccion va justo debajo de la fila que se esta corrigiendo.
+            if (state.editor && state.editor.index === index) {
+                html += htmlEditorLinea(state, linea);
+            }
         }
 
         $tbody.html(html);
+        state.filasCambiadas = null;
+        if (state.editor) prepararEditorLinea($form);
         recalculate($form);
     }
 
@@ -788,6 +830,7 @@
         $form.find('#Observaciones').val(draft.observaciones || '');
         setCantMedias($form, draft.cantMedias || '');
 
+        state.editor = null;
         state.lineas = $.isArray(draft.lineas) ? draft.lineas : [];
         syncTipoPanels($form);
         renderLineas($form);
@@ -1270,6 +1313,306 @@
         }
     }
 
+    // ---- Corregir una linea ya cargada (precio y cantidad) ----
+    // Pedido 2026-11-14: antes la unica salida ante un precio o cantidad equivocados era quitar la linea con el tacho y cargarla de
+    // nuevo. El lapiz (o tocar la fila) abre un panel debajo de la linea con Cantidad y Precio; al cambiar el PRECIO, si hay otras lineas
+    // iguales se sugiere aplicarlo tambien a ellas. Es solo estado del navegador (state.lineas): igual que quitar/agregar, recien impacta
+    // al guardar la compra, y el servidor rehace todas las lineas con lo que se manda (ver docs/DECISIONS.md, 2026-11-14).
+    // Sirve igual para productos y para medias reses (estas solo existen si permiteMediaRes).
+
+    function esMediaLinea(linea) {
+        return !!linea && linea.tipoLinea === 'MediaRes';
+    }
+
+    function cantidadDeLinea(linea) {
+        return esMediaLinea(linea) ? toNumber(linea.kgMedia) : toNumber(linea.cantKgs);
+    }
+
+    function precioDeLinea(linea) {
+        return esMediaLinea(linea) ? toNumber(linea.precioMedia) : toNumber(linea.precioKg);
+    }
+
+    function mismoImporte(a, b) {
+        return Math.abs(toNumber(a) - toNumber(b)) < 0.005;
+    }
+
+    // Otras lineas "iguales" a la del indice: producto = mismo producto (idCorte); media res = otra media con el mismo precio
+    // (las medias no tienen identidad propia). mismoPrecio marca las que traen el mismo precio viejo: son las que se pre-marcan,
+    // porque lo mas probable es que sea el mismo error (otro precio puede ser legitimo).
+    function lineasIgualesA(state, index) {
+        var base = state.lineas[index];
+        var iguales = [];
+        if (!base) return iguales;
+
+        $.each(state.lineas, function (i, linea) {
+            if (i === index || !linea || esMediaLinea(linea) !== esMediaLinea(base)) return;
+            var mismoPrecio = mismoImporte(precioDeLinea(linea), precioDeLinea(base));
+            if (esMediaLinea(base)) {
+                if (mismoPrecio) iguales.push({ index: i, mismoPrecio: true });
+            } else if (Number(linea.idCorte) === Number(base.idCorte)) {
+                iguales.push({ index: i, mismoPrecio: mismoPrecio });
+            }
+        });
+        return iguales;
+    }
+
+    function tieneAjustesDePrecio(linea) {
+        return !esMediaLinea(linea) && (toNumber(linea.descRecargo) !== 0 || toNumber(linea.ivaCompra) > 0);
+    }
+
+    // Con un precio de venta cargado, el margen se recalcula y el P. venta se mantiene (el usuario lo eligio; no se cambia el precio de
+    // venta de un producto sin que lo decida). Si el precio nuevo supera al P. venta el margen quedaria negativo, que esta pantalla no
+    // admite al cargar una linea: se avisa y no se aplica. Devuelve el texto del problema o ''.
+    function problemaMargenLinea(linea, precioNuevo) {
+        if (esMediaLinea(linea)) return '';
+        var precioVenta = toNumber(linea.precioVenta);
+        if (precioVenta > 0 && precioNuevo > precioVenta) {
+            return 'Con ese precio el margen de «' + (linea.corteNombre || 'la línea') + '» quedaría negativo (P. venta ' + formatNumberAr(precioVenta) + '). Quitá la línea y cargala de nuevo con el precio de venta que corresponda.';
+        }
+        return '';
+    }
+
+    // Aplica a la linea la cantidad (null = no se toca) y el precio nuevos. En productos el precio escrito es el FINAL (el de la columna
+    // Precio), por eso Desc./Recargo e IVA pasan a 0: si quedaran, el precio ya no coincidiria con "base + ajustes".
+    function aplicarValoresLinea(linea, cantidad, precio) {
+        if (esMediaLinea(linea)) {
+            if (cantidad !== null) linea.kgMedia = cantidad;
+            linea.precioMedia = precio;
+            return;
+        }
+        if (cantidad !== null) linea.cantKgs = cantidad;
+        linea.precioKg = precio;
+        linea.descRecargo = 0;
+        linea.ivaCompra = 0;
+        linea.totalLinea = toNumber(linea.cantKgs) * precio;
+        if (toNumber(linea.precioVenta) > 0) {
+            linea.margen = Math.round(((toNumber(linea.precioVenta) / precio) - 1) * 10000) / 100;
+        }
+    }
+
+    function textoLineaEditor(linea, index) {
+        return 'Línea ' + (index + 1) + ' · ' + (esMediaLinea(linea) ? 'Media' : (linea.corteNombre || ''));
+    }
+
+    // HTML del panel (una fila con un solo td que ocupa todo el ancho; en celular .cc-fila-detalle la deja como bloque).
+    function htmlEditorLinea(state, linea) {
+        var editor = state.editor;
+        var media = esMediaLinea(linea);
+        var html = '<tr class="cc-fila-detalle compra-fila-editor"><td colspan="8"><div class="compra-editor" data-fase="' + editor.fase + '">';
+        html += '<div class="compra-editor-head"><strong>Corregir línea ' + (editor.index + 1) + ' · ' + escapeHtml(media ? 'Media' : (linea.corteNombre || '')) + '</strong>'
+            + '<span class="text-muted">Enter aplica · Esc cancela</span></div>';
+
+        if (editor.fase === 'sugerir') {
+            var cambioCantidad = !mismoImporte(editor.nuevaCant, cantidadDeLinea(linea));
+            html += '<div class="compra-editor-sug">'
+                + '<div class="mb-1">Precio ' + (media ? 'de la media' : 'de <b>' + escapeHtml(linea.corteNombre || '') + '</b>') + ': <b>' + formatNumberAr(precioDeLinea(linea)) + '</b> → <b>' + formatNumberAr(editor.nuevoPrecio) + '</b>'
+                + (cambioCantidad ? ' · ' + (media ? 'Kg' : 'Cantidad') + ': <b>' + formatNumberAr(cantidadDeLinea(linea)) + '</b> → <b>' + formatNumberAr(editor.nuevaCant) + '</b> (solo esta línea)' : '') + '</div>'
+                + '<div class="mb-1">' + (media
+                    ? 'Hay ' + editor.iguales.length + ' ' + (editor.iguales.length === 1 ? 'media más' : 'medias más') + ' con el mismo precio. ¿Cambiar también su precio?'
+                    : 'Hay ' + editor.iguales.length + ' ' + (editor.iguales.length === 1 ? 'línea más' : 'líneas más') + ' de este producto. ¿Cambiar también su precio?') + '</div>';
+            $.each(editor.iguales, function (_, igual) {
+                var otra = state.lineas[igual.index];
+                if (!otra) return;
+                html += '<label class="compra-editor-sug-fila"><input type="checkbox" data-sug-index="' + igual.index + '"' + (editor.marcados[igual.index] ? ' checked' : '') + ' />'
+                    + '<span>' + escapeHtml(textoLineaEditor(otra, igual.index)) + ' · ' + formatNumberAr(cantidadDeLinea(otra)) + ' × ' + formatNumberAr(precioDeLinea(otra)) + '</span>'
+                    + '<span class="text-muted ml-auto">' + (igual.mismoPrecio ? 'mismo precio' : 'otro precio') + (tieneAjustesDePrecio(otra) ? ' · se quitan Desc./IVA' : '') + '</span></label>';
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="compra-editor-campos">'
+                + '<div><label for="edtLineaCant">' + (media ? 'Kg media' : 'Cantidad') + '</label>'
+                + '<input type="text" id="edtLineaCant" class="form-control form-control-sm" inputmode="decimal" autocomplete="off" value="' + escapeHtml(editor.cant) + '" /></div>'
+                + '<div><label for="edtLineaPrecio">Precio</label>'
+                + '<input type="text" id="edtLineaPrecio" class="form-control form-control-sm" inputmode="decimal" autocomplete="off" value="' + escapeHtml(editor.precio) + '" /></div>'
+                + '<div class="compra-editor-total"><small>Total de la línea</small><b id="edtLineaTotal">-</b></div>'
+                + '</div>';
+        }
+
+        html += '<div class="compra-editor-error text-danger" id="edtLineaError" role="alert">' + escapeHtml(editor.error || '') + '</div>';
+
+        // Avisos de que implica el cambio (la compra no se toca hasta guardarla).
+        var avisos = ['Los cambios quedan en la compra recién al tocar <b>Guardar compra</b>.'];
+        if (state.config.esEdicion) {
+            avisos.push('Al guardar se recalculan el total y la cuenta corriente del proveedor. '
+                + (state.config.desdePos
+                    ? 'El egreso de caja de la compra se actualiza con el nuevo importe (si esa caja ya está cerrada se te va a pedir confirmar).'
+                    : 'El egreso de caja de la compra no se modifica desde esta pantalla.'));
+        }
+        if (!media && linea.actualizarPrecioVenta && toNumber(linea.precioVenta) > 0) {
+            avisos.push('Esta línea actualiza el precio de venta del producto a <b>' + formatNumberAr(linea.precioVenta) + '</b> al guardar; el margen se recalcula con el precio nuevo.');
+        }
+        if (tieneAjustesDePrecio(linea)) {
+            avisos.push('Esta línea tiene Desc./Recargo o IVA: el precio que escribas es el final y esos ajustes se quitan.');
+        }
+        html += '<div class="compra-editor-avisos">';
+        $.each(avisos, function (_, aviso) {
+            html += '<div><i class="fas fa-info-circle" aria-hidden="true"></i><span>' + aviso + '</span></div>';
+        });
+        html += '</div>';
+
+        html += '<div class="compra-editor-botones">'
+            + '<button type="button" class="btn btn-sm btn-outline-secondary" data-action="editor-cancelar">Cancelar</button>';
+        if (editor.fase === 'sugerir') {
+            html += '<button type="button" class="btn btn-sm btn-outline-secondary" data-action="editor-solo-esta">Solo esta</button>'
+                + '<button type="button" class="btn btn-sm btn-primary" data-action="editor-aplicar-marcadas">Aplicar a las marcadas</button>';
+        } else {
+            html += '<button type="button" class="btn btn-sm btn-primary" data-action="editor-aplicar">Aplicar</button>';
+        }
+        html += '</div></div></td></tr>';
+        return html;
+    }
+
+    // Despues de pintar el panel: mascara de importe en el precio, total en vivo y foco (Precio al abrir, ya que es lo habitual).
+    function prepararEditorLinea($form) {
+        var state = getState($form);
+        var editor = state.editor;
+        if (!editor) return;
+
+        var $precio = $form.find('#edtLineaPrecio');
+        if ($precio.length && window.MoneyInputMask) {
+            window.MoneyInputMask.attach($precio);
+        }
+        actualizarTotalEditor($form);
+
+        if (editor.enfocar) {
+            var $objetivo = editor.fase === 'sugerir'
+                ? $form.find('[data-action="editor-aplicar-marcadas"]')
+                : (editor.enfocar === 'cant' ? $form.find('#edtLineaCant') : $precio);
+            editor.enfocar = null;
+            focusField($objetivo);
+        }
+    }
+
+    function leerCamposEditor($form) {
+        var $precio = $form.find('#edtLineaPrecio');
+        var precioTexto = window.MoneyInputMask ? window.MoneyInputMask.getRawValue($precio) : ($precio.val() || '');
+        return { cantidad: toNumber($form.find('#edtLineaCant').val()), precio: toNumber(precioTexto) };
+    }
+
+    function actualizarTotalEditor($form) {
+        var $total = $form.find('#edtLineaTotal');
+        if (!$total.length) return;
+        var campos = leerCamposEditor($form);
+        $total.text(formatNumberAr(campos.cantidad * campos.precio));
+    }
+
+    function abrirEditorLinea($form, index, campoInicial) {
+        var state = getState($form);
+        var linea = state.lineas[index];
+        // En modo "ver" una compra guardada no se toca: hay que apretar Modificar primero.
+        if (!linea || $form.hasClass('edit-readonly-active')) return;
+
+        state.editor = {
+            index: index,
+            fase: 'editar',
+            cant: formatNumberAr(cantidadDeLinea(linea)),
+            precio: formatNumberAr(precioDeLinea(linea)),
+            error: '',
+            nuevaCant: 0,
+            nuevoPrecio: 0,
+            iguales: [],
+            marcados: {},
+            enfocar: campoInicial || 'precio'
+        };
+        renderLineas($form);
+    }
+
+    function cerrarEditorLinea($form) {
+        var state = getState($form);
+        if (!state.editor) return;
+        state.editor = null;
+        renderLineas($form);
+    }
+
+    function mostrarErrorEditor($form, mensaje, $campo) {
+        var state = getState($form);
+        if (state.editor) state.editor.error = mensaje;
+        $form.find('#edtLineaError').text(mensaje);
+        window.BusquedaFeedback && window.BusquedaFeedback.beepError();
+        focusField($campo);
+    }
+
+    // Paso 1 ("Aplicar"): valida lo escrito; si cambio el precio y hay lineas iguales pasa a la sugerencia, si no aplica directo.
+    function aplicarEditorLinea($form) {
+        var state = getState($form);
+        var editor = state.editor;
+        var linea = editor && state.lineas[editor.index];
+        if (!linea) return;
+
+        var media = esMediaLinea(linea);
+        var campos = leerCamposEditor($form);
+        if (campos.cantidad <= 0) {
+            mostrarErrorEditor($form, media ? 'Ingresá kilos mayores a cero.' : 'Ingresá una cantidad mayor a cero.', $form.find('#edtLineaCant'));
+            return;
+        }
+        if (campos.precio <= 0) {
+            mostrarErrorEditor($form, 'Ingresá un precio mayor a cero.', $form.find('#edtLineaPrecio'));
+            return;
+        }
+
+        var cambioPrecio = !mismoImporte(campos.precio, precioDeLinea(linea));
+        var cambioCantidad = !mismoImporte(campos.cantidad, cantidadDeLinea(linea));
+        if (!cambioPrecio && !cambioCantidad) {
+            cerrarEditorLinea($form);
+            return;
+        }
+
+        var problema = problemaMargenLinea(linea, campos.precio);
+        if (problema) {
+            mostrarErrorEditor($form, problema, $form.find('#edtLineaPrecio'));
+            return;
+        }
+
+        editor.nuevaCant = campos.cantidad;
+        editor.nuevoPrecio = campos.precio;
+        editor.error = '';
+
+        var iguales = cambioPrecio ? lineasIgualesA(state, editor.index) : [];
+        if (!iguales.length) {
+            confirmarCambioLinea($form, []);
+            return;
+        }
+
+        editor.fase = 'sugerir';
+        editor.iguales = iguales;
+        editor.marcados = {};
+        $.each(iguales, function (_, igual) { editor.marcados[igual.index] = igual.mismoPrecio; });
+        editor.enfocar = 'sugerir';
+        renderLineas($form);
+    }
+
+    // Paso final: escribe en state.lineas (la elegida con cantidad y precio; las marcadas solo el precio) y repinta como al agregar/quitar.
+    function confirmarCambioLinea($form, indicesExtra) {
+        var state = getState($form);
+        var editor = state.editor;
+        var linea = editor && state.lineas[editor.index];
+        if (!linea) return;
+
+        // Antes de tocar nada: si el precio nuevo deja negativo el margen de alguna marcada, no se aplica a ninguna.
+        for (var i = 0; i < indicesExtra.length; i++) {
+            var problema = problemaMargenLinea(state.lineas[indicesExtra[i]], editor.nuevoPrecio);
+            if (problema) {
+                editor.error = problema;
+                $form.find('#edtLineaError').text(problema);
+                window.BusquedaFeedback && window.BusquedaFeedback.beepError();
+                return;
+            }
+        }
+
+        aplicarValoresLinea(linea, editor.nuevaCant, editor.nuevoPrecio);
+        $.each(indicesExtra, function (_, indice) {
+            aplicarValoresLinea(state.lineas[indice], null, editor.nuevoPrecio);
+        });
+
+        state.filasCambiadas = [editor.index].concat(indicesExtra);
+        state.editor = null;
+        renderLineas($form);
+        rebuildHiddenInputs($form);
+        window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
+        capturarRespaldo('Compra', $form);
+        scheduleDraft($form);
+    }
+
     function addLineaMediaRes($form) {
         var state = getState($form);
         var linea = {
@@ -1473,6 +1816,7 @@
 
         $form.on('change.compras', '#TipoCompra', function () {
             syncTipoPanels($form);
+            state.editor = null;
             state.lineas = [];
             renderLineas($form);
             rebuildHiddenInputs($form);
@@ -1781,9 +2125,81 @@
             addLineaMediaRes($form);
         });
 
+        // Corregir una linea (ver "Corregir una linea ya cargada"): lapiz de la fila, o tocar la fila misma.
+        $form.on('click.compras', '[data-action="edit-line"]', function (e) {
+            e.stopPropagation();
+            var index = parseInt($(this).data('index'), 10);
+            if (isNaN(index)) return;
+            abrirEditorLinea($form, index);
+        });
+
+        $form.on('click.compras', '#tablaLineasCompra tbody tr[data-index]', function (e) {
+            // Los botones de la fila (lapiz, tacho) tienen su propio handler.
+            if ($(e.target).closest('button, a, input, label').length) return;
+            var index = parseInt($(this).data('index'), 10);
+            if (isNaN(index) || (state.editor && state.editor.index === index)) return;
+            abrirEditorLinea($form, index);
+        });
+
+        $form.on('click.compras', '[data-action="editor-cancelar"]', function () {
+            cerrarEditorLinea($form);
+        });
+
+        $form.on('click.compras', '[data-action="editor-aplicar"]', function () {
+            aplicarEditorLinea($form);
+        });
+
+        $form.on('click.compras', '[data-action="editor-solo-esta"]', function () {
+            confirmarCambioLinea($form, []);
+        });
+
+        $form.on('click.compras', '[data-action="editor-aplicar-marcadas"]', function () {
+            var marcadas = [];
+            $form.find('.compra-editor [data-sug-index]:checked').each(function () {
+                marcadas.push(parseInt($(this).attr('data-sug-index'), 10));
+            });
+            confirmarCambioLinea($form, marcadas);
+        });
+
+        // El panel recuerda lo escrito (si se repinta, ej. al ordenar) y muestra el total de la linea en vivo.
+        $form.on('input.compras', '#edtLineaCant, #edtLineaPrecio', function () {
+            if (state.editor) {
+                state.editor.cant = $form.find('#edtLineaCant').val();
+                state.editor.precio = $form.find('#edtLineaPrecio').val();
+                state.editor.error = '';
+            }
+            $form.find('#edtLineaError').text('');
+            actualizarTotalEditor($form);
+        });
+
+        $form.on('change.compras', '.compra-editor [data-sug-index]', function () {
+            if (state.editor) state.editor.marcados[$(this).attr('data-sug-index')] = this.checked;
+        });
+
+        // Enter aplica y Esc cierra. El Enter se corta aca: dentro del form dispararia el envio (guardar la compra).
+        $form.on('keydown.compras', '.compra-editor', function (e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                cerrarEditorLinea($form);
+                return;
+            }
+            if (e.key !== 'Enter' || e.altKey || e.ctrlKey) return;
+            if ($(e.target).is('button')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (state.editor && state.editor.fase === 'sugerir') {
+                $form.find('[data-action="editor-aplicar-marcadas"]').trigger('click');
+            } else {
+                aplicarEditorLinea($form);
+            }
+        });
+
         $form.on('click.compras', '[data-action="remove-line"]', function () {
             var index = parseInt($(this).data('index'), 10);
             if (isNaN(index)) return;
+            // Quitar una linea corre los indices de las siguientes: el panel abierto se cierra.
+            state.editor = null;
             state.lineas.splice(index, 1);
             renderLineas($form);
             rebuildHiddenInputs($form);

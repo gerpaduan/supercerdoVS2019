@@ -825,6 +825,17 @@
 }
 
 <style>
+    /* Nombre del proveedor (input de solo lectura): el tema lo pintaba en gris atenuado. Se fuerza el
+       maximo contraste en claro y en oscuro. El ID gana a "body.app-shell .form-control[readonly]". */
+    body .stock-page #razonSocial {
+        color: #000;
+        font-weight: 600;
+    }
+
+    html.dark-mode body .stock-page #razonSocial {
+        color: #f8fafc;
+    }
+
     .stock-page .stock-panel-card {
         border: 1px solid #e9ecef;
         border-radius: .75rem;

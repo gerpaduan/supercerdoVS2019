@@ -6,6 +6,37 @@
 - **Dónde:** `WebCore/Views/Cajas/_EgresosCajaTabla.cshtml`, `_MisEgresosCaja.cshtml`, `DatosPostgres/CierreCajaPg.cs` (`obtenerEgresosCajaVendedorInterno`: cliente de la venta).
 - **Verificado:** compila; PENDIENTE probar en pantalla (Mis actividades F6 y Cajas abiertas, claro y oscuro, escritorio y celular).
 
+## 2026-11-14 - Compras: franja de «modo ver» en lugar del bloque Agregar producto
+
+- **Pedido:** como en Stock, mostrar «Estás viendo este registro. Para cambiarlo, presioná Modificar» en vez del bloque de agregar producto al abrir una compra guardada.
+- **Cambio:** franja nueva en `Compras/Editar.cshtml`; `compras-editar.css` esconde el bloque y muestra la franja solo en modo ver; `compras.js` suelta el foco al pasar a modo ver. Detalle en `docs/DECISIONS.md` (2026-11-14). Manual: `Compras.Editar`.
+- **Verificado:** compila (0 errores) a una carpeta aparte. PENDIENTE verlo en pantalla (hay que reiniciar el servidor del 5270 para tomar la vista). Falta deploy.
+
+## 2026-11-14 - Compras: corregir precio y cantidad de una línea sin quitarla
+
+- **Pedido:** cambiar el precio de una línea mal cargada sin borrarla y volver a ingresarla; sugerir lo mismo para las líneas iguales; en nueva compra y modificar, productos y medias reses; sumar cantidad e informar el efecto.
+- **Cambio:** lápiz junto al tacho (o clic en la fila) abre un panel con Cantidad y Precio; al cambiar el precio con líneas iguales ofrece aplicarlo a las marcadas. Avisos de qué implica el cambio. Solo `compras.js` y `compras-editar.css`; sin backend. Detalle en `docs/DECISIONS.md` (2026-11-14). Manual: `Compras.Editar`.
+- **Verificado:** compila (0 errores). Probado con usuario de prueba (ya borrado) en Nueva compra: sugerencia con líneas iguales, solo cantidad, P. venta/margen, Desc./IVA, medias reses, Esc, quitar con el panel abierto, totales y campos ocultos; escritorio y celular. PENDIENTE: modificar una compra ya guardada en pantalla real. Falta deploy.
+
+## 2026-11-14 - Stock: franja e ícono por acción y chips de vínculo entre registros
+
+- **Pedido:** reconocer de un vistazo pesaje / ajuste / cierre en la lista de Stock y ver los registros vinculados entre sí.
+- **Cambio:** franja de color + ícono por acción (azul pesaje, verde ajuste, violeta cierre); vínculos como chips del color del registro destino con tooltip, resaltado de a pares al pasar el mouse y salto con clic. Detalle en `docs/DECISIONS.md` (2026-11-14). Manual: `Stock.Index`.
+- **Verificado:** compila (0 errores). Probado en una página estática con el mismo CSS/JS (escritorio claro y oscuro, celular, hover, clic y chip de pesajes vinculados). PENDIENTE verlo en la pantalla real de Stock con datos (hace falta un usuario de prueba en la base local). Falta deploy.
+
+## 2026-11-14 - Nombre del proveedor con letra fuerte en Nueva compra y Nuevo stock
+
+- **Pedido:** el nombre del proveedor (input de solo lectura que se completa con la lupa) se veía en gris atenuado.
+- **Cambio:** `#razonSocial` pasa a negro (`#000`) en modo claro y a casi blanco (`#f8fafc`) en modo oscuro, con peso 600. Solo CSS: `compras-editar.css` (Compras) y el `<style>` de `Stock/Editar.cshtml` (Stock). Gana en especificidad al `[readonly]` de `ui-refresh.css`.
+- **Verificado:** PENDIENTE verlo en pantalla (claro y oscuro). Falta deploy.
+
+## 2026-11-14 - Ingreso rápido: el punto de la cantidad es decimal, no separador de miles
+
+- **Síntoma:** al tipear `5.325` (teclado en pantalla o físico) en «Cantidad a elaborar», el sistema lo tomaba como 5325 en vez de 5,325 kg.
+- **Causa:** el campo se envía como texto y el servidor (`ElaboradoRapidoEditVm.Cantidad`, float) lo interpreta con cultura es-AR, donde el punto es separador de miles.
+- **Arreglo (`elaborados-rapido.js`):** el punto tipeado en `#CantidadRapida` pasa a coma al instante, y al guardar la cantidad se reenvía como decimal con coma y sin miles (cubre también el valor que escribe la balanza por JS).
+- **Verificado:** PENDIENTE probar en pantalla (Ingreso rápido, teclado en pantalla con `.`) y guardar 5.325.
+
 ## 2026-11-14 - Corrección: Mis actividades no cargaba («No se pudo cargar egresos de caja»)
 
 - **Síntoma:** tras el cambio de la venta vinculada, Mis actividades (F6) mostraba «No se pudo cargar egresos de caja» cuando había filas Pago Electronico / Cta Cte con venta.

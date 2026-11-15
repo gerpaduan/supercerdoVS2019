@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-11-13
+revisada: 2026-11-14
 alias: Stock.Nuevo
 ---
 ## Para qué sirve

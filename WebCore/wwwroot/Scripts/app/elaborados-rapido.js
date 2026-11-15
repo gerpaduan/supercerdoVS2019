@@ -664,6 +664,18 @@
             });
         }
 
+        // El punto tipeado (teclado fisico o teclado en pantalla) es SIEMPRE el separador decimal, no el de miles
+        // (pedido 2026-11-14): el servidor bindea "Cantidad" con cultura es-AR, donde "5.325" se leeria como 5325.
+        // Se cambia a coma en el momento (misma longitud: el cursor no se mueve). El guard SoloDecimalGuard,
+        // que corre despues, sigue evitando un segundo separador.
+        $cantidad.on('input', function () {
+            if (this.value.indexOf('.') < 0) return;
+            var pos = this.selectionStart;
+            this.value = this.value.replace(/\./g, ',');
+            if (typeof pos === 'number' && typeof this.setSelectionRange === 'function') {
+                try { this.setSelectionRange(pos, pos); } catch (ex) { /* sin soporte de seleccion */ }
+            }
+        });
         $cantidad.on('input', recalcularFormula);
         $cantidad.on('input change', function () {
             state.borradorGenerico && state.borradorGenerico.programarGuardado();
@@ -855,6 +867,10 @@
 
             function guardarIngresoRapidoReal() {
                 state.guardando = true;
+                // Red de seguridad: el valor que llega por otra via (ej. la balanza escribe "5.325" por JS, sin evento
+                // input) se envia como decimal con coma y sin separador de miles, que es lo que el binder es-AR espera.
+                var cantidadAEnviar = parseDecimal($cantidad.val());
+                if (cantidadAEnviar.ok) $cantidad.val(String(cantidadAEnviar.value).replace('.', ','));
                 $.ajax({
                     url: $form.attr('action'),
                     type: 'POST',

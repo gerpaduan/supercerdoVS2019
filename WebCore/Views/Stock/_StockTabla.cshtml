@@ -126,54 +126,81 @@
                         resumenPesaje = soloProductosFila ? "Solo productos" : string.Join(" | ", partesPesaje);
                     }
 
-                    <tr>
+                    // Tipo de accion para la franja de color y el icono de la fila (2026-11-14). Pesaje/Ajuste salen del tipo o del detalle
+                    // (igual que arriba); Cierre Stock solo por el texto del tipo. Sin tipo reconocido, la fila queda sin franja.
+                    bool esCierreFila = !string.IsNullOrWhiteSpace(tipoCompraFila) && tipoCompraFila.IndexOf("Cierre", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool esIngresoFila = !string.IsNullOrWhiteSpace(tipoCompraFila) && tipoCompraFila.IndexOf("Ingreso", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool esEgresoFila = !string.IsNullOrWhiteSpace(tipoCompraFila) && tipoCompraFila.IndexOf("Egreso", StringComparison.OrdinalIgnoreCase) >= 0;
+                    string tipoAccionClave = ((detalle != null && detalle.EsPesaje) || esPesajeFila) ? "pesaje"
+                        : (((detalle != null && detalle.EsAjuste) || esAjusteFila) ? "ajuste"
+                        : (esCierreFila ? "cierre"
+                        : (esIngresoFila ? "ingreso"
+                        : (esEgresoFila ? "egreso" : ""))));
+                    string tipoAccionIcono = tipoAccionClave == "pesaje" ? "fa-weight-hanging"
+                        : (tipoAccionClave == "ajuste" ? "fa-sliders-h"
+                        : (tipoAccionClave == "cierre" ? "fa-lock"
+                        : (tipoAccionClave == "ingreso" ? "fa-sign-in-alt"
+                        : (tipoAccionClave == "egreso" ? "fa-sign-out-alt" : ""))));
+
+                    <tr class="@(tipoAccionClave != "" ? "stock-tipo-" + tipoAccionClave : "")" data-stock-id="@idCompra">
                         @* En la tarjeta de celular el ID va tenue en el titulo (cc-titulo-linea, abajo): esta celda solo se ve en desktop. *@
                         <td class="stock-id-cell font-weight-bold cc-solo-tabla" data-label="ID">@idCompra</td>
                         <td class="col-clave tc-fecha" data-label="Fecha">@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
                         <td class="col-clave tc-suc" data-label="Sucursal">@row["sucursal"]</td>
                         <td class="cc-titulo tc-prod">
-                            <div class="stock-accion-titulo cc-titulo-linea">@row["tipoCompra"]<span class="cc-solo-card cc-titulo-extra" title="Número de registro">#@idCompra</span></div>
+                            <div class="stock-accion-titulo cc-titulo-linea">@if (tipoAccionIcono != "") { <i class="fas @tipoAccionIcono stock-accion-icono" aria-hidden="true"></i> }@row["tipoCompra"]<span class="cc-solo-card cc-titulo-extra" title="Número de registro">#@idCompra</span></div>
                             @if (!string.IsNullOrWhiteSpace(resumenPesaje))
                             {
                                 <div class="stock-accion-resumen" title="@resumenPesaje">@resumenPesaje</div>
                             }
                             @if (detalle != null)
                             {
-                                if (detalle.EsPesaje && detalle.IdCompraVinculada.HasValue)
-                                {
-                                    if (detalle.CompraVinculadaEsPesaje)
-                                    {
-                                        <div class="mt-1">
-                                            <span class="badge badge-pill badge-warning">Pesaje padre #@detalle.IdCompraVinculada.Value</span>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="mt-1">
-                                            <span class="badge badge-pill badge-primary">Compra #@detalle.IdCompraVinculada.Value</span>
-                                        </div>
-                                    }
-                                }
+                                // Vinculos con otros registros (2026-11-14): chips del color del registro al que apuntan (azul = pesaje,
+                                // verde = ajuste, teal = compra). Mismas condiciones que antes; solo cambia la presentacion.
+                                //  - data-stock-destino: ids de filas de ESTA pagina para resaltar al pasar el mouse y saltar con el clic
+                                //    (si el destino no esta en la pagina, el clic sigue el href y abre el registro).
+                                //  - data-abrir-detalle (chip de pesajes vinculados): el clic despliega el Detalle de la fila, donde se listan.
+                                bool chipCompraOPadre = detalle.EsPesaje && detalle.IdCompraVinculada.HasValue;
+                                bool chipHijos = detalle.EsPesaje && detalle.PesajesHijosVinculadosIds != null && detalle.PesajesHijosVinculadosIds.Count > 0;
+                                bool chipAjuste = detalle.EsPesaje && detalle.IdAjusteRelacionado.HasValue;
+                                bool chipPesajeDeAjuste = !chipAjuste && (detalle.EsAjuste || esAjusteFila) && detalle.IdPesajeRelacionado.HasValue;
 
-                                if (detalle.EsPesaje && detalle.PesajesHijosVinculadosIds != null && detalle.PesajesHijosVinculadosIds.Count > 0)
+                                if (chipCompraOPadre || chipHijos || chipAjuste || chipPesajeDeAjuste)
                                 {
-                                    <div class="mt-1">
-                                        <span class="badge badge-pill badge-secondary" title="@string.Join(", ", detalle.PesajesHijosVinculadosIds.ConvertAll(id => "#" + id))">
-                                            @detalle.PesajesHijosVinculadosIds.Count pesaje@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s") vinculado@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s")
-                                        </span>
-                                    </div>
-                                }
+                                    <div class="stock-vinculos">
+                                        <i class="fas fa-link stock-vinculos-icono" aria-hidden="true" title="Registros vinculados"></i>
+                                        @if (chipCompraOPadre && detalle.CompraVinculadaEsPesaje)
+                                        {
+                                            <a class="stock-chip stock-chip-pesaje" href="@Url.Action("Editar", "Stock", new { id = detalle.IdCompraVinculada.Value })"
+                                               data-stock-destino="@detalle.IdCompraVinculada.Value"
+                                               title="Pesaje padre de este pesaje. Clic para ir a él."><i class="fas fa-level-up-alt" aria-hidden="true"></i>Pesaje padre #@detalle.IdCompraVinculada.Value</a>
+                                        }
+                                        else if (chipCompraOPadre)
+                                        {
+                                            <a class="stock-chip stock-chip-compra" href="@Url.Action("Editar", "Compras", new { id = detalle.IdCompraVinculada.Value })"
+                                               title="Compra que originó este pesaje. Clic para abrirla."><i class="fas fa-shopping-cart" aria-hidden="true"></i>Compra #@detalle.IdCompraVinculada.Value</a>
+                                        }
 
-                                if (detalle.EsPesaje && detalle.IdAjusteRelacionado.HasValue)
-                                {
-                                    <div class="mt-1">
-                                        <span class="badge badge-pill badge-success">Aj. #@detalle.IdAjusteRelacionado.Value</span>
-                                    </div>
-                                }
-                                else if (((detalle.EsAjuste || esAjusteFila) && detalle.IdPesajeRelacionado.HasValue))
-                                {
-                                    <div class="mt-1">
-                                        <span class="badge badge-pill badge-info">Pesaje #@detalle.IdPesajeRelacionado.Value</span>
+                                        @if (chipHijos)
+                                        {
+                                            <button type="button" class="stock-chip stock-chip-pesaje stock-chip-hijos"
+                                                    data-stock-destino="@string.Join(",", detalle.PesajesHijosVinculadosIds)"
+                                                    data-abrir-detalle="#@detailId"
+                                                    title="Pesajes vinculados a este: @string.Join(", ", detalle.PesajesHijosVinculadosIds.ConvertAll(id => "#" + id)). Clic para ver el detalle."><i class="fas fa-weight-hanging" aria-hidden="true"></i>@detalle.PesajesHijosVinculadosIds.Count pesaje@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s") vinculado@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s")</button>
+                                        }
+
+                                        @if (chipAjuste)
+                                        {
+                                            <a class="stock-chip stock-chip-ajuste" href="@Url.Action("Editar", "Stock", new { id = detalle.IdAjusteRelacionado.Value })"
+                                               data-stock-destino="@detalle.IdAjusteRelacionado.Value"
+                                               title="Ajuste generado por este pesaje. Clic para ir a él."><i class="fas fa-sliders-h" aria-hidden="true"></i>Ajuste #@detalle.IdAjusteRelacionado.Value</a>
+                                        }
+                                        else if (chipPesajeDeAjuste)
+                                        {
+                                            <a class="stock-chip stock-chip-pesaje" href="@Url.Action("Editar", "Stock", new { id = detalle.IdPesajeRelacionado.Value })"
+                                               data-stock-destino="@detalle.IdPesajeRelacionado.Value"
+                                               title="Pesaje que originó este ajuste. Clic para ir a él."><i class="fas fa-weight-hanging" aria-hidden="true"></i>Pesaje #@detalle.IdPesajeRelacionado.Value</a>
+                                        }
                                     </div>
                                 }
                             }
@@ -271,5 +298,109 @@
 
     .stock-accion-titulo {
         font-weight: 700;
+    }
+
+    /* ---- Identificacion por tipo de accion (2026-11-14) ----
+       Franja de color a la izquierda de la fila + icono delante del titulo: azul = Pesaje Cortes, verde = Ajuste Stock,
+       violeta = Cierre Stock, ambar = Ingreso Stock, rojo = Egreso Stock. --stock-tipo-color lo define cada clase stock-tipo-* (la pone el servidor en el <tr>). */
+    tr.stock-tipo-pesaje { --stock-tipo-color: #378ADD; }
+    tr.stock-tipo-ajuste { --stock-tipo-color: #639922; }
+    tr.stock-tipo-cierre { --stock-tipo-color: #7F77DD; }
+    tr.stock-tipo-ingreso { --stock-tipo-color: #BA7517; }
+    tr.stock-tipo-egreso { --stock-tipo-color: #E24B4A; }
+    html.dark-mode tr.stock-tipo-pesaje { --stock-tipo-color: #85B7EB; }
+    html.dark-mode tr.stock-tipo-ajuste { --stock-tipo-color: #97C459; }
+    html.dark-mode tr.stock-tipo-cierre { --stock-tipo-color: #AFA9EC; }
+    html.dark-mode tr.stock-tipo-ingreso { --stock-tipo-color: #EF9F27; }
+    html.dark-mode tr.stock-tipo-egreso { --stock-tipo-color: #F09595; }
+
+    .stock-accion-icono {
+        color: var(--stock-tipo-color, inherit);
+        margin-right: .35rem;
+        font-size: .85em;
+    }
+
+    /* Desktop: la franja es el borde izquierdo de la primera celda (ID). Se usa border y no box-shadow porque
+       Bootstrap pinta el hover de la fila con un box-shadow inset en cada celda y taparia la franja. */
+    @@media (min-width: 768px) {
+        table.tabla-cards > tbody > tr[class*="stock-tipo-"] > td:first-child {
+            border-left: 4px solid var(--stock-tipo-color);
+        }
+    }
+
+    /* Celular: la fila es una tarjeta (tabla-cards.css), asi que la franja va en el borde izquierdo de la tarjeta. */
+    @@media (max-width: 767.98px) {
+        table.tabla-cards > tbody > tr[class*="stock-tipo-"] {
+            border-left: 4px solid var(--stock-tipo-color);
+        }
+    }
+
+    /* ---- Chips de vinculo entre registros (2026-11-14) ----
+       Cada chip lleva el color del registro al que apunta (azul pesaje, verde ajuste, teal compra), igual que la franja. */
+    .stock-vinculos {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .3rem;
+        margin-top: .35rem;
+    }
+
+    .stock-vinculos-icono {
+        font-size: .72rem;
+        color: #8a93a0;
+    }
+
+    .stock-chip {
+        --chip-bg: #E6F1FB;
+        --chip-borde: #85B7EB;
+        --chip-texto: #0C447C;
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .08rem .55rem .08rem .45rem;
+        border: 1px solid var(--chip-borde);
+        border-radius: 999px;
+        background: var(--chip-bg);
+        color: var(--chip-texto);
+        font-size: .72rem;
+        font-weight: 600;
+        line-height: 1.35;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap; /* el texto del chip no se parte: si no entra en la fila, baja el chip entero (flex-wrap) */
+    }
+
+    .stock-chip i { font-size: .72rem; }
+
+    .stock-chip:hover,
+    .stock-chip:focus-visible {
+        color: var(--chip-texto);
+        text-decoration: underline;
+        border-color: var(--chip-texto);
+    }
+
+    .stock-chip-ajuste { --chip-bg: #EAF3DE; --chip-borde: #97C459; --chip-texto: #27500A; }
+    .stock-chip-compra { --chip-bg: #E1F5EE; --chip-borde: #5DCAA5; --chip-texto: #085041; }
+    .stock-chip-hijos { border-style: dashed; }
+
+    html.dark-mode .stock-chip { --chip-bg: #0C447C; --chip-borde: #378ADD; --chip-texto: #B5D4F4; }
+    html.dark-mode .stock-chip-ajuste { --chip-bg: #27500A; --chip-borde: #639922; --chip-texto: #C0DD97; }
+    html.dark-mode .stock-chip-compra { --chip-bg: #085041; --chip-borde: #1D9E75; --chip-texto: #9FE1CB; }
+
+    /* Resaltado de a pares: al pasar el mouse por un chip se tiñen la fila actual y la vinculada (JS en Index.cshtml). */
+    tr.stock-fila-vinculo,
+    tr.stock-fila-vinculo > td {
+        background-color: rgba(55, 138, 221, .12) !important;
+    }
+
+    /* Destello de la fila destino al saltar con el clic en un chip. */
+    @@keyframes stock-fila-destello {
+        0%, 60% { background-color: rgba(255, 193, 7, .35); }
+        100% { background-color: transparent; }
+    }
+
+    tr.stock-fila-destello,
+    tr.stock-fila-destello > td {
+        animation: stock-fila-destello 1.8s ease-out;
     }
 </style>

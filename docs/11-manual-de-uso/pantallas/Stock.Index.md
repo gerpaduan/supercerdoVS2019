@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-11-13
+revisada: 2026-11-14
 ---
 ## Para qué sirve
 Ver los **movimientos de stock** de un período (ingresos, egresos, cierres, pesajes y ajustes) por sucursal, con el total de kilos, y cargar uno nuevo.
@@ -30,6 +30,11 @@ Ver los **movimientos de stock** de un período (ingresos, egresos, cierres, pes
 - **Fecha**, **Sucursal** y **Cantidad** se ven en negrita, igual que la **Acción**.
 - **Detalles** abre arriba una franja con el número de registro, la sucursal, la acción, quién lo creó y, si se cambió, quién lo modificó (**Ver Porc(%)** a la derecha en los pesajes). Las observaciones salen en un recuadro amarillo y la compra, el pesaje o el ajuste vinculados en cajas.
 - Debajo, las líneas con *Cód.* (15 caracteres), *Producto* (25), *Cantidad / kg* (8), el icono de **balanza** y la hora de carga; al pie, el **Total** de los kilos de las líneas.
+
+## Cómo reconocer cada movimiento (desde el 2026-11-14)
+- **Franja de color e ícono por acción**: cada fila lleva una franja a la izquierda y un ícono delante del título. **Azul** con balanza = *Pesaje Cortes*, **verde** con deslizadores = *Ajuste Stock*, **violeta** con candado = *Cierre Stock*, **ámbar** con flecha entrando = *Ingreso Stock*, **rojo** con flecha saliendo = *Egreso Stock*. En el celular la franja va en el borde izquierdo de la tarjeta.
+- **Vínculos con otros registros**: debajo del título, tras un ícono de eslabón, aparecen chips con el **color del registro al que apuntan**: azul = pesaje (*Pesaje #…*, *Pesaje padre #…*, *N pesajes vinculados* con borde punteado), verde = ajuste (*Ajuste #…*) y teal con carrito = compra (*Compra #…*). Al apoyar el mouse sobre un chip se resaltan esta fila y la vinculada, si está en la página.
+- **Clic en un chip**: *Pesaje*, *Pesaje padre* y *Ajuste* saltan a la fila vinculada y la destacan un momento si está en la página; si no está, abren ese registro (con Ctrl o el botón del medio, en otra pestaña). *Compra #…* abre la compra. *N pesajes vinculados* despliega los **Detalles** de la fila, donde se listan.
 
 ## En una ventana angosta con mouse (desde el 2026-11-13)
 - Con el navegador o la ventana independiente **angostos** (menos de 1200 píxeles) y mouse, los botones (*Ver lineas*, *Ver eliminados*, *Ingreso*, *Egreso*, *Cierre*, *Pesaje*, *Ajuste*) pasan a renglones compactos y los filtros (*Sucursal* y *Acción*, *Desde*, *Hasta* y *Buscar*) también, con la etiqueta a la izquierda del campo. *Total Kg* y *Ver detalles* quedan en una sola línea. Así la lista gana lugar.

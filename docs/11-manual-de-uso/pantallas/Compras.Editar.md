@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.NuevaCompra (alta) y Compra.ModificarCompra (modificar y eliminar); a los usuarios de producción les pide elegir el operador de Compras antes de entrar
-revisada: 2026-11-09
+revisada: 2026-11-14
 alias: Compras.NuevaCompra, Compras.ModificarCompra
 ---
 ## Para qué sirve
@@ -33,6 +33,29 @@ Pensado para ver más campos y más líneas sin bajar con la rueda. Es igual en 
 - **Cantidad, Precio y Subtotal** van en una misma fila.
 - **Productos cargados:** se ven como una lista. Arriba, el número de línea, el producto y el total; abajo, el código con cantidad × precio (en las medias, la tropa con kilos × precio). Si la línea tiene descuento/recargo, IVA, precio de venta o margen, se muestran en un renglón más. El tacho de la derecha quita la línea.
 - **Orden:** arranca con **lo último cargado arriba**; con el selector de la derecha se cambia a «Primeros primero». En la computadora se ordena tocando los encabezados (ver arriba).
+
+## Modo ver: cómo se nota que no se puede editar (desde 2026-11-14)
+Al abrir una compra **ya guardada** queda en **modo ver**. El bloque **Agregar producto** (o **Agregar media**) **no se muestra**: no hay dónde escribir. En su lugar aparece una franja gris con *«Estás viendo este registro. Para cambiarlo, presioná Modificar»*. Al tocar **Modificar** (abajo a la derecha) la franja desaparece y vuelve el bloque. Una compra **nueva** no pasa por modo ver. Es el mismo criterio que en Stock, Movimientos y Elaborados.
+- Diferencia con esas pantallas: en Compras no hay etiqueta «Solo lectura» arriba ni botón **Modificar** arriba, ni aviso al intentar escribir; solo la franja.
+- PENDIENTE: probarlo en pantalla real (se verificó la compilación, no el aspecto).
+
+## Corregir el precio o la cantidad de una línea (desde 2026-11-14)
+Si cargaste un producto (o una media) con un precio o una cantidad equivocados, **no hace falta quitarlo y cargarlo de nuevo**.
+1. Tocá el **lápiz** azul de la línea (al lado del tacho) o tocá la fila. La línea se marca en azul y se abre un panel debajo con **Cantidad** (en las medias, **Kg media**) y **Precio**, y el total de la línea en vivo.
+2. Cambiá lo que haga falta y apretá **Aplicar** (o Enter). **Cancelar** o Esc cierran el panel sin cambiar nada.
+3. Si cambiaste el **precio** y hay **otras líneas iguales**, el panel las lista con una casilla y pregunta si querés cambiarles el precio también:
+   - Producto: «iguales» son las líneas del **mismo producto**. Vienen tildadas las que tenían **el mismo precio** que la que corregís; las de otro precio quedan sin tildar (pueden ser legítimas).
+   - Media res: «iguales» son las otras medias con **el mismo precio**.
+   - **Solo esta** cambia únicamente la línea elegida; **Aplicar a las marcadas** cambia también las tildadas. La **cantidad** se cambia siempre solo en la línea elegida.
+4. La fila cambiada destella en verde y el total de la compra se recalcula.
+
+Qué hay que saber:
+- **No se guarda nada todavía:** el cambio queda en la compra recién al tocar **Guardar compra**, igual que al quitar o agregar una línea. En una compra ya guardada, el panel te recuerda que al guardar se recalculan el total y la cuenta corriente del proveedor, y que el egreso de caja solo se actualiza si la compra se abre desde el POS (si esa caja ya está cerrada se pide confirmar).
+- **Descuento/Recargo e IVA:** el precio que escribís es el **final** (el de la columna Precio). Si la línea tenía descuento, recargo o IVA, esos ajustes se **quitan** (el panel lo avisa).
+- **P. venta y Margen:** si la línea tenía un precio de venta cargado, **se mantiene** y el margen se recalcula con el precio nuevo. Si el precio nuevo es mayor que el precio de venta, el margen quedaría negativo y **no se aplica**: quitá la línea y cargala de nuevo con el precio de venta que corresponda. Si la línea actualiza el precio de venta del producto, el panel lo avisa.
+- En una compra **ya guardada**, el lápiz no se ve hasta tocar **Modificar**.
+- Solo se corrigen precio y cantidad; para cambiar el **producto** de una línea hay que quitarla y cargarla de nuevo.
+- PENDIENTE: no se verificó en el código qué pasa con el **stock** cuando se modifica una compra guardada; el panel no dice nada al respecto.
 
 ## Eliminar una compra
 El botón rojo **Eliminar** aparece al abrir una compra **ya guardada** para quien tenga permiso de modificar compras: en la pantalla completa y, desde **F6 → Mis actividades** del POS, en las compras propias de la caja abierta (ver [Ventas.POS](ayuda:pantalla/Ventas.POS)); no dentro de la cuenta corriente del proveedor.

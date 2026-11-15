@@ -796,6 +796,84 @@
                 if (btnDetalle) btnDetalle.click();
             });
 
+            // ---- Chips de vinculo entre registros (2026-11-14; markup en _StockTabla.cshtml) ----
+            // Delegado en document: sirve aunque la tabla se vuelva a pintar. El destino (data-stock-destino) son ids de
+            // filas que pueden estar o no en la pagina actual (la lista esta paginada/filtrada).
+            function filasStockDestino(chip) {
+                return String(chip.getAttribute("data-stock-destino") || "")
+                    .split(",")
+                    .filter(function (id) { return /^\d+$/.test(id); })
+                    .map(function (id) { return document.querySelector('tr[data-stock-id="' + id + '"]'); })
+                    .filter(function (fila) { return fila !== null; });
+            }
+
+            function limpiarResaltadoVinculo() {
+                document.querySelectorAll("tr.stock-fila-vinculo").forEach(function (fila) {
+                    fila.classList.remove("stock-fila-vinculo");
+                });
+            }
+
+            function resaltarVinculo(chip) {
+                limpiarResaltadoVinculo();
+                const filaOrigen = chip.closest("tr");
+                const destinos = filasStockDestino(chip);
+                // Sin destino en la pagina no se resalta nada: teñir solo la fila de origen no comunica ningun vinculo.
+                if (!filaOrigen || destinos.length === 0) return;
+                filaOrigen.classList.add("stock-fila-vinculo");
+                destinos.forEach(function (fila) { fila.classList.add("stock-fila-vinculo"); });
+            }
+
+            document.addEventListener("mouseover", function (e) {
+                const chip = e.target.closest(".stock-chip");
+                if (chip) resaltarVinculo(chip);
+            });
+
+            document.addEventListener("mouseout", function (e) {
+                const chip = e.target.closest(".stock-chip");
+                // relatedTarget dentro del mismo chip = el mouse solo paso del icono al texto: no se limpia.
+                if (chip && !chip.contains(e.relatedTarget)) limpiarResaltadoVinculo();
+            });
+
+            document.addEventListener("focusin", function (e) {
+                const chip = e.target.closest(".stock-chip");
+                if (chip) resaltarVinculo(chip);
+            });
+
+            document.addEventListener("focusout", function (e) {
+                if (e.target.closest(".stock-chip")) limpiarResaltadoVinculo();
+            });
+
+            document.addEventListener("click", function (e) {
+                const chip = e.target.closest(".stock-chip");
+                if (!chip) return;
+                // Ctrl/Cmd/Shift/boton del medio: se deja el comportamiento normal del link (nueva pestaña).
+                if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+
+                // Chip de «N pesajes vinculados»: despliega el Detalle de la fila, donde se listan.
+                const selectorDetalle = chip.getAttribute("data-abrir-detalle");
+                if (selectorDetalle) {
+                    e.preventDefault();
+                    const detalle = document.querySelector(selectorDetalle);
+                    if (detalle && !detalle.classList.contains("show")) {
+                        const btnDetalle = document.querySelector('.btn-detalles-stock[data-target="' + selectorDetalle + '"]');
+                        if (btnDetalle) btnDetalle.click();
+                    }
+                    return;
+                }
+
+                // Registro destino en esta pagina: se salta a su fila y se la destaca. Si no esta, sigue el href.
+                const destinos = filasStockDestino(chip);
+                if (destinos.length === 0) return;
+                e.preventDefault();
+                limpiarResaltadoVinculo();
+                const destino = destinos[0];
+                destino.scrollIntoView({ behavior: "smooth", block: "center" });
+                destino.classList.remove("stock-fila-destello");
+                void destino.offsetWidth; // reinicia la animacion si se hace clic dos veces seguidas
+                destino.classList.add("stock-fila-destello");
+                setTimeout(function () { destino.classList.remove("stock-fila-destello"); }, 2000);
+            });
+
             switchVista.addEventListener("change", function () {
                 const expandir = switchVista.checked;
                 document.querySelectorAll(".stock-detalle-collapse").forEach(function (detalle) {

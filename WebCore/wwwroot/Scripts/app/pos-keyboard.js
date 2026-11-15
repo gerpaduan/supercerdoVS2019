@@ -102,6 +102,42 @@
             });
         }
 
+        // Normaliza el texto de Cantidad: el punto es SIEMPRE el separador decimal y solo se admite uno.
+        // - La coma (la que trae el teclado numerico en configuracion regional AR) se convierte en punto.
+        // - Se descarta todo lo que no sea digito o punto.
+        // - Del segundo punto en adelante se descarta (se conserva el primero).
+        // Devuelve el texto ya normalizado; no toca el DOM.
+        function normalizarCantidadTipeada(texto) {
+            const soloNumerico = String(texto ?? '').replace(/,/g, '.').replace(/[^0-9.]/g, '');
+            const primerPunto = soloNumerico.indexOf('.');
+            if (primerPunto < 0) return soloNumerico;
+            return soloNumerico.slice(0, primerPunto + 1) + soloNumerico.slice(primerPunto + 1).replace(/\./g, '');
+        }
+
+        // Aplica la normalizacion mientras el cajero tipea con teclado fisico (el virtual ya la cumple en
+        // writeCharacter). Reescribir .value mueve el cursor al final, por eso se restaura la posicion
+        // descontando los caracteres que se quitaron antes del cursor. No actua sobre #modalCantidad (muestra
+        // formato argentino con coma) ni sobre los valores que pone la balanza por codigo (.val() no dispara 'input').
+        function bindNormalizacionCantidad() {
+            document.addEventListener('input', function (e) {
+                const input = e.target;
+                if (!input || input.id !== 'inputCantidad') return;
+
+                const original = input.value;
+                const normalizado = normalizarCantidadTipeada(original);
+                if (normalizado === original) return;
+
+                const cursor = input.selectionStart ?? original.length;
+                const antesDelCursor = normalizarCantidadTipeada(original.slice(0, cursor));
+                input.value = normalizado;
+                try {
+                    // Si el cursor quedaria despues de un punto descartado, se acota al largo del texto final.
+                    const nuevaPos = Math.min(antesDelCursor.length, normalizado.length);
+                    input.setSelectionRange(nuevaPos, nuevaPos);
+                } catch { /* algunos tipos de input no permiten selection; el cursor al final es aceptable */ }
+            }, true);
+        }
+
         // Conecta cada boton del teclado virtual con su accion correspondiente.
         function bindVirtualKeyboard() {
             document.querySelectorAll('.btn-key').forEach(function (button) {
@@ -190,6 +226,7 @@
         const api = {
             init: function () {
                 bindFocusTracking();
+                bindNormalizacionCantidad();
                 bindVirtualKeyboard();
                 bindPOSFocusEvents();
                 bindConfigurarInputsMobile();
