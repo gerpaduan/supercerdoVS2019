@@ -1008,9 +1008,14 @@ namespace DatosPostgres
                     ec.descripcion AS ""Descripcion"", ec.detalle AS ""Detalle"", ec.conteobilletes AS ""ConteoBilletes"", ROUND(CAST(ec.monto AS numeric), 2) AS ""Monto"",
                     te.esgasto AS ""Gasto"", s.sucursal AS ""Sucursal"", ec.creado AS ""Creado"", cp.nombre AS ""Creado Por"",
                     ec.actualizado AS ""Actualizado"", ap.nombre AS ""Actualizado Por"",
-                    ec.tabla AS ""Tabla"", ec.idtabla AS ""IdTabla""
+                    ec.tabla AS ""Tabla"", ec.idtabla AS ""IdTabla"",
+                    pc.identificacion AS ""ClienteIdentificacion"", pc.razonsocial AS ""ClienteRazonSocial""
                 FROM egresoscaja ec
                 INNER JOIN tiposegresocaja te ON ec.idtipoegresocaja = te.id
+                -- Cliente de la venta vinculada (egreso 'Pago Electronico' / 'Cta Cte': tabla = 'Ventas', idtabla = idventa): la fila de
+                -- Mis actividades muestra su nombre corto y el desplegable su razon social (docs/DECISIONS.md, 2026-11-14).
+                LEFT JOIN ventas vv ON ec.tabla = 'Ventas' AND vv.idventa = ec.idtabla
+                LEFT JOIN personas pc ON pc.idpersona = vv.idpersona
                 LEFT JOIN sucursal s ON s.idsucursal = ec.idsucursal
                 LEFT JOIN usuarios cp ON ec.creadopor = cp.id
                 LEFT JOIN usuarios ap ON ec.actualizadopor = ap.id

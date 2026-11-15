@@ -153,6 +153,67 @@
         return int.TryParse(Valor(row, "IdTabla"), NumberStyles.Integer, CultureInfo.InvariantCulture, out idVenta) && idVenta > 0 ? idVenta : 0;
     }
 
+    // Descripcion que se muestra en la fila de Mis actividades cuando hay venta vinculada (2026-11-14, docs/DECISIONS.md "Descripcion
+    // corta"): solo el nombre de la venta ("Venta Mixta", "Venta Debito"...), sin importes, sin "ID:nnn" ni etiqueta de venta; esos datos
+    // estan en el desplegable. Cta Cte: "Venta Cta Cte" (el cliente se muestra aparte). El texto completo se guarda en la base tal cual.
+    string DescripcionCorta(DataRow row)
+    {
+        string completa = Descripcion(row);
+        if (IdVentaVinculada(row) == 0)
+            return completa;
+        if (EsCtaCte(row))
+            return "Venta Cta Cte";
+
+        int corte = completa.IndexOf(" - ", StringComparison.Ordinal);
+        return corte > 0 ? completa.Substring(0, corte).Trim() : completa;
+    }
+
+    string ClienteRazonSocial(DataRow row)
+    {
+        return Valor(row, "ClienteRazonSocial").Trim();
+    }
+
+    // Nombre corto del cliente de una venta a cuenta corriente: su Identificacion; si esta vacia, la razon social; y si la consulta no
+    // trae al cliente (p. ej. el motor SQL Server) se toma del texto del egreso: "Venta a <razon social> - ID:nnn".
+    string ClienteNombreCorto(DataRow row)
+    {
+        string identificacion = Valor(row, "ClienteIdentificacion").Trim();
+        if (identificacion.Length > 0)
+            return identificacion;
+
+        string razonSocial = ClienteRazonSocial(row);
+        if (razonSocial.Length > 0)
+            return razonSocial;
+
+        const string prefijo = "Venta a ";
+        string descripcion = Descripcion(row);
+        int fin = descripcion.LastIndexOf(" - ID:", StringComparison.Ordinal);
+        return descripcion.StartsWith(prefijo, StringComparison.OrdinalIgnoreCase) && fin > prefijo.Length
+            ? descripcion.Substring(prefijo.Length, fin - prefijo.Length).Trim()
+            : "";
+    }
+
+    // Bloque "Cliente" del desplegable de una venta a cuenta corriente: la razon social y, mas sutil y sin rotulo, el nombre corto
+    // (la Identificacion) solo si es distinto; si son iguales se muestra una sola vez.
+    void ClienteBloque(DataRow row)
+    {
+        string razonSocial = ClienteRazonSocial(row);
+        string nombreCorto = ClienteNombreCorto(row);
+        string principal = razonSocial.Length > 0 ? razonSocial : nombreCorto;
+        if (principal.Length == 0)
+            return;
+
+        bool mostrarNombreCorto = nombreCorto.Length > 0 && !string.Equals(nombreCorto, principal, StringComparison.OrdinalIgnoreCase);
+        <div class="egreso-cliente-bloque">
+            <span class="egreso-cliente-lbl">Cliente</span>
+            <span class="egreso-cliente-rs">@principal</span>
+            @if (mostrarNombreCorto)
+            {
+                <span class="egreso-cliente-id">@nombreCorto</span>
+            }
+        </div>
+    }
+
     // "ANULACION:" (anulacion de un egreso) o "ELIMINADO:" (egreso opuesto que genera Negocio.Compra.eliminarCompra al borrar una compra).
     bool EsAnulacion(DataRow row)
     {
@@ -374,10 +435,18 @@
                             <td>@Valor(row, "TipoEgresoCaja")</td>
                         }
                         <td>
-                            @Descripcion(row)
                             @if (idVentaVinculada > 0)
                             {
-                                <span class="egreso-venta-chip" title="Este movimiento corresponde a la venta @idVentaVinculada: desplegá la fila para verla">Venta @idVentaVinculada</span>
+                                @* Con venta vinculada: solo el nombre de la venta (+ el cliente si es a cuenta corriente); el resto va en el desplegable. *@
+                                <span class="egreso-desc-corta">@DescripcionCorta(row)</span>
+                                @if (EsCtaCte(row) && ClienteNombreCorto(row).Length > 0)
+                                {
+                                    <span class="egreso-cliente">· @ClienteNombreCorto(row)</span>
+                                }
+                            }
+                            else
+                            {
+                                @Descripcion(row)
                             }
                             @if (esHistorico)
                             {
@@ -389,7 +458,9 @@
                             }
                             @if (modoActividades && tieneDetalle)
                             {
-                                <div class="mt-1"><a href="#@detalleId" class="egreso-ver-detalle" data-toggle="collapse" data-target="#@detalleId" role="button" aria-expanded="false" aria-controls="@detalleId" title="Desplegá la fila para ver el detalle"><i class="fas fa-chevron-down mr-1"></i>Ver detalle</a></div>
+                                @* Boton "Ver detalle" (2026-11-14): pildora con un circulo que gira al abrir y cambia a "Ocultar detalle".
+                                   El estado abierto lo marca el CSS con :has(.collapse.show) (el aria-expanded no se actualiza con bootstrap4-compat). *@
+                                <div class="mt-1"><button type="button" class="egreso-ver-detalle" data-toggle="collapse" data-target="#@detalleId" aria-expanded="false" aria-controls="@detalleId" title="Desplegá la fila para ver el detalle"><span class="egreso-ver-detalle-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></span><span class="evd-abrir">Ver detalle</span><span class="evd-cerrar">Ocultar detalle</span></button></div>
                             }
                         </td>
                         <td class="text-right text-nowrap egreso-monto">$ @Monto(row)</td>
@@ -476,14 +547,19 @@
                                 string actualizadoPorActividad = Valor(row, "Actualizado Por");
                                 <div id="@detalleId" class="collapse egreso-detalle-collapse">
                                     <div class="egreso-detalle-panel">
-                                        <div class="egreso-detalle-panel-lbl">Detalle</div>
-                                        @if (string.IsNullOrWhiteSpace(detalleTexto))
+                                        @* Con venta vinculada no se muestra el "Detalle" automatico (" | Kgs | Precio | TOT"): lo reemplaza el panel
+                                           de la venta, que trae las lineas y el comentario (2026-11-14). *@
+                                        @if (idVentaVinculada == 0)
                                         {
-                                            <div class="egreso-detalle-panel-vacio">Sin detalle cargado</div>
-                                        }
-                                        else
-                                        {
-                                            <div class="egreso-detalle-panel-txt">@detalleTexto</div>
+                                            <div class="egreso-detalle-panel-lbl">Detalle</div>
+                                            @if (string.IsNullOrWhiteSpace(detalleTexto))
+                                            {
+                                                <div class="egreso-detalle-panel-vacio">Sin detalle cargado</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="egreso-detalle-panel-txt">@detalleTexto</div>
+                                            }
                                         }
                                         @if (!string.IsNullOrWhiteSpace(conteoActividad))
                                         {
@@ -494,6 +570,10 @@
                                             @* Se carga al desplegar la fila (script del final): Ventas/DetalleVentaResumen, el mismo panel de Mis ventas. *@
                                             <div class="egreso-venta-vinculada" data-id-venta="@idVentaVinculada" data-id-cierre="@idCierreActividad">
                                                 <div class="egreso-venta-vinculada-cab">Venta vinculada #@idVentaVinculada</div>
+                                                @if (EsCtaCte(row))
+                                                {
+                                                    ClienteBloque(row);
+                                                }
                                                 <div class="egreso-venta-vinculada-cuerpo venta-detalle-panel">
                                                     <div class="vr-cargando">Se carga al desplegar…</div>
                                                 </div>
@@ -615,7 +695,18 @@
                 </div>
                 <div class="egreso-card-line">@Fecha(row, "Fecha")</div>
                 <div class="egreso-card-line">
-                    @Descripcion(row)
+                    @if (modoActividades && IdVentaVinculada(row) > 0)
+                    {
+                        <span class="egreso-desc-corta">@DescripcionCorta(row)</span>
+                        @if (EsCtaCte(row) && ClienteNombreCorto(row).Length > 0)
+                        {
+                            <span class="egreso-cliente">· @ClienteNombreCorto(row)</span>
+                        }
+                    }
+                    else
+                    {
+                        @Descripcion(row)
+                    }
                     @if (esHistorico)
                     {
                         <div class="small text-muted mt-1">@(descripcionesEliminadas.Contains(Descripcion(row)) ? "Compra eliminada: ver el egreso ELIMINADO." : "Registro anterior reemplazado por una modificacion.")</div>
@@ -666,7 +757,8 @@
                     }
                 </div>
                 <div id="@detalleId" class="collapse egreso-detalle-collapse">
-                    @if (!string.IsNullOrWhiteSpace(Valor(row, "Detalle")))
+                    @* Con venta vinculada el "Detalle" automatico se omite en Mis actividades: lo reemplaza el panel de la venta (abajo). *@
+                    @if (!string.IsNullOrWhiteSpace(Valor(row, "Detalle")) && !(modoActividades && IdVentaVinculada(row) > 0))
                     {
                         <div class="egreso-card-detail">@Valor(row, "Detalle")</div>
                     }
@@ -691,6 +783,10 @@
                         int idVentaVinculadaCard = IdVentaVinculada(row);
                         <div class="egreso-venta-vinculada" data-id-venta="@idVentaVinculadaCard" data-id-cierre="@idCierreActividad">
                             <div class="egreso-venta-vinculada-cab">Venta vinculada #@idVentaVinculadaCard</div>
+                            @if (EsCtaCte(row))
+                            {
+                                ClienteBloque(row);
+                            }
                             <div class="egreso-venta-vinculada-cuerpo venta-detalle-panel">
                                 <div class="vr-cargando">Se carga al desplegar…</div>
                             </div>

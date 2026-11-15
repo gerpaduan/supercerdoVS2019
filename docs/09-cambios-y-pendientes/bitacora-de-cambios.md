@@ -1,5 +1,18 @@
 # Bitacora de cambios
 
+## 2026-11-14 - Mis actividades: descripción corta, cliente en Cta Cte y botón «Ver detalle» nuevo
+
+- **Qué cambia:** en las filas con venta vinculada la columna Descripción dice solo «Venta Mixta» / «Venta Debito»… (sin importes, sin «ID:», sin la etiqueta «Venta N»); todo eso se ve al desplegar. En Cta Cte dice «Venta Cta Cte · nombre del cliente» y el desplegable muestra la razón social y, más sutil, el nombre corto si es distinto. El botón «Ver detalle» es ahora una píldora con un círculo que gira y pasa a «Ocultar detalle».
+- **Dónde:** `WebCore/Views/Cajas/_EgresosCajaTabla.cshtml`, `_MisEgresosCaja.cshtml`, `DatosPostgres/CierreCajaPg.cs` (`obtenerEgresosCajaVendedorInterno`: cliente de la venta).
+- **Verificado:** compila; PENDIENTE probar en pantalla (Mis actividades F6 y Cajas abiertas, claro y oscuro, escritorio y celular).
+
+## 2026-11-14 - Corrección: Mis actividades no cargaba («No se pudo cargar egresos de caja»)
+
+- **Síntoma:** tras el cambio de la venta vinculada, Mis actividades (F6) mostraba «No se pudo cargar egresos de caja» cuando había filas Pago Electronico / Cta Cte con venta.
+- **Causa:** `_VentasExpandible.cshtml` incluía `_VentaLineasStyles` por nombre corto; ASP.NET Core solo lo busca en `Views/<controlador>` y `Views/Shared`, así que desde Cajas daba error 500 (desde Ventas andaba).
+- **Arreglo:** ruta completa `~/Views/Ventas/_VentaLineasStyles.cshtml`. Regla para el futuro: un parcial que se incluya desde más de un controlador va siempre con ruta completa.
+- **Verificado:** compila; PENDIENTE probar Mis actividades en pantalla.
+
 ## 2026-11-14 - Forma de pago en el detalle de la venta y venta vinculada en Mis actividades
 
 - **Pedido:** ver la forma de pago (y, si es mixta, cuánto en efectivo y cuánto en el otro medio) en el detalle de la venta, y en Mis actividades el detalle de los pagos electrónicos con la venta vinculada.
