@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-11-14
+revisada: 2026-11-16
 ---
 
 ## Para qué sirve
@@ -34,7 +34,13 @@ Modo compacto del listado de **Egresos de caja** (el que se abre desde el menú,
 - **Tabla:** una línea por fila (la Descripción baja de renglón solo si es larga). El **Monto** se ve con la **misma letra que las demás columnas** (antes iba más grande y en negrita), en todos los anchos. En **Creado** la fecha y el usuario van en la misma línea (el nombre se corta si es largo; el nombre completo está en la fila desplegable).
 - El **Detalle** de la tabla muestra la primera línea cortada a ~9 rem (el texto completo está en la fila desplegable).
 - Con una ventana de **1200 px** la tabla puede tener scroll horizontal propio (no entran las 8 columnas con el menú lateral abierto).
-- **Celular y tablet (menos de 1200 px):** se ve como antes (en el celular, el texto de estado queda debajo de los filtros).
+- **Celular y tablet (menos de 1200 px):** se ve como antes (en el celular, el texto de estado queda debajo de los filtros). La tabla sigue igual entre 768 y 1199 px; por debajo de 768 px se ve como tarjetas (ver abajo).
+
+## En ventana angosta (menos de 1200 px)
+Desde el 2026-11-16, igual que **Movimientos**, **Stock** y **Elaborados**:
+- **Computadora con mouse y ventana de menos de 1200 px:** los botones **Nuevo Egreso**, **Calcular comisiones electrónicas** y **Tipos Egresos** van en **un solo renglón**, y los filtros en **tres renglones compactos** con la etiqueta a la izquierda de cada campo: *Desde / Hasta*, *Sucursal / Usuario / Tipo* y *Descripción / Gasto / Buscar*. Items, Total y **Vista completa** quedan en una línea. Si cambiás las fechas y todavía no buscaste, **Buscar se pone amarillo** y aparece el aviso de siempre en su propio renglón (no la alerta grande). En un celular o una tablet los filtros siguen como antes.
+- **Menos de 768 px (celular o ventana muy angosta):** cada egreso del listado es una **tarjeta** con el mismo estilo que Movimientos: arriba la **fecha** y, a la derecha en gris, el **número de egreso**; abajo **Tipo y Monto**, la **Descripción**, el **Detalle** (si tiene), **Sucursal y Creado** (con la etiqueta **Modificado** si corresponde) y una fila de botones **Detalle**, **Imprimir** y **Modificar** (este último solo si se puede). **Detalle** despliega los datos completos debajo de la tarjeta. **Vista completa** los despliega todos. *Mis actividades* y *Actividades* del POS conservan sus tarjetas de siempre.
+- Verificado el 2026-11-16 en el navegador con sesión real: filtros y tarjetas a 1000, 600 y 1500 px, **Detalle** y el filtro **Gasto** en tarjeta. **PENDIENTE:** modo oscuro y celular real (el panel emula táctil por debajo de 768 px, así que los renglones compactos de los filtros se vieron solo a 1000 px).
 
 ## Ver los pagos electrónicos (control)
 - «Todos» **no** lista los pagos electrónicos ni la cuenta corriente: son movimientos que genera el sistema con cada venta y ensuciarían el listado.

@@ -34,7 +34,9 @@
         @* Bloque superior: en escritorio (>= 1200 px) los filtros van arriba (fechas primero) y debajo UNA barra con Items/Total, estado,
            "Vista completa" y los botones (Nuevo Egreso ...); la tabla es el ultimo item (#tablaEgresosCaja se disuelve con display:contents para
            que el resumen entre en la barra). Por debajo de 1200 px conserva el orden de siempre. Estilos: Shared/_FiltrosCompactosStyles + <style> de abajo. *@
-        <div class="fc-top egresos-top">
+        @* fc-angosto (2026-11-16): en escritorio con mouse y menos de 1200 px usa el bloque compacto de _FiltrosCompactosStyles
+           (botones en un renglon, filtros en renglones con la etiqueta a la izquierda); los renglones los arman .egr-corte y el <style> de abajo. *@
+        <div class="fc-top fc-angosto egresos-top">
         <div class="egresos-actions fc-acciones">
             @if (soloLectura)
             {
@@ -86,6 +88,9 @@
                         <input type="datetime-local" step="1" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
                     </div>
 
+                    @* Corte de renglon: solo existe en escritorio angosto (en el resto display:none, no es item de la grilla). *@
+                    <div class="egr-corte egr-corte-1" aria-hidden="true"></div>
+
                     <div class="form-group mb-0 egr-f-usuario">
                         <label class="egresos-filtro-label">Usuario</label>
                         <select name="idUsuario" id="filtroUsuarioEgreso" class="form-control">
@@ -117,6 +122,8 @@
                             }
                         </select>
                     </div>
+
+                    <div class="egr-corte egr-corte-2" aria-hidden="true"></div>
 
                     <div class="form-group mb-0 egr-f-descripcion">
                         <label class="egresos-filtro-label">Descripcion</label>
@@ -509,6 +516,116 @@
         .egresos-filtros-row,
         .egresos-filtros-grid {
             grid-template-columns: 1fr;
+        }
+
+        /* Listado como tarjetas (mismo estilo que Movimientos; el resto del estilo lo pone tabla-cards.css).
+           custom.css oculta .egresos-tabla-desktop en celular para mostrar las tarjetas propias, que en este listado ya no se generan. */
+        .egresos-page .egresos-tabla-desktop.egresos-tabla-cards {
+            display: block;
+        }
+
+        /* Orden de los datos en la tarjeta: fecha (titulo), tipo y monto, descripcion, detalle, sucursal y creado, botones. */
+        .egresos-page table.tabla-cards > tbody > tr > td.egr-c-desc { order: 1; }
+        .egresos-page table.tabla-cards > tbody > tr > td.egr-c-detalle { order: 2; }
+        .egresos-page table.tabla-cards > tbody > tr > td.egr-c-sucursal,
+        .egresos-page table.tabla-cards > tbody > tr > td.egr-c-creado { order: 3; }
+        .egresos-page table.tabla-cards > tbody > tr > td.cc-acciones { order: 9; }
+
+        /* Importes alineados en columna entre tarjetas. */
+        .egresos-page table.tabla-cards > tbody > tr > td.egr-c-monto {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* "Detalle" como boton con borde (en escritorio es solo un chevron sin marco). */
+        .egresos-page .egresos-tabla-cards .btn-detalle-egreso {
+            border: 1px solid currentColor;
+            color: var(--bs-secondary, #6c757d);
+        }
+    }
+
+    /* ---- Escritorio ANGOSTO (2026-11-16, docs/DECISIONS.md "Egresos de Caja en pantalla angosta") ----
+       Mismo criterio que Movimientos / Stock / Elaborados (bloque "Escritorio ANGOSTO" de _FiltrosCompactosStyles, activado por .fc-angosto en
+       .fc-top): ventana de menos de 1200 px con mouse. Esa hoja ya compacta botones, estado y barra de totales y deja la etiqueta a la izquierda
+       de cada campo; aca solo se arman los renglones (la grilla de Egresos es plana, sin .fc-fila) y se pisa lo propio de esta pantalla.
+       Renglones: Desde / Hasta  |  Sucursal / Usuario / Tipo  |  Descripcion / Gasto / Buscar. No cambia ningun id ni name. */
+    .egr-corte {
+        display: none;
+    }
+
+    @@media (max-width: 1199.98px) and (hover: hover) and (pointer: fine) {
+        body.app-shell .fc-top.fc-angosto .egresos-filtros-card {
+            padding: .4rem .5rem;
+        }
+
+        body.app-shell .fc-top.fc-angosto .egresos-filtros-stack {
+            gap: 0;
+        }
+
+        /* El renglon de la alerta de fechas queda vacio (la alerta es .fc-alerta, oculta): se saca para que no sume el gap. */
+        body.app-shell .fc-top.fc-angosto .egresos-filtros-row {
+            display: none;
+        }
+
+        body.app-shell .fc-top.fc-angosto .egresos-filtros-grid {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .35rem .5rem;
+        }
+
+        body.app-shell .fc-top.fc-angosto .egr-corte {
+            display: block;
+            flex: 0 0 100%;
+            height: 0;
+        }
+
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group.egr-f-desde { order: 1; flex: 1 1 15rem; }
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group.egr-f-hasta { order: 2; flex: 1 1 15rem; }
+        body.app-shell .fc-top.fc-angosto .egr-corte-1 { order: 3; }
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group.egr-f-sucursal { order: 4; flex: 1 1 10rem; }
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group.egr-f-usuario { order: 5; flex: 1 1 10rem; }
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group.egr-f-tipo { order: 6; flex: 1 1 10rem; }
+        body.app-shell .fc-top.fc-angosto .egr-corte-2 { order: 7; }
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group.egr-f-descripcion { order: 8; flex: 2 1 12rem; }
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group.egr-f-gasto { order: 9; flex: 1 1 9rem; }
+        body.app-shell .fc-top.fc-angosto .fc-card .form-group.egresos-filtro-accion { order: 10; flex: 0 0 auto; }
+
+        /* Items / Total en una linea junto a "Vista completa" (mismo recurso que >= 1200 px): #tablaEgresosCaja se disuelve para que el
+           resumen y la tabla sean items de la barra. Sin esto la tabla se agranda a su ancho natural (la barra es flex) y se sale de la ventana. */
+        body.app-shell .fc-top.fc-angosto > .egresos-tabla-host { display: contents; }
+
+        body.app-shell .fc-top.fc-angosto .egresos-tabla-host > .egresos-resumen {
+            order: 2;
+            margin: 0;
+            justify-content: flex-start;
+            gap: .4rem;
+            flex: 0 0 auto;
+        }
+
+        body.app-shell .fc-top.fc-angosto .egresos-tabla-host > .egresos-resumen > div {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: baseline;
+            gap: .45rem;
+            padding: .28rem .65rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        body.app-shell .fc-top.fc-angosto .egresos-tabla-host > .egresos-resumen span,
+        body.app-shell .fc-top.fc-angosto .egresos-tabla-host > .egresos-resumen strong {
+            display: inline;
+            margin: 0;
+        }
+
+        body.app-shell .fc-top.fc-angosto > .fc-vista { order: 3; }
+
+        /* La tabla (y el aviso de rango) ocupan todo el ancho, debajo de la barra, y se contienen con su propio scroll horizontal. */
+        body.app-shell .fc-top.fc-angosto .egresos-tabla-host > :not(.egresos-resumen) {
+            order: 10;
+            flex: 0 0 100%;
+            max-width: 100%;
+            min-width: 0;
         }
     }
 </style>

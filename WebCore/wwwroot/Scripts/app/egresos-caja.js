@@ -212,9 +212,12 @@
         var pendiente = hayCambioFechasPendiente();
         $mensaje.toggleClass("d-none", !pendiente);
 
-        // Escritorio (>= 1200 px): la alerta de arriba esta oculta (.fc-alerta); el aviso es Buscar en ambar + el texto de estado de la barra.
-        // En celular se queda la alerta sola (no se duplica el mensaje).
-        if (!window.matchMedia || !window.matchMedia("(min-width: 1200px)").matches) return;
+        // Escritorio (>= 1200 px) y escritorio angosto (< 1200 px con mouse, ver .fc-angosto en _FiltrosCompactosStyles): la alerta de arriba
+        // esta oculta (.fc-alerta); el aviso es Buscar en ambar + el texto de estado de la barra.
+        // En celular y tablet se queda la alerta sola (no se duplica el mensaje).
+        if (!window.matchMedia
+            || !(window.matchMedia("(min-width: 1200px)").matches
+                || window.matchMedia("(max-width: 1199.98px) and (hover: hover) and (pointer: fine)").matches)) return;
 
         var $btn = $("#btnBuscarEgresosCaja");
         var $estado = $("#estadoBusquedaEgresos");
