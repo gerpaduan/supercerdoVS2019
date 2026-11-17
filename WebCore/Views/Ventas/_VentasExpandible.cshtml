@@ -15,6 +15,7 @@
     Dentro del panel (lo arman _DetalleVentaResumen / _DetalleFacturaResumen):
       _VentaLineas sin su total (ViewData VentaLineasSinTotal) + .vr-pie = .vr-pie-total + .vr-acciones
       (pie compacto: botones a la izquierda y total a la derecha desde 576px; docs/DECISIONS.md, 2026-11-10).
+    El panel de venta (_DetalleVentaResumen) en cambio usa .vr-grid: dos columnas desde 560px de panel (2026-11-16).
       .venta-abrir-detalle  -> en modal lo resuelve _MisVentas.cshtml; si no es un link normal (misma pestaña).
       .venta-accion-pos     -> "Modificar venta" / "Cambiar forma de pago": evita el aviso de salida del POS.
 
@@ -245,6 +246,54 @@
         font-size: .7rem;
         color: var(--ui-text-muted, #6c757d);
         margin-top: .2rem;
+    }
+
+    /* Panel de venta en dos columnas (_DetalleVentaResumen, 2026-11-16, docs/DECISIONS.md "Detalle de venta en dos columnas").
+       .vr-venta es el contenedor de la container query: se mide el ancho del PANEL, no el de la ventana, porque el mismo panel
+       se ve en la pagina de Ventas, en el modal de Mis ventas y dentro de Mis actividades (modal + tabla). container-type:
+       inline-size ademas hace que el panel no empuje el ancho minimo de la celda de tabla que lo contiene (se salia del modal).
+       Una columna por defecto (orden: lineas, total, forma de pago, acciones); desde 560px de panel, dos. */
+    .vr-venta {
+        container-type: inline-size;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .vr-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: .4rem;
+    }
+
+    .vr-col-izq,
+    .vr-col-der {
+        min-width: 0;
+    }
+
+    .vr-col-der {
+        display: grid;
+        gap: .4rem;
+        align-content: start;
+    }
+
+    .vr-grid .fp {
+        margin: 0;
+    }
+
+    .vr-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: .6rem;
+        padding-top: .3rem;
+    }
+
+    @@container (min-width: 560px) {
+        .vr-grid {
+            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+            gap: .4rem .9rem;
+            align-items: start;
+        }
     }
 </style>
 @* Ruta completa (2026-11-14): con el nombre corto solo se encuentra desde el controlador Ventas; Mis actividades (Cajas) tambien incluye este parcial. *@

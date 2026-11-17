@@ -573,11 +573,14 @@
                                         {
                                             @* Se carga al desplegar la fila (script del final): Ventas/DetalleVentaResumen, el mismo panel de Mis ventas. *@
                                             <div class="egreso-venta-vinculada" data-id-venta="@idVentaVinculada" data-id-cierre="@idCierreActividad">
-                                                <div class="egreso-venta-vinculada-cab">Venta vinculada #@idVentaVinculada</div>
-                                                @if (EsCtaCte(row))
-                                                {
-                                                    ClienteBloque(row);
-                                                }
+                                                @* Encabezado en un renglon: "Venta vinculada #N" y, en Cta Cte, el Cliente al lado (2026-11-16). *@
+                                                <div class="egreso-venta-vinculada-encab">
+                                                    <div class="egreso-venta-vinculada-cab">Venta vinculada #@idVentaVinculada</div>
+                                                    @if (EsCtaCte(row))
+                                                    {
+                                                        ClienteBloque(row);
+                                                    }
+                                                </div>
                                                 <div class="egreso-venta-vinculada-cuerpo venta-detalle-panel">
                                                     <div class="vr-cargando">Se carga al desplegar…</div>
                                                 </div>
@@ -790,11 +793,13 @@
                     {
                         int idVentaVinculadaCard = IdVentaVinculada(row);
                         <div class="egreso-venta-vinculada" data-id-venta="@idVentaVinculadaCard" data-id-cierre="@idCierreActividad">
-                            <div class="egreso-venta-vinculada-cab">Venta vinculada #@idVentaVinculadaCard</div>
-                            @if (EsCtaCte(row))
-                            {
-                                ClienteBloque(row);
-                            }
+                            <div class="egreso-venta-vinculada-encab">
+                                <div class="egreso-venta-vinculada-cab">Venta vinculada #@idVentaVinculadaCard</div>
+                                @if (EsCtaCte(row))
+                                {
+                                    ClienteBloque(row);
+                                }
+                            </div>
                             <div class="egreso-venta-vinculada-cuerpo venta-detalle-panel">
                                 <div class="vr-cargando">Se carga al desplegar…</div>
                             </div>

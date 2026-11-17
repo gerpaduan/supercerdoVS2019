@@ -5,7 +5,7 @@ rol: admin
 modulo: Caja
 orden: 2
 permiso: Caja.CerrarCaja (cerrar cajas y ver el historial; sin el permiso se pide usuario y clave de quien lo tiene, valen 5 minutos) / Caja.CierresDeCaja (modificar un cierre ya hecho)
-revisada: 2026-11-11
+revisada: 2026-11-16
 ---
 ## Para qué sirve
 Ver las **cajas que están abiertas** (una por cajero), **cerrarlas** y consultar el **historial de cierres**. Quien cierra la caja es el encargado: confirma el efectivo que entrega el cajero y el sistema calcula la diferencia.
@@ -82,7 +82,7 @@ Al confirmar el cierre, si el cajero tiene una venta sin terminar aparece **«Ha
 ## En el celular
 - En pantallas angostas (celular) **Cajas abiertas** y el **Historial de cierres** se ven como **tarjetas**, una debajo de otra, en vez de tablas: no hace falta desplazarse de costado.
 - Cada tarjeta de caja abierta tiene arriba al **vendedor**, después sucursal, inicio y caja inicial, y abajo los botones (**Ventas**, **Actividad**, **Cerrar** y, si hay varias sucursales, **Cambiar sucursal**).
-- **Ventas** abre las ventas de esa caja en una ventana: tocá una venta para **desplegar** sus artículos y total (y **Modificar venta** / **Cambiar forma de pago** si te corresponden); **Abrir detalle** abre el [detalle completo](ayuda:pantalla/Ventas.DetalleVenta) en la misma ventana.
+- **Ventas** abre las ventas de esa caja en una ventana: tocá una venta para **desplegar** sus artículos y total a la izquierda y la forma de pago a la derecha (en dos columnas si hay lugar; y **Modificar venta** / **Cambiar forma de pago** si te corresponden); **Abrir detalle** abre el [detalle completo](ayuda:pantalla/Ventas.DetalleVenta) en la misma ventana.
 - Cada tarjeta del historial dice **Caja #número** y muestra los mismos datos que las columnas de la tabla, de a dos por renglón. **Origen del cierre** y **Avisos** solo aparecen si tienen algo. Los botones (**Modificar**, **Reabrir**) quedan al pie.
 - Si los botones no entran a lo ancho de la tarjeta (por ejemplo con el menú lateral abierto), los que sobran pasan al renglón de abajo. En la computadora la pantalla se ve igual que antes.
 
