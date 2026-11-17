@@ -5,7 +5,7 @@ rol: admin
 modulo: Stock
 orden: 3
 permiso: Stock.VerStock (PENDIENTE: en WebCore el chequeo está omitido, ver TODO en StockController.ExistenciaPorSucursales)
-revisada: 2026-11-04
+revisada: 2026-11-17
 ---
 ## Para qué sirve
 Ver el **stock actual de cada producto, una sucursal por grupo de columnas**, para comparar sucursales o ver una sola, saber qué falta (contra el **punto de stock**) y exportarlo.
@@ -123,3 +123,20 @@ El cálculo parte del **último cierre de stock** de cada sucursal. Con varias s
 - PENDIENTE: con una **cuenta de producción** el pedido se guarda a nombre de la cuenta de la sesión (no pide elegir la persona como Stock o Movimientos).
 - PENDIENTE: las cantidades sugeridas se redondean a 3 decimales también en productos que no son por peso; si hace falta que sean enteros hay que definirlo.
 - PENDIENTE: capturas de la pantalla.
+
+## Como aplicación instalada (desde 2026-11-17)
+- Se instala desde **Configuración → Utilidades → Aplicaciones instalables → Existencia por sucursal → Instalar** (ver [Utilidades](ayuda:pantalla/Home.Utilidades)). Queda con el nombre **Existencia por sucursal**, su propio ícono (barras por sucursal) y su propia ventana.
+- Abre directo en esta pantalla en el modo de ventana independiente (compacta, sin menú lateral ni barra superior). Es la misma pantalla y la misma sesión.
+- PENDIENTE: no se probó la instalación real en producción.
+
+## Botones − / + de ancho (ventana independiente y app instalada, desde 2026-11-17)
+- En la **ventana independiente** y en la **app instalada** (no en una pestaña normal) hay dos botones **−** y **+** justo a la izquierda de «Borradores sin guardar»; si ese botón no está (borradores apagados), van antes de **Excel / PDF**. Cada clic achica o agranda el **ancho de la ventana un 10 %** del ancho con que se abrió (mínimo 50 %, máximo hasta el borde izquierdo de la pantalla). **El borde derecho de la ventana queda fijo**: crece o se achica hacia la izquierda; el alto no cambia.
+- Dejá el mouse sobre un botón para ver el nivel actual. Se recuerda el último nivel de cada sección.
+- Si el navegador no deja cambiar el tamaño de la ventana, avisa «El navegador no permite cambiar el tamaño de esta ventana».
+- Solo aparecen donde está el botón de registros sin guardar (si ese botón está apagado en el sistema, tampoco aparecen).
+- PENDIENTE: no se probó en una app instalada real si el navegador permite cambiar el tamaño de la ventana.
+
+## Ícono propio (desde 2026-11-17)
+- Existencia por sucursal tiene su **propio ícono** (barras por sucursal, ya no el de Stock) en la pestaña y en la barra de título, también en la ventana independiente.
+- El **botón de la barra de tareas** lo decide el navegador: una ventana abierta con **Ventana** desde la app **Stock** instalada se agrupa con Stock. Para que Existencia tenga su propio botón e ícono, instalá **Existencia por sucursal** desde Utilidades y abrila desde su ícono. La app instalada abre en la dirección propia `/Existencia` (fuera de `/Stock/`) justamente para no mezclarse con la app Stock; **si ya la habías instalado antes del 2026-11-17, desinstalala (`chrome://apps` → clic derecho → Quitar) y volvé a instalarla desde Utilidades.**
+- PENDIENTE: no se verificó en una ventana real.

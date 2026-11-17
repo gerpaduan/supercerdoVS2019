@@ -1,0 +1,17 @@
+{
+  "name": "Punto de venta",
+  "short_name": "Punto de venta",
+  "description": "CarniSys: punto de venta (POS)",
+  "lang": "es-AR",
+  "id": "./pos-app",
+  "start_url": "./Ventas/POS",
+  "scope": "./Ventas/",
+  "display": "standalone",
+  "background_color": "#062d63",
+  "theme_color": "#062d63",
+  "icons": [
+    { "src": "./Content/img/ventanas/pos-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./Content/img/ventanas/pos-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./Content/img/ventanas/pos-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

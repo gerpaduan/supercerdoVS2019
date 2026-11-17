@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-14
+revisada: 2026-11-17
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -317,3 +317,9 @@ Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el co
 - Solo el ticket del post-venta ofrece el saldo. La **reimpresión desde el historial**, el **PDF** y el **email** no lo incluyen.
 - El ticket facturado (con CAE) también lo admite: el saldo va después del total fiscal y antes de los datos fiscales.
 - PENDIENTE: el resto de la pantalla (carrito, forma de pago, caja, borradores) no se documentó en esta revisión.
+
+## Como aplicación instalada (desde 2026-11-17)
+- Se instala desde **Configuración → Utilidades → Aplicaciones instalables → Punto de venta → Instalar** (ver [Utilidades](ayuda:pantalla/Home.Utilidades)). Queda con el nombre **Punto de venta**, su propio ícono y su propia ventana.
+- Abre directo en el POS, sin ir por Inicio. Los enlaces a otras secciones del sistema no funcionan en esta ventana: muestran «No disponible en esta ventana».
+- El botón **Salir** (← arriba), cancelar la apertura de caja o cancelar la elección de operador **cierran la ventana** en lugar de ir a Inicio. Si hay una venta en curso, el navegador pregunta antes de cerrar. Ver una venta o cobrar siguen funcionando dentro de la ventana.
+- PENDIENTE: no se probó la instalación real en producción ni el uso de **Duplicar POS** dentro de la app instalada.

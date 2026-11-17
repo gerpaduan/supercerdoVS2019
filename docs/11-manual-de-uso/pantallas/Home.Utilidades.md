@@ -5,7 +5,7 @@ rol: usuario
 modulo: Configuración
 orden: 1
 permiso: ninguno (el ítem Utilidades del menú Configuración lo ve todo usuario; verificado en `Views/Shared/_Layout.cshtml`)
-revisada: 2026-11-13
+revisada: 2026-11-17
 ---
 ## Para qué sirve
 Reúne las herramientas auxiliares que cualquier usuario puede necesitar sin entrar a otra pantalla: el **contador de billetes** y la descarga de los **agentes locales** (impresora y balanza) que se instalan en cada PC.
@@ -17,10 +17,15 @@ Reúne las herramientas auxiliares que cualquier usuario puede necesitar sin ent
 - Atajos dentro del contador: **Alt + Enter** acepta, **Esc** o **Alt + C** cierran (si hay algo contado pregunta antes).
 
 ## Aplicaciones instalables
-- La tarjeta **Aplicaciones instalables** tiene un botón **Instalar** para **Stock**, **Movimientos** y **Elaborados**. Cada una se instala como aplicación propia: abre en su ventana y tiene su ícono en la barra de tareas.
-- Al tocar **Instalar** se abre la pantalla en una pestaña nueva y arriba aparece una barra azul con el botón **Instalar**; al tocarlo el navegador pide confirmar. Después se puede cerrar la pestaña y abrir la app desde su ícono.
-- Si la barra no ofrece el botón, muestra los pasos manuales (menú ⋮ del navegador → «Guardar y compartir» → «Instalar página como aplicación»). Pasa cuando la app ya estaba instalada o cuando el sitio no es `https://carnisys.com`: en Servidor SM y San Lorenzo el navegador no deja instalar (certificado no válido).
+- La tarjeta **Aplicaciones instalables** tiene un botón **Instalar** para **Stock**, **Movimientos**, **Elaborados**, **Punto de venta**, **Punto de expendio** y **Existencia por sucursal**. Cada una se instala como aplicación independiente: con **su nombre** (ej. «Punto de venta»), **su ícono** y su propia ventana, **sin menú lateral**, y solo se puede usar esa pantalla (los enlaces a otras secciones muestran «No disponible en esta ventana»).
+- Al tocar **Instalar** se abre una **ventana chica** con el nombre y el ícono de la app y un botón **Instalar**. Al tocarlo, el navegador pide confirmar; cuando la app queda instalada, esa ventana se cierra sola y la app se abre desde su ícono.
+- Para tener el ícono en la **barra de tareas**: clic derecho sobre el ícono de la app (con la app abierta) → **Anclar a la barra de tareas**. El navegador no deja hacerlo desde la página.
+- Si el botón no aparece, la ventana muestra los pasos manuales (menú ⋮ del navegador → «Guardar y compartir» → «Instalar página como aplicación»). Pasa cuando la app ya estaba instalada o cuando el sitio no es `https://carnisys.com`: en Servidor SM y San Lorenzo el navegador no deja instalar (certificado no válido). Si el navegador bloquea la ventana chica, el botón abre la misma página en una pestaña.
+- Si por error se instaló una app llamada **CarniSys** (la app general), se desinstala desde `chrome://apps` (clic derecho → Quitar).
 - Funciona con Chrome o Edge. PENDIENTE: no se probó la instalación real en producción.
 
 ## Agentes locales
 Cada tarjeta muestra el agente (impresión, balanza), su versión y un botón **Descargar**; la nota de la tarjeta dice dónde instalarlo. Debajo, el sector **Más herramientas** queda reservado para sumar utilidades.
+
+## Tamaño de las apps instaladas
+Las apps instaladas y las ventanas independientes de carga (Stock, Movimientos, Elaborados, Existencia) tienen los botones **− / +** junto a «… sin guardar» para achicar o agrandar el **ancho** de la ventana un 10 % por clic; ver la sección «Botones − / + de ancho» de cada pantalla (por ejemplo [Stock](ayuda:pantalla/Stock.Editar)).

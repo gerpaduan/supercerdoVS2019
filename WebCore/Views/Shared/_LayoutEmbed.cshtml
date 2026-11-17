@@ -12,6 +12,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CarniSys</title>
+    @* Identidad propia de la ventana independiente (2026-11-17): la vista puede pedir un icono de pestana/ventana (ViewBag.IconoVentana, nombre de un SVG de
+       Content/img/ventanas) y su manifest (ViewBag.ManifestVentana). Hoy solo Existencia por sucursal en ventana independiente; sin esto la ventana no tenia icono
+       propio ni manifest. Los iframes (panel de stock del destino) no lo piden. *@
+    @if (ViewBag.IconoVentana is string iconoVentana)
+    {
+        <link rel="icon" href="~/favicon.ico" sizes="32x32" asp-append-version="true" />
+        <link rel="icon" type="image/svg+xml" href="~/Content/img/ventanas/@(iconoVentana).svg" asp-append-version="true" />
+        <meta name="theme-color" content="#062d63" />
+    }
+    @if (ViewBag.ManifestVentana is string manifestVentana)
+    {
+        <link rel="manifest" href="@Url.Content("~/" + manifestVentana)" />
+    }
     <script type="importmap"></script>
 
     @* Mismo preload de modo oscuro que _Layout: el iframe respeta el tema elegido por el usuario al cargar (el cambio en vivo lo sigue
@@ -98,6 +111,8 @@
         window.desactivarProteccionSalida = window.desactivarProteccionSalida || function () { window.__protegerSalida = false; };
     </script>
 
+    @* Botones −/+ de tamano de la ventana: solo si es una ventana emergente o mini-app instalada (no iframes). Ver ventana-tamano.js. *@
+    <script src="~/Scripts/app/ventana-tamano.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

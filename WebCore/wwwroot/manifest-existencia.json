@@ -1,0 +1,17 @@
+{
+  "name": "Existencia por sucursal",
+  "short_name": "Existencia",
+  "description": "CarniSys: existencia de stock por sucursal",
+  "lang": "es-AR",
+  "id": "./existencia-app",
+  "start_url": "./Existencia",
+  "scope": "./Existencia",
+  "display": "standalone",
+  "background_color": "#062d63",
+  "theme_color": "#062d63",
+  "icons": [
+    { "src": "./Content/img/ventanas/existencia-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./Content/img/ventanas/existencia-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./Content/img/ventanas/existencia-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

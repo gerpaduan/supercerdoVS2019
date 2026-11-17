@@ -231,6 +231,7 @@
                 }
                 <a class="btn btn-light btn-sm pos-btn-layout"
                    href="@Url.Action("Index", "Home")"
+                   data-app-salir
                    title="Volver al sistema">
                     <i class="fas fa-arrow-left"></i>
                     <span>Salir</span>
@@ -620,7 +621,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Home")">Cancelar</a>
+                <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Home")" data-app-salir>Cancelar</a>
             </div>
         </div>
     </div>
@@ -763,13 +764,13 @@
                     }
                     recargarConOperadorAutorizado();
                 }).catch(function () {
-                    if (esInicial) window.location.href = '@Url.Action("Index", "Home")';
+                    if (esInicial) window.AppInstalada.salir('@Url.Action("Index", "Home")'); // en la app instalada cierra la ventana (app-instalada.js)
                 });
             }
 
             $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
                 if (loginObligatorioPendiente && !$(this).data('resuelto')) {
-                    window.location.href = '@Url.Action("Index", "Home")';
+                    window.AppInstalada.salir('@Url.Action("Index", "Home")');
                 }
             });
 

@@ -444,6 +444,11 @@
                 return navigateSamePwaWindow('original', false);
             }
 
+            // App instalada (Punto de venta / Expendio): Inicio queda fuera de la app, asi que se cierra la ventana (app-instalada.js).
+            if (window.AppInstalada && window.AppInstalada.activa) {
+                window.AppInstalada.salir();
+                return true;
+            }
             window.location.replace(config().homeUrl || '/');
             return true;
         }
@@ -618,7 +623,9 @@
                 text: text,
                 allowOutsideClick: false
             }).then(function () {
-                window.location.href = config().homeUrl || '/';
+                // En la app instalada Inicio queda fuera de la app: se cierra la ventana (app-instalada.js); fuera de ella va a Inicio como siempre.
+                if (window.AppInstalada) window.AppInstalada.salir(config().homeUrl || '/');
+                else window.location.href = config().homeUrl || '/';
             });
 
             return false;

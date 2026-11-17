@@ -1,0 +1,35 @@
+@model WebCore.Models.AppInstalableVm
+@* Pagina anfitriona de instalacion (ventana chica que abre Utilidades). Enlaza el manifest de la app elegida (NO usa _PwaHead, que elegiria el manifest
+   general por controlador) y deja que pwa-instalar.js dispare el aviso nativo. Layout propio (sin menu) a proposito: es una ventana de 520x640. *@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es" data-pwa-anfitriona data-pwa-nombre="@Model.Nombre">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Instalar @Model.Nombre</title>
+    <link rel="manifest" href="@Url.Content("~/" + Model.ArchivoManifest)" />
+    <meta name="theme-color" content="#062d63" />
+    <script src="~/Scripts/app/pwa-instalar.js" asp-append-version="true"></script>
+    <style>
+        html, body { height: 100%; margin: 0; }
+        body { display: flex; align-items: center; justify-content: center; background: #062d63; color: #fff; font-family: "Segoe UI", system-ui, sans-serif; }
+        .anfitriona { text-align: center; padding: 1.5rem; max-width: 26rem; }
+        .anfitriona img { width: 7rem; height: 7rem; border-radius: 1.6rem; box-shadow: 0 4px 18px rgba(0,0,0,.4); }
+        .anfitriona h1 { font-size: 1.6rem; margin: 1rem 0 .4rem; }
+        .anfitriona p { margin: 0 0 1.2rem; line-height: 1.45; opacity: .92; }
+        .anfitriona button { border: 0; border-radius: .6rem; padding: .6rem 1.8rem; font-size: 1.05rem; font-weight: 600; background: #fff; color: #062d63; cursor: pointer; }
+        .anfitriona button:hover { background: #e6edf7; }
+    </style>
+</head>
+<body>
+    <main class="anfitriona">
+        <img src="~/Content/img/ventanas/@Model.ArchivoIcono" alt="" />
+        <h1>@Model.Nombre</h1>
+        <p id="pwaAnfitrionaTexto" role="status">Preparando la instalación…</p>
+        <button type="button" id="pwaAnfitrionaBoton" style="display:none">Instalar</button>
+    </main>
+</body>
+</html>

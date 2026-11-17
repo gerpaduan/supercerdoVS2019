@@ -125,7 +125,11 @@
         (function () {
             try {
                 var nombre = window.name || "";
-                if (!/^carnisys-trabajo-/.test(nombre) && /[?&]ventana=1(&|$)/.test(location.search)) {
+                // Mini-app instalada (2026-11-17): _PwaHead publica el scope de la app en <meta name="carnisys-app-scope">; si ademas corre como app instalada
+                // (standalone) tambien es modo ventana, aunque se haya perdido el ?ventana=1 (ej. al volver de un login vencido).
+                var esMiniAppInstalada = !!document.querySelector('meta[name="carnisys-app-scope"]') &&
+                    window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+                if (!/^carnisys-trabajo-/.test(nombre) && (esMiniAppInstalada || /[?&]ventana=1(&|$)/.test(location.search))) {
                     window.name = nombre = "carnisys-trabajo-app";
                 }
                 if (/^carnisys-trabajo-/.test(nombre)) {
@@ -1015,6 +1019,10 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @* Ventana independiente: se cierra sola al guardar (Movimientos / Stock / Elaborados). Antes de los avisos de abajo (layoutAlertClosed). *@
     <script src="~/Scripts/app/ventana-trabajo.js" asp-append-version="true"></script>
+    @* App instalada (Stock / Movimientos / Elaborados): bloquea los enlaces a otras secciones. Solo actua en la mini-app instalada. *@
+    <script src="~/Scripts/app/app-instalada.js" asp-append-version="true"></script>
+    @* Botones −/+ de tamano de la ventana: solo en modo ventana / mini-app instalada (ventana-tamano.js decide). *@
+    <script src="~/Scripts/app/ventana-tamano.js" asp-append-version="true"></script>
     @if (esAdmin && WebCore.Helpers.PosBorradorSettings.Habilitado)
     {
         @* Modal global de detalle de advertencias (lo abre la campana y /Actividades) + token antiforgery

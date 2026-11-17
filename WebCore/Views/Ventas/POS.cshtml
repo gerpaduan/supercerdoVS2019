@@ -301,7 +301,7 @@
                                 <span>Cambiar operario</span>
                             </button>
                         }
-                        <a class="btn btn-light btn-sm pos-btn-layout" id="btnSalirPOS" href="@Url.Action("Index", "Home")" title="Volver al sistema">
+                        <a class="btn btn-light btn-sm pos-btn-layout" id="btnSalirPOS" href="@Url.Action("Index", "Home")" data-app-salir title="Volver al sistema">
                             <i class="fas fa-arrow-left"></i>
                             <span>Salir</span>
                         </a>
@@ -1413,7 +1413,7 @@ else
                     }
                     recargarConOperadorAutorizado();
                 }).catch(function () {
-                    if (esInicial) window.location.href = '@Url.Action("Index", "Home")';
+                    if (esInicial) window.AppInstalada.salir('@Url.Action("Index", "Home")'); // en la app instalada cierra la ventana (app-instalada.js)
                 });
             }
 
@@ -1422,7 +1422,7 @@ else
             // resuelve NI se rechaza (ver seleccion-usuario.js) -- sin esto, .catch() nunca corre.
             $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
                 if (loginObligatorioPendiente && !$(this).data('resuelto')) {
-                    window.location.href = '@Url.Action("Index", "Home")';
+                    window.AppInstalada.salir('@Url.Action("Index", "Home")');
                 }
             });
 
@@ -1606,7 +1606,7 @@ else
                     });
 
                     $("#btnCancelarAbrirCaja").off("click").on("click", function () {
-                        window.location.href = "@Url.Action("Index", "Home")";
+                        window.AppInstalada.salir("@Url.Action("Index", "Home")");
                     });
 
                     // Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): checkbox

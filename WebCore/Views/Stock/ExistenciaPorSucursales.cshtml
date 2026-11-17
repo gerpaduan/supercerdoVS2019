@@ -35,6 +35,13 @@
     if (popup)
     {
         Layout = "~/Views/Shared/_LayoutEmbed.cshtml";
+        // Ventana independiente de Existencia (no el panel del destino dentro de un movimiento): icono y manifest propios de la mini-app
+        // «Existencia por sucursal», para que no se confunda con Stock (_LayoutEmbed los lee de ViewBag.IconoVentana / ManifestVentana).
+        if (!modoMovimiento)
+        {
+            ViewBag.IconoVentana = "existencia";
+            ViewBag.ManifestVentana = "manifest-existencia.json";
+        }
     }
 
     // "Con movimiento" usa la actividad de "Que pedir": solo Postgres. Los limites de la autoactualizacion salen de App.config.

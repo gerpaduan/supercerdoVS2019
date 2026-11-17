@@ -843,6 +843,13 @@ namespace WebCore.Controllers
             return View("~/Views/Stock/ExistenciaPorSucursales.cshtml", model);
         }
 
+        // Entrada de la mini-app instalada «Existencia por sucursal» (wwwroot/manifest-existencia.json, 2026-11-17): la misma pantalla en modo
+        // ventana independiente (popup=true) pero en la URL /Existencia, FUERA de /Stock/. Asi el scope de esa app no se anida dentro del de la app
+        // Stock (./Stock/) y el navegador no las confunde (la ventana de Existencia se agrupaba con Stock). Los endpoints AJAX (Buscar..., Exportar...)
+        // siguen en /Stock/: son fetch, no navegaciones, y no dependen del scope. Detalle: docs/DECISIONS.md (2026-11-17 g).
+        [HttpGet("Existencia")]
+        public IActionResult ExistenciaApp() => ExistenciaPorSucursales(popup: true);
+
         // Busqueda de Existencia por sucursales (tabla parcial). auto=true marca las llamadas AUTOMATICAS (la 1.a busqueda al
         // abrir y las del autoactualizar): si el servidor esta cargado se postergan con HTTP 503 + Retry-After en vez de calcular
         // (ExistenciaCargaGuard, docs/DECISIONS.md 2026-10-19). El Buscar manual (auto=false) nunca se rechaza. `auto` es una

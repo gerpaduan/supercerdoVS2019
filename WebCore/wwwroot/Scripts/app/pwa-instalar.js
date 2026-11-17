@@ -1,19 +1,25 @@
-/* Instalador de mini-apps (Stock / Movimientos / Elaborados), 2026-11-13, pedido del usuario: tarjetas en Utilidades.
-   Por que existe: el navegador solo ofrece instalar una PWA desde una pagina que enlaza SU manifest (_PwaHead.cshtml elige el manifest por
-   controlador), asi que Utilidades (manifest general) no puede instalar las mini-apps directamente. Utilidades abre la pantalla con ?instalar=1
-   y este script muestra una barra con el boton "Instalar", que dispara el aviso nativo del navegador (beforeinstallprompt) con un clic del usuario.
-   Solo actua con ?instalar=1 en la URL: en cualquier otra pagina no hace nada. Sin dependencias. Detalle: docs/DECISIONS.md (2026-11-13). */
+/* Instalador de mini-apps (Stock / Movimientos / Elaborados / Punto de venta / Punto de expendio): dispara el aviso nativo "Instalar app".
+   Por que existe: el navegador solo ofrece instalar una PWA desde una pagina que enlaza SU manifest (_PwaHead.cshtml elige el manifest por controlador),
+   asi que Utilidades (manifest general) no puede instalar las mini-apps directamente. Dos modos, ambos con el boton que da el gesto del usuario
+   que exige el navegador (beforeinstallprompt -> prompt()):
+   - PAGINA ANFITRIONA (2026-11-17): Views/InstalarApp/Index.cshtml (<html data-pwa-anfitriona data-pwa-nombre="...">), la abre Utilidades en una ventana
+     chica. Usa los elementos de esa pagina (#pwaAnfitrionaTexto / #pwaAnfitrionaBoton) y, al instalarse, cierra la ventana sola.
+   - BARRA (2026-11-13, compatibilidad): cualquier pantalla con ?instalar=1 en la URL muestra una barra arriba con el boton.
+   En cualquier otra pagina no hace nada. Sin dependencias. Detalle: docs/DECISIONS.md (2026-11-13 y 2026-11-17 c). */
 (function () {
     'use strict';
 
-    if (!/[?&]instalar=1(&|$)/.test(window.location.search)) return;
+    var anfitriona = document.documentElement.hasAttribute('data-pwa-anfitriona');
+    if (!anfitriona && !/[?&]instalar=1(&|$)/.test(window.location.search)) return;
 
     // Si pasa este tiempo sin que el navegador ofrezca instalar, se muestran las instrucciones manuales (ya instalada, HTTPS no valido, etc.).
     var ESPERA_OFERTA_MS = 4000;
+    // En la pagina anfitriona, cuanto se deja ver el "listo" antes de cerrar la ventana.
+    var ESPERA_CIERRE_MS = 1500;
 
     var eventoInstalacion = null; // evento beforeinstallprompt guardado para dispararlo con el clic
     var estado = 'esperando';     // esperando | listo | instalada | manual
-    var nombreApp = 'esta app';
+    var nombreApp = document.documentElement.getAttribute('data-pwa-nombre') || 'esta app';
     var barra = null;
 
     function estaEnAppInstalada() {
@@ -30,8 +36,7 @@
 
     window.addEventListener('appinstalled', function () {
         eventoInstalacion = null;
-        estado = 'instalada';
-        dibujar();
+        marcarInstalada();
     });
 
     function textoManual() {
@@ -41,21 +46,38 @@
         return 'El navegador no ofreció instalar ' + nombreApp + '. Si ya la tenés instalada, abrila desde el ícono. Si no, en Chrome o Edge: menú ⋮ → «Guardar y compartir» (Edge: «Aplicaciones») → «Instalar página como aplicación».';
     }
 
+    // Elementos donde se dibuja el estado: los de la pagina anfitriona o los de la barra.
+    function elementos() {
+        if (anfitriona) return { texto: document.getElementById('pwaAnfitrionaTexto'), boton: document.getElementById('pwaAnfitrionaBoton') };
+        if (!barra) return null;
+        return { texto: barra.querySelector('.pwa-instalar-texto'), boton: barra.querySelector('.pwa-instalar-boton') };
+    }
+
     function dibujar() {
-        if (!barra) return;
-        var texto = barra.querySelector('.pwa-instalar-texto');
-        var boton = barra.querySelector('.pwa-instalar-boton');
-        boton.style.display = 'none';
+        var el = elementos();
+        if (!el || !el.texto || !el.boton) return;
+        el.boton.style.display = 'none';
         if (estado === 'listo') {
-            texto.textContent = 'Instalá ' + nombreApp + ' como aplicación: tiene su ventana y su ícono en la barra de tareas.';
-            boton.style.display = '';
+            el.texto.textContent = anfitriona
+                ? 'Tocá «Instalar»: el navegador te pide confirmar y la app queda con su ventana y su ícono.'
+                : 'Instalá ' + nombreApp + ' como aplicación: tiene su ventana y su ícono en la barra de tareas.';
+            el.boton.style.display = '';
         } else if (estado === 'instalada') {
-            texto.textContent = nombreApp + ' quedó instalada. Ya podés cerrar esta pestaña y abrirla desde su ícono.';
+            el.texto.textContent = anfitriona
+                ? nombreApp + ' quedó instalada. Esta ventana se cierra sola; si no, ya podés cerrarla.'
+                : nombreApp + ' quedó instalada. Ya podés cerrar esta pestaña y abrirla desde su ícono.';
         } else if (estado === 'manual') {
-            texto.textContent = textoManual();
+            el.texto.textContent = textoManual();
         } else {
-            texto.textContent = 'Preparando la instalación de ' + nombreApp + '…';
+            el.texto.textContent = 'Preparando la instalación de ' + nombreApp + '…';
         }
+    }
+
+    // Instalada: en la pagina anfitriona la ventana chica se cierra sola (window.close() funciona porque la abrio Utilidades con window.open).
+    function marcarInstalada() {
+        estado = 'instalada';
+        dibujar();
+        if (anfitriona) window.setTimeout(function () { try { window.close(); } catch (e) { /* el navegador puede negar el cierre: queda el aviso */ } }, ESPERA_CIERRE_MS);
     }
 
     function pedirInstalacion() {
@@ -65,11 +87,11 @@
         pendiente.prompt();
         pendiente.userChoice.then(function (eleccion) {
             if (eleccion && eleccion.outcome === 'accepted') {
-                estado = 'instalada';
+                marcarInstalada();
             } else {
                 estado = 'manual'; // rechazó el aviso: el navegador no lo vuelve a ofrecer enseguida, quedan las instrucciones manuales
+                dibujar();
             }
-            dibujar();
         }).catch(function (error) {
             console.warn('[pwa-instalar] no se pudo completar la instalación', error);
             estado = 'manual';
@@ -77,7 +99,7 @@
         });
     }
 
-    // Toma el nombre de la mini-app desde el manifest que enlaza esta pagina (ej. "CarniSys Stock"); si falla, queda el texto genérico.
+    // Modo barra: toma el nombre de la mini-app desde el manifest que enlaza esta pagina; si falla, queda el texto generico.
     function cargarNombreApp() {
         var enlace = document.querySelector('link[rel="manifest"]');
         if (!enlace) return Promise.resolve();
@@ -109,9 +131,13 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         if (estaEnAppInstalada()) return; // ya se está usando la app instalada: no hay nada que instalar
-        crearBarra();
+        if (anfitriona) {
+            document.getElementById('pwaAnfitrionaBoton').addEventListener('click', pedirInstalacion);
+        } else {
+            crearBarra();
+            cargarNombreApp().then(dibujar);
+        }
         dibujar();
-        cargarNombreApp().then(dibujar);
         window.setTimeout(function () {
             if (estado === 'esperando') { estado = 'manual'; dibujar(); }
         }, ESPERA_OFERTA_MS);

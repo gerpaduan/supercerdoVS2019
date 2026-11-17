@@ -1,0 +1,17 @@
+{
+  "name": "Punto de expendio",
+  "short_name": "Expendio",
+  "description": "CarniSys: punto de expendio",
+  "lang": "es-AR",
+  "id": "./expendio-app",
+  "start_url": "./PuntosExpendio/POS",
+  "scope": "./PuntosExpendio/",
+  "display": "standalone",
+  "background_color": "#062d63",
+  "theme_color": "#062d63",
+  "icons": [
+    { "src": "./Content/img/ventanas/expendio-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./Content/img/ventanas/expendio-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./Content/img/ventanas/expendio-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

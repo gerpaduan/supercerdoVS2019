@@ -38,16 +38,20 @@
         </div>
     </div>
 
-    @* Instaladores de mini-apps (2026-11-13, ver docs/DECISIONS.md): Stock, Movimientos y Elaborados se instalan como aplicacion propia (ventana + icono
-       en la barra de tareas). El navegador solo ofrece instalar desde una pagina que enlaza el manifest de esa app, asi que cada boton abre la pantalla
-       con ?instalar=1 en una pestana nueva y alli pwa-instalar.js (cargado por _PwaHead) muestra la barra con "Instalar". Los manifests y el scope viven
-       en wwwroot/manifest-*.json. Si se agrega otra mini-app: manifest propio + entrada en _PwaHead + una fila aca. *@
+    @* Instaladores de mini-apps (2026-11-13 y 2026-11-17, ver docs/DECISIONS.md): Stock, Movimientos, Elaborados, Punto de venta y Punto de expendio se
+       instalan como aplicacion propia (ventana + icono + nombre propios, sin menu lateral). El navegador solo ofrece instalar desde una pagina que enlaza
+       el manifest de esa app, asi que cada boton abre en una ventana chica la pagina anfitriona {Carpeta}/InstalarApp (InstalarAppController), que enlaza
+       ese manifest y muestra el boton "Instalar" (pwa-instalar.js). Los manifests y el scope viven en wwwroot/manifest-*.json.
+       Si se agrega otra mini-app: manifest propio + entrada en _PwaHead + entrada en InstalarAppController + una fila aca. *@
     @{
         var miniApps = new[]
         {
-            new { Nombre = "Stock", Descripcion = "Carga y modificación de stock en su propia ventana.", Icono = "fa-boxes", Controlador = "Stock" },
-            new { Nombre = "Movimientos", Descripcion = "Movimientos de stock entre sucursales en su propia ventana.", Icono = "fa-truck-loading", Controlador = "Movimientos" },
-            new { Nombre = "Elaborados", Descripcion = "Carga y fórmulas de elaborados (embutidos) en su propia ventana.", Icono = "fa-industry", Controlador = "Elaborados" }
+            new { Nombre = "Stock", Descripcion = "Carga y modificación de stock en su propia ventana.", Icono = "fa-boxes", Carpeta = "Stock" },
+            new { Nombre = "Movimientos", Descripcion = "Movimientos de stock entre sucursales en su propia ventana.", Icono = "fa-truck-loading", Carpeta = "Movimientos" },
+            new { Nombre = "Elaborados", Descripcion = "Carga y fórmulas de elaborados (embutidos) en su propia ventana.", Icono = "fa-industry", Carpeta = "Elaborados" },
+            new { Nombre = "Punto de venta", Descripcion = "Ventas de mostrador (POS) en su propia ventana.", Icono = "fa-cash-register", Carpeta = "Ventas" },
+            new { Nombre = "Punto de expendio", Descripcion = "Expendio de mercadería en su propia ventana.", Icono = "fa-store", Carpeta = "PuntosExpendio" },
+            new { Nombre = "Existencia por sucursal", Descripcion = "Stock y estado de cada producto por sucursal, en su propia ventana.", Icono = "fa-warehouse", Carpeta = "Existencia" }
         };
     }
     <div class="card shadow-sm mb-4">
@@ -55,19 +59,20 @@
             <h6 class="m-0 font-weight-bold text-primary">Aplicaciones instalables</h6>
         </div>
         <div class="card-body">
-            <p class="text-muted mb-3">Instalá estas pantallas como aplicaciones: cada una abre en su propia ventana y tiene su ícono en la barra de tareas. Al tocar «Instalar» se abre la pantalla y arriba aparece el botón que confirma la instalación. Solo funciona desde <strong>https://carnisys.com</strong> con Chrome o Edge.</p>
+            <p class="text-muted mb-3">Instalá estas pantallas como aplicaciones independientes: cada una abre en su propia ventana, con su nombre y su ícono, sin menú lateral y solo con esa pantalla. Al tocar «Instalar» se abre una ventana chica con el botón «Instalar»; al confirmar en el navegador la app queda instalada y esa ventana se cierra sola. Para tener el ícono en la barra de tareas: clic derecho sobre el ícono de la app → «Anclar a la barra de tareas» (el navegador no permite hacerlo solo). Solo funciona desde <strong>https://carnisys.com</strong> con Chrome o Edge.</p>
             <div class="row">
                 @foreach (var app in miniApps)
                 {
-                    <div class="col-12 col-md-4 mb-3 mb-md-0">
+                    <div class="col-12 col-md-6 col-xl-4 mb-3">
                         <div class="border rounded p-3 h-100 d-flex flex-column">
                             <h5 class="mb-1"><i class="fas @app.Icono mr-1 text-primary"></i> @app.Nombre</h5>
                             <p class="text-muted mb-3">@app.Descripcion</p>
                             <div class="mt-auto">
-                                <a class="btn btn-primary btn-sm"
-                                   href="@Url.Action("Index", app.Controlador, new { instalar = 1 })"
-                                   target="_blank" rel="noopener"
-                                   id="btnUtilidadesInstalar@(app.Nombre)">
+                                @* El href es la pagina anfitriona; utilidades-instalar-apps.js la abre en una ventana chica (si el popup se bloquea, rige el enlace). *@
+                                <a class="btn btn-primary btn-sm js-instalar-app"
+                                   href="@Url.Content("~/" + app.Carpeta + "/InstalarApp")"
+                                   target="_blank"
+                                   id="btnUtilidadesInstalar@(app.Carpeta)">
                                     <i class="fas fa-download mr-1"></i> Instalar
                                 </a>
                             </div>
@@ -145,6 +150,10 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/Scripts/app/utilidades-instalar-apps.js" asp-append-version="true"></script>
+}
 
 <style>
     .utilidades-page {

@@ -20,7 +20,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (69 de 101 pantallas)
+## Cobertura (70 de 102 pantallas)
 
 ## Manual del usuario
 
@@ -48,21 +48,21 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-11-09 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-11-09 |
 | pantallas | Registros eliminados | Configuración | `pantallas/RegistrosEliminados.Index.md` | 2026-10-22 |
-| pantallas | Utilidades (contador de billetes, aplicaciones instalables y agentes locales) | Configuración | `pantallas/Home.Utilidades.md` | 2026-11-13 |
+| pantallas | Utilidades (contador de billetes, aplicaciones instalables y agentes locales) | Configuración | `pantallas/Home.Utilidades.md` | 2026-11-17 |
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-11-13 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-11-13 |
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-11-13 |
-| pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-11-14 |
+| pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-11-17 |
 | pantallas | Ingreso rápido y desarme de elaborado (listado) | Elaborados | `pantallas/Elaborados.IngresoRapido.md` | 2026-11-13 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-11-13 |
-| pantallas | Nuevo Elaborado (carga manual) | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-11-13 |
+| pantallas | Nuevo Elaborado (carga manual) | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-11-17 |
 | pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-09 |
 | pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-11-10 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-09 |
 | pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-10 |
 | pantallas | Líneas de movimiento | Movimientos | `pantallas/Movimientos.Lineas.md` | 2026-11-13 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-11-13 |
-| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-13 |
+| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-17 |
 | pantallas | Personas | Personas | `pantallas/Personas.Index.md` | 2026-11-02 |
 | pantallas | Ver / modificar persona | Personas | `pantallas/Personas.Editar.md` | 2026-11-02 |
 | pantallas | Alta y edición de un producto | Productos | `pantallas/Productos.AddOrEdit.md` | 2026-11-10 |
@@ -70,13 +70,14 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-11-10 |
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-11-10 |
 | pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-30 |
-| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-14 |
+| pantallas | Punto de expendio (pantalla de trabajo y app instalada) | Punto de Expendio | `pantallas/PuntosExpendio.POS.md` | 2026-11-17 |
+| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-17 |
 | pantallas | Líneas de stock | Stock | `pantallas/Stock.Lineas.md` | 2026-11-02 |
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-11-14 |
 | pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-11-14 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-11-10 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
-| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-14 |
+| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-17 |
 | pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-11-16 |
 
 ## Manual del administrador
@@ -92,7 +93,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
 | pantallas | Parámetros | Mi empresa | `pantallas/Parametros.Index.md` | 2026-11-10 |
 | pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-11-10 |
-| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-04 |
+| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-17 |
 | pantallas | Modificar pedido | Stock | `pantallas/Pedidos.Editar.md` | 2026-10-20 |
 | pantallas | Pedido (detalle) | Stock | `pantallas/Pedidos.Detalle.md` | 2026-10-20 |
 | pantallas | Pedidos | Stock | `pantallas/Pedidos.Index.md` | 2026-10-27 |
@@ -125,11 +126,12 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 - **DispositivosSeguros**: AutorizarModulo
 - **Empleados**: Editar, Historial, Index, Vacaciones
 - **Finanzas**: Cheques, Pagos
+- **InstalarApp**: Index
 - **Jornadas**: Fichaje, FichajeConfirmar, Index, MiJornada, MiJornadaProduccion
 - **Liquidaciones**: Index, Nueva, Preview
 - **PadronPlataforma**: Index
 - **Productos**: EmbedGuardado
-- **PuntosExpendio**: POS, Sectores
+- **PuntosExpendio**: Sectores
 - **SeleccionUsuario**: Index
 - **Sucursal**: Editar, Index
 - **SucursalesSpike**: Index

@@ -1,5 +1,42 @@
 # Bitacora de cambios
 
+## 2026-11-17 (g) - Existencia por sucursal: app con URL propia `/Existencia`
+
+- **Cambio:** la app instalada de Existencia se agrupaba con Stock (scopes anidados). Nueva ruta `/Existencia` (`StockController.ExistenciaApp`, misma pantalla en modo ventana independiente) y `manifest-existencia.json` con `scope ./Existencia`, `start_url ./Existencia`; página de instalación en `Existencia/InstalarApp`. Detalle: `docs/DECISIONS.md` (2026-11-17 g).
+- **Pendiente:** el usuario debe desinstalar «Existencia por sucursal» y reinstalarla desde Utilidades; confirmar que ya no se agrupa con Stock; `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-17 (f) - Existencia por sucursal: botones −/+ siempre visibles e ícono propio
+
+- **Cambio:** los − / + de ancho ahora aparecen en la ventana independiente de Existencia aunque «Borradores sin guardar» no esté (van antes de Excel / PDF); la pantalla usa `manifest-existencia.json` e ícono `existencia.svg` en la pestaña (también la ventana `?popup=true` vía `ViewBag.IconoVentana`), en vez de los de Stock. Detalle y el límite de la barra de tareas: `docs/DECISIONS.md` (2026-11-17 f). Manual: `Stock.ExistenciaPorSucursales.md`.
+- **Pendiente:** ver el ícono y el par −/+ en Chrome real con sesión; `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-17 (e) - Botones − / + de ancho junto a «… sin guardar» en las pantallas independientes
+
+- **Cambio:** `wwwroot/Scripts/app/ventana-tamano.js` (cargado en `_Layout` y `_LayoutEmbed`) inserta un par − / + antes del botón «… sin guardar» de Stock/Editar, Movimientos/Editar, Elaborados/Carga (y IngresoRapido) y Existencia; cada clic cambia el **ancho** de la ventana un 10 % del original (`resizeTo`, solo en ventanas independientes y apps instaladas). Se quitó la pastilla flotante (tapaba Guardar/Cancelar) y el zoom; el POS, el Expendio y los listados no lo llevan. Detalle y límites: `docs/DECISIONS.md` (2026-11-17 e). Manual: sección «Botones − / + de ancho» en Stock.Editar, Movimientos.Editar, Elaborados.Carga, Elaborados.EditarIngresoRapido, Stock.ExistenciaPorSucursales y nota en Home.Utilidades.
+- **Pendiente:** probar con sesión en una ventana independiente y en una app instalada reales (orden de botones, `resizeTo` permitido); `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-17 (d) - Utilidades: instalador de «Existencia por sucursal»
+
+- **Cambio:** sexta mini-app instalable: `manifest-existencia.json` (abre `Stock/ExistenciaPorSucursales?popup=true`, sin menú), ícono propio (`existencia-*.png`, barras por sucursal), página anfitriona `Stock/ExistenciaPorSucursales/InstalarApp` y tarjeta en Utilidades. Detalle: `docs/DECISIONS.md` (2026-11-17 d). Manual: `Home.Utilidades.md` y `Stock.ExistenciaPorSucursales.md`.
+- **Pendiente:** probar la instalación real en `https://carnisys.com`.
+
+## 2026-11-17 (c) - Mini-apps instalables independientes: Stock, Movimientos, Elaborados, Punto de venta y Punto de expendio
+
+- **Pedido:** al instalar desde Utilidades, que quede una app independiente (nombre e ícono propios, sin menú lateral, solo esa pantalla) y sumar Punto de venta y Punto de expendio. Chrome había instalado «CarniSys» (la general).
+- **Cambio:** se quitó `navigator.install`; «Instalar» abre una ventana chica con la página anfitriona `{Carpeta}/InstalarApp` (nuevo `InstalarAppController`) que enlaza el manifest correcto y se cierra sola al instalar. Manifests nuevos `manifest-pos.json` / `manifest-expendio.json` y nombres cortos en los otros tres; íconos `pos-*` / `expendio-*` (`scripts/make-miniapp-icons.ps1`); `app-instalada.js` bloquea enlaces a otras secciones y «Salir» del POS/Expendio cierra la ventana. Test nuevo `ManifestsMiniAppsTests`. Detalle y límites: `docs/DECISIONS.md` (2026-11-17 c). Manual: `Home.Utilidades.md`, `Ventas.POS.md`, `PuntosExpendio.POS.md`.
+- **Pendiente:** probar la instalación real en `https://carnisys.com` (nombre, ícono, sin menú, enlaces bloqueados, «Salir» cierra); `scripts/check-ayuda.ps1` antes del deploy; el usuario debe desinstalar la «CarniSys» instalada por error.
+
+## 2026-11-17 (b) - Ícono de CarniSys con puntas redondeadas
+
+- **Cambio:** nuevos `WebCore/wwwroot/Content/img/pwa-rounded-192.png` y `pwa-rounded-512.png` (generados con `scripts/make-rounded-icon.ps1`); `wwwroot/manifest.json` los usa como íconos de la app instalada. Los originales cuadrados y el maskable no cambian. Detalle: `docs/DECISIONS.md` (2026-11-17 b).
+- **Pendiente:** ver el ícono en una instalación real (una app ya instalada puede tardar en actualizarlo; reinstalar lo fuerza).
+
+## 2026-11-17 - Utilidades: «Instalar» instala la mini-app directo, sin pestañas
+
+- **Pedido:** que al instalar desde Utilidades se genere el ícono de la app (y en lo posible quede en la barra de tareas) para usar cada pantalla independiente desde su ícono.
+- **Cambio:** `wwwroot/Scripts/app/utilidades-instalar-apps.js` usa `navigator.install({ manifest })` (Web Install API) si el navegador la tiene; si no, queda el flujo anterior con pestaña. La barra de tareas no se puede fijar desde la web: se indica el clic derecho → «Anclar a la barra de tareas». Detalle y límites: `docs/DECISIONS.md` (2026-11-17).
+- **Pendiente:** probar en `https://carnisys.com` (la API está en prueba de origen y puede no estar activa en el navegador); decidir si se registra el token de la prueba de origen; `scripts/check-ayuda.ps1` antes del deploy.
+
 ## 2026-11-14 - Mis actividades: descripción corta, cliente en Cta Cte y botón «Ver detalle» nuevo
 
 - **Qué cambia:** en las filas con venta vinculada la columna Descripción dice solo «Venta Mixta» / «Venta Debito»… (sin importes, sin «ID:», sin la etiqueta «Venta N»); todo eso se ve al desplegar. En Cta Cte dice «Venta Cta Cte · nombre del cliente» y el desplegable muestra la razón social y, más sutil, el nombre corto si es distinto. El botón «Ver detalle» es ahora una píldora con un círculo que gira y pasa a «Ocultar detalle».

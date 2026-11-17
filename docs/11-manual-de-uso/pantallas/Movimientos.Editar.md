@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-11-13
+revisada: 2026-11-17
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -130,3 +130,10 @@ El botón rojo **Eliminar** aparece al abrir un movimiento **ya guardado** para 
 - El botón **Stock destino** no aparece: es solo para pantallas de escritorio, y necesita un navegador reciente.
 - El stock dice *Elegí la sucursal destino*: elegí primero el destino en el movimiento.
 - El doble click no carga el producto: si el movimiento está abierto solo para ver (un movimiento ya guardado), tocá **Modificar** primero.
+
+## Botones − / + de ancho (ventana independiente y app instalada, desde 2026-11-17)
+- En la **ventana independiente** y en la **app instalada** (no en una pestaña normal) hay dos botones **−** y **+** justo a la izquierda de «… sin guardar», arriba a la derecha. Cada clic achica o agranda el **ancho de la ventana un 10 %** del ancho con que se abrió (mínimo 50 %, máximo hasta el borde izquierdo de la pantalla). **El borde derecho de la ventana queda fijo**: crece o se achica hacia la izquierda; el alto no cambia.
+- Dejá el mouse sobre un botón para ver el nivel actual. Se recuerda el último nivel de cada sección.
+- Si el navegador no deja cambiar el tamaño de la ventana, avisa «El navegador no permite cambiar el tamaño de esta ventana».
+- Solo aparecen donde está el botón de registros sin guardar (si ese botón está apagado en el sistema, tampoco aparecen).
+- PENDIENTE: no se probó en una app instalada real si el navegador permite cambiar el tamaño de la ventana.

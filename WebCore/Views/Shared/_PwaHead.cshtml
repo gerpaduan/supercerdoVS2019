@@ -4,24 +4,42 @@
    (SM y San Lorenzo cuelgan de "/CarniSysWeb"). El manifest usa URLs relativas: heredan ese prefijo. *@
 @* Stock, Movimientos y Elaborados tienen su propio manifest (nombre, id y scope propios) para poder instalarse como mini-apps con su ventana y su
    lugar en la barra de tareas (pantallas de trabajo, docs/DECISIONS.md 2026-11-04). El resto de la app usa el manifest general. *@
+@* Punto de venta (Ventas/POS) y Punto de expendio (PuntosExpendio/POS) tambien son mini-apps (2026-11-17): solo la accion POS usa su manifest; el resto de
+   Ventas / PuntosExpendio usa el general. El scope de cada app (carpeta del controlador) se publica en <meta name="carnisys-app-scope"> para
+   app-instalada.js, que bloquea los enlaces fuera de la app SOLO cuando esta corriendo instalada. *@
 @{
     var controladorActual = (ViewContext.RouteData.Values["controller"] as string ?? "").ToLowerInvariant();
+    var accionActual = (ViewContext.RouteData.Values["action"] as string ?? "").ToLowerInvariant();
     var archivoManifest = controladorActual switch
     {
         "stock" => "manifest-stock.json",
         "movimientos" => "manifest-movimientos.json",
         "elaborados" => "manifest-elaborados.json",
+        "ventas" when accionActual == "pos" => "manifest-pos.json",
+        "puntosexpendio" when accionActual == "pos" => "manifest-expendio.json",
         _ => "manifest.json"
+    };
+    // Carpeta (scope) de la mini-app actual; null si la pagina usa el manifest general.
+    var carpetaScopeApp = archivoManifest switch
+    {
+        "manifest-stock.json" => "Stock",
+        "manifest-movimientos.json" => "Movimientos",
+        "manifest-elaborados.json" => "Elaborados",
+        "manifest-pos.json" => "Ventas",
+        "manifest-expendio.json" => "PuntosExpendio",
+        _ => null
     };
 
     // Icono de la pestana segun la seccion (mismo agrupado que el sidebar de _Layout.cshtml). null = icono general de CarniSys (el triangulo).
     // Los SVG viven en Content/img/ventanas; los de stock/movimientos/elaborados son los mismos de las mini-apps instalables.
     var iconoSeccion = controladorActual switch
     {
+        "stock" when accionActual == "existenciaporsucursales" => "existencia", // icono propio: ya no se confunde con Stock
         "stock" or "reposicion" or "pedidos" => "stock",
         "movimientos" => "movimientos",
         "elaborados" => "elaborados",
-        "ventas" or "puntosexpendio" => "pos",
+        "ventas" => "pos",
+        "puntosexpendio" => "expendio",
         "compras" => "compras",
         "finanzas" => "finanzas",
         "cajas" => "cajas",
@@ -45,5 +63,9 @@ else
 <link rel="manifest" href="@Url.Content("~/" + archivoManifest)" />
 <link rel="apple-touch-icon" href="@Url.Content("~/Content/img/pwa-192.png")" />
 <meta name="theme-color" content="#062d63" />
+@if (carpetaScopeApp != null)
+{
+    <meta name="carnisys-app-scope" content="@Url.Content("~/" + carpetaScopeApp + "/")" />
+}
 @* Instalador de mini-apps: solo actua con ?instalar=1 (tarjetas de Utilidades). Va en el head para capturar beforeinstallprompt antes de que se dispare. *@
 <script src="~/Scripts/app/pwa-instalar.js" asp-append-version="true"></script>

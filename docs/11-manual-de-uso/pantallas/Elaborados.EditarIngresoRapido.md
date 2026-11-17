@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 3
 permiso: Elaborado.IngresoEmbutidoRapido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-14
+revisada: 2026-11-17
 ---
 ## Para qué sirve
 Registrar un elaborado (o desarmarlo) cargando **solo la cantidad final**: el sistema calcula los ingredientes con la fórmula del producto y los guarda. Se llega desde *Elaborados → Ingreso rápido* (o *Desarme de elaborado*) eligiendo un producto, o abriendo un registro existente desde el listado.
@@ -45,3 +45,10 @@ Al abrir un **ingreso rápido o desarme nuevo**, si en este navegador ya tenés 
 
 ## Resto de la pantalla
 PENDIENTE: documentar sucursal, fecha, balanza, desarme, modificar/anular y costeo (no verificado contra el código en esta revisión).
+
+## Botones − / + de ancho (ventana independiente y app instalada, desde 2026-11-17)
+- En la **ventana independiente** y en la **app instalada** (no en una pestaña normal) hay dos botones **−** y **+** justo a la izquierda de «… sin guardar», arriba a la derecha. Cada clic achica o agranda el **ancho de la ventana un 10 %** del ancho con que se abrió (mínimo 50 %, máximo hasta el borde izquierdo de la pantalla). **El borde derecho de la ventana queda fijo**: crece o se achica hacia la izquierda; el alto no cambia.
+- Dejá el mouse sobre un botón para ver el nivel actual. Se recuerda el último nivel de cada sección.
+- Si el navegador no deja cambiar el tamaño de la ventana, avisa «El navegador no permite cambiar el tamaño de esta ventana».
+- Solo aparecen donde está el botón de registros sin guardar (si ese botón está apagado en el sistema, tampoco aparecen).
+- PENDIENTE: no se probó en una app instalada real si el navegador permite cambiar el tamaño de la ventana.

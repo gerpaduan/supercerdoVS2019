@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-11-14
+revisada: 2026-11-17
 alias: Stock.Nuevo
 ---
 ## Para qué sirve
@@ -112,3 +112,10 @@ Al **cambiar la acción** (botón **Cambiar** junto a la acción) las cantidades
 
 - El cambio es solo en pantalla: **queda definitivo al tocar Guardar**. Si cambiás de acción y volvés a la anterior, las cantidades que pasaron a positivas o negativas **no vuelven a su signo original** (por ejemplo, Ajuste → Ingreso → Ajuste deja todo positivo).
 - El texto de ayuda debajo de **Cantidad** dice la regla de la acción elegida.
+
+## Botones − / + de ancho (ventana independiente y app instalada, desde 2026-11-17)
+- En la **ventana independiente** y en la **app instalada** (no en una pestaña normal) hay dos botones **−** y **+** justo a la izquierda de «… sin guardar», arriba a la derecha. Cada clic achica o agranda el **ancho de la ventana un 10 %** del ancho con que se abrió (mínimo 50 %, máximo hasta el borde izquierdo de la pantalla). **El borde derecho de la ventana queda fijo**: crece o se achica hacia la izquierda; el alto no cambia.
+- Dejá el mouse sobre un botón para ver el nivel actual. Se recuerda el último nivel de cada sección.
+- Si el navegador no deja cambiar el tamaño de la ventana, avisa «El navegador no permite cambiar el tamaño de esta ventana».
+- Solo aparecen donde está el botón de registros sin guardar (si ese botón está apagado en el sistema, tampoco aparecen).
+- PENDIENTE: no se probó en una app instalada real si el navegador permite cambiar el tamaño de la ventana.
