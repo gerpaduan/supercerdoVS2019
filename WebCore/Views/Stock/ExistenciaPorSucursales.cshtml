@@ -76,7 +76,7 @@
 }
 
 @* El diseño es SIEMPRE compacto (clase fija existencia-compacto): ya no hay interruptor ni preferencia por navegador. *@
-<div class="container-fluid existencia-sucursales-page existencia-compacto@(modoMovimiento ? " ex-modo-mov" : "")" id="existenciaPage">
+<div class="container-fluid existencia-sucursales-page existencia-compacto@(modoMovimiento ? " ex-modo-mov" : "")@(popup && !modoMovimiento ? " ex-popup" : "")" id="existenciaPage">
 
     @* Barra plegable (pedido 2026-11-02): en celular (< 768 px) y en la ventana independiente (?popup=true) la barra muestra solo Sucursales,
        Producto y Buscar; el resto (los controles marcados "ex-sec") queda detras del boton de opciones, para que la tabla gane filas.
@@ -742,6 +742,13 @@
     .ex-modo-mov .tabla-existencia-sucursales td.ex-col-prod-cell,
     .ex-modo-mov .tabla-existencia-sucursales td.ex-col-stock { font-size: 14px; }
     .ex-modo-mov .tabla-existencia-sucursales td.ex-col-prod-cell { --ex-prod-ch: 17.2ch; }
+    /* Ventana independiente (?popup=true, pedido 2026-11-17): mismo estilo que el panel del movimiento. La tabla llega hasta el pie (sin el margin-bottom
+       de 60 px de site.css, que dejaba un hueco en blanco abajo) y Producto y Stock llevan la letra de 14 px. Producto conserva el ancho en pixeles
+       que tenia con 25ch a .78rem (25 x 10,92 / 14 = 19.5ch). */
+    body.app-embed:has(.ex-popup) { margin-bottom: 0; }
+    .ex-popup .tabla-existencia-sucursales td.ex-col-prod-cell,
+    .ex-popup .tabla-existencia-sucursales td.ex-col-stock { font-size: 14px; }
+    .ex-popup .tabla-existencia-sucursales td.ex-col-prod-cell { --ex-prod-ch: 19.5ch; }
     /* Panel angosto (movimiento en una ventana de ~1366 px o menos: el panel no pasa de la mitad): Producto mas corto y margenes laterales mas
        finos para que "Stock origen" entre sin desplazar la tabla (pedido 2026-11-09; medido: a 1366 px la tabla pasaba de 519 a 467 px, justo
        lo que entra). Con ventanas todavia mas chicas (1280 px) sigue habiendo desplazamiento horizontal. El selector lleva .existencia-compacto

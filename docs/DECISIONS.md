@@ -33,6 +33,13 @@
 - **Límites / sin verificar:** `_LayoutEmbed` no incluye `_PwaHead`, por eso la pantalla en sí no enlaza ningún manifest (solo la página anfitriona); el ícono de pestaña no cambia. Sin probar: instalación real, y que Chrome resuelva bien el scope sin barra final con el `start_url` con querystring (el test comprueba que el `start_url` cae dentro del scope).
 - **Archivos:** `WebCore/wwwroot/manifest-existencia.json`, `Content/img/ventanas/existencia*.{svg,png}`, `Controllers/InstalarAppController.cs`, `Views/Home/Utilidades.cshtml`, `scripts/make-miniapp-icons.ps1`, `WebCore.Tests/ManifestsMiniAppsTests.cs`.
 
+## 2026-11-17 - Existencia por sucursales (ventana independiente): letra y alto como el panel del movimiento
+
+- **Pedido:** que la tabla de la ventana independiente (`?popup=true`) tenga el mismo estilo que la de Existencia dentro de Movimientos: tabla hasta el pie de la página y letra más grande.
+- **Qué se decidió:** la página lleva la clase `ex-popup` (solo `popup && !modoMovimiento`) y en `ExistenciaPorSucursales.cshtml` se copian las dos reglas del modo movimiento: `body.app-embed:has(.ex-popup) { margin-bottom: 0 }` (site.css trae `margin-bottom: 60px` y dejaba un hueco debajo; `ajustarAltoTablaAlPie` lo contaba como página) y 14 px en Producto y Stock. Producto mantiene su ancho en píxeles (`--ex-prod-ch: 19.5ch` = 25ch a .78rem).
+- **Alternativa descartada:** reutilizar `.ex-modo-mov` en la ventana: trae además Stock origen, Sugerido, el bloque de período y oculta el selector de sucursales.
+- **Verificado:** no se probó en el navegador (la vista necesita login). Archivos: `WebCore/Views/Stock/ExistenciaPorSucursales.cshtml`, `docs/11-manual-de-uso/pantallas/Stock.ExistenciaPorSucursales.md`.
+
 ## 2026-11-16 - Egresos de Caja en pantalla angosta: bloque compacto y tarjetas como Movimientos
 
 - **Pedido:** en Egresos de Caja, con la pantalla angosta en modo escritorio, aplicar el mismo estilo que Movimientos (botones y filtros compactos, tarjetas). Maqueta aprobada antes de codificar; el usuario eligió bloque **y** tarjetas.
