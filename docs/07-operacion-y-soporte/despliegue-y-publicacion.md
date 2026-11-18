@@ -1023,6 +1023,17 @@ Tablas nuevas de auditoría: sin ellas, **eliminar falla** (el resto de la aplic
 - **Rollback**: deshabilitar `WebCoreAppWatchdog`, detener `WebCoreApp` y matar `WebCore.exe`, `robocopy C:\WebCore_backup_20261117 C:\WebCore /MIR /XD AFIP /R:2 /W:5`, arrancar, habilitar watchdog.
 - **PENDIENTE (a cargo del usuario)**: probar con login real en SM la instalación de las mini-apps (Utilidades) y Existencia por sucursales en ventana propia; no verificado con sesión de producción. Recargar con Ctrl+F5.
 
+## Redeploy WebCore en Servidor SM -- 2026-11-17 (2.º del día, "limpio", solo SM; commit `6e5d398d`; tag local `pre-deploy-sm-20261117b` = `d21b088e`, lo que estaba desplegado)
+- A pedido del usuario ("publicar en sm"). Entra 1 commit (`6e5d398d`: compra en curso del POS en su propio modal) más su prueba; solo WebCore, sin migraciones. Los cambios sin commitear del árbol de trabajo (Utilidades / InstalarApp / pwa-instalar) **no entraron**: se publicó `HEAD` desde un worktree limpio.
+- `WebCore.Tests` 292/292. `win-x64` self-contained, 1099 archivos, zip SHA256 `155B0E7C110A500FEBDA86D49B790425A723C856135F0CF6E33CBB3E25F58A78` (idéntico en el servidor), `WebCore.dll` `970C9C56E0EB` (anterior `297AE1CAC7BE`). Mismo procedimiento que el deploy anterior del día; backup `C:\WebCore_backup_20261117b` (1114). Resultado: 1114 archivos, `AFIP\` 4, `WebCoreApp` Running, watchdog Ready, sonda `127.0.0.1:5250/Login` 200 con «Ingresar a CARNISYS». `C:\_deploy_sm` borrado.
+- **Rollback**: igual que el anterior, con `C:\WebCore_backup_20261117b`.
+- **PENDIENTE (usuario)**: probar la compra (F5) en el POS con login real en SM; Ctrl+F5.
+
+## Redeploy WebCore en Servidor SM -- 2026-11-17 (3.º del día, "limpio", solo SM; commit `98349473`; tag local `pre-deploy-sm-20261117c` = `6e5d398d`, lo que estaba desplegado)
+- A pedido del usuario. Entra `c1a7a952` (Utilidades: instalar varias mini-apps en lote); solo WebCore, sin migraciones. Los cambios sin commitear del árbol (layouts, `_PwaHead`, `app-instalada.js`, `ventana-tamano.js`, manifiestos) **no entraron**: `HEAD` desde worktree limpio.
+- `WebCore.Tests` 292/292. 1099 archivos, zip SHA256 `EB59A70EB3E4EDA1E1A917EF126F4841148C0503F050C58BBCBDD51656A324B4` (idéntico en el servidor), `WebCore.dll` `C6D12058A6D8` (anterior `970C9C56E0EB`). Mismo procedimiento; backup `C:\WebCore_backup_20261117c`. Sonda `127.0.0.1:5250/Login` 200; `WebCoreApp` Running, watchdog Ready. Rollback: igual, con ese backup.
+- **PENDIENTE (usuario)**: probar «Instalar seleccionadas» en Utilidades con login real; Ctrl+F5.
+
 ## Unificar SuperCerdo SM + SL (SQL Server local) y volcarla a carnisys (Postgres local, empresa 1)
 
 Reglas y porque: `docs/DECISIONS.md` (2026-10-27). Todo corre en la maquina de desarrollo; no toca los servidores SM/SL ni la VPS.
