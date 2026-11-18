@@ -5,7 +5,7 @@
     Layout = null;
 }
 <!DOCTYPE html>
-<html lang="es" data-pwa-anfitriona data-pwa-nombre="@Model.Nombre">
+<html lang="es" data-pwa-anfitriona data-pwa-nombre="@Model.Nombre" data-pwa-base="@Url.Content("~/")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,6 +19,7 @@
         .anfitriona { text-align: center; padding: 1.5rem; max-width: 26rem; }
         .anfitriona img { width: 7rem; height: 7rem; border-radius: 1.6rem; box-shadow: 0 4px 18px rgba(0,0,0,.4); }
         .anfitriona h1 { font-size: 1.6rem; margin: 1rem 0 .4rem; }
+        #pwaAnfitrionaCola:empty { display: none; }
         .anfitriona p { margin: 0 0 1.2rem; line-height: 1.45; opacity: .92; }
         .anfitriona button { border: 0; border-radius: .6rem; padding: .6rem 1.8rem; font-size: 1.05rem; font-weight: 600; background: #fff; color: #062d63; cursor: pointer; }
         .anfitriona button:hover { background: #e6edf7; }
@@ -28,6 +29,8 @@
     <main class="anfitriona">
         <img src="~/Content/img/ventanas/@Model.ArchivoIcono" alt="" />
         <h1>@Model.Nombre</h1>
+        @* Con la cola de «Instalar seleccionadas / todas» (pwa-instalar.js, ?cola=...) avisa cuantas faltan. *@
+        <p id="pwaAnfitrionaCola" style="font-size:.9rem;opacity:.8;margin-bottom:.6rem"></p>
         <p id="pwaAnfitrionaTexto" role="status">Preparando la instalación…</p>
         <button type="button" id="pwaAnfitrionaBoton" style="display:none">Instalar</button>
     </main>

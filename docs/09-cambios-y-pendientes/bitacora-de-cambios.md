@@ -1,5 +1,10 @@
 # Bitacora de cambios
 
+## 2026-11-17 (h) - Utilidades: instalar varias apps en lote
+
+- **Cambio:** casillas por app, «Seleccionar todas», «Instalar seleccionadas» e «Instalar todas». Abren una sola ventana chica que va instalando una tras otra (cola `?cola=` en la página de instalación); el navegador igual pide un clic en «Instalar» por cada app. Detalle y límites: `docs/DECISIONS.md` (2026-11-17 h). Manual: `Home.Utilidades.md`.
+- **Pendiente:** probar el recorrido con instalaciones reales en `https://carnisys.com`; `scripts/check-ayuda.ps1` antes del deploy.
+
 ## 2026-11-17 (g) - Existencia por sucursal: app con URL propia `/Existencia`
 
 - **Cambio:** la app instalada de Existencia se agrupaba con Stock (scopes anidados). Nueva ruta `/Existencia` (`StockController.ExistenciaApp`, misma pantalla en modo ventana independiente) y `manifest-existencia.json` con `scope ./Existencia`, `start_url ./Existencia`; página de instalación en `Existencia/InstalarApp`. Detalle: `docs/DECISIONS.md` (2026-11-17 g).

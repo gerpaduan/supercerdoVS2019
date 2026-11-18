@@ -17,6 +17,18 @@
     // En la pagina anfitriona, cuanto se deja ver el "listo" antes de cerrar la ventana.
     var ESPERA_CIERRE_MS = 1500;
 
+    // Cola de instalacion (2026-11-17, «Instalar seleccionadas / todas» de Utilidades): ?cola=Movimientos,Elaborados lista las apps que faltan DESPUES de esta.
+    // Cada app necesita su propio clic en «Instalar» (el navegador exige un gesto del usuario por instalacion y no lo arrastra entre paginas), asi que la ventana
+    // pasa sola a la siguiente cuando esta se instala, se rechaza o el navegador no la ofrece (ya instalada). Solo claves alfabeticas: son carpetas de InstalarAppController.
+    var ESPERA_SIGUIENTE_MS = 1500;       // tras instalarse o rechazarse, cuanto se muestra el resultado antes de pasar a la siguiente
+    var ESPERA_SIGUIENTE_SIN_OFERTA_MS = 3000; // idem cuando el navegador no la ofrecio (ya instalada)
+    var cola = [];
+    if (anfitriona) {
+        var parametroCola = new URLSearchParams(window.location.search).get('cola') || '';
+        cola = parametroCola.split(',').filter(function (clave) { return /^[A-Za-z]+$/.test(clave); });
+    }
+    var baseApp = document.documentElement.getAttribute('data-pwa-base') || '/';
+
     var eventoInstalacion = null; // evento beforeinstallprompt guardado para dispararlo con el clic
     var estado = 'esperando';     // esperando | listo | instalada | manual
     var nombreApp = document.documentElement.getAttribute('data-pwa-nombre') || 'esta app';
@@ -67,17 +79,34 @@
                 ? nombreApp + ' quedó instalada. Esta ventana se cierra sola; si no, ya podés cerrarla.'
                 : nombreApp + ' quedó instalada. Ya podés cerrar esta pestaña y abrirla desde su ícono.';
         } else if (estado === 'manual') {
-            el.texto.textContent = textoManual();
+            el.texto.textContent = textoManual() + (anfitriona && cola.length ? ' Sigo con la siguiente app…' : '');
         } else {
             el.texto.textContent = 'Preparando la instalación de ' + nombreApp + '…';
         }
     }
 
-    // Instalada: en la pagina anfitriona la ventana chica se cierra sola (window.close() funciona porque la abrio Utilidades con window.open).
+    // Pasa a la siguiente app de la cola; si no queda ninguna, cierra la ventana chica (window.close() funciona porque la abrio Utilidades con window.open).
+    function avanzar() {
+        if (cola.length) {
+            var resto = cola.slice(1);
+            window.location.href = baseApp + cola[0] + '/InstalarApp' + (resto.length ? '?cola=' + resto.join(',') : '');
+            return;
+        }
+        try { window.close(); } catch (e) { /* el navegador puede negar el cierre: queda el aviso */ }
+    }
+
+    // Instalada: en la pagina anfitriona sigue con la cola o, si no hay mas, cierra la ventana.
     function marcarInstalada() {
         estado = 'instalada';
         dibujar();
-        if (anfitriona) window.setTimeout(function () { try { window.close(); } catch (e) { /* el navegador puede negar el cierre: queda el aviso */ } }, ESPERA_CIERRE_MS);
+        if (anfitriona) window.setTimeout(avanzar, cola.length ? ESPERA_SIGUIENTE_MS : ESPERA_CIERRE_MS);
+    }
+
+    // Rechazada o no ofrecida: instrucciones manuales y, si hay cola, sigue con la siguiente sin trabar el resto.
+    function marcarManual(sinOferta) {
+        estado = 'manual';
+        dibujar();
+        if (anfitriona && cola.length) window.setTimeout(avanzar, sinOferta ? ESPERA_SIGUIENTE_SIN_OFERTA_MS : ESPERA_SIGUIENTE_MS);
     }
 
     function pedirInstalacion() {
@@ -89,14 +118,19 @@
             if (eleccion && eleccion.outcome === 'accepted') {
                 marcarInstalada();
             } else {
-                estado = 'manual'; // rechazó el aviso: el navegador no lo vuelve a ofrecer enseguida, quedan las instrucciones manuales
-                dibujar();
+                marcarManual(false); // rechazó el aviso: el navegador no lo vuelve a ofrecer enseguida, quedan las instrucciones manuales
             }
         }).catch(function (error) {
             console.warn('[pwa-instalar] no se pudo completar la instalación', error);
-            estado = 'manual';
-            dibujar();
+            marcarManual(false);
         });
+    }
+
+    // Pagina anfitriona con cola: avisa cuantas apps faltan despues de esta.
+    function pintarCola() {
+        var elemento = document.getElementById('pwaAnfitrionaCola');
+        if (!elemento || !cola.length) return;
+        elemento.textContent = 'Instalando varias apps: después de esta ' + (cola.length === 1 ? 'falta 1 más.' : 'faltan ' + cola.length + ' más.');
     }
 
     // Modo barra: toma el nombre de la mini-app desde el manifest que enlaza esta pagina; si falla, queda el texto generico.
@@ -138,8 +172,9 @@
             cargarNombreApp().then(dibujar);
         }
         dibujar();
+        pintarCola();
         window.setTimeout(function () {
-            if (estado === 'esperando') { estado = 'manual'; dibujar(); }
+            if (estado === 'esperando') marcarManual(true); // el navegador no la ofrecio (ya instalada, etc.)
         }, ESPERA_OFERTA_MS);
     });
 })();

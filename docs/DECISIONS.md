@@ -1,3 +1,12 @@
+## 2026-11-17 (h) - Utilidades: instalar varias apps en lote («Instalar seleccionadas» / «Instalar todas»)
+
+- **Pedido:** no ir app por app: una opción para instalar todas, o marcar con casillas cuáles y que se instalen las marcadas.
+- **Qué se decidió:** en `Views/Home/Utilidades.cshtml`, una casilla por tarjeta, «Seleccionar todas» (con estado intermedio), **«Instalar seleccionadas (N)»** (deshabilitado sin marcas) e **«Instalar todas»**. `utilidades-instalar-apps.js` abre **una sola** ventana chica con la primera app y las que faltan en `?cola=B,C,D` (claves alfabéticas = carpetas de `InstalarAppController`: Stock, Movimientos, Elaborados, Ventas, PuntosExpendio, Existencia). `pwa-instalar.js` (modo anfitriona) pasa sola a la siguiente (`<html data-pwa-base>` + clave + `/InstalarApp`): a los 1,5 s de instalada, a los 1,5 s de rechazada y a los 3 s si el navegador no la ofreció (ya instalada); al terminar la cola cierra la ventana. La página muestra «después de esta faltan N más».
+- **Límite inevitable:** el navegador exige un gesto del usuario (clic en «Instalar» + confirmar su diálogo) **por cada app**, y no lo arrastra entre páginas: no hay forma de instalarlas todas con un solo clic. El lote ahorra volver a Utilidades por cada una. Chrome además abre la ventana de cada app al instalarla.
+- **Alternativas descartadas:** instalar en una sola página enlazando varios manifests (el navegador solo considera uno por página); una ventana por app a la vez (varios popups y confusión); Web Install API con varios `install()` seguidos (descartada el 2026-11-17: instaló la app equivocada).
+- **Sin verificar:** el recorrido completo con instalaciones reales (hasta aquí, build, tests y la barra de Utilidades).
+- **Archivos:** `WebCore/Views/Home/Utilidades.cshtml`, `WebCore/Views/InstalarApp/Index.cshtml`, `WebCore/wwwroot/Scripts/app/{utilidades-instalar-apps,pwa-instalar}.js`, `docs/11-manual-de-uso/pantallas/Home.Utilidades.md`.
+
 ## 2026-11-17 (g) - Existencia por sucursal: app con URL propia `/Existencia` (scope fuera de `/Stock/`) porque se agrupaba con Stock
 
 - **Pedido / síntoma:** con la app «Existencia por sucursal» ya instalada, su ventana se agrupaba con la app Stock (mismo botón de la barra de tareas).

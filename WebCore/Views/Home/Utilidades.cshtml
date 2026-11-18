@@ -60,17 +60,36 @@
         </div>
         <div class="card-body">
             <p class="text-muted mb-3">Instalá estas pantallas como aplicaciones independientes: cada una abre en su propia ventana, con su nombre y su ícono, sin menú lateral y solo con esa pantalla. Al tocar «Instalar» se abre una ventana chica con el botón «Instalar»; al confirmar en el navegador la app queda instalada y esa ventana se cierra sola. Para tener el ícono en la barra de tareas: clic derecho sobre el ícono de la app → «Anclar a la barra de tareas» (el navegador no permite hacerlo solo). Solo funciona desde <strong>https://carnisys.com</strong> con Chrome o Edge.</p>
+            @* Instalacion en lote (2026-11-17): marcar las apps y «Instalar seleccionadas», o «Instalar todas». utilidades-instalar-apps.js abre UNA ventana chica
+               que va instalando una tras otra (cola ?cola=... de InstalarApp/Index): el navegador pide un clic en «Instalar» por cada app, no se puede evitar. *@
+            <div class="d-flex flex-wrap align-items-center mb-3" id="barraInstalarLote">
+                <div class="form-check mr-3 mb-2">
+                    <input class="form-check-input" type="checkbox" id="chkInstalarTodas">
+                    <label class="form-check-label" for="chkInstalarTodas">Seleccionar todas</label>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm mr-2 mb-2" id="btnInstalarSeleccionadas" disabled>
+                    <i class="fas fa-download mr-1"></i> Instalar seleccionadas <span class="badge badge-light ml-1" id="cntInstalarSeleccionadas">0</span>
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm mr-3 mb-2" id="btnInstalarTodas">
+                    <i class="fas fa-download mr-1"></i> Instalar todas
+                </button>
+                <span class="small text-muted mb-2">Se instalan una detrás de otra en una ventana chica; hay que tocar «Instalar» y confirmar en cada una.</span>
+            </div>
             <div class="row">
                 @foreach (var app in miniApps)
                 {
                     <div class="col-12 col-md-6 col-xl-4 mb-3">
                         <div class="border rounded p-3 h-100 d-flex flex-column">
-                            <h5 class="mb-1"><i class="fas @app.Icono mr-1 text-primary"></i> @app.Nombre</h5>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h5 class="mb-1"><i class="fas @app.Icono mr-1 text-primary"></i> @app.Nombre</h5>
+                                <input class="form-check-input js-instalar-marca position-static ml-2 mt-1" type="checkbox" data-app="@app.Carpeta"
+                                       id="chkInstalar@(app.Carpeta)" title="Marcar para instalar con «Instalar seleccionadas»" aria-label="Seleccionar @app.Nombre">
+                            </div>
                             <p class="text-muted mb-3">@app.Descripcion</p>
                             <div class="mt-auto">
                                 @* El href es la pagina anfitriona; utilidades-instalar-apps.js la abre en una ventana chica (si el popup se bloquea, rige el enlace). *@
                                 <a class="btn btn-primary btn-sm js-instalar-app"
-                                   href="@Url.Content("~/" + app.Carpeta + "/InstalarApp")"
+                                   href="@Url.Content("~/" + app.Carpeta + "/InstalarApp")" data-app="@app.Carpeta"
                                    target="_blank"
                                    id="btnUtilidadesInstalar@(app.Carpeta)">
                                     <i class="fas fa-download mr-1"></i> Instalar
