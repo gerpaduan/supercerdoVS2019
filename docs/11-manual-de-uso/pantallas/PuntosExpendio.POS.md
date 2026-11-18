@@ -5,7 +5,7 @@ rol: usuario
 modulo: Punto de Expendio
 orden: 1
 permiso: cualquier usuario activo puede operar Expendio (verificado en `PuntosExpendioController.POS`); no pide permiso POS ni apertura de caja
-revisada: 2026-11-17
+revisada: 2026-11-18
 ---
 ## Para qué sirve
 Pantalla de trabajo del **Punto de expendio**: se elige el sector y se cargan los expendios. **Esta ayuda cubre solo cómo usarlo como aplicación instalada (desde 2026-11-17).** El resto de la pantalla está PENDIENTE de documentar.
@@ -17,3 +17,8 @@ Pantalla de trabajo del **Punto de expendio**: se elige el sector y se cargan lo
 - Si se vence la sesión, la ventana pide usuario y clave y vuelve a esta pantalla.
 - **Sin menú solo en las apps de Utilidades:** únicamente las apps instaladas desde **Utilidades** abren sin menú lateral. Si usás la app general **CarniSys** (o una pestaña del navegador) y entrás a esta pantalla, el **menú se ve** y los enlaces funcionan; la ventana de **Abrir en ventana** sí va sin menú. Si instalaste esta app antes del 2026-11-17, **desinstalala y reinstalala desde Utilidades** para que tome esta regla (Stock, Movimientos y Elaborados ya la traían).
 - PENDIENTE: no se probó la instalación real en producción.
+
+## Total en vivo y producto sin agregar (desde 2026-11-18)
+Igual que en el POS de Ventas (ver [Punto de venta](ayuda:pantalla/Ventas.POS), sección «Total en vivo y producto sin agregar»):
+- El **Total** suma el **Subtotal** del producto cargado antes de **Agregar a la venta** (con la etiqueta «con producto sin agregar» junto a «Total») y cambia en vivo con la cantidad; es solo visual, el expendio guarda lo agregado.
+- **Finalizar** no avanza mientras el campo **Código** tenga algo escrito: avisa «El campo Código tiene un valor sin agregar…» y devuelve el cursor al campo. Hay que agregar el producto o borrar el código.

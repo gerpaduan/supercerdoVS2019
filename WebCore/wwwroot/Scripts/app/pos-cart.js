@@ -179,6 +179,8 @@
             if (isNaN(cant) || cant <= 0 || precioActual <= 0) {
                 $("#prodSubtotal").text("$ 0,00");
                 $("#btnAgregarProducto").prop("disabled", true);
+                // El total en vivo incluye este subtotal (ver getSubtotalPendiente): se refresca en cada salida.
+                recalculateTotal();
                 return;
             }
 
@@ -190,11 +192,34 @@
                 })
             );
             $("#btnAgregarProducto").prop("disabled", false);
+            recalculateTotal();
         }
 
-        // Recalcula el total usando POSState como fuente única de verdad.
+        // Subtotal del producto que esta en pantalla y todavia NO se agrego al carrito (precio x cantidad,
+        // el mismo importe que muestra #prodSubtotal). 0 si no hay producto reconocido o cantidad/precio
+        // validos. Se suma al total SOLO para mostrarlo en vivo: el cobro y lo que se guarda salen de
+        // POSState.getTotal() (solo lo agregado) y Finalizar queda bloqueado mientras haya un pendiente.
+        function getSubtotalPendiente() {
+            if (!options.getProductoSeleccionado()) return 0;
+            const cant = parseCant($("#inputCantidad").val());
+            const precio = options.getPrecioActual();
+            if (isNaN(cant) || cant <= 0 || !(precio > 0)) return 0;
+            const subtotal = cant * precio;
+            return Number.isFinite(subtotal) ? subtotal : 0;
+        }
+
+        // Total que se ve en pantalla: lo agregado al carrito + el producto en edicion sin agregar.
+        function getTotalEnPantalla() {
+            return POSState.getTotal() + getSubtotalPendiente();
+        }
+
+        // Recalcula el total mostrado: carrito (POSState es la fuente unica de verdad) + subtotal pendiente.
         function recalculateTotal() {
-            const total = POSState.getTotal();
+            const pendiente = getSubtotalPendiente();
+            const total = POSState.getTotal() + pendiente;
+            // Aviso discreto: ese total incluye algo que todavia no esta en la venta. Solo cambia la opacidad (el
+            // elemento siempre ocupa su lugar junto a "Total"), asi la altura de la zona del total no se mueve.
+            $("#posTotalPendienteAviso").toggleClass("pos-total-pendiente--on", pendiente > 0);
             $("#lblSubtotal").text(
                 "$ " + total.toLocaleString("es-AR", {
                     minimumFractionDigits: 2,
@@ -374,6 +399,9 @@
             updateSaleState();
             options.setProductoSeleccionado(null);
             options.showWaiting();
+            // El recalculateTotal de arriba corrio con el producto todavia en pantalla (contaba su subtotal
+            // como pendiente Y como linea agregada): se repite ya limpio para que no quede duplicado.
+            recalculateTotal();
         }
 
         // Pinta el contenido visual del carrito.
@@ -1245,6 +1273,8 @@
             updateCartSummary: updateCartSummary
         };
 
+        // Total visible (carrito + producto sin agregar): lo usa "Total c/saldo" del POS de Ventas.
+        window.POSTotalEnPantalla = getTotalEnPantalla;
         window.calcularSubtotal = calculateSubtotal;
         window.recalcularTotal = recalculateTotal;
         window.agregarProducto = addProduct;

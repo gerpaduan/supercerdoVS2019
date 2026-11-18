@@ -268,7 +268,11 @@
 
                             <div class="zona-total">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h2 class="m-0 pos-total-label">Total</h2>
+                                    @* Aviso (2026-11-18): ver el comentario equivalente en Ventas/POS.cshtml; siempre ocupa su lugar, solo cambia la opacidad. *@
+                                    <div class="d-flex align-items-baseline pos-total-label-wrap">
+                                        <h2 class="m-0 pos-total-label">Total</h2>
+                                        <span id="posTotalPendienteAviso" class="pos-total-pendiente" title="El total incluye el producto cargado que todavía no agregaste a la venta">con producto sin agregar</span>
+                                    </div>
                                     <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-start pos-sale-summary-row">
@@ -796,6 +800,7 @@
        valida en VentasController.DesbloquearPOS (misma Session de operador POS). Sin caja: no valida caja. *@
     @Html.Partial("~/Views/Shared/_BloqueoPOS.cshtml")
 
+    <script src="~/Scripts/app/producto-pendiente-guard.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/punto-expendio-pos.js" asp-append-version="true"></script>
 
     <script>

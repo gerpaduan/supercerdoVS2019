@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-17
+revisada: 2026-11-18
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -35,6 +35,14 @@ Desde el 2026-11-12, en el POS y en Punto de Expendio:
 - En **Cantidad** el separador decimal es siempre el **punto**: si se escribe una coma (por ejemplo con el teclado numérico) se cambia sola por punto, solo se acepta **un** punto (el segundo se ignora) y no entran letras ni otros signos. El teclado en pantalla ya funcionaba así. Desde el 2026-11-14. No cambia la ventana «Línea de venta», que sigue mostrando la cantidad con coma. Igual en el POS de los puntos de expendio. PENDIENTE: no se probó con una balanza real; el peso que llega de la balanza se muestra como siempre.
 - **Subtotal** se ve más grande, en negrita y en una fila con borde oscuro (no verde). En el celular se agranda solo el valor.
 - Debajo del **Total**, los textos «N ítems activos» y «X kgs | Y unidad» se ven más oscuros y en semi-negrita (en el tema oscuro, más claros) y con la letra un punto más grande, para leerse mejor.
+
+## Total en vivo y producto sin agregar (desde 2026-11-18)
+Aplica al POS de Ventas y a Punto de Expendio.
+- **Total en vivo:** apenas hay un producto reconocido y una cantidad válida, el **Total** del carrito suma también el **Subtotal** de ese producto, antes de apretar **Agregar a la venta**, y se mueve mientras se tipea la cantidad o llega el peso de la balanza. Ej.: carrito `$ 18.334,00` + Subtotal `$ 9.836,89` → el Total muestra `$ 28.170,89`. Junto a «Total» aparece una etiqueta amarilla «con producto sin agregar» (siempre ocupa su lugar y solo se desvanece, así el Total no sube ni baja). Si se borra el código o la cantidad, el Total vuelve a mostrar solo el carrito.
+- **«Total c/saldo»** (solo Ventas) usa ese mismo total en vivo.
+- **Es solo lo que se ve:** lo que se cobra y se guarda es únicamente lo que está agregado al carrito.
+- **Finalizar bloqueado con un código sin agregar:** si el campo **Código** tiene algo escrito (producto buscado y sin agregar), **Finalizar** avisa «El campo Código tiene un valor sin agregar…» y no avanza; el cursor vuelve al campo. Hay que **agregar** el producto o **borrar** el código. Vale también con la tecla de atajo de Finalizar. **Cancelar Venta** no se bloquea. La **Cantidad** sola no cuenta (la balanza la completa aunque no haya producto).
+- PENDIENTE: no se probó con una balanza real conectada ni en la app instalada.
 
 ### Ventas sin guardar (corte de luz, navegador cerrado)
 Verificado en el código el 2026-11-10 (`pos-borrador.js`, `VentasController.Borradores.cs`):

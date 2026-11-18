@@ -319,6 +319,48 @@
         letter-spacing: -.03em;
     }
 
+    /* Aviso "con producto sin agregar" (2026-11-18): etiqueta chica pegada a "Total" cuando el total en vivo suma el producto
+       cargado que todavia no se agrego al carrito. SIEMPRE ocupa su lugar (opacity, no display): si apareciera y desapareciera
+       cambiaria la altura de la zona del total, anclada al pie, y el total subiria y bajaria con cada producto. pos-cart.js
+       le pone/saca la clase --on. */
+    .pos-total-pendiente {
+        margin-left: .75rem;
+        padding: .15rem .6rem;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: .8rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity .15s ease;
+        pointer-events: none;
+    }
+
+    .pos-total-pendiente--on {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    html.dark-mode .pos-total-pendiente {
+        background: rgba(251, 191, 36, .18);
+        color: #fcd34d;
+    }
+
+    html.pos-gris .pos-total-pendiente {
+        background: #fde68a;
+        color: #78350f;
+    }
+
+    @media (max-width: 575.98px) {
+        .pos-total-pendiente {
+            margin-left: .4rem;
+            padding: .1rem .4rem;
+            font-size: .65rem;
+        }
+    }
+
     /* "Total c/saldo" de cuenta corriente (2026-10-19): debajo del total, en letra mas chica, con cualquier forma de pago. */
     .pos-total-con-saldo {
         margin-top: .3rem;

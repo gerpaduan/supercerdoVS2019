@@ -5,6 +5,7 @@
 //
 // Uso: al inicio del handler de submit de cada pantalla,
 //     if (window.ProductoPendienteGuard.bloqueaGuardado({ codigoSelector: '#txtCodigoProducto', destino: 'el movimiento' })) return;
+// Opciones: codigoSelector, destino (a dónde se agregaría), accion (verbo, default 'guardar'; el POS usa 'finalizar').
 // Solo mira el campo Código (visible y con texto); la Cantidad NO cuenta porque la balanza la
 // completa sola aunque no haya producto. Depende de jQuery; usa SweetAlert2 y BusquedaFeedback si están.
 (function (window, $) {
@@ -36,8 +37,12 @@
         if (!$pendiente) return false;
 
         var destino = config.destino || 'el registro';
-        var mensaje = 'El campo Código tiene un valor sin agregar. Agregá el producto a ' + destino +
-            ' o borrá el código; tiene que estar vacío para guardar.';
+        // accion: verbo del bloqueo ('guardar' por defecto; el POS pasa 'finalizar').
+        var accion = config.accion || 'guardar';
+        // Contracción gramatical: «a el movimiento» -> «al movimiento» («a la venta» queda igual).
+        var destinoConPreposicion = ('a ' + destino).replace(/^a el /, 'al ');
+        var mensaje = 'El campo Código tiene un valor sin agregar. Agregá el producto ' + destinoConPreposicion +
+            ' o borrá el código; tiene que estar vacío para ' + accion + '.';
 
         window.BusquedaFeedback && window.BusquedaFeedback.beepError();
 

@@ -158,6 +158,8 @@
             $('#prodSubtotal').text('$ 0,00');
             $('#inputCantidad').prop('disabled', true).val('').removeClass('pos-campo-cargado');
             $('#btnAgregarProducto').prop('disabled', true);
+            // Sin producto en pantalla: el total en vivo vuelve a mostrar solo el carrito.
+            options.calculateSubtotal();
             if (typeof options.onProductoChanged === 'function') {
                 options.onProductoChanged(null);
             }
@@ -188,6 +190,8 @@
             $('#inputCantidad').prop('disabled', true).val(cantidadActual);
             $('#inputCantidad').toggleClass('pos-campo-cargado', !!(cantidadActual && String(cantidadActual).trim()));
             $('#btnAgregarProducto').prop('disabled', true);
+            // Buscando: todavia no hay producto, el total en vivo no suma ningun pendiente.
+            options.calculateSubtotal();
         }
 
         // Deja la UI lista para un nuevo intento cuando no encontramos coincidencia.
@@ -201,6 +205,7 @@
             $('#prodSubtotal').text('$ 0,00');
             $('#inputCantidad').prop('disabled', true).val('').removeClass('pos-campo-cargado');
             $('#btnAgregarProducto').prop('disabled', true);
+            options.calculateSubtotal();
             if (typeof options.onProductoChanged === 'function') {
                 options.onProductoChanged(null);
             }

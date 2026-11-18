@@ -1024,6 +1024,14 @@
             }
             if (expendioGuardado) payload.IdExpendioModificar = expendioGuardado.resp.idExpendio;
 
+            // Pedido del usuario (2026-11-18): no se finaliza con un codigo escrito/buscado que no se agrego
+            // al carrito (el campo Codigo tiene que estar vacio). Guarda compartida con Stock/Compras.
+            if (window.ProductoPendienteGuard && window.ProductoPendienteGuard.bloqueaGuardado({
+                codigoSelector: '#inputCodigo',
+                destino: 'el expendio',
+                accion: 'finalizar el expendio'
+            })) return;
+
             if (!payload.Sector) {
                 firePosAlert({ icon: 'warning', title: 'Sector', text: 'Debe seleccionar un sector.' });
                 openSectorModal();

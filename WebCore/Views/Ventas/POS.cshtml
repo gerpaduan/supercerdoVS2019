@@ -386,7 +386,13 @@
                                     </div>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h2 class="m-0 pos-total-label">Total</h2>
+                                    @* Aviso (2026-11-18): el total en vivo suma el producto cargado que todavia no se agrego al carrito. Va en el
+                                       mismo renglon que "Total" y SIEMPRE ocupa su lugar (solo cambia la opacidad, ver .pos-total-pendiente en pos.css):
+                                       asi la altura de la zona del total no cambia y el total no sube/baja. pos-cart.js le pone/saca --on. *@
+                                    <div class="d-flex align-items-baseline pos-total-label-wrap">
+                                        <h2 class="m-0 pos-total-label">Total</h2>
+                                        <span id="posTotalPendienteAviso" class="pos-total-pendiente" title="El total incluye el producto cargado que todavía no agregaste a la venta">con producto sin agregar</span>
+                                    </div>
                                     <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
                                 </div>
                                 @* Saldo de cuenta corriente del cliente bajo el total (docs/DECISIONS.md, 2026-10-19), en letra mas
@@ -1363,6 +1369,7 @@ else
         <script src="~/Scripts/app/pos-caja-vigilante.js" asp-append-version="true"></script>
     }
     <script src="~/Scripts/app/pos-producto-pendiente.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/producto-pendiente-guard.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/calculadora-billetes-targets.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/post-comprobante.js" asp-append-version="true"></script>
@@ -2951,7 +2958,10 @@ else
                 if (!$wrap.length) return;
 
                 if (typeof total !== "number") {
-                    total = window.POSState && window.POSState.getTotal ? window.POSState.getTotal() : 0;
+                    // Mismo total que muestra la pantalla: carrito + producto en edicion sin agregar.
+                    total = typeof window.POSTotalEnPantalla === "function"
+                        ? window.POSTotalEnPantalla()
+                        : (window.POSState && window.POSState.getTotal ? window.POSState.getTotal() : 0);
                 }
 
                 if (saldoParaTotalPOS === null || !(total > 0)) {
@@ -3580,6 +3590,13 @@ else
             }
 
             $("#btnFinalizar").on("click", function () {
+                // Pedido del usuario (2026-11-18): no se finaliza con un codigo escrito/buscado que no se agrego
+                // al carrito (el campo Codigo tiene que estar vacio). Guarda compartida con Stock/Compras.
+                if (window.ProductoPendienteGuard && window.ProductoPendienteGuard.bloqueaGuardado({
+                    codigoSelector: "#inputCodigo",
+                    destino: "la venta",
+                    accion: "finalizar la venta"
+                })) return;
                 window.abrirModalFormaPagoFinalizacion();
             });
 
