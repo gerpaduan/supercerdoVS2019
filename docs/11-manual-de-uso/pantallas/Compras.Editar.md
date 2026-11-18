@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.NuevaCompra (alta) y Compra.ModificarCompra (modificar y eliminar); a los usuarios de producción les pide elegir el operador de Compras antes de entrar
-revisada: 2026-11-14
+revisada: 2026-11-17
 alias: Compras.NuevaCompra, Compras.ModificarCompra
 ---
 ## Para qué sirve
@@ -85,3 +85,12 @@ Si abrís una compra que ya fue eliminada (por ejemplo desde un link guardado), 
 - **Al modificar una compra:** el recuadro es de solo lectura (estado de factura, comprobantes y totales: *Total compra*, *Facturado neto*, *Sin factura* o *Facturado de más*). El botón **Comprobantes** abre el modal para cargar, editar o eliminar comprobantes (con motivo), cambiar el titular (pide confirmar si ya hay comprobantes) o marcar **no lleva factura**. **Cargar o cambiar comprobantes no modifica la compra, el stock ni la cuenta corriente** y se puede hacer con la caja cerrada. Necesita el permiso de modificar compras.
 - **Reglas:** una sola factura por compra (si el proveedor manda otra, es otra compra); las notas de crédito y débito necesitan la factura; el mismo número no se carga dos veces para el mismo proveedor; neto + IVA + otros tiene que dar el total. La deuda con el proveedor sigue siendo el **importe de la compra**, no el de la factura.
 - PENDIENTE: el borrador local de esta pantalla no guarda los datos de la factura del alta; la pantalla no se probó en el celular.
+
+## Compra en curso en el POS (desde 2026-11-17)
+La **Nueva compra** del POS (**F5**) y **Modificar compra** se abren en su propia ventana, que **no se cierra** al tocar afuera ni con **Esc**:
+- **Minimizar** (arriba a la derecha) vuelve al POS y deja la compra «en curso». Podés seguir vendiendo; arriba aparece el botón amarillo **Compra en curso**: tocalo y la compra vuelve tal como la dejaste.
+- **Descartar** tira lo cargado sin guardar (pide confirmar).
+- **Una sola compra a la vez:** con una compra en curso, **F5** o **Modificar compra** no abren otra: te devuelven a la que está y avisan «Ya hay una compra en curso». Guardala o descartala primero.
+- Al **Guardar compra** la ventana se cierra y el aviso desaparece. Si recargás o cerrás la pestaña del POS con una compra en curso, el navegador avisa.
+- Si abrís **Modificar** desde **F6 → Mis actividades**, esa pantalla queda abajo y la ves al guardar o minimizar.
+- PENDIENTE: no se verificó en el navegador; descartar no cierra el borrador del servidor (queda como «interrumpido» sin latido).

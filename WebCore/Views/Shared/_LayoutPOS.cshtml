@@ -343,6 +343,16 @@
                     </div>
                 }
 
+                @* Compra en curso (2026-11-17, ver docs/DECISIONS.md): aviso de la compra del POS (F5) minimizada. Lo muestra/oculta
+                   POSCompras (Ventas/POS.cshtml); al tocarlo vuelve la compra tal como quedo. Solo Ventas/POS. *@
+                @if (controller == "Ventas")
+                {
+                    <button type="button" id="btnCompraEnCursoPOS" class="btn btn-warning btn-sm fw-bold pos-compra-en-curso d-none align-self-center"
+                            title="Hay una compra sin guardar: tocá para volver a ella" aria-label="Compra en curso">
+                        <i class="fas fa-file-invoice-dollar me-1"></i>Compra en curso
+                    </button>
+                }
+
                 @* Manual de uso (2026-10-03): panel lateral con la ayuda de esta pantalla, encima del POS (no
                    navega ni recarga: la venta en curso no se toca). El F1 del POS (atajos) sigue igual. *@
                 <button type="button" class="nav-link topbar-icon-btn border-0 bg-transparent" data-ayuda-abrir="pantalla" title="Manual de uso de esta pantalla" aria-label="Manual de uso">

@@ -32,7 +32,7 @@ public sealed class ComprasEmbebidaModalStackingTests
         await page.WaitForTimeoutAsync(500);
 
         await page.Keyboard.PressAsync("F5");
-        await page.Locator("#modalFinanzasPOS.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 10000 });
+        await page.Locator("#modalCompraPOS.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 10000 });
         await page.WaitForTimeoutAsync(600);
         return page;
     }
@@ -47,21 +47,21 @@ public sealed class ComprasEmbebidaModalStackingTests
         await page.WaitForTimeoutAsync(400);
 
         // El bug real: aunque tuviera la clase "show", quedaba invisible/no clickeable detras de
-        // #modalFinanzasPOS (mismo z-index, gana el ultimo en el DOM) -- se verifica visibilidad
+        // el modal de la compra (mismo z-index, gana el ultimo en el DOM) -- se verifica visibilidad
         // real, no solo la clase.
         Assert.True(await page.Locator("#modalBuscarPersona").IsVisibleAsync(), "el buscador de proveedor deberia ser visible al primer F9, no requerir un segundo intento");
         Assert.True(await page.Locator("#filtroPersona").IsVisibleAsync());
 
         // Confirma que quedo re-parentado como sibling de body -- ya no descendiente de
-        // #modalFinanzasPOS (causa raiz del bug de z-index/escape en cascada).
+        // el modal de la compra (causa raiz del bug de z-index/escape en cascada).
         var esDescendienteDeFinanzas = await page.EvaluateAsync<bool>(
-            "() => { var f = document.getElementById('modalFinanzasPOS'); var p = document.getElementById('modalBuscarPersona'); return !!(f && p && f.contains(p)); }");
-        Assert.False(esDescendienteDeFinanzas, "el buscador de proveedor deberia haberse re-parentado a body, no seguir anidado dentro de #modalFinanzasPOS");
+            "() => { var f = document.getElementById('modalCompraPOS'); var p = document.getElementById('modalBuscarPersona'); return !!(f && p && f.contains(p)); }");
+        Assert.False(esDescendienteDeFinanzas, "el buscador de proveedor deberia haberse re-parentado a body, no seguir anidado dentro de #modalCompraPOS");
 
         // Escape solo debe cerrar el buscador de proveedor, NO todo el modal de Compras.
         await page.Keyboard.PressAsync("Escape");
         await page.Locator("#modalBuscarPersona.show").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10000 });
-        Assert.Equal(1, await page.Locator("#modalFinanzasPOS.show").CountAsync());
+        Assert.Equal(1, await page.Locator("#modalCompraPOS.show").CountAsync());
 
         await page.CloseAsync();
     }
@@ -91,6 +91,32 @@ public sealed class ComprasEmbebidaModalStackingTests
 
         var idFocoActual = await page.EvaluateAsync<string>("() => document.activeElement ? document.activeElement.id : ''");
         Assert.Equal("txtCantKgs", idFocoActual);
+
+        await page.CloseAsync();
+    }
+
+    // Compra en curso (2026-11-17, ver docs/DECISIONS.md): la compra del POS no se cierra al tocar afuera ni con Esc, se minimiza,
+    // el POS muestra el aviso, el aviso la recupera y con una en curso F5 no abre otra.
+    [Fact]
+    public async Task CompraEnCurso_NoSeCierraAfueraSeMinimizaYSeRecupera()
+    {
+        var page = await AbrirNuevaCompraEnPOSAsync(_fixture);
+
+        // Tocar el fondo y Esc no la cierran.
+        await page.Mouse.ClickAsync(2, 2);
+        await page.Keyboard.PressAsync("Escape");
+        await page.WaitForTimeoutAsync(500);
+        Assert.Equal(1, await page.Locator("#modalCompraPOS.show").CountAsync());
+
+        // Minimizar: el modal se oculta y aparece el aviso del nav.
+        await page.Locator("#modalCompraPOS .js-compra-minimizar").ClickAsync();
+        await page.Locator("#modalCompraPOS.show").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10000 });
+        Assert.True(await page.Locator("#btnCompraEnCursoPOS").IsVisibleAsync(), "con la compra minimizada debe verse 'Compra en curso'");
+
+        // Con una compra en curso, F5 no carga otra: vuelve a la misma y avisa.
+        await page.Keyboard.PressAsync("F5");
+        await page.Locator("#modalCompraPOS.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 10000 });
+        Assert.True(await page.Locator(".swal2-popup").First.IsVisibleAsync(), "debe avisar que solo se puede cargar una compra a la vez");
 
         await page.CloseAsync();
     }

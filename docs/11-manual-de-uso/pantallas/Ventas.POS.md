@@ -323,3 +323,6 @@ Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el co
 - Abre directo en el POS, sin ir por Inicio. Los enlaces a otras secciones del sistema no funcionan en esta ventana: muestran «No disponible en esta ventana».
 - El botón **Salir** (← arriba), cancelar la apertura de caja o cancelar la elección de operador **cierran la ventana** en lugar de ir a Inicio. Si hay una venta en curso, el navegador pregunta antes de cerrar. Ver una venta o cobrar siguen funcionando dentro de la ventana.
 - PENDIENTE: no se probó la instalación real en producción ni el uso de **Duplicar POS** dentro de la app instalada.
+
+## Compra en curso (F5, desde 2026-11-17)
+La compra del POS no se cierra por accidente: se **minimiza** y el botón amarillo **Compra en curso** (arriba, junto a la campana) la recupera. Solo se puede cargar una compra a la vez. Detalle en [Compras.Editar](ayuda:pantalla/Compras.Editar).

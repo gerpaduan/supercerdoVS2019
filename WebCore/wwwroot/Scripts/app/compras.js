@@ -1764,6 +1764,12 @@
                     if (window.Swal && !state.config.modoModal) {
                         Swal.fire({ icon: 'success', title: 'Compra registrada', text: res.mensaje || 'La compra se guardó correctamente.', timer: 1800, timerProgressBar: true, showConfirmButton: false });
                     }
+                    // La compra ya esta guardada: se corta el latido del borrador (sin esto seguiria subiendo un borrador nuevo
+                    // de lo ya guardado mientras el formulario siga vivo en el DOM) y el POS deja de darla por "en curso".
+                    if (state.borradorGenerico) state.borradorGenerico.soltar();
+                    if (state.config.desdePos && window.POSCompras && typeof window.POSCompras.marcarGuardada === 'function') {
+                        window.POSCompras.marcarGuardada();
+                    }
                     $(getHostModalSelector(state)).modal('hide');
                     // Evento nativo (no de jQuery): la Cta. Cte. lo escucha para recargarse con los filtros vigentes.
                     if (state.config.modoModal) {
@@ -1852,12 +1858,14 @@
         $(document)
             .off('shown.bs.modal.comprasPersona', '#modalBuscarPersona')
             .on('shown.bs.modal.comprasPersona', '#modalBuscarPersona', function () {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 $('#filtroPersona').focus().select();
             });
 
         $(document)
             .off('hidden.bs.modal.comprasPersona', '#modalBuscarPersona')
             .on('hidden.bs.modal.comprasPersona', '#modalBuscarPersona', function () {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 if ($(this).data('suprimir-foco-codigo')) return;
                 $form.find('#NroRemito').focus().select();
             });
@@ -1865,6 +1873,7 @@
         $(document)
             .off('click.comprasPersonaNueva', '#btnNuevaPersonaDesdeBuscar')
             .on('click.comprasPersonaNueva', '#btnNuevaPersonaDesdeBuscar', function () {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 if (esEmbebido(state)) return; // deshabilitado: compra embebida dentro de un modal (POS venta / Cta. Cte.)
                 abrirCrearProveedorModal($form);
             });
@@ -1872,6 +1881,7 @@
         $(document)
             .off('submit.comprasPersonaNueva', '#formPersonaModal')
             .on('submit.comprasPersonaNueva', '#formPersonaModal', function (e) {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 e.preventDefault();
                 var $formPersona = $(this);
                 var $btn = $('#btnGuardarPersonaModal');
@@ -1918,6 +1928,7 @@
         $(document)
             .off('input.comprasPersona', '#filtroPersona')
             .on('input.comprasPersona', '#filtroPersona', function () {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 window.clearTimeout(state.personaTimer);
                 state.personaTimer = window.setTimeout(function () {
                     cargarProveedores($form, $('#filtroPersona').val());
@@ -1934,6 +1945,7 @@
         $(document)
             .off('dblclick.comprasPersona', '#tablaPersonas tr.fila-persona')
             .on('dblclick.comprasPersona', '#tablaPersonas tr.fila-persona', function () {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 var $row = $(this);
                 setProveedor($form, {
                     id: $row.data('id'),
@@ -1947,6 +1959,7 @@
         $(document)
             .off('keydown.comprasPersona', '#filtroPersona')
             .on('keydown.comprasPersona', '#filtroPersona', function (e) {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     var $target = $('#tablaPersonas tr.fila-persona.is-selected').first();
@@ -1967,6 +1980,7 @@
         $(document)
             .off('shown.bs.modal.comprasProducto', modalProductoSelector)
             .on('shown.bs.modal.comprasProducto', modalProductoSelector, function () {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 $(this).find('.js-buscar-producto-input').focus().select();
             });
 
@@ -2063,6 +2077,7 @@
         $(document)
             .off('input.comprasProductoModal', state.config.modalProductoSelector + ' .js-buscar-producto-input')
             .on('input.comprasProductoModal', state.config.modalProductoSelector + ' .js-buscar-producto-input', function () {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 var filtro = $(this).val() || '';
                 window.clearTimeout(state.productoTimer);
                 state.productoTimer = window.setTimeout(function () {
@@ -2080,12 +2095,14 @@
         $(document)
             .off('dblclick.comprasProductoModal', state.config.modalProductoSelector + ' .js-buscar-producto-row')
             .on('dblclick.comprasProductoModal', state.config.modalProductoSelector + ' .js-buscar-producto-row', function () {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 seleccionarProductoDesdeModal($form, $(this));
             });
 
         $(document)
             .off('keydown.comprasProductoModal', state.config.modalProductoSelector + ' .js-buscar-producto-input')
             .on('keydown.comprasProductoModal', state.config.modalProductoSelector + ' .js-buscar-producto-input', function (e) {
+                if (!$form.is(':visible')) return; // compra minimizada: los buscadores compartidos con el POS son del POS
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     var $modal = $(state.config.modalProductoSelector);
@@ -2409,4 +2426,16 @@
     };
 
     window.ComprasUI.syncPrimaryAction = syncPrimaryAction;
+
+    // Descarte explicito de la compra en curso del POS ("Descartar" de #modalCompraPOS): corta el latido/guardado del borrador y borra el
+    // respaldo local, sin guardar nada. No toca el borrador del servidor: queda con el ciclo normal (sin latido pasa a "interrumpido").
+    // TODO(claude): definir si descartar desde el POS debe cerrar tambien el borrador en el servidor (hoy descartar pide motivo y avisa al
+    // administrador, ver BorradoresGenericoController.DescartarBorrador, y trabaja por id de borrador, no por clientId).
+    window.ComprasUI.liberar = function (formSelector) {
+        var $form = $(formSelector || '#formCompra');
+        if (!$form.length) return;
+        var state = getState($form);
+        if (state && state.borradorGenerico) state.borradorGenerico.soltar();
+        clearDraft($form);
+    };
 })(window, window.jQuery);

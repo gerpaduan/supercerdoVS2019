@@ -903,6 +903,17 @@
         text-align: left;
     }
 
+    /* Compra en curso (2026-11-17): boton del nav que recupera la compra minimizada; pulso suave para que no pase desapercibido. */
+    .pos-compra-en-curso {
+        margin-right: .5rem;
+        animation: pos-compra-en-curso-pulso 2s ease-in-out infinite;
+    }
+
+    @keyframes pos-compra-en-curso-pulso {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, .55); }
+        50% { box-shadow: 0 0 0 .35rem rgba(255, 193, 7, 0); }
+    }
+
     .pos-restore-banner {
         border: 1px solid #f1c36d;
         background: #fff8e7;

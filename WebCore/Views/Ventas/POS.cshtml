@@ -945,37 +945,37 @@
             background: #fff;
         }
 
-        #modalFinanzasPOS.modal-compra-pos-layout .modal-dialog {
+        #modalCompraPOS .modal-dialog {
             max-width: 1320px;
             width: calc(100% - 1.25rem);
             margin: .5rem auto;
         }
 
-        #modalFinanzasPOS.modal-compra-pos-layout .modal-content {
+        #modalCompraPOS .modal-content {
             border: 1px solid #e3e6f0;
             border-radius: .8rem;
             overflow: hidden;
             box-shadow: 0 .45rem 1.4rem rgba(58, 59, 69, .18);
         }
 
-        #modalFinanzasPOS.modal-compra-pos-layout .modal-header {
+        #modalCompraPOS .modal-header {
             background: #f8f9fc;
             border-bottom: 1px solid #e3e6f0;
             padding: .5rem 1rem;
         }
 
-        #modalFinanzasPOS.modal-compra-pos-layout .modal-title,
-        #modalFinanzasPOS.modal-compra-pos-layout .close {
+        #modalCompraPOS .modal-title,
+        #modalCompraPOS .close {
             color: #2f3e52;
             text-shadow: none !important;
         }
 
-        #modalFinanzasPOS.modal-compra-pos-layout .modal-title {
+        #modalCompraPOS .modal-title {
             font-weight: 700;
             font-size: 1.05rem;
         }
 
-        #modalFinanzasPOS.modal-compra-pos-layout .modal-body {
+        #modalCompraPOS .modal-body {
             padding: .35rem !important;
             background: #f4f7fb;
         }
@@ -1111,16 +1111,16 @@
                 padding: .75rem !important;
             }
 
-            #modalFinanzasPOS.modal-compra-pos-layout .modal-dialog {
+            #modalCompraPOS .modal-dialog {
                 width: calc(100% - .5rem);
                 margin: .25rem auto;
             }
 
-            #modalFinanzasPOS.modal-compra-pos-layout .modal-header {
+            #modalCompraPOS .modal-header {
                 padding: .85rem .95rem;
             }
 
-            #modalFinanzasPOS.modal-compra-pos-layout .modal-body {
+            #modalCompraPOS .modal-body {
                 padding: .35rem !important;
             }
 
@@ -1167,6 +1167,35 @@
                     </button>
                 </div>
                 <div class="modal-body p-0" id="contenedorFinanzasPOS">
+                    <div class="p-4 text-center text-muted">Cargando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Compra del POS (F5 / modificar compra) en SU PROPIO modal (2026-11-17, ver docs/DECISIONS.md "Compra en curso en el POS").
+       Antes vivia en #modalFinanzasPOS, cuyo data-backdrop/data-keyboard (Bootstrap 4) no hace nada en Bootstrap 5: tocar afuera
+       o Esc cerraba la compra y se perdia lo cargado. Aca el fondo es estatico (data-bs-*) y NO hay X: la compra solo se
+       MINIMIZA (queda viva en el DOM, el POS muestra "Compra en curso" y la recupera) o se DESCARTA con confirmacion.
+       Una sola compra a la vez: lo controla window.POSCompras (mas abajo). *@
+    <div class="modal fade modal-compra-pos-layout" id="modalCompraPOS" data-backdrop="static" data-keyboard="false"
+         data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="modalCompraPOSTitle">
+                        <i class="fas fa-file-invoice-dollar mr-2"></i>Nueva compra
+                    </h5>
+                    <div class="ml-auto ms-auto d-flex align-items-center" style="gap:.4rem;">
+                        <button type="button" class="btn btn-sm btn-outline-danger js-compra-descartar" title="Descartar la compra sin guardar">
+                            <i class="fas fa-trash-alt mr-1"></i>Descartar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-compra-minimizar" title="Volver al POS y dejar la compra en curso">
+                            <i class="fas fa-window-minimize mr-1"></i>Minimizar
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-body p-0" id="contenedorCompraPOS">
                     <div class="p-4 text-center text-muted">Cargando...</div>
                 </div>
             </div>
@@ -1922,19 +1951,55 @@ else
                 $("#contenedorFinanzasPOS").html('<div class="alert alert-danger m-3 mb-0">' + msg + '</div>');
             }
 
+            // Error al cargar contenido AJAX en un modal del POS (Finanzas o Compra). Muestra el motivo que manda el servidor
+            // (ej. 403 sin "POS - Ctas.Ctes Persona", o el operador vencido) cuando es un texto corto y sin HTML; si no, queda
+            // el cartel generico. Se arma con .text(): nada del servidor se inyecta como HTML.
+            function mostrarErrorCargaPOS(xhr, url, titulo, selectorContenedor, mensajeGenerico) {
+                var detalle = xhr && xhr.status === 403 && typeof xhr.responseText === "string" ? xhr.responseText.trim() : "";
+                if (!(detalle && detalle.length <= 200 && detalle.indexOf("<") === -1)) {
+                    $(selectorContenedor).html('<div class="alert alert-danger m-3 mb-0"></div>').children().text(mensajeGenerico);
+                    return;
+                }
+
+                var $contenedor = $(selectorContenedor).empty()
+                    .append($('<div class="alert alert-warning m-3 mb-2"></div>').text(detalle));
+
+                // Falta el permiso y se puede autorizar con otro usuario (encabezado del 403, 2026-11-03):
+                // se abre el selector junto con el mensaje y queda el boton por si se cancela.
+                var autorizable = window.PosAutorizacion && window.PosAutorizacion.leerEncabezado(xhr);
+                if (autorizable) {
+                    $contenedor.append(
+                        $('<button type="button" class="btn btn-primary btn-sm mx-3 mb-3 js-pos-autorizar"></button>')
+                            .attr({
+                                "data-accion": autorizable.accion,
+                                "data-id-registro": autorizable.idRegistro,
+                                "data-recargar-url": url,
+                                "data-recargar-titulo": titulo || "",
+                                "data-motivo": detalle
+                            })
+                            .html('<i class="fas fa-user-check mr-1"></i> Autorizar con otro usuario'));
+                    $contenedor.find(".js-pos-autorizar").trigger("click");
+                }
+            }
+
             window.POSFinanzas = {
                 cargar: function (url, titulo) {
+                    // Las compras (nueva / modificar, tambien desde Mis actividades) viven en su propio modal
+                    // #modalCompraPOS: ahi se minimizan y quedan "en curso" sin que F2/F6/F7/F8 las pisen.
+                    if (!!url && url.indexOf("/Compras/") >= 0) {
+                        window.POSCompras.cargar(url, titulo);
+                        return;
+                    }
+
                     if (window.POSGuard && !window.POSGuard.startAction("finanzas:cargar")) return;
 
                     var esMisActividades = !!url && url.indexOf("ActividadesCaja") >= 0;
-                    var esCompra = !!url && url.indexOf("/Compras/") >= 0;
                     var esCtasCtes = !!url && url.indexOf("/Finanzas/CtasCtes") >= 0;
                     var esCtaCtePersona = !!url && url.indexOf("/Finanzas/CtaCtePersona") >= 0;
                     var esHistorialPrecios = !!url && url.indexOf("/Ventas/HistorialPreciosCliente") >= 0;
 
                     $("#modalFinanzasPOS")
-                        .removeClass("modal-egreso-pos-compacto modal-compra-pos-layout modal-ctasctes-pos-compacto modal-mis-actividades-pos-compacto modal-historial-precios-pos-compacto")
-                        .toggleClass("modal-compra-pos-layout", esCompra)
+                        .removeClass("modal-egreso-pos-compacto modal-ctasctes-pos-compacto modal-mis-actividades-pos-compacto modal-historial-precios-pos-compacto")
                         .toggleClass("modal-ctasctes-pos-compacto", esCtasCtes)
                         .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades)
                         .toggleClass("modal-historial-precios-pos-compacto", esHistorialPrecios)
@@ -1972,33 +2037,7 @@ else
                         },
                         error: function (xhr) {
                             window.POSModalLoading?.hide();
-                            // Muestra el motivo que manda el servidor (ej. 403 sin "POS - Ctas.Ctes Persona", o el operador
-                            // vencido) cuando es un texto corto y sin HTML; si no, queda el cartel generico. Se arma con
-                            // .text(): nada del servidor se inyecta como HTML.
-                            var detalle = xhr && xhr.status === 403 && typeof xhr.responseText === "string" ? xhr.responseText.trim() : "";
-                            if (detalle && detalle.length <= 200 && detalle.indexOf("<") === -1) {
-                                var $contenedor = $("#contenedorFinanzasPOS").empty()
-                                    .append($('<div class="alert alert-warning m-3 mb-2"></div>').text(detalle));
-
-                                // Falta el permiso y se puede autorizar con otro usuario (encabezado del 403, 2026-11-03):
-                                // se abre el selector junto con el mensaje y queda el boton por si se cancela.
-                                var autorizable = window.PosAutorizacion && window.PosAutorizacion.leerEncabezado(xhr);
-                                if (autorizable) {
-                                    $contenedor.append(
-                                        $('<button type="button" class="btn btn-primary btn-sm mx-3 mb-3 js-pos-autorizar"></button>')
-                                            .attr({
-                                                "data-accion": autorizable.accion,
-                                                "data-id-registro": autorizable.idRegistro,
-                                                "data-recargar-url": url,
-                                                "data-recargar-titulo": titulo || "",
-                                                "data-motivo": detalle
-                                            })
-                                            .html('<i class="fas fa-user-check mr-1"></i> Autorizar con otro usuario'));
-                                    $contenedor.find(".js-pos-autorizar").trigger("click");
-                                }
-                            } else {
-                                mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
-                            }
+                            mostrarErrorCargaPOS(xhr, url, titulo, "#contenedorFinanzasPOS", "No se pudo cargar el contenido de finanzas.");
                         },
                         complete: function () {
                             window.POSGuard?.endAction("finanzas:cargar");
@@ -2188,17 +2227,170 @@ else
                     $("#contenedorPagoPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
                 });
 
-            window.POSCompras = {
-                abrirNueva: function () {
-                    window.POSFinanzas.cargar('@Url.Action("NuevaCompra", "Compras", new { origen = "pos" })', "Nueva compra");
-                },
-                abrirModificar: function (idCompra) {
-                    var id = parseInt(idCompra, 10) || 0;
-                    if (id <= 0) return;
-                    var url = '@Url.Action("ModificarCompra", "Compras")' + '?id=' + encodeURIComponent(id) + '&origen=pos';
-                    window.POSFinanzas.cargar(url, "Modificar compra");
+            // Compra del POS (F5 / modificar compra) -- "Compra en curso" (2026-11-17, ver docs/DECISIONS.md).
+            // Vive en #modalCompraPOS, que NO se cierra por accidente (fondo estatico, sin X): se MINIMIZA (el formulario y su estado
+            // quedan vivos en el DOM, el boton #btnCompraEnCursoPOS del nav la recupera tal como estaba) o se DESCARTA con
+            // confirmacion. Solo puede haber una compra a la vez mientras no se guarde ni se descarte.
+            window.POSCompras = (function () {
+                var enCurso = false;   // hay un formulario de compra cargado y sin guardar/descartar
+                var cargando = false;  // el GET del formulario todavia no termino
+
+                function $modal() { return $("#modalCompraPOS"); }
+
+                // El aviso del nav aparece solo con la compra minimizada (en curso y el modal no esta a la vista).
+                function actualizarAviso(modalVisible) {
+                    $("#btnCompraEnCursoPOS").toggleClass("d-none", !(enCurso && !modalVisible));
                 }
-            };
+
+                // Minimizar/Descartar se bloquean mientras carga el formulario: si se cerrara en ese momento, el GET
+                // terminaria escribiendo en un modal oculto.
+                function habilitarBotones(habilitados) {
+                    $modal().find(".js-compra-minimizar, .js-compra-descartar").prop("disabled", !habilitados);
+                }
+
+                function restaurar() {
+                    if (!enCurso && !cargando) return;
+                    var $m = $modal();
+                    if (!$m.hasClass("show")) $m.modal("show");
+                }
+
+                function minimizar() {
+                    $modal().modal("hide");
+                }
+
+                function avisarUnaSolaCompra() {
+                    restaurar();
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: "info",
+                            title: "Ya hay una compra en curso",
+                            text: "Solo se puede cargar una compra a la vez. Guardala o descartala antes de empezar otra.",
+                            confirmButtonText: "Entendido"
+                        });
+                    }
+                }
+
+                function cargar(url, titulo) {
+                    // Una sola compra a la vez: con una en curso (o cargandose) se vuelve a ella en vez de pisarla.
+                    if (enCurso || cargando) { avisarUnaSolaCompra(); return; }
+                    if (window.POSGuard && !window.POSGuard.startAction("compra:cargar")) return;
+
+                    $("#modalCompraPOSTitle").text(titulo || "Compra");
+                    $("#contenedorCompraPOS").html(window.POSModalLoading.html("Cargando..."));
+                    window.POSModalLoading?.show('Cargando solicitud...');
+                    cargando = true;
+                    habilitarBotones(false);
+
+                    var abierto = window.POSGuard
+                        ? window.POSGuard.requestModalOpen('compra', function () { $modal().modal("show"); })
+                        : true;
+
+                    if (!abierto) {
+                        cargando = false;
+                        habilitarBotones(true);
+                        window.POSModalLoading?.hide();
+                        window.POSGuard?.endAction("compra:cargar");
+                        return;
+                    }
+
+                    $.ajax({
+                        url: url,
+                        type: "GET",
+                        cache: false,
+                        success: function (html) {
+                            renderConScripts(html, "#contenedorCompraPOS", function () {
+                                window.POSModalLoading?.hide();
+                                cargando = false;
+                                // Solo es "en curso" si llego el formulario (un 200 con otro contenido no cuenta).
+                                enCurso = $("#contenedorCompraPOS #formCompra").length > 0;
+                                habilitarBotones(true);
+                                actualizarAviso($modal().hasClass("show"));
+                            });
+                        },
+                        error: function (xhr) {
+                            window.POSModalLoading?.hide();
+                            cargando = false;
+                            enCurso = false;
+                            habilitarBotones(true);
+                            mostrarErrorCargaPOS(xhr, url, titulo, "#contenedorCompraPOS", "No se pudo cargar la compra.");
+                        },
+                        complete: function () {
+                            window.POSGuard?.endAction("compra:cargar");
+                        }
+                    });
+                }
+
+                // La compra se guardo (la llama compras.js antes de ocultar el modal): deja de estar "en curso".
+                function marcarGuardada() {
+                    enCurso = false;
+                    actualizarAviso(false);
+                }
+
+                // Cierra la compra sin guardarla (descartada por el operador o eliminada desde el propio formulario): corta el
+                // borrador, deja de estar "en curso" y cierra el modal.
+                function cerrarSinGuardar() {
+                    window.ComprasUI?.liberar?.("#formCompra");
+                    enCurso = false;
+                    actualizarAviso(false);
+                    $modal().modal("hide");
+                }
+
+                function descartar() {
+                    if (!enCurso) { minimizar(); return; }
+
+                    Swal.fire({
+                        icon: "warning",
+                        title: "¿Descartar la compra en curso?",
+                        text: "Se pierde lo que cargaste y no se guarda nada.",
+                        showCancelButton: true,
+                        confirmButtonText: "Descartar",
+                        cancelButtonText: "Seguir con la compra",
+                        focusCancel: true
+                    }).then(function (r) {
+                        if (!r.isConfirmed) return;
+                        cerrarSinGuardar();
+                    });
+                }
+
+                // Eventos del modal: el aviso sigue al estado visible; al cerrarse sin compra en curso (guardada, descartada o con
+                // error de carga) se vacia el contenedor para no dejar vivo un formulario viejo.
+                $(document)
+                    .on("shown.bs.modal.posCompra", "#modalCompraPOS", function () { actualizarAviso(true); })
+                    .on("hide.bs.modal.posCompra", "#modalCompraPOS", function () { actualizarAviso(false); })
+                    .on("hidden.bs.modal.posCompra", "#modalCompraPOS", function () {
+                        if (!enCurso && !cargando) {
+                            $("#contenedorCompraPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+                        }
+                        // Los buscadores de persona/producto son compartidos con la venta: la compra los marca como "suyos"
+                        // (compra-embebida) al abrirlos y, con ella oculta, ese marcador no puede quedar puesto (cambiaria
+                        // a donde vuelve el foco en el POS). La compra lo vuelve a poner cada vez que abre uno.
+                        $("#modalBuscarPersona").removeData("origen-persona-buscar");
+                        $("#modalBuscarProducto").removeData("origen-producto-buscar");
+                        actualizarAviso(false);
+                    })
+                    .on("click.posCompra", "#modalCompraPOS .js-compra-minimizar", minimizar)
+                    .on("click.posCompra", "#modalCompraPOS .js-compra-descartar", descartar)
+                    .on("click.posCompra", "#btnCompraEnCursoPOS", restaurar);
+
+                return {
+                    abrirNueva: function () {
+                        cargar('@Url.Action("NuevaCompra", "Compras", new { origen = "pos" })', "Nueva compra");
+                    },
+                    abrirModificar: function (idCompra) {
+                        var id = parseInt(idCompra, 10) || 0;
+                        if (id <= 0) return;
+                        var url = '@Url.Action("ModificarCompra", "Compras")' + '?id=' + encodeURIComponent(id) + '&origen=pos';
+                        cargar(url, "Modificar compra");
+                    },
+                    cargar: cargar,
+                    restaurar: restaurar,
+                    minimizar: minimizar,
+                    marcarGuardada: marcarGuardada,
+                    cerrarSinGuardar: cerrarSinGuardar,
+                    descartar: descartar,
+                    hayCompraEnCurso: function () { return enCurso || cargando; }
+                };
+            })();
 
             // Egresos de caja dentro del POS: a diferencia del clasico (accion MisEgresosCaja que
             // resuelve la caja actual del vendedor de sesion internamente), WebCore porto ese
@@ -2242,7 +2434,7 @@ else
                     // al ancho completo del modal grande y desentonaba con la pantalla desde la que se llega (F6).
                     var esMisActividades = !!url && (url.indexOf("ActividadesCaja") >= 0 || url.indexOf("MisVentas") >= 0);
                     $("#modalFinanzasPOS")
-                        .removeClass("modal-compra-pos-layout modal-ctasctes-pos-compacto")
+                        .removeClass("modal-ctasctes-pos-compacto")
                         .toggleClass("modal-egreso-pos-compacto", compacto === true)
                         .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades);
                     $("#modalFinanzasPOSTitle").text(titulo || "Egresos de Caja");

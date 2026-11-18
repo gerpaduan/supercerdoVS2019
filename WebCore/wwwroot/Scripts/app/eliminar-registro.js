@@ -33,7 +33,10 @@ function iniciarEliminarRegistro(window, $) {
     // (mismo arreglo que compras.js, gestionarFocusTrapModalAbierto).
     function ajustarFocusTrapSobreModalDelPos($m) {
         if (cfg.origen !== 'pos' || !window.bootstrap || !window.bootstrap.Modal) return;
-        var elFondo = document.getElementById('modalFinanzasPOS');
+        // El modal de fondo es el que contiene este formulario: #modalCompraPOS (la compra del POS vive en su propio modal desde
+        // 2026-11-17) o #modalFinanzasPOS (el resto de las pantallas de Finanzas).
+        var nodoConfig = document.getElementById('eliminarRegistroConfig');
+        var elFondo = (nodoConfig && nodoConfig.closest('.modal')) || document.getElementById('modalFinanzasPOS');
         if (!elFondo) return;
         $m.on('show.bs.modal', function () {
             var fondo = window.bootstrap.Modal.getInstance(elFondo);
@@ -249,6 +252,11 @@ function iniciarEliminarRegistro(window, $) {
             }).then(function () {
                 // En el POS no se navega (se perderia la venta en curso): se recarga Mis actividades en el mismo modal, donde la
                 // compra queda con su egreso "ELIMINADO".
+                // La compra del POS vive en #modalCompraPOS (no en el de Finanzas): la compra eliminada ya no puede quedar "en curso".
+                if (cierreEnPos && window.POSCompras && typeof window.POSCompras.cerrarSinGuardar === 'function'
+                    && $('#modalCompraPOS #eliminarRegistroConfig').length) {
+                    window.POSCompras.cerrarSinGuardar();
+                }
                 if (cierreEnPos && window.POSEgresos && typeof window.POSEgresos.abrirMis === 'function') {
                     window.POSEgresos.abrirMis();
                     return;

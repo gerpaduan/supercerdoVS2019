@@ -526,7 +526,9 @@
             // (Mis Ventas, Cta Cte, calculadora, factura, etc.) tambien se
             // avisa: recargar/cerrar la pestaña ahi puede perder lo que el
             // usuario esta viendo o cargando en ese modal.
-            const hayModalAbierto = document.querySelector(".modal.show") !== null;
+            // La compra minimizada ("Compra en curso", #modalCompraPOS oculto) tampoco se pierde en silencio.
+            const hayModalAbierto = document.querySelector(".modal.show") !== null
+                || (window.POSCompras?.hayCompraEnCurso?.() === true);
 
             if (omitirAvisoSalidaPOS || window.POSFinalizandoVenta || (!hayVentaEnCurso && !window.POSCancelacionEnCurso && !hayModalAbierto)) return;
 
