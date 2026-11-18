@@ -1051,6 +1051,14 @@ Tablas nuevas de auditoría: sin ellas, **eliminar falla** (el resto de la aplic
 - `WebCore.Tests` 292/292. 1099 archivos, zip SHA256 `EB59A70EB3E4EDA1E1A917EF126F4841148C0503F050C58BBCBDD51656A324B4` (idéntico en el servidor), `WebCore.dll` `C6D12058A6D8` (anterior `970C9C56E0EB`). Mismo procedimiento; backup `C:\WebCore_backup_20261117c`. Sonda `127.0.0.1:5250/Login` 200; `WebCoreApp` Running, watchdog Ready. Rollback: igual, con ese backup.
 - **PENDIENTE (usuario)**: probar «Instalar seleccionadas» en Utilidades con login real; Ctrl+F5.
 
+## Redeploy WebCore en Servidor SM -- 2026-11-17 (4.º del día, "limpio", solo SM; commit `7935d180`; tag local `pre-deploy-sm-20261117d` = `98349473`, lo que estaba desplegado)
+- A pedido del usuario ("publicar limpio SM"). Entra `7935d180` (sin menú lateral solo en las apps independientes de Utilidades; marca `?ventana=1` en el `start_url` de los manifiestos de POS, Punto de expendio y Existencia; `app-independiente.js` nuevo) más `5a179c56` (solo docs). Solo WebCore, sin migraciones. `HEAD` desde worktree limpio, sin cambios sin commitear.
+- `WebCore.Tests` 292/292. `win-x64` self-contained, 1102 archivos, sin `App.config`/`WebCore.dll.config` ni `AFIP\`; zip 113,7 MB SHA256 `0153A0FBEAEF84FB5D8A413FC329AFA6D0C59A395BC5029A11F07581E3AB8076` (idéntico en el servidor), `WebCore.dll` `45918DC71E08` (anterior `C6D12058A6D8`).
+- **Servidor SM**: identidad previa verificada (1114 archivos, `AFIP\` 4, dll `C6D12058A6D8`, 21,6 GB libres). Script remoto (aborta si algo no coincide; revierte solo si la sonda falla): backup `C:\WebCore_backup_20261117d` (1114), watchdog deshabilitado, `WebCoreApp` detenido y `WebCore.exe` muerto, `robocopy /E /XF WebCore.dll.config App.config` (exit 3), arrancar, sonda `127.0.0.1:5250/Login` 200 con «Ingresar a CARNISYS», watchdog habilitado. Resultado: 1117 archivos, `AFIP\` 4, dll `45918DC71E08`, `WebCoreApp` Running, watchdog Ready. `C:\_deploy_sm` borrado; queda el backup.
+- **Verificado (externo, `curl -k`)**: `https://192.168.0.151/Login` 200 con «Ingresar a CARNISYS»; `/SuperCerdoWeb/` 200; `manifest-pos.json` con `start_url` `./Ventas/POS?ventana=1`; `app-independiente.js` servido. **NO probado**: login ni pantallas con sesión de producción.
+- **Rollback**: igual que el primero del día, con `C:\WebCore_backup_20261117d`.
+- **PENDIENTE (usuario)**: en SM, **desinstalar y reinstalar Punto de venta, Punto de expendio y Existencia** desde Utilidades (Chrome conserva el manifest viejo); comprobar que la app general CarniSys instalada muestra el menú y las mini-apps no; Ctrl+F5.
+
 ## Unificar SuperCerdo SM + SL (SQL Server local) y volcarla a carnisys (Postgres local, empresa 1)
 
 Reglas y porque: `docs/DECISIONS.md` (2026-10-27). Todo corre en la maquina de desarrollo; no toca los servidores SM/SL ni la VPS.
