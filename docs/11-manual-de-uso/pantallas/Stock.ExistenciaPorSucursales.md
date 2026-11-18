@@ -127,6 +127,7 @@ El cálculo parte del **último cierre de stock** de cada sucursal. Con varias s
 ## Como aplicación instalada (desde 2026-11-17)
 - Se instala desde **Configuración → Utilidades → Aplicaciones instalables → Existencia por sucursal → Instalar** (ver [Utilidades](ayuda:pantalla/Home.Utilidades)). Queda con el nombre **Existencia por sucursal**, su propio ícono (barras por sucursal) y su propia ventana.
 - Abre directo en esta pantalla en el modo de ventana independiente (compacta, sin menú lateral ni barra superior). Es la misma pantalla y la misma sesión.
+- **Sin menú solo en las apps de Utilidades:** únicamente las apps instaladas desde **Utilidades** abren sin menú lateral. Si usás la app general **CarniSys** (o una pestaña del navegador) y entrás a esta pantalla, el **menú se ve** y los enlaces funcionan; la ventana de **Abrir en ventana** sí va sin menú. Si instalaste esta app antes del 2026-11-17, **desinstalala y reinstalala desde Utilidades** para que tome esta regla (Stock, Movimientos y Elaborados ya la traían).
 - PENDIENTE: no se probó la instalación real en producción.
 
 ## Botones − / + de ancho (ventana independiente y app instalada, desde 2026-11-17)

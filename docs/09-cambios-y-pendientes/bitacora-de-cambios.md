@@ -1,5 +1,10 @@
 # Bitacora de cambios
 
+## 2026-11-17 (i) - Sin menú lateral solo en las apps independientes de Utilidades
+
+- **Cambio:** en la app general «CarniSys» instalada, Elaborados / Stock / Movimientos / POS ya no pierden el menú ni los enlaces: la marca de «app independiente» pasó a ser el `?ventana=1` del `start_url` de cada mini-app (`app-independiente.js`, `sessionStorage`), no `display-mode: standalone`. «Abrir en ventana» sigue sin menú; una pestaña normal con `?ventana=1` muestra el menú. Manifests de POS, Expendio y Existencia con `?ventana=1`. Detalle: `docs/DECISIONS.md` (2026-11-17 i). Manual: `Home.Utilidades.md`, `Ventas.POS.md`, `PuntosExpendio.POS.md`, `Stock.ExistenciaPorSucursales.md`.
+- **Pendiente:** reinstalar Punto de venta, Punto de expendio y Existencia desde Utilidades; probar en la app general y en las instaladas reales; `scripts/check-ayuda.ps1` antes del deploy.
+
 ## 2026-11-17 (h) - Utilidades: instalar varias apps en lote
 
 - **Cambio:** casillas por app, «Seleccionar todas», «Instalar seleccionadas» e «Instalar todas». Abren una sola ventana chica que va instalando una tras otra (cola `?cola=` en la página de instalación); el navegador igual pide un clic en «Instalar» por cada app. Detalle y límites: `docs/DECISIONS.md` (2026-11-17 h). Manual: `Home.Utilidades.md`.

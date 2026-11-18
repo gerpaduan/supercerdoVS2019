@@ -4,7 +4,7 @@
   "description": "CarniSys: existencia de stock por sucursal",
   "lang": "es-AR",
   "id": "./existencia-app",
-  "start_url": "./Existencia",
+  "start_url": "./Existencia?ventana=1",
   "scope": "./Existencia",
   "display": "standalone",
   "background_color": "#062d63",

@@ -69,3 +69,5 @@ else
 }
 @* Instalador de mini-apps: solo actua con ?instalar=1 (tarjetas de Utilidades). Va en el head para capturar beforeinstallprompt antes de que se dispare. *@
 <script src="~/Scripts/app/pwa-instalar.js" asp-append-version="true"></script>
+@* Marca «app independiente» (window.__appIndependiente): sincrono y antes de los scripts de modo ventana de _Layout y del POS. Ver app-independiente.js. *@
+<script src="~/Scripts/app/app-independiente.js" asp-append-version="true"></script>

@@ -12,7 +12,9 @@
     var metaScope = document.querySelector('meta[name="carnisys-app-scope"]');
     var scope = metaScope ? (metaScope.getAttribute('content') || '').toLowerCase() : '';
     var enAppInstalada = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-    var activa = !!scope && enAppInstalada;
+    // Solo en las apps independientes de Utilidades: standalone tambien es verdadero en la app general CarniSys, que debe navegar libre (window.__appIndependiente,
+    // app-independiente.js: la marca es el ?ventana=1 del start_url de cada mini-app).
+    var activa = !!scope && enAppInstalada && window.__appIndependiente === true;
 
     // Tiempo que se espera para saber si el navegador acepto cerrar la ventana antes de mostrar el aviso de respaldo.
     var ESPERA_CIERRE_MS = 800;

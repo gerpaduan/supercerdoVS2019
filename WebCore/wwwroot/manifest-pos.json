@@ -4,7 +4,7 @@
   "description": "CarniSys: punto de venta (POS)",
   "lang": "es-AR",
   "id": "./pos-app",
-  "start_url": "./Ventas/POS",
+  "start_url": "./Ventas/POS?ventana=1",
   "scope": "./Ventas/",
   "display": "standalone",
   "background_color": "#062d63",

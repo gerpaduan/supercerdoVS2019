@@ -4,7 +4,7 @@
   "description": "CarniSys: punto de expendio",
   "lang": "es-AR",
   "id": "./expendio-app",
-  "start_url": "./PuntosExpendio/POS",
+  "start_url": "./PuntosExpendio/POS?ventana=1",
   "scope": "./PuntosExpendio/",
   "display": "standalone",
   "background_color": "#062d63",

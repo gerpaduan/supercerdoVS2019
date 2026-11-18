@@ -322,6 +322,7 @@ Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el co
 - Se instala desde **Configuración → Utilidades → Aplicaciones instalables → Punto de venta → Instalar** (ver [Utilidades](ayuda:pantalla/Home.Utilidades)). Queda con el nombre **Punto de venta**, su propio ícono y su propia ventana.
 - Abre directo en el POS, sin ir por Inicio. Los enlaces a otras secciones del sistema no funcionan en esta ventana: muestran «No disponible en esta ventana».
 - El botón **Salir** (← arriba), cancelar la apertura de caja o cancelar la elección de operador **cierran la ventana** en lugar de ir a Inicio. Si hay una venta en curso, el navegador pregunta antes de cerrar. Ver una venta o cobrar siguen funcionando dentro de la ventana.
+- **Sin menú solo en las apps de Utilidades:** únicamente las apps instaladas desde **Utilidades** abren sin menú lateral. Si usás la app general **CarniSys** (o una pestaña del navegador) y entrás a esta pantalla, el **menú se ve** y los enlaces funcionan; la ventana de **Abrir en ventana** sí va sin menú. Si instalaste esta app antes del 2026-11-17, **desinstalala y reinstalala desde Utilidades** para que tome esta regla (Stock, Movimientos y Elaborados ya la traían).
 - PENDIENTE: no se probó la instalación real en producción ni el uso de **Duplicar POS** dentro de la app instalada.
 
 ## Compra en curso (F5, desde 2026-11-17)

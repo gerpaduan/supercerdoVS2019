@@ -31,7 +31,8 @@
 
     function aplica() {
         var embebida = !!(document.body && document.body.classList.contains('app-embed'));
-        if (enAppInstalada()) return !!document.querySelector('meta[name="carnisys-app-scope"]') || embebida;
+        // App instalada: solo si es una app independiente de Utilidades (window.__appIndependiente); la app general CarniSys no lleva el par −/+.
+        if (enAppInstalada()) return window.__appIndependiente === true;
         if (document.documentElement.classList.contains('modo-ventana')) return true;
         return embebida && !!window.opener;
     }

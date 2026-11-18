@@ -118,18 +118,17 @@
     </script>
 
     @* Modo ventana (pantallas de trabajo Stock / Movimientos / Elaborados, docs/DECISIONS.md 2026-11-04): la pantalla se abrio en una ventana
-       propia ("Abrir en ventana", o la mini-app instalada con ?ventana=1) y se muestra sin menu lateral, barra superior ni pie. Se decide aca,
+       propia ("Abrir en ventana", o una app independiente instalada desde Utilidades: window.__appIndependiente) y se muestra sin menu lateral, barra superior ni pie. Se decide aca,
        antes de pintar, para evitar el parpadeo. window.name sobrevive a la navegacion dentro de la ventana (Guardar -> listado -> Nuevo), asi
        no hace falta arrastrar ningun parametro por las URLs. *@
     <script>
         (function () {
             try {
                 var nombre = window.name || "";
-                // Mini-app instalada (2026-11-17): _PwaHead publica el scope de la app en <meta name="carnisys-app-scope">; si ademas corre como app instalada
-                // (standalone) tambien es modo ventana, aunque se haya perdido el ?ventana=1 (ej. al volver de un login vencido).
-                var esMiniAppInstalada = !!document.querySelector('meta[name="carnisys-app-scope"]') &&
-                    window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
-                if (!/^carnisys-trabajo-/.test(nombre) && (esMiniAppInstalada || /[?&]ventana=1(&|$)/.test(location.search))) {
+                // Sin menu SOLO en (a) las apps independientes instaladas desde Utilidades (window.__appIndependiente, app-independiente.js: standalone + el
+                // ?ventana=1 de su start_url; la app general CarniSys NO la tiene y muestra el menu) y (b) la ventana emergente de «Abrir en ventana»
+                // (window.name carnisys-trabajo-*). Una pestana normal con ?ventana=1 ya no pierde el menu (2026-11-17 i).
+                if (!/^carnisys-trabajo-/.test(nombre) && window.__appIndependiente === true) {
                     window.name = nombre = "carnisys-trabajo-app";
                 }
                 if (/^carnisys-trabajo-/.test(nombre)) {

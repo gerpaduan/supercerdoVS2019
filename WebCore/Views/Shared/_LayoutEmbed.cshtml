@@ -24,6 +24,8 @@
     @if (ViewBag.ManifestVentana is string manifestVentana)
     {
         <link rel="manifest" href="@Url.Content("~/" + manifestVentana)" />
+        @* Marca «app independiente» (app instalada de Existencia: su start_url trae ?ventana=1). Ver app-independiente.js. *@
+        <script src="~/Scripts/app/app-independiente.js" asp-append-version="true"></script>
     }
     <script type="importmap"></script>
 
