@@ -1059,6 +1059,14 @@ Tablas nuevas de auditoría: sin ellas, **eliminar falla** (el resto de la aplic
 - **Rollback**: igual que el primero del día, con `C:\WebCore_backup_20261117d`.
 - **PENDIENTE (usuario)**: en SM, **desinstalar y reinstalar Punto de venta, Punto de expendio y Existencia** desde Utilidades (Chrome conserva el manifest viejo); comprobar que la app general CarniSys instalada muestra el menú y las mini-apps no; Ctrl+F5.
 
+## Redeploy WebCore en Servidor SM -- 2026-11-18 ("limpio", solo SM; commit `8f418260`; tag local `pre-deploy-sm-20261118` = `7935d180`, lo que estaba desplegado)
+- A pedido del usuario ("deployá esto a SM"). Entra `8f418260` (POS de Ventas y Expendio: el Total suma en vivo el subtotal del producto sin agregar y Finalizar se bloquea con el campo Código lleno; `pos-cart.js`, `pos-product.js`, `punto-expendio-pos.js`, `producto-pendiente-guard.js`, `pos.css`, vistas de los 2 POS). Solo WebCore, sin migraciones. `HEAD` desde worktree limpio. **San Lorenzo y VPS luden no se tocaron.**
+- `WebCore.Tests` 292/292. `win-x64` self-contained, 1102 archivos, sin `App.config`/`WebCore.dll.config`; zip 113,7 MB SHA256 `38978770CF41910F9D164C3988821FC50C7CED636F43B78BC4719DEDF8D7D92E` (idéntico en el servidor), `WebCore.dll` `01C61754DD19` (anterior `45918DC71E08`).
+- **Servidor SM**: identidad previa verificada (`ServidorSM`, 1117 archivos, `AFIP\` 4, dll `45918DC71E08`, 21,8 GB libres). Mismo script remoto que el 4.º del 2026-11-17 (aborta si el hash no coincide o el paquete trae config; revierte solo si la sonda falla o cambia `WebCore.dll.config`): backup `C:\WebCore_backup_20261118` (1117), watchdog deshabilitado, app detenida, `robocopy /E /XF WebCore.dll.config App.config` (exit 3), arrancar, sonda `127.0.0.1:5250/Login` 200 con «Ingresar a CARNISYS», watchdog habilitado. Resultado: 1117 archivos, `AFIP\` 4, config intacta, `WebCoreApp` Running, watchdog Ready. Queda el zip y `deploy-sm.ps1` en `C:\WebCore_upload\`.
+- **Verificado (externo, `curl -k`)**: `https://192.168.0.151/Login` 200 con «Ingresar a CARNISYS»; `/SuperCerdoWeb/` 200; los 5 estáticos modificados (`pos-cart.js`, `pos-product.js`, `punto-expendio-pos.js`, `producto-pendiente-guard.js`, `pos.css`) servidos con el mismo hash que el commit. **NO probado**: login ni pantallas con sesión de producción.
+- **Rollback**: deshabilitar `WebCoreAppWatchdog`, detener `WebCoreApp` y matar `WebCore.exe`, `robocopy C:\WebCore_backup_20261118 C:\WebCore /MIR /XD AFIP /R:2 /W:5`, arrancar, habilitar watchdog.
+- **PENDIENTE (usuario)**: probar en los POS de SM con login real que el Total suma el producto sin agregar y que Finalizar se bloquea con el campo Código lleno; Ctrl+F5.
+
 ## Unificar SuperCerdo SM + SL (SQL Server local) y volcarla a carnisys (Postgres local, empresa 1)
 
 Reglas y porque: `docs/DECISIONS.md` (2026-10-27). Todo corre en la maquina de desarrollo; no toca los servidores SM/SL ni la VPS.
