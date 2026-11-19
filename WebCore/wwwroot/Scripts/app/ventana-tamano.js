@@ -30,6 +30,8 @@
     }
 
     function aplica() {
+        // Carga abierta dentro del POS (iframe, 2026-11-18): el tamano de la ventana no tiene sentido ahi (resizeTo no actua en un iframe).
+        if (window.parent !== window && /^carnisys-trabajo-pos-/.test(window.name || '')) return false;
         var embebida = !!(document.body && document.body.classList.contains('app-embed'));
         // App instalada: solo si es una app independiente de Utilidades (window.__appIndependiente); la app general CarniSys no lleva el par −/+.
         if (enAppInstalada()) return window.__appIndependiente === true;

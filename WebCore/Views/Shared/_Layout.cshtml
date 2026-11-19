@@ -26,6 +26,12 @@
     // que en cada request que no sea a Compras, si hay un operador de Compras activo en Session
     // se limpia aca mismo. Server side, sin beacon/pagehide. Port de
     // Web/Views/Shared/_LayoutBase.cshtml:19.
+    // Cargas desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): Stock, Movimientos y Elaborados se abren dentro
+    // de un iframe del POS. Ese render NO es "salir" del POS ni del modulo: si limpiara estas claves le sacaria al POS que sigue
+    // abierto el "operar sin caja" y el operador de Ventas/Compras. El navegador avisa que es un iframe con Sec-Fetch-Dest.
+    bool enIframe = WebCore.Helpers.PermisosHelper.EsPedidoDeIframe(Context.Request.Headers["Sec-Fetch-Dest"].ToString());
+    if (!enIframe)
+    {
     WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Context.Session, controller);
 
     // Operador que vive solo en una pantalla puntual (Cajas/EgresosCaja, 2026-11-03): caduca al renderizar cualquier otra vista.
@@ -37,6 +43,7 @@
     // cualquier request que llegue aca YA significa "salio de POS". Mismo criterio que la
     // limpieza de operador de modulo, una linea arriba.
     WebCore.Helpers.PermisosHelper.LimpiarBypassCajaSiSalioDePOS(Context.Session, controller, action, Sesion.UsuarioActual?.Id ?? 0);
+    }
 
     bool enStock = controller == "Stock" || controller == "Reposicion" || controller == "Pedidos";
     bool enEmpleados = controller == "Empleados" || controller == "Jornadas" || controller == "Liquidaciones";

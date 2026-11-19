@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-18
+revisada: 2026-11-19
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -335,3 +335,15 @@ Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el co
 
 ## Compra en curso (F5, desde 2026-11-17)
 La compra del POS no se cierra por accidente: se **minimiza** y el botón amarillo **Compra en curso** (arriba, junto a la campana) la recupera. Solo se puede cargar una compra a la vez. Detalle en [Compras.Editar](ayuda:pantalla/Compras.Editar).
+
+## Cargas desde el POS (desde 2026-11-18)
+El botón **Cargas** de la barra de arriba (junto a la campana) abre, **sin salir de la caja**, una carga de Stock (**ingreso, egreso, pesaje de cortes, ajuste**), de **Movimientos** o de **Elaborados** (**nuevo elaborado, ingreso rápido**). Cada una es la pantalla de siempre, dentro de una ventana del POS, sin el menú lateral. Solo aparece con el POS operativo (caja abierta u «operar sin caja») y no al modificar una venta.
+- **No se cierra por accidente:** tocar afuera o Esc no hace nada. Se **Minimiza** (queda un botón amarillo «<carga> en curso» en la barra, que la trae de vuelta con lo cargado) o se **Descarta** (con confirmación; se pierde lo cargado).
+- **Una de cada tipo a la vez.** Se pueden tener, por ejemplo, un ingreso de stock y un movimiento abiertos a la vez, cada uno con su botón. Tocar un tipo ya en curso vuelve a él.
+- **Al guardar** la ventana se cierra sola, aparece un aviso («Movimiento guardado») y la lista se actualiza.
+- **Cargado desde que abriste la caja:** abajo del menú se lista lo que **vos** cargaste desde la apertura de tu caja (hora, tipo y resumen: «3 productos · 48,500 kg»). El **ojo** abre el detalle de solo lectura. Con «operar sin caja» no hay apertura: dice **«Cargado hoy»**. Se ve también lo cargado fuera del POS. Sirve para verificar que no cargaste dos veces lo mismo.
+- **Aviso de posible duplicado:** si abrís un tipo que ya figura en esa lista, arriba de la pantalla aparece una franja amarilla («Ya cargaste un ingreso de stock a las 10:42…»). Avisa, no bloquea.
+- **Sin permiso:** si el usuario de la caja no tiene el permiso de esa pantalla, se ofrece **«Autorizar con otro usuario»**: otro usuario que sí lo tenga pone su usuario y clave y la carga se abre. Vale solo para ese tipo, para una carga **nueva** y hasta guardarla o descartarla (queda registrado en la auditoría de autorizaciones). El **ajuste de stock** lo puede autorizar solo un **administrador**.
+- La carga queda a nombre de quien opera la caja (con la cuenta de producción, el operador elegido en el POS).
+- Con SQL Server (no es la base oficial) el menú funciona pero **no muestra la lista** de lo cargado.
+- PENDIENTE: no se probó con balanza real, con el bloqueo por inactividad activado ni con una caja abierta (solo «operar sin caja»), ni el paso de autorizar con otro usuario en el navegador.

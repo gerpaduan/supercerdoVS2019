@@ -23,6 +23,14 @@
         var destination = redirectUrl || '/Elaborados';
         permitirSalidaSinAdvertencia();
 
+        // Carga abierta dentro del POS (2026-11-18): al cerrar el aviso se le avisa al POS (VentanaTrabajo.cerrarVentana) en lugar de ir al listado.
+        // Fuera del POS devuelve false y queda el flujo de siempre (ir al listado).
+        var irADestino = function () {
+            var irAlListado = function () { window.location.href = destination; };
+            if (window.VentanaTrabajo && window.VentanaTrabajo.cerrarVentana(irAlListado)) return;
+            irAlListado();
+        };
+
         if (window.Swal && typeof window.Swal.fire === 'function') {
             Swal.fire({
                 icon: 'success',
@@ -34,15 +42,11 @@
                 confirmButtonText: 'OK',
                 allowOutsideClick: false,
                 returnFocus: false
-            }).then(function () {
-                window.location.href = destination;
-            });
+            }).then(irADestino);
             return;
         }
 
-        window.setTimeout(function () {
-            window.location.href = destination;
-        }, 2000);
+        window.setTimeout(irADestino, 2000);
     }
 
     function parseDecimal(value) {

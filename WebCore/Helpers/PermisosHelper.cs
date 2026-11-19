@@ -78,6 +78,13 @@ namespace WebCore.Helpers
         // FinanzasController.AutorizarModuloCtaCte): vive mientras se navega dentro de Finanzas.
         private static readonly string[] ControllersConOperadorModuloSesion = { "Compras", "Ventas", "DispositivosSeguros", "Finanzas" };
 
+        // Cargas desde el POS (2026-11-18): el navegador marca con "Sec-Fetch-Dest: iframe" el pedido de una pagina que se
+        // muestra dentro de un iframe. Un render asi no es navegar "afuera" del modulo ni del POS, y los layouts no deben
+        // limpiar el operador de modulo ni el bypass de caja (ver _Layout.cshtml). Sin ese encabezado (navegador viejo o
+        // HTTP sin contexto seguro) devuelve false: queda el comportamiento de siempre.
+        public static bool EsPedidoDeIframe(string secFetchDest) =>
+            string.Equals((secFetchDest ?? "").Trim(), "iframe", StringComparison.OrdinalIgnoreCase);
+
         public static void LimpiarOperadorModuloSiSalioDelModulo(ISession session, string controllerActual)
         {
             if (session == null) return;

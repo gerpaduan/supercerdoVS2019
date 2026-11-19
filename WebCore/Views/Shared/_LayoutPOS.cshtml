@@ -343,6 +343,53 @@
                     </div>
                 }
 
+                @* Cargas desde el POS (2026-11-18, ver docs/DECISIONS.md "Cargas desde el POS"): menu para abrir una carga de Stock, Movimientos o
+                   Elaborados SIN salir de la caja, y lista de lo que el operador cargo desde que abrio su caja (para no cargar dos veces lo
+                   mismo). Solo con el POS operativo (Ventas/POS.cshtml fija ViewBag.PosMostrarCargas). Lo maneja window.POSTrabajos
+                   (Scripts/app/pos-trabajos.js); las cargas abiertas minimizadas aparecen como botones amarillos "... en curso" en #posCargasEnCurso. *@
+                @if (controller == "Ventas" && ViewBag.PosMostrarCargas is true)
+                {
+                    <div class="nav-item dropdown no-arrow d-flex align-items-center me-2" id="posCargasWrap">
+                        <button type="button" class="btn btn-sm btn-outline-light" id="btnCargasPOS" data-bs-toggle="dropdown" aria-expanded="false"
+                                title="Cargas de stock, movimientos y elaborados sin salir de la caja">
+                            <i class="fas fa-boxes me-1"></i>Cargas <i class="fas fa-chevron-down ms-1" style="font-size:.7rem;"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end shadow p-0 pos-cargas-menu" aria-labelledby="btnCargasPOS">
+                            <h6 class="dropdown-header">Nueva carga</h6>
+                            <div id="posCargasTipos">
+                                @foreach (var carga in new[]
+                                {
+                                    ("ingreso", "fa-arrow-down"), ("egreso", "fa-arrow-up"), ("pesaje", "fa-balance-scale"), ("ajuste", "fa-sliders-h"),
+                                    ("movimiento", "fa-truck"), ("elaborado", "fa-utensils"), ("rapido", "fa-bolt")
+                                })
+                                {
+                                    var datosCarga = WebCore.Helpers.CargasPosCatalogo.Buscar(carga.Item1);
+                                    if (datosCarga == null) { continue; }
+                                    <a class="dropdown-item d-flex align-items-center js-pos-carga" href="#" data-tipo="@datosCarga.Tipo">
+                                        <i class="fas @carga.Item2 pos-carga-icono me-2"></i>
+                                        <span>@datosCarga.Titulo</span>
+                                        @if (datosCarga.SoloAdmin)
+                                        {
+                                            <span class="small text-muted ms-1">(autoriza un admin)</span>
+                                        }
+                                        <span class="badge bg-warning text-dark ms-auto d-none js-pos-carga-en-curso">en curso</span>
+                                    </a>
+                                }
+                            </div>
+                            <div class="dropdown-divider m-0"></div>
+                            <h6 class="dropdown-header d-flex justify-content-between">
+                                <span id="posCargasTitulo">Cargado desde que abriste la caja</span>
+                                <span id="posCargasDesde"></span>
+                            </h6>
+                            <div id="posCargasLista" class="pos-cargas-lista">
+                                <div class="px-3 py-2 small text-muted">Cargando...</div>
+                            </div>
+                            <div class="px-3 py-2 small text-muted border-top">Solo lo que cargaste vos. Tocá el ojo para ver el detalle.</div>
+                        </div>
+                    </div>
+                    <span id="posCargasEnCurso" class="d-flex align-items-center"></span>
+                }
+
                 @* Compra en curso (2026-11-17, ver docs/DECISIONS.md): aviso de la compra del POS (F5) minimizada. Lo muestra/oculta
                    POSCompras (Ventas/POS.cshtml); al tocarlo vuelve la compra tal como quedo. Solo Ventas/POS. *@
                 @if (controller == "Ventas")

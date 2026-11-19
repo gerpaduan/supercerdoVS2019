@@ -956,6 +956,76 @@
         50% { box-shadow: 0 0 0 .35rem rgba(255, 193, 7, 0); }
     }
 
+    /* Cargas desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): modal con un iframe por carga (Stock, Movimientos,
+       Elaborados). Alto casi completo para que la pantalla entre sin scroll doble; el iframe llena el cuerpo del modal. */
+    #modalTrabajoPOS .modal-dialog {
+        max-width: min(1320px, 96vw);
+        margin: .6rem auto;
+    }
+
+    #modalTrabajoPOS .modal-content {
+        height: calc(100vh - 1.2rem);
+    }
+
+    #modalTrabajoPOS .modal-body {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        flex: 1 1 auto;
+    }
+
+    .pos-trabajo-frame {
+        width: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        border: 0;
+        background: #fff;
+    }
+
+    html.dark-mode .pos-trabajo-frame {
+        background: transparent;
+    }
+
+    /* Aviso de posible duplicado: ya hay una carga igual en la lista de esta caja. Informa, no bloquea. */
+    .pos-trabajo-aviso {
+        padding: .4rem .9rem;
+        background: #fff3cd;
+        color: #664d03;
+        border-bottom: 1px solid #ffecb5;
+        font-size: .9rem;
+    }
+
+    html.dark-mode .pos-trabajo-aviso {
+        background: rgba(255, 193, 7, .14);
+        color: #ffd77a;
+        border-bottom-color: rgba(255, 193, 7, .3);
+    }
+
+    /* Menu "Cargas" de la barra: lista de lo cargado desde que se abrio la caja, con scroll propio si es larga. */
+    .pos-cargas-menu {
+        min-width: 340px;
+        max-width: 92vw;
+    }
+
+    .pos-cargas-lista {
+        max-height: 280px;
+        overflow-y: auto;
+    }
+
+    .pos-carga-fila + .pos-carga-fila {
+        border-top: 1px solid var(--pos-border, rgba(0, 0, 0, .08));
+    }
+
+    .pos-carga-hora {
+        min-width: 2.6rem;
+    }
+
+    .pos-carga-icono {
+        width: 1rem;
+        text-align: center;
+        opacity: .7;
+    }
+
     .pos-restore-banner {
         border: 1px solid #f1c36d;
         background: #fff8e7;

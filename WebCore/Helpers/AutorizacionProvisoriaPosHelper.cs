@@ -45,6 +45,18 @@ namespace WebCore.Helpers
                     return usuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.AddOrEditPago, DateTime.Now, usuario.Id);
                 case AutorizacionesProvisoriasPos.AccionMisVentas:
                     return usuarioN.tienePermiso(usuario, Entidades.Permisos.Venta.VerVentasVendedor, DateTime.Today, -1);
+                // Cargas nuevas desde el POS (2026-11-18): altas, por eso fecha de hoy y creador = el propio autorizante.
+                case AutorizacionesProvisoriasPos.AccionCargaStock:
+                    return usuarioN.tienePermiso(usuario, Entidades.Permisos.Stock.AddOrEditStock, DateTime.Now, usuario.Id);
+                case AutorizacionesProvisoriasPos.AccionCargaMovimiento:
+                    return usuarioN.tienePermiso(usuario, Entidades.Permisos.Movimiento.NuevoMovimiento, DateTime.Now, usuario.Id);
+                case AutorizacionesProvisoriasPos.AccionCargaElaborado:
+                    return usuarioN.tienePermiso(usuario, Entidades.Permisos.Elaborado.IngresoEmbutido, DateTime.Now, usuario.Id);
+                case AutorizacionesProvisoriasPos.AccionCargaElaboradoRapido:
+                    return usuarioN.tienePermiso(usuario, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Now, usuario.Id);
+                // El ajuste de stock es solo de administradores (StockController): un no admin no puede autorizarlo.
+                case AutorizacionesProvisoriasPos.AccionCargaStockAjuste:
+                    return false;
                 default:
                     return false;
             }

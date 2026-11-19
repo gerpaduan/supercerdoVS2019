@@ -165,12 +165,19 @@ namespace WebCore.Controllers
             return View(model);
         }
 
-        public IActionResult Nuevo(int idUsuarioCreador = 0)
+        // Alta autorizada desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): el cajero no tiene el permiso de
+        // Movimientos y otro usuario que SI lo tiene lo autorizo para esta pestana del POS (VentasController.AbrirCargaPOS).
+        private bool AltaAutorizadaDesdePos(string posInstanceId) =>
+            !string.IsNullOrEmpty(posInstanceId)
+            && WebCore.Helpers.AutorizacionProvisoriaPosHelper.Autorizante(HttpContext.Session, _oUsuarioN, posInstanceId,
+                Negocio.AutorizacionesProvisoriasPos.AccionCargaMovimiento, 0) != null;
+
+        public IActionResult Nuevo(int idUsuarioCreador = 0, string posInstanceId = "")
         {
-            return Editar(0, idUsuarioCreador);
+            return Editar(0, idUsuarioCreador, false, 0, posInstanceId);
         }
 
-        public IActionResult Editar(int id = 0, int idUsuarioCreador = 0, bool conClave = false, int desdeEliminado = 0)
+        public IActionResult Editar(int id = 0, int idUsuarioCreador = 0, bool conClave = false, int desdeEliminado = 0, string posInstanceId = "")
         {
             var user = _usuarioActual;
 
@@ -227,7 +234,8 @@ namespace WebCore.Controllers
             else
             {
                 // Port de Web/Controllers/MovimientosController.cs:206-212.
-                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id))
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id)
+                    && !AltaAutorizadaDesdePos(posInstanceId))
                 {
                     TempData["AlertType"] = "warning";
                     TempData["AlertTitle"] = "Permisos";
@@ -263,6 +271,8 @@ namespace WebCore.Controllers
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
             ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreador;
+            // Pestana del POS desde la que se abrio (la vista la devuelve en un hidden al guardar); vacio fuera del POS.
+            ViewBag.PosInstanceId = posInstanceId ?? "";
             if (id > 0) ViewBag.EliminarRegistro = CrearBotonEliminar(id, model.FechaMovimiento, user);
 
             // Bug real (2026-09-08, ver docs/DECISIONS.md): "return View(model)" sin nombre
@@ -484,7 +494,7 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult Guardar(MovimientoEditVm model, int idUsuarioCreador = 0)
+        public JsonResult Guardar(MovimientoEditVm model, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             try
             {
@@ -501,7 +511,9 @@ namespace WebCore.Controllers
                     model.FechaMovimiento = WebCore.Helpers.MovimientoTiempos.CalcularLlegada(ahora, model.TiempoEnvioMinutos);
 
                 DateTime fechaPermisoGuardar = model?.FechaMovimiento ?? DateTime.Today;
-                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, fechaPermisoGuardar, user.Id))
+                // Alta desde el POS autorizada por otro usuario (2026-11-18): vale solo para un movimiento nuevo.
+                bool altaAutorizadaPos = model != null && model.IdMovimiento <= 0 && AltaAutorizadaDesdePos(posInstanceId);
+                if (!altaAutorizadaPos && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, fechaPermisoGuardar, user.Id))
                 {
                     // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su
                     // clave al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.

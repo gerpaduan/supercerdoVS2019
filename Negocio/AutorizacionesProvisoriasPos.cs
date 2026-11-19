@@ -23,13 +23,23 @@ namespace Negocio
         public const string AccionPago = "Pago";
         public const string AccionMisVentas = "MisVentas";
 
+        // Cargas nuevas que el cajero abre desde el POS (2026-11-18, ver docs/DECISIONS.md "Cargas desde el POS"): cada una
+        // exige el permiso de su pantalla (Stock, Movimientos, Elaborados). El ajuste de stock es solo de administradores.
+        public const string AccionCargaStock = "CargaStock";
+        public const string AccionCargaStockAjuste = "CargaStockAjuste";
+        public const string AccionCargaMovimiento = "CargaMovimiento";
+        public const string AccionCargaElaborado = "CargaElaborado";
+        public const string AccionCargaElaboradoRapido = "CargaElaboradoRapido";
+
         private const char SeparadorEntradas = ';';
         private const char SeparadorCampos = ',';
 
         // Acciones que se pueden autorizar (el cliente manda el texto: se valida contra esta lista).
         public static bool EsAccionValida(string accion) =>
             accion == AccionModificarVenta || accion == AccionBonificar || accion == AccionCtaCte
-            || accion == AccionPago || accion == AccionMisVentas;
+            || accion == AccionPago || accion == AccionMisVentas
+            || accion == AccionCargaStock || accion == AccionCargaStockAjuste || accion == AccionCargaMovimiento
+            || accion == AccionCargaElaborado || accion == AccionCargaElaboradoRapido;
 
         public sealed class Autorizacion
         {

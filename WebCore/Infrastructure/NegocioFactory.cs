@@ -386,6 +386,15 @@ namespace WebCore.Infrastructure
             return new DatosPostgres.AutorizacionPosPg(PgConnString, empresa.IdEmpresa);
         }
 
+        // Lista de lo que un operador cargo desde cierta fecha en Stock/Movimientos/Elaborados (menu "Cargas" del POS, 2026-11-18, ver
+        // docs/DECISIONS.md "Cargas desde el POS"). Solo Postgres: en SQL Server devuelve null y el POS muestra el menu sin la lista.
+        public static Contratos.ICargasPosRepository CrearCargasPosRepository(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return null;
+
+            return new DatosPostgres.CargasPosPg(PgConnString, empresa.IdEmpresa);
+        }
+
         // Modulo "Actividades" (solo admin, 2026-09-07, pedido explicito del usuario -- ver
         // docs/DECISIONS.md). Portado a SQL Server el 2026-09-16 (ver docs/DECISIONS.md) -- de las
         // 6 fuentes, "Cambios de precio" queda excluida en SQL Server por falta de historial real

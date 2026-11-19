@@ -228,9 +228,15 @@ namespace WebCore.Controllers
             return View(model);
         }
 
-        public IActionResult IngresoRapido()
+        // Alta autorizada desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): el cajero no tiene el permiso de esta
+        // carga y otro usuario que SI lo tiene lo autorizo para esta pestana del POS (VentasController.AbrirCargaPOS).
+        private bool AltaAutorizadaDesdePos(string posInstanceId, string accion) =>
+            !string.IsNullOrEmpty(posInstanceId)
+            && WebCore.Helpers.AutorizacionProvisoriaPosHelper.Autorizante(HttpContext.Session, _oUsuarioN, posInstanceId, accion, 0) != null;
+
+        public IActionResult IngresoRapido(int idUsuarioCreador = 0, string posInstanceId = "")
         {
-            return VistaIngresoRapido(false);
+            return VistaIngresoRapido(false, idUsuarioCreador, posInstanceId);
         }
 
         public IActionResult Desarme()
@@ -238,10 +244,12 @@ namespace WebCore.Controllers
             return VistaIngresoRapido(true);
         }
 
-        public IActionResult EditarIngresoRapido(int idElaborado = 0, int id = 0, bool esDesarme = false, int idUsuarioCreador = 0, bool conClave = false)
+        public IActionResult EditarIngresoRapido(int idElaborado = 0, int id = 0, bool esDesarme = false, int idUsuarioCreador = 0, bool conClave = false, string posInstanceId = "")
         {
             var user = _usuarioActual;
             int idCreadorPermiso = user.Id;
+            // Pestana del POS desde la que se abrio (la vista la devuelve en un hidden al guardar); vacio fuera del POS.
+            ViewBag.PosInstanceId = posInstanceId ?? "";
 
             // Port de Web/Controllers/ElaboradosController.cs:224-231.
             var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
@@ -253,7 +261,8 @@ namespace WebCore.Controllers
             int idUsuarioCreadorResuelto = operadorResuelto?.Id ?? 0;
 
             // Port de Web/Controllers/ElaboradosController.cs:240-246.
-            if (id <= 0 && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id))
+            if (id <= 0 && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id)
+                && !AltaAutorizadaDesdePos(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionCargaElaboradoRapido))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Permisos";
@@ -371,10 +380,12 @@ namespace WebCore.Controllers
             return View(model);
         }
 
-        public IActionResult Carga(int id = 0, int idUsuarioCreador = 0, bool conClave = false)
+        public IActionResult Carga(int id = 0, int idUsuarioCreador = 0, bool conClave = false, string posInstanceId = "")
         {
             var user = _usuarioActual;
             int idCreadorPermiso = user.Id;
+            // Pestana del POS desde la que se abrio (la vista la devuelve en un hidden al guardar); vacio fuera del POS.
+            ViewBag.PosInstanceId = posInstanceId ?? "";
 
             // Port de Web/Controllers/ElaboradosController.cs:337-344.
             var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
@@ -442,7 +453,8 @@ namespace WebCore.Controllers
             else
             {
                 // Port de Web/Controllers/ElaboradosController.cs:382-388.
-                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, DateTime.Today, user.Id))
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, DateTime.Today, user.Id)
+                    && !AltaAutorizadaDesdePos(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionCargaElaborado))
                 {
                     TempData["AlertType"] = "warning";
                     TempData["AlertTitle"] = "Permisos";
@@ -964,7 +976,7 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult GuardarIngresoRapido(ElaboradoRapidoEditVm model, int idUsuarioCreador = 0)
+        public JsonResult GuardarIngresoRapido(ElaboradoRapidoEditVm model, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             try
             {
@@ -989,7 +1001,10 @@ namespace WebCore.Controllers
 
                 // Port de Web/Controllers/ElaboradosController.cs:724 (GuardarIngresoRapido).
                 DateTime fechaPermisoRapido = embutidoOriginal != null ? embutidoOriginal.FechaEmbutido : (model != null ? model.FechaEmbutido : DateTime.Today);
-                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, fechaPermisoRapido, idCreadorPermiso))
+                // Alta desde el POS autorizada por otro usuario (2026-11-18): vale solo para un registro nuevo.
+                bool altaAutorizadaPos = model.IdEmbutido <= 0
+                    && AltaAutorizadaDesdePos(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionCargaElaboradoRapido);
+                if (!altaAutorizadaPos && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, fechaPermisoRapido, idCreadorPermiso))
                 {
                     // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su
                     // clave al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.
@@ -1070,7 +1085,7 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult GuardarCarga(ElaboradoCargaVm model, int idUsuarioCreador = 0)
+        public JsonResult GuardarCarga(ElaboradoCargaVm model, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             try
             {
@@ -1098,7 +1113,10 @@ namespace WebCore.Controllers
 
                 // Port de Web/Controllers/ElaboradosController.cs:830-832.
                 DateTime fechaPermisoCarga = embutidoOriginal != null ? embutidoOriginal.FechaEmbutido : (model != null ? model.FechaEmbutido : DateTime.Today);
-                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, fechaPermisoCarga, idCreadorPermisoCarga))
+                // Alta desde el POS autorizada por otro usuario (2026-11-18): vale solo para un registro nuevo.
+                bool altaAutorizadaPos = model.IdEmbutido <= 0
+                    && AltaAutorizadaDesdePos(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionCargaElaborado);
+                if (!altaAutorizadaPos && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, fechaPermisoCarga, idCreadorPermisoCarga))
                 {
                     // Idem GuardarIngresoRapido: suma el permiso de la persona que puso su clave (ElevacionRegistroHelper).
                     var elevadoCarga = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, user, idUsuarioCreador, fechaPermisoCarga);
@@ -1228,10 +1246,11 @@ namespace WebCore.Controllers
             }
         }
 
-        private IActionResult VistaIngresoRapido(bool esDesarme)
+        private IActionResult VistaIngresoRapido(bool esDesarme, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             // Port de Web/Controllers/ElaboradosController.cs:952-956.
-            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, _usuarioActual.Id))
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, _usuarioActual.Id)
+                && !AltaAutorizadaDesdePos(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionCargaElaboradoRapido))
             {
                 ViewBag.Seccion = "Elaborados";
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
@@ -1253,6 +1272,10 @@ namespace WebCore.Controllers
             // para IngresoRapido() como para Desarme() -- la vista se adapta sola segun
             // Model.EsDesarme, no hay una vista "Desarme.cshtml" separada.
             ViewBag.Title = model.Titulo;
+            // Carga abierta desde el POS (2026-11-18): las tarjetas del listado llevan la pestana del POS y el operador elegido
+            // hacia el formulario (la vista los agrega a cada enlace); fuera del POS quedan vacios y no cambia nada.
+            ViewBag.PosInstanceId = posInstanceId ?? "";
+            ViewBag.IdUsuarioCreadorPos = idUsuarioCreador;
             return View("IngresoRapido", model);
         }
 

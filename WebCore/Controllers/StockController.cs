@@ -228,7 +228,20 @@ namespace WebCore.Controllers
             return PartialView("_StockDetalle", ConstruirDetalleIndexCompleto(compra));
         }
 
-        public IActionResult Nuevo(string tipoCompra, int idUsuarioCreador = 0)
+        // Alta autorizada desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): el cajero no tiene el permiso de Stock
+        // y otro usuario que SI lo tiene lo autorizo para esta pestana del POS (VentasController.AbrirCargaPOS). Solo vale para
+        // altas; el ajuste necesita su propia autorizacion (la de un administrador), nunca la de ingreso/egreso/pesaje.
+        private bool AltaAutorizadaDesdePos(string posInstanceId, string tipoOperacion)
+        {
+            if (string.IsNullOrEmpty(posInstanceId)) return false;
+
+            string accion = EsAjuste(tipoOperacion)
+                ? Negocio.AutorizacionesProvisoriasPos.AccionCargaStockAjuste
+                : Negocio.AutorizacionesProvisoriasPos.AccionCargaStock;
+            return WebCore.Helpers.AutorizacionProvisoriaPosHelper.Autorizante(HttpContext.Session, _oUsuarioN, posInstanceId, accion, 0) != null;
+        }
+
+        public IActionResult Nuevo(string tipoCompra, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             string tipoNormalizado = NormalizarTipoOperacion(tipoCompra);
             if (string.IsNullOrWhiteSpace(tipoNormalizado))
@@ -245,10 +258,10 @@ namespace WebCore.Controllers
                 return RedirectToAction("Index");
             }
 
-            return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado, idUsuarioCreador });
+            return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado, idUsuarioCreador, posInstanceId });
         }
 
-        public IActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0, bool conClave = false, int desdeEliminado = 0)
+        public IActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0, bool conClave = false, int desdeEliminado = 0, string posInstanceId = "")
         {
             Entidades.Usuario user = _usuarioActual;
 
@@ -284,6 +297,9 @@ namespace WebCore.Controllers
             DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
             int idCreadorPermiso = compra != null && compra.CreadoPor != null ? compra.CreadoPor.Id : user.Id;
             bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermiso, idCreadorPermiso);
+            // Alta desde el POS autorizada por otro usuario: equivale a tener el permiso para esta carga (2026-11-18).
+            bool altaAutorizadaPos = compra == null && AltaAutorizadaDesdePos(posInstanceId, tipoOperacion);
+            puedeModificar = puedeModificar || altaAutorizadaPos;
             bool puedeVer = puedeModificar || (compra != null && _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, fechaPermiso, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */));
 
             // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
@@ -312,7 +328,7 @@ namespace WebCore.Controllers
                 return RedirectToAction("Index");
             }
 
-            if (EsAjuste(tipoOperacion) && !user.Admin)
+            if (EsAjuste(tipoOperacion) && !user.Admin && !altaAutorizadaPos)
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Sin permiso";
@@ -348,6 +364,8 @@ namespace WebCore.Controllers
                 ? ResolverUsuarioCreador(idUsuarioCreador, user).Nombre
                 : (user.Nombre ?? "");
             CargarViewBags(model, idUsuarioCreador);
+            // Pestana del POS desde la que se abrio (la vista la devuelve en un hidden al guardar); vacio fuera del POS.
+            ViewBag.PosInstanceId = posInstanceId ?? "";
             ViewBag.EliminarRegistro = CrearBotonEliminar(compra, user);
 
             return View("~/Views/Stock/Editar.cshtml", model);
@@ -355,7 +373,7 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Guardar(StockEditVm model, int idUsuarioCreador = 0)
+        public IActionResult Guardar(StockEditVm model, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             Entidades.Usuario user = _usuarioActual;
 
@@ -371,6 +389,10 @@ namespace WebCore.Controllers
             // esta pantalla (idUsuarioCreador, ver Editar), no el usuario de sesion compartido.
             // Con el stub esto siempre devuelve user sin cambios (ver ResolverUsuarioCreador).
             var usuarioCreador = ResolverUsuarioCreador(idUsuarioCreador, user);
+
+            // Si la vista se vuelve a mostrar con un error, tiene que seguir devolviendo la pestana del POS (si no, el segundo
+            // intento perderia la autorizacion).
+            ViewBag.PosInstanceId = posInstanceId ?? "";
 
             string tipoOperacion = NormalizarTipoOperacion(model.TipoCompra);
             Entidades.Compra compraActual = null;
@@ -393,7 +415,9 @@ namespace WebCore.Controllers
             NormalizarDecimalesPosteados(model);
             AplicarGuardarSinPesaje(model);
             CompletarDatosProveedor(model);
-            string error = ValidarModelo(model, user);
+            // Alta desde el POS autorizada por otro usuario (2026-11-18): vale solo para un registro nuevo y para ese tipo de carga.
+            bool altaAutorizadaPos = model.IdCompra <= 0 && AltaAutorizadaDesdePos(posInstanceId, tipoOperacion);
+            string error = ValidarModelo(model, user, altaAutorizadaPos);
             if (!string.IsNullOrWhiteSpace(error))
             {
                 ModelState.AddModelError("", error);
@@ -408,7 +432,8 @@ namespace WebCore.Controllers
             // Port de Web/Controllers/StockController.cs:584-593.
             DateTime fechaPermisoGuardar = model.FechaCompra;
             int idCreadorPermisoGuardar = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : user.Id;
-            bool puedeGuardar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermisoGuardar, idCreadorPermisoGuardar);
+            bool puedeGuardar = altaAutorizadaPos
+                || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermisoGuardar, idCreadorPermisoGuardar);
             // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su clave
             // al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.
             Entidades.Usuario elevadoGuardar = null;
@@ -2388,7 +2413,8 @@ namespace WebCore.Controllers
             return false;
         }
 
-        private string ValidarModelo(StockEditVm model, Entidades.Usuario user)
+        // altaAutorizadaPos: otro usuario autorizo esta alta desde el POS (para un ajuste, un administrador); ver AltaAutorizadaDesdePos.
+        private string ValidarModelo(StockEditVm model, Entidades.Usuario user, bool altaAutorizadaPos = false)
         {
             if (model == null)
                 return "No se recibieron datos.";
@@ -2402,7 +2428,7 @@ namespace WebCore.Controllers
             if (model.FechaCompra == DateTime.MinValue)
                 return "Ingrese una fecha válida.";
 
-            if (EsAjuste(model.TipoCompra) && (user == null || !user.Admin))
+            if (EsAjuste(model.TipoCompra) && (user == null || !user.Admin) && !altaAutorizadaPos)
                 return "No tiene permisos para realizar Ajuste de Stock.";
 
             if (model.Lineas == null || model.Lineas.Count == 0)

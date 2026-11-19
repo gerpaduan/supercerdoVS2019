@@ -352,4 +352,9 @@
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible') chequear();
     });
+
+    // Cargas desde el POS (2026-11-18): Stock/Movimientos/Elaborados corren en un iframe y su teclado/mouse no llega a los
+    // listeners de este documento. pos-trabajos.js llama a esto con la actividad del iframe para que el POS no se bloquee con
+    // el cajero cargando. Con el POS ya bloqueado no hace nada (alActividad lo ignora).
+    window.POSBloqueo = { registrarActividad: alActividad };
 })(window, window.jQuery);

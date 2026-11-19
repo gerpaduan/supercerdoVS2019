@@ -59,7 +59,7 @@
         @foreach (var item in Model.Items)
         {
             <a class="rapido-tarjeta js-rapido-row @(Model.EsDesarme ? "rapido-desarme" : "")"
-               href="@Url.Action("EditarIngresoRapido", "Elaborados", new { idElaborado = item.IdCorte, esDesarme = Model.EsDesarme })"
+               href="@Url.Action("EditarIngresoRapido", "Elaborados", new { idElaborado = item.IdCorte, esDesarme = Model.EsDesarme, idUsuarioCreador = (int)(ViewBag.IdUsuarioCreadorPos ?? 0), posInstanceId = (string)(ViewBag.PosInstanceId ?? "") })"
                data-codigo="@item.Codigo"
                data-producto="@item.Producto"
                data-tono="@(item.Codigo % 4)">

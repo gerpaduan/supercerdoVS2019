@@ -93,6 +93,8 @@
 
             <form id="formStock" class="pt-fill" method="post" action="@Url.Action("Guardar", "Stock")" novalidate>
                 @Html.AntiForgeryToken()
+                @* Pestana del POS desde la que se abrio esta carga (2026-11-18): el servidor la usa para aceptar la autorizacion de otro usuario. Vacio fuera del POS. *@
+                <input type="hidden" name="posInstanceId" value="@(ViewBag.PosInstanceId as string ?? "")" />
                 @Html.HiddenFor(m => m.IdCompra)
                 @Html.HiddenFor(m => m.TipoCompra)
                 @Html.HiddenFor(m => m.IdProveedor)

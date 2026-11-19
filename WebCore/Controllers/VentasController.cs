@@ -916,6 +916,152 @@ namespace WebCore.Controllers
             return Json(new { ok = true });
         }
 
+        // ===== Cargas desde el POS (2026-11-18, ver docs/DECISIONS.md "Cargas desde el POS") =====
+        // El cajero abre desde la barra del POS una carga de Stock (ingreso, egreso, pesaje, ajuste), Movimientos o Elaborados
+        // (nuevo, ingreso rapido) dentro de un modal con un iframe. Este endpoint valida el permiso y devuelve la URL de la
+        // pantalla: si el operador no lo tiene, 403 con los encabezados que le permiten pedir la autorizacion de otro usuario
+        // (pos-autorizacion.js). El chequeo es el mismo que hace la pantalla destino (usuario de sesion); aca solo se adelanta
+        // para no abrir un iframe que termine en un redirect. El cliente manda solo la clave del catalogo, nunca una URL.
+        [HttpGet]
+        public IActionResult AbrirCargaPOS(string tipo, string posInstanceId)
+        {
+            var carga = WebCore.Helpers.CargasPosCatalogo.Buscar(tipo);
+            if (carga == null || string.IsNullOrWhiteSpace(posInstanceId))
+                return BadRequest("Tipo de carga inválido.");
+
+            var user = _usuarioActual;
+            if (user == null) return Unauthorized();
+
+            // Cuenta de produccion sin operador en Session (vencio): la pantalla destino pediria elegir quien opera dentro del iframe.
+            if (user.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null)
+                return StatusCode(403, "La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.");
+
+            var operador = ResolverOperadorPOS(posInstanceId, user);
+
+            bool puede = carga.SoloAdmin ? user.Admin : _oUsuarioN.tienePermiso(user, carga.Permiso, DateTime.Now, user.Id);
+            if (!puede && AutorizanteVigente(posInstanceId, carga.Accion) == null)
+            {
+                // El cuerpo es el aviso; el encabezado le dice al POS que se puede pedir la autorizacion de otro usuario.
+                Response.Headers["X-Pos-Autorizacion"] = carga.Accion;
+                Response.Headers["X-Pos-Autorizacion-Id"] = "0";
+                return StatusCode(403, carga.SoloAdmin
+                    ? "El " + carga.Titulo.ToLowerInvariant() + " es solo para administradores."
+                    : "No tenés permiso para " + carga.Titulo.ToLowerInvariant() + ".");
+            }
+
+            // idUsuarioCreador evita la pantalla "Quien opera" con la cuenta de produccion; con un usuario comun es el mismo.
+            string url = Url.Action(carga.Action, carga.Controller,
+                new { tipoCompra = carga.TipoCompra, idUsuarioCreador = operador.Id, posInstanceId }) ?? "";
+            return Json(new { ok = true, tipo = carga.Tipo, titulo = carga.Titulo, accion = carga.Accion, url });
+        }
+
+        // Lo que el operador cargo desde que abrio su caja en Stock, Movimientos y Elaborados (2026-11-18): el menu "Cargas" del POS lo
+        // muestra para que no cargue dos veces lo mismo. Las cargas se identifican por creadopor + creado (hora de ALTA, no la fecha
+        // del registro que se puede tipear). Con "operar sin caja" no hay apertura: se muestra lo de hoy. Con SQL Server no hay lista.
+        // El detalle de cada fila (ojo) abre los parciales de solo lectura que ya usan los listados.
+        [HttpGet]
+        public IActionResult CargasDesdeAperturaPOS(string posInstanceId)
+        {
+            if (string.IsNullOrWhiteSpace(posInstanceId)) return BadRequest("Falta la pestaña del POS.");
+
+            var user = _usuarioActual;
+            if (user == null) return Unauthorized();
+
+            if (user.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null)
+                return StatusCode(403, "La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.");
+
+            var operador = ResolverOperadorPOS(posInstanceId, user);
+            var cierre = ObtenerCierreCajaActual(operador);
+
+            DateTime desde;
+            string titulo;
+            string desdeTexto;
+            if (cierre != null && cierre.FechaHoraInicio.HasValue)
+            {
+                // Margen de 2 minutos: la apertura toma la hora del navegador (sin segundos) y "creado" la de la base de datos.
+                desde = cierre.FechaHoraInicio.Value.AddMinutes(-2);
+                titulo = "Cargado desde que abriste la caja";
+                desdeTexto = cierre.FechaHoraInicio.Value.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                desde = DateTime.Today;
+                titulo = "Cargado hoy";
+                desdeTexto = "";
+            }
+
+            var repo = WebCore.Infrastructure.NegocioFactory.CrearCargasPosRepository(_empresa);
+            var items = new List<object>();
+            if (repo != null)
+            {
+                var conFecha = new List<(DateTime Creado, object Item)>();
+                var tabla = repo.ListarCargasDesde(operador.Id, desde, 30);
+                var es = new System.Globalization.CultureInfo("es-AR");
+                string Kg(object valor) => Convert.ToDecimal(valor, System.Globalization.CultureInfo.InvariantCulture).ToString("N3", es) + " kg";
+                string Cant(object valor, string singular, string plural)
+                {
+                    long n = Convert.ToInt64(valor, System.Globalization.CultureInfo.InvariantCulture);
+                    return n + " " + (n == 1 ? singular : plural);
+                }
+
+                foreach (System.Data.DataRow fila in tabla.Rows)
+                {
+                    string origen = Convert.ToString(fila["origen"]) ?? "";
+                    string subtipo = Convert.ToString(fila["subtipo"]) ?? "";
+                    int id = Convert.ToInt32(fila["id"]);
+                    DateTime creado = Convert.ToDateTime(fila["creado"]);
+                    string detalle = Convert.ToString(fila["detalle"]) ?? "";
+
+                    string tipo;
+                    string tituloItem;
+                    string resumen;
+                    string urlDetalle;
+                    if (origen == "stock")
+                    {
+                        (tipo, tituloItem) = subtipo switch
+                        {
+                            "Ingreso Stock" => ("ingreso", "Ingreso de stock"),
+                            "Egreso Stock" => ("egreso", "Egreso de stock"),
+                            "Pesaje Cortes" => ("pesaje", "Pesaje de cortes"),
+                            "Ajuste Stock" => ("ajuste", "Ajuste de stock"),
+                            _ => ("cierre", "Cierre de stock")
+                        };
+                        resumen = Cant(fila["lineas"], "producto", "productos") + " · " + Kg(fila["kg"]);
+                        urlDetalle = Url.Action("Detalle", "Stock", new { idCompra = id }) ?? "";
+                    }
+                    else if (origen == "movimiento")
+                    {
+                        tipo = "movimiento";
+                        tituloItem = "Movimiento";
+                        resumen = (detalle != "" ? "A " + detalle + " · " : "") + Cant(fila["lineas"], "producto", "productos") + " · " + Kg(fila["kg"]);
+                        urlDetalle = Url.Action("Detalle", "Movimientos", new { id }) ?? "";
+                    }
+                    else
+                    {
+                        (tipo, tituloItem) = subtipo switch
+                        {
+                            "rapido" => ("rapido", "Ingreso rápido de elaborado"),
+                            "desarme" => ("desarme", "Desarme de elaborado"),
+                            _ => ("elaborado", "Nuevo elaborado")
+                        };
+                        resumen = (detalle != "" ? detalle + " · " : "") + Cant(fila["lineas"], "ingrediente", "ingredientes") + " · " + Kg(fila["kg"]);
+                        urlDetalle = Url.Action("Detalle", "Elaborados", new { id }) ?? "";
+                    }
+
+                    // Hoy solo la hora; una carga de otro dia (con "operar sin caja" no pasa, con una caja abierta de varios dias si) lleva la fecha.
+                    string hora = creado.Date == DateTime.Today
+                        ? creado.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+                        : creado.ToString("dd/MM HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+                    conFecha.Add((creado, new { tipo, titulo = tituloItem, id, creado, hora, resumen, urlDetalle }));
+                }
+
+                items = conFecha.OrderByDescending(x => x.Creado).Select(x => x.Item).ToList();
+            }
+
+            return Json(new { ok = true, titulo, desde = desdeTexto, items });
+        }
+
         private static string ClaveBonificacion(long codigo, float bonificacion) =>
             codigo.ToString(System.Globalization.CultureInfo.InvariantCulture) + "|"
             + Math.Round(bonificacion, 2).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);

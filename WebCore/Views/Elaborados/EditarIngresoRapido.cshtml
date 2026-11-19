@@ -48,6 +48,8 @@
         <div class="card-body">
             <form id="formIngresoRapidoElaborado" method="post" action="@Url.Action("GuardarIngresoRapido", "Elaborados")" novalidate>
                 @Html.AntiForgeryToken()
+                @* Pestana del POS desde la que se abrio esta carga (2026-11-18): el servidor la usa para aceptar la autorizacion de otro usuario. Vacio fuera del POS. *@
+                <input type="hidden" name="posInstanceId" value="@(ViewBag.PosInstanceId as string ?? "")" />
                 <input type="hidden" name="EsDesarme" value="@(Model.EsDesarme ? "true" : "false")" />
                 <input type="hidden" name="IdEmbutido" value="@Model.IdEmbutido" />
                 <input type="hidden" name="IdElaborado" value="@Model.IdElaborado" />

@@ -1,0 +1,305 @@
+// Cargas desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): el cajero abre desde el boton "Cargas" de la barra una
+// carga de Stock (ingreso, egreso, pesaje, ajuste), Movimientos o Elaborados (nuevo, ingreso rapido) SIN salir de su caja.
+//
+// Cada carga es la pantalla real, tal cual, dentro de un <iframe> de #modalTrabajoPOS (su balanza, atajos, borrador y modales
+// quedan en su propio contexto: no pisan los del POS). El modal NO se cierra por accidente (fondo estatico, sin X): se MINIMIZA
+// (el iframe sigue vivo con lo cargado y la barra muestra "<carga> en curso", que la trae de vuelta) o se DESCARTA con
+// confirmacion. Una carga abierta de cada tipo a la vez. Mismo patron que POSCompras (Ventas/POS.cshtml, "Compra en curso").
+//
+// Tambien arma la lista "Cargado desde que abriste la caja" del menu (para no cargar dos veces lo mismo) y avisa, al abrir un tipo,
+// si ya hay una carga igual en esa lista.
+//
+// Depende de: jQuery, Bootstrap 5 (modal y dropdown), SweetAlert2, POSGuard, PosAutorizacion (opcional, para pedir la autorizacion
+// de otro usuario) y POSBloqueo (opcional, para que el POS no se bloquee mientras se carga dentro del iframe).
+// Config en window.POSTrabajosConfig (la arma Ventas/POS.cshtml): urlAbrir, urlCargas, posInstanceId, tipos {tipo: {titulo}}.
+// Las pantallas dentro del iframe avisan que guardaron con postMessage (ventana-trabajo.js, evento 'guardado').
+(function (window, $) {
+    'use strict';
+
+    var cfg = window.POSTrabajosConfig;
+    if (!cfg || !$) return;
+
+    var MENSAJE_TIPO = 'carnisys-trabajo-pos';
+    var ACTIVIDAD = ['keydown', 'mousedown', 'mousemove', 'touchstart', 'wheel'];
+
+    var slots = {};          // tipo -> { tipo, accion, iframe }: cargas abiertas (en curso)
+    var activo = null;       // tipo que se esta viendo en el modal (null = minimizado o cerrado)
+    var abriendo = false;    // hay un GET de AbrirCargaPOS en vuelo
+    var ultimaLista = [];    // items de "Cargado desde que abriste la caja" (para el aviso de posible duplicado)
+
+    function $modal() { return $('#modalTrabajoPOS'); }
+
+    function tituloDe(tipo) {
+        var info = cfg.tipos && cfg.tipos[tipo];
+        return info && info.titulo ? info.titulo : tipo;
+    }
+
+    function hayEnCurso() { return Object.keys(slots).length > 0; }
+
+    // ---- Menu "Cargas" y botones "en curso" ------------------------------------------------------
+    // Cada carga abierta tiene su boton amarillo en la barra, salvo la que se esta viendo en el modal.
+    function actualizarBarra() {
+        var visible = $modal().hasClass('show');
+        var $zona = $('#posCargasEnCurso').empty();
+
+        Object.keys(slots).forEach(function (tipo) {
+            if (visible && activo === tipo) return;
+            $('<button type="button" class="btn btn-warning btn-sm fw-bold pos-compra-en-curso js-pos-trabajo-en-curso"></button>')
+                .attr({ 'data-tipo': tipo, title: 'Hay una carga sin guardar: tocá para volver a ella' })
+                .append('<i class="fas fa-play me-1"></i>')
+                .append(document.createTextNode(tituloDe(tipo) + ' en curso'))
+                .appendTo($zona);
+        });
+
+        // Marca "en curso" en el menu de cargas.
+        $('#posCargasTipos .js-pos-carga').each(function () {
+            $(this).find('.js-pos-carga-en-curso').toggleClass('d-none', !slots[$(this).data('tipo')]);
+        });
+    }
+
+    // ---- Aviso de posible duplicado -------------------------------------------------------------
+    // Al ver una carga cuyo tipo ya tiene un registro en la lista de esta caja: franja amarilla arriba. No bloquea.
+    function actualizarAvisoDuplicado() {
+        var $aviso = $('#trabajoPOSAviso');
+        var previa = activo ? ultimaLista.filter(function (i) { return i.tipo === activo; })[0] : null;
+
+        if (!previa) { $aviso.addClass('d-none').text(''); return; }
+
+        var texto = 'Ya cargaste un ' + tituloDe(activo).toLowerCase() + ' a las ' + previa.hora
+            + (previa.resumen ? ' (' + previa.resumen + ')' : '') + '. Revisá que no sea el mismo.';
+        $aviso.removeClass('d-none').text(texto);
+    }
+
+    // ---- Modal ----------------------------------------------------------------------------------
+    function mostrar(tipo) {
+        var slot = slots[tipo];
+        if (!slot) return;
+
+        activo = tipo;
+        $('#contenedorTrabajoPOS .pos-trabajo-frame').each(function () {
+            $(this).toggleClass('d-none', this !== slot.iframe);
+        });
+        $('#modalTrabajoPOSTitle').text(tituloDe(tipo));
+        actualizarAvisoDuplicado();
+
+        var $m = $modal();
+        if (!$m.hasClass('show')) {
+            if (window.POSGuard) window.POSGuard.requestModalOpen('trabajo', function () { $m.modal('show'); });
+            else $m.modal('show');
+        }
+        actualizarBarra();
+    }
+
+    function minimizar() {
+        $modal().modal('hide');
+    }
+
+    // Quita una carga: el iframe se destruye (el borrador del servidor queda "interrumpido" por falta de latido, igual que al
+    // descartar una compra) y, si ninguna otra carga abierta usa la misma autorizacion, se avisa al servidor que termino.
+    function cerrarCarga(tipo) {
+        var slot = slots[tipo];
+        if (!slot) return;
+
+        delete slots[tipo];
+        if (slot.iframe && slot.iframe.parentNode) slot.iframe.parentNode.removeChild(slot.iframe);
+
+        var otraUsaLaAccion = Object.keys(slots).some(function (t) { return slots[t].accion === slot.accion; });
+        if (slot.accion && !otraUsaLaAccion && window.PosAutorizacion) window.PosAutorizacion.revocar(slot.accion);
+
+        if (activo === tipo) {
+            activo = null;
+            $modal().modal('hide');
+        }
+        actualizarBarra();
+    }
+
+    function descartar() {
+        if (!activo) { minimizar(); return; }
+
+        var tipo = activo;
+        Swal.fire({
+            icon: 'warning',
+            title: '¿Descartar «' + tituloDe(tipo) + '» en curso?',
+            text: 'Se pierde lo que cargaste y no se guarda nada.',
+            showCancelButton: true,
+            confirmButtonText: 'Descartar',
+            cancelButtonText: 'Seguir con la carga',
+            focusCancel: true
+        }).then(function (r) {
+            if (r.isConfirmed) cerrarCarga(tipo);
+        });
+    }
+
+    // La pantalla del iframe termino de guardar: se cierra la carga, se avisa con un toast y se refresca la lista.
+    function alGuardar(tipo) {
+        var titulo = tituloDe(tipo);
+        cerrarCarga(tipo);
+        if (window.Swal) {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: titulo + ' guardado', showConfirmButton: false, timer: 2800 });
+        }
+        cargarLista();
+    }
+
+    // ---- Abrir una carga ------------------------------------------------------------------------
+    function crearIframe(tipo, resp) {
+        var iframe = document.createElement('iframe');
+        iframe.className = 'pos-trabajo-frame d-none';
+        // El nombre empieza con "carnisys-trabajo-": _Layout.cshtml lo toma como "modo ventana" (sin menu lateral ni barra) y se
+        // conserva en toda la navegacion dentro del iframe.
+        iframe.name = 'carnisys-trabajo-pos-' + tipo;
+        iframe.title = resp.titulo || tituloDe(tipo);
+        iframe.setAttribute('allow', 'camera');
+        iframe.addEventListener('load', function () { enlazarActividad(iframe); });
+        iframe.src = resp.url;
+        document.getElementById('contenedorTrabajoPOS').appendChild(iframe);
+        return iframe;
+    }
+
+    function abrir(tipo) {
+        if (!cfg.tipos || !cfg.tipos[tipo]) return;
+
+        // Ya hay una de este tipo en curso: se vuelve a ella (no se abre otra).
+        if (slots[tipo]) { mostrar(tipo); return; }
+        if (abriendo) return;
+        if (window.POSGuard && !window.POSGuard.startAction('trabajo:abrir')) return;
+
+        abriendo = true;
+        window.POSModalLoading && window.POSModalLoading.show('Abriendo ' + tituloDe(tipo).toLowerCase() + '...');
+
+        $.ajax({ url: cfg.urlAbrir, type: 'GET', cache: false, data: { tipo: tipo, posInstanceId: cfg.posInstanceId } })
+            .done(function (resp) {
+                if (!resp || !resp.ok || !resp.url) { avisarError(tipo, 'No se pudo abrir la carga.'); return; }
+                slots[tipo] = { tipo: tipo, accion: resp.accion || '', iframe: crearIframe(tipo, resp) };
+                mostrar(tipo);
+            })
+            .fail(function (xhr) { manejarError(xhr, tipo); })
+            .always(function () {
+                abriendo = false;
+                window.POSModalLoading && window.POSModalLoading.hide();
+                if (window.POSGuard) window.POSGuard.endAction('trabajo:abrir');
+            });
+    }
+
+    function avisarError(tipo, texto) {
+        Swal.fire({ icon: 'warning', title: tituloDe(tipo), text: texto });
+    }
+
+    // 403 con el encabezado de autorizacion: el operador no tiene el permiso pero otro usuario que si lo tiene puede autorizar
+    // (usuario y clave). Si autoriza, se reintenta. Cualquier otro error se muestra tal cual.
+    function manejarError(xhr, tipo) {
+        var detalle = xhr && xhr.status === 403 && typeof xhr.responseText === 'string' ? xhr.responseText.trim() : '';
+        if (!(detalle && detalle.length <= 200 && detalle.indexOf('<') === -1)) detalle = '';
+
+        var autorizable = window.PosAutorizacion && window.PosAutorizacion.leerEncabezado(xhr);
+        if (autorizable && detalle) {
+            window.PosAutorizacion.pedir({ accion: autorizable.accion, idRegistro: autorizable.idRegistro, motivo: detalle })
+                .then(function (ok) { if (ok) abrir(tipo); });
+            return;
+        }
+
+        avisarError(tipo, detalle || 'No se pudo abrir la carga. Revisá la conexión e intentá de nuevo.');
+    }
+
+    // ---- Actividad dentro del iframe -------------------------------------------------------------
+    // El teclado y el mouse del iframe no llegan a los listeners del POS: sin esto el bloqueo por inactividad se dispararia con el
+    // cajero cargando. Se vuelve a enlazar en cada pagina nueva del iframe (guardar y volver al listado, por ejemplo).
+    function enlazarActividad(iframe) {
+        var doc;
+        try { doc = iframe.contentDocument; } catch (e) { return; /* otro origen: no se puede (no deberia pasar) */ }
+        if (!doc) return;
+
+        function registrar() {
+            if (window.POSBloqueo && typeof window.POSBloqueo.registrarActividad === 'function') window.POSBloqueo.registrarActividad();
+        }
+        ACTIVIDAD.forEach(function (evento) { doc.addEventListener(evento, registrar, { passive: true, capture: true }); });
+    }
+
+    // La pantalla del iframe avisa que guardo. Se identifica por la ventana de origen (no por el texto del mensaje): otra pagina no
+    // puede hacerse pasar por una carga.
+    window.addEventListener('message', function (e) {
+        if (e.origin !== window.location.origin) return;
+        var datos = e.data;
+        if (!datos || datos.tipo !== MENSAJE_TIPO || datos.evento !== 'guardado') return;
+
+        var tipo = Object.keys(slots).filter(function (t) {
+            return slots[t].iframe && slots[t].iframe.contentWindow === e.source;
+        })[0];
+        if (tipo) alGuardar(tipo);
+    });
+
+    // ---- "Cargado desde que abriste la caja" ----------------------------------------------------
+    function escapar(texto) {
+        return $('<div>').text(texto == null ? '' : String(texto)).html();
+    }
+
+    function pintarLista(resp) {
+        var items = (resp && resp.items) || [];
+        ultimaLista = items;
+        $('#posCargasTitulo').text((resp && resp.titulo) || 'Cargado desde que abriste la caja');
+        $('#posCargasDesde').text((resp && resp.desde) || '');
+
+        var $lista = $('#posCargasLista');
+        if (!items.length) {
+            $lista.html('<div class="px-3 py-2 small text-muted">Todavía no cargaste nada' + (resp && resp.titulo === 'Cargado hoy' ? ' hoy' : ' en esta caja') + '.</div>');
+        } else {
+            $lista.html(items.map(function (i) {
+                return '<div class="pos-carga-fila d-flex align-items-center px-3 py-1">'
+                    + '<span class="text-muted small pos-carga-hora">' + escapar(i.hora) + '</span>'
+                    + '<span class="flex-grow-1 mx-2" style="min-width:0;"><span class="fw-bold">' + escapar(i.titulo) + '</span>'
+                    + '<br><span class="text-muted small">' + escapar(i.resumen) + '</span></span>'
+                    + (i.urlDetalle
+                        ? '<a href="#" class="text-secondary js-pos-carga-ver" title="Ver detalle" data-url="' + escapar(i.urlDetalle)
+                            + '" data-titulo="' + escapar(i.titulo) + '"><i class="fas fa-eye"></i></a>'
+                        : '')
+                    + '</div>';
+            }).join(''));
+        }
+        actualizarAvisoDuplicado();
+    }
+
+    function cargarLista() {
+        if (!cfg.urlCargas) return;
+        $.ajax({ url: cfg.urlCargas, type: 'GET', cache: false, data: { posInstanceId: cfg.posInstanceId } })
+            .done(pintarLista)
+            .fail(function () {
+                $('#posCargasLista').html('<div class="px-3 py-2 small text-muted">No se pudo cargar la lista. Intentá de nuevo.</div>');
+            });
+    }
+
+    // ---- Eventos --------------------------------------------------------------------------------
+    $(document)
+        .on('click.posTrabajos', '.js-pos-carga', function (e) { e.preventDefault(); abrir($(this).data('tipo')); })
+        .on('click.posTrabajos', '.js-pos-trabajo-en-curso', function () { mostrar($(this).data('tipo')); })
+        .on('click.posTrabajos', '#modalTrabajoPOS .js-trabajo-minimizar', minimizar)
+        .on('click.posTrabajos', '#modalTrabajoPOS .js-trabajo-descartar', descartar)
+        .on('click.posTrabajos', '.js-pos-carga-ver', function (e) {
+            e.preventDefault();
+            // Detalle de solo lectura del registro (los mismos parciales que usan los listados), en el modal de Finanzas del POS.
+            if (window.POSFinanzas && typeof window.POSFinanzas.cargar === 'function') {
+                window.POSFinanzas.cargar($(this).data('url'), $(this).data('titulo') || 'Detalle');
+            }
+        })
+        .on('show.bs.dropdown.posTrabajos', '#posCargasWrap', cargarLista)
+        .on('shown.bs.modal.posTrabajos', '#modalTrabajoPOS', function () {
+            actualizarBarra();
+            // El foco va al iframe para que se pueda escribir enseguida.
+            var slot = activo && slots[activo];
+            try { if (slot && slot.iframe.contentWindow) slot.iframe.contentWindow.focus(); } catch (e) { /* sin foco: no frena nada */ }
+        })
+        .on('hidden.bs.modal.posTrabajos', '#modalTrabajoPOS', function () {
+            activo = null;
+            actualizarBarra();
+        });
+
+    // La lista se carga al abrir el POS para que el aviso de duplicado ya la tenga cuando se abra una carga.
+    $(cargarLista);
+
+    window.POSTrabajos = {
+        abrir: abrir,
+        restaurar: function (tipo) { mostrar(tipo); },
+        minimizar: minimizar,
+        descartar: descartar,
+        hayEnCurso: hayEnCurso,
+        actualizarLista: cargarLista
+    };
+})(window, window.jQuery);

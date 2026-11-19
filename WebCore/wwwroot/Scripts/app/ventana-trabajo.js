@@ -12,11 +12,25 @@
 (function () {
     'use strict';
 
-    var CLAVE_MARCA = 'carnisys-ventana-cerrar-tras-guardar';
     var VIGENCIA_MARCA_MS = 60000;
     var ESPERA_ALTERNATIVA_MS = 500;
 
     var enModoVentana = document.documentElement.classList.contains('modo-ventana');
+
+    // Carga abierta DENTRO del POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): la pantalla corre en un iframe de
+    // #modalTrabajoPOS cuyo nombre es carnisys-trabajo-pos-<tipo>. Ahi no hay ventana que cerrar: al terminar de guardar se le avisa al
+    // POS (postMessage, mismo origen) y es el POS quien cierra esa carga.
+    var nombreVentana = String(window.name || '');
+    var enPos = window.parent !== window && nombreVentana.indexOf('carnisys-trabajo-pos-') === 0;
+
+    // La marca de Stock lleva el nombre del iframe: con dos cargas de Stock abiertas (ingreso y egreso) cada una cierra solo la suya.
+    var CLAVE_MARCA = 'carnisys-ventana-cerrar-tras-guardar' + (enPos ? ':' + nombreVentana : '');
+
+    function avisarAlPos() {
+        try {
+            window.parent.postMessage({ tipo: 'carnisys-trabajo-pos', evento: 'guardado' }, window.location.origin);
+        } catch (e) { /* el POS no esta: queda la carga a la vista, se puede descartar a mano */ }
+    }
 
     function leerMarca() {
         try { return parseInt(window.sessionStorage.getItem(CLAVE_MARCA), 10) || 0; } catch (e) { return 0; }
@@ -36,6 +50,8 @@
         // Ya se guardo: sin esto el aviso nativo "¿Deseas abandonar el sitio?" frenaria el cierre si quedara algun cambio marcado.
         if (typeof window.desactivarProteccionSalida === 'function') window.desactivarProteccionSalida();
         else window.__protegerSalida = false;
+        // Dentro del POS no se cierra ninguna ventana ni se va al listado: el POS cierra la carga y muestra el aviso.
+        if (enPos) { avisarAlPos(); return true; }
         try { window.close(); } catch (e) { /* el navegador puede negar el cierre */ }
         if (typeof alternativa === 'function') window.setTimeout(alternativa, ESPERA_ALTERNATIVA_MS);
         return true;

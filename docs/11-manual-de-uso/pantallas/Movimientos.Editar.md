@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-11-17
+revisada: 2026-11-19
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -137,3 +137,6 @@ El botón rojo **Eliminar** aparece al abrir un movimiento **ya guardado** para 
 - Si el navegador no deja cambiar el tamaño de la ventana, avisa «El navegador no permite cambiar el tamaño de esta ventana».
 - Solo aparecen donde está el botón de registros sin guardar (si ese botón está apagado en el sistema, tampoco aparecen).
 - PENDIENTE: no se probó en una app instalada real si el navegador permite cambiar el tamaño de la ventana.
+
+## Desde el POS (desde 2026-11-18)
+También se abre desde el botón **Cargas** del POS (un movimiento nuevo nuevo, sin salir de la caja): minimizable, con aviso «en curso» y con la lista de lo cargado desde la apertura de la caja. Ver [Punto de venta](ayuda:pantalla/Ventas.POS), sección «Cargas desde el POS».

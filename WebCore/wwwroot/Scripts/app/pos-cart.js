@@ -555,8 +555,10 @@
             // avisa: recargar/cerrar la pestaña ahi puede perder lo que el
             // usuario esta viendo o cargando en ese modal.
             // La compra minimizada ("Compra en curso", #modalCompraPOS oculto) tampoco se pierde en silencio.
+            // Igual las cargas minimizadas (Stock, Movimientos, Elaborados dentro del POS, 2026-11-18).
             const hayModalAbierto = document.querySelector(".modal.show") !== null
-                || (window.POSCompras?.hayCompraEnCurso?.() === true);
+                || (window.POSCompras?.hayCompraEnCurso?.() === true)
+                || (window.POSTrabajos?.hayEnCurso?.() === true);
 
             if (omitirAvisoSalidaPOS || window.POSFinalizandoVenta || (!hayVentaEnCurso && !window.POSCancelacionEnCurso && !hayModalAbierto)) return;
 

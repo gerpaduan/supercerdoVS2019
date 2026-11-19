@@ -73,6 +73,8 @@
         <div class="card-body pt-fill">
             <form id="formCargaElaborado" class="pt-fill" method="post" action="@Url.Action("GuardarCarga", "Elaborados")" novalidate>
                 @Html.AntiForgeryToken()
+                @* Pestana del POS desde la que se abrio esta carga (2026-11-18): el servidor la usa para aceptar la autorizacion de otro usuario. Vacio fuera del POS. *@
+                <input type="hidden" name="posInstanceId" value="@(ViewBag.PosInstanceId as string ?? "")" />
                 <input type="hidden" id="IdEmbutido" name="IdEmbutido" value="@Model.IdEmbutido" />
                 <div id="lineasHiddenContainer"></div>
 

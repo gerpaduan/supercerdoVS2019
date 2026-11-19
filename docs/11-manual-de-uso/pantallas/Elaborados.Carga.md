@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 2
 permiso: Elaborado.IngresoEmbutido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-17
+revisada: 2026-11-19
 ---
 ## Para qué sirve
 Registrar un elaborado cargando **a mano los ingredientes** (con su peso). Los ingredientes de la fórmula marcados como *Auto* se agregan solos al guardar, calculados como porcentaje de lo cargado a mano.
@@ -77,3 +77,6 @@ PENDIENTE: documentar sucursal, fecha, búsqueda de elaborado e ingredientes, ba
 - Si el navegador no deja cambiar el tamaño de la ventana, avisa «El navegador no permite cambiar el tamaño de esta ventana».
 - Solo aparecen donde está el botón de registros sin guardar (si ese botón está apagado en el sistema, tampoco aparecen).
 - PENDIENTE: no se probó en una app instalada real si el navegador permite cambiar el tamaño de la ventana.
+
+## Desde el POS (desde 2026-11-18)
+También se abre desde el botón **Cargas** del POS (un elaborado nuevo nuevo, sin salir de la caja): minimizable, con aviso «en curso» y con la lista de lo cargado desde la apertura de la caja. Ver [Punto de venta](ayuda:pantalla/Ventas.POS), sección «Cargas desde el POS».

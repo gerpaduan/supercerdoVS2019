@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-11-17
+revisada: 2026-11-19
 alias: Stock.Nuevo
 ---
 ## Para qué sirve
@@ -119,3 +119,6 @@ Al **cambiar la acción** (botón **Cambiar** junto a la acción) las cantidades
 - Si el navegador no deja cambiar el tamaño de la ventana, avisa «El navegador no permite cambiar el tamaño de esta ventana».
 - Solo aparecen donde está el botón de registros sin guardar (si ese botón está apagado en el sistema, tampoco aparecen).
 - PENDIENTE: no se probó en una app instalada real si el navegador permite cambiar el tamaño de la ventana.
+
+## Desde el POS (desde 2026-11-18)
+También se abre desde el botón **Cargas** del POS (ingreso, egreso, pesaje o ajuste nuevo, sin salir de la caja): minimizable, con aviso «en curso» y con la lista de lo cargado desde la apertura de la caja. Ver [Punto de venta](ayuda:pantalla/Ventas.POS), sección «Cargas desde el POS».

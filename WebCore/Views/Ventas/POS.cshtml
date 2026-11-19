@@ -113,6 +113,10 @@
     bool soloFormaPago = ViewBag.SoloFormaPago != null && (bool)ViewBag.SoloFormaPago;
     int idCierreActividadPOS = ViewBag.IdCierreActividadPOS != null ? (int)ViewBag.IdCierreActividadPOS : 0;
     int idConsumidorFinalPOS = ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0;
+    // Menu "Cargas" de la barra (2026-11-18, ver docs/DECISIONS.md "Cargas desde el POS"): solo con el POS operativo (caja abierta o
+    // "operar sin caja", operador identificado) y fuera de la edicion de una venta. _LayoutPOS.cshtml lo lee de ViewBag.
+    bool mostrarCargasPOS = cajaAbierta && Model != null && !requiereOperadorPOS && !esEdicionVenta;
+    ViewBag.PosMostrarCargas = mostrarCargasPOS;
 
     // Precarga de POSState en modo edicion -- port de Web/Views/Ventas/POS.cshtml:24-63 (batch 7,
     // iteracion 5). "anulado"/"indexAnulado" replican EXACTAMENTE la logica del original
@@ -1208,6 +1212,36 @@
         </div>
     </div>
 
+    @if (mostrarCargasPOS)
+    {
+        @* Cargas desde el POS (2026-11-18, ver docs/DECISIONS.md "Cargas desde el POS"): Stock (ingreso, egreso, pesaje, ajuste), Movimientos y
+           Elaborados (nuevo, ingreso rapido) dentro de un iframe, sin salir de la caja. Mismo criterio que #modalCompraPOS: fondo estatico
+           (data-bs-*), SIN X; solo se MINIMIZA (el iframe sigue vivo y la barra muestra "<carga> en curso") o se DESCARTA con confirmacion.
+           Lo maneja window.POSTrabajos (Scripts/app/pos-trabajos.js). Cada carga abierta es un <iframe> dentro de #contenedorTrabajoPOS. *@
+        <div class="modal fade modal-trabajo-pos-layout" id="modalTrabajoPOS" data-backdrop="static" data-keyboard="false"
+             data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title" id="modalTrabajoPOSTitle">
+                            <i class="fas fa-boxes mr-2 me-2"></i>Carga
+                        </h5>
+                        <div class="ml-auto ms-auto d-flex align-items-center" style="gap:.4rem;">
+                            <button type="button" class="btn btn-sm btn-outline-danger js-trabajo-descartar" title="Descartar la carga sin guardar">
+                                <i class="fas fa-trash-alt mr-1 me-1"></i>Descartar
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary js-trabajo-minimizar" title="Volver al POS y dejar la carga en curso">
+                                <i class="fas fa-window-minimize mr-1 me-1"></i>Minimizar
+                            </button>
+                        </div>
+                    </div>
+                    <div id="trabajoPOSAviso" class="pos-trabajo-aviso d-none" role="status"></div>
+                    <div class="modal-body p-0" id="contenedorTrabajoPOS"></div>
+                </div>
+            </div>
+        </div>
+    }
+
     @* Ventas en curso (ver docs/DECISIONS.md "Ventas en curso"): "Ver ventas sin cerrar" (panel de Ayuda F1).
        Lista las ventas sin cerrar de la sucursal con usuario e items; el contenido lo pinta Scripts/app/pos-borrador.js. *@
     <div class="modal fade" id="modalVentasSinCerrarPOS" tabindex="-1" role="dialog" aria-hidden="true">
@@ -1379,6 +1413,21 @@ else
     <script src="~/Scripts/app/pos-compact.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/seleccion-usuario.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-autorizacion.js" asp-append-version="true"></script>
+    @if (mostrarCargasPOS)
+    {
+        @* Cargas desde el POS (2026-11-18): la config va ANTES del script (sin config no hace nada). Los titulos salen del catalogo del
+           servidor (CargasPosCatalogo), el mismo que valida AbrirCargaPOS. *@
+        <script>
+            window.POSTrabajosConfig = {
+                urlAbrir: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("AbrirCargaPOS", "Ventas"))),
+                urlCargas: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("CargasDesdeAperturaPOS", "Ventas"))),
+                posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)),
+                tipos: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    WebCore.Helpers.CargasPosCatalogo.Todas.ToDictionary(c => c.Tipo, c => new { titulo = c.Titulo })))
+            };
+        </script>
+        <script src="~/Scripts/app/pos-trabajos.js" asp-append-version="true"></script>
+    }
     <script src="~/Scripts/app/persona-buscar.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/modal-productos.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/factura-electronica.js" asp-append-version="true"></script>

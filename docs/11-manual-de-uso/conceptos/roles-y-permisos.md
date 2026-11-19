@@ -3,7 +3,7 @@ titulo: Roles y permisos (quién puede hacer qué)
 rol: usuario
 modulo: Conceptos generales
 orden: 1
-revisada: 2026-11-10
+revisada: 2026-11-19
 ---
 # Roles y permisos
 
@@ -31,3 +31,6 @@ Si un usuario entra a una pantalla sin permiso, ve **"Acceso denegado"**. Ademá
 
 ## Dónde se configura cada cosa
 Ver el [mapa de configuraciones](ayuda:referencia/configuraciones) para saber qué interruptor existe, quién lo cambia y qué efecto tiene.
+
+## Cargas desde el POS: autorización de otro usuario (2026-11-18)
+Las cargas de Stock, Movimientos y Elaborados que se abren desde el POS (botón **Cargas**) exigen el permiso de su pantalla (`Stock.AddOrEditStock`, `Movimiento.NuevoMovimiento`, `Elaborado.IngresoEmbutido`, `Elaborado.IngresoEmbutidoRapido`). Sin él se ofrece «Autorizar con otro usuario» (mismo mecanismo que bonificar o cuenta corriente en el POS): acciones `CargaStock`, `CargaStockAjuste`, `CargaMovimiento`, `CargaElaborado`, `CargaElaboradoRapido`. El ajuste de stock solo lo autoriza un administrador. Vale solo para altas y hasta guardar o descartar.
