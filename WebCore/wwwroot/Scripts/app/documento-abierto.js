@@ -30,6 +30,8 @@
     var PREFIJO_FRAME_POS = 'carnisys-trabajo-pos-';   // nombre del <iframe> de las cargas del POS (pos-trabajos.js, crearIframe)
     var DURACION_SENAL_MS = 10000;   // cuanto titila una pestaña "señalada" desde el cartel de otra
     var MAX_ITEMS_VISTA_PREVIA = 3;  // items que se muestran por documento abierto en el cartel (el resto va como "y N más")
+    var GRACIA_SIN_RESPONDER_MS = 1500;  // cuanto se insiste con un lock sin respuesta antes de avisar "una pestaña que no responde"
+    var PASO_GRACIA_MS = 300;            // pausa entre cada reintento de esa insistencia
 
     function nuevoId() {
         if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
@@ -188,6 +190,37 @@
 
         function soltarTodosLosLocks() {
             Object.keys(liberadores).forEach(soltarLock);
+        }
+
+        // Salida de la pagina (2026-11-19): se sueltan los locks sin esperar a que el navegador destruya la pestaña. Antes dependia de eso, y si
+        // tardaba (o la pagina quedaba congelada en el cache de "atras/adelante") otra pestaña veia un lock sin dueño que contesta y avisaba
+        // "una pestaña que no responde". `estado` se conserva: si el navegador RESTAURA la pagina del cache (pageshow persisted) se retoman.
+        window.addEventListener('pagehide', function () {
+            if (estado) soltarTodosLosLocks();
+        });
+
+        window.addEventListener('pageshow', function (ev) {
+            if (!ev || !ev.persisted || !estado || cedido) return;
+            var nombre = estado.tipo === 'edicion' ? nombreEdicion(estado.idRegistro) : nombreNuevo(instanceId);
+            tomarLock(nombre, false).then(function (ok) {
+                if (!ok) console.warn('[DocumentoAbierto] no se pudo retomar el lock al volver a la pagina', nombre);
+            });
+        });
+
+        // Reintenta (hasta GRACIA_SIN_RESPONDER_MS) mientras haya locks de otras pestañas sin respuesta: en cada paso vuelve a mirar los locks y a
+        // preguntar "quien". Un lock que se suelta (la otra pestaña se estaba yendo) o una pestaña lenta que por fin contesta ya no cuentan.
+        // `contar(respuestas, ajenos)` devuelve cuantos locks siguen sin explicar. Resuelve { respuestas, ajenos } con lo ultimo visto.
+        function reverificarSinResponder(contar, respuestas, ajenos) {
+            var inicio = Date.now();
+            function paso(resp, aj) {
+                if (!contar(resp, aj) || Date.now() - inicio >= GRACIA_SIN_RESPONDER_MS) return Promise.resolve({ respuestas: resp, ajenos: aj });
+                return new Promise(function (listo) { window.setTimeout(listo, PASO_GRACIA_MS); })
+                    .then(function () { return locksAjenos(); })
+                    .then(function (aj2) {
+                        return descubrir().then(function (resp2) { return paso(resp2, aj2); });
+                    });
+            }
+            return paso(respuestas, ajenos);
         }
 
         // Nombres de lock de este modulo/usuario/grupo tomados por OTRAS pestañas (los propios estan en `liberadores`).
@@ -486,7 +519,10 @@
                     caja.style.cssText = 'border:1px solid var(--bs-border-color,#dee2e6);border-radius:.4rem;padding:.4rem .6rem;margin:.4rem 0;';
                     lineaDeTexto(caja, fila.texto, 'font-weight:600;');
                     lineaDeTexto(caja, fila.sub, 'font-size:.85em;opacity:.85;');
-                    lineaDeTexto(caja, fila.items, 'font-size:.85em;');
+                    // Detalle de lo cargado (2026-11-19): mas grande y en negrita, sobre un fondo tenue con borde de color, para que se lea de un vistazo.
+                    // Fondo azul translucido (no un color fijo ni --bs-tertiary-bg: en modo oscuro quedaba claro con texto claro) y color de texto heredado.
+                    lineaDeTexto(caja, fila.items, 'font-size:1rem;font-weight:600;line-height:1.35;margin:.35rem 0;padding:.4rem .6rem;' +
+                        'background:rgba(13,110,253,.13);border-left:4px solid #0d6efd;border-radius:.3rem;');
                     lineaDeTexto(caja, fila.ayuda, 'font-size:.85em;font-style:italic;');
                     var nota = document.createElement('div');
                     nota.style.cssText = 'font-size:.85em;color:var(--bs-primary,#0d6efd);';
@@ -588,7 +624,10 @@
                 if (opciones.sinAviso) return { accion: 'seguir' };
                 return locksAjenos().then(function (ajenos) {
                     return descubrir().then(function (respuestas) {
-                        return vieneDeVentana ? { accion: 'seguir' } : evaluarNuevo(respuestas, ajenos);
+                        if (vieneDeVentana) return { accion: 'seguir' };
+                        // Un lock sin respuesta se reverifica unos instantes antes de avisar (puede ser una pestaña que se esta yendo o lenta).
+                        return reverificarSinResponder(function (resp, aj) { return locksNuevoSinResponder(resp, aj).length; }, respuestas, ajenos)
+                            .then(function (r) { return evaluarNuevo(r.respuestas, r.ajenos); });
                     });
                 });
             });
@@ -657,18 +696,24 @@
             };
         }
 
-        function evaluarNuevo(respuestas, ajenos) {
-            // En modoLista (Elaborados) tambien se listan las ediciones abiertas, para que se vea TODO lo que hay abierto.
-            var anteriores = respuestas.filter(function (m) { return (cfg.modoLista || m.tipo === 'nuevo') && esAnterior(m); });
-            // Locks de Nuevo que ninguna respuesta explica = pestañas suspendidas que no contestan el canal.
-            var sinResponder = ajenos.filter(function (nombre) {
+        // Locks de Nuevo que ninguna respuesta explica = pestañas suspendidas que no contestan el canal.
+        function locksNuevoSinResponder(respuestas, ajenos) {
+            return ajenos.filter(function (nombre) {
                 var pref = prefijoNuevo();
                 if (nombre.indexOf(pref) !== 0) return false;
                 var id = nombre.substring(pref.length);
                 return !respuestas.some(function (m) { return m.de === id; });
             });
+        }
+
+        function evaluarNuevo(respuestas, ajenos) {
+            // En modoLista (Elaborados) tambien se listan las ediciones abiertas, para que se vea TODO lo que hay abierto.
+            var anteriores = respuestas.filter(function (m) { return (cfg.modoLista || m.tipo === 'nuevo') && esAnterior(m); });
+            var sinResponder = locksNuevoSinResponder(respuestas, ajenos);
             var total = anteriores.length + sinResponder.length;
             if (!total) return Promise.resolve({ accion: 'seguir' });
+            // Diagnostico (2026-11-19): si el cartel vuelve a salir sin que haya otra pestaña, esto dice que lock lo causo.
+            if (sinResponder.length) console.warn('[DocumentoAbierto] lock(s) de otra pestaña sin respuesta tras ' + GRACIA_SIN_RESPONDER_MS + ' ms:', sinResponder);
 
             var titulo = (total === 1 ? 'Ya tenés un ' + singular + ' nuevo abierto' : 'Tenés ' + total + ' ' + plural + ' nuevos abiertos') + sufijoGrupo();
             var filas = anteriores.map(filaDeAbierto);
@@ -707,11 +752,21 @@
         function tomarEdicion(idRegistro) {
             cedido = false;
             estado = { tipo: 'edicion', idRegistro: idRegistro, ts: Date.now() };
+            // Lock de ESTE registro tomado por otra pestaña que no contesta el canal.
+            function edicionSinResponder(resp, aj) {
+                return aj.indexOf(nombreEdicion(idRegistro)) !== -1 &&
+                    !resp.some(function (m) { return m.tipo === 'edicion' && m.idRegistro === idRegistro; });
+            }
             return locksAjenos().then(function (ajenos) {
-                return descubrir().then(function (respuestas) {
+                return descubrir().then(function (respuestasIniciales) {
+                    // Se reverifica unos instantes antes de dar el lock por colgado (puede ser una pestaña que se esta yendo o lenta).
+                    return reverificarSinResponder(function (resp, aj) { return edicionSinResponder(resp, aj) ? 1 : 0; }, respuestasIniciales, ajenos)
+                        .then(function (r) { return { respuestas: r.respuestas, ajenos: r.ajenos }; });
+                }).then(function (visto) {
+                    var respuestas = visto.respuestas;
+                    ajenos = visto.ajenos;
                     var anteriores = respuestas.filter(function (m) { return m.tipo === 'edicion' && m.idRegistro === idRegistro && esAnterior(m); });
-                    var hayLockSinResponder = ajenos.indexOf(nombreEdicion(idRegistro)) !== -1 &&
-                        !respuestas.some(function (m) { return m.tipo === 'edicion' && m.idRegistro === idRegistro; });
+                    var hayLockSinResponder = edicionSinResponder(respuestas, ajenos);
                     if (!anteriores.length && !hayLockSinResponder) {
                         return tomarLock(nombreEdicion(idRegistro), false).then(function (ok) {
                             if (ok) return true;
