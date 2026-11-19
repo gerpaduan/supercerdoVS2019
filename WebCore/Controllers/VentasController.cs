@@ -1091,7 +1091,10 @@ namespace WebCore.Controllers
                         ? creado.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
                         : creado.ToString("dd/MM HH:mm", System.Globalization.CultureInfo.InvariantCulture);
 
-                    conFecha.Add((creado, new { tipo, titulo = tituloItem, id, creado, hora, resumen }));
+                    // kg (numero, suma de |kg| de las lineas) lo usa pos-trabajos.js para avisar de un posible duplicado SOLO si la carga nueva
+                    // tiene la misma cantidad (2026-11-19); "resumen" es el mismo dato como texto.
+                    decimal kg = Convert.ToDecimal(fila["kg"], System.Globalization.CultureInfo.InvariantCulture);
+                    conFecha.Add((creado, new { tipo, titulo = tituloItem, id, creado, hora, resumen, kg }));
                 }
 
                 items = conFecha.OrderByDescending(x => x.Creado).Select(x => x.Item).ToList();

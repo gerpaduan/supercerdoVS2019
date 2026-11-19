@@ -75,15 +75,85 @@
     }
 
     // ---- Aviso de posible duplicado -------------------------------------------------------------
-    // Al ver una carga NUEVA cuyo tipo ya tiene un registro en la lista de esta caja: franja amarilla arriba. No bloquea.
+    // Al ver una carga NUEVA cuyo tipo ya tiene un registro en la lista de esta caja CON LA MISMA CANTIDAD (los mismos kilos): franja amarilla
+    // arriba. No bloquea. (2026-11-19: antes avisaba con cualquier carga previa del mismo tipo y confundia; ahora solo si coincide la cantidad.)
+    // Como lo que se carga cambia mientras se escribe, se vuelve a comprobar cada segundo mientras esa carga esta a la vista.
+    var VIGILANCIA_MS = 1000;
+    var TOLERANCIA_KG = 0.0005;
+    var temporizadorVigilancia = null;
+
+    // Numero de un texto de pantalla: "14.000" (punto decimal) o "1.234,500" (formato es-AR).
+    function numeroDeTexto(texto) {
+        var t = String(texto == null ? '' : texto).replace(/\s/g, '');
+        if (!t) return 0;
+        var n = t.indexOf(',') >= 0 ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t);
+        return isNaN(n) ? 0 : n;
+    }
+
+    // Suma del valor absoluto de los inputs hidden Lineas[i].<campo> de la pantalla del iframe (igual que el servidor: SUM(ABS(kg))).
+    function sumarKilosOcultos(doc, campo) {
+        var total = 0;
+        Array.prototype.forEach.call(doc.querySelectorAll('input[type="hidden"][name$=".' + campo + '"]'), function (input) {
+            total += Math.abs(numeroDeTexto(input.value));
+        });
+        return total;
+    }
+
+    // Kilos de lo que se esta cargando ahora en la carga `slot` (misma medida que "kg" de la lista del servidor), o null si no se puede leer.
+    // Lee la pantalla del iframe (mismo origen): hidden de lineas en Stock y Movimientos, y el total en pantalla en los elaborados.
+    function kilosActuales(slot) {
+        var doc;
+        try { doc = slot && slot.iframe && slot.iframe.contentDocument; } catch (e) { return null; }
+        if (!doc) return null;
+        try {
+            switch (slot.tipo) {
+                case 'ingreso': case 'egreso': case 'pesaje': case 'ajuste':
+                    return sumarKilosOcultos(doc, 'CantKgs');
+                case 'movimiento':
+                    return sumarKilosOcultos(doc, 'CantKg');
+                case 'rapido': case 'desarme': {
+                    var rapido = doc.getElementById('lblTotalFormulaRapida');
+                    return rapido ? Math.abs(numeroDeTexto(rapido.textContent)) : null;
+                }
+                case 'elaborado': {
+                    var total = doc.getElementById('lblTotalProducir');
+                    return total ? Math.abs(numeroDeTexto(total.textContent)) : null;
+                }
+                default:
+                    return null;
+            }
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function detenerVigilancia() {
+        if (temporizadorVigilancia) { window.clearInterval(temporizadorVigilancia); temporizadorVigilancia = null; }
+    }
+
     function actualizarAvisoDuplicado() {
         var $aviso = $('#trabajoPOSAviso');
         var slot = activo ? slots[activo] : null;
-        var previa = slot && !slot.id ? ultimaLista.filter(function (i) { return i.tipo === slot.tipo; })[0] : null;
+        var nueva = !!slot && !slot.id;
 
+        // Solo las cargas del mismo tipo con kilos (las de 0 kg no se pueden comparar).
+        var candidatas = nueva ? ultimaLista.filter(function (i) { return i.tipo === slot.tipo && Number(i.kg) > TOLERANCIA_KG; }) : [];
+        if (!candidatas.length) {
+            detenerVigilancia();
+            $aviso.addClass('d-none').text('');
+            return;
+        }
+
+        // Hay con que comparar: se sigue mirando la pantalla mientras esta carga este a la vista.
+        if (!temporizadorVigilancia) temporizadorVigilancia = window.setInterval(actualizarAvisoDuplicado, VIGILANCIA_MS);
+
+        var kg = kilosActuales(slot);
+        var previa = kg !== null && kg > TOLERANCIA_KG
+            ? candidatas.filter(function (i) { return Math.abs(Number(i.kg) - kg) < TOLERANCIA_KG; })[0]
+            : null;
         if (!previa) { $aviso.addClass('d-none').text(''); return; }
 
-        var texto = 'Ya cargaste un ' + tituloDeTipo(slot.tipo).toLowerCase() + ' a las ' + previa.hora
+        var texto = 'Ya cargaste un ' + tituloDeTipo(slot.tipo).toLowerCase() + ' con la misma cantidad a las ' + previa.hora
             + (previa.resumen ? ' (' + previa.resumen + ')' : '') + '. Revisá que no sea el mismo.';
         $aviso.removeClass('d-none').text(texto);
     }
