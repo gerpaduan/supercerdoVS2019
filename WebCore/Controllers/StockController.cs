@@ -228,6 +228,18 @@ namespace WebCore.Controllers
             return PartialView("_StockDetalle", ConstruirDetalleIndexCompleto(compra));
         }
 
+        // "Propio de la caja" (2026-11-19, docs/DECISIONS.md "Cargas desde el POS: modificar lo cargado"): abierto desde el POS (llega
+        // posInstanceId), un registro que cargo este operador desde que abrio su caja se puede ver y modificar aunque no tenga el
+        // permiso. Se valida de nuevo en el servidor (CargasPosPropias); un posInstanceId inventado no habilita registros ajenos.
+        private bool PropiaDeLaCajaDesdePos(string posInstanceId, string origen, int id, int idUsuarioCreador)
+        {
+            if (string.IsNullOrEmpty(posInstanceId) || id <= 0) return false;
+
+            var sesion = _usuarioActual;
+            var operador = ResolverUsuarioCreador(idUsuarioCreador, sesion);
+            return WebCore.Helpers.CargasPosPropias.EsPropiaDeLaCaja(_empresa, _param, sesion, operador, origen, id);
+        }
+
         // Alta autorizada desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): el cajero no tiene el permiso de Stock
         // y otro usuario que SI lo tiene lo autorizo para esta pestana del POS (VentasController.AbrirCargaPOS). Solo vale para
         // altas; el ajuste necesita su propia autorizacion (la de un administrador), nunca la de ingreso/egreso/pesaje.
@@ -299,7 +311,8 @@ namespace WebCore.Controllers
             bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermiso, idCreadorPermiso);
             // Alta desde el POS autorizada por otro usuario: equivale a tener el permiso para esta carga (2026-11-18).
             bool altaAutorizadaPos = compra == null && AltaAutorizadaDesdePos(posInstanceId, tipoOperacion);
-            puedeModificar = puedeModificar || altaAutorizadaPos;
+            puedeModificar = puedeModificar || altaAutorizadaPos
+                || (compra != null && !puedeModificar && PropiaDeLaCajaDesdePos(posInstanceId, "stock", id, idUsuarioCreador));
             bool puedeVer = puedeModificar || (compra != null && _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, fechaPermiso, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */));
 
             // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
@@ -414,6 +427,7 @@ namespace WebCore.Controllers
             model.TipoCompra = tipoOperacion;
             NormalizarDecimalesPosteados(model);
             AplicarGuardarSinPesaje(model);
+            AplicarMediasEnCeroConfirmado(model);
             CompletarDatosProveedor(model);
             // Alta desde el POS autorizada por otro usuario (2026-11-18): vale solo para un registro nuevo y para ese tipo de carga.
             bool altaAutorizadaPos = model.IdCompra <= 0 && AltaAutorizadaDesdePos(posInstanceId, tipoOperacion);
@@ -433,7 +447,8 @@ namespace WebCore.Controllers
             DateTime fechaPermisoGuardar = model.FechaCompra;
             int idCreadorPermisoGuardar = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : user.Id;
             bool puedeGuardar = altaAutorizadaPos
-                || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermisoGuardar, idCreadorPermisoGuardar);
+                || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermisoGuardar, idCreadorPermisoGuardar)
+                || (model.IdCompra > 0 && PropiaDeLaCajaDesdePos(posInstanceId, "stock", model.IdCompra, idUsuarioCreador));
             // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su clave
             // al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.
             Entidades.Usuario elevadoGuardar = null;
@@ -2212,7 +2227,13 @@ namespace WebCore.Controllers
                 bool sinMedias = (compra.CantMedias ?? 0) <= 0 && (compra.KgsMedias ?? 0f) <= 0f;
                 bool sinVinculos = !(compra.IdPesajeAjustado.HasValue && compra.IdPesajeAjustado.Value > 0)
                     && model.PesajesVinculadosIds.Count == 0;
-                model.GuardarSinPesaje = sinMedias && sinVinculos;
+                // Un pesaje en 0/0 con un proveedor real es un pesaje de medias guardado con los datos pendientes (se confirmo en
+                // el aviso de Guardar): se abre normal para poder completar medias y kilos. «Solo productos» deja el proveedor
+                // por defecto («Indefinido»), asi que ese caso se sigue reconociendo.
+                int idProveedorPorDefecto = _param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
+                bool proveedorReal = compra.Proveedor != null && compra.Proveedor.IdPersona > 0
+                    && compra.Proveedor.IdPersona != idProveedorPorDefecto;
+                model.GuardarSinPesaje = sinMedias && sinVinculos && !proveedorReal;
             }
 
             var cortes = (_oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
@@ -2465,11 +2486,17 @@ namespace WebCore.Controllers
                     if (model.IdProveedor <= 0)
                         return "Seleccione un proveedor para el pesaje.";
 
-                    if (!model.CantMedias.HasValue || model.CantMedias.Value <= 0)
-                        return "Ingrese la cantidad de medias para el pesaje." + SugerenciaSoloProductos;
+                    // Medias o kilos en cero: solo se acepta si el usuario lo confirmo en el aviso de la pantalla
+                    // (ConfirmaMediasEnCero; AplicarMediasEnCeroConfirmado los deja en 0). Se valida aca y no solo en el
+                    // navegador para que un POST directo no se salte el aviso.
+                    if (!model.ConfirmaMediasEnCero)
+                    {
+                        if (!model.CantMedias.HasValue || model.CantMedias.Value <= 0)
+                            return "Ingrese la cantidad de medias para el pesaje." + SugerenciaSoloProductos;
 
-                    if (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0)
-                        return "Ingrese los kilos de medias para el pesaje." + SugerenciaSoloProductos;
+                        if (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0)
+                            return "Ingrese los kilos de medias para el pesaje." + SugerenciaSoloProductos;
+                    }
                 }
             }
 
@@ -2497,6 +2524,20 @@ namespace WebCore.Controllers
             var proveedor = ResolverProveedor(model.IdProveedor);
             model.ProveedorNombre = proveedor != null ? proveedor.RazonSocial : "";
             model.ProveedorCuit = proveedor != null ? proveedor.Cuit : "";
+        }
+
+        // Pesaje con medias/kilos desconocidos y confirmados por el usuario: lo no cargado (vacio o <= 0) se guarda en 0.
+        // Lo que si se cargo no se toca. Con «Solo productos» no aplica (ya lo resuelve AplicarGuardarSinPesaje).
+        private void AplicarMediasEnCeroConfirmado(StockEditVm model)
+        {
+            if (model == null || !EsPesaje(model.TipoCompra) || model.GuardarSinPesaje || !model.ConfirmaMediasEnCero)
+                return;
+
+            if (!model.CantMedias.HasValue || model.CantMedias.Value <= 0)
+                model.CantMedias = 0;
+
+            if (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0f)
+                model.KgsMedias = 0f;
         }
 
         private void AplicarGuardarSinPesaje(StockEditVm model)

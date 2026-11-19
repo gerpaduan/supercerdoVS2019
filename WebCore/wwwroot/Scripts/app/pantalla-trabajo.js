@@ -279,6 +279,8 @@
         }
         var url = new URL(window.location.href);
         url.searchParams.set('ventana', '1');
+        // La pestaña de origen vuelve al listado enseguida: la ventana nueva no debe avisar de ella (documento-abierto.js, desdeVentana).
+        url.searchParams.set('desdeVentana', '1');
         if (hayCambios) {
             // Lo cargado viaja en una clave temporal de localStorage (misma PC y navegador); si la pantalla no puede prepararlo, no se abre.
             var clave = traspaso.preparar();

@@ -556,9 +556,10 @@
             // usuario esta viendo o cargando en ese modal.
             // La compra minimizada ("Compra en curso", #modalCompraPOS oculto) tampoco se pierde en silencio.
             // Igual las cargas minimizadas (Stock, Movimientos, Elaborados dentro del POS, 2026-11-18).
-            const hayModalAbierto = document.querySelector(".modal.show") !== null
+            // Con "Salir igual" ya confirmado en el aviso de #btnSalirPOS (pos-trabajos.js) no se vuelve a preguntar por esto.
+            const hayModalAbierto = window.POSSalidaConfirmada !== true && (document.querySelector(".modal.show") !== null
                 || (window.POSCompras?.hayCompraEnCurso?.() === true)
-                || (window.POSTrabajos?.hayEnCurso?.() === true);
+                || (window.POSTrabajos?.hayEnCurso?.() === true));
 
             if (omitirAvisoSalidaPOS || window.POSFinalizandoVenta || (!hayVentaEnCurso && !window.POSCancelacionEnCurso && !hayModalAbierto)) return;
 

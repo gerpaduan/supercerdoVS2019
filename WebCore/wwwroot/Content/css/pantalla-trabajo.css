@@ -274,11 +274,18 @@ html.dark-mode.modo-ventana .pt-quien-operador {
         padding-bottom: 2px;
     }
 
-    /* Negrita: producto y cantidades (el codigo gris de Stock queda en peso normal). */
+    /* Negrita: producto y cantidades. Codigo tambien (pedido 2026-11-19): es la 2.a columna de las tres tablas (en Stock y Movimientos
+       es td.cc-l-cod; en Elaborados es un td.cc-solo-tabla y la cc-l-cod queda oculta en escritorio), por eso se elige por posicion. */
     body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-prod,
     body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-kg,
-    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-cant {
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-cant,
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap :is(#tablaLineasStock, #tablaLineasMovimiento, #tablaLineasElaborado) tbody td:nth-child(2) {
         font-weight: 700;
+    }
+
+    /* Columna "#" (1.a): un punto menos de letra que el resto de la tabla (.875rem = 14 px -> 13 px), pedido 2026-11-19. */
+    body.app-shell .pantalla-trabajo .pt-tabla-wrap :is(#tablaLineasStock, #tablaLineasMovimiento, #tablaLineasElaborado) tbody td:first-child {
+        font-size: .8125rem;
     }
 
     body.app-shell .pantalla-trabajo .pt-tabla-wrap tbody td.cc-l-prod .text-muted {
@@ -785,14 +792,16 @@ html.dark-mode.modo-ventana .pt-quien-operador {
         overflow: visible;
         z-index: 3;
         pointer-events: none;
-        font-size: .62rem;
+        /* Etiqueta mas fuerte (pedido 2026-11-19): negrita y color de texto normal en vez del gris apagado. */
+        font-size: .65rem;
+        font-weight: 700;
         text-transform: uppercase;
-        color: var(--ui-text-muted, #6c757d);
+        color: var(--ui-text, #212529);
     }
 
     body.app-shell .pantalla-trabajo.pt-pesaje-linea #CantMedias,
     body.app-shell .pantalla-trabajo.pt-pesaje-linea #KgsMedias {
-        padding-left: 5.4rem;
+        padding-left: 5.8rem;
     }
 
     /* El nombre ya se ve adentro: sin el placeholder repetido. */

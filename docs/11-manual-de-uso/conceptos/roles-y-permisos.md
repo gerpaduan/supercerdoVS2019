@@ -34,3 +34,6 @@ Ver el [mapa de configuraciones](ayuda:referencia/configuraciones) para saber qu
 
 ## Cargas desde el POS: autorización de otro usuario (2026-11-18)
 Las cargas de Stock, Movimientos y Elaborados que se abren desde el POS (botón **Cargas**) exigen el permiso de su pantalla (`Stock.AddOrEditStock`, `Movimiento.NuevoMovimiento`, `Elaborado.IngresoEmbutido`, `Elaborado.IngresoEmbutidoRapido`). Sin él se ofrece «Autorizar con otro usuario» (mismo mecanismo que bonificar o cuenta corriente en el POS): acciones `CargaStock`, `CargaStockAjuste`, `CargaMovimiento`, `CargaElaborado`, `CargaElaboradoRapido`. El ajuste de stock solo lo autoriza un administrador. Vale solo para altas y hasta guardar o descartar.
+
+### Modificar lo cargado desde el POS: «propio de la caja» (2026-11-19)
+En el menú **Cargas** del POS, un registro de Stock, Movimientos o Elaborados que **cargó el mismo operador desde que abrió su caja** (o desde hoy con «operar sin caja») se abre y se modifica aunque ese usuario no tenga el permiso del módulo; mismo criterio que la compra propia de la caja. No incluye eliminar ni el ajuste de stock (solo administradores). El servidor lo valida de nuevo en cada pantalla (`CargasPosPropias`).

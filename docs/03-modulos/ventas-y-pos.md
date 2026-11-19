@@ -166,3 +166,8 @@ Controlador `WebCore/Controllers/PuntosExpendioController.cs`; reglas puras en `
 - Pantallas destino (`StockController`, `MovimientosController`, `ElaboradosController`): parámetro `posInstanceId` (hidden en cada formulario) y, solo para altas, aceptan la autorización provisoria del POS (`AltaAutorizadaDesdePos`).
 - `_Layout.cshtml` no limpia el operador de módulo ni el bypass de caja cuando el pedido es de un iframe (`Sec-Fetch-Dest: iframe`, `PermisosHelper.EsPedidoDeIframe`).
 - `ventana-trabajo.js`: en el iframe del POS `cerrarVentana()` avisa por `postMessage` (`evento: 'guardado'`); el POS cierra la carga.
+
+### Abrir y modificar lo cargado, botón Inicio (2026-11-19)
+- `VentasController.AbrirCargaPOS(tipo, posInstanceId, id)`: con `id > 0` abre un registro ya cargado (tipos de la lista: ingreso, egreso, pesaje, ajuste, cierre, movimiento, elaborado, rapido, desarme). Exige que sea **propio de la caja** (`Contratos.ICargasPosRepository.EsCargaPropia`, `CargasPosPg`); si no, 403. El ajuste solo para administradores. Devuelve la URL de edición (`Stock/Editar`, `Movimientos/Editar`, `Elaborados/Carga`, `Elaborados/EditarIngresoRapido`).
+- `WebCore/Helpers/CargasPosPropias.cs`: `CalcularDesde` (apertura − 2 min o hoy 00:00), `OrigenDe`, `TituloDe` y `EsPropiaDeLaCaja`. Las pantallas destino lo usan (`PropiaDeLaCajaDesdePos`) para ver y guardar sin el permiso cuando llega `posInstanceId`.
+- `pos-trabajos.js`: slots por clave `tipo` o `tipo:id`; las filas de la lista llaman a `abrirRegistro`. `#btnSalirPOS` dice «Inicio» (`data-salir-cerrar`: «Cerrar» en la app instalada, `app-instalada.js`) y avisa antes de salir si hay cargas o compra sin guardar (`POSSalidaConfirmada`).

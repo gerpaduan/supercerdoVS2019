@@ -101,6 +101,8 @@
                 @Html.HiddenFor(m => m.IdPesajeAjustado)
                 @Html.HiddenFor(m => m.DraftKey)
                 @Html.HiddenFor(m => m.BorradorGenericoClientId)
+                @* Lo pone en true stock.js al confirmar el aviso «medias/kilos en cero» (ver ConfirmaMediasEnCero en StockEditVm). *@
+                @Html.HiddenFor(m => m.ConfirmaMediasEnCero)
                 <div id="lineasHiddenContainer"></div>
                 <div id="pesajesVinculadosHiddenContainer"></div>
 
@@ -525,7 +527,7 @@
                     {
                         <button type="button"
                                 class="btn btn-primary mr-2 mb-2"
-                                id="btnHabilitarEdicionStock"
+                                id="btnHabilitarEdicionStock" data-sin-foco tabindex="-1"
                                 data-edit-readonly-ignore="true"
                                 disabled="@(Model.PuedeHabilitarEdicion ? null : "disabled")">
                             <i class="fas fa-edit mr-1"></i> Modificar
@@ -543,10 +545,10 @@
                     {
                         <partial name="_EliminarRegistro" model="vmEliminarStock" />
                     }
-                    <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarStock">
+                    <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarStock" data-sin-foco tabindex="-1">
                         <i class="fas fa-save mr-1"></i> Guardar stock
                     </button>
-                    <a href="@Url.Action("Index", "Stock")" class="btn btn-outline-secondary mb-2">
+                    <a href="@Url.Action("Index", "Stock")" class="btn btn-outline-secondary mb-2" data-sin-foco tabindex="-1">
                         Cancelar
                     </a>
                 </div>
@@ -1225,6 +1227,7 @@
     <link rel="stylesheet" href="@Url.Content("~/Content/css/stock-editar-compacto.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pt-entrada.css")" asp-append-version="true" />
+    <script src="@Url.Content("~/Scripts/app/sin-foco-botones.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/pantalla-trabajo.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/pantalla-completa.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>

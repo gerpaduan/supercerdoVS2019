@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.NuevaCompra (alta) y Compra.ModificarCompra (modificar y eliminar); a los usuarios de producción les pide elegir el operador de Compras antes de entrar
-revisada: 2026-11-17
+revisada: 2026-11-19
 alias: Compras.NuevaCompra, Compras.ModificarCompra
 ---
 ## Para qué sirve
@@ -94,3 +94,8 @@ La **Nueva compra** del POS (**F5**) y **Modificar compra** se abren en su propi
 - Al **Guardar compra** la ventana se cierra y el aviso desaparece. Si recargás o cerrás la pestaña del POS con una compra en curso, el navegador avisa.
 - Si abrís **Modificar** desde **F6 → Mis actividades**, esa pantalla queda abajo y la ves al guardar o minimizar.
 - PENDIENTE: no se verificó en el navegador; descartar no cierra el borrador del servidor (queda como «interrumpido» sin latido).
+
+## Botones sin foco del teclado (2026-11-19)
+- **Guardar compra**, **Cancelar** y **Modificar** (atajos: Alt+G o Alt+Enter para Guardar o Modificar, Alt+C para Cancelar). **no toman el foco**: Tab no se detiene en ellos y, al hacer clic, el cursor sigue donde estaba (no queda el recuadro de foco ni un Enter o Espacio posterior los vuelve a activar). Solo responden al **clic** o al **atajo** de la pantalla.
+- **Enter dentro de un campo no guarda** la pantalla (antes el navegador lo trataba como un clic en Guardar). Enter sigue haciendo lo suyo en los campos que lo usan (Código, Cantidad, editor de línea).
+- Detalle técnico: `sin-foco-botones.js` + atributo `data-sin-foco` en cada botón; ver `docs/DECISIONS.md` (2026-11-19).

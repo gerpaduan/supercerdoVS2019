@@ -126,13 +126,13 @@
                         <div class="col-12 col-lg-3">
                             <div class="form-group">
                                 <label>Codigo</label>
-                                <input type="text" class="form-control" value="@Model.CodigoElaborado" readonly />
+                                <input type="text" class="form-control elaborados-campo-codigo" value="@Model.CodigoElaborado" readonly />
                             </div>
                         </div>
                         <div class="col-12 col-lg-5">
                             <div class="form-group">
                                 <label>Elaborado</label>
-                                <input type="text" class="form-control app-product-highlight" value="@Model.Elaborado" readonly />
+                                <input type="text" class="form-control app-product-highlight elaborados-campo-elaborado" value="@Model.Elaborado" readonly />
                             </div>
                         </div>
                         @* Formula secreta: si esta oculta, el controller dejo Receta vacia y todo el bloque va
@@ -299,7 +299,7 @@
                     {
                         <button type="button"
                                 class="btn btn-primary mr-2 mb-2"
-                                id="btnHabilitarEdicionIngresoRapido"
+                                id="btnHabilitarEdicionIngresoRapido" data-sin-foco tabindex="-1"
                                 data-edit-readonly-ignore="true"
                                 disabled="@(Model.PuedeHabilitarEdicion ? null : "disabled")">
                             <i class="fas fa-edit mr-1"></i> Modificar
@@ -307,20 +307,20 @@
                     }
                     @if (!esAnulado)
                     {
-                        <button type="submit" class="btn btn-success mr-2 mb-2 @((Model.EsEdicion && !esAnulado) ? "d-none" : "")" id="btnGuardarIngresoRapido" disabled="@(Model.EsEdicion && !Model.PuedeHabilitarEdicion ? "disabled" : null)">
+                        <button type="submit" class="btn btn-success mr-2 mb-2 @((Model.EsEdicion && !esAnulado) ? "d-none" : "")" id="btnGuardarIngresoRapido" data-sin-foco tabindex="-1" disabled="@(Model.EsEdicion && !Model.PuedeHabilitarEdicion ? "disabled" : null)">
                             <i class="fas fa-save mr-1"></i> @(Model.EsDesarme ? "Guardar desarme" : "Guardar ingreso rapido")
                         </button>
                     }
                     @if (Model.EsEdicion && Model.PuedeAnular)
                     {
-                        <button type="button" class="btn btn-outline-danger mr-2 mb-2" id="btnAnularIngresoRapido">
+                        <button type="button" class="btn btn-outline-danger mr-2 mb-2" id="btnAnularIngresoRapido" data-sin-foco tabindex="-1">
                             <i class="fas fa-ban mr-1"></i> Anular
                         </button>
                     }
                     @* data-ignore-exit="1" removido 2026-09-10 (item 2 de la segunda ronda de
                        pedidos, ver docs/DECISIONS.md "Batch 10: advertencia de salir sin
                        guardar") -- ver mismo comentario en Elaborados/Carga.cshtml. *@
-                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-outline-secondary mb-2">
+                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-outline-secondary mb-2" data-sin-foco tabindex="-1">
                         Cancelar
                     </a>
                 </div>
@@ -414,6 +414,7 @@
     <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/documento-abierto.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/sin-foco-botones.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>

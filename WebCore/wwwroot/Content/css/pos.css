@@ -1012,6 +1012,22 @@
         overflow-y: auto;
     }
 
+    /* Cada fila abre ese registro (ver / modificar, 2026-11-19). */
+    .pos-carga-fila {
+        cursor: pointer;
+    }
+
+    .pos-carga-fila:hover,
+    .pos-carga-fila:focus-visible {
+        background: rgba(0, 0, 0, .05);
+        outline: none;
+    }
+
+    html.dark-mode .pos-carga-fila:hover,
+    html.dark-mode .pos-carga-fila:focus-visible {
+        background: rgba(255, 255, 255, .08);
+    }
+
     .pos-carga-fila + .pos-carga-fila {
         border-top: 1px solid var(--pos-border, rgba(0, 0, 0, .08));
     }
@@ -1020,11 +1036,34 @@
         min-width: 2.6rem;
     }
 
+    /* Icono de cada tipo de carga (menu y lista "Cargado desde que abriste la caja"): un color por tipo para reconocerlas de un
+       vistazo (2026-11-19). Tonos mas claros en el tema oscuro y mas oscuros en el gris, para conservar el contraste. */
     .pos-carga-icono {
         width: 1rem;
         text-align: center;
-        opacity: .7;
+        --pos-carga-color: #6c757d;
+        color: var(--pos-carga-color);
     }
+
+    .pos-carga-icono--ingreso { --pos-carga-color: #3b6d11; }
+    .pos-carga-icono--egreso { --pos-carga-color: #c62828; }
+    .pos-carga-icono--pesaje { --pos-carga-color: #0f766e; }
+    .pos-carga-icono--ajuste { --pos-carga-color: #b26a00; }
+    .pos-carga-icono--movimiento { --pos-carga-color: #1565c0; }
+    .pos-carga-icono--elaborado { --pos-carga-color: #a1481f; }
+    .pos-carga-icono--rapido { --pos-carga-color: #6a3fc4; }
+    .pos-carga-icono--desarme { --pos-carga-color: #8d6e63; }
+    .pos-carga-icono--cierre { --pos-carga-color: #455a64; }
+
+    html.dark-mode .pos-carga-icono--ingreso { --pos-carga-color: #8fd14f; }
+    html.dark-mode .pos-carga-icono--egreso { --pos-carga-color: #ff8a80; }
+    html.dark-mode .pos-carga-icono--pesaje { --pos-carga-color: #4fd1c5; }
+    html.dark-mode .pos-carga-icono--ajuste { --pos-carga-color: #ffc947; }
+    html.dark-mode .pos-carga-icono--movimiento { --pos-carga-color: #64b5f6; }
+    html.dark-mode .pos-carga-icono--elaborado { --pos-carga-color: #ff9e6b; }
+    html.dark-mode .pos-carga-icono--rapido { --pos-carga-color: #b39dfa; }
+    html.dark-mode .pos-carga-icono--desarme { --pos-carga-color: #bcaaa4; }
+    html.dark-mode .pos-carga-icono--cierre { --pos-carga-color: #b0bec5; }
 
     .pos-restore-banner {
         border: 1px solid #f1c36d;

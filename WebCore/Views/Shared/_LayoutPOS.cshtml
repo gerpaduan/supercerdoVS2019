@@ -366,7 +366,7 @@
                                     var datosCarga = WebCore.Helpers.CargasPosCatalogo.Buscar(carga.Item1);
                                     if (datosCarga == null) { continue; }
                                     <a class="dropdown-item d-flex align-items-center js-pos-carga" href="#" data-tipo="@datosCarga.Tipo">
-                                        <i class="fas @carga.Item2 pos-carga-icono me-2"></i>
+                                        <i class="fas @carga.Item2 pos-carga-icono pos-carga-icono--@datosCarga.Tipo me-2"></i>
                                         <span>@datosCarga.Titulo</span>
                                         @if (datosCarga.SoloAdmin)
                                         {

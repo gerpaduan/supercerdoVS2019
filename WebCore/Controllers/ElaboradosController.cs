@@ -228,6 +228,18 @@ namespace WebCore.Controllers
             return View(model);
         }
 
+        // "Propio de la caja" (2026-11-19, docs/DECISIONS.md "Cargas desde el POS: modificar lo cargado"): abierto desde el POS (llega
+        // posInstanceId), un registro que cargo este operador desde que abrio su caja se puede ver y modificar aunque no tenga el
+        // permiso. Se valida de nuevo en el servidor (CargasPosPropias); un posInstanceId inventado no habilita registros ajenos.
+        private bool PropiaDeLaCajaDesdePos(string posInstanceId, string origen, int id, int idUsuarioCreador)
+        {
+            if (string.IsNullOrEmpty(posInstanceId) || id <= 0) return false;
+
+            var sesion = _usuarioActual;
+            var operador = ResolverUsuarioCreador(idUsuarioCreador, sesion);
+            return WebCore.Helpers.CargasPosPropias.EsPropiaDeLaCaja(_empresa, _param, sesion, operador, origen, id);
+        }
+
         // Alta autorizada desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): el cajero no tiene el permiso de esta
         // carga y otro usuario que SI lo tiene lo autorizo para esta pestana del POS (VentasController.AbrirCargaPOS).
         private bool AltaAutorizadaDesdePos(string posInstanceId, string accion) =>
@@ -278,7 +290,8 @@ namespace WebCore.Controllers
 
                 // Port de Web/Controllers/ElaboradosController.cs:254-262.
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
-                bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador);
+                bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador)
+                    || PropiaDeLaCajaDesdePos(posInstanceId, "elaborado", id, idUsuarioCreador);
                 bool puedeVer = puedeModificar || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1);
 
                 // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
@@ -405,7 +418,8 @@ namespace WebCore.Controllers
 
                 // Port de Web/Controllers/ElaboradosController.cs:360-368.
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
-                bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador);
+                bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador)
+                    || PropiaDeLaCajaDesdePos(posInstanceId, "elaborado", id, idUsuarioCreador);
                 bool puedeVer = puedeModificar || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1);
 
                 // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
@@ -1004,7 +1018,9 @@ namespace WebCore.Controllers
                 // Alta desde el POS autorizada por otro usuario (2026-11-18): vale solo para un registro nuevo.
                 bool altaAutorizadaPos = model.IdEmbutido <= 0
                     && AltaAutorizadaDesdePos(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionCargaElaboradoRapido);
-                if (!altaAutorizadaPos && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, fechaPermisoRapido, idCreadorPermiso))
+                // Y un elaborado ya cargado que es propio de la caja (se modifica desde el POS sin el permiso, 2026-11-19).
+                if (!altaAutorizadaPos && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, fechaPermisoRapido, idCreadorPermiso)
+                    && !(model.IdEmbutido > 0 && PropiaDeLaCajaDesdePos(posInstanceId, "elaborado", model.IdEmbutido, idUsuarioCreador)))
                 {
                     // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su
                     // clave al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.
@@ -1116,7 +1132,9 @@ namespace WebCore.Controllers
                 // Alta desde el POS autorizada por otro usuario (2026-11-18): vale solo para un registro nuevo.
                 bool altaAutorizadaPos = model.IdEmbutido <= 0
                     && AltaAutorizadaDesdePos(posInstanceId, Negocio.AutorizacionesProvisoriasPos.AccionCargaElaborado);
-                if (!altaAutorizadaPos && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, fechaPermisoCarga, idCreadorPermisoCarga))
+                // Y un elaborado ya cargado que es propio de la caja (se modifica desde el POS sin el permiso, 2026-11-19).
+                if (!altaAutorizadaPos && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, fechaPermisoCarga, idCreadorPermisoCarga)
+                    && !(model.IdEmbutido > 0 && PropiaDeLaCajaDesdePos(posInstanceId, "elaborado", model.IdEmbutido, idUsuarioCreador)))
                 {
                     // Idem GuardarIngresoRapido: suma el permiso de la persona que puso su clave (ElevacionRegistroHelper).
                     var elevadoCarga = WebCore.Helpers.ElevacionRegistroHelper.ObtenerElevado(HttpContext.Session, WebCore.Helpers.ElevacionRegistroHelper.ModuloElaborados, user, idUsuarioCreador, fechaPermisoCarga);

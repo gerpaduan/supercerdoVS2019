@@ -922,9 +922,16 @@ namespace WebCore.Controllers
         // pantalla: si el operador no lo tiene, 403 con los encabezados que le permiten pedir la autorizacion de otro usuario
         // (pos-autorizacion.js). El chequeo es el mismo que hace la pantalla destino (usuario de sesion); aca solo se adelanta
         // para no abrir un iframe que termine en un redirect. El cliente manda solo la clave del catalogo, nunca una URL.
+        //
+        // Con id > 0 abre un registro YA cargado (el ojo de la lista "Cargado desde que abriste la caja", 2026-11-19): la pantalla real
+        // del registro, en solo lectura y con su boton Modificar. Se permite si el registro es propio de la caja del operador
+        // (CargasPosPropias); si no, 403. "tipo" es el de la lista (ingreso, egreso, pesaje, ajuste, cierre, movimiento, elaborado,
+        // rapido, desarme); el cliente nunca manda una URL.
         [HttpGet]
-        public IActionResult AbrirCargaPOS(string tipo, string posInstanceId)
+        public IActionResult AbrirCargaPOS(string tipo, string posInstanceId, int id = 0)
         {
+            if (id > 0) return AbrirRegistroCargaPOS(tipo, posInstanceId, id);
+
             var carga = WebCore.Helpers.CargasPosCatalogo.Buscar(tipo);
             if (carga == null || string.IsNullOrWhiteSpace(posInstanceId))
                 return BadRequest("Tipo de carga inválido.");
@@ -955,6 +962,51 @@ namespace WebCore.Controllers
             return Json(new { ok = true, tipo = carga.Tipo, titulo = carga.Titulo, accion = carga.Accion, url });
         }
 
+        private IActionResult AbrirRegistroCargaPOS(string tipo, string posInstanceId, int id)
+        {
+            string tipoLimpio = (tipo ?? "").Trim();
+            string origen = WebCore.Helpers.CargasPosPropias.OrigenDe(tipoLimpio);
+            if (origen == null || string.IsNullOrWhiteSpace(posInstanceId))
+                return BadRequest("Tipo de carga inválido.");
+
+            var user = _usuarioActual;
+            if (user == null) return Unauthorized();
+
+            if (user.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceId) == null)
+                return StatusCode(403, "La autorización del vendedor venció. Recargá el POS e ingresá de nuevo con tu usuario.");
+
+            var operador = ResolverOperadorPOS(posInstanceId, user);
+
+            // El ajuste de stock es solo de administradores (StockController): la regla "propio de la caja" no lo habilita.
+            if (tipoLimpio == "ajuste" && !user.Admin)
+                return StatusCode(403, "El ajuste de stock es solo para administradores.");
+
+            // Regla "propio de la caja": lo cargo este operador desde que abrio su caja (o desde hoy con "operar sin caja").
+            var cierre = ObtenerCierreCajaActual(operador);
+            DateTime desde = WebCore.Helpers.CargasPosPropias.CalcularDesde(cierre?.FechaHoraInicio, DateTime.Now, out _);
+            var repo = WebCore.Infrastructure.NegocioFactory.CrearCargasPosRepository(_empresa);
+            if (repo == null || !repo.EsCargaPropia(origen, id, operador.Id, desde))
+                return StatusCode(403, "Ese registro no es de tu caja.");
+
+            string url = tipoLimpio switch
+            {
+                "movimiento" => Url.Action("Editar", "Movimientos", new { id, idUsuarioCreador = operador.Id, posInstanceId }),
+                "elaborado" => Url.Action("Carga", "Elaborados", new { id, idUsuarioCreador = operador.Id, posInstanceId }),
+                "rapido" or "desarme" => Url.Action("EditarIngresoRapido", "Elaborados",
+                    new { id, esDesarme = tipoLimpio == "desarme", idUsuarioCreador = operador.Id, posInstanceId }),
+                _ => Url.Action("Editar", "Stock", new { id, idUsuarioCreador = operador.Id, posInstanceId })
+            } ?? "";
+
+            return Json(new
+            {
+                ok = true,
+                tipo = tipoLimpio,
+                titulo = WebCore.Helpers.CargasPosPropias.TituloDe(tipoLimpio) + " #" + id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                accion = "",
+                url
+            });
+        }
+
         // Lo que el operador cargo desde que abrio su caja en Stock, Movimientos y Elaborados (2026-11-18): el menu "Cargas" del POS lo
         // muestra para que no cargue dos veces lo mismo. Las cargas se identifican por creadopor + creado (hora de ALTA, no la fecha
         // del registro que se puede tipear). Con "operar sin caja" no hay apertura: se muestra lo de hoy. Con SQL Server no hay lista.
@@ -973,22 +1025,12 @@ namespace WebCore.Controllers
             var operador = ResolverOperadorPOS(posInstanceId, user);
             var cierre = ObtenerCierreCajaActual(operador);
 
-            DateTime desde;
-            string titulo;
-            string desdeTexto;
-            if (cierre != null && cierre.FechaHoraInicio.HasValue)
-            {
-                // Margen de 2 minutos: la apertura toma la hora del navegador (sin segundos) y "creado" la de la base de datos.
-                desde = cierre.FechaHoraInicio.Value.AddMinutes(-2);
-                titulo = "Cargado desde que abriste la caja";
-                desdeTexto = cierre.FechaHoraInicio.Value.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
-            }
-            else
-            {
-                desde = DateTime.Today;
-                titulo = "Cargado hoy";
-                desdeTexto = "";
-            }
+            // Margen y "operar sin caja" en un solo lugar (CargasPosPropias), el mismo que usa la regla "propio de la caja".
+            DateTime desde = WebCore.Helpers.CargasPosPropias.CalcularDesde(cierre?.FechaHoraInicio, DateTime.Now, out bool conCaja);
+            string titulo = conCaja ? "Cargado desde que abriste la caja" : "Cargado hoy";
+            string desdeTexto = conCaja
+                ? cierre!.FechaHoraInicio!.Value.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+                : "";
 
             var repo = WebCore.Infrastructure.NegocioFactory.CrearCargasPosRepository(_empresa);
             var items = new List<object>();
@@ -1015,7 +1057,6 @@ namespace WebCore.Controllers
                     string tipo;
                     string tituloItem;
                     string resumen;
-                    string urlDetalle;
                     if (origen == "stock")
                     {
                         (tipo, tituloItem) = subtipo switch
@@ -1027,14 +1068,12 @@ namespace WebCore.Controllers
                             _ => ("cierre", "Cierre de stock")
                         };
                         resumen = Cant(fila["lineas"], "producto", "productos") + " · " + Kg(fila["kg"]);
-                        urlDetalle = Url.Action("Detalle", "Stock", new { idCompra = id }) ?? "";
                     }
                     else if (origen == "movimiento")
                     {
                         tipo = "movimiento";
                         tituloItem = "Movimiento";
                         resumen = (detalle != "" ? "A " + detalle + " · " : "") + Cant(fila["lineas"], "producto", "productos") + " · " + Kg(fila["kg"]);
-                        urlDetalle = Url.Action("Detalle", "Movimientos", new { id }) ?? "";
                     }
                     else
                     {
@@ -1045,7 +1084,6 @@ namespace WebCore.Controllers
                             _ => ("elaborado", "Nuevo elaborado")
                         };
                         resumen = (detalle != "" ? detalle + " · " : "") + Cant(fila["lineas"], "ingrediente", "ingredientes") + " · " + Kg(fila["kg"]);
-                        urlDetalle = Url.Action("Detalle", "Elaborados", new { id }) ?? "";
                     }
 
                     // Hoy solo la hora; una carga de otro dia (con "operar sin caja" no pasa, con una caja abierta de varios dias si) lleva la fecha.
@@ -1053,7 +1091,7 @@ namespace WebCore.Controllers
                         ? creado.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
                         : creado.ToString("dd/MM HH:mm", System.Globalization.CultureInfo.InvariantCulture);
 
-                    conFecha.Add((creado, new { tipo, titulo = tituloItem, id, creado, hora, resumen, urlDetalle }));
+                    conFecha.Add((creado, new { tipo, titulo = tituloItem, id, creado, hora, resumen }));
                 }
 
                 items = conFecha.OrderByDescending(x => x.Creado).Select(x => x.Item).ToList();

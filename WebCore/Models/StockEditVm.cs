@@ -41,6 +41,10 @@ namespace WebCore.Models
 
         public bool GuardarSinPesaje { get; set; }
 
+        // El usuario confirmo (aviso de stock.js) guardar un pesaje con Cant.Medias y/o Kgs.Medias en cero porque no
+        // los sabe todavia. Distinto de GuardarSinPesaje («Solo productos»): aca el proveedor y los vinculos se conservan.
+        public bool ConfirmaMediasEnCero { get; set; }
+
         public string Creado { get; set; } = "";
 
         public string CreadoPor { get; set; } = "";

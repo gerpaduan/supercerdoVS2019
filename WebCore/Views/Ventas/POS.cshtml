@@ -305,9 +305,14 @@
                                 <span>Cambiar operario</span>
                             </button>
                         }
-                        <a class="btn btn-light btn-sm pos-btn-layout" id="btnSalirPOS" href="@Url.Action("Index", "Home")" data-app-salir title="Volver al sistema">
-                            <i class="fas fa-arrow-left"></i>
-                            <span>Salir</span>
+                        @* Boton de salida con el nombre de lo que hace (2026-11-19): "Inicio" (va a Home); en la app instalada app-instalada.js lo pasa a
+                           "Cerrar" (data-salir-cerrar); al modificar una venta vuelve de donde vino ("Volver", y el href lo cambia urlSalidaEdicionVenta).
+                           Con cargas o una compra sin guardar, pos-trabajos.js avisa antes de salir. *@
+                        <a class="btn btn-light btn-sm pos-btn-layout" id="btnSalirPOS" href="@Url.Action("Index", "Home")" data-app-salir
+                           @(esEdicionVenta ? "" : "data-salir-cerrar") data-title-cerrar="Cerrar el punto de venta"
+                           title="@(esEdicionVenta ? "Volver" : "Ir a Inicio")">
+                            <i class="fas @(esEdicionVenta ? "fa-arrow-left" : "fa-home")"></i>
+                            <span>@(esEdicionVenta ? "Volver" : "Inicio")</span>
                         </a>
                     </div>
                 </div>

@@ -713,7 +713,7 @@
                         {
                             <button type="button"
                                     class="btn btn-primary mr-2"
-                                    id="btnHabilitarEdicionCompra"
+                                    id="btnHabilitarEdicionCompra" data-sin-foco tabindex="-1"
                                     data-edit-readonly-ignore="true">
                                 <i class="fas fa-edit mr-1"></i> Modificar
                             </button>
@@ -726,11 +726,11 @@
                         }
                         @if (!embebido)
                         {
-                            <a href="@Url.Action("Index", "Compras")" class="btn btn-outline-secondary" id="btnCancelarCompra">
+                            <a href="@Url.Action("Index", "Compras")" class="btn btn-outline-secondary" id="btnCancelarCompra" data-sin-foco tabindex="-1">
                                 Cancelar
                             </a>
                         }
-                        <button type="submit" class="btn btn-success @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarCompra">
+                        <button type="submit" class="btn btn-success @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarCompra" data-sin-foco tabindex="-1">
                             <i class="fas fa-save"></i> Guardar compra
                         </button>
                     </div>
@@ -794,6 +794,7 @@
         <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
+        <script src="@Url.Content("~/Scripts/app/sin-foco-botones.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
@@ -873,6 +874,7 @@
             <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/sin-foco-botones.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
             @if (ViewBag.ComprobantesDisponibles == true)
             {

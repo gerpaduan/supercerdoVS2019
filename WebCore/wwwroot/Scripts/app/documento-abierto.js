@@ -13,6 +13,9 @@
 //  - Grupo: separa los NUEVO entre si (p.ej. la accion de Stock: un Nuevo de «Egreso» no avisa por uno de «Cierre»). Un registro existente
 //    se identifica por su id y no depende del grupo. cfg.modoLista: el aviso lista todos los abiertos con «Traer este» por fila (Elaborados).
 // Uso: var doc = DocumentoAbierto.crear({...}); doc.anunciarNuevo() / doc.tomarEdicion(id) / doc.convertirAEdicion(id) / doc.cambiarGrupo(g) / doc.liberar().
+//  - Cartel (2026-11-19): una fila por cada abierto con que es, donde esta (pestaña / ventana / app instalada / dentro del POS), desde cuando y
+//    que items tiene, mas "Traer este", "Señalar" (esa pestaña titila) y "Cerrar" (solo un Nuevo vacio; la otra pestaña lo vuelve a comprobar).
+//  - ?desdeVentana=1 (lo pone "Abrir en ventana"): la ventana nueva no avisa de la pestaña de origen, que se esta yendo.
 // Depende de: SweetAlert (window.Swal). Todo texto de otras pestañas se pinta con textContent, nunca con innerHTML.
 (function (window, document) {
     'use strict';
@@ -24,6 +27,9 @@
     var ESPERA_TRABAJO_MS = 3000;    // cuanto se espera el trabajo de la otra pestaña tras pedirlo
     var ESPERA_ACUSE_MS = 5000;      // cuanto espera la pestaña que entrega el "recibido" antes de quedarse con su trabajo
     var ESPERA_LOCK_MS = 3000;       // cuanto se espera a que la pestaña que cedio suelte su lock
+    var PREFIJO_FRAME_POS = 'carnisys-trabajo-pos-';   // nombre del <iframe> de las cargas del POS (pos-trabajos.js, crearIframe)
+    var DURACION_SENAL_MS = 10000;   // cuanto titila una pestaña "señalada" desde el cartel de otra
+    var MAX_ITEMS_VISTA_PREVIA = 3;  // items que se muestran por documento abierto en el cartel (el resto va como "y N más")
 
     function nuevoId() {
         if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
@@ -54,6 +60,55 @@
         return (n || 0) + ((n || 0) === 1 ? ' línea' : ' líneas');
     }
 
+    function dosDigitos(n) {
+        return (n < 10 ? '0' : '') + n;
+    }
+
+    // "desde las 10:42 (hace 25 min)"; si no es de hoy suma la fecha. `ms` = marca de tiempo de cuando se abrio la pagina.
+    function textoApertura(ms) {
+        var d = new Date(ms);
+        var ahora = new Date();
+        var hora = dosDigitos(d.getHours()) + ':' + dosDigitos(d.getMinutes());
+        if (d.toDateString() !== ahora.toDateString()) hora += ' del ' + dosDigitos(d.getDate()) + '/' + dosDigitos(d.getMonth() + 1);
+        var min = Math.max(0, Math.round((ahora.getTime() - ms) / 60000));
+        var hace;
+        if (min < 1) hace = 'recién';
+        else if (min < 60) hace = 'hace ' + min + ' min';
+        else hace = 'hace ' + Math.floor(min / 60) + ' h' + (min % 60 ? ' ' + (min % 60) + ' min' : '');
+        return 'desde las ' + hora + ' (' + hace + ')';
+    }
+
+    // Kilos con coma decimal y hasta 3 decimales, para los textos de la vista previa de cada pantalla.
+    function formatoKg(n) {
+        var v = Number(n);
+        if (!isFinite(v)) return '';
+        return v.toLocaleString('es-AR', { maximumFractionDigits: 3 });
+    }
+
+    // Helper para el resumen() de cada pantalla: arma {vistaPrevia, masItems} con los primeros items (aTexto(item) -> "Producto 4 kg").
+    function vistaPrevia(items, aTexto) {
+        var lista = (items || []).filter(Boolean);
+        return {
+            vistaPrevia: lista.slice(0, MAX_ITEMS_VISTA_PREVIA).map(function (i) { return aTexto(i); }),
+            masItems: Math.max(0, lista.length - MAX_ITEMS_VISTA_PREVIA)
+        };
+    }
+
+    // Marca ?desdeVentana=1 que pone "Abrir en ventana" (pantalla-trabajo.js). Se lee una sola vez y se saca de la URL: asi un F5 de la
+    // ventana vuelve a avisar como siempre.
+    function consumirMarcaDesdeVentana() {
+        try {
+            var url = new URL(window.location.href);
+            if (url.searchParams.get('desdeVentana') !== '1') return false;
+            url.searchParams.delete('desdeVentana');
+            window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+            return true;
+        } catch (err) {
+            console.warn('[DocumentoAbierto] no se pudo leer la marca desdeVentana', err);
+            return false;
+        }
+    }
+
     function crear(cfg) {
         var modulo = String(cfg.modulo || '');
         var idUsuario = String(cfg.idUsuario || 0);
@@ -69,6 +124,9 @@
         var liberadores = {};                // nombre de lock -> funcion que lo suelta
         var vivos = [];                      // claveInstancia de las pestañas vivas vistas en el ultimo descubrimiento
         var cedido = false;
+        var abiertoEn = Date.now();          // cuando se cargo esta pagina: el cartel de otra pestaña muestra "desde las HH:MM"
+        var temporizadorSenal = null;        // mientras esta pestaña titila por un "Señalar" de otra
+        var escuchaCerrado = null;
         var escuchaEstoy = null;
         var escuchaTrabajo = null;
         var escuchaAcuse = null;
@@ -178,9 +236,12 @@
                 if (m.t === 'quien') {
                     if (m.de === instanceId || !estado || !debeContestar(m)) return;
                     var r = resumenPropio();
+                    var lugar = detectarLugar();
                     enviar({
                         t: 'estoy', a: m.de, de: instanceId, tipo: estado.tipo, idRegistro: estado.idRegistro, ts: estado.ts,
                         clave: claveInstancia, cantLineas: r.cantLineas || 0, etiqueta: r.etiqueta || '', detalle: r.detalle || '',
+                        vistaPrevia: (r.vistaPrevia || []).slice(0, MAX_ITEMS_VISTA_PREVIA).map(String), masItems: r.masItems || 0,
+                        abiertoEn: abiertoEn, lugar: lugar.texto, enPos: lugar.enPos, minimizada: lugar.minimizada,
                         compat: cfg.compatibilidad ? String(cfg.compatibilidad()) : ''
                     });
                 } else if (m.t === 'estoy') {
@@ -191,6 +252,12 @@
                     if (m.a === instanceId && escuchaTrabajo) escuchaTrabajo(m);
                 } else if (m.t === 'recibido') {
                     if (m.a === instanceId && escuchaAcuse) escuchaAcuse(m);
+                } else if (m.t === 'senalar') {
+                    if (m.a === instanceId) senalarEstaPestana();
+                } else if (m.t === 'cerrar') {
+                    if (m.a === instanceId) atenderCierre(m);
+                } else if (m.t === 'cerrado') {
+                    if (m.a === instanceId && escuchaCerrado) escuchaCerrado(m);
                 }
             };
         }
@@ -305,9 +372,90 @@
             if (urls.listado) window.location.href = urls.listado;
         }
 
+        // ---- lugar y acciones sobre otra pestaña ----
+        // Donde vive ESTA pagina, en palabras del usuario, para que el cartel de la otra pestaña le diga donde buscarla. Una carga del POS
+        // (menu Cargas) vive en un <iframe> cuyo nombre empieza con PREFIJO_FRAME_POS (pos-trabajos.js) y, minimizada, no se ve en ninguna pestaña.
+        function detectarLugar() {
+            var oculta = document.visibilityState === 'hidden';
+            if ((window.name || '').indexOf(PREFIJO_FRAME_POS) === 0) {
+                var marco = null;
+                try { marco = window.frameElement; } catch (err) { marco = null; }   // sin acceso al marco: se asume minimizada
+                var visible = !!(marco && marco.closest && marco.closest('.modal.show') && !marco.classList.contains('d-none'));
+                return { texto: 'dentro del POS (menú Cargas)' + (visible ? '' : ', minimizada'), enPos: true, minimizada: !visible };
+            }
+            var texto = 'pestaña del navegador';
+            if (document.documentElement.classList.contains('modo-ventana')) {
+                var instalada = !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+                texto = instalada ? 'app instalada' : 'ventana independiente';
+            }
+            return { texto: texto + (oculta ? ' (en segundo plano)' : ''), enPos: false, minimizada: oculta };
+        }
+
+        // "Señalar" del cartel de otra pestaña: hace titilar el titulo de esta (y muestra una cinta si se la mira) para encontrarla en la barra
+        // de pestañas o de tareas. Se apaga sola a los DURACION_SENAL_MS o al tocar la cinta.
+        function senalarEstaPestana() {
+            if (temporizadorSenal) return;
+            var tituloOriginal = document.title;
+            var tituloAlterno = '▶ ACÁ · ' + tituloOriginal;
+            var alterno = false;
+            var cinta = document.createElement('div');
+            cinta.setAttribute('role', 'status');
+            cinta.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:20001;padding:.4rem .75rem;text-align:center;font-weight:600;' +
+                'background:#ffc107;color:#212529;cursor:pointer;';
+            cinta.textContent = 'Esta es la pantalla que te señaló el aviso de la otra pestaña. (Tocá acá para ocultar este cartel)';
+            if (document.body) document.body.appendChild(cinta);
+            var intervalo = window.setInterval(function () {
+                alterno = !alterno;
+                document.title = alterno ? tituloAlterno : tituloOriginal;
+            }, 700);
+            function terminar() {
+                window.clearInterval(intervalo);
+                window.clearTimeout(temporizadorSenal);
+                temporizadorSenal = null;
+                document.title = tituloOriginal;
+                if (cinta.parentNode) cinta.parentNode.removeChild(cinta);
+            }
+            cinta.addEventListener('click', terminar);
+            temporizadorSenal = window.setTimeout(terminar, DURACION_SENAL_MS);
+        }
+
+        // Lado B: pide a la pestaña `idOtra` que se cierre (vuelva al listado). Resuelve {ok} o null si no contesto a tiempo.
+        function pedirCierre(idOtra) {
+            return new Promise(function (resolve) {
+                var temporizador = window.setTimeout(function () { escuchaCerrado = null; resolve(null); }, ESPERA_TRABAJO_MS);
+                escuchaCerrado = function (m) {
+                    if (m.de !== idOtra) return;
+                    window.clearTimeout(temporizador);
+                    escuchaCerrado = null;
+                    resolve({ ok: !!m.ok });
+                };
+                enviar({ t: 'cerrar', a: idOtra, de: instanceId });
+            });
+        }
+
+        // Lado A: otra pestaña pidio cerrar esta. Solo se acepta si es un Nuevo SIN lineas (se vuelve a comprobar aca, el cartel pudo
+        // quedar viejo) y no es una carga del POS. Contesta primero y recien despues navega, para que el mensaje alcance a salir.
+        function atenderCierre(m) {
+            var puede = !!estado && estado.tipo === 'nuevo' && !cedido && (window.name || '').indexOf(PREFIJO_FRAME_POS) !== 0 &&
+                (resumenPropio().cantLineas || 0) === 0;
+            enviar({ t: 'cerrado', a: m.de, de: instanceId, ok: puede });
+            if (!puede) return;
+            cedido = true;
+            soltarTodosLosLocks();
+            estado = null;
+            try {
+                if (cfg.alCeder) cfg.alCeder();   // frena borradores y deja salir sin el aviso de "cambios sin guardar"
+            } catch (err) {
+                console.error('[DocumentoAbierto] fallo alCeder() al cerrar por pedido de otra pestaña', err);
+            }
+            window.setTimeout(irAlListado, 150);
+        }
+
         // ---- avisos ----
         // Devuelve {accion:'traer', id}|{accion:'aparte'}|{accion:'listado'}|{accion:'cerrado'}.
-        // o: {titulo, mensajes[], filas[{id, texto}], idTraer, textoTraer, textoAparte, permiteCerrar}
+        // o: {titulo, mensajes[], filas[{id, texto, sub, items, ayuda, acciones[{texto, titulo, clase, alClick(ctx)}]}], idTraer, textoTraer,
+        //     textoAparte, permiteCerrar}. ctx = {nota(texto), ocupado(bool), quitarFila()}: si se quitan todas las filas, el cartel se cierra
+        // como "cargar aparte" (ya no queda nada abierto que avisar).
         function preguntar(o) {
             return new Promise(function (resolve) {
                 if (!window.Swal) {
@@ -323,29 +471,70 @@
                     contenido.appendChild(p);
                 });
                 var elegido = null;
-                (o.filas || []).forEach(function (fila) {
+                var filasRestantes = (o.filas || []).length;
+
+                function lineaDeTexto(caja, texto, estilo) {
+                    if (!texto) return;
                     var linea = document.createElement('div');
-                    linea.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.25rem 0;';
-                    var rotulo = document.createElement('span');
-                    rotulo.textContent = fila.texto;
-                    linea.appendChild(rotulo);
-                    if (fila.id) {
+                    linea.style.cssText = estilo;
+                    linea.textContent = texto;
+                    caja.appendChild(linea);
+                }
+
+                (o.filas || []).forEach(function (fila) {
+                    var caja = document.createElement('div');
+                    caja.style.cssText = 'border:1px solid var(--bs-border-color,#dee2e6);border-radius:.4rem;padding:.4rem .6rem;margin:.4rem 0;';
+                    lineaDeTexto(caja, fila.texto, 'font-weight:600;');
+                    lineaDeTexto(caja, fila.sub, 'font-size:.85em;opacity:.85;');
+                    lineaDeTexto(caja, fila.items, 'font-size:.85em;');
+                    lineaDeTexto(caja, fila.ayuda, 'font-size:.85em;font-style:italic;');
+                    var nota = document.createElement('div');
+                    nota.style.cssText = 'font-size:.85em;color:var(--bs-primary,#0d6efd);';
+                    caja.appendChild(nota);
+
+                    var botones = document.createElement('div');
+                    botones.style.cssText = 'display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.3rem;';
+                    var nuevoBoton = function (texto, clase) {
                         var boton = document.createElement('button');
                         boton.type = 'button';
-                        boton.className = 'btn btn-sm btn-primary';
-                        boton.textContent = 'Traer este';
-                        boton.addEventListener('click', function () {
+                        boton.className = 'btn btn-sm ' + clase;
+                        boton.textContent = texto;
+                        botones.appendChild(boton);
+                        return boton;
+                    };
+                    if (fila.id) {
+                        nuevoBoton('Traer este', 'btn-primary').addEventListener('click', function () {
                             elegido = { accion: 'traer', id: fila.id };
                             window.Swal.close();
                         });
-                        linea.appendChild(boton);
                     }
-                    contenido.appendChild(linea);
+                    var ctx = {
+                        nota: function (texto) { nota.textContent = texto || ''; },
+                        ocupado: function (valor) {
+                            Array.prototype.forEach.call(botones.querySelectorAll('button'), function (b) { b.disabled = !!valor; });
+                        },
+                        quitarFila: function () {
+                            if (caja.parentNode) caja.parentNode.removeChild(caja);
+                            filasRestantes--;
+                            if (filasRestantes <= 0) {
+                                elegido = { accion: 'aparte' };
+                                window.Swal.close();
+                            }
+                        }
+                    };
+                    (fila.acciones || []).forEach(function (accion) {
+                        var boton = nuevoBoton(accion.texto, accion.clase || 'btn-outline-secondary');
+                        if (accion.titulo) boton.title = accion.titulo;
+                        boton.addEventListener('click', function () { accion.alClick(ctx); });
+                    });
+                    if (botones.childNodes.length) caja.appendChild(botones);
+                    contenido.appendChild(caja);
                 });
                 window.Swal.fire({
                     icon: 'warning',
                     title: o.titulo,
                     html: contenido,
+                    width: (o.filas || []).length ? '42rem' : undefined,
                     showConfirmButton: !!o.idTraer,
                     confirmButtonText: o.textoTraer || 'Traer a esta pestaña',
                     showDenyButton: true,
@@ -392,11 +581,14 @@
             opciones = opciones || {};
             cedido = false;
             estado = { tipo: 'nuevo', idRegistro: 0, ts: Date.now() };
+            // "Abrir en ventana" marca la URL de la ventana nueva (pantalla-trabajo.js): la pestaña de origen se esta yendo, no corresponde
+            // avisar de ella. Igual se descubren las pestañas vivas (para no adoptar el borrador local de una que sigue abierta).
+            var vieneDeVentana = consumirMarcaDesdeVentana();
             return tomarLock(nombreNuevo(instanceId), false).then(function () {
                 if (opciones.sinAviso) return { accion: 'seguir' };
                 return locksAjenos().then(function (ajenos) {
                     return descubrir().then(function (respuestas) {
-                        return evaluarNuevo(respuestas, ajenos);
+                        return vieneDeVentana ? { accion: 'seguir' } : evaluarNuevo(respuestas, ajenos);
                     });
                 });
             });
@@ -407,6 +599,62 @@
             if (!textos.rotuloGrupo) return '';
             // etiquetaGrupo() da el nombre con sus mayusculas originales (el grupo se compara en minusculas).
             return ' ' + textos.rotuloGrupo.replace('{grupo}', cfg.etiquetaGrupo ? cfg.etiquetaGrupo() : grupo);
+        }
+
+        // Una fila del cartel por cada documento abierto en otra pestaña/ventana: que es, donde esta, desde cuando y que tiene cargado,
+        // con "Traer este" / "Señalar" / "Cerrar" segun corresponda. Los textos vienen de otra pestaña: se pintan con textContent.
+        function filaDeAbierto(m) {
+            var esNuevoOtra = m.tipo === 'nuevo';
+            var soportaAcciones = !!m.lugar;   // una pestaña con la version vieja de este script no entiende "senalar" ni "cerrar"
+            var vacio = !(m.cantLineas > 0);
+
+            var partes = [esNuevoOtra ? 'Nuevo' : 'Edición #' + m.idRegistro];
+            if (m.etiqueta) partes.push(m.etiqueta);
+            partes.push(m.detalle || (vacio ? 'vacío' : textoLineas(m.cantLineas) + (m.cantLineas === 1 ? ' cargada' : ' cargadas')));
+
+            var items = (m.vistaPrevia || []).join(' · ');
+            if (items && m.masItems > 0) items += ' · y ' + m.masItems + ' más';
+
+            var acciones = [];
+            // Una carga dentro del POS no tiene pestaña que titilar ni se puede cerrar desde afuera: se vuelve a ella desde la barra del POS.
+            if (soportaAcciones && !m.enPos) {
+                acciones.push({
+                    texto: 'Señalar',
+                    titulo: 'Hace titilar el título de esa pestaña o ventana para que la encuentres',
+                    clase: 'btn-outline-secondary',
+                    alClick: function (ctx) {
+                        enviar({ t: 'senalar', a: m.de, de: instanceId });
+                        ctx.nota('Señalada: mirá la barra de pestañas o la de tareas, titila unos segundos.');
+                    }
+                });
+                // Solo un Nuevo vacio se puede cerrar sin perder nada; la otra pestaña lo vuelve a comprobar antes de irse.
+                if (esNuevoOtra && vacio) {
+                    acciones.push({
+                        texto: 'Cerrar',
+                        titulo: 'Cierra ese ' + singular + ' vacío (esa pestaña vuelve al listado)',
+                        clase: 'btn-outline-danger',
+                        cerrar: true,
+                        alClick: function (ctx) {
+                            ctx.ocupado(true);
+                            pedirCierre(m.de).then(function (r) {
+                                ctx.ocupado(false);
+                                if (r && r.ok) ctx.quitarFila();
+                                else ctx.nota(r ? 'No se cerró: ya tiene algo cargado.' : 'La otra pestaña no respondió.');
+                            });
+                        }
+                    });
+                }
+            }
+
+            return {
+                // "Traer este": solo un Nuevo con algo cargado y compatible (una edicion tiene su propio id y no cabe en un formulario nuevo).
+                id: esNuevoOtra && !vacio && puedeTraer(m) ? m.de : null,
+                texto: partes.join(' · '),
+                sub: [m.lugar || 'otra pestaña o ventana', m.abiertoEn ? textoApertura(m.abiertoEn) : ''].filter(Boolean).join(' · '),
+                items: items,
+                ayuda: m.enPos ? 'Para volver a ella: botón amarillo «… en curso» de la barra del POS (menú Cargas).' : '',
+                acciones: acciones
+            };
         }
 
         function evaluarNuevo(respuestas, ajenos) {
@@ -422,39 +670,26 @@
             var total = anteriores.length + sinResponder.length;
             if (!total) return Promise.resolve({ accion: 'seguir' });
 
-            var mensajes = [];
-            var filas = [];
-            var idTraer = null;
-            var titulo;
-            if (cfg.modoLista) {
-                titulo = 'Ya tenés ' + (total === 1 ? 'un ' + singular + ' nuevo abierto' : total + ' ' + plural + ' nuevos abiertos');
-                mensajes.push('Están abiertos en otras pestañas o ventanas. Elegí cuál traer a esta pestaña, o cargá uno nuevo aparte.');
-                anteriores.forEach(function (m) {
-                    var esNuevoOtra = m.tipo === 'nuevo';
-                    var partes = [m.etiqueta || ('Nuevo ' + singular), esNuevoOtra ? 'nuevo' : 'edición #' + m.idRegistro, m.detalle || textoLineas(m.cantLineas)];
-                    // Solo un Nuevo con algo cargado y compatible se puede traer: una edicion tiene su propio id y no cabe en un formulario nuevo.
-                    filas.push({ id: esNuevoOtra && m.cantLineas > 0 && puedeTraer(m) ? m.de : null, texto: partes.join(' · ') });
+            var titulo = (total === 1 ? 'Ya tenés un ' + singular + ' nuevo abierto' : 'Tenés ' + total + ' ' + plural + ' nuevos abiertos') + sufijoGrupo();
+            var filas = anteriores.map(filaDeAbierto);
+            sinResponder.forEach(function () {
+                filas.push({
+                    texto: 'Una pestaña que no responde',
+                    sub: 'Puede estar suspendida por el navegador: no se puede traer su trabajo, buscala entre tus pestañas.',
+                    acciones: []
                 });
-            } else if (total === 1 && anteriores.length === 1) {
-                var unico = anteriores[0];
-                titulo = 'Ya tenés un ' + singular + ' nuevo abierto' + sufijoGrupo();
-                mensajes.push('Hay un ' + singular + ' nuevo abierto en otra pestaña o ventana (' +
-                    (unico.cantLineas > 0 ? textoLineas(unico.cantLineas) + (unico.cantLineas === 1 ? ' cargada' : ' cargadas') : 'todavía vacío') + ').');
-                mensajes.push(unico.cantLineas > 0
-                    ? 'Podés traerlo a esta pestaña, cargar otro nuevo aparte (independiente) o volver al listado.'
-                    : 'Podés cargar otro nuevo aparte (independiente) o volver al listado.');
-                if (unico.cantLineas > 0 && puedeTraer(unico)) idTraer = unico.de;
-            } else {
-                titulo = 'Tenés ' + total + ' ' + plural + ' nuevos abiertos' + sufijoGrupo();
-                mensajes.push('Están en otras pestañas o ventanas: buscalos ahí para continuar con alguno. Desde acá podés cargar otro nuevo aparte o volver al listado.');
-            }
-            if (sinResponder.length) {
-                mensajes.push(sinResponder.length + (sinResponder.length === 1 ? ' pestaña no responde' : ' pestañas no responden') +
-                    ' (puede estar suspendida por el navegador): no se puede traer su trabajo, buscala entre tus pestañas.');
-            }
+            });
+
+            var hayTraible = filas.some(function (f) { return !!f.id; });
+            var hayCerrable = filas.some(function (f) { return f.acciones.some(function (a) { return a.cerrar; }); });
+            var mensajes = [(total === 1 ? 'Está abierto' : 'Están abiertos') + ' en otra pestaña, otra ventana o dentro del POS. Abajo ves dónde, desde cuándo y qué tiene cargado.'];
+            mensajes.push(hayTraible
+                ? 'Podés traer lo cargado a esta pestaña, cargar otro nuevo aparte (independiente) o volver al listado.'
+                : 'Podés cargar otro nuevo aparte (independiente) o volver al listado.');
+            if (hayCerrable) mensajes.push('Si es uno vacío que ya no usás, tocá «Cerrar» y seguí acá.');
 
             return preguntar({
-                titulo: titulo, mensajes: mensajes, filas: filas, idTraer: idTraer, textoAparte: 'Cargar otro nuevo aparte'
+                titulo: titulo, mensajes: mensajes, filas: filas, textoAparte: 'Cargar otro nuevo aparte'
             }).then(function (r) {
                 if (r.accion === 'listado') { irAlListado(); return { accion: 'listado' }; }
                 if (r.accion === 'traer') {
@@ -495,7 +730,7 @@
             var otra = anteriores[0] || null;
             var mensajes = [];
             if (otra) {
-                mensajes.push('Otra pestaña o ventana lo tiene abierto para modificar (' + textoLineas(otra.cantLineas) + ').');
+                mensajes.push('Otra pestaña o ventana lo tiene abierto para modificar (' + textoLineas(otra.cantLineas) + (otra.lugar ? ', ' + otra.lugar : '') + (otra.abiertoEn ? ', ' + textoApertura(otra.abiertoEn) : '') + ').');
                 mensajes.push('Si lo modificás en las dos, la última que guarde pisa a la otra. Podés traer esa modificación a esta pestaña, cargar uno nuevo aparte o volver al listado.');
             } else {
                 mensajes.push('Este ' + singular + ' está abierto para modificar en una pestaña que no responde (puede estar suspendida por el navegador). Buscala entre tus pestañas.');
@@ -601,5 +836,5 @@
         };
     }
 
-    window.DocumentoAbierto = { crear: crear };
+    window.DocumentoAbierto = { crear: crear, vistaPrevia: vistaPrevia, formatoKg: formatoKg };
 })(window, document);

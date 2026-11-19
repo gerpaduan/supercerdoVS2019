@@ -123,7 +123,15 @@
                             partesPesaje.Add(mediasPesaje);
                         }
 
-                        resumenPesaje = soloProductosFila ? "Solo productos" : string.Join(" | ", partesPesaje);
+                        // Medias en 0 con un proveedor real (no «Indefinido», el que deja «Solo productos») es un pesaje de medias guardado
+                        // con los datos pendientes (aviso «guardar en cero», 2026-11-19): se muestra el proveedor y «sin pesar».
+                        // HACK: la fila solo trae el nombre del proveedor (no su id), por eso se compara por texto; es solo de presentacion.
+                        bool proveedorPesajeReal = !string.IsNullOrWhiteSpace(proveedorOrigen)
+                            && !string.Equals(proveedorOrigen.Trim(), "Indefinido", StringComparison.OrdinalIgnoreCase);
+                        if (soloProductosFila && proveedorPesajeReal)
+                            resumenPesaje = proveedorPesaje + " | sin pesar";
+                        else
+                            resumenPesaje = soloProductosFila ? "Solo productos" : string.Join(" | ", partesPesaje);
                     }
 
                     // Tipo de accion para la franja de color y el icono de la fila (2026-11-14). Pesaje/Ajuste salen del tipo o del detalle

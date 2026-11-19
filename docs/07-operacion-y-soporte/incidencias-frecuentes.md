@@ -13,6 +13,14 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-19 - Aparece «Ya tenés un movimiento nuevo abierto» y el usuario no ve nada abierto
+
+- **Sintoma**: al abrir un Nuevo de Stock, Movimientos o Elaborados sale el aviso de «ya tenés uno abierto» (a veces «todavía vacío») y el usuario no sabe dónde está ni qué tiene.
+- **Causa**: el aviso (`documento-abierto.js`) sale solo si otra página viva del mismo navegador **contestó** por el BroadcastChannel como Nuevo del mismo módulo/usuario/acción. Casos reales: carga **minimizada dentro del POS** (menú Cargas, es un iframe que sigue vivo), ventana independiente o app instalada fuera de vista, pestaña restaurada por el navegador, y —hasta este cambio— la ventana nueva de «Abrir en ventana» avisando por la pestaña de origen que todavía se estaba yendo. Los 28 de «Stock sin guardar» son borradores del servidor, no disparan este aviso.
+- **Resolucion**: el aviso lista cada abierto con dónde está, desde qué hora y los primeros ítems, con **Traer este**, **Señalar** (titila esa pestaña) y **Cerrar** (solo Nuevos vacíos). «Abrir en ventana» agrega `?desdeVentana=1` y la ventana nueva no avisa de la pestaña de origen (se consume y se borra de la URL: un F5 vuelve a chequear). Ver `docs/DECISIONS.md` (2026-11-19).
+
+---
+
 ## 2026-11-11 - POS: se registró una venta con la caja ya cerrada desde otra terminal
 
 - **Sintoma**: se cerró la caja de un cajero desde otra PC y su POS (abierto, última actividad antes del cierre) dejó cargar y **registrar una venta más**; recién después saltó el modal de abrir caja. La venta quedó fuera de caja y el cierre inconsistente.

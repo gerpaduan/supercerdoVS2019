@@ -18,6 +18,42 @@ namespace DatosPostgres
             _idEmpresa = idEmpresa;
         }
 
+        // Una consulta por origen (nunca SQL armado con texto del cliente: el origen se elige de una lista fija).
+        public bool EsCargaPropia(string origen, int id, int idOperador, DateTime desde)
+        {
+            if (id <= 0 || idOperador <= 0) return false;
+
+            string sql;
+            switch (origen)
+            {
+                case "stock":
+                    sql = @"SELECT EXISTS (SELECT 1 FROM compras c
+                                           WHERE c.idcompra = @id AND c.creadopor = @idOperador AND c.creado >= @desde
+                                             AND c.tipocompra IN ('Ingreso Stock', 'Egreso Stock', 'Pesaje Cortes', 'Ajuste Stock', 'Cierre Stock')
+                                             AND COALESCE(c.estado, '') <> 'Anulado')";
+                    break;
+                case "movimiento":
+                    sql = @"SELECT EXISTS (SELECT 1 FROM movimiento m
+                                           WHERE m.idmovimiento = @id AND m.creadopor = @idOperador AND m.creado >= @desde)";
+                    break;
+                case "elaborado":
+                    sql = @"SELECT EXISTS (SELECT 1 FROM embutidos e
+                                           WHERE e.idembutido = @id AND e.creadopor = @idOperador AND e.creado >= @desde
+                                             AND COALESCE(e.estado, '') <> 'Anulado')";
+                    break;
+                default:
+                    return false;
+            }
+
+            object existe = DbPg.Scalar(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("id", id);
+                p.AddWithValue("idOperador", idOperador);
+                p.AddWithValue("desde", desde);
+            });
+            return existe != null && existe != DBNull.Value && Convert.ToBoolean(existe);
+        }
+
         public DataTable ListarCargasDesde(int idOperador, DateTime desde, int limitePorTipo)
         {
             if (idOperador <= 0) return new DataTable();

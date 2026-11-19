@@ -15,5 +15,10 @@ namespace Contratos
         // movimiento: ''), id, creado, lineas (cantidad), kg (suma en valor absoluto), detalle (movimiento: sucursal destino;
         // elaborado: producto elaborado; stock: '').
         DataTable ListarCargasDesde(int idOperador, DateTime desde, int limitePorTipo);
+
+        // true si ese registro (origen 'stock' | 'movimiento' | 'elaborado') lo cargo el operador (creadopor) desde ese momento
+        // (creado >= desde) y no esta anulado. Es la regla "propio de la caja" para modificar desde el POS sin el permiso del modulo
+        // (2026-11-19), la misma que usa ListarCargasDesde para armar la lista.
+        bool EsCargaPropia(string origen, int id, int idOperador, DateTime desde);
     }
 }

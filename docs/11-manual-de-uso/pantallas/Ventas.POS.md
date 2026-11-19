@@ -271,7 +271,7 @@ Buscar el cliente, ver sus movimientos, registrar un cobro y un pago, y cómo qu
 ![Video: cuentas corrientes, pagos y cobros desde el punto de venta](media:Ventas.POS/tutorial-ctacte.mp4)
 
 ### Salir del POS con una venta en curso
-Si hay productos cargados y tocás **Salir** (o intentás cerrar el POS), no te deja salir y muestra el aviso **«Hay una venta en curso»**: si presionás **Cancelar Venta** se pierden los datos de esa venta; para conservarla, guardala primero y recién después salí. (Texto verificado contra el código 2026-11-13; PENDIENTE probarlo en pantalla.)
+Si hay productos cargados y tocás **Inicio** (o intentás cerrar el POS), no te deja salir y muestra el aviso **«Hay una venta en curso»**: si presionás **Cancelar Venta** se pierden los datos de esa venta; para conservarla, guardala primero y recién después salí. (Texto verificado contra el código 2026-11-13; PENDIENTE probarlo en pantalla.)
 
 ### Forma de pago en Mis ventas y venta vinculada en Mis actividades
 En **Mis ventas** (F6), la tarjeta de una venta mixta ahora dice, por ejemplo, **Transferencia | Efectivo**, y al desplegarla aparece el bloque **Forma de pago** con cuánto fue en efectivo y cuánto en el otro medio. En **Mis actividades**, las filas **Pago Electronico** y **Cta Cte** muestran la etiqueta **Venta N** y, al desplegar la fila, la venta vinculada con sus productos y el botón **Abrir detalle** (ver [Cajas.EgresosCaja](ayuda:pantalla/Cajas.EgresosCaja)). (Verificado contra el código 2026-11-14; PENDIENTE probarlo en pantalla.)
@@ -280,7 +280,7 @@ En **Mis ventas** (F6), la tarjeta de una venta mixta ahora dice, por ejemplo, *
 Si entrás con la cuenta compartida de producción y ya te autorizaste como operario, al tocar **Duplicar POS** el duplicado se abre directo con **el mismo operario**, sin volver a pedir la identificación (también en el POS de Puntos de Expendio). Si en el POS original la autorización ya venció, el duplicado sí pide autorizarse. Con **Cambiar operario** en el duplicado cambiás solo el operario del duplicado; el original conserva el suyo. Las autorizaciones provisorias de otro usuario no se pasan al duplicado. (Verificado contra el código 2026-11-14; PENDIENTE probarlo en pantalla.)
 
 ### Recorrido por la pantalla
-Empresa, sucursal, fecha y hora, Duplicar POS, Salir, colores (claro, gris, oscuro), buscador de productos (F10), comentario de la venta, cancelar la venta, ayuda (F1), Mis actividades y Mis ventas.
+Empresa, sucursal, fecha y hora, Duplicar POS, Inicio, colores (claro, gris, oscuro), buscador de productos (F10), comentario de la venta, cancelar la venta, ayuda (F1), Mis actividades y Mis ventas.
 
 ![Video: recorrido por la pantalla del punto de venta](media:Ventas.POS/tutorial-recorrido.mp4)
 
@@ -329,7 +329,7 @@ Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el co
 ## Como aplicación instalada (desde 2026-11-17)
 - Se instala desde **Configuración → Utilidades → Aplicaciones instalables → Punto de venta → Instalar** (ver [Utilidades](ayuda:pantalla/Home.Utilidades)). Queda con el nombre **Punto de venta**, su propio ícono y su propia ventana.
 - Abre directo en el POS, sin ir por Inicio. Los enlaces a otras secciones del sistema no funcionan en esta ventana: muestran «No disponible en esta ventana».
-- El botón **Salir** (← arriba), cancelar la apertura de caja o cancelar la elección de operador **cierran la ventana** en lugar de ir a Inicio. Si hay una venta en curso, el navegador pregunta antes de cerrar. Ver una venta o cobrar siguen funcionando dentro de la ventana.
+- El botón **Cerrar** (arriba, en la app instalada), cancelar la apertura de caja o cancelar la elección de operador **cierran la ventana** en lugar de ir a Inicio. Si hay una venta en curso, el navegador pregunta antes de cerrar. Ver una venta o cobrar siguen funcionando dentro de la ventana.
 - **Sin menú solo en las apps de Utilidades:** únicamente las apps instaladas desde **Utilidades** abren sin menú lateral. Si usás la app general **CarniSys** (o una pestaña del navegador) y entrás a esta pantalla, el **menú se ve** y los enlaces funcionan; la ventana de **Abrir en ventana** sí va sin menú. Si instalaste esta app antes del 2026-11-17, **desinstalala y reinstalala desde Utilidades** para que tome esta regla (Stock, Movimientos y Elaborados ya la traían).
 - PENDIENTE: no se probó la instalación real en producción ni el uso de **Duplicar POS** dentro de la app instalada.
 
@@ -341,9 +341,14 @@ El botón **Cargas** de la barra de arriba (junto a la campana) abre, **sin sali
 - **No se cierra por accidente:** tocar afuera o Esc no hace nada. Se **Minimiza** (queda un botón amarillo «<carga> en curso» en la barra, que la trae de vuelta con lo cargado) o se **Descarta** (con confirmación; se pierde lo cargado).
 - **Una de cada tipo a la vez.** Se pueden tener, por ejemplo, un ingreso de stock y un movimiento abiertos a la vez, cada uno con su botón. Tocar un tipo ya en curso vuelve a él.
 - **Al guardar** la ventana se cierra sola, aparece un aviso («Movimiento guardado») y la lista se actualiza.
-- **Cargado desde que abriste la caja:** abajo del menú se lista lo que **vos** cargaste desde la apertura de tu caja (hora, tipo y resumen: «3 productos · 48,500 kg»). El **ojo** abre el detalle de solo lectura. Con «operar sin caja» no hay apertura: dice **«Cargado hoy»**. Se ve también lo cargado fuera del POS. Sirve para verificar que no cargaste dos veces lo mismo.
+- **Cargado desde que abriste la caja:** abajo del menú se lista lo que **vos** cargaste desde la apertura de tu caja (hora, tipo y resumen: «3 productos · 48,500 kg»). Tocar una fila (o el **ojo**) abre **ese registro** en la misma ventana, en **solo lectura**, con el botón **Modificar** de su pantalla (igual que desde el listado del módulo). Cada tipo tiene su ícono de color. Con «operar sin caja» no hay apertura: dice **«Cargado hoy»**. Se ve también lo cargado fuera del POS. Sirve para verificar que no cargaste dos veces lo mismo.
 - **Aviso de posible duplicado:** si abrís un tipo que ya figura en esa lista, arriba de la pantalla aparece una franja amarilla («Ya cargaste un ingreso de stock a las 10:42…»). Avisa, no bloquea.
 - **Sin permiso:** si el usuario de la caja no tiene el permiso de esa pantalla, se ofrece **«Autorizar con otro usuario»**: otro usuario que sí lo tenga pone su usuario y clave y la carga se abre. Vale solo para ese tipo, para una carga **nueva** y hasta guardarla o descartarla (queda registrado en la auditoría de autorizaciones). El **ajuste de stock** lo puede autorizar solo un **administrador**.
 - La carga queda a nombre de quien opera la caja (con la cuenta de producción, el operador elegido en el POS).
 - Con SQL Server (no es la base oficial) el menú funciona pero **no muestra la lista** de lo cargado.
 - PENDIENTE: no se probó con balanza real, con el bloqueo por inactividad activado ni con una caja abierta (solo «operar sin caja»), ni el paso de autorizar con otro usuario en el navegador.
+
+### Modificar lo cargado, botón «Inicio» y aviso al salir (desde 2026-11-19)
+- **Modificar:** en «Cargado desde que abriste la caja», tocá la fila o el **ojo**: se abre ese registro (ingreso, egreso, pesaje, movimiento, elaborado…) dentro del POS, en solo lectura, y con **Modificar** lo cambiás y guardás. Se puede hacer aunque tu usuario no tenga el permiso de modificar de ese módulo, **siempre que lo hayas cargado vos desde que abriste tu caja** (o hoy, con «operar sin caja»). **Eliminar** y el **ajuste de stock** no entran en esto (el ajuste es solo de administradores). Un registro abierto es una carga más: se minimiza, queda su botón «… en curso» y se descarta sin borrar el registro.
+- **Botón de salida:** se llama **Inicio** (ícono de casa) y va a la pantalla de Inicio. En la **app instalada del POS** dice **Cerrar** y cierra la ventana. Al modificar una venta dice **Volver**.
+- **Aviso al salir:** si tenés cargas abiertas o una compra sin guardar, antes de salir avisa nombrándolas («Tenés sin guardar: Movimiento #1008777, Compra. Si salís se pierden.») con **Salir igual** / **Seguir en el POS**. Una venta en curso sigue pidiendo **Cancelar Venta**.

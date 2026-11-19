@@ -1671,7 +1671,16 @@
                 urls: config.documentoAbierto.urls,
                 textos: { singular: 'elaborado', plural: 'elaborados' },
                 resumen: function () {
-                    return { cantLineas: (state.lineas || []).length, etiqueta: ($elaboradoNombre.val() || '').trim() };
+                    // Vista previa para el cartel de "ya abierto" (documento-abierto.js): primeros ingredientes con su cantidad.
+                    var previa = window.DocumentoAbierto.vistaPrevia(state.lineas || [], function (l) {
+                        return (l.Producto || l.Codigo || '?') + ' ' + window.DocumentoAbierto.formatoKg(l.CantKg) + ' kg';
+                    });
+                    return {
+                        cantLineas: (state.lineas || []).length,
+                        etiqueta: ($elaboradoNombre.val() || '').trim(),
+                        vistaPrevia: previa.vistaPrevia,
+                        masItems: previa.masItems
+                    };
                 },
                 obtenerPaquete: obtenerPaquete,
                 aplicarPaquete: aplicarPaquete,

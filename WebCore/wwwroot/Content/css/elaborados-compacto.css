@@ -36,7 +36,37 @@
     }
 }
 
+/* ---- Ingreso rapido / Desarme: datos de cabecera con letra fuerte (pedido 2026-11-19) ----
+   Sucursal / Fecha / Usuario en negrita; Codigo en negrita y mas grande; Elaborado con el tamano de la cantidad
+   (1.25rem = form-control-lg de #CantidadRapida; en escritorio compacto sube a 1.3rem, ver mas abajo).
+   Se acota con data-elaborados-page para no tocar Carga ni las otras pestanas. El Elaborado lleva !important
+   porque .app-product-highlight (custom.css) fija .92rem con !important. */
+body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-fila-datos .form-control {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--ui-text, #212529);
+}
+
+body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-campo-codigo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ui-text, #212529);
+}
+
+body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-campo-elaborado {
+    font-size: 1.25rem !important;
+}
+
 @media (min-width: 1200px) {
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-campo-elaborado {
+        font-size: 1.3rem !important;
+    }
+
+    /* El min-height va con .elaborados-section-box para ganarle al 1.9rem de la regla compacta de mas abajo. */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"].elaborados-compacto .elaborados-section-box :is(.elaborados-campo-codigo, .elaborados-campo-elaborado) {
+        min-height: 2.5rem;
+    }
+
     /* ---- Pestanas + botones (Volver / Elaborados sin guardar) en UN renglon ---- */
     body.app-shell .elaborados-compacto {
         display: grid;

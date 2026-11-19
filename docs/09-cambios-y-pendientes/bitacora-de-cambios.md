@@ -1,5 +1,16 @@
 # Bitacora de cambios
 
+## 2026-11-19 (b) - Botones Guardar, Cancelar, Modificar y Anular sin foco del teclado
+
+- **Cambio:** en Movimientos, Stock, Elaborados (carga e ingreso rápido) y Compras los botones **Guardar**, **Cancelar**, **Modificar** y **Anular** ya no toman el foco: Tab no se detiene en ellos, el clic no los deja enfocados y solo responden al clic o al atajo de la pantalla (Alt+Enter, Alt+G, Alt+C en Compras). Además, Enter dentro de un campo de esos formularios ya no guarda por envío implícito (se mantiene el Enter propio de Código/Cantidad/editor y el guardado con Enter en Cantidad del ingreso rápido).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/sin-foco-botones.js` (nuevo), atributo `data-sin-foco tabindex="-1"` en `Views/Movimientos/Editar`, `Stock/Editar`, `Elaborados/Carga`, `Elaborados/EditarIngresoRapido`, `Compras/Editar`; manual de las 5 pantallas.
+- **Verificado (2026-11-19, WebCore local con usuario de prueba, ya borrado):** Movimientos (Enter en Envío no envía, Tab salta Guardar y Cancelar, el clic en Guardar no deja foco), y botones marcados con `tabindex=-1` en Stock (nuevo y existente), Elaborados (carga nueva y existente, ingreso rápido existente) y Compras nueva; clic en Modificar de Elaborados sin foco en el botón. **Pendiente:** probar Compras existente (Modificar), Anular con clic y el POS (Cargas); `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-19 - Aviso de «documento ya abierto»: dónde está, desde cuándo, qué tiene, Señalar y Cerrar
+
+- **Cambio:** el cartel de Stock, Movimientos y Elaborados (carga e ingreso rápido) lista una fila por cada abierto con dónde está (pestaña, ventana, app instalada o dentro del POS), desde qué hora y los primeros ítems; botones **Traer este**, **Señalar** (esa pestaña titila) y **Cerrar** (solo Nuevos vacíos). «Abrir en ventana» ya no hace que la ventana nueva avise por la pestaña de origen (`?desdeVentana=1`). Análisis de por qué aparecía «sin nada abierto» en `DECISIONS.md` y `incidencias-frecuentes.md`.
+- **Pendiente:** probar en el sistema real con login (verificado solo en un arnés con el `documento-abierto.js` real); ver con el POS real una carga minimizada; `scripts/check-ayuda.ps1` antes del deploy.
+
 ## 2026-11-17 (i) - Sin menú lateral solo en las apps independientes de Utilidades
 
 - **Cambio:** en la app general «CarniSys» instalada, Elaborados / Stock / Movimientos / POS ya no pierden el menú ni los enlaces: la marca de «app independiente» pasó a ser el `?ventana=1` del `start_url` de cada mini-app (`app-independiente.js`, `sessionStorage`), no `display-mode: standalone`. «Abrir en ventana» sigue sin menú; una pestaña normal con `?ventana=1` muestra el menú. Manifests de POS, Expendio y Existencia con `?ventana=1`. Detalle: `docs/DECISIONS.md` (2026-11-17 i). Manual: `Home.Utilidades.md`, `Ventas.POS.md`, `PuntosExpendio.POS.md`, `Stock.ExistenciaPorSucursales.md`.

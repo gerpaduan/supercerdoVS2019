@@ -165,6 +165,18 @@ namespace WebCore.Controllers
             return View(model);
         }
 
+        // "Propio de la caja" (2026-11-19, docs/DECISIONS.md "Cargas desde el POS: modificar lo cargado"): abierto desde el POS (llega
+        // posInstanceId), un registro que cargo este operador desde que abrio su caja se puede ver y modificar aunque no tenga el
+        // permiso. Se valida de nuevo en el servidor (CargasPosPropias); un posInstanceId inventado no habilita registros ajenos.
+        private bool PropiaDeLaCajaDesdePos(string posInstanceId, string origen, int id, int idUsuarioCreador)
+        {
+            if (string.IsNullOrEmpty(posInstanceId) || id <= 0) return false;
+
+            var sesion = _usuarioActual;
+            var operador = ResolverUsuarioCreador(idUsuarioCreador, sesion);
+            return WebCore.Helpers.CargasPosPropias.EsPropiaDeLaCaja(_empresa, _param, sesion, operador, origen, id);
+        }
+
         // Alta autorizada desde el POS (2026-11-18, docs/DECISIONS.md "Cargas desde el POS"): el cajero no tiene el permiso de
         // Movimientos y otro usuario que SI lo tiene lo autorizo para esta pestana del POS (VentasController.AbrirCargaPOS).
         private bool AltaAutorizadaDesdePos(string posInstanceId) =>
@@ -201,6 +213,13 @@ namespace WebCore.Controllers
                 // Port de Web/Controllers/MovimientosController.cs:192-199.
                 puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, model.FechaMovimiento, user.Id);
                 bool puedeVer = puedeModificar || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.VerMovimientos, model.FechaMovimiento, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */);
+
+                // Abierto desde el POS: un movimiento propio de la caja se ve y se modifica sin el permiso (2026-11-19).
+                if (!puedeModificar && PropiaDeLaCajaDesdePos(posInstanceId, "movimiento", id, idUsuarioCreador))
+                {
+                    puedeModificar = true;
+                    puedeVer = true;
+                }
 
                 // Registro anterior a hoy desde la cuenta de produccion: si ella sola no alcanza, se pide la clave de la
                 // persona elegida y su permiso por fecha se SUMA al de la cuenta (docs/DECISIONS.md, 2026-10-15).
@@ -513,7 +532,11 @@ namespace WebCore.Controllers
                 DateTime fechaPermisoGuardar = model?.FechaMovimiento ?? DateTime.Today;
                 // Alta desde el POS autorizada por otro usuario (2026-11-18): vale solo para un movimiento nuevo.
                 bool altaAutorizadaPos = model != null && model.IdMovimiento <= 0 && AltaAutorizadaDesdePos(posInstanceId);
-                if (!altaAutorizadaPos && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, fechaPermisoGuardar, user.Id))
+                // Y un movimiento ya cargado que es propio de la caja (se modifica desde el POS sin el permiso, 2026-11-19).
+                bool puedeGuardarMov = altaAutorizadaPos
+                    || _oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, fechaPermisoGuardar, user.Id)
+                    || (model != null && model.IdMovimiento > 0 && PropiaDeLaCajaDesdePos(posInstanceId, "movimiento", model.IdMovimiento, idUsuarioCreador));
+                if (!puedeGuardarMov)
                 {
                     // Cuenta de produccion con fecha anterior a hoy: vale tambien el permiso de la persona que puso su
                     // clave al abrir el registro (ElevacionRegistroHelper); sin esa clave, queda el rechazo de siempre.

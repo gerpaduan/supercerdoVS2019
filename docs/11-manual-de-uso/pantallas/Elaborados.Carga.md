@@ -40,7 +40,7 @@ Pensado para ver **muchos ingredientes sin bajar con la rueda**: la tabla de ing
 - **Código y Nombre del elaborado** van en **un solo renglón**, con la **última actualización** a la derecha.
 - **Cantidad en cero o vacía:** al cerrar el aviso «Ingresa una cantidad de kilos mayor a cero» el cursor vuelve a **Cantidad**.
 - **Ingredientes manuales en una fila:** **Código, Ingrediente (con F10), Cantidad y +**, y a continuación, **en la misma línea**, **Balanza**, **Ver acumulados** y el teclado solo con su **icono** (el nombre aparece al apoyar el mouse); el estado de la balanza queda debajo de los campos. Desde ~1366 px de ancho entra todo en una línea; a 1280 px el teclado baja a la línea de abajo y a 1200 px bajan también Balanza y Ver acumulados. **Código** muestra **15 caracteres** y **Cantidad** **8** (medido 2026-11-11); el nombre del ingrediente se ve en ~100 px a 1366 px y en ~200 px a 1524 px (los nombres largos se cortan al final del campo). Con el **teclado numérico desplegado** vuelve el cuadro de siempre y la lista cede lugar.
-- **Tabla de ingredientes:** letra de 14 px, encabezado fijo y filas alternadas; **el ingrediente y los kilos van en negrita**, con lugar para unos **30 caracteres** y los kilos pegados al nombre (si es más largo, sigue en un segundo renglón).
+- **Tabla de ingredientes:** letra de 14 px, encabezado fijo y filas alternadas; **el código, el ingrediente y los kilos van en negrita**, con lugar para unos **30 caracteres** y los kilos pegados al nombre (si es más largo, sigue en un segundo renglón). La columna **#** tiene la letra un punto más chica (13 px) (desde el 2026-11-19).
 - **Tabla Fórmula:** misma letra que la tabla de ingredientes (14 px, cifras tabulares, filas de la misma altura) y **filas alternadas** con el mismo tono; el **ingrediente y los kilos van en negrita**, con un punto **gris** por fila y una etiqueta **Auto** (gris oscuro: se agrega sola al guardar) o **Manual** (borde azul: hay que cargarla a mano) en lugar de Sí / No.
 - **Receta y Fórmula** a la derecha; **Observaciones** y los botones (**Modificar** o **Guardar**, **Anular**, **Cancelar**) quedan **al pie de la columna derecha**, siempre a la vista. **Observaciones** es una línea y se agranda al tocarla.
 - Con el **costeo** (administradores) la columna derecha es más alta y puede aparecer un scroll dentro de ella.
@@ -62,9 +62,14 @@ Pensado para ver **muchos ingredientes sin bajar con la rueda**: la tabla de ing
 - **Observaciones** sigue siendo el último bloque, de ancho completo, justo arriba de los botones.
 
 ## Si ya tenés elaborados abiertos en otras pestañas (2026-11-12)
-Al abrir una **carga nueva**, si en este navegador ya tenés otras abiertas, aparece un aviso con la **lista** de lo que tenés abierto: nombre del elaborado, si es **nuevo** o **edición #número**, y cuántas líneas tiene.
+Al abrir una **carga nueva**, si en este navegador ya tenés otras abiertas, aparece un aviso con la **lista** de lo que tenés abierto: nombre del elaborado, si es **nuevo** o **edición #número**, y cuántas líneas tiene. Cada fila muestra **qué es** (nuevo o edición), **dónde está** (pestaña del navegador, ventana independiente, app instalada o **dentro del POS**, menú Cargas, a la vista o minimizada), **desde qué hora** (y hace cuánto) y **qué tiene cargado** (los primeros productos con su cantidad; el resto, «y N más»).
 - Cada carga **nueva con algo cargado** trae su botón **Traer este**: el trabajo pasa a esta pestaña y la otra queda tapada con un botón **Ir al listado**. Las ediciones y las cargas vacías se listan pero no se pueden traer.
+- **Señalar:** esa pestaña o ventana hace titilar su título unos segundos y muestra una cinta amarilla, para que la encuentres en la barra de pestañas o de tareas (el navegador no permite traerla al frente desde acá).
+- **Cerrar** (solo en un nuevo **vacío**): esa pestaña vuelve al listado y, si era la única, el aviso desaparece y seguís acá. Si en el medio le cargaron algo, no se cierra.
+- Una carga abierta **dentro del POS** no se puede señalar ni cerrar desde acá: se vuelve a ella con el botón amarillo «… en curso» de la barra del POS.
 - Además podés **Cargar otro nuevo aparte** (esta carga es independiente) o **Volver al listado**.
+- Si abrís la pantalla con **Abrir en ventana**, la ventana nueva no te avisa de la pestaña de origen (que vuelve al listado). Un F5 de la ventana vuelve a chequear como siempre.
+- Si el aviso aparece y **parece que no hay nada abierto**, casi siempre es una carga minimizada del POS, una ventana o app instalada que no estás mirando, o una pestaña que el navegador restauró al abrirse; la fila te dice cuál.
 - **Modificar uno ya guardado:** el aviso aparece al tocar **Modificar** si otra pestaña ya lo está modificando (**Traer la modificación a esta pestaña**, **Cargar uno nuevo aparte** o **Volver al listado**).
 - Solo detecta pestañas del **mismo navegador** de esta computadora.
 
@@ -80,3 +85,8 @@ PENDIENTE: documentar sucursal, fecha, búsqueda de elaborado e ingredientes, ba
 
 ## Desde el POS (desde 2026-11-18)
 También se abre desde el botón **Cargas** del POS (un elaborado nuevo nuevo, sin salir de la caja): minimizable, con aviso «en curso» y con la lista de lo cargado desde la apertura de la caja. Ver [Punto de venta](ayuda:pantalla/Ventas.POS), sección «Cargas desde el POS».
+
+## Botones sin foco del teclado (2026-11-19)
+- **Guardar elaborado / Guardar cambios**, **Cancelar**, **Modificar** y **Anular** (atajo: Alt+Enter para Guardar o Modificar). **no toman el foco**: Tab no se detiene en ellos y, al hacer clic, el cursor sigue donde estaba (no queda el recuadro de foco ni un Enter o Espacio posterior los vuelve a activar). Solo responden al **clic** o al **atajo** de la pantalla.
+- **Enter dentro de un campo no guarda** la pantalla (antes el navegador lo trataba como un clic en Guardar). Enter sigue haciendo lo suyo en los campos que lo usan (Código, Cantidad, editor de línea).
+- Detalle técnico: `sin-foco-botones.js` + atributo `data-sin-foco` en cada botón; ver `docs/DECISIONS.md` (2026-11-19).

@@ -2781,6 +2781,64 @@
             scheduleDraft($form);
         });
 
+        // Pesaje con Cant.Medias y/o Kgs.Medias sin cargar (2026-11-19): el usuario puede no saber todavia cuantos kilos pesaron las
+        // medias. Antes de guardar se le avisa que quedaran en cero y, si confirma, se marca #ConfirmaMediasEnCero (el servidor lo
+        // revalida en ValidarModelo y guarda 0). Va ANTES de los otros submit.stock (stopImmediatePropagation corta los siguientes,
+        // asi no se marca "guardado" ni se pide el usuario de produccion hasta que se confirme). Con «Solo productos» no aplica.
+        function valorMediasEsCero(raw) {
+            var texto = $.trim(raw || '').replace(',', '.');
+            var numero = parseFloat(texto);
+            return isNaN(numero) || numero <= 0;
+        }
+
+        $form.on('input.stock change.stock', '#CantMedias, #KgsMedias, #GuardarSinPesaje', function () {
+            // Si cambia algo despues de confirmar, la confirmacion ya no vale: se vuelve a preguntar al guardar.
+            $form.find('#ConfirmaMediasEnCero').val('False');
+        });
+
+        $form.on('submit.stock', function (e) {
+            var $confirma = $form.find('#ConfirmaMediasEnCero');
+            if (!stateEsPesaje($form) || esSoloProductos($form)) {
+                $confirma.val('False');
+                return;
+            }
+
+            var faltaCant = valorMediasEsCero($form.find('#CantMedias').val());
+            var faltaKgs = valorMediasEsCero($form.find('#KgsMedias').val());
+            if (!faltaCant && !faltaKgs) {
+                $confirma.val('False');
+                return;
+            }
+
+            if (String($confirma.val()).toLowerCase() === 'true') return; // ya confirmado: sigue el guardado normal
+
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            var faltantes = faltaCant && faltaKgs ? 'la cantidad de medias y los kilos de medias'
+                : (faltaCant ? 'la cantidad de medias' : 'los kilos de medias');
+            var texto = 'No cargaste ' + faltantes + '. Se va a guardar en cero. Podés completarlo después editando el pesaje.';
+            var confirmar = function () {
+                $confirma.val('True');
+                $form.trigger('submit'); // vuelve a pasar por todos los handlers, ahora con la confirmacion puesta
+            };
+
+            if (window.Swal && typeof window.Swal.fire === 'function') {
+                window.Swal.fire({
+                    icon: 'warning',
+                    title: 'Guardar en cero',
+                    text: texto,
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar en cero',
+                    cancelButtonText: 'Volver'
+                }).then(function (resultado) {
+                    if (resultado && resultado.isConfirmed) confirmar();
+                });
+            } else if (window.confirm(texto + '\n\n¿Guardar en cero?')) {
+                confirmar();
+            }
+        });
+
         // Usuario de produccion (sala de piso): antes de guardar (submit nativo del form),
         // se elige de un modal quien es el empleado real -- ver
         // Web/Scripts/app/seleccion-usuario-produccion.js. Para cualquier otro usuario, el
@@ -3372,7 +3430,17 @@
             urls: cfgDoc.urls,
             textos: { singular: 'movimiento de stock', plural: 'movimientos de stock', rotuloGrupo: 'con la acción «{grupo}»' },
             resumen: function () {
-                return { cantLineas: (getState($form).lineas || []).filter(function (l) { return !!l; }).length };
+                var lineas = (getState($form).lineas || []).filter(function (l) { return !!l; });
+                // Vista previa para el cartel de "ya abierto" (documento-abierto.js): primeros productos con su cantidad.
+                var previa = window.DocumentoAbierto.vistaPrevia(lineas, function (l) {
+                    return (l.producto || l.codigo || '?') + ' ' + window.DocumentoAbierto.formatoKg(l.cantKgs) + ' kg';
+                });
+                return {
+                    cantLineas: lineas.length,
+                    etiqueta: $.trim($form.find('#IdSucursal option:selected').text() || ''),
+                    vistaPrevia: previa.vistaPrevia,
+                    masItems: previa.masItems
+                };
             },
             obtenerPaquete: function () { return obtenerPaquete($form); },
             aplicarPaquete: function (paquete) { aplicarPaquete($form, paquete); },

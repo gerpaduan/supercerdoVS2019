@@ -51,6 +51,22 @@
     window.AppInstalada = { activa: activa, salir: salir };
     if (!activa) return;
 
+    // El boton de salida del POS/Expendio dice "Inicio" (va a Home); en la app instalada NO va a Home, cierra la ventana: pasa a decir
+    // "Cerrar" (2026-11-19). Los botones lo piden con data-salir-cerrar (+ data-title-cerrar). El script va al final del body: el
+    // boton ya existe; si no, se reintenta al terminar de cargar.
+    function rotularBotonesDeSalida() {
+        var botones = document.querySelectorAll('[data-salir-cerrar]');
+        Array.prototype.forEach.call(botones, function (boton) {
+            var texto = boton.querySelector('span');
+            var icono = boton.querySelector('i');
+            if (texto) texto.textContent = 'Cerrar';
+            if (icono) icono.className = 'fas fa-times';
+            boton.setAttribute('title', boton.getAttribute('data-title-cerrar') || 'Cerrar esta ventana');
+        });
+    }
+    rotularBotonesDeSalida();
+    document.addEventListener('DOMContentLoaded', rotularBotonesDeSalida);
+
     // true si el enlace es una navegacion dentro de este sitio pero fuera de la carpeta de la app (y no es /Login).
     function saleDeLaApp(enlace) {
         if (enlace.hasAttribute('download')) return false;

@@ -778,7 +778,21 @@
                 grupo: '',
                 urls: cfgDoc.urls,
                 textos: { singular: 'movimiento', plural: 'movimientos' },
-                resumen: function () { return { cantLineas: (state.lines || []).length }; },
+                resumen: function () {
+                    var lineas = state.lines || [];
+                    // Vista previa para el cartel de "ya abierto" (documento-abierto.js): primeros productos con su cantidad.
+                    var previa = window.DocumentoAbierto.vistaPrevia(lineas, function (l) {
+                        return (l.Producto || l.Codigo || '?') + ' ' + window.DocumentoAbierto.formatoKg(l.CantKg) + ' kg';
+                    });
+                    var origen = $.trim($('#IdSucursalOrigen option:selected').text() || '');
+                    var destino = $.trim($('#IdSucursalDestino option:selected').text() || '');
+                    return {
+                        cantLineas: lineas.length,
+                        etiqueta: origen && destino ? origen + ' → ' + destino : '',
+                        vistaPrevia: previa.vistaPrevia,
+                        masItems: previa.masItems
+                    };
+                },
                 obtenerPaquete: obtenerPaquete,
                 aplicarPaquete: aplicarPaquete,
                 alCeder: alCederTrabajo
