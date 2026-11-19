@@ -151,3 +151,9 @@ También se abre desde el botón **Cargas** del POS (un movimiento nuevo nuevo, 
 - **Guardar movimiento**, **Cancelar** y **Modificar** (atajo: Alt+Enter para Guardar o Modificar). **no toman el foco**: Tab no se detiene en ellos y, al hacer clic, el cursor sigue donde estaba (no queda el recuadro de foco ni un Enter o Espacio posterior los vuelve a activar). Solo responden al **clic** o al **atajo** de la pantalla.
 - **Enter dentro de un campo no guarda** la pantalla (antes el navegador lo trataba como un clic en Guardar). Enter sigue haciendo lo suyo en los campos que lo usan (Código, Cantidad, editor de línea).
 - Detalle técnico: `sin-foco-botones.js` + atributo `data-sin-foco` en cada botón; ver `docs/DECISIONS.md` (2026-11-19).
+
+## Balanza y la tecla * (2026-11-19)
+- **Sin balanza conectada, `*` deja el campo de cantidad vacío.** Si ya habías tipeado un valor a mano (por ejemplo 1,5) y apretás `*` para leer la balanza, aparece el aviso de que no hay balanza y la cantidad queda **vacía**: así un Enter distraído no guarda el valor viejo.
+- **Al desactivar la balanza** (`*` otra vez o destildar el icono) mientras se estaba leyendo, la cantidad también se **vacía**.
+- **Si la balanza se desconecta sola** con la lectura activa (y solo si en algún momento desde que se abrió la pantalla se había leído la balanza), la pantalla pasa a carga manual, vacía la cantidad y avisa «Se perdió la conexión con la balanza…». Espera dos chequeos seguidos sin conexión (aprox. 1 s) para no cortar por una falla momentánea.
+- Detalle técnico y motivo: `docs/DECISIONS.md` (2026-11-19, tecla * de la balanza). Verificado solo por lectura de código; PENDIENTE probarlo con una balanza real.

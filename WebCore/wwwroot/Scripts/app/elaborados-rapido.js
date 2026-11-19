@@ -337,12 +337,44 @@
             $('#balanzaStatusWrapRapido').toggle(!!$balanza.is(':checked'));
         }
 
+        // Corte automatico: la balanza se cae con la lectura activa. Se destilda (el 'change' pasa a manual y vacia Cantidad) y se avisa.
+        // Exige 2 chequeos consecutivos sin conexion para no cortar por un solo poll fallido del agente local.
+        var chequeosSinConexion = 0;
+        var huboConexion = false;
+        function registrarChequeoBalanza(conectada) {
+            // El aviso de corte solo aparece si en algun momento desde que se abrio la pantalla hubo lectura de la balanza (huboConexion no se reinicia); el check puede venir tildado de entrada sin balanza.
+            if (conectada) {
+                chequeosSinConexion = 0;
+                huboConexion = true;
+                return;
+            }
+            if (!$balanza.is(':checked') || state.balanzaDesactivadaManual) {
+                chequeosSinConexion = 0;
+                return;
+            }
+            if (!huboConexion) return;
+            chequeosSinConexion += 1;
+            if (chequeosSinConexion < 2) return;
+
+            $balanza.prop('checked', false).trigger('change');
+            $alertaBalanza.removeClass('d-none').text('Se perdió la conexión con la balanza. Cargue la cantidad a mano o vuelva a activarla con *.');
+            $cantidad.focus().select();
+        }
+
+        // Deja Cantidad vacia y recalcula la formula / guarda el borrador (lo usan el * sin balanza y el desactivar).
+        function vaciarCantidad() {
+            $cantidad.val('');
+            recalcularFormula();
+            state.borradorGenerico && state.borradorGenerico.programarGuardado();
+        }
+
         function aplicarLecturaBalanza(payload) {
             var normalized = normalizarBalanzaPayload(payload);
             state.balanzaDisponible = normalized.conectada === true;
             state.balanzaUltimaLectura = normalized;
             renderBalanzaStatus(payload);
             syncCantidadReadonly();
+            registrarChequeoBalanza(normalized.conectada === true);
 
             if (!esPesable() || !normalized.conectada || !$balanza.is(':checked') || state.balanzaDesactivadaManual) {
                 return;
@@ -359,6 +391,7 @@
             state.balanzaDisponible = normalized.conectada === true;
             renderBalanzaStatus(payload);
             syncCantidadReadonly();
+            registrarChequeoBalanza(normalized.conectada === true);
         }
 
         // Costeo (solo Usuario.Admin): busca (y cachea por idCorte) el precio de compra mas
@@ -521,6 +554,7 @@
                         state.balanzaDisponible = false;
                         renderBalanzaStatus(null);
                         syncCantidadReadonly();
+                        // Sin registrarChequeoBalanza aca: cuando falla el /status el cliente llama a onStatus Y a onError, y se contaria doble (el corte exigiria 1 solo chequeo).
                     }
                 });
             }
@@ -575,6 +609,8 @@
             verificarBalanza(function (disponible, data) {
                 if (!disponible) {
                     $balanza.prop('checked', false);
+                    // Cantidad queda vacia: si habia un valor tipeado a mano, un Enter distraido lo guardaria.
+                    vaciarCantidad();
                     $alertaBalanza.removeClass('d-none').text('No hay balanza conectada.');
                     return;
                 }
@@ -783,8 +819,9 @@
                     window.CarnisysBalanza.desactivar();
                 }
                 $alertaBalanza.addClass('d-none').text('');
+                // Al dejar de leer la balanza Cantidad se vacia siempre (no queda el ultimo peso leido para guardar por error).
+                vaciarCantidad();
                 if (!esPesable()) {
-                    $cantidad.val('');
                     window.setTimeout(function () {
                         $cantidad.focus().select();
                     }, 30);

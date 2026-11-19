@@ -882,11 +882,35 @@
             $('#balanzaStatusWrapMovimiento').toggle(!!$balanza.is(':checked'));
         }
 
+        // Corte automatico: la balanza se cae con la lectura activa. Se destilda (el 'change' pasa a manual y vacia Kgs.) y se avisa.
+        // Exige 2 chequeos consecutivos sin conexion para no cortar por un solo poll fallido del agente local.
+        var chequeosSinConexion = 0;
+        var huboConexion = false;
+        function registrarChequeoBalanza(conectada) {
+            // El aviso de corte solo aparece si en algun momento desde que se abrio la pantalla hubo lectura de la balanza (huboConexion no se reinicia); el check puede venir tildado de entrada sin balanza.
+            if (conectada) {
+                chequeosSinConexion = 0;
+                huboConexion = true;
+                return;
+            }
+            if (!$balanza.is(':checked') || balanzaManualDesactivada) {
+                chequeosSinConexion = 0;
+                return;
+            }
+            if (!huboConexion) return;
+            chequeosSinConexion += 1;
+            if (chequeosSinConexion < 2) return;
+
+            $balanza.prop('checked', false).trigger('change');
+            showAlert('warning', 'Balanza', 'Se perdió la conexión con la balanza. Cargue los kilos a mano o vuelva a activarla con *.', $cantKgs);
+        }
+
         function aplicarLecturaBalanza(payload) {
             var normalized = normalizarBalanzaPayload(payload);
             balanzaUltimaLectura = normalized;
             setBalanzaDisponible(normalized.conectada === true);
             renderBalanzaStatus(payload);
+            registrarChequeoBalanza(normalized.conectada === true);
 
             var hayProducto = toInt($productoId.val()) > 0;
             if (!normalized.conectada || !$balanza.is(':checked') || balanzaManualDesactivada || (hayProducto && !productoEsPesable())) {
@@ -902,6 +926,7 @@
             var normalized = normalizarBalanzaPayload(payload);
             setBalanzaDisponible(normalized.conectada === true);
             renderBalanzaStatus(payload);
+            registrarChequeoBalanza(normalized.conectada === true);
         }
 
         function verificarBalanza(callback) {
@@ -927,6 +952,7 @@
                     onError: function () {
                         setBalanzaDisponible(false);
                         renderBalanzaStatus(null);
+                        // Sin registrarChequeoBalanza aca: cuando falla el /status el cliente llama a onStatus Y a onError, y se contaria doble (el corte exigiria 1 solo chequeo).
                     }
                 });
             }
@@ -964,6 +990,9 @@
             verificarBalanza(function (disponible) {
                 if (!disponible) {
                     $balanza.prop('checked', false);
+                    // Kgs. queda vacio: si habia un valor tipeado a mano, un Enter distraido lo guardaria.
+                    $cantKgs.val('');
+                    validarRelacionCantidadKilos();
                     // Sin balanza el * igual deja el foco en Kgs. (se tipea a mano); el aviso lo devuelve a ese campo al cerrarse.
                     showAlert('warning', 'Balanza', 'No hay balanza conectada.', enfocar ? $cantKgs : undefined);
                     return;
@@ -1584,6 +1613,9 @@
                 if (window.CarnisysBalanza) {
                     window.CarnisysBalanza.desactivar();
                 }
+                // Al dejar de leer la balanza Kgs. se vacia (no queda el ultimo peso leido para guardar por error).
+                $cantKgs.val('');
+                validarRelacionCantidadKilos();
             }
 
             syncBalanzaStatusVisibility();

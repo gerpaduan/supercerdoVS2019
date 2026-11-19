@@ -2313,12 +2313,38 @@
         return normalizarBalanzaPayload(data).peso || 0;
     }
 
+    // Corte automatico: la balanza se cae con la lectura activa. Se pasa a manual (desactivarBalanzaManual vacia Cantidad) y se avisa.
+    // Exige 2 chequeos consecutivos sin conexion para no cortar por un solo poll fallido del agente local.
+    function registrarChequeoBalanza($form, conectada) {
+        var state = getState($form);
+        // El aviso de corte solo aparece si en algun momento desde que se abrio la pantalla hubo lectura de la balanza (huboConexion no se reinicia); el check puede venir tildado de entrada sin balanza.
+        if (conectada) {
+            state.chequeosSinConexion = 0;
+            state.huboConexion = true;
+            return;
+        }
+        if (!$form.find('#chkBalanzaLinea').is(':checked') || state.balanzaDesactivadaManual) {
+            state.chequeosSinConexion = 0;
+            return;
+        }
+        if (!state.huboConexion) return;
+        state.chequeosSinConexion = (state.chequeosSinConexion || 0) + 1;
+        if (state.chequeosSinConexion < 2) {
+            return;
+        }
+
+        desactivarBalanzaManual($form);
+        showWarning($form, 'Se perdió la conexión con la balanza. Cargue la cantidad a mano o vuelva a activarla con *.');
+        focusCantidadManual($form);
+    }
+
     function aplicarLecturaBalanza($form, payload) {
         var state = getState($form);
         var normalized = normalizarBalanzaPayload(payload);
         state.balanzaUltimaLectura = normalized;
         setBalanzaDisponible($form, normalized.conectada === true);
         renderBalanzaStatus($form, payload);
+        registrarChequeoBalanza($form, normalized.conectada === true);
 
         if (!normalized.conectada) {
             return;
@@ -2341,6 +2367,7 @@
         var normalized = normalizarBalanzaPayload(payload);
         setBalanzaDisponible($form, normalized.conectada === true);
         renderBalanzaStatus($form, payload);
+        registrarChequeoBalanza($form, normalized.conectada === true);
     }
 
     function ensureBalanzaClient($form) {
@@ -2363,6 +2390,7 @@
             onError: function () {
                 setBalanzaDisponible($form, false);
                 renderBalanzaStatus($form, null);
+                // Sin registrarChequeoBalanza aca: cuando falla el /status el cliente llama a onStatus Y a onError, y se contaria doble (el corte exigiria 1 solo chequeo).
             }
         });
     }
@@ -2405,13 +2433,18 @@
         syncCantidadReadonly($form);
     }
 
-    function iniciarLecturaBalanza($form, silencioso, allowFocusManual) {
+    // vaciarSiNoHay: lo pide el * / tilde (accion del operador): sin balanza la Cantidad queda vacia, para que un valor tipeado a mano
+    // no se guarde por error con un Enter distraido. Al elegir un producto (silencioso) no se toca.
+    function iniciarLecturaBalanza($form, silencioso, allowFocusManual, vaciarSiNoHay) {
         var state = getState($form);
         detenerLecturaBalanza($form);
 
         verificarBalanza($form, function (disponible, data) {
             if (!disponible) {
                 $form.find('#chkBalanzaLinea').prop('checked', false);
+                if (vaciarSiNoHay) {
+                    $form.find('#txtCantKgs').val('');
+                }
                 syncCantidadReadonly($form);
                 if (!silencioso) {
                     showWarning($form, 'No existe balanza conectada.');
@@ -2436,7 +2469,7 @@
     function activarBalanzaManual($form) {
         var state = getState($form);
         state.balanzaDesactivadaManual = false;
-        iniciarLecturaBalanza($form, false, true);
+        iniciarLecturaBalanza($form, false, true, true);
         scheduleDraft($form);
     }
 
@@ -2444,6 +2477,8 @@
         var state = getState($form);
         state.balanzaDesactivadaManual = true;
         $form.find('#chkBalanzaLinea').prop('checked', false);
+        // Al dejar de leer la balanza Cantidad se vacia (no queda el ultimo peso leido para guardar por error).
+        $form.find('#txtCantKgs').val('');
         detenerLecturaBalanza($form);
         clearWarning($form);
         syncCantidadReadonly($form);

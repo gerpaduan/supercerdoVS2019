@@ -9321,3 +9321,10 @@ El listado admin `Cajas/EgresosCaja` no cambia.
 **Alternativas descartadas:** solo `tabindex="-1"` (el clic igual enfoca y un Enter posterior lo reactiva); `blur()` tras cada clic (parpadea el foco y no evita el recuadro); quitar `type="submit"` (rompe el envío por `submit` que usan los scripts de cada pantalla).
 **Riesgos / deuda:** el ingreso rápido guarda con Enter en el campo Cantidad por diseño (manejador propio): se mantuvo. Eliminar y «Modificar con mi clave» no se marcaron (no se pidieron). Probado con login en Movimientos, Stock, Elaborados y Compras nueva; falta Compras existente y el POS (Cargas).
 **Archivos:** `WebCore/wwwroot/Scripts/app/sin-foco-botones.js`, las 5 vistas y sus páginas del manual.
+
+## 2026-11-19 — Tecla * de la balanza: la cantidad queda vacía si no hay lectura (POS, Movimientos, Stock, Elaborados)
+**Pedido:** si el operador tipea una cantidad (ej. 1,5) y aprieta `*` pero la balanza no está conectada, el valor tipeado quedaba y un Enter distraído lo guardaba.
+**Qué se decidió:** (a) `*` sin balanza conectada vacía el campo de cantidad; (b) desactivar la balanza (`*` o tilde) con la lectura activa lo vacía; (c) corte automático: si la balanza se cae sola con la lectura activa (y solo si desde que se abrió la pantalla hubo alguna lectura; si no, no avisa, porque el check viene tildado de entrada) se pasa a manual, se vacía y se avisa, tras 2 chequeos consecutivos sin conexión (evita cortar por un poll fallido del agente local). Activar al elegir un producto pesable no se toca.
+**Alternativas descartadas:** solo avisar (no evita guardar el valor viejo); cortar al primer chequeo fallido (falsos cortes).
+**Riesgos / deuda:** el aviso de Stock usa `showWarning` que dura 1,6 s. Sin probar con balanza real (solo código).
+**Archivos:** `WebCore/wwwroot/Scripts/app/pos-balanza.js`, `movimientos.js`, `stock.js`, `elaborados-carga.js`, `elaborados-rapido.js`; las 6 páginas del manual.

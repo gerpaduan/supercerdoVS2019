@@ -22,6 +22,7 @@
         var mensajes = {
             sinAgente: 'No se detectó el agente local de balanza. Puede continuar con carga manual.',
             desconectada: 'Balanza desconectada',
+            perdida: 'Se perdió la conexión con la balanza. Cargue la cantidad a mano o vuelva a activarla con *.',
             inestable: 'Peso inestable, espere y presione Enter',
             pesoCero: 'No se puede registrar un peso menor o igual a cero.'
         };
@@ -263,6 +264,30 @@
             intentarModoBalanza();
         }
 
+        // Corte automatico: la balanza se cae con la lectura activa (sin que el operador haga nada). Se pasa a manual,
+        // se vacia Cantidad (que no quede un peso viejo que un Enter pueda guardar) y se avisa. Exige 2 chequeos
+        // consecutivos sin conexion para no cortar por un solo poll fallido del agente local.
+        var chequeosSinConexion = 0;
+        var huboConexion = false; // el aviso de corte solo sale si desde que se abrio la pantalla hubo lectura de la balanza
+        function registrarChequeoDesconectado() {
+            // Solo cuenta con la lectura activa: en manual el contador no acumula (si no, al activarla cortaria de inmediato).
+            if (state.modoCantidad !== 'Balanza') {
+                chequeosSinConexion = 0;
+                return;
+            }
+            if (!huboConexion) return;
+            chequeosSinConexion += 1;
+            if (chequeosSinConexion < 2) {
+                return;
+            }
+
+            var cantidadTieneFoco = document.activeElement && document.activeElement.id === 'inputCantidad';
+            $('#inputCantidad').val('');
+            activarModoManual(cantidadTieneFoco, true);
+            options.calculateSubtotal();
+            options.showNotice(mensajes.perdida);
+        }
+
         function onStatus(data) {
             state.agenteDetectado = !!(data && data.ok);
             state.agenteDisponible = !!(data && data.ok);
@@ -270,13 +295,13 @@
 
             if (!data || data.ok !== true) {
                 setEstado('Agente no detectado', 10, 'bg-danger');
-                if (esPesable(state.productoActual) && state.modoCantidad === 'Balanza') {
-                    activarModoManual(false, false);
-                }
+                registrarChequeoDesconectado();
                 return;
             }
 
             if (data.conectada) {
+                chequeosSinConexion = 0;
+                huboConexion = true;
                 options.showNotice('');
                 setEstado('Conectada (' + (data.puerto || data.port || '') + ')', 100, 'bg-success');
                 if (!state.lecturaSuspendida && !state.productoActual) {
@@ -289,9 +314,7 @@
             }
 
             setEstado('Balanza desconectada', 35, 'bg-warning');
-            if (esPesable(state.productoActual) && state.modoCantidad === 'Balanza') {
-                activarModoManual(false, false);
-            }
+            registrarChequeoDesconectado();
         }
 
         function onPeso(data) {
@@ -305,9 +328,12 @@
             if (data.conectada !== true) {
                 setEstado('Balanza desconectada', 35, 'bg-warning');
                 setAvisoCantidad('');
+                registrarChequeoDesconectado();
                 return;
             }
 
+            chequeosSinConexion = 0;
+            huboConexion = true;
             if (data.inestable) {
                 setEstado('Peso inestable', 70, 'bg-warning');
             } else {
@@ -379,7 +405,10 @@
             }
 
             if (!state.balanzaConectada) {
+                // Sin balanza el * deja Cantidad vacia: si habia un valor tipeado a mano, un Enter distraido lo guardaria.
+                $('#inputCantidad').val('');
                 activarModoManual(origen !== 'inputCodigo', true);
+                options.calculateSubtotal();
                 return;
             }
 
