@@ -21,8 +21,16 @@ Si la fórmula del producto es [secreta](ayuda:concepto/formula-secreta), el pan
 - La fórmula vuelve a ocultarse sola a los 5 minutos, con **Ocultar** o al salir de la pantalla. Para verla de nuevo hay que volver a ingresar usuario y contraseña.
 - Los borradores de *Elaborados sin guardar* no guardan la fórmula de un producto secreto.
 
+## Modo vista y modo edición (2026-11-19)
+Un registro existente se abre **solo para ver**; hay que tocar **Modificar** para cambiarlo. Una franja arriba del formulario dice en cuál de los dos estás:
+- **Modo vista** (franja gris con candado): *«Modo vista — para cambiar este registro presioná Modificar»*, con el botón **Modificar** a la derecha de la franja (ya no está abajo). En este modo **no se muestran** el campo de cantidad, el interruptor **Balanza** ni el **Teclado**: la cantidad aparece como un dato (*«Cantidad elaborada»* o *«Cantidad desarmada»*) y la **Fórmula calculada** ocupa el ancho que queda libre.
+- **Modo edición** (franja amarilla con lápiz): *«Editando — al guardar se anula el registro actual y se crea uno nuevo con los datos actualizados»*. Vuelven el campo de cantidad, la balanza y el teclado, y abajo aparecen **Guardar** y **Cancelar**.
+- **Sin permiso para modificar:** la franja gris dice *«no tenés permiso para modificar este registro»*, el botón **Modificar** queda apagado y, si corresponde, aparece **Modificar con mi clave**.
+- **Anulado:** franja roja *«Elaborado anulado: solo lectura, no se puede modificar»*, sin botón Modificar.
+- Los botones **Volver**, **Elaborados sin guardar**, **Anular** y **Cancelar** son más chicos para que no compitan con **Modificar**.
+
 ## Teclado digital
-Entre la **cantidad** y la **fórmula calculada** hay un teclado numérico en pantalla (7-9, 4-6, 1-3, 0 y punto; borrar y `*`), siempre visible y solo en pantallas grandes. Escribe en el campo de cantidad. **Enter** del teclado guarda el ingreso (hace lo mismo que Enter en el campo o el botón *Guardar*). No escribe si el campo es de solo lectura: con la balanza leyendo el peso, o cuando se abre un registro en modo vista hasta tocar *Modificar*.
+Entre la **cantidad** y la **fórmula calculada** hay un teclado numérico en pantalla (7-9, 4-6, 1-3, 0 y punto; borrar y `*`), solo en pantallas grandes y solo en **modo edición** (en modo vista no se muestra). Escribe en el campo de cantidad. **Enter** del teclado guarda el ingreso (hace lo mismo que Enter en el campo o el botón *Guardar*). No escribe si el campo es de solo lectura: con la balanza leyendo el peso, o cuando se abre un registro en modo vista hasta tocar *Modificar*.
 
 **Punto y coma decimal (2026-11-14):** en la cantidad, el **punto** (del teclado físico o del teclado en pantalla) y la **coma** son siempre el separador decimal; el punto se convierte en coma al escribirlo, y nunca se interpreta como separador de miles. Escribir `5.325` o `5,325` carga **5,325 kg**. Solo admite un separador.
 

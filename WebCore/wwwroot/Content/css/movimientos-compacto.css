@@ -861,7 +861,7 @@ html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-w
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-num:nth-child(5) { width: 4.3rem !important; }
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-resto { width: 3.3rem !important; }
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-med { width: 3.5rem !important; }
-html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th:last-child { width: 2.9rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] .pt-tabla-wrap:has(th.pt-th-med) thead th:last-child { width: 5rem !important; } /* lapiz + tacho (2026-11-19, linea-editor.css); antes 2.9rem con solo el tacho */
 
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="mov"] #tablaLineasMovimiento .js-remove-line {
     padding: .1rem .35rem;

@@ -147,6 +147,10 @@
             // Lineas[i] salen de state.lineas (ver rebuildHiddenInputs).
             sortDirection: (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) ? 'desc' : 'asc',
             searchText: '',
+            // Corregir una linea (2026-11-19, linea-editor.js): { index, valor, error } mientras el panel esta abierto; null si no.
+            // filasCambiadas = indices que acaban de cambiar (destello hasta el proximo repintado).
+            editor: null,
+            filasCambiadas: [],
             // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
             // Embutidos"): instancia de BorradorGenerico.crear() cuando esta habilitado, o null
             // cuando no (ahi se sigue con localStorage/CapturaRespaldo de siempre).
@@ -959,7 +963,17 @@
             var hora = formatearHoraLinea($form, linea.creadoTexto);
             var textoBalanza = linea.balanza ? 'Pesado en balanza' : 'Sin balanza';
 
-            html += '<tr data-index="' + item.indiceOriginal + '">'
+            // Corregir una linea (linea-editor.js). Las lineas de un pesaje vinculado o "No contado" no se corrigen desde aca: cambiar sus
+            // kilos descuadraria el pesaje del que vienen. El lapiz sale apagado con la explicacion; en modo vista lo oculta el CSS.
+            var lineaBloqueada = !!linea.noContado || linea.idPesajeVinculado > 0;
+            var estaEditando = !!(state.editor && state.editor.index === item.indiceOriginal);
+            var clasesFila = (estaEditando ? ' linea-fila-sel' : '')
+                + (state.filasCambiadas.indexOf(item.indiceOriginal) >= 0 ? ' linea-fila-cambiada' : '');
+            var botonLapiz = lineaBloqueada
+                ? '<button type="button" class="btn btn-sm btn-outline-secondary js-edit-linea" disabled title="' + (linea.noContado ? 'Línea «No contado»: no se corrige desde acá' : 'Línea de un pesaje vinculado: no se corrige desde acá') + '" aria-label="Corregir cantidad no disponible"><i class="fas fa-pen"></i></button>'
+                : '<button type="button" class="btn btn-sm btn-outline-primary js-edit-linea" data-index="' + item.indiceOriginal + '" title="Corregir cantidad" aria-label="Corregir cantidad"><i class="fas fa-pen"></i></button>';
+
+            html += '<tr data-index="' + item.indiceOriginal + '"' + (clasesFila ? ' class="' + $.trim(clasesFila) + '"' : '') + '>'
                 + '<td class="text-center font-weight-bold cc-solo-tabla">' + (item.indiceOriginal + 1) + '</td>'
                 // Codigo (2026-11-13): columna propia tambien en escritorio (antes solo en la tarjeta del celular, y en escritorio iba debajo del nombre).
                 // "Cód. " solo en la tarjeta del celular; en la tabla va el numero solo.
@@ -972,9 +986,21 @@
                 + '<td class="cc-l-hora' + (hora.otroDia ? ' cc-l-hora-otro-dia' : '') + (hora.texto === '' ? ' cc-vacio' : '') + '">'
                 + '<span class="cc-solo-tabla">' + (linea.noContado ? '<span class="badge badge-warning mb-1">No contado</span><br>' : '') + vinculoHtml + escapeHtml(linea.creadoTexto || '-') + '</span>'
                 + '<span class="cc-solo-card" title="' + (hora.otroDia ? 'Cargada otro día que el registro' : 'Hora de carga') + '"><i class="far fa-clock"></i>' + escapeHtml(hora.texto) + '</span></td>'
-                + '<td class="text-center cc-l-acc"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + item.indiceOriginal + '" title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>'
+                + '<td class="text-center cc-l-acc linea-col-acciones">' + botonLapiz + '<button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + item.indiceOriginal + '" title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>'
                 + '</tr>';
+
+            // Panel "Corregir linea" justo debajo de la fila que se esta corrigiendo.
+            if (estaEditando) {
+                html += window.LineaEditor.htmlFila({
+                    titulo: 'Corregir línea ' + (item.indiceOriginal + 1) + ' · ' + (linea.producto || ''),
+                    campos: [{ id: 'edtLineaKg', label: state.config.esEgreso ? 'Kilos (egreso)' : 'Kilos', valor: state.editor.valor }],
+                    error: state.editor.error,
+                    avisos: textosAvisoEditor(state, linea),
+                    colspan: 7
+                });
+            }
         });
+        state.filasCambiadas = [];
 
         $tbody.html(html);
         recalculate($form);
@@ -2674,9 +2700,81 @@
         return dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + mi;
     }
 
+    // ---- Corregir una linea (2026-11-19, linea-editor.js) ----
+    // Lapiz de la fila -> panel debajo con la cantidad. Aplicar cambia solo la linea en memoria (el registro se guarda recien con Guardar).
+    // Mismas reglas de signo que al agregar (validarLinea): egreso siempre negativo (se escribe en positivo), ajuste con signo y distinto
+    // de cero, el resto mayor a cero. Una linea pesada en balanza y corregida a mano deja de figurar como pesada en balanza.
+    // Las lineas de un pesaje vinculado o "No contado" no se corrigen (el lapiz sale apagado).
+
+    // Valor que se muestra en el panel: en egreso el valor absoluto (se guarda negativo).
+    function valorInicialEditor(state, linea) {
+        var cantidad = toNumber(linea.cantKgs);
+        return formatNumber(state.config.esEgreso ? Math.abs(cantidad) : cantidad, 3);
+    }
+
+    function textosAvisoEditor(state, linea) {
+        var avisos = ['El cambio queda en el registro recién al tocar <b>Guardar</b>.'];
+        if (linea.balanza) avisos.push('Esta línea se pesó en balanza: al corregirla a mano deja de figurar como pesada en balanza.');
+        if (state.config.esPesaje) avisos.push('En un pesaje, <b>Kgs.Medias</b> no se recalcula solo: revisalo si cambia el total.');
+        return avisos;
+    }
+
+    // Devuelve { ok, valor } con el valor a guardar (con el signo que corresponde) o { ok:false, error }.
+    function validarCantidadCorregida(state, texto) {
+        var parsed = parseNumber(texto);
+        if (!parsed.ok) return { ok: false, error: 'Ingresá una cantidad válida.' };
+        var valor = parsed.value;
+
+        if (state.config.esEgreso) {
+            if (valor === 0) return { ok: false, error: 'Ingresá una cantidad distinta de cero.' };
+            return { ok: true, valor: -Math.abs(valor) };
+        }
+        if (state.config.permiteCantidadNegativa) {
+            if (valor === 0) return { ok: false, error: 'Ingresá una cantidad distinta de cero.' };
+            return { ok: true, valor: valor };
+        }
+        if (valor <= 0) return { ok: false, error: 'Ingresá una cantidad mayor a cero.' };
+        return { ok: true, valor: valor };
+    }
+
+    function cerrarEditorLinea($form) {
+        var state = getState($form);
+        if (!state.editor) return;
+        state.editor = null;
+        renderLineas($form);
+        focusCodigo($form);
+    }
+
+    function aplicarEditorLinea($form) {
+        var state = getState($form);
+        if (!state.editor) return;
+        var linea = state.lineas[state.editor.index];
+        if (!linea) { state.editor = null; renderLineas($form); return; }
+
+        var resultado = validarCantidadCorregida(state, state.editor.valor);
+        if (!resultado.ok) {
+            state.editor.error = resultado.error;
+            window.LineaEditor.mostrarError(resultado.error);
+            window.LineaEditor.enfocar('edtLineaKg');
+            return;
+        }
+
+        // Sin cambios: solo se cierra el panel (no ensucia el registro ni destella).
+        if (resultado.valor !== toNumber(linea.cantKgs)) {
+            linea.cantKgs = resultado.valor;
+            linea.balanza = false;
+            state.filasCambiadas = [state.editor.index];
+            capturarRespaldo('Stock', $form);
+            scheduleDraft($form);
+        }
+        state.editor = null;
+        renderLineas($form);
+        focusCodigo($form);
+    }
+
     function validarLinea($form) {
         var state = getState($form);
-        var idCorte = parseInt($form.find('#txtProductoId').val(), 10) || 0;
+        var idCorte =parseInt($form.find('#txtProductoId').val(), 10) || 0;
         var cantidadTexto = $.trim($form.find('#txtCantKgs').val() || '');
         var parsedCantidad = parseNumber(cantidadTexto);
         var cantidad = parsedCantidad.value;
@@ -3154,10 +3252,34 @@
         $form.on('click.stock', '[data-action="remove-line"]', function () {
             var index = parseInt($(this).data('index'), 10);
             if (isNaN(index)) return;
+            // Quitar una linea corre los indices de las siguientes: el panel de corregir se cierra.
+            state.editor = null;
             state.lineas.splice(index, 1);
             renderLineas($form);
             capturarRespaldo('Stock', $form);
             scheduleDraft($form);
+        });
+
+        // Lapiz de la fila: abre el panel de corregir. Modo vista: hay que apretar Modificar primero (el CSS tambien oculta el lapiz).
+        $form.on('click.stock', '.js-edit-linea', function () {
+            if ($form.hasClass('edit-readonly-active')) return;
+            var index = parseInt($(this).attr('data-index'), 10);
+            var linea = isNaN(index) ? null : state.lineas[index];
+            if (!linea || linea.noContado || linea.idPesajeVinculado > 0) return;
+            state.editor = { index: index, valor: valorInicialEditor(state, linea), error: '' };
+            renderLineas($form);
+            window.LineaEditor.enfocar('edtLineaKg');
+        });
+
+        window.LineaEditor.enlazar({
+            onAplicar: function () { aplicarEditorLinea($form); },
+            onCancelar: function () { cerrarEditorLinea($form); },
+            onInput: function (idCampo, valor) {
+                if (!state.editor) return;
+                state.editor.valor = valor;
+                state.editor.error = '';
+                window.LineaEditor.mostrarError('');
+            }
         });
 
         $form.on('click.stock', '.js-stock-sort, #tablaLineasStock thead th[data-sort-key]', function (e) {
@@ -3332,6 +3454,8 @@
         $(document).on('keydown.stock', function (e) {
             var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
             var key = String(e.key || '').toLowerCase();
+            // Dentro del panel de corregir una linea los atajos de la pantalla (ej. * de la balanza) no aplican: se escribe un numero.
+            if ($(e.target).closest('.linea-editor').length) return;
 
             if (e.key === 'F10' && tag !== 'textarea') {
                 e.preventDefault();

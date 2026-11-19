@@ -294,7 +294,7 @@
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLines() en movimientos.js. *@
                         <div class="table-responsive mov-tabla-wrap pt-tabla-wrap">
-                            <table class="table table-bordered table-sm movimiento-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasMovimiento">
+                            <table class="table table-bordered table-sm movimiento-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion linea-con-lapiz tabla-items" id="tablaLineasMovimiento">
                                 <thead class="thead-light">
                                     <tr>
                                         <th class="pt-th-cod" style="width:110px;">Código</th>
@@ -920,12 +920,14 @@
     <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/acumulados-detalle.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/documento-abierto.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/linea-editor.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
     <script>window.movimientoStockDestinoConfig = { url: '@Url.Action("ExistenciaPorSucursales", "Stock")' };</script>
     <script src="@Url.Content("~/Scripts/app/movimiento-stock-destino.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     @* Escritorio compacto (2026-10-30): va DESPUES de numeric-keypad.css, que comparte con otras pantallas. *@
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/linea-editor.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/movimientos-compacto.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pt-entrada.css")" asp-append-version="true" />
@@ -937,7 +939,7 @@
     <script>
         $(function () {
             // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en el campo Kgs.
-            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtCantKgs');
+            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtCantKgs, .linea-editor-campo:not([data-le-entero])');
 
             if (window.NumericKeypad) {
                 window.NumericKeypad.create({

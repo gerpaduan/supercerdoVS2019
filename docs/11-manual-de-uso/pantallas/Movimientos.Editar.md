@@ -86,6 +86,16 @@ Al guardar aparece un aviso con el **mismo diseño que el de una venta en el POS
 - **3 · Generar PDF.** *Enviar a WhatsApp* sigue oculto.
 - No se cierra con **Escape** ni haciendo clic afuera: solo eligiendo una opción. Al imprimir un movimiento **ya guardado** el título es **«Imprimir movimiento»**.
 
+## Corregir las unidades y los kilos de una línea ya cargada (2026-11-19)
+- Cada línea tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · producto»** con los campos **Unidades** y **Kilos**. En un producto **no pesable** solo hay **Unidades** (los kilos son las unidades, como al agregarlo).
+- **Enter** o **Aplicar** cambia la línea (tabla, totales y datos que se guardan se actualizan y la fila destella en verde); **Esc** o **Cancelar** cierra sin cambiar nada. Si no cambiás nada, el panel solo se cierra y **no** se pierde un «Permitir ingreso» ya autorizado.
+- **Mismas reglas que al agregar una línea:** las unidades son un número entero (sin decimales), los kilos tienen que ser mayores a cero y, si el producto tiene promedio, los kilos deben estar entre promedio × (unidades − 1) y promedio × (unidades + 1).
+- **Si la relación no cierra:** el panel avisa cuánto deberían pesar las unidades y muestra la casilla **«Permitir ingreso»**; hay que tildarla (o corregir los valores) para poder aplicar. Al corregir se **revalida**: si los valores nuevos entran en el rango, la marca «Permitir ingreso» de la línea se limpia; si no entran, hay que volver a tildarla aunque la línea ya la tuviera.
+- El cambio **queda en la pantalla**: se guarda recién al tocar **Guardar**. Un valor escrito y no aplicado no se guarda.
+- Una línea **pesada en balanza** que se corrige a mano deja de figurar como pesada en balanza (el panel lo avisa).
+- En **modo vista** el lápiz no se muestra ni funciona; aparece al tocar **Modificar**. Quitar una línea con el tacho cierra el panel abierto. Dentro del panel las teclas `*` y `+` no activan la balanza ni «Permitir ingreso»: se escribe un número.
+- La columna **Acción** de la tabla es más ancha (lápiz + tacho). El panel de **Stock destino** lee las cantidades en cuanto se aplica el cambio. Detalle técnico: `linea-editor.js` / `linea-editor.css`; ver `docs/DECISIONS.md` (2026-11-19).
+
 ## Modo solo lectura: cómo se ve que no se puede editar (2026-11-13)
 Al abrir un movimiento **ya guardado** la pantalla queda en **modo ver**:
 - Arriba aparece la etiqueta gris **Solo lectura** y, junto a los botones de la derecha, un botón azul **Modificar** (el mismo que el de abajo a la derecha; los dos hacen lo mismo).

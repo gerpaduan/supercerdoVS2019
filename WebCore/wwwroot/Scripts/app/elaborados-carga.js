@@ -140,6 +140,10 @@
             elaboradoRequestSeq: 0,
             draftTimer: null,
             guardando: false,
+            // Corregir una linea (2026-11-19, linea-editor.js): { index, valor, error } mientras el panel esta abierto; null si no.
+            // filasCambiadas = indices que acaban de cambiar (destello hasta el proximo repintado).
+            editor: null,
+            filasCambiadas: [],
             // Costeo (efimero, solo Usuario.Admin, ver docs del pedido 2026-09-21): cache
             // compartida de precio de compra/venta por idCorte, para no repetir requests cuando
             // el mismo ingrediente aparece en la tabla manual y en la de formula.
@@ -686,8 +690,13 @@
             lineasVisibles().forEach(function (item) {
                 var linea = item.linea;
                 var textoBalanza = linea.PesoBalanza ? 'Pesado en balanza' : 'Sin balanza';
+                var estaEditando = !!(state.editor && state.editor.index === item.indiceOriginal);
+                var clasesFila = (estaEditando ? ' linea-fila-sel' : '')
+                    + (state.filasCambiadas.indexOf(item.indiceOriginal) >= 0 ? ' linea-fila-cambiada' : '');
+                // Lapiz (corregir kilos) junto al tacho; en modo vista lo oculta el CSS (linea-editor.css) y el clic se ignora.
+                var botonLapiz = config.esAnulado ? '' : '<button type="button" class="btn btn-sm btn-outline-primary js-edit-linea" data-index="' + item.indiceOriginal + '" title="Corregir kilos" aria-label="Corregir kilos"><i class="fas fa-pen"></i></button>';
                 // # = posicion en el orden de carga (indice real + 1); no cambia al ordenar la tabla.
-                html += '<tr>'
+                html += '<tr' + (clasesFila ? ' class="' + $.trim(clasesFila) + '"' : '') + '>'
                     + '<td class="text-center font-weight-bold cc-solo-tabla">' + (item.indiceOriginal + 1) + '</td>'
                     + '<td class="cc-solo-tabla">' + escapeHtml(linea.Codigo) + '</td>'
                     + '<td class="cc-l-cod cc-solo-card">Cód. ' + escapeHtml(linea.Codigo) + '</td>'
@@ -696,9 +705,22 @@
                     + '<td class="text-center cc-l-bal cc-l-ultimo"><span class="cc-solo-tabla">' + formatBool(linea.PesoBalanza) + '</span>'
                     + '<i class="cc-solo-card fas fa-balance-scale ' + (linea.PesoBalanza ? 'text-primary' : 'cc-ico-off') + '" role="img" aria-label="' + textoBalanza + '" title="' + textoBalanza + '"></i></td>'
                     + (config.esAdmin ? renderCostoCeldaProduccion(linea, item.indiceOriginal, 'manual') : '')
-                    + '<td class="cc-l-acc"><button type="button" class="btn btn-sm btn-outline-danger js-remove-linea" data-index="' + item.indiceOriginal + '"' + (config.esAnulado ? ' disabled' : '') + ' title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>'
+                    + '<td class="cc-l-acc linea-col-acciones">' + botonLapiz + '<button type="button" class="btn btn-sm btn-outline-danger js-remove-linea" data-index="' + item.indiceOriginal + '"' + (config.esAnulado ? ' disabled' : '') + ' title="Quitar línea" aria-label="Quitar línea"><i class="fas fa-trash"></i></button></td>'
                     + '</tr>';
+
+                // Panel "Corregir linea" justo debajo de la fila que se esta corrigiendo.
+                if (estaEditando) {
+                    html += window.LineaEditor.htmlFila({
+                        titulo: 'Corregir línea ' + (item.indiceOriginal + 1) + ' · ' + (linea.Producto || ''),
+                        campos: [{ id: 'edtLineaKg', label: 'Kilos', valor: state.editor.valor }],
+                        error: state.editor.error,
+                        avisos: ['El cambio queda en el elaborado recién al tocar <b>Guardar</b>.'
+                            + (linea.PesoBalanza ? ' Esta línea se pesó en balanza: al corregirla a mano deja de figurar como pesada en balanza.' : '')],
+                        colspan: config.esAdmin ? 7 : 6
+                    });
+                }
             });
+            state.filasCambiadas = [];
 
             if (!html) {
                 var sinLineas = !state.lineas.length;
@@ -1238,11 +1260,75 @@
 
         $(document).on('click', '.js-remove-linea', function () {
             if (config.esAnulado) return;
+            // Modo vista (2026-11-19): las lineas se dibujan despues de que edit-readonly.js bloquea el formulario, asi que el tacho
+            // quedaba activo y permitia quitar ingredientes sin haber tocado Modificar. El CSS tambien lo oculta (_Styles.cshtml).
+            if ($form.hasClass('edit-readonly-active')) return;
             var index = toInt($(this).data('index'));
+            // Quitar una linea corre los indices de las siguientes: el panel de corregir se cierra.
+            state.editor = null;
             state.lineas.splice(index, 1);
             renderLineas();
             capturarRespaldo('Elaborado');
             scheduleDraft();
+        });
+
+        // ---- Corregir una linea (2026-11-19) ----
+        // Lapiz de la fila -> panel debajo con los kilos. Aplicar cambia solo la linea en memoria (el registro se guarda recien con Guardar).
+        // Una linea pesada en balanza y corregida a mano deja de figurar como pesada en balanza. Mismas reglas que al agregar: kilos > 0.
+        function cerrarEditorLinea() {
+            if (!state.editor) return;
+            state.editor = null;
+            renderLineas();
+            focusIngredienteCodigo();
+        }
+
+        function aplicarEditorLinea() {
+            if (!state.editor) return;
+            var linea = state.lineas[state.editor.index];
+            if (!linea) { state.editor = null; renderLineas(); return; }
+
+            var kilos = parseDecimal(state.editor.valor);
+            if (!kilos.ok || kilos.value <= 0) {
+                state.editor.error = 'Ingresá una cantidad de kilos mayor a cero.';
+                window.LineaEditor.mostrarError(state.editor.error);
+                window.LineaEditor.enfocar('edtLineaKg');
+                return;
+            }
+
+            // Sin cambios: solo se cierra el panel (no ensucia el registro ni destella).
+            if (kilos.value !== toFloat(linea.CantKg)) {
+                linea.CantKg = kilos.value;
+                linea.PesoBalanza = false;
+                state.filasCambiadas = [state.editor.index];
+                capturarRespaldo('Elaborado');
+                scheduleDraft();
+            }
+            state.editor = null;
+            renderLineas();
+            focusIngredienteCodigo();
+        }
+
+        $(document).on('click', '.js-edit-linea', function () {
+            if (config.esAnulado) return;
+            // Modo vista: hay que apretar Modificar primero (el CSS tambien oculta el lapiz).
+            if ($form.hasClass('edit-readonly-active')) return;
+            var index = toInt($(this).data('index'));
+            var linea = state.lineas[index];
+            if (!linea) return;
+            state.editor = { index: index, valor: formatKg(linea.CantKg), error: '' };
+            renderLineas();
+            window.LineaEditor.enfocar('edtLineaKg');
+        });
+
+        window.LineaEditor.enlazar({
+            onAplicar: aplicarEditorLinea,
+            onCancelar: cerrarEditorLinea,
+            onInput: function (idCampo, valor) {
+                if (!state.editor) return;
+                state.editor.valor = valor;
+                state.editor.error = '';
+                window.LineaEditor.mostrarError('');
+            }
         });
 
         // Costeo: toggle Compra/Venta y precio editable por linea, en cualquiera de las dos
@@ -1506,6 +1592,8 @@
             var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
             var key = String(e.key || '').toLowerCase();
             if (tag === 'textarea') return;
+            // Dentro del panel de corregir una linea los atajos de la pantalla (ej. * de la balanza) no aplican: se escribe un numero.
+            if ($(e.target).closest('.linea-editor').length) return;
 
             if (e.key === 'F9') {
                 e.preventDefault();

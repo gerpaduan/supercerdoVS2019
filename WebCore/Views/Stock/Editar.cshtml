@@ -451,7 +451,7 @@
                         @* En celular (<768px) las lineas son una lista compacta (tabla-cards-lista-edicion, wwwroot/Content/css/tabla-cards.css):
                            las clases de cada celda las pone renderLineas() en stock.js. En desktop la tabla no cambia. *@
                         <div class="table-responsive stock-tabla-wrap pt-tabla-wrap">
-                            <table class="table table-bordered table-sm stock-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasStock">
+                            <table class="table table-bordered table-sm stock-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion linea-con-lapiz tabla-items" id="tablaLineasStock">
                                 <thead class="thead-light">
                                     <tr>
                                         <th class="text-center pt-th-n" style="width:50px;" data-sort-key="orden">#</th>
@@ -1222,8 +1222,10 @@
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/acumulados-detalle.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/linea-editor.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/stock.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/linea-editor.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/stock-editar-compacto.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pt-entrada.css")" asp-append-version="true" />
@@ -1235,7 +1237,7 @@
     <script>
         $(function () {
             // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en Cantidad/Kgs.Medias.
-            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtCantKgs, #KgsMedias');
+            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtCantKgs, #KgsMedias, .linea-editor-campo');
 
             if (window.NumericKeypad) {
                 window.NumericKeypad.create({

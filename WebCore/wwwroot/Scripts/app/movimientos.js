@@ -208,6 +208,10 @@
             sortDirection: (window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches) ? 'desc' : 'asc',
             lineSequence: 0,
             searchText: '',
+            // Corregir una linea (2026-11-19, linea-editor.js): { index, unidades, kilos, permitir, pedirPermitir, error } mientras el panel
+            // esta abierto; null si no. filasCambiadas = indices que acaban de cambiar (destello hasta el proximo repintado).
+            editor: null,
+            filasCambiadas: [],
             // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
             // Embutidos"): se completa abajo (crearBorradorGenerico), null si esta deshabilitado
             // (ahi se sigue con localStorage/CapturaRespaldo de siempre).
@@ -1035,7 +1039,12 @@
                     var textoIngreso = line.PermitirIngreso ? 'Ingreso permitido: línea autorizada aunque los kilos no coincidían' : 'Ingreso normal';
                     var horaLinea = datosHoraLinea(line.CreadoTexto);
                     var tituloHora = 'Ítem ' + orden + (horaLinea.hora ? ' · ' + horaLinea.titulo : ' · sin hora de carga (anterior al cambio)');
-                    html += '<tr>'
+                    var estaEditando = !!(state.editor && state.editor.index === item.originalIndex);
+                    var clasesFila = (estaEditando ? ' linea-fila-sel' : '')
+                        + (state.filasCambiadas.indexOf(item.originalIndex) >= 0 ? ' linea-fila-cambiada' : '');
+                    // Lapiz (corregir unidades y kilos) junto al tacho; en modo vista lo oculta el CSS (linea-editor.css) y el clic se ignora.
+                    var botonLapiz = '<button type="button" class="btn btn-sm btn-outline-primary js-edit-linea" data-index="' + item.originalIndex + '" title="Corregir unidades y kilos" aria-label="Corregir unidades y kilos"><i class="fas fa-pen"></i></button>';
+                    html += '<tr' + (clasesFila ? ' class="' + $.trim(clasesFila) + '"' : '') + '>'
                         + '<td class="text-center font-weight-bold cc-solo-tabla" title="' + tituloHora + '">' + orden + '</td>'
                         + '<td class="cc-l-cod"><span class="cc-solo-card">#' + orden + ' · Cód. </span>' + line.Codigo + '</td>'
                         + '<td class="cc-l-prod">' + line.Producto + '</td>'
@@ -1047,11 +1056,16 @@
                         + '<i class="cc-solo-card fas fa-user-shield ' + (line.PermitirIngreso ? 'text-success' : 'cc-ico-off') + '" role="img" aria-label="' + textoIngreso + '" title="' + textoIngreso + '"></i></td>'
                         + '<td class="cc-l-hora cc-solo-card' + (horaLinea.otroDia ? ' cc-l-hora-otro-dia' : '') + (horaLinea.hora === '' ? ' cc-vacio' : '') + '" title="' + horaLinea.titulo + '">'
                         + (horaLinea.hora ? '<i class="far fa-clock"></i>' + horaLinea.hora : '') + '</td>'
-                        + '<td class="cc-l-acc"><span class="cc-solo-tabla mov-acc-hora-txt' + (horaLinea.otroDia ? ' mov-hora-otro-dia' : '') + '" title="' + tituloHora + '">' + (horaLinea.hora || '—') + '</span>'
+                        + '<td class="cc-l-acc linea-col-acciones"><span class="cc-solo-tabla mov-acc-hora-txt' + (horaLinea.otroDia ? ' mov-hora-otro-dia' : '') + '" title="' + tituloHora + '">' + (horaLinea.hora || '—') + '</span>'
+                        + botonLapiz
                         + '<button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + item.originalIndex + '" title="Quitar línea" aria-label="Quitar línea"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
                         + '</tr>';
+
+                    // Panel "Corregir linea" justo debajo de la fila que se esta corrigiendo.
+                    if (estaEditando) html += htmlPanelEditor(line, item.originalIndex);
                 }
             });
+            state.filasCambiadas = [];
 
             // Hidden inputs en el ORDEN DE CARGA (state.lines), no en el de pantalla: con "ultimos primero" (celular) o al
             // ordenar por una columna, las lineas nuevas se guardarian invertidas o mezcladas (2026-10-27, ver docs/DECISIONS.md).
@@ -1456,9 +1470,155 @@
             $('#modalAcumuladosMovimiento').modal('show');
         });
 
+        // ---- Corregir una linea (2026-11-19, linea-editor.js) ----
+        // Lapiz de la fila -> panel debajo con Unidades y Kilos (un producto no pesable solo lleva Unidades: sus kilos son las unidades, como al
+        // agregarlo). Aplicar cambia solo la linea en memoria (el movimiento se guarda recien con Guardar). Reglas = las de agregar una linea:
+        // unidades enteras, kilos > 0 y relacion unidades/kilos segun el promedio del producto (validarRelacionCantidadKilos). Si los valores
+        // cambian se REVALIDA la relacion: fuera de rango hay que tildar "Permitir ingreso" de nuevo, y dentro de rango la marca se limpia.
+        // Una linea pesada en balanza y corregida a mano deja de figurar como pesada en balanza.
+        function lineaEsNoPesable(line) {
+            return line.Pesable === false;
+        }
+
+        function textoKgCorto(valor) {
+            return valor.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+
+        // Limites (exclusivos) de kilos para N unidades segun el promedio; null si no hay promedio que validar.
+        function limitesRelacion(promedio, unidades) {
+            if (promedio <= 0 || unidades <= 0) return null;
+            return { inferior: promedio * (unidades - 1), superior: promedio * (unidades + 1) };
+        }
+
+        function htmlPanelEditor(line, index) {
+            var ed = state.editor;
+            var campos = [{ id: 'edtLineaUn', label: 'Unidades', valor: ed.unidades, entero: true }];
+            if (!lineaEsNoPesable(line)) campos.push({ id: 'edtLineaKg', label: 'Kilos', valor: ed.kilos });
+
+            var extra = ed.pedirPermitir
+                ? '<label class="linea-editor-permitir"><input type="checkbox" data-le-campo="edtLineaPermitir"' + (ed.permitir ? ' checked' : '') + ' /> '
+                    + 'Permitir ingreso (autorizo estos kilos aunque no coincidan con el promedio)</label>'
+                : '';
+
+            var avisos = ['El cambio queda en el movimiento recién al tocar <b>Guardar</b>.'];
+            if (line.PesoBalanza) avisos.push('Esta línea se pesó en balanza: al corregirla a mano deja de figurar como pesada en balanza.');
+            if (lineaEsNoPesable(line)) avisos.push('Producto no pesable: los kilos son las unidades.');
+
+            return window.LineaEditor.htmlFila({
+                titulo: 'Corregir línea ' + (toInt(line.__ordenIngreso) || (index + 1)) + ' · ' + (line.Producto || ''),
+                campos: campos,
+                htmlExtra: extra,
+                error: ed.error,
+                avisos: avisos,
+                colspan: 8
+            });
+        }
+
+        function errorEditorLinea(mensaje, idCampo) {
+            state.editor.error = mensaje;
+            window.LineaEditor.mostrarError(mensaje);
+            window.LineaEditor.enfocar(idCampo);
+        }
+
+        function cerrarEditorLinea() {
+            if (!state.editor) return;
+            state.editor = null;
+            renderLines();
+            focusCodigo();
+        }
+
+        function aplicarEditorLinea() {
+            var ed = state.editor;
+            if (!ed) return;
+            var line = state.lines[ed.index];
+            if (!line) { state.editor = null; renderLines(); return; }
+
+            // Unidades: entero (el servidor las guarda como int).
+            var textoUnidades = $.trim(ed.unidades || '');
+            if (textoUnidades === '') { errorEditorLinea('Ingresá la cantidad de unidades.', 'edtLineaUn'); return; }
+            if (!/^\d+$/.test(textoUnidades)) { errorEditorLinea('Las unidades tienen que ser un número entero, sin decimales.', 'edtLineaUn'); return; }
+            var unidades = parseInt(textoUnidades, 10);
+
+            // Kilos: los del campo, o las unidades en un producto no pesable.
+            var kilos;
+            if (lineaEsNoPesable(line)) {
+                kilos = unidades;
+                if (kilos <= 0) { errorEditorLinea('Ingresá una cantidad mayor a cero.', 'edtLineaUn'); return; }
+            } else {
+                var parsedKg = parseDecimal(ed.kilos);
+                if (!parsedKg.ok) { errorEditorLinea('Ingresá una cantidad de kilogramos válida.', 'edtLineaKg'); return; }
+                if (parsedKg.value <= 0) { errorEditorLinea('Ingresá una cantidad de kilogramos mayor a cero.', 'edtLineaKg'); return; }
+                kilos = parsedKg.value;
+            }
+
+            // Sin cambios: solo se cierra el panel (no ensucia el movimiento, no destella y no revoca un "Permitir ingreso" ya autorizado).
+            if (unidades === toInt(line.CantUnidad) && Math.abs(kilos - toFloat(line.CantKg)) < 0.0000005) {
+                cerrarEditorLinea();
+                return;
+            }
+
+            // Relacion unidades/kilos (misma regla que al agregar).
+            var promedio = toFloat(line.PromedioProducto);
+            var limites = limitesRelacion(promedio, unidades);
+            var fueraDeRango = !!limites && !(limites.inferior < kilos && kilos < limites.superior);
+            if (fueraDeRango && !ed.permitir) {
+                ed.pedirPermitir = true;
+                ed.error = unidades + (unidades === 1 ? ' un. debería' : ' un. deberían') + ' pesar entre ' + textoKgCorto(Math.max(limites.inferior, 0)) + ' y '
+                    + textoKgCorto(limites.superior) + ' kg (promedio ' + textoKgCorto(promedio) + ' c/u) y cargaste ' + textoKgCorto(kilos)
+                    + ' kg. Corregí uno o tildá «Permitir ingreso».';
+                renderLines();
+                window.LineaEditor.enfocar('edtLineaUn');
+                return;
+            }
+
+            line.CantUnidad = unidades;
+            line.CantKg = kilos;
+            line.PesoBalanza = false;
+            line.PermitirIngreso = fueraDeRango; // revalidado: dentro de rango la marca ya no hace falta
+            state.filasCambiadas = [ed.index];
+            state.editor = null;
+            capturarRespaldo('Movimiento');
+            scheduleDraft();
+            renderLines();
+            focusCodigo();
+        }
+
+        $(document).on('click.movimientoEditLine', '.js-edit-linea', function () {
+            // Modo vista: hay que apretar Modificar primero (el CSS tambien oculta el lapiz).
+            if (state.readOnly) return;
+            var index = toInt($(this).data('index'));
+            var line = state.lines[index];
+            if (!line) return;
+            state.editor = {
+                index: index,
+                unidades: String(toInt(line.CantUnidad)),
+                kilos: formatKg(line.CantKg),
+                permitir: false,
+                pedirPermitir: false,
+                error: ''
+            };
+            renderLines();
+            window.LineaEditor.enfocar('edtLineaUn');
+        });
+
+        window.LineaEditor.enlazar({
+            onAplicar: aplicarEditorLinea,
+            onCancelar: cerrarEditorLinea,
+            onInput: function (idCampo, valor) {
+                if (!state.editor) return;
+                if (idCampo === 'edtLineaUn') state.editor.unidades = valor;
+                else if (idCampo === 'edtLineaKg') state.editor.kilos = valor;
+                else if (idCampo === 'edtLineaPermitir') { state.editor.permitir = !!valor; return; }
+                state.editor.error = '';
+                window.LineaEditor.mostrarError('');
+            }
+        });
+
         $(document).on('click.movimientoLine', '.js-remove-line', function () {
             if (state.readOnly) return;
             var index = toInt($(this).data('index'));
+            // Quitar una linea corre los indices de las siguientes: el panel de corregir se cierra.
+            state.editor = null;
             state.lines.splice(index, 1);
             renderLines();
             capturarRespaldo('Movimiento');
@@ -1627,6 +1787,8 @@
             if (!$page.length) return;
             var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
             var key = String(e.key || '').toLowerCase();
+            // Dentro del panel de corregir una linea los atajos de la pantalla (* de la balanza, + de Permitir ingreso) no aplican: se escribe un numero.
+            if ($(e.target).closest('.linea-editor').length) return;
             if (e.key === 'F10' && tag !== 'textarea') {
                 e.preventDefault();
                 openProductoModal();

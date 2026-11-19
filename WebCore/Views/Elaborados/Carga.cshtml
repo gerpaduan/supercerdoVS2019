@@ -41,7 +41,7 @@
     @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 elaborados-barra-botones">
-        <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Elaborados")">
+        <a class="btn btn-sm btn-outline-secondary mb-2" href="@Url.Action("Index", "Elaborados")">
             <i class="fas fa-arrow-left mr-1"></i> Volver
         </a>
         @Html.Partial("~/Views/Shared/_QuienOpera.cshtml", Model.UsuarioNombre)
@@ -50,7 +50,7 @@
         <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 ml-auto pt-barra-grupo-der">
         @if (borradorGenericoHabilitado)
         {
-            <button type="button" class="btn btn-outline-secondary mb-2" id="btnVerBorradoresElaborados" title="Elaborados sin guardar">
+            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" id="btnVerBorradoresElaborados" title="Elaborados sin guardar">
                 <i class="fas fa-history mr-1"></i> Elaborados sin guardar
                 <span id="badgeBorradoresGenerico" class="badge badge-warning d-none ml-1">0</span>
             </button>
@@ -94,8 +94,10 @@
                 }
                 else if (Model.EsEdicion && !esAnulado)
                 {
-                    <div class="alert alert-warning" role="alert">
-                        Al guardar esta modificacion se anula primero el registro actual y luego se crea uno nuevo con los datos actualizados.
+                    @* Solo en modo edicion (pedido 2026-11-19): en modo vista ya hay una franja "Estas viendo este registro" (pantalla-trabajo.js)
+                       y este cartel de "se anula y se crea uno nuevo" confundia. La clase la resuelve _Styles.cshtml con .edit-readonly-active. *@
+                    <div class="alert alert-warning ela-solo-edicion" role="alert">
+                        <i class="fas fa-pen mr-1" aria-hidden="true"></i> <b>Editando</b> &mdash; al guardar se anula primero el registro actual y luego se crea uno nuevo con los datos actualizados.
                     </div>
                 }
                 @if (Model.EsEdicion && esAnulado)
@@ -322,7 +324,7 @@
                            las clases de cada celda las pone renderLineas() en elaborados-carga.js. En desktop la tabla no cambia. *@
                         <div class="table-responsive mb-3 elaborados-tabla-wrap pt-tabla-wrap">
                             @* # y encabezados con data-sort-key: en escritorio ordenan la lista (orden-tabla.js); la celda # es cc-solo-tabla (no se ve en celular). *@
-                            <table class="table table-bordered table-sm elaborados-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion tabla-items" id="tablaLineasElaborado">
+                            <table class="table table-bordered table-sm elaborados-table-compact tabla-cards tabla-cards-lista tabla-cards-lista-edicion linea-con-lapiz tabla-items" id="tablaLineasElaborado">
                                 <thead class="thead-light">
                                     <tr>
                                         <th style="width:60px;" data-sort-key="orden">#</th>
@@ -470,7 +472,7 @@
                     @if (Model.EsEdicion && !esAnulado)
                     {
                         <button type="button"
-                                class="btn btn-primary mr-2 mb-2"
+                                class="btn btn-sm btn-primary mr-2 mb-2"
                                 id="btnHabilitarEdicionElaborado" data-sin-foco tabindex="-1"
                                 data-edit-readonly-ignore="true"
                                 disabled="@(Model.PuedeHabilitarEdicion ? null : "disabled")">
@@ -479,13 +481,13 @@
                     }
                     @if (!esAnulado)
                     {
-                        <button type="submit" class="btn btn-success mr-2 mb-2 @((Model.EsEdicion && !esAnulado) ? "d-none" : "")" id="btnGuardarElaborado" data-sin-foco tabindex="-1" disabled="@(Model.EsEdicion && !Model.PermiteGuardarEdicion ? "disabled" : null)">
+                        <button type="submit" class="btn btn-sm btn-success mr-2 mb-2 @((Model.EsEdicion && !esAnulado) ? "d-none" : "")" id="btnGuardarElaborado" data-sin-foco tabindex="-1" disabled="@(Model.EsEdicion && !Model.PermiteGuardarEdicion ? "disabled" : null)">
                             <i class="fas fa-save mr-1"></i> @(Model.EsEdicion ? "Guardar cambios" : "Guardar elaborado")
                         </button>
                     }
                     @if (Model.EsEdicion && Model.PuedeAnular)
                     {
-                        <button type="button" class="btn btn-outline-danger mr-2 mb-2" id="btnAnularElaborado" data-sin-foco tabindex="-1">
+                        <button type="button" class="btn btn-sm btn-outline-danger mr-2 mb-2" id="btnAnularElaborado" data-sin-foco tabindex="-1">
                             <i class="fas fa-ban mr-1"></i> Anular
                         </button>
                     }
@@ -494,7 +496,7 @@
                        guardar") -- este atributo excluiria este link del intercept global de
                        _Layout.cshtml, contradiciendo el pedido explicito del usuario ("cliqueando
                        cancelar... siempre advertir"). *@
-                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-outline-secondary mb-2" data-sin-foco tabindex="-1">
+                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-sm btn-outline-secondary mb-2" data-sin-foco tabindex="-1">
                         Cancelar
                     </a>
                 </div>
@@ -643,10 +645,12 @@
     <script src="@Url.Content("~/Scripts/app/producto-pendiente-guard.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/acumulados-detalle.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/linea-editor.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-carga.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/pantalla-completa.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     @* Escritorio compacto (2026-10-30): va DESPUES de numeric-keypad.css, que comparte con otras pantallas. *@
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/linea-editor.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/elaborados-compacto.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pantalla-trabajo.css")" asp-append-version="true" />
     <link rel="stylesheet" href="@Url.Content("~/Content/css/pt-entrada.css")" asp-append-version="true" />
@@ -659,7 +663,7 @@
             // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en el Kg del ingrediente.
             // Los selectores de costeo (margen, precio por linea) se agregan aca porque las
             // celdas de precio se crean dinamicamente en renderLineas()/renderFormula().
-            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtKgIngrediente, #txtMargenCarga, .js-precio-costo-produccion');
+            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtKgIngrediente, #txtMargenCarga, .js-precio-costo-produccion, .linea-editor-campo');
 
             if (window.NumericKeypad) {
                 window.NumericKeypad.create({

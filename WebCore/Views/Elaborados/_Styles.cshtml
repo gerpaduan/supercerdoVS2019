@@ -323,4 +323,122 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* ---- Modo vista vs. modo edicion (pedido 2026-11-19) ----
+       edit-readonly.js deja .edit-readonly-active en el formulario mientras el registro se esta VIENDO; al apretar Modificar la saca.
+       Anulado nunca se edita: el formulario lleva .ela-anulado y se comporta siempre como vista.
+       - .ela-solo-vista : se ve solo en modo vista (franja con candado, cantidad como texto).
+       - .ela-solo-edicion: se ve solo en modo edicion (cantidad editable, balanza, teclado, cartel de "se anula y se crea uno nuevo").
+       Se usa display:none (no visibility): los campos ocultos siguen en el DOM con su valor, asi nada del JS de la pantalla se entera. */
+    .ela-franja {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-bottom: .6rem;
+        padding: .35rem .75rem;
+        border: 1px solid;
+        border-left-width: 4px;
+        border-radius: .4rem;
+        font-size: .85rem;
+    }
+
+    .ela-franja-texto > i {
+        margin-right: .35rem;
+    }
+
+    .ela-franja-acciones {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .ela-franja-vista {
+        border-color: #cbd5e1;
+        border-left-color: #64748b;
+        background: #f1f5f9;
+        color: #334155;
+    }
+
+    .ela-franja-anulado {
+        display: flex;
+        border-color: #fecaca;
+        border-left-color: #dc2626;
+        background: #fef2f2;
+        color: #7f1d1d;
+    }
+
+    .ela-franja-edicion {
+        border-color: #fde68a;
+        border-left-color: #f59e0b;
+        background: #fffbeb;
+        color: #78350f;
+    }
+
+    form.edit-readonly-active .ela-franja-vista {
+        display: flex;
+    }
+
+    form:not(.edit-readonly-active):not(.ela-anulado) .ela-franja-edicion {
+        display: flex;
+    }
+
+    form.edit-readonly-active .ela-solo-edicion,
+    form.ela-anulado .ela-solo-edicion {
+        display: none !important;
+    }
+
+    .ela-solo-vista {
+        display: none;
+    }
+
+    form.edit-readonly-active .ela-solo-vista,
+    form.ela-anulado .ela-solo-vista {
+        display: block;
+    }
+
+    /* Carga: el tacho de quitar ingrediente no se muestra en modo vista (el click tambien se ignora en elaborados-carga.js). */
+    form.edit-readonly-active .js-remove-linea,
+    form.ela-anulado .js-remove-linea {
+        display: none !important;
+    }
+
+    /* Cantidad en modo vista: un dato, no un campo (sin recuadro verde de "listo para escribir"). */
+    .ela-cantidad-vista-valor {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    @@media (min-width: 1200px) {
+        /* Sin el teclado, la formula ocupa el lugar que quedaba libre a la derecha de la cantidad. */
+        form.edit-readonly-active .ela-col-formula,
+        form.ela-anulado .ela-col-formula {
+            flex: 0 0 75%;
+            max-width: 75%;
+        }
+    }
+
+    html.dark-mode .ela-franja-vista {
+        border-color: #475569;
+        border-left-color: #94a3b8;
+        background: #1e293b;
+        color: #cbd5e1;
+    }
+
+    html.dark-mode .ela-franja-anulado {
+        border-color: #7f1d1d;
+        border-left-color: #f87171;
+        background: #3b1212;
+        color: #fecaca;
+    }
+
+    html.dark-mode .ela-franja-edicion {
+        border-color: #78350f;
+        border-left-color: #fbbf24;
+        background: #2f2208;
+        color: #fde68a;
+    }
 </style>

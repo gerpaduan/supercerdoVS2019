@@ -23,10 +23,21 @@ Si escribiste (o escaneaste) un código de ingrediente y no lo agregaste a la ta
 ## Agregar un ingrediente
 **Código**, **Ingrediente**, **Cantidad** (kilos) y el botón **+**. En el celular **Cantidad** y **+** van en el mismo renglón, con el **+** pegado a la cantidad (con el teclado numérico en pantalla abierto se apilan como antes).
 
+## Corregir los kilos de un ingrediente ya cargado (2026-11-19)
+- Cada línea de la tabla tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · ingrediente»** con el campo **Kilos**.
+- **Enter** o **Aplicar** cambia los kilos de esa línea (la tabla, el total manual, el resumen y la fórmula se recalculan y la fila destella en verde); **Esc** o **Cancelar** cierra el panel sin cambiar nada. Los kilos tienen que ser mayores a cero (si no, el panel avisa y no cierra). Si no cambiás el valor, el panel solo se cierra.
+- El cambio **queda en la pantalla**: se guarda recién al tocar **Guardar** (como agregar o quitar una línea). Si escribís un valor y tocás **Guardar** sin **Aplicar**, ese valor no se guarda.
+- Una línea **pesada en balanza** que se corrige a mano deja de figurar como pesada en balanza (el panel lo avisa).
+- En **modo vista** el lápiz no se muestra ni funciona; aparece al tocar **Modificar**. En un elaborado **anulado** tampoco. Quitar una línea con el tacho cierra el panel abierto.
+- Dentro del panel la tecla `*` no activa la balanza: se escribe un número.
+- Detalle técnico: `linea-editor.js` / `linea-editor.css` (panel compartido, pensado también para Stock y Movimientos); ver `docs/DECISIONS.md` (2026-11-19).
+
 ## Modo solo lectura: cómo se ve que no se puede editar (2026-11-13)
 Al abrir un elaborado **ya guardado** la pantalla queda en **modo ver**:
 - Arriba aparece la etiqueta gris **Solo lectura** y, junto a los botones de la derecha, un botón azul **Modificar** (el mismo que el de abajo a la derecha; los dos hacen lo mismo). Un elaborado **anulado** muestra la etiqueta pero sin botón.
 - El cuadro de carga de **2 Ingredientes** (Código, Ingrediente, Cantidad, balanza, teclado) **no se muestra**; la cabecera «2 Ingredientes» con el resumen de ingredientes y kilos sigue arriba de la tabla. El cuadro **1 Elaborado** queda visible con sus campos bloqueados. En su lugar hay una franja con *«Estás viendo este registro. Para cambiarlo, presioná Modificar»*.
+- El cartel amarillo *«Editando — al guardar se anula primero el registro actual y luego se crea uno nuevo…»* se ve **solo en modo edición** (después de tocar **Modificar**); en modo vista ya no aparece (2026-11-19). Los botones de abajo y **Volver** / **Elaborados sin guardar** son más chicos.
+- En modo vista el **tacho de quitar ingrediente** de la tabla no se muestra y, aunque se lo accionara, no quita nada: antes se veía y permitía borrar líneas sin haber tocado **Modificar** (corregido 2026-11-19). Aparece al tocar **Modificar**. El botón **Modificar** de arriba tampoco queda duplicado: se muestra solo en modo vista.
 - Si intentás escribir letras o números (por ejemplo con el lector de código de barras) sale un aviso y el botón **Modificar** late dos veces; no se repite antes de 3 segundos.
 - Al tocar **Modificar** vuelve el cuadro de carga. Un elaborado **nuevo** no pasa por modo ver. **Ver acumulados** de esta pantalla está apagado en modo ver (así era antes) y por eso no aparece en la franja.
 - Lo hace `pantalla-trabajo.js` (sección 7) y `pantalla-trabajo.css` (sección 10), igual en Stock y Movimientos. **Verificado** solo en una maqueta con el CSS y el JS reales (de Stock); PENDIENTE probarlo en la pantalla real. **No cubre** la pantalla de **Ingreso rápido / Desarme** (`Elaborados/EditarIngresoRapido`): no usa `pantalla-trabajo`.

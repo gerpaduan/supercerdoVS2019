@@ -236,7 +236,7 @@ html.dark-mode.modo-ventana .pt-quien-operador {
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-resto { width: 11% !important; }
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th.pt-th-med { width: 13% !important; }
         /* Accion: lo que mide el boton de quitar (~52 px) y no un %: con 10% de una tabla de ~465 px (1280 px de ventana) el boton se salia. */
-        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th:last-child { width: 3.4rem !important; }
+        body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th:last-child { width: 5.2rem !important; }
         body.app-shell .pantalla-trabajo .pt-tabla-wrap:has(th.pt-th-med) thead th {
             padding-left: .3rem;
             padding-right: .3rem;
@@ -1370,6 +1370,12 @@ html.dark-mode .pantalla-trabajo[data-pt="stock"] {
 .pt-lectura-modificar,
 .pt-lectura-barra {
     display: none;
+}
+
+/* Fuera del modo ver el Modificar de la barra de arriba no se muestra (2026-11-19): en Elaborados la regla de los botones de la barra
+   (display:inline-flex, seccion de Elaborados) le ganaba a .pt-lectura-modificar { display:none } y quedaba duplicado junto al de abajo. */
+.pantalla-trabajo:not(.pt-solo-lectura) .pt-lectura-modificar {
+    display: none !important;
 }
 
 /* El doble .pt-box-agregar sube la especificidad: las reglas del cuadro (Stock / Movimientos) traen su propio border !important. */

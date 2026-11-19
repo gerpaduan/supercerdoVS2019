@@ -176,7 +176,8 @@ body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-bal
     body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:first-child { width: 2.5rem !important; }
     body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th.pt-th-num { width: 6.2rem !important; }
     body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:nth-child(5) { width: 3.5rem !important; }
-    body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:last-child { width: 3.5rem !important; }
+    /* Accion: lapiz + tacho (2026-11-19, linea-editor.css); antes 3.5rem con solo el tacho. */
+    body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:last-child { width: 5rem !important; }
 }
 
 /* ===== Ventana independiente angosta (1/3 del ancho) de Stock y Elaborados (2026-11-13) =====
@@ -301,7 +302,7 @@ html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th.pt-th-prod { width: auto !important; }
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th.pt-th-num { width: 4.6rem !important; }
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:nth-child(5) { width: 2.6rem !important; }
-html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:last-child { width: 2.9rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="stock"] .pt-tabla-wrap thead th:last-child { width: 5rem !important; }
 
 html.ventana-angosta body.app-shell .pantalla-trabajo:is([data-pt="stock"], [data-pt="elab"]) .pt-tabla-wrap tbody .btn-sm {
     padding: .1rem .35rem;
@@ -516,7 +517,7 @@ html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-prod { width: auto !important; }
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-num { width: 4.6rem !important; }
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th.pt-th-resto { width: 3.3rem !important; }
-html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th:last-child { width: 2.9rem !important; }
+html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-tabla-wrap thead th:last-child { width: 5rem !important; }
 
 /* Pie: Receta, Formula (totales), Observaciones y botones cada uno en su renglon y compactos. La tabla de la formula queda con altura limitada. */
 html.ventana-angosta body.app-shell .pantalla-trabajo[data-pt="elab"] .pt-col-der > :is(#bloqueRecetaCarga, .elaborados-summary-card, .elaborados-card-observaciones, .elaborados-obs-bloque) {

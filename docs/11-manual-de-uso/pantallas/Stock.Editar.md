@@ -67,6 +67,16 @@ PENDIENTE: documentar los datos del encabezado, la carga de productos (código, 
 ## Datos del registro
 - En la pantalla de un registro ya guardado, **Creado** y **Actualizado** (con el usuario debajo de cada fecha) se muestran en un bloque compacto de dos columnas, con letra chica, para ocupar poca altura.
 
+## Corregir la cantidad de una línea ya cargada (2026-11-19)
+- Cada línea tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · producto»** con el campo **Kilos**.
+- **Enter** o **Aplicar** cambia la cantidad de esa línea (el total, la tabla y los datos que se guardan se actualizan y la fila destella en verde); **Esc** o **Cancelar** cierra sin cambiar nada. Si no cambiás el valor, el panel solo se cierra.
+- **Signo, igual que al agregar una línea:** en **Egreso** se escribe en positivo y queda en negativo (el campo se rotula «Kilos (egreso)»); en **Ajuste** se puede escribir con signo y no puede ser cero; en el resto tiene que ser mayor a cero. Si el valor no es válido, el panel avisa y no cierra.
+- El cambio **queda en la pantalla**: se guarda recién al tocar **Guardar**. Un valor escrito en el panel y no aplicado no se guarda.
+- Una línea **pesada en balanza** que se corrige a mano deja de figurar como pesada en balanza (el panel lo avisa). En un **Pesaje** el panel recuerda que **Kgs.Medias** no se recalcula solo.
+- **Líneas que no se corrigen:** las de un **pesaje vinculado** y las marcadas **«No contado»** muestran el lápiz apagado (con el motivo al pasar el mouse); cambiar sus kilos descuadraría el pesaje del que vienen.
+- En **modo vista** el lápiz no se muestra ni funciona; aparece al tocar **Modificar**. Quitar una línea con el tacho cierra el panel abierto. Dentro del panel la tecla `*` no activa la balanza.
+- La columna **Acción** de la tabla es más ancha (lápiz + tacho). Detalle técnico: `linea-editor.js` / `linea-editor.css`; ver `docs/DECISIONS.md` (2026-11-19).
+
 ## Modo solo lectura: cómo se ve que no se puede editar (2026-11-13)
 Al abrir un movimiento **ya guardado** la pantalla queda en **modo ver** y lo deja claro:
 - Arriba aparece la etiqueta gris **Solo lectura** y, a su lado, un botón azul **Modificar** (el mismo que el de abajo a la derecha; los dos hacen lo mismo).
