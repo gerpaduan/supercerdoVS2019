@@ -5,7 +5,7 @@ rol: usuario
 modulo: Productos
 orden: 3
 permiso: Producto.NuevoCorte para crear y guardar cambios (el servidor lo valida al guardar; sin él se vuelve al listado con un aviso)
-revisada: 2026-11-10
+revisada: 2026-11-20
 ---
 
 ## Para qué sirve
@@ -38,3 +38,6 @@ Solo aparece al editar un producto que depende de un producto maestro. Permite m
 En pantallas anchas (desde 1200 px) el formulario se muestra en dos columnas: *Datos del producto* y *Producto maestro* a la izquierda; *Stock y estado* y *Jerarquía por sucursal* a la derecha. En pantallas más chicas todo queda en una columna.
 
 Verificado en pantalla (2026-11-10, base local, producto Carré): disposición en dos columnas a 1536 px y en una a 1100 px, modo solo lectura y paso a edición con **Modificar**, y modo oscuro. PENDIENTE: no se verificó el uso dentro de Compras (formulario embebido), el guardado de cambios ni la carga continua.
+
+## Leer el código con la cámara (2026-11-20)
+El botón de la cámara exige **dos lecturas iguales seguidas**, separadas al menos **0,5 s** (antes la segunda tardaba 2 s), y acepta **EAN-8, EAN-13 y UPC-A** (12 dígitos: un EAN-13 que empieza con 0). Al aceptar, la cámara se cierra sola. El recuadro de la cámara es más alto (120 px) y muestra el **centro** de la imagen, que es lo que se lee. Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).

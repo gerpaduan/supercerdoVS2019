@@ -36,3 +36,6 @@ Igual que en el POS de Ventas (ver [Punto de venta](ayuda:pantalla/Ventas.POS), 
 - El peso inestable ya se rechazaba; lo nuevo es que sin lectura fresca tampoco agrega (antes, si el agente no respondía, aceptaba lo que hubiera en Cantidad).
 - Si vuelve a pasar que el peso no se actualiza, ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md` (2026-11-20). Detalle técnico: `docs/DECISIONS.md` (2026-11-20, «Balanza: lectura vigente»).
 - Verificado el 2026-11-20 en el POS de ventas (mismo código de balanza, `pos-balanza.js`) con un agente simulado. PENDIENTE: probarlo en esta pantalla y con una balanza real.
+
+## Leer el código con la cámara (2026-11-20)
+El recuadro de la cámara es más alto (120 px) y muestra el **centro** de la imagen, que es lo que se lee; el celular además aplica un zoom moderado si lo permite. **No cambia** la pausa: el mismo código no se vuelve a cargar antes de 2 s, y el alta rápida de un producto nuevo solo se ofrece con la segunda lectura igual. Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).

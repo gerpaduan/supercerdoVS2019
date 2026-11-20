@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.NuevaCompra (alta) y Compra.ModificarCompra (modificar y eliminar); a los usuarios de producción les pide elegir el operador de Compras antes de entrar
-revisada: 2026-11-19
+revisada: 2026-11-20
 alias: Compras.NuevaCompra, Compras.ModificarCompra
 ---
 ## Para qué sirve
@@ -99,3 +99,8 @@ La **Nueva compra** del POS (**F5**) y **Modificar compra** se abren en su propi
 - **Guardar compra**, **Cancelar** y **Modificar** (atajos: Alt+G o Alt+Enter para Guardar o Modificar, Alt+C para Cancelar). **no toman el foco**: Tab no se detiene en ellos y, al hacer clic, el cursor sigue donde estaba (no queda el recuadro de foco ni un Enter o Espacio posterior los vuelve a activar). Solo responden al **clic** o al **atajo** de la pantalla.
 - **Enter dentro de un campo no guarda** la pantalla (antes el navegador lo trataba como un clic en Guardar). Enter sigue haciendo lo suyo en los campos que lo usan (Código, Cantidad, editor de línea).
 - Detalle técnico: `sin-foco-botones.js` + atributo `data-sin-foco` en cada botón; ver `docs/DECISIONS.md` (2026-11-19).
+
+## Leer el código con la cámara (2026-11-20)
+El botón de la cámara exige **dos lecturas iguales seguidas** y ahora acepta también **UPC-A** (12 dígitos: un EAN-13 que empieza con 0; antes decía «Código inválido»). La cámara queda abierta para el siguiente producto y tras cada lectura hay una pausa de 2 s. El recuadro es más alto (120 px) y muestra el **centro** de la imagen, que es lo que se lee. Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).
+
+- **Aviso «Salir sin guardar» (desde 2026-11-20):** el foco arranca en «No, quedarme» con borde marcado; Enter solo activa el botón con foco y las flechas pasan a «Sí, salir». Ver [aviso «Salir sin guardar»](ayuda:concepto/aviso-salir-sin-guardar).

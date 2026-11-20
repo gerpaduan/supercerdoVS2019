@@ -12,6 +12,60 @@
 - **Archivos:** `Carnisys.Balanza.Agent/*`, `app.manifest`, `WebCore/Controllers/HomeController.cs`, `WebCore/wwwroot/Content/downloads/Carnisys.Balanza.Agent.exe` (reemplaza al zip), manual `Home.Utilidades.md`.
 - **Pendiente:** probar con balanza y puertos reales y con Windows al 125/150 %; reinstalar el agente en cada PC con balanza; `scripts/check-ayuda.ps1` antes del deploy.
 
+## 2026-11-20 (g) - Lectura por cámara: el visor muestra el centro, zoom, 0,5 s entre lecturas y UPC-A
+
+- **Cambio:** la cámara que lee códigos de barra ahora muestra y analiza la **franja central** de la imagen (el recuadro es más alto, 120 px; antes se veía solo el borde superior, donde no enfoca ni lee), pide 1280x720 y un zoom moderado si el celular lo permite, y en iPhone/Firefox lee con ZXing sobre esa franja. En el **alta de producto** y el **catálogo global** la 2da lectura de confirmación llega a los 0,5 s (antes a los 2 s) y el mensaje pide mantener el código quieto. Compras, Movimientos, Stock y el alta aceptan también **UPC-A** (EAN-13 que empieza con 0, 12 dígitos). Se mantienen la doble lectura, el dígito verificador y las pausas de 2 s; el POS y el POS de expendio no cambian su pausa.
+- **Archivos:** `WebCore/wwwroot/Scripts/app/scanner.js`, `barcode-code-input.js`, `Content/css/{custom,pos,pos-expendio}.css`, `Views/Productos/{AddOrEdit,Index}.cshtml`, `Views/Compras/Editar.cshtml`, manual (`conceptos/lectura-codigo-barra-camara.md` nuevo y 7 pantallas).
+- **Verificado:** compila (0 errores); cámara simulada con la librería real en el navegador integrado y pruebas en Node (ver DECISIONS). **Pendiente:** probar en un Android y un iPhone reales con productos que antes no leían, y medir el consumo de ZXing en equipos viejos; `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-20 (e) - POS: «Inicio» sin cerrar el POS y «Punto de Venta» trae al frente el POS abierto
+
+- **Cambio:** en el POS, **Inicio** abre Home en otra pestaña (o trae al frente la que ya está) y el POS queda como estaba; desde Home, **Punto de Venta** (menú o clic derecho › Abrir ventana de la app) trae al frente el POS ya abierto del mismo usuario y sucursal en vez de abrir otro. Si figura abierto pero el navegador no deja alcanzarlo, avisa y deja elegir. Al modificar una venta y en la app instalada el botón no cambia.
+- **Archivos:** `WebCore/wwwroot/Scripts/app/pos-ventana-unica.js` (nuevo), `pos-multi-instance.js`, `menu-ventana-independiente.js`, `Views/Ventas/POS.cshtml`, `Views/Shared/_Layout.cshtml`, manual `Ventas.POS.md` y `Home.Utilidades.md`.
+- **Verificado:** compila (0 errores); 14 tests de Node nuevos (`WebCore.Tests/js/pos-ventana-unica.test.js`, ventanas simuladas; detectan 3 roturas introducidas a propósito). **Pendiente:** probarlo en Chrome real con login (el navegador del pane no abre ventanas emergentes y el test no reproduce cómo el navegador busca ventanas por nombre); ver DECISIONS (2026-11-20 e).
+
+## 2026-11-20 (j) - Ventanas independientes: sin el cartel del navegador al salir
+
+- **Cambio:** en las ventanas independientes y apps instaladas (menos el POS) ya no aparece «¿Deseas abandonar el sitio?» del navegador. Volver, enlaces y **F5 / Ctrl+R** con cambios sin guardar pasan por el aviso propio «Salir sin guardar»; cerrar con la X, Alt+F4 o Ctrl+W no pregunta (el navegador no deja interceptarlo; lo cargado queda como borrador). Pestañas normales sin cambios. Existencia también perdió su aviso nativo. Detalle: `docs/DECISIONS.md` (2026-11-20 j).
+- **Archivos:** `WebCore/Views/Shared/_Layout.cshtml`, `wwwroot/Scripts/app/existencia-sucursales.js`, manual (concepto `aviso-salir-sin-guardar`).
+- **Verificado:** `beforeunload` y F5 en el navegador con SweetAlert2 real. **Pendiente:** probar en una ventana real de Chrome con login (X sin cartel, F5 con aviso); `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-20 (i) - Avisos «Salir sin guardar»: Enter ya no saca de la pantalla
+
+- **Cambio:** en los avisos de salida (global de las pantallas de alta/edición, Egreso de caja, pago de Finanzas, POS «¿Salir de la edición?» y «Tenés sin guardar») el foco arranca en «No, quedarme» con un borde azul visible; Enter activa solo el botón con foco (sin foco = cancelar) y las flechas pasan a «Sí, salir». Antes Enter confirmaba la salida aunque el foco estuviera en «No, quedarme». Las demás confirmaciones no cambian. Detalle: `docs/DECISIONS.md` (2026-11-20 i).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/swal-single-confirm.js`, `egresos-caja.js`, `pos-trabajos.js`, `Views/Shared/_Layout.cshtml`, `Views/Finanzas/AddOrEditPago.cshtml`, `Views/Ventas/POS.cshtml`, manual (concepto nuevo y 8 pantallas).
+- **Verificado:** SweetAlert2 real con teclas reales en el navegador. **Pendiente:** probar en las pantallas reales con login; `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-20 (h) - Mover la ventana independiente arrastrando la franja de título
+
+- **Cambio:** la franja azul de título de las ventanas independientes se puede arrastrar con el botón izquierdo para mover la ventana (no sirve maximizada). La ventana no sale de la pantalla (siempre quedan 120 px a la vista). Detalle: `docs/DECISIONS.md` (2026-11-20 h).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/titulo-ventana.js`, `marco-ventana.js`, `WebCore.Tests/js/marco-ventana.test.js` (5 tests nuevos), manual de 6 pantallas.
+- **Verificado:** 46 tests de Node y el arrastre con eventos simulados en el navegador. **Pendiente:** probar en una ventana real de Chrome (fluidez del movimiento).
+
+## 2026-11-20 (f) - Marco de las ventanas independientes con filete naranja
+
+- **Cambio:** el marco de las ventanas independientes pasa a doble borde, filete naranja de 2 px por fuera y azul de 5 px por dentro, para distinguirlo del fondo oscuro o claro; el resaltado de los agarres pasa a blanco. La franja de título sube a 35 px (28 visibles). Detalle: `docs/DECISIONS.md` (2026-11-20 f).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/marco-ventana.js`, `titulo-ventana.js`, manual de 6 pantallas.
+- **Verificado:** grosores y colores en el navegador con un DOM simulado. **Pendiente:** verlo en una ventana real de Chrome sobre la app.
+
+## 2026-11-20 (d) - Título claro de las ventanas independientes
+
+- **Cambio:** en las ventanas independientes el título del sistema pasa a «Sección · Pantalla» (sin «- CarniSys») y hay una franja azul arriba con el nombre de la sección («Stock», «Movimientos», «Cajas»…) y la pantalla. La franja resta unos 28 px de alto a la tabla. Detalle: `docs/DECISIONS.md` (2026-11-20 d).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/titulo-ventana.js` y `WebCore/Views/Shared/_SeccionVentana.cshtml` (nuevos), `_Layout.cshtml`, `_LayoutEmbed.cshtml`, `pantalla-trabajo.js` (ya no antepone el nombre), manual de 6 pantallas.
+- **Verificado:** en el navegador con un DOM simulado (título, franja como primer hijo, sin scroll de más). **Pendiente:** ver en las pantallas reales con login y en una ventana/app real de Chrome; `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-20 (c) - Marco y agarres para cambiar el tamaño de las ventanas independientes
+
+- **Cambio:** las ventanas independientes (apps instaladas desde Utilidades menos el POS, «Abrir en ventana» y el clic derecho del menú lateral) tienen un marco azul visible con agarres en los 4 lados y las 4 esquinas: se resaltan al pasar el cursor y arrastrando cambian el ancho, el alto o ambos (borde opuesto fijo, mínimo 480×360). Detalle: `docs/DECISIONS.md` (2026-11-20 c).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/marco-ventana.js` (nuevo), `ventana-tamano.js`, `_Layout.cshtml`, `_LayoutEmbed.cshtml`, `WebCore.Tests/js/marco-ventana.test.js` (nuevo), manual de 6 pantallas.
+- **Verificado:** 13 tests de Node de la geometría y el marco/agarres en el navegador con `resizeTo`/`moveTo` simulados. **Pendiente:** probar el arrastre en una ventana real de Chrome (popup y app instalada); `scripts/check-ayuda.ps1` antes del deploy.
+
+## 2026-11-20 (b) - Menú lateral: clic derecho para abrir la pantalla o la app independiente
+
+- **Cambio:** clic derecho en una opción del menú lateral abre un menú propio: en Stock › Gestión de stock, Existencia por sucursales, Movimientos, Elaborados, Punto de venta y Punto de expendio, «Abrir ventana de la app» (ventana sin menú lateral); en el resto, «Abrir en ventana independiente». La vista actual no se toca; repetir trae la ventana ya abierta al frente sin recargarla. Detalle: `docs/DECISIONS.md` (2026-11-20 b).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/menu-ventana-independiente.js` (nuevo), `WebCore/Views/Shared/_Layout.cshtml` (atributos `data-app` / `data-app-url` y script), manual `Home.Utilidades.md`.
+- **Verificado:** menú y opciones por tipo de enlace, Escape y flechas, en el navegador con un menú lateral simulado. **Pendiente:** probar en Chrome real (apertura de ventanas); `scripts/check-ayuda.ps1` antes del deploy.
+
 ## 2026-11-20 - Balanza: un peso viejo nunca se muestra ni se guarda (web + agente)
 
 - **Cambio:** las pantallas con balanza (Elaborados carga e ingreso rápido, Movimientos, Stock, POS y Puntos de expendio) muestran y guardan solo una lectura fresca de la balanza (< 1,5 s); sin ella el campo queda vacío y Enter avisa. Peso inestable o cero no se agrega. Elaborados y Movimientos activan la lectura al abrir (antes quedaba el peso del momento de abrir hasta tocar `*`). El agente informa la antigüedad de la lectura, detecta y destraba el lector colgado, no se cuelga por un cliente HTTP y deja log. Detalle: `docs/DECISIONS.md` (2026-11-20).

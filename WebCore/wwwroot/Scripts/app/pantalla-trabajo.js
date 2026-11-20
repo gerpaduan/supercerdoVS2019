@@ -233,8 +233,6 @@
     // Por debajo de 1200 px el diseno de escritorio lo aplica ventana-angosta.js (antes: 60 % con piso de 1200 px).
     var VENTANA_ANCHO_FRACCION = 1 / 3;
     var VENTANA_ANCHO_MIN_PX = 480;
-    // Nombre de la pantalla para el titulo de la ventana (se ve en la barra de titulo y al pasar el mouse por la barra de tareas).
-    var NOMBRE_PANTALLA = { mov: 'Movimientos', stock: 'Stock', elab: 'Elaborados' }[pantalla] || '';
     var enModoVentana = document.documentElement.classList.contains('modo-ventana');
 
     function avisar(texto, icono) {
@@ -301,10 +299,7 @@
 
     function prepararVentana() {
         // El icono de la pestana lo pone el servidor en _PwaHead.cshtml (uno por seccion, ver Content/img/ventanas); aca ya no se toca.
-        // En la ventana independiente el titulo lleva el nombre de la pantalla al principio ("Movimientos · Nuevo Movimiento - CarniSys").
-        if (enModoVentana && NOMBRE_PANTALLA && document.title.indexOf(NOMBRE_PANTALLA + ' · ') !== 0) {
-            document.title = NOMBRE_PANTALLA + ' · ' + document.title;
-        }
+        // El titulo de la ventana independiente ("Movimientos · Nuevo movimiento") lo arma titulo-ventana.js (desde 2026-11-20; antes se anteponía acá).
         if (enModoVentana || !MOSTRAR_BOTON_VENTANA) return;
         var barra = $1('[class*="-barra-botones"]', root);
         if (!barra) return;

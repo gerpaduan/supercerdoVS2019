@@ -5,7 +5,7 @@ rol: usuario
 modulo: Productos
 orden: 1
 permiso: Producto.ModificarPrecios para cambiar precios (el botón $ de cada fila y "Precios por selección" quedan deshabilitados sin él); Producto.NuevoCorte para crear, editar y eliminar; Etiqueta.Etiquetas para Etiquetas (PDF)
-revisada: 2026-11-10
+revisada: 2026-11-20
 ---
 
 ## Para qué sirve
@@ -54,3 +54,6 @@ En el catálogo global, al tildar un producto aparece su casillero de **Precio**
 
 ## Resto de la pantalla
 PENDIENTE: documentar la columna de stock por sucursal, la vista completa, las acciones de cada fila (ver, stock por sucursales, eliminar), Tipos, Marcas, el catálogo global y el ajuste por forma de pago (no verificado contra el código en esta revisión).
+
+## Leer el código con la cámara (2026-11-20)
+La cámara del catálogo global exige **dos lecturas iguales seguidas**, separadas al menos **0,5 s** (antes la segunda tardaba 2 s). Ahí sigue aceptando solo **EAN-8 y EAN-13** (no UPC-A de 12 dígitos). Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).

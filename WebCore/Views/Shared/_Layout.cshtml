@@ -108,6 +108,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CarniSys</title>
+    @* Seccion e icono para el titulo de las ventanas independientes (titulo-ventana.js). *@
+    <partial name="_SeccionVentana" />
     <partial name="_PwaHead" />
     <script type="importmap"></script>
 
@@ -601,7 +603,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link @(controller == "Ventas" && action == "POS" ? "active" : "")" href="@Url.Action("POS", "Ventas")">
+                <a class="nav-link @(controller == "Ventas" && action == "POS" ? "active" : "")" href="@Url.Action("POS", "Ventas")" data-app="Ventas"
+                   data-pos-unico data-pos-usuario="@usuarioActual.Id" data-pos-sucursal="@usuarioActual.IdSucursal">
                     <i class="fas fa-fw fa-store"></i>
                     <span>Punto de Venta</span>
                 </a>
@@ -613,14 +616,14 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="@Url.Action("Index", "Elaborados")">
+                <a class="nav-link" href="@Url.Action("Index", "Elaborados")" data-app="Elaborados">
                     @* Icono "kitchen-set" de Font Awesome 6 Free (CC BY 4.0), inline porque la app carga FA 5.15.3 *@
                     <svg class="nav-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" aria-hidden="true"><!--! Font Awesome Free 6.5.2 by @@fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc. --><path d="M240 144A96 96 0 1 0 48 144a96 96 0 1 0 192 0zm44.4 32C269.9 240.1 212.5 288 144 288C64.5 288 0 223.5 0 144S64.5 0 144 0c68.5 0 125.9 47.9 140.4 112h71.8c8.8-9.8 21.6-16 35.8-16H496c26.5 0 48 21.5 48 48s-21.5 48-48 48H392c-14.2 0-27-6.2-35.8-16H284.4zM144 80a64 64 0 1 1 0 128 64 64 0 1 1 0-128zM400 240c13.3 0 24 10.7 24 24v8h96c13.3 0 24 10.7 24 24s-10.7 24-24 24H280c-13.3 0-24-10.7-24-24s10.7-24 24-24h96v-8c0-13.3 10.7-24 24-24zM288 464V352H512V464c0 26.5-21.5 48-48 48H336c-26.5 0-48-21.5-48-48zM48 320h80 16 32c26.5 0 48 21.5 48 48s-21.5 48-48 48H160c0 17.7-14.3 32-32 32H64c-17.7 0-32-14.3-32-32V336c0-8.8 7.2-16 16-16zm128 64c8.8 0 16-7.2 16-16s-7.2-16-16-16H160v32h16zM24 464H200c13.3 0 24 10.7 24 24s-10.7 24-24 24H24c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg>
                     <span>Elaborados</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="@Url.Action("Index", "Movimientos")">
+                <a class="nav-link" href="@Url.Action("Index", "Movimientos")" data-app="Movimientos">
                     <i class="fas fa-fw fa-exchange-alt"></i>
                     <span>Movimientos</span>
                 </a>
@@ -633,8 +636,8 @@
                 </a>
                 <div id="collapseStock" class="collapse @(enStock ? "show" : "")">
                     <div class="collapse-inner rounded">
-                        <a class="collapse-item @(controller == "Stock" && action == "Index" ? "active" : "")" href="@Url.Action("Index", "Stock")">Gestion de stock</a>
-                        <a class="collapse-item @(controller == "Stock" && action == "ExistenciaPorSucursales" ? "active" : "")" href="@Url.Action("ExistenciaPorSucursales", "Stock")">Existencia por sucursales</a>
+                        <a class="collapse-item @(controller == "Stock" && action == "Index" ? "active" : "")" href="@Url.Action("Index", "Stock")" data-app="Stock">Gestion de stock</a>
+                        <a class="collapse-item @(controller == "Stock" && action == "ExistenciaPorSucursales" ? "active" : "")" href="@Url.Action("ExistenciaPorSucursales", "Stock")" data-app="Existencia" data-app-url="@Url.Content("~/Existencia")">Existencia por sucursales</a>
                         @* Qué pedir (2026-10-13): solo Postgres, oculto si el motor activo es SQL Server. *@
                         @if (WebCore.Infrastructure.NegocioFactory.UsarPostgres)
                         {
@@ -678,7 +681,7 @@
                 </a>
                 <div id="collapsePuntosExpendio" class="collapse @(enPuntosExpendio ? "show" : "")">
                     <div class="collapse-inner rounded">
-                        <a class="collapse-item @(enPuntosExpendio && action == "POS" ? "active" : "")" href="@Url.Action("POS", "PuntosExpendio")">Abrir punto de expendio</a>
+                        <a class="collapse-item @(enPuntosExpendio && action == "POS" ? "active" : "")" href="@Url.Action("POS", "PuntosExpendio")" data-app="PuntosExpendio">Abrir punto de expendio</a>
                         <a class="collapse-item @(enPuntosExpendio && action == "ExpendiosGenerados" ? "active" : "")" href="@Url.Action("ExpendiosGenerados", "PuntosExpendio")">Expendios generados</a>
                         <a class="collapse-item @(enPuntosExpendio && action == "Sectores" ? "active" : "")" href="@Url.Action("Sectores", "PuntosExpendio")">Sectores</a>
                     </div>
@@ -1029,6 +1032,15 @@
     <script src="~/Scripts/app/app-instalada.js" asp-append-version="true"></script>
     @* Botones −/+ de tamano de la ventana: solo en modo ventana / mini-app instalada (ventana-tamano.js decide). *@
     <script src="~/Scripts/app/ventana-tamano.js" asp-append-version="true"></script>
+    @* Marco y agarres para cambiar el tamano de la ventana independiente (despues de ventana-tamano.js: usa VentanaTamano.aplica). *@
+    <script src="~/Scripts/app/marco-ventana.js" asp-append-version="true"></script>
+    @* Titulo claro de la ventana independiente: titulo del sistema «Seccion · Pantalla» y franja de titulo (tambien depende de VentanaTamano.aplica). *@
+    <script src="~/Scripts/app/titulo-ventana.js" asp-append-version="true"></script>
+    @* POS en ventana unica (2026-11-20): «Punto de Venta» trae al frente el POS ya abierto; Home se nombra para que el POS la encuentre. Usa POSMultiInstance. *@
+    <script src="~/Scripts/app/pos-multi-instance.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-ventana-unica.js" asp-append-version="true"></script>
+    @* Clic derecho en el menu lateral: «Abrir ventana de la app» / «Instalar la app» / «Abrir en ventana independiente» (2026-11-20). *@
+    <script src="~/Scripts/app/menu-ventana-independiente.js" asp-append-version="true"></script>
     @if (esAdmin && WebCore.Helpers.PosBorradorSettings.Habilitado)
     {
         @* Modal global de detalle de advertencias (lo abre la campana y /Actividades) + token antiforgery
@@ -1661,27 +1673,24 @@
             window.__protegerSalida = false;
         };
 
+        // Ventana independiente (popup / app instalada desde Utilidades): misma condicion que el marco y los -/+ (VentanaTamano.aplica, ventana-tamano.js).
+        // En iframes no existe VentanaTamano, asi que alli todo queda como antes.
+        function esVentanaIndependiente() {
+            return !!(window.VentanaTamano && typeof window.VentanaTamano.aplica === "function" && window.VentanaTamano.aplica());
+        }
+
         window.addEventListener("beforeunload", function (e) {
             if (!window.__protegerSalida) return;
+            // Ventana independiente (2026-11-20, pedido del usuario): sin el cartel del navegador «¿Deseas abandonar el sitio?» (no se puede ocultar ni
+            // cambiar su texto; solo no activarlo). La salida desde la app la aprueba el usuario con «Salir sin guardar» (enlaces, Volver, F5 / Ctrl+R);
+            // cerrar con la X / Alt+F4 / Ctrl+W ya no pregunta, y lo cargado queda como borrador (borrador-generico.js, 1,5 s despues de cada cambio).
+            if (esVentanaIndependiente()) return;
             e.preventDefault();
             e.returnValue = "";
         });
 
-        $(document).on("click", "a:not([data-ignore-exit]), button[data-navega]", function (e) {
-            if (!window.__protegerSalida) return;
-
-            var url = $(this).attr("href");
-            if (!url) return;
-
-            // Enlaces que no salen de la pagina (href="#", "#ancla", javascript:) o que solo abren un
-            // desplegable/modal (la campana del admin es <a href="#" data-bs-toggle="dropdown">) no
-            // navegan: no hay nada que perder, asi que no se pregunta.
-            if (url.charAt(0) === "#" || /^\s*javascript:/i.test(url)) return;
-            if ($(this).is("[data-bs-toggle='dropdown'], [data-toggle='dropdown']")) return;
-
-            e.preventDefault();
-            if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-
+        // Aviso propio «Salir sin guardar»: alConfirmar() se ejecuta solo si el usuario elige «Sí, salir».
+        function confirmarSalidaSinGuardar(alConfirmar) {
             var keyHandler = null;
             Swal.fire({
                 title: "Salir sin guardar",
@@ -1692,6 +1701,8 @@
                 cancelButtonText: "No, quedarme",
                 reverseButtons: true,
                 focusCancel: true,
+                // Salida segura (swal-single-confirm.js): foco en «No, quedarme» con borde visible, flechas entre los botones y Enter solo activa el que tiene el foco.
+                customClass: { popup: "swal-salir-seguro" },
                 allowOutsideClick: false,
                 allowEscapeKey: true,
                 didOpen: function () {
@@ -1712,9 +1723,38 @@
             }).then(function (result) {
                 if (result.isConfirmed) {
                     window.desactivarProteccionSalida();
-                    window.location.href = url;
+                    alConfirmar();
                 }
             });
+        }
+
+        // F5 / Ctrl+R en una ventana independiente con cambios sin guardar: sin el cartel del navegador, recargar pasa por el aviso propio.
+        // (El boton de recargar del navegador y la X de la ventana no se pueden interceptar: ahi no se pregunta.)
+        document.addEventListener("keydown", function (e) {
+            if (!window.__protegerSalida || e.altKey || !esVentanaIndependiente()) return;
+            var recarga = e.key === "F5" || ((e.ctrlKey || e.metaKey) && String(e.key || "").toLowerCase() === "r");
+            if (!recarga) return;
+            e.preventDefault();
+            if (e.repeat || document.querySelector(".swal2-container")) return; // ya hay un aviso abierto
+            confirmarSalidaSinGuardar(function () { window.location.reload(); });
+        }, true);
+
+        $(document).on("click", "a:not([data-ignore-exit]), button[data-navega]", function (e) {
+            if (!window.__protegerSalida) return;
+
+            var url = $(this).attr("href");
+            if (!url) return;
+
+            // Enlaces que no salen de la pagina (href="#", "#ancla", javascript:) o que solo abren un
+            // desplegable/modal (la campana del admin es <a href="#" data-bs-toggle="dropdown">) no
+            // navegan: no hay nada que perder, asi que no se pregunta.
+            if (url.charAt(0) === "#" || /^\s*javascript:/i.test(url)) return;
+            if ($(this).is("[data-bs-toggle='dropdown'], [data-toggle='dropdown']")) return;
+
+            e.preventDefault();
+            if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+
+            confirmarSalidaSinGuardar(function () { window.location.href = url; });
         });
     </script>
 </body>

@@ -986,6 +986,9 @@
     // Modo "Precios por selección" (?modo=precios): el lote de precios opera solo sobre lo tildado.
     const MODO_PRECIOS = @(modoPrecios ? "true" : "false");
     const TIEMPO_PAUSA_LECTURA_SCANNER = 2000;
+    // Separacion minima entre la 1ra lectura y la 2da de confirmacion (0,5 s): evita que dos cuadros
+    // casi identicos seguidos cuenten como "dos lecturas" (docs/DECISIONS.md 2026-11-20).
+    const TIEMPO_MIN_ENTRE_LECTURAS_MS = 500;
     let scannerCatalogoGlobal = null;
     const scannerCatalogoGlobalState = {
         ultimoCodigoLeido: "",
@@ -1073,6 +1076,10 @@
             callbacks.onDifferentRead && callbacks.onDifferentRead(codigo);
             return;
         }
+
+        // Misma lectura pero demasiado pronto: no cuenta como confirmacion; se espera al siguiente cuadro
+        // (los 0,5 s se miden desde la 1ra lectura porque aca no se toca tiempoUltimaLectura).
+        if ((Date.now() - state.tiempoUltimaLectura) < TIEMPO_MIN_ENTRE_LECTURAS_MS) return;
 
         if (!isValidEAN(codigo)) {
             resetScannerDoubleReadState(state, false);
@@ -1657,10 +1664,13 @@
         scannerCatalogoGlobal = new BarcodeScanner({
             videoSelector: "#videoScannerCatalogoGlobal",
             containerSelector: "#scannerCatalogoGlobalContainer",
+            // La doble lectura (processDoubleReadCode) ya controla la separacion entre lecturas y la pausa
+            // tras aceptar; con el descarte de 2 s del lector la 2da lectura recien llegaba a los 2 s.
+            tiempoRelectura: 0,
             onCodeDetected: function (codigoLeido) {
                 processDoubleReadCode(scannerCatalogoGlobalState, codigoLeido, {
                     onFirstRead: function () {
-                        setScannerCatalogoGlobalMsg("Código detectado. Acerque nuevamente para confirmar.");
+                        setScannerCatalogoGlobalMsg("Código detectado. Mantené el código quieto frente a la cámara para confirmar.");
                     },
                     onDifferentRead: function () {
                         setScannerCatalogoGlobalMsg("La segunda lectura no coincidió. Se reinició la validación.");

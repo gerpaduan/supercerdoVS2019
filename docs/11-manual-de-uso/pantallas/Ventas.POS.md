@@ -271,7 +271,15 @@ Buscar el cliente, ver sus movimientos, registrar un cobro y un pago, y cómo qu
 ![Video: cuentas corrientes, pagos y cobros desde el punto de venta](media:Ventas.POS/tutorial-ctacte.mp4)
 
 ### Salir del POS con una venta en curso
-Si hay productos cargados y tocás **Inicio** (o intentás cerrar el POS), no te deja salir y muestra el aviso **«Hay una venta en curso»**: si presionás **Cancelar Venta** se pierden los datos de esa venta; para conservarla, guardala primero y recién después salí. (Texto verificado contra el código 2026-11-13; PENDIENTE probarlo en pantalla.)
+Desde el 2026-11-20, **Inicio** ya no saca al POS de su pantalla: abre **Inicio en otra pestaña** (si ya la tenías abierta, la trae al frente) y el POS queda como estaba, con la venta en curso. Para volver, tocá la pestaña del POS o, desde Inicio, **Punto de Venta**: te lleva al POS que ya está abierto, **sin abrir otro** (ver «Un solo POS por usuario» abajo).
+Lo que sigue avisando **«Hay una venta en curso»** es intentar **cerrar** o **recargar** el POS (F5, Ctrl+R, cerrar la pestaña) o ir a otra pantalla desde dentro del POS: si presionás **Cancelar Venta** se pierden los datos de esa venta; para conservarla, guardala primero y recién después salí. (Texto verificado contra el código 2026-11-13; PENDIENTE probarlo en pantalla.)
+
+### Un solo POS por usuario (desde 2026-11-20)
+- Por usuario y sucursal hay **un POS original** (más su duplicado, ver **Duplicar POS**). Si ya está abierto y tocás **Punto de Venta** en el menú (o clic derecho › **Abrir ventana de la app**), se **trae al frente** el que ya estaba, sin recargarlo ni perder lo cargado. Dos POS originales solo pueden convivir si son de usuarios distintos.
+- Con la **cuenta compartida de producción** es uno por computadora; para cambiar de operario se usa **Cambiar operario**.
+- Si el POS está abierto en otra pestaña que el navegador no deja alcanzar desde acá (por ejemplo, la abriste escribiendo la dirección en otra pestaña), aparece **«El punto de venta ya está abierto»**: buscalo en la barra de pestañas, o elegí **No lo encuentro, abrir de nuevo**.
+- No cambia **al modificar una venta** (el botón sigue diciendo **Volver**) ni en la **app instalada** del POS (sigue diciendo **Cerrar**).
+- PENDIENTE: probado solo por lectura de código y compilación; falta verlo en Chrome real con varias pestañas.
 
 ### Forma de pago en Mis ventas y venta vinculada en Mis actividades
 En **Mis ventas** (F6), la tarjeta de una venta mixta ahora dice, por ejemplo, **Transferencia | Efectivo**, y al desplegarla aparece el bloque **Forma de pago** con cuánto fue en efectivo y cuánto en el otro medio. En **Mis actividades**, las filas **Pago Electronico** y **Cta Cte** muestran la etiqueta **Venta N** y, al desplegar la fila, la venta vinculada con sus productos y el botón **Abrir detalle** (ver [Cajas.EgresosCaja](ayuda:pantalla/Cajas.EgresosCaja)). (Verificado contra el código 2026-11-14; PENDIENTE probarlo en pantalla.)
@@ -350,7 +358,7 @@ El botón **Cargas** de la barra de arriba (junto a la campana) abre, **sin sali
 
 ### Modificar lo cargado, botón «Inicio» y aviso al salir (desde 2026-11-19)
 - **Modificar:** en «Cargado desde que abriste la caja», tocá la fila o el **ojo**: se abre ese registro (ingreso, egreso, pesaje, movimiento, elaborado…) dentro del POS, en solo lectura, y con **Modificar** lo cambiás y guardás. Se puede hacer aunque tu usuario no tenga el permiso de modificar de ese módulo, **siempre que lo hayas cargado vos desde que abriste tu caja** (o hoy, con «operar sin caja»). **Eliminar** y el **ajuste de stock** no entran en esto (el ajuste es solo de administradores). Un registro abierto es una carga más: se minimiza, queda su botón «… en curso» y se descarta sin borrar el registro.
-- **Botón de salida:** se llama **Inicio** (ícono de casa) y va a la pantalla de Inicio. En la **app instalada del POS** dice **Cerrar** y cierra la ventana. Al modificar una venta dice **Volver**.
+- **Botón de salida:** se llama **Inicio** (ícono de casa) y abre la pantalla de Inicio **en otra pestaña**, sin cerrar el POS (desde 2026-11-20). En la **app instalada del POS** dice **Cerrar** y cierra la ventana. Al modificar una venta dice **Volver**.
 - **Aviso al salir:** si tenés cargas abiertas o una compra sin guardar, antes de salir avisa nombrándolas («Tenés sin guardar: Movimiento #1008777, Compra. Si salís se pierden.») con **Salir igual** / **Seguir en el POS**. Una venta en curso sigue pidiendo **Cancelar Venta**.
 
 ## Balanza y la tecla * (2026-11-19)
@@ -366,3 +374,8 @@ El botón **Cargas** de la barra de arriba (junto a la campana) abre, **sin sali
 - En el POS el peso inestable ya se rechazaba (ver «Peso inestable de la balanza»); lo nuevo es que sin lectura fresca tampoco agrega (antes, si el agente no respondía, aceptaba lo que hubiera en Cantidad).
 - Si vuelve a pasar que el peso no se actualiza, ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md` (2026-11-20). Detalle técnico: `docs/DECISIONS.md` (2026-11-20, «Balanza: lectura vigente»).
 - Verificado el 2026-11-20 en la pantalla real con un agente de balanza simulado (peso que cambia, lectura congelada, agente colgado, peso inestable). PENDIENTE: probarlo con una balanza real.
+
+## Leer el código con la cámara (2026-11-20)
+El recuadro de la cámara es más alto (120 px) y muestra el **centro** de la imagen, que es lo que se lee; el celular además aplica un zoom moderado si lo permite. **No cambia** la pausa: el mismo código no se vuelve a cargar antes de 2 s, y el alta rápida de un producto nuevo solo se ofrece con la segunda lectura igual. Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).
+
+- **Aviso «Salir sin guardar» (desde 2026-11-20):** el foco arranca en «No, quedarme» con borde marcado; Enter solo activa el botón con foco y las flechas pasan a «Sí, salir». Ver [aviso «Salir sin guardar»](ayuda:concepto/aviso-salir-sin-guardar).

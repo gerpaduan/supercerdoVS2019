@@ -309,8 +309,8 @@
                            "Cerrar" (data-salir-cerrar); al modificar una venta vuelve de donde vino ("Volver", y el href lo cambia urlSalidaEdicionVenta).
                            Con cargas o una compra sin guardar, pos-trabajos.js avisa antes de salir. *@
                         <a class="btn btn-light btn-sm pos-btn-layout" id="btnSalirPOS" href="@Url.Action("Index", "Home")" data-app-salir
-                           @(esEdicionVenta ? "" : "data-salir-cerrar") data-title-cerrar="Cerrar el punto de venta"
-                           title="@(esEdicionVenta ? "Volver" : "Ir a Inicio")">
+                           @(esEdicionVenta ? "" : "data-salir-cerrar data-inicio-aparte") data-title-cerrar="Cerrar el punto de venta"
+                           title="@(esEdicionVenta ? "Volver" : "Ir a Inicio (se abre en otra pestaña; el POS queda como está)")">
                             <i class="fas @(esEdicionVenta ? "fa-arrow-left" : "fa-home")"></i>
                             <span>@(esEdicionVenta ? "Volver" : "Inicio")</span>
                         </a>
@@ -1415,6 +1415,8 @@ else
     <script src="~/Scripts/app/money-input-mask.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/egresos-caja.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-multi-instance.js" asp-append-version="true"></script>
+    @* «Inicio» abre Home en otra pestana sin descargar el POS. Va ANTES de pos-trabajos.js: su clic (captura en window) tiene que correr primero. *@
+    <script src="~/Scripts/app/pos-ventana-unica.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-compact.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/seleccion-usuario.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-autorizacion.js" asp-append-version="true"></script>
@@ -3717,7 +3719,9 @@ else
                         text: "Se descartarán los cambios no guardados.",
                         showCancelButton: true,
                         confirmButtonText: "Sí",
-                        cancelButtonText: "No"
+                        cancelButtonText: "No",
+                        // Salida segura (swal-single-confirm.js): foco en «No», borde visible, flechas entre los botones y Enter solo activa el que tiene el foco.
+                        customClass: { popup: "swal-salir-seguro" }
                     }).then(function (result) {
                         if (!result.isConfirmed) return;
                         salirDeEdicionVenta();

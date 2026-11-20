@@ -1,0 +1,43 @@
+@* Nombre e icono de la SECCION de la pantalla actual para el titulo de las ventanas independientes (2026-11-20, docs/DECISIONS.md).
+   Emite <meta name="carnisys-seccion" content="Stock" data-icono="fa-boxes">; titulo-ventana.js lo lee y arma el titulo del sistema («Stock · Gestión de stock»)
+   y la franja de titulo de la ventana. La seccion sale del controller (los mismos nombres del menu lateral); un controller sin entrada usa su propio nombre.
+   Solo emite datos: nada se ve fuera de una ventana independiente. *@
+@{
+    var controladorSeccion = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+    var accionSeccion = (ViewContext.RouteData.Values["action"] as string) ?? "";
+
+    // (nombre, icono Font Awesome 5) por controller.
+    (string Nombre, string Icono) seccion = controladorSeccion switch
+    {
+        "Compras" => ("Compras", "fa-shopping-cart"),
+        "Ventas" => ("Ventas", "fa-cash-register"),
+        "Cajas" => ("Cajas", "fa-file-invoice-dollar"),
+        "Elaborados" => ("Elaborados", "fa-utensils"),
+        "Movimientos" => ("Movimientos", "fa-exchange-alt"),
+        "Stock" => ("Stock", "fa-boxes"),
+        "Reposicion" => ("Qué pedir", "fa-boxes"),
+        "Pedidos" => ("Pedidos", "fa-boxes"),
+        "Empleados" => ("Empleados", "fa-id-badge"),
+        "Jornadas" => ("Jornadas", "fa-id-badge"),
+        "Liquidaciones" => ("Liquidaciones", "fa-id-badge"),
+        "PuntosExpendio" => ("Punto de expendio", "fa-store-alt"),
+        "Productos" => ("Productos", "fa-boxes"),
+        "Personas" => ("Personas", "fa-user-friends"),
+        "Finanzas" => ("Finanzas", "fa-coins"),
+        "Reportes" => ("Reportes", "fa-chart-line"),
+        "Actividades" => ("Actividades", "fa-stream"),
+        "Usuarios" => ("Usuarios", "fa-users-cog"),
+        "AuditoriaLogin" => ("Auditoría de accesos", "fa-tools"),
+        "RegistrosEliminados" => ("Registros eliminados", "fa-tools"),
+        "Parametros" => ("Parámetros", "fa-tools"),
+        "Empresa" => ("Mi empresa", "fa-tools"),
+        "Sucursal" => ("Sucursales", "fa-tools"),
+        "CodigosBarra" => ("Códigos de barra", "fa-tools"),
+        "DispositivosSeguros" => ("Dispositivos seguros", "fa-tools"),
+        "Home" when accionSeccion == "Utilidades" => ("Utilidades", "fa-tools"),
+        "Home" => ("Inicio", "fa-home"),
+        "SystemAdministration" => ("Administración del sistema", "fa-network-wired"),
+        _ => (string.IsNullOrEmpty(controladorSeccion) ? "CarniSys" : controladorSeccion, "fa-window-maximize")
+    };
+}
+<meta name="carnisys-seccion" content="@seccion.Nombre" data-icono="@seccion.Icono" />

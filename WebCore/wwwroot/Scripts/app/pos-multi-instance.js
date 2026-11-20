@@ -34,8 +34,14 @@
         return config().productKey ? '-' + config().productKey : '';
     }
 
+    // Clave de localStorage del estado de un usuario+sucursal (+ producto). La comparten stateKey() (este POS) y
+    // openOriginalEntry() (Home, que busca el POS de otra pestana): un solo lugar para el formato.
+    function buildStateKey(product, userId, sucursalId) {
+        return STORAGE_PREFIX + (product ? '-' + product : '') + '-' + (userId || 0) + '-' + (sucursalId || 0);
+    }
+
     function stateKey() {
-        return STORAGE_PREFIX + productKey() + '-' + (config().userId || 0) + '-' + (config().sucursalId || 0);
+        return buildStateKey(config().productKey, config().userId, config().sucursalId);
     }
 
     function postVentaRedirectKey() {
@@ -714,8 +720,19 @@
         return true;
     }
 
+    // Entrada del POS ORIGINAL abierto de un usuario+sucursal (+ producto, '' = Venta), o null. La usa Home (pos-ventana-unica.js) para
+    // traer al frente el POS ya abierto en vez de abrir otro; no requiere init() ni config() de una pagina de POS.
+    // toleranciaMs: antiguedad maxima del ultimo latido (default STALE_MS). Una entrada sin windowName no sirve para ubicar la ventana.
+    function openOriginalEntry(userId, sucursalId, product, toleranciaMs) {
+        var state = readJsonStorage(localStorage, buildStateKey(product, userId, sucursalId), null);
+        var entry = state && state.original;
+        if (!entry || !entry.id || !entry.ts || !entry.windowName) return null;
+        return (now() - entry.ts) <= (toleranciaMs || STALE_MS) ? entry : null;
+    }
+
     window.POSMultiInstance = {
         init: init,
+        openOriginalEntry: openOriginalEntry,
         isBlocked: function () { return blocked; },
         isDuplicate: isDuplicate,
         updateUi: updateUi,

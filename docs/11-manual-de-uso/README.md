@@ -32,10 +32,12 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Eliminar compras, stock y movimientos | Acceso y seguridad | `conceptos/eliminar-registros.md` | 2026-10-22 |
 | conceptos | Ingresar con la dirección de tu empresa (CUIT) | Acceso y seguridad | `conceptos/login-por-cuit.md` | 2026-10-04 |
 | conceptos | Intentos de clave al autorizar (POS, Cierre de Caja, Ver fórmula) | Acceso y seguridad | `conceptos/intentos-de-clave-al-autorizar.md` | 2026-10-20 |
+| conceptos | Leer códigos de barra con la cámara del celular | Cargas y ventas | `conceptos/lectura-codigo-barra-camara.md` | 2026-11-20 |
 | conceptos | Buscar cliente, vendedor o proveedor en los filtros (F9 / F10) | Conceptos generales | `conceptos/selector-cliente-vendedor-proveedor.md` | 2026-10-13 |
 | conceptos | Menú de usuario (arriba a la derecha) | Conceptos generales | `conceptos/menu-de-usuario.md` | 2026-10-14 |
 | conceptos | Roles y permisos (quién puede hacer qué) | Conceptos generales | `conceptos/roles-y-permisos.md` | 2026-11-19 |
 | conceptos | Fórmula secreta | Elaborados | `conceptos/formula-secreta.md` | 2026-10-20 |
+| conceptos | Aviso «Salir sin guardar» | Uso general | `conceptos/aviso-salir-sin-guardar.md` | 2026-11-20 |
 | pantallas | Cambiar contraseña | Acceso y seguridad | `pantallas/Login.ChangePassword.md` | 2026-10-03 |
 | pantallas | Clave rápida (PIN) | Acceso y seguridad | `pantallas/Login.ChangePin.md` | 2026-10-03 |
 | pantallas | Desbloquear usuario (enlace del mail) | Acceso y seguridad | `pantallas/Login.UnlockAccount.md` | 2026-10-03 |
@@ -43,12 +45,12 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Ingreso al sistema | Acceso y seguridad | `pantallas/Login.Index.md` | 2026-10-13 |
 | pantallas | Recuperar contraseña | Acceso y seguridad | `pantallas/Login.ForgotPassword.md` | 2026-10-03 |
 | pantallas | Restablecer contraseña | Acceso y seguridad | `pantallas/Login.ResetPassword.md` | 2026-10-03 |
-| pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-11-16 |
-| pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-11-19 |
+| pantallas | Egresos de caja | Caja | `pantallas/Cajas.EgresosCaja.md` | 2026-11-20 |
+| pantallas | Cargar, modificar o eliminar una compra | Compras | `pantallas/Compras.Editar.md` | 2026-11-20 |
 | pantallas | Compras | Compras | `pantallas/Compras.Index.md` | 2026-11-09 |
 | pantallas | Líneas de compra | Compras | `pantallas/Compras.Lineas.md` | 2026-11-09 |
 | pantallas | Registros eliminados | Configuración | `pantallas/RegistrosEliminados.Index.md` | 2026-10-22 |
-| pantallas | Utilidades (contador de billetes, aplicaciones instalables y agentes locales) | Configuración | `pantallas/Home.Utilidades.md` | 2026-11-17 |
+| pantallas | Utilidades (contador de billetes, aplicaciones instalables y agentes locales) | Configuración | `pantallas/Home.Utilidades.md` | 2026-11-20 |
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-11-13 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-11-13 |
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-11-13 |
@@ -58,16 +60,16 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Nuevo Elaborado (carga manual) | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-11-20 |
 | pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-09 |
 | pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-11-10 |
-| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-09 |
+| pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-20 |
 | pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-20 |
 | pantallas | Líneas de movimiento | Movimientos | `pantallas/Movimientos.Lineas.md` | 2026-11-13 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-11-13 |
 | pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-20 |
 | pantallas | Personas | Personas | `pantallas/Personas.Index.md` | 2026-11-02 |
 | pantallas | Ver / modificar persona | Personas | `pantallas/Personas.Editar.md` | 2026-11-02 |
-| pantallas | Alta y edición de un producto | Productos | `pantallas/Productos.AddOrEdit.md` | 2026-11-10 |
+| pantallas | Alta y edición de un producto | Productos | `pantallas/Productos.AddOrEdit.md` | 2026-11-20 |
 | pantallas | Marcas de productos | Productos | `pantallas/Productos.Marcas.md` | 2026-10-22 |
-| pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-11-10 |
+| pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-11-20 |
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-11-10 |
 | pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-30 |
 | pantallas | Punto de expendio (pantalla de trabajo y app instalada) | Punto de Expendio | `pantallas/PuntosExpendio.POS.md` | 2026-11-20 |
@@ -93,7 +95,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
 | pantallas | Parámetros | Mi empresa | `pantallas/Parametros.Index.md` | 2026-11-10 |
 | pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-11-10 |
-| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-17 |
+| pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-20 |
 | pantallas | Modificar pedido | Stock | `pantallas/Pedidos.Editar.md` | 2026-10-20 |
 | pantallas | Pedido (detalle) | Stock | `pantallas/Pedidos.Detalle.md` | 2026-10-20 |
 | pantallas | Pedidos | Stock | `pantallas/Pedidos.Index.md` | 2026-10-27 |

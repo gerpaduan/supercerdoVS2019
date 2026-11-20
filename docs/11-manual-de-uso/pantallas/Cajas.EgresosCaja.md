@@ -5,7 +5,7 @@ rol: usuario
 modulo: Caja
 orden: 1
 permiso: EgresoCaja.VerEgresosCaja (ver el listado) / EgresoCaja.AddOrEditEgresoCaja (cargar). Desde el POS no pide el permiso de carga
-revisada: 2026-11-16
+revisada: 2026-11-20
 ---
 
 ## Para qué sirve
@@ -86,3 +86,5 @@ El ticket respeta el que ya imprimía el sistema de escritorio: *Egreso Caja*, s
 - **PENDIENTE:** impresión física en la térmica y envío real de mail no verificados.
 
 Ver también: [mapa de configuraciones](ayuda:referencia/configuraciones)
+
+- **Aviso «Salir sin guardar» (desde 2026-11-20):** el foco arranca en «No, quedarme» con borde marcado; Enter solo activa el botón con foco y las flechas pasan a «Sí, salir». Ver [aviso «Salir sin guardar»](ayuda:concepto/aviso-salir-sin-guardar).

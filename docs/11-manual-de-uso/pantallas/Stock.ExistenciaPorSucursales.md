@@ -5,7 +5,7 @@ rol: admin
 modulo: Stock
 orden: 3
 permiso: Stock.VerStock (PENDIENTE: en WebCore el chequeo está omitido, ver TODO en StockController.ExistenciaPorSucursales)
-revisada: 2026-11-17
+revisada: 2026-11-20
 ---
 ## Para qué sirve
 Ver el **stock actual de cada producto, una sucursal por grupo de columnas**, para comparar sucursales o ver una sola, saber qué falta (contra el **punto de stock**) y exportarlo.
@@ -134,6 +134,8 @@ El cálculo parte del **último cierre de stock** de cada sucursal. Con varias s
 - En la **ventana independiente** y en la **app instalada** (no en una pestaña normal) hay dos botones **−** y **+** justo a la izquierda de «Borradores sin guardar»; si ese botón no está (borradores apagados), van antes de **Excel / PDF**. Cada clic achica o agranda el **ancho de la ventana un 10 %** del ancho con que se abrió (mínimo 50 %, máximo hasta el borde izquierdo de la pantalla). **El borde derecho de la ventana queda fijo**: crece o se achica hacia la izquierda; el alto no cambia.
 - Dejá el mouse sobre un botón para ver el nivel actual. Se recuerda el último nivel de cada sección.
 - Si el navegador no deja cambiar el tamaño de la ventana, avisa «El navegador no permite cambiar el tamaño de esta ventana».
+- **Marco y agarres (desde 2026-11-20):** la ventana independiente y la app instalada tienen un **marco azul con un filete naranja por fuera** (así se distingue del fondo, sea oscuro o claro). Pasá el cursor por un **lado** (se resalta en blanco y el cursor cambia) y arrastrá para cambiar el **ancho** (lados izquierdo y derecho) o el **alto** (arriba y abajo); en una **esquina** cambia los dos. El borde de enfrente queda fijo, hay un tamaño mínimo y la ventana no sale de la pantalla. Si la pantalla tiene barra de desplazamiento, el marco de ese lado queda junto a ella. No aparece en el punto de venta ni en una pestaña normal.
+- **Título de la ventana (desde 2026-11-20):** en la ventana independiente y en la app instalada, arriba hay una **franja azul con el nombre de la sección** (por ejemplo «Stock» o «Movimientos») y, al lado, el nombre de la pantalla. El título del sistema (barra de título, Alt+Tab, barra de tareas) pasa a ser «Sección · Pantalla», sin el «- CarniSys» del final. La franja le resta unos 28 px de alto a la tabla. **Arrastrando la franja con el botón izquierdo del mouse se mueve la ventana** (como la barra superior del sistema); no sirve en una ventana maximizada.
 - Solo aparecen donde está el botón de registros sin guardar (si ese botón está apagado en el sistema, tampoco aparecen).
 - PENDIENTE: no se probó en una app instalada real si el navegador permite cambiar el tamaño de la ventana.
 

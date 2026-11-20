@@ -1144,19 +1144,11 @@
         $lblEstado.toggleClass('ex-estado-rutina', MENSAJE_RUTINA.test($lblEstado.text()));
     }
 
-    // Ventana independiente: avisa antes de cerrarla o recargarla, para evitar un cierre sin querer (pedido 2026-11-02). _LayoutEmbed no trae el
-    // beforeunload del layout normal, por eso va aca. Solo en la ventana propia (en el panel embebido de Movimientos/Editar, window.top es la
-    // pagina del movimiento). El texto lo pone el navegador (no se puede personalizar) y solo lo muestra si el usuario ya toco la ventana.
-    // La unica salida propia es el cambio de sucursal destino del modo movimiento (existencia-movimiento.js): llama a permitirSalida().
+    // Ventana independiente: hasta el 2026-11-20 avisaba antes de cerrarla o recargarla con el cartel del navegador «¿Deseas abandonar el sitio?»
+    // (pedido 2026-11-02). Se quito (pedido del usuario, ver docs/DECISIONS.md 2026-11-20 j): ese cartel no se puede ocultar ni cambiar, y en
+    // todas las ventanas independientes ahora la salida se aprueba con el aviso propio de la app (donde hay cambios sin guardar). Existencia no tiene
+    // cambios propios que se pierdan al cerrar. salidaPermitida y permitirSalida() quedan por compatibilidad con existencia-movimiento.js.
     var salidaPermitida = false;
-
-    if (cfg.popup && window.top === window) {
-        window.addEventListener('beforeunload', function (e) {
-            if (salidaPermitida) return;
-            e.preventDefault();
-            e.returnValue = '';
-        });
-    }
 
     // ---------- Eventos ----------
 

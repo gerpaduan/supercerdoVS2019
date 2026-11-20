@@ -12,6 +12,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CarniSys</title>
+    <partial name="_SeccionVentana" />
     @* Identidad propia de la ventana independiente (2026-11-17): la vista puede pedir un icono de pestana/ventana (ViewBag.IconoVentana, nombre de un SVG de
        Content/img/ventanas) y su manifest (ViewBag.ManifestVentana). Hoy solo Existencia por sucursal en ventana independiente; sin esto la ventana no tenia icono
        propio ni manifest. Los iframes (panel de stock del destino) no lo piden. *@
@@ -115,6 +116,10 @@
 
     @* Botones −/+ de tamano de la ventana: solo si es una ventana emergente o mini-app instalada (no iframes). Ver ventana-tamano.js. *@
     <script src="~/Scripts/app/ventana-tamano.js" asp-append-version="true"></script>
+    @* Marco y agarres para cambiar el tamano de la ventana (mismas condiciones que los −/+). *@
+    <script src="~/Scripts/app/marco-ventana.js" asp-append-version="true"></script>
+    @* Titulo del sistema «Seccion · Pantalla» en la ventana independiente (sin franja: este layout no tiene #content-wrapper). *@
+    <script src="~/Scripts/app/titulo-ventana.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

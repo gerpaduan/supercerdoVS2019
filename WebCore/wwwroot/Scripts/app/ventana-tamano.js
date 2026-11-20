@@ -39,6 +39,9 @@
         return embebida && !!window.opener;
     }
 
+    // marco-ventana.js (marco y agarres de la ventana) usa la misma condicion para decidir si esta ventana es independiente.
+    window.VentanaTamano = { aplica: aplica };
+
     function seccion() {
         // Con PathBase (/CarniSysWeb/Stock/...) el primer segmento seria el prefijo: si hay meta de scope se usa su ultimo segmento.
         var scope = (document.querySelector('meta[name="carnisys-app-scope"]') || {}).content || '';

@@ -2497,6 +2497,9 @@
     // SCANNER: EAN-8 / EAN-13 -> setea #Codigo, cierra, foco #CorteDesc
     // ======================================================
     const TIEMPO_RELECTURA = 2000;
+    // Separacion minima entre la 1ra lectura y la 2da de confirmacion (0,5 s): evita que dos cuadros
+    // casi identicos seguidos cuenten como "dos lecturas" (docs/DECISIONS.md 2026-11-20).
+    const TIEMPO_MIN_ENTRE_LECTURAS_MS = 500;
     const SEL_CODIGO = "#Codigo";
     const SEL_DESC = "#CorteDesc";
     const SEL_MSG = "#scannerMsg";
@@ -2571,6 +2574,18 @@
         return false;
     }
 
+    // Lo que acepta la CAMARA: EAN-8, EAN-13 o UPC-A (12 digitos). Un EAN-13 que empieza con 0 se
+    // guarda y se lee de 12 digitos (docs/DECISIONS.md 2026-10-12); su digito de control se valida
+    // sobre '0' + codigo. Es aditivo: isValidEAN (8/13 estricto) no cambia, lo usa la validacion del campo.
+    function isValidUPCA(code12) {
+        return /^\d{12}$/.test(code12) && isValidEAN13("0" + code12);
+    }
+
+    function isValidCodigoLeidoCamara(code) {
+        code = onlyDigits(code);
+        return isValidEAN(code) || isValidUPCA(code);
+    }
+
     function isValidEAN13(code13) {
         if (!/^\d{13}$/.test(code13)) return false;
         let sum = 0;
@@ -2633,6 +2648,10 @@
         const scanner = new BarcodeScanner({
             videoSelector: "#videoScanner",
             containerSelector: "#scannerContainer",
+            // Esta pantalla ya exige dos lecturas iguales y tiene su propia pausa tras aceptar: con el
+            // descarte de 2 s del lector, la 2da lectura recien llegaba a los 2 s. La separacion minima
+            // se controla abajo (TIEMPO_MIN_ENTRE_LECTURAS_MS).
+            tiempoRelectura: 0,
             onCodeDetected: function (codigoLeido) {
 
                 if (pausaLecturaActiva) return;
@@ -2643,7 +2662,7 @@
                 if (!ultimoCodigoLeido) {
                     ultimoCodigoLeido = clean;
                     tiempoUltimaLectura = Date.now();
-                    setScannerMsg("Código detectado. Acerque nuevamente para confirmar.");
+                    setScannerMsg("Código detectado. Mantené el código quieto frente a la cámara para confirmar.");
                     return;
                 }
 
@@ -2654,9 +2673,13 @@
                     return;
                 }
 
-                if (!isValidEAN(clean)) {
+                // Misma lectura pero demasiado pronto: no cuenta como confirmacion, se espera al siguiente cuadro
+                // (sin tocar tiempoUltimaLectura, asi los 0,5 s se miden desde la 1ra lectura).
+                if ((Date.now() - tiempoUltimaLectura) < TIEMPO_MIN_ENTRE_LECTURAS_MS) return;
+
+                if (!isValidCodigoLeidoCamara(clean)) {
                     limpiarEstadoLecturaScanner();
-                    setScannerMsg("Código inválido (solo EAN-8 o EAN-13). Volvé a enfocar.");
+                    setScannerMsg("Código inválido (solo EAN-8, EAN-13 o UPC-A). Volvé a enfocar.");
                     return;
                 }
 
@@ -2855,15 +2878,17 @@
         position: relative;
         width: 100%;
         max-width: 100%;
-        height: 80px;
+        height: 120px; /* antes 80; el video llena la franja y se recorta centrado (ver custom.css) */
         overflow: hidden;
         background: #000;
         border-radius: 8px;
     }
 
     #videoScanner {
+        display: block;
         width: 100%;
-        height: auto;
+        height: 100%;
+        object-fit: cover;
     }
 
     .scanner-line {

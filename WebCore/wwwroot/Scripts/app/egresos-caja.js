@@ -64,7 +64,10 @@
                 text: "Puede perder todos los datos ingresados. Desea salir?",
                 showCancelButton: true,
                 confirmButtonText: "Si, salir",
-                cancelButtonText: "Cancelar"
+                cancelButtonText: "Cancelar",
+                reverseButtons: true,
+                // Salida segura (swal-single-confirm.js): foco en cancelar con borde visible, flechas entre los botones y Enter solo activa el que tiene el foco.
+                customClass: { popup: "swal-salir-seguro" }
             }).then(function (r) {
                 if (r && r.isConfirmed && typeof callback === "function") {
                     callback();

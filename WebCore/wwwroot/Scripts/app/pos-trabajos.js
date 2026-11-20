@@ -432,7 +432,9 @@
             showCancelButton: true,
             confirmButtonText: 'Salir igual',
             cancelButtonText: 'Seguir en el POS',
-            focusCancel: true
+            focusCancel: true,
+            // Salida segura (swal-single-confirm.js): Enter solo activa el boton con foco (arranca en «Seguir en el POS»), flechas entre los botones.
+            customClass: { popup: 'swal-salir-seguro' }
         }).then(function (r) {
             if (!r.isConfirmed) return;
             window.POSSalidaConfirmada = true;

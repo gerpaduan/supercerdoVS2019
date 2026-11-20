@@ -146,7 +146,7 @@
                 // detecta el 100% de esos casos.
                 if (!ultimoCodigoLeido) {
                     ultimoCodigoLeido = clean;
-                    setMsg('Código detectado. Acerque nuevamente para confirmar.');
+                    setMsg('Código detectado. Mantené el código quieto frente a la cámara para confirmar.');
                     return;
                 }
 
@@ -156,9 +156,12 @@
                     return;
                 }
 
-                if (!isValidEAN(clean)) {
+                // EAN-8, EAN-13 o UPC-A (12 digitos): un EAN-13 que empieza con 0 se guarda y se lee de
+                // 12 digitos (docs/DECISIONS.md 2026-10-12). El digito de control se valida igual, sobre
+                // '0' + codigo, asi que la proteccion contra lecturas erradas no cambia.
+                if (!isValidCodigoLeido(clean)) {
                     limpiarEstadoLectura();
-                    setMsg('Código inválido (solo EAN-8 o EAN-13). Volvé a enfocar.');
+                    setMsg('Código inválido (solo EAN-8, EAN-13 o UPC-A). Volvé a enfocar.');
                     return;
                 }
 

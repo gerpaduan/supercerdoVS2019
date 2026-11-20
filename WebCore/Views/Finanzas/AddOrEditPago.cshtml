@@ -1272,7 +1272,8 @@
         // Espera a que terminen de cargar los cheques y la mascara del importe antes de tomar la foto.
         window.setTimeout(function () { estadoInicialPago = fotoDelFormularioPago(); }, 700);
 
-        // Con cambios sin guardar pide confirmacion: Enter = salir y perder los datos, Esc = seguir en el pago.
+        // Con cambios sin guardar pide confirmacion. Desde 2026-11-20 el foco arranca en «Seguir en el pago» y Enter solo activa el boton con foco
+        // (antes Enter = salir y perder los datos): un Enter equivocado no debe perder lo cargado. Flechas entre los botones, Esc = seguir.
         function pedirSalidaDelPago() {
             if (!formularioPagoModificado()) {
                 salirDelPago();
@@ -1283,12 +1284,13 @@
                 title: '¿Salir sin guardar?',
                 text: 'Hiciste cambios que todavía no se guardaron. Si salís, se perderán los datos ingresados.',
                 showCancelButton: true,
-                confirmButtonText: 'Salir y perder los datos (Enter)',
+                confirmButtonText: 'Salir y perder los datos',
                 cancelButtonText: 'Seguir en el pago (Esc)',
                 confirmButtonColor: '#d33',
                 reverseButtons: true,
-                focusConfirm: true,
-                allowEnterKey: true,
+                focusCancel: true,
+                // Salida segura (swal-single-confirm.js): foco en «Seguir en el pago» con borde visible, flechas entre los botones, Enter solo activa el del foco.
+                customClass: { popup: 'swal-salir-seguro' },
                 allowEscapeKey: true
             }).then(function (resultado) {
                 if (resultado.isConfirmed) salirDelPago();

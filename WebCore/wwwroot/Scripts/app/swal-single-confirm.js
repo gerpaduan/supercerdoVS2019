@@ -65,9 +65,111 @@
         }
     }
 
+    // ---------- Confirmaciones de SALIDA sin guardar («Salir sin guardar», 2026-11-20, pedido del usuario) ----------
+    // Un Enter equivocado no debe sacar al usuario perdiendo lo cargado, asi que estos avisos NO usan el atajo «Enter = confirmar» de abajo:
+    //   - el foco arranca en «No, quedarme» (cancelar), con un borde bien visible (se ve cual tiene el foco);
+    //   - las flechas (←→↑↓) pasan el foco entre «No, quedarme» y «Sí, salir»; Enter activa SOLO el boton que tiene el foco (sin foco en un boton = cancelar);
+    //   - Esc cierra (sigue en la pantalla).
+    // Se activan agregando customClass: { popup: 'swal-salir-seguro' } a la llamada (hoy: el aviso global de _Layout.cshtml, egresos-caja.js y el pago de
+    // AddOrEditPago.cshtml). El resto de las confirmaciones conserva Enter = confirmar (pedido del 2026-09-10).
+    var CLASE_SALIDA_SEGURA = 'swal-salir-seguro';
+
+    function esSalidaSegura(options) {
+        if (!options || options.toast === true) return false;
+        var clases = options.customClass;
+        var popup = clases && typeof clases === 'object' ? clases.popup : clases;
+        return String(popup || '').split(/\s+/).indexOf(CLASE_SALIDA_SEGURA) >= 0;
+    }
+
+    function inyectarEstilosSalidaSegura() {
+        if (document.getElementById('swal-salir-seguro-estilos')) return;
+        var estilo = document.createElement('style');
+        estilo.id = 'swal-salir-seguro-estilos';
+        // :focus (no :focus-visible): el foco se pone por codigo y, si el usuario llego con el mouse, :focus-visible no se mostraria.
+        estilo.textContent =
+            '.' + CLASE_SALIDA_SEGURA + ' .swal2-actions button:focus{outline:3px solid #35479b!important;outline-offset:3px!important;box-shadow:none!important}' +
+            'html.dark-mode .' + CLASE_SALIDA_SEGURA + ' .swal2-actions button:focus{outline-color:#8fa3ff!important}';
+        document.head.appendChild(estilo);
+    }
+
+    // Botones del aviso en el orden en que se ven (con reverseButtons «No, quedarme» queda a la izquierda).
+    function botonesSalidaSegura() {
+        var botones = [window.Swal.getCancelButton && window.Swal.getCancelButton(), window.Swal.getConfirmButton && window.Swal.getConfirmButton()]
+            .filter(function (b) { return b && b.offsetParent !== null; });
+        return botones.sort(function (a, b) { return a.getBoundingClientRect().left - b.getBoundingClientRect().left; });
+    }
+
+    function dispararSalidaSegura(options) {
+        inyectarEstilosSalidaSegura();
+        var trapsSuspendidos = [];
+        var manejador = null;
+        var willOpenOriginal = options.willOpen;
+        var didOpenOriginal = options.didOpen;
+        var willCloseOriginal = options.willClose;
+
+        return originalFire(Object.assign({}, options, {
+            showCancelButton: true,
+            focusCancel: true,
+            focusConfirm: false,
+            allowEnterKey: true,
+            allowEscapeKey: true,
+            returnFocus: false,
+            willOpen: function (popup) {
+                trapsSuspendidos = suspenderFocusTrap();
+                var activo = document.activeElement;
+                if (activo && typeof activo.blur === 'function') activo.blur();
+                if (typeof willOpenOriginal === 'function') willOpenOriginal.call(this, popup);
+            },
+            didOpen: function (popup) {
+                manejador = function (evt) {
+                    if (evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey) return;
+                    var tecla = evt.key;
+                    var botones = botonesSalidaSegura();
+                    var indice = botones.indexOf(document.activeElement);
+                    if (tecla === 'Enter') {
+                        // Solo el boton con foco; si el foco se perdio (ningun boton), la salida segura: cancelar.
+                        evt.preventDefault();
+                        evt.stopPropagation();
+                        evt.stopImmediatePropagation();
+                        if (indice >= 0 && botones[indice] === window.Swal.getConfirmButton()) window.Swal.clickConfirm();
+                        else window.Swal.clickCancel();
+                    } else if (tecla === 'ArrowRight' || tecla === 'ArrowDown' || tecla === 'ArrowLeft' || tecla === 'ArrowUp') {
+                        evt.preventDefault();
+                        evt.stopPropagation();
+                        evt.stopImmediatePropagation();
+                        if (!botones.length) return;
+                        var adelante = tecla === 'ArrowRight' || tecla === 'ArrowDown';
+                        // Sin foco en un boton, la flecha lo pone en «No, quedarme»; con foco, pasa al vecino (sin dar la vuelta).
+                        var destino = indice < 0 ? 0 : Math.max(0, Math.min(botones.length - 1, indice + (adelante ? 1 : -1)));
+                        botones[destino].focus();
+                    }
+                };
+                // En window y en captura: corre antes que cualquier otro atajo de teclado de la pagina.
+                window.addEventListener('keydown', manejador, true);
+                // El foco arranca en «No, quedarme» (Swal lo hace con focusCancel; se reafirma por si otro script lo movio).
+                window.setTimeout(function () {
+                    var cancelar = window.Swal.getCancelButton && window.Swal.getCancelButton();
+                    if (cancelar && typeof cancelar.focus === 'function') cancelar.focus();
+                }, 0);
+                if (typeof didOpenOriginal === 'function') didOpenOriginal.call(this, popup);
+            },
+            willClose: function (popup) {
+                if (manejador) {
+                    window.removeEventListener('keydown', manejador, true);
+                    manejador = null;
+                }
+                reactivarFocusTrap(trapsSuspendidos);
+                trapsSuspendidos = [];
+                if (typeof willCloseOriginal === 'function') willCloseOriginal.call(this, popup);
+            }
+        }));
+    }
+
     window.Swal.fire = function () {
         var args = Array.prototype.slice.call(arguments);
         var options = normalizeArgs(args);
+
+        if (esSalidaSegura(options)) return dispararSalidaSegura(options);
 
         if (!isSingleConfirmAlert(options)) {
             // Fix real (2026-10-05, ver docs/DECISIONS.md): los Swals que NO son de confirmacion simple
