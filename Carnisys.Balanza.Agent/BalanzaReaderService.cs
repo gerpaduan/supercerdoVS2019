@@ -17,6 +17,8 @@ namespace Carnisys.Balanza.Agent
         private const int LecturaCongeladaMs = 3000;
         // Con la lectura congelada este tiempo se cierra el puerto desde otro hilo para destrabar la llamada bloqueada.
         private const int RecuperacionPuertoMs = 10000;
+        // Tiempo que se espera al pausar el lector para que termine la vuelta en curso (una vuelta dura ~300 ms).
+        private const int LectorPausaEsperaMs = 450;
 
         // _sync protege puerto y config (lo usa el hilo lector); _lecturaSync solo la ultima lectura, para que el HTTP nunca
         // espere a una operacion del puerto serie (que puede colgarse con adaptadores USB-serie).
@@ -34,6 +36,8 @@ namespace Carnisys.Balanza.Agent
         private string _ultimoErrorLogueado;
         private bool _congeladaLogueada;
         private int _recuperacionEnCurso;
+        // Pausas pedidas por quien prueba puertos (ventana de configuracion, instalador): con _pausas > 0 el lector suelta el COM.
+        private int _pausas;
 
         public BalanzaReaderService(AgentConfig config)
         {
@@ -146,6 +150,7 @@ namespace Carnisys.Balanza.Agent
                 return LecturaPeso.CrearError("Debe seleccionar un puerto COM.", normalized);
             }
 
+            PausarLector();
             try
             {
                 using (var port = CreatePort(normalized, driver))
@@ -167,6 +172,49 @@ namespace Carnisys.Balanza.Agent
             {
                 return LecturaPeso.CrearError(ex.Message, normalized);
             }
+            finally
+            {
+                ReanudarLector();
+            }
+        }
+
+        // Prueba cada puerto con cada marca para encontrar la balanza (ver BalanzaScanner). Pausa el lector mientras dura.
+        public System.Collections.Generic.List<ResultadoPuerto> Buscar(BalanzaConfig plantilla, Action<string> avance)
+        {
+            PausarLector();
+            try
+            {
+                return BalanzaScanner.Buscar(_registry, plantilla, avance);
+            }
+            finally
+            {
+                ReanudarLector();
+            }
+        }
+
+        // Hace que el lector suelte el puerto COM (para que otro lo pueda abrir y probar). Cada llamada se cancela con
+        // ReanudarLector. Mientras dura la pausa la ultima lectura queda como "Buscando la balanza..." (no es una lectura vieja).
+        public void PausarLector()
+        {
+            Interlocked.Increment(ref _pausas);
+            lock (_sync)
+            {
+                ClosePort();
+            }
+
+            // El lector puede estar a mitad de una vuelta: se le da tiempo a salir antes de que el otro abra el puerto.
+            Thread.Sleep(LectorPausaEsperaMs);
+            AgentLog.Info("Lector pausado para probar puertos.");
+        }
+
+        public void ReanudarLector()
+        {
+            if (Interlocked.Decrement(ref _pausas) < 0)
+            {
+                Interlocked.Exchange(ref _pausas, 0);
+            }
+
+            AgentLog.Info("Lector reanudado.");
         }
 
         private void ReadLoop()
@@ -177,6 +225,14 @@ namespace Carnisys.Balanza.Agent
                 lock (_sync)
                 {
                     config = ConfigStore.Normalize(_config);
+                }
+
+                if (Volatile.Read(ref _pausas) > 0)
+                {
+                    // Pausa por una prueba de puertos: no se lee, y la lectura no queda vieja (el watchdog no debe saltar).
+                    GuardarLectura(LecturaPeso.CrearError("Buscando la balanza…", config.Balanza));
+                    Thread.Sleep(150);
+                    continue;
                 }
 
                 var lectura = LeerUnaVez(config);
@@ -325,6 +381,11 @@ namespace Carnisys.Balanza.Agent
             string nextSignature = BuildSignature(config, driver);
             lock (_sync)
             {
+                if (Volatile.Read(ref _pausas) > 0)
+                {
+                    throw new InvalidOperationException("Lector en pausa.");
+                }
+
                 if (_port != null && _port.IsOpen && string.Equals(_portSignature, nextSignature, StringComparison.OrdinalIgnoreCase))
                 {
                     return _port;
@@ -379,7 +440,7 @@ namespace Carnisys.Balanza.Agent
             return limpio.Length > 80 ? limpio.Substring(0, 80) + "..." : limpio;
         }
 
-        private static SerialPort CreatePort(BalanzaConfig config, IBalanzaDriver driver)
+        internal static SerialPort CreatePort(BalanzaConfig config, IBalanzaDriver driver)
         {
             var port = new SerialPort
             {

@@ -2,6 +2,8 @@ namespace WebCore.Models
 {
     public sealed class UtilityItemVm
     {
+        // Identifica utilidades con interfaz propia en la vista (ej. "agente-balanza": boton Instalar/Actualizar).
+        public string Codigo { get; set; }
         public string Nombre { get; set; }
         public string Categoria { get; set; }
         public string Descripcion { get; set; }

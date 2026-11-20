@@ -1,5 +1,17 @@
 # Bitacora de cambios
 
+## 2026-11-20 (b) - Utilidades: «Instalar» / «Actualizar» del agente de balanza, con actualización automática firmada
+
+- **Cambio:** la tarjeta del agente de balanza en Utilidades tiene un botón que detecta la PC: **Instalar** descarga el archivo y guía cómo abrirlo (y detecta solo cuando queda instalado), **Actualizar** hace que el agente instalado se baje, verifique (firma) e instale la versión nueva sin que la persona toque nada, y **Reinstalar** si ya está al día. Un navegador no puede ejecutar un archivo descargado: la primera instalación necesita abrirlo una vez. Detalle: `docs/DECISIONS.md` (2026-11-20, Instalar/Actualizar desde Utilidades y auto-actualización firmada).
+- **Archivos:** `Carnisys.Balanza.Agent/Actualizador.cs` (nuevo) y otros del agente, `scripts/publicar-agente-balanza.ps1` (nuevo), `WebCore/wwwroot/Scripts/app/utilidades-agente-balanza.js` (nuevo), `Views/Home/Utilidades.cshtml`, `downloads/Carnisys.Balanza.Agent.{exe,json}`, manual `Home.Utilidades.md`.
+- **Pendiente:** probar la vista real con login, Chrome real contra carnisys.com y una actualización en una PC con balanza; cada versión nueva del agente se publica con el script (firma).
+
+## 2026-11-20 - Agente de balanza 2.0: se instala con un solo .exe, ventana nueva e ícono de estado
+
+- **Cambio:** Utilidades ofrece `Carnisys.Balanza.Agent.exe` (ya no zip + .cmd): al ejecutarlo se instala solo, sin permisos de administrador, conserva la configuración o busca la balanza, y queda junto al reloj; para actualizar se ejecuta el nuevo. La ventana de configuración muestra el peso en vivo, los puertos con su nombre y «Buscar balanza automáticamente» (lo técnico quedó en «Opciones avanzadas»); «Probar lectura» dejó de fallar con el agente corriendo. El ícono de la bandeja es una balanza que cambia de color (verde/ámbar/rojo/gris). Con los colores de CarniSys. Detalle: `docs/DECISIONS.md` (2026-11-20, Agente de balanza 2.0).
+- **Archivos:** `Carnisys.Balanza.Agent/*`, `app.manifest`, `WebCore/Controllers/HomeController.cs`, `WebCore/wwwroot/Content/downloads/Carnisys.Balanza.Agent.exe` (reemplaza al zip), manual `Home.Utilidades.md`.
+- **Pendiente:** probar con balanza y puertos reales y con Windows al 125/150 %; reinstalar el agente en cada PC con balanza; `scripts/check-ayuda.ps1` antes del deploy.
+
 ## 2026-11-20 - Balanza: un peso viejo nunca se muestra ni se guarda (web + agente)
 
 - **Cambio:** las pantallas con balanza (Elaborados carga e ingreso rápido, Movimientos, Stock, POS y Puntos de expendio) muestran y guardan solo una lectura fresca de la balanza (< 1,5 s); sin ella el campo queda vacío y Enter avisa. Peso inestable o cero no se agrega. Elaborados y Movimientos activan la lectura al abrir (antes quedaba el peso del momento de abrir hasta tocar `*`). El agente informa la antigüedad de la lectura, detecta y destraba el lector colgado, no se cuelga por un cliente HTTP y deja log. Detalle: `docs/DECISIONS.md` (2026-11-20).

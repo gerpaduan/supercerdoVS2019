@@ -420,13 +420,15 @@ public class HomeController : Controller
             Agentes = new System.Collections.Generic.List<UtilityItemVm>
             {
                 BuildUtilityItem(
+                    "agente-balanza",
                     "Agente de balanza",
                     "Agente local",
                     "Lee la balanza desde la PC local y expone la API en 127.0.0.1 para POS y otras pantallas web.",
-                    "Content/downloads/Carnisys.Balanza.Agent.zip",
-                    "Carnisys.Balanza.Agent.zip",
-                    "Incluye ejecutable, configuración inicial y script de instalación local."),
+                    "Content/downloads/Carnisys.Balanza.Agent.exe",
+                    "Carnisys.Balanza.Agent.exe",
+                    "Instalar: baja el archivo y te guía para abrirlo; se instala solo (sin permisos de administrador), busca la balanza y queda junto al reloj. Si ya lo tenés instalado, Actualizar lo hace el propio agente. Si Windows muestra «Windows protegió su PC», tocá «Más información» y «Ejecutar de todas formas»."),
                 BuildUtilityItem(
+                    null,
                     "Agente de impresión",
                     "Agente local",
                     "Permite imprimir tickets desde la terminal local sin depender del servidor web.",
@@ -462,7 +464,7 @@ public class HomeController : Controller
         return PhysicalFile(path, "application/zip", "CarniSys.PrintAgent.zip");
     }
 
-    private UtilityItemVm BuildUtilityItem(string nombre, string categoria, string descripcion, string relativePath, string archivoNombre, string notaInstalacion)
+    private UtilityItemVm BuildUtilityItem(string codigo, string nombre, string categoria, string descripcion, string relativePath, string archivoNombre, string notaInstalacion)
     {
         string physicalPath = System.IO.Path.Combine(_env.WebRootPath, relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
         bool disponible = System.IO.File.Exists(physicalPath);
@@ -470,6 +472,7 @@ public class HomeController : Controller
 
         return new UtilityItemVm
         {
+            Codigo = codigo,
             Nombre = nombre,
             Categoria = categoria,
             Descripcion = descripcion,

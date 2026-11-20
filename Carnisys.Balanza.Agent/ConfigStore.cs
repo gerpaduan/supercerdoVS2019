@@ -6,12 +6,15 @@ namespace Carnisys.Balanza.Agent
 {
     internal static class ConfigStore
     {
-        private static readonly string BasePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "CarniSys",
-            "BalanzaAgent");
+        // Carpeta y archivo de config: salen de AgentPaths (acepta la variable CARNISYS_BALANZA_DIR para pruebas).
+        private static string BasePath { get { return AgentPaths.Carpeta; } }
 
-        private static readonly string ConfigPath = Path.Combine(BasePath, "config.json");
+        private static string ConfigPath { get { return Path.Combine(BasePath, "config.json"); } }
+
+        public static bool ExisteConfig()
+        {
+            return File.Exists(ConfigPath);
+        }
 
         public static AgentConfig Load()
         {
@@ -56,6 +59,7 @@ namespace Carnisys.Balanza.Agent
             config = config ?? new AgentConfig();
             config.Balanza = NormalizeBalanza(config.Balanza);
             config.Api = NormalizeApi(config.Api);
+            config.Actualizacion = NormalizeActualizacion(config.Actualizacion);
             return config;
         }
 
@@ -74,6 +78,19 @@ namespace Carnisys.Balanza.Agent
                 ? (string.Equals(config.Marca, "Kretz", StringComparison.OrdinalIgnoreCase) ? "Two" : "One")
                 : config.StopBits.Trim();
             config.IntervaloLecturaMs = config.IntervaloLecturaMs >= 100 ? config.IntervaloLecturaMs : 150;
+            return config;
+        }
+
+        // Origenes por defecto desde los que se acepta actualizar el agente (ver Actualizador).
+        public static readonly string[] OrigenesActualizacionPorDefecto = { "https://carnisys.com", "https://www.carnisys.com" };
+
+        public static ActualizacionConfig NormalizeActualizacion(ActualizacionConfig config)
+        {
+            config = config ?? new ActualizacionConfig();
+            if (config.OrigenesPermitidos == null || config.OrigenesPermitidos.Count == 0)
+            {
+                config.OrigenesPermitidos = new System.Collections.Generic.List<string>(OrigenesActualizacionPorDefecto);
+            }
             return config;
         }
 

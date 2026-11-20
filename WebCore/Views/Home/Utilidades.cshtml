@@ -127,7 +127,21 @@
                         </div>
 
                         <div class="mt-auto">
-                            @if (item.Disponible)
+                            @if (item.Disponible && item.Codigo == "agente-balanza")
+                            {
+                                @* Instalar / Actualizar / Reinstalar segun lo que detecta utilidades-agente-balanza.js en esta PC. *@
+                                <div id="agenteBalanza"
+                                     data-manifiesto="@Url.Content("~/Content/downloads/Carnisys.Balanza.Agent.json")"
+                                     data-exe="@item.ArchivoUrl"
+                                     data-nombre-exe="@item.ArchivoNombre">
+                                    <div id="agenteBalanzaEstado" class="small text-muted mb-2" aria-live="polite">Buscando el agente en esta PC…</div>
+                                    <button type="button" id="btnAgenteBalanza" class="btn btn-primary btn-sm" disabled>
+                                        <i class="fas fa-download mr-1"></i><span class="agente-btn-texto">Instalar</span>
+                                    </button>
+                                    <a class="btn btn-link btn-sm" href="@item.ArchivoUrl" download>Descargar solo el archivo</a>
+                                </div>
+                            }
+                            else if (item.Disponible)
                             {
                                 <a class="btn btn-primary btn-sm" href="@item.ArchivoUrl" download>
                                     <i class="fas fa-download mr-1"></i> Descargar
@@ -172,6 +186,7 @@
 
 @section Scripts {
     <script src="~/Scripts/app/utilidades-instalar-apps.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/utilidades-agente-balanza.js" asp-append-version="true"></script>
 }
 
 <style>

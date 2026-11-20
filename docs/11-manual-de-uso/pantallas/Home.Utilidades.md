@@ -5,7 +5,7 @@ rol: usuario
 modulo: Configuración
 orden: 1
 permiso: ninguno (el ítem Utilidades del menú Configuración lo ve todo usuario; verificado en `Views/Shared/_Layout.cshtml`)
-revisada: 2026-11-17
+revisada: 2026-11-20
 ---
 ## Para qué sirve
 Reúne las herramientas auxiliares que cualquier usuario puede necesitar sin entrar a otra pantalla: el **contador de billetes** y la descarga de los **agentes locales** (impresora y balanza) que se instalan en cada PC.
@@ -28,6 +28,17 @@ Reúne las herramientas auxiliares que cualquier usuario puede necesitar sin ent
 
 ## Agentes locales
 Cada tarjeta muestra el agente (impresión, balanza), su versión y un botón **Descargar**; la nota de la tarjeta dice dónde instalarlo. Debajo, el sector **Más herramientas** queda reservado para sumar utilidades.
+
+### Agente de balanza (desde 2026-11-20)
+- **La tarjeta se adapta a tu PC.** Al abrir Utilidades revisa si el agente está instalado en esa computadora y en qué versión, y muestra un solo botón: **Instalar** (no está instalado), **Actualizar** (hay una versión más nueva) o **Reinstalar** (ya está al día).
+- **Instalar:** tocá **Instalar**. Se descarga `Carnisys.Balanza.Agent.exe` y aparece una guía. El navegador no deja ejecutar el archivo solo: abrilo con el botón **Abrir** de la barra de descargas (o desde Descargas). Se abre una ventana azul «Instalar agente de balanza» con cuatro pasos (cerrar la versión anterior, copiar el agente, iniciar solo al prender la PC y buscar la balanza). No pide permisos de administrador. Al terminar dice **Listo**, el agente queda junto al reloj de Windows y la guía de la pantalla lo detecta sola («Agente de balanza instalado»). También podés bajar solo el archivo con **Descargar solo el archivo**.
+- **Aviso de Windows:** como el archivo no está firmado digitalmente, Windows puede mostrar «Windows protegió su PC». Tocá **Más información** y después **Ejecutar de todas formas**.
+- **Actualizar:** tocá **Actualizar**. El propio agente baja la versión nueva, comprueba que es auténtica (está firmada por CarniSys) y se reemplaza solo: aparece un cartel de progreso, la ventana azul se abre unos segundos y se cierra sola, y al final dice **Agente actualizado**. No hay que abrir ningún archivo. Conserva el puerto y la marca elegidos. Si la versión instalada es anterior a esta función, o el sistema no está autorizado a actualizarla (por ejemplo una instalación en red local), la pantalla te lo avisa y pasa a la descarga guiada de Instalar. Es una vez: después se actualiza sola.
+- **Si no encuentra la balanza:** se abre la ventana de configuración para elegirla a mano (balanza prendida y con el cable conectado).
+- **Ventana de configuración** (doble clic en el ícono, o «Configurar balanza» con clic derecho; también al ejecutar de nuevo el archivo): arriba muestra el **peso en vivo** y si la balanza está conectada y estable (poné algo sobre la balanza: el número tiene que cambiar). Elegí la **marca** y el **puerto** (aparece con el nombre que le da Windows, por ejemplo «USB-SERIAL CH340 (COM3)»). **Buscar balanza automáticamente** prueba todos los puertos con las dos marcas y deja elegida la que responde; **Probar selección** prueba solo el puerto marcado. Después, **Guardar**. Velocidad, intervalo de lectura y puerto local están en **Opciones avanzadas** y casi nunca hace falta tocarlos. **Ver registro** abre la carpeta con el historial del agente.
+- **Ícono junto al reloj:** gris = sin configurar, verde = conectada, ámbar = peso inestable o buscando, rojo = sin lectura. Al apoyar el mouse muestra el peso. Si estaba conectada y se pierde la lectura, avisa con un globo.
+- La búsqueda automática manda una consulta a **todos** los puertos de la PC: si hay otro aparato conectado por puerto serie (lector, impresora), conviene elegir el puerto a mano.
+- PENDIENTE: no se probó con una balanza real ni con Windows al 125 % o 150 %.
 
 ## Tamaño de las apps instaladas
 Las apps instaladas y las ventanas independientes de carga (Stock, Movimientos, Elaborados, Existencia) tienen los botones **− / +** junto a «… sin guardar» para achicar o agrandar el **ancho** de la ventana un 10 % por clic; ver la sección «Botones − / + de ancho» de cada pantalla (por ejemplo [Stock](ayuda:pantalla/Stock.Editar)).

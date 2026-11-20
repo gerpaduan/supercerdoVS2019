@@ -15,11 +15,7 @@ namespace Carnisys.Balanza.Agent
     {
         private const int DiasRetencion = 14;
         private static readonly object Sync = new object();
-        private static readonly string LogDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "CarniSys",
-            "BalanzaAgent",
-            "logs");
+        private static string LogDir { get { return AgentPaths.CarpetaLogs; } }
 
         private static DateTime _ultimaLimpieza = DateTime.MinValue;
 

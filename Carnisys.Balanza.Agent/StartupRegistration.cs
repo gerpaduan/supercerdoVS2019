@@ -11,9 +11,20 @@ namespace Carnisys.Balanza.Agent
 
         public static void EnsureRegistered()
         {
+            Register(GetExecutablePath());
+        }
+
+        // Registra el agente para iniciar con Windows (solo el usuario actual, sin permisos de administrador).
+        // En modo prueba (CARNISYS_BALANZA_DIR) no toca el registro.
+        public static void Register(string executablePath)
+        {
+            if (AgentPaths.ModoPrueba)
+            {
+                return;
+            }
+
             try
             {
-                string executablePath = GetExecutablePath();
                 if (string.IsNullOrWhiteSpace(executablePath))
                 {
                     return;
@@ -35,24 +46,15 @@ namespace Carnisys.Balanza.Agent
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                AgentLog.Error("No se pudo registrar el inicio con Windows.", ex);
             }
         }
 
         private static string GetExecutablePath()
         {
-            try
-            {
-                using (var process = Process.GetCurrentProcess())
-                {
-                    return process.MainModule != null ? process.MainModule.FileName : null;
-                }
-            }
-            catch
-            {
-                return null;
-            }
+            return AgentPaths.RutaExeActual();
         }
     }
 }

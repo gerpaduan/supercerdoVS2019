@@ -51,6 +51,7 @@ namespace Carnisys.Balanza.Agent
         {
             _listener = new TcpListener(IPAddress.Parse("127.0.0.1"), _port);
             _listener.Start();
+            NoHeredable(_listener.Server.Handle);
             _running = true;
             _worker = new System.Threading.Thread(ListenLoop)
             {
@@ -58,6 +59,21 @@ namespace Carnisys.Balanza.Agent
                 Name = "Carnisys.Balanza.Http"
             };
             _worker.Start();
+        }
+
+        // .NET Framework crea los sockets como heredables: un proceso hijo (el instalador al actualizar) heredaba el socket de escucha y
+        // mantenia el puerto tomado despues de cerrarse este agente. Se marca como no heredable.
+        private const uint HandleFlagInherit = 0x00000001;
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags);
+
+        private static void NoHeredable(IntPtr handle)
+        {
+            if (!SetHandleInformation(handle, HandleFlagInherit, 0))
+            {
+                AgentLog.Warn("No se pudo marcar el socket como no heredable (error " + System.Runtime.InteropServices.Marshal.GetLastWin32Error() + ").");
+            }
         }
 
         private void ListenLoop()
@@ -145,12 +161,17 @@ namespace Carnisys.Balanza.Agent
                 }
 
                 int contentLength = 0;
+                string origin = null;
                 string line;
                 while (!string.IsNullOrEmpty(line = reader.ReadLine()))
                 {
                     if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
                     {
                         int.TryParse(line.Substring("Content-Length:".Length).Trim(), out contentLength);
+                    }
+                    else if (line.StartsWith("Origin:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        origin = line.Substring("Origin:".Length).Trim();
                     }
                 }
 
@@ -173,11 +194,11 @@ namespace Carnisys.Balanza.Agent
                     body = new string(buffer, 0, read);
                 }
 
-                HandleRequest(stream, method, path.ToLowerInvariant(), body);
+                HandleRequest(stream, method, path.ToLowerInvariant(), body, origin);
             }
         }
 
-        private void HandleRequest(Stream stream, string method, string path, string body)
+        private void HandleRequest(Stream stream, string method, string path, string body, string origin)
         {
             if (method == "OPTIONS")
             {
@@ -204,8 +225,21 @@ namespace Carnisys.Balanza.Agent
                     error = lectura.Error,
                     fechaHora = lectura.FechaHora.ToString("yyyy-MM-ddTHH:mm:ss"),
                     edadMs = lectura.EdadMs,
-                    secuencia = lectura.Secuencia
+                    secuencia = lectura.Secuencia,
+                    // Version del agente y estado de la actualizacion en curso: la web decide si ofrece Instalar o Actualizar.
+                    version = AgentPaths.Version(),
+                    actualizacion = Actualizador.EstadoActual()
                 });
+                return;
+            }
+
+            // La web pide actualizar (solo desde un Origin permitido en config.json; ver Actualizador). Responde enseguida y sigue
+            // en segundo plano: la web consulta el avance en /status.
+            if (path == "/actualizar" && method == "POST")
+            {
+                string motivo;
+                bool aceptada = Actualizador.Iniciar(origin, _getConfig(), out motivo);
+                WriteJson(stream, new { ok = aceptada, mensaje = motivo, version = AgentPaths.Version() }, aceptada ? 202 : 403);
                 return;
             }
 
@@ -233,6 +267,7 @@ namespace Carnisys.Balanza.Agent
                 var current = _getConfig();
                 var next = new AgentConfig
                 {
+                    Actualizacion = current.Actualizacion,
                     Balanza = ConfigStore.NormalizeBalanza(req.Balanza ?? new BalanzaConfig
                     {
                         Marca = req.Marca,
@@ -341,6 +376,8 @@ namespace Carnisys.Balanza.Agent
             string statusText = statusCode == 200 ? "OK" :
                 statusCode == 404 ? "Not Found" :
                 statusCode == 400 ? "Bad Request" :
+                statusCode == 202 ? "Accepted" :
+                statusCode == 403 ? "Forbidden" :
                 "Internal Server Error";
 
             string headers =
@@ -349,6 +386,7 @@ namespace Carnisys.Balanza.Agent
                 "Access-Control-Allow-Origin: *\r\n" +
                 "Access-Control-Allow-Headers: Content-Type\r\n" +
                 "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
+                "Access-Control-Allow-Private-Network: true\r\n" +
                 "Cache-Control: no-store\r\n" +
                 "Content-Length: " + bodyBytes.Length + "\r\n" +
                 "Connection: close\r\n\r\n";
