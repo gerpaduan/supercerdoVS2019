@@ -125,6 +125,54 @@
         elemento.style.top = Math.max(MARGEN_PANTALLA_PX, Math.min(y, maxY)) + 'px';
     }
 
+    // Pantalla dividida (2026-11-20, docs/DECISIONS.md "Pantalla dividida"): ver varios modulos lado a lado.
+    // - Estando en la pantalla dividida (window.PantallaDividida, pantalla-dividida.js): «Abrir en un panel nuevo» y «Abrir en el panel activo».
+    // - Desde cualquier otra pantalla: «Abrir en pantalla dividida» va a la pantalla dividida con este modulo en un panel (?abrir=<ruta>).
+    // El POS no se abre en un panel (solo ventana independiente); la URL de la pantalla dividida viene de data-pantalla-dividida-url del menu lateral.
+    // Va a la pantalla dividida con "ruta" como panel (?abrir=<ruta>). Si esta pantalla tiene cambios sin guardar pide confirmar con el aviso de la app
+    // («Salir sin guardar») y apaga el cartel del navegador para no preguntar dos veces (mismo criterio que los enlaces de _Layout.cshtml).
+    // llevarCarga (solo para la pantalla ACTUAL, boton «Dividir pantalla»): si es una carga que sabe pasar lo cargado (DocumentoAbierto:
+    // Elaborados, Elaborados rapido, Movimientos, Stock) sigue en el panel con todo lo que tenia, sin el aviso; si no, el aviso de siempre.
+    function irAPantallaDividida(ruta, llevarCarga) {
+        var urlDividida = menuLateral.getAttribute('data-pantalla-dividida-url');
+        if (!urlDividida) return;
+        var traspaso = null;
+        if (llevarCarga && window.DocumentoAbierto && typeof window.DocumentoAbierto.prepararTraspaso === 'function') {
+            traspaso = window.DocumentoAbierto.prepararTraspaso();
+        }
+        var ir = function () {
+            if (traspaso) {
+                ruta = traspaso.urlCon(ruta);
+                traspaso.ceder();   // esta pagina deja de guardar borrador y de proteger la salida: lo cargado sigue en el panel
+            }
+            if (typeof window.desactivarProteccionSalida === 'function') window.desactivarProteccionSalida();
+            window.location.href = urlDividida + '?abrir=' + encodeURIComponent(ruta);
+        };
+        if (!traspaso && window.__protegerSalida && typeof window.confirmarSalidaSinGuardar === 'function') window.confirmarSalidaSinGuardar(ir);
+        else ir();
+    }
+
+    // Boton «Dividir pantalla» de la barra superior: la pantalla actual pasa a ser un panel de la pantalla dividida, con lo que tenga cargado.
+    var botonDividir = document.getElementById('btnDividirPantalla');
+    if (botonDividir) {
+        botonDividir.addEventListener('click', function () { irAPantallaDividida(window.location.pathname + window.location.search, true); });
+    }
+
+    function agregarOpcionesPantallaDividida(enlace) {
+        var urlDividida = menuLateral.getAttribute('data-pantalla-dividida-url');
+        if (!urlDividida || enlace.hasAttribute('data-pos-unico')) return;
+        var ruta = enlace.pathname + enlace.search;
+        if (ruta.toLowerCase().indexOf('/pantalladividida') !== -1) return;   // el propio enlace de la pantalla dividida
+        var api = window.PantallaDividida;
+        if (api) {
+            if (!api.esUrlPermitida(ruta)) return;
+            menu.appendChild(crearOpcion('Abrir en un panel nuevo', 'fa-columns', function () { api.abrirEnPanelNuevo(ruta); }));
+            menu.appendChild(crearOpcion('Abrir en el panel activo', 'fa-window-maximize', function () { api.abrirEnPanelActivo(ruta); }));
+        } else {
+            menu.appendChild(crearOpcion('Abrir en pantalla dividida', 'fa-columns', function () { irAPantallaDividida(ruta); }));
+        }
+    }
+
     function abrirMenu(enlace, x, y) {
         cerrarMenu(false);
         inyectarEstilos();
@@ -150,6 +198,8 @@
                 abrirVentana(enlace.href, PREFIJO_VENTANA_PANTALLA + normalizarRuta(enlace.href));
             }));
         }
+
+        agregarOpcionesPantallaDividida(enlace);
 
         document.body.appendChild(menu);
         posicionar(menu, x, y);

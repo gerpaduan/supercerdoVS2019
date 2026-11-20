@@ -3,6 +3,7 @@
 //    pregunta si seguir).
 //  - Orden por encabezado, filtros de la barra (texto, Estado) y filtros avanzados de seleccion multiple.
 //  - Columna Estado, edicion del punto de stock sin salir de la pantalla y exportacion.
+//  - Anchos de Cod., Producto, Stock y Estado elegidos por el usuario arrastrando el borde del encabezado (logica pura en existencia-anchos.js).
 //  - "Ingresar pedido" (Scripts/app/existencia-pedido.js) se engancha por window.ExistenciaPantalla y por eventos jQuery sobre
 //    #existenciaPage: existencia:tablaCargada, existencia:filtrado, existencia:puntoCambiado y existencia:periodoCambiado ({ origen }).
 // Lee su configuracion de window.ExistenciaConfig (la deja la vista). La tabla la dibuja _TablaExistenciaPorSucursales.cshtml
@@ -1271,8 +1272,129 @@
         }
     });
 
+    // ---------- Anchos de columna elegidos por el usuario (docs/DECISIONS.md 2026-11-20) ----------
+    // Se arrastra la manija .ex-rs-grip del borde derecho del encabezado (Cod., Producto, Stock, Estado). Los anchos quedan como variables
+    // --exu-* sobre #existenciaPage y no sobre la tabla, porque la tabla se reemplaza entera en cada Buscar. Se recuerdan por navegador
+    // (localStorage), una clave por modo: el panel del movimiento y la ventana independiente son mas angostos que la pantalla normal.
+    var Anchos = window.ExistenciaAnchos;
+    var MODO_ANCHOS = MODO_MOV ? 'movimiento' : ($page.hasClass('ex-popup') ? 'popup' : 'normal');
+    var anchosUsuario = Anchos ? Anchos.leer(leerLS(Anchos.claveAlmacen(MODO_ANCHOS), '')) : {};
+    var $ctlRestablecerAnchos = $('#ctlRestablecerAnchosExistencia');
+    // Soltar el mouse despues de arrastrar dispara un click sobre el encabezado: en este lapso ese click no ordena la columna.
+    var ESPERA_CLICK_TRAS_ARRASTRE_MS = 300;
+    var finArrastreAncho = 0;
+
+    // Pasa los anchos elegidos a la pagina (variables CSS y clases exu-*-on, que dejan partir en renglones las celdas de Stock / Estado)
+    // y muestra el boton "Anchos" solo si hay alguno cambiado.
+    function aplicarAnchos() {
+        if (!Anchos || !$page.length) return;
+        Object.keys(Anchos.COLUMNAS).forEach(function (columna) {
+            var px = anchosUsuario[columna];
+            if (px) {
+                $page[0].style.setProperty('--exu-' + columna, px + 'px');
+            } else {
+                $page[0].style.removeProperty('--exu-' + columna);
+            }
+        });
+        $page.toggleClass('exu-stock-on', !!anchosUsuario.stock).toggleClass('exu-estado-on', !!anchosUsuario.estado);
+        $ctlRestablecerAnchos.toggleClass('d-none', $.isEmptyObject(anchosUsuario));
+    }
+
+    function guardarAnchos() {
+        var clave = Anchos.claveAlmacen(MODO_ANCHOS);
+        var texto = Anchos.serializar(anchosUsuario);
+        if (texto !== null) {
+            guardarLS(clave, texto);
+            return;
+        }
+        try { window.localStorage.removeItem(clave); } catch (e) { /* sin almacenamiento: no habia nada que borrar, no es un error */ }
+    }
+
+    // Ancho actual en px de lo que la variable controla, que siempre es un ancho de CONTENIDO (sin padding ni bordes de la celda): el bloque
+    // interno de Cod. / Producto, o el contenido del th de Stock / Estado (su ::before toma ese ancho, ver la vista). Es el punto de
+    // partida del arrastre.
+    function medirAnchoColumna(columna, th) {
+        if (columna === 'stock' || columna === 'estado') {
+            var cs = window.getComputedStyle(th);
+            return th.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+                - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
+        }
+        var interno = $(th).closest('table').find(columna === 'cod' ? 'tbody .ex-cod-txt' : 'tbody .existencia-producto-desc')[0];
+        return interno ? interno.getBoundingClientRect().width : 0;
+    }
+
+    // Recalcula la posicion de las columnas fijas (Producto queda pegado a Cod.) a lo sumo una vez por cuadro mientras se arrastra.
+    var ajusteAnchoPendiente = false;
+    function programarAjusteAnchos() {
+        if (ajusteAnchoPendiente) return;
+        ajusteAnchoPendiente = true;
+        window.requestAnimationFrame(function () { ajusteAnchoPendiente = false; ajustarAltoTabla(); });
+    }
+
+    function restablecerAnchos(columna) {
+        if (columna) {
+            delete anchosUsuario[columna];
+        } else {
+            anchosUsuario = {};
+        }
+        aplicarAnchos();
+        guardarAnchos();
+        ajustarAltoTabla();
+    }
+
+    $contenedor.on('pointerdown', '.ex-rs-grip', function (e) {
+        var ev = e.originalEvent;
+        if (!Anchos || ev.button !== 0) return;
+        var columna = this.getAttribute('data-rs');
+        if (!Anchos.esColumna(columna)) return;
+        var px0 = medirAnchoColumna(columna, $(this).closest('th')[0]);
+        if (!px0) return;
+        e.preventDefault();     // sin seleccion de texto mientras se arrastra
+        e.stopPropagation();
+
+        var grip = this;
+        var x0 = ev.clientX;
+        var movio = false;
+        $(grip).addClass('ex-rs-activo');
+        $('body').addClass('ex-rs-arrastrando');
+
+        // Se escucha en el documento (no solo en la manija): el mouse sale de la manija apenas empieza a arrastrar.
+        function mover(evMov) {
+            var px = Anchos.anchoArrastrado(columna, px0, evMov.clientX - x0);
+            if (px === null || px === anchosUsuario[columna]) return;
+            movio = true;
+            anchosUsuario[columna] = px;
+            aplicarAnchos();
+            programarAjusteAnchos();
+        }
+        function soltar() {
+            document.removeEventListener('pointermove', mover);
+            document.removeEventListener('pointerup', soltar);
+            document.removeEventListener('pointercancel', soltar);
+            $(grip).removeClass('ex-rs-activo');
+            $('body').removeClass('ex-rs-arrastrando');
+            if (!movio) return;
+            finArrastreAncho = Date.now();
+            guardarAnchos();
+            ajustarAltoTabla();
+        }
+        document.addEventListener('pointermove', mover);
+        document.addEventListener('pointerup', soltar);
+        document.addEventListener('pointercancel', soltar);
+    });
+
+    // Un click sobre la manija no ordena la columna; el doble click la vuelve a su ancho por defecto.
+    $contenedor.on('click', '.ex-rs-grip', function (e) { e.stopPropagation(); });
+    $contenedor.on('dblclick', '.ex-rs-grip', function (e) {
+        e.stopPropagation();
+        restablecerAnchos(this.getAttribute('data-rs'));
+    });
+    $('#btnRestablecerAnchosExistencia').on('click', function () { restablecerAnchos(null); });
+    aplicarAnchos();
+
     // Tabla (delegado: se reemplaza entera en cada busqueda).
     $contenedor.on('click', 'th.ex-sortable', function () {
+        if (Date.now() - finArrastreAncho < ESPERA_CLICK_TRAS_ARRASTRE_MS) return; // es el click de soltar un arrastre de ancho
         var clave = $(this).attr('data-sort-key');
         if (!clave) return;
         if (orden.clave === clave) {

@@ -574,7 +574,9 @@
 </head>
 <body id="page-top" class="app-shell">
     <div id="wrapper">
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar" tabindex="0" aria-label="Menú de navegación. Usá las flechas o Av Pág/Re Pág para desplazar.">
+        @* data-pantalla-dividida-url: lo lee menu-ventana-independiente.js para ofrecer «Abrir en pantalla dividida» (2026-11-20). *@
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar" tabindex="0" aria-label="Menú de navegación. Usá las flechas o Av Pág/Re Pág para desplazar."
+            data-pantalla-dividida-url="@Url.Action("Index", "PantallaDividida")">
             <li class="nav-item">
                 <a class="sidebar-brand d-flex align-items-center justify-content-center" href="@Url.Action("Index", "Home")">
                     <div class="sidebar-brand-icon sidebar-brand-mark">
@@ -590,6 +592,13 @@
                 <hr class="sidebar-divider my-0">
             </li>
 
+            @* Pantalla dividida (2026-11-20, docs/DECISIONS.md): varios modulos lado a lado. Visible para todos: cada panel respeta los permisos de su pantalla. *@
+            <li class="nav-item">
+                <a class="nav-link @(controller == "PantallaDividida" ? "active" : "")" href="@Url.Action("Index", "PantallaDividida")">
+                    <i class="fas fa-fw fa-columns"></i>
+                    <span>Pantalla dividida</span>
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link @(controller == "Compras" ? "active" : "")" href="@Url.Action("Index", "Compras")">
                     <i class="fas fa-fw fa-shopping-cart"></i>
@@ -873,6 +882,16 @@
                                         <div class="dropdown-divider m-0"></div>
                                         <a class="dropdown-item text-center small" href="@Url.Action("Index", "Actividades")">Ver actividades</a>
                                     </div>
+                                </li>
+                            }
+                            @* Dividir pantalla (2026-11-20, docs/DECISIONS.md "Pantalla dividida"): lleva ESTA pantalla a la pantalla dividida como panel. Solo en
+                               escritorio (menu-ventana-independiente.js lo maneja); es un button: la salida con cambios sin guardar la confirma ese script. *@
+                            @if (controller != "PantallaDividida")
+                            {
+                                <li class="nav-item no-arrow d-none d-lg-flex align-items-center">
+                                    <button type="button" class="nav-link topbar-icon-btn border-0 bg-transparent" id="btnDividirPantalla" title="Dividir pantalla: ver esta pantalla junto a otras" aria-label="Dividir pantalla">
+                                        <i class="fas fa-columns"></i>
+                                    </button>
                                 </li>
                             }
                             <li class="nav-item no-arrow d-flex align-items-center">

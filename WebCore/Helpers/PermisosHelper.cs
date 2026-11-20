@@ -148,6 +148,35 @@ namespace WebCore.Helpers
             session.Remove(ClaveSessionBypassCajaPOS(idOperador));
         }
 
+        // Pantalla dividida (2026-11-20, docs/DECISIONS.md "Pantalla dividida"): varias pantallas conviven en paneles <iframe> de UNA pagina.
+        // Un render dentro de un iframe no limpia el operador (ver EsPedidoDeIframe), asi que sin este paso el operador de Compras o el de
+        // Egresos de Caja quedaria vivo despues de cerrar su panel. La pantalla dividida avisa que rutas siguen abiertas en los paneles y
+        // aca se borra el operador de todo modulo/pantalla que ya NO esta abierto en ninguno (mismas claves y mismos modulos que las reglas de arriba).
+        // No agrega permisos: solo quita. Con la lista vacia quita todo (no hay ningun panel abierto).
+        public static void LimpiarOperadoresFueraDe(ISession session, IReadOnlyCollection<(string Controller, string Action)> abiertas)
+        {
+            if (session == null) return;
+            var rutas = abiertas ?? Array.Empty<(string Controller, string Action)>();
+
+            // Por controller: sigue vivo mientras haya alguna pantalla de ese controller abierta.
+            foreach (var modulo in ControllersConOperadorModuloSesion)
+            {
+                if (string.IsNullOrEmpty(session.GetString(ClaveSessionOperadorModulo(modulo)))) continue;
+                bool sigueAbierto = rutas.Any(r => string.Equals(r.Controller ?? "", modulo, StringComparison.OrdinalIgnoreCase));
+                if (!sigueAbierto) session.Remove(ClaveSessionOperadorModulo(modulo));
+            }
+
+            // Por pantalla puntual: sigue vivo solo mientras esa pantalla exacta (controller + accion) siga abierta.
+            foreach (var (modulo, controller, action) in OperadoresPorPantalla)
+            {
+                if (string.IsNullOrEmpty(session.GetString(ClaveSessionOperadorModulo(modulo)))) continue;
+                bool sigueAbierta = rutas.Any(r =>
+                    string.Equals(r.Controller ?? "", controller, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(r.Action ?? "", action, StringComparison.OrdinalIgnoreCase));
+                if (!sigueAbierta) session.Remove(ClaveSessionOperadorModulo(modulo));
+            }
+        }
+
         // ===== Ventana de dias por permiso (Ver/Editar) =====
         // Port literal de Web/Helpers/PermisosHelper.cs:263-299 (item 2, 2026-09-12, ver
         // docs/DECISIONS.md) -- mismo mecanismo ya usado por Negocio.Usuario.tienePermiso para

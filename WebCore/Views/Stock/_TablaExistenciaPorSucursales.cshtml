@@ -11,7 +11,8 @@
     (existencia-pedido.js las llena: el parcial solo deja el esqueleto y los datos que hacen falta en data-). Todos los
     estilos viven en ExistenciaPorSucursales.cshtml (este parcial es solo HTML): asi no se repiten en cada refresco. El
     ordenamiento, los filtros de la barra, el modo compacto y la edicion del punto de stock los hace el JS de la vista
-    leyendo los atributos data- de cada fila. Estado de cada celda: Negocio.ExistenciaEstado (el estado de la consulta SQL
+    leyendo los atributos data- de cada fila. Las manijas .ex-rs-grip de los encabezados (data-rs = cod | prod | stock | estado) permiten
+    cambiar el ancho de la columna arrastrando su borde (existencia-sucursales.js + existencia-anchos.js). Estado de cada celda: Negocio.ExistenciaEstado (el estado de la consulta SQL
     usa el punto global legacy, no el real de la sucursal). Detalle: docs/DECISIONS.md 2026-10-19.
 *@
 
@@ -61,8 +62,8 @@ else
         <table class="table table-bordered table-hover mb-0 tabla-existencia-sucursales">
             <thead class="thead-light">
                 <tr>
-                    <th rowspan="2" class="ex-col-cod ex-sortable" data-sort-key="cod" title="Ordenar por código">Cód.</th>
-                    <th rowspan="2" class="ex-col-prod ex-sortable" data-sort-key="nom" title="Ordenar por producto">Producto</th>
+                    <th rowspan="2" class="ex-col-cod ex-sortable" data-sort-key="cod" title="Ordenar por código">Cód.<span class="ex-rs-grip" data-rs="cod" aria-hidden="true"></span></th>
+                    <th rowspan="2" class="ex-col-prod ex-sortable" data-sort-key="nom" title="Ordenar por producto">Producto<span class="ex-rs-grip" data-rs="prod" aria-hidden="true"></span></th>
                     @for (int i = 0; i < columnas.Count; i++)
                     {
                         @* El colspan lo ajusta el JS segun las columnas visibles (Estado y A pedir se pueden ocultar). *@
@@ -92,16 +93,16 @@ else
                 <tr>
                     @for (int i = 0; i < columnas.Count; i++)
                     {
-                        <th class="ex-sub ex-sortable ex-grupo-ini @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="s@(columnas[i].IdSucursal)" title="Ordenar por stock de @columnas[i].Sucursal">Stock</th>
-                        <th class="ex-sub ex-sortable ex-col-estado @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="e@(columnas[i].IdSucursal)" title="Ordenar por estado en @columnas[i].Sucursal (primero los faltantes)">Estado</th>
+                        <th class="ex-sub ex-sortable ex-grupo-ini ex-rs-stock @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="s@(columnas[i].IdSucursal)" title="Ordenar por stock de @columnas[i].Sucursal">Stock<span class="ex-rs-grip" data-rs="stock" aria-hidden="true"></span></th>
+                        <th class="ex-sub ex-sortable ex-col-estado @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="e@(columnas[i].IdSucursal)" title="Ordenar por estado en @columnas[i].Sucursal (primero los faltantes)">Estado<span class="ex-rs-grip" data-rs="estado" aria-hidden="true"></span></th>
                         <th class="ex-sub ex-sortable ex-col-pedir @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="p@(columnas[i].IdSucursal)" title="Ordenar por lo pedido a @columnas[i].Sucursal">A pedir</th>
                         @* Solo en el modo movimiento (ver la vista): lo que conviene enviar = consumo del periodo - stock. Lo llena existencia-movimiento.js. *@
                         <th class="ex-sub ex-sortable ex-col-sug @(i % 2 == 1 ? "ex-alt" : "")" data-sort-key="g@(columnas[i].IdSucursal)" title="Sugerido a enviar (ventas + uso en elaborados del período − stock): ordenar, primero el mayor">Sugerido</th>
                     }
                     @if (mostrarTotal)
                     {
-                        <th class="ex-sub ex-sortable ex-grupo-ini ex-grupo-total" data-sort-key="st" title="Ordenar por stock total">Stock</th>
-                        <th class="ex-sub ex-sortable ex-col-estado ex-grupo-total" data-sort-key="et" title="Ordenar por estado del total (primero los faltantes)">Estado</th>
+                        <th class="ex-sub ex-sortable ex-grupo-ini ex-grupo-total ex-rs-stock" data-sort-key="st" title="Ordenar por stock total">Stock<span class="ex-rs-grip" data-rs="stock" aria-hidden="true"></span></th>
+                        <th class="ex-sub ex-sortable ex-col-estado ex-grupo-total" data-sort-key="et" title="Ordenar por estado del total (primero los faltantes)">Estado<span class="ex-rs-grip" data-rs="estado" aria-hidden="true"></span></th>
                     }
                 </tr>
             </thead>
@@ -197,7 +198,7 @@ else
                         <td class="text-right text-nowrap ex-col-orig"></td>
                         @if (mostrarTotal)
                         {
-                            <td class="text-right text-nowrap ex-grupo-ini ex-grupo-total font-weight-bold" title="Suma de stock en las sucursales mostradas">
+                            <td class="text-right text-nowrap ex-grupo-ini ex-grupo-total ex-col-stock-total font-weight-bold" title="Suma de stock en las sucursales mostradas">
                                 @totalStock.ToString("N3")
                             </td>
                             <td class="text-right text-nowrap ex-col-estado ex-grupo-total ex-estado-total" title="Total menos la suma de los puntos de stock de las sucursales mostradas">

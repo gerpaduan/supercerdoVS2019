@@ -1,0 +1,95 @@
+@* Pantalla dividida (2026-11-20, docs/DECISIONS.md "Pantalla dividida"): varios modulos lado a lado en una sola pantalla.
+   Solo es la estructura: pantalla-dividida.js arma los paneles (un <iframe> por panel, cada uno con la pantalla real y sus permisos) y
+   pantalla-dividida-arbol.js decide como se dividen. Detalle de uso: docs/11-manual-de-uso/pantallas/PantallaDividida.Index.md. *@
+@inject WebCore.Services.IUsuarioSesionService Sesion
+@{
+    ViewBag.Title = "Pantalla dividida";
+    // Clave del guardado local: una distribucion por usuario y por equipo (localStorage, sin tocar la base).
+    var idUsuario = Sesion.UsuarioActual?.Id ?? 0;
+}
+
+<style>
+    /* Tamano compacto (regla de vistas WebCore): texto 0.8 a 0.9 rem, nunca el default de Bootstrap. */
+    .pd-pagina { font-size: .85rem; }
+    .pd-barra { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; flex-wrap: wrap; }
+    .pd-barra h1 { font-size: 1.05rem; margin: 0 .5rem 0 0; }
+    .pd-barra .btn { font-size: .8rem; padding: .15rem .55rem; }
+    .pd-contador { font-size: .8rem; color: #6c757d; margin-left: auto; }
+    .pd-ayuda { font-size: .8rem; color: #6c757d; }
+    .pd-area { position: relative; width: 100%; height: 520px; background: #e9ecef; border-radius: .5rem; overflow: hidden; }
+    .pd-area.pd-arrastrando iframe { pointer-events: none; }
+    .pd-panel { position: absolute; padding: 3px; box-sizing: border-box; }
+    .pd-panel.pd-oculto { visibility: hidden; pointer-events: none; }
+    .pd-panel.pd-maximizado { z-index: 3; }
+    .pd-marco { display: flex; flex-direction: column; height: 100%; background: #fff; border: 1px solid #ced4da; border-radius: .4rem; overflow: hidden; }
+    .pd-panel.pd-activo .pd-marco { border: 2px solid #35479b; }
+    .pd-cab { display: flex; align-items: center; gap: .15rem; padding: .1rem .3rem; background: #f1f3f5; border-bottom: 1px solid #dee2e6; white-space: nowrap; min-height: 1.7rem; }
+    .pd-titulo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: .8rem; font-weight: 600; cursor: default; }
+    .pd-cab .pd-icono { color: #6c757d; font-size: .8rem; margin-right: .15rem; }
+    .pd-cab button { border: 0; background: transparent; color: #495057; padding: .1rem .3rem; border-radius: .25rem; font-size: .8rem; line-height: 1; cursor: pointer; }
+    .pd-cab button:hover, .pd-cab button:focus-visible { background: #dee2e6; color: #212529; outline: 0; }
+    .pd-cuerpo { position: relative; flex: 1; min-height: 0; }
+    .pd-cuerpo iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+    .pd-vacio, .pd-aviso { position: absolute; inset: 0; overflow: auto; padding: .6rem; background: #fff; font-size: .8rem; }
+    .pd-vacio[hidden], .pd-aviso[hidden] { display: none; }
+    .pd-vacio h2 { font-size: .85rem; margin: 0 0 .4rem; color: #495057; }
+    .pd-vacio input { width: 100%; font-size: .8rem; padding: .2rem .45rem; margin-bottom: .4rem; border: 1px solid #ced4da; border-radius: .3rem; }
+    .pd-lista { list-style: none; margin: 0; padding: 0; }
+    .pd-lista button { display: flex; align-items: baseline; gap: .4rem; width: 100%; padding: .25rem .4rem; border: 0; background: transparent; text-align: left; border-radius: .3rem; font-size: .82rem; cursor: pointer; }
+    .pd-lista button:hover, .pd-lista button:focus-visible { background: #e7edf9; color: #1f3a8a; outline: 0; }
+    .pd-lista small { color: #6c757d; }
+    .pd-aviso { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; text-align: center; color: #495057; }
+    /* Sin desactivar de verdad (disabled no muestra el motivo ni recibe clics): se ve apagado y al tocarlo explica por que. */
+    .pd-cerrar-todo[aria-disabled="true"] { opacity: .55; }
+    .pd-botones { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
+    .pd-botones .btn { font-size: .8rem; }
+    .pd-divisor { position: absolute; z-index: 4; background: transparent; touch-action: none; }
+    .pd-divisor.pd-fila { cursor: col-resize; width: 8px; }
+    .pd-divisor.pd-columna { cursor: row-resize; height: 8px; }
+    .pd-divisor:hover, .pd-divisor:focus-visible, .pd-divisor.pd-activo { background: rgba(53, 71, 155, .35); outline: 0; }
+    html.dark-mode .pd-area { background: #1b1f26; }
+    html.dark-mode .pd-marco, html.dark-mode .pd-vacio, html.dark-mode .pd-aviso { background: #2b2f36; border-color: #444b55; color: #e6e8eb; }
+    html.dark-mode .pd-cab { background: #323842; border-color: #444b55; }
+    html.dark-mode .pd-cab button { color: #ced4da; }
+    html.dark-mode .pd-cab button:hover { background: #444b55; color: #fff; }
+    html.dark-mode .pd-vacio input { background: #1b1f26; color: #e6e8eb; border-color: #444b55; }
+    html.dark-mode .pd-lista button { color: #e6e8eb; }
+    html.dark-mode .pd-lista button:hover { background: #3b4a78; color: #fff; }
+</style>
+
+<div class="container-fluid pd-pagina" id="pdPagina"
+     data-usuario="@idUsuario"
+     data-base="@Url.Content("~/")"
+     data-url-liberar="@Url.Action("LiberarPermisos", "PantallaDividida")">
+    @* Token antiforgery propio: el de _Layout solo existe para administradores. *@
+    <div id="pdAntiForgery" style="display:none;">@Html.AntiForgeryToken()</div>
+
+    <div class="alert alert-info d-lg-none py-2" role="alert" style="font-size:.85rem;">
+        La pantalla dividida necesita una pantalla ancha (computadora). En el celular o la tablet abrí cada módulo por separado desde el menú.
+    </div>
+
+    <div class="d-none d-lg-block">
+        <div class="pd-barra">
+            <h1 class="text-gray-800">Pantalla dividida</h1>
+            <button type="button" class="btn btn-outline-secondary" id="pdTres" title="Acomoda tres columnas conservando lo que ya tenés abierto">
+                <i class="fas fa-columns" aria-hidden="true"></i> 3 columnas
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="pdCuadro" title="Acomoda cuatro paneles en cuadro conservando lo que ya tenés abierto">
+                <i class="fas fa-th-large" aria-hidden="true"></i> 4 en cuadro
+            </button>
+            @* Solo se puede cerrar la pantalla dividida con UN panel que tenga una pantalla: esa pantalla pasa al layout normal, entera (pantalla-dividida.js). *@
+            <button type="button" class="btn btn-outline-secondary pd-cerrar-todo" id="pdCerrar" aria-disabled="true"
+                    title="Cerrá o juntá los paneles hasta que quede uno solo con una pantalla">
+                <i class="fas fa-compress-arrows-alt" aria-hidden="true"></i> Cerrar pantalla dividida
+            </button>
+            <span class="pd-ayuda">Dividí cada panel con los botones de su cabecera y elegí qué abrir desde el menú lateral.</span>
+            <span class="pd-contador" id="pdContador" aria-live="polite"></span>
+        </div>
+        <div class="pd-area" id="pdArea" role="group" aria-label="Paneles de la pantalla dividida"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/app/pantalla-dividida-arbol.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pantalla-dividida.js" asp-append-version="true"></script>
+}

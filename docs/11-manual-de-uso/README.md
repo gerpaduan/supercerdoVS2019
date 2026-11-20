@@ -20,7 +20,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 
 **Regla**: toda vista o comportamiento nuevo/modificado actualiza su `.md` y, si hay una configuracion nueva, `referencia/configuraciones.md`, en el mismo commit. Lo no verificado contra el codigo se marca `PENDIENTE`; si la doc contradice al codigo, manda el codigo. Control: `powershell -File scripts\check-ayuda.ps1`.
 
-## Cobertura (70 de 102 pantallas)
+## Cobertura (71 de 103 pantallas)
 
 ## Manual del usuario
 
@@ -61,6 +61,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-09 |
 | pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-11-10 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-20 |
+| pantallas | Pantalla dividida (varios módulos lado a lado) | Inicio | `pantallas/PantallaDividida.Index.md` | 2026-11-20 |
 | pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-20 |
 | pantallas | Líneas de movimiento | Movimientos | `pantallas/Movimientos.Lineas.md` | 2026-11-13 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-11-13 |

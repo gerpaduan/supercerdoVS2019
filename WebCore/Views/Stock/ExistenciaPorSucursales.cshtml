@@ -229,6 +229,14 @@
                             <label class="ex-chip-texto" for="switchExpandirExistencia">Expandir</label>
                         </span>
                     </div>
+                    @* Vuelve Cod., Producto, Stock y Estado a su ancho por defecto. Solo se ve si el usuario cambio algun ancho (lo maneja existencia-sucursales.js). *@
+                    <div class="ex-ctl ex-ctl-chip ex-sec d-none" id="ctlRestablecerAnchosExistencia">
+                        <label class="ex-lbl d-none d-md-block">&nbsp;</label>
+                        <button type="button" class="btn btn-outline-secondary" id="btnRestablecerAnchosExistencia"
+                                title="Volver Cód., Producto, Stock y Estado a su ancho por defecto">
+                            <i class="fas fa-arrows-alt-h"></i><span class="ex-btn-texto ml-1">Anchos</span>
+                        </button>
+                    </div>
                     @* Solo con permiso (Producto.NuevoCorte). Arranca apagado en cada carga: los lapices del punto de stock no se ven hasta encenderlo,
                        para no modificar un punto sin querer. No se recuerda entre visitas. *@
                     @if (puedeEditarPunto)
@@ -853,10 +861,12 @@
 
     /* ---------- Tabla ---------- */
     .ex-tabla-wrap .tabla-full { overflow: auto; }
-    /* Anchos: Cod. y Producto son FIJOS (15 y 25 caracteres) y quedan pegados; Stock, Estado, A pedir y el resto toman el ancho de su
-       contenido. El ancho que sobra lo absorbe la columna de relleno (.ex-col-relleno, la ultima), asi nada se estira y todo queda
-       a la vista sin mover los ojos. Con "width: 100%" la tabla ocupa al menos el ancho disponible y crece (con scroll) si no entra. */
-    .tabla-existencia-sucursales { --ex-cod-ch: 15ch; --ex-prod-ch: 25ch; width: 100%; font-size: .84rem; margin-bottom: 0; }
+    /* Anchos: Cod. y Producto tienen ancho FIJO por defecto (8 y 25 caracteres) y quedan pegados; Stock, Estado, A pedir y el resto toman el
+       ancho de su contenido. El ancho que sobra lo absorbe la columna de relleno (.ex-col-relleno, la ultima), asi nada se estira y todo queda
+       a la vista sin mover los ojos. Con "width: 100%" la tabla ocupa al menos el ancho disponible y crece (con scroll) si no entra.
+       Cod., Producto, Stock y Estado se pueden ensanchar o angostar arrastrando el borde del encabezado (ver "Anchos elegidos por el usuario"
+       mas abajo); Cod. paso de 15 a 8 caracteres con salto de linea el 2026-11-20 (pedido del usuario). */
+    .tabla-existencia-sucursales { --ex-cod-ch: 8ch; --ex-prod-ch: 25ch; width: 100%; font-size: .84rem; margin-bottom: 0; }
     .tabla-existencia-sucursales th,
     .tabla-existencia-sucursales td { vertical-align: middle; padding: .42rem .58rem; line-height: 1.2; }
     .tabla-existencia-sucursales thead th {
@@ -876,13 +886,13 @@
     .tabla-existencia-sucursales thead th.ex-grupo { text-align: center; }
 
     /* Las dos primeras columnas (Cod. y Producto) quedan fijas a la izquierda al desplazar. */
-    /* El ancho de "Cod." lo da el codigo mas largo (un codigo de barras entra en una linea): el JS lo mide y lo deja en --ex-cod-w
-       para que "Producto" quede pegado justo a su derecha. */
+    /* "Producto" queda pegado justo a la derecha de "Cod.": el JS mide el ancho de "Cod." y lo deja en --ex-cod-w. */
     .ex-col-cod, .ex-col-cod-cell { position: sticky; left: 0; z-index: 3; white-space: nowrap; text-align: left; color: var(--ui-text-soft, #5f6772); }
     .ex-col-prod, .ex-col-prod-cell { position: sticky; left: var(--ex-cod-w, 7rem); z-index: 3; box-shadow: inset -1px 0 0 var(--ui-border-strong, #ced4da); }
-    /* El ancho fijo lo da el contenido interno (un bloque de 15 / 25 caracteres): el texto que no entra se corta con "..." y el nombre
-       completo queda en el tooltip. */
-    .ex-cod-txt { width: var(--ex-cod-ch); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* El ancho fijo lo da el contenido interno: un bloque de --ex-cod-ch / --ex-prod-ch caracteres, o el ancho en px que eligio el usuario
+       (--exu-cod / --exu-prod, si lo cambio). Un codigo mas largo que el ancho sigue en el renglon de abajo (solo esa fila crece); un
+       nombre que no entra en 2 renglones se corta con "..." y el completo queda en el tooltip. */
+    .ex-cod-txt { width: var(--exu-cod, var(--ex-cod-ch)); overflow: hidden; white-space: normal; overflow-wrap: anywhere; }
     .ex-col-cod-cell, .ex-col-prod-cell { background-color: var(--ui-surface, #fff); }
     .tabla-existencia-sucursales thead .ex-col-cod,
     .tabla-existencia-sucursales thead .ex-col-prod { z-index: 6; background: var(--ui-table-head, #eceff3); }
@@ -897,7 +907,7 @@
     .tabla-existencia-sucursales td.ex-col-stock .existencia-unidades { font-weight: 400; }
 
     .existencia-producto-row { cursor: pointer; }
-    .existencia-producto-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-word; font-weight: 600; width: var(--ex-prod-ch); }
+    .existencia-producto-desc { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-word; font-weight: 600; width: var(--exu-prod, var(--ex-prod-ch)); }
     .existencia-unidades { display: block; font-size: .72rem; color: #858796; }
     .existencia-producto-completo { font-size: .78rem; color: #6c757d; margin-bottom: .6rem; }
     .existencia-producto-completo strong { color: inherit; }
@@ -924,6 +934,34 @@
     .existencia-detalle-tabla thead th { font-size: .67rem !important; line-height: 1.1; padding-top: .32rem; padding-bottom: .32rem; position: static; }
     .existencia-detalle-destacado { background: #f4f8fc; font-weight: 600; }
     .existencia-detalle-stockactual { background: #e7f1fb; font-weight: 700; }
+
+    /* ---------- Anchos elegidos por el usuario (2026-11-20, docs/DECISIONS.md) ---------- */
+    /* Manija invisible en el borde derecho de Cod., Producto, Stock y Estado: al pasar el mouse por el encabezado aparece una rayita, y
+       arrastrandola cambia el ancho (doble clic: vuelve al de por defecto). La logica esta en existencia-sucursales.js; los anchos quedan en
+       variables --exu-* sobre #existenciaPage (sobreviven al reemplazo de la tabla en cada Buscar). El th ya es position: sticky, asi que
+       la manija se ubica respecto de el. */
+    .ex-rs-grip { position: absolute; top: 0; right: 0; bottom: 0; width: .55rem; cursor: col-resize; z-index: 1; touch-action: none; }
+    .ex-rs-grip::after { content: ""; position: absolute; top: 22%; bottom: 22%; right: 2px; width: 2px; border-radius: 1px; background: transparent; }
+    .tabla-existencia-sucursales thead th:hover > .ex-rs-grip::after { background: var(--ui-border-strong, #adb5bd); }
+    .tabla-existencia-sucursales thead th > .ex-rs-grip:hover::after,
+    .ex-rs-grip.ex-rs-activo::after { background: var(--ui-primary, #2d5b8f) !important; }
+    /* Mientras se arrastra: el cursor no cambia al pasar sobre otras celdas y no se selecciona texto. */
+    .ex-rs-arrastrando, .ex-rs-arrastrando * { cursor: col-resize !important; user-select: none !important; }
+    /* Stock y Estado: un ancho para todas las sucursales y el Total. "width" en el th NO sirve: la columna de relleno (width: 100%) aprieta a
+       todas las demas a su ancho minimo y el navegador ignora el width de la celda (medido 2026-11-20, ni inline). Por eso, igual que Cod. y
+       Producto, el ancho lo da un bloque interno: un ::before de alto 0 con el ancho elegido (ancho de contenido, sin padding). Sin ancho
+       elegido, "var()" queda invalido, el bloque mide 0 y la columna toma su contenido como siempre. Con ancho elegido (clases exu-*-on en la
+       pagina) las celdas pueden partirse en renglones: el "N un." y el "pto N" pasan debajo, pero un numero o un estado nunca se parte ni se
+       corta, asi que la columna no se achica por debajo del mas largo. */
+    .tabla-existencia-sucursales th.ex-rs-stock::before,
+    .tabla-existencia-sucursales th.ex-col-estado::before { content: ""; display: block; height: 0; }
+    .tabla-existencia-sucursales th.ex-rs-stock::before { width: var(--exu-stock); }
+    .tabla-existencia-sucursales th.ex-col-estado::before { width: var(--exu-estado); }
+    .exu-stock-on .tabla-existencia-sucursales td.ex-col-stock,
+    .exu-stock-on .tabla-existencia-sucursales td.ex-col-stock-total,
+    .exu-estado-on .tabla-existencia-sucursales td.ex-col-estado { white-space: normal !important; }
+    .tabla-existencia-sucursales td .existencia-unidades,
+    .tabla-existencia-sucursales td .ex-est { white-space: nowrap; }
 
     /* Mini-editor del punto de stock (flota sobre la celda). */
     .ex-pop-pto {
@@ -1020,8 +1058,12 @@
         /* En pantallas chicas solo "Cod." queda fijo: dos columnas fijas se comerian casi todo el ancho. */
         .ex-col-prod, .ex-col-prod-cell { position: static; }
         /* En el celular el ancho fijo de 15/25 caracteres sobra: Cod. y Producto toman su contenido hasta un tope. */
-        .ex-cod-txt { width: auto; max-width: 11ch; }
+        /* Cod. de un renglon: con salto de linea y ancho auto la columna (apretada por la de relleno) quedaba de 1 caracter y un codigo de
+           barras ocupaba 5 renglones (medido 2026-11-20). Igual que antes del cambio a 8 caracteres: hasta 11 y "...". */
+        .ex-cod-txt { width: auto; max-width: 11ch; white-space: nowrap; overflow-wrap: normal; text-overflow: ellipsis; }
         .existencia-producto-desc, .existencia-compacto .existencia-producto-desc { width: auto; max-width: 15ch; }
+        /* Arrastrar un borde de medio centimetro con el dedo es incomodo y aca los anchos ya tienen sus topes: sin manijas. */
+        .ex-rs-grip { display: none; }
     }
 </style>
 
@@ -1084,6 +1126,7 @@
             }
         };
     </script>
+    <script src="@Url.Content("~/Scripts/app/existencia-anchos.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/existencia-sucursales.js")" asp-append-version="true"></script>
     @* Antes de existencia-pedido.js: el modulo del pedido usa window.BorradorGenerico (autoguardado en servidor) y, tras guardar,
        window.PedidoAcciones (ticket, PDF, mail y Excel; pedido-acciones.js). El ticket lo imprime ticket-print.js: _Layout ya lo trae,

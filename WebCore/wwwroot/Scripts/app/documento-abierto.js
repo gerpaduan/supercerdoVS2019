@@ -16,6 +16,8 @@
 //  - Cartel (2026-11-19): una fila por cada abierto con que es, donde esta (pestaña / ventana / app instalada / dentro del POS), desde cuando y
 //    que items tiene, mas "Traer este", "Señalar" (esa pestaña titila) y "Cerrar" (solo un Nuevo vacio; la otra pestaña lo vuelve a comprobar).
 //  - ?desdeVentana=1 (lo pone "Abrir en ventana"): la ventana nueva no avisa de la pestaña de origen, que se esta yendo.
+//  - ?traspasoDoc=<clave> (2026-11-20, Pantalla dividida): DocumentoAbierto.prepararTraspaso() deja el paquete de un Nuevo en localStorage
+//    para que la pantalla siga con lo cargado en otro documento (panel, ventana independiente o pantalla normal); anunciarNuevo() lo aplica.
 // Depende de: SweetAlert (window.Swal). Todo texto de otras pestañas se pinta con textContent, nunca con innerHTML.
 (function (window, document) {
     'use strict';
@@ -28,8 +30,13 @@
     var ESPERA_ACUSE_MS = 5000;      // cuanto espera la pestaña que entrega el "recibido" antes de quedarse con su trabajo
     var ESPERA_LOCK_MS = 3000;       // cuanto se espera a que la pestaña que cedio suelte su lock
     var PREFIJO_FRAME_POS = 'carnisys-trabajo-pos-';   // nombre del <iframe> de las cargas del POS (pos-trabajos.js, crearIframe)
+    var PREFIJO_FRAME_PANEL = 'carnisys-trabajo-panel-';   // <iframe> de un panel de la Pantalla dividida (pantalla-dividida.js)
     var DURACION_SENAL_MS = 10000;   // cuanto titila una pestaña "señalada" desde el cartel de otra
     var MAX_ITEMS_VISTA_PREVIA = 3;  // items que se muestran por documento abierto en el cartel (el resto va como "y N más")
+    // Traspaso por URL (2026-11-20, Pantalla dividida): la pagina que se va deja su paquete en localStorage y la que llega lo aplica.
+    var PREFIJO_TRASPASO = 'carnisys-traspaso-doc-';
+    var PARAM_TRASPASO = 'traspasoDoc';
+    var VIGENCIA_TRASPASO_MS = 10 * 60 * 1000;   // una clave sin usar (la pagina de destino nunca abrio) se descarta a los 10 minutos
     var GRACIA_SIN_RESPONDER_MS = 1500;  // cuanto se insiste con un lock sin respuesta antes de avisar "una pestaña que no responde"
     var PASO_GRACIA_MS = 300;            // pausa entre cada reintento de esa insistencia
 
@@ -109,6 +116,86 @@
             console.warn('[DocumentoAbierto] no se pudo leer la marca desdeVentana', err);
             return false;
         }
+    }
+
+    // ---- Traspaso por URL (2026-11-20, docs/DECISIONS.md "Pantalla dividida: seguir con lo cargado") ----
+    // Pasar de la pantalla normal a la pantalla dividida (o al reves, o de un panel a una ventana independiente) RECARGA la pantalla en otro
+    // documento: la pagina de origen ya no existe cuando la nueva arranca, asi que el canal de "Traer este" no sirve. En su lugar la de origen
+    // deja su paquete (el mismo de "Traer este": borrador + clientId del borrador en servidor) en una clave temporal de localStorage y la URL de
+    // destino lleva ?traspasoDoc=<clave>; la nueva pantalla lo aplica en anunciarNuevo() sin avisar de la de origen, que se esta yendo.
+    var instancias = [];   // una entrada por DocumentoAbierto.crear de esta pagina: {prepararTraspaso}
+
+    function limpiarTraspasosViejos() {
+        try {
+            var ahora = Date.now();
+            for (var i = window.localStorage.length - 1; i >= 0; i--) {
+                var k = window.localStorage.key(i);
+                if (!k || k.indexOf(PREFIJO_TRASPASO) !== 0) continue;
+                var creado = parseInt(k.substring(PREFIJO_TRASPASO.length).split('-')[0], 10);
+                if (!creado || ahora - creado > VIGENCIA_TRASPASO_MS) window.localStorage.removeItem(k);
+            }
+        } catch (err) {
+            console.warn('[DocumentoAbierto] no se pudieron limpiar traspasos viejos', err);
+        }
+    }
+
+    // Lee (una sola vez) el traspaso que trae la URL: lo saca de la URL y de localStorage. null si no hay, vencio o esta roto.
+    function consumirTraspasoUrl() {
+        var clave = '';
+        try {
+            var url = new URL(window.location.href);
+            clave = url.searchParams.get(PARAM_TRASPASO) || '';
+            if (!clave) return null;
+            url.searchParams.delete(PARAM_TRASPASO);
+            window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+        } catch (err) {
+            console.warn('[DocumentoAbierto] no se pudo leer el traspaso de la URL', err);
+            return null;
+        }
+        if (clave.indexOf(PREFIJO_TRASPASO) !== 0) return null;
+        var crudo = null;
+        try {
+            crudo = window.localStorage.getItem(clave);
+            window.localStorage.removeItem(clave);   // se usa una sola vez: recargar no vuelve a pisar lo que se cargue despues
+        } catch (err) {
+            console.warn('[DocumentoAbierto] no se pudo leer el traspaso guardado', err);
+            return null;
+        }
+        var creado = parseInt(clave.substring(PREFIJO_TRASPASO.length).split('-')[0], 10);
+        if (!crudo || !creado || Date.now() - creado > VIGENCIA_TRASPASO_MS) return null;
+        try {
+            var datos = JSON.parse(crudo);
+            return datos && datos.v === 1 && datos.paquete ? datos : null;
+        } catch (err) {
+            console.warn('[DocumentoAbierto] el traspaso guardado esta roto', err);
+            return null;
+        }
+    }
+
+    // Agrega la marca REEMPLAZANDO cualquier marca vieja que traiga la url (una marca ya usada haria que el destino lea la equivocada).
+    // url relativa al sitio ("/Elaborados/Carga?x=1") -> devuelve relativa.
+    function urlConTraspaso(url, clave) {
+        try {
+            var destino = new URL(url, window.location.origin);
+            destino.searchParams.delete(PARAM_TRASPASO);
+            destino.searchParams.set(PARAM_TRASPASO, clave);
+            return destino.pathname + destino.search + destino.hash;
+        } catch (err) {
+            console.warn('[DocumentoAbierto] no se pudo armar la url del traspaso', err);
+            return url + (url.indexOf('?') >= 0 ? '&' : '?') + PARAM_TRASPASO + '=' + encodeURIComponent(clave);
+        }
+    }
+
+    // API de pagina: deja lo cargado del Nuevo activo listo para seguir en otro documento. Devuelve null si no hay un Nuevo que sepa
+    // pasar su trabajo (ahi el que llama mantiene el aviso «Salir sin guardar»), o {clave, urlCon(url), ceder(), descartar()}:
+    // urlCon agrega la marca a la URL de destino; ceder() suelta esta pagina (deja de guardar borrador y de proteger la salida) y se llama
+    // justo antes de irse; descartar() borra la clave si al final no se va.
+    function prepararTraspaso() {
+        for (var i = 0; i < instancias.length; i++) {
+            var r = instancias[i].prepararTraspaso();
+            if (r) return r;
+        }
+        return null;
     }
 
     function crear(cfg) {
@@ -366,7 +453,8 @@
             enviar({ t: 'trabajo', a: solicitante, de: instanceId, paquete: paquete });
         }
 
-        function ceder() {
+        // sinCartel: la pagina se va enseguida (traspaso por URL), no hace falta taparla con el cartel de "pasó a otra pestaña".
+        function ceder(sinCartel) {
             cedido = true;
             soltarTodosLosLocks();
             estado = null;
@@ -375,7 +463,56 @@
             } catch (err) {
                 console.error('[DocumentoAbierto] fallo alCeder()', err);
             }
-            mostrarCartelCedido();
+            if (!sinCartel) mostrarCartelCedido();
+        }
+
+        // Traspaso por URL de ESTA instancia (ver prepararTraspaso de pagina): solo un Nuevo activo que sabe armar y aplicar su paquete.
+        function prepararTraspasoPropio() {
+            if (cedido || !estado || estado.tipo !== 'nuevo' || typeof cfg.obtenerPaquete !== 'function' || typeof cfg.aplicarPaquete !== 'function') return null;
+            var paquete;
+            try {
+                paquete = JSON.parse(JSON.stringify(cfg.obtenerPaquete()));
+            } catch (err) {
+                console.error('[DocumentoAbierto] no se pudo armar el paquete para el traspaso', err);
+                return null;
+            }
+            limpiarTraspasosViejos();
+            var clave = PREFIJO_TRASPASO + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+            try {
+                window.localStorage.setItem(clave, JSON.stringify({ v: 1, modulo: modulo, idUsuario: idUsuario, grupo: grupo, paquete: paquete }));
+            } catch (err) {
+                console.warn('[DocumentoAbierto] no se pudo guardar el traspaso (localStorage)', err);
+                return null;
+            }
+            return {
+                clave: clave,
+                urlCon: function (url) { return urlConTraspaso(url, clave); },
+                ceder: function () { ceder(true); },
+                descartar: function () {
+                    try { window.localStorage.removeItem(clave); } catch (err) { console.warn('[DocumentoAbierto] no se pudo descartar el traspaso', err); }
+                }
+            };
+        }
+        instancias.push({ prepararTraspaso: prepararTraspasoPropio });
+
+        // Aplica el traspaso que llego por la URL (ya leido). true si se aplico.
+        function aplicarTraspasoRecibido(traspaso) {
+            if (!traspaso) return false;
+            // El grupo NO se compara: en Stock la accion se cambia en pantalla sin tocar la URL, y el paquete ya trae la accion elegida.
+            if (traspaso.modulo !== modulo || String(traspaso.idUsuario) !== idUsuario) {
+                console.warn('[DocumentoAbierto] el traspaso recibido es de otra pantalla o de otro usuario: se ignora');
+                return false;
+            }
+            try {
+                cfg.aplicarPaquete(traspaso.paquete);
+            } catch (err) {
+                console.error('[DocumentoAbierto] no se pudo aplicar lo que llegó con el traspaso', err);
+                return false;
+            }
+            if (window.Swal && typeof window.Swal.fire === 'function') {
+                window.Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Seguís con lo que tenías cargado.', showConfirmButton: false, timer: 3000 });
+            }
+            return true;
         }
 
         function mostrarCartelCedido() {
@@ -415,6 +552,10 @@
                 try { marco = window.frameElement; } catch (err) { marco = null; }   // sin acceso al marco: se asume minimizada
                 var visible = !!(marco && marco.closest && marco.closest('.modal.show') && !marco.classList.contains('d-none'));
                 return { texto: 'dentro del POS (menú Cargas)' + (visible ? '' : ', minimizada'), enPos: true, minimizada: !visible };
+            }
+            // Panel de la Pantalla dividida (2026-11-20): el aviso de otra pestaña debe decirle al usuario que mire sus paneles, no una pestaña.
+            if ((window.name || '').indexOf(PREFIJO_FRAME_PANEL) === 0) {
+                return { texto: 'un panel de la Pantalla dividida' + (oculta ? ' (en segundo plano)' : ''), enPos: false, minimizada: oculta };
             }
             var texto = 'pestaña del navegador';
             if (document.documentElement.classList.contains('modo-ventana')) {
@@ -620,7 +761,10 @@
             // "Abrir en ventana" marca la URL de la ventana nueva (pantalla-trabajo.js): la pestaña de origen se esta yendo, no corresponde
             // avisar de ella. Igual se descubren las pestañas vivas (para no adoptar el borrador local de una que sigue abierta).
             var vieneDeVentana = consumirMarcaDesdeVentana();
+            // Traspaso por URL (pantalla dividida / ventana independiente): la pagina de origen ya se fue; se aplica lo que dejo y no se avisa.
+            var traspaso = typeof cfg.aplicarPaquete === 'function' ? consumirTraspasoUrl() : null;
             return tomarLock(nombreNuevo(instanceId), false).then(function () {
+                if (aplicarTraspasoRecibido(traspaso)) return { accion: 'traido' };
                 if (opciones.sinAviso) return { accion: 'seguir' };
                 return locksAjenos().then(function (ajenos) {
                     return descubrir().then(function (respuestas) {
@@ -891,5 +1035,5 @@
         };
     }
 
-    window.DocumentoAbierto = { crear: crear, vistaPrevia: vistaPrevia, formatoKg: formatoKg };
+    window.DocumentoAbierto = { crear: crear, vistaPrevia: vistaPrevia, formatoKg: formatoKg, prepararTraspaso: prepararTraspaso };
 })(window, document);
