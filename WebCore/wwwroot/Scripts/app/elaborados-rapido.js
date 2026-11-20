@@ -376,14 +376,43 @@
             syncCantidadReadonly();
             registrarChequeoBalanza(normalized.conectada === true);
 
-            if (!esPesable() || !normalized.conectada || !$balanza.is(':checked') || state.balanzaDesactivadaManual) {
+            if (!esPesable() || !$balanza.is(':checked') || state.balanzaDesactivadaManual) {
                 return;
             }
 
-            $alertaBalanza.addClass('d-none').text('');
-            $cantidad.val(normalized.pesoDisplay || normalized.pesoTexto || formatKg(normalized.peso));
+            if (normalized.conectada) $alertaBalanza.addClass('d-none').text('');
+            mostrarPesoVigente();
+        }
+
+        // Con la balanza activa Cantidad muestra SOLO la lectura vigente (CarnisysBalanza.lecturaVigente): si la balanza no responde,
+        // el agente se traba o la lectura tiene error, el ultimo peso deja de verse al vencer en vez de quedar pegado (2026-11-20).
+        // Solo recalcula y guarda borrador si el valor cambio (antes se hacia en cada poll de 250 ms).
+        function mostrarPesoVigente() {
+            var vigente = window.CarnisysBalanza ? window.CarnisysBalanza.lecturaVigente() : null;
+            var texto = vigente ? (vigente.pesoDisplay || vigente.pesoTexto || formatKg(vigente.peso)) : '';
+            if ($cantidad.val() === texto) return;
+            $cantidad.val(texto);
             recalcularFormula();
             state.borradorGenerico && state.borradorGenerico.programarGuardado();
+        }
+
+        // La cantidad sale de la balanza: elaborado pesable y tilde activo (no desactivado a mano).
+        function usaBalanza() {
+            return !!(window.CarnisysBalanza && esPesable() && $balanza.is(':checked') && !state.balanzaDesactivadaManual);
+        }
+
+        // Con la balanza activa exige lectura vigente, estable y > 0, y deja en Cantidad exactamente ese peso. Devuelve el mensaje de
+        // error o '' (docs/DECISIONS.md "Balanza: lectura vigente", 2026-11-20).
+        function validarPesoBalanza() {
+            if (!usaBalanza()) return '';
+            var chequeo = window.CarnisysBalanza.validarParaAgregar();
+            if (!chequeo.ok) {
+                mostrarPesoVigente();
+                return chequeo.mensaje;
+            }
+            $cantidad.val(chequeo.lectura.pesoTexto || formatKg(chequeo.lectura.peso));
+            recalcularFormula();
+            return '';
         }
 
         function aplicarStatusBalanza(payload) {
@@ -589,6 +618,11 @@
                     $alertaBalanza.removeClass('d-none').text('No se detectó balanza activa. La carga seguirá manual.');
                 } else {
                     $alertaBalanza.addClass('d-none').text('');
+                    // El tilde viene marcado de entrada: sin activar() el cliente no pide /peso y Cantidad quedaba congelada con la
+                    // lectura de cuando se abrio la pantalla hasta tocar * (2026-11-20).
+                    if ($balanza.is(':checked') && !state.balanzaDesactivadaManual && window.CarnisysBalanza) {
+                        window.CarnisysBalanza.activar();
+                    }
                 }
                 syncCantidadReadonly();
             });
@@ -626,6 +660,8 @@
         function validar() {
             if (config.esAnulado) return 'El elaborado fue anulado y no puede ser modificado.';
             if ($('#IdSucursalRapido').val() === '0') return 'Debe seleccionar una sucursal.';
+            var errorBalanza = validarPesoBalanza();
+            if (errorBalanza) return errorBalanza;
             var parsed = parseDecimal($cantidad.val());
             if (!parsed.ok || parsed.value <= 0) return 'Debe ingresar una cantidad mayor a cero.';
             // Con formula secreta oculta el cliente no la conoce: la valida el servidor al guardar
@@ -907,6 +943,13 @@
             }
 
             function guardarIngresoRapidoReal() {
+                // Entre validar() y aca puede pasar tiempo (modal de usuario de produccion) y la balanza sigue escribiendo Cantidad:
+                // se vuelve a validar el peso justo antes de enviarlo.
+                var errorBalanza = validarPesoBalanza();
+                if (errorBalanza) {
+                    showAlert('warning', 'Balanza', errorBalanza);
+                    return;
+                }
                 state.guardando = true;
                 // Red de seguridad: el valor que llega por otra via (ej. la balanza escribe "5.325" por JS, sin evento
                 // input) se envia como decimal con coma y sin separador de miles, que es lo que el binder es-AR espera.

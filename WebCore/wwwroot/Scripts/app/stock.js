@@ -470,8 +470,8 @@
         $form.find('#txtProductoPesable').val('');
         $form.find('#txtProductoTipo').val('');
         $form.find('#txtProductoPromedio').val('');
-        if (state && state.balanzaDisponible && $form.find('#chkBalanzaLinea').is(':checked') && !state.balanzaDesactivadaManual && state.balanzaUltimaLectura) {
-            $form.find('#txtCantKgs').val(state.balanzaUltimaLectura.pesoDisplay || state.balanzaUltimaLectura.pesoTexto || '');
+        if (state && state.balanzaDisponible && $form.find('#chkBalanzaLinea').is(':checked') && !state.balanzaDesactivadaManual) {
+            mostrarPesoVigente($form);
             if (window.CarnisysBalanza) {
                 window.CarnisysBalanza.activar();
             }
@@ -2372,21 +2372,34 @@
         renderBalanzaStatus($form, payload);
         registrarChequeoBalanza($form, normalized.conectada === true);
 
-        if (!normalized.conectada) {
-            return;
-        }
-
         var hayProducto = !!$.trim($form.find('#txtProductoId').val() || '');
         if (!$form.find('#chkBalanzaLinea').is(':checked') || state.balanzaDesactivadaManual || (hayProducto && !esPesableActual($form))) {
             return;
         }
 
-        $form.find('#txtCantKgs').val(normalized.pesoDisplay || normalized.pesoTexto || formatNumber(normalized.peso, 3));
+        // Con la balanza activa Cantidad muestra SOLO la lectura vigente: si la balanza no responde, el agente se traba o la lectura
+        // tiene error, el ultimo peso deja de verse al vencer (CarnisysBalanza.lecturaVigente) en vez de quedar pegado (2026-11-20).
+        mostrarPesoVigente($form);
+        if (!normalized.conectada) {
+            return;
+        }
         if (state.focusAgregarPendiente) {
             state.focusAgregarPendiente = false;
             // Antes el foco iba al boton "+"; ahora queda en Cantidad (de solo lectura con la balanza) y Enter registra la linea.
             enfocarCantidad($form);
         }
+    }
+
+    // Pone en Cantidad el peso de la lectura vigente de la balanza, o lo vacia si no hay ninguna.
+    function mostrarPesoVigente($form) {
+        var vigente = window.CarnisysBalanza ? window.CarnisysBalanza.lecturaVigente() : null;
+        $form.find('#txtCantKgs').val(vigente ? (vigente.pesoDisplay || vigente.pesoTexto || formatNumber(vigente.peso, 3)) : '');
+    }
+
+    // La linea actual se pesa en balanza: tilde activo (no desactivado a mano) y producto pesable.
+    function usaBalanzaLineaActual($form) {
+        var state = getState($form);
+        return !!(window.CarnisysBalanza && $form.find('#chkBalanzaLinea').is(':checked') && !(state && state.balanzaDesactivadaManual) && esPesableActual($form));
     }
 
     function aplicarStatusBalanza($form, payload) {
@@ -2448,6 +2461,9 @@
                 state.balanzaDesactivadaManual = true;
                 $form.find('#chkBalanzaLinea').prop('checked', false);
                 syncCantidadReadonly($form);
+            } else if ($form.find('#chkBalanzaLinea').is(':checked') && !state.balanzaDesactivadaManual && window.CarnisysBalanza) {
+                // El tilde viene marcado de entrada: lectura continua desde que abre la pantalla (antes recien al elegir producto), 2026-11-20.
+                window.CarnisysBalanza.activar();
             }
         });
     }
@@ -2775,15 +2791,29 @@
     function validarLinea($form) {
         var state = getState($form);
         var idCorte =parseInt($form.find('#txtProductoId').val(), 10) || 0;
-        var cantidadTexto = $.trim($form.find('#txtCantKgs').val() || '');
-        var parsedCantidad = parseNumber(cantidadTexto);
-        var cantidad = parsedCantidad.value;
 
         if (idCorte <= 0) {
             showWarning($form, 'Seleccione un producto válido.');
             $form.find('#txtCodigoProducto').focus().select();
             return null;
         }
+
+        if (usaBalanzaLineaActual($form)) {
+            // Con la balanza activa el peso sale de la lectura vigente (no de lo que quedo en el campo): sin lectura fresca,
+            // con peso inestable o en cero no se agrega (docs/DECISIONS.md "Balanza: lectura vigente", 2026-11-20).
+            var chequeo = window.CarnisysBalanza.validarParaAgregar();
+            if (!chequeo.ok) {
+                mostrarPesoVigente($form);
+                showWarning($form, chequeo.mensaje);
+                enfocarCantidad($form);
+                return null;
+            }
+            $form.find('#txtCantKgs').val(chequeo.lectura.pesoTexto || formatNumber(chequeo.lectura.peso, 3));
+        }
+
+        var cantidadTexto = $.trim($form.find('#txtCantKgs').val() || '');
+        var parsedCantidad = parseNumber(cantidadTexto);
+        var cantidad = parsedCantidad.value;
 
         if (cantidadTexto === '') {
             showWarning($form, 'Ingrese la cantidad.');

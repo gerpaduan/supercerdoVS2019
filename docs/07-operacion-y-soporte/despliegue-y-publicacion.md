@@ -1137,3 +1137,11 @@ Cambio: los cajeros (no administradores también) modifican sus propios egresos 
 - Restore point recomendado antes de pushear: `git tag pre-auditoria-egresos-20261110`. Respaldo: `pg_dump -Fc` completo de siempre (la migración solo agrega una tabla).
 - **Rollback:** volver al build anterior; la tabla queda sobrante y el código viejo la ignora (las modificaciones registradas dejan de verse). No hace falta tocar la base.
 - Estado 2026-11-10: **aplicada en la base local** (`carnisys`, como `carnisys_admin`; verificado RLS activo, `carnisys_user`/`cs_admin_pg` solo SELECT/INSERT, segunda corrida sin error). PENDIENTE en la VPS luden.
+
+## Agente de balanza: actualizar en las PCs con balanza (2026-11-20)
+
+1. Deploy normal de WebCore (los scripts nuevos se toman solos: `asp-append-version`). La web nueva funciona con el agente viejo (detecta la lectura congelada por `fechaHora`).
+2. En cada PC con balanza: Utilidades → descargar el agente de balanza → descomprimir → ejecutar `Instalar-Local.cmd` (cierra el agente que corre, copia, abre el configurador; la config se conserva: cerrar sin cambios).
+3. Verificar en esa PC: `http://127.0.0.1:5100/peso` trae `edadMs` < 1000 con la balanza conectada; en Elaborados/Carga el peso cambia solo al poner y sacar mercadería.
+4. Rollback: reinstalar el zip anterior (`cmd /c "git show <commit-anterior>:WebCore/wwwroot/Content/downloads/Carnisys.Balanza.Agent.zip > agente-anterior.zip"`; con `cmd` porque la redirección de PowerShell 5.1 corrompe binarios) con su `Instalar-Local.cmd`; si el viejo no cierra el agente, salir antes desde el icono de la bandeja.
+- **PENDIENTE**: no se actualizó ninguna PC todavía (2026-11-20).

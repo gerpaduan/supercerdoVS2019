@@ -618,8 +618,8 @@
             $productoPromedio.val(producto.promedio || 0);
             if (!productoEsPesable()) {
                 $cantKgs.val('');
-            } else if ($balanza.is(':checked') && balanzaDisponible && balanzaUltimaLectura) {
-                $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
+            } else if ($balanza.is(':checked') && balanzaDisponible && !balanzaManualDesactivada) {
+                mostrarPesoVigente();
             }
             syncReadOnlyUi();
             scheduleDraft();
@@ -640,8 +640,8 @@
             $productoTipo.val('');
             $productoPromedio.val('');
             $cantUnidad.val('');
-            if ($balanza.is(':checked') && balanzaDisponible && balanzaUltimaLectura && !balanzaManualDesactivada) {
-                $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
+            if ($balanza.is(':checked') && balanzaDisponible && !balanzaManualDesactivada) {
+                mostrarPesoVigente();
             } else {
                 $cantKgs.val('');
             }
@@ -917,13 +917,26 @@
             registrarChequeoBalanza(normalized.conectada === true);
 
             var hayProducto = toInt($productoId.val()) > 0;
-            if (!normalized.conectada || !$balanza.is(':checked') || balanzaManualDesactivada || (hayProducto && !productoEsPesable())) {
+            if (!$balanza.is(':checked') || balanzaManualDesactivada || (hayProducto && !productoEsPesable())) {
                 return;
             }
 
-            $cantKgs.val(normalized.pesoDisplay || normalized.pesoTexto || '');
+            // Con la balanza activa Kgs. muestra SOLO la lectura vigente: si la balanza no responde, el agente se traba o la lectura
+            // tiene error, el ultimo peso deja de verse al vencer (CarnisysBalanza.lecturaVigente) en vez de quedar pegado (2026-11-20).
+            mostrarPesoVigente();
             syncReadOnlyUi();
             validarRelacionCantidadKilos();
+        }
+
+        // Pone en Kgs. el peso de la lectura vigente de la balanza, o lo vacia si no hay ninguna.
+        function mostrarPesoVigente() {
+            var vigente = window.CarnisysBalanza ? window.CarnisysBalanza.lecturaVigente() : null;
+            $cantKgs.val(vigente ? (vigente.pesoDisplay || vigente.pesoTexto || '') : '');
+        }
+
+        // La linea actual se pesa en balanza: tilde activo (no desactivado a mano) y producto pesable.
+        function usaBalanzaLineaActual() {
+            return !!(window.CarnisysBalanza && $balanza.is(':checked') && !balanzaManualDesactivada && productoEsPesable());
         }
 
         function aplicarStatusBalanza(payload) {
@@ -977,6 +990,10 @@
                 if (!disponible) {
                     balanzaManualDesactivada = true;
                     $balanza.prop('checked', false);
+                } else if ($balanza.is(':checked') && !balanzaManualDesactivada && window.CarnisysBalanza) {
+                    // El tilde viene marcado de entrada: sin activar() el cliente no pide /peso y Kgs. quedaba congelado con la
+                    // lectura de cuando se abrio la pantalla hasta tocar * (2026-11-20).
+                    window.CarnisysBalanza.activar();
                 }
                 syncBalanzaStatusVisibility();
                 syncReadOnlyUi();
@@ -1005,9 +1022,7 @@
                 balanzaManualDesactivada = false;
                 $balanza.prop('checked', true);
                 window.CarnisysBalanza.activar();
-                if (balanzaUltimaLectura && balanzaUltimaLectura.conectada) {
-                    $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
-                }
+                mostrarPesoVigente();
                 syncReadOnlyUi();
                 if (enfocar) enfocarKilos();
             });
@@ -1273,6 +1288,19 @@
             if (($cantUnidad.val() || '').trim() === '') {
                 showAlert('warning', 'Movimiento', 'Ingresá la cantidad.', $cantUnidad);
                 return false;
+            }
+            if (usaBalanzaLineaActual()) {
+                // Con la balanza activa el peso sale de la lectura vigente (no de lo que quedo en el campo): sin lectura fresca,
+                // con peso inestable o en cero no se agrega (docs/DECISIONS.md "Balanza: lectura vigente", 2026-11-20).
+                var chequeo = window.CarnisysBalanza.validarParaAgregar();
+                if (!chequeo.ok) {
+                    mostrarPesoVigente();
+                    showAlert('warning', 'Balanza', chequeo.mensaje, $cantKgs);
+                    return false;
+                }
+                // buildCurrentLine (sincronico, justo despues) toma este mismo valor.
+                $cantKgs.val(chequeo.lectura.pesoTexto || '');
+                parsedCantKg = parseDecimal($cantKgs.val());
             }
             if (($cantKgs.val() || '').trim() === '') {
                 showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos mayor a cero.', $cantKgs);
@@ -1765,9 +1793,7 @@
                 if (window.CarnisysBalanza) {
                     window.CarnisysBalanza.activar();
                 }
-                if (balanzaUltimaLectura && balanzaUltimaLectura.conectada) {
-                    $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
-                }
+                mostrarPesoVigente();
             } else {
                 balanzaManualDesactivada = true;
                 if (window.CarnisysBalanza) {

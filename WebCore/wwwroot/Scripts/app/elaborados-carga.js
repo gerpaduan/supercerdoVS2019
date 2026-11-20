@@ -134,6 +134,8 @@
             balanzaDesactivadaManual: false,
             balanzaClientStarted: false,
             balanzaUltimaLectura: null,
+            // Peso de la lectura de balanza validada al agregar (validarLineaActual); null si la linea no se pesa en balanza.
+            pesoBalanzaValidado: null,
             ingredienteTimer: null,
             elaboradoTimer: null,
             ingredienteRequestSeq: 0,
@@ -439,8 +441,8 @@
             if (preserveCodigo) {
                 $ingredienteCodigo.val(codigoActual);
             }
-            if ($balanza.is(':checked') && state.balanzaDisponible && state.balanzaUltimaLectura && !state.balanzaDesactivadaManual) {
-                $ingredienteKg.val(state.balanzaUltimaLectura.pesoDisplay || state.balanzaUltimaLectura.pesoTexto || '');
+            if ($balanza.is(':checked') && state.balanzaDisponible && !state.balanzaDesactivadaManual) {
+                mostrarPesoVigente();
             } else {
                 $ingredienteKg.val('');
             }
@@ -457,8 +459,8 @@
             actualizarBalanzaSegunTipo();
             if (!ingredienteEsPesable()) {
                 $ingredienteKg.val('');
-            } else if ($balanza.is(':checked') && state.balanzaDisponible && state.balanzaUltimaLectura && !state.balanzaDesactivadaManual) {
-                $ingredienteKg.val(state.balanzaUltimaLectura.pesoDisplay || state.balanzaUltimaLectura.pesoTexto || '');
+            } else if ($balanza.is(':checked') && state.balanzaDisponible && !state.balanzaDesactivadaManual) {
+                mostrarPesoVigente();
             }
             syncIngredienteReadonly();
         }
@@ -944,7 +946,7 @@
             syncIngredienteReadonly();
             registrarChequeoBalanza(normalized.conectada === true);
 
-            if (!normalized.conectada || !$balanza.is(':checked') || state.balanzaDesactivadaManual) {
+            if (!$balanza.is(':checked') || state.balanzaDesactivadaManual) {
                 return;
             }
 
@@ -953,7 +955,15 @@
                 return;
             }
 
-            $ingredienteKg.val(normalized.pesoDisplay || normalized.pesoTexto || formatKg(normalized.peso));
+            // Con la balanza activa Cantidad muestra SOLO la lectura vigente: si la balanza no responde, el agente se traba o la lectura
+            // tiene error, el ultimo peso deja de verse al vencer (CarnisysBalanza.lecturaVigente) en vez de quedar pegado (2026-11-20).
+            mostrarPesoVigente();
+        }
+
+        // Pone en Cantidad el peso de la lectura vigente de la balanza, o lo vacia si no hay ninguna.
+        function mostrarPesoVigente() {
+            var vigente = window.CarnisysBalanza ? window.CarnisysBalanza.lecturaVigente() : null;
+            $ingredienteKg.val(vigente ? (vigente.pesoDisplay || vigente.pesoTexto || formatKg(vigente.peso)) : '');
         }
 
         function aplicarStatusBalanza(payload) {
@@ -1014,6 +1024,10 @@
                 if (!disponible) {
                     state.balanzaDesactivadaManual = true;
                     $balanza.prop('checked', false);
+                } else if ($balanza.is(':checked') && !state.balanzaDesactivadaManual && window.CarnisysBalanza) {
+                    // El tilde viene marcado de entrada: sin activar() el cliente no pide /peso y Cantidad quedaba congelada con la
+                    // lectura de cuando se abrio la pantalla hasta tocar * (causa del peso viejo, 2026-11-20).
+                    window.CarnisysBalanza.activar();
                 }
                 syncIngredienteReadonly();
             });
@@ -1133,17 +1147,37 @@
         }
 
         function validarLineaActual() {
+            state.pesoBalanzaValidado = null;
             var parsedKg = parseDecimal($ingredienteKg.val());
             if (toInt($ingredienteId.val()) <= 0) {
                 showAlert('warning', 'Ingrediente', 'Selecciona un ingrediente valido.');
                 focusIngredienteCodigo();
                 return false;
             }
+            if (usaBalanzaLineaActual()) {
+                // Con la balanza activa el peso sale de la lectura vigente (no de lo que quedo en el campo): sin lectura fresca,
+                // con peso inestable o en cero no se agrega (docs/DECISIONS.md "Balanza: lectura vigente", 2026-11-20).
+                var chequeo = window.CarnisysBalanza.validarParaAgregar();
+                if (!chequeo.ok) {
+                    mostrarPesoVigente();
+                    showAlert('warning', 'Balanza', chequeo.mensaje, $ingredienteKg);
+                    return false;
+                }
+                $ingredienteKg.val(chequeo.lectura.pesoDisplay || chequeo.lectura.pesoTexto || formatKg(chequeo.lectura.peso));
+                // agregarLinea guarda exactamente este peso (el mismo que se acaba de mostrar).
+                state.pesoBalanzaValidado = chequeo.lectura.peso;
+                return true;
+            }
             if (($ingredienteKg.val() || '').trim() === '' || !parsedKg.ok || parsedKg.value <= 0) {
                 showAlert('warning', 'Ingrediente', 'Ingresa una cantidad de kilos mayor a cero.', $ingredienteKg);
                 return false;
             }
             return true;
+        }
+
+        // La linea actual se pesa en balanza: tilde activo (no desactivado a mano) e ingrediente pesable.
+        function usaBalanzaLineaActual() {
+            return !!(window.CarnisysBalanza && $balanza.is(':checked') && !state.balanzaDesactivadaManual && ingredienteEsPesable());
         }
 
         function agregarLinea() {
@@ -1158,7 +1192,7 @@
                 Codigo: toInt($ingredienteCodigo.val()),
                 Producto: $ingredienteNombre.val(),
                 TipoProducto: $ingredienteTipo.val(),
-                CantKg: toFloat($ingredienteKg.val()),
+                CantKg: state.pesoBalanzaValidado != null ? state.pesoBalanzaValidado : toFloat($ingredienteKg.val()),
                 PesoBalanza: $balanza.is(':checked'),
                 FuenteCosto: 'compra',
                 PrecioCosto: 0,

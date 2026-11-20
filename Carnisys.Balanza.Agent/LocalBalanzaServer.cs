@@ -3,12 +3,19 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Web.Script.Serialization;
 
 namespace Carnisys.Balanza.Agent
 {
+    // Servidor HTTP minimo en 127.0.0.1 (puerto de config, 5100 por defecto) que consumen las pantallas web: /status, /peso,
+    // /config, /puertos, /probar. 2026-11-20: cada conexion se atiende en el ThreadPool con timeouts de lectura/escritura, asi
+    // un cliente que abre el socket y no manda nada ya no deja colgado al agente entero (todas las pantallas sin peso nuevo).
     internal sealed class LocalBalanzaServer : IDisposable
     {
+        // Tiempo maximo para recibir el pedido o enviar la respuesta; los pedidos del navegador tardan milisegundos.
+        private const int ClienteTimeoutMs = 2000;
+
         private readonly JavaScriptSerializer _serializer;
         private readonly Func<AgentConfig> _getConfig;
         private readonly Action<AgentConfig> _saveConfig;
@@ -62,31 +69,48 @@ namespace Carnisys.Balanza.Agent
                 {
                     client = _listener.AcceptTcpClient();
                 }
-                catch
+                catch (Exception ex)
                 {
                     if (!_running)
                     {
                         break;
                     }
 
+                    AgentLog.Warn("HTTP: fallo al aceptar una conexion: " + ex.Message);
                     continue;
                 }
 
-                using (client)
+                client.ReceiveTimeout = ClienteTimeoutMs;
+                client.SendTimeout = ClienteTimeoutMs;
+                ThreadPool.QueueUserWorkItem(AtenderCliente, client);
+            }
+        }
+
+        // Atiende una conexion (en un hilo del ThreadPool). Un pedido que no llega a tiempo corta por ReceiveTimeout y se descarta.
+        private void AtenderCliente(object estado)
+        {
+            var client = (TcpClient)estado;
+            using (client)
+            {
+                try
                 {
+                    HandleClient(client);
+                }
+                catch (IOException ex)
+                {
+                    // Timeout o cliente que corto la conexion (pestaña cerrada a mitad del pedido): no hay a quien responder.
+                    AgentLog.Warn("HTTP: conexion descartada: " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    AgentLog.Error("HTTP: error atendiendo un pedido.", ex);
                     try
                     {
-                        HandleClient(client);
+                        WriteJson(client.GetStream(), new { ok = false, error = ex.Message }, 500);
                     }
-                    catch (Exception ex)
+                    catch (Exception exRespuesta)
                     {
-                        try
-                        {
-                            WriteJson(client.GetStream(), new { ok = false, error = ex.Message }, 500);
-                        }
-                        catch
-                        {
-                        }
+                        AgentLog.Warn("HTTP: no se pudo enviar el error al cliente: " + exRespuesta.Message);
                     }
                 }
             }
@@ -178,7 +202,9 @@ namespace Carnisys.Balanza.Agent
                     modelo = config.Balanza.Modelo,
                     puerto = config.Balanza.Puerto,
                     error = lectura.Error,
-                    fechaHora = lectura.FechaHora.ToString("yyyy-MM-ddTHH:mm:ss")
+                    fechaHora = lectura.FechaHora.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    edadMs = lectura.EdadMs,
+                    secuencia = lectura.Secuencia
                 });
                 return;
             }
@@ -292,6 +318,9 @@ namespace Carnisys.Balanza.Agent
                 puerto = lectura.Puerto ?? string.Empty,
                 raw = lectura.Raw ?? string.Empty,
                 fechaHora = lectura.FechaHora.ToString("yyyy-MM-ddTHH:mm:ss"),
+                // Antiguedad (ms) de la lectura al servirla y numero de lectura: la web descarta pesos viejos con edadMs.
+                edadMs = lectura.EdadMs,
+                secuencia = lectura.Secuencia,
                 error = lectura.Error
             };
         }
@@ -320,6 +349,7 @@ namespace Carnisys.Balanza.Agent
                 "Access-Control-Allow-Origin: *\r\n" +
                 "Access-Control-Allow-Headers: Content-Type\r\n" +
                 "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
+                "Cache-Control: no-store\r\n" +
                 "Content-Length: " + bodyBytes.Length + "\r\n" +
                 "Connection: close\r\n\r\n";
 

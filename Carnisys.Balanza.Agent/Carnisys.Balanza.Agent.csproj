@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AgentApplicationContext.cs" />
+    <Compile Include="AgentLog.cs" />
     <Compile Include="AgentConfig.cs" />
     <Compile Include="ApiConfig.cs" />
     <Compile Include="BalanzaConfig.cs" />

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-11-19
+revisada: 2026-11-20
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -168,3 +168,10 @@ También se abre desde el botón **Cargas** del POS (un movimiento nuevo nuevo, 
 - **Al desactivar la balanza** (`*` otra vez o destildar el icono) mientras se estaba leyendo, la cantidad también se **vacía**.
 - **Si la balanza se desconecta sola** con la lectura activa (y solo si en algún momento desde que se abrió la pantalla se había leído la balanza), la pantalla pasa a carga manual, vacía la cantidad y avisa «Se perdió la conexión con la balanza…». Espera dos chequeos seguidos sin conexión (aprox. 1 s) para no cortar por una falla momentánea.
 - Detalle técnico y motivo: `docs/DECISIONS.md` (2026-11-19, tecla * de la balanza). Verificado solo por lectura de código; PENDIENTE probarlo con una balanza real.
+
+## Peso siempre actualizado de la balanza (2026-11-20)
+- **Al abrir la pantalla con la balanza activada, el peso se lee solo y se actualiza todo el tiempo.** Antes, si el icono venía activado de entrada, **Kgs.** podía quedar fijo con el peso del momento en que se abrió la pantalla hasta tocar `*`: por eso a veces aparecía el peso del producto anterior.
+- **Kgs. muestra solo un peso fresco.** Si la balanza deja de mandar pesos nuevos (agente de balanza trabado o que no responde, cable flojo), en aprox. 1,5 s el campo **se vacía** y el estado de la balanza dice *«Lectura congelada (sin peso nuevo)»* o *«Agente no detectado»*; enseguida se pasa a carga manual con el aviso *«Se perdió la conexión con la balanza…»*. Nunca queda a la vista un peso viejo.
+- **Enter en Kgs. (o +) con la balanza activa** usa el peso de la última lectura fresca de la balanza (no lo que haya quedado escrito en el campo). **No registra** y avisa si: no hay lectura fresca (*«Esperando lectura de la balanza…»*), el peso está **inestable** (*«Peso inestable: esperá a que la balanza se estabilice…»*) o la balanza marca cero.
+- Si vuelve a pasar que el peso no se actualiza, ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md` (2026-11-20). Detalle técnico: `docs/DECISIONS.md` (2026-11-20, «Balanza: lectura vigente»).
+- Verificado el 2026-11-20 en la pantalla real con un agente de balanza simulado (peso que cambia, lectura congelada, agente colgado, peso inestable). PENDIENTE: probarlo con una balanza real.

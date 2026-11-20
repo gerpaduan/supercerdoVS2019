@@ -910,7 +910,7 @@
             }
         });
     </script>
-    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js")" asp-append-version="true"></script>
     @* print-agent.js (ESC/POS via agente local) no se porto a proposito -- ver el comentario
        de cabecera de _ModalPostMovimiento.cshtml. Este <script src> quedaba apuntando a un
        archivo que nunca existio en WebCore, tirando un 404 silencioso en cada carga de esta

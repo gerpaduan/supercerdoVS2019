@@ -20,6 +20,11 @@ namespace Carnisys.Balanza.Agent
         public DateTime FechaHora { get; set; }
         public string Error { get; set; }
 
+        // Antiguedad de la lectura (ms) al momento de servirla por HTTP y numero de lectura del hilo lector (crece con cada
+        // lectura nueva). Los completa BalanzaReaderService.GetUltimaLectura: la web los usa para no mostrar un peso viejo.
+        public long EdadMs { get; set; }
+        public long Secuencia { get; set; }
+
         public LecturaPeso Clone()
         {
             return (LecturaPeso)MemberwiseClone();

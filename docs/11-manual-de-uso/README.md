@@ -52,17 +52,17 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Editar fórmula | Elaborados | `pantallas/Elaborados.EditarFormula.md` | 2026-11-13 |
 | pantallas | Elaborados | Elaborados | `pantallas/Elaborados.Index.md` | 2026-11-13 |
 | pantallas | Fórmulas | Elaborados | `pantallas/Elaborados.Formulas.md` | 2026-11-13 |
-| pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-11-19 |
+| pantallas | Ingreso rápido y desarme de elaborado | Elaborados | `pantallas/Elaborados.EditarIngresoRapido.md` | 2026-11-20 |
 | pantallas | Ingreso rápido y desarme de elaborado (listado) | Elaborados | `pantallas/Elaborados.IngresoRapido.md` | 2026-11-13 |
 | pantallas | Líneas de elaborado | Elaborados | `pantallas/Elaborados.Lineas.md` | 2026-11-13 |
-| pantallas | Nuevo Elaborado (carga manual) | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-11-19 |
+| pantallas | Nuevo Elaborado (carga manual) | Elaborados | `pantallas/Elaborados.Carga.md` | 2026-11-20 |
 | pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-09 |
 | pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-11-10 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-09 |
-| pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-10 |
+| pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-20 |
 | pantallas | Líneas de movimiento | Movimientos | `pantallas/Movimientos.Lineas.md` | 2026-11-13 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-11-13 |
-| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-19 |
+| pantallas | Nuevo movimiento entre sucursales | Movimientos | `pantallas/Movimientos.Editar.md` | 2026-11-20 |
 | pantallas | Personas | Personas | `pantallas/Personas.Index.md` | 2026-11-02 |
 | pantallas | Ver / modificar persona | Personas | `pantallas/Personas.Editar.md` | 2026-11-02 |
 | pantallas | Alta y edición de un producto | Productos | `pantallas/Productos.AddOrEdit.md` | 2026-11-10 |
@@ -70,14 +70,14 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-11-10 |
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-11-10 |
 | pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-30 |
-| pantallas | Punto de expendio (pantalla de trabajo y app instalada) | Punto de Expendio | `pantallas/PuntosExpendio.POS.md` | 2026-11-19 |
-| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-19 |
+| pantallas | Punto de expendio (pantalla de trabajo y app instalada) | Punto de Expendio | `pantallas/PuntosExpendio.POS.md` | 2026-11-20 |
+| pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-20 |
 | pantallas | Líneas de stock | Stock | `pantallas/Stock.Lineas.md` | 2026-11-02 |
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-11-14 |
 | pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-11-14 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-11-10 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
-| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-19 |
+| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-20 |
 | pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-11-16 |
 
 ## Manual del administrador

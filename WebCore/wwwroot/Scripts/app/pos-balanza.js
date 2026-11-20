@@ -4,6 +4,8 @@
 // agente local (http://127.0.0.1:5100) no responde.
 // 2026-11-10: con peso inestable ya no hay modal: el aviso va debajo de Cantidad (#avisoCantidadPOS,
 // presente en Ventas/POS y PuntosExpendio/POS) y el cursor queda en Cantidad para reintentar con Enter.
+// 2026-11-20: Cantidad en modo balanza muestra y valida SOLO la lectura vigente (CarnisysBalanza.lecturaVigente): una lectura
+// congelada, con error o sin respuesta del agente deja de verse al vencer (docs/DECISIONS.md "Balanza: lectura vigente").
 (function (window, $) {
     'use strict';
 
@@ -26,6 +28,20 @@
             inestable: 'Peso inestable, espere y presione Enter',
             pesoCero: 'No se puede registrar un peso menor o igual a cero.'
         };
+
+        // Payload del agente normalizado (marca 'vencida' y la trata como no conectada). Sin el cliente, se usa tal cual.
+        function normalizar(data) {
+            if (!data) return null;
+            return window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.normalize === 'function'
+                ? window.CarnisysBalanzaUtils.normalize(data)
+                : data;
+        }
+
+        function lecturaVigente() {
+            return window.CarnisysBalanza && typeof window.CarnisysBalanza.lecturaVigente === 'function'
+                ? window.CarnisysBalanza.lecturaVigente()
+                : null;
+        }
 
         function esPesable(producto) {
             return !!(producto && producto.pesable === true);
@@ -102,12 +118,15 @@
                 return;
             }
 
-            if (!state.ultimaLectura || state.ultimaLectura.conectada !== true) {
+            var vigente = lecturaVigente();
+            if (!vigente) {
+                // En modo balanza sin lectura vigente Cantidad queda vacia: nunca un peso viejo listo para Enter.
+                if (state.modoCantidad === 'Balanza') $('#inputCantidad').val('');
                 return;
             }
 
             setInputBalanza();
-            $('#inputCantidad').val(state.ultimaLectura.pesoDisplay || state.ultimaLectura.pesoTexto || '');
+            $('#inputCantidad').val(vigente.pesoDisplay || vigente.pesoTexto || '');
         }
 
         function refreshSubtotalAndButton() {
@@ -121,29 +140,36 @@
                 return;
             }
 
-            if (!state.ultimaLectura || !state.ultimaLectura.conectada) {
+            var vigente = lecturaVigente();
+            if (!vigente) {
                 $('#btnAgregarProducto').prop('disabled', true);
                 return;
             }
 
-            var invalid = state.ultimaLectura.inestable === true || Number(state.ultimaLectura.peso || 0) <= 0;
+            var invalid = vigente.inestable === true || Number(vigente.peso || 0) <= 0;
             if (invalid) {
                 $('#btnAgregarProducto').prop('disabled', true);
             }
         }
 
+        // Muestra en Cantidad la lectura vigente (el parametro solo indica que hubo una lectura; el peso sale de lecturaVigente).
         function aplicarLectura(data) {
             if (!data || state.lecturaSuspendida) {
                 return;
             }
 
-            if (data.conectada !== true) {
+            var vigente = lecturaVigente();
+            if (!vigente) {
+                if (state.modoCantidad === 'Balanza') {
+                    $('#inputCantidad').val('');
+                    refreshSubtotalAndButton();
+                }
                 return;
             }
 
-            state.ultimaLectura = data;
+            state.ultimaLectura = vigente;
             setInputBalanza();
-            $('#inputCantidad').val(data.pesoDisplay || data.pesoTexto || '');
+            $('#inputCantidad').val(vigente.pesoDisplay || vigente.pesoTexto || '');
             refreshSubtotalAndButton();
         }
 
@@ -213,7 +239,7 @@
         function onProductoChanged(producto) {
             state.productoActual = producto || null;
             setAvisoCantidad('');
-            state.ultimaLectura = window.CarnisysBalanza ? window.CarnisysBalanza.ultimo() : null;
+            state.ultimaLectura = window.CarnisysBalanza ? normalizar(window.CarnisysBalanza.ultimo()) : null;
 
             if (!producto) {
                 state.lecturaSuspendida = false;
@@ -289,9 +315,10 @@
         }
 
         function onStatus(data) {
+            var normalizado = normalizar(data);
             state.agenteDetectado = !!(data && data.ok);
             state.agenteDisponible = !!(data && data.ok);
-            state.balanzaConectada = !!(data && data.conectada);
+            state.balanzaConectada = !!(normalizado && normalizado.conectada);
 
             if (!data || data.ok !== true) {
                 setEstado('Agente no detectado', 10, 'bg-danger');
@@ -299,7 +326,15 @@
                 return;
             }
 
-            if (data.conectada) {
+            // El agente responde pero su ultima lectura no se renueva (hilo de lectura trabado): no hay peso real.
+            if (normalizado && normalizado.vencida) {
+                setEstado('Lectura congelada (sin peso nuevo)', 20, 'bg-danger');
+                mostrarUltimaLectura();
+                registrarChequeoDesconectado();
+                return;
+            }
+
+            if (state.balanzaConectada) {
                 chequeosSinConexion = 0;
                 huboConexion = true;
                 options.showNotice('');
@@ -317,17 +352,25 @@
             registrarChequeoDesconectado();
         }
 
-        function onPeso(data) {
-            if (!data) {
+        function onPeso(payload) {
+            if (!payload) {
                 return;
             }
 
+            var data = normalizar(payload);
             state.ultimaLectura = data;
             state.balanzaConectada = !!data.conectada;
 
             if (data.conectada !== true) {
-                setEstado('Balanza desconectada', 35, 'bg-warning');
+                if (data.vencida) {
+                    setEstado('Lectura congelada (sin peso nuevo)', 20, 'bg-danger');
+                } else {
+                    setEstado('Balanza desconectada', 35, 'bg-warning');
+                }
                 setAvisoCantidad('');
+                // Al vencer la ultima lectura valida, Cantidad (modo balanza) queda vacia en vez de conservar el peso viejo.
+                mostrarUltimaLectura();
+                refreshSubtotalAndButton();
                 registrarChequeoDesconectado();
                 return;
             }
@@ -358,17 +401,23 @@
                 return { ok: true };
             }
 
-            if (!state.agenteDisponible || !state.balanzaConectada || !state.ultimaLectura) {
-                return cantidad > 0
-                    ? { ok: true }
-                    : { ok: false, message: mensajes.pesoCero };
+            // Modo balanza: hace falta una lectura vigente, estable y > 0. Antes, sin agente o sin lectura se aceptaba lo que hubiera
+            // en Cantidad (podia ser el peso viejo). Sin el cliente de balanza (script ausente) queda la regla manual.
+            if (!window.CarnisysBalanza || typeof window.CarnisysBalanza.validarParaAgregar !== 'function') {
+                return cantidad > 0 ? { ok: true } : { ok: false, message: mensajes.pesoCero };
             }
 
-            if (Number(state.ultimaLectura.peso || 0) <= 0) {
+            var chequeo = window.CarnisysBalanza.validarParaAgregar();
+            if (chequeo.motivo === 'sinLectura') {
+                mostrarUltimaLectura();
+                return { ok: false, message: chequeo.mensaje };
+            }
+
+            if (chequeo.motivo === 'pesoCero') {
                 return { ok: false, message: mensajes.pesoCero };
             }
 
-            if (state.ultimaLectura.inestable === true) {
+            if (chequeo.motivo === 'inestable') {
                 // inline: pos-cart no abre modal y deja el foco en Cantidad para reintentar con Enter.
                 // Sin #avisoCantidadPOS en la vista, se mantiene el modal de antes.
                 return setAvisoCantidad(mensajes.inestable)

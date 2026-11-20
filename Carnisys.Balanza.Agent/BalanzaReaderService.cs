@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
@@ -6,9 +7,21 @@ using System.Threading;
 
 namespace Carnisys.Balanza.Agent
 {
+    // Hilo lector de la balanza: abre el puerto COM, pide el peso cada IntervaloLecturaMs y deja la ultima lectura para el HTTP.
+    // 2026-11-20 (peso "pegado"): la lectura se guarda con su hora monotona y numero de secuencia; si el hilo se traba en el
+    // puerto serie, GetUltimaLectura informa "lectura congelada" (no conectada) en vez de seguir sirviendo el ultimo peso como
+    // bueno, e intenta destrabarlo cerrando el puerto. Ver docs/06-datos-e-integraciones/balanzas-e-impresoras.md.
     internal sealed class BalanzaReaderService : IDisposable
     {
+        // Una lectura sana se renueva cada ~300 ms. Pasado este tiempo sin lectura nueva el hilo esta trabado (o abriendo el puerto).
+        private const int LecturaCongeladaMs = 3000;
+        // Con la lectura congelada este tiempo se cierra el puerto desde otro hilo para destrabar la llamada bloqueada.
+        private const int RecuperacionPuertoMs = 10000;
+
+        // _sync protege puerto y config (lo usa el hilo lector); _lecturaSync solo la ultima lectura, para que el HTTP nunca
+        // espere a una operacion del puerto serie (que puede colgarse con adaptadores USB-serie).
         private readonly object _sync = new object();
+        private readonly object _lecturaSync = new object();
         private readonly BalanzaDriverRegistry _registry;
         private volatile bool _running;
         private Thread _worker;
@@ -16,12 +29,17 @@ namespace Carnisys.Balanza.Agent
         private SerialPort _port;
         private string _portSignature = string.Empty;
         private LecturaPeso _ultimaLectura;
+        private long _ultimaLecturaTimestamp;
+        private long _secuencia;
+        private string _ultimoErrorLogueado;
+        private bool _congeladaLogueada;
+        private int _recuperacionEnCurso;
 
         public BalanzaReaderService(AgentConfig config)
         {
             _registry = new BalanzaDriverRegistry();
             _config = ConfigStore.Normalize(config);
-            _ultimaLectura = LecturaPeso.CrearError("Sin lectura disponible.", _config.Balanza);
+            GuardarLectura(LecturaPeso.CrearError("Sin lectura disponible.", _config.Balanza));
         }
 
         public void Start()
@@ -38,6 +56,7 @@ namespace Carnisys.Balanza.Agent
                 Name = "Carnisys.Balanza.Reader"
             };
             _worker.Start();
+            AgentLog.Info("Lector de balanza iniciado. Log en " + AgentLog.Directorio);
         }
 
         public void UpdateConfig(AgentConfig config)
@@ -48,14 +67,50 @@ namespace Carnisys.Balanza.Agent
                 _portSignature = string.Empty;
                 ClosePort();
             }
+            AgentLog.Info("Configuracion actualizada: " + DescribirConfig(_config.Balanza));
         }
 
+        // Ultima lectura con su antiguedad y secuencia. Si no se renovo en LecturaCongeladaMs se devuelve como error no
+        // conectado ("lectura congelada"): un peso viejo nunca sale como bueno.
         public LecturaPeso GetUltimaLectura()
         {
-            lock (_sync)
+            LecturaPeso lectura;
+            long timestamp;
+            lock (_lecturaSync)
             {
-                return _ultimaLectura.Clone();
+                lectura = _ultimaLectura.Clone();
+                timestamp = _ultimaLecturaTimestamp;
             }
+
+            long edadMs = (Stopwatch.GetTimestamp() - timestamp) * 1000 / Stopwatch.Frequency;
+            lectura.EdadMs = edadMs;
+            if (edadMs <= UmbralCongeladaMs() || !_running)
+            {
+                return lectura;
+            }
+
+            RegistrarCongelada(edadMs);
+            var congelada = LecturaPeso.CrearError(
+                "Lectura congelada: la balanza no actualiza el peso hace " + (edadMs / 1000) + " s.",
+                null,
+                lectura.Raw,
+                false);
+            congelada.Marca = lectura.Marca;
+            congelada.Modelo = lectura.Modelo;
+            congelada.Puerto = lectura.Puerto;
+            congelada.Secuencia = lectura.Secuencia;
+            congelada.EdadMs = edadMs;
+            return congelada;
+        }
+
+        // Umbral de lectura congelada: LecturaCongeladaMs, o mas si el intervalo configurado es largo (una vuelta del hilo lector
+        // dura ~ min(intervalo, 250) + intervalo ms; con 2 vueltas perdidas recien se considera trabado).
+        private int UmbralCongeladaMs()
+        {
+            var config = _config;
+            int intervalo = config != null && config.Balanza != null ? config.Balanza.IntervaloLecturaMs : 150;
+            int vuelta = Math.Min(intervalo, 250) + Math.Max(100, intervalo);
+            return Math.Max(LecturaCongeladaMs, vuelta * 2 + 1000);
         }
 
         public string[] GetPuertos()
@@ -125,14 +180,107 @@ namespace Carnisys.Balanza.Agent
                 }
 
                 var lectura = LeerUnaVez(config);
-                lock (_sync)
-                {
-                    _ultimaLectura = lectura;
-                }
+                GuardarLectura(lectura);
+                LoguearCambioDeEstado(lectura);
 
                 int espera = config.Balanza != null ? config.Balanza.IntervaloLecturaMs : 150;
                 Thread.Sleep(Math.Max(100, espera));
             }
+        }
+
+        // Guarda la lectura nueva con su hora monotona (no depende del reloj de Windows) y su numero de secuencia.
+        private void GuardarLectura(LecturaPeso lectura)
+        {
+            lock (_lecturaSync)
+            {
+                lectura.Secuencia = ++_secuencia;
+                _ultimaLectura = lectura;
+                _ultimaLecturaTimestamp = Stopwatch.GetTimestamp();
+                if (_congeladaLogueada)
+                {
+                    _congeladaLogueada = false;
+                    AgentLog.Info("La lectura volvio a actualizarse (secuencia " + lectura.Secuencia + ").");
+                }
+            }
+        }
+
+        // Loguea solo los cambios (error nuevo o recuperacion), no cada lectura: el hilo lee ~3 veces por segundo.
+        private void LoguearCambioDeEstado(LecturaPeso lectura)
+        {
+            string error = lectura.Ok ? null : (lectura.Error ?? "Error de lectura.");
+            if (string.Equals(error, _ultimoErrorLogueado, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (error == null)
+            {
+                AgentLog.Info("Lectura OK en " + (lectura.Puerto ?? string.Empty) + " (antes: " + _ultimoErrorLogueado + ").");
+            }
+            else
+            {
+                AgentLog.Warn("Lectura con error en " + (lectura.Puerto ?? string.Empty) + ": " + error + " | raw=" + Recortar(lectura.Raw));
+            }
+
+            _ultimoErrorLogueado = error;
+        }
+
+        // Lectura congelada: se loguea una vez por episodio y, si dura RecuperacionPuertoMs, se intenta destrabar el hilo lector.
+        private void RegistrarCongelada(long edadMs)
+        {
+            lock (_lecturaSync)
+            {
+                if (!_congeladaLogueada)
+                {
+                    _congeladaLogueada = true;
+                    AgentLog.Warn("Lectura congelada: el hilo lector no renueva la lectura hace " + edadMs + " ms.");
+                }
+            }
+
+            if (edadMs >= RecuperacionPuertoMs)
+            {
+                IntentarDestrabarPuerto(edadMs);
+            }
+        }
+
+        // El hilo lector quedo bloqueado dentro de una llamada al puerto serie. Cerrar el puerto desde otro hilo hace que esa
+        // llamada falle con excepcion: LeerUnaVez la captura, cierra y reabre el puerto en la vuelta siguiente. Se hace en un hilo
+        // aparte porque el cierre tambien puede colgarse, y nunca hay dos intentos a la vez.
+        private void IntentarDestrabarPuerto(long edadMs)
+        {
+            if (Interlocked.CompareExchange(ref _recuperacionEnCurso, 1, 0) != 0)
+            {
+                return;
+            }
+
+            SerialPort trabado = _port;
+            AgentLog.Warn("Intentando destrabar el puerto " + (trabado != null ? trabado.PortName : "(sin puerto)") + " tras " + edadMs + " ms sin lectura.");
+            var hilo = new Thread(() =>
+            {
+                try
+                {
+                    if (trabado != null)
+                    {
+                        trabado.Dispose();
+                    }
+                    AgentLog.Info("Puerto cerrado para destrabar el lector.");
+                }
+                catch (Exception ex)
+                {
+                    AgentLog.Error("No se pudo cerrar el puerto trabado.", ex);
+                }
+                finally
+                {
+                    // Siguiente intento recien despues de otra ventana completa, para no martillar el driver.
+                    Thread.Sleep(RecuperacionPuertoMs);
+                    Interlocked.Exchange(ref _recuperacionEnCurso, 0);
+                }
+            })
+            {
+                IsBackground = true,
+                Name = "Carnisys.Balanza.Recuperacion"
+            };
+            hilo.Start();
         }
 
         private LecturaPeso LeerUnaVez(AgentConfig config)
@@ -151,13 +299,13 @@ namespace Carnisys.Balanza.Agent
 
             try
             {
-                EnsurePort(balanzaConfig, driver);
-                SafeDiscard(_port);
-                driver.SolicitarPeso(_port);
+                var port = EnsurePort(balanzaConfig, driver);
+                SafeDiscard(port);
+                driver.SolicitarPeso(port);
                 Thread.Sleep(Math.Max(60, Math.Min(balanzaConfig.IntervaloLecturaMs, 250)));
-                string raw = _port.ReadExisting();
+                string raw = port.ReadExisting();
                 var lectura = driver.ParsearRespuesta(raw, balanzaConfig);
-                lectura.Conectada = _port != null && _port.IsOpen && (lectura.Conectada || string.IsNullOrWhiteSpace(lectura.Error));
+                lectura.Conectada = port.IsOpen && (lectura.Conectada || string.IsNullOrWhiteSpace(lectura.Error));
                 return lectura;
             }
             catch (Exception ex)
@@ -170,21 +318,39 @@ namespace Carnisys.Balanza.Agent
             }
         }
 
-        private void EnsurePort(BalanzaConfig config, IBalanzaDriver driver)
+        // Devuelve el puerto abierto para la config actual; si cambio la config (o se cerro) lo reabre. El Open() va FUERA del
+        // lock: si el driver se cuelga abriendo, no bloquea a UpdateConfig ni a nadie mas.
+        private SerialPort EnsurePort(BalanzaConfig config, IBalanzaDriver driver)
         {
+            string nextSignature = BuildSignature(config, driver);
             lock (_sync)
             {
-                string nextSignature = BuildSignature(config, driver);
                 if (_port != null && _port.IsOpen && string.Equals(_portSignature, nextSignature, StringComparison.OrdinalIgnoreCase))
                 {
-                    return;
+                    return _port;
                 }
 
                 ClosePort();
-                _port = CreatePort(config, driver);
-                _port.Open();
+            }
+
+            AgentLog.Info("Abriendo puerto: " + DescribirConfig(config));
+            var nuevo = CreatePort(config, driver);
+            try
+            {
+                nuevo.Open();
+            }
+            catch
+            {
+                nuevo.Dispose();
+                throw;
+            }
+
+            lock (_sync)
+            {
+                _port = nuevo;
                 _portSignature = nextSignature;
             }
+            return nuevo;
         }
 
         private static string BuildSignature(BalanzaConfig config, IBalanzaDriver driver)
@@ -198,6 +364,19 @@ namespace Carnisys.Balanza.Agent
                 config.StopBits ?? string.Empty,
                 driver.Marca
             });
+        }
+
+        private static string DescribirConfig(BalanzaConfig config)
+        {
+            if (config == null) return "(sin config)";
+            return (config.Marca ?? string.Empty) + " " + (config.Puerto ?? "(sin puerto)") + " " + config.BaudRate + " baud";
+        }
+
+        private static string Recortar(string texto)
+        {
+            if (string.IsNullOrEmpty(texto)) return string.Empty;
+            string limpio = texto.Replace("\r", "\\r").Replace("\n", "\\n").Replace("\0", "\\0");
+            return limpio.Length > 80 ? limpio.Substring(0, 80) + "..." : limpio;
         }
 
         private static SerialPort CreatePort(BalanzaConfig config, IBalanzaDriver driver)

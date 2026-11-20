@@ -5,7 +5,7 @@ rol: usuario
 modulo: Inicio
 orden: 1
 permiso: PENDIENTE (no verificado contra el código en esta revisión; lo que sí se sabe: los datos comerciales los ven solo los administradores, el estado de la balanza lo ve cualquiera)
-revisada: 2026-11-10
+revisada: 2026-11-20
 ---
 ## Para qué sirve
 Pantalla de inicio: resumen del negocio en una sola pantalla (ventas, gráficos y últimos movimientos). Cada bloque se carga por separado, así que la pantalla aparece enseguida y los datos van llegando.
@@ -35,3 +35,6 @@ Las tablas chicas del tablero (últimas ventas, elaborados, movimientos y finanz
 
 ## Resto de la pantalla
 PENDIENTE: documentar los gráficos y las tablas, y qué ve quien no es administrador (no verificado contra el código en esta revisión).
+
+## Estado de la balanza (2026-11-20)
+- Si la balanza deja de mandar pesos nuevos (agente trabado o que no responde), el estado de la balanza del inicio pasa a **Desconectada** en vez de seguir mostrando el último peso. Mismo criterio que las pantallas de carga: ver `docs/DECISIONS.md` (2026-11-20, «Balanza: lectura vigente»). PENDIENTE: no se probó esta pantalla en el navegador (solo usa el cliente compartido ya probado).

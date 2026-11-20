@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-11-20 - Balanza: un peso viejo nunca se muestra ni se guarda (web + agente)
+
+- **Cambio:** las pantallas con balanza (Elaborados carga e ingreso rápido, Movimientos, Stock, POS y Puntos de expendio) muestran y guardan solo una lectura fresca de la balanza (< 1,5 s); sin ella el campo queda vacío y Enter avisa. Peso inestable o cero no se agrega. Elaborados y Movimientos activan la lectura al abrir (antes quedaba el peso del momento de abrir hasta tocar `*`). El agente informa la antigüedad de la lectura, detecta y destraba el lector colgado, no se cuelga por un cliente HTTP y deja log. Detalle: `docs/DECISIONS.md` (2026-11-20).
+- **Archivos:** `WebCore/wwwroot/Scripts/carnisys.balanza.js` y `app/{elaborados-carga,elaborados-rapido,movimientos,stock,pos-balanza}.js`, 7 vistas (script con `asp-append-version`), `Carnisys.Balanza.Agent/*`, zip del agente, `WebCore.Tests/js/carnisys-balanza.test.js`, manual de 6 pantallas.
+- **Verificado:** 14 tests de Node, agente probado por reflexión, pantallas reales con agente simulado (ver DECISIONS). **Pendiente:** probar con balanza real; reinstalar el agente en cada PC con balanza; `scripts/check-ayuda.ps1` antes del deploy.
+
 ## 2026-11-19 (b) - Botones Guardar, Cancelar, Modificar y Anular sin foco del teclado
 
 - **Cambio:** en Movimientos, Stock, Elaborados (carga e ingreso rápido) y Compras los botones **Guardar**, **Cancelar**, **Modificar** y **Anular** ya no toman el foco: Tab no se detiene en ellos, el clic no los deja enfocados y solo responden al clic o al atajo de la pantalla (Alt+Enter, Alt+G, Alt+C en Compras). Además, Enter dentro de un campo de esos formularios ya no guarda por envío implícito (se mantiene el Enter propio de Código/Cantidad/editor y el guardado con Enter en Cantidad del ingreso rápido).

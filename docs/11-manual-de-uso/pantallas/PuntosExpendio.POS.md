@@ -5,7 +5,7 @@ rol: usuario
 modulo: Punto de Expendio
 orden: 1
 permiso: cualquier usuario activo puede operar Expendio (verificado en `PuntosExpendioController.POS`); no pide permiso POS ni apertura de caja
-revisada: 2026-11-19
+revisada: 2026-11-20
 ---
 ## Para qué sirve
 Pantalla de trabajo del **Punto de expendio**: se elige el sector y se cargan los expendios. **Esta ayuda cubre solo cómo usarlo como aplicación instalada (desde 2026-11-17).** El resto de la pantalla está PENDIENTE de documentar.
@@ -28,3 +28,11 @@ Igual que en el POS de Ventas (ver [Punto de venta](ayuda:pantalla/Ventas.POS), 
 - **Al desactivar la balanza** (`*` otra vez o destildar el icono) mientras se estaba leyendo, la cantidad también se **vacía**.
 - **Si la balanza se desconecta sola** con la lectura activa (y solo si en algún momento desde que se abrió la pantalla se había leído la balanza), la pantalla pasa a carga manual, vacía la cantidad y avisa «Se perdió la conexión con la balanza…». Espera dos chequeos seguidos sin conexión (aprox. 1 s) para no cortar por una falla momentánea.
 - Detalle técnico y motivo: `docs/DECISIONS.md` (2026-11-19, tecla * de la balanza). Verificado solo por lectura de código; PENDIENTE probarlo con una balanza real.
+
+## Peso siempre actualizado de la balanza (2026-11-20)
+- El POS ya leía la balanza todo el tiempo desde que se abre; lo que cambia es qué pasa cuando la balanza **deja de mandar pesos nuevos** (abajo).
+- **Cantidad muestra solo un peso fresco.** Si la balanza deja de mandar pesos nuevos (agente de balanza trabado o que no responde, cable flojo), en aprox. 1,5 s el campo **se vacía** y el estado de la balanza dice *«Lectura congelada (sin peso nuevo)»* o *«Agente no detectado»*; enseguida se pasa a carga manual con el aviso *«Se perdió la conexión con la balanza…»*. Nunca queda a la vista un peso viejo.
+- **Enter (o Agregar) con la balanza activa** agrega la cantidad que muestra el campo, que con la balanza activa es siempre la última lectura fresca. **No agrega** y avisa si: no hay lectura fresca (*«Esperando lectura de la balanza…»*), el peso está **inestable** (*«Peso inestable, espere y presione Enter»*, debajo de Cantidad) o la balanza marca cero.
+- El peso inestable ya se rechazaba; lo nuevo es que sin lectura fresca tampoco agrega (antes, si el agente no respondía, aceptaba lo que hubiera en Cantidad).
+- Si vuelve a pasar que el peso no se actualiza, ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md` (2026-11-20). Detalle técnico: `docs/DECISIONS.md` (2026-11-20, «Balanza: lectura vigente»).
+- Verificado el 2026-11-20 en el POS de ventas (mismo código de balanza, `pos-balanza.js`) con un agente simulado. PENDIENTE: probarlo en esta pantalla y con una balanza real.

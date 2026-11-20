@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-19
+revisada: 2026-11-20
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -358,3 +358,11 @@ El botón **Cargas** de la barra de arriba (junto a la campana) abre, **sin sali
 - **Al desactivar la balanza** (`*` otra vez o destildar el icono) mientras se estaba leyendo, la cantidad también se **vacía**.
 - **Si la balanza se desconecta sola** con la lectura activa (y solo si en algún momento desde que se abrió la pantalla se había leído la balanza), la pantalla pasa a carga manual, vacía la cantidad y avisa «Se perdió la conexión con la balanza…». Espera dos chequeos seguidos sin conexión (aprox. 1 s) para no cortar por una falla momentánea.
 - Detalle técnico y motivo: `docs/DECISIONS.md` (2026-11-19, tecla * de la balanza). Verificado solo por lectura de código; PENDIENTE probarlo con una balanza real.
+
+## Peso siempre actualizado de la balanza (2026-11-20)
+- El POS ya leía la balanza todo el tiempo desde que se abre; lo que cambia es qué pasa cuando la balanza **deja de mandar pesos nuevos** (abajo).
+- **Cantidad muestra solo un peso fresco.** Si la balanza deja de mandar pesos nuevos (agente de balanza trabado o que no responde, cable flojo), en aprox. 1,5 s el campo **se vacía** y el estado de la balanza dice *«Lectura congelada (sin peso nuevo)»* o *«Agente no detectado»*; enseguida se pasa a carga manual con el aviso *«Se perdió la conexión con la balanza…»*. Nunca queda a la vista un peso viejo.
+- **Enter (o Agregar) con la balanza activa** agrega la cantidad que muestra el campo, que con la balanza activa es siempre la última lectura fresca. **No agrega** y avisa si: no hay lectura fresca (*«Esperando lectura de la balanza…»*), el peso está **inestable** (*«Peso inestable, espere y presione Enter»*, debajo de Cantidad) o la balanza marca cero.
+- En el POS el peso inestable ya se rechazaba (ver «Peso inestable de la balanza»); lo nuevo es que sin lectura fresca tampoco agrega (antes, si el agente no respondía, aceptaba lo que hubiera en Cantidad).
+- Si vuelve a pasar que el peso no se actualiza, ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md` (2026-11-20). Detalle técnico: `docs/DECISIONS.md` (2026-11-20, «Balanza: lectura vigente»).
+- Verificado el 2026-11-20 en la pantalla real con un agente de balanza simulado (peso que cambia, lectura congelada, agente colgado, peso inestable). PENDIENTE: probarlo con una balanza real.
