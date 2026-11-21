@@ -518,6 +518,30 @@ body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-box-agregar .movimiento-inp
     background-size: 1rem 1rem;
 }
 
+/* Kgs. con ancho propio (2026-11-21): el icono de balanza (padding-right 1.9rem) + el relleno izquierdo se comen ~38 px del campo y la columna de Kgs
+   (5.5 rem con el Stock destino / ventana angosta; 16.67 % de la fila en escritorio) dejaba ~2 digitos y la coma. Igual que Stock/Editar (min-width: 8ch):
+   el campo mide 8 caracteres (ch = digito de SU fuente, la de 1 pt mas en >= 1200 px) + relleno + icono + borde, y la columna se ajusta a el
+   (+ las gutters de Bootstrap, 15 px por lado); Producto es flex: 1 y cede el lugar. Mismo ancho con la balanza activa o no, asi no salta al tocar
+   «Balanza». Solo con el teclado digital cerrado (abierto Cant.Un. + Kgs. + "+" se reparten el renglon) y desde 768 px (en celular se reparten el renglon). */
+@media (min-width: 768px) {
+    body.app-shell .pantalla-trabajo[data-pt="mov"] #movimientoNumericKeypadLayout:not(.teclado-desplegado) .movimiento-producto-row > .movimiento-col-cantidad:has(#txtCantKgs) {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+    }
+
+    body.app-shell .pantalla-trabajo[data-pt="mov"] #movimientoNumericKeypadLayout:not(.teclado-desplegado) #txtCantKgs {
+        width: calc(8ch + 2.4rem + 2px);
+        min-width: 0;
+        max-width: none;
+    }
+
+    /* Con el Stock destino abierto / ventana angosta la columna es angosta: de «Buscar producto (F10)» queda solo la lupa (el atajo sigue en el tooltip). */
+    body.app-shell .pantalla-trabajo[data-pt="mov"] .mov-layout.mov-con-stock #btnBuscarProducto > span {
+        display: none !important;
+    }
+}
+
 /* Foco verde (2026-11-12): borde + aura verdes en cualquier campo de la pantalla (tambien el Kgs. de solo lectura). */
 body.app-shell .pantalla-trabajo[data-pt="mov"] :is(input.form-control, select.form-control, textarea.form-control, .custom-select):focus {
     border-color: var(--foco-verde) !important;

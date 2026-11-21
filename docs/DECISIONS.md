@@ -1,3 +1,12 @@
+## 2026-11-21 - Movimientos: el campo Kgs. mide 8 caracteres más el icono de balanza (como Stock) y «F10» se oculta en el modo angosto
+
+- **Pedido:** con la balanza activa el Kgs. de Movimientos/Editar mostraba solo 2 dígitos y la coma (captura en ventana angosta). Stock/Editar sí se ve completo; aplicar ahí lo mismo y, si hace falta, esconder «F10» dejando la lupa.
+- **Causa:** el icono de balanza reserva `padding-right: 1.9rem` (+ `.5rem` a la izquierda) y la columna de Kgs. medía 5.5 rem con `.mov-con-stock` (o 16.67 % de la fila) **con las gutters de Bootstrap de 15 px por lado**: quedaban ~20 px de texto. Stock usa una grilla sin gutters y `min-width: 8ch`.
+- **Qué se decidió:** `movimientos-compacto.css`: en ≥768 px y con el teclado digital cerrado, `#txtCantKgs` mide `calc(8ch + 2.4rem + 2px)` y su columna se ajusta a él (`flex: 0 0 auto`); mismo ancho con la balanza activa o no. Producto ya era `flex: 1` y cede el lugar. Con `.mov-con-stock` (Stock destino / ventana angosta) el botón de buscar muestra solo la lupa. `Movimientos/Editar.cshtml`: el umbral de la container query que baja *Código* a su renglón sube de 36 a 39 rem (Kgs. creció ~3.2 rem).
+- **Descartado:** tocar Stock y Elaborados (el usuario pidió solo Movimientos); pasar Movimientos a una grilla como Stock (más cambios y riesgo en los tres modos de la fila); `ch` en la columna en vez de en el input (la columna usa la fuente del cuerpo, más grande que la del campo).
+- **Verificado (2026-11-21, navegador, usuario de prueba ya borrado):** ventana angosta real (900 px, `modo-ventana`): Kgs. 109 px con 68.6 px de texto (8 caracteres en negrita miden 63.7) contra 38.6 px antes; `8888,888` entra sin desborde junto al icono; solo la lupa en Buscar; Producto 542 px. Con `.mov-con-stock` a 1366: Producto 250 → 219 px. En escritorio sin stock el Kgs. ya medía ~109 px (sin cambio práctico). Con el teclado digital abierto y en celular (<768 px) no se toca.
+- **Archivos:** `WebCore/wwwroot/Content/css/movimientos-compacto.css`, `WebCore/Views/Movimientos/Editar.cshtml`; manual `Movimientos.Editar.md`.
+
 ## 2026-11-21 (d) - Pantalla dividida: F5 / Ctrl+R con cambios sin guardar pasan por el aviso de la app (capa 1 contra la recarga accidental)
 
 - **Pedido:** evitar que un F5 + Enter sin querer recargue la pantalla dividida y pierda lo cargado en los paneles (altas y ediciones).

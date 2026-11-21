@@ -487,7 +487,8 @@
     .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-producto { flex: 1 1 10rem; }
     .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-cantidad { flex: 0 0 5.5rem; }
     .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-btn-add { width: auto; }
-    @@container (max-width: 36rem) {
+    /* 2026-11-21: 36rem -> 39rem; Kgs. paso de 5.5 rem a ~8.7 rem (8 caracteres + icono de balanza, movimientos-compacto.css), el umbral sube lo mismo para que Producto conserve su lugar. */
+    @@container (max-width: 39rem) {
         .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row { flex-wrap: wrap; }
         .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo { flex: 0 0 100%; }
         .mov-layout.mov-con-stock #movimientoNumericKeypadLayout .movimiento-producto-row > .movimiento-col-codigo > .form-group { max-width: 11rem; }

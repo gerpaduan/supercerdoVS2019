@@ -8,6 +8,11 @@
 - **Pendiente:** el alta de **usuarios** (Asistente) no viaja; **Compras** no tiene aviso de documento abierto; no probado: cierre real de una ventana independiente.
 - **Archivos:** `WebCore/wwwroot/Scripts/app/documento-abierto.js`, `pantalla-dividida.js`, `compras.js`; `WebCore/Views/Compras/Editar.cshtml`, `Personas/Editar.cshtml`, `Productos/AddOrEdit.cshtml`, `PantallaDividida/Index.cshtml`; tests `WebCore.Tests/js/documento-abierto-formulario.test.js`, `documento-abierto-aviso.test.js`; manual `PantallaDividida.Index.md`, `Movimientos.Editar.md`, `Stock.Editar.md`, `Elaborados.Carga.md`, `Elaborados.EditarIngresoRapido.md`.
 
+## 2026-11-21 - Movimientos: Kgs. con lugar para 8 caracteres + icono de balanza, y solo la lupa en el modo angosto
+
+- **Cambio:** en Movimientos/Editar el campo **Kgs.** ya no queda en 2 dígitos con la balanza activa: mide 8 caracteres más el icono (como Cantidad en Stock) y **Producto** se achica. Con el stock al lado o en ventana angosta, el botón de buscar producto muestra solo la lupa. Verificado en el navegador (ventana angosta, 1366 y 1920 px). Detalle: `docs/DECISIONS.md` (2026-11-21, «Movimientos: el campo Kgs. mide 8 caracteres...»).
+- **Archivos:** `WebCore/wwwroot/Content/css/movimientos-compacto.css`, `WebCore/Views/Movimientos/Editar.cshtml`; manual `Movimientos.Editar.md`.
+
 ## 2026-11-20 (k-n) - Pantalla dividida: varios módulos lado a lado, ventana independiente por panel y seguir con lo cargado
 
 - **Cambio:** pantalla nueva **Pantalla dividida** (menú lateral, primera entrada, y botón **Dividir pantalla** en la barra superior de todas las pantallas): hasta 6 paneles con la pantalla real de cada módulo, que se dividen a lo ancho o a lo alto, con divisores que se arrastran, maximizar, atajos «3 columnas / 4 en cuadro» y la última distribución recordada en la PC. Cada panel se puede **pasar a una ventana independiente** (el panel queda con «Ir a la pantalla independiente» / «Traer de vuelta al panel») y **Cerrar pantalla dividida** (con un solo panel) muestra esa pantalla entera. Una carga nueva de Elaborados, Elaborados rápido, Movimientos o Stock **sigue con lo cargado** en cada paso, sin «Salir sin guardar». El operador autorizado de un módulo vive mientras su pantalla siga abierta en algún panel; el POS no se abre en un panel.
