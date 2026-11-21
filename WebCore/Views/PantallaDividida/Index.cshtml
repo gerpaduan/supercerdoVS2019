@@ -60,7 +60,8 @@
 <div class="container-fluid pd-pagina" id="pdPagina"
      data-usuario="@idUsuario"
      data-base="@Url.Content("~/")"
-     data-url-liberar="@Url.Action("LiberarPermisos", "PantallaDividida")">
+     data-url-liberar="@Url.Action("LiberarPermisos", "PantallaDividida")"
+     data-url-inicio="@Url.Action("Index", "Home")">
     @* Token antiforgery propio: el de _Layout solo existe para administradores. *@
     <div id="pdAntiForgery" style="display:none;">@Html.AntiForgeryToken()</div>
 
@@ -81,6 +82,12 @@
             <button type="button" class="btn btn-outline-secondary pd-cerrar-todo" id="pdCerrar" aria-disabled="true"
                     title="Cerrá o juntá los paneles hasta que quede uno solo con una pantalla">
                 <i class="fas fa-compress-arrows-alt" aria-hidden="true"></i> Cerrar pantalla dividida
+            </button>
+            @* Pasa TODA la distribucion (todos los paneles y sus tamaños) a una ventana independiente sin menu ni barra; esta pestaña vuelve a Inicio
+               (pantalla-dividida.js, independizarTodo). Se oculta dentro de esa ventana. *@
+            <button type="button" class="btn btn-outline-secondary" id="pdIndependizar"
+                    title="Pasa toda la pantalla dividida, con todos sus paneles, a una ventana independiente">
+                <i class="fas fa-external-link-alt" aria-hidden="true"></i> Pasar a ventana independiente
             </button>
             <span class="pd-ayuda">Dividí cada panel con los botones de su cabecera y elegí qué abrir desde el menú lateral.</span>
             <span class="pd-contador" id="pdContador" aria-live="polite"></span>

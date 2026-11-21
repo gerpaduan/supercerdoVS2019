@@ -1,5 +1,6 @@
 ﻿@model WebCore.Models.PersonaEditVm
 @using System.Linq
+@inject WebCore.Services.IUsuarioSesionService Sesion
 
 @{
     // Una persona existente abre en solo lectura (hay que tocar "Modificar"), por eso el titulo es "Ver persona".
@@ -620,6 +621,17 @@
                 });
             }
 
+            // Pantalla dividida / ventana independiente: una persona NUEVA a medio cargar viaja sin el cartel «Salir sin guardar»
+            // (documento-abierto.js, registrarTraspasoFormulario; docs/DECISIONS.md 2026-11-21). Una persona existente no viaja: se recarga del servidor.
+            if (window.DocumentoAbierto && typeof window.DocumentoAbierto.registrarTraspasoFormulario === "function") {
+                window.DocumentoAbierto.registrarTraspasoFormulario({
+                    modulo: "personas-editar",
+                    idUsuario: @Sesion.UsuarioActual.Id,
+                    formSelector: "#formPersona",
+                    esAlta: function () { return !@(Model.EsEdicion ? "true" : "false"); }
+                });
+            }
+
             document.addEventListener("click", function (event) {
                 var link = event.target.closest ? event.target.closest(".persona-page a[href]") : null;
                 if (!link) return;
@@ -661,4 +673,5 @@
        puesto directo en el body (ver docs/DECISIONS.md, batch de "advertencia de salir sin
        guardar", 2026-09-10). *@
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/documento-abierto.js")" asp-append-version="true"></script>
 }

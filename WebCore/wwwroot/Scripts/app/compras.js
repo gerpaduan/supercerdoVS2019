@@ -2427,6 +2427,50 @@
 
     window.ComprasUI.syncPrimaryAction = syncPrimaryAction;
 
+    // Pantalla dividida / ventana independiente (2026-11-21, docs/DECISIONS.md "Pantalla dividida: «Dividir pantalla» deja un panel vacío..."):
+    // una compra NUEVA a medio cargar viaja a otro documento sin el cartel «Salir sin guardar». Reusa buildDraft/applyDraft (el mismo borrador de
+    // siempre) y el clientId del borrador en servidor, asi hay UN solo borrador a traves del viaje (igual que Movimientos/Stock/Elaborados).
+    // Se llama DESPUES de EditPageGuard.init: asi lo aplicado cuenta como cambio sin guardar en la pantalla de destino. Solo pantalla completa
+    // (el modal del POS y el de Cta. Cte. no pasan por aca). Una compra existente no viaja: se recarga del servidor.
+    window.ComprasUI.registrarTraspaso = function (formSelector, idUsuario) {
+        var $form = $(formSelector || '#formCompra');
+        if (!$form.length || !window.DocumentoAbierto || typeof window.DocumentoAbierto.registrarTraspaso !== 'function') return;
+        var state = getState($form);
+        if (!state) return;
+
+        window.DocumentoAbierto.registrarTraspaso({
+            modulo: 'compras-editar',
+            idUsuario: idUsuario,
+            esAlta: function () { return !state.config.esEdicion; },
+            obtenerPaquete: function () {
+                var conServidor = state.borradorGenerico && state.borradorGenerico.estaHabilitado();
+                return { draft: buildDraft($form), clientId: conServidor ? state.borradorGenerico.getClientId() : null };
+            },
+            aplicarPaquete: function (paquete) {
+                if (!paquete || !paquete.draft) throw new Error('El paquete de la compra no trae borrador.');
+                // Se toma el clientId del borrador en servidor: la pagina de origen se va y no deben quedar dos borradores.
+                if (paquete.clientId && state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
+                    state.borradorGenerico.adoptarClientId(paquete.clientId);
+                }
+                applyDraft($form, paquete.draft);
+                $form.closest('.compra-page').find('#compraDraftBanner').addClass('d-none');
+            },
+            // Esta pagina entrego su trabajo: se frena todo lo que guarda y se deja salir sin el aviso del navegador.
+            alCeder: function () {
+                window.clearTimeout(state.draftTimer);
+                if (state.borradorGenerico) {
+                    state.borradorGenerico.soltar();   // sin avisar al servidor: la pagina de destino retoma el mismo borrador
+                } else {
+                    clearDraft($form);   // el borrador local ya lo guarda la de destino en su clave: este quedaria como uno viejo que ofrecer
+                }
+                var api = $form.data('editPageGuardApi');
+                if (api && typeof api.allowNavigation === 'function') api.allowNavigation();
+                if (typeof window.desactivarProteccionSalida === 'function') window.desactivarProteccionSalida();
+                else window.__protegerSalida = false;
+            }
+        });
+    };
+
     // Descarte explicito de la compra en curso del POS ("Descartar" de #modalCompraPOS): corta el latido/guardado del borrador y borra el
     // respaldo local, sin guardar nada. No toca el borrador del servidor: queda con el ciclo normal (sin latido pasa a "interrumpido").
     // TODO(claude): definir si descartar desde el POS debe cerrar tambien el borrador en el servidor (hoy descartar pide motivo y avisa al

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-11-20
+revisada: 2026-11-21
 alias: Stock.Nuevo
 ---
 ## Para qué sirve
@@ -52,14 +52,15 @@ El botón rojo **Eliminar** aparece al abrir un movimiento **ya guardado** (ingr
 
 ## Si el movimiento ya está abierto en otra pestaña (2026-11-12)
 Si en esta computadora y en este navegador ya tenés un movimiento de stock abierto en otra pestaña o ventana, la pantalla te avisa antes de dejarte pisar lo que cargaste.
-- **Nuevo movimiento:** solo avisa si el otro nuevo es de **la misma acción** (por ejemplo, dos «Egreso Stock»). Un «Egreso Stock» y un «Cierre Stock» abiertos a la vez no se avisan entre sí. Si **cambiás la acción** dentro de la pantalla, se vuelve a chequear con la acción nueva. El aviso lista **cada movimiento abierto**. Cada fila muestra **qué es** (nuevo o edición), **dónde está** (pestaña del navegador, ventana independiente, app instalada o **dentro del POS**, menú Cargas, a la vista o minimizada), **desde qué hora** (y hace cuánto) y **qué tiene cargado** (los primeros productos con su cantidad; el resto, «y N más»). Por cada uno: **Traer este** (solo si tiene algo cargado: el trabajo pasa a esta pestaña); además podés **Cargar otro nuevo aparte** o **Volver al listado**.
-- **Señalar:** esa pestaña o ventana hace titilar su título unos segundos y muestra una cinta amarilla, para que la encuentres en la barra de pestañas o de tareas (el navegador no permite traerla al frente desde acá).
-- **Cerrar** (solo en un nuevo **vacío**): esa pestaña vuelve al listado y, si era la única, el aviso desaparece y seguís acá. Si en el medio le cargaron algo, no se cierra.
-- Una carga abierta **dentro del POS** no se puede señalar ni cerrar desde acá: se vuelve a ella con el botón amarillo «… en curso» de la barra del POS.
+- **Nuevo movimiento:** solo avisa si el otro nuevo es de **la misma acción** (por ejemplo, dos «Egreso Stock»). Un «Egreso Stock» y un «Cierre Stock» abiertos a la vez no se avisan entre sí. Si **cambiás la acción** dentro de la pantalla, se vuelve a chequear con la acción nueva. El aviso lista **cada movimiento abierto**. Cada fila muestra **qué es** (nuevo o edición), **dónde está** (pestaña del navegador, ventana independiente, app instalada o **dentro del POS**, menú Cargas, a la vista o minimizada), **desde qué hora** (y hace cuánto) y **qué tiene cargado** (los primeros productos con su cantidad; el resto, «y N más»).
+- **Seguir con ese acá** (2026-11-21): si el otro nuevo tiene algo cargado, el aviso te deja traer lo cargado a esta pantalla y **la otra se cierra sola**: si estaba en un panel de la pantalla dividida se cierra el panel, si era una ventana independiente se cierra la ventana, y si era una pestaña del navegador (que el navegador no deja cerrar desde acá) vuelve al listado. Con varios abiertos, cada fila tiene su botón **Seguir con este acá**.
+- **Empezar uno nuevo** deja todo como está: este es independiente de los otros. También podés **Volver al listado**.
+- Si el otro nuevo está **vacío** (sin líneas), se **cierra solo, sin preguntar**, y ves el aviso «Cerré el movimiento de stock nuevo vacío que tenías abierto». Ojo: si solo tenía datos de cabecera sin líneas, eso se pierde.
+- Una carga abierta **dentro del POS** no se cierra sola: se vuelve a ella con el botón amarillo «… en curso» de la barra del POS.
 - Si abrís la pantalla con **Abrir en ventana**, la ventana nueva no te avisa de la pestaña de origen (que vuelve al listado). Un F5 de la ventana vuelve a chequear como siempre.
 - Si el aviso aparece y **parece que no hay nada abierto**, casi siempre es una carga minimizada del POS, una ventana o app instalada que no estás mirando, o una pestaña que el navegador restauró al abrirse; la fila te dice cuál. Una fila **«Una pestaña que no responde»** es una pestaña que el navegador tiene suspendida: buscala entre tus pestañas.
 - **Modificar uno ya guardado:** mirarlo en dos pestañas no avisa; el aviso aparece al tocar **Modificar** si otra pestaña ya lo está modificando (**Traer la modificación a esta pestaña**, **Cargar uno nuevo aparte** o **Volver al listado**). Si cerrás el aviso, queda en solo lectura.
-- La pestaña que entrega el trabajo **no se cierra sola**: queda tapada con un botón **Ir al listado**. Solo detecta pestañas del **mismo navegador** de esta computadora.
+- Una **pestaña normal** que entrega el trabajo no se puede cerrar desde la pantalla (el navegador no lo permite): vuelve al listado de stock. Solo detecta pestañas del **mismo navegador** de esta computadora.
 
 ## Resto de la pantalla
 PENDIENTE: documentar los datos del encabezado, la carga de productos (código, balanza, teclado numérico), Productos no cargados, Acumulados, Ver porcentaje de cortes y Generar ajuste, Vincular compra, borradores y las reglas por tipo de movimiento (no verificado contra el código en esta revisión).

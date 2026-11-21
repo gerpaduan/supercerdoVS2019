@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-11-20
+revisada: 2026-11-21
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -127,14 +127,15 @@ Pensado para ver **20 líneas o más sin bajar con la rueda**: la lista ocupa to
 
 ## Si el movimiento ya está abierto en otra pestaña (2026-11-12)
 Si en esta computadora y en este navegador ya tenés un movimiento abierto en otra pestaña o ventana, la pantalla te avisa antes de dejarte pisar lo que cargaste.
-- **Nuevo movimiento:** podés tener varios nuevos a la vez, pero siempre te avisa. El aviso lista **cada movimiento abierto**. Cada fila muestra **qué es** (nuevo o edición), **dónde está** (pestaña del navegador, ventana independiente, app instalada o **dentro del POS**, menú Cargas, a la vista o minimizada), **desde qué hora** (y hace cuánto) y **qué tiene cargado** (los primeros productos con su cantidad; el resto, «y N más»; desde 2026-11-19 ese detalle se ve **más grande y en negrita, en un recuadro azul**, igual en Stock, Elaborados y las demás pantallas con este aviso). Por cada uno con algo cargado hay **Traer este** (lo cargado pasa acá y la otra queda tapada con el cartel «Lo que tenías cargado pasó a otra pestaña»); además podés **Cargar otro nuevo aparte** (este es independiente) o **Volver al listado**.
-- **Señalar:** esa pestaña o ventana hace titilar su título unos segundos y muestra una cinta amarilla, para que la encuentres en la barra de pestañas o de tareas (el navegador no permite traerla al frente desde acá).
-- **Cerrar** (solo en un nuevo **vacío**): esa pestaña vuelve al listado y, si era la única, el aviso desaparece y seguís acá. Si en el medio le cargaron algo, no se cierra.
-- Una carga abierta **dentro del POS** no se puede señalar ni cerrar desde acá: se vuelve a ella con el botón amarillo «… en curso» de la barra del POS.
+- **Nuevo movimiento:** podés tener varios nuevos a la vez, pero siempre te avisa. El aviso lista **cada movimiento abierto**. Cada fila muestra **qué es** (nuevo o edición), **dónde está** (pestaña del navegador, ventana independiente, app instalada o **dentro del POS**, menú Cargas, a la vista o minimizada), **desde qué hora** (y hace cuánto) y **qué tiene cargado** (los primeros productos con su cantidad; el resto, «y N más»; desde 2026-11-19 ese detalle se ve **más grande y en negrita, en un recuadro azul**, igual en Stock, Elaborados y las demás pantallas con este aviso).
+- **Seguir con ese acá** (2026-11-21): si el otro nuevo tiene algo cargado, el aviso te deja traer lo cargado a esta pantalla y **la otra se cierra sola**: si estaba en un panel de la pantalla dividida se cierra el panel, si era una ventana independiente se cierra la ventana, y si era una pestaña del navegador (que el navegador no deja cerrar desde acá) vuelve al listado. Con varios abiertos, cada fila tiene su botón **Seguir con este acá**.
+- **Empezar uno nuevo** deja todo como está: este es independiente de los otros. También podés **Volver al listado**.
+- Si el otro nuevo está **vacío** (sin líneas), se **cierra solo, sin preguntar**, y ves el aviso «Cerré el movimiento nuevo vacío que tenías abierto». Ojo: si solo tenía origen, destino u observaciones sin líneas, eso se pierde.
+- Una carga abierta **dentro del POS** no se cierra sola: se vuelve a ella con el botón amarillo «… en curso» de la barra del POS.
 - Si abrís la pantalla con **Abrir en ventana**, la ventana nueva no te avisa de la pestaña de origen (que vuelve al listado). Un F5 de la ventana vuelve a chequear como siempre.
 - Si el aviso aparece y **parece que no hay nada abierto**, casi siempre es una carga minimizada del POS, una ventana o app instalada que no estás mirando, o una pestaña que el navegador restauró al abrirse; la fila te dice cuál.
 - **Modificar uno ya guardado:** mirarlo en dos pestañas no avisa; el aviso aparece al tocar **Modificar** si otra pestaña ya lo está modificando. Elegís **Traer la modificación a esta pestaña**, **Cargar uno nuevo aparte** (abre un movimiento nuevo) o **Volver al listado**. Si cerrás el aviso, esta pestaña queda en solo lectura.
-- La pestaña que entrega el trabajo **no se cierra sola** (el navegador no lo permite): queda tapada con un botón **Ir al listado**.
+- Una **pestaña normal** que entrega el trabajo no se puede cerrar desde la pantalla (el navegador no lo permite): vuelve al listado de movimientos.
 - Si dice que hay una pestaña que **no responde**, el navegador la tiene suspendida: encontrala entre tus pestañas y volvé a ella.
 - **Falsos avisos de «no responde» (corregido 2026-11-19):** antes podía aparecer ese aviso al abrir, cerrar y volver a abrir un movimiento nuevo, sin que hubiera otra pestaña. Ahora la pantalla suelta su marca al salir (o al irse al caché de «atrás/adelante») y, si ve una marca sin respuesta, espera hasta 1,5 s y vuelve a comprobar antes de avisar. Si igual aparece con una pestaña realmente suspendida, el aviso sale unos instantes después de abrir la pantalla.
 - Solo detecta pestañas del **mismo navegador** de esta computadora; no avisa si otro usuario u otra computadora tiene el mismo movimiento abierto (**PENDIENTE**, no implementado).

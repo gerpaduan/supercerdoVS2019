@@ -158,6 +158,29 @@
         botonDividir.addEventListener('click', function () { irAPantallaDividida(window.location.pathname + window.location.search, true); });
     }
 
+    // El item «Pantalla dividida» del menu lateral (2026-11-21): estando en una pantalla normal hace lo mismo que el boton de arriba —la pantalla actual
+    // pasa como primer panel, con lo cargado y sin el aviso «Salir sin guardar», y queda un panel vacio al lado para elegir—. Antes navegaba normal
+    // (sin llevar la pantalla) y los enlaces de _Layout.cshtml pedian confirmar la salida. No se toca si: es una pestaña/ventana nueva (Ctrl, Mayus,
+    // Alt, clic del medio), ya estamos en la pantalla dividida, o la pantalla actual no se abre en un panel (Inicio, POS, login): ahi navega normal.
+    var RUTA_NO_DIVIDIBLE = /(^|\/)(ventas\/pos|login|logout)(\/|$)/i;
+    var RUTA_INICIO = /(^\/$)|(\/home(\/index)?\/?$)/i;
+    window.addEventListener('click', function (evento) {
+        if (evento.defaultPrevented || evento.button !== 0 || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return;
+        if (window.PantallaDividida || !document.getElementById('btnDividirPantalla')) return;   // ya en la pantalla dividida, o sin el boton de dividir
+        var enlace = evento.target && evento.target.closest ? evento.target.closest('a[href]') : null;
+        if (!enlace || !menuLateral.contains(enlace)) return;
+        var urlDividida = menuLateral.getAttribute('data-pantalla-dividida-url');
+        if (!urlDividida) return;
+        var destino;
+        try { destino = new URL(urlDividida, window.location.origin).pathname.toLowerCase(); } catch (err) { return; }
+        if (enlace.pathname.toLowerCase() !== destino) return;
+        var rutaActual = window.location.pathname;
+        if (RUTA_NO_DIVIDIBLE.test(rutaActual) || RUTA_INICIO.test(rutaActual)) return;
+        evento.preventDefault();
+        evento.stopImmediatePropagation();   // antes que los enlaces de _Layout.cshtml, que pedirian confirmar la salida
+        irAPantallaDividida(rutaActual + window.location.search, true);
+    }, true);
+
     function agregarOpcionesPantallaDividida(enlace) {
         var urlDividida = menuLateral.getAttribute('data-pantalla-dividida-url');
         if (!urlDividida || enlace.hasAttribute('data-pos-unico')) return;

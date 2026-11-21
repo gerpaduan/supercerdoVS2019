@@ -1,6 +1,7 @@
 ﻿@model WebCore.Models.CorteUpsertVM
 @using System.Collections.Generic
 @using Microsoft.AspNetCore.Mvc.Rendering
+@inject WebCore.Services.IUsuarioSesionService Sesion
 
 @{
     bool esEdicion = Model != null && Model.IdCorte > 0;
@@ -819,6 +820,7 @@
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/documento-abierto.js")" asp-append-version="true"></script>
     <script>
 (function () {
     // =========================
@@ -2746,6 +2748,63 @@
             modifyButtonSelector: "#btnHabilitarEdicionProducto",
             saveButtonSelector: "#btnGuardarProducto"
         });
+    }
+
+    // Pantalla dividida / ventana independiente (2026-11-21, docs/DECISIONS.md "Pantalla dividida: «Dividir pantalla» deja un panel vacío..."):
+    // un producto NUEVO a medio cargar viaja a otro documento sin el cartel «Salir sin guardar». No sirve copiar el form generico: la marca y
+    // el corte maestro viven en inputs hidden + un nombre visible sin name, y el modo de corte muestra/oculta cajas. Por eso se lista cada campo
+    // por selector. Los valores se ponen SIN disparar eventos (el 'input' del codigo lanzaria el autocompletado del catalogo global y pisaria
+    // lo cargado) y despues se llama a los refrescos propios de la pantalla. Va DESPUES de EditPageGuard.init: lo aplicado cuenta como
+    // cambio sin guardar. No aplica al modo embebido (alta desde Compras, en un iframe de modal) ni a un producto existente.
+    @if (!embed)
+    {
+    <text>
+    const CAMPOS_TRASPASO = [
+        { sel: "#Codigo" }, { sel: "#CorteDesc" }, { sel: "#PrecioKg" }, { sel: "#ddlTipo" }, { sel: "#ddlIva" },
+        { sel: "#txtMarcaNombre" }, { sel: "input[name='IdMarca']" },
+        { sel: "#ddlModo" }, { sel: "#txtCorteMaestroNombre" }, { sel: "input[name='IdCorteMaestro']" },
+        { sel: "#txtPorcentaje" }, { sel: "#txtDesperdicio" }, { sel: "#txtPresentacionUnidades" },
+        { sel: "input[name='Porcentaje']" }, { sel: "input[name='PorcentajeHueso']" }, { sel: "input[name='AlicuotaIva']" },
+        { sel: "input[name='PuntoStock']" }, { sel: "input[name='Promedio']" },
+        { sel: "#swIndependiente" }, { sel: "#swPesable" }, { sel: "#swHabilitado" }, { sel: "#swRapido" }, { sel: "#swCierre" },
+        { sel: "#swCargaContinua" }
+    ];
+    if (window.DocumentoAbierto && typeof window.DocumentoAbierto.registrarTraspaso === "function") {
+        window.DocumentoAbierto.registrarTraspaso({
+            modulo: "productos-addoredit",
+            idUsuario: @Sesion.UsuarioActual.Id,
+            esAlta: function () { return !esEdicion; },
+            obtenerPaquete: function () {
+                return CAMPOS_TRASPASO.map(function (campo) {
+                    const el = $frm.find(campo.sel).first()[0];
+                    if (!el) return { sel: campo.sel, ausente: true };
+                    return el.type === "checkbox"
+                        ? { sel: campo.sel, marcado: !!el.checked }
+                        : { sel: campo.sel, valor: el.value };
+                });
+            },
+            aplicarPaquete: function (paquete) {
+                let cambios = 0;
+                (paquete || []).forEach(function (guardado) {
+                    if (!guardado || guardado.ausente || !CAMPOS_TRASPASO.some(function (c) { return c.sel === guardado.sel; })) return;
+                    const el = $frm.find(guardado.sel).first()[0];
+                    if (!el || el.disabled) return;
+                    if (el.type === "checkbox") {
+                        if (el.checked !== !!guardado.marcado) { el.checked = !!guardado.marcado; cambios++; }
+                    } else if (el.value !== String(guardado.valor)) {
+                        el.value = String(guardado.valor);
+                        cambios++;
+                    }
+                });
+                // Refrescos propios de la pantalla (sin tocar valores): cajas segun el modo de corte, aviso de cierre de stock y carga continua.
+                aplicarModo();
+                actualizarAvisoCierreStockIndependiente();
+                actualizarUiCargaContinua();
+                return cambios;
+            }
+        });
+    }
+    </text>
     }
 
     if (window.productosEditReadonly && esEdicion && cargaContinuaInicial && obtenerModoEdicionActivo()) {

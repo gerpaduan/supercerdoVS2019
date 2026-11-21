@@ -872,6 +872,7 @@
             <script src="@Url.Content("~/Scripts/app/money-input-mask.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/documento-abierto.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/borrador-generico.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/orden-tabla.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/sin-foco-botones.js")" asp-append-version="true"></script>
@@ -951,6 +952,12 @@
                             modifyButtonSelector: "#btnHabilitarEdicionCompra",
                             saveButtonSelector: "#btnGuardarCompra"
                         });
+                    }
+
+                    // Una compra NUEVA a medio cargar viaja a la pantalla dividida / ventana independiente sin el cartel «Salir sin guardar».
+                    // Va DESPUES de EditPageGuard.init para que lo aplicado cuente como cambio sin guardar (compras.js, registrarTraspaso).
+                    if (window.ComprasUI && typeof window.ComprasUI.registrarTraspaso === "function") {
+                        window.ComprasUI.registrarTraspaso("#formCompra", @Sesion.UsuarioActual.Id);
                     }
                 })();
             </script>

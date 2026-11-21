@@ -277,3 +277,40 @@ test('deserializar rechaza un nombre de ventana ajeno o una ventana sin url', ()
     const sinUrl = JSON.stringify({ version: 1, raiz: { tipo: 'panel', id: 1, url: null, ventana: VENTANA } });
     assert.equal(A.deserializar(sinUrl, aceptaTodo).ok, false);
 });
+
+// ---- mapearUrls (2026-11-21, pasar toda la pantalla dividida a una ventana independiente) ----
+
+test('mapearUrls reemplaza la url de cada panel con pantalla y deja los vacios y la forma del arbol', () => {
+    let r = A.dividir(A.crearPanel(1, '/Movimientos/Nuevo'), 1, 'fila', 2);   // 1 con pantalla, 2 vacio
+    r = A.dividir(r.raiz, 2, 'columna', 3);
+    const raiz = A.cargarUrl(r.raiz, 3, '/Stock/Editar');
+    const nueva = A.mapearUrls(raiz, (p) => p.url + '?traspasoDoc=k' + p.id);
+    const paneles = A.listarPaneles(nueva);
+    assert.deepEqual(plano(paneles.map((p) => [p.id, p.url])), [[1, '/Movimientos/Nuevo?traspasoDoc=k1'], [2, null], [3, '/Stock/Editar?traspasoDoc=k3']]);
+    assert.equal(nueva.direccion, raiz.direccion);
+    assert.equal(nueva.proporcion, raiz.proporcion);
+});
+
+test('mapearUrls no modifica el arbol original', () => {
+    const raiz = A.dividir(A.crearPanel(1, '/Stock'), 1, 'fila', 2).raiz;
+    const antes = JSON.stringify(raiz);
+    A.mapearUrls(raiz, () => '/Otra');
+    assert.equal(JSON.stringify(raiz), antes);
+});
+
+test('mapearUrls: si urlDe no devuelve texto el panel conserva su url, y conserva la marca de ventana independiente', () => {
+    const raiz = A.independizar(A.dividir(A.crearPanel(1, '/Stock'), 1, 'fila', 2).raiz, 1, 'carnisys-trabajo-menu-stock');
+    const nueva = A.mapearUrls(raiz, () => undefined);
+    const p1 = A.buscarPanel(nueva, 1);
+    assert.equal(p1.url, '/Stock');
+    assert.equal(p1.ventana, 'carnisys-trabajo-menu-stock');
+});
+
+test('un arbol con urls mapeadas se serializa y se lee de vuelta (el destino lo valida igual que lo guardado)', () => {
+    const raiz = A.dividir(A.crearPanel(1, '/Movimientos/Nuevo'), 1, 'fila', 2).raiz;
+    const texto = A.serializar(A.mapearUrls(raiz, (p) => p.url + '?traspasoDoc=carnisys-traspaso-doc-1-abc'), 2);
+    const leido = A.deserializar(texto, soloRelativas);
+    assert.equal(leido.ok, true);
+    assert.equal(A.buscarPanel(leido.raiz, 1).url, '/Movimientos/Nuevo?traspasoDoc=carnisys-traspaso-doc-1-abc');
+    assert.equal(leido.activo, 2);
+});

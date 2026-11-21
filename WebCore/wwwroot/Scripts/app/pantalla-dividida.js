@@ -37,11 +37,20 @@
     var PREFIJO_FRAME = 'carnisys-trabajo-panel-';
     var PREFIJO_VENTANA_PANTALLA = 'carnisys-trabajo-menu-';   // mismo que menu-ventana-independiente.js: una ventana por destino
     var SUFIJO_TITULO = ' - CarniSys';
-    var CLAVE_GUARDADO = 'carnisys-pantalla-dividida-v1-' + (pagina.getAttribute('data-usuario') || '0');
+    // Pasar TODA la pantalla dividida a una ventana independiente (2026-11-21): una sola ventana por usuario (como una pantalla = una ventana), con
+    // nombre de la familia carnisys-trabajo-* (activa html.modo-ventana: sin menu ni barra) y su PROPIA distribucion guardada, para que la de la
+    // pestaña y la de la ventana no se pisen.
+    var NOMBRE_VENTANA_DIVIDIDA = 'carnisys-trabajo-pantalla-dividida';
+    var EN_VENTANA_DIVIDIDA = window.name === NOMBRE_VENTANA_DIVIDIDA;
+    var PARAM_DESDE_LAYOUT = 'desdeLayout';                  // ?desdeLayout=<clave>: la distribucion que viene de la pestaña (una sola vez)
+    var PREFIJO_LAYOUT_TRASPASO = 'carnisys-pd-layout-';     // clave temporal en localStorage con esa distribucion
+    var VIGENCIA_LAYOUT_MS = 10 * 60 * 1000;                 // una clave sin usar se descarta a los 10 minutos
+    var CLAVE_GUARDADO = 'carnisys-pantalla-dividida-v1-' + (pagina.getAttribute('data-usuario') || '0') + (EN_VENTANA_DIVIDIDA ? '-ventana' : '');
     var PARAM_ABRIR = 'abrir';
 
     var BASE = (pagina.getAttribute('data-base') || '/').replace(/\/+$/, '');   // PathBase sin barra final ("" o "/carnisys")
     var URL_LIBERAR = pagina.getAttribute('data-url-liberar') || '';
+    var URL_INICIO = pagina.getAttribute('data-url-inicio') || (BASE + '/');   // dashboard: destino al cerrar con un unico panel vacio
 
     // Pantallas que NO se abren en un panel: el POS (usa su propia ventana y su heartbeat), esta misma pantalla (recursion), y el login/salir.
     var RUTAS_NO_PERMITIDAS = [/^\/ventas\/pos(\/|$)/i, /^\/pantalladividida(\/|$)/i, /^\/login(\/|$)/i, /^\/logout(\/|$)/i];
@@ -51,6 +60,8 @@
     var raiz = null;                // arbol de paneles
     var activo = null;              // id del panel activo
     var maximizado = null;          // id del panel maximizado, o null
+    var activoFijoHasta = 0;        // hasta cuando (ms) el foco de un iframe no cambia el panel activo (ver dejarPanelVacioParaElegir)
+    var ACTIVO_FIJO_MS = 6000;      // ventana en que las pantallas recien cargadas pueden robar el foco al arrancar
     var paneles = {};               // id -> { el, iframe, titulo, icono, vacio, aviso, urlActual }
     var divisores = {};             // ruta -> { el, info }
     var ventanas = {};              // nombre -> Window de cada ventana independiente abierta desde esta pantalla (la referencia se pierde al recargarla)
@@ -137,6 +148,44 @@
 
     function hayCambiosEnAlgunPanel() {
         return Arbol.listarPaneles(raiz).some(function (p) { return tieneCambiosSinGuardar(paneles[p.id]); });
+    }
+
+    // ---------- recarga accidental (F5 / Ctrl+R) ----------
+    // 2026-11-21 (docs/DECISIONS.md): con una carga o una edicion sin guardar en algun panel, F5 / Ctrl+R / Ctrl+F5 / Ctrl+Mayus+R NO recargan: se cancela la
+    // recarga y se muestra el aviso de la app («Salir sin guardar») con «No, quedarme» como opcion por omision, asi un F5 + Enter accidental ya no
+    // pierde lo cargado (el cartel nativo del navegador tiene «Recargar» por omision y no se puede cambiar). Se escucha en esta pagina y, al cargar cada
+    // pantalla, tambien dentro de su panel (el foco suele estar en el iframe). No se puede interceptar el boton de recargar del navegador, la barra
+    // de direcciones ni cerrar la pestaña: ahi sigue el cartel nativo.
+    function esTeclaDeRecarga(ev) {
+        var tecla = String(ev.key || '').toLowerCase();
+        return tecla === 'f5' || ((ev.ctrlKey || ev.metaKey) && tecla === 'r');
+    }
+
+    // Deja de proteger la salida en cada panel: el usuario ya confirmo, y su cartel nativo preguntaria de nuevo al recargar.
+    function soltarProteccionDePaneles() {
+        Arbol.listarPaneles(raiz).forEach(function (n) {
+            var panel = paneles[n.id];
+            try { if (panel) panel.iframe.contentWindow.desactivarProteccionSalida(); } catch (e) { /* la pantalla no tiene proteccion de salida */ }
+        });
+    }
+
+    function alTeclaDeRecarga(ev) {
+        if (ev.altKey || !esTeclaDeRecarga(ev) || !iniciado || !hayCambiosEnAlgunPanel()) return;
+        ev.preventDefault();
+        if (ev.repeat || document.querySelector('.swal2-container')) return;   // dejar apretada la tecla no apila avisos
+        confirmarSalida(function () {
+            soltarProteccionDePaneles();
+            window.location.reload();
+        });
+    }
+
+    // «Recargar» y «Atrás» de la cabecera de un panel con cambios sin guardar: mismo aviso de la app en vez del cartel nativo.
+    function conConfirmacionDelPanel(panel, accion) {
+        if (!tieneCambiosSinGuardar(panel)) { accion(); return; }
+        confirmarSalida(function () {
+            try { panel.iframe.contentWindow.desactivarProteccionSalida(); } catch (e) { /* la pantalla no tiene proteccion de salida */ }
+            accion();
+        });
     }
 
     // ---------- catalogo de modulos (menu lateral) ----------
@@ -373,6 +422,7 @@
         try {
             ventana.addEventListener('pointerdown', function () { activar(panel.id); }, true);
             ventana.addEventListener('focus', function () { activar(panel.id); });
+            ventana.addEventListener('keydown', alTeclaDeRecarga, true);   // F5 con el foco dentro del panel (ver «recarga accidental»)
         } catch (e) { /* sin acceso: queda el clic en la cabecera */ }
 
         programarGuardado();
@@ -698,8 +748,16 @@
         else if (accion === 'maximizar') { maximizado = maximizado === id ? null : id; dibujar(); }
         else if (accion === 'independizar') independizarPanel(id);
         else if (panel.enVentana) return;   // Atrás / Recargar no aplican: la pantalla esta en su ventana independiente
-        else if (accion === 'recargar') { try { panel.iframe.contentWindow.location.reload(); } catch (e) { if (panel.urlActual) navegarMarco(panel, panel.urlActual); } }
-        else if (accion === 'atras') { try { panel.iframe.contentWindow.history.back(); } catch (e) { console.warn('Pantalla dividida: no se pudo volver atrás en el panel', id, e); } }
+        else if (accion === 'recargar') {
+            conConfirmacionDelPanel(panel, function () {
+                try { panel.iframe.contentWindow.location.reload(); } catch (e) { if (panel.urlActual) navegarMarco(panel, panel.urlActual); }
+            });
+        }
+        else if (accion === 'atras') {
+            conConfirmacionDelPanel(panel, function () {
+                try { panel.iframe.contentWindow.history.back(); } catch (e) { console.warn('Pantalla dividida: no se pudo volver atrás en el panel', id, e); }
+            });
+        }
     }
 
     function tamanoPx(id) {
@@ -741,6 +799,23 @@
         programarLiberar();
     }
 
+    // Cierra el panel cuya pantalla es `ventana` (su contentWindow), sin pedir confirmacion. Lo usa documento-abierto.js cuando la pantalla de un
+    // panel entrego su trabajo a otra (2026-11-21, «Seguir con ese acá»): ya no guarda nada ni protege la salida. Devuelve true si cerro un panel.
+    function cerrarPanelDeVentana(ventana) {
+        if (!iniciado || !ventana) return false;
+        var ids = Object.keys(paneles);
+        for (var i = 0; i < ids.length; i++) {
+            var panel = paneles[ids[i]];
+            var contenido = null;
+            try { contenido = panel && panel.iframe ? panel.iframe.contentWindow : null; } catch (e) { contenido = null; }
+            if (contenido && contenido === ventana) {
+                cerrarPanel(Number(ids[i]), true);
+                return true;
+            }
+        }
+        return false;
+    }
+
     // Abre una pantalla en un panel nuevo a la derecha (o en el primer panel vacio). Lo usa el clic derecho del menu lateral.
     function abrirEnPanelNuevo(url) {
         if (!iniciado) return;   // pantalla angosta: todavia no hay paneles
@@ -753,6 +828,25 @@
             cargarEnPanel(activo, url);
             return;
         }
+        raiz = resultado.raiz;
+        activo = resultado.nuevoId;
+        maximizado = null;
+        dibujar();
+    }
+
+    // «Dividir pantalla» desde otra pantalla: ademas de cargar la pantalla de origen, queda un panel vacio y activo al costado para elegir con que
+    // compararla (con su lista de modulos y buscador). Si ya hay un panel vacio no se agrega otro; con el maximo de paneles se avisa.
+    function dejarPanelVacioParaElegir() {
+        activoFijoHasta = Date.now() + ACTIVO_FIJO_MS;
+        var hayVacio = Arbol.listarPaneles(raiz).some(function (p) { return !p.url; });
+        if (hayVacio) {
+            // El vacio que ya habia pasa a ser el activo para que el siguiente clic del menu lateral caiga ahi.
+            activo = Arbol.listarPaneles(raiz).filter(function (p) { return !p.url; })[0].id;
+            dibujar();
+            return;
+        }
+        var resultado = Arbol.agregarAlCostado(raiz, Arbol.siguienteId(raiz), null);
+        if (!resultado) { avisar('Ya hay ' + Arbol.MAX_PANELES + ' paneles: cerrá alguno para abrir otra pantalla al lado.', 'info'); return; }
         raiz = resultado.raiz;
         activo = resultado.nuevoId;
         maximizado = null;
@@ -943,7 +1037,9 @@
         var nodo = lista[0];
         var panel = paneles[nodo.id];
         if (nodo.ventana) return { ok: false, motivo: 'La pantalla está en una ventana independiente: traela de vuelta al panel para cerrar la pantalla dividida.' };
-        if (!panel || !panel.urlActual || !panel.aviso.hidden) return { ok: false, motivo: 'El panel está vacío: elegí una pantalla para llevarla al layout.' };
+        // Un unico panel vacio: no hay pantalla que llevar al layout, se cierra yendo al dashboard.
+        if (panel && !panel.urlActual) return { ok: true, url: URL_INICIO, panel: panel, vacio: true };
+        if (!panel || !panel.aviso.hidden) return { ok: false, motivo: 'El panel tiene un aviso: elegí otra pantalla para llevarla al layout.' };
         return { ok: true, url: panel.urlActual, panel: panel };
     }
 
@@ -952,7 +1048,7 @@
         if (!boton || !raiz) return;
         var r = panelUnicoCerrable();
         boton.setAttribute('aria-disabled', r.ok ? 'false' : 'true');
-        boton.title = r.ok ? 'Ver esta pantalla entera, sin dividir' : r.motivo;
+        boton.title = r.ok ? (r.vacio ? 'Salir de la pantalla dividida e ir al inicio' : 'Ver esta pantalla entera, sin dividir') : r.motivo;
     }
 
     // «Cerrar pantalla dividida»: la pantalla del panel unico se abre entera en el layout normal (misma pestaña) y la distribucion guardada se borra,
@@ -961,8 +1057,8 @@
         var r = panelUnicoCerrable();
         if (!r.ok) { avisar(r.motivo, 'info'); return; }
         // Una carga que sabe pasar lo cargado sigue entera en el layout con todo; si no, con cambios sin guardar se pide confirmar.
-        var traspaso = confirmado ? null : prepararTraspasoDe(r.panel.iframe.contentWindow);
-        if (!traspaso && !confirmado && tieneCambiosSinGuardar(r.panel)) {
+        var traspaso = (confirmado || r.vacio) ? null : prepararTraspasoDe(r.panel.iframe.contentWindow);
+        if (!traspaso && !confirmado && !r.vacio && tieneCambiosSinGuardar(r.panel)) {
             confirmarSalida(function () { cerrarPantallaDividida(true); });
             return;
         }
@@ -976,6 +1072,109 @@
         // El cartel del navegador de la pantalla del panel preguntaria de nuevo al salir: el usuario ya confirmo (o no habia nada sin guardar).
         try { r.panel.iframe.contentWindow.desactivarProteccionSalida(); } catch (e) { /* la pantalla no tiene proteccion de salida */ }
         window.location.assign(r.url);
+    }
+
+    // ---------- pasar TODA la pantalla dividida a una ventana independiente ----------
+    // «Pasar a ventana independiente» (2026-11-21, docs/DECISIONS.md): MUEVE toda la distribucion (todos los paneles, sus tamaños) a una ventana nueva
+    // sin menu ni barra, y esta pestaña vuelve a Inicio. Cada panel con una carga nueva que sabe pasar lo cargado (DocumentoAbierto.prepararTraspaso)
+    // viaja con todo y sin avisos; si algun panel tiene cambios sin guardar que NO puede viajar, se pide confirmar UNA vez («Salir sin guardar»).
+    // Los paneles cuya pantalla ya esta en su propia ventana independiente siguen apuntando a esa ventana (se la encuentra por nombre).
+    // La distribucion viaja por una clave temporal de localStorage (?desdeLayout=) que la ventana lee una sola vez.
+    function descartarTraspasos(traspasos) {
+        Object.keys(traspasos).forEach(function (id) {
+            try { traspasos[id].descartar(); } catch (e) { console.warn('Pantalla dividida: no se pudo descartar un traspaso.', e); }
+        });
+    }
+
+    function independizarTodo(confirmado) {
+        if (EN_VENTANA_DIVIDIDA || !iniciado) return;
+        var lista = Arbol.listarPaneles(raiz);
+        if (!lista.some(function (n) { return !!n.url; })) { avisar('No hay nada para pasar: abrí alguna pantalla en un panel.', 'info'); return; }
+
+        // Lo cargado de cada panel que sabe pasarlo; y si algun panel con cambios sin guardar NO puede, hay que confirmar antes de soltar nada.
+        var traspasos = {};
+        var hayCambiosSinTraspaso = false;
+        lista.forEach(function (nodo) {
+            var panel = paneles[nodo.id];
+            if (nodo.ventana || !panel || !panel.urlActual) return;
+            var traspaso = prepararTraspasoDe(panel.iframe.contentWindow);
+            if (traspaso) traspasos[nodo.id] = traspaso;
+            else if (tieneCambiosSinGuardar(panel)) hayCambiosSinTraspaso = true;
+        });
+        if (hayCambiosSinTraspaso && !confirmado) {
+            descartarTraspasos(traspasos);
+            confirmarSalida(function () { independizarTodo(true); });
+            return;
+        }
+
+        // La ventana se abre dentro del clic (o del «Sí, salir»): el navegador la permite. Se ubica donde estaba el area de paneles.
+        var ventana = window.open('', NOMBRE_VENTANA_DIVIDIDA, caracteristicasVentana({ el: document.getElementById('pdArea') }));
+        if (!ventana) { descartarTraspasos(traspasos); avisarVentanaBloqueada(); return; }
+        if (paginaCargada(ventana)) {
+            descartarTraspasos(traspasos);
+            try { ventana.focus(); } catch (e) { console.warn('Pantalla dividida: no se pudo traer la ventana al frente.', e); }
+            avisar('Ya hay una pantalla dividida en una ventana independiente: la traje al frente. Cerrala antes de pasar esta.', 'warning');
+            return;
+        }
+
+        // Distribucion con la url de cada panel (+ la marca de su traspaso) en una clave temporal.
+        var mapeado = Arbol.mapearUrls(raiz, function (nodo) {
+            var panel = paneles[nodo.id];
+            var url = !nodo.ventana && panel && panel.urlActual ? panel.urlActual : nodo.url;
+            return traspasos[nodo.id] ? traspasos[nodo.id].urlCon(url) : url;
+        });
+        var clave = PREFIJO_LAYOUT_TRASPASO + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        try {
+            window.localStorage.setItem(clave, Arbol.serializar(mapeado, activo));
+        } catch (e) {
+            console.warn('Pantalla dividida: no se pudo guardar la distribución para la ventana (localStorage).', e);
+            descartarTraspasos(traspasos);
+            try { ventana.close(); } catch (e2) { console.warn('Pantalla dividida: no se pudo cerrar la ventana en blanco.', e2); }
+            avisar('No se pudo pasar la pantalla dividida a una ventana (el navegador no deja guardar la distribución).', 'warning');
+            return;
+        }
+
+        // Se suelta lo de esta pestaña (los paneles dejan de guardar borrador y de proteger la salida) y recien entonces se carga la ventana.
+        Object.keys(traspasos).forEach(function (id) { traspasos[id].ceder(); });
+        saliendo = true;
+        if (temporizadorGuardado) { window.clearTimeout(temporizadorGuardado); temporizadorGuardado = null; }
+        try { window.localStorage.removeItem(CLAVE_GUARDADO); } catch (e) { console.warn('Pantalla dividida: no se pudo borrar la distribución guardada.', e); }
+        lista.forEach(function (nodo) {
+            var panel = paneles[nodo.id];
+            try { if (panel) panel.iframe.contentWindow.desactivarProteccionSalida(); } catch (e) { /* la pantalla no tiene proteccion de salida */ }
+        });
+        try {
+            ventana.location.href = window.location.origin + window.location.pathname + '?' + PARAM_DESDE_LAYOUT + '=' + encodeURIComponent(clave);
+            ventana.focus();
+        } catch (e) {
+            console.warn('Pantalla dividida: no se pudo cargar la ventana independiente.', e);
+        }
+        window.location.assign(URL_INICIO);   // la distribucion se MOVIO: esta pestaña vuelve a Inicio
+    }
+
+    // Lee (una sola vez) la distribucion que trae ?desdeLayout=<clave>. null si no viene, vencio o no es valida (se arranca como siempre).
+    function leerLayoutTraspasado() {
+        var params = new URLSearchParams(window.location.search);
+        var clave = params.get(PARAM_DESDE_LAYOUT) || '';
+        if (!clave) return null;
+        if (window.history && window.history.replaceState) window.history.replaceState(null, '', window.location.pathname);
+        if (clave.indexOf(PREFIJO_LAYOUT_TRASPASO) !== 0) return null;
+        var texto = null;
+        try {
+            texto = window.localStorage.getItem(clave);
+            window.localStorage.removeItem(clave);   // se usa una sola vez
+        } catch (e) {
+            console.warn('Pantalla dividida: no se pudo leer la distribución traída de la pestaña.', e);
+            return null;
+        }
+        var creado = parseInt(clave.substring(PREFIJO_LAYOUT_TRASPASO.length).split('-')[0], 10);
+        if (!texto || !creado || Date.now() - creado > VIGENCIA_LAYOUT_MS) return null;
+        var leido = Arbol.deserializar(texto, esUrlPermitida);
+        if (!leido.ok) {
+            console.warn('Pantalla dividida: se ignoró la distribución traída de la pestaña (' + leido.motivo + ').');
+            return null;
+        }
+        return leido;
     }
 
     // ---------- guardado local ----------
@@ -1058,7 +1257,8 @@
         construirCatalogo();
         ajustarAlto();
 
-        var guardado = restaurar();
+        // En la ventana independiente: primero la distribucion que viene de la pestaña (?desdeLayout=), si no la que esa ventana guardo antes.
+        var guardado = leerLayoutTraspasado() || restaurar();
         if (guardado) {
             raiz = guardado.raiz;
             activo = guardado.activo;
@@ -1074,11 +1274,22 @@
         document.getElementById('pdCuadro').addEventListener('click', function () { aplicarDistribucion(Arbol.distribucionCuadro); });
         var botonCerrar = document.getElementById('pdCerrar');
         if (botonCerrar) botonCerrar.addEventListener('click', function () { cerrarPantallaDividida(false); });
+        // «Pasar a ventana independiente»: no tiene sentido estando ya en la ventana.
+        var botonIndependizar = document.getElementById('pdIndependizar');
+        if (botonIndependizar) {
+            if (EN_VENTANA_DIVIDIDA) botonIndependizar.hidden = true;
+            else botonIndependizar.addEventListener('click', function () { independizarTodo(false); });
+        }
         window.addEventListener('resize', function () { ajustarAlto(); });
+        window.addEventListener('keydown', alTeclaDeRecarga, true);   // F5 / Ctrl+R con el foco en esta pagina (los paneles lo engancha alCargarMarco)
         window.addEventListener('pagehide', guardar);
         window.setInterval(revisarVentanas, REVISION_VENTANAS_MS);
         // Tocar un iframe saca el foco de esta pagina: el iframe enfocado es el panel activo.
         window.addEventListener('blur', function () {
+            // Recien llegada con «Dividir pantalla»: la pantalla cargada enfoca sus campos al arrancar y eso NO es una eleccion del usuario;
+            // durante un rato el panel vacio sigue siendo el activo (si no, el menu lateral cargaria sobre la pantalla que se quiere conservar).
+            if (activoFijoHasta && Date.now() < activoFijoHasta) return;
+            activoFijoHasta = 0;
             var el = document.activeElement;
             if (el && el.tagName === 'IFRAME' && el.name && el.name.indexOf(PREFIJO_FRAME) === 0) activar(Number(el.name.substring(PREFIJO_FRAME.length)));
         });
@@ -1088,12 +1299,13 @@
         if (abrir) {
             if (window.history && window.history.replaceState) window.history.replaceState(null, '', window.location.pathname);
             abrirEnPanelNuevo(abrir);
+            dejarPanelVacioParaElegir();
         }
         programarLiberar();
     }
 
     // API para menu-ventana-independiente.js (clic derecho en el menu lateral).
-    window.PantallaDividida = { abrirEnPanelNuevo: abrirEnPanelNuevo, abrirEnPanelActivo: abrirEnPanelActivo, esUrlPermitida: esUrlPermitida };
+    window.PantallaDividida = { abrirEnPanelNuevo: abrirEnPanelNuevo, abrirEnPanelActivo: abrirEnPanelActivo, esUrlPermitida: esUrlPermitida, cerrarPanelDeVentana: cerrarPanelDeVentana };
 
     // Por debajo de 992 px la pantalla solo muestra un aviso: los paneles se arman recien si la ventana se agranda.
     if (esEscritorio()) {

@@ -182,6 +182,19 @@
         return nodo;
     }
 
+    // Devuelve una copia del arbol con la url de cada panel que tenga una calculada por urlDe(panel) (2026-11-21, pasar TODA la pantalla dividida a una
+    // ventana independiente: cada panel viaja con su url + la marca del traspaso de lo cargado). Si urlDe no devuelve texto, el panel conserva la suya.
+    // No modifica el arbol original. Los paneles sin url (vacios) quedan igual.
+    function mapearUrls(nodo, urlDe) {
+        if (!nodo) return nodo;
+        if (esPanel(nodo)) {
+            if (!nodo.url) return nodo;
+            var nueva = urlDe(nodo);
+            return crearPanel(nodo.id, typeof nueva === 'string' && nueva !== '' ? nueva : nodo.url, nodo.ventana);
+        }
+        return { tipo: 'division', direccion: nodo.direccion, proporcion: nodo.proporcion, a: mapearUrls(nodo.a, urlDe), b: mapearUrls(nodo.b, urlDe) };
+    }
+
     // ---------- guardado ----------
     function serializar(raiz, idActivo) {
         return JSON.stringify({ version: 1, activo: idActivo || null, raiz: raiz });
@@ -255,6 +268,7 @@
         cambiarProporcion: cambiarProporcion,
         distribucionTres: distribucionTres,
         distribucionCuadro: distribucionCuadro,
+        mapearUrls: mapearUrls,
         serializar: serializar,
         deserializar: deserializar
     };

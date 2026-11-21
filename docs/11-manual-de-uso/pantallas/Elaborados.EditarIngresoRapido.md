@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 3
 permiso: Elaborado.IngresoEmbutidoRapido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-20
+revisada: 2026-11-21
 ---
 ## Para qué sirve
 Registrar un elaborado (o desarmarlo) cargando **solo la cantidad final**: el sistema calcula los ingredientes con la fórmula del producto y los guarda. Se llega desde *Elaborados → Ingreso rápido* (o *Desarme de elaborado*) eligiendo un producto, o abriendo un registro existente desde el listado.
@@ -47,13 +47,14 @@ Un registro existente se abre en **modo vista**. Mientras no se toque **Modifica
 
 ## Si ya tenés ingresos rápidos o desarmes abiertos en otras pestañas (2026-11-12)
 Al abrir un **ingreso rápido o desarme nuevo**, si en este navegador ya tenés otros abiertos, aparece un aviso con la **lista**: nombre del elaborado, si es nuevo o edición, y la cantidad cargada. Cada fila muestra **qué es** (nuevo o edición), **dónde está** (pestaña del navegador, ventana independiente, app instalada o **dentro del POS**, menú Cargas, a la vista o minimizada), **desde qué hora** (y hace cuánto) y **qué tiene cargado** (los primeros productos con su cantidad; el resto, «y N más»).
-- **Traer este** solo aparece en los que son del **mismo elaborado y del mismo modo** (ingreso o desarme) y ya tienen cantidad: el trabajo pasa a esta pestaña y la otra queda tapada con un botón **Ir al listado**.
-- **Señalar:** esa pestaña o ventana hace titilar su título unos segundos y muestra una cinta amarilla, para que la encuentres en la barra de pestañas o de tareas (el navegador no permite traerla al frente desde acá).
-- **Cerrar** (solo en un nuevo **vacío**): esa pestaña vuelve al listado y, si era la única, el aviso desaparece y seguís acá. Si en el medio le cargaron algo, no se cierra.
-- Una carga abierta **dentro del POS** no se puede señalar ni cerrar desde acá: se vuelve a ella con el botón amarillo «… en curso» de la barra del POS.
+- **Seguir con ese acá** (2026-11-21): si el otro nuevo tiene algo cargado y es del **mismo elaborado y del mismo modo** (ingreso o desarme), el aviso te deja traer lo cargado a esta pantalla y **la otra se cierra sola**: si estaba en un panel de la pantalla dividida se cierra el panel, si era una ventana independiente se cierra la ventana, y si era una pestaña del navegador (que el navegador no deja cerrar desde acá) vuelve al listado. Con varios abiertos, cada fila tiene su botón **Seguir con este acá**.
+- **Empezar uno nuevo** deja todo como está: esta carga es independiente de las otras. También podés **Volver al listado**.
+- Si el otro nuevo está **vacío** (sin líneas), se **cierra solo, sin preguntar**, y ves el aviso «Cerré el … nuevo vacío que tenías abierto». Ojo: si solo tenía datos de cabecera u observaciones sin líneas, eso se pierde.
+- **Señalar** (hace titilar el título de esa pestaña o ventana) queda solo para las **ediciones** abiertas que se listan, que no se pueden traer.
+- Una carga abierta **dentro del POS** no se cierra sola ni se puede señalar: se vuelve a ella con el botón amarillo «… en curso» de la barra del POS.
 - Si abrís la pantalla con **Abrir en ventana**, la ventana nueva no te avisa de la pestaña de origen (que vuelve al listado). Un F5 de la ventana vuelve a chequear como siempre.
 - Si el aviso aparece y **parece que no hay nada abierto**, casi siempre es una carga minimizada del POS, una ventana o app instalada que no estás mirando, o una pestaña que el navegador restauró al abrirse; la fila te dice cuál.
-- También podés **Cargar otro nuevo aparte** o **Volver al listado**. Al tocar **Modificar** en uno ya guardado, si otra pestaña lo está modificando, el aviso te deja traer esa modificación.
+- Al tocar **Modificar** en uno ya guardado, si otra pestaña lo está modificando, el aviso te deja traer esa modificación.
 - Solo detecta pestañas del **mismo navegador** de esta computadora.
 
 ## Resto de la pantalla

@@ -1,7 +1,9 @@
 // Aviso de "documento ya abierto en otra pestaña" (2026-11-12, ver docs/DECISIONS.md "Documento abierto en otra pestaña").
 // Problema: en la misma PC se puede abrir el mismo movimiento (o varios "Nuevo") en dos pestañas/ventanas y pisarse al guardar.
 // Una pagina web NO puede traer al frente otra pestaña de forma confiable, asi que en vez de "saltar a la otra" este modulo avisa y deja
-// PASAR EL TRABAJO a la pestaña actual (la otra queda tapada con un cartel), cargar uno nuevo aparte o volver al listado.
+// PASAR EL TRABAJO a la pestaña actual, cargar uno nuevo aparte o volver al listado. Desde 2026-11-21 («Seguir con ese acá» / «Empezar uno
+// nuevo») la otra pantalla se CIERRA SOLA al pasar el trabajo (panel, ventana o, si es una pestaña normal, vuelve al listado; ver
+// cerrarEstaPantalla) y un Nuevo vacio se cierra sin preguntar (separarAbiertos).
 //
 // Como funciona (solo este navegador; sin servidor):
 //  - BroadcastChannel: cada pestaña con un Nuevo o una edicion activa contesta "estoy" cuando otra pregunta "quien". Asi se sabe cuantas
@@ -196,6 +198,149 @@
             if (r) return r;
         }
         return null;
+    }
+
+    // Guarda el paquete en localStorage y devuelve {clave, urlCon, ceder, descartar} (null si no se pudo guardar). Lo usan los Nuevo de
+    // crear() y los formularios simples de registrarTraspasoFormulario(). cederFn se llama justo antes de irse.
+    function guardarTraspaso(modulo, idUsuario, grupo, paquete, cederFn) {
+        limpiarTraspasosViejos();
+        var clave = PREFIJO_TRASPASO + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        try {
+            window.localStorage.setItem(clave, JSON.stringify({ v: 1, modulo: modulo, idUsuario: idUsuario, grupo: grupo, paquete: paquete }));
+        } catch (err) {
+            console.warn('[DocumentoAbierto] no se pudo guardar el traspaso (localStorage)', err);
+            return null;
+        }
+        return {
+            clave: clave,
+            urlCon: function (url) { return urlConTraspaso(url, clave); },
+            ceder: cederFn,
+            descartar: function () {
+                try { window.localStorage.removeItem(clave); } catch (err) { console.warn('[DocumentoAbierto] no se pudo descartar el traspaso', err); }
+            }
+        };
+    }
+
+    // ---- Traspaso de FORMULARIOS simples (2026-11-21, Personas) ----
+    // Pantallas de alta sin DocumentoAbierto (sin borrador en servidor, sin aviso de otra pestaña) cuyo estado es solo el valor de sus campos.
+    // cfg: {modulo, idUsuario, formSelector, esAlta(), excluir:[nombres de campo que NO viajan]}. Viaja el valor de cada campo con name
+    // (texto, numero, email, textarea, select, checkbox, radio); NO viajan hidden, password, file ni el token antiforgery (el token es de cada
+    // carga de pagina y una clave no debe quedar en localStorage). Al llegar con ?traspasoDoc= se vuelven a poner y se dispara input/change para
+    // que cada pantalla recalcule lo suyo. Solo altas: una edicion se vuelve a cargar del servidor con su id y no se pisa.
+    var TIPOS_QUE_NO_VIAJAN = { hidden: 1, password: 1, file: 1, submit: 1, button: 1, reset: 1, image: 1 };
+
+    function camposDelFormulario(form, excluir) {
+        var lista = [];
+        for (var i = 0; i < form.elements.length; i++) {
+            var el = form.elements[i];
+            var nombre = el.name;
+            if (!nombre || nombre === '__RequestVerificationToken' || excluir.indexOf(nombre) !== -1) continue;
+            var tipo = (el.type || '').toLowerCase();
+            if (TIPOS_QUE_NO_VIAJAN[tipo] || el.tagName === 'FIELDSET' || el.tagName === 'BUTTON') continue;
+            lista.push(el);
+        }
+        return lista;
+    }
+
+    // Aviso de «ya tenés un ... nuevo abierto» (2026-11-21, docs/DECISIONS.md): de los documentos abiertos en otras pestañas, paneles o
+    // ventanas separa los Nuevo VACIOS que se pueden cerrar solos (sin lineas, que soportan acciones —version nueva de este script— y que no
+    // son una carga del POS, que se maneja desde su barra) del resto, que se muestra en el aviso. Funcion pura (con tests).
+    function separarAbiertos(abiertos) {
+        var cerrables = [];
+        var resto = [];
+        (abiertos || []).forEach(function (m) {
+            if (m && m.tipo === 'nuevo' && !(m.cantLineas > 0) && !!m.lugar && !m.enPos) cerrables.push(m);
+            else resto.push(m);
+        });
+        return { cerrables: cerrables, resto: resto };
+    }
+
+    // Registro generico (2026-11-21, Compras): una pantalla de alta con estado propio registra sus propios ganchos.
+    // cfg: {modulo, idUsuario, esAlta(), obtenerPaquete() -> objeto serializable, aplicarPaquete(paquete) -> cuantos cambios hizo (o undefined: se
+    // avisa igual), alCeder() (opcional: soltar borradores/guardas justo antes de irse)}. Mismo viaje y mismas reglas que el de formularios.
+    function registrarTraspaso(cfg) {
+        var modulo = String(cfg.modulo || '');
+        var idUsuario = String(cfg.idUsuario || 0);
+        if (!modulo || typeof cfg.obtenerPaquete !== 'function' || typeof cfg.aplicarPaquete !== 'function') return;
+
+        instancias.push({
+            prepararTraspaso: function () {
+                if (typeof cfg.esAlta === 'function' && !cfg.esAlta()) return null;   // una edicion no viaja: se vuelve a cargar del servidor
+                var paquete;
+                try {
+                    paquete = JSON.parse(JSON.stringify(cfg.obtenerPaquete()));
+                } catch (err) {
+                    console.error('[DocumentoAbierto] no se pudo armar el paquete para el traspaso', err);
+                    return null;
+                }
+                if (paquete === null || paquete === undefined) return null;
+                return guardarTraspaso(modulo, idUsuario, '', paquete, function () {
+                    try {
+                        if (typeof cfg.alCeder === 'function') cfg.alCeder();
+                    } catch (err) {
+                        console.error('[DocumentoAbierto] fallo alCeder() del traspaso', err);
+                    }
+                });
+            }
+        });
+
+        // Llegada: si la URL trae una marca valida de ESTE modulo y usuario, se aplica el paquete.
+        var traspaso = consumirTraspasoUrl();
+        if (!traspaso) return;
+        if (traspaso.modulo !== modulo || String(traspaso.idUsuario) !== idUsuario) {
+            console.warn('[DocumentoAbierto] el traspaso recibido es de otra pantalla o de otro usuario: se ignora');
+            return;
+        }
+        try {
+            var cambios = cfg.aplicarPaquete(traspaso.paquete);
+            if (cambios !== 0 && window.Swal && typeof window.Swal.fire === 'function') {
+                window.Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Seguís con lo que tenías cargado.', showConfirmButton: false, timer: 3000 });
+            }
+        } catch (err) {
+            console.error('[DocumentoAbierto] no se pudo aplicar lo que llegó con el traspaso', err);
+        }
+    }
+
+    function registrarTraspasoFormulario(cfg) {
+        var excluir = cfg.excluir || [];
+        var form = document.querySelector(cfg.formSelector);
+        if (!form) return;
+
+        function obtenerPaquete() {
+            return camposDelFormulario(form, excluir).map(function (el, pos) {
+                var tipo = (el.type || '').toLowerCase();
+                return { nombre: el.name, pos: pos, tipo: tipo, valor: el.value, marcado: (tipo === 'checkbox' || tipo === 'radio') ? el.checked : null, deshabilitado: el.disabled };
+            });
+        }
+
+        // Pone cada valor en el campo del mismo name y posicion; ignora lo que ya no existe. Devuelve cuantos campos cambio.
+        function aplicarPaquete(paquete) {
+            var campos = camposDelFormulario(form, excluir);
+            var cambiados = 0;
+            (paquete || []).forEach(function (guardado) {
+                var el = campos[guardado.pos];
+                if (!el || el.name !== guardado.nombre || el.disabled || el.readOnly) return;   // campo bloqueado en esta carga: no se pisa
+                var tipo = (el.type || '').toLowerCase();
+                var cambia = false;
+                if (tipo === 'checkbox' || tipo === 'radio') {
+                    if (el.checked !== !!guardado.marcado) { el.checked = !!guardado.marcado; cambia = true; }
+                } else if (el.value !== String(guardado.valor)) {
+                    el.value = String(guardado.valor);
+                    cambia = true;
+                }
+                if (!cambia) return;
+                cambiados++;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            return cambiados;
+        }
+
+        registrarTraspaso({
+            modulo: cfg.modulo, idUsuario: cfg.idUsuario, esAlta: cfg.esAlta,
+            obtenerPaquete: obtenerPaquete, aplicarPaquete: aplicarPaquete
+            // sin alCeder: un formulario simple no tiene borrador ni lock que soltar
+        });
     }
 
     function crear(cfg) {
@@ -463,7 +608,33 @@
             } catch (err) {
                 console.error('[DocumentoAbierto] fallo alCeder()', err);
             }
-            if (!sinCartel) mostrarCartelCedido();
+            if (!sinCartel) cerrarEstaPantalla();
+        }
+
+        // Esta pantalla entrego su trabajo a otra (2026-11-21): se cierra sola para que no queden ventanas sueltas. Segun donde vive:
+        // carga del POS -> el cartel de siempre (el POS maneja sus cargas); panel de la pantalla dividida -> se cierra el panel; ventana
+        // independiente o app instalada -> window.close(); pestaña normal -> el navegador no deja cerrarla por script: va al listado.
+        function cerrarEstaPantalla() {
+            var nombre = window.name || '';
+            if (nombre.indexOf(PREFIJO_FRAME_POS) === 0) { mostrarCartelCedido(); return; }
+            if (nombre.indexOf(PREFIJO_FRAME_PANEL) === 0) {
+                try {
+                    var padre = window.parent;
+                    if (padre && padre.PantallaDividida && typeof padre.PantallaDividida.cerrarPanelDeVentana === 'function' &&
+                        padre.PantallaDividida.cerrarPanelDeVentana(window)) return;
+                } catch (err) {
+                    console.warn('[DocumentoAbierto] no se pudo cerrar el panel desde la pantalla dividida', err);
+                }
+                irAlListado();
+                return;
+            }
+            if (document.documentElement.classList.contains('modo-ventana')) {
+                window.close();
+                // Si el navegador no la dejo cerrar la pagina sigue viva: se la manda al listado.
+                window.setTimeout(irAlListado, 300);
+                return;
+            }
+            irAlListado();
         }
 
         // Traspaso por URL de ESTA instancia (ver prepararTraspaso de pagina): solo un Nuevo activo que sabe armar y aplicar su paquete.
@@ -476,22 +647,7 @@
                 console.error('[DocumentoAbierto] no se pudo armar el paquete para el traspaso', err);
                 return null;
             }
-            limpiarTraspasosViejos();
-            var clave = PREFIJO_TRASPASO + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-            try {
-                window.localStorage.setItem(clave, JSON.stringify({ v: 1, modulo: modulo, idUsuario: idUsuario, grupo: grupo, paquete: paquete }));
-            } catch (err) {
-                console.warn('[DocumentoAbierto] no se pudo guardar el traspaso (localStorage)', err);
-                return null;
-            }
-            return {
-                clave: clave,
-                urlCon: function (url) { return urlConTraspaso(url, clave); },
-                ceder: function () { ceder(true); },
-                descartar: function () {
-                    try { window.localStorage.removeItem(clave); } catch (err) { console.warn('[DocumentoAbierto] no se pudo descartar el traspaso', err); }
-                }
-            };
+            return guardarTraspaso(modulo, idUsuario, grupo, paquete, function () { ceder(true); });
         }
         instancias.push({ prepararTraspaso: prepararTraspasoPropio });
 
@@ -622,7 +778,7 @@
             } catch (err) {
                 console.error('[DocumentoAbierto] fallo alCeder() al cerrar por pedido de otra pestaña', err);
             }
-            window.setTimeout(irAlListado, 150);
+            window.setTimeout(cerrarEstaPantalla, 150);
         }
 
         // ---- avisos ----
@@ -680,7 +836,7 @@
                         return boton;
                     };
                     if (fila.id) {
-                        nuevoBoton('Traer este', 'btn-primary').addEventListener('click', function () {
+                        nuevoBoton('Seguir con este acá', 'btn-primary').addEventListener('click', function () {
                             elegido = { accion: 'traer', id: fila.id };
                             window.Swal.close();
                         });
@@ -713,7 +869,7 @@
                     html: contenido,
                     width: (o.filas || []).length ? '42rem' : undefined,
                     showConfirmButton: !!o.idTraer,
-                    confirmButtonText: o.textoTraer || 'Traer a esta pestaña',
+                    confirmButtonText: o.textoTraer || 'Seguir con ese acá',
                     showDenyButton: true,
                     denyButtonText: o.textoAparte,
                     denyButtonColor: '#198754',   // el rojo por defecto de "deny" sugiere algo peligroso y "cargar aparte" no lo es
@@ -799,8 +955,10 @@
             if (items && m.masItems > 0) items += ' · y ' + m.masItems + ' más';
 
             var acciones = [];
-            // Una carga dentro del POS no tiene pestaña que titilar ni se puede cerrar desde afuera: se vuelve a ella desde la barra del POS.
-            if (soportaAcciones && !m.enPos) {
+            // 2026-11-21: un Nuevo con carga se resuelve con «Seguir con este acá» (trae lo cargado y la otra pantalla se cierra sola), sin
+            // «Señalar» ni «Cerrar». «Señalar» queda solo para las EDICIONES abiertas (modoLista de Elaborados): no se pueden traer y es la unica
+            // forma de encontrarlas. Una carga dentro del POS no tiene pestaña que titilar: se vuelve a ella desde la barra del POS.
+            if (soportaAcciones && !m.enPos && !esNuevoOtra) {
                 acciones.push({
                     texto: 'Señalar',
                     titulo: 'Hace titilar el título de esa pestaña o ventana para que la encuentres',
@@ -810,23 +968,6 @@
                         ctx.nota('Señalada: mirá la barra de pestañas o la de tareas, titila unos segundos.');
                     }
                 });
-                // Solo un Nuevo vacio se puede cerrar sin perder nada; la otra pestaña lo vuelve a comprobar antes de irse.
-                if (esNuevoOtra && vacio) {
-                    acciones.push({
-                        texto: 'Cerrar',
-                        titulo: 'Cierra ese ' + singular + ' vacío (esa pestaña vuelve al listado)',
-                        clase: 'btn-outline-danger',
-                        cerrar: true,
-                        alClick: function (ctx) {
-                            ctx.ocupado(true);
-                            pedirCierre(m.de).then(function (r) {
-                                ctx.ocupado(false);
-                                if (r && r.ok) ctx.quitarFila();
-                                else ctx.nota(r ? 'No se cerró: ya tiene algo cargado.' : 'La otra pestaña no respondió.');
-                            });
-                        }
-                    });
-                }
             }
 
             return {
@@ -854,11 +995,40 @@
             // En modoLista (Elaborados) tambien se listan las ediciones abiertas, para que se vea TODO lo que hay abierto.
             var anteriores = respuestas.filter(function (m) { return (cfg.modoLista || m.tipo === 'nuevo') && esAnterior(m); });
             var sinResponder = locksNuevoSinResponder(respuestas, ajenos);
-            var total = anteriores.length + sinResponder.length;
-            if (!total) return Promise.resolve({ accion: 'seguir' });
+            if (!anteriores.length && !sinResponder.length) return Promise.resolve({ accion: 'seguir' });
             // Diagnostico (2026-11-19): si el cartel vuelve a salir sin que haya otra pestaña, esto dice que lock lo causo.
             if (sinResponder.length) console.warn('[DocumentoAbierto] lock(s) de otra pestaña sin respuesta tras ' + GRACIA_SIN_RESPONDER_MS + ' ms:', sinResponder);
 
+            // 2026-11-21: un Nuevo VACIO abierto en otro lado se cierra solo, sin preguntar (de uno en uno: pedirCierre usa un solo "escucha").
+            // Los que no contestan o ya tienen algo cargado siguen en el aviso.
+            var partes = separarAbiertos(anteriores);
+            var cerrados = 0;
+            var sigueAbierto = [];
+            var cadena = Promise.resolve();
+            partes.cerrables.forEach(function (m) {
+                cadena = cadena.then(function () {
+                    return pedirCierre(m.de).then(function (r) {
+                        if (r && r.ok) cerrados++;
+                        else sigueAbierto.push(m);
+                    });
+                });
+            });
+            return cadena.then(function () {
+                if (cerrados > 0 && window.Swal && typeof window.Swal.fire === 'function') {
+                    window.Swal.fire({
+                        toast: true, position: 'top', icon: 'info', showConfirmButton: false, timer: 3500,
+                        title: cerrados === 1 ? 'Cerré el ' + singular + ' nuevo vacío que tenías abierto.' : 'Cerré ' + cerrados + ' ' + plural + ' nuevos vacíos que tenías abiertos.'
+                    });
+                }
+                return avisarNuevosAbiertos(partes.resto.concat(sigueAbierto), sinResponder);
+            });
+        }
+
+        // El aviso en si: 2 opciones claras (2026-11-21). «Seguir con ese acá» trae lo cargado y la otra pantalla se cierra sola; «Empezar uno nuevo»
+        // deja la otra como esta. Resuelve igual que anunciarNuevo.
+        function avisarNuevosAbiertos(anteriores, sinResponder) {
+            var total = anteriores.length + sinResponder.length;
+            if (!total) return Promise.resolve({ accion: 'seguir' });
             var titulo = (total === 1 ? 'Ya tenés un ' + singular + ' nuevo abierto' : 'Tenés ' + total + ' ' + plural + ' nuevos abiertos') + sufijoGrupo();
             var filas = anteriores.map(filaDeAbierto);
             sinResponder.forEach(function () {
@@ -869,16 +1039,20 @@
                 });
             });
 
-            var hayTraible = filas.some(function (f) { return !!f.id; });
-            var hayCerrable = filas.some(function (f) { return f.acciones.some(function (a) { return a.cerrar; }); });
+            // Con UNA sola fila traible, «Seguir con ese acá» es el boton principal del aviso y la fila no lo repite; con varias, cada fila tiene el suyo.
+            var traibles = filas.filter(function (f) { return !!f.id; });
+            var idTraer = null;
+            if (traibles.length === 1) {
+                idTraer = traibles[0].id;
+                traibles[0].id = null;
+            }
             var mensajes = [(total === 1 ? 'Está abierto' : 'Están abiertos') + ' en otra pestaña, otra ventana o dentro del POS. Abajo ves dónde, desde cuándo y qué tiene cargado.'];
-            mensajes.push(hayTraible
-                ? 'Podés traer lo cargado a esta pestaña, cargar otro nuevo aparte (independiente) o volver al listado.'
-                : 'Podés cargar otro nuevo aparte (independiente) o volver al listado.');
-            if (hayCerrable) mensajes.push('Si es uno vacío que ya no usás, tocá «Cerrar» y seguí acá.');
+            mensajes.push(traibles.length
+                ? '«Seguir con ' + (traibles.length === 1 ? 'ese' : 'uno de esos') + ' acá» trae lo cargado y la otra pantalla se cierra sola. «Empezar uno nuevo» deja todo como está.'
+                : '«Empezar uno nuevo» deja todo como está, o volvé al listado.');
 
             return preguntar({
-                titulo: titulo, mensajes: mensajes, filas: filas, textoAparte: 'Cargar otro nuevo aparte'
+                titulo: titulo, mensajes: mensajes, filas: filas, idTraer: idTraer, textoAparte: 'Empezar uno nuevo'
             }).then(function (r) {
                 if (r.accion === 'listado') { irAlListado(); return { accion: 'listado' }; }
                 if (r.accion === 'traer') {
@@ -1035,5 +1209,5 @@
         };
     }
 
-    window.DocumentoAbierto = { crear: crear, vistaPrevia: vistaPrevia, formatoKg: formatoKg, prepararTraspaso: prepararTraspaso };
+    window.DocumentoAbierto = { crear: crear, vistaPrevia: vistaPrevia, formatoKg: formatoKg, prepararTraspaso: prepararTraspaso, registrarTraspasoFormulario: registrarTraspasoFormulario, registrarTraspaso: registrarTraspaso, _separarAbiertos: separarAbiertos };
 })(window, document);
