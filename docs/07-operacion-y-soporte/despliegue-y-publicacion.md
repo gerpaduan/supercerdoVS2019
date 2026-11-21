@@ -1067,6 +1067,14 @@ Tablas nuevas de auditoría: sin ellas, **eliminar falla** (el resto de la aplic
 - **Rollback**: deshabilitar `WebCoreAppWatchdog`, detener `WebCoreApp` y matar `WebCore.exe`, `robocopy C:\WebCore_backup_20261118 C:\WebCore /MIR /XD AFIP /R:2 /W:5`, arrancar, habilitar watchdog.
 - **PENDIENTE (usuario)**: probar en los POS de SM con login real que el Total suma el producto sin agregar y que Finalizar se bloquea con el campo Código lleno; Ctrl+F5.
 
+## Redeploy WebCore en Servidor SM -- 2026-11-20 ("limpio", solo SM; commit `6a0f0aae`; tag local `pre-deploy-sm-20261120` = `8f418260`, lo que estaba desplegado)
+- A pedido explícito del usuario ("publicar la app limpia en SM"). **San Lorenzo y VPS luden no se tocaron.** `HEAD` desde un `git worktree` limpio. Entran 11 commits: pantalla dividida, ventanas independientes, POS ventana única, menú Cargas del POS, lectura de código de barra por cámara, balanza (tecla `*`, peso viejo), modo vista/edición en Elaborados/Stock/Movimientos, etc. (el agente de balanza 2.0 es un `.exe` aparte: no forma parte de este paquete). **Sin migraciones SQL Server**; `DatosPostgres/CargasPosPg.cs` solo aplica a Postgres.
+- `WebCore.Tests` 365/365. `win-x64` self-contained, 1141 archivos, sin `App.config`/`WebCore.dll.config`; zip 114,1 MB SHA256 `D7FE9583C7C76B0B5467114A6D4ED3BEED5F52289BA0BBD74DAB93C6506200C8` (verificado en el servidor), `WebCore.dll` `70268E23885C` (anterior `01C61754DD19`).
+- **Servidor SM**: script remoto (aborta si el host, el hash del zip o el dll vivo no coinciden; revierte solo si la sonda falla o cambia `WebCore.dll.config`): backup `C:\WebCore_backup_20261120` (1117), watchdog deshabilitado, app detenida y proceso muerto, `robocopy /E /XF WebCore.dll.config App.config` (exit 3), arrancar, sonda `127.0.0.1:5250/Login` 200 con «Ingresar a CARNISYS», watchdog habilitado. Resultado: 1157 archivos, `AFIP\` 4 (recursivo), config intacta, `WebCoreApp` Running, watchdog Ready. Queda el zip y `deploy-sm.ps1` en `C:\WebCore_upload\`.
+- **Verificado (externo, `curl -k`)**: `https://192.168.0.151/Login` 200 con «Ingresar a CARNISYS»; `/SuperCerdoWeb/` 200; `/CarniSysWeb/Login/Index` 301; `app-instalada.js` servido con el mismo hash que el publish; Event Log de Application (20 min) sin errores. **NO probado**: login ni pantallas con sesión de producción.
+- **Rollback**: deshabilitar `WebCoreAppWatchdog`, detener `WebCoreApp` y matar `WebCore.exe`, `robocopy C:\WebCore_backup_20261120 C:\WebCore /MIR /XD AFIP /R:2 /W:5`, arrancar, habilitar watchdog.
+- **PENDIENTE (usuario)**: probar con login real en SM la pantalla dividida y las ventanas independientes; Ctrl+F5 (y reinstalar mini-apps si Chrome conserva el manifest viejo).
+
 ## Unificar SuperCerdo SM + SL (SQL Server local) y volcarla a carnisys (Postgres local, empresa 1)
 
 Reglas y porque: `docs/DECISIONS.md` (2026-10-27). Todo corre en la maquina de desarrollo; no toca los servidores SM/SL ni la VPS.
