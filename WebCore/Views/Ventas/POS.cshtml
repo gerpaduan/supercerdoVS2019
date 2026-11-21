@@ -1485,7 +1485,9 @@ else
                     usuarios: cfg.usuariosActivos,
                     requierePassword: true,
                     validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId),
-                    obligatorio: esInicial
+                    obligatorio: esInicial,
+                    // Modo obligatorio: sin X ni Cancelar; en pestana normal queda «Ir a Inicio» (en la app instalada se sale con la X de la ventana).
+                    urlInicio: '@Url.Action("Index", "Home")'
                 }).then(function (operador) {
                     loginObligatorioPendiente = false;
                     // Cambio de operario (2026-11-03): aviso de 1 segundo antes de recargar. No aplica al login
@@ -1504,17 +1506,17 @@ else
                         return;
                     }
                     recargarConOperadorAutorizado();
-                }).catch(function () {
-                    if (esInicial) window.AppInstalada.salir('@Url.Action("Index", "Home")'); // en la app instalada cierra la ventana (app-instalada.js)
                 });
             }
 
-            // Red de seguridad: si el login era obligatorio y el modal se cierra sin resolver
-            // (Escape/backdrop/"Cancelar"/X), el Promise de SeleccionUsuario.abrir() nunca se
-            // resuelve NI se rechaza (ver seleccion-usuario.js) -- sin esto, .catch() nunca corre.
+            // Red de seguridad (2026-11-21, pedido del usuario): si el login era obligatorio y el modal se cierra sin resolver, se VUELVE A ABRIR.
+            // Antes se llamaba a AppInstalada.salir(), que en la app instalada no puede cerrar la ventana y dejaba la pantalla en blanco con el
+            // aviso «Cerra esta ventana con la X». El modal ya no tiene X ni Cancelar (seleccion-usuario.js); esto cubre cualquier otro cierre.
+            // El Promise de abrir() no se resuelve ni rechaza al cerrar sin resolver: la unica forma de enterarse es este evento.
+            // setTimeout: Bootstrap termina de ocultar el modal despues de emitir hidden.bs.modal.
             $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
                 if (loginObligatorioPendiente && !$(this).data('resuelto')) {
-                    window.AppInstalada.salir('@Url.Action("Index", "Home")');
+                    window.setTimeout(function () { pedirOperador(true); }, 0);
                 }
             });
 

@@ -45,6 +45,20 @@
     document.addEventListener('beforeinput', cancelarSiSupresionActiva, true);
     document.addEventListener('keypress', cancelarSiSupresionActiva, true);
 
+    // Que salidas muestra el modal (2026-11-21, pedido del usuario: en el POS / Expendio de la app instalada, cerrar el modal de operador
+    // dejaba la pantalla en blanco y el operador no sabia que habia que apretar F5).
+    //  - No obligatorio (Cambiar operario, autorizaciones, etc.): X y «Cancelar», sin enlace (como siempre).
+    //  - Obligatorio (POS sin operador resuelto): sin X ni «Cancelar»; el modal solo se cierra al confirmar. Si hay urlInicio y NO es la app instalada
+    //    (pestana normal), queda el enlace «Ir a Inicio» como unica salida; en la app instalada se sale con la X de la ventana.
+    // Funcion pura: la usa abrir() y la prueba WebCore.Tests/js/seleccion-usuario-obligatorio.test.js.
+    function salidasDelModal(obligatorio, urlInicio, enAppInstalada) {
+        return {
+            mostrarCerrar: !obligatorio,
+            mostrarCancelar: !obligatorio,
+            mostrarIrInicio: !!obligatorio && !!urlInicio && !enAppInstalada
+        };
+    }
+
     function createSeleccionUsuario() {
         var usuariosActuales = [];
         var requierePassword = false;
@@ -238,9 +252,16 @@
             // en el backdrop cerraba el modal SIN resolver -- el llamador interpreta eso como
             // cancelado y redirige a Home, perdiendo lo que el usuario ya habia tipeado. Con
             // backdrop:'static' + keyboard:false, clickear afuera o Escape ya no cierran el
-            // modal -- solo los botones explicitos "Cancelar"/"Confirmar" lo hacen. Comportamiento
-            // sin cambios para los usos NO obligatorios (Cambiar operario, Cierre de Caja, etc.).
+            // modal. Desde 2026-11-21 tampoco hay X ni "Cancelar" en este modo (ver salidasDelModal): solo "Confirmar" lo cierra.
+            // Comportamiento sin cambios para los usos NO obligatorios (Cambiar operario, Cierre de Caja, etc.).
             var obligatorio = !!opciones.obligatorio;
+
+            // Sin X ni «Cancelar» si es obligatorio (opciones.urlInicio: destino del enlace «Ir a Inicio» en pestana normal). Se recalcula en cada
+            // apertura: el mismo modal se reusa en la pagina (ej. «Cambiar operario», que no es obligatorio).
+            var salidas = salidasDelModal(obligatorio, opciones.urlInicio, !!(window.AppInstalada && window.AppInstalada.activa));
+            $('#btnCerrarSeleccionUsuario').toggleClass('d-none', !salidas.mostrarCerrar);
+            $('#btnCancelarSeleccionUsuario').toggleClass('d-none', !salidas.mostrarCancelar);
+            $('#lnkIrInicioSeleccionUsuario').toggleClass('d-none', !salidas.mostrarIrInicio).attr('href', opciones.urlInicio || '#');
 
             reset();
             $('#seleccionUsuarioTitulo').text(opciones.titulo || 'Seleccionar usuario');
@@ -385,4 +406,5 @@
     }
 
     window.SeleccionUsuario = createSeleccionUsuario();
+    window.SeleccionUsuario.salidasDelModal = salidasDelModal;
 })(window, window.jQuery);

@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-11-21 - POS y Expendio: el cartel de operador no se puede cerrar (adiós a la pantalla en blanco)
+
+- **Cambio:** el cartel «Autorizate para operar…» del Punto de venta y del Punto de expendio (cuenta de producción) ya no tiene X ni «Cancelar», y si se cerrara se vuelve a abrir solo; así no queda la pantalla en blanco ni hace falta F5. En pestaña normal queda el enlace «Ir a Inicio»; en la app instalada se sale con la X de la ventana. «Cambiar operario» no cambia. Detalle: `docs/DECISIONS.md` (2026-11-21, «POS y Expendio: el modal de operador no se puede cerrar»).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/seleccion-usuario.js`, `Views/Shared/_ModalSeleccionUsuario.cshtml`, `Views/Ventas/POS.cshtml`, `Views/PuntosExpendio/POS.cshtml`; test `WebCore.Tests/js/seleccion-usuario-obligatorio.test.js`; manual `Ventas.POS.md`, `PuntosExpendio.POS.md`.
+- **Pendiente:** probar en la app instalada real; «Cancelar» de la apertura de caja y de la elección de sector usan el mismo cierre y no se revisaron.
+
 ## 2026-11-21 - Pantalla dividida: panel vacío al dividir, cerrar con un panel vacío, traspaso de altas y aviso de «ya abierto» simplificado
 
 - **Cambio:** (1) «Dividir pantalla» deja un panel vacío activo al lado de la pantalla actual. (2) «Cerrar pantalla dividida» con un único panel vacío va al dashboard. (3) El alta de **Personas**, **Compras** y **Productos** viaja a la pantalla dividida sin «Salir sin guardar» (las de Elaborados, Movimientos y Stock ya viajaban). (4) El aviso «Ya tenés un … nuevo abierto» pasa a 2 opciones (**Seguir con ese acá** / **Empezar uno nuevo**): al traer lo cargado la otra pantalla se cierra sola y un Nuevo vacío se cierra sin preguntar. Detalle: `docs/DECISIONS.md` (2026-11-21 y 2026-11-21 (b)).
@@ -17,6 +23,12 @@
 
 - **Cambio:** en la ventana de una app instalada desde Utilidades (Punto de venta, Punto de expendio, Stock, Movimientos, Elaborados, Existencia), después de cerrar sesión (o de cerrarse por inactividad) el login vuelve a esa app. En el POS el usuario de producción ve directo el modal de operador; en Expendio, operador y sector. Pestañas normales y la app general CarniSys siguen yendo al dashboard. Detalle: `docs/DECISIONS.md` (2026-11-21, «Login en una app instalada vuelve a la app»).
 - **Archivos:** `WebCore/wwwroot/Scripts/app/app-independiente.js`, `login-volver-app.js` (nuevo), `WebCore/Views/Login/Index.cshtml`; test `WebCore.Tests/js/login-volver-app.test.js`; manual `Login.Index.md`, `Ventas.POS.md`, `PuntosExpendio.POS.md`, `Home.Utilidades.md`.
+
+## 2026-11-20 (o) - POS en la app instalada: el operario ya no se pide en cada cambio entre original y duplicado
+
+- **Cambio (bug fix, reportado en SM):** con la cuenta de producción en la app instalada, pasar entre POS original y duplicado pedía identificar al operario cada vez. La navegación entre POS de la misma ventana ahora marca `PosConservarOperadorAlSalir` y el `pagehide` ya no manda `CerrarOperadorPOS` (detalle en `docs/07-operacion-y-soporte/incidencias-frecuentes.md`, 2026-11-20).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/pos-multi-instance.js`, `WebCore/Views/PuntosExpendio/POS.cshtml`; test nuevo `WebCore.Tests/js/pos-multi-instance-operador.test.js`; manual `Ventas.POS.md`.
+- **Verificado:** causa confirmada en el log de IIS de SM; 365 tests C# y 94 de Node (el test nuevo falla sin el fix); prueba en un WebCore local con una cuenta de producción de prueba (borrada al terminar) simulando la app instalada: original → duplicado → original → duplicado sin pedir operario, y con la navegación vieja vuelve a pedirlo. **Pendiente:** probar en la app instalada real en SM (no desplegado) y el POS de Expendio en pantalla (solo se verificó que la vista compilada trae el cambio).
 
 ## 2026-11-20 (k-n) - Pantalla dividida: varios módulos lado a lado, ventana independiente por panel y seguir con lo cargado
 

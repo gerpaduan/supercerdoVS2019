@@ -42,7 +42,8 @@
                 <h5 class="modal-title" id="modalSeleccionUsuarioTitle">
                     <i class="fas fa-user-shield mr-2"></i><span id="seleccionUsuarioTitulo">Seleccionar usuario</span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                @* La X y «Cancelar» se ocultan cuando el modal es obligatorio (POS / Expendio sin operador): ver seleccion-usuario.js (salidasDelModal). *@
+                <button type="button" class="close" id="btnCerrarSeleccionUsuario" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
@@ -80,7 +81,9 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                @* Solo en modo obligatorio y fuera de la app instalada: unica salida del modal (pestana normal del navegador). Su href lo pone seleccion-usuario.js. *@
+                <a href="#" id="lnkIrInicioSeleccionUsuario" class="small text-muted mr-auto d-none" style="text-decoration:underline">Ir a Inicio</a>
+                <button type="button" class="btn btn-light" id="btnCancelarSeleccionUsuario" data-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="btnConfirmarSeleccionUsuario">Confirmar</button>
             </div>
         </div>

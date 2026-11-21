@@ -13,6 +13,15 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-20 - POS con la cuenta de producción: pide identificar al operario en cada cambio entre original y duplicado
+
+- **Sintoma**: en la app instalada (Punto de venta, `?ventana=1`), con la cuenta compartida de producción, cada «Ir al duplicado» / «Ir al original» vuelve a pedir «Autorizate para operar este Punto de Venta». En el navegador común (dos ventanas) no pasa; con un usuario común tampoco (no hay operario).
+- **Causa**: en la app instalada `pos-multi-instance.js` (`navigateSamePwaWindow`, `abrirDuplicado`) cambia de POS navegando la misma ventana; el `pagehide` de `Ventas/POS.cshtml` (y `PuntosExpendio/POS.cshtml`) mandaba `CerrarOperadorPOS` del `posInstanceId` que se dejaba, porque esa navegación no ponía `PosConservarOperadorAlSalir`. El primer duplicado heredaba solo por ganarle la carrera al beacon.
+- **Verificaciones**: log de IIS de SM (`C:\inetpub\logs\LogFiles\W3SVC1\u_ex<aammdd>.log`): cada `GET /Ventas/POS?modoPos=...` va seguido de `POST /Ventas/CerrarOperadorPOS` del otro id y, al volver, de `AutorizarOperadorPOS`.
+- **Resolucion**: esas dos navegaciones marcan `window.PosConservarOperadorAlSalir = true` (salvo el duplicado que se descarta tras la venta, que sí suelta su operario); el `pagehide` de Expendio también respeta la marca. Test: `WebCore.Tests/js/pos-multi-instance-operador.test.js`.
+
+---
+
 ## 2026-11-20 - Balanza: la cantidad queda con el peso anterior (Elaborados y otras pantallas)
 
 - **Sintoma**: con la balanza activa, al cambiar el peso y elegir el siguiente ingrediente/producto, Cantidad sigue mostrando el peso anterior (ej. 2 kg cuando la balanza marca 4).

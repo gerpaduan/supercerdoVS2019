@@ -349,6 +349,14 @@
         } catch (e) { }
     }
 
+    // App instalada (una sola ventana): pasar al otro POS navega ESTA ventana, y el pagehide de POS.cshtml mandaria
+    // CerrarOperadorPOS, borrando el operario de la pestana que se deja; al volver lo pedia otra vez (bug real en SM,
+    // 2026-11-20, ver docs/07-operacion-y-soporte/incidencias-frecuentes.md). La marca conserva el operario sin frenar el
+    // resguardo de la venta en curso (mismo criterio que "Modificar venta").
+    function conservarOperadorAlSalir() {
+        window.PosConservarOperadorAlSalir = true;
+    }
+
     function navigateSamePwaWindow(role, keepDuplicateSession) {
         var sessionValue = ensureStandaloneSession();
         var targetId = role === 'duplicado' ? sessionValue.duplicateId : sessionValue.originalId;
@@ -358,6 +366,9 @@
         if (role === 'original' && keepDuplicateSession === false) {
             sessionValue.duplicateId = '';
             writePwaSession(sessionValue);
+        } else {
+            // Solo cuando la pestana que se deja sigue viva: el duplicado que se descarta tras la venta si debe soltar su operario.
+            conservarOperadorAlSalir();
         }
 
         persistDraftBeforeSwitch();
@@ -534,6 +545,8 @@
         updateUi();
 
         if (isStandalonePwa()) {
+            // El original sigue vivo (se vuelve con "Ir al original"): conserva su operario, que ademas hereda el duplicado.
+            conservarOperadorAlSalir();
             persistDraftBeforeSwitch();
             suppressReleaseOnUnload = true;
             window.location.href = duplicateUrl;

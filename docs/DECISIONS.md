@@ -1,3 +1,13 @@
+## 2026-11-21 - POS y Expendio: el modal de operador no se puede cerrar (sin X ni «Cancelar»)
+
+- **Pedido:** en la app instalada del POS, al cerrar el modal «Autorizate para operar» con la cuenta de producción queda la pantalla en blanco y muchos operadores no saben que hay que apretar F5. El usuario pidió un botón de recargar **o** que el modal nunca se cierre; eligió que **no se cierre** (opción A), para Punto de venta y Punto de expendio.
+- **Causa:** con `obligatorio` el modal ya ignoraba Esc y el clic afuera, pero la X y «Cancelar» lo cerraban; el evento `hidden.bs.modal` llamaba a `AppInstalada.salir()`, que hace `window.close()`: Chrome no deja cerrar con código una ventana de app que abrió el usuario → pantalla en blanco + aviso «Cerrá esta ventana con la X».
+- **Qué se decidió:** en modo obligatorio `seleccion-usuario.js` oculta la X y «Cancelar» (`salidasDelModal`, función pura con test); en pestaña normal (no `AppInstalada.activa`) queda un enlace «Ir a Inicio» (opción `urlInicio`) como única salida, porque con el fondo bloqueado no hay otra; en la app instalada se sale con la X de la ventana. La red de seguridad de `Ventas/POS.cshtml` y `PuntosExpendio/POS.cshtml` ahora **reabre** el modal (`pedirOperador(true)`) en vez de llamar a `salir()`. Se quitó el `.catch` de `abrir()`, que nunca corría (la promesa no se rechaza al cerrar).
+- **Alcance:** solo `obligatorio: true` (únicos usos: Ventas/POS y PuntosExpendio/POS al entrar sin operador). «Cambiar operario», autorizaciones, cierre de caja y el desbloqueo del POS conservan X y «Cancelar».
+- **Alternativa descartada:** dejar «Cancelar» y mostrar detrás un cartel «Falta identificar al operador» con «Elegir operador» y «Recargar» (B): el operador igual cae en una pantalla inútil y necesita un clic más.
+- **No tocado (PENDIENTE de revisar si el usuario lo pide):** «Cancelar» de la apertura de caja (`Ventas/POS.cshtml`) y de la elección de sector del Expendio usan el mismo `AppInstalada.salir()`; en la app instalada mostrarían el mismo aviso y no se verificó qué queda en pantalla.
+- **Archivos:** `Scripts/app/seleccion-usuario.js`, `Views/Shared/_ModalSeleccionUsuario.cshtml`, `Views/Ventas/POS.cshtml`, `Views/PuntosExpendio/POS.cshtml`; test `WebCore.Tests/js/seleccion-usuario-obligatorio.test.js`; manual `Ventas.POS.md`, `PuntosExpendio.POS.md`.
+
 ## 2026-11-21 - Movimientos: el campo Kgs. mide 8 caracteres más el icono de balanza (como Stock) y «F10» se oculta en el modo angosto
 
 - **Pedido:** con la balanza activa el Kgs. de Movimientos/Editar mostraba solo 2 dígitos y la coma (captura en ventana angosta). Stock/Editar sí se ve completo; aplicar ahí lo mismo y, si hace falta, esconder «F10» dejando la lupa.

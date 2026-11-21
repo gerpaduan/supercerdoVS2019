@@ -750,7 +750,9 @@
                     usuarios: cfg.usuariosActivos,
                     requierePassword: true,
                     validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId),
-                    obligatorio: esInicial
+                    obligatorio: esInicial,
+                    // Modo obligatorio: sin X ni Cancelar; en pestana normal queda «Ir a Inicio» (en la app instalada se sale con la X de la ventana).
+                    urlInicio: '@Url.Action("Index", "Home")'
                 }).then(function (operador) {
                     loginObligatorioPendiente = false;
                     // Cambio de operario (2026-11-03): aviso de 1 segundo antes de recargar. No aplica al login
@@ -769,14 +771,14 @@
                         return;
                     }
                     recargarConOperadorAutorizado();
-                }).catch(function () {
-                    if (esInicial) window.AppInstalada.salir('@Url.Action("Index", "Home")'); // en la app instalada cierra la ventana (app-instalada.js)
                 });
             }
 
+            // Red de seguridad (2026-11-21): igual que Ventas/POS, si el modal obligatorio se cierra sin resolver se vuelve a abrir (antes:
+            // AppInstalada.salir(), que en la app instalada dejaba la pantalla en blanco). Ver seleccion-usuario.js (sin X ni Cancelar).
             $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
                 if (loginObligatorioPendiente && !$(this).data('resuelto')) {
-                    window.AppInstalada.salir('@Url.Action("Index", "Home")');
+                    window.setTimeout(function () { pedirOperador(true); }, 0);
                 }
             });
 
@@ -788,8 +790,9 @@
                 pedirOperador(false);
             });
 
+            // PosConservarOperadorAlSalir: pasar entre POS original y duplicado en la app instalada (pos-multi-instance.js).
             window.addEventListener('pagehide', function () {
-                if (window.PosNavegandoInternoPOS) return;
+                if (window.PosNavegandoInternoPOS || window.PosConservarOperadorAlSalir) return;
                 if (navigator.sendBeacon) {
                     var data = new Blob([JSON.stringify({ posInstanceId: cfg.posInstanceId })], { type: 'application/json' });
                     navigator.sendBeacon(cfg.urlCerrar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId), data);
