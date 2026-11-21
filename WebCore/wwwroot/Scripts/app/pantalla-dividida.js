@@ -174,6 +174,8 @@
         ev.preventDefault();
         if (ev.repeat || document.querySelector('.swal2-container')) return;   // dejar apretada la tecla no apila avisos
         confirmarSalida(function () {
+            // «Sí, salir» es una decision de descartar: no se devuelve lo cargado al recargar (ver «fotos de lo cargado»).
+            apagarFotos();
             soltarProteccionDePaneles();
             window.location.reload();
         });
@@ -183,9 +185,155 @@
     function conConfirmacionDelPanel(panel, accion) {
         if (!tieneCambiosSinGuardar(panel)) { accion(); return; }
         confirmarSalida(function () {
+            descartarFotoDe(panel.id);   // el usuario eligio salir sin guardar de ESE panel
             try { panel.iframe.contentWindow.desactivarProteccionSalida(); } catch (e) { /* la pantalla no tiene proteccion de salida */ }
             accion();
         });
+    }
+
+    // ---------- fotos de lo cargado: recuperarlo al recargar (capa 2) ----------
+    // 2026-11-21 (docs/DECISIONS.md): si la pagina se recarga igual (boton de recargar del navegador, cartel nativo aceptado, cuelgue), las ALTAS
+    // (Elaborados, Elaborados rapido, Movimientos, Stock, Compras, Personas, Productos) vuelven a su panel con lo que tenian. Cada pocos segundos se
+    // pide a cada panel con cambios sin guardar una «foto» (DocumentoAbierto.instantanea: el mismo paquete del traspaso, sin soltar nada) y se guarda
+    // en localStorage junto a la distribucion. Al arrancar esta pagina por una RECARGA (performance navigation type "reload"), cada panel cuya pantalla
+    // sigue siendo la misma se carga con un traspaso hecho de su foto (la misma marca ?traspasoDoc= de dividir / independizar). Entrar de nuevo por
+    // un enlace NO devuelve nada (alli el usuario decidio salir). No cubre ediciones de registros ya guardados (instantanea devuelve null).
+    var CLAVE_FOTOS = CLAVE_GUARDADO + '-fotos';
+    var FOTOS_INTERVALO_MS = 3000;                    // cada cuanto se fotografian los paneles
+    var FOTOS_VIGENCIA_MS = 12 * 60 * 60 * 1000;      // una foto mas vieja que esto no se devuelve
+    var FOTOS_GRACIA_MS = 10000;                      // un panel recien devuelto no se vuelve a fotografiar hasta que termine de aplicar (o pasen 10 s)
+    var fotos = {};            // idPanel -> {url, ts, modulo, idUsuario, grupo, paquete}
+    var firmasFotos = {};      // idPanel -> JSON del paquete (no se reescribe lo que no cambio)
+    var devueltas = {};        // idPanel -> ms hasta cuando dura la gracia: su foto se acaba de devolver
+    var eraSucio = {};         // idPanel -> true: el panel tuvo cambios sin guardar (si despues queda limpio, se guardo o se descarto)
+    var fotosApagadas = false; // true tras una salida decidida («Sí, salir»): no se toman mas fotos en esta pagina
+
+    function esRecargaDePagina() {
+        try {
+            var entrada = window.performance.getEntriesByType('navigation')[0];
+            return !!entrada && entrada.type === 'reload';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function rutaSinConsulta(url) { return String(url || '').split('?')[0].toLowerCase(); }
+
+    function guardarFotos() {
+        try {
+            if (Object.keys(fotos).length) window.localStorage.setItem(CLAVE_FOTOS, JSON.stringify(fotos));
+            else window.localStorage.removeItem(CLAVE_FOTOS);
+        } catch (e) {
+            console.warn('Pantalla dividida: no se pudieron guardar las fotos de lo cargado en este equipo.', e);
+        }
+    }
+
+    function borrarFotos() {
+        fotos = {}; firmasFotos = {}; devueltas = {}; eraSucio = {};
+        try { window.localStorage.removeItem(CLAVE_FOTOS); } catch (e) { console.warn('Pantalla dividida: no se pudieron borrar las fotos de lo cargado.', e); }
+    }
+
+    function apagarFotos() { fotosApagadas = true; borrarFotos(); }
+
+    function descartarFotoDe(id) {
+        if (!fotos[id] && !devueltas[id] && !eraSucio[id]) return;
+        delete fotos[id]; delete firmasFotos[id]; delete devueltas[id]; delete eraSucio[id];
+        guardarFotos();
+    }
+
+    // Lee las fotos guardadas descartando lo vencido o con forma rara (el navegador es input hostil: lo guardado se valida igual que la distribucion).
+    function leerFotos() {
+        var texto = null;
+        try { texto = window.localStorage.getItem(CLAVE_FOTOS); } catch (e) { console.warn('Pantalla dividida: no se pudieron leer las fotos de lo cargado.', e); }
+        if (!texto) return {};
+        var limpias = {};
+        try {
+            var datos = JSON.parse(texto);
+            Object.keys(datos || {}).forEach(function (id) {
+                var f = datos[id];
+                if (!f || typeof f !== 'object' || typeof f.url !== 'string' || !esUrlPermitida(f.url)) return;
+                if (typeof f.modulo !== 'string' || f.paquete === null || f.paquete === undefined) return;
+                if (typeof f.ts !== 'number' || Date.now() - f.ts > FOTOS_VIGENCIA_MS) return;
+                limpias[id] = f;
+            });
+        } catch (e) {
+            console.warn('Pantalla dividida: se ignoraron las fotos de lo cargado (' + (e && e.message ? e.message : e) + ').');
+        }
+        return limpias;
+    }
+
+    // Devuelve la distribucion con la url de cada panel que tiene foto (y sigue con la misma pantalla) apuntando a un traspaso hecho de esa foto.
+    function conFotosDevueltas(arbol) {
+        var api = window.DocumentoAbierto;
+        if (!Object.keys(fotos).length || !api || typeof api.crearTraspasoDeFoto !== 'function') return arbol;
+        var usadas = {};
+        var nuevo = Arbol.mapearUrls(arbol, function (nodo) {
+            var foto = fotos[nodo.id];
+            if (!foto || nodo.ventana || rutaSinConsulta(foto.url) !== rutaSinConsulta(nodo.url)) return null;
+            var traspaso = api.crearTraspasoDeFoto(foto);
+            if (!traspaso) return null;
+            usadas[nodo.id] = true;
+            return traspaso.urlCon(foto.url);
+        });
+        // Lo que no se pudo devolver (la pantalla del panel cambio, o ya no hay panel) se descarta; lo devuelto sigue fotografiandose.
+        Object.keys(fotos).forEach(function (id) {
+            if (usadas[id]) devueltas[id] = Date.now() + FOTOS_GRACIA_MS;
+            else delete fotos[id];
+        });
+        guardarFotos();
+        return nuevo;
+    }
+
+    function tomarFotos() {
+        if (!iniciado || saliendo || fotosApagadas || !raiz) return;
+        var cambio = false;
+        var vigentes = {};
+        Arbol.listarPaneles(raiz).forEach(function (nodo) {
+            var id = nodo.id;
+            vigentes[id] = true;
+            var panel = paneles[id];
+            var foto = fotos[id];
+            // Panel vacio o con su pantalla en una ventana independiente: no hay nada que fotografiar.
+            if (!nodo.url || nodo.ventana) {
+                if (foto) { delete fotos[id]; delete firmasFotos[id]; cambio = true; }
+                delete devueltas[id]; delete eraSucio[id];
+                return;
+            }
+            if (!panel || !panel.urlActual) return;   // la pantalla del panel todavia esta cargando: se conserva lo que haya
+            if (foto && foto.url !== panel.urlActual) {   // el panel cambio de pantalla: la foto era de otra
+                delete fotos[id]; delete firmasFotos[id]; delete devueltas[id]; delete eraSucio[id];
+                foto = null; cambio = true;
+            }
+            var sucio = tieneCambiosSinGuardar(panel);
+            if (sucio) eraSucio[id] = true;
+            else if (eraSucio[id]) {   // tenia cambios sin guardar y ya no: se guardo o se descarto
+                if (foto) { delete fotos[id]; delete firmasFotos[id]; cambio = true; }
+                delete eraSucio[id]; delete devueltas[id];
+                return;
+            }
+            // Recien devuelto: la pantalla puede no haber aplicado todavia lo suyo (no pisar la foto con una carga vacia).
+            if (!sucio && devueltas[id] && Date.now() < devueltas[id]) return;
+            if (!sucio && !devueltas[id]) {
+                if (foto) { delete fotos[id]; delete firmasFotos[id]; cambio = true; }
+                return;
+            }
+            var api = null;
+            try { api = panel.iframe.contentWindow.DocumentoAbierto; } catch (e) { return; }
+            var instantanea = api && typeof api.instantanea === 'function' ? api.instantanea() : null;
+            if (!instantanea) {   // edicion de un registro, o una pantalla que no sabe armar su paquete
+                if (foto && !devueltas[id]) { delete fotos[id]; delete firmasFotos[id]; cambio = true; }
+                return;
+            }
+            var firma = JSON.stringify(instantanea.paquete);
+            if (foto && firmasFotos[id] === firma) return;   // nada nuevo
+            fotos[id] = { url: panel.urlActual, ts: Date.now(), modulo: instantanea.modulo, idUsuario: instantanea.idUsuario, grupo: instantanea.grupo, paquete: instantanea.paquete };
+            firmasFotos[id] = firma;
+            cambio = true;
+        });
+        Object.keys(fotos).forEach(function (id) {   // paneles que ya no existen
+            if (!vigentes[id]) { delete fotos[id]; delete firmasFotos[id]; delete devueltas[id]; delete eraSucio[id]; cambio = true; }
+        });
+        if (cambio) guardarFotos();
     }
 
     // ---------- catalogo de modulos (menu lateral) ----------
@@ -1258,13 +1406,22 @@
         ajustarAlto();
 
         // En la ventana independiente: primero la distribucion que viene de la pestaña (?desdeLayout=), si no la que esa ventana guardo antes.
-        var guardado = leerLayoutTraspasado() || restaurar();
+        var traido = leerLayoutTraspasado();
+        var guardado = traido || restaurar();
         if (guardado) {
             raiz = guardado.raiz;
             activo = guardado.activo;
         } else {
             raiz = Arbol.crearPanel(1, null);
             activo = 1;
+        }
+        // Fotos de lo cargado (capa 2): solo una RECARGA de esta pagina devuelve a cada panel lo que tenia; entrar de nuevo por un enlace, o abrir la
+        // ventana con lo que viene de la pestaña, parte de cero y borra las fotos viejas (el usuario decidio salir).
+        if (!traido && esRecargaDePagina()) {
+            fotos = leerFotos();
+            raiz = conFotosDevueltas(raiz);
+        } else {
+            borrarFotos();
         }
         dibujar();
 
@@ -1284,6 +1441,10 @@
         window.addEventListener('keydown', alTeclaDeRecarga, true);   // F5 / Ctrl+R con el foco en esta pagina (los paneles lo engancha alCargarMarco)
         window.addEventListener('pagehide', guardar);
         window.setInterval(revisarVentanas, REVISION_VENTANAS_MS);
+        // Fotos de lo cargado (capa 2): cada pocos segundos y justo antes de salir (con los iframes todavia vivos). Si el usuario cancela el cartel
+        // nativo y se queda, solo se refrescan las fotos.
+        window.setInterval(tomarFotos, FOTOS_INTERVALO_MS);
+        window.addEventListener('beforeunload', tomarFotos);
         // Tocar un iframe saca el foco de esta pagina: el iframe enfocado es el panel activo.
         window.addEventListener('blur', function () {
             // Recien llegada con «Dividir pantalla»: la pantalla cargada enfoca sus campos al arrancar y eso NO es una eleccion del usuario;

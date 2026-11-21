@@ -200,6 +200,24 @@
         return null;
     }
 
+    // «Foto» de lo cargado (2026-11-21, capa 2 de la proteccion contra F5, docs/DECISIONS.md): como prepararTraspaso() pero SIN guardar nada ni soltar
+    // la pagina: devuelve {modulo, idUsuario, grupo, paquete} del Nuevo activo, o null (no hay un Nuevo que sepa armar su paquete, o es una edicion).
+    // La pantalla dividida la pide cada pocos segundos a cada panel para poder devolverle lo cargado si la pagina se recarga.
+    function instantanea() {
+        for (var i = 0; i < instancias.length; i++) {
+            var r = instancias[i].instantanea ? instancias[i].instantanea() : null;
+            if (r) return r;
+        }
+        return null;
+    }
+
+    // Convierte una foto (ver instantanea) en un traspaso listo para cargar: guarda su paquete bajo una clave NUEVA (vigencia de 10 minutos desde ahora) y
+    // devuelve {clave, urlCon(url), descartar()}; la pantalla que cargue esa url con la marca lo aplica una sola vez, como cualquier traspaso. null si no se pudo.
+    function crearTraspasoDeFoto(foto) {
+        if (!foto || !foto.modulo || foto.paquete === null || foto.paquete === undefined) return null;
+        return guardarTraspaso(String(foto.modulo), String(foto.idUsuario || 0), String(foto.grupo || ''), foto.paquete, function () { /* no hay pagina que soltar */ });
+    }
+
     // Guarda el paquete en localStorage y devuelve {clave, urlCon, ceder, descartar} (null si no se pudo guardar). Lo usan los Nuevo de
     // crear() y los formularios simples de registrarTraspasoFormulario(). cederFn se llama justo antes de irse.
     function guardarTraspaso(modulo, idUsuario, grupo, paquete, cederFn) {
@@ -263,17 +281,27 @@
         var idUsuario = String(cfg.idUsuario || 0);
         if (!modulo || typeof cfg.obtenerPaquete !== 'function' || typeof cfg.aplicarPaquete !== 'function') return;
 
+        // Paquete de lo cargado, o null si es una edicion (no viaja: se vuelve a cargar del servidor) o no se pudo armar.
+        function armarPaquete() {
+            if (typeof cfg.esAlta === 'function' && !cfg.esAlta()) return null;
+            var paquete;
+            try {
+                paquete = JSON.parse(JSON.stringify(cfg.obtenerPaquete()));
+            } catch (err) {
+                console.error('[DocumentoAbierto] no se pudo armar el paquete para el traspaso', err);
+                return null;
+            }
+            return paquete === undefined ? null : paquete;
+        }
+
         instancias.push({
+            instantanea: function () {
+                var paquete = armarPaquete();
+                return paquete === null ? null : { modulo: modulo, idUsuario: idUsuario, grupo: '', paquete: paquete };
+            },
             prepararTraspaso: function () {
-                if (typeof cfg.esAlta === 'function' && !cfg.esAlta()) return null;   // una edicion no viaja: se vuelve a cargar del servidor
-                var paquete;
-                try {
-                    paquete = JSON.parse(JSON.stringify(cfg.obtenerPaquete()));
-                } catch (err) {
-                    console.error('[DocumentoAbierto] no se pudo armar el paquete para el traspaso', err);
-                    return null;
-                }
-                if (paquete === null || paquete === undefined) return null;
+                var paquete = armarPaquete();
+                if (paquete === null) return null;
                 return guardarTraspaso(modulo, idUsuario, '', paquete, function () {
                     try {
                         if (typeof cfg.alCeder === 'function') cfg.alCeder();
@@ -638,18 +666,26 @@
         }
 
         // Traspaso por URL de ESTA instancia (ver prepararTraspaso de pagina): solo un Nuevo activo que sabe armar y aplicar su paquete.
-        function prepararTraspasoPropio() {
+        // Paquete de lo cargado del Nuevo activo, o null (no es un Nuevo activo que sepa armar y aplicar su paquete, o fallo).
+        function paqueteDelNuevo() {
             if (cedido || !estado || estado.tipo !== 'nuevo' || typeof cfg.obtenerPaquete !== 'function' || typeof cfg.aplicarPaquete !== 'function') return null;
-            var paquete;
             try {
-                paquete = JSON.parse(JSON.stringify(cfg.obtenerPaquete()));
+                return JSON.parse(JSON.stringify(cfg.obtenerPaquete()));
             } catch (err) {
                 console.error('[DocumentoAbierto] no se pudo armar el paquete para el traspaso', err);
                 return null;
             }
+        }
+        function prepararTraspasoPropio() {
+            var paquete = paqueteDelNuevo();
+            if (paquete === null || paquete === undefined) return null;
             return guardarTraspaso(modulo, idUsuario, grupo, paquete, function () { ceder(true); });
         }
-        instancias.push({ prepararTraspaso: prepararTraspasoPropio });
+        function instantaneaPropia() {
+            var paquete = paqueteDelNuevo();
+            return paquete === null || paquete === undefined ? null : { modulo: modulo, idUsuario: idUsuario, grupo: grupo, paquete: paquete };
+        }
+        instancias.push({ prepararTraspaso: prepararTraspasoPropio, instantanea: instantaneaPropia });
 
         // Aplica el traspaso que llego por la URL (ya leido). true si se aplico.
         function aplicarTraspasoRecibido(traspaso) {
@@ -1209,5 +1245,5 @@
         };
     }
 
-    window.DocumentoAbierto = { crear: crear, vistaPrevia: vistaPrevia, formatoKg: formatoKg, prepararTraspaso: prepararTraspaso, registrarTraspasoFormulario: registrarTraspasoFormulario, registrarTraspaso: registrarTraspaso, _separarAbiertos: separarAbiertos };
+    window.DocumentoAbierto = { crear: crear, vistaPrevia: vistaPrevia, formatoKg: formatoKg, prepararTraspaso: prepararTraspaso, instantanea: instantanea, crearTraspasoDeFoto: crearTraspasoDeFoto, registrarTraspasoFormulario: registrarTraspasoFormulario, registrarTraspaso: registrarTraspaso, _separarAbiertos: separarAbiertos };
 })(window, document);

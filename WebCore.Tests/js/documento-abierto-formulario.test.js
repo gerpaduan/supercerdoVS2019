@@ -169,3 +169,72 @@ test('registrarTraspaso: si aplicarPaquete falla no rompe la pantalla', () => {
         modulo: 'm', idUsuario: 7, obtenerPaquete: () => ({}), aplicarPaquete: () => { throw new Error('boom'); }
     }));
 });
+
+// ---- instantanea / crearTraspasoDeFoto (2026-11-21, capa 2: recuperar lo cargado al recargar la pantalla dividida) ----
+
+test('instantanea: devuelve lo cargado SIN guardar nada ni soltar la pagina', () => {
+    const { win, almacen } = cargar([], 'http://localhost/Compras/NuevaCompra');
+    let cedido = 0;
+    win.DocumentoAbierto.registrarTraspaso({
+        modulo: 'compras-editar', idUsuario: 7, esAlta: () => true,
+        obtenerPaquete: () => ({ draft: { lineas: [{ codigo: 'A1' }] }, clientId: 'abc' }),
+        aplicarPaquete: () => {}, alCeder: () => { cedido++; }
+    });
+    const foto = win.DocumentoAbierto.instantanea();
+    assert.equal(foto.modulo, 'compras-editar');
+    assert.equal(foto.idUsuario, '7');
+    assert.equal(foto.paquete.clientId, 'abc');
+    assert.equal(almacen.size, 0, 'una foto no escribe en localStorage');
+    assert.equal(cedido, 0, 'una foto no suelta la pagina');
+});
+
+test('instantanea: una edicion (esAlta false) no tiene foto', () => {
+    const { win } = cargar([], 'http://localhost/x');
+    win.DocumentoAbierto.registrarTraspaso({ modulo: 'm', idUsuario: 7, esAlta: () => false, obtenerPaquete: () => ({ a: 1 }), aplicarPaquete: () => {} });
+    assert.equal(win.DocumentoAbierto.instantanea(), null);
+});
+
+test('instantanea: sin ninguna pantalla registrada devuelve null', () => {
+    assert.equal(cargar([], 'http://localhost/x').win.DocumentoAbierto.instantanea(), null);
+});
+
+test('instantanea: el formulario de Personas devuelve sus campos', () => {
+    const { win } = cargar([campo('Nombre', 'text', 'Ana'), campo('Clave', 'password', 'secreta')], 'http://localhost/Personas/Nuevo');
+    win.DocumentoAbierto.registrarTraspasoFormulario(CFG);
+    const foto = win.DocumentoAbierto.instantanea();
+    assert.deepEqual(Array.from(foto.paquete, (c) => c.nombre), ['Nombre']);
+    assert.ok(!JSON.stringify(foto).includes('secreta'), 'la contraseña nunca entra en una foto');
+});
+
+test('una foto vuelve a su pantalla: crearTraspasoDeFoto + la marca en la url, y la pantalla la aplica una sola vez', () => {
+    // Pagina que se recarga: saca la foto y (como la pantalla dividida) la guarda como texto.
+    const antes = cargar([], 'http://localhost/Compras/NuevaCompra');
+    antes.win.DocumentoAbierto.registrarTraspaso({
+        modulo: 'compras-editar', idUsuario: 7, obtenerPaquete: () => ({ draft: { lineas: [{ codigo: 'A1' }] } }), aplicarPaquete: () => {}
+    });
+    const guardada = JSON.stringify(antes.win.DocumentoAbierto.instantanea());
+
+    // Pagina padre (pantalla dividida): crea el traspaso de la foto.
+    const padre = cargar([], 'http://localhost/PantallaDividida');
+    const t = padre.win.DocumentoAbierto.crearTraspasoDeFoto(JSON.parse(guardada));
+    assert.ok(t, 'debe crear el traspaso');
+    assert.match(t.urlCon('/Compras/NuevaCompra'), /traspasoDoc=carnisys-traspaso-doc-/);
+
+    // Pantalla del panel tras la recarga: llega con la marca y aplica el paquete.
+    let recibido = null;
+    const despues = cargar([], 'http://localhost' + t.urlCon('/Compras/NuevaCompra'));
+    despues.almacen.set(t.clave, padre.almacen.get(t.clave));
+    despues.win.DocumentoAbierto.registrarTraspaso({
+        modulo: 'compras-editar', idUsuario: 7, obtenerPaquete: () => ({}), aplicarPaquete: (p) => { recibido = p; }
+    });
+    assert.deepEqual(recibido, { draft: { lineas: [{ codigo: 'A1' }] } });
+    assert.equal(despues.almacen.has(t.clave), false, 'la clave se usa una sola vez');
+});
+
+test('crearTraspasoDeFoto: una foto sin modulo o sin paquete no crea nada', () => {
+    const { win, almacen } = cargar([], 'http://localhost/x');
+    assert.equal(win.DocumentoAbierto.crearTraspasoDeFoto(null), null);
+    assert.equal(win.DocumentoAbierto.crearTraspasoDeFoto({ paquete: {} }), null);
+    assert.equal(win.DocumentoAbierto.crearTraspasoDeFoto({ modulo: 'm' }), null);
+    assert.equal(almacen.size, 0);
+});
