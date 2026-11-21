@@ -4,7 +4,7 @@ titulo: Ingreso al sistema
 rol: usuario
 modulo: Acceso y seguridad
 orden: 1
-revisada: 2026-10-13
+revisada: 2026-11-21
 ---
 ## Para qué sirve
 Es la pantalla para entrar al sistema. Funciona igual desde la dirección general (`/Login`) y desde la dirección de tu empresa (`/Login/<CUIT>`, ver [ingresar con la dirección de tu empresa](ayuda:concepto/login-por-cuit)).
@@ -24,6 +24,7 @@ Es la pantalla para entrar al sistema. Funciona igual desde la dirección genera
 - Fuera del **horario laboral** de la empresa los empleados (no administradores) no pueden iniciar sesión.
 - Si **olvidaste la contraseña**, usá *"¿Olvidaste tu contraseña?"* ([ayuda](ayuda:pantalla/Login.ForgotPassword)).
 - Desde tu usuario ya ingresado podés [cambiar tu contraseña](ayuda:pantalla/Login.ChangePassword) o [configurar tu PIN](ayuda:pantalla/Login.ChangePin).
+- **Adónde entrás (desde 2026-11-21):** normalmente a **Inicio**. Si el ingreso aparece **dentro de la ventana de una app instalada** desde [Utilidades](ayuda:pantalla/Home.Utilidades) (Punto de venta, Punto de expendio, Stock, Movimientos, Elaborados o Existencia), por ejemplo después de **cerrar sesión** o de un cierre por inactividad, volvés a **esa app**. En el Punto de venta la cuenta de producción ve directo la elección de operador; en el Punto de expendio, operador y después sector. En una pestaña del navegador o en la app general **CarniSys** se sigue entrando a Inicio.
 
 ## Instalar como app en el celular
 Desde el navegador del celular o la tablet podés instalar CarniSys como una app (ícono en la pantalla de inicio y sin barra del navegador): en Chrome/Android, menú ⋮ → *Instalar app*; en iPhone/iPad (Safari), compartir → *Agregar a pantalla de inicio*. No hace falta reinstalar cuando el sistema se actualiza: se actualiza sola al abrirla. Funciona solo con conexión. El navegador solo ofrece instalar si la dirección es **https con certificado válido** (hoy `carnisys.com`); en las instalaciones que se abren por IP con certificado propio (Servidor SM, San Lorenzo) aparece "no se puede instalar". En iPhone/iPad la app instalada guarda su propia sesión, así que hay que ingresar de nuevo y el dispositivo puede pedir autorización otra vez. PENDIENTE: confirmar el texto exacto de los menús en un celular real.

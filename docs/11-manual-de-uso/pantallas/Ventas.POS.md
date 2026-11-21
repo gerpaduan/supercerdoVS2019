@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-20
+revisada: 2026-11-21
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -339,6 +339,7 @@ Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el co
 - Abre directo en el POS, sin ir por Inicio. Los enlaces a otras secciones del sistema no funcionan en esta ventana: muestran «No disponible en esta ventana».
 - El botón **Cerrar** (arriba, en la app instalada), cancelar la apertura de caja o cancelar la elección de operador **cierran la ventana** en lugar de ir a Inicio. Si hay una venta en curso, el navegador pregunta antes de cerrar. Ver una venta o cobrar siguen funcionando dentro de la ventana.
 - **Sin menú solo en las apps de Utilidades:** únicamente las apps instaladas desde **Utilidades** abren sin menú lateral. Si usás la app general **CarniSys** (o una pestaña del navegador) y entrás a esta pantalla, el **menú se ve** y los enlaces funcionan; la ventana de **Abrir en ventana** sí va sin menú. Si instalaste esta app antes del 2026-11-17, **desinstalala y reinstalala desde Utilidades** para que tome esta regla (Stock, Movimientos y Elaborados ya la traían).
+- **Cerrar sesión y volver a ingresar (desde 2026-11-21):** si cerrás sesión dentro de la app (o se cierra por inactividad), al volver a ingresar en esa misma ventana entrás de nuevo al **POS**, no a Inicio. Con la cuenta de producción aparece directo la elección de operador.
 - PENDIENTE: no se probó la instalación real en producción ni el uso de **Duplicar POS** dentro de la app instalada.
 
 ## Compra en curso (F5, desde 2026-11-17)

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Configuración
 orden: 1
 permiso: ninguno (el ítem Utilidades del menú Configuración lo ve todo usuario; verificado en `Views/Shared/_Layout.cshtml`)
-revisada: 2026-11-20
+revisada: 2026-11-21
 ---
 ## Para qué sirve
 Reúne las herramientas auxiliares que cualquier usuario puede necesitar sin entrar a otra pantalla: el **contador de billetes** y la descarga de los **agentes locales** (impresora y balanza) que se instalan en cada PC.
@@ -25,6 +25,7 @@ Reúne las herramientas auxiliares que cualquier usuario puede necesitar sin ent
 - Si por error se instaló una app llamada **CarniSys** (la app general), se desinstala desde `chrome://apps` (clic derecho → Quitar).
 - **Menú lateral:** solo las apps instaladas desde acá abren sin menú. La app general **CarniSys** y cualquier pestaña del navegador muestran el menú de siempre, aunque entres a Stock, Movimientos, Elaborados o al POS; la ventana de **Abrir en ventana** va sin menú. Si instalaste Punto de venta, Punto de expendio o Existencia antes del 2026-11-17, desinstalalas y volvé a instalarlas desde acá.
 - **Clic derecho en el menú lateral:** sobre cualquier opción del menú (no sobre los encabezados que se despliegan, como «Stock» o «Configuración») se abre un menú propio, para trabajar en otra pantalla **sin salir de la actual** (por ejemplo, con filtros aplicados). En Stock › Gestión de stock, Existencia por sucursales, Movimientos, Elaborados, Punto de venta y Punto de expendio ofrece **Abrir ventana de la app** (una ventana sin menú lateral; repetirla trae al frente la que ya está abierta, sin recargarla). En el resto de las pantallas ofrece **Abrir en ventana independiente**. En **Punto de venta**, si ya hay un POS abierto de tu usuario y sucursal, **Abrir ventana de la app** (y el clic común en el menú) lo trae al frente en vez de abrir otro. El navegador no deja abrir desde una página la app ya instalada: esa ventana es del navegador, igual que «Abrir en ventana»; el ícono instalado se abre desde la barra de tareas o el menú Inicio. Las apps se instalan solo desde esta pantalla. Solo en pantalla de escritorio.
+- **Cerrar sesión dentro de una app instalada (desde 2026-11-21):** al volver a ingresar en esa ventana se vuelve a la misma app, no a Inicio (ver [Ingreso al sistema](ayuda:pantalla/Login.Index)).
 - Funciona con Chrome o Edge. PENDIENTE: no se probó la instalación real en producción ni el clic derecho en Chrome real.
 
 ## Agentes locales

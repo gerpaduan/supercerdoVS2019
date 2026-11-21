@@ -217,6 +217,9 @@
        sigue normal: ahi se usa la cookie del navegador. El submit espera como maximo ~1,5 s a que
        responda el agente. *@
     <script src="@Url.Content("~/Scripts/app/print-agent.js")" asp-append-version="true"></script>
+    @* Ventana de una app instalada (POS, Expendio, Stock...): si el login llega sin destino, vuelve a esa app y no al dashboard (2026-11-21, ver
+       docs/DECISIONS.md). Va antes de passkey.js por claridad: completa el campo oculto ReturnUrl que tambien usa el ingreso con huella. *@
+    <script src="@Url.Content("~/Scripts/app/login-volver-app.js")" asp-append-version="true"></script>
     @if (WebCore.Helpers.PasskeySettings.Habilitado)
     {
         <script src="@Url.Content("~/Scripts/app/passkey.js")" asp-append-version="true"></script>
