@@ -3,7 +3,7 @@ titulo: Aviso «Salir sin guardar»
 rol: usuario
 modulo: Uso general
 orden: 30
-revisada: 2026-11-20
+revisada: 2026-11-24
 ---
 # Aviso «Salir sin guardar»
 
@@ -22,9 +22,10 @@ En las pantallas con aviso de salida: el aviso general de las pantallas de alta 
 
 Otras confirmaciones (por ejemplo, anular o eliminar) **no cambian**: ahí Enter sigue confirmando.
 
-## En una ventana independiente (desde 2026-11-20)
-En las **ventanas independientes** y las **apps instaladas** desde Utilidades **no aparece el cartel del navegador** («¿Deseas abandonar el sitio?»): ese cartel lo pone el navegador y no se puede ocultar ni cambiar, solo no activarlo. Ahí la salida la aprobás vos con el aviso de arriba:
-- Al tocar **Volver**, **Cancelar** o un enlace, y al apretar **F5** o **Ctrl + R** (recargar), con cambios sin guardar aparece «Salir sin guardar» y solo se sale o recarga si elegís «Sí, salir».
-- **Cerrar la ventana** con la **X**, **Alt + F4** o **Ctrl + W**, o usar el botón de recargar del navegador, **no pregunta** (el navegador no deja interceptarlo). Lo que habías cargado queda como **borrador**: se guarda solo 1,5 segundos después de cada cambio y se recupera desde el botón «… sin guardar» de la pantalla.
-- En una **pestaña normal** del navegador todo sigue igual: al cerrarla o recargarla el navegador muestra su cartel.
-- El **punto de venta** (también el instalado) no cambia: sigue con sus propios avisos.
+## En una ventana independiente (desde 2026-11-24)
+En las **ventanas independientes**, las **apps instaladas** desde Utilidades y la **pantalla dividida** pasada a ventana, con cambios sin guardar:
+- Al tocar **Volver**, **Cancelar** o un enlace, y al apretar **F5** o **Ctrl + R** (recargar), aparece «Salir sin guardar» (el aviso de arriba) y solo se sale o recarga si elegís «Sí, salir».
+- **Cerrar la ventana** con la **X**, **Alt + F4** o **Ctrl + W**, o usar el botón de recargar del navegador, muestra el **cartel del navegador** «¿Deseas abandonar el sitio?». Ese cartel lo pone el navegador: no se puede cambiar su texto y su botón marcado es **«Abandonar»**, así que **un Enter ahí cierra la ventana y se pierde lo cargado**. Para quedarte tocá **Cancelar** con el mouse o apretá **Esc**.
+- Si igual se cerró, lo que habías cargado en Stock, Movimientos, Elaborados o Compras suele quedar como **borrador** (se guarda solo 1,5 segundos después de cada cambio) y se recupera desde el botón «… sin guardar» de la pantalla.
+- Entre el 2026-11-20 y el 2026-11-24 la X cerraba estas ventanas **sin preguntar**; se volvió al cartel del navegador por pedido del usuario.
+- En una **pestaña normal** todo sigue igual (cartel del navegador). El **punto de venta** (también el instalado) no cambia: sigue con sus propios avisos.

@@ -1146,9 +1146,9 @@
     }
 
     // Ventana independiente: hasta el 2026-11-20 avisaba antes de cerrarla o recargarla con el cartel del navegador «¿Deseas abandonar el sitio?»
-    // (pedido 2026-11-02). Se quito (pedido del usuario, ver docs/DECISIONS.md 2026-11-20 j): ese cartel no se puede ocultar ni cambiar, y en
-    // todas las ventanas independientes ahora la salida se aprueba con el aviso propio de la app (donde hay cambios sin guardar). Existencia no tiene
-    // cambios propios que se pierdan al cerrar. salidaPermitida y permitirSalida() quedan por compatibilidad con existencia-movimiento.js.
+    // (pedido 2026-11-02). Se quito (pedido del usuario, ver docs/DECISIONS.md 2026-11-20 j) y no se volvio a poner cuando el cartel volvio a las
+    // demas ventanas independientes (2026-11-24 h): ese cartel ahora sale solo con cambios sin guardar (__protegerSalida, _Layout.cshtml) y Existencia
+    // no tiene cambios propios que se pierdan al cerrar. salidaPermitida y permitirSalida() quedan por compatibilidad con existencia-movimiento.js.
     var salidaPermitida = false;
 
     // ---------- Eventos ----------

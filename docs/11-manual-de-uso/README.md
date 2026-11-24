@@ -37,7 +37,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Menú de usuario (arriba a la derecha) | Conceptos generales | `conceptos/menu-de-usuario.md` | 2026-10-14 |
 | conceptos | Roles y permisos (quién puede hacer qué) | Conceptos generales | `conceptos/roles-y-permisos.md` | 2026-11-19 |
 | conceptos | Fórmula secreta | Elaborados | `conceptos/formula-secreta.md` | 2026-10-20 |
-| conceptos | Aviso «Salir sin guardar» | Uso general | `conceptos/aviso-salir-sin-guardar.md` | 2026-11-20 |
+| conceptos | Aviso «Salir sin guardar» | Uso general | `conceptos/aviso-salir-sin-guardar.md` | 2026-11-24 |
 | pantallas | Cambiar contraseña | Acceso y seguridad | `pantallas/Login.ChangePassword.md` | 2026-10-03 |
 | pantallas | Clave rápida (PIN) | Acceso y seguridad | `pantallas/Login.ChangePin.md` | 2026-10-03 |
 | pantallas | Desbloquear usuario (enlace del mail) | Acceso y seguridad | `pantallas/Login.UnlockAccount.md` | 2026-10-03 |

@@ -6,6 +6,17 @@
 - **Alternativa descartada:** anclar en «Ensanchar» (`#btnEnsancharVentana`): lo crea `movimiento-stock-destino.js` por JS y solo en Movimientos; no cubre Stock ni Elaborados.
 - **Sin verificar en navegador con SQL Server;** pendiente probarlo en SM tras el deploy. **No «arreglar» llevando los borradores a SQL Server por esto.**
 
+## 2026-11-24 (h) — Ventanas independientes y apps instaladas: vuelve el cartel del navegador al cerrar con cambios sin guardar (revierte 2026-11-20 j)
+
+- **Pedido:** al cerrar la ventana de pantalla dividida con algo en carga o edición, obligar a cerrar panel por panel antes de salir. Después, probando la app instalada de Movimientos: «cierra automáticamente; mostrar el cartel por defecto del navegador».
+- **Límite (navegador, igual en la app instalada):** una página no puede frenar la X / Alt+F4 / Ctrl+W ni mostrar un aviso propio antes; solo puede pedir el cartel nativo «¿Deseas abandonar el sitio?», cuyo texto no se cambia y cuyo botón por omisión es «Abandonar». Solo una app de escritorio (nativa o envoltorio WebView2/Electron/Tauri) intercepta la X.
+- **Qué se decidió (preguntado):** el cartel nativo es el freno en **todas** las páginas con `__protegerSalida`: en `_Layout.cshtml` se quitó `if (esVentanaIndependiente()) return;` del `beforeunload`. Se acepta el riesgo de que un Enter sobre el cartel cierre todo. En la pantalla dividida en ventana ya salía (los paneles son iframes, que nunca tuvieron la excepción); ahora sale también en ventanas independientes y apps instaladas de una sola pantalla.
+- **Se conserva:** el `keydown` de F5 / Ctrl+R en ventana independiente sigue abriendo «Salir sin guardar» (foco en «No, quedarme»); `confirmarSalidaSinGuardar` apaga la protección antes de recargar, así que no hay doble aviso. Las salidas ya aprobadas por la app apagan la protección antes de cerrar: guardar y cerrar (`ventana-trabajo.js`), traspasos (`ceder()`), y ahora «Traer de vuelta al panel» con «Sí, salir» (`pantalla-dividida.js` `traerDeVuelta`: llama a `ventana.desactivarProteccionSalida()`; sin eso el cartel nativo volvía a preguntar al hacer `ventana.close()`).
+- **No se tocó:** `existencia-sucursales.js` (su `beforeunload` propio quitado el 2026-11-20 no vuelve: no tiene cambios propios que se pierdan); el POS (sus propios avisos).
+- **Alternativa descartada:** sin cartel en todas las ventanas (también en los paneles) y devolver lo cargado al reabrir la pantalla dividida (fotos de 2026-11-21 (e), hoy solo al recargar). **No volver a quitar el cartel** sin preguntar.
+- **Verificado:** `dotnet build` de WebCore sin errores; `node --test WebCore.Tests/js/*.test.js` 160/160. **Sin verificar en el navegador:** la X de una ventana real de Chrome / app instalada (el pane no abre popups ni cierra ventanas); lo prueba el usuario.
+- **Archivos:** `WebCore/Views/Shared/_Layout.cshtml`, `WebCore/wwwroot/Scripts/app/pantalla-dividida.js`, comentario de `existencia-sucursales.js`; manual `conceptos/aviso-salir-sin-guardar.md`, `pantallas/PantallaDividida.Index.md`.
+
 ## 2026-11-24 - App instalada: Volver y Cancelar al listado de la propia app ya no se bloquean
 
 - **Pedido:** en la app instalada de Movimientos, «Volver» y «Cancelar» mostraban «No disponible en esta ventana». Tienen que volver al listado, igual en Stock, Movimientos y Elaborados: cada app es un circuito cerrado listado → editar / ver / agregar → listado, sin salir a otros menús.
@@ -159,6 +170,8 @@
 - **Archivos:** `WebCore/wwwroot/Scripts/app/pos-ventana-unica.js` (nuevo), `pos-multi-instance.js` (`openOriginalEntry`, `buildStateKey`), `menu-ventana-independiente.js`, `WebCore/Views/Ventas/POS.cshtml`, `WebCore/Views/Shared/_Layout.cshtml`; manual `Ventas.POS.md`, `Home.Utilidades.md`.
 
 ## 2026-11-20 (j) - Ventanas independientes: sin el cartel del navegador «¿Deseas abandonar el sitio?»; salir o recargar lo aprueba el usuario con el aviso propio
+
+> **Revertido el 2026-11-24 (h):** el cartel del navegador volvió a las ventanas independientes y apps instaladas. Sigue vigente lo de F5 / Ctrl+R.
 
 - **Pedido:** ocultar el cartel del navegador al cerrar/salir de una ventana independiente («Es posible que los cambios que implementaste no se puedan guardar») y que solo se pueda salir con la aprobación del usuario en la app. Decidió (preguntado): quitarlo **solo en ventanas independientes** (no en pestañas normales) e **interceptar F5 / Ctrl+R** con el aviso propio.
 - **Límite del navegador:** ese cartel (`beforeunload`) no se puede ocultar, ni cambiar su texto, ni reemplazar por un aviso propio al cerrar con la X / Alt+F4 / Ctrl+W: la única forma de que no aparezca es **no activar** `beforeunload`. Lo mismo vale para el botón de recargar del navegador. Por eso «solo con aprobación de la app» vale para enlaces, Volver/Cancelar y F5 / Ctrl+R, **no** para la X de la ventana.

@@ -1704,10 +1704,10 @@
 
         window.addEventListener("beforeunload", function (e) {
             if (!window.__protegerSalida) return;
-            // Ventana independiente (2026-11-20, pedido del usuario): sin el cartel del navegador «¿Deseas abandonar el sitio?» (no se puede ocultar ni
-            // cambiar su texto; solo no activarlo). La salida desde la app la aprueba el usuario con «Salir sin guardar» (enlaces, Volver, F5 / Ctrl+R);
-            // cerrar con la X / Alt+F4 / Ctrl+W ya no pregunta, y lo cargado queda como borrador (borrador-generico.js, 1,5 s despues de cada cambio).
-            if (esVentanaIndependiente()) return;
+            // Cartel del navegador «¿Deseas abandonar el sitio?» en TODAS las paginas, tambien en ventanas independientes y apps instaladas
+            // (2026-11-24 h, docs/DECISIONS.md: vuelve atras lo de 2026-11-20 j). Es lo unico que frena la X / Alt+F4 / Ctrl+W; su texto y su boton
+            // por omision («Abandonar») los pone el navegador. Las salidas que ya aprobo el usuario en la app (aviso «Salir sin guardar», guardar y
+            // cerrar, traspasos) apagan antes __protegerSalida, asi que no preguntan dos veces.
             e.preventDefault();
             e.returnValue = "";
         });
@@ -1751,8 +1751,8 @@
             });
         }
 
-        // F5 / Ctrl+R en una ventana independiente con cambios sin guardar: sin el cartel del navegador, recargar pasa por el aviso propio.
-        // (El boton de recargar del navegador y la X de la ventana no se pueden interceptar: ahi no se pregunta.)
+        // F5 / Ctrl+R en una ventana independiente con cambios sin guardar: en vez del cartel del navegador, recargar pasa por el aviso propio
+        // (foco en «No, quedarme»). El boton de recargar del navegador y la X de la ventana no se pueden interceptar: ahi queda el cartel nativo.
         document.addEventListener("keydown", function (e) {
             if (!window.__protegerSalida || e.altKey || !esVentanaIndependiente()) return;
             var recarga = e.key === "F5" || ((e.ctrlKey || e.metaKey) && String(e.key || "").toLowerCase() === "r");

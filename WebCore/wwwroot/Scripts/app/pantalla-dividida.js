@@ -970,6 +970,10 @@
             return;
         }
         if (traspaso) traspaso.ceder();   // la ventana deja de guardar borrador y de proteger la salida: lo cargado vuelve al panel
+        // «Sí, salir» ya confirmado: la ventana suelta su proteccion, si no su cartel nativo (2026-11-24 h) volveria a preguntar al cerrarla.
+        if (confirmado) {
+            try { if (typeof ventana.desactivarProteccionSalida === 'function') ventana.desactivarProteccionSalida(); } catch (e) { console.warn('Pantalla dividida: no se pudo soltar la proteccion de la ventana independiente.', e); }
+        }
         try { ventana.close(); } catch (e) { console.warn('Pantalla dividida: no se pudo cerrar la ventana independiente.', e); }
         delete ventanas[nodo.ventana];
         // Se espera a que termine de cerrarse: asi suelta sus candados de «documento abierto» antes de que el panel cargue lo mismo.
