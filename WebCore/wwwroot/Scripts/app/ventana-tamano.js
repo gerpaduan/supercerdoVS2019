@@ -3,9 +3,9 @@
    Donde hay un boton «Stock / Movimientos / Elaborados sin guardar» (o «Borradores sin guardar» en Existencia) el par − / + se inserta justo ANTES de ese
    boton, en la misma barra de la derecha. En las pantallas sin ese boton (listados, POS, Expendio) no aparece nada: una pastilla flotante abajo a la derecha
    se probo y tapaba «Guardar» / «Cancelar» (aviso del usuario, 2026-11-17).
-   Aparece solo en: (a) Stock / Movimientos / Elaborados en modo ventana (html.modo-ventana, ver _Layout.cshtml), (b) las mini-apps instaladas
-   (display-mode: standalone con <meta name="carnisys-app-scope"> o layout embebido), (c) las ventanas emergentes de _LayoutEmbed (tienen window.opener).
-   Nunca en iframes ni en una pestana normal.
+   Aparece solo en: (a) cualquier pantalla en modo ventana (html.modo-ventana, ver _Layout.cshtml), tambien si Chrome la trata como parte de la app instalada
+   (2026-11-24), (b) las mini-apps instaladas (display-mode: standalone con la marca window.__appIndependiente), (c) las ventanas emergentes de
+   _LayoutEmbed (tienen window.opener). Nunca en iframes ni en una pestana normal. La regla es decidirAplica() (pura, con tests).
    Cada clic cambia el ANCHO de la ventana un 10 % del ancho que tenia al abrirse, con el borde DERECHO fijo (crece o se achica hacia la izquierda) (window.resizeTo + moveTo, el mismo mecanismo que ya usan el boton «Ensanchar» de
    Movimientos y el cartel de Existencia), con minimo del 50 % y maximo hasta el borde izquierdo de la pantalla; el alto no cambia. Si el navegador no deja redimensionar esa
    ventana avisa «no permite cambiar el tamano». El ultimo nivel se recuerda por seccion (localStorage) y se reaplica al abrir.
@@ -32,18 +32,36 @@
         return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
     }
 
-    function aplica() {
+    // Regla pura (testeable): ¿esta ventana es una ventana independiente (marco, franja de titulo y −/+)?
+    //   e = { enPos: carga dentro del POS (iframe), enApp: display-mode standalone, appIndependiente: marca de app de Utilidades,
+    //         modoVentana: html.modo-ventana (window.name carnisys-trabajo-*), embebida: layout embebido, conOpener: tiene window.opener }
+    // Orden (2026-11-24, aviso del usuario: «Movimientos» abierta desde la app instalada no mostraba el marco, «Cajas Abiertas» si):
+    //   1) una ventana que NOSOTROS abrimos (nombre carnisys-trabajo-* o emergente embebida con opener) es independiente SIEMPRE. Antes se miraba primero si
+    //      Chrome la trataba como app instalada (una ventana emergente abierta desde la app lo hace: display-mode standalone) y ahi se la descartaba
+    //      por no tener __appIndependiente, que solo tienen las apps de Utilidades: justo las ventanas del menu / «Abrir en ventana» quedaban sin marco;
+    //   2) sin eso, una app instalada cuenta solo si es una de las apps de Utilidades; la app general CarniSys (ventana normal) no lleva el par −/+.
+    function decidirAplica(e) {
         // Carga abierta dentro del POS (iframe, 2026-11-18): el tamano de la ventana no tiene sentido ahi (resizeTo no actua en un iframe).
-        if (window.parent !== window && /^carnisys-trabajo-pos-/.test(window.name || '')) return false;
-        var embebida = !!(document.body && document.body.classList.contains('app-embed'));
-        // App instalada: solo si es una app independiente de Utilidades (window.__appIndependiente); la app general CarniSys no lleva el par −/+.
-        if (enAppInstalada()) return window.__appIndependiente === true;
-        if (document.documentElement.classList.contains('modo-ventana')) return true;
-        return embebida && !!window.opener;
+        if (e.enPos) return false;
+        if (e.modoVentana) return true;
+        if (e.embebida && e.conOpener) return true;
+        if (e.enApp) return e.appIndependiente === true;
+        return false;
+    }
+
+    function aplica() {
+        return decidirAplica({
+            enPos: window.parent !== window && /^carnisys-trabajo-pos-/.test(window.name || ''),
+            enApp: enAppInstalada(),
+            appIndependiente: window.__appIndependiente,
+            modoVentana: document.documentElement.classList.contains('modo-ventana'),
+            embebida: !!(document.body && document.body.classList.contains('app-embed')),
+            conOpener: !!window.opener
+        });
     }
 
     // marco-ventana.js (marco y agarres de la ventana) usa la misma condicion para decidir si esta ventana es independiente.
-    window.VentanaTamano = { aplica: aplica, buscarAncla: function (buscar) { return buscarAncla(buscar); }, anclas: ANCLAS.slice() };
+    window.VentanaTamano = { aplica: aplica, decidirAplica: decidirAplica, buscarAncla: function (buscar) { return buscarAncla(buscar); }, anclas: ANCLAS.slice() };
 
     function seccion() {
         // Con PathBase (/CarniSysWeb/Stock/...) el primer segmento seria el prefijo: si hay meta de scope se usa su ultimo segmento.

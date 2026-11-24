@@ -11,7 +11,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CarniSys</title>
+    <title>@(string.IsNullOrWhiteSpace(ViewData["Title"] as string) ? "CarniSys" : ViewData["Title"])</title>
     <partial name="_SeccionVentana" />
     @* Identidad propia de la ventana independiente (2026-11-17): la vista puede pedir un icono de pestana/ventana (ViewBag.IconoVentana, nombre de un SVG de
        Content/img/ventanas) y su manifest (ViewBag.ManifestVentana). Hoy solo Existencia por sucursal en ventana independiente; sin esto la ventana no tenia icono

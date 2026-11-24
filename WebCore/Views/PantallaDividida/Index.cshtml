@@ -66,6 +66,10 @@
     .pd-aviso { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; text-align: center; color: #495057; }
     /* Sin desactivar de verdad (disabled no muestra el motivo ni recibe clics): se ve apagado y al tocarlo explica por que. */
     .pd-cerrar-todo[aria-disabled="true"], #pdTres[aria-disabled="true"], #pdCuadro[aria-disabled="true"] { opacity: .55; }
+    /* Aviso de toda el area cuando la distribucion esta en la ventana independiente (2026-11-24): tapa los paneles y oculta los botones de la barra. */
+    .pd-afuera { z-index: 8; font-size: .85rem; }
+    .pd-afuera i.pd-afuera-icono { font-size: 1.6rem; color: #35479b; }
+    .pd-con-afuera #pdTres, .pd-con-afuera #pdCuadro, .pd-con-afuera #pdCerrar, .pd-con-afuera #pdIndependizar, .pd-con-afuera .pd-ayuda, .pd-con-afuera #pdContador { display: none; }
     .pd-botones { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
     .pd-botones .btn { font-size: .8rem; }
     .pd-divisor { position: absolute; z-index: 4; background: transparent; touch-action: none; }
@@ -108,8 +112,9 @@
                     title="Cerrá o juntá los paneles hasta que quede uno solo con una pantalla">
                 <i class="fas fa-compress-arrows-alt" aria-hidden="true"></i> Cerrar pantalla dividida
             </button>
-            @* Pasa TODA la distribucion (todos los paneles y sus tamaños) a una ventana independiente sin menu ni barra; esta pestaña vuelve a Inicio
-               (pantalla-dividida.js, independizarTodo). Se oculta dentro de esa ventana. *@
+            @* Pasa TODA la distribucion (todos los paneles y sus tamaños) a una ventana independiente sin menu ni barra; esta pestaña queda con un
+               aviso para ir a esa ventana o traerla de vuelta (pantalla-dividida.js, independizarTodo, 2026-11-24). Dentro de esa ventana el mismo boton
+               pasa a ser «Devolver a la ventana principal». *@
             <button type="button" class="btn btn-outline-secondary" id="pdIndependizar"
                     title="Pasa toda la pantalla dividida, con todos sus paneles, a una ventana independiente">
                 <i class="fas fa-external-link-alt" aria-hidden="true"></i> Pasar a ventana independiente
@@ -126,5 +131,6 @@
        paneles cargan su propia copia. *@
     <script src="~/Scripts/app/documento-abierto.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pantalla-dividida-arbol.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pantalla-dividida-canal.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pantalla-dividida.js" asp-append-version="true"></script>
 }

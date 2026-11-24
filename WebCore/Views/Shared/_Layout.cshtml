@@ -107,7 +107,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CarniSys</title>
+    <title>@(string.IsNullOrWhiteSpace(ViewData["Title"] as string) ? "CarniSys" : ViewData["Title"])</title>
     @* Seccion e icono para el titulo de las ventanas independientes (titulo-ventana.js). *@
     <partial name="_SeccionVentana" />
     <partial name="_PwaHead" />

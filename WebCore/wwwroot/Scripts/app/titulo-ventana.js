@@ -23,7 +23,8 @@
         return String(texto || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
     }
 
-    // Titulo de la pantalla sin el « - CarniSys» final ni una seccion ya antepuesta («Movimientos · Nuevo…»).
+    // Titulo de la pantalla sin una seccion ya antepuesta («Movimientos · Nuevo…»). Desde 2026-11-24 los layouts ya no agregan « - CarniSys» (en la app
+    // instalada Chrome antepone «CarniSys - » y quedaba repetido); se lo sigue quitando por si alguna pagina lo trae en su propio titulo.
     function tituloDePantalla(seccion) {
         var titulo = String(document.title || '').replace(/\s*-\s*CarniSys\s*$/i, '').trim();
         var prefijo = seccion + SEPARADOR_TITULO;

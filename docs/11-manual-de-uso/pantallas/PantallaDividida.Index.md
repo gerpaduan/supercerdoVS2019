@@ -62,13 +62,19 @@ Sobre cualquier módulo del menú (no el punto de venta):
 - **Estando en otra pantalla**: **Abrir en pantalla dividida** va a la pantalla dividida con ese módulo cargado en un panel.
 - **Estando en la pantalla dividida**: **Abrir en un panel nuevo** (a la derecha de todo, o en el primer panel vacío) y **Abrir en el panel activo**.
 - **Abrir en ventana independiente** sigue disponible como siempre (**copia**: abre la ventana y no toca los paneles).
+- **Clic con la rueda** sobre un módulo del menú (desde 2026-11-24) hace lo mismo que **Abrir en ventana independiente** (o **Abrir ventana de la app**), también estando en la pantalla dividida.
 
 ## Pasar toda la pantalla dividida a una ventana independiente
-El botón **Pasar a ventana independiente** (en la barra de arriba, junto a *3 columnas*, *4 en cuadro* y *Cerrar pantalla dividida*) **mueve toda la distribución** —todos los paneles, con sus tamaños y lo que tiene cada uno— a **una ventana nueva sin menú lateral ni barra superior**. Esta pestaña **vuelve a Inicio**.
+El botón **Pasar a ventana independiente** (en la barra de arriba, junto a *3 columnas*, *4 en cuadro* y *Cerrar pantalla dividida*) **mueve toda la distribución** —todos los paneles, con sus tamaños y lo que tiene cada uno— a **una ventana nueva sin menú lateral ni barra superior** (se abre un poco corrida, para que se note que es otra ventana).
+- **La ventana de origen queda abierta (desde 2026-11-24; antes volvía a Inicio):** sigue en la pantalla dividida, con el menú lateral, y en lugar de los paneles muestra **«La pantalla dividida está en una ventana independiente»** con **Ir a esa ventana** (la trae al frente) y **Traerla de vuelta acá** (la ventana devuelve todos los paneles, con lo cargado, y se cierra; si algún panel tiene cambios que no pueden viajar, la ventana pide confirmar ahí). Mientras tanto, la barra de arriba (*3 columnas*, *4 en cuadro*…) se oculta y el menú lateral navega normal.
+- **Dentro de la ventana**, el botón pasa a llamarse **Devolver a la ventana principal** y hace lo mismo que *Traerla de vuelta acá*. Si la ventana de origen ya no está en la pantalla dividida (o se cerró), avisa y **no se pierde nada**: entrá a *Pantalla dividida* desde el menú y tocá *Traerla de vuelta acá*.
+- Si **cerrás la ventana**, el aviso pasa a **«La ventana independiente se cerró»** con **Volver a cargarla acá** (trae lo que la ventana tenía al cerrarse). Si la ventana de origen se recarga o entrás de nuevo a *Pantalla dividida* y la ventana ya no está, la distribución **vuelve sola**.
+- Con la distribución en la ventana, **Dividir pantalla**, *Abrir en pantalla dividida* y el clic derecho del menú abren la pantalla **en un panel nuevo de la ventana** (avisa; tocá *Ir a esa ventana* para verla).
+- PENDIENTE: probado en el navegador integrado con la ventana simulada (pestañas del mismo sitio); falta probarlo en la app instalada real (foco entre ventanas, cierre).
 - Una carga **nueva** de Elaborados, Elaborados rápido, Movimientos, Stock, Compras, Personas o Productos **viaja con lo cargado**, sin avisos. Si algún panel tiene **cambios sin guardar que no pueden viajar** (por ejemplo, la edición de un registro ya guardado), aparece **una vez** el aviso «Salir sin guardar».
 - Los paneles que ya estaban en su **propia ventana independiente** siguen apuntando a esa ventana.
 - Hay **una sola** pantalla dividida independiente: si ya hay una, se la trae al frente y se avisa (cerrala antes de pasar otra).
-- La ventana guarda **su propia distribución** (no la de la pestaña). Dentro de la ventana el botón no aparece.
+- La ventana guarda **su propia distribución** (no la de la pestaña).
 - Si el navegador **bloquea la ventana emergente**, se avisa y todo queda como estaba: permitila para este sitio y probá de nuevo.
 
 ## Pasar un panel a una ventana independiente

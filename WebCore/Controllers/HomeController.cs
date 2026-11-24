@@ -451,7 +451,7 @@ public class HomeController : Controller
             }
         };
 
-        ViewBag.Title = "CarniSys | Utilidades";
+        ViewBag.Title = "Utilidades";
         return View(model);
     }
 

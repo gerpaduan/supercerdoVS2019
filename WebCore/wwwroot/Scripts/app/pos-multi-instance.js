@@ -283,11 +283,11 @@
         }
 
         if (isDuplicate()) {
-            document.title = 'CarniSys | POS Duplicado';
+            document.title = 'POS Duplicado';
         } else if (hasDuplicado) {
-            document.title = 'CarniSys | POS Original';
+            document.title = 'POS Original';
         } else {
-            document.title = 'CarniSys | Punto de Venta';
+            document.title = 'Punto de Venta';
         }
     }
 

@@ -1,5 +1,25 @@
 # Bitacora de cambios
 
+## 2026-11-24 - Marco, franja de título y − / + en toda ventana independiente
+
+- **Cambio:** las ventanas abiertas con el menú, «Abrir en ventana» o la rueda del mouse ya muestran el marco azul con filete naranja, la franja de título y los − / + aunque Chrome las trate como parte de la app instalada (antes «Movimientos» salía sin nada y «Cajas Abiertas» sí). La app general abierta normalmente sigue sin marco. Detalle: `docs/DECISIONS.md` (2026-11-24 (m)).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/ventana-tamano.js` (`decidirAplica`), `WebCore.Tests/js/ventana-tamano.test.js`, manual `Home.Utilidades.md`.
+- **Pendiente:** verlo en el Chrome real; el Punto de venta y el Punto de expendio quedan sin marco (otro layout).
+
+## 2026-11-24 - Pantalla dividida: la ventana original queda abierta; clic con la rueda en el menú; títulos sin «CarniSys»
+
+- **Cambio:**
+  1. **Pasar a ventana independiente** abre otra ventana, corrida para que se note. La original **queda** en la pantalla dividida con su menú y un aviso con **Ir a esa ventana** y **Traerla de vuelta acá**. En la ventana, el botón es **Devolver a la ventana principal**. Si la ventana se cierra, la distribución vuelve a la original. Antes la original iba a Inicio.
+  2. El **clic con la rueda** en el menú lateral abre la pantalla en ventana independiente (o la ventana de la app), en vez de una pestaña nueva. El menú del clic derecho y la rueda funcionan con la ventana de cualquier ancho (antes, a media pantalla salía el menú de Chrome).
+  3. Los títulos ya no llevan «CarniSys». En la app instalada el navegador antepone el nombre de la app y eso no se puede quitar; se evita que salga repetido.
+  - Detalle: `docs/DECISIONS.md` (2026-11-24 (j) y (k)).
+- **Archivos:**
+  - `WebCore/wwwroot/Scripts/app/pantalla-dividida.js` y `pantalla-dividida-canal.js` (nuevo, con el test `WebCore.Tests/js/pantalla-dividida-canal.test.js`), `Views/PantallaDividida/Index.cshtml`;
+  - `menu-ventana-independiente.js`;
+  - títulos en `_Layout`, `_LayoutEmbed`, `_LayoutPOS`, Ventas/POS, PuntosExpendio/POS, Utilidades (vista y `HomeController`), las pantallas de Login y `pos-multi-instance.js`;
+  - manual `PantallaDividida.Index.md` y `Home.Utilidades.md`.
+- **Pendiente:** probar en la app instalada real (ir y volver entre ventanas, cierre) y la rueda con un mouse real. Se verificó con la ventana simulada en el navegador integrado.
+
 ## 2026-11-21 - POS y Expendio: el cartel de operador no se puede cerrar (adiós a la pantalla en blanco)
 
 - **Cambio:** el cartel «Autorizate para operar…» del Punto de venta y del Punto de expendio (cuenta de producción) ya no tiene X ni «Cancelar», y si se cerrara se vuelve a abrir solo; así no queda la pantalla en blanco ni hace falta F5. En pestaña normal queda el enlace «Ir a Inicio»; en la app instalada se sale con la X de la ventana. «Cambiar operario» no cambia. Detalle: `docs/DECISIONS.md` (2026-11-21, «POS y Expendio: el modal de operador no se puede cerrar»).

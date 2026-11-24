@@ -51,3 +51,44 @@ test('el panel de stock del destino (Existencia en modo movimiento) no lleva el 
 test('pantallas sin ninguno de los botones (listados, POS, Expendio) no muestran nada', () => {
     assert.equal(buscarAncla(pantallaCon([])), null);
 });
+
+// ---------- decidirAplica: cuando una ventana es independiente (marco, franja y −/+) ----------
+// Regresion 2026-11-24: una ventana abierta por el menu / «Abrir en ventana» desde la app instalada (Chrome la trata como app: standalone) no mostraba el
+// marco porque se la descartaba por no ser una app de Utilidades; la misma ventana abierta desde una pestana normal si lo mostraba.
+const { decidirAplica } = sandbox.VentanaTamano;
+const base = { enPos: false, enApp: false, appIndependiente: false, modoVentana: false, embebida: false, conOpener: false };
+const con = (cambios) => decidirAplica({ ...base, ...cambios });
+
+test('ventana abierta por nosotros (modo ventana) desde una pestana normal: es independiente', () => {
+    assert.equal(con({ modoVentana: true }), true);
+});
+
+test('ventana abierta por nosotros (modo ventana) que Chrome trata como app instalada: tambien (el caso de «Movimientos»)', () => {
+    assert.equal(con({ modoVentana: true, enApp: true, appIndependiente: false }), true);
+});
+
+test('emergente embebida con opener: es independiente, tambien si Chrome la trata como app instalada', () => {
+    assert.equal(con({ embebida: true, conOpener: true }), true);
+    assert.equal(con({ embebida: true, conOpener: true, enApp: true }), true);
+});
+
+test('embebida sin opener y sin app: no (por ejemplo un panel o una pagina embebida suelta)', () => {
+    assert.equal(con({ embebida: true }), false);
+});
+
+test('app instalada de Utilidades (marca __appIndependiente): es independiente', () => {
+    assert.equal(con({ enApp: true, appIndependiente: true }), true);
+});
+
+test('app general CarniSys abierta normalmente (standalone, sin marca ni nombre de ventana): no lleva marco', () => {
+    assert.equal(con({ enApp: true, appIndependiente: false }), false);
+});
+
+test('pestana normal: no es independiente', () => {
+    assert.equal(con({}), false);
+});
+
+test('carga dentro del POS (iframe): nunca, aunque este en modo ventana', () => {
+    assert.equal(con({ enPos: true, modoVentana: true }), false);
+    assert.equal(con({ enPos: true, enApp: true, appIndependiente: true }), false);
+});

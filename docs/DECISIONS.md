@@ -1,3 +1,54 @@
+## 2026-11-24 (m) - Marco, franja y − / + en TODA ventana independiente, también las abiertas desde la app instalada
+
+- **Pedido / síntoma:** «Cajas Abiertas» mostraba el marco azul con filete naranja y «Movimientos» no, aunque las dos eran ventanas independientes. Pidió el marco en todas.
+- **Causa:** `VentanaTamano.aplica()` (`ventana-tamano.js`) miraba primero si la ventana es una app instalada (`display-mode: standalone`) y en ese caso solo decía «sí» con la marca `__appIndependiente`, que tienen las apps de Utilidades y no la app general. Una ventana emergente abierta por el menú / «Abrir en ventana» desde la app instalada la trata Chrome como parte de la app (standalone), así que se la descartaba antes de mirar `html.modo-ventana`. La misma ventana abierta desde una pestaña normal sí lo mostraba. Lo de cómo se abrió cada ventana del usuario es una deducción del código: no se pudo ver en su Chrome.
+- **Qué se decidió:** la regla pasó a `decidirAplica()` (pura, con 8 tests en `ventana-tamano.test.js`), en este orden: (1) carga dentro del POS (iframe): no; (2) una ventana que abrimos nosotros (`modo-ventana`, o emergente embebida con `window.opener`): sí, siempre; (3) si no, una app instalada cuenta solo si tiene `__appIndependiente`. La app general abierta normalmente sigue sin marco. Los consumidores son el marco, la franja de título, los − / + y el F5 con aviso propio, así que todos se corrigen juntos.
+- **No incluye:** el Punto de venta y el Punto de expendio (`_LayoutPOS` no carga estos scripts; decisión de 2026-11-20 (c)). Sumarlos es un cambio aparte que requiere revisar que el marco no tape botones.
+- **Verificado:** 174 tests de Node; en el navegador, con el estado de «app instalada» y nombre de ventana simulados: se dibuja el marco con sus 8 agarres, y sin modo ventana (app general) no se dibuja. PENDIENTE: verlo en el Chrome real.
+
+## 2026-11-24 (k) - Títulos de las páginas sin «CarniSys»
+
+- **Pedido:** en la barra de tareas, quitar el primer «CarniSys» de cada título. Con la app instalada se veía «CarniSys - Inicio - CarniSys».
+- **Límite (Chromium, verificado en blink-dev «Document Subtitle» y en el explainer `application-title` de Edge):** en una app instalada el navegador **siempre antepone «<nombre de la app> - »** al título, salvo que el título ya empiece con ese nombre. Es una medida de seguridad para que ninguna página se haga pasar por otra app, y la página no la puede quitar. La meta `application-title` solo cambia lo que va después del nombre.
+- **Qué se decidió (preguntado: «sacarlo en todos lados»):** las páginas ya no ponen «CarniSys» en su `<title>`. `_Layout`/`_LayoutEmbed` usan `ViewData["Title"]` (si viene vacío, «CarniSys»); `_LayoutPOS` usa `ViewData["Title"]` o «Punto de Venta». Se quitó «CarniSys | » de POS, Expendio, Utilidades y `pos-multi-instance.js`, y « - CARNISYS» de las pantallas de login. Queda un solo «CarniSys», el del navegador, en la app general («CarniSys - Inicio»); las mini-apps muestran el suyo («Stock - Gestión de stock»); en una pestaña común queda solo el nombre de la pantalla.
+- **No se tocaron:** la Landing (sitio público, el título sirve para buscadores), el pie «© 2026 - CarniSys» ni el asunto de los mails. `titulo-ventana.js` y `pantalla-dividida.js` siguen quitando el sufijo viejo por si alguna página lo trae.
+- **Alternativa descartada:** sacar solo el sufijo dentro de la app instalada (dejándolo en una pestaña común): el usuario lo quiso en todos lados.
+
+## 2026-11-24 (j) - Pantalla dividida: la ventana original queda abierta al pasar a ventana independiente; clic con la rueda en el menú lateral
+
+- **Pedido:** con la app instalada, al pasar la pantalla dividida a una ventana independiente, parecía que se abría en la misma ventana y se perdía la distribución con los menús. Se pidió que se abra otra ventana, que la original quede y que se pueda ir y volver. Además, que el **clic con la rueda** en el menú lateral haga lo mismo que «Abrir en ventana independiente» del clic derecho.
+- **Causa:** `independizarTodo` abría la ventana exactamente encima del área de paneles y mandaba la pestaña a Inicio (2026-11-21 (c)).
+- **Qué se decidió (preguntado: «Aviso con ir/traer»; modifica 2026-11-21 (c)):**
+  - Se sigue **moviendo, no copiando**, para no tener dos borradores iguales. La pestaña **queda** en la pantalla dividida con su menú y un aviso sobre el área: «Ir a esa ventana» / «Traerla de vuelta acá»; si la ventana se cierra, «Volver a cargarla acá».
+  - Dentro de la ventana, `#pdIndependizar` pasa a «Devolver a la ventana principal». La ventana nueva se abre corrida 40 px (`DESPLAZAMIENTO_VENTANA_PX`).
+- **Cómo:**
+  - La pestaña deja la marca `carnisys-pantalla-dividida-v1-<usuario>-en-ventana` en localStorage y queda con un panel vacío tapado por el aviso.
+  - Mientras está «afuera» (`afuera`) no guarda la distribución, no toma fotos y **no llama a `LiberarPermisos`**: si avisara «ninguna pantalla», les sacaría el operador autorizado a las de la ventana.
+  - Las dos se hablan por `BroadcastChannel` (`pantalla-dividida-canal.js`, con tests), porque la referencia de `window.open` se pierde al recargar la pestaña. Mensajes:
+    - ping / aca;
+    - abrir: «Dividir pantalla», «Abrir en pantalla dividida» y el clic derecho se mandan a un panel nuevo de la ventana;
+    - devolver;
+    - distribucion / recibida: la ventana se cierra recién cuando la pestaña acusa recibo; sin recibo descarta los traspasos y avisa, sin perder nada;
+    - cerrada.
+  - Si al cargar la pestaña la ventana no contesta (2 s), la pestaña toma la distribución que la ventana guardó al cerrarse (`...-ventana`) y borra la marca.
+  - Clic con la rueda (`menu-ventana-independiente.js`): `auxclick` con `button === 1` y sin Ctrl/Mayús/Alt, que antes abría una pestaña nueva. Llama a `abrirEnVentanaIndependiente(enlace)`, la misma acción que la primera opción del menú contextual. El `mousedown` de la rueda se cancela para que no aparezca el autodesplazamiento.
+  - **Corregido tras probar en Chrome real (misma fecha):** la primera versión llamaba a `window.open` dentro del `auxclick` y Chrome abría una **pestaña** del navegador (con el menú lateral) en vez de una ventana: Chrome deriva ventana/pestaña del evento que dispara `window.open`, y con la rueda siempre es pestaña. Ahora se abre en un `setTimeout(0)` (fuera del evento; la activación del usuario dura unos segundos). Verificado solo que la apertura queda diferida; el resultado real hay que verlo en Chrome.
+  - **Corregido tras probar en Chrome real (2, misma fecha):** el menú propio y la rueda solo actuaban con la ventana a 992 px CSS o más (piso heredado de `ventana-independiente.js` para no actuar en celular/tablet). Con Windows al 125 % eso exige ~1240 px reales: una ventana a media pantalla quedaba con el menú nativo de Chrome y la rueda abría una **ventana nueva de la app con menú** (síntoma reportado). Ahora el criterio es tener mouse (`(any-pointer: fine)`), sin importar el ancho. Reproducido y verificado en el navegador integrado a 900 px (antes: nada; después: menú propio y ventana). **No volver a un piso de ancho:** el caso de uso es justamente trabajar con varias ventanas. Sin probar en un celular real.
+  - El ítem Pantalla dividida (por clic derecho o rueda) se abre con el nombre `carnisys-trabajo-pantalla-dividida`, así guarda su propia distribución y no pisa la de la pestaña.
+- **Alternativas descartadas:**
+  - Copiar la distribución en las dos ventanas (ya descartado el 2026-11-21).
+  - Dejar Inicio como antes y solo correr la ventana.
+  - Comunicar por la referencia `window.open` / `opener`: se pierde al recargar y no sirve si la pestaña original se cerró.
+- **Verificado:** en el navegador integrado, con la página de login de un WebCore propio y la ventana simulada por stub de `window.open` + otra pestaña del mismo sitio:
+  - pasar, aviso, marca y corrimiento;
+  - abrir desde la pestaña a la ventana;
+  - traer de vuelta: la ventana se cerró y la pestaña recuperó los 3 paneles;
+  - ventana cerrada → recuperación sola al recargar;
+  - «Devolver» sin pestaña esperando: avisa y no pierde nada;
+  - ventana bloqueada: todo queda como estaba;
+  - clic con la rueda en Compras, Stock, encabezado, Ctrl+rueda y Pantalla dividida.
+- **PENDIENTE:** probar en la app instalada real (foco entre ventanas, cierre) y con un mouse real.
+
 ## 2026-11-24 (i) - Botones − / + de ancho también sin «… sin guardar» (SQL Server): respaldo en «Pantalla completa»
 
 - **Pedido:** en Servidor SM los botones − / + de ancho de la ventana no aparecían (sí en el local).
@@ -84,6 +135,8 @@
 - **Archivos:** `Scripts/app/pantalla-dividida.js`; manual `PantallaDividida.Index.md` (sección «Cambios sin guardar»). **Sin probar en el navegador aún.**
 
 ## 2026-11-21 (c) - Pantalla dividida: ítem del menú lateral igual al botón y «Pasar a ventana independiente» para toda la pantalla
+
+- **Modificado el 2026-11-24 (j):** la pestaña ya no vuelve a Inicio; queda con un aviso para ir a la ventana o traerla de vuelta.
 
 - **Síntoma:** al pasar una compra a la pantalla dividida salía «Salir sin guardar». Causa: el usuario tocaba el ítem **Pantalla dividida del menú lateral**, que navegaba normal (sin traspaso) y los enlaces de `_Layout.cshtml` pedían confirmar; el botón de la barra superior sí funcionaba.
 - **Decidido con el usuario:** (1) el ítem del menú **se deja** y hace lo mismo que el botón (`menu-ventana-independiente.js`: listener en captura en `window`, solo clic simple, fuera de Inicio/POS/login y de la propia pantalla dividida; recomendación aceptada, se descartó quitarlo porque es la única forma de volver a la distribución guardada). (2) Botón **Pasar a ventana independiente** en la barra de la pantalla dividida: **mueve** toda la distribución a una ventana sin menú ni barra y la pestaña **vuelve a Inicio**.

@@ -2,13 +2,15 @@
    - Pantallas que tienen app independiente (enlace con data-app: Stock, Movimientos, Elaborados, Punto de venta, Punto de expendio, Existencia por
      sucursales): «Abrir ventana de la app».
    - Resto de las pantallas: «Abrir en ventana independiente».
+   - Clic del medio (rueda) sobre el enlace (2026-11-24): hace directamente esa primera opcion, sin pestaña nueva (con Ctrl/Mayus/Alt, lo nativo). La ventana
+     se abre en una tarea aparte (setTimeout 0): llamada dentro del evento de la rueda, Chrome la abriria como pestaña.
    La ventana es la misma de «Abrir en ventana»: su nombre empieza con carnisys-trabajo-, y el script del <head> de _Layout.cshtml la muestra sin menu
    lateral, barra superior ni pie (html.modo-ventana). Una ventana por destino: repetir el clic derecho sobre el mismo destino la trae al frente SIN
    recargarla (no se pierde lo que tenga cargado). Una pagina web no puede lanzar una app ya instalada (Chrome no lo permite): «Abrir ventana de la app»
    abre la URL de la app en una ventana del navegador; no se intenta detectar si esta instalada. Instalar las apps se hace solo desde Utilidades
    (el 2026-11-20 se quito «Instalar la app…» de este menu a pedido del usuario).
    Atributos que lee del enlace (los pone _Layout.cshtml, ya con el PathBase): data-app (clave) y data-app-url (URL de la app si difiere del href).
-   Solo escritorio (>= 992 px). Dependencias: ninguna (JS plano; usa Swal solo para avisar si esta cargado).
+   Solo en equipos con mouse (any-pointer: fine), con la ventana de cualquier ancho (antes >= 992 px, 2026-11-24). Dependencias: ninguna (JS plano; usa Swal solo para avisar si esta cargado).
    Decision y alternativas: docs/DECISIONS.md (2026-11-20). */
 (function () {
     'use strict';
@@ -17,8 +19,10 @@
     // Ventana independiente / mini-app: no hay menu lateral que escuchar.
     if (!menuLateral || document.documentElement.classList.contains('modo-ventana')) return;
 
-    // Por debajo de este ancho el menu lateral es la franja de iconos del celular/tablet: se deja el menu nativo (mismo piso que ventana-independiente.js).
-    var ESCRITORIO_ANCHO_MIN_PX = 992;
+    // Equipos con mouse (2026-11-24): el menu propio y la rueda actuan si hay un puntero preciso, SIN importar el ancho de la ventana. Antes se pedia
+    // un ancho de 992 px (CSS) y una ventana de escritorio a media pantalla (con Windows al 125 %, menos de ~1240 px reales) quedaba con el menu nativo de
+    // Chrome y la rueda abria una ventana nueva de la app CON menu (aviso del usuario). En celular / tablet sin mouse se sigue dejando lo nativo.
+    var CONSULTA_MOUSE = '(any-pointer: fine)';
     // Tamano de la ventana independiente (igual que ventana-independiente.js); el usuario puede moverla, redimensionarla y maximizarla.
     var VENTANA_ANCHO_PX = 1100;
     var VENTANA_ALTO_PX = 800;
@@ -26,6 +30,14 @@
     var PREFIJO_VENTANA_APP = 'carnisys-trabajo-app-';
     var PREFIJO_VENTANA_PANTALLA = 'carnisys-trabajo-menu-';
     var MARGEN_PANTALLA_PX = 8;
+    var NOMBRE_VENTANA_DIVIDIDA = 'carnisys-trabajo-pantalla-dividida';   // el mismo de pantalla-dividida.js
+
+    // true si el enlace va a la pantalla dividida (su URL la da data-pantalla-dividida-url del menu lateral).
+    function esPantallaDividida(enlace) {
+        var urlDividida = menuLateral.getAttribute('data-pantalla-dividida-url');
+        if (!urlDividida) return false;
+        try { return enlace.pathname.toLowerCase() === new URL(urlDividida, window.location.origin).pathname.toLowerCase(); } catch (e) { return false; }
+    }
 
     var menu = null;          // <div role="menu"> abierto, o null
     var origenFoco = null;    // enlace al que se devuelve el foco al cerrar con el teclado
@@ -47,8 +59,8 @@
     }
 
     // ---------- utilidades ----------
-    function esEscritorio() {
-        return window.matchMedia ? window.matchMedia('(min-width: ' + ESCRITORIO_ANCHO_MIN_PX + 'px)').matches : true;
+    function hayMouse() {
+        return window.matchMedia ? window.matchMedia(CONSULTA_MOUSE).matches : true;
     }
 
     function avisar(texto, icono) {
@@ -93,6 +105,37 @@
         }
         ventana.location.href = url;
         ventana.focus();
+    }
+
+    // Accion principal sobre un enlace del menu (primera opcion del clic derecho y clic del medio, 2026-11-24):
+    // - con data-app: la ventana de la app (data-app-url si difiere del href); en el Punto de venta, si ya hay un POS abierto se lo trae al frente
+    //   en vez de abrir otro (pos-ventana-unica.js);
+    // - sin data-app: la pantalla en una ventana independiente, una por destino.
+    function abrirEnVentanaIndependiente(enlace) {
+        var clave = enlace.getAttribute('data-app');
+        if (!clave) {
+            // La pantalla dividida usa el nombre de SU ventana (pantalla-dividida.js, NOMBRE_VENTANA_DIVIDIDA): asi guarda su propia distribucion y no
+            // pisa la de la pestaña.
+            abrirVentana(enlace.href, esPantallaDividida(enlace) ? NOMBRE_VENTANA_DIVIDIDA : PREFIJO_VENTANA_PANTALLA + normalizarRuta(enlace.href));
+            return;
+        }
+        var urlApp = enlace.getAttribute('data-app-url') || enlace.href;
+        var abrirApp = function () { abrirVentana(urlApp, PREFIJO_VENTANA_APP + clave.toLowerCase()); };
+        var unica = window.POSVentanaUnica;
+        if (enlace.hasAttribute('data-pos-unico') && unica && unica.traerPosAlFrente(unica.configDeEnlace(enlace), abrirApp)) return;
+        abrirApp();
+    }
+
+    // Enlace del menu lateral sobre el que cae el evento, si admite ventana independiente; null si no (celular/tablet sin mouse, encabezados desplegables
+    // —Stock, Empleados, Configuracion…—, "#", javascript: u otro sitio). Lo usan el clic derecho y el clic del medio.
+    function enlaceConVentana(evento) {
+        if (!hayMouse()) return null;
+        var enlace = evento.target && evento.target.closest ? evento.target.closest('a[href]') : null;
+        if (!enlace || !menuLateral.contains(enlace)) return null;
+        var href = enlace.getAttribute('href') || '';
+        if (href === '' || href.charAt(0) === '#' || /^javascript:/i.test(href) || enlace.getAttribute('data-bs-toggle')) return null;
+        if (enlace.origin !== window.location.origin) return null;
+        return enlace;
     }
 
     // ---------- menu contextual ----------
@@ -161,7 +204,7 @@
     // El item «Pantalla dividida» del menu lateral (2026-11-21): estando en una pantalla normal hace lo mismo que el boton de arriba —la pantalla actual
     // pasa como primer panel, con lo cargado y sin el aviso «Salir sin guardar», y queda un panel vacio al lado para elegir—. Antes navegaba normal
     // (sin llevar la pantalla) y los enlaces de _Layout.cshtml pedian confirmar la salida. No se toca si: es una pestaña/ventana nueva (Ctrl, Mayus,
-    // Alt, clic del medio), ya estamos en la pantalla dividida, o la pantalla actual no se abre en un panel (Inicio, POS, login): ahi navega normal.
+    // Alt; el clic del medio lo atiende el auxclick de abajo), ya estamos en la pantalla dividida, o la pantalla actual no se abre en un panel (Inicio, POS, login): ahi navega normal.
     var RUTA_NO_DIVIDIBLE = /(^|\/)(ventas\/pos|login|logout)(\/|$)/i;
     var RUTA_INICIO = /(^\/$)|(\/home(\/index)?\/?$)/i;
     window.addEventListener('click', function (evento) {
@@ -206,21 +249,10 @@
         menu.className = 'mvi-menu';
         menu.setAttribute('role', 'menu');
 
-        if (clave) {
-            // Pantalla con app independiente: se abre la URL de la app (data-app-url si difiere del href del menu).
-            var urlApp = enlace.getAttribute('data-app-url') || enlace.href;
-            menu.appendChild(crearOpcion('Abrir ventana de la app', 'fa-external-link-alt', function () {
-                var abrirApp = function () { abrirVentana(urlApp, PREFIJO_VENTANA_APP + clave.toLowerCase()); };
-                // Punto de venta: si ya hay un POS abierto se trae al frente en vez de abrir otro (pos-ventana-unica.js).
-                var unica = window.POSVentanaUnica;
-                if (enlace.hasAttribute('data-pos-unico') && unica && unica.traerPosAlFrente(unica.configDeEnlace(enlace), abrirApp)) return;
-                abrirApp();
-            }));
-        } else {
-            menu.appendChild(crearOpcion('Abrir en ventana independiente', 'fa-external-link-alt', function () {
-                abrirVentana(enlace.href, PREFIJO_VENTANA_PANTALLA + normalizarRuta(enlace.href));
-            }));
-        }
+        // Primera opcion: la misma accion que el clic del medio (abrirEnVentanaIndependiente).
+        menu.appendChild(crearOpcion(clave ? 'Abrir ventana de la app' : 'Abrir en ventana independiente', 'fa-external-link-alt', function () {
+            abrirEnVentanaIndependiente(enlace);
+        }));
 
         agregarOpcionesPantallaDividida(enlace);
 
@@ -234,14 +266,9 @@
     menuLateral.addEventListener('contextmenu', function (evento) {
         // Un menu abierto se cierra siempre; si el clic derecho cae en un enlace sin menu propio (encabezado desplegable) no debe quedar el anterior.
         cerrarMenu(false);
-        if (!esEscritorio()) return;
-        var enlace = evento.target.closest ? evento.target.closest('a[href]') : null;
-        if (!enlace || !menuLateral.contains(enlace)) return;
-        // Los encabezados desplegables (Stock, Empleados, Configuracion...) y cualquier "#" conservan el menu nativo.
-        var href = enlace.getAttribute('href') || '';
-        if (href === '' || href.charAt(0) === '#' || /^javascript:/i.test(href) || enlace.getAttribute('data-bs-toggle')) return;
-        // Solo enlaces del mismo sitio.
-        if (enlace.origin !== window.location.origin) return;
+        // Los encabezados desplegables, "#" y otros sitios conservan el menu nativo.
+        var enlace = enlaceConVentana(evento);
+        if (!enlace) return;
 
         evento.preventDefault();
         var x = evento.clientX, y = evento.clientY;
@@ -252,6 +279,27 @@
             y = r.bottom;
         }
         abrirMenu(enlace, x, y);
+    });
+
+    // Clic del medio (rueda) sobre un enlace del menu (2026-11-24, pedido del usuario): hace lo mismo que la primera opcion del clic derecho, en vez de
+    // la pestaña nueva del navegador (que trae el menu lateral). Con Ctrl, Mayus o Alt se deja el comportamiento nativo.
+    function esClicDelMedioPropio(evento) {
+        return evento.button === 1 && !evento.ctrlKey && !evento.metaKey && !evento.shiftKey && !evento.altKey;
+    }
+    // mousedown: evita el icono de autodesplazamiento de Windows que aparece al apretar la rueda sobre la pagina.
+    menuLateral.addEventListener('mousedown', function (evento) {
+        if (esClicDelMedioPropio(evento) && enlaceConVentana(evento)) evento.preventDefault();
+    });
+    menuLateral.addEventListener('auxclick', function (evento) {
+        if (!esClicDelMedioPropio(evento)) return;
+        var enlace = enlaceConVentana(evento);
+        if (!enlace) return;
+        evento.preventDefault();   // sin esto el navegador abre ademas la pestaña nueva
+        cerrarMenu(false);
+        // La ventana se abre FUERA del evento de la rueda (2026-11-24): Chrome deriva si window.open abre ventana o pestaña del evento que la dispara, y
+        // con un clic del medio la abre como PESTAÑA en segundo plano aunque se pida popup=yes (quedaba dentro del navegador, con el menu lateral).
+        // El permiso de abrir ventanas (activacion del usuario) dura unos segundos, asi que una tarea inmediata ya no es un clic del medio y sigue permitida.
+        window.setTimeout(function () { abrirEnVentanaIndependiente(enlace); }, 0);
     });
 
     document.addEventListener('mousedown', function (evento) {

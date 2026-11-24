@@ -36,7 +36,7 @@
     var LIBERAR_DEMORA_MS = 300;
     var PREFIJO_FRAME = 'carnisys-trabajo-panel-';
     var PREFIJO_VENTANA_PANTALLA = 'carnisys-trabajo-menu-';   // mismo que menu-ventana-independiente.js: una ventana por destino
-    var SUFIJO_TITULO = ' - CarniSys';
+    var SUFIJO_TITULO = ' - CarniSys';   // sufijo viejo del <title> (los layouts lo sacaron el 2026-11-24); se sigue quitando por si alguna pagina lo trae
     // Pasar TODA la pantalla dividida a una ventana independiente (2026-11-21): una sola ventana por usuario (como una pantalla = una ventana), con
     // nombre de la familia carnisys-trabajo-* (activa html.modo-ventana: sin menu ni barra) y su PROPIA distribucion guardada, para que la de la
     // pestaña y la de la ventana no se pisen.
@@ -45,7 +45,19 @@
     var PARAM_DESDE_LAYOUT = 'desdeLayout';                  // ?desdeLayout=<clave>: la distribucion que viene de la pestaña (una sola vez)
     var PREFIJO_LAYOUT_TRASPASO = 'carnisys-pd-layout-';     // clave temporal en localStorage con esa distribucion
     var VIGENCIA_LAYOUT_MS = 10 * 60 * 1000;                 // una clave sin usar se descarta a los 10 minutos
-    var CLAVE_GUARDADO = 'carnisys-pantalla-dividida-v1-' + (pagina.getAttribute('data-usuario') || '0') + (EN_VENTANA_DIVIDIDA ? '-ventana' : '');
+    var ID_USUARIO = pagina.getAttribute('data-usuario') || '0';
+    var CLAVE_BASE = 'carnisys-pantalla-dividida-v1-' + ID_USUARIO;
+    var CLAVE_GUARDADO_VENTANA = CLAVE_BASE + '-ventana';   // distribucion que guarda la ventana independiente
+    var CLAVE_GUARDADO = EN_VENTANA_DIVIDIDA ? CLAVE_GUARDADO_VENTANA : CLAVE_BASE;
+    // La ventana original queda abierta (2026-11-24, docs/DECISIONS.md «Pantalla dividida: la ventana original queda abierta»): al pasar la distribucion
+    // a la ventana, la pestaña deja esta marca (fecha) para saber, aun despues de recargarse, que su distribucion esta en la ventana. Se borra al volver.
+    var CLAVE_EN_VENTANA = CLAVE_BASE + '-en-ventana';
+    var ESPERA_RESPUESTA_VENTANA_MS = 2000;   // cuanto se espera que la otra ventana conteste por el canal antes de darla por cerrada
+    var DESPLAZAMIENTO_VENTANA_PX = 40;       // la ventana nueva se corre esto respecto del area de paneles: se nota que es OTRA ventana
+    var ESPERA_CIERRE_PROPIO_MS = 1500;       // tras devolver la distribucion: si la ventana sigue abierta despues de esto, se avisa que se puede cerrar
+    var Canal = window.PantallaDivididaCanal;
+    var TIPOS = Canal.TIPOS;
+    var canal = Canal.crear(ID_USUARIO);
     var PARAM_ABRIR = 'abrir';
     // Lugares de los atajos de la barra: deben coincidir con Arbol.distribucionTres / Arbol.distribucionCuadro (3 y 4 paneles).
     var CAPACIDAD_TRES = 3;
@@ -77,6 +89,11 @@
     var catalogo = [];              // modulos del menu lateral para el listado de un panel vacio
     var iniciado = false;
     var saliendo = false;           // true al cerrar la pantalla dividida: ya no se guarda la distribucion (pagehide y demoras pendientes)
+    // Solo en la pestaña: null, o el estado del aviso cuando la distribucion esta en la ventana independiente ('buscando' | 'abierta' | 'cerrada').
+    // Mientras no es null no se guarda la distribucion, no se toman fotos ni se avisa al servidor que pantallas siguen abiertas (lo hace la ventana).
+    var afuera = null;
+    var avisoAfuera = null;         // <div> del aviso de toda el area
+    var devolviendo = false;        // solo en la ventana: hay una devolucion en curso (esperando que la pestaña la reciba)
 
     // ---------- utilidades ----------
     function avisar(texto, icono) {
@@ -292,7 +309,7 @@
     }
 
     function tomarFotos() {
-        if (!iniciado || saliendo || fotosApagadas || !raiz) return;
+        if (!iniciado || saliendo || fotosApagadas || !raiz || afuera) return;
         var cambio = false;
         var vigentes = {};
         Arbol.listarPaneles(raiz).forEach(function (nodo) {
@@ -754,14 +771,16 @@
     // La ventana es la de siempre (nombre carnisys-trabajo-menu-<ruta>, sin menu lateral ni barra: ver _Layout.cshtml); al abrirla se ubica donde estaba el panel.
 
     // Ubicacion y tamano de pantalla donde estaba el panel (aproximado: el navegador agrega su barra de titulo). Panel no medible: tamano por omision.
-    function caracteristicasVentana(panel) {
+    // desplazamiento (opcional, px): corre la ventana en diagonal respecto del elemento, para que se vea que es otra ventana y no la misma.
+    function caracteristicasVentana(panel, desplazamiento) {
         var r = panel.el.getBoundingClientRect();
         var base = 'popup=yes,resizable=yes,scrollbars=yes,';
         if (r.width < 1 || r.height < 1) return base + 'width=' + VENTANA_ANCHO_PX + ',height=' + VENTANA_ALTO_PX;
+        var corrimiento = desplazamiento || 0;
         var bordeLateral = Math.max(0, (window.outerWidth - window.innerWidth) / 2);
         var barraSuperior = Math.max(0, window.outerHeight - window.innerHeight - bordeLateral);
-        var izquierda = Math.round(window.screenX + bordeLateral + r.left);
-        var arriba = Math.round(window.screenY + barraSuperior + r.top);
+        var izquierda = Math.round(window.screenX + bordeLateral + r.left + corrimiento);
+        var arriba = Math.round(window.screenY + barraSuperior + r.top + corrimiento);
         var ancho = Math.max(VENTANA_MIN_ANCHO_PX, Math.round(r.width));
         var alto = Math.max(VENTANA_MIN_ALTO_PX, Math.round(r.height));
         return base + 'left=' + izquierda + ',top=' + arriba + ',width=' + ancho + ',height=' + alto;
@@ -997,6 +1016,12 @@
             }
         });
         actualizarFranjasDeEdicion();   // una ventana de edicion de venta que se cerro sin guardar apaga su franja
+        // La ventana con TODA la distribucion (pestaña con el aviso): ademas del aviso que manda ella al cerrarse, se mira la referencia si la hay.
+        var dividida = ventanas[NOMBRE_VENTANA_DIVIDIDA];
+        if (afuera === 'abierta' && dividida && dividida.closed) {
+            delete ventanas[NOMBRE_VENTANA_DIVIDIDA];
+            mostrarAfuera('cerrada');
+        }
     }
 
     // Pantallas que siguen abiertas (para el operador autorizado): las de los paneles y las de las ventanas independientes que siguen abiertas.
@@ -1601,23 +1626,23 @@
     }
 
     // ---------- pasar TODA la pantalla dividida a una ventana independiente ----------
-    // «Pasar a ventana independiente» (2026-11-21, docs/DECISIONS.md): MUEVE toda la distribucion (todos los paneles, sus tamaños) a una ventana nueva
-    // sin menu ni barra, y esta pestaña vuelve a Inicio. Cada panel con una carga nueva que sabe pasar lo cargado (DocumentoAbierto.prepararTraspaso)
-    // viaja con todo y sin avisos; si algun panel tiene cambios sin guardar que NO puede viajar, se pide confirmar UNA vez («Salir sin guardar»).
-    // Los paneles cuya pantalla ya esta en su propia ventana independiente siguen apuntando a esa ventana (se la encuentra por nombre).
-    // La distribucion viaja por una clave temporal de localStorage (?desdeLayout=) que la ventana lee una sola vez.
+    // «Pasar a ventana independiente» (2026-11-21; desde 2026-11-24 la ventana original QUEDA ABIERTA, docs/DECISIONS.md «Pantalla dividida: la ventana
+    // original queda abierta»): MUEVE toda la distribucion (todos los paneles, sus tamaños) a una ventana nueva sin menu ni barra, y esta pestaña se queda
+    // en la pantalla dividida, con su menu lateral, mostrando un aviso con «Ir a esa ventana» y «Traerla de vuelta acá». Se mueve (no se copia) para no
+    // tener dos pantallas con el mismo borrador. Cada panel con una carga nueva que sabe pasar lo cargado (DocumentoAbierto.prepararTraspaso) viaja con
+    // todo y sin avisos; si algun panel tiene cambios sin guardar que NO puede viajar, se pide confirmar UNA vez («Salir sin guardar»). Los paneles cuya
+    // pantalla ya esta en su propia ventana independiente siguen apuntando a esa ventana (se la encuentra por nombre). La distribucion viaja por una
+    // clave temporal de localStorage (?desdeLayout=) que la ventana lee una sola vez; las dos ventanas se hablan por pantalla-dividida-canal.js.
     function descartarTraspasos(traspasos) {
         Object.keys(traspasos).forEach(function (id) {
             try { traspasos[id].descartar(); } catch (e) { console.warn('Pantalla dividida: no se pudo descartar un traspaso.', e); }
         });
     }
 
-    function independizarTodo(confirmado) {
-        if (EN_VENTANA_DIVIDIDA || !iniciado) return;
+    // Lo cargado de cada panel que sabe pasarlo. Si algun panel con cambios sin guardar NO puede, pide confirmar («Salir sin guardar») y, si el usuario
+    // elige salir, corre reintentar(); en ese caso devuelve 'confirmando'. Si no, devuelve { lista, traspasos } (todavia sin soltar nada).
+    function prepararPaquete(confirmado, reintentar) {
         var lista = Arbol.listarPaneles(raiz);
-        if (!lista.some(function (n) { return !!n.url; })) { avisar('No hay nada para pasar: abrí alguna pantalla en un panel.', 'info'); return; }
-
-        // Lo cargado de cada panel que sabe pasarlo; y si algun panel con cambios sin guardar NO puede, hay que confirmar antes de soltar nada.
         var traspasos = {};
         var hayCambiosSinTraspaso = false;
         lista.forEach(function (nodo) {
@@ -1629,53 +1654,286 @@
         });
         if (hayCambiosSinTraspaso && !confirmado) {
             descartarTraspasos(traspasos);
-            confirmarSalida(function () { independizarTodo(true); });
-            return;
+            confirmarSalida(reintentar);
+            return 'confirmando';
         }
+        return { lista: lista, traspasos: traspasos };
+    }
 
-        // La ventana se abre dentro del clic (o del «Sí, salir»): el navegador la permite. Se ubica donde estaba el area de paneles.
-        var ventana = window.open('', NOMBRE_VENTANA_DIVIDIDA, caracteristicasVentana({ el: document.getElementById('pdArea') }));
-        if (!ventana) { descartarTraspasos(traspasos); avisarVentanaBloqueada(); return; }
-        if (paginaCargada(ventana)) {
-            descartarTraspasos(traspasos);
-            try { ventana.focus(); } catch (e) { console.warn('Pantalla dividida: no se pudo traer la ventana al frente.', e); }
-            avisar('Ya hay una pantalla dividida en una ventana independiente: la traje al frente. Cerrala antes de pasar esta.', 'warning');
-            return;
-        }
-
-        // Distribucion con la url de cada panel (+ la marca de su traspaso) en una clave temporal.
+    // Guarda la distribucion (con la url de cada panel + la marca de su traspaso) en una clave temporal. Devuelve la clave, o null si el navegador no
+    // deja guardar (en ese caso descarta los traspasos y avisa).
+    function guardarPaquete(paquete) {
         var mapeado = Arbol.mapearUrls(raiz, function (nodo) {
             var panel = paneles[nodo.id];
             var url = !nodo.ventana && panel && panel.urlActual ? panel.urlActual : nodo.url;
-            return traspasos[nodo.id] ? traspasos[nodo.id].urlCon(url) : url;
+            return paquete.traspasos[nodo.id] ? paquete.traspasos[nodo.id].urlCon(url) : url;
         });
         var clave = PREFIJO_LAYOUT_TRASPASO + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
         try {
             window.localStorage.setItem(clave, Arbol.serializar(mapeado, activo));
+            return clave;
         } catch (e) {
-            console.warn('Pantalla dividida: no se pudo guardar la distribución para la ventana (localStorage).', e);
-            descartarTraspasos(traspasos);
-            try { ventana.close(); } catch (e2) { console.warn('Pantalla dividida: no se pudo cerrar la ventana en blanco.', e2); }
-            avisar('No se pudo pasar la pantalla dividida a una ventana (el navegador no deja guardar la distribución).', 'warning');
-            return;
+            console.warn('Pantalla dividida: no se pudo guardar la distribución para pasarla a la otra ventana (localStorage).', e);
+            descartarTraspasos(paquete.traspasos);
+            avisar('No se pudo pasar la pantalla dividida a la otra ventana (el navegador no deja guardar la distribución).', 'warning');
+            return null;
         }
+    }
 
-        // Se suelta lo de esta pestaña (los paneles dejan de guardar borrador y de proteger la salida) y recien entonces se carga la ventana.
-        Object.keys(traspasos).forEach(function (id) { traspasos[id].ceder(); });
+    // Suelta lo de esta ventana: los paneles dejan de guardar borrador y de proteger la salida, y se borra la distribucion guardada (se MOVIO).
+    function soltarDistribucion(paquete) {
+        Object.keys(paquete.traspasos).forEach(function (id) { paquete.traspasos[id].ceder(); });
         saliendo = true;
         if (temporizadorGuardado) { window.clearTimeout(temporizadorGuardado); temporizadorGuardado = null; }
         try { window.localStorage.removeItem(CLAVE_GUARDADO); } catch (e) { console.warn('Pantalla dividida: no se pudo borrar la distribución guardada.', e); }
-        lista.forEach(function (nodo) {
+        paquete.lista.forEach(function (nodo) {
             var panel = paneles[nodo.id];
             try { if (panel) panel.iframe.contentWindow.desactivarProteccionSalida(); } catch (e) { /* la pantalla no tiene proteccion de salida */ }
         });
+    }
+
+    function independizarTodo(confirmado) {
+        if (EN_VENTANA_DIVIDIDA || !iniciado || afuera) return;
+        var lista = Arbol.listarPaneles(raiz);
+        if (!lista.some(function (n) { return !!n.url; })) { avisar('No hay nada para pasar: abrí alguna pantalla en un panel.', 'info'); return; }
+
+        var paquete = prepararPaquete(confirmado, function () { independizarTodo(true); });
+        if (paquete === 'confirmando') return;
+
+        // La ventana se abre dentro del clic (o del «Sí, salir»): el navegador la permite. Se ubica sobre el area de paneles, corrida en diagonal.
+        var ventana = window.open('', NOMBRE_VENTANA_DIVIDIDA, caracteristicasVentana({ el: area }, DESPLAZAMIENTO_VENTANA_PX));
+        if (!ventana) { descartarTraspasos(paquete.traspasos); avisarVentanaBloqueada(); return; }
+        if (paginaCargada(ventana)) {
+            descartarTraspasos(paquete.traspasos);
+            try { ventana.focus(); } catch (e) { console.warn('Pantalla dividida: no se pudo traer la ventana al frente.', e); }
+            avisar('Ya hay una pantalla dividida en una ventana independiente: la traje al frente. Cerrala antes de pasar esta.', 'warning');
+            return;
+        }
+        var clave = guardarPaquete(paquete);
+        if (!clave) {
+            try { ventana.close(); } catch (e) { console.warn('Pantalla dividida: no se pudo cerrar la ventana en blanco.', e); }
+            return;
+        }
+
+        // Se suelta lo de esta pestaña y recien entonces se carga la ventana.
+        soltarDistribucion(paquete);
+        ventanas[NOMBRE_VENTANA_DIVIDIDA] = ventana;
         try {
             ventana.location.href = window.location.origin + window.location.pathname + '?' + PARAM_DESDE_LAYOUT + '=' + encodeURIComponent(clave);
             ventana.focus();
         } catch (e) {
             console.warn('Pantalla dividida: no se pudo cargar la ventana independiente.', e);
         }
-        window.location.assign(URL_INICIO);   // la distribucion se MOVIO: esta pestaña vuelve a Inicio
+        quedarConAviso();
+    }
+
+    // ---------- la pestaña con la distribucion afuera ----------
+    function marcarAfuera() {
+        try { window.localStorage.setItem(CLAVE_EN_VENTANA, String(Date.now())); } catch (e) { console.warn('Pantalla dividida: no se pudo guardar la marca de «en ventana».', e); }
+    }
+    function borrarMarcaAfuera() {
+        try { window.localStorage.removeItem(CLAVE_EN_VENTANA); } catch (e) { console.warn('Pantalla dividida: no se pudo borrar la marca de «en ventana».', e); }
+    }
+    function hayMarcaAfuera() {
+        try { return window.localStorage.getItem(CLAVE_EN_VENTANA) !== null; } catch (e) { return false; }
+    }
+
+    // La pestaña se queda en la pantalla dividida con un solo panel vacio (tapado por el aviso): quitar los paneles viejos deja sus iframes en blanco,
+    // asi sueltan los candados de «documento abierto» antes de que la ventana cargue lo mismo.
+    function quedarConAviso() {
+        marcarAfuera();
+        borrarFotos();
+        mostrarAfuera('abierta');
+        var nuevoId = Arbol.siguienteId(raiz);
+        raiz = Arbol.crearPanel(nuevoId, null);
+        activo = nuevoId;
+        maximizado = null;
+        saliendo = false;   // la pestaña sigue viva; mientras este «afuera» no guarda (ver guardar)
+        dibujar();
+    }
+
+    // Aviso de toda el area. estado: 'buscando' (recien cargada, preguntandole a la ventana), 'abierta' o 'cerrada'.
+    function mostrarAfuera(estado) {
+        afuera = estado;
+        pagina.classList.add('pd-con-afuera');
+        if (!avisoAfuera) {
+            avisoAfuera = document.createElement('div');
+            avisoAfuera.className = 'pd-aviso pd-afuera';
+            avisoAfuera.setAttribute('role', 'status');
+            area.appendChild(avisoAfuera);
+        }
+        avisoAfuera.innerHTML = '';
+        var icono = document.createElement('i');
+        icono.className = 'fas fa-external-link-alt pd-afuera-icono';
+        icono.setAttribute('aria-hidden', 'true');
+        var texto = document.createElement('div');
+        texto.textContent = estado === 'cerrada'
+            ? 'La ventana independiente de la pantalla dividida se cerró.'
+            : estado === 'buscando'
+                ? 'Buscando la ventana independiente de la pantalla dividida…'
+                : 'La pantalla dividida está en una ventana independiente.';
+        var botones = document.createElement('div');
+        botones.className = 'pd-botones';
+        var crear = function (clase, icono, etiqueta, alClic) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn btn-sm ' + clase;
+            b.innerHTML = '<i class="fas ' + icono + '" aria-hidden="true"></i> ';
+            b.appendChild(document.createTextNode(etiqueta));
+            b.addEventListener('click', alClic);
+            botones.appendChild(b);
+        };
+        if (estado === 'cerrada') {
+            crear('btn-primary', 'fa-undo', 'Volver a cargarla acá', volverACargarAca);
+        } else if (estado === 'abierta') {
+            crear('btn-primary', 'fa-external-link-alt', 'Ir a esa ventana', irAVentanaDividida);
+            crear('btn-outline-secondary', 'fa-sign-in-alt', 'Traerla de vuelta acá', pedirDevolucion);
+        }
+        avisoAfuera.appendChild(icono);
+        avisoAfuera.appendChild(texto);
+        if (botones.childNodes.length) avisoAfuera.appendChild(botones);
+        avisoAfuera.hidden = false;
+    }
+
+    function ocultarAfuera() {
+        afuera = null;
+        pagina.classList.remove('pd-con-afuera');
+        if (avisoAfuera) avisoAfuera.hidden = true;
+    }
+
+    // La ventana no contesto: ya no esta. La pestaña toma la distribucion que la ventana guardo al cerrarse (si hay) y, si se pidio, abre "ruta".
+    function recuperarDeLaVentana(ruta, conPanelVacio) {
+        var texto = null;
+        try {
+            texto = window.localStorage.getItem(CLAVE_GUARDADO_VENTANA);
+            window.localStorage.removeItem(CLAVE_GUARDADO_VENTANA);   // la distribucion vuelve a ser de la pestaña: la ventana no la debe reabrir
+        } catch (e) {
+            console.warn('Pantalla dividida: no se pudo leer la distribución que guardó la ventana.', e);
+        }
+        var leido = texto ? Arbol.deserializar(texto, esUrlPermitida) : null;
+        borrarMarcaAfuera();
+        ocultarAfuera();
+        if (leido && leido.ok) {
+            raiz = leido.raiz;
+            activo = leido.activo;
+        } else {
+            if (leido) console.warn('Pantalla dividida: se ignoró la distribución de la ventana (' + leido.motivo + ').');
+            var nuevoId = Arbol.siguienteId(raiz);
+            raiz = Arbol.crearPanel(nuevoId, null);
+            activo = nuevoId;
+        }
+        maximizado = null;
+        dibujar();
+        if (ruta) {
+            abrirEnPanelNuevo(ruta);
+            if (conPanelVacio) dejarPanelVacioParaElegir();   // como al llegar con ?abrir= (queda un panel vacio al lado para elegir)
+        }
+        programarLiberar();
+        avisar(leido && leido.ok ? 'La ventana independiente ya no estaba abierta: la pantalla dividida volvió acá.' : 'La ventana independiente ya no estaba abierta.', 'info');
+    }
+
+    // Le pregunta a la ventana si sigue abierta; si se pide, ademas le manda "ruta" para abrir en un panel nuevo (desde otra pantalla: «Dividir
+    // pantalla», «Abrir en pantalla dividida»). Sin respuesta, la distribucion vuelve a la pestaña.
+    function consultarVentana(ruta, conPanelVacio) {
+        var pedido = ruta ? { tipo: TIPOS.ABRIR, ruta: ruta } : { tipo: TIPOS.PING };
+        canal.pedir(pedido, ESPERA_RESPUESTA_VENTANA_MS).then(function (respuesta) {
+            if (!respuesta) { recuperarDeLaVentana(ruta, conPanelVacio); return; }
+            mostrarAfuera('abierta');
+            if (ruta) avisar('Se abrió en la pantalla dividida de la ventana independiente. Tocá «Ir a esa ventana» para verla.', 'info');
+        });
+    }
+
+    // «Ir a esa ventana»: la trae al frente. Sin referencia (se recargo la pestaña) la busca por nombre; si no la encuentra pero contesta por el canal,
+    // esta abierta en otro lado y solo se puede avisar.
+    function irAVentanaDividida() {
+        var ventana = obtenerVentana(NOMBRE_VENTANA_DIVIDIDA);
+        if (ventana === false) { avisarVentanaBloqueada(); return; }
+        if (ventana) {
+            try { ventana.focus(); } catch (e) { console.warn('Pantalla dividida: no se pudo traer la ventana al frente.', e); }
+            return;
+        }
+        canal.pedir({ tipo: TIPOS.PING }, ESPERA_RESPUESTA_VENTANA_MS).then(function (respuesta) {
+            if (respuesta) avisar('La ventana sigue abierta, pero no la puedo traer al frente desde acá: buscala en la barra de tareas.', 'info');
+            else mostrarAfuera('cerrada');
+        });
+    }
+
+    // «Traerla de vuelta acá»: le pide a la ventana que devuelva la distribucion (ella pide confirmar si hace falta y la manda por el canal).
+    function pedirDevolucion() {
+        var ventana = ventanas[NOMBRE_VENTANA_DIVIDIDA];
+        if (ventana && !ventana.closed) { try { ventana.focus(); } catch (e) { /* sin foco: igual se le pide */ } }
+        canal.pedir({ tipo: TIPOS.DEVOLVER }, ESPERA_RESPUESTA_VENTANA_MS).then(function (respuesta) {
+            if (!respuesta) { recuperarDeLaVentana(null); return; }
+            if (respuesta.pideConfirmar) avisar('La ventana independiente pide confirmar: respondé ahí (está en la barra de tareas).', 'info');
+        });
+    }
+
+    // «Volver a cargarla acá» (la ventana se cerro): se confirma por el canal que no este abierta (pudo haberse recargado) y se trae lo que guardo.
+    function volverACargarAca() {
+        canal.pedir({ tipo: TIPOS.PING }, ESPERA_RESPUESTA_VENTANA_MS).then(function (respuesta) {
+            if (respuesta) {
+                mostrarAfuera('abierta');
+                avisar('La ventana independiente sigue abierta.', 'info');
+                return;
+            }
+            recuperarDeLaVentana(null);
+        });
+    }
+
+    // Mensajes que recibe la pestaña.
+    function alMensajeEnPestana(mensaje) {
+        if (!afuera) return;   // la pestaña tiene su propia distribucion: lo de la ventana no le corresponde
+        if (mensaje.tipo === TIPOS.ACA && afuera === 'cerrada') mostrarAfuera('abierta');
+        else if (mensaje.tipo === TIPOS.CERRADA && afuera === 'abierta') mostrarAfuera('cerrada');
+        else if (mensaje.tipo === TIPOS.DISTRIBUCION && mensaje.clave && String(mensaje.clave).indexOf(PREFIJO_LAYOUT_TRASPASO) === 0) {
+            // La ventana devuelve la distribucion: se acusa recibo (la ventana se cierra) y la pestaña se recarga con ella.
+            canal.responder(mensaje, { tipo: TIPOS.RECIBIDA });
+            saliendo = true;
+            window.location.href = window.location.pathname + '?' + PARAM_DESDE_LAYOUT + '=' + encodeURIComponent(mensaje.clave);
+        }
+    }
+
+    // ---------- la ventana devuelve la distribucion ----------
+    // Desde la ventana («Devolver a la ventana principal», o «Traerla de vuelta acá» de la pestaña): arma el traspaso (pide confirmar una vez si hace
+    // falta), lo manda a la pestaña por el canal y, cuando la pestaña acusa recibo, suelta todo y se cierra. Si ninguna pestaña con el aviso lo recibe
+    // (esta cerrada o ya tiene otra distribucion) no se pierde nada: se avisa y la ventana sigue como estaba.
+    // Devuelve 'confirmando' (espera el «Salir sin guardar»), 'enviado' o 'nada' (no corresponde ahora).
+    function devolverDistribucion(confirmado) {
+        if (!EN_VENTANA_DIVIDIDA || !iniciado || devolviendo) return 'nada';
+        var paquete = prepararPaquete(confirmado, function () { devolverDistribucion(true); });
+        if (paquete === 'confirmando') return 'confirmando';
+        var clave = guardarPaquete(paquete);
+        if (!clave) return 'nada';
+        devolviendo = true;
+        canal.pedir({ tipo: TIPOS.DISTRIBUCION, clave: clave }, ESPERA_RESPUESTA_VENTANA_MS).then(function (respuesta) {
+            devolviendo = false;
+            if (!respuesta) {
+                descartarTraspasos(paquete.traspasos);
+                try { window.localStorage.removeItem(clave); } catch (e) { console.warn('Pantalla dividida: no se pudo borrar la distribución sin usar.', e); }
+                avisar('La ventana principal no está esperando esta pantalla dividida. En CarniSys entrá a «Pantalla dividida» del menú y tocá «Traerla de vuelta acá».', 'warning');
+                return;
+            }
+            soltarDistribucion(paquete);
+            window.close();
+            // Si el navegador no la deja cerrar (no la abrio un script), al menos se avisa: la distribucion ya esta en la ventana principal.
+            window.setTimeout(function () {
+                if (!window.closed) avisar('La pantalla dividida ya está en la ventana principal: podés cerrar esta ventana.', 'info');
+            }, ESPERA_CIERRE_PROPIO_MS);
+        });
+        return 'enviado';
+    }
+
+    // Mensajes que recibe la ventana independiente.
+    function alMensajeEnVentana(mensaje) {
+        if (mensaje.tipo === TIPOS.PING) {
+            canal.responder(mensaje, { tipo: TIPOS.ACA });
+        } else if (mensaje.tipo === TIPOS.ABRIR && typeof mensaje.ruta === 'string') {
+            canal.responder(mensaje, { tipo: TIPOS.ABIERTO });
+            abrirEnPanelNuevo(mensaje.ruta);
+        } else if (mensaje.tipo === TIPOS.DEVOLVER) {
+            var resultado = devolverDistribucion(false);
+            canal.responder(mensaje, { tipo: TIPOS.DEVOLVIENDO, pideConfirmar: resultado === 'confirmando' });
+        }
     }
 
     // Lee (una sola vez) la distribucion que trae ?desdeLayout=<clave>. null si no viene, vencio o no es valida (se arranca como siempre).
@@ -1717,7 +1975,7 @@
 
     function guardar() {
         temporizadorGuardado = null;
-        if (!raiz || saliendo) return;
+        if (!raiz || saliendo || afuera) return;   // afuera: la distribucion la guarda la ventana independiente
         try {
             window.localStorage.setItem(CLAVE_GUARDADO, Arbol.serializar(raiz, activo));
         } catch (e) {
@@ -1739,7 +1997,8 @@
 
     // ---------- permisos ----------
     function programarLiberar() {
-        if (!iniciado || !URL_LIBERAR) return;
+        // afuera: la pestaña no tiene pantallas propias; avisar «ninguna» le sacaria el operador autorizado a las de la ventana (que avisa las suyas).
+        if (!iniciado || !URL_LIBERAR || afuera) return;
         if (temporizadorLiberar) window.clearTimeout(temporizadorLiberar);
         temporizadorLiberar = window.setTimeout(liberarPermisos, LIBERAR_DEMORA_MS);
     }
@@ -1766,6 +2025,7 @@
     // encabezados desplegables conservan su comportamiento normal.
     function alClicEnMenu(ev) {
         if (!esEscritorio() || ev.defaultPrevented || ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+        if (afuera) return;   // la distribucion esta en la ventana independiente: el menu navega normal
         var enlace = ev.target.closest ? ev.target.closest('a[href]') : null;
         if (!enlace) return;
         var href = enlace.getAttribute('href') || '';
@@ -1773,7 +2033,8 @@
             || enlace.target === '_blank' || enlace.hasAttribute('download') || enlace.classList.contains('sidebar-brand')) return;
         var ruta = rutaRelativa(enlace.href);
         // El item «Pantalla dividida» del propio menu: ya estamos aca, navegar recargaria la pagina (y los paneles) para nada. 2026-11-24
-        // (docs/DECISIONS.md): se ignora el clic. Con Ctrl / clic del medio (nueva pestaña) no llega aca: el navegador lo maneja.
+        // (docs/DECISIONS.md): se ignora el clic. Con Ctrl (nueva pestaña) no llega aca: el navegador lo maneja; el clic del medio abre la ventana
+        // independiente (menu-ventana-independiente.js, 2026-11-24).
         if (ruta && RUTA_PANTALLA_DIVIDIDA.test(rutaSinBase(ruta.split('?')[0]))) {
             ev.preventDefault();
             ev.stopPropagation();
@@ -1794,9 +2055,15 @@
         construirCatalogo();
         ajustarAlto();
 
-        // En la ventana independiente: primero la distribucion que viene de la pestaña (?desdeLayout=), si no la que esa ventana guardo antes.
+        // Primero la distribucion que viene de la otra ventana (?desdeLayout=: la pestaña a la ventana, o la ventana que la devuelve), si no la guardada.
         var traido = leerLayoutTraspasado();
-        var guardado = traido || restaurar();
+        if (traido && !EN_VENTANA_DIVIDIDA) borrarMarcaAfuera();   // volvio a la pestaña
+        // «Abrir en pantalla dividida» / «Dividir pantalla» desde otra pantalla: llega con ?abrir=<ruta>.
+        var abrir = new URLSearchParams(window.location.search).get(PARAM_ABRIR);
+        if (abrir && window.history && window.history.replaceState) window.history.replaceState(null, '', window.location.pathname);
+        // La pestaña dejo su distribucion en la ventana independiente (2026-11-24): no se restaura nada; se le pregunta a la ventana si sigue abierta.
+        var buscarVentana = !EN_VENTANA_DIVIDIDA && !traido && hayMarcaAfuera();
+        var guardado = traido || (buscarVentana ? null : restaurar());
         if (guardado) {
             raiz = guardado.raiz;
             activo = guardado.activo;
@@ -1804,9 +2071,10 @@
             raiz = Arbol.crearPanel(1, null);
             activo = 1;
         }
+        if (buscarVentana) mostrarAfuera('buscando');
         // Fotos de lo cargado (capa 2): solo una RECARGA de esta pagina devuelve a cada panel lo que tenia; entrar de nuevo por un enlace, o abrir la
         // ventana con lo que viene de la pestaña, parte de cero y borra las fotos viejas (el usuario decidio salir).
-        if (!traido && esRecargaDePagina()) {
+        if (!traido && !buscarVentana && esRecargaDePagina()) {
             fotos = leerFotos();
             raiz = conFotosDevueltas(raiz);
         } else {
@@ -1820,11 +2088,29 @@
         document.getElementById('pdCuadro').addEventListener('click', function () { aplicarDistribucion(Arbol.distribucionCuadro, CAPACIDAD_CUADRO); });
         var botonCerrar = document.getElementById('pdCerrar');
         if (botonCerrar) botonCerrar.addEventListener('click', function () { cerrarPantallaDividida(false); });
-        // «Pasar a ventana independiente»: no tiene sentido estando ya en la ventana.
+        // «Pasar a ventana independiente»; dentro de la ventana el mismo boton es «Devolver a la ventana principal» (2026-11-24).
         var botonIndependizar = document.getElementById('pdIndependizar');
         if (botonIndependizar) {
-            if (EN_VENTANA_DIVIDIDA) botonIndependizar.hidden = true;
-            else botonIndependizar.addEventListener('click', function () { independizarTodo(false); });
+            if (EN_VENTANA_DIVIDIDA) {
+                botonIndependizar.innerHTML = '<i class="fas fa-sign-in-alt" aria-hidden="true"></i> Devolver a la ventana principal';
+                botonIndependizar.title = 'Devuelve toda la pantalla dividida, con sus paneles, a la ventana de CarniSys desde donde se pasó, y cierra esta';
+                botonIndependizar.addEventListener('click', function () { devolverDistribucion(false); });
+            } else {
+                botonIndependizar.addEventListener('click', function () { independizarTodo(false); });
+            }
+        }
+        // Canal con la otra ventana: la ventana avisa que esta (al arrancar) y que se va (al cerrarse); la pestaña escucha solo mientras tiene el aviso.
+        if (EN_VENTANA_DIVIDIDA) {
+            canal.escuchar(alMensajeEnVentana);
+            canal.enviar({ tipo: TIPOS.ACA });
+            // Primero guarda (la pestaña la recupera de ahi si la ventana no vuelve) y despues avisa.
+            window.addEventListener('pagehide', function () {
+                if (saliendo) return;
+                guardar();
+                canal.enviar({ tipo: TIPOS.CERRADA });
+            });
+        } else {
+            canal.escuchar(alMensajeEnPestana);
         }
         window.addEventListener('resize', function () { ajustarAlto(); });
         window.addEventListener('keydown', alTeclaDeRecarga, true);   // F5 / Ctrl+R con el foco en esta pagina (los paneles lo engancha alCargarMarco)
@@ -1844,10 +2130,10 @@
             if (el && el.tagName === 'IFRAME' && el.name && el.name.indexOf(PREFIJO_FRAME) === 0) activar(Number(el.name.substring(PREFIJO_FRAME.length)));
         });
 
-        // «Abrir en pantalla dividida» desde otra pantalla: llega con ?abrir=<ruta>.
-        var abrir = new URLSearchParams(window.location.search).get(PARAM_ABRIR);
-        if (abrir) {
-            if (window.history && window.history.replaceState) window.history.replaceState(null, '', window.location.pathname);
+        // ?abrir=<ruta>: con la distribucion en la ventana, la ruta se le manda a ella (si no contesta, la distribucion vuelve aca y se abre aca).
+        if (buscarVentana) {
+            consultarVentana(abrir || null, true);
+        } else if (abrir) {
             abrirEnPanelNuevo(abrir);
             dejarPanelVacioParaElegir();
         }
@@ -1856,8 +2142,16 @@
 
     // API para menu-ventana-independiente.js (clic derecho en el menu lateral).
     // edicionDeVentaTerminada: la usa el POS de una ventana abierta desde un panel para editar una venta (forma-pago.js: window.PosEdicionDesdePanel).
+    // Con la distribucion en la ventana independiente (pestaña con el aviso), abrir algo desde el clic derecho del menu se le manda a esa ventana.
+    function abrirDesdeMenu(abrirAca) {
+        return function (url) {
+            if (afuera === 'abierta' || afuera === 'buscando') { consultarVentana(url); return; }
+            if (afuera === 'cerrada') { recuperarDeLaVentana(url); return; }
+            abrirAca(url);
+        };
+    }
     window.PantallaDividida = {
-        abrirEnPanelNuevo: abrirEnPanelNuevo, abrirEnPanelActivo: abrirEnPanelActivo, esUrlPermitida: esUrlPermitida,
+        abrirEnPanelNuevo: abrirDesdeMenu(abrirEnPanelNuevo), abrirEnPanelActivo: abrirDesdeMenu(abrirEnPanelActivo), esUrlPermitida: esUrlPermitida,
         cerrarPanelDeVentana: cerrarPanelDeVentana, edicionDeVentaTerminada: edicionDeVentaTerminada
     };
 
