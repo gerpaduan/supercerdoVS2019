@@ -1782,6 +1782,51 @@
             $("#btnPlegarFiltrosReporte").toggleClass("rfr-disponible", !!config.consultaRealizada);
         }
 
+        // Columnas redimensionables (tabla-anchos.js; docs/DECISIONS.md 2026-11-24). Por tabla: clave de localStorage y, por tipo
+        // de columna (data-rs del th), topes en px y "contenido": lo que no se puede cortar al angostar ("" = toda la celda,
+        // un selector = esa parte, null = nada: Producto/Concepto se cortan con "..."). Solo se ve una tabla por vez, asi que
+        // el boton "Anchos" de la barra restablece la que esta en pantalla.
+        var ANCHOS_SIN_MANIJAS = "(max-width: 767.98px)"; // celular: rigen los anchos del CSS (misma media query que la vista)
+        var NUMERO = { min: 48, max: 400, contenido: "" };
+        var ANCHOS_TABLAS = {
+            tablaReporteStockActual: {
+                clave: "reportesAnchos.stock",
+                columnas: {
+                    producto: { min: 90, max: 700, contenido: null },
+                    detalle: NUMERO, stockinicial: NUMERO, totalingresos: NUMERO, totalegresos: NUMERO,
+                    stockcierre: NUMERO, stockactual: NUMERO, puntostock: NUMERO, estado: NUMERO,
+                    // Faltante: solo el numero es intocable; unidades y etiqueta bajan de renglon (ver la vista).
+                    faltante: { min: 48, max: 600, contenido: ".reporte-faltante-valor" }
+                }
+            },
+            tablaReporteVentasProducto: {
+                clave: "reportesAnchos.ventas",
+                columnas: { producto: { min: 90, max: 700, contenido: null }, kg: NUMERO, importe: NUMERO }
+            },
+            tablaReporteProyeccionVentasStock: {
+                clave: "reportesAnchos.proyeccion",
+                columnas: {
+                    producto: { min: 90, max: 700, contenido: null },
+                    stockactual: NUMERO, ventas: NUMERO, dif: NUMERO, totalperiodo: NUMERO
+                }
+            },
+            tablaReporteBalanceEconomico: {
+                clave: "reportesAnchos.balance",
+                columnas: { concepto: { min: 90, max: 700, contenido: null }, periodo: NUMERO }
+            }
+        };
+
+        function activarAnchosColumnas() {
+            if (!window.TablaAnchos) return;
+            var boton = document.getElementById("btnRestablecerAnchosReportes");
+            Object.keys(ANCHOS_TABLAS).forEach(function (id) {
+                var tabla = document.getElementById(id);
+                if (!tabla) return;
+                var conf = ANCHOS_TABLAS[id];
+                window.TablaAnchos.activar(tabla, { clave: conf.clave, columnas: conf.columnas, boton: boton, sinManijas: ANCHOS_SIN_MANIJAS });
+            });
+        }
+
         $(document).on("click", "#btnEditarFiltrosReporte", function () {
             setFiltrosPlegados(false);
         });
@@ -1801,6 +1846,7 @@
         // Despues de armar fechas/cierres, sucursales y periodos: el resumen refleja la busqueda recien cargada.
         renderResumenFiltros();
         renderBalanceCharts();
+        activarAnchosColumnas();
         updateFloatingStack();
 
         $(window).on("scroll resize", function () {

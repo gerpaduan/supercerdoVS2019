@@ -5,7 +5,7 @@ rol: admin
 modulo: Reportes
 orden: 1
 permiso: un permiso por tipo de reporte (Reporte.StockActual, CierreStock, StockRetroactivo, ProyeccionVentasVsStock, VentasPorProducto, BalanceEconomico; sin ninguno se muestra "Acceso denegado")
-revisada: 2026-11-10
+revisada: 2026-11-24
 ---
 ## Para qué sirve
 Consultar **stock, ventas y balance** de una, varias o todas las sucursales. Se elige el **tipo de reporte**, las **fechas** y las **sucursales**, y se toca **Buscar**.
@@ -49,11 +49,30 @@ El selector muestra **solo los tipos que tu usuario tiene permitidos** (cada uno
   - **Positivo, rojo, ↑ "Faltó mercadería"**: había que tener más de lo que se registró al cierre.
   - **Negativo, ámbar, ↓ "Vendido de más"**: se registró más stock al cierre del que correspondía.
   - **0, verde tenue, ✓ "Coincide"**: el cierre coincide con lo calculado.
-- La tabla va compacta (celdas con poco relleno, columnas angostas) y el valor del *Faltante* tiene el mismo tamaño de letra que el resto de las celdas, distinguido solo por la negrita. Arriba de la tabla hay una **leyenda** con los tres casos. Al tocar el encabezado *Faltante* la tabla se ordena por ese valor: un toque de menor a mayor (primero los "vendido de más"), otro toque lo invierte (primero los que más faltaron).
+- La tabla va compacta (celdas con poco relleno, columnas angostas) y el valor del *Faltante* tiene el mismo tamaño de letra que el resto de las celdas, distinguido solo por la negrita. La **leyenda** con los tres casos (↑ faltó, ↓ vendido de más, ✓ coincide) está en el **encabezado de la columna Faltante**; al dejar el mouse sobre cada uno se lee su descripción completa. Al tocar el encabezado *Faltante* la tabla se ordena por ese valor: un toque de menor a mayor (primero los "vendido de más"), otro toque lo invierte (primero los que más faltaron).
 - **Estado**: en *Cierre Stock* compara el **Stock Cierre** (el de la misma fila) con el *Punto stock*: *NEGATIVO* si es negativo; *BAJO* si hay punto de stock y el Stock Cierre es menor o igual; *SIN STOCK* si es 0; *OK* en el resto. En *Stock Actual* y *Retroactivo* compara el stock disponible, como siempre. El filtro en vivo *Estado stock* usa esa misma regla.
+- **Faltante alineado a la izquierda (desde 2026-11-24):** el número, las unidades y la etiqueta arrancan desde el borde izquierdo de la celda.
+- **Faltante cuando la columna es angosta (desde 2026-11-24):** por defecto el número, las unidades («-1.8 un.») y la etiqueta («↓ Vendido de más») van en **una sola línea**, como siempre. Si achicás la columna (ver [Ancho de las columnas](#ancho-de-las-columnas)) y no entran, **la etiqueta baja completa al renglón de abajo**, solo en esa fila; si la columna queda todavía más angosta, la etiqueta se parte en palabras y las unidades bajan debajo del número. Nada se oculta. El número queda siempre en el primer renglón, **a la misma altura** que Stock Cierre, Punto stock y Estado de la fila.
 - **Totales** (switch *Mostrar totales*): en *Cierre Stock* hay dos tarjetas, **Faltó mercadería** (suma de los Faltantes positivos) y **Vendido de más** (suma de los negativos, en positivo). No se muestra una sola cifra porque lo que faltó y lo vendido de más se compensarían. Ambas se recalculan con las filas visibles.
 - El **detalle de producto** (doble clic en la fila) usa el mismo código de colores en *Stock Cierre* y *Faltante*. En *Stock Actual* y *Stock Retroactivo* no hay colores: allí el mismo dato es el stock disponible, no un faltante.
 - En ese detalle, *Solo ingresos* y *Egresos* quedan enfrentados renglón a renglón: **Compra | Ventas**, **Elaborado | Elaborado**, **Stock | Stock**, **Movimiento | Movimiento** y **Ajustes** solo del lado de ingresos (del otro hay un renglón vacío), así *Tot. ingresos* y *Tot. egresos* quedan a la misma altura. En el celular las tarjetas van una debajo de la otra y el renglón vacío no se muestra.
+
+## Barra de la tabla y tamaño de letra (desde 2026-11-24)
+- En los reportes de stock, **la lupa de buscar, *Mostrar detalles* y *Ver inicial, ingresos y egresos* están en una sola fila baja** (unos 33 px; antes eran dos filas de ~112 px), así entran 2 o 3 filas más de la tabla. Al tocar la lupa, el campo de búsqueda se abre al lado, sobre la misma fila, sin agrandarla. La barra sigue flotando arriba mientras bajás por la tabla, ahora **con la lupa incluida**.
+- En Ventas por Producto y Proyección, donde no hay esos interruptores, queda solo la lupa, en una fila más baja que antes.
+- **Punto stock** y **Estado** se ven con **1 punto menos de letra** que el resto de las celdas (los encabezados no cambian).
+
+## Ancho de las columnas
+Desde 2026-11-24, en las 4 tablas (Stock Actual / Cierre Stock / Stock Retroactivo, Ventas por Producto, Proyección Ventas vs Stock y Balance Económico):
+- Pasá el mouse por un encabezado: en su **borde derecho** aparece una rayita. **Arrastrala** para ensanchar o angostar la columna. Tocar la rayita no ordena; tocar el título ordena como siempre.
+- **Las columnas del mismo tipo cambian juntas:** todas las «Kg» y todas las «$» de los períodos (Ventas por Producto); «Stock actual», «Ventas» y «Dif.» de todas las sucursales y períodos (Proyección); todos los períodos (Balance); las 12 columnas de *Mostrar detalles* (Stock).
+- **Nunca se tapa la columna de al lado ni se corta un número:** al angostar, la columna se frena en su número más largo. Los textos (la etiqueta de Faltante, las unidades) bajan de renglón. El nombre del producto se corta con «…» y se lee completo dejando el mouse encima. Si un número ya no entraba con el ancho de siempre, la columna no deja angostarla más (no se ensancha sola).
+- **Doble clic en la rayita** vuelve esa columna a su ancho de siempre. El botón **Anchos** de la barra (junto a *Exportar a Excel*; solo aparece si cambiaste algún ancho) vuelve todas las columnas de la tabla que estás viendo.
+- Los anchos **se recuerdan en este navegador** (no en otra PC), uno por tabla, aunque cambies de fechas o sucursales.
+- **Balance** ocupa todo el ancho de la pantalla; apenas cambiás un ancho deja de estirarse, para que el cambio se note.
+- En el **celular** no hay rayitas y los anchos son los de siempre.
+- **Alineación:** en todas las tablas las celdas de una fila se alinean por su **primer renglón**. Si una celda tiene dos renglones (Producto con código debajo, la etiqueta de Faltante abajo), los números de las demás quedan a la altura del primero, no centrados.
+- PENDIENTE: verificado con el CSS y el JS reales en una maqueta del navegador (ver `docs/DECISIONS.md` 2026-11-24), no con login en la pantalla real.
 
 ## Abrir en una ventana independiente
 En la barra de botones (a la derecha de **Mostrar totales**) está el botón **Abrir en ventana**: abre Reportes en una ventana aparte (≈1100×800, se puede mover y redimensionar) **sin menú lateral ni barra superior**, para dejarlo en otro monitor o tener más lugar para las tablas.

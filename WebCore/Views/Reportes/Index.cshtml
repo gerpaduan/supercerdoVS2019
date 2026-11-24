@@ -222,6 +222,11 @@
             <span class="text-muted small reportes-registros" id="lblTotalRegistrosCompacto">@cantidadRegistrosVisibles registros visibles</span>
         </div>
         <div class="ms-auto ml-auto d-flex reportes-acciones">
+            @* Vuelve las columnas de la tabla visible a su ancho por defecto. Oculto hasta que se cambia algun ancho (tabla-anchos.js). *@
+            <button type="button" class="btn btn-outline-secondary btn-sm mr-2 d-none" id="btnRestablecerAnchosReportes"
+                    title="Volver las columnas de la tabla a su ancho por defecto">
+                <i class="fas fa-arrows-alt-h mr-1"></i>Anchos
+            </button>
             @* Exportar a Excel: solo en los reportes de stock con resultados (comparten tabla). reportes.js arma la URL con los filtros y el estado de "Mostrar detalles". *@
             @if (esReporteStockDetalle && Model.ConsultaRealizada && Model.HayResultados)
             {
@@ -349,10 +354,15 @@
 
     <div class="card shadow-sm mb-3 reportes-resultado-card">
         <div class="card-body p-0">
-            @if (Model.MostrarFiltroBusquedaProducto)
+            @{
+                // Reportes de stock con resultados: la lupa va DENTRO de la barra de interruptores (una sola fila baja, y flota con ella al
+                // scrollear). En los demas casos (Ventas, Proyeccion, sin resultados) sigue en su propia fila, mas baja que antes.
+                bool lupaEnBarra = Model.MostrarFiltroBusquedaProducto && esReporteStockDetalle && Model.ConsultaRealizada && Model.HayResultados;
+            }
+            @if (Model.MostrarFiltroBusquedaProducto && !lupaEnBarra)
             {
-                <div class="d-flex align-items-center px-3 pt-3 reportes-search-toolbar">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaProductoReporte"
+                <div class="d-flex align-items-center px-3 py-1 reportes-search-toolbar">
+                    <button type="button" class="btn btn-sm btn-outline-secondary reportes-lupa" id="btnToggleBusquedaProductoReporte"
                             title="Buscar producto" aria-expanded="false">
                         <i class="fas fa-search"></i>
                     </button>
@@ -394,7 +404,19 @@
                 {
                     <div class="reportes-floating-zone" id="reportesFloatingZone">
                         <div class="reportes-sticky-stack js-sync-scroll-anchor" id="reportesStickyStack">
-                            <div class="border-bottom px-3 py-2 bg-light reportes-detalle-toolbar @(esCierreStock ? "reportes-detalle-toolbar-cierre" : "")">
+                            @* Una sola fila: lupa + interruptores (2026-11-24). La leyenda de Faltante esta en el encabezado de la columna. *@
+                            <div class="border-bottom px-3 py-1 bg-light reportes-detalle-toolbar @(esCierreStock ? "reportes-detalle-toolbar-cierre" : "")">
+                                @if (lupaEnBarra)
+                                {
+                                    <div class="d-flex align-items-center reportes-search-toolbar">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary reportes-lupa" id="btnToggleBusquedaProductoReporte"
+                                                title="Buscar producto" aria-expanded="false">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <input type="text" id="busquedaProductoReporte" name="busquedaProducto" class="form-control form-control-sm ml-2 d-none filtro-vivo"
+                                               value="@Model.BusquedaProducto" placeholder="Codigo o descripcion" autocomplete="off" style="max-width:240px;" />
+                                    </div>
+                                }
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox" class="custom-control-input" id="switchMostrarDetallesReporte" />
                                     <label class="custom-control-label" for="switchMostrarDetallesReporte">Mostrar detalles</label>
@@ -409,61 +431,57 @@
                                                title="Mostrar las columnas St. inicial, Total Ingresos y Total Egresos">Ver inicial, ingresos y egresos</label>
                                     </div>
                                 }
-                                @if (esCierreStock)
-                                {
-                                    @* Leyenda de la columna Faltante: el color nunca va solo, siempre con icono y texto. *@
-                                    <div class="reporte-faltante-leyenda">
-                                        <span class="reporte-faltante-leyenda-titulo">Faltante:</span>
-                                        <span class="reporte-faltante-chip reporte-faltante-pos"><i class="fas fa-arrow-up"></i> Positivo: faltó mercadería</span>
-                                        <span class="reporte-faltante-chip reporte-faltante-neg"><i class="fas fa-arrow-down"></i> Negativo: se vendió de más</span>
-                                        <span class="reporte-faltante-chip reporte-faltante-cero"><i class="fas fa-check"></i> 0: coincide con el cierre</span>
-                                    </div>
-                                }
                             </div>
                         </div>
                         <div class="table-responsive js-sync-scroll-body reportes-scroll-y">
                             <table class="table table-bordered table-hover mb-0 reportes-tabla js-sticky-first-col" id="tablaReporteStockActual">
                                 <thead class="thead-light">
+                                    @* data-rs = tipo de columna redimensionable (tabla-anchos.js): las del mismo tipo comparten ancho. *@
                                     <tr>
-                                        <th>
+                                        <th data-rs="producto">
                                             <a href="#" class="reporte-sortable-col" data-sort-key="producto" data-sort-type="text">Producto</a>
                                             ·
                                             <a href="#" class="reporte-sortable-col" data-sort-key="codigo" data-sort-type="number">Código</a>
                                         </th>
-                                        <th class="text-right reporte-detalle-col d-none">St. inicial</th>
-                                        <th class="text-right reporte-detalle-col d-none">Ingr. compra</th>
-                                        <th class="text-right reporte-detalle-col d-none">Ingr. elab.</th>
-                                        <th class="text-right reporte-detalle-col d-none">Ingr. stock</th>
-                                        <th class="text-right reporte-detalle-col d-none">Ingr. mov.</th>
-                                        <th class="text-right reporte-detalle-col d-none">Ajustes</th>
-                                        <th class="text-right reporte-detalle-col d-none">Tot. ingresos</th>
-                                        <th class="text-right reporte-detalle-col d-none">Egr. stock</th>
-                                        <th class="text-right reporte-detalle-col d-none">Egr. mov.</th>
-                                        <th class="text-right reporte-detalle-col d-none">Egr. elab.</th>
-                                        <th class="text-right reporte-detalle-col d-none">Egr. venta</th>
-                                        <th class="text-right reporte-detalle-col d-none">Tot. egresos</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">St. inicial</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Ingr. compra</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Ingr. elab.</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Ingr. stock</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Ingr. mov.</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Ajustes</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Tot. ingresos</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Egr. stock</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Egr. mov.</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Egr. elab.</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Egr. venta</th>
+                                        <th class="text-right reporte-detalle-col d-none" data-rs="detalle">Tot. egresos</th>
                                         @if (esCierreStock)
                                         {
-                                            <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-cierre-mov-col reporte-sortable-col" data-sort-key="stockinicial" data-sort-type="number">St. inicial</th>
-                                            <th class="text-right reporte-stock-resumen-col reporte-cierre-mov-col reporte-sortable-col" data-sort-key="totalingresos" data-sort-type="number">Total Ingresos</th>
-                                            <th class="text-right reporte-stock-resumen-col reporte-cierre-mov-col reporte-sortable-col" data-sort-key="totalegresos" data-sort-type="number">Total Egresos</th>
-                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col reporte-col-stockcierre" data-sort-key="stockcierre" data-sort-type="number"
+                                            <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-cierre-mov-col reporte-sortable-col" data-rs="stockinicial" data-sort-key="stockinicial" data-sort-type="number">St. inicial</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-cierre-mov-col reporte-sortable-col" data-rs="totalingresos" data-sort-key="totalingresos" data-sort-type="number">Total Ingresos</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-cierre-mov-col reporte-sortable-col" data-rs="totalegresos" data-sort-key="totalegresos" data-sort-type="number">Total Egresos</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col reporte-col-stockcierre" data-rs="stockcierre" data-sort-key="stockcierre" data-sort-type="number"
                                                 title="Stock registrado en el cierre de stock (fecha hasta).">
                                                 Stock Cierre
                                                 <span class="reporte-th-sub">al cierre</span>
                                             </th>
-                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col reporte-col-faltante" data-sort-key="stockactual" data-sort-type="number"
+                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col reporte-col-faltante" data-rs="faltante" data-sort-key="stockactual" data-sort-type="number"
                                                 title="Stock que debería haber (inicial + ingresos − egresos) menos el Stock Cierre. Positivo: faltó mercadería. Negativo: se vendió de más. 0: coincide.">
                                                 Faltante
-                                                <span class="reporte-th-sub">+ faltó · − vendido de más</span>
+                                                @* Leyenda (2026-11-24, antes una fila de chips arriba de la tabla): el color nunca va solo, siempre con icono y texto. *@
+                                                <span class="reporte-th-sub reporte-faltante-leyenda-th">
+                                                    <span class="reporte-faltante-chip reporte-faltante-pos" title="Positivo: faltó mercadería"><i class="fas fa-arrow-up"></i> faltó</span>
+                                                    <span class="reporte-faltante-chip reporte-faltante-neg" title="Negativo: se vendió de más"><i class="fas fa-arrow-down"></i> vendido de más</span>
+                                                    <span class="reporte-faltante-chip reporte-faltante-cero" title="0: coincide con el cierre"><i class="fas fa-check"></i> coincide</span>
+                                                </span>
                                             </th>
                                         }
                                         else
                                         {
-                                            <th class="text-right reporte-stock-resumen-col">Stock actual</th>
+                                            <th class="text-right reporte-stock-resumen-col" data-rs="stockactual">Stock actual</th>
                                         }
-                                        <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="puntostock" data-sort-type="number">Punto stock</th>
-                                        <th class="reporte-stock-resumen-col reporte-sortable-col" data-sort-key="estado" data-sort-type="text">Estado</th>
+                                        <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-rs="puntostock" data-sort-key="puntostock" data-sort-type="number">Punto stock</th>
+                                        <th class="reporte-stock-resumen-col reporte-sortable-col" data-rs="estado" data-sort-key="estado" data-sort-type="text">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -528,25 +546,25 @@
                                                     </button>
                                                 </div>
                                             </td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.StockInicial.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.Compras.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.IngresoElaborado.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.IngresoStock.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.IngresoMovimiento.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.AjusteStock.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.TotalIngresos.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.EgresoStock.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.EgresoMovimiento.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.EgresoElaborado.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.Ventas.ToString("N3")</td>
-                                            <td class="text-right reporte-detalle-col d-none">@item.TotalEgresos.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.StockInicial.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.Compras.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.IngresoElaborado.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.IngresoStock.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.IngresoMovimiento.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.AjusteStock.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.TotalIngresos.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.EgresoStock.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.EgresoMovimiento.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.EgresoElaborado.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.Ventas.ToString("N3")</td>
+                                            <td class="rs-detalle text-right reporte-detalle-col d-none">@item.TotalEgresos.ToString("N3")</td>
                                             @{ var equivalenteUnidadesStock = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades(item.StockActual, item.Promedio, item.Pesable); }
                                             @if (esCierreStock)
                                             {
-                                                <td class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-cierre-mov-col">@item.StockInicial.ToString("N3")</td>
-                                                <td class="text-right reporte-stock-resumen-col reporte-cierre-mov-col">@item.TotalIngresos.ToString("N3")</td>
-                                                <td class="text-right reporte-stock-resumen-col reporte-cierre-mov-col">@item.TotalEgresos.ToString("N3")</td>
-                                                <td class="text-right reporte-stock-resumen-col font-weight-bold reporte-col-stockcierre">@item.StockCierre.ToString("N3")</td>
+                                                <td class="rs-stockinicial text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-cierre-mov-col">@item.StockInicial.ToString("N3")</td>
+                                                <td class="rs-totalingresos text-right reporte-stock-resumen-col reporte-cierre-mov-col">@item.TotalIngresos.ToString("N3")</td>
+                                                <td class="rs-totalegresos text-right reporte-stock-resumen-col reporte-cierre-mov-col">@item.TotalEgresos.ToString("N3")</td>
+                                                <td class="rs-stockcierre text-right reporte-stock-resumen-col font-weight-bold reporte-col-stockcierre">@item.StockCierre.ToString("N3")</td>
                                                 // Faltante = stock teorico - Stock Cierre (CierreStockWeb). Se clasifica sobre el valor ya
                                                 // redondeado a 3 decimales (los que se muestran) para que "0,000" nunca salga como falta.
                                                 var faltanteRedondeado = Math.Round(item.StockActual, 3);
@@ -559,18 +577,26 @@
                                                 var textoFaltante = faltanteRedondeado > 0 ? "Faltó mercadería"
                                                     : faltanteRedondeado < 0 ? "Vendido de más"
                                                     : "Coincide";
-                                                <td class="text-right reporte-stock-resumen-col reporte-col-faltante @claseFaltante">
-                                                    <span class="reporte-faltante-valor">@item.StockActual.ToString("+#,##0.000;-#,##0.000;0.000")</span>
-                                                    <span class="reporte-faltante-etiqueta"><i class="fas @iconoFaltante"></i> @textoFaltante</span>
-                                                    @if (equivalenteUnidadesStock != null)
-                                                    {
-                                                        <span class="text-muted small d-block">@equivalenteUnidadesStock</span>
-                                                    }
+                                                @* Dos bloques que se acomodan solos segun el ancho de la columna (2026-11-24): (1) numero + unidades y
+                                                   (2) etiqueta. Por defecto van en una linea; si no entran, la etiqueta baja ENTERA al renglon de abajo
+                                                   (y si la columna es mas angosta que ella, se parte en palabras). El numero queda siempre en el primer
+                                                   renglon, alineado con las demas columnas (vertical-align: baseline). Nunca se oculta nada. *@
+                                                <td class="rs-faltante text-right reporte-stock-resumen-col reporte-col-faltante @claseFaltante">
+                                                    <div class="reporte-faltante-celda">
+                                                        <span class="reporte-faltante-num">
+                                                            <span class="reporte-faltante-valor">@item.StockActual.ToString("+#,##0.000;-#,##0.000;0.000")</span>
+                                                            @if (equivalenteUnidadesStock != null)
+                                                            {
+                                                                <span class="reporte-faltante-unidades text-muted">@equivalenteUnidadesStock</span>
+                                                            }
+                                                        </span>
+                                                        <span class="reporte-faltante-etiqueta"><i class="fas @iconoFaltante"></i> @textoFaltante</span>
+                                                    </div>
                                                 </td>
                                             }
                                             else
                                             {
-                                                <td class="text-right reporte-stock-resumen-col font-weight-bold">
+                                                <td class="rs-stockactual text-right reporte-stock-resumen-col font-weight-bold">
                                                     @item.StockActual.ToString("N3")
                                                     @if (equivalenteUnidadesStock != null)
                                                     {
@@ -578,8 +604,8 @@
                                                     }
                                                 </td>
                                             }
-                                            <td class="text-right reporte-stock-resumen-col">@item.PuntoStock.ToString("N3")</td>
-                                            <td class="reporte-stock-resumen-col">@item.EstadoStock</td>
+                                            <td class="rs-puntostock text-right reporte-stock-resumen-col">@item.PuntoStock.ToString("N3")</td>
+                                            <td class="rs-estado reporte-stock-resumen-col">@item.EstadoStock</td>
                                         </tr>
                                     }
                                     <tr id="filaSinResultadosReporte" class="d-none">
@@ -603,12 +629,13 @@
                     <div class="table-responsive js-sync-scroll-body reportes-scroll-y">
                         <table class="table table-bordered table-hover mb-0 reportes-tabla js-sticky-first-col" id="tablaReporteVentasProducto">
                             <thead class="thead-light">
+                                @* data-rs: tipo de columna redimensionable (tabla-anchos.js); todas las "Kg" comparten ancho y todas las "$" tambien. *@
                                 <tr>
-                                    <th>Producto</th>
+                                    <th data-rs="producto">Producto</th>
                                     @foreach (var periodo in periodosVentas)
                                     {
-                                        <th class="text-right">@periodo.Titulo Kg</th>
-                                        <th class="text-right">@periodo.Titulo $</th>
+                                        <th class="text-right" data-rs="kg">@periodo.Titulo Kg</th>
+                                        <th class="text-right" data-rs="importe">@periodo.Titulo $</th>
                                     }
                                 </tr>
                             </thead>
@@ -643,8 +670,8 @@
                                         @foreach (var periodo in periodosVentas)
                                         {
                                             var valorPeriodo = item.ValoresPeriodo.FirstOrDefault(x => x.PeriodoId == periodo.Id) ?? new WebCore.Models.ReporteVentasProductoValorVm();
-                                            <td class="text-right">@valorPeriodo.Kg.ToString("N3")</td>
-                                            <td class="text-right">@valorPeriodo.Importe.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                            <td class="rs-kg text-right">@valorPeriodo.Kg.ToString("N3")</td>
+                                            <td class="rs-importe text-right">@valorPeriodo.Importe.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
                                         }
                                     </tr>
                                     if (item.IdCorte > 0)
@@ -702,21 +729,20 @@
                                 @if (proyeccionMultiplesSucursales)
                                 {
                                     var totalSortIndex = 1 + (sucursalesProyeccion.Count * (1 + (periodosProyeccion.Count * 2)));
+                                    @* data-rs: tipo de columna redimensionable (tabla-anchos.js); las del mismo tipo (de todas las sucursales y periodos) comparten ancho. *@
                                     <tr class="reportes-proyeccion-head-group">
-                                        <th rowspan="2" class="reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="producto" data-sort-type="text">Producto</th>
-                                        @{
-                                            var anchoSucursalHead = (1 + periodosProyeccion.Count * 2) * 15;
-                                        }
+                                        <th data-rs="producto" rowspan="2" class="reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="producto" data-sort-type="text">Producto</th>
+                                        @* El encabezado de cada sucursal no lleva ancho propio (2026-11-24): lo suman sus columnas, que se pueden redimensionar. *@
                                         @foreach (var sucursal in sucursalesProyeccion)
                                         {
-                                            <th colspan="@(1 + (periodosProyeccion.Count * 2))" class="text-center reportes-proyeccion-sucursal-head" style="width:@(anchoSucursalHead)ch; min-width:@(anchoSucursalHead)ch; max-width:@(anchoSucursalHead)ch;">@sucursal.Sucursal</th>
+                                            <th colspan="@(1 + (periodosProyeccion.Count * 2))" class="text-center reportes-proyeccion-sucursal-head">@sucursal.Sucursal</th>
                                         }
                                         @{
                                             var totalPeriodoSortIndex = totalSortIndex;
                                         }
                                         @foreach (var periodo in periodosProyeccion)
                                         {
-                                            <th rowspan="2" class="text-right reportes-proyeccion-total-periodo-head reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@totalPeriodoSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Dif. total</span></th>
+                                            <th data-rs="totalperiodo" rowspan="2" class="text-right reportes-proyeccion-total-periodo-head reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@totalPeriodoSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Dif. total</span></th>
                                             totalPeriodoSortIndex++;
                                         }
                                     </tr>
@@ -726,13 +752,13 @@
                                         }
                                         @foreach (var sucursal in sucursalesProyeccion)
                                         {
-                                            <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">Stock actual</th>
+                                            <th data-rs="stockactual" class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">Stock actual</th>
                                             proyeccionMetricSortIndex++;
                                             foreach (var periodo in periodosProyeccion)
                                             {
-                                                <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Ventas</span></th>
+                                                <th data-rs="ventas" class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Ventas</span></th>
                                                 proyeccionMetricSortIndex++;
-                                                <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Dif.</span></th>
+                                                <th data-rs="dif" class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Dif.</span></th>
                                                 proyeccionMetricSortIndex++;
                                             }
                                         }
@@ -741,16 +767,16 @@
                                 else
                                 {
                                     <tr>
-                                        <th class="reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="producto" data-sort-type="text">Producto</th>
-                                        <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="1">Stock Actual</th>
+                                        <th data-rs="producto" class="reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="producto" data-sort-type="text">Producto</th>
+                                        <th data-rs="stockactual" class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="1">Stock Actual</th>
                                         @{
                                             var proyeccionSimpleSortIndex = 2;
                                         }
                                         @foreach (var periodo in periodosProyeccion)
                                         {
-                                            <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionSimpleSortIndex">@periodo.Titulo Ventas</th>
+                                            <th data-rs="ventas" class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionSimpleSortIndex">@periodo.Titulo Ventas</th>
                                             proyeccionSimpleSortIndex++;
-                                            <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionSimpleSortIndex">@periodo.Titulo Dif.</th>
+                                            <th data-rs="dif" class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionSimpleSortIndex">@periodo.Titulo Dif.</th>
                                             proyeccionSimpleSortIndex++;
                                         }
                                     </tr>
@@ -782,7 +808,7 @@
                                             {
                                                 var stockSucursal = item.StocksPorSucursal.FirstOrDefault(x => x.IdSucursal == sucursal.IdSucursal) ?? new WebCore.Models.ReporteProyeccionSucursalStockVm();
                                                 var equivalenteUnidadesSucursal = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades(stockSucursal.StockActual, stockSucursal.Promedio, stockSucursal.Pesable);
-                                                <td class="text-right font-weight-bold reportes-proyeccion-stock-cell">
+                                                <td class="rs-stockactual text-right font-weight-bold reportes-proyeccion-stock-cell">
                                                     @stockSucursal.StockActual.ToString("N3")
                                                     @if (equivalenteUnidadesSucursal != null)
                                                     {
@@ -793,8 +819,8 @@
                                                 {
                                                     var valorSucursal = item.ValoresPeriodoSucursal.FirstOrDefault(x => x.IdSucursal == sucursal.IdSucursal && x.PeriodoId == periodo.Id) ?? new WebCore.Models.ReporteProyeccionVentasStockSucursalValorVm();
                                                     var claseDifSucursal = valorSucursal.Diferencia < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
-                                                    <td class="text-right reportes-proyeccion-ventas-cell">@valorSucursal.Ventas.ToString("N3")</td>
-                                                    <td class="text-right @claseDifSucursal reportes-proyeccion-dif-cell">@((valorSucursal.Diferencia > 0 ? "+" : "") + valorSucursal.Diferencia.ToString("N3"))</td>
+                                                    <td class="rs-ventas text-right reportes-proyeccion-ventas-cell">@valorSucursal.Ventas.ToString("N3")</td>
+                                                    <td class="rs-dif text-right @claseDifSucursal reportes-proyeccion-dif-cell">@((valorSucursal.Diferencia > 0 ? "+" : "") + valorSucursal.Diferencia.ToString("N3"))</td>
                                                 }
                                             }
 
@@ -802,13 +828,13 @@
                                             {
                                                 var valorPeriodo = item.ValoresPeriodo.FirstOrDefault(x => x.PeriodoId == periodo.Id) ?? new WebCore.Models.ReporteProyeccionVentasStockValorVm();
                                                 var claseDifTotalPeriodo = valorPeriodo.Diferencia < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
-                                                <td class="text-right @claseDifTotalPeriodo reportes-proyeccion-dif-total-cell">@((valorPeriodo.Diferencia > 0 ? "+" : "") + valorPeriodo.Diferencia.ToString("N3"))</td>
+                                                <td class="rs-totalperiodo text-right @claseDifTotalPeriodo reportes-proyeccion-dif-total-cell">@((valorPeriodo.Diferencia > 0 ? "+" : "") + valorPeriodo.Diferencia.ToString("N3"))</td>
                                             }
                                         }
                                         else
                                         {
                                             var equivalenteUnidadesProyeccion = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades(item.StockActual, item.Promedio, item.Pesable);
-                                            <td class="text-right font-weight-bold">
+                                            <td class="rs-stockactual text-right font-weight-bold">
                                                 @item.StockActual.ToString("N3")
                                                 @if (equivalenteUnidadesProyeccion != null)
                                                 {
@@ -819,8 +845,8 @@
                                             {
                                                 var valorPeriodo = item.ValoresPeriodo.FirstOrDefault(x => x.PeriodoId == periodo.Id) ?? new WebCore.Models.ReporteProyeccionVentasStockValorVm();
                                                 var claseDif = valorPeriodo.Diferencia < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
-                                                <td class="text-right">@valorPeriodo.Ventas.ToString("N3")</td>
-                                                <td class="text-right @claseDif">@((valorPeriodo.Diferencia > 0 ? "+" : "") + valorPeriodo.Diferencia.ToString("N3"))</td>
+                                                <td class="rs-ventas text-right">@valorPeriodo.Ventas.ToString("N3")</td>
+                                                <td class="rs-dif text-right @claseDif">@((valorPeriodo.Diferencia > 0 ? "+" : "") + valorPeriodo.Diferencia.ToString("N3"))</td>
                                             }
                                         }
                                     </tr>
@@ -929,11 +955,12 @@
                     <div class="table-responsive js-sync-scroll-body">
                         <table class="table table-bordered table-hover mb-0 reportes-tabla" id="tablaReporteBalanceEconomico">
                             <thead class="thead-light">
+                                @* data-rs: tipo de columna redimensionable (tabla-anchos.js); todos los periodos comparten ancho. *@
                                 <tr>
-                                    <th>Concepto</th>
+                                    <th data-rs="concepto">Concepto</th>
                                     @foreach (var periodo in periodosBalance)
                                     {
-                                        <th class="text-right">
+                                        <th class="text-right" data-rs="periodo">
                                             @periodo.Titulo
                                             <div class="small text-muted font-weight-normal">@periodo.FechaDesde.ToString("dd/MM/yyyy") - @periodo.FechaHasta.ToString("dd/MM/yyyy")</div>
                                         </th>
@@ -1257,6 +1284,34 @@
         line-height: 1.15;
     }
 
+    /* Alineacion por renglon y desborde (2026-11-24, docs/DECISIONS.md): (1) las celdas se alinean por su PRIMER renglon
+       (baseline), asi el numero de una celda que baja algo al renglon de abajo (la etiqueta de Faltante, unidades) queda a la
+       misma altura que los numeros de las demas columnas; con "middle" quedaba mas arriba. (2) Nada se pinta sobre la celda
+       vecina (overflow hidden): las tablas son de layout fijo y, sin esto, un numero mas ancho que la columna tapaba la de al
+       lado. Que un numero no llegue a cortarse lo asegura el minimo de la redimension (tabla-anchos.js). (3) Los titulos
+       pueden partirse en dos renglones si la columna es mas angosta que el titulo. */
+    .reportes-tabla tbody td {
+        vertical-align: baseline;
+        overflow: hidden;
+    }
+
+    .reportes-tabla thead th {
+        white-space: normal;
+    }
+
+    /* Manija de redimension (tabla-anchos.js): rayita en el borde derecho del encabezado, visible al pasar el mouse. Arrastrar
+       cambia el ancho de todas las columnas de ese tipo; doble clic vuelve al de por defecto. En celular no hay manijas (misma
+       media query que reportes.js le pasa a tabla-anchos.js). */
+    .tabla-rs-grip { position: absolute; top: 0; right: 0; bottom: 0; width: .55rem; cursor: col-resize; z-index: 1; touch-action: none; }
+    .tabla-rs-grip::after { content: ""; position: absolute; top: 22%; bottom: 22%; right: 2px; width: 2px; border-radius: 1px; background: transparent; }
+    .tabla-rs thead th:hover > .tabla-rs-grip::after { background: var(--ui-border-strong, #adb5bd); }
+    .tabla-rs thead th > .tabla-rs-grip:hover::after,
+    .tabla-rs-grip.tabla-rs-activo::after { background: var(--ui-primary, #2d5b8f) !important; }
+    .tabla-rs-arrastrando, .tabla-rs-arrastrando * { cursor: col-resize !important; user-select: none !important; }
+    @@media (max-width: 767.98px) {
+        .tabla-rs-grip { display: none; }
+    }
+
     .reportes-tabla th.reporte-detalle-col,
     .reportes-tabla td.reporte-detalle-col {
         font-size: .81rem;
@@ -1317,11 +1372,12 @@
         width: max-content;
     }
 
+    /* --rs-*: ancho elegido por el usuario arrastrando el encabezado (tabla-anchos.js); sin elegir rige el valor de siempre. */
     #tablaReporteStockActual th:first-child,
     #tablaReporteStockActual td:first-child {
-        width: 25ch;
-        min-width: 25ch;
-        max-width: 25ch;
+        width: var(--rs-producto, 25ch);
+        min-width: var(--rs-producto, 25ch);
+        max-width: var(--rs-producto, 25ch);
     }
 
     #tablaReporteStockActual th:not(:first-child),
@@ -1366,9 +1422,9 @@
 
     #tablaReporteVentasProducto th:first-child,
     #tablaReporteVentasProducto td:first-child {
-        width: 20ch;
-        min-width: 20ch;
-        max-width: 20ch;
+        width: var(--rs-producto, 20ch);
+        min-width: var(--rs-producto, 20ch);
+        max-width: var(--rs-producto, 20ch);
     }
 
     #tablaReporteVentasProducto th:not(:first-child),
@@ -1376,6 +1432,21 @@
         width: 15ch;
         min-width: 15ch;
         max-width: 15ch;
+    }
+
+    /* Columnas redimensionables (tabla-anchos.js, 2026-11-24): todas las "Kg" comparten ancho, y todas las "$" tambien. */
+    #tablaReporteVentasProducto th[data-rs="kg"],
+    #tablaReporteVentasProducto td.rs-kg {
+        width: var(--rs-kg, 15ch);
+        min-width: var(--rs-kg, 15ch);
+        max-width: var(--rs-kg, 15ch);
+    }
+
+    #tablaReporteVentasProducto th[data-rs="importe"],
+    #tablaReporteVentasProducto td.rs-importe {
+        width: var(--rs-importe, 15ch);
+        min-width: var(--rs-importe, 15ch);
+        max-width: var(--rs-importe, 15ch);
     }
 
     .reporte-ventas-producto-wrap {
@@ -1411,9 +1482,9 @@
 
     #tablaReporteProyeccionVentasStock th:first-child,
     #tablaReporteProyeccionVentasStock td:first-child {
-        width: 20ch;
-        min-width: 20ch;
-        max-width: 20ch;
+        width: var(--rs-producto, 20ch);
+        min-width: var(--rs-producto, 20ch);
+        max-width: var(--rs-producto, 20ch);
     }
 
     #tablaReporteProyeccionVentasStock th:not(:first-child),
@@ -1421,6 +1492,63 @@
         width: 15ch;
         min-width: 15ch;
         max-width: 15ch;
+    }
+
+    /* Columnas redimensionables (tabla-anchos.js, 2026-11-24): las del mismo tipo, de todas las sucursales y periodos, comparten ancho. */
+    #tablaReporteProyeccionVentasStock th[data-rs="stockactual"],
+    #tablaReporteProyeccionVentasStock td.rs-stockactual {
+        width: var(--rs-stockactual, 15ch);
+        min-width: var(--rs-stockactual, 15ch);
+        max-width: var(--rs-stockactual, 15ch);
+    }
+
+    #tablaReporteProyeccionVentasStock th[data-rs="ventas"],
+    #tablaReporteProyeccionVentasStock td.rs-ventas {
+        width: var(--rs-ventas, 15ch);
+        min-width: var(--rs-ventas, 15ch);
+        max-width: var(--rs-ventas, 15ch);
+    }
+
+    #tablaReporteProyeccionVentasStock th[data-rs="dif"],
+    #tablaReporteProyeccionVentasStock td.rs-dif {
+        width: var(--rs-dif, 15ch);
+        min-width: var(--rs-dif, 15ch);
+        max-width: var(--rs-dif, 15ch);
+    }
+
+    #tablaReporteProyeccionVentasStock th[data-rs="totalperiodo"],
+    #tablaReporteProyeccionVentasStock td.rs-totalperiodo {
+        width: var(--rs-totalperiodo, 15ch);
+        min-width: var(--rs-totalperiodo, 15ch);
+        max-width: var(--rs-totalperiodo, 15ch);
+    }
+
+    /* Balance (layout automatico, se estira a todo el ancho): sin ancho elegido "var()" queda invalido y todo queda como siempre.
+       Con algun ancho elegido deja de estirarse, porque estirada un ancho mas angosto no se notaria (lo absorberian las demas). */
+    #tablaReporteBalanceEconomico.tabla-rs-con-anchos {
+        width: auto;
+    }
+
+    #tablaReporteBalanceEconomico th[data-rs="concepto"],
+    #tablaReporteBalanceEconomico td:first-child {
+        width: var(--rs-concepto);
+        min-width: var(--rs-concepto, 240px);
+        max-width: var(--rs-concepto);
+    }
+
+    #tablaReporteBalanceEconomico th[data-rs="periodo"],
+    #tablaReporteBalanceEconomico td:not(:first-child) {
+        width: var(--rs-periodo);
+        min-width: var(--rs-periodo);
+        max-width: var(--rs-periodo);
+    }
+
+    /* Encabezado de sucursal (colspan, varias sucursales): sin ancho propio, mide lo que suman sus columnas. Antes llevaba un ancho
+       en linea calculado en Razor; se saco (2026-11-24) para que manden las columnas, que se pueden redimensionar. */
+    #tablaReporteProyeccionVentasStock th.reportes-proyeccion-sucursal-head {
+        width: auto;
+        min-width: 0;
+        max-width: none;
     }
 
     .reporte-proyeccion-producto-wrap {
@@ -1451,23 +1579,48 @@
     /* Cierre Stock: "Stock Cierre" (azul, lo registrado al cierre) y "Faltante" (rojo / ambar / verde segun el signo)
        se distinguen del resto de columnas. Los tintes van en background-image (capa translucida) para que
        convivan con el color alternado por producto y con el hover de la fila, que usan background-color. */
-    .reportes-detalle-toolbar-cierre {
+    /* Barra de una sola fila (2026-11-24): lupa + interruptores, para ocupar poca altura. Aplica a todos los reportes de stock. */
+    .reportes-detalle-toolbar {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: .4rem 1.25rem;
+        gap: .25rem 1.1rem;
+        font-size: .85rem;
     }
 
-    .reporte-faltante-leyenda {
+    .reportes-detalle-toolbar .custom-control {
+        min-height: 1.25rem;
+        margin: 0;
+    }
+
+    /* El campo de busqueda abierto no tiene que agrandar la barra: el .form-control del tema mide ~44 px (medido). */
+    .reportes-detalle-toolbar #busquedaProductoReporte {
+        max-width: 240px;
+        height: 1.75rem;
+        min-height: 0;
+        padding: .1rem .5rem;
+        font-size: .85rem;
+    }
+
+    /* Lupa baja: el boton chico de Bootstrap seguia midiendo ~31 px. */
+    .reportes-lupa {
+        padding: .1rem .5rem;
+        line-height: 1.4;
+    }
+
+    /* Leyenda de Faltante dentro del encabezado: chips chicos en la misma linea (bajan de renglon si la columna es angosta). */
+    .reporte-faltante-leyenda-th {
         display: flex;
         flex-wrap: wrap;
-        align-items: center;
-        gap: .3rem .5rem;
-        font-size: .78rem;
+        gap: .15rem .25rem;
+        opacity: 1;
     }
 
-    .reporte-faltante-leyenda-titulo {
-        font-weight: 700;
+    #tablaReporteStockActual thead .reporte-faltante-chip {
+        font-size: .6rem;
+        padding: 0 .35rem;
+        font-weight: 600;
+        cursor: help;
     }
 
     .reporte-faltante-chip,
@@ -1563,9 +1716,11 @@
     /* Tabla compacta (pedido 2026-10-13): cada fila ocupa UNA sola linea. Producto y codigo van juntos; en Cierre
        Stock el Faltante junta valor, etiqueta y equivalente en unidades. Menos relleno por celda y columnas mas
        angostas, para que entren mas filas y columnas sin scroll. */
+    /* baseline y no middle: ver "Alineacion por renglon y desborde" (con middle el numero de Faltante quedaba mas arriba que
+       los demas cuando la etiqueta baja de renglon). */
     #tablaReporteStockActual tbody td {
         padding: .16rem .5rem;
-        vertical-align: middle;
+        vertical-align: baseline;
         white-space: nowrap;
     }
 
@@ -1588,21 +1743,117 @@
         max-width: 32ch;
     }
 
+    /* Celda Faltante (2026-11-24): dos bloques flexibles alineados a la IZQUIERDA (pedido del usuario). Si "numero + unidades" y la etiqueta no
+       entran juntos, la etiqueta baja ENTERA al renglon de abajo; si la columna es mas angosta que el numero + unidades, las
+       unidades bajan debajo del numero; si es mas angosta que la etiqueta, la etiqueta se parte en palabras. El numero nunca se
+       parte ni se oculta, y la celda se alinea por el primer renglon (ver "Alineacion por renglon" mas abajo). */
+    #tablaReporteStockActual tbody td.reporte-col-faltante {
+        text-align: left;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-celda {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: baseline;
+        column-gap: .4rem;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-num {
+        min-width: 0;
+        white-space: normal;
+    }
+
     #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-valor {
-        display: inline-block;
-        margin-right: .4rem;
+        display: inline;
+        white-space: nowrap;
+    }
+
+    #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-unidades {
+        font-size: .62rem;
+        white-space: nowrap;
+        margin-left: .3rem;
     }
 
     #tablaReporteStockActual tbody td.reporte-col-faltante .reporte-faltante-etiqueta {
         display: inline-block;
+        min-width: 0;
         font-size: .62rem;
-        margin: 0 .4rem 0 0;
+        margin: 0;
+        white-space: normal;
+        text-align: left;
     }
 
-    /* El equivalente en unidades trae la clase d-block (!important): se vuelve en linea solo dentro de esta celda. */
-    #tablaReporteStockActual tbody td.reporte-col-faltante .d-block {
-        display: inline !important;
-        font-size: .62rem;
+    /* Punto stock y Estado: 1 pt menos que el resto de las celdas (calc(1rem - 2pt) -> calc(1rem - 3pt), 2026-11-24). Solo el contenido. */
+    #tablaReporteStockActual tbody td.rs-puntostock,
+    #tablaReporteStockActual tbody td.rs-estado {
+        font-size: calc(1rem - 3pt);
+    }
+
+    /* Columnas redimensionables (tabla-anchos.js, 2026-11-24): el ancho elegido va en el th Y en las td de ese tipo (Chrome tambien
+       respeta el ancho de las td en layout fijo); sin elegir rige el valor de siempre (13ch, Faltante 32ch). Van despues de las reglas
+       de ancho de arriba para ganarles por orden (misma especificidad). Las 12 columnas de detalle comparten ancho. */
+    #tablaReporteStockActual th[data-rs="detalle"],
+    #tablaReporteStockActual td.rs-detalle {
+        width: var(--rs-detalle, 13ch);
+        min-width: var(--rs-detalle, 13ch);
+        max-width: var(--rs-detalle, 13ch);
+    }
+
+    #tablaReporteStockActual th[data-rs="stockinicial"],
+    #tablaReporteStockActual td.rs-stockinicial {
+        width: var(--rs-stockinicial, 13ch);
+        min-width: var(--rs-stockinicial, 13ch);
+        max-width: var(--rs-stockinicial, 13ch);
+    }
+
+    #tablaReporteStockActual th[data-rs="totalingresos"],
+    #tablaReporteStockActual td.rs-totalingresos {
+        width: var(--rs-totalingresos, 13ch);
+        min-width: var(--rs-totalingresos, 13ch);
+        max-width: var(--rs-totalingresos, 13ch);
+    }
+
+    #tablaReporteStockActual th[data-rs="totalegresos"],
+    #tablaReporteStockActual td.rs-totalegresos {
+        width: var(--rs-totalegresos, 13ch);
+        min-width: var(--rs-totalegresos, 13ch);
+        max-width: var(--rs-totalegresos, 13ch);
+    }
+
+    #tablaReporteStockActual th[data-rs="stockcierre"],
+    #tablaReporteStockActual td.rs-stockcierre {
+        width: var(--rs-stockcierre, 13ch);
+        min-width: var(--rs-stockcierre, 13ch);
+        max-width: var(--rs-stockcierre, 13ch);
+    }
+
+    #tablaReporteStockActual th[data-rs="stockactual"],
+    #tablaReporteStockActual td.rs-stockactual {
+        width: var(--rs-stockactual, 13ch);
+        min-width: var(--rs-stockactual, 13ch);
+        max-width: var(--rs-stockactual, 13ch);
+    }
+
+    #tablaReporteStockActual th[data-rs="puntostock"],
+    #tablaReporteStockActual td.rs-puntostock {
+        width: var(--rs-puntostock, 13ch);
+        min-width: var(--rs-puntostock, 13ch);
+        max-width: var(--rs-puntostock, 13ch);
+    }
+
+    #tablaReporteStockActual th[data-rs="estado"],
+    #tablaReporteStockActual td.rs-estado {
+        width: var(--rs-estado, 13ch);
+        min-width: var(--rs-estado, 13ch);
+        max-width: var(--rs-estado, 13ch);
+    }
+
+    #tablaReporteStockActual th[data-rs="faltante"],
+    #tablaReporteStockActual td.rs-faltante {
+        width: var(--rs-faltante, 32ch);
+        min-width: var(--rs-faltante, 32ch);
+        max-width: var(--rs-faltante, 32ch);
     }
 
     /* Producto y codigo en el mismo renglon: el nombre se recorta con "..." si no entra (el titulo trae el completo). */
@@ -2421,5 +2672,6 @@
         };
     </script>
     <script src="@Url.Content("~/Scripts/app/ventana-independiente.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/tabla-anchos.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/reportes.js")" asp-append-version="true"></script>
 }
