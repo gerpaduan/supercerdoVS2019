@@ -5,6 +5,7 @@
      /Login (sesion vencida), enlaces a otros sitios (WhatsApp, etc.), descargas, #hash y javascript:. Si el enlace trae data-app-salir se cierra la ventana.
    - window.AppInstalada.salir(urlAlternativa): reemplaza el "volver a Inicio" del POS/Expendio: en la app instalada cierra la ventana (los avisos de
      beforeunload del POS siguen protegiendo una venta en curso); fuera de ella navega a urlAlternativa como siempre.
+   - Dentro de la app el circuito es Index -> editar / ver / agregar -> de vuelta al Index (Volver y Cancelar son enlaces al Index de la propia app).
    Limite conocido: solo se interceptan clics en enlaces; una navegacion hecha por JS (location.href) no pasa por aqui. Decision: docs/DECISIONS.md (2026-11-17 c). */
 (function () {
     'use strict';
@@ -76,7 +77,11 @@
         if (url.origin !== window.location.origin) return false;                  // otros sitios (WhatsApp, etc.): los maneja el navegador
         if (url.pathname === window.location.pathname && url.search === window.location.search) return false; // mismo lugar / #hash
         var ruta = url.pathname.toLowerCase();
-        if (ruta.indexOf(scope) === 0) return false;
+        // Dentro de la app = la carpeta misma (/Movimientos) o cualquier cosa debajo (/Movimientos/Editar). Se compara SIN la barra final del scope:
+        // Url.Action("Index", "Movimientos") genera "/Movimientos" (la ruta por defecto omite "/Index"), y contra "/movimientos/" no coincidia, asi que
+        // Volver / Cancelar mostraban «No disponible en esta ventana» (2026-11-24).
+        var carpetaApp = scope.replace(/\/+$/, '');
+        if (ruta === carpetaApp || ruta.indexOf(carpetaApp + '/') === 0) return false;
         if (/\/login(\/|$)/.test(ruta)) return false; // sesion vencida: la app tiene que poder volver a pedir clave
         return true;
     }

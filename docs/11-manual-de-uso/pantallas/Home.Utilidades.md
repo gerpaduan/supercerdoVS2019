@@ -5,7 +5,7 @@ rol: usuario
 modulo: Configuración
 orden: 1
 permiso: ninguno (el ítem Utilidades del menú Configuración lo ve todo usuario; verificado en `Views/Shared/_Layout.cshtml`)
-revisada: 2026-11-21
+revisada: 2026-11-24
 ---
 ## Para qué sirve
 Reúne las herramientas auxiliares que cualquier usuario puede necesitar sin entrar a otra pantalla: el **contador de billetes** y la descarga de los **agentes locales** (impresora y balanza) que se instalan en cada PC.
@@ -17,7 +17,7 @@ Reúne las herramientas auxiliares que cualquier usuario puede necesitar sin ent
 - Atajos dentro del contador: **Alt + Enter** acepta, **Esc** o **Alt + C** cierran (si hay algo contado pregunta antes).
 
 ## Aplicaciones instalables
-- La tarjeta **Aplicaciones instalables** tiene un botón **Instalar** para **Stock**, **Movimientos**, **Elaborados**, **Punto de venta**, **Punto de expendio** y **Existencia por sucursal**. Cada una se instala como aplicación independiente: con **su nombre** (ej. «Punto de venta»), **su ícono** y su propia ventana, **sin menú lateral**, y solo se puede usar esa pantalla (los enlaces a otras secciones muestran «No disponible en esta ventana»).
+- La tarjeta **Aplicaciones instalables** tiene un botón **Instalar** para **Stock**, **Movimientos**, **Elaborados**, **Punto de venta**, **Punto de expendio** y **Existencia por sucursal**. Cada una se instala como aplicación independiente: con **su nombre** (ej. «Punto de venta»), **su ícono** y su propia ventana, **sin menú lateral**, y solo se puede usar esa pantalla (los enlaces a otras secciones muestran «No disponible en esta ventana»). Dentro de cada app el recorrido es siempre listado → editar, ver o agregar → de vuelta al listado: **Volver** y **Cancelar** llevan al listado de la propia app (en Stock, Movimientos y Elaborados) y no muestran ese aviso (corregido el 2026-11-24: antes lo mostraban por un error al reconocer la dirección del listado).
 - Al tocar **Instalar** se abre una **ventana chica** con el nombre y el ícono de la app y un botón **Instalar**. Al tocarlo, el navegador pide confirmar; cuando la app queda instalada, esa ventana se cierra sola y la app se abre desde su ícono.
 - Para tener el ícono en la **barra de tareas**: clic derecho sobre el ícono de la app (con la app abierta) → **Anclar a la barra de tareas**. El navegador no deja hacerlo desde la página.
 - **Instalar varias a la vez:** cada tarjeta tiene una **casilla**. Marcá las que quieras y tocá **Instalar seleccionadas** (muestra cuántas marcaste; sin marcas está apagado), o tocá **Instalar todas**; **Seleccionar todas** marca o desmarca todas las casillas. Se abre **una sola ventana chica** que instala una app tras otra: en cada una hay que tocar **Instalar** y confirmar en el navegador (el navegador no deja instalar sin ese clic por app). Cuando una queda instalada, o la rechazás, o ya estaba instalada, la ventana pasa sola a la siguiente y avisa cuántas faltan; al terminar se cierra. Chrome abre la ventana de cada app cuando se instala.

@@ -1,3 +1,11 @@
+## 2026-11-24 - App instalada: Volver y Cancelar al listado de la propia app ya no se bloquean
+
+- **Pedido:** en la app instalada de Movimientos, «Volver» y «Cancelar» mostraban «No disponible en esta ventana». Tienen que volver al listado, igual en Stock, Movimientos y Elaborados: cada app es un circuito cerrado listado → editar / ver / agregar → listado, sin salir a otros menús.
+- **Causa:** `app-instalada.js` comparaba la ruta contra el scope con barra final (`/movimientos/`), pero `Url.Action("Index", "Movimientos")` genera `/Movimientos` (la ruta `{controller=Home}/{action=Index}` omite `/Index`), que no empezaba con el scope y se tomaba como «salir de la app». Afectaba a todo enlace al listado de Stock, Movimientos, Elaborados, y al listado de POS/Expendio.
+- **Qué se decidió:** se compara contra la carpeta sin barra final: dentro de la app = la carpeta misma o algo debajo (`/Movimientos`, `/Movimientos/Editar`); `/MovimientosOtro` sigue contando como otra sección. Los enlaces de las vistas no se tocaron. Test: `WebCore.Tests/js/app-instalada.test.js` (falla contra el código anterior).
+- **Sigue igual (a propósito):** los enlaces a otras secciones (ej. «Ver eliminados» del listado, que va a `RegistrosEliminados`) siguen bloqueados en la app instalada. Elaborados: «Volver» de Fórmulas y de Ingreso rápido/Desarme va a su listado propio, dentro de la app. La ventana emergente de «Abrir en ventana» (no instalada) no bloquea enlaces: solo oculta el menú.
+- **Archivos:** `WebCore/wwwroot/Scripts/app/app-instalada.js`, `WebCore.Tests/js/app-instalada.test.js`; manual `Home.Utilidades.md` y `Movimientos.Editar.md`.
+
 ## 2026-11-21 - POS y Expendio: el modal de operador no se puede cerrar (sin X ni «Cancelar»)
 
 - **Pedido:** en la app instalada del POS, al cerrar el modal «Autorizate para operar» con la cuenta de producción queda la pantalla en blanco y muchos operadores no saben que hay que apretar F5. El usuario pidió un botón de recargar **o** que el modal nunca se cierre; eligió que **no se cierre** (opción A), para Punto de venta y Punto de expendio.
