@@ -9,6 +9,7 @@
    Cada clic cambia el ANCHO de la ventana un 10 % del ancho que tenia al abrirse, con el borde DERECHO fijo (crece o se achica hacia la izquierda) (window.resizeTo + moveTo, el mismo mecanismo que ya usan el boton «Ensanchar» de
    Movimientos y el cartel de Existencia), con minimo del 50 % y maximo hasta el borde izquierdo de la pantalla; el alto no cambia. Si el navegador no deja redimensionar esa
    ventana avisa «no permite cambiar el tamano». El ultimo nivel se recuerda por seccion (localStorage) y se reaplica al abrir.
+   Sin boton «sin guardar» (SQL Server: borradores apagados) el par va antes de «Pantalla completa» (2026-11-24, aviso del usuario: en SM no aparecia).
    Limites: otros scripts que cambian el tamano (Movimientos a 1/3 del ancho, «Ensanchar») pueden pisar lo recordado. Decision: docs/DECISIONS.md (2026-11-17 e). */
 (function () {
     'use strict';
@@ -23,7 +24,9 @@
 
     // Botones «sin guardar» junto a los que va el par − / +. 'envoltorio' = el contenedor que se mueve (en Existencia el boton va dentro de un .ex-ctl).
     // Existencia: si los borradores estan apagados no hay «Borradores sin guardar»; entonces el par va antes del bloque Excel / PDF (#btnExcelExistencia).
-    var ANCLAS = ['#btnVerBorradoresStock', '#btnVerBorradoresMovimientos', '#btnVerBorradoresElaborados', '#btnVerBorradoresPedido', '#btnExcelExistencia'];
+    // Ultimo recurso: pantalla completa (#btnPantallaCompleta, solo existe en Stock/Editar, Movimientos/Editar y Elaborados/Carga). Con SQL Server los borradores
+    // genericos estan apagados (solo Postgres) y no hay boton «sin guardar»: sin este respaldo el par −/+ no aparecia en Servidor SM / San Lorenzo (2026-11-24).
+    var ANCLAS = ['#btnVerBorradoresStock', '#btnVerBorradoresMovimientos', '#btnVerBorradoresElaborados', '#btnVerBorradoresPedido', '#btnExcelExistencia', '#btnPantallaCompleta'];
 
     function enAppInstalada() {
         return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
@@ -40,7 +43,7 @@
     }
 
     // marco-ventana.js (marco y agarres de la ventana) usa la misma condicion para decidir si esta ventana es independiente.
-    window.VentanaTamano = { aplica: aplica };
+    window.VentanaTamano = { aplica: aplica, buscarAncla: function (buscar) { return buscarAncla(buscar); }, anclas: ANCLAS.slice() };
 
     function seccion() {
         // Con PathBase (/CarniSysWeb/Stock/...) el primer segmento seria el prefijo: si hay meta de scope se usa su ultimo segmento.
@@ -149,11 +152,13 @@
     }
 
     // Busca el boton «sin guardar» de la pantalla; devuelve el elemento ANTES del cual insertar (en Existencia, su .ex-ctl).
-    function buscarAncla() {
+    // "buscar" (selector -> elemento o null) se inyecta solo en los tests; en la pagina es document.querySelector.
+    function buscarAncla(buscar) {
+        buscar = buscar || function (selector) { return document.querySelector(selector); };
         // Existencia en modo movimiento (panel de stock del destino): ahi la barra no tiene Excel/PDF/borradores y el ancho lo maneja Movimientos.
-        if (document.querySelector('.ex-modo-mov')) return null;
+        if (buscar('.ex-modo-mov')) return null;
         for (var i = 0; i < ANCLAS.length; i++) {
-            var boton = document.querySelector(ANCLAS[i]);
+            var boton = buscar(ANCLAS[i]);
             if (!boton) continue;
             var envoltorio = boton.closest('.ex-ctl');
             return { boton: boton, referencia: envoltorio || boton, enExistencia: !!envoltorio };

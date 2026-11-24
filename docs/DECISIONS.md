@@ -1,3 +1,11 @@
+## 2026-11-24 (i) - Botones − / + de ancho también sin «… sin guardar» (SQL Server): respaldo en «Pantalla completa»
+
+- **Pedido:** en Servidor SM los botones − / + de ancho de la ventana no aparecían (sí en el local).
+- **Causa:** `ventana-tamano.js` los ancla antes del botón «… sin guardar», y ese botón solo se dibuja con los borradores genéricos habilitados, que son **solo Postgres** (`BorradorGenericoSettings.Habilitado`). SM y San Lorenzo usan SQL Server → sin ancla, el script no mostraba nada. Era el límite ya anotado en 2026-11-17 (e) («tampoco aparecen si los borradores están apagados»), que el usuario no esperaba.
+- **Qué se decidió (preguntado):** agregar `#btnPantallaCompleta` como **último ancla** de `ANCLAS`: el par va antes de «Pantalla completa». Ese botón existe solo en Stock/Editar, Movimientos/Editar y Elaborados/Carga, así que los listados, los POS y Expendio siguen sin −/+ y no hay pastilla flotante. Con borradores encendidos nada cambia (el ancla anterior gana). `buscarAncla` quedó expuesto en `window.VentanaTamano` para testearlo (`WebCore.Tests/js/ventana-tamano.test.js`).
+- **Alternativa descartada:** anclar en «Ensanchar» (`#btnEnsancharVentana`): lo crea `movimiento-stock-destino.js` por JS y solo en Movimientos; no cubre Stock ni Elaborados.
+- **Sin verificar en navegador con SQL Server;** pendiente probarlo en SM tras el deploy. **No «arreglar» llevando los borradores a SQL Server por esto.**
+
 ## 2026-11-24 - App instalada: Volver y Cancelar al listado de la propia app ya no se bloquean
 
 - **Pedido:** en la app instalada de Movimientos, «Volver» y «Cancelar» mostraban «No disponible en esta ventana». Tienen que volver al listado, igual en Stock, Movimientos y Elaborados: cada app es un circuito cerrado listado → editar / ver / agregar → listado, sin salir a otros menús.
