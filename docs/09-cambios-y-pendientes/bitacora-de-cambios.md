@@ -1,5 +1,11 @@
 # Bitacora de cambios
 
+## 2026-11-24 - Ventana independiente: si arrancó en el listado, al guardar vuelve al listado
+
+- **Cambio:** en Elaborados, Movimientos y Stock, una ventana independiente que se abrió en el listado (menú lateral, clic derecho, rueda o app instalada) ya no se cierra al guardar: vuelve al listado. La que se abrió directo en el formulario (botón ↗ del editor) se sigue cerrando. Detalle: `docs/DECISIONS.md` (2026-11-24 (n)).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/ventana-trabajo.js`, `WebCore.Tests/js/ventana-trabajo.test.js`; manual `Elaborados.Carga.md`, `Movimientos.Editar.md`, `Stock.Editar.md`.
+- **Pendiente:** probarlo guardando de verdad en Chrome.
+
 ## 2026-11-24 - Marco, franja de título y − / + en toda ventana independiente
 
 - **Cambio:** las ventanas abiertas con el menú, «Abrir en ventana» o la rueda del mouse ya muestran el marco azul con filete naranja, la franja de título y los − / + aunque Chrome las trate como parte de la app instalada (antes «Movimientos» salía sin nada y «Cajas Abiertas» sí). La app general abierta normalmente sigue sin marco. Detalle: `docs/DECISIONS.md` (2026-11-24 (m)).

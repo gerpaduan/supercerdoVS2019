@@ -1,3 +1,11 @@
+## 2026-11-24 (n) - Ventana independiente: si arrancó en el listado, al guardar vuelve al listado (no se cierra)
+
+- **Pedido:** «abro Elaborados en ventana independiente, pongo Nuevo elaborado y al guardarlo se cierra toda la ventana. Si la abrí desde el Index, que vuelva al Index» (también Movimientos y Stock).
+- **Qué se decidió (modifica 2026-11-13 (c)):** `ventana-trabajo.js` anota la **primera** pantalla que carga la ventana en `sessionStorage` (`carnisys-ventana-origen:<window.name>` = `listado` si es el Index de Elaborados / Movimientos / Stock, si no `carga`). Si arrancó en el listado, `cerrarVentana(alternativa)` ejecuta la alternativa de quien llama (ir al listado, la `redirectUrl` del servidor = Index) en vez de `window.close()`; en Stock (el aviso sale en el listado) la marca se borra y la ventana queda ahí. Si se abrió directo en un formulario (botón ↗ «Abrir en ventana» del editor, que lleva lo cargado), se sigue cerrando sola. El POS (cargas en iframe) no cambia.
+- **Por qué la clave lleva el nombre de la ventana:** `sessionStorage` lo comparten los paneles (iframes) de la pantalla dividida y `window.open` lo copia a la ventana nueva; sin el nombre una ventana heredaría el origen de otra.
+- **Alternativas descartadas:** mirar `document.referrer` (se pierde con las redirecciones del POST de Stock); volver siempre al listado (el usuario pidió el cierre en 2026-11-13 para la ventana abierta desde el editor).
+- **Verificado:** 8 tests nuevos (`WebCore.Tests/js/ventana-trabajo.test.js`) y en el navegador integrado con `sessionStorage` real (arrancada en el listado → vuelve; directo en el formulario → se cierra). PENDIENTE: probarlo guardando de verdad en Chrome.
+
 ## 2026-11-24 (m) - Marco, franja y − / + en TODA ventana independiente, también las abiertas desde la app instalada
 
 - **Pedido / síntoma:** «Cajas Abiertas» mostraba el marco azul con filete naranja y «Movimientos» no, aunque las dos eran ventanas independientes. Pidió el marco en todas.
@@ -9495,6 +9503,8 @@ El listado admin `Cajas/EgresosCaja` no cambia.
 **Verificado** en la app real (usuario de prueba, borrado): las tres pantallas abren con el foco en el campo pedido; el Código del elaborado mide igual que el del ingrediente (800 / 14,29 px / 30 px); Sucursal y Fecha de Stock 700 / 12,96 px / 30 px. **Pendiente:** ver el foco en la ventana emergente real (el panel no tiene el foco de ventana).
 
 ## 2026-11-13 (c) — Ventana independiente: se cierra sola al guardar
+
+- **Modificado el 2026-11-24 (n):** si la ventana arrancó en el listado, al guardar vuelve al listado y no se cierra.
 
 **Pedido:** en las ventanas independientes de Movimientos, Stock y Elaborados, al guardarse que la ventana se cierre automáticamente luego de cerrar el modal.
 **Qué se decidió:** `wwwroot/Scripts/app/ventana-trabajo.js` (nuevo; cargado en `_Layout.cshtml` después de `site.js`) expone `window.VentanaTrabajo.cerrarVentana(alternativa)`: solo actúa con `html.modo-ventana`; desactiva la protección de salida (`desactivarProteccionSalida`, para que el aviso nativo «¿Deseas abandonar el sitio?» no frene el cierre), llama `window.close()` y a los 500 ms ejecuta la **alternativa** (lo que se hacía antes: ir al listado). **Por qué la alternativa:** `window.close()` solo funciona en ventanas abiertas por script (el botón «Abrir en ventana») o en la mini-app instalada; una pestaña común con `?ventana=1` no se cierra y no debe quedar clavada.
