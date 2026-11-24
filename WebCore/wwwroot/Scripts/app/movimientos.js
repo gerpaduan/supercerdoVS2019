@@ -212,6 +212,8 @@
             // esta abierto; null si no. filasCambiadas = indices que acaban de cambiar (destello hasta el proximo repintado).
             editor: null,
             filasCambiadas: [],
+            // Indices de las lineas recien agregadas (destello de alta, linea-editor.css): se vacia en el repintado que las muestra.
+            filasNuevas: [],
             // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
             // Embutidos"): se completa abajo (crearBorradorGenerico), null si esta deshabilitado
             // (ahi se sigue con localStorage/CapturaRespaldo de siempre).
@@ -1056,7 +1058,8 @@
                     var tituloHora = 'Ítem ' + orden + (horaLinea.hora ? ' · ' + horaLinea.titulo : ' · sin hora de carga (anterior al cambio)');
                     var estaEditando = !!(state.editor && state.editor.index === item.originalIndex);
                     var clasesFila = (estaEditando ? ' linea-fila-sel' : '')
-                        + (state.filasCambiadas.indexOf(item.originalIndex) >= 0 ? ' linea-fila-cambiada' : '');
+                        + (state.filasCambiadas.indexOf(item.originalIndex) >= 0 ? ' linea-fila-cambiada' : '')
+                        + (state.filasNuevas.indexOf(item.originalIndex) >= 0 ? ' linea-fila-nueva' : '');
                     // Lapiz (corregir unidades y kilos) junto al tacho; en modo vista lo oculta el CSS (linea-editor.css) y el clic se ignora.
                     var botonLapiz = '<button type="button" class="btn btn-sm btn-outline-primary js-edit-linea" data-index="' + item.originalIndex + '" title="Corregir unidades y kilos" aria-label="Corregir unidades y kilos"><i class="fas fa-pen"></i></button>';
                     html += '<tr' + (clasesFila ? ' class="' + $.trim(clasesFila) + '"' : '') + '>'
@@ -1081,6 +1084,9 @@
                 }
             });
             state.filasCambiadas = [];
+            // Si la fila nueva no quedo visible (la busqueda la oculta) no hay destello, y el aviso no se arrastra al proximo repintado.
+            var hayFilaNueva = state.filasNuevas.length > 0;
+            state.filasNuevas = [];
 
             // Hidden inputs en el ORDEN DE CARGA (state.lines), no en el de pantalla: con "ultimos primero" (celular) o al
             // ordenar por una columna, las lineas nuevas se guardarian invertidas o mezcladas (2026-10-27, ver docs/DECISIONS.md).
@@ -1106,6 +1112,7 @@
 
             html = html.replace('colspan="7"', 'colspan="8"');
             $('#tablaLineasMovimiento tbody').html(html);
+            if (hayFilaNueva && window.LineaEditor) window.LineaEditor.mostrarFilaNueva($('#tablaLineasMovimiento tbody'));
             $('#lineasHiddenContainer').html(hidden);
             $('#lblTotalItems').text(formatInt(totalItems));
             $('#lblTotalUnidades').text(formatInt(totalUnidades));
@@ -1328,6 +1335,8 @@
             }
             var line = buildCurrentLine();
             state.lines.push(line);
+            // Destello de la fila recien agregada (indice real = ultimo; no depende del orden en pantalla).
+            state.filasNuevas = [state.lines.length - 1];
             renderLines();
             // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
             // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.

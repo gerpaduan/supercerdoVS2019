@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 2
 permiso: Elaborado.IngresoEmbutido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-21
+revisada: 2026-11-24
 ---
 ## Para qué sirve
 Registrar un elaborado cargando **a mano los ingredientes** (con su peso). Los ingredientes de la fórmula marcados como *Auto* se agregan solos al guardar, calculados como porcentaje de lo cargado a mano.
@@ -22,6 +22,9 @@ Si escribiste (o escaneaste) un código de ingrediente y no lo agregaste a la ta
 
 ## Agregar un ingrediente
 **Código**, **Ingrediente**, **Cantidad** (kilos) y el botón **+**. En el celular **Cantidad** y **+** van en el mismo renglón, con el **+** pegado a la cantidad (con el teclado numérico en pantalla abierto se apilan como antes).
+
+## La última línea agregada destella (2026-11-24)
+Al agregar un ingrediente, su fila en la tabla **destella en verde** (dos pulsos y una franja verde a la izquierda, unos 2 segundos) para ver cuál fue la última carga. Si la tabla es larga y la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar**: al abrir la pantalla, recuperar un borrador, ordenar o buscar no destella nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Con la opción «reducir movimiento» del sistema queda resaltada fija en vez de titilar.
 
 ## Corregir los kilos de un ingrediente ya cargado (2026-11-19)
 - Cada línea de la tabla tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · ingrediente»** con el campo **Kilos**.

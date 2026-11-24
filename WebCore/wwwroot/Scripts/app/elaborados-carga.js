@@ -121,6 +121,9 @@
 
         var config = window.elaboradosCargaConfig || {};
 
+        // Lo que dura el destello de una fila recien agregada (igual a la animacion linea-fila-nueva-destello de linea-editor.css).
+        var DURACION_DESTELLO_ALTA_MS = 1800;
+
         var state = {
             lineas: $.isArray(config.initialLines) ? config.initialLines.slice() : [],
             formula: $.isArray(config.initialFormula) ? config.initialFormula.slice() : [],
@@ -146,6 +149,10 @@
             // filasCambiadas = indices que acaban de cambiar (destello hasta el proximo repintado).
             editor: null,
             filasCambiadas: [],
+            // Indices de las lineas recien agregadas (destello de alta, linea-editor.css): se vacia en el repintado que las muestra.
+            filasNuevas: [],
+            // { indice, momento } de la ultima alta: ver esFilaNueva (el destello sobrevive a repintados que llegan enseguida).
+            ultimaAlta: null,
             // Costeo (efimero, solo Usuario.Admin, ver docs del pedido 2026-09-21): cache
             // compartida de precio de compra/venta por idCorte, para no repetir requests cuando
             // el mismo ingrediente aparece en la tabla manual y en la de formula.
@@ -669,6 +676,14 @@
             window.OrdenTabla.sincronizarEncabezados($('#tablaLineasElaborado thead th[data-sort-key]'), state);
         }
 
+        // Destello de alta: una fila es "nueva" en el repintado que sigue al alta y, ademas, durante lo que dura el destello. Esto ultimo
+        // porque en Admin el costo del ingrediente llega por un request asincrono (asegurarCostoIngrediente) que repinta la tabla
+        // enseguida; sin esta ventana ese repintado le sacaba la clase a la fila y cortaba el destello (verificado en el navegador 2026-11-24).
+        function esFilaNueva(indice) {
+            if (state.filasNuevas.indexOf(indice) >= 0) return true;
+            return !!state.ultimaAlta && state.ultimaAlta.indice === indice && (Date.now() - state.ultimaAlta.momento) < DURACION_DESTELLO_ALTA_MS;
+        }
+
         function renderLineas() {
             var html = '';
             var hidden = '';
@@ -694,7 +709,8 @@
                 var textoBalanza = linea.PesoBalanza ? 'Pesado en balanza' : 'Sin balanza';
                 var estaEditando = !!(state.editor && state.editor.index === item.indiceOriginal);
                 var clasesFila = (estaEditando ? ' linea-fila-sel' : '')
-                    + (state.filasCambiadas.indexOf(item.indiceOriginal) >= 0 ? ' linea-fila-cambiada' : '');
+                    + (state.filasCambiadas.indexOf(item.indiceOriginal) >= 0 ? ' linea-fila-cambiada' : '')
+                    + (esFilaNueva(item.indiceOriginal) ? ' linea-fila-nueva' : '');
                 // Lapiz (corregir kilos) junto al tacho; en modo vista lo oculta el CSS (linea-editor.css) y el clic se ignora.
                 var botonLapiz = config.esAnulado ? '' : '<button type="button" class="btn btn-sm btn-outline-primary js-edit-linea" data-index="' + item.indiceOriginal + '" title="Corregir kilos" aria-label="Corregir kilos"><i class="fas fa-pen"></i></button>';
                 // # = posicion en el orden de carga (indice real + 1); no cambia al ordenar la tabla.
@@ -723,6 +739,9 @@
                 }
             });
             state.filasCambiadas = [];
+            // Si la fila nueva no quedo visible (la busqueda la oculta) no hay destello, y el aviso no se arrastra al proximo repintado.
+            var hayFilaNueva = state.filasNuevas.length > 0;
+            state.filasNuevas = [];
 
             if (!html) {
                 var sinLineas = !state.lineas.length;
@@ -731,6 +750,7 @@
             }
 
             $('#tablaLineasElaborado tbody').html(html);
+            if (hayFilaNueva && window.LineaEditor) window.LineaEditor.mostrarFilaNueva($('#tablaLineasElaborado tbody'));
             syncOrdenLineas();
             syncEncabezadosLineas();
             $('#lineasHiddenContainer').html(hidden);
@@ -1202,6 +1222,9 @@
             };
 
             state.lineas.push(linea);
+            // Destello de la fila recien agregada (indice real = ultimo; no depende del orden en pantalla).
+            state.filasNuevas = [state.lineas.length - 1];
+            state.ultimaAlta = { indice: state.lineas.length - 1, momento: Date.now() };
             renderLineas();
             clearIngrediente();
             // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se

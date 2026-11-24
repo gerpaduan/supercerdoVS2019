@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-11-21
+revisada: 2026-11-24
 alias: Stock.Nuevo
 ---
 ## Para qué sirve
@@ -67,6 +67,9 @@ PENDIENTE: documentar los datos del encabezado, la carga de productos (código, 
 
 ## Datos del registro
 - En la pantalla de un registro ya guardado, **Creado** y **Actualizado** (con el usuario debajo de cada fecha) se muestran en un bloque compacto de dos columnas, con letra chica, para ocupar poca altura.
+
+## La última línea agregada destella (2026-11-24)
+Al agregar un producto con el botón de agregar línea, su fila en la tabla **destella en verde** (dos pulsos y una franja verde a la izquierda, unos 2 segundos) para ver cuál fue la última carga, aunque la tabla esté ordenada de otra forma o en el celular se muestre «últimos primero». Si la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar de a una**: las cargas masivas («Agregar productos no cargados», pesajes vinculados), al abrir la pantalla, recuperar un borrador, ordenar o buscar no destellan nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Con la opción «reducir movimiento» del sistema queda resaltada fija en vez de titilar.
 
 ## Corregir la cantidad de una línea ya cargada (2026-11-19)
 - Cada línea tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · producto»** con el campo **Kilos**.

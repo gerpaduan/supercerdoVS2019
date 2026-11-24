@@ -6,6 +6,15 @@
 - **Sigue igual (a propósito):** los enlaces a otras secciones (ej. «Ver eliminados» del listado, que va a `RegistrosEliminados`) siguen bloqueados en la app instalada. Elaborados: «Volver» de Fórmulas y de Ingreso rápido/Desarme va a su listado propio, dentro de la app. La ventana emergente de «Abrir en ventana» (no instalada) no bloquea enlaces: solo oculta el menú.
 - **Archivos:** `WebCore/wwwroot/Scripts/app/app-instalada.js`, `WebCore.Tests/js/app-instalada.test.js`; manual `Home.Utilidades.md` y `Movimientos.Editar.md`.
 
+## 2026-11-24 - Movimientos, Stock y Elaborados (Carga): la fila recién agregada destella
+
+- **Pedido:** al agregar un producto a la tabla de líneas, que la fila nueva se vea (color que titile) para identificar la última carga.
+- **Qué se decidió:** clase `linea-fila-nueva` en `linea-editor.css` (dos pulsos verdes más intensos en 1,8 s + franja verde de 4 px a la izquierda; con `prefers-reduced-motion` resaltado fijo). Cada pantalla guarda `state.filasNuevas` (índice real de la línea, no el de pantalla), lo pone solo en `addCurrentLine` / `addLinea` / `agregarLinea` y lo vacía en el repintado que sigue, así que cargar la página, restaurar un borrador, ordenar o buscar no destellan. `LineaEditor.mostrarFilaNueva` acerca la fila a la vista (`scrollIntoView({block:'nearest'})` con `setTimeout 0` para que el foco al buscador no la pise).
+- **Elaborados (Carga), Admin:** el costo del ingrediente llega por un request asíncrono que repinta la tabla enseguida y le sacaba la clase a la fila (cortaba el destello, detectado probando en el navegador). Por eso `esFilaNueva` también marca la fila durante 1,8 s desde el alta (`state.ultimaAlta`). Movimientos y Stock no repintan después del alta y no lo necesitan.
+- **Alternativa descartada:** reusar `linea-fila-cambiada` (fundido verde de 2,5 s, el de «corregir línea»): demasiado sutil para cargar rápido y mezclaba «agregada» con «corregida». El destello de corrección **no se tocó**.
+- **Alcance:** solo altas de a una. Cargas masivas de Stock («Agregar productos no cargados», pesajes vinculados) no destellan a propósito (decenas de filas titilando). Compras (`compra-fila-cambiada`) y Elaborados Ingreso rápido (no tiene tabla de líneas) quedan afuera.
+- **Archivos:** `wwwroot/Content/css/linea-editor.css`, `Scripts/app/linea-editor.js`, `movimientos.js`, `stock.js`, `elaborados-carga.js`; manual `Movimientos.Editar.md`, `Stock.Editar.md`, `Elaborados.Carga.md`.
+
 ## 2026-11-21 - POS y Expendio: el modal de operador no se puede cerrar (sin X ni «Cancelar»)
 
 - **Pedido:** en la app instalada del POS, al cerrar el modal «Autorizate para operar» con la cuenta de producción queda la pantalla en blanco y muchos operadores no saben que hay que apretar F5. El usuario pidió un botón de recargar **o** que el modal nunca se cierre; eligió que **no se cierre** (opción A), para Punto de venta y Punto de expendio.

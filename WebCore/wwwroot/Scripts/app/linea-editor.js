@@ -5,6 +5,7 @@
 //   - htmlFila({ titulo, campos:[{id,label,valor}], error, avisos:[html], colspan })  -> <tr> del panel (va justo debajo de la fila).
 //   - enlazar({ onAplicar, onCancelar, onInput(idCampo, valor) })                       -> engancha los eventos (una sola vez por pantalla).
 //   - enfocar(idCampo) / mostrarError(texto)                                            -> ayudas despues de repintar.
+//   - mostrarFilaNueva($tbody)                                                          -> acerca a la vista la fila recien agregada (destello, 2026-11-24).
 // Decision y motivo: docs/DECISIONS.md (2026-11-19, "Corregir una linea").
 (function (window, $) {
     'use strict';
@@ -114,10 +115,22 @@
         $('.linea-editor-error').text(texto || '');
     }
 
+    // Despues de repintar tras un alta: si la fila nueva (tr.linea-fila-nueva) quedo fuera de la pantalla (lista larga, o orden "ultimos
+    // primero" del celular), la acerca lo justo para que se vea el destello. El setTimeout 0 deja que el foco vuelva antes al buscador
+    // de codigo, para que ese foco no pise este scroll.
+    function mostrarFilaNueva($tbody) {
+        var fila = $tbody && $tbody.find('tr.linea-fila-nueva')[0];
+        if (!fila || typeof fila.scrollIntoView !== 'function') return;
+        window.setTimeout(function () {
+            fila.scrollIntoView({ block: 'nearest' });
+        }, 0);
+    }
+
     window.LineaEditor = {
         htmlFila: htmlFila,
         enlazar: enlazar,
         enfocar: enfocar,
-        mostrarError: mostrarError
+        mostrarError: mostrarError,
+        mostrarFilaNueva: mostrarFilaNueva
     };
 })(window, window.jQuery);

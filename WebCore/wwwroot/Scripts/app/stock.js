@@ -151,6 +151,8 @@
             // filasCambiadas = indices que acaban de cambiar (destello hasta el proximo repintado).
             editor: null,
             filasCambiadas: [],
+            // Indices de las lineas recien agregadas (destello de alta, linea-editor.css): se vacia en el repintado que las muestra.
+            filasNuevas: [],
             // Borrador en servidor (ver docs/DECISIONS.md "Borradores de Compras/Stock/Movimientos/
             // Embutidos"): instancia de BorradorGenerico.crear() cuando esta habilitado, o null
             // cuando no (ahi se sigue con localStorage/CapturaRespaldo de siempre).
@@ -928,6 +930,9 @@
         var state = getState($form);
         var $tbody = $form.find('#tablaLineasStock tbody');
         var html = '';
+        // Destello de alta: se toma y se vacia de entrada, asi no se arrastra al proximo repintado aunque este termine antes (tabla vacia / sin resultados).
+        var filasNuevas = state.filasNuevas;
+        state.filasNuevas = [];
 
         // El detalle se vuelve a dibujar completo en cada cambio para mantener sincronizados grilla, totales e inputs hidden.
         if (!$tbody.length) return;
@@ -968,7 +973,8 @@
             var lineaBloqueada = !!linea.noContado || linea.idPesajeVinculado > 0;
             var estaEditando = !!(state.editor && state.editor.index === item.indiceOriginal);
             var clasesFila = (estaEditando ? ' linea-fila-sel' : '')
-                + (state.filasCambiadas.indexOf(item.indiceOriginal) >= 0 ? ' linea-fila-cambiada' : '');
+                + (state.filasCambiadas.indexOf(item.indiceOriginal) >= 0 ? ' linea-fila-cambiada' : '')
+                + (filasNuevas.indexOf(item.indiceOriginal) >= 0 ? ' linea-fila-nueva' : '');
             var botonLapiz = lineaBloqueada
                 ? '<button type="button" class="btn btn-sm btn-outline-secondary js-edit-linea" disabled title="' + (linea.noContado ? 'Línea «No contado»: no se corrige desde acá' : 'Línea de un pesaje vinculado: no se corrige desde acá') + '" aria-label="Corregir cantidad no disponible"><i class="fas fa-pen"></i></button>'
                 : '<button type="button" class="btn btn-sm btn-outline-primary js-edit-linea" data-index="' + item.indiceOriginal + '" title="Corregir cantidad" aria-label="Corregir cantidad"><i class="fas fa-pen"></i></button>';
@@ -1003,6 +1009,7 @@
         state.filasCambiadas = [];
 
         $tbody.html(html);
+        if (filasNuevas.length && window.LineaEditor) window.LineaEditor.mostrarFilaNueva($tbody);
         recalculate($form);
         rebuildHiddenInputs($form);
         syncSortHeadersStock($form);
@@ -2874,6 +2881,8 @@
         }
 
         state.lineas.push(linea);
+        // Destello de la fila recien agregada (indice real = ultimo; no depende del orden en pantalla).
+        state.filasNuevas = [state.lineas.length - 1];
         renderLineas($form);
         scheduleDraft($form);
         // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se

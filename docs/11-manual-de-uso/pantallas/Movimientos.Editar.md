@@ -86,6 +86,9 @@ Al guardar aparece un aviso con el **mismo diseño que el de una venta en el POS
 - **3 · Generar PDF.** *Enviar a WhatsApp* sigue oculto.
 - No se cierra con **Escape** ni haciendo clic afuera: solo eligiendo una opción. Al imprimir un movimiento **ya guardado** el título es **«Imprimir movimiento»**.
 
+## La última línea agregada destella (2026-11-24)
+Al agregar un producto, su fila en la tabla **destella en verde** (dos pulsos y una franja verde a la izquierda, unos 2 segundos) para ver cuál fue la última carga, aunque la tabla esté ordenada de otra forma o en el celular se muestre «últimos primero». Si la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar**: al abrir la pantalla, recuperar un borrador, ordenar o buscar no destella nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Con la opción «reducir movimiento» del sistema queda resaltada fija en vez de titilar.
+
 ## Corregir las unidades y los kilos de una línea ya cargada (2026-11-19)
 - Cada línea tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · producto»** con los campos **Unidades** y **Kilos**. En un producto **no pesable** solo hay **Unidades** (los kilos son las unidades, como al agregarlo).
 - **Enter** o **Aplicar** cambia la línea (tabla, totales y datos que se guardan se actualizan y la fila destella en verde); **Esc** o **Cancelar** cierra sin cambiar nada. Si no cambiás nada, el panel solo se cierra y **no** se pierde un «Permitir ingreso» ya autorizado.
