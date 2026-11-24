@@ -594,7 +594,11 @@
 
             @* Pantalla dividida (2026-11-20, docs/DECISIONS.md): varios modulos lado a lado. Visible para todos: cada panel respeta los permisos de su pantalla. *@
             <li class="nav-item">
-                <a class="nav-link @(controller == "PantallaDividida" ? "active" : "")" href="@Url.Action("Index", "PantallaDividida")">
+                @* Estando ya en la pantalla dividida el item queda inhabilitado (aria-disabled + sin clic, pantalla-dividida.js): navegar a si mismo la recargaba. *@
+                @{ var yaEnDividida = controller == "PantallaDividida"; }   @* un atributo con valor null no se escribe *@
+                <a class="nav-link @(yaEnDividida ? "active" : "")" href="@Url.Action("Index", "PantallaDividida")"
+                   aria-disabled="@(yaEnDividida ? "true" : null)" aria-current="@(yaEnDividida ? "page" : null)"
+                   title="@(yaEnDividida ? "Ya estás en la pantalla dividida" : null)" style="@(yaEnDividida ? "cursor: default; opacity: .6;" : null)">
                     <i class="fas fa-fw fa-columns"></i>
                     <span>Pantalla dividida</span>
                 </a>

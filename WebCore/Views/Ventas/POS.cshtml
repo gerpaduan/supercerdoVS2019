@@ -3303,6 +3303,8 @@ else
                 // Salir de la edicion termina la autorizacion provisoria de otro usuario para modificar esta venta
                 // (guardar ya la termina en el servidor). 2026-11-03.
                 window.PosAutorizacion?.revocar("ModificarVenta", parseInt($("#idVentaEditar").val(), 10) || 0);
+                // Abierta desde un panel de la pantalla dividida: salir de la edicion cierra esta ventana (el detalle ya esta en el panel).
+                if (window.PosEdicionDesdePanel?.alTerminar(false)) return;
                 if (window.PosEsMismaPestana(url)) window.PosConservarOperadorAlSalir = true;
                 window.location.href = url;
             }
@@ -3320,7 +3322,9 @@ else
                     .prop("disabled", true)
                     .attr("readonly", "readonly");
                 $("#tablaItems").addClass("pos-bloqueado");
-                $("#btnSalirPOS").attr("href", urlSalidaEdicionVenta()).on("click", function () {
+                $("#btnSalirPOS").attr("href", urlSalidaEdicionVenta()).on("click", function (evento) {
+                    // Abierta desde un panel de la pantalla dividida: salir cierra esta ventana en vez de navegar al detalle.
+                    if (window.PosEdicionDesdePanel?.alTerminar(false)) { evento.preventDefault(); return; }
                     if (window.PosEsMismaPestana($(this).attr("href"))) window.PosConservarOperadorAlSalir = true;
                 });
 

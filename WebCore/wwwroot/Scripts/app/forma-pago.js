@@ -26,6 +26,27 @@ let porcentajeTotalVentaActivo = 0;
 // Lo usa actualizarModoCompactoModal. Declarado aca arriba para no caer en la TDZ de let.
 let bloqueDescuentoAbierto = false;
 
+// Edicion de una venta abierta DESDE LA PANTALLA DIVIDIDA (2026-11-24, docs/DECISIONS.md "Pantalla dividida"): el detalle de venta de un panel abre
+// «Modificar venta» en una ventana aparte (window.open) y espera que esta ventana avise al terminar. alTerminar(guardada) le avisa a la pagina que la
+// abrio (window.opener.PantallaDividida.edicionDeVentaTerminada) y, si ella la reconoce como una edicion suya, cierra esta ventana: el detalle del panel
+// se recarga solo (guardada=true). Devuelve true si la ventana se cerro; false (sin hacer nada) si no la abrio la pantalla dividida, en cuyo caso el
+// llamador sigue con su flujo de siempre (volver al detalle).
+window.PosEdicionDesdePanel = {
+    alTerminar: function (guardada) {
+        try {
+            var origen = window.opener;
+            if (!origen || origen.closed || !origen.PantallaDividida || typeof origen.PantallaDividida.edicionDeVentaTerminada !== 'function') return false;
+            if (!origen.PantallaDividida.edicionDeVentaTerminada(window, guardada === true)) return false;
+            if (typeof window.desactivarAvisoSalidaPOS === 'function') window.desactivarAvisoSalidaPOS();   // cerrar no debe preguntar «¿abandonar?»
+            window.close();
+            return true;
+        } catch (e) {
+            console.warn('[POS] no se pudo avisar a la pantalla dividida que terminó la edición de la venta', e);
+            return false;
+        }
+    }
+};
+
 function getPOSStateFormaPago() {
     return window.POSState || null;
 }
@@ -984,6 +1005,8 @@ function finalizarVenta(data) {
                     title: 'Venta actualizada',
                     text: 'Los cambios se guardaron correctamente.'
                 }).then(function () {
+                    // Abierta desde un panel de la pantalla dividida: se avisa (el detalle del panel se recarga) y esta ventana se cierra sola.
+                    if (window.PosEdicionDesdePanel.alTerminar(true)) return;
                     const returnUrl = window.POSModo?.returnUrl || $('#returnUrlPOS').val() || '';
                     if (returnUrl) {
                         // Vuelve a la misma pestaña de POS (2026-10-20): el pagehide no debe borrar al operador de la

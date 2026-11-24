@@ -66,6 +66,12 @@
         return listarPaneles(raiz).map(function (p) { return p.url; }).filter(function (u) { return !!u; });
     }
 
+    // Paneles con una pantalla cargada EN el panel: ni vacios (no pierden nada al reacomodar) ni pasados a una ventana independiente (su pantalla
+    // vive en su ventana). Es lo que un atajo de distribucion (3 columnas / 4 en cuadro) tiene que poder conservar.
+    function contarConPantalla(raiz) {
+        return listarPaneles(raiz).filter(function (p) { return !!p.url && !p.ventana; }).length;
+    }
+
     function reemplazarPanel(nodo, id, fabrica) {
         if (esPanel(nodo)) return nodo.id === id ? fabrica(nodo) : nodo;
         return {
@@ -92,6 +98,32 @@
             raiz: { tipo: 'division', direccion: 'fila', proporcion: PROPORCION_PANEL_NUEVO_AL_COSTADO, a: raiz, b: nuevo },
             nuevoId: idNuevo
         };
+    }
+
+    // Agrega un panel nuevo (con url, o vacio si no hay) al costado IZQUIERDO de TODO lo existente: espejo de agregarAlCostado. null si se pasa del tope.
+    function agregarAlExtremoIzquierdo(raiz, idNuevo, url) {
+        if (!raiz || contarPaneles(raiz) >= MAX_PANELES) return null;
+        var nuevo = crearPanel(idNuevo, url);
+        return {
+            raiz: { tipo: 'division', direccion: 'fila', proporcion: 1 - PROPORCION_PANEL_NUEVO_AL_COSTADO, a: nuevo, b: raiz },
+            nuevoId: idNuevo
+        };
+    }
+
+    // Agrega un panel nuevo VACIO pegado a un panel: lado 'izquierda' o 'derecha'. Ese panel cede la mitad de su espacio al nuevo y ningun otro
+    // cambia de tamaño (2026-11-24, «Agregar panel»). Si el panel esta dentro de una division en columna, solo se parte su celda. null si el panel no
+    // existe, el lado es invalido o se pasa del tope.
+    function agregarJunto(raiz, idPanel, lado, idNuevo) {
+        if (lado !== 'izquierda' && lado !== 'derecha') return null;
+        if (!raiz || !buscarPanel(raiz, idPanel) || contarPaneles(raiz) >= MAX_PANELES) return null;
+        var nuevo = crearPanel(idNuevo, null);
+        var arbol = reemplazarPanel(raiz, idPanel, function (panel) {
+            return {
+                tipo: 'division', direccion: 'fila', proporcion: PROPORCION_INICIAL,
+                a: lado === 'izquierda' ? nuevo : panel, b: lado === 'izquierda' ? panel : nuevo
+            };
+        });
+        return { raiz: arbol, nuevoId: idNuevo };
     }
 
     // Cierra el panel: su hermano ocupa el lugar de la division. null si era el unico panel (el arbol queda vacio).
@@ -258,8 +290,11 @@
         listarPaneles: listarPaneles,
         siguienteId: siguienteId,
         urlsAbiertas: urlsAbiertas,
+        contarConPantalla: contarConPantalla,
         dividir: dividir,
         agregarAlCostado: agregarAlCostado,
+        agregarAlExtremoIzquierdo: agregarAlExtremoIzquierdo,
+        agregarJunto: agregarJunto,
         cerrar: cerrar,
         cargarUrl: cargarUrl,
         independizar: independizar,

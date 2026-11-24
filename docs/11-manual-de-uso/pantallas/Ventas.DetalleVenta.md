@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 4
 permiso: a los usuarios de producción les pide elegir el operador de Ventas antes de entrar (no en el modal de Mis ventas); las acciones Modificar venta y Cambiar forma de pago aparecen solo si corresponden (ver abajo). PENDIENTE: no se verificó el permiso de menú de esta pantalla.
-revisada: 2026-11-14
+revisada: 2026-11-24
 ---
 ## Para qué sirve
 Ver **una venta completa**: a quién, cuándo, con qué forma de pago, cada artículo y el total, y desde ahí **facturar o imprimir**, **modificarla** o **cambiarle la forma de pago**. También se ve dentro de otras pantallas: **Mis ventas** (modal del POS y de Cajas Abiertas) y, debajo de la factura, en el [detalle de la factura](ayuda:pantalla/Ventas.Facturas).
@@ -24,7 +24,7 @@ Ver **una venta completa**: a quién, cuándo, con qué forma de pago, cada art�
 
 ## Acciones (abajo, dentro de la tarjeta)
 - **Factura / Imprimir**: abre el comprobante para imprimir el ticket, mandarlo por email o facturar.
-- **Modificar venta**: solo aparece si corresponde. Abre la venta en el POS para editarla.
+- **Modificar venta**: solo aparece si corresponde. Abre la venta en el POS para editarla. Si el detalle está en un panel de la [pantalla dividida](PantallaDividida.Index.md), el POS se abre en una **ventana aparte**, el detalle queda en el panel y se actualiza solo al guardar (la ventana se cierra sola).
 - **Cambiar forma de pago**: solo aparece si corresponde. Abre el POS en modo «solo forma de pago».
 - Con un usuario común, **Modificar venta** y **Cambiar forma de pago** se ofrecen para ventas de **su caja abierta actual** (misma sucursal y dentro del horario de esa caja); Modificar además pide el permiso de última venta. Quien tiene permiso administrativo sobre la venta las ve siempre. PENDIENTE: no se verificó en esta revisión cuál es el permiso administrativo exacto.
 - Con la cuenta compartida de **producción**, desde Mis ventas del POS, se evalúan con el empleado autorizado en esa pestaña.

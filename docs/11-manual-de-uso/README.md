@@ -61,7 +61,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Cuenta corriente de una persona | Finanzas | `pantallas/Finanzas.CtaCtePersona.md` | 2026-11-09 |
 | pantallas | Cuentas corrientes | Finanzas | `pantallas/Finanzas.CtasCtes.md` | 2026-11-10 |
 | pantallas | Pago / Cobro | Finanzas | `pantallas/Finanzas.AddOrEditPago.md` | 2026-11-20 |
-| pantallas | Pantalla dividida (varios módulos lado a lado) | Inicio | `pantallas/PantallaDividida.Index.md` | 2026-11-21 |
+| pantallas | Pantalla dividida (varios módulos lado a lado) | Inicio | `pantallas/PantallaDividida.Index.md` | 2026-11-24 |
 | pantallas | Tablero diario (inicio) | Inicio | `pantallas/Home.Index.md` | 2026-11-20 |
 | pantallas | Líneas de movimiento | Movimientos | `pantallas/Movimientos.Lineas.md` | 2026-11-13 |
 | pantallas | Movimientos | Movimientos | `pantallas/Movimientos.Index.md` | 2026-11-13 |
@@ -77,7 +77,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-24 |
 | pantallas | Líneas de stock | Stock | `pantallas/Stock.Lineas.md` | 2026-11-02 |
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-11-14 |
-| pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-11-14 |
+| pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-11-24 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-11-10 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-10-14 |
 | pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-21 |

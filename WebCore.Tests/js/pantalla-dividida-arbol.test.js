@@ -314,3 +314,67 @@ test('un arbol con urls mapeadas se serializa y se lee de vuelta (el destino lo 
     assert.equal(A.buscarPanel(leido.raiz, 1).url, '/Movimientos/Nuevo?traspasoDoc=carnisys-traspaso-doc-1-abc');
     assert.equal(leido.activo, 2);
 });
+
+test('contarConPantalla cuenta solo los paneles con una pantalla cargada en el panel (no vacios ni en ventana independiente)', () => {
+    assert.equal(A.contarConPantalla(A.distribucionCuadro(['/Stock', '/Movimientos', '/Reportes', '/Compras'])), 4);
+    // Un panel vacio no pierde nada al reacomodar: no cuenta (4 paneles, 3 con pantalla -> entran en «3 columnas»).
+    assert.equal(A.contarConPantalla(A.distribucionCuadro(['/Stock', '/Movimientos', '/Reportes', null])), 3);
+    assert.equal(A.contarConPantalla(A.distribucionTres([null, null, null])), 0);
+    assert.equal(A.contarConPantalla(null), 0);
+    // Un panel pasado a una ventana independiente tiene url pero su pantalla vive en su ventana: tampoco cuenta.
+    const conVentana = A.independizar(A.distribucionTres(['/Stock', '/Movimientos', '/Reportes']), 2, 'carnisys-trabajo-menu-movimientos');
+    assert.equal(A.contarConPantalla(conVentana), 2);
+});
+
+test('agregarJunto pone el panel nuevo vacio a la derecha o a la izquierda y solo achica a ese panel', () => {
+    const base = A.distribucionTres(['/Stock', '/Movimientos', '/Reportes']);
+    const rectDe = (arbol, id) => A.calcularRectangulos(arbol).paneles.find((p) => p.id === id);
+    const antes3 = rectDe(base, 3);
+
+    const der = A.agregarJunto(base, 2, 'derecha', 4);
+    assert.equal(der.nuevoId, 4);
+    assert.deepEqual(plano(A.listarPaneles(der.raiz).map((p) => p.id)), [1, 2, 4, 3]);   // 4 queda justo a la derecha del 2
+    assert.equal(A.buscarPanel(der.raiz, 4).url, null);
+    // el panel 3 y el 1 no cambian; el 2 y el 4 se reparten el ancho que tenia el 2
+    assert.deepEqual(plano(rectDe(der.raiz, 3)), plano(antes3));
+    assert.ok(Math.abs(rectDe(der.raiz, 2).w - rectDe(der.raiz, 4).w) < 1e-9);
+    assert.ok(Math.abs(rectDe(der.raiz, 2).w * 2 - rectDe(base, 2).w) < 1e-9);
+
+    const izq = A.agregarJunto(base, 2, 'izquierda', 4);
+    assert.deepEqual(plano(A.listarPaneles(izq.raiz).map((p) => p.id)), [1, 4, 2, 3]);
+});
+
+test('agregarJunto devuelve null con lado invalido, panel inexistente o tope alcanzado, y no muta el arbol', () => {
+    const base = A.distribucionTres(['/Stock', null, null]);
+    const copia = plano(base);
+    assert.equal(A.agregarJunto(base, 1, 'arriba', 9), null);
+    assert.equal(A.agregarJunto(base, 99, 'derecha', 9), null);
+    assert.equal(A.agregarJunto(null, 1, 'derecha', 9), null);
+    let lleno = base;
+    for (let id = 4; id <= 6; id++) lleno = A.agregarJunto(lleno, 1, 'derecha', id).raiz;
+    assert.equal(A.contarPaneles(lleno), 6);
+    assert.equal(A.agregarJunto(lleno, 1, 'derecha', 7), null);
+    assert.deepEqual(plano(base), copia);
+});
+
+test('agregarJunto dentro de un cuadro parte solo la celda del panel', () => {
+    const cuadro = A.distribucionCuadro(['/a', '/b', '/c', '/d']);
+    const r = A.agregarJunto(cuadro, 3, 'derecha', 5);
+    assert.equal(A.contarPaneles(r.raiz), 5);
+    const g = A.calcularRectangulos(r.raiz).paneles;
+    const p = (id) => g.find((x) => x.id === id);
+    assert.ok(Math.abs(p(3).w - 0.25) < 1e-9 && Math.abs(p(5).w - 0.25) < 1e-9);   // la celda de abajo a la izquierda (0.5) se parte en dos
+    assert.ok(Math.abs(p(1).w - 0.5) < 1e-9 && Math.abs(p(4).w - 0.5) < 1e-9);       // las demas celdas no cambian
+});
+
+test('agregarAlExtremoIzquierdo pone el panel nuevo primero con un tercio del ancho y respeta el tope', () => {
+    const base = A.distribucionTres(['/a', '/b', '/c']);
+    const r = A.agregarAlExtremoIzquierdo(base, 4, null);
+    assert.deepEqual(plano(A.listarPaneles(r.raiz).map((p) => p.id)), [4, 1, 2, 3]);
+    const g = A.calcularRectangulos(r.raiz).paneles;
+    assert.ok(Math.abs(g.find((p) => p.id === 4).w - 0.34) < 1e-9 && g.find((p) => p.id === 4).x === 0);
+    assert.equal(A.agregarAlExtremoIzquierdo(null, 4, null), null);
+    let lleno = base;
+    for (let id = 4; id <= 6; id++) lleno = A.agregarAlExtremoIzquierdo(lleno, id, null).raiz;
+    assert.equal(A.agregarAlExtremoIzquierdo(lleno, 7, null), null);
+});

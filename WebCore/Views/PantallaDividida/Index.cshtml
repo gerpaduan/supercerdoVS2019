@@ -18,7 +18,8 @@
     .pd-ayuda { font-size: .8rem; color: #6c757d; }
     .pd-area { position: relative; width: 100%; height: 520px; background: #e9ecef; border-radius: .5rem; overflow: hidden; }
     .pd-area.pd-arrastrando iframe { pointer-events: none; }
-    .pd-panel { position: absolute; padding: 3px; box-sizing: border-box; }
+    /* container-type: el texto de «Agregar panel» se oculta cuando ESTE panel es angosto (queda el «+»), no segun el ancho de la pantalla. */
+    .pd-panel { position: absolute; padding: 3px; box-sizing: border-box; container-type: inline-size; container-name: pd-panel; }
     .pd-panel.pd-oculto { visibility: hidden; pointer-events: none; }
     .pd-panel.pd-maximizado { z-index: 3; }
     .pd-marco { display: flex; flex-direction: column; height: 100%; background: #fff; border: 1px solid #ced4da; border-radius: .4rem; overflow: hidden; }
@@ -28,6 +29,30 @@
     .pd-cab .pd-icono { color: #6c757d; font-size: .8rem; margin-right: .15rem; }
     .pd-cab button { border: 0; background: transparent; color: #495057; padding: .1rem .3rem; border-radius: .25rem; font-size: .8rem; line-height: 1; cursor: pointer; }
     .pd-cab button:hover, .pd-cab button:focus-visible { background: #dee2e6; color: #212529; outline: 0; }
+    .pd-cab button[aria-disabled="true"] { opacity: .35; cursor: default; background: transparent; }
+    /* «Agregar panel»: boton principal + flechita pegados; el menu de posiciones vive en el area (no en la cabecera, que recorta lo que se sale). */
+    .pd-agregar { display: inline-flex; }
+    .pd-cab .pd-agregar button:first-child { display: inline-flex; align-items: center; gap: .25rem; padding-right: .3rem; border-radius: .25rem 0 0 .25rem; }
+    .pd-cab .pd-agregar button:last-child { padding-left: .2rem; padding-right: .25rem; border-radius: 0 .25rem .25rem 0; }
+    .pd-agregar-texto { font-size: .8rem; }
+    /* Franja «esta venta se esta modificando en otra ventana»: en el flujo del panel, entre la cabecera y el contenido. */
+    .pd-franja { display: flex; align-items: center; gap: .5rem; padding: .25rem .5rem; background: #e7f1ff; border-bottom: 1px solid #b6d4fe; color: #084298; font-size: .78rem; }
+    .pd-franja[hidden] { display: none; }
+    .pd-franja span { flex: 1; min-width: 0; }
+    .pd-franja button { flex: none; border: 1px solid #0d6efd; background: #fff; color: #0d6efd; border-radius: .25rem; padding: .1rem .45rem; font-size: .75rem; cursor: pointer; }
+    .pd-franja button:hover { background: #0d6efd; color: #fff; }
+    html.dark-mode .pd-franja { background: #1d2f52; border-color: #2f4a80; color: #cfe2ff; }
+    html.dark-mode .pd-franja button { background: transparent; color: #9ec5fe; border-color: #6ea8fe; }
+    @@container pd-panel (max-width: 329px) { .pd-agregar-texto { display: none; } }
+    .pd-menu-agregar { position: absolute; z-index: 10; width: 230px; box-sizing: border-box; padding: .25rem; background: #fff; border: 1px solid #ced4da; border-radius: .4rem; box-shadow: 0 4px 12px rgba(0, 0, 0, .15); font-size: .82rem; }
+    .pd-menu-agregar[hidden] { display: none; }
+    .pd-menu-titulo { padding: .15rem .5rem; font-size: .7rem; color: #6c757d; }
+    .pd-menu-agregar button { display: flex; align-items: center; gap: .5rem; width: 100%; padding: .3rem .5rem; border: 0; background: transparent; text-align: left; border-radius: .3rem; font-size: .82rem; color: #212529; cursor: pointer; }
+    .pd-menu-agregar button i { width: 1rem; text-align: center; color: #6c757d; }
+    .pd-menu-agregar button:hover, .pd-menu-agregar button:focus-visible { background: #e7edf9; color: #1f3a8a; outline: 0; }
+    html.dark-mode .pd-menu-agregar { background: #2b2f36; border-color: #444b55; color: #e6e8eb; }
+    html.dark-mode .pd-menu-agregar button { color: #e6e8eb; }
+    html.dark-mode .pd-menu-agregar button:hover { background: #3b4a78; color: #fff; }
     .pd-cuerpo { position: relative; flex: 1; min-height: 0; }
     .pd-cuerpo iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
     .pd-vacio, .pd-aviso { position: absolute; inset: 0; overflow: auto; padding: .6rem; background: #fff; font-size: .8rem; }
@@ -40,7 +65,7 @@
     .pd-lista small { color: #6c757d; }
     .pd-aviso { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; text-align: center; color: #495057; }
     /* Sin desactivar de verdad (disabled no muestra el motivo ni recibe clics): se ve apagado y al tocarlo explica por que. */
-    .pd-cerrar-todo[aria-disabled="true"] { opacity: .55; }
+    .pd-cerrar-todo[aria-disabled="true"], #pdTres[aria-disabled="true"], #pdCuadro[aria-disabled="true"] { opacity: .55; }
     .pd-botones { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
     .pd-botones .btn { font-size: .8rem; }
     .pd-divisor { position: absolute; z-index: 4; background: transparent; touch-action: none; }
@@ -89,7 +114,7 @@
                     title="Pasa toda la pantalla dividida, con todos sus paneles, a una ventana independiente">
                 <i class="fas fa-external-link-alt" aria-hidden="true"></i> Pasar a ventana independiente
             </button>
-            <span class="pd-ayuda">Dividí cada panel con los botones de su cabecera y elegí qué abrir desde el menú lateral.</span>
+            <span class="pd-ayuda">Agregá paneles con el botón «Agregar panel» de su cabecera y elegí qué abrir desde el menú lateral.</span>
             <span class="pd-contador" id="pdContador" aria-live="polite"></span>
         </div>
         <div class="pd-area" id="pdArea" role="group" aria-label="Paneles de la pantalla dividida"></div>

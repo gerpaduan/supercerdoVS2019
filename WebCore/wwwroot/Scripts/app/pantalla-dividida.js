@@ -47,6 +47,12 @@
     var VIGENCIA_LAYOUT_MS = 10 * 60 * 1000;                 // una clave sin usar se descarta a los 10 minutos
     var CLAVE_GUARDADO = 'carnisys-pantalla-dividida-v1-' + (pagina.getAttribute('data-usuario') || '0') + (EN_VENTANA_DIVIDIDA ? '-ventana' : '');
     var PARAM_ABRIR = 'abrir';
+    // Lugares de los atajos de la barra: deben coincidir con Arbol.distribucionTres / Arbol.distribucionCuadro (3 y 4 paneles).
+    var CAPACIDAD_TRES = 3;
+    var CAPACIDAD_CUADRO = 4;
+    // Tooltips normales de esos botones (los mismos de Index.cshtml); cuando no entran las pantallas abiertas el tooltip pasa a ser el motivo.
+    var TITULO_TRES = 'Acomoda tres columnas conservando lo que ya tenés abierto';
+    var TITULO_CUADRO = 'Acomoda cuatro paneles en cuadro conservando lo que ya tenés abierto';
 
     var BASE = (pagina.getAttribute('data-base') || '/').replace(/\/+$/, '');   // PathBase sin barra final ("" o "/carnisys")
     var URL_LIBERAR = pagina.getAttribute('data-url-liberar') || '';
@@ -55,6 +61,7 @@
     // Pantallas que NO se abren en un panel: el POS (usa su propia ventana y su heartbeat), esta misma pantalla (recursion), y el login/salir.
     var RUTAS_NO_PERMITIDAS = [/^\/ventas\/pos(\/|$)/i, /^\/pantalladividida(\/|$)/i, /^\/login(\/|$)/i, /^\/logout(\/|$)/i];
     var RUTA_POS = /^\/ventas\/pos(\/|$)/i;
+    var RUTA_PANTALLA_DIVIDIDA = /^\/pantalladividida(\/|$)/i;   // el item «Pantalla dividida» del menu lateral (ya estamos en ella)
 
     // ---------- estado ----------
     var raiz = null;                // arbol de paneles
@@ -387,9 +394,7 @@
         cab.appendChild(titulo);
         cab.appendChild(crearBoton('atras', 'fa-arrow-left', 'Atrás'));
         cab.appendChild(crearBoton('recargar', 'fa-sync-alt', 'Recargar'));
-        cab.appendChild(crearBoton('dividir-fila', 'fa-columns', 'Dividir a lo ancho'));
-        cab.appendChild(crearBoton('dividir-columna', 'fa-grip-lines', 'Dividir a lo alto'));
-        cab.appendChild(crearBoton('maximizar', 'fa-expand', 'Maximizar'));
+        cab.appendChild(crearBotonesAgregar());
         cab.appendChild(crearBoton('independizar', 'fa-external-link-alt', 'Pasar a una ventana independiente'));
         cab.appendChild(crearBoton('cerrar', 'fa-times', 'Cerrar panel'));
 
@@ -408,7 +413,19 @@
         cuerpo.appendChild(vacio);
         cuerpo.appendChild(aviso);
 
+        // Franja de «esta venta se esta modificando en otra ventana»: en el flujo del panel (entre la cabecera y el contenido) para no tapar el detalle.
+        var franja = document.createElement('div');
+        franja.className = 'pd-franja';
+        franja.hidden = true;
+        var franjaTexto = document.createElement('span');
+        var franjaBoton = document.createElement('button');
+        franjaBoton.type = 'button';
+        franjaBoton.textContent = 'Ir a esa ventana';
+        franja.appendChild(franjaTexto);
+        franja.appendChild(franjaBoton);
+
         marco.appendChild(cab);
+        marco.appendChild(franja);
         marco.appendChild(cuerpo);
         el.appendChild(marco);
         area.appendChild(el);
@@ -419,19 +436,21 @@
             ventanaCerrada: false,    // true si se detecto que esa ventana ya no esta abierta
             avisoClave: null,         // evita rearmar el aviso en cada dibujo
             tituloPrevio: '',         // titulo que tenia el panel antes de pasar a la ventana
-            alVaciar: null            // callback a correr cuando el iframe termina de quedar en blanco
+            alVaciar: null,           // callback a correr cuando el iframe termina de quedar en blanco
+            franja: franja, franjaTexto: franjaTexto, franjaIdVenta: 0   // aviso de edicion de venta en otra ventana (actualizarFranjasDeEdicion)
         };
+        franjaBoton.addEventListener('click', function () { irAVentanaDeEdicion(panel); });
 
         // Un clic en cualquier parte del panel (cabecera, listado) lo marca activo; dentro del iframe lo hace el listener de cada documento cargado.
         el.addEventListener('mousedown', function () { activar(id); }, true);
         cab.addEventListener('click', function (ev) {
             var boton = ev.target.closest ? ev.target.closest('button[data-accion]') : null;
-            if (boton) accionDePanel(id, boton.getAttribute('data-accion'));
+            if (!boton) return;
+            var accion = boton.getAttribute('data-accion');
+            // La flechita de «Agregar panel» abre el menu de posiciones; el resto de los botones pasa por accionDePanel.
+            if (accion === 'agregar-menu') { activar(id); alternarMenuAgregar(id, boton); } else accionDePanel(id, accion);
         });
-        cab.addEventListener('dblclick', function (ev) {
-            if (ev.target.closest && ev.target.closest('button')) return;
-            accionDePanel(id, 'maximizar');
-        });
+        // 2026-11-24: el doble clic en la cabecera ya no maximiza (se quito «Maximizar»; ver docs/DECISIONS.md).
         iframe.addEventListener('load', function () { alCargarMarco(panel); });
 
         armarListadoVacio(panel);
@@ -563,6 +582,9 @@
         panel.urlActual = ruta;
         panel.vacio.hidden = true;
         panel.aviso.hidden = true;
+        // 2026-11-24: si el panel estaba rechazando una pantalla (iframe oculto con el cartel «se abre aparte») y se vuelve atras a una valida, el iframe
+        // tiene que mostrarse de nuevo; antes quedaba oculto y el panel parecia vacio aunque el detalle estaba cargado.
+        panel.iframe.hidden = false;
         if (Arbol.buscarPanel(raiz, panel.id)) raiz = Arbol.cargarUrl(raiz, panel.id, ruta);
         actualizarTitulo(panel, documento);
 
@@ -571,6 +593,7 @@
             ventana.addEventListener('pointerdown', function () { activar(panel.id); }, true);
             ventana.addEventListener('focus', function () { activar(panel.id); });
             ventana.addEventListener('keydown', alTeclaDeRecarga, true);   // F5 con el foco dentro del panel (ver «recarga accidental»)
+            ventana.addEventListener('click', function (ev) { alClicEnPanel(panel, ev); }, true);   // «Modificar venta»: se abre aparte sin salir del detalle
         } catch (e) { /* sin acceso: queda el clic en la cabecera */ }
 
         programarGuardado();
@@ -579,6 +602,8 @@
 
     // El panel navego (por un enlace de adentro) a una pantalla que no puede vivir en un panel: se vacia el iframe y se ofrece abrirla aparte.
     function rechazarPantalla(panel, ruta, ventana) {
+        // Una pantalla que se cargo entera (el POS) puede tener su propio aviso de salida: se lo apaga para que no salte «¿Deseas abandonar el sitio?».
+        try { if (typeof ventana.desactivarAvisoSalidaPOS === 'function') ventana.desactivarAvisoSalidaPOS(); } catch (e) { /* sin acceso: se sigue igual */ }
         try { ventana.location.replace('about:blank'); } catch (e) { /* ya se esta descargando */ }
         panel.iframe.hidden = true;
         panel.aviso.innerHTML = '';
@@ -622,6 +647,105 @@
         var ventana = window.open(window.location.origin + url, nombreVentanaDe(url), 'popup=yes,width=' + VENTANA_ANCHO_PX + ',height=' + VENTANA_ALTO_PX + ',resizable=yes,scrollbars=yes');
         if (!ventana) avisar('El navegador bloqueó la ventana emergente. Permitila para este sitio e intentá de nuevo.', 'warning');
         else ventana.focus();
+    }
+
+    // ---------- editar una venta en una ventana aparte (desde el detalle de venta de un panel) ----------
+    // 2026-11-24 (docs/DECISIONS.md): «Modificar venta» y «Cambiar forma de pago» del detalle de venta son enlaces al POS, que no puede vivir en un panel.
+    // Antes el panel cargaba el POS entero, lo vaciaba (con el cartel «¿Deseas abandonar el sitio?») y perdia el detalle. Ahora el clic se intercepta
+    // ANTES de navegar: el detalle queda en el panel, el POS se abre en una ventana aparte, una franja avisa que la venta se esta modificando y, al
+    // guardar, el POS le avisa a esta pagina (window.opener.PantallaDividida.edicionDeVentaTerminada) y los paneles con ese detalle se recargan.
+    var RUTA_DETALLE_VENTA = /^\/ventas\/detalleventa(\/|$)/i;
+    var edicionesVenta = {};   // idVenta -> Window de la ventana donde se esta modificando esa venta (solo las abiertas desde esta pagina)
+
+    // idVenta del enlace «Modificar venta» / «Cambiar forma de pago» (?idVentaEditar=N en /Ventas/POS), o 0 si el enlace no es de edicion.
+    function idVentaDeEnlaceDeEdicion(ruta) {
+        var destino;
+        try { destino = new URL(ruta, window.location.origin); } catch (e) { return 0; }
+        if (!RUTA_POS.test(rutaSinBase(destino.pathname))) return 0;
+        var id = Number(destino.searchParams.get('idVentaEditar'));
+        return isFinite(id) && id > 0 && Math.floor(id) === id ? id : 0;
+    }
+
+    // idVenta que muestra el panel si esta en el detalle de una venta (/Ventas/DetalleVenta?id=N), o 0.
+    function idVentaDelDetalle(panel) {
+        if (!panel || !panel.urlActual) return 0;
+        var destino;
+        try { destino = new URL(panel.urlActual, window.location.origin); } catch (e) { return 0; }
+        if (!RUTA_DETALLE_VENTA.test(rutaSinBase(destino.pathname))) return 0;
+        var id = Number(destino.searchParams.get('id'));
+        return isFinite(id) && id > 0 && Math.floor(id) === id ? id : 0;
+    }
+
+    // Clic dentro de un panel (fase de captura, antes que los manejadores de la propia pantalla): si es un enlace de edicion de venta, no navega.
+    function alClicEnPanel(panel, ev) {
+        if (ev.defaultPrevented || ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+        var enlace = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
+        if (!enlace || enlace.target === '_blank' || enlace.hasAttribute('download')) return;
+        var ruta = rutaRelativa(enlace.href);
+        var idVenta = ruta ? idVentaDeEnlaceDeEdicion(ruta) : 0;
+        if (!idVenta) return;   // cualquier otro enlace sigue su camino (un POS que no es edicion cae en rechazarPantalla)
+        ev.preventDefault();
+        ev.stopPropagation();
+        abrirEdicionDeVentaAparte(panel, ruta, idVenta);
+    }
+
+    function abrirEdicionDeVentaAparte(panel, ruta, idVenta) {
+        var viva = edicionesVenta[idVenta];
+        if (viva && !viva.closed) {   // ya se esta modificando: se trae esa ventana al frente en vez de abrir otra
+            try { viva.focus(); } catch (e) { console.warn('Pantalla dividida: el navegador no dejó traer al frente la ventana de edición.', e); }
+            avisar('La venta #' + idVenta + ' ya se está modificando en otra ventana.', 'info');
+            return;
+        }
+        var ventana = window.open(window.location.origin + ruta, 'carnisys-trabajo-editar-venta-' + idVenta, caracteristicasVentana(panel));
+        if (!ventana) { avisarVentanaBloqueada(); return; }
+        edicionesVenta[idVenta] = ventana;
+        try { ventana.focus(); } catch (e) { /* window.open ya la activo */ }
+        avisar('La edición de la venta #' + idVenta + ' se abre en una ventana aparte. Este detalle se actualiza solo al guardar.', 'info');
+        actualizarFranjasDeEdicion();
+    }
+
+    // Lo llama el POS de una ventana abierta desde aca (forma-pago.js / POS.cshtml) al guardar o salir de la edicion. `ventana` es la del POS: solo se
+    // atiende si esta pagina la abrio para editar una venta. Devuelve true si la atendio (el POS entonces se cierra solo).
+    function edicionDeVentaTerminada(ventana, guardada) {
+        var idVenta = 0;
+        Object.keys(edicionesVenta).forEach(function (k) { if (edicionesVenta[k] === ventana) idVenta = Number(k); });
+        if (!idVenta) return false;
+        delete edicionesVenta[idVenta];
+        if (guardada) {
+            Object.keys(paneles).forEach(function (k) {
+                var panel = paneles[k];
+                if (idVentaDelDetalle(panel) !== idVenta) return;
+                try { panel.iframe.contentWindow.location.reload(); } catch (e) { if (panel.urlActual) navegarMarco(panel, panel.urlActual); }
+            });
+            avisar('Venta #' + idVenta + ' actualizada.', 'success');
+        }
+        actualizarFranjasDeEdicion();
+        return true;
+    }
+
+    // Franja sobre el contenido del panel mientras su detalle de venta se esta modificando en otra ventana.
+    function actualizarFranjasDeEdicion() {
+        Object.keys(edicionesVenta).forEach(function (k) {
+            var v = edicionesVenta[k];
+            if (!v || v.closed) delete edicionesVenta[k];   // la ventana se cerro sin guardar: se acaba el aviso
+        });
+        Object.keys(paneles).forEach(function (k) {
+            var panel = paneles[k];
+            var idVenta = idVentaDelDetalle(panel);
+            var enEdicion = idVenta > 0 && !!edicionesVenta[idVenta];
+            if (enEdicion && panel.franjaIdVenta !== idVenta) {
+                panel.franjaTexto.textContent = 'Modificando la venta #' + idVenta + ' en otra ventana. Al guardar, este detalle se actualiza solo.';
+                panel.franjaIdVenta = idVenta;
+            }
+            if (!enEdicion) panel.franjaIdVenta = 0;
+            panel.franja.hidden = !enEdicion;
+        });
+    }
+
+    function irAVentanaDeEdicion(panel) {
+        var v = edicionesVenta[panel.franjaIdVenta];
+        if (!v || v.closed) { actualizarFranjasDeEdicion(); return; }
+        try { v.focus(); } catch (e) { avisar('El navegador no dejó traer la ventana al frente: buscala en la barra de tareas.', 'info'); }
     }
 
     // ---------- ventana independiente: pasar un panel a su propia ventana ----------
@@ -868,6 +992,7 @@
                 marcarVentanaCerrada(panel);
             }
         });
+        actualizarFranjasDeEdicion();   // una ventana de edicion de venta que se cerro sin guardar apaga su franja
     }
 
     // Pantallas que siguen abiertas (para el operador autorizado): las de los paneles y las de las ventanas independientes que siguen abiertas.
@@ -890,10 +1015,9 @@
         var panel = paneles[id];
         if (!panel) return;
         activar(id);
-        if (accion === 'dividir-fila') dividirPanel(id, 'fila');
-        else if (accion === 'dividir-columna') dividirPanel(id, 'columna');
+        cerrarMenuAgregar();
+        if (accion === 'agregar') agregarPanel(id, 'derecha');
         else if (accion === 'cerrar') cerrarPanel(id);
-        else if (accion === 'maximizar') { maximizado = maximizado === id ? null : id; dibujar(); }
         else if (accion === 'independizar') independizarPanel(id);
         else if (panel.enVentana) return;   // Atrás / Recargar no aplican: la pantalla esta en su ventana independiente
         else if (accion === 'recargar') {
@@ -902,10 +1026,68 @@
             });
         }
         else if (accion === 'atras') {
-            conConfirmacionDelPanel(panel, function () {
-                try { panel.iframe.contentWindow.history.back(); } catch (e) { console.warn('Pantalla dividida: no se pudo volver atrás en el panel', id, e); }
-            });
+            if (!panelTienePantalla(panel)) return;   // ya es el menu de modulos: no hay a donde volver
+            conConfirmacionDelPanel(panel, function () { volverAtrasEnPanel(panel); });
         }
+    }
+
+    // ---------- «Atrás» de un panel ----------
+    // 2026-11-24 (docs/DECISIONS.md): antes era iframe.contentWindow.history.back(), que retrocede el historial de TODA la pestaña (la pagina principal y
+    // los iframes de todos los paneles, mezclados): en un panel sin pantallas previas sacaba al usuario de la pantalla dividida, y con varios paneles
+    // deshacia la navegacion de OTRO panel. Ahora solo se mira el historial propio del iframe (Navigation API: navigation.entries() de un iframe son
+    // solo las suyas) y, si no queda pantalla anterior, el panel vuelve a su menu de modulos. Nunca se toca el historial de la pestaña.
+    function panelTienePantalla(panel) {
+        var nodo = Arbol.buscarPanel(raiz, panel.id);
+        return !!nodo && !!nodo.url && !nodo.ventana;
+    }
+
+    // true si el iframe del panel tiene una pantalla anterior propia a la que volver (una entrada about:blank no cuenta: es el panel vaciado).
+    function hayPantallaAnteriorEnPanel(panel) {
+        try {
+            var nav = panel.iframe.contentWindow.navigation;
+            if (!nav || !nav.canGoBack || !nav.currentEntry) return false;
+            var previa = nav.entries()[nav.currentEntry.index - 1];
+            return !!previa && !!previa.url && previa.url !== 'about:blank';
+        } catch (e) {
+            return false;   // sin Navigation API o sin acceso al documento: se va al menu, que es el destino seguro
+        }
+    }
+
+    function volverAtrasEnPanel(panel) {
+        if (hayPantallaAnteriorEnPanel(panel)) {
+            try {
+                var recorrido = panel.iframe.contentWindow.navigation.back();
+                // Si la pantalla cancela la salida o el recorrido falla, la promesa se rechaza: se avisa en consola y el panel queda como estaba.
+                var avisarFallo = function (e) { console.warn('Pantalla dividida: no se pudo volver atrás en el panel', panel.id, e); };
+                if (recorrido && recorrido.finished) recorrido.finished.catch(avisarFallo);
+                if (recorrido && recorrido.committed) recorrido.committed.catch(avisarFallo);
+                return;
+            } catch (e) {
+                console.warn('Pantalla dividida: no se pudo volver atrás en el panel', panel.id, e);
+            }
+        }
+        volverAlMenuDelPanel(panel);
+    }
+
+    // El panel queda vacio (con la lista de modulos), igual que un panel nuevo. No toca ningun otro panel.
+    function volverAlMenuDelPanel(panel) {
+        raiz = Arbol.cargarUrl(raiz, panel.id, null);
+        descartarFotoDe(panel.id);   // ya no hay pantalla que fotografiar
+        dibujar();                   // dibujar() ve el panel sin url y llama a mostrarPanelVacio
+        programarLiberar();
+    }
+
+    // «Atrás» apagado (sin disabled de verdad, igual que los atajos: el tooltip explica) cuando el panel es el menu de modulos o su pantalla esta en una ventana.
+    function actualizarBotonesAtras() {
+        if (!raiz) return;
+        Object.keys(paneles).forEach(function (k) {
+            var panel = paneles[k];
+            var boton = panel.el.querySelector('button[data-accion="atras"]');
+            if (!boton) return;
+            var activo = panelTienePantalla(panel);
+            boton.setAttribute('aria-disabled', activo ? 'false' : 'true');
+            boton.title = activo ? 'Atrás (si no hay pantalla anterior, vuelve al menú de módulos)' : 'Atrás: este panel ya está en el menú de módulos';
+        });
     }
 
     function tamanoPx(id) {
@@ -929,6 +1111,175 @@
         activo = resultado.nuevoId;
         maximizado = null;
         dibujar();
+    }
+
+    // ---------- «Agregar panel» ----------
+    // 2026-11-24 (docs/DECISIONS.md): reemplaza a «Dividir a lo ancho / a lo alto» y «Maximizar» en la cabecera de cada panel. El boton principal agrega un
+    // panel vacio a la DERECHA de este panel; la flechita abre un menu con las otras posiciones (extremos de toda la pantalla, o a cada lado de este panel).
+    var MENU_AGREGAR_ANCHO_PX = 230;
+    var FRACCION_QUE_CONSERVAN_LOS_EXISTENTES = 0.66;   // mismo valor que PROPORCION_PANEL_NUEVO_AL_COSTADO de pantalla-dividida-arbol.js
+    var TITULO_AGREGAR = 'Agregar panel a la derecha de este';
+    var TITULO_AGREGAR_MENU = 'Elegir dónde agregar el panel';
+    var menuAgregar = null;        // <div> del menu de posiciones (uno solo, vive en el area: la cabecera de un panel recortaria lo que se salga)
+    var menuAgregarPanelId = null; // panel al que pertenece el menu abierto
+
+    function crearBotonesAgregar() {
+        var grupo = document.createElement('span');
+        grupo.className = 'pd-agregar';
+        var principal = document.createElement('button');
+        principal.type = 'button';
+        principal.setAttribute('data-accion', 'agregar');
+        principal.title = TITULO_AGREGAR;
+        principal.setAttribute('aria-label', 'Agregar panel');
+        // El texto se oculta por CSS cuando el panel es angosto (container query de Index.cshtml): queda solo el «+» con su tooltip.
+        principal.innerHTML = '<i class="fas fa-plus" aria-hidden="true"></i><span class="pd-agregar-texto">Agregar panel</span>';
+        var flecha = document.createElement('button');
+        flecha.type = 'button';
+        flecha.setAttribute('data-accion', 'agregar-menu');
+        flecha.title = TITULO_AGREGAR_MENU;
+        flecha.setAttribute('aria-label', TITULO_AGREGAR_MENU);
+        flecha.setAttribute('aria-haspopup', 'menu');
+        flecha.setAttribute('aria-expanded', 'false');
+        flecha.innerHTML = '<i class="fas fa-chevron-down" aria-hidden="true"></i>';
+        grupo.appendChild(principal);
+        grupo.appendChild(flecha);
+        return grupo;
+    }
+
+    function hayLugarParaOtroPanel() { return Arbol.contarPaneles(raiz) < Arbol.MAX_PANELES; }
+
+    // Agrega un panel vacio y lo deja activo. modo: 'derecha' | 'izquierda' (pegado a `id`) o 'extremo-izquierdo' | 'extremo-derecho' (de toda la pantalla).
+    function agregarPanel(id, modo) {
+        if (!hayLugarParaOtroPanel()) {
+            avisar('Máximo ' + Arbol.MAX_PANELES + ' paneles. Cerrá uno para agregar otro.', 'warning');
+            return;
+        }
+        var idNuevo = Arbol.siguienteId(raiz);
+        var resultado = null;
+        if (modo === 'extremo-izquierdo' || modo === 'extremo-derecho') {
+            // En un extremo todos los paneles existentes se achican (conservan FRACCION_QUE_CONSERVAN_LOS_EXISTENTES de su ancho): el mas angosto no
+            // puede quedar bajo el minimo, y el panel nuevo (el resto del ancho) tampoco.
+            var masAngosto = Arbol.calcularRectangulos(raiz).paneles.reduce(function (min, p) { return Math.min(min, p.w * area.clientWidth); }, Infinity);
+            if (masAngosto * FRACCION_QUE_CONSERVAN_LOS_EXISTENTES < MIN_PANEL_PX || area.clientWidth * (1 - FRACCION_QUE_CONSERVAN_LOS_EXISTENTES) < MIN_PANEL_PX) {
+                avisar('No hay lugar para otro panel en el extremo. Cerrá un panel o agregalo junto a uno ancho.', 'warning');
+                return;
+            }
+            resultado = modo === 'extremo-izquierdo' ? Arbol.agregarAlExtremoIzquierdo(raiz, idNuevo, null) : Arbol.agregarAlCostado(raiz, idNuevo, null);
+        } else {
+            // Junto a un panel, ese panel cede la mitad de su ancho: si no queda lugar para dos, se avisa (los extremos no cortan: achican a todos parejo).
+            if (tamanoPx(id).w / 2 < MIN_PANEL_PX) {
+                avisar('No hay lugar para otro panel acá. Agrandá este panel o cerrá otro.', 'warning');
+                return;
+            }
+            resultado = Arbol.agregarJunto(raiz, id, modo, idNuevo);
+        }
+        if (!resultado) return;
+        raiz = resultado.raiz;
+        activo = resultado.nuevoId;
+        maximizado = null;
+        dibujar();
+    }
+
+    // Un panel esta pegado al borde izquierdo / derecho si su rectangulo toca ese borde (con cuadros, los paneles del medio no lo tocan).
+    function bordesDelPanel(id) {
+        var rect = Arbol.calcularRectangulos(raiz).paneles.filter(function (p) { return p.id === id; })[0];
+        if (!rect) return { izquierdo: false, derecho: false };
+        return { izquierdo: rect.x < 0.001, derecho: rect.x + rect.w > 0.999 };
+    }
+
+    function cerrarMenuAgregar() {
+        if (!menuAgregar || menuAgregar.hidden) return;
+        menuAgregar.hidden = true;
+        var panel = paneles[menuAgregarPanelId];
+        var flecha = panel ? panel.el.querySelector('button[data-accion="agregar-menu"]') : null;
+        if (flecha) flecha.setAttribute('aria-expanded', 'false');
+        menuAgregarPanelId = null;
+    }
+
+    function alternarMenuAgregar(id, flecha) {
+        if (menuAgregar && !menuAgregar.hidden && menuAgregarPanelId === id) { cerrarMenuAgregar(); return; }
+        cerrarMenuAgregar();
+        if (!hayLugarParaOtroPanel()) {
+            avisar('Máximo ' + Arbol.MAX_PANELES + ' paneles. Cerrá uno para agregar otro.', 'warning');
+            return;
+        }
+        if (!menuAgregar) {
+            menuAgregar = document.createElement('div');
+            menuAgregar.className = 'pd-menu-agregar';
+            menuAgregar.setAttribute('role', 'menu');
+            menuAgregar.hidden = true;
+            area.appendChild(menuAgregar);
+            menuAgregar.addEventListener('click', function (ev) {
+                var opcion = ev.target.closest ? ev.target.closest('button[data-modo]') : null;
+                if (!opcion) return;
+                var panelId = menuAgregarPanelId;
+                cerrarMenuAgregar();
+                if (panelId !== null) agregarPanel(panelId, opcion.getAttribute('data-modo'));
+            });
+            // Esc cierra el menu y devuelve el foco a la flechita; el clic fuera (o dentro de un iframe, que hace perder el foco a esta pagina) tambien.
+            document.addEventListener('keydown', function (ev) {
+                if (ev.key !== 'Escape' || !menuAgregar || menuAgregar.hidden) return;
+                var panel = paneles[menuAgregarPanelId];
+                var boton = panel ? panel.el.querySelector('button[data-accion="agregar-menu"]') : null;
+                cerrarMenuAgregar();
+                if (boton) boton.focus();
+            });
+            document.addEventListener('mousedown', function (ev) {
+                if (!menuAgregar || menuAgregar.hidden) return;
+                if (menuAgregar.contains(ev.target) || (ev.target.closest && ev.target.closest('button[data-accion="agregar-menu"]'))) return;
+                cerrarMenuAgregar();
+            }, true);
+            window.addEventListener('blur', cerrarMenuAgregar);
+            window.addEventListener('resize', cerrarMenuAgregar);
+        }
+
+        // Opciones: las que no cambian nada se ocultan (un panel ya pegado al borde izquierdo no ofrece «extremo izquierdo»).
+        var bordes = bordesDelPanel(id);
+        var opciones = [];
+        if (!bordes.izquierdo) opciones.push(['extremo-izquierdo', 'fa-angle-double-left', 'Al extremo izquierdo']);
+        opciones.push(['izquierda', 'fa-arrow-left', 'A la izquierda de este panel']);
+        opciones.push(['derecha', 'fa-arrow-right', 'A la derecha de este panel']);
+        if (!bordes.derecho) opciones.push(['extremo-derecho', 'fa-angle-double-right', 'Al extremo derecho']);
+        menuAgregar.innerHTML = '';
+        var titulo = document.createElement('div');
+        titulo.className = 'pd-menu-titulo';
+        titulo.textContent = 'Agregar panel…';
+        menuAgregar.appendChild(titulo);
+        opciones.forEach(function (o) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.setAttribute('role', 'menuitem');
+            b.setAttribute('data-modo', o[0]);
+            b.innerHTML = '<i class="fas ' + o[1] + '" aria-hidden="true"></i>';
+            b.appendChild(document.createTextNode(o[2]));
+            menuAgregar.appendChild(b);
+        });
+
+        // Posicion: debajo de la flechita, alineado a su borde derecho y sin salirse del area.
+        var caja = area.getBoundingClientRect();
+        var f = flecha.getBoundingClientRect();
+        var izquierda = Math.min(Math.max(f.right - caja.left - MENU_AGREGAR_ANCHO_PX, 4), Math.max(caja.width - MENU_AGREGAR_ANCHO_PX - 4, 4));
+        menuAgregar.style.left = izquierda + 'px';
+        menuAgregar.style.top = (f.bottom - caja.top + 2) + 'px';
+        menuAgregar.hidden = false;
+        menuAgregarPanelId = id;
+        flecha.setAttribute('aria-expanded', 'true');
+        var primera = menuAgregar.querySelector('button');
+        if (primera) primera.focus();
+    }
+
+    // «Agregar panel» apagado (sin disabled de verdad: el tooltip explica y al tocarlo se avisa) cuando ya hay el maximo de paneles.
+    function actualizarBotonesAgregar() {
+        if (!raiz) return;
+        var lleno = !hayLugarParaOtroPanel();
+        Object.keys(paneles).forEach(function (k) {
+            var panel = paneles[k];
+            var principal = panel.el.querySelector('button[data-accion="agregar"]');
+            var flecha = panel.el.querySelector('button[data-accion="agregar-menu"]');
+            var motivo = 'Máximo ' + Arbol.MAX_PANELES + ' paneles: cerrá uno para agregar otro';
+            if (principal) { principal.setAttribute('aria-disabled', lleno ? 'true' : 'false'); principal.title = lleno ? motivo : TITULO_AGREGAR; }
+            if (flecha) { flecha.setAttribute('aria-disabled', lleno ? 'true' : 'false'); flecha.title = lleno ? motivo : TITULO_AGREGAR_MENU; }
+        });
     }
 
     function cerrarPanel(id, confirmado) {
@@ -1003,8 +1354,34 @@
 
     function abrirEnPanelActivo(url) { if (iniciado) cargarEnPanel(activo, url); }
 
+    // Motivo por el que un atajo de `capacidad` paneles no se puede usar ahora, o null si se puede. 2026-11-24 (docs/DECISIONS.md): antes, con mas
+    // pantallas abiertas que lugares (p. ej. 4 en cuadro -> 3 columnas), la distribucion nueva descartaba la sobrante EN SILENCIO (el panel desaparecia
+    // con lo que tenia cargado). Ahora hay que cerrar paneles a mano primero.
+    function motivoAtajoBloqueado(capacidad) {
+        var abiertas = Arbol.contarConPantalla(raiz);   // los paneles vacios no cuentan: reacomodar no les quita nada
+        if (abiertas <= capacidad) return null;
+        var sobran = abiertas - capacidad;
+        return 'Tenés ' + abiertas + ' paneles con pantallas abiertas y acá entran ' + capacidad + ': cerrá ' + (sobran === 1 ? 'un panel' : sobran + ' paneles') + ' para usar este atajo.';
+    }
+
+    // Deja «3 columnas» / «4 en cuadro» apagados (sin disabled de verdad, igual que «Cerrar pantalla dividida»: el motivo se ve en el tooltip y al tocarlo)
+    // cuando no entran las pantallas abiertas.
+    function actualizarBotonesDeAtajo() {
+        if (!raiz) return;
+        [['pdTres', CAPACIDAD_TRES, TITULO_TRES], ['pdCuadro', CAPACIDAD_CUADRO, TITULO_CUADRO]].forEach(function (def) {
+            var boton = document.getElementById(def[0]);
+            if (!boton) return;
+            var motivo = motivoAtajoBloqueado(def[1]);
+            boton.setAttribute('aria-disabled', motivo ? 'true' : 'false');
+            boton.title = motivo || def[2];
+        });
+    }
+
     // 3 columnas / 4 en cuadro: reacomoda conservando lo que ya estaba abierto (en orden). Pide confirmar si algun panel tiene cambios sin guardar.
-    function aplicarDistribucion(fabrica) {
+    // Si hay mas pantallas abiertas que `capacidad`, no hace nada y avisa (no se descarta ninguna).
+    function aplicarDistribucion(fabrica, capacidad) {
+        var motivo = motivoAtajoBloqueado(capacidad);
+        if (motivo) { avisar(motivo, 'warning'); return; }
         var reacomodar = function () {
             // Los paneles en ventana independiente no se reacomodan (su pantalla sigue viva en su ventana): se conserva lo que esta en los paneles.
             var enVentanas = Arbol.listarPaneles(raiz).filter(function (p) { return p.ventana; }).length;
@@ -1025,6 +1402,7 @@
 
     // Pone al dia el DOM con el arbol: crea/quita paneles, los posiciona y sincroniza lo que cada uno muestra. NUNCA reubica un <iframe>.
     function dibujar() {
+        cerrarMenuAgregar();   // cualquier cambio de paneles deja sin sentido un menu de posiciones abierto
         var lista = Arbol.listarPaneles(raiz);
         var ids = {};
         lista.forEach(function (n) { ids[n.id] = true; });
@@ -1056,10 +1434,6 @@
             panel.el.classList.toggle('pd-maximizado', esMaximizado);
             panel.el.classList.toggle('pd-oculto', maximizado !== null && !esMaximizado);
             panel.el.classList.toggle('pd-activo', r.id === activo);
-            var botonMax = panel.el.querySelector('button[data-accion="maximizar"]');
-            botonMax.title = esMaximizado ? 'Restaurar' : 'Maximizar';
-            botonMax.setAttribute('aria-label', botonMax.title);
-            botonMax.firstChild.className = 'fas ' + (esMaximizado ? 'fa-compress' : 'fa-expand');
         });
 
         // Lo que muestra cada panel sigue a la url del arbol (si no cambio, no se recarga).
@@ -1329,6 +1703,10 @@
     function programarGuardado() {
         if (!iniciado) return;
         actualizarBotonCerrar();   // todo cambio de paneles o de pantallas cargadas pasa por aca: el boton de cerrar sigue al estado
+        actualizarBotonesAtras();     // «Atrás» de cada panel se apaga si el panel ya es el menu
+        actualizarBotonesAgregar();   // y «Agregar panel» con el maximo de paneles
+        actualizarFranjasDeEdicion(); // y la franja de «venta en edicion» sigue a la pantalla que muestra cada panel
+        actualizarBotonesDeAtajo();   // y los atajos de 3 / 4 paneles se apagan si no entran las pantallas abiertas
         if (temporizadorGuardado) window.clearTimeout(temporizadorGuardado);
         temporizadorGuardado = window.setTimeout(guardar, GUARDADO_DEMORA_MS);
     }
@@ -1390,6 +1768,13 @@
         if (href === '' || href.charAt(0) === '#' || enlace.getAttribute('data-bs-toggle') || enlace.hasAttribute('data-pos-unico')
             || enlace.target === '_blank' || enlace.hasAttribute('download') || enlace.classList.contains('sidebar-brand')) return;
         var ruta = rutaRelativa(enlace.href);
+        // El item «Pantalla dividida» del propio menu: ya estamos aca, navegar recargaria la pagina (y los paneles) para nada. 2026-11-24
+        // (docs/DECISIONS.md): se ignora el clic. Con Ctrl / clic del medio (nueva pestaña) no llega aca: el navegador lo maneja.
+        if (ruta && RUTA_PANTALLA_DIVIDIDA.test(rutaSinBase(ruta.split('?')[0]))) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            return;
+        }
         if (!ruta || !esUrlPermitida(ruta)) return;   // otro sitio, el POS, esta misma pantalla...
         if (esInicio(ruta)) return;   // Inicio: sale de la pantalla dividida
 
@@ -1427,8 +1812,8 @@
 
         var menu = document.getElementById('accordionSidebar');
         if (menu) menu.addEventListener('click', alClicEnMenu, true);
-        document.getElementById('pdTres').addEventListener('click', function () { aplicarDistribucion(Arbol.distribucionTres); });
-        document.getElementById('pdCuadro').addEventListener('click', function () { aplicarDistribucion(Arbol.distribucionCuadro); });
+        document.getElementById('pdTres').addEventListener('click', function () { aplicarDistribucion(Arbol.distribucionTres, CAPACIDAD_TRES); });
+        document.getElementById('pdCuadro').addEventListener('click', function () { aplicarDistribucion(Arbol.distribucionCuadro, CAPACIDAD_CUADRO); });
         var botonCerrar = document.getElementById('pdCerrar');
         if (botonCerrar) botonCerrar.addEventListener('click', function () { cerrarPantallaDividida(false); });
         // «Pasar a ventana independiente»: no tiene sentido estando ya en la ventana.
@@ -1466,7 +1851,11 @@
     }
 
     // API para menu-ventana-independiente.js (clic derecho en el menu lateral).
-    window.PantallaDividida = { abrirEnPanelNuevo: abrirEnPanelNuevo, abrirEnPanelActivo: abrirEnPanelActivo, esUrlPermitida: esUrlPermitida, cerrarPanelDeVentana: cerrarPanelDeVentana };
+    // edicionDeVentaTerminada: la usa el POS de una ventana abierta desde un panel para editar una venta (forma-pago.js: window.PosEdicionDesdePanel).
+    window.PantallaDividida = {
+        abrirEnPanelNuevo: abrirEnPanelNuevo, abrirEnPanelActivo: abrirEnPanelActivo, esUrlPermitida: esUrlPermitida,
+        cerrarPanelDeVentana: cerrarPanelDeVentana, edicionDeVentaTerminada: edicionDeVentaTerminada
+    };
 
     // Por debajo de 992 px la pantalla solo muestra un aviso: los paneles se arman recien si la ventana se agranda.
     if (esEscritorio()) {

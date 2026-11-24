@@ -5,7 +5,7 @@ rol: usuario
 modulo: Inicio
 orden: 2
 permiso: ninguno propio (el ítem del menú lo ve todo usuario; cada panel muestra la pantalla real y aplica los permisos de esa pantalla)
-revisada: 2026-11-21
+revisada: 2026-11-24
 ---
 ## Para qué sirve
 Ver **varios módulos a la vez en una sola pantalla** para compararlos: por ejemplo **Stock** en una columna, **Movimientos** en otra y un **Reporte** en la tercera. Vos decidís cuántos paneles hay y cómo se reparten el espacio.
@@ -17,14 +17,14 @@ Solo está en **computadora** (pantalla de 992 px o más). En el celular o la ta
 ## Cómo se usa
 1. Entrá por **Pantalla dividida** (arriba de todo en el menú lateral). La primera vez hay **un panel vacío** con la lista de módulos y un buscador.
 2. **Elegí un módulo** en la lista del panel vacío, o tocá un enlace del **menú lateral**: se abre **en el panel activo** (el que tiene el borde azul; el último que tocaste).
-3. **Dividí** un panel con los botones de su cabecera: **Dividir a lo ancho** (uno al lado del otro) o **Dividir a lo alto** (uno arriba del otro). El panel nuevo queda vacío y activo.
-4. **Arrastrá los divisores** (las franjas entre paneles) para cambiar los tamaños. Con el divisor enfocado (Tab) también se mueve con las **flechas del teclado**. Al dividir un panel o arrastrar un divisor ningún panel queda más chico que unos 220 px; al sumar paneles con el clic derecho del menú pueden quedar algo más angostos (ajustalos arrastrando los divisores).
-5. Atajos en la barra de arriba: **3 columnas** y **4 en cuadro** acomodan los paneles **conservando lo que ya tenías abierto**, en orden.
+3. **Agregá un panel** con el botón **Agregar panel** de la cabecera de otro: el panel nuevo aparece **a la derecha** de ese, vacío y activo. Con la flechita ▾ elegís otra posición: **al extremo izquierdo**, **a la izquierda de este panel**, **a la derecha de este panel** o **al extremo derecho** (las que no cambian nada no aparecen). Junto a un panel, ese panel **cede la mitad de su ancho** y los demás no se mueven; en un extremo, el panel nuevo toma **un tercio** del ancho y los demás se achican parejo.
+4. **Arrastrá los divisores** (las franjas entre paneles) para cambiar los tamaños. Con el divisor enfocado (Tab) también se mueve con las **flechas del teclado**. Al agregar un panel o arrastrar un divisor ningún panel queda más chico que unos 220 px (si no hay lugar, avisa); al sumar paneles con el clic derecho del menú pueden quedar algo más angostos (ajustalos arrastrando los divisores).
+5. Atajos en la barra de arriba: **3 columnas** y **4 en cuadro** acomodan los paneles **conservando lo que ya tenías abierto**, en orden. Si tenés **más pantallas abiertas que lugares** (por ejemplo 4 en cuadro con 4 pantallas y tocás *3 columnas*), el botón queda **apagado** y al tocarlo avisa cuántos paneles cerrar: **no se descarta ninguna pantalla** (desde 2026-11-24; antes la sobrante desaparecía sin avisar). Un panel **vacío** no cuenta: se puede usar el atajo con 4 paneles si uno está vacío.
 
 Hay un máximo de **6 paneles**; el contador (*n/6 paneles*) está arriba a la derecha.
 
 ## Entrar desde cualquier pantalla: «Dividir pantalla»
-Podés entrar de **dos maneras**, y las dos hacen lo mismo con la pantalla que tenés abierta: el ícono de columnas de la **barra superior** o el ítem **Pantalla dividida** del **menú lateral** (desde 2026-11-21; antes el menú lateral navegaba sin llevar la pantalla y pedía confirmar «Salir sin guardar»). Con Ctrl, Mayús o clic del medio, o estando en Inicio, el POS o el login, el ítem del menú navega normal.
+Podés entrar de **dos maneras**, y las dos hacen lo mismo con la pantalla que tenés abierta: el ícono de columnas de la **barra superior** o el ítem **Pantalla dividida** del **menú lateral** (desde 2026-11-21; antes el menú lateral navegaba sin llevar la pantalla y pedía confirmar «Salir sin guardar»). Con Ctrl, Mayús o clic del medio, o estando en Inicio, el POS o el login, el ítem del menú navega normal. **Estando ya en la pantalla dividida**, el ítem **Pantalla dividida** del menú queda **inhabilitado** (atenuado, con el aviso «Ya estás en la pantalla dividida»): tocarlo no hace nada, ya no recarga la página ni los paneles (desde 2026-11-24). El botón *Dividir pantalla* de la barra superior directamente no aparece acá.
 
 En la **barra superior** de todas las pantallas del layout (a la izquierda del modo oscuro; solo en computadora) está el botón **Dividir pantalla**: lleva **esa pantalla** a la pantalla dividida como un panel y deja **un panel vacío y activo al lado** (con la lista de módulos y el buscador) para que elijas con cuál compararla. Si ya había un panel vacío se usa ese; con 6 paneles no se agrega y avisa. Si ya tenías una distribución guardada se **suma**: la pantalla entra en el primer panel vacío o en uno nuevo a la derecha. Si estabas **a mitad de una carga**, seguís con ella en el panel (ver *Seguir con lo cargado*).
 
@@ -50,9 +50,8 @@ El botón **Cerrar pantalla dividida** (en la barra de arriba, junto a *3 column
 - Al cerrar se **borra la distribución guardada**: la próxima vez que entres a la pantalla dividida arranca con un panel vacío.
 
 ## Botones de la cabecera de cada panel
-- **Atrás** y **Recargar**: actúan solo sobre ese panel.
-- **Dividir a lo ancho / a lo alto**.
-- **Maximizar / Restaurar**: el panel ocupa toda la zona (también con doble clic en la cabecera); los demás siguen cargados detrás y no pierden nada.
+- **Atrás** y **Recargar**: actúan solo sobre ese panel. **Atrás** vuelve a la pantalla anterior **de ese panel** (la que tenía antes de tocar un enlace adentro); si no hay una, el panel **vuelve al menú de módulos** (queda como un panel nuevo). Nunca sale de la pantalla dividida ni mueve otros paneles (desde 2026-11-24; antes usaba el historial de toda la pestaña). En un panel que ya está en el menú de módulos el botón queda apagado. Con cambios sin guardar pide el aviso «Salir sin guardar», igual que antes. Si el navegador no soporta el historial por panel (solo Chrome/Edge lo tienen hoy), **Atrás** lleva siempre al menú de módulos.
+- **Agregar panel ▾** (desde 2026-11-24; reemplaza a *Dividir a lo ancho / a lo alto* y *Maximizar*): ver el paso 3 de *Cómo se usa*. Con el máximo de **6 paneles** queda apagado y avisa que hay que cerrar uno. El texto «Agregar panel» se oculta en los paneles angostos (menos de unos 330 px) y queda solo el **+**. Ya **no hay Maximizar** ni **Dividir a lo alto**, y el doble clic en la cabecera no hace nada. Para ver un panel más grande, arrastrá los divisores o pasalo a una ventana independiente. Los paneles apilados de una distribución guardada antes siguen funcionando, y *4 en cuadro* sigue acomodándolos en cuadro.
 - **Pasar a una ventana independiente** (*Independizar*): **mueve** esa pantalla a una ventana propia (por ejemplo para otro monitor). Ver *Pasar un panel a una ventana independiente*.
 - **Cerrar panel**: el espacio lo ocupa el panel vecino. Si es el último, queda un panel vacío.
 
@@ -79,13 +78,13 @@ El botón **Pasar a una ventana independiente** (el de la flecha hacia afuera, e
 3. Una carga nueva de Elaborados, Elaborados rápido, Movimientos o Stock **pasa con lo cargado** a la ventana, y vuelve con lo cargado al traerla de vuelta. En otras pantallas con **cambios sin guardar** antes aparece el aviso «Salir sin guardar», porque la pantalla se vuelve a abrir vacía. Si ya había una ventana de esa misma pantalla abierta, la carga **no** se pasa (pisaría la otra): se avisa y el panel sigue como estaba.
 4. Si **cerrás la ventana**, el panel avisa **«La ventana independiente se cerró»** con el botón **Volver a cargarla en el panel** (no vuelve solo).
 5. Una pantalla tiene **una sola ventana**: si ya estaba abierta (por ejemplo desde el clic derecho del menú), el panel queda con el aviso y esa ventana se trae al frente sin recargarla.
-6. El panel con el aviso se puede **dividir, maximizar o cerrar** como cualquier otro; al cargarle otra pantalla (menú lateral o listado) se convierte en un panel común y la ventana sigue abierta.
+6. El panel con el aviso se puede **cerrar** o **agregarle un panel al lado** como cualquier otro; al cargarle otra pantalla (menú lateral o listado) se convierte en un panel común y la ventana sigue abierta.
 7. La marca se **recuerda** al recargar la pantalla dividida; como el navegador no deja seguir a la ventana tras recargar, que se cerró se descubre al tocar **Ir a la pantalla independiente**.
 
 Al usar **3 columnas / 4 en cuadro**, los paneles en ventana independiente no se reacomodan: sus ventanas siguen abiertas. Si cerrás un panel que está en una ventana, la ventana **sigue abierta** pero deja de contar para el permiso de operador autorizado.
 
 ## Cambios sin guardar
-Si cerrás un panel, o cargás otra pantalla en él, y tiene **cambios sin guardar**, aparece el aviso **«Salir sin guardar»** (ver *Aviso de salir sin guardar*). Lo mismo si usás **3 columnas / 4 en cuadro** con algún panel con cambios. Dividir, arrastrar un divisor o maximizar **no recargan** los paneles: no se pierde nada.
+Si cerrás un panel, o cargás otra pantalla en él, y tiene **cambios sin guardar**, aparece el aviso **«Salir sin guardar»** (ver *Aviso de salir sin guardar*). Lo mismo si usás **3 columnas / 4 en cuadro** con algún panel con cambios. Agregar un panel o arrastrar un divisor **no recargan** los paneles: no se pierde nada.
 
 **F5 sin querer** (2026-11-21): si algún panel tiene una carga o una edición sin guardar, **F5, Ctrl+R, Ctrl+F5 y Ctrl+Mayús+R no recargan**: aparece el aviso **«Salir sin guardar»** con **«No, quedarme»** marcado por omisión, así que un F5 seguido de Enter **no pierde nada** (hay que elegir «Sí, salir» a propósito, con el mouse, con la tecla S o con las flechas). Pasa igual con el foco dentro de un panel, y también con los botones **Recargar** y **Atrás** de la cabecera del panel. Sin cambios sin guardar, F5 funciona normal. **Límite:** el botón de recargar del navegador, la barra de direcciones y cerrar la pestaña no se pueden interceptar: ahí sigue el aviso del propio navegador (con «Recargar» marcado). 
 
@@ -99,8 +98,16 @@ Si cerrás un panel, o cargás otra pantalla en él, y tiene **cambios sin guard
 ## Permisos especiales (operador autorizado)
 Algunas pantallas piden **autorizar a un operador** (Compras, Ventas, Finanzas / cuenta corriente, Egresos de Caja). Esa autorización **dura mientras esa pantalla siga abierta en algún panel**: podés trabajar en los otros paneles sin perderla, y **se pierde al cerrar ese panel** o al cargar otra pantalla ahí. La pantalla dividida avisa al servidor qué pantallas siguen abiertas cada vez que un panel carga o se cierra.
 
+## Modificar una venta desde el detalle de un panel
+Desde 2026-11-24, en el **detalle de una venta** abierto en un panel, **Modificar venta** y **Cambiar forma de pago** (los enlaces al POS) **no sacan al panel de su pantalla**:
+1. Aparece el aviso *«La edición de la venta #N se abre en una ventana aparte…»* y el POS se abre **en una ventana nueva** (una por venta; si ya está abierta, se la trae al frente).
+2. El **detalle sigue en el panel**, con una **franja azul** arriba: *«Modificando la venta #N en otra ventana. Al guardar, este detalle se actualiza solo.»* y el botón **Ir a esa ventana**.
+3. Al **guardar**, la ventana del POS **se cierra sola**, el detalle del panel **se recarga** con los datos nuevos y aparece *«Venta #N actualizada.»*.
+4. Si usás **Salir de la edición** (o cerrás la ventana), no se guarda nada: la ventana se cierra, la franja desaparece y el detalle queda como estaba.
+Si el navegador bloquea la ventana emergente, avisa y hay que permitirla para este sitio. Solo se recargan los paneles que muestran el detalle **de esa venta**; un listado de ventas abierto en otro panel no se actualiza solo.
+
 ## Qué no se abre en un panel
-- **El punto de venta**: tiene su propia ventana. Si un panel termina yendo al POS (por un enlace de adentro), el panel muestra *«El punto de venta se abre aparte»* con un botón para abrirlo en una ventana independiente. El enlace **Punto de Venta** del menú lateral funciona como siempre (sale de la pantalla dividida).
+- **El punto de venta**: tiene su propia ventana. Si un panel termina yendo al POS (por un enlace de adentro), el panel muestra *«El punto de venta se abre aparte»* con un botón para abrirlo en una ventana independiente (si desde ahí volvés **Atrás**, el panel recupera su pantalla anterior; desde 2026-11-24 el marco ya no queda oculto). La excepción es **Modificar venta / Cambiar forma de pago** del detalle de una venta: ver *Modificar una venta desde el detalle de un panel*. El enlace **Punto de Venta** del menú lateral funciona como siempre (sale de la pantalla dividida).
 - **Inicio**, el **login** y la propia pantalla dividida.
 
 ## Se recuerda tu distribución
