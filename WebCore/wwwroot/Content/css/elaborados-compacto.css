@@ -405,6 +405,273 @@ body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-campo
     }
 }
 
+/* ==== Ingreso rapido / Desarme en ventanas de 576 a 1199 px (pedido 2026-11-24) ====
+   Antes esta pantalla solo se compactaba desde 1200 px: en ventanas de ~700 y ~1080 px (ventana independiente, app instalada) la formula
+   quedaba abajo y habia que scrollear. Ahora, SOLO en EditarIngresoRapido (data-elaborados-page), desde 576 px:
+   - Sucursal | Fecha | Usuario en una fila; Codigo | Elaborado en otra, con la Receta debajo (al costado desde 992 px).
+   - 576-991 px: Cantidad | Formula (5 | 7), sin teclado. 992-1199 px: Cantidad | Teclado | Formula (3 | 3 | 6), como ya era en 1200+.
+   - Pestanas en una fila con scroll horizontal; botones de la barra agrupados a la izquierda y la etiqueta a la derecha.
+   - Controles, espacios y tabla con las mismas medidas compactas de 1200+ (que siguen intactas mas arriba).
+   Solo CSS: ids, names y JS no cambian. De 1200 px para arriba rige el bloque de arriba, sin cambios. Detalle: docs/DECISIONS.md (2026-11-24). */
+@media (min-width: 576px) and (max-width: 1199.98px) {
+    /* ---- Filas de datos ---- */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-fila-datos {
+        display: grid;
+        grid-template-columns: minmax(8rem, 1fr) minmax(13.5rem, 15rem) minmax(7rem, 1fr);
+        gap: 0 .5rem;
+        margin: 0;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-fila-datos > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+
+    /* Codigo (2-3 digitos) angosto; el resto del ancho es del Elaborado. La Receta ocupa su propio renglon. */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-caja-fila {
+        display: grid;
+        grid-template-columns: 5.5rem minmax(0, 1fr);
+        gap: 0 .5rem;
+        margin: 0;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-caja-fila > [class*="col-"] {
+        flex: none;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 0;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-caja-fila > #wrapRecetaRapida {
+        grid-column: 1 / -1;
+        margin-top: .3rem;
+    }
+
+    /* ---- Pestanas en UN renglon (con scroll horizontal si no entran) y botones agrupados ---- */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-tabs-card > .card-body {
+        padding: .3rem .55rem !important;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-tabs-nav {
+        flex-wrap: nowrap;
+        gap: .3rem;
+        overflow-x: auto;
+        scrollbar-width: none; /* si no entran, se desliza con el dedo/rueda sin mostrar barra */
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-tabs-nav .nav-link {
+        flex: 0 0 auto;
+        padding: .22rem .6rem;
+        font-size: .8rem;
+        white-space: nowrap;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-barra-botones {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: .4rem;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-barra-botones .btn,
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-barra-botones .badge {
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+
+    /* La etiqueta (Ingreso rapido / Desarme / Anulado) va al borde derecho. */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-barra-botones .badge {
+        margin-left: auto !important;
+    }
+
+    /* ---- Espacios y controles (mismas medidas que 1200+) ---- */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .mb-3 {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .form-group {
+        margin-bottom: .3rem;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-panel-card > .card-body {
+        padding: .45rem .65rem;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-section-box {
+        padding: .3rem .6rem !important;
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-section-box .form-group,
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-section-box .form-group.mb-0 {
+        margin-bottom: 0;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-form-compact .form-control,
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-section-box .form-control,
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-panel-card .form-control {
+        min-height: 1.9rem;
+        padding: .18rem .5rem;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-section-box :is(.elaborados-campo-codigo, .elaborados-campo-elaborado) {
+        min-height: 2.5rem;
+    }
+
+    /* Receta: Sin receta (placeholder) o el texto, de una linea; crece hasta ~3 lineas y despues scrollea. */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] textarea.js-auto-receta {
+        height: auto !important;
+        min-height: 2rem !important;
+        max-height: 4.6rem;
+        overflow-y: auto !important;
+        resize: none !important;
+        field-sizing: content;
+    }
+
+    /* ---- Cantidad y balanza (estado y barra en una linea; la ayuda se oculta como en 1200+) ---- */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-card-cantidad .small.text-muted {
+        display: none !important;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-card-cantidad .card-body > .d-flex {
+        margin-bottom: .4rem !important;
+    }
+
+    /* En la columna angosta (576-991 px) el titulo baja de renglon y el interruptor Balanza no se achica (si no, quedaba aplastado y su rotulo se perdia). */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-card-cantidad .card-body > .d-flex > div:first-child {
+        min-width: 0;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-card-cantidad .custom-switch {
+        flex: 0 0 auto;
+        margin-left: .4rem;
+        white-space: nowrap;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] #CantidadRapida {
+        min-height: 2.5rem;
+        font-size: 1.3rem;
+        padding: .2rem .6rem;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] #balanzaStatusWrapRapido {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-top: .35rem;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] #balanzaStatusWrapRapido > .small {
+        margin: 0 !important;
+        font-size: .7rem !important;
+        line-height: 1.1;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] #balanzaStatusWrapRapido > .progress {
+        flex: 1 1 60px;
+        margin: 0 !important;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] #alertaBalanzaRapido {
+        margin-top: .35rem !important;
+        padding: .2rem .5rem;
+        font-size: .75rem;
+    }
+
+    /* ---- Teclado numerico y formula (mismas medidas compactas que 1200+) ---- */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .numeric-keypad-grid {
+        grid-auto-rows: 2.3rem;
+        gap: .3rem;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .numeric-keypad-grid .btn-key,
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .numeric-keypad-grid .btn-enter {
+        font-size: .95rem;
+        padding: 0;
+        min-height: 0;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .numeric-keypad-wrap > .card {
+        margin-bottom: .4rem !important;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .numeric-keypad-wrap .card-body {
+        padding: .4rem .55rem;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .numeric-keypad-wrap h6 {
+        margin: 0 0 .3rem !important;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .formula-elaborado-wrap {
+        max-height: calc(1.55rem + 10 * 1.25rem + 2px);
+        overflow-y: auto;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-table-compact {
+        font-size: .808rem;
+        margin-bottom: 0;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-table-compact tbody .text-muted,
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-table-compact tbody small {
+        font-size: .725rem !important;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-table-compact > thead > tr > th {
+        font-size: .723rem !important;
+        line-height: 1.2;
+        padding: .2rem .45rem;
+        white-space: nowrap !important;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--ui-surface-alt, #f3f4f6);
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-table-compact tbody td {
+        height: 1.25rem;
+        padding: 0 .45rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-summary-card hr {
+        margin: .3rem 0;
+    }
+
+    /* ---- Botones de abajo (Guardar / Cancelar): un renglon, a la derecha ---- */
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] form > .mt-3 {
+        margin-top: .15rem !important;
+        justify-content: flex-end;
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] form > .mt-3 .btn {
+        margin-bottom: 0 !important;
+    }
+}
+
+/* 992-1199 px: la Receta va al costado del Elaborado (en 576-991 px queda en su propio renglon, ver arriba). */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-caja-fila {
+        grid-template-columns: 5.5rem minmax(0, 1.4fr) minmax(0, 1fr);
+    }
+
+    body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] .elaborados-caja-fila > #wrapRecetaRapida {
+        grid-column: auto;
+        margin-top: 0;
+    }
+}
+
+/* Receta sin texto: de 1200 px para arriba tambien dice "Sin receta" en cursiva (el placeholder lo pone la vista). */
+body.app-shell [data-elaborados-page="ingreso-rapido-edicion"] textarea.js-auto-receta::placeholder {
+    font-style: italic;
+}
+
 /* ---- Modo oscuro ---- */
 html.dark-mode body.app-shell .elaborados-compacto .elaborados-table-compact thead th {
     background: #1b2c42;

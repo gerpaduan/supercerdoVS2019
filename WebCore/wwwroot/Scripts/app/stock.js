@@ -3291,6 +3291,8 @@
         $form.on('click.stock', '[data-action="remove-line"]', function () {
             var index = parseInt($(this).data('index'), 10);
             if (isNaN(index)) return;
+            // Modo vista: no se quita nada (el CSS tambien oculta el tacho; al ordenar la tabla se repinta y el boton nace habilitado).
+            if ($form.hasClass('edit-readonly-active')) return;
             // Quitar una linea corre los indices de las siguientes: el panel de corregir se cierra.
             state.editor = null;
             state.lineas.splice(index, 1);

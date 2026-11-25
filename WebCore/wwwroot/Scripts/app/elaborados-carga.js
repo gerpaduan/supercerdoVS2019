@@ -122,7 +122,7 @@
         var config = window.elaboradosCargaConfig || {};
 
         // Lo que dura el destello de una fila recien agregada (igual a la animacion linea-fila-nueva-destello de linea-editor.css).
-        var DURACION_DESTELLO_ALTA_MS = 1800;
+        var DURACION_DESTELLO_ALTA_MS = 1400;
 
         var state = {
             lineas: $.isArray(config.initialLines) ? config.initialLines.slice() : [],
@@ -684,6 +684,26 @@
             return !!state.ultimaAlta && state.ultimaAlta.indice === indice && (Date.now() - state.ultimaAlta.momento) < DURACION_DESTELLO_ALTA_MS;
         }
 
+        // Celular (<768 px, pedido 2026-11-25): resumen "N · X kg" en la cabecera de Ingredientes y franja con la ULTIMA linea cargada
+        // (orden de carga, no el de la pantalla), asi se verifica lo agregado aunque el teclado del telefono tape la tabla. Se llama
+        // desde renderLineas(), unico punto de repintado: agregar, quitar, corregir y recuperar un borrador la dejan siempre coherente.
+        // En escritorio los dos elementos existen pero estan ocultos por CSS (d-md-none). Usa .text(): el nombre no se interpreta como HTML.
+        function actualizarUltimaLineaCelular(totalManual) {
+            var cantidad = state.lineas.length;
+            $('#lblResumenIngredientesCel').text(cantidad ? (cantidad + ' · ' + formatKg(totalManual) + ' kg') : '');
+
+            var $franja = $('#ultimoIngredienteCarga');
+            if (!$franja.length) return;
+            if (!cantidad) {
+                $franja.addClass('d-none');
+                return;
+            }
+            var ultima = state.lineas[cantidad - 1];
+            $('#txtUltimoIngredienteCarga').text('#' + cantidad + ' · ' + (ultima.Codigo || '') + ' ' + (ultima.Producto || ''));
+            $('#kgUltimoIngredienteCarga').text(formatKg(ultima.CantKg) + ' kg');
+            $franja.removeClass('d-none');
+        }
+
         function renderLineas() {
             var html = '';
             var hidden = '';
@@ -750,7 +770,10 @@
             }
 
             $('#tablaLineasElaborado tbody').html(html);
-            if (hayFilaNueva && window.LineaEditor) window.LineaEditor.mostrarFilaNueva($('#tablaLineasElaborado tbody'));
+            // En celular no se acerca la fila nueva con scroll (2026-11-25): con el teclado abierto la pagina saltaba hacia la lista y el foco
+            // que vuelve a Codigo la subia de nuevo; el ultimo agregado se ve en la franja (actualizarUltimaLineaCelular). El destello sigue.
+            var esCelular = !!(window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches);
+            if (hayFilaNueva && !esCelular && window.LineaEditor) window.LineaEditor.mostrarFilaNueva($('#tablaLineasElaborado tbody'));
             syncOrdenLineas();
             syncEncabezadosLineas();
             $('#lineasHiddenContainer').html(hidden);
@@ -762,6 +785,7 @@
             $('#lblTotalManual').text(formatKg(totalManual));
             // Resumen en la cabecera del sector "2 Ingredientes" (solo se ve en escritorio).
             $('#lblResumenIngredientes').text(state.lineas.length + (state.lineas.length === 1 ? ' ingrediente' : ' ingredientes') + ' · ' + formatKg(totalManual) + ' kg');
+            actualizarUltimaLineaCelular(totalManual);
             recalcularFormula();
         }
 
@@ -1365,16 +1389,32 @@
             focusIngredienteCodigo();
         }
 
-        $(document).on('click', '.js-edit-linea', function () {
+        // Abre el panel "Corregir linea" de la linea con ese indice REAL en state.lineas. Lo usan el lapiz de cada fila y el de la franja
+        // del ultimo ingrediente (celular).
+        function abrirEditorLinea(index) {
             if (config.esAnulado) return;
             // Modo vista: hay que apretar Modificar primero (el CSS tambien oculta el lapiz).
             if ($form.hasClass('edit-readonly-active')) return;
-            var index = toInt($(this).data('index'));
             var linea = state.lineas[index];
             if (!linea) return;
             state.editor = { index: index, valor: formatKg(linea.CantKg), error: '' };
             renderLineas();
             window.LineaEditor.enfocar('edtLineaKg');
+        }
+
+        $(document).on('click', '.js-edit-linea', function () {
+            abrirEditorLinea(toInt($(this).data('index')));
+        });
+
+        // Lapiz de la franja del ultimo ingrediente (celular): corrige la ultima linea cargada. Si la busqueda de la lista la estuviera
+        // ocultando se limpia el filtro, para que el panel de correccion quede a la vista.
+        $(document).on('click', '.js-edit-ultima', function () {
+            if (!state.lineas.length) return;
+            if (state.searchText) {
+                state.searchText = '';
+                $('#filtroLineasElaborado').val('');
+            }
+            abrirEditorLinea(state.lineas.length - 1);
         });
 
         window.LineaEditor.enlazar({

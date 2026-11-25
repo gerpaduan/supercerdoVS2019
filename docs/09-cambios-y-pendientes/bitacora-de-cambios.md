@@ -1,5 +1,25 @@
 # Bitacora de cambios
 
+## 2026-11-25 - Movimientos/Editar en celular: más baja, Enter del teléfono, último agregado a la vista y datos de arriba más fuertes
+
+- **Cambio:** en < 768 px, Origen | Destino en un renglón; Código | Producto y debajo Cant.Un. | Kgs. | +; «Ver acumulados» solo con el icono; resumen «N · X kg» en la cabecera de Agregar producto; franja verde con el último producto agregado (y lápiz para corregirlo); Resumen de abajo como tira de tres cifras; `enterkeyhint="go"` en Código y Cant.Un.; al agregar ya no se hace scroll a la fila nueva en celular. Origen, Destino y Fecha en negro y negrita (blanco en modo oscuro) hasta 991 px. Escritorio sin cambios.
+- **Archivos:** `WebCore/Views/Movimientos/Editar.cshtml`, `WebCore/wwwroot/Scripts/app/movimientos.js`; manual `Movimientos.Editar.md`; `docs/DECISIONS.md` (2026-11-25 h).
+- **Verificado** (navegador integrado, usuario de prueba ya borrado): a 375 px la página vacía pasó de 1176 a 837 px; Código ↵ → Cant.Un. ↵ → Kgs. ↵ agrega y vuelve a Código; con unidades y kilos que no coinciden el aviso y «Permitir ingreso» quedan bien ubicados; la franja y el resumen siguen a agregar, corregir con el lápiz (1,200 → 1,500) y quitar; a 1366 px nada cambia (misma grilla y flex, franja y resumen ocultos, mismas medidas); a 800 px el diseño no cambia (solo el color). Sin errores de JS.
+- **Pendiente:** probar el Enter del teclado en un Android real; modo oscuro, modo vista y la ventana independiente de escritorio no se miraron en pantalla.
+
+## 2026-11-25 - Elaborados/Carga en celular: más baja, Enter del teléfono y último agregado a la vista
+
+- **Cambio:** en < 768 px, Código | Nombre del elaborado en un renglón; Código | Ingrediente y debajo Cantidad | +; «Ver acumulados» solo con el icono; resumen «N · X kg» en la cabecera de Ingredientes; franja verde con el último ingrediente agregado (y lápiz para corregir sus kilos); `enterkeyhint` en Código («Ir») y Cantidad («Listo»); al agregar ya no se hace scroll a la fila nueva en celular. Escritorio, tablet y ventana independiente sin cambios.
+- **Archivos:** `WebCore/Views/Elaborados/Carga.cshtml`, `WebCore/wwwroot/Scripts/app/elaborados-carga.js`; manual `Elaborados.Carga.md`; `docs/DECISIONS.md` (2026-11-25 g).
+- **Verificado** (navegador integrado, usuario de prueba ya borrado): a 375 px la página pasó de 1826 a 1577 px; Código ↵ → Cantidad ↵ agrega y vuelve a Código (3 ingredientes); la franja y el resumen siguen a agregar, corregir con el lápiz (0,250 → 0,400) y quitar; a 1366 px nada cambia (grillas en flex, franja y resumen ocultos, mismas medidas). Sin errores de JS.
+- **Pendiente:** probar el Enter del teclado en un Android real; modo oscuro, modo vista y tablet no se miraron en pantalla.
+
+## 2026-11-25 - Celular: el contenedor de la página ya no scrollea por dentro (doble deslizamiento)
+
+- **Cambio:** `#content-wrapper` pasa a `overflow-y: hidden` solo en < 768 px (`WebCore/Views/Shared/_Layout.cshtml`), para que el primer deslizamiento llegue a la página. Escritorio y tablet sin cambios.
+- **Verificado:** el cambio de estilo se aplica (`hidden` a 375 px, `auto` a 1366 px) y la página sigue scrolleando. **No se pudo reproducir ni comprobar el efecto táctil** desde la PC.
+- **Pendiente:** confirmar en el Android real; si no mejora, ver `docs/DECISIONS.md` (2026-11-25 f).
+
 ## 2026-11-25 - Reportes: franjas alternadas y fila resaltada en las tablas
 
 - **Cambio:** las tablas de Stock, Ventas por Producto y Proyección alternan un fondo suave por fila (se rehace al filtrar y ordenar) y resaltan en azul la fila bajo el mouse; con variante en modo oscuro. Balance y Stock con varias sucursales quedan como estaban. Detalle: `docs/DECISIONS.md` (2026-11-25 (e)).
@@ -19,6 +39,18 @@
 - **Cambio:** Tipo de reporte, Fecha desde, Fecha hasta y Sucursales (y los demás campos de la tarjeta de filtros) pasan a negro `#000` con peso 500; «Fecha hasta» de solo lectura, a `#1a1a1a` (antes gris `#7a838d`). En modo oscuro, blanco. Detalle: `docs/DECISIONS.md` (2026-11-25 (c)).
 - **Archivos:** `WebCore/Views/Reportes/Index.cshtml` (bloque de estilos); manual `Reportes.Index.md`.
 - **Pendiente:** verlo en el navegador (claro y oscuro, ventana angosta).
+
+## 2026-11-25 - Stock en modo vista: el tacho de las líneas no aparece (tampoco al ordenar)
+
+- **Cambio:** al abrir un stock en solo lectura y ordenar las líneas, reaparecía el tacho de cada una (la tabla se repinta y el botón nacía habilitado; incluso quitaba la línea en pantalla). Ahora el tacho se oculta por CSS en modo vista y su clic se ignora; aparece al tocar **Modificar**.
+- **Archivos:** `WebCore/wwwroot/Content/css/pantalla-trabajo.css`, `WebCore/wwwroot/Scripts/app/stock.js`; manual `Stock.Editar.md`.
+- **Pendiente:** probarlo en el navegador (ver, ordenar, Modificar).
+
+## 2026-11-25 - POS: terminar una venta ya no pierde la compra ni las cargas minimizadas; F5 no recarga
+
+- **Cambio:** con una compra o una carga (stock, movimiento, elaborado) minimizada, «Nueva venta» (y las demás opciones de «Venta completada», y Cancelar Venta) deja la venta en blanco **sin recargar** el POS; la compra o la carga siguen con su botón amarillo y lo cargado. Sin nada en curso, recarga como antes. F5 ya no recarga la página: solo abre «Nueva compra». Detalle: `docs/DECISIONS.md` (2026-11-25 (b)).
+- **Archivos:** `WebCore/Views/Ventas/POS.cshtml`, `WebCore/wwwroot/Scripts/app/forma-pago.js`; manual `Ventas.POS.md`.
+- **Pendiente:** probar con un cobro real, Cancelar Venta, factura obligatoria y POS duplicado.
 
 ## 2026-11-24 - Ventana independiente: si arrancó en el listado, al guardar vuelve al listado
 

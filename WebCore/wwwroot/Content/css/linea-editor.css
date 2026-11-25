@@ -35,32 +35,26 @@ tr.linea-fila-cambiada > td {
     animation: linea-fila-cambiada-destello 2.5s ease-out 1;
 }
 
-/* Fila recien agregada (2026-11-24): dos pulsos verdes mas intensos que el de "cambiada" y una franja a la izquierda, para que se
+/* Fila recien agregada (2026-11-24): un solo pulso verde suave de 1,4 s (opacidad maxima .26; con .55 y con dos pulsos cansaba y mareaba) y una franja a la izquierda, para que se
    vea cual fue la ultima carga aunque se cargue rapido. La clase se pone solo en el repintado que sigue al alta (ver
    state.filasNuevas en cada pantalla); al cargar la pagina, restaurar un borrador, ordenar o buscar no destella nada. */
 @keyframes linea-fila-nueva-destello {
-    0% { background-color: rgba(40, 167, 69, .55); }
-    25% { background-color: rgba(40, 167, 69, .08); }
-    50% { background-color: rgba(40, 167, 69, .55); }
+    0% { background-color: transparent; }
+    15% { background-color: rgba(40, 167, 69, .26); }
     100% { background-color: transparent; }
 }
 
 tr.linea-fila-nueva > td {
-    animation: linea-fila-nueva-destello 1.8s ease-out 1;
+    animation: linea-fila-nueva-destello 1.4s ease-out 1;
 }
 
 tr.linea-fila-nueva > td:first-child {
     box-shadow: inset 4px 0 0 #28a745;
 }
 
-/* Preferencia "reducir movimiento" del sistema: sin titileo, un resaltado fijo (la clase igual se saca en el proximo repintado). */
-@media (prefers-reduced-motion: reduce) {
-    tr.linea-fila-nueva > td,
-    tr.linea-fila-cambiada > td {
-        animation: none;
-        background-color: rgba(40, 167, 69, .25);
-    }
-}
+/* Sin regla de "prefers-reduced-motion" a proposito (2026-11-24): es un cambio de color de 1,8 s, sin desplazamientos, y con esa
+   preferencia activa (comun en Windows con efectos de animacion apagados) el resaltado fijo de reemplazo perdia contra el rayado de
+   las filas pares (pantalla-trabajo.css, mas especifico) y solo se veia en las impares. Una animacion de CSS le gana al rayado. */
 
 /* La fila del panel no es una linea: sin resaltado al pasar el mouse. */
 tr.linea-editor-fila,

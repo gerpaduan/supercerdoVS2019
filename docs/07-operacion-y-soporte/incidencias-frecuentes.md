@@ -13,6 +13,13 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-25 - Celular: hay que deslizar dos veces para que la página se mueva
+
+- **Sintoma**: en el celular (Android, todas las pantallas) el primer deslizamiento arriba/abajo no mueve la página y el segundo sí.
+- **Causa probable** (no reproducida en la PC): `#content-wrapper` tenía `overflow-x: hidden` → `overflow-y: auto` implícito, una caja con scroll propio que envuelve la página; con pixeles fraccionarios puede sobrarle 1 px y absorbe el primer gesto.
+- **Verificaciones**: en el navegador, `#content-wrapper`: `scrollHeight - clientHeight` (0 en la PC) y `getComputedStyle(...).overflowY` (`auto` antes del cambio, `hidden` en < 768 px después); lista de cajas con `overflow` auto/scroll (el menú lateral `#accordionSidebar` también scrollea por dentro, 91 px de ancho en celular).
+- **Resolucion**: `overflow-y: hidden` en `#content-wrapper` solo en < 768 px (`_Layout.cshtml`). PENDIENTE confirmar en el Android real; ver `docs/DECISIONS.md` (2026-11-25 f).
+
 ## 2026-11-20 - POS con la cuenta de producción: pide identificar al operario en cada cambio entre original y duplicado
 
 - **Sintoma**: en la app instalada (Punto de venta, `?ventana=1`), con la cuenta compartida de producción, cada «Ir al duplicado» / «Ir al original» vuelve a pedir «Autorizate para operar este Punto de Venta». En el navegador común (dos ventanas) no pasa; con un usuario común tampoco (no hay operario).

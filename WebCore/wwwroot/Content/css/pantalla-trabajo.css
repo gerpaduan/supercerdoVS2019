@@ -1405,6 +1405,13 @@ body.app-shell .pantalla-trabajo form.edit-readonly-active #TipoCompraVisual {
     border-bottom-right-radius: .25rem;
 }
 
+/* Stock: el tacho de cada linea no se muestra en modo ver (2026-11-25). Se oculta por CSS y no con disabled porque stock.js repinta todo el
+   <tbody> al ordenar / buscar y los botones nuevos nacen habilitados (edit-readonly.js solo deshabilita los que existen al iniciar).
+   Acotado a #tablaLineasStock: Compras usa el mismo data-action="remove-line". El handler en stock.js tambien ignora el clic en modo ver. */
+body.app-shell .pantalla-trabajo form.edit-readonly-active #tablaLineasStock [data-action="remove-line"] {
+    display: none !important;
+}
+
 /* Los campos bloqueados no muestran el halo de "listo para escribir" ni el cursor de texto. */
 body.app-shell .pantalla-trabajo form.edit-readonly-active .edit-readonly-field {
     cursor: default;

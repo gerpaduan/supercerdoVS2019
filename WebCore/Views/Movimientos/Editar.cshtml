@@ -97,7 +97,7 @@
                 @* mov-fila-datos: en escritorio es una grilla con la columna de Fecha de ancho minimo (se ve completa, con la hora), tambien con el
                    Stock destino al lado; ver movimientos-compacto.css. *@
                 <div class="row mov-fila-datos">
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-3 mov-col-sucursal">
                         <div class="form-group">
                             <label for="IdSucursalOrigen" title="Sucursal origen">Origen</label>
                             <select id="IdSucursalOrigen" name="IdSucursalOrigen" class="form-control">
@@ -109,7 +109,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-3 mov-col-sucursal">
                         <div class="form-group">
                             <label for="IdSucursalDestino" title="Sucursal destino">Destino</label>
                             <select id="IdSucursalDestino" name="IdSucursalDestino" class="form-control">
@@ -153,6 +153,8 @@
                         <div class="border rounded p-3 mb-3 movimiento-section-box mov-box-agregar">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 movimiento-section-title">Agregar producto</h6>
+                                @* Solo celular: cantidad de productos y kilos (en escritorio el Resumen esta a la derecha). Lo llena renderLines(). *@
+                                <span id="lblResumenMovimientoCel" class="d-md-none mov-resumen-cel"></span>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
                                     @* Balanza (2026-11-12): el interruptor pasa a un icono de balanza con la palabra «Balanza» en chiquito: verde = activada, gris =
                                        desactivada. Sigue siendo el MISMO checkbox (#chkBalanzaLinea, movimientos.js lo lee y lo cambia igual); el label lo dibuja como
@@ -163,7 +165,7 @@
                                             <i class="fas fa-balance-scale" aria-hidden="true"></i><span class="mov-balanza-txt">Balanza</span>
                                         </label>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados" data-edit-readonly-ignore="true">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados" data-edit-readonly-ignore="true" title="Ver acumulados" aria-label="Ver acumulados">
                                         <i class="fas fa-layer-group mr-1"></i> Ver acumulados
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary d-none d-lg-inline-block" id="btnToggleTecladoMovimiento" title="Mostrar/ocultar teclado digital">
@@ -203,7 +205,7 @@
                                                             <i class="fas fa-barcode"></i>
                                                         </button>
                                                     </div>
-                                                    <input type="number" id="txtCodigoProducto" class="form-control movimiento-input-codigo" min="0" step="1" autocomplete="off" />
+                                                    <input type="number" id="txtCodigoProducto" class="form-control movimiento-input-codigo" min="0" step="1" enterkeyhint="go" autocomplete="off" />
                                                 </div>
                                                 <small id="scannerMsg" class="text-danger d-none"></small>
                                             </div>
@@ -226,7 +228,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad">
+                                        <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad movimiento-col-cantun">
                                             <div class="form-group">
                                                 <label for="txtCantUnidad">Cant.Un.</label>
                                                 @* Permitir ingreso (2026-11-12): boton de un clic arriba de Cant.Un. (antes un checkbox aparte + apretar "+"). Aparece solo si la
@@ -241,10 +243,10 @@
                                                         <kbd class="mov-permitir-tecla" aria-hidden="true">+</kbd>
                                                     </button>
                                                 </div>
-                                                <input type="number" id="txtCantUnidad" class="form-control movimiento-input-cantidad" min="0" step="1" />
+                                                <input type="number" id="txtCantUnidad" class="form-control movimiento-input-cantidad" min="0" step="1" enterkeyhint="go" />
                                             </div>
                                         </div>
-                                        <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad">
+                                        <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad movimiento-col-kgs">
                                             <div class="form-group">
                                                 <label for="txtCantKgs">Kgs.</label>
                                                 <input type="text" id="txtCantKgs" class="form-control solo-decimal movimiento-input-cantidad" inputmode="decimal" enterkeyhint="done" autocomplete="off" />
@@ -258,6 +260,18 @@
                                                 </button>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    @* Ultimo producto agregado (solo celular, pedido 2026-11-25): con el teclado del telefono abierto la tabla queda tapada; esta franja
+                                       deja a mano lo ultimo cargado para verificarlo y, si hace falta, corregir sus cantidades con el lapiz. La arma renderLines()
+                                       (movimientos.js) desde la ultima linea en orden de carga. Sin name: no entra al form ni al guard de salida. *@
+                                    <div id="ultimoProductoMovimiento" class="mov-ultimo-agregado d-md-none d-none" role="status" aria-live="polite">
+                                        <i class="fas fa-check-circle mov-ultimo-ico" aria-hidden="true"></i>
+                                        <span class="mov-ultimo-texto" id="txtUltimoProductoMovimiento" title="Último producto agregado"></span>
+                                        <b class="mov-ultimo-cant" id="cantUltimoProductoMovimiento"></b>
+                                        <button type="button" class="btn btn-sm btn-outline-primary js-edit-ultima-mov" id="btnEditarUltimoProducto" data-sin-foco title="Corregir las cantidades de este producto" aria-label="Corregir las cantidades del último producto">
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -693,6 +707,129 @@
             padding: .15rem 1.6rem .15rem .5rem;
             font-size: .8rem;
         }
+    }
+
+    /* Datos de arriba (Origen, Destino, Fecha) con el contenido bien marcado (pedido 2026-11-25): negro y negrita, como ya se ve en escritorio
+       (movimientos-compacto.css, desde 992 px). En modo oscuro, blanco. */
+    @@media (max-width: 991.98px) {
+        body.app-shell .movimiento-page .mov-fila-datos .form-control {
+            color: #000;
+            font-weight: 700;
+        }
+
+        html.dark-mode body.app-shell .movimiento-page .mov-fila-datos .form-control { color: #fff; }
+    }
+
+    /* ==== Celular: pantalla mas baja (pedido 2026-11-25, mismo criterio que Elaborados/Carga) ====
+       Antes cada campo iba en su renglon (~420 px de la Fecha a Cant.Un.). Ahora: Origen | Destino en un renglon; en Agregar producto,
+       Codigo | Producto y debajo Cant.Un. | Kgs. | +; el Resumen de abajo pasa a una tira de tres cifras. Solo CSS (ids, names y JS no
+       cambian) y solo < 768 px: tablet y escritorio quedan como estaban. Cada hijo de la grilla lleva fila y columna explicitas para que
+       el aviso de validacion (que anclarAvisoResponsive mueve junto al Codigo) no desarme el orden. */
+    @@media (max-width: 767.98px) {
+        .movimiento-page .mov-fila-datos > .mov-col-sucursal { flex: 0 0 50%; max-width: 50%; }
+        .movimiento-page .mov-fila-datos .form-group { margin-bottom: .3rem; }
+        .movimiento-page .mov-fila-datos label { font-size: .72rem; margin-bottom: .1rem; }
+        .movimiento-page .mov-hr { margin: .35rem 0 .5rem; }
+
+        .movimiento-page .mov-box-agregar {
+            padding: .45rem .55rem !important;
+            margin-bottom: .45rem !important;
+        }
+
+        .movimiento-page .mov-box-agregar .form-group { margin-bottom: .3rem; }
+        .movimiento-page .mov-box-agregar label { font-size: .72rem; margin-bottom: .1rem; }
+
+        .movimiento-page .mov-box-agregar .numeric-keypad-toggle-fields > .row {
+            display: grid;
+            grid-template-columns: 7.2rem minmax(0, 1fr) 2.7rem;
+            gap: 0 .4rem;
+            margin: 0;
+            align-items: end;
+        }
+
+        .movimiento-page .mov-box-agregar .numeric-keypad-toggle-fields > .row > [class*="col-"] {
+            flex: none;
+            width: auto;
+            max-width: none;
+            min-width: 0;
+            padding: 0;
+        }
+
+        .movimiento-page .mov-box-agregar .movimiento-col-codigo { grid-column: 1; grid-row: 1; }
+        .movimiento-page .mov-box-agregar .movimiento-col-producto { grid-column: 2 / 4; grid-row: 1; }
+
+        .movimiento-page .mov-box-agregar .numeric-keypad-toggle-fields > .row > #movimientoWarning {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            margin: 0 0 .3rem !important;
+        }
+
+        .movimiento-page .mov-box-agregar .movimiento-producto-row .movimiento-col-cantun { grid-column: 1; grid-row: 3; }
+        .movimiento-page .mov-box-agregar .movimiento-producto-row .movimiento-col-kgs { grid-column: 2; grid-row: 3; }
+        .movimiento-page .mov-box-agregar .movimiento-producto-row > .movimiento-col-accion { grid-column: 3; grid-row: 3; }
+        .movimiento-page .movimiento-btn-add { width: 100%; }
+
+        /* Cabecera de Agregar producto: titulo mas chico, cantidad y kilos a su lado y, a la derecha, Ver acumulados solo con el icono. */
+        .movimiento-page .mov-box-agregar > .d-flex { margin-bottom: .35rem !important; }
+        .movimiento-page .mov-box-agregar .movimiento-section-title { font-size: .72rem; }
+        .movimiento-page .mov-resumen-cel {
+            margin: 0 auto 0 .5rem;
+            font-size: .72rem;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--ui-text-muted, #6c757d);
+        }
+
+        .movimiento-page #btnVerAcumulados { font-size: 0 !important; padding: .25rem .55rem; }
+        .movimiento-page #btnVerAcumulados > i { font-size: .9rem; margin: 0 !important; }
+
+        /* Ultimo producto agregado (lo llena renderLines). Sin borde redondeado: lleva un acento solo a la izquierda. */
+        .movimiento-page .mov-ultimo-agregado {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            margin-top: .1rem;
+            padding: .3rem .45rem;
+            border-left: 3px solid #198754;
+            border-radius: 0;
+            background: #e9f6ee;
+            color: #14532d;
+            font-size: .8rem;
+        }
+        .movimiento-page .mov-ultimo-ico { flex: 0 0 auto; color: #198754; }
+        .movimiento-page .mov-ultimo-texto { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .movimiento-page .mov-ultimo-cant { flex: 0 0 auto; white-space: nowrap; }
+        .movimiento-page .mov-ultimo-agregado .js-edit-ultima-mov { flex: 0 0 auto; padding: .15rem .45rem; line-height: 1.2; }
+        html.dark-mode .movimiento-page .mov-ultimo-agregado { background: #12301f; color: #bff0cf; border-left-color: #3fb868; }
+        html.dark-mode .movimiento-page .mov-ultimo-ico { color: #3fb868; }
+        /* Modo vista: se ve el dato pero no el lapiz (igual que el de la tabla, linea-editor.css). */
+        form.edit-readonly-active .js-edit-ultima-mov { display: none !important; }
+
+        /* Resumen de abajo: tres cifras en una tira (rotulo chico arriba, valor abajo) y el usuario en una linea; sin titulo ni separador. */
+        .movimiento-page .movimiento-summary-card > .card-body {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .2rem .4rem;
+            padding: .4rem .6rem;
+        }
+        .movimiento-page .movimiento-summary-card .movimiento-section-title,
+        .movimiento-page .movimiento-summary-card .mov-resumen-hr { display: none; }
+        .movimiento-page .movimiento-summary-card .card-body > .d-flex.justify-content-between {
+            flex-direction: column;
+            align-items: center;
+            font-size: .68rem;
+            line-height: 1.15;
+            color: var(--ui-text-muted, #6c757d);
+        }
+        .movimiento-page .movimiento-summary-card .card-body > .d-flex.justify-content-between strong { font-size: .95rem; color: var(--ui-text, #1f2937); }
+        .movimiento-page .movimiento-summary-card .mov-resumen-usuario {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .movimiento-page .movimiento-summary-card .mov-resumen-usuario label { margin: 0; }
+        .movimiento-page .movimiento-summary-card .mov-resumen-usuario .form-control { flex: 1 1 auto; min-height: 0; height: 1.8rem; }
     }
 
     .movimiento-page .movimiento-table-compact {

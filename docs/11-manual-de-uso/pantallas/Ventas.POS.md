@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 0
 permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pantalla)
-revisada: 2026-11-21
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
@@ -236,6 +236,8 @@ Al cobrar aparece **Venta completada** con cinco opciones. Cada una tiene su **t
 | **4** | Enviar por email | Abre el envío: email destino, asunto y mensaje (los dos últimos ya vienen completos). Al enviar, pasa a una venta nueva; si cancelás, también. |
 | **5** | Factura electrónica | Abre la factura electrónica de esa venta; con **Registrar factura** (o **Alt+R**) se emite y vuelve a esta ventana con el aviso «Factura registrada correctamente» y su número, para imprimirla o mandarla por email. |
 
+**Con una compra o una carga minimizada (desde 2026-11-25):** si arriba hay un botón amarillo «Compra en curso» o «<carga> en curso» (por ejemplo «Nuevo elaborado en curso»), pasar a la venta nueva **no recarga la pantalla**: la venta queda en blanco (Consumidor Final, sin productos ni comentario, fecha y hora de ahora, sin forma de pago elegida) y la compra o la carga **siguen ahí con lo que tenían**; se retoman con su botón amarillo. Vale para las cinco opciones y también para **Cancelar Venta**. Sin nada en curso, el POS se recarga como siempre. En un **POS duplicado** con algo en curso, la pestaña ya no se cierra sola al terminar la venta (cerrarla perdería lo cargado). PENDIENTE: probado en el navegador con ventas simuladas (sin registrar ventas reales), no con un cobro real ni con Cancelar Venta.
+
 En la factura electrónica, **Alt+R** registra la factura (Enter dentro de sus campos no la registra, a propósito, para no emitirla sin querer).
 
 ## Peso inestable de la balanza
@@ -272,10 +274,10 @@ Buscar el cliente, ver sus movimientos, registrar un cobro y un pago, y cómo qu
 
 ### Salir del POS con una venta en curso
 Desde el 2026-11-20, **Inicio** ya no saca al POS de su pantalla: abre **Inicio en otra pestaña** (si ya la tenías abierta, la trae al frente) y el POS queda como estaba, con la venta en curso. Para volver, tocá la pestaña del POS o, desde Inicio, **Punto de Venta**: te lleva al POS que ya está abierto, **sin abrir otro** (ver «Un solo POS por usuario» abajo).
-Lo que sigue avisando **«Hay una venta en curso»** es intentar **cerrar** o **recargar** el POS (F5, Ctrl+R, cerrar la pestaña) o ir a otra pantalla desde dentro del POS: si presionás **Cancelar Venta** se pierden los datos de esa venta; para conservarla, guardala primero y recién después salí. (Texto verificado contra el código 2026-11-13; PENDIENTE probarlo en pantalla.)
+Lo que sigue avisando **«Hay una venta en curso»** es intentar **cerrar** o **recargar** el POS (Ctrl+R, cerrar la pestaña; **F5 ya no recarga**: es el atajo de «Nueva compra», desde 2026-11-24) o ir a otra pantalla desde dentro del POS: si presionás **Cancelar Venta** se pierden los datos de esa venta; para conservarla, guardala primero y recién después salí. (Texto verificado contra el código 2026-11-13; PENDIENTE probarlo en pantalla.)
 
 ### Un solo POS por usuario (desde 2026-11-20)
-- Por usuario y sucursal hay **un POS original** (más su duplicado, ver **Duplicar POS**). Si ya está abierto y tocás **Punto de Venta** en el menú (o clic derecho › **Abrir ventana de la app**), se **trae al frente** el que ya estaba, sin recargarlo ni perder lo cargado. Dos POS originales solo pueden convivir si son de usuarios distintos.
+- Por usuario y sucursal hay **un POS original** (más su duplicado, ver **Duplicar POS**). Si ya está abierto y tocás **Punto de Venta** en el menú (o clic derecho › **Abrir ventana de la app**), se **trae al frente** el que ya estaba, sin recargarlo ni perder lo cargado. Dos POS originales solo pueden convivir si son de usuarios distintos. **Desde 2026-11-25, en una PC con mouse, el clic izquierdo común sobre «Punto de Venta» del menú abre siempre la ventana independiente** (ya no reemplaza la pestaña actual); con Ctrl, Mayús o Alt se deja el comportamiento del navegador.
 - Con la **cuenta compartida de producción** es uno por computadora; para cambiar de operario se usa **Cambiar operario**.
 - Si el POS está abierto en otra pestaña que el navegador no deja alcanzar desde acá (por ejemplo, la abriste escribiendo la dirección en otra pestaña), aparece **«El punto de venta ya está abierto»**: buscalo en la barra de pestañas, o elegí **No lo encuentro, abrir de nuevo**.
 - No cambia **al modificar una venta** (el botón sigue diciendo **Volver**) ni en la **app instalada** del POS (sigue diciendo **Cerrar**).
@@ -346,11 +348,12 @@ Voz: Piper, voz «daniela» (es_AR) de rhasspy/piper-voices, entrenada con el co
 - PENDIENTE: no se probó la instalación real en producción ni el uso de **Duplicar POS** dentro de la app instalada.
 
 ## Compra en curso (F5, desde 2026-11-17)
-La compra del POS no se cierra por accidente: se **minimiza** y el botón amarillo **Compra en curso** (arriba, junto a la campana) la recupera. Solo se puede cargar una compra a la vez. Detalle en [Compras.Editar](ayuda:pantalla/Compras.Editar).
+La compra del POS no se cierra por accidente: se **minimiza** y el botón amarillo **Compra en curso** (arriba, junto a la campana) la recupera. Solo se puede cargar una compra a la vez. Terminar una venta con la compra minimizada ya no la pierde (ver «Después de cobrar»). Detalle en [Compras.Editar](ayuda:pantalla/Compras.Editar).
 
 ## Cargas desde el POS (desde 2026-11-18)
 El botón **Cargas** de la barra de arriba (junto a la campana) abre, **sin salir de la caja**, una carga de Stock (**ingreso, egreso, pesaje de cortes, ajuste**), de **Movimientos** o de **Elaborados** (**nuevo elaborado, ingreso rápido**). Cada una es la pantalla de siempre, dentro de una ventana del POS, sin el menú lateral. Solo aparece con el POS operativo (caja abierta u «operar sin caja») y no al modificar una venta.
 - **No se cierra por accidente:** tocar afuera o Esc no hace nada. Se **Minimiza** (queda un botón amarillo «<carga> en curso» en la barra, que la trae de vuelta con lo cargado) o se **Descarta** (con confirmación; se pierde lo cargado).
+- **Vender mientras tanto:** con una carga minimizada podés cobrar ventas; al pasar a la venta nueva la carga sigue abierta (desde 2026-11-25, ver «Después de cobrar»).
 - **Una de cada tipo a la vez.** Se pueden tener, por ejemplo, un ingreso de stock y un movimiento abiertos a la vez, cada uno con su botón. Tocar un tipo ya en curso vuelve a él.
 - **Al guardar** la ventana se cierra sola, aparece un aviso («Movimiento guardado») y la lista se actualiza.
 - **Cargado desde que abriste la caja:** abajo del menú se lista lo que **vos** cargaste desde la apertura de tu caja (hora, tipo y resumen: «3 productos · 48,500 kg»). Tocar una fila (o el **ojo**) abre **ese registro** en la misma ventana, en **solo lectura**, con el botón **Modificar** de su pantalla (igual que desde el listado del módulo). Cada tipo tiene su ícono de color. Con «operar sin caja» no hay apertura: dice **«Cargado hoy»**. Se ve también lo cargado fuera del POS. Sirve para verificar que no cargaste dos veces lo mismo.

@@ -5,13 +5,14 @@ rol: usuario
 modulo: Punto de Expendio
 orden: 1
 permiso: cualquier usuario activo puede operar Expendio (verificado en `PuntosExpendioController.POS`); no pide permiso POS ni apertura de caja
-revisada: 2026-11-21
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Pantalla de trabajo del **Punto de expendio**: se elige el sector y se cargan los expendios. **Esta ayuda cubre solo cómo usarlo como aplicación instalada (desde 2026-11-17).** El resto de la pantalla está PENDIENTE de documentar.
 
 ## Como aplicación instalada
 - Se instala desde **Configuración → Utilidades → Aplicaciones instalables → Punto de expendio → Instalar** (ver [Utilidades](ayuda:pantalla/Home.Utilidades)). Queda con el nombre **Punto de expendio**, su propio ícono y su propia ventana.
+- **Desde 2026-11-25, en una PC con mouse, el clic izquierdo común sobre «Abrir punto de expendio» del menú lateral abre siempre una ventana independiente** (ya no reemplaza la pestaña actual); con Ctrl, Mayús o Alt se deja lo del navegador.
 - Abre directo en esta pantalla, sin menú lateral. Los enlaces a otras secciones del sistema no funcionan en esta ventana: muestran «No disponible en esta ventana».
 - El botón **Cerrar** (arriba; fuera de la app instalada se llama **Inicio** y va a Inicio) y **Cancelar** al elegir el sector **cierran la ventana** en lugar de ir a Inicio. Si hay un expendio a medio cargar, el navegador pregunta antes de cerrar.
 - **Elección de operador (cuenta de producción, desde 2026-11-21):** el cartel «Autorizate para operar este Punto de Expendio» **no se puede cerrar**: no tiene X ni «Cancelar», y si se cerrara por algún motivo se vuelve a abrir solo (no queda la pantalla en blanco ni hace falta F5). Para salir, cerrá la ventana con la X; en una pestaña normal queda el enlace **Ir a Inicio**. «Cambiar operario» sigue con su «Cancelar».

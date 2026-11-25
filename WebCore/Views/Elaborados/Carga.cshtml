@@ -177,10 +177,10 @@
                                 <div class="col-12 col-md-3 col-lg-2 elaborado-col-codigo">
                                     <div class="form-group">
                                         <label for="txtCodigoElaborado">Código</label>
-                                        <input type="number" id="txtCodigoElaborado" class="form-control pt-input-codigo" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" readonly="@(esAnulado ? "readonly" : null)" />
+                                        <input type="number" id="txtCodigoElaborado" class="form-control pt-input-codigo" min="0" step="1" enterkeyhint="go" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" readonly="@(esAnulado ? "readonly" : null)" />
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-9 col-lg-10">
+                                <div class="col-12 col-md-9 col-lg-10 elaborado-col-nombre">
                                     <div class="form-group">
                                         <label for="txtElaboradoNombre">Nombre del elaborado</label>
                                         <div class="input-group">
@@ -216,6 +216,8 @@
                         <div class="border rounded p-3 mb-3 elaborados-section-box elaborados-box-ingredientes">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Ingredientes manuales</h6>
+                                @* Solo celular: cantidad de ingredientes y kilos (en escritorio ya van en la cabecera «2 Ingredientes»). Lo llena renderLineas(). *@
+                                <span id="lblResumenIngredientesCel" class="d-md-none ela-resumen-cel"></span>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
                                     @* Balanza (2026-11-13): icono verde (activada) / gris (desactivada) con «Balanza» en chiquito; mismo checkbox
                                        (#chkBalanzaIngrediente, elaborados-carga.js). La tecla * la activa o desactiva y el cursor va a Cantidad. *@
@@ -225,7 +227,7 @@
                                             <i class="fas fa-balance-scale" aria-hidden="true"></i><span class="pt-balanza-txt">Balanza</span>
                                         </label>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumuladosElaborado">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumuladosElaborado" title="Ver acumulados" aria-label="Ver acumulados">
                                         <i class="fas fa-layer-group mr-1"></i> Ver acumulados
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary d-none d-lg-inline-block" id="btnToggleTecladoIngrediente" title="Mostrar/ocultar teclado digital">
@@ -257,10 +259,10 @@
                                         <div class="col-12 col-md-4 col-lg-3 ingrediente-col-codigo">
                                             <div class="form-group">
                                                 <label for="txtCodigoIngrediente">Código</label>
-                                                <input type="number" id="txtCodigoIngrediente" class="form-control pt-input-codigo" min="0" step="1" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
+                                                <input type="number" id="txtCodigoIngrediente" class="form-control pt-input-codigo" min="0" step="1" enterkeyhint="go" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
                                             </div>
                                         </div>
-                                        <div class="col-12 col-md-8 col-lg-5">
+                                        <div class="col-12 col-md-8 col-lg-5 ingrediente-col-nombre">
                                             <div class="form-group">
                                                 <label for="txtIngredienteNombre">Ingrediente</label>
                                                 <div class="input-group">
@@ -281,7 +283,7 @@
                                         <div class="col-12 col-md-4 col-lg-2 ingrediente-col-cantidad">
                                             <div class="form-group">
                                                 <label for="txtKgIngrediente">Cantidad (kg)</label>
-                                                <input type="text" id="txtKgIngrediente" class="form-control solo-decimal pt-input-cantidad" inputmode="decimal" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
+                                                <input type="text" id="txtKgIngrediente" class="form-control solo-decimal pt-input-cantidad" inputmode="decimal" enterkeyhint="done" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
                                             </div>
                                         </div>
                                         <div class="col-12 col-md-4 col-lg-2 ingrediente-col-accion">
@@ -292,6 +294,18 @@
                                                 </button>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    @* Ultimo ingrediente agregado (solo celular, pedido 2026-11-25): con el teclado del telefono abierto la tabla queda tapada;
+                                       esta franja deja a mano lo ultimo cargado para verificarlo y, si hace falta, corregir sus kilos con el lapiz. La arma
+                                       renderLineas() (elaborados-carga.js) desde la ultima linea en orden de carga. Sin name: no entra al form ni al guard de salida. *@
+                                    <div id="ultimoIngredienteCarga" class="ela-ultimo-agregado d-md-none d-none" role="status" aria-live="polite">
+                                        <i class="fas fa-check-circle ela-ultimo-ico" aria-hidden="true"></i>
+                                        <span class="ela-ultimo-texto" id="txtUltimoIngredienteCarga" title="Último ingrediente agregado"></span>
+                                        <b class="ela-ultimo-kg" id="kgUltimoIngredienteCarga"></b>
+                                        <button type="button" class="btn btn-sm btn-outline-primary js-edit-ultima" id="btnEditarUltimoIngrediente" data-sin-foco title="Corregir los kilos de este ingrediente" aria-label="Corregir los kilos del último ingrediente">
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -574,6 +588,98 @@
             padding: .15rem 1.6rem .15rem .5rem;
             font-size: .8rem;
         }
+
+        /* ==== Celular: cuadros Elaborado e Ingredientes mas petizos (pedido 2026-11-25) ====
+           Antes cada campo iba en su renglon (Codigo, Nombre, Codigo, Ingrediente, Cantidad+: ~600 px entre el elaborado y la tabla).
+           Ahora: Codigo | Nombre en un renglon; en Ingredientes, Codigo | Ingrediente y debajo Cantidad | +.
+           Solo CSS (ids, names y JS no cambian) y solo < 768 px: tablet y escritorio quedan como estaban. Cada hijo de la grilla tiene
+           fila y columna explicitas para que el aviso de validacion (que anclarAvisoResponsive mueve entre los campos) no desarme el orden. */
+        .elaborados-page .elaborados-box-elaborado,
+        .elaborados-page .elaborados-box-ingredientes {
+            padding: .45rem .55rem !important;
+            margin-bottom: .45rem !important;
+        }
+
+        .elaborados-page .elaborados-box-elaborado .elaborados-box-cab { display: none !important; }
+
+        .elaborados-page .elaborados-box-elaborado .form-group,
+        .elaborados-page .elaborados-box-ingredientes .form-group { margin-bottom: .3rem; }
+
+        .elaborados-page .elaborados-box-elaborado label,
+        .elaborados-page .elaborados-box-ingredientes label { font-size: .72rem; margin-bottom: .1rem; }
+
+        .elaborados-page .elaborados-box-elaborado > .row,
+        .elaborados-page .elaborados-box-ingredientes .numeric-keypad-toggle-fields > .row {
+            display: grid;
+            grid-template-columns: 4.6rem minmax(0, 1fr) 2.7rem;
+            gap: 0 .4rem;
+            margin: 0;
+            align-items: end;
+        }
+
+        .elaborados-page .elaborados-box-elaborado > .row > [class*="col-"],
+        .elaborados-page .elaborados-box-ingredientes .numeric-keypad-toggle-fields > .row > [class*="col-"] {
+            flex: none;
+            width: auto;
+            max-width: none;
+            min-width: 0;
+            padding: 0;
+        }
+
+        .elaborados-page .elaborados-box-elaborado .elaborado-col-codigo,
+        .elaborados-page .elaborados-box-ingredientes .ingrediente-col-codigo { grid-column: 1; grid-row: 1; }
+
+        .elaborados-page .elaborados-box-elaborado .elaborado-col-nombre,
+        .elaborados-page .elaborados-box-ingredientes .ingrediente-col-nombre { grid-column: 2 / 4; grid-row: 1; }
+
+        .elaborados-page .elaborados-box-elaborado > .row > #elaboradoWarning,
+        .elaborados-page .elaborados-box-ingredientes .numeric-keypad-toggle-fields > .row > #cargaWarning {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            margin: 0 0 .3rem !important;
+        }
+
+        .elaborados-page .elaborados-box-ingredientes .ingrediente-col-cantidad { grid-column: 1 / 3; grid-row: 3; }
+        .elaborados-page .elaborados-box-ingredientes .ingrediente-col-accion { grid-column: 3; grid-row: 3; }
+        .elaborados-page #btnAgregarIngrediente { width: 100%; }
+
+        /* Cabecera de Ingredientes: titulo mas chico y, a su lado, la cantidad de ingredientes y los kilos; a la derecha, Ver acumulados. */
+        .elaborados-page .elaborados-box-ingredientes > .d-flex { margin-bottom: .35rem !important; }
+        .elaborados-page .elaborados-box-ingredientes .elaborados-section-title { font-size: .72rem; }
+        .elaborados-page .ela-resumen-cel {
+            margin: 0 auto 0 .5rem;
+            font-size: .72rem;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--ui-text-muted, #6c757d);
+        }
+
+        /* Ver acumulados: solo el icono (el nombre queda como tooltip y para lectores de pantalla). */
+        .elaborados-page #btnVerAcumuladosElaborado { font-size: 0 !important; padding: .25rem .55rem; }
+        .elaborados-page #btnVerAcumuladosElaborado > i { font-size: .9rem; margin: 0 !important; }
+
+        /* Ultimo ingrediente agregado (lo llena renderLineas). Sin borde redondeado: lleva un acento solo a la izquierda. */
+        .elaborados-page .ela-ultimo-agregado {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            margin-top: .1rem;
+            padding: .3rem .45rem;
+            border-left: 3px solid #198754;
+            border-radius: 0;
+            background: #e9f6ee;
+            color: #14532d;
+            font-size: .8rem;
+        }
+        .elaborados-page .ela-ultimo-ico { flex: 0 0 auto; color: #198754; }
+        .elaborados-page .ela-ultimo-texto { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .elaborados-page .ela-ultimo-kg { flex: 0 0 auto; white-space: nowrap; }
+        .elaborados-page .ela-ultimo-agregado .js-edit-ultima { flex: 0 0 auto; padding: .15rem .45rem; line-height: 1.2; }
+        html.dark-mode .elaborados-page .ela-ultimo-agregado { background: #12301f; color: #bff0cf; border-left-color: #3fb868; }
+        html.dark-mode .elaborados-page .ela-ultimo-ico { color: #3fb868; }
+        /* Modo vista y anulado: se ve el dato pero no el lapiz (igual que el tacho de la tabla). */
+        form.edit-readonly-active .js-edit-ultima,
+        form.ela-anulado .js-edit-ultima { display: none !important; }
     }
 </style>
 

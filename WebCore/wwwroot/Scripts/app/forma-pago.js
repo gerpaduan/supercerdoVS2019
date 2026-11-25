@@ -982,7 +982,10 @@ function finalizarVenta(data) {
                 window.POSCancelacionEnCurso = false;
                 setEstadoVentaEnProceso(false);
                 window.POSGuard?.endAction('venta:finalizar');
-                if (typeof window.resetPOSDespuesDeFinalizar === 'function') {
+                // Con una compra o carga minimizada no se recarga (se perderian): la venta se limpia en el lugar (2026-11-24).
+                if (window.POSNuevaVenta?.hayCargasEnCurso?.()) {
+                    window.POSNuevaVenta.reiniciarSinRecargar();
+                } else if (typeof window.resetPOSDespuesDeFinalizar === 'function') {
                     window.resetPOSDespuesDeFinalizar();
                 } else {
                     window.POSState?.clear?.();
@@ -1777,6 +1780,23 @@ function abrirFormaPagoAlCargarPOS() {
 }
 
 $(document).ready(abrirFormaPagoAlCargarPOS);
+
+// Nueva venta SIN recargar el POS (2026-11-24, docs/DECISIONS.md "Nueva venta sin recargar con cargas en curso"): con una compra o
+// una carga minimizada, recargar la pagina las perderia, asi que Ventas/POS.cshtml limpia la venta en el lugar. Esta parte deja el
+// estado de este archivo como lo deja una recarga: sin "venta en proceso" (Finalizar habilitado), sin forma de pago elegida, sin
+// "precio de lista aceptado", sin cobro de la venta anterior, y vuelve a ofrecer la forma de pago como al cargar el POS.
+// Asume que POSState ya se vacio (la forma preseleccionada y el total salen de ahi).
+window.reiniciarFormaPagoParaNuevaVenta = function () {
+    setEstadoVentaEnProceso(false);
+    precioListaAceptado = false;
+    cambioFormaPagoPendiente = false;
+    otroTipoPagoSeleccionado = null;
+    limpiarSeleccionFormaPago();
+    window.POSCobroTrasVenta = null;
+    actualizarPOSFormaPagoActual({ tipo: '', pagoMixtoEfectivo: 0, total: 0 });
+    window.POSGuard?.endAction('venta:finalizar');
+    abrirFormaPagoAlCargarPOS();
+};
 
 // ===============================
 // ATAJOS DE TECLADO

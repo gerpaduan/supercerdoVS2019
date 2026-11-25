@@ -1030,6 +1030,32 @@
             });
         }
 
+        // Celular (<768 px, pedido 2026-11-25): resumen "N · X kg" en la cabecera de Agregar producto y franja con la ULTIMA linea cargada
+        // (orden de carga, no el de la pantalla), asi se verifica lo agregado aunque el teclado del telefono tape la tabla. Se llama desde
+        // renderLines(), unico punto de repintado: agregar, quitar, corregir y recuperar un borrador la dejan siempre coherente. En escritorio
+        // los dos elementos existen pero estan ocultos por CSS (d-md-none). Usa .text(): el nombre no se interpreta como HTML.
+        function actualizarUltimaLineaCelular(totalKilos) {
+            var cantidad = state.lines.length;
+            $('#lblResumenMovimientoCel').text(cantidad ? (cantidad + ' · ' + formatKg(totalKilos) + ' kg') : '');
+
+            var $franja = $('#ultimoProductoMovimiento');
+            if (!$franja.length) return;
+            if (!cantidad) {
+                $franja.addClass('d-none');
+                return;
+            }
+            var ultima = state.lines[cantidad - 1];
+            // Mismo criterio que la tabla: sin unidades no se muestran; los kilos se ocultan si el producto no es pesable y coinciden con las unidades.
+            var unidades = toInt(ultima.CantUnidad);
+            var ocultarKilos = ultima.Pesable === false && isIntegerDecimal(ultima.CantKg) && unidades === toInt(ultima.CantKg);
+            var partes = [];
+            if (unidades !== 0) partes.push(formatInt(ultima.CantUnidad) + ' un');
+            if (!ocultarKilos) partes.push(formatKg(ultima.CantKg) + ' kg');
+            $('#txtUltimoProductoMovimiento').text('#' + toInt(ultima.__ordenIngreso) + ' · ' + (ultima.Codigo || '') + ' ' + (ultima.Producto || ''));
+            $('#cantUltimoProductoMovimiento').text(partes.join(' · '));
+            $franja.removeClass('d-none');
+        }
+
         function renderLines() {
             var html = '';
             var hidden = '';
@@ -1112,11 +1138,15 @@
 
             html = html.replace('colspan="7"', 'colspan="8"');
             $('#tablaLineasMovimiento tbody').html(html);
-            if (hayFilaNueva && window.LineaEditor) window.LineaEditor.mostrarFilaNueva($('#tablaLineasMovimiento tbody'));
+            // En celular no se acerca la fila nueva con scroll (2026-11-25): con el teclado abierto la pagina saltaba hacia la lista y el foco
+            // que vuelve a Codigo la subia de nuevo; el ultimo agregado se ve en la franja (actualizarUltimaLineaCelular). El destello sigue.
+            var esCelular = !!(window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches);
+            if (hayFilaNueva && !esCelular && window.LineaEditor) window.LineaEditor.mostrarFilaNueva($('#tablaLineasMovimiento tbody'));
             $('#lineasHiddenContainer').html(hidden);
             $('#lblTotalItems').text(formatInt(totalItems));
             $('#lblTotalUnidades').text(formatInt(totalUnidades));
             $('#lblTotalKilos').text(formatKg(totalKilos));
+            actualizarUltimaLineaCelular(totalKilos);
             syncSortHeaders();
             syncReadOnlyUi();
             notificarLineas();
@@ -1620,10 +1650,11 @@
             focusCodigo();
         }
 
-        $(document).on('click.movimientoEditLine', '.js-edit-linea', function () {
+        // Abre el panel "Corregir linea" de la linea con ese indice REAL en state.lines. Lo usan el lapiz de cada fila y el de la franja del
+        // ultimo producto (celular).
+        function abrirEditorLinea(index) {
             // Modo vista: hay que apretar Modificar primero (el CSS tambien oculta el lapiz).
             if (state.readOnly) return;
-            var index = toInt($(this).data('index'));
             var line = state.lines[index];
             if (!line) return;
             state.editor = {
@@ -1636,6 +1667,21 @@
             };
             renderLines();
             window.LineaEditor.enfocar('edtLineaUn');
+        }
+
+        $(document).on('click.movimientoEditLine', '.js-edit-linea', function () {
+            abrirEditorLinea(toInt($(this).data('index')));
+        });
+
+        // Lapiz de la franja del ultimo producto (celular): corrige la ultima linea cargada. Si la busqueda de la lista la estuviera ocultando
+        // se limpia el filtro, para que el panel de correccion quede a la vista.
+        $(document).on('click.movimientoEditLine', '.js-edit-ultima-mov', function () {
+            if (!state.lines.length) return;
+            if (state.searchText) {
+                state.searchText = '';
+                $('#filtroLineasMovimiento').val('');
+            }
+            abrirEditorLinea(state.lines.length - 1);
         });
 
         window.LineaEditor.enlazar({

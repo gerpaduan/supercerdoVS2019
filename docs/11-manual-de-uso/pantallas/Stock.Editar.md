@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-11-24
+revisada: 2026-11-25
 alias: Stock.Nuevo
 ---
 ## Para qué sirve
@@ -69,7 +69,7 @@ PENDIENTE: documentar los datos del encabezado, la carga de productos (código, 
 - En la pantalla de un registro ya guardado, **Creado** y **Actualizado** (con el usuario debajo de cada fecha) se muestran en un bloque compacto de dos columnas, con letra chica, para ocupar poca altura.
 
 ## La última línea agregada destella (2026-11-24)
-Al agregar un producto con el botón de agregar línea, su fila en la tabla **destella en verde** (dos pulsos y una franja verde a la izquierda, unos 2 segundos) para ver cuál fue la última carga, aunque la tabla esté ordenada de otra forma o en el celular se muestre «últimos primero». Si la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar de a una**: las cargas masivas («Agregar productos no cargados», pesajes vinculados), al abrir la pantalla, recuperar un borrador, ordenar o buscar no destellan nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Con la opción «reducir movimiento» del sistema queda resaltada fija en vez de titilar.
+Al agregar un producto con el botón de agregar línea, su fila en la tabla **destella en verde** (un solo pulso suave y una franja verde a la izquierda, algo más de 1 segundo) para ver cuál fue la última carga, aunque la tabla esté ordenada de otra forma o en el celular se muestre «últimos primero». Si la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar de a una**: las cargas masivas («Agregar productos no cargados», pesajes vinculados), al abrir la pantalla, recuperar un borrador, ordenar o buscar no destellan nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Se ve igual en las filas pares (rayadas) y en las impares.
 
 ## Corregir la cantidad de una línea ya cargada (2026-11-19)
 - Cada línea tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · producto»** con el campo **Kilos**.
@@ -78,7 +78,7 @@ Al agregar un producto con el botón de agregar línea, su fila en la tabla **de
 - El cambio **queda en la pantalla**: se guarda recién al tocar **Guardar**. Un valor escrito en el panel y no aplicado no se guarda.
 - Una línea **pesada en balanza** que se corrige a mano deja de figurar como pesada en balanza (el panel lo avisa). En un **Pesaje** el panel recuerda que **Kgs.Medias** no se recalcula solo.
 - **Líneas que no se corrigen:** las de un **pesaje vinculado** y las marcadas **«No contado»** muestran el lápiz apagado (con el motivo al pasar el mouse); cambiar sus kilos descuadraría el pesaje del que vienen.
-- En **modo vista** el lápiz no se muestra ni funciona; aparece al tocar **Modificar**. Quitar una línea con el tacho cierra el panel abierto. Dentro del panel la tecla `*` no activa la balanza.
+- En **modo vista** el lápiz y el **tacho** no se muestran ni funcionan (tampoco después de ordenar o buscar en la tabla; antes el tacho reaparecía al ordenar); aparecen al tocar **Modificar**. Quitar una línea con el tacho cierra el panel abierto. Dentro del panel la tecla `*` no activa la balanza.
 - La columna **Acción** de la tabla es más ancha (lápiz + tacho). Detalle técnico: `linea-editor.js` / `linea-editor.css`; ver `docs/DECISIONS.md` (2026-11-19).
 
 ## Modo solo lectura: cómo se ve que no se puede editar (2026-11-13)

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-11-24
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -87,7 +87,7 @@ Al guardar aparece un aviso con el **mismo diseño que el de una venta en el POS
 - No se cierra con **Escape** ni haciendo clic afuera: solo eligiendo una opción. Al imprimir un movimiento **ya guardado** el título es **«Imprimir movimiento»**.
 
 ## La última línea agregada destella (2026-11-24)
-Al agregar un producto, su fila en la tabla **destella en verde** (dos pulsos y una franja verde a la izquierda, unos 2 segundos) para ver cuál fue la última carga, aunque la tabla esté ordenada de otra forma o en el celular se muestre «últimos primero». Si la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar**: al abrir la pantalla, recuperar un borrador, ordenar o buscar no destella nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Con la opción «reducir movimiento» del sistema queda resaltada fija en vez de titilar.
+Al agregar un producto, su fila en la tabla **destella en verde** (un solo pulso suave y una franja verde a la izquierda, algo más de 1 segundo) para ver cuál fue la última carga, aunque la tabla esté ordenada de otra forma o en el celular se muestre «últimos primero». Si la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar**: al abrir la pantalla, recuperar un borrador, ordenar o buscar no destella nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Se ve igual en las filas pares (rayadas) y en las impares.
 
 ## Corregir las unidades y los kilos de una línea ya cargada (2026-11-19)
 - Cada línea tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · producto»** con los campos **Unidades** y **Kilos**. En un producto **no pesable** solo hay **Unidades** (los kilos son las unidades, como al agregarlo).
@@ -121,6 +121,10 @@ Pensado para ver **20 líneas o más sin bajar con la rueda**: la lista ocupa to
 - **Abrir en ventana:** el botón estuvo oculto desde el 2026-11-04 y **volvió a mostrarse en Movimientos el 2026-11-12** (en Stock y Elaborados sigue oculto): ver *Ventana independiente* más arriba. La pantalla también se puede usar sin menú instalándola como aplicación (*Instalar CarniSys Movimientos*).
 
 ## En el celular
+- **Pantalla más baja (2026-11-25):** **Origen** y **Destino** van en un solo renglón (la **Fecha** debajo). En **Agregar producto**, **Código** (con el botón del escáner) y **Producto** van en un renglón y **Cant.Un.**, **Kgs.** y **+** en el de abajo. La cabecera muestra «N · X kg» (cuántos productos y cuántos kilos) y **Ver acumulados** queda **solo con el icono**. El **Resumen** de abajo pasa a una tira de tres cifras (Total items, Total unidades, Total kilos) con el **Usuario** en una línea. Medido en 375 px con la pantalla vacía: la página pasó de 1176 a 837 px de alto. No cambia la computadora, la tablet (768 px o más) ni la ventana independiente de escritorio.
+- **Origen, Destino y Fecha con letra más fuerte (2026-11-25):** el contenido de esos tres campos se ve en **negro y negrita** (en modo oscuro, blanco), como ya se veía en la computadora. Vale en pantallas de menos de 992 px, tablet incluida.
+- **Enter del teclado del teléfono (2026-11-25):** **Código** y **Cant.Un.** piden al teclado la tecla «Ir» (**Kgs.** ya pedía «Listo»); antes, en Android, el teclado mostraba «Siguiente», que solo mueve el cursor sin buscar ni agregar. Recorrido: Código ↵ busca y pasa a **Cant.Un.** (también al elegir con la lupa); Cant.Un. ↵ **agrega** si el producto no es pesable (si es pesable pasa a **Kgs.**); Kgs. ↵ **agrega**, y el cursor vuelve a **Código**. PENDIENTE: probarlo en un Android real (en el navegador de la PC se probó con la tecla Enter). En iPhone el teclado numérico no tiene tecla Enter: se agrega con el botón **+**.
+- **Último agregado a la vista (2026-11-25):** debajo de Cant.Un. / Kgs. aparece una franja verde «✓ #N · código producto · unidades · kilos» con un **lápiz** que abre el mismo panel **«Corregir línea»** de la lista. Se actualiza sola al agregar, quitar, corregir o recuperar un borrador y siempre muestra la **última cargada** (no depende del orden de la lista; el # es el mismo de la lista). En modo vista no muestra el lápiz. Al agregar ya **no se desplaza la página** hasta la fila nueva de la lista (la franja la reemplaza); la fila sigue destellando.
 - **Agregar producto:** Cant.Un., Kgs. y el botón **+** van en el mismo renglón (con el teclado numérico en pantalla abierto se apilan como antes).
 - **Líneas cargadas:** se ven como una lista. Arriba el producto, las unidades y los kilos; abajo el número de orden y el código (`#3 · Cód. 5`) y dos iconos: **balanza** (azul = pesado en balanza, gris = no) e **ingreso permitido** (verde = la línea se autorizó aunque los kilos no coincidían con las unidades, gris = normal). El botón rojo de la derecha **quita la línea**.
 - **Orden:** en el celular arranca con **lo último cargado arriba**. Con el selector de la derecha se puede cambiar (primeros primero, código, producto, cantidad, kilos). En la computadora se ordena tocando los encabezados, como siempre.

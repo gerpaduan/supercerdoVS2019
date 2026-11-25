@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 3
 permiso: Elaborado.IngresoEmbutidoRapido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-21
+revisada: 2026-11-24
 ---
 ## Para qué sirve
 Registrar un elaborado (o desarmarlo) cargando **solo la cantidad final**: el sistema calcula los ingredientes con la fórmula del producto y los guarda. Se llega desde *Elaborados → Ingreso rápido* (o *Desarme de elaborado*) eligiendo un producto, o abriendo un registro existente desde el listado.
@@ -41,6 +41,15 @@ Igual para **Ingreso rápido** y **Desarme**; pensado para ver todo sin bajar co
 - Tres bloques: **Cantidad** (a elaborar o a desarmar), **Teclado** (teclas más bajas) y **Fórmula calculada**. La leyenda «La fórmula se calcula automáticamente en vivo» (o «se mostrará en negativo» en el desarme) ya no aparece en pantalla.
 - La tabla de la fórmula muestra **10 ingredientes** de una línea cada uno; con más, tiene su propio scroll con el encabezado fijo. Al pasar el mouse por un ingrediente, la fila se pinta de azul tenue.
 - Con el **costeo** (administradores) la pantalla es más alta y puede aparecer el scroll de la página. Con una ventana de menos de 690 px de alto la página scrollea un poco.
+
+## En ventanas medianas (de 576 a 1199 px) (2026-11-24)
+Pensado para una ventana independiente o una app instalada que no ocupa toda la pantalla. La fórmula queda **al lado de la cantidad**, sin bajar:
+- **De 992 a 1199 px:** Cantidad, Teclado y Fórmula en una sola fila. **Código** (angosto), **Elaborado** y **Receta** en un renglón.
+- **De 576 a 991 px:** Cantidad y Fórmula lado a lado, **sin teclado** (el teclado en pantalla solo aparece desde 992 px). La **Receta** va en su propio renglón.
+- **Sucursal, Fecha y Usuario** en una fila. Las **pestañas** van en un renglón (si no entran, se deslizan hacia los costados). **Volver**, **− / +** y **Elaborados sin guardar** quedan juntos a la izquierda y la etiqueta a la derecha.
+- **Receta:** si el producto tiene receta se ve el texto; si no tiene, el campo dice *«Sin receta»* (en cursiva). Esto vale en todos los anchos. Con fórmula secreta oculta, la receta sigue escondida.
+- **Balanza:** por debajo de 768 px de ancho el interruptor y el estado de la balanza no se muestran (es así desde 2026-09-14, `custom.css`).
+- PENDIENTE: no se probó con un ingreso rápido nuevo con receta cargada ni con el costeo de administrador abierto en estos anchos.
 
 ## Salir de un registro existente
 Un registro existente se abre en **modo vista**. Mientras no se toque **Modificar**, se puede salir (Volver, Cancelar o cualquier enlace) sin ningún aviso, porque no hay nada que perder. Al tocar **Modificar**, el aviso de *salir sin guardar* solo aparece si después se cambió algo.

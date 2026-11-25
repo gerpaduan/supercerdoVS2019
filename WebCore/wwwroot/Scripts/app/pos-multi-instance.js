@@ -209,9 +209,11 @@
         updateUi();
     }
 
+    // Libera la entrada de ESTE POS en localStorage al cerrarse. Desde 2026-11-25 tambien en la app instalada: antes salia sin hacer nada y la
+    // entrada quedaba «viva» (hasta 120 s para pos-ventana-unica.js), asi que tocar «Punto de Venta» justo despues de cerrar la app mostraba
+    // «ya esta abierto» sin abrir nada. En la app instalada el id de esta ventana sale de sessionStorage y es el mismo que escribe register(),
+    // asi que el chequeo por id de abajo sirve igual; un pase al duplicado/original (suppressReleaseOnUnload) no llega aca.
     function release() {
-        if (isStandalonePwa()) return;
-
         var state = readState();
         if (isDuplicate()) {
             if (state.duplicado && state.duplicado.id === config().instanceId) {

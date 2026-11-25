@@ -9,7 +9,8 @@
    recargarla (no se pierde lo que tenga cargado). Una pagina web no puede lanzar una app ya instalada (Chrome no lo permite): «Abrir ventana de la app»
    abre la URL de la app en una ventana del navegador; no se intenta detectar si esta instalada. Instalar las apps se hace solo desde Utilidades
    (el 2026-11-20 se quito «Instalar la app…» de este menu a pedido del usuario).
-   Atributos que lee del enlace (los pone _Layout.cshtml, ya con el PathBase): data-app (clave) y data-app-url (URL de la app si difiere del href).
+   Atributos que lee del enlace (los pone _Layout.cshtml, ya con el PathBase): data-app (clave), data-app-url (URL de la app si difiere del href) y
+   data-ventana-siempre (2026-11-25: Punto de venta y Punto de expendio; el clic izquierdo comun tambien abre la ventana independiente).
    Solo en equipos con mouse (any-pointer: fine), con la ventana de cualquier ancho (antes >= 992 px, 2026-11-24). Dependencias: ninguna (JS plano; usa Swal solo para avisar si esta cargado).
    Decision y alternativas: docs/DECISIONS.md (2026-11-20). */
 (function () {
@@ -301,6 +302,22 @@
         // El permiso de abrir ventanas (activacion del usuario) dura unos segundos, asi que una tarea inmediata ya no es un clic del medio y sigue permitida.
         window.setTimeout(function () { abrirEnVentanaIndependiente(enlace); }, 0);
     });
+
+    // Punto de venta y Punto de expendio SIEMPRE en ventana independiente (2026-11-25, pedido del usuario): el clic izquierdo comun sobre un enlace
+    // marcado con data-ventana-siempre (lo pone _Layout.cshtml) hace lo mismo que «Abrir ventana de la app», en vez de navegar la pestaña actual
+    // (que dejaba el POS dentro del navegador, con el menu lateral a la vista). Solo en equipos con mouse (enlaceConVentana); con Ctrl / Mayus / Alt
+    // se deja lo nativo, igual que la rueda. Va en window y en captura: tiene que ganarle a pos-ventana-unica.js (document, captura) y a los enlaces
+    // de _Layout.cshtml que piden confirmar la salida; la unicidad del POS la resuelve igual abrirEnVentanaIndependiente. El permiso de abrir ventanas
+    // lo da este mismo clic (activacion del usuario), asi que window.open se llama dentro del evento.
+    window.addEventListener('click', function (evento) {
+        if (evento.defaultPrevented || evento.button !== 0 || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return;
+        var enlace = enlaceConVentana(evento);
+        if (!enlace || !enlace.hasAttribute('data-ventana-siempre') || !enlace.hasAttribute('data-app')) return;
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+        cerrarMenu(false);
+        abrirEnVentanaIndependiente(enlace);
+    }, true);
 
     document.addEventListener('mousedown', function (evento) {
         if (menu && !menu.contains(evento.target)) cerrarMenu(false);

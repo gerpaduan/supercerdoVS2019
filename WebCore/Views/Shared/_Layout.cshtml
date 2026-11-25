@@ -247,6 +247,18 @@
             min-height: 100dvh;
         }
 
+        /* Celular (2026-11-25): hay que deslizar dos veces para que la pagina se mueva. "overflow-x: hidden" deja a este contenedor con
+           overflow-y: auto, o sea una caja con scroll propio que envuelve TODA la pagina. Si en un telefono real (pixeles fraccionarios)
+           le sobra aunque sea 1 px, Chrome Android le da el primer deslizamiento a esa caja (se mueve 1 px, no se ve) y recien el segundo
+           llega a la pagina; al cambiar de direccion pasa de nuevo. Con "hidden" en vertical el dedo no puede scrollearla y el gesto va
+           directo a la pagina. Se eligio hidden y no clip a proposito: clip deja de ser contenedor de scroll y los position: sticky de
+           todo el sistema pasarian a pegarse al borde de la pantalla; con hidden se comportan como hasta ahora. Escritorio no cambia. */
+        @@media (max-width: 767.98px) {
+            #content-wrapper {
+                overflow-y: hidden;
+            }
+        }
+
         #content-wrapper #content {
             flex: 1 0 auto;
         }
@@ -617,7 +629,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link @(controller == "Ventas" && action == "POS" ? "active" : "")" href="@Url.Action("POS", "Ventas")" data-app="Ventas"
-                   data-pos-unico data-pos-usuario="@usuarioActual.Id" data-pos-sucursal="@usuarioActual.IdSucursal">
+                   data-ventana-siempre data-pos-unicodata-pos-usuario="@usuarioActual.Id" data-pos-sucursal="@usuarioActual.IdSucursal">
                     <i class="fas fa-fw fa-store"></i>
                     <span>Punto de Venta</span>
                 </a>
@@ -694,7 +706,7 @@
                 </a>
                 <div id="collapsePuntosExpendio" class="collapse @(enPuntosExpendio ? "show" : "")">
                     <div class="collapse-inner rounded">
-                        <a class="collapse-item @(enPuntosExpendio && action == "POS" ? "active" : "")" href="@Url.Action("POS", "PuntosExpendio")" data-app="PuntosExpendio">Abrir punto de expendio</a>
+                        <a class="collapse-item @(enPuntosExpendio && action == "POS" ? "active" : "")" href="@Url.Action("POS", "PuntosExpendio")" data-app="PuntosExpendio" data-ventana-siempre>Abrir punto de expendio</a>
                         <a class="collapse-item @(enPuntosExpendio && action == "ExpendiosGenerados" ? "active" : "")" href="@Url.Action("ExpendiosGenerados", "PuntosExpendio")">Expendios generados</a>
                         <a class="collapse-item @(enPuntosExpendio && action == "Sectores" ? "active" : "")" href="@Url.Action("Sectores", "PuntosExpendio")">Sectores</a>
                     </div>

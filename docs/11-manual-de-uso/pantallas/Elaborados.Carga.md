@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 2
 permiso: Elaborado.IngresoEmbutido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-24
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Registrar un elaborado cargando **a mano los ingredientes** (con su peso). Los ingredientes de la fórmula marcados como *Auto* se agregan solos al guardar, calculados como porcentaje de lo cargado a mano.
@@ -24,7 +24,7 @@ Si escribiste (o escaneaste) un código de ingrediente y no lo agregaste a la ta
 **Código**, **Ingrediente**, **Cantidad** (kilos) y el botón **+**. En el celular **Cantidad** y **+** van en el mismo renglón, con el **+** pegado a la cantidad (con el teclado numérico en pantalla abierto se apilan como antes).
 
 ## La última línea agregada destella (2026-11-24)
-Al agregar un ingrediente, su fila en la tabla **destella en verde** (dos pulsos y una franja verde a la izquierda, unos 2 segundos) para ver cuál fue la última carga. Si la tabla es larga y la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar**: al abrir la pantalla, recuperar un borrador, ordenar o buscar no destella nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Con la opción «reducir movimiento» del sistema queda resaltada fija en vez de titilar.
+Al agregar un ingrediente, su fila en la tabla **destella en verde** (un solo pulso suave y una franja verde a la izquierda, algo más de 1 segundo) para ver cuál fue la última carga. Si la tabla es larga y la fila queda fuera de pantalla, se acerca a la vista. Solo destella al **agregar**: al abrir la pantalla, recuperar un borrador, ordenar o buscar no destella nada. Si la búsqueda de la tabla oculta la fila nueva, no se ve el destello. Se ve igual en las filas pares (rayadas) y en las impares.
 
 ## Corregir los kilos de un ingrediente ya cargado (2026-11-19)
 - Cada línea de la tabla tiene un **lápiz** azul junto al tacho. Al tocarlo se abre debajo de la línea un panel **«Corregir línea N · ingrediente»** con el campo **Kilos**.
@@ -67,6 +67,9 @@ Pensado para ver **muchos ingredientes sin bajar con la rueda**: la tabla de ing
 - **PENDIENTE (no medido):** modo oscuro y la tabla con el costeo de administrador abierto.
 
 ## En el celular
+- **Cuadros más bajos (2026-11-25):** **Código** y **Nombre del elaborado** van en **un solo renglón**; en **Ingredientes**, **Código** e **Ingrediente** en un renglón y **Cantidad** con el **+** justo debajo. La cabecera de Ingredientes muestra «N · X kg» (cuántos ingredientes y cuántos kilos) y **Ver acumulados** queda **solo con el icono** (el nombre sale al mantener apoyado el dedo o con un lector de pantalla). Medido en 375 px con la pantalla vacía: la página pasó de 1826 a 1577 px de alto. No cambia la computadora, la tablet (768 px o más) ni la ventana independiente de escritorio.
+- **Enter del teclado del teléfono (2026-11-25):** **Código** pide al teclado la tecla «Ir» y **Cantidad** la tecla «Listo» (antes el teclado mostraba «Siguiente», que en Android solo mueve el cursor sin buscar ni agregar). El recorrido queda: Código ↵ busca y pasa a **Cantidad** (también al elegir con la lupa), Cantidad ↵ **agrega** y el cursor vuelve a **Código**. PENDIENTE: probarlo en un Android real (en el navegador de la PC se probó con la tecla Enter). En iPhone el teclado numérico no tiene tecla Enter: se agrega con el botón **+**.
+- **Último agregado a la vista (2026-11-25):** debajo de **Cantidad** aparece una franja verde «✓ #N · código nombre · kilos» con un **lápiz** que abre el mismo panel **«Corregir línea»** de la tabla. Se actualiza sola al agregar, quitar, corregir o recuperar un borrador, y siempre muestra la **última cargada** (no depende del orden de la lista). En modo vista y en un elaborado anulado no muestra el lápiz. En el celular, al agregar ya **no se desplaza la página** hasta la fila nueva de la tabla (la franja la reemplaza); la fila sigue destellando.
 - **Ingredientes cargados:** se ven como una lista. Arriba el ingrediente y los kilos; abajo el código (`Cód. 3`) y el icono de **balanza** (azul = pesado en balanza, gris = no). El botón rojo de la derecha **quita la línea**. Con el **costeo** activado (solo administradores) debajo de cada línea aparece su costo.
 - **Orden:** arranca con **lo último cargado arriba**. El selector de la derecha permite cambiarlo (primeros primero, código, ingrediente, kilos). Con la **lupa** se filtra por ingrediente o código.
 - El selector de orden y la **lupa** **siguen activos en el modo ver** (cuando los campos y la tabla están bloqueados): solo cambian cómo se ven las líneas.

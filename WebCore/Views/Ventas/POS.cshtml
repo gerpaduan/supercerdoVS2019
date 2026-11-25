@@ -3592,7 +3592,16 @@ else
 
             document.addEventListener("keydown", function (e) {
                 const key = (e.key || "").toLowerCase();
-                const intentaRecargar = e.key === "F5" || ((e.ctrlKey || e.metaKey) && key === "r");
+                // F5 es el atajo de "Nueva compra" del POS (pedido del usuario 2026-11-24): nunca debe
+                // recargar la pagina ni mostrar el aviso de recarga. Se anula siempre el default y se deja
+                // propagar para que pos-help.js dispare el atajo (salvo con un modal abierto, ver abajo).
+                // Solo Ctrl+R / Cmd+R se siguen tratando como intento de recarga.
+                const intentaRecargar = (e.ctrlKey || e.metaKey) && key === "r";
+
+                if (e.key === "F5" && !hayModalAbiertoEnPOS()) {
+                    e.preventDefault();
+                    return;
+                }
 
                 if (e.key === "F5" && hayModalAbiertoEnPOS()) {
                     e.preventDefault();
@@ -4241,7 +4250,88 @@ else
                 requiereFacturaAutomatica: facturaElectronicaRequeridaPorFormaPagoPOS
             };
 
+            // ===== Nueva venta sin recargar con cargas en curso (2026-11-24, ver docs/DECISIONS.md) =====
+            // Recargar el POS destruye la compra minimizada (#modalCompraPOS vive en el DOM de esta pagina) y las cargas minimizadas
+            // (iframes de pos-trabajos.js): se perdia lo cargado. Con alguna en curso, la venta siguiente arranca limpiando en el lugar
+            // todo lo que una recarga deja nuevo; sin nada en curso se sigue recargando como siempre (camino de siempre, sin cambios).
+            function hayCargasEnCursoPOS() {
+                return window.POSCompras?.hayCompraEnCurso?.() === true || window.POSTrabajos?.hayEnCurso?.() === true;
+            }
+
+            // "yyyy-MM-ddTHH:mm:ss" en hora local: el mismo formato que el servidor pone en #fechaVenta al cargar el POS.
+            function fechaVentaLocalPOS(fecha) {
+                function dos(n) { return ("0" + n).slice(-2); }
+                return fecha.getFullYear() + "-" + dos(fecha.getMonth() + 1) + "-" + dos(fecha.getDate())
+                    + "T" + dos(fecha.getHours()) + ":" + dos(fecha.getMinutes()) + ":" + dos(fecha.getSeconds());
+            }
+
+            // Deja el POS listo para otra venta SIN recargar: carrito, borrador (carrito nuevo), cancelacion, cliente, fecha, producto en
+            // pantalla y forma de pago. La compra y las cargas minimizadas no se tocan (siguen con sus botones amarillos). No cambia la
+            // pestaña ni el operador (sin recarga, el pagehide no corre).
+            function reiniciarVentaSinRecargar() {
+                // 1) Carrito vacio y carrito nuevo para el borrador del servidor. Las marcas de "finalizando" se bajan DESPUES de vaciar:
+                //    con el carrito ya vacio ningun guardado del borrador puede volver a mandar la venta recien cobrada.
+                window.POSState.clear();
+                window.POSDraft?.clear?.();
+                cancelandoVentaPOS = false;
+                indicesCancelacionPOS = [];
+                window.POSCancelacionEnCurso = false;
+                window.POSFinalizandoVenta = false;
+                window.POSVentaFinalizada = false;
+                $("#btnCancelarItem").prop("disabled", false);
+
+                // 2) Cliente: Consumidor Final, por el mismo boton CF (identificacion, saldo, historial de precios, precio copiado).
+                $("#btnConsumidorFinal").trigger("click");
+
+                // 3) Fecha de la venta: ahora (al recargar la ponia el servidor), con el chip a la vista y el campo editable oculto.
+                var ahora = new Date();
+                window.POSState.setFechaVenta(ahora);
+                $("#fechaVenta").val(fechaVentaLocalPOS(ahora));
+                $("#fechaVentaEditable").val(fechaVentaLocalPOS(ahora).slice(0, 16));
+                $("#fechaVentaEditableWrap").addClass("d-none");
+                $("#fechaHoraPOSWrap").removeClass("d-none");
+
+                // 4) Producto en pantalla y carrito pintado vacio (total, resumen, comentario, expendios).
+                $("#inputCodigo").val("");
+                posProduct.showWaiting();
+                window.POSDraftRefrescarUI();
+
+                // 5) Forma de pago (Finalizar habilitado, sin preseleccion; la vuelve a ofrecer si hay precios por forma de pago)
+                //    y aviso de salida de la pestaña otra vez activo.
+                window.reiniciarFormaPagoParaNuevaVenta?.();
+                window.__pvbFacturaResultado = null;
+                window.activarAvisoSalidaPOS?.();
+                setTimeout(function () { posKeyboard.focusCodigo(); }, 50);
+            }
+
+            // Lo usa tambien forma-pago.js al terminar «Cancelar Venta» (sale por la misma puerta que una venta cobrada).
+            window.POSNuevaVenta = {
+                hayCargasEnCurso: hayCargasEnCursoPOS,
+                reiniciarSinRecargar: reiniciarVentaSinRecargar
+            };
+
+            var pvbReiniciandoSinRecargar = false;
+
             function pvbContinuarNuevaVenta() {
+                // Con una compra o carga minimizada: se cierra el post-venta y, ya cerrado (para no apilarlo con el modal de forma de
+                // pago que puede abrirse despues), se limpia la venta en el lugar. Sin recargar: la pestaña duplicada tampoco se cierra.
+                if (hayCargasEnCursoPOS()) {
+                    if (pvbReiniciandoSinRecargar) return;
+                    pvbReiniciandoSinRecargar = true;
+                    var $postVenta = $("#modalPostVentaBasico");
+                    var seguir = function () {
+                        pvbReiniciandoSinRecargar = false;
+                        reiniciarVentaSinRecargar();
+                    };
+                    if ($postVenta.hasClass("show")) {
+                        $postVenta.one("hidden.bs.modal", seguir);
+                        $postVenta.modal("hide");
+                    } else {
+                        seguir();
+                    }
+                    return;
+                }
+
                 $("#modalPostVentaBasico").modal("hide");
                 // Si esta es la pestaña "duplicado" (Duplicar POS, batch 7 iteracion 4): marca
                 // el flag para que, tras el reload, pos-multi-instance.js la cierre y devuelva
