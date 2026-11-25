@@ -5,7 +5,7 @@ rol: admin
 modulo: Reportes
 orden: 1
 permiso: un permiso por tipo de reporte (Reporte.StockActual, CierreStock, StockRetroactivo, ProyeccionVentasVsStock, VentasPorProducto, BalanceEconomico; sin ninguno se muestra "Acceso denegado")
-revisada: 2026-11-24
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Consultar **stock, ventas y balance** de una, varias o todas las sucursales. Se elige el **tipo de reporte**, las **fechas** y las **sucursales**, y se toca **Buscar**.
@@ -22,7 +22,10 @@ El selector muestra **solo los tipos que tu usuario tiene permitidos** (cada uno
 
 ## Filtros y barra de botones
 - En la **computadora** (pantalla de 1200 px o más) todos los filtros van en **una sola fila**: **Tipo de reporte**, **Fecha desde**, **Fecha hasta**, **Sucursales**, el interruptor **Filtros avanzados** y **Buscar**. Los filtros avanzados, la opción de ventas en cuenta corriente del Balance y los *Períodos comparativos* aparecen debajo, a todo el ancho. En pantallas más angostas se ven apilados.
+- En una **ventana angosta con mouse** (de 768 a 1199 px: ventana achicada, ventana independiente, notebook con Windows al 125 %) los filtros también van en **una sola fila compacta** (unos 70 px de alto en vez de unos 300); si la ventana es muy angosta, **Filtros avanzados** y **Buscar** bajan solos a un segundo renglón. En el celular y la tablet siguen apilados.
 - **Filtros plegados en pantalla angosta** (menos de 1200 px: ventana achicada, notebook con Windows al 125 %, celular): después de tocar **Buscar**, los filtros se **pliegan a una sola línea** para que la tabla tenga más lugar. La línea resume lo buscado (*Cierre Stock · 19/10 07:35 → 26/10 07:30 · San Martín*) y, si los hay, cuántos **filtros avanzados** y **períodos comparativos** están puestos. Tocá la línea o **Filtros** para abrirlos; **Buscar** repite la consulta. Con los filtros abiertos, **Ocultar filtros** los vuelve a plegar; si cambiaste algo sin buscar, la línea muestra *⚠ sin aplicar*. Al entrar a la pantalla (sin búsqueda) se ven abiertos. En la computadora con pantalla ancha no se pliegan: ya van en una fila.
+- El **contenido de los filtros** (tipo de reporte, fechas, sucursales) se ve en **negro fuerte y un poco más grueso**; **Fecha hasta**, cuando no se puede editar, queda en casi negro sobre fondo gris. En modo oscuro el texto pasa a blanco.
+- Las tablas de **Stock, Ventas por Producto y Proyección** llevan **franjas alternadas muy suaves** (una fila sí, otra no) para seguir la línea de cada producto, y la fila bajo el mouse se resalta en azul con una línea fina arriba y abajo. Las franjas se rehacen al **filtrar** y al **ordenar**. El **Balance Económico** no las lleva, y **Stock con varias sucursales** conserva su color alternado por producto.
 - Debajo de los filtros hay **una barra**: a la izquierda el interruptor **Mostrar totales** y la cantidad de registros visibles; en el medio, el aviso *Cambiaste los filtros: tocá Buscar para actualizar.* (con **Buscar** en ámbar) cuando tocás un filtro y todavía no buscaste; a la derecha **Exportar a Excel** y **Abrir en ventana**.
 - **Mostrar totales** despliega los totales como **etiquetas de una línea**, en un renglón debajo de la barra (en el celular siguen siendo tarjetas). Arrancan ocultos.
 

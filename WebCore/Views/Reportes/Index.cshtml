@@ -1179,9 +1179,42 @@
         background-color: color-mix(in srgb, var(--ui-surface, #ffffff) 90%, var(--ui-primary, #2d5b8f) 10%);
     }
 
-    body.app-shell #tablaReporteStockActual tbody tr.grupo-stock-b:hover > td,
-    body.app-shell #tablaReporteStockActual tbody tr.grupo-stock-a:hover > td {
-        background-color: var(--ui-table-hover, #f8fafb);
+    /* Franjas alternadas y fila bajo el mouse (2026-11-25, docs/DECISIONS.md (e)). Tablas de Stock, Ventas por Producto y Proyeccion;
+       el Balance no (sus filas son secciones, no registros). "fila-franja" la pone reportes.js (repaintStripes) sobre una de cada dos
+       filas visibles. Stock con varias sucursales usa los grupos de arriba (grupo-stock-a/b) y no recibe franjas por fila; el hover
+       tambien reemplaza al que tenian esos grupos. La primera columna es sticky con fondo propio (ui-refresh.css): hay que pintarla
+       igual, y conserva su sombra del borde derecho. Los colores con significado (Faltante, Estado) van en celdas con su propia clase
+       y no se tocan. */
+    .reportes-page {
+        --reportes-franja: #f3f6fa;
+        --reportes-fila-hover: #d6e6fb;
+        --reportes-fila-hover-linea: #9ec1ee;
+    }
+
+    html.dark-mode .reportes-page,
+    body.app-shell.dark-mode .reportes-page {
+        --reportes-franja: var(--ui-surface-alt, #1d293a);
+        --reportes-fila-hover: #26435f;
+        --reportes-fila-hover-linea: #4a6f98;
+    }
+
+    body.app-shell :is(#tablaReporteStockActual, #tablaReporteVentasProducto, #tablaReporteProyeccionVentasStock) tbody tr.fila-franja > td {
+        background-color: var(--reportes-franja);
+    }
+
+    body.app-shell :is(#tablaReporteStockActual, #tablaReporteVentasProducto, #tablaReporteProyeccionVentasStock) tbody tr:is(.reporte-stock-row, .reporte-ventas-row, .reporte-proyeccion-row):hover > td {
+        background-color: var(--reportes-fila-hover);
+    }
+
+    /* La linea arriba/abajo va en box-shadow, que tambien usa la barra de las celdas Faltante (roja/ambar/verde) y Stock Cierre (azul) de
+       Cierre Stock (inset 3px a la izquierda, mas abajo en esta hoja): esas celdas quedan afuera para no perder la barra; su tinte
+       (background-image) ya se mezcla con el fondo del hover. */
+    body.app-shell :is(#tablaReporteStockActual, #tablaReporteVentasProducto, #tablaReporteProyeccionVentasStock) tbody tr:is(.reporte-stock-row, .reporte-ventas-row, .reporte-proyeccion-row):hover > td:not(.reporte-col-faltante, .reporte-col-stockcierre, :first-child) {
+        box-shadow: inset 0 1px 0 var(--reportes-fila-hover-linea), inset 0 -1px 0 var(--reportes-fila-hover-linea);
+    }
+
+    body.app-shell :is(#tablaReporteStockActual, #tablaReporteVentasProducto, #tablaReporteProyeccionVentasStock) tbody tr:is(.reporte-stock-row, .reporte-ventas-row, .reporte-proyeccion-row):hover > td:first-child {
+        box-shadow: inset -1px 0 0 var(--ui-border-strong), inset 0 1px 0 var(--reportes-fila-hover-linea), inset 0 -1px 0 var(--reportes-fila-hover-linea);
     }
 
     body.app-shell #tablaReporteStockActual tbody tr.corte-stock > td {
@@ -2487,6 +2520,30 @@
         --fc-cols: minmax(10rem, 1.15fr) minmax(10.5rem, 1fr) minmax(12.5rem, 1fr) minmax(7rem, 1fr) 9.5rem 6.2rem;
     }
 
+    /* Contenido de los filtros principales (Tipo de reporte, fechas, Sucursales) en negro fuerte y peso 500 (pedido 2026-11-25, opcion B).
+       Antes heredaba --ui-text (#1f2937) y, en "Fecha hasta" de solo lectura, --ui-text-muted (#7a838d), que se leia apagado.
+       "body.app-shell" + 4 clases: gana a "body.app-shell .form-control[readonly]" de ui-refresh.css. Solo los campos de texto/lista:
+       los checkboxes del desplegable de sucursales no llevan este estilo. En modo oscuro pasa a casi blanco (negro no se veria). */
+    .reportes-top .reportes-filtros-card {
+        --reportes-filtro-texto: #000;
+        --reportes-filtro-texto-solo-lectura: #1a1a1a;
+    }
+
+    html.dark-mode .reportes-top .reportes-filtros-card {
+        --reportes-filtro-texto: #ffffff;
+        --reportes-filtro-texto-solo-lectura: #f1f5ff;
+    }
+
+    body.app-shell .reportes-top .reportes-filtros-card :is(input.filtro-principal:not([type="checkbox"]), select.filtro-principal),
+    body.app-shell .reportes-top .reportes-filtros-card .ui-multiselect-toggle {
+        color: var(--reportes-filtro-texto);
+        font-weight: 500;
+    }
+
+    body.app-shell .reportes-top .reportes-filtros-card :is(input.filtro-principal, select.filtro-principal):is([readonly], :disabled) {
+        color: var(--reportes-filtro-texto-solo-lectura);
+    }
+
     /* "N registros visibles" separado del interruptor (el margen del switch lo pisaba ui-refresh.css). */
     body.app-shell .reportes-vista .reportes-registros {
         margin-left: 1rem;
@@ -2526,6 +2583,78 @@
         }
 
         body.app-shell .reportes-top .fc-card #btnBuscarReporte {
+            white-space: nowrap;
+        }
+    }
+
+    /* ---- Filtros en una fila en escritorio angosto (2026-11-25, docs/DECISIONS.md (d)) ----
+       Ventana de 768 a 1199 px con mouse (hover + pointer fine; el celular y la tablet NO entran): los filtros ya no van en 2 columnas
+       de campos altos (~300 px) sino en UNA fila compacta (~70 px) como en >= 1200 px, con flex-wrap en vez de grilla de columnas fijas:
+       si no entran (ventana muy angosta) Filtros avanzados / Ocultar filtros / Buscar bajan solos a un segundo renglon, sin cortarse.
+       No cambia ningun id ni el JS. Lo que ya hace este rango sigue igual: el plegado de filtros tras Buscar (.reportes-filtros-plegados),
+       el aviso amarillo de filtros pendientes (en >= 1200 se reemplaza por la barra) y el panel de filtros avanzados a todo el ancho. */
+    @@media (min-width: 768px) and (max-width: 1199.98px) and (hover: hover) and (pointer: fine) {
+        body.app-shell .reportes-top .fc-card .card-body {
+            padding: .5rem .65rem;
+        }
+
+        body.app-shell .reportes-top .fc-grid {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: .5rem;
+            font-size: .84rem;
+        }
+
+        /* Las filas de la version angosta se disuelven: sus campos son items de la fila unica. */
+        body.app-shell .reportes-top .fc-fila {
+            display: contents;
+        }
+
+        /* Anchos base de cada campo (los mismos que la fila de >= 1200 px); crecen para repartirse el renglon. */
+        body.app-shell .reportes-top .fc-c1 { flex: 1 1 7rem; min-width: 0; }
+        body.app-shell .reportes-top .fc-c2 { flex: 1 1 9.8rem; min-width: 0; }
+        body.app-shell .reportes-top .fc-c3 { flex: 1 1 11.2rem; min-width: 0; }
+        body.app-shell .reportes-top .fc-c4 { flex: 1.4 1 7.5rem; min-width: 0; }
+        body.app-shell .reportes-top .fc-c5 { flex: 0 0 auto; min-width: 0; margin-right: auto; }
+        body.app-shell .reportes-top .fc-c6 { flex: 0 0 5rem; min-width: 0; }
+
+        /* Panel de filtros avanzados: los campos se acomodan en un renglon (antes 2 columnas, hasta 3 renglones de campos altos). */
+        body.app-shell .reportes-top .reportes-filtros-secundarios {
+            grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+            gap: .5rem;
+        }
+
+        /* Los avisos y paneles de ancho completo ocupan su propio renglon. */
+        body.app-shell .reportes-top .fc-alerta,
+        body.app-shell .reportes-top .reportes-fc-ancho {
+            flex: 0 0 100%;
+        }
+
+        body.app-shell .reportes-top .fc-card .form-group > label {
+            font-size: .68rem;
+            margin-bottom: .12rem;
+        }
+
+        /* Misma altura para campos y botones (el partial no trae los labels &nbsp; en este rango: los items se alinean por abajo). */
+        body.app-shell .reportes-top .fc-card .form-control,
+        body.app-shell .reportes-top .fc-card .btn {
+            height: 1.95rem;
+            min-height: 1.95rem;
+            font-size: .84rem;
+            padding: .15rem .5rem;
+            border-radius: .5rem;
+            line-height: 1.2;
+        }
+
+        body.app-shell .reportes-top .fc-card .custom-switch {
+            padding-top: .27rem !important;
+        }
+
+        /* "Ocultar filtros" (si hay una busqueda hecha) queda pegado a Buscar, a la derecha: el margin-right:auto de Filtros avanzados
+           (fc-c5) empuja a los dos al borde cuando bajan a un segundo renglon. Pisa los ms-auto/ml-auto del partial (!important). */
+        body.app-shell .reportes-top .btn-plegar-filtros {
+            margin-left: 0 !important;
             white-space: nowrap;
         }
     }

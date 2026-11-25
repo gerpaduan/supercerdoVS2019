@@ -916,6 +916,25 @@
             }
         }
 
+        // Franjas alternadas (2026-11-25, docs/DECISIONS.md (e)): una de cada dos filas VISIBLES lleva "fila-franja" (el CSS le da el
+        // fondo suave). Se calcula por JS y no con :nth-child porque las filas filtradas (d-none) siguen contando en :nth-child y
+        // romperian la alternancia; se rehace despues de filtrar y de ordenar. Stock con varias sucursales NO lleva franjas por fila:
+        // ya agrupa por producto con color alternado (repaintStockGroups).
+        function repaintStripes($rows) {
+            var impar = false;
+            $rows.each(function () {
+                var $row = $(this);
+                $row.removeClass("fila-franja");
+
+                if ($row.hasClass("d-none")) {
+                    return;
+                }
+
+                impar = !impar;
+                $row.toggleClass("fila-franja", !impar);
+            });
+        }
+
         function applyLiveFilters() {
             var text = ($.trim($("#busquedaProductoReporte").val() || "")).toUpperCase();
             var tipo = ($.trim($("#tipoProductoReporte").val() || "")).toUpperCase();
@@ -940,6 +959,9 @@
 
                 updateVisibleTotalsStock();
                 repaintStockGroups();
+                if (!config.usaCierresPorSucursal) {
+                    repaintStripes($rowsStock);
+                }
             }
 
             if ($rowsVentas.length) {
@@ -958,6 +980,7 @@
                 });
 
                 updateVisibleTotalsVentas();
+                repaintStripes($rowsVentas);
             }
 
             if ($rowsProyeccion.length) {
@@ -975,6 +998,7 @@
                 });
 
                 updateVisibleTotalsProyeccion();
+                repaintStripes($rowsProyeccion);
             }
         }
 

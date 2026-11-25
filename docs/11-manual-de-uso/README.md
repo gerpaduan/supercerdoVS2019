@@ -95,7 +95,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Titulares de facturación | Facturación | `pantallas/TitularesFiscales.Index.md` | 2026-10-12 |
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
 | pantallas | Parámetros | Mi empresa | `pantallas/Parametros.Index.md` | 2026-11-10 |
-| pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-11-24 |
+| pantallas | Reportes | Reportes | `pantallas/Reportes.Index.md` | 2026-11-25 |
 | pantallas | Existencia por sucursales | Stock | `pantallas/Stock.ExistenciaPorSucursales.md` | 2026-11-20 |
 | pantallas | Modificar pedido | Stock | `pantallas/Pedidos.Editar.md` | 2026-10-20 |
 | pantallas | Pedido (detalle) | Stock | `pantallas/Pedidos.Detalle.md` | 2026-10-20 |

@@ -1,5 +1,25 @@
 # Bitacora de cambios
 
+## 2026-11-25 - Reportes: franjas alternadas y fila resaltada en las tablas
+
+- **Cambio:** las tablas de Stock, Ventas por Producto y Proyección alternan un fondo suave por fila (se rehace al filtrar y ordenar) y resaltan en azul la fila bajo el mouse; con variante en modo oscuro. Balance y Stock con varias sucursales quedan como estaban. Detalle: `docs/DECISIONS.md` (2026-11-25 (e)).
+- **Archivos:** `WebCore/Views/Reportes/Index.cshtml` (estilos), `WebCore/wwwroot/Scripts/app/reportes.js` (`repaintStripes`); manual `Reportes.Index.md`.
+- **Verificado** (navegador integrado): Stock Actual (franja, hover, filtrar y ordenar mantienen la alternancia, modo oscuro), Ventas por Producto, Proyección y Cierre Stock; en Cierre Stock el hover conserva las barras de color de «Stock Cierre» y «Faltante» (primera versión las pisaba); Stock con 2 sucursales sigue con sus grupos, sin franjas por fila.
+- **Pendiente:** Ventas por Producto con el gráfico de una fila abierto; verlo en tu Chrome.
+
+## 2026-11-25 - Reportes: filtros en una fila compacta en ventana angosta
+
+- **Cambio:** en ventanas de 768 a 1199 px con mouse, los filtros de Reportes ocupan una fila (~70 px) en vez de dos columnas de campos altos (~300 px); si no entran, Filtros avanzados y Buscar bajan a un segundo renglón. Detalle: `docs/DECISIONS.md` (2026-11-25 (d)).
+- **Archivos:** `WebCore/Views/Reportes/Index.cshtml` (bloque de estilos); manual `Reportes.Index.md`.
+- **Verificado** (navegador integrado, ventana independiente): a 1060 px una fila de 67 px (con «Ocultar filtros» y con el panel avanzado en un renglón); a 900 y 800 px dos renglones de 106 px, sin cortes ni scroll horizontal; tras Buscar se pliega como antes.
+- **Pendiente:** verlo en tu Chrome real y en modo oscuro.
+
+## 2026-11-25 - Reportes: el contenido de los filtros se ve en negro fuerte
+
+- **Cambio:** Tipo de reporte, Fecha desde, Fecha hasta y Sucursales (y los demás campos de la tarjeta de filtros) pasan a negro `#000` con peso 500; «Fecha hasta» de solo lectura, a `#1a1a1a` (antes gris `#7a838d`). En modo oscuro, blanco. Detalle: `docs/DECISIONS.md` (2026-11-25 (c)).
+- **Archivos:** `WebCore/Views/Reportes/Index.cshtml` (bloque de estilos); manual `Reportes.Index.md`.
+- **Pendiente:** verlo en el navegador (claro y oscuro, ventana angosta).
+
 ## 2026-11-24 - Ventana independiente: si arrancó en el listado, al guardar vuelve al listado
 
 - **Cambio:** en Elaborados, Movimientos y Stock, una ventana independiente que se abrió en el listado (menú lateral, clic derecho, rueda o app instalada) ya no se cierra al guardar: vuelve al listado. La que se abrió directo en el formulario (botón ↗ del editor) se sigue cerrando. Detalle: `docs/DECISIONS.md` (2026-11-24 (n)).

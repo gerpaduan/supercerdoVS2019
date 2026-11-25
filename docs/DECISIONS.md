@@ -1,3 +1,22 @@
+## 2026-11-25 (e) - Reportes: franjas alternadas por JS y hover marcado en las tablas de registros
+
+- **Decisión:** `repaintStripes` (`reportes.js`) pone `fila-franja` a una de cada dos filas visibles de Stock, Ventas por Producto y Proyección, y se llama al final de `applyLiveFilters` (inicio, filtro, orden). El CSS (`Reportes/Index.cshtml`, variables `--reportes-franja*`/`--reportes-fila-hover*`, con variante oscura) pinta la franja y un hover azul con línea arriba/abajo, incluida la primera columna sticky. Pedido del usuario, opción aprobada con mockup.
+- **Alternativa descartada:** `:nth-child(even)` / `.table-striped`: las filas filtradas siguen en `d-none` y siguen contando, así que la alternancia se rompe al filtrar; tampoco ve el orden por JS.
+- **Excepciones:** Balance Económico (filas de sección, no de registro) y Stock con varias sucursales (ya agrupa con `grupo-stock-a/b`; su hover viejo se reemplazó por el nuevo).
+
+## 2026-11-25 (d) - Reportes: filtros en una fila compacta en escritorio angosto (768-1199 px)
+
+- **Decisión:** en 768-1199 px con `hover: hover` y `pointer: fine`, `.fc-grid` de Reportes pasa a `flex-wrap` de una fila (campos 1.95rem, labels .68rem) en vez de las 2 columnas de campos altos (~300 px → ~70 px). Bloque propio en `Reportes/Index.cshtml`; no cambia ids ni JS. Pedido del usuario, mockup aprobado.
+- **Alternativa descartada:** sumar `.fc-angosto` al `.fc-top` (como Movimientos/Stock): ese bloque no se verificó con la estructura de Reportes (ver `_FiltrosCompactosStyles`). También se descartó la grilla de columnas fijas de >= 1200 px: con "Ocultar filtros" visible no entra a ~1000 px.
+- **Umbral:** 768 px (no 900 como se habló): con flex-wrap no hace falta un mínimo mayor; debajo de ~900 px baja a 2 renglones.
+- **Sin cambios:** el plegado tras Buscar, el aviso amarillo de filtros pendientes y el panel de filtros avanzados.
+
+## 2026-11-25 (c) - Reportes: texto de los filtros en negro fuerte, solo en esa pantalla
+
+- **Decisión:** los campos `.filtro-principal` de la tarjeta de filtros de Reportes usan `color: #000` y `font-weight: 500` (variables `--reportes-filtro-texto*` en el `<style>` de `Reportes/Index.cshtml`); solo-lectura `#1a1a1a`; modo oscuro `#ffffff` / `#f1f5ff`. Pedido del usuario, elegida la opción B de un mockup (la A era `#000` sin cambiar el grosor).
+- **Alternativa descartada:** cambiar `--ui-text` en `ui-refresh.css` (`#1f2937`): afectaría a toda la app, y el pedido era solo Reportes.
+- **Efecto lateral aceptado:** también toma el estilo la lista de agrupación temporal y las fechas de períodos comparativos, que comparten la clase.
+
 ## 2026-11-24 (n) - Ventana independiente: si arrancó en el listado, al guardar vuelve al listado (no se cierra)
 
 - **Pedido:** «abro Elaborados en ventana independiente, pongo Nuevo elaborado y al guardarlo se cierra toda la ventana. Si la abrí desde el Index, que vuelva al Index» (también Movimientos y Stock).
