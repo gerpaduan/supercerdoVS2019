@@ -48,7 +48,7 @@
        totales, estado y "Ver detalles"; por debajo de 1200 px conserva el orden de siempre. Las pestañas quedan fuera
        (las comparten todas las pantallas de Elaborados). Estilos en Shared/_FiltrosCompactosStyles. *@
     <div class="fc-top fc-angosto elaborados-top">
-    <div class="card shadow-sm mb-3 elaborados-filtros-card fc-card">
+    <div class="card shadow-sm mb-3 elaborados-filtros-card fc-card" data-filtros-celular>
         <div class="card-body">
             <form method="get" action="@Url.Action("Index", "Elaborados")" id="formFiltrosElaborados">
                 <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3 fc-alerta" role="alert">
@@ -353,3 +353,5 @@
     <script src="@Url.Content("~/Scripts/app/formula-secreta.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados.js")" asp-append-version="true"></script>
 }
+
+@Html.Partial("~/Views/Shared/_FiltrosCelular.cshtml")

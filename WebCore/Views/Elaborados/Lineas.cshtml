@@ -30,7 +30,7 @@
     @* Bloque superior: en escritorio (>= 1200 px) los filtros van en una sola fila y debajo una barra con totales, aviso de
        anuladas y "Solo ingredientes"; por debajo de 1200 px conserva el orden de siempre. Estilos en Shared/_FiltrosCompactosStyles. *@
     <div class="fc-top elaborados-top">
-    <div class="card shadow-sm mb-3 elaborados-filtros-card fc-card">
+    <div class="card shadow-sm mb-3 elaborados-filtros-card fc-card" data-filtros-celular>
         <div class="card-body">
             <form method="get" action="@Url.Action("Lineas", "Elaborados")" id="formFiltrosLineasElaborados">
                 <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3 fc-alerta" role="alert">
@@ -115,7 +115,7 @@
     <div class="card shadow-sm elaborados-panel-card">
         <div class="card-body p-0">
             <div class="table-responsive js-sync-scroll-body">
-                <table class="table table-hover mb-0 elaborados-table-compact">
+                <table class="table table-hover mb-0 elaborados-table-compact lineas-cel lineas-cel-elab">
                     <thead class="thead-light">
                         <tr>
                             <th style="width:150px;">Fecha</th>
@@ -395,3 +395,5 @@
     </script>
     <script src="@Url.Content("~/Scripts/app/elaborados.js")" asp-append-version="true"></script>
 }
+
+@Html.Partial("~/Views/Shared/_FiltrosCelular.cshtml")

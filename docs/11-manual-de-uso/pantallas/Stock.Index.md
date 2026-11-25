@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-11-14
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Ver los **movimientos de stock** de un período (ingresos, egresos, cierres, pesajes y ajustes) por sucursal, con el total de kilos, y cargar uno nuevo.
@@ -42,4 +42,6 @@ Ver los **movimientos de stock** de un período (ingresos, egresos, cierres, pes
 - El aviso de fechas sin aplicar sale solo cuando hace falta (y *Buscar* se pone ámbar). En celular y tablet no cambia nada.
 
 ## En el celular
-- En pantallas angostas (celular y tablet) la pantalla se ve como antes: **Ver lineas** y **Ver eliminados** arriba, los cinco botones de acción en un recuadro, filtros apilados y, debajo, el **Total Kg** y **Ver detalles**.
+- En la tablet la pantalla se ve como antes: **Ver lineas** y **Ver eliminados** arriba, los cinco botones de acción en un recuadro, filtros apilados y, debajo, el **Total Kg** y **Ver detalles**.
+- **Celular (desde 2026-11-25):** los cinco botones de acción van en un renglón; debajo la barra de filtros, el **Total Kg** con **Ver detalles**, y **Ver lineas** y **Ver eliminados** como iconos.
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Si cambiás las fechas se abren solos con el aviso.

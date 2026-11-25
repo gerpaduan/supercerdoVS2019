@@ -201,6 +201,7 @@
             enviando: false,    // hay un POST de guardado en vuelo: otro submit se ignora (ver #formMovimiento submit)
             productoTimer: null,
             productoRequestSeq: 0,
+            focoCodigoTimer: null,   // foco a Codigo pendiente (focusCodigo); una busqueda nueva lo cancela
             readOnly: !!config.soloLecturaInicial,
             sortKey: 'ordenIngreso',
             // En el celular arranca en "ultimos primero": lo recien cargado queda arriba, cerca del formulario (2026-10-27,
@@ -840,8 +841,12 @@
             }
         };
 
+        // Foco a Codigo con 30 ms de demora. El temporizador queda guardado para que una busqueda nueva lo cancele (cancelarFocoCodigo): antes
+        // quedaba suelto y, si llegaba tarde, devolvia el cursor a Codigo cuando el Enter ya lo habia llevado a Cant.Un. (2026-11-25).
         function focusCodigo() {
-            setTimeout(function () {
+            cancelarFocoCodigo();
+            state.focoCodigoTimer = setTimeout(function () {
+                state.focoCodigoTimer = null;
                 $codigo.focus();
                 var input = $codigo.get(0);
                 if (input && typeof input.setSelectionRange === 'function') {
@@ -850,6 +855,12 @@
                     try { input.setSelectionRange(end, end); } catch (e) { /* tipo sin seleccion */ }
                 }
             }, 30);
+        }
+
+        // Descarta un foco a Codigo que todavia no se ejecuto.
+        function cancelarFocoCodigo() {
+            window.clearTimeout(state.focoCodigoTimer);
+            state.focoCodigoTimer = null;
         }
 
         function autoResizeObservaciones() {
@@ -1388,9 +1399,15 @@
             return true;
         }
 
+        // Busca el producto del campo Codigo. preserveFocus = busqueda automatica mientras se tipea (debounce del 'input'): NO mueve el foco,
+        // el cursor sigue donde lo tenga el usuario. Antes llamaba a focusCodigo y, si el Enter ya habia lanzado otra busqueda que volvia
+        // rapido y ponia el foco en Cant.Un., ese foco demorado lo devolvia a Codigo (2026-11-25, docs/07-operacion-y-soporte/incidencias-frecuentes.md).
+        // Sin preserveFocus (Enter, buscador, panel de stock) el foco lo decide el callback; si la consulta falla, vuelve a Codigo.
         function buscarPorCodigo(callback, preserveFocus) {
             var codigo = toInt($codigo.val());
             if (!codigo || !config.urlBuscarProductoPorCodigo) return;
+            // Una busqueda nueva manda sobre cualquier foco a Codigo que hubiera quedado pendiente.
+            cancelarFocoCodigo();
             state.productoRequestSeq += 1;
             var requestSeq = state.productoRequestSeq;
             setProductoEstado('Buscando...');
@@ -1400,9 +1417,6 @@
                     if (requestSeq !== state.productoRequestSeq) return;
                     if (resp && resp.ok) {
                         setProducto(resp);
-                        if (preserveFocus) {
-                            focusCodigo();
-                        }
                         if (typeof callback === 'function') callback(true);
                     } else {
                         $productoId.val('');
@@ -1411,7 +1425,6 @@
                         $productoNombre.val('No existe o sin coincidencia');
                         $codigo.val(codigo);
                         if (preserveFocus) {
-                            focusCodigo();
                             if (typeof callback === 'function') callback(false);
                             return;
                         }
@@ -1429,7 +1442,6 @@
                     $productoPromedio.val('');
                     $productoNombre.val('No existe o sin coincidencia');
                     if (preserveFocus) {
-                        focusCodigo();
                         if (typeof callback === 'function') callback(false);
                         return;
                     }

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 4
 permiso: PENDIENTE (no verificado contra el código en esta revisión)
-revisada: 2026-11-02
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Ver los **movimientos de stock con sus líneas** (producto y cantidad de cada ingreso, egreso, cierre, pesaje o ajuste), por sucursal y fechas. Se llega desde [Stock](ayuda:pantalla/Stock.Index) con **Ver lineas**, que lleva los filtros ya aplicados.
@@ -22,3 +22,7 @@ Ver los **movimientos de stock con sus líneas** (producto y cantidad de cada in
 
 ## Resto de la pantalla
 PENDIENTE: documentar permisos, de dónde sale cada total y qué significa *Tipo / signo* (no verificado contra el código en esta revisión).
+
+## En el celular
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Los totales van de a dos.
+- Cada línea se ve como una fila corta (código, producto y cantidad; debajo el resto), sin desplazarse de costado (desde 2026-11-25). Las observaciones vacías no se muestran.

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 1
 permiso: Venta.VerVentas (sin el permiso se muestra "Acceso denegado"; a los usuarios de producción les pide elegir el operador de Ventas antes de entrar)
-revisada: 2026-11-16
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Ver las **ventas de un período**, agrupadas por día, con la cantidad y el total de lo que se está mostrando. Tocando una venta se **despliega** su detalle sin salir de la lista.
@@ -30,3 +30,7 @@ Ver las **ventas de un período**, agrupadas por día, con la cantidad y el tota
 
 ## Notas
 - PENDIENTE: no se verificó en esta revisión qué permiso muestra la entrada de esta pantalla en el menú.
+
+## En el celular
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Las fechas van una debajo de otra.
+- Cada venta ocupa dos renglones: comprobante, forma de pago y cliente; abajo la caja y el id. El importe y la hora quedan a la derecha (desde 2026-11-25).

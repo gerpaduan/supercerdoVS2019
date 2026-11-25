@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-11-13
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Listado de los **elaborados registrados** (por sucursal y fechas) con el total de kilos, la cantidad de elaborados mostrados y un detalle desplegable de cada uno.
@@ -45,3 +45,5 @@ PENDIENTE: documentar la vista completa y las acciones de fila (no verificado co
   - **Fecha**, **Sucursal**, el **nombre del elaborado** (el código queda en gris, más chico) y la **Cantidad** se ven en negrita.
   - **Detalles** abre arriba una franja con el número de registro, el estado (si está anulado), la sucursal, la receta, quién lo creó y, si se cambió, quién lo modificó; las observaciones salen en un recuadro amarillo.
   - Debajo, los ingredientes con *Cód.* (15 caracteres), *Ingrediente utilizado* (25), *Kgs* (8) y el icono de **balanza**; al pie, el **Total** de los kilos (no aparece con la fórmula secreta oculta, porque sería parcial).
+- **Celular (desde 2026-11-25):** las pestañas van en un renglón que se desliza; las tarjetas de totales quedan en línea.
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Si cambiás las fechas se abren solos con el aviso.

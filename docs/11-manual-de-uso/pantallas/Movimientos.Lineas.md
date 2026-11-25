@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 3
 permiso: PENDIENTE (no se revisó el permiso exacto para entrar)
-revisada: 2026-11-13
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Ver **cada movimiento entre sucursales con sus líneas** (producto, cantidad, unidades y si se pesó en balanza), con una tarjeta por movimiento, de un período. Se llega desde [Movimientos](ayuda:pantalla/Movimientos.Index) con **Ver lineas**, que lleva las sucursales y fechas ya aplicadas.
@@ -35,3 +35,7 @@ Cuatro tarjetas: **Total Kg**, **Total unidades**, **Cantidad de líneas** y **C
 ## Verificado y pendiente
 - Verificado el 2026-11-11 con un usuario de prueba en la base local: sin subtítulo, botón *Volver* chico, columna *Balanza*, cambio entre las dos vistas, orden por cantidad, filtro en vivo por producto y totales.
 - PENDIENTE: no se probó con una línea cargada en balanza (los datos de prueba no tenían ninguna), en modo oscuro ni en celular.
+
+## En el celular
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Los totales van de a dos.
+- Cada línea se ve como una fila corta (código, producto y cantidad; debajo el resto), sin desplazarse de costado (desde 2026-11-25). Las observaciones vacías no se muestran.

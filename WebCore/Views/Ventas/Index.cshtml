@@ -25,7 +25,7 @@
     </div>
 
     <!-- Filtro por fechas, sucursal y búsqueda rápida -->
-    <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
+    <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card" data-filtros-celular>
         <form id="formFiltroFechas" method="get" action="@Url.Action("Index")" class="w-100">
             <div class="filtros-ventas-stack">
                 <div id="alertaFiltrosPendientesVentas" class="alert alert-warning d-none mb-0" role="alert">
@@ -270,3 +270,5 @@
 @Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "ventas")
 @* Tarjetas expandibles: tocar una venta despliega su detalle en el lugar (docs/DECISIONS.md, 2026-10-28). *@
 <partial name="_VentasExpandible" />
+
+@Html.Partial("~/Views/Shared/_FiltrosCelular.cshtml")

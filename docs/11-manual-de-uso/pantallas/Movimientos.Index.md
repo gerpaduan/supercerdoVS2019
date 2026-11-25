@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 1
 permiso: PENDIENTE
-revisada: 2026-11-13
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Ver los **movimientos de mercadería entre sucursales** de un período (origen, destino, totales) y abrir el detalle de cada uno.
@@ -38,4 +38,7 @@ Columnas: *Fecha movimiento*, *Origen*, *De origen* y *Estado* (solo donde corre
 - En celular y tablet (pantalla táctil) no cambia nada: se ve como en la sección siguiente.
 
 ## En el celular
-- En pantallas angostas (celular y tablet) la pantalla se ve como antes: botones arriba, filtros apilados y el estado (*Resultados actualizados.*) debajo del recuadro de filtros. Cada movimiento se ve como **tarjeta**: la fecha arriba (con el número de movimiento) y **Ver**, **Imprimir** y **Detalle** al pie.
+- En la tablet la pantalla se ve como antes: botones arriba, filtros apilados y el estado (*Resultados actualizados.*) debajo del recuadro de filtros.
+- **Celular (desde 2026-11-25):** **Nuevo movimiento** ocupa el renglón y **Ver lineas** y **Ver eliminados** son iconos.
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Si cambiás las fechas se abren solos con el aviso.
+- Cada movimiento se ve como **tarjeta**: la fecha arriba (con el número de movimiento) y **Ver**, **Imprimir** y **Detalle** al pie.

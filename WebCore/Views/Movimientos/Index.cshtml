@@ -26,7 +26,7 @@
         }
     </div>
 
-    <div class="card shadow-sm mb-3 movimientos-filtros-card fc-card">
+    <div class="card shadow-sm mb-3 movimientos-filtros-card fc-card" data-filtros-celular>
         <div class="card-body">
             <form method="get">
                 <div class="movimientos-filtros-stack fc-grid">
@@ -601,3 +601,5 @@
     <script src="@Url.Content("~/Scripts/app/movimientos.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js")" asp-append-version="true"></script>
 }
+
+@Html.Partial("~/Views/Shared/_FiltrosCelular.cshtml")

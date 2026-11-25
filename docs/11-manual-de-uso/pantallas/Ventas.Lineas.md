@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 3
 permiso: PENDIENTE (la acción no valida un permiso propio; a los usuarios de producción les pide elegir el operador de Ventas antes de entrar)
-revisada: 2026-10-14
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Ver **cada venta con sus líneas** (producto, cantidad en kilos, precio y total de cada línea) de un período, con una tarjeta por venta. Sirve para revisar qué se vendió producto por producto y para **exportarlo a PDF o Excel**.
@@ -73,3 +73,7 @@ Reglas:
 
 ## Notas
 - PENDIENTE: qué permiso o rol muestra la entrada de esta pantalla en el menú (no verificado contra el código en esta revisión).
+
+## En el celular
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Los totales van de a dos.
+- Cada línea se ve como una fila corta (código, producto y cantidad; debajo el resto), sin desplazarse de costado (desde 2026-11-25).

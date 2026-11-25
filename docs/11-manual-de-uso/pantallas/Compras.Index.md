@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 1
 permiso: Compra.VerCompras (sin el permiso se muestra "Acceso denegado"; a los usuarios de producción les pide elegir el operador de Compras antes de entrar)
-revisada: 2026-11-09
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Ver las **compras de un período** (proveedor, tipo, cantidad, total, sucursal) y abrir el detalle de cada una.
@@ -33,7 +33,9 @@ Ver las **compras de un período** (proveedor, tipo, cantidad, total, sucursal) 
 - Al pie de la tarjeta están **Detalle** (abre debajo de la tarjeta el detalle de la compra) y **Ver compra**. Las compras anuladas se ven con la tarjeta en rojo.
 - Arriba a la derecha de la tarjeta, en gris, va el **número de compra**.
 - **Detalle** en el celular: no se muestra el recuadro de datos del registro (lo principal ya está en la tarjeta). Arriba de las líneas aparecen las **observaciones** (si hay) y la etiqueta **Cta. cte.** si la compra va a cuenta corriente. Cada línea muestra el producto y la cantidad arriba, y abajo el código, la **hora** en que se cargó y el icono de **balanza** (azul = pesada en balanza, gris = no). Si la línea se cargó **otro día** que la compra, en vez de la hora sale la fecha y hora en ámbar.
-- En la tablet y el celular la pantalla se ve como antes: filtros apilados, con el estado (*Resultados actualizados.*) debajo del recuadro de filtros.
+- En la tablet la pantalla se ve como antes: filtros apilados, con el estado (*Resultados actualizados.*) debajo del recuadro de filtros.
+- **Celular (desde 2026-11-25):** **Nueva compra** ocupa el renglón, **Ver lineas** y **Ver eliminados** son iconos y los totales van en línea.
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Si cambiás las fechas se abren solos con el aviso.
 
 ## Facturas del proveedor y titular (desde 2026-11-09; solo bases Postgres)
 - **Factura** (filtro): *Todas*, *Pendiente* (la bandeja de facturas que faltan cargar), *Facturada*, *No lleva factura* y *Sin dato (anteriores)* (compras cargadas antes de esta función: no se llenan de pendientes). Se recarga sola al cambiarlo.

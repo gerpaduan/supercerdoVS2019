@@ -119,7 +119,11 @@ El botón con el icono ↗ (arriba a la derecha, antes de *Pantalla completa*; s
 - **Orden:** en el celular arranca con **lo último cargado arriba**. Con el selector de la derecha se puede cambiar (primeros primero, código, producto, cantidad). En la computadora se ordena tocando los encabezados, como siempre.
 - El orden en que se ven las líneas **no cambia el orden en que se guardan**: siempre se guardan en el orden en que se cargaron.
 - El selector de orden y la **lupa de búsqueda** **siguen activos en el modo ver** (cuando los campos y la tabla están bloqueados): solo cambian cómo se ven las líneas.
-- **Botones:** en un **Pesaje**, **Vincular compra** y **Vincular pesajes** van uno al lado del otro. En **Agregar producto**, **Ver acumulados**, **Ver Porc(%)** y **Productos no cargados** (los que corresponden a la acción elegida) se reparten el ancho debajo del título.
+- **Botones:** en un **Pesaje**, **Vincular compra** y **Vincular pesajes** van uno al lado del otro. En **Agregar producto**, **Ver acumulados**, **Ver Porc(%)** y **Productos no cargados** (los que corresponden a la acción elegida) son iconos a la derecha del título (desde 2026-11-25).
+- **Pantalla más baja (desde 2026-11-25):** **Sucursal** y **Acción** van en un renglón (el botón de cambiar la acción es solo el icono) y la **Fecha** debajo. En **Agregar producto**, **Código** y **Producto** van juntos y debajo **Cantidad** y **+**.
+- Junto al título se ve la cantidad de ítems y el total. Debajo aparece en verde el **último producto agregado**, con un lápiz para corregir su cantidad (apagado si es una línea «No contado» o de un pesaje vinculado; en modo ver no aparece).
+- El **Enter** del teclado del teléfono en **Código** busca el producto y en **Cantidad** agrega la línea. Si la balanza no está conectada, en el celular no se muestra el aviso.
+- El resumen de abajo muestra **Total items** y **Total cantidad** lado a lado.
 
 ## Signo de las cantidades según la acción
 Al **cambiar la acción** (botón **Cambiar** junto a la acción) las cantidades **ya cargadas** se ajustan solas, y el sistema avisa con un mensaje verde sobre la tabla cuántas líneas cambiaron:

@@ -1,0 +1,187 @@
+/* Listados y «Ver lineas» en celular (2026-11-25): filtros plegados con barra de resumen (filtros-celular.js, opt-in data-filtros-celular),
+   campos de a dos por renglon y totales en tira. TODO vive en < 768 px: tablet y escritorio no cambian. Lo propio de una pantalla (botones de
+   arriba, tarjetas de filas) va en el <style> de su vista. */
+.fcel-barra { display: none; }
+
+@media (max-width: 767.98px) {
+    .fcel-barra {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        width: 100%;
+        flex: 0 0 100%;
+        margin: 0 0 .45rem;
+        padding: .4rem .6rem;
+        border: 1px solid var(--ui-border, #d1d5db);
+        border-radius: .5rem;
+        background: var(--ui-surface, #fff);
+        color: var(--ui-text, #1f2937);
+        font-size: .82rem;
+        text-align: left;
+    }
+    html.dark-mode .fcel-barra { background: #1f2430; color: #e5e7eb; border-color: #3a4150; }
+    .fcel-barra .fcel-resumen { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fcel-barra[aria-expanded="true"] .fcel-flecha { transform: rotate(180deg); }
+
+    body.app-shell [data-filtros-celular].fcel-activo:not(.fcel-abierto) { display: none !important; }
+
+    /* Tarjeta abierta: compacta y con los campos de a dos. Cada pantalla arma sus filas con alguna de estas clases. */
+    body.app-shell [data-filtros-celular] { margin-bottom: .45rem !important; }
+    body.app-shell [data-filtros-celular].p-3 { padding: .5rem .55rem !important; }
+    body.app-shell [data-filtros-celular] > .card-body { padding: .5rem .55rem !important; }
+    body.app-shell [data-filtros-celular] :is(.fc-grid, .elaborados-filtros-grid, .compras-filtros-row, .filtros-fila, .fc-fila) {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: .35rem .45rem !important;
+        margin: 0 !important;
+        align-items: end;
+    }
+    body.app-shell [data-filtros-celular] :is(.compras-filtros-stack, .filtros-ventas-stack, .movimientos-filtros-stack, .stock-filtros-stack) {
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: .35rem !important;
+    }
+    body.app-shell [data-filtros-celular] :is(.fc-grid, .fc-fila, .compras-filtros-row, .filtros-fila, .elaborados-filtros-grid) { width: 100%; }
+    body.app-shell [data-filtros-celular] button[type="submit"] { width: 100%; }
+    /* Filas anidadas y avisos ocupan todo el ancho de la grilla contenedora. */
+    body.app-shell [data-filtros-celular] :is(.fc-grid, .elaborados-filtros-grid) > :is(.fc-fila, .alert) { grid-column: 1 / -1; }
+    body.app-shell [data-filtros-celular] .form-group { margin: 0 !important; min-width: 0; grid-column: auto !important; }
+    /* El boton de buscar va a lo ancho. */
+    body.app-shell [data-filtros-celular] .form-group:has(> button[type="submit"]) { grid-column: 1 / -1 !important; }
+    body.app-shell [data-filtros-celular] label:not(.custom-control-label):not(.dropdown-item) { font-size: .72rem; margin-bottom: .1rem; }
+    body.app-shell [data-filtros-celular] .form-group:has(> button[type="submit"]) > label { display: none !important; }
+    body.app-shell [data-filtros-celular] :is(.form-control, .btn) { min-height: 2.2rem; height: auto; font-size: .85rem; padding-top: .2rem; padding-bottom: .2rem; }
+    body.app-shell [data-filtros-celular] .row { margin-top: .35rem !important; }
+    body.app-shell [data-filtros-celular] .row > [class*="col-"] { margin-bottom: .3rem !important; }
+
+    /* Un campo que queda solo en el ultimo renglon, o una fecha con hora, ocupan todo el ancho (a media columna se cortan). */
+    body.app-shell [data-filtros-celular] .form-group:last-child:nth-child(odd) { grid-column: 1 / -1 !important; }
+    body.app-shell [data-filtros-celular] .form-group:has(> input[type="datetime-local"]) { grid-column: 1 / -1 !important; }
+    body.app-shell [data-filtros-celular] .filtros-fila-fechas { grid-template-columns: minmax(0, 1fr) !important; }
+
+    /* Totales de «Ver lineas»: tira de dos columnas. */
+    body.app-shell .lineas-resumen-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: .35rem !important; margin-bottom: .5rem !important; }
+    body.app-shell .lineas-resumen-grid .card-body { padding: .3rem .55rem !important; }
+    body.app-shell .lineas-resumen-grid .card-body > * { margin-bottom: 0 !important; }
+
+    /* ---- Cabecera de los listados: botones en un renglon, totales en linea. ---- */
+    body.app-shell :is(.fc-top.fc-angosto, .compras-top) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem .4rem;
+        margin-bottom: .45rem;
+    }
+    body.app-shell :is(.fc-top.fc-angosto, .compras-top) > * { margin-bottom: 0 !important; margin-top: 0 !important; }
+    body.app-shell :is(.fc-top.fc-angosto, .compras-top) > .fcel-barra { order: 2; }
+    body.app-shell :is(.fc-top.fc-angosto, .compras-top) > [data-filtros-celular] { order: 3; flex: 0 0 100%; }
+
+    /* Aviso de permiso de fecha y alertas fuera de la tarjeta conservan todo el ancho. */
+    /* El estado de la busqueda no se muestra: el aviso de fechas pendientes ya aparece dentro de los filtros, que se abren solos. */
+    body.app-shell :is(.fc-top.fc-angosto, .compras-top) > :is(.fc-estado, .compras-estado) { display: none !important; }
+
+    /* Botones de arriba: el principal ocupa el ancho; el resto, solo el icono (el texto sigue para lectores de pantalla). */
+    body.app-shell :is(.fc-top.fc-angosto > .fc-acciones, .compras-top > .compras-acciones-header) {
+        order: 1;
+        display: flex;
+        flex: 0 0 100%;
+        flex-wrap: nowrap !important;
+        gap: .35rem !important;
+    }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-acciones, .compras-top > .compras-acciones-header) > .btn { flex: 0 0 auto; width: auto; margin: 0 !important; min-height: 2.3rem; display: flex; align-items: center; justify-content: center; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-acciones, .compras-top > .compras-acciones-header) > .btn-success { flex: 1 1 auto; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-acciones, .compras-top > .compras-acciones-header) > .btn:not(.btn-success) { font-size: 0 !important; width: 2.8rem; padding: .25rem; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-acciones, .compras-top > .compras-acciones-header) > .btn:not(.btn-success) > i { font-size: .95rem; margin: 0 !important; }
+
+    /* Stock: los cinco «Nuevo» en una tira; «Ver lineas» y «Ver eliminados» (solo icono) van en el renglon del total. */
+    body.app-shell .stock-top.fc-angosto > .stock-acciones-card { order: 1; flex: 0 0 100%; border: 0; box-shadow: none !important; background: transparent; }
+    body.app-shell .stock-top.fc-angosto > .stock-acciones-card > .card-body { padding: 0 !important; }
+    body.app-shell .stock-top.fc-angosto .stock-acciones-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: .25rem !important; }
+    body.app-shell .stock-top.fc-angosto .stock-action-btn {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem;
+        min-height: 2.6rem; padding: .25rem .1rem !important; font-size: .7rem !important; line-height: 1.1; white-space: nowrap;
+    }
+    body.app-shell .stock-top.fc-angosto .stock-action-btn > i { font-size: .95rem; margin: 0 !important; }
+    body.app-shell .stock-top.fc-angosto > .fc-contents:not(.stock-acciones-card) { order: 6; display: flex; flex: 0 0 auto; gap: .3rem; margin-left: auto; }
+    body.app-shell .stock-top.fc-angosto .stock-btn-lineas { font-size: 0 !important; width: 2.6rem; min-height: 2.2rem; margin: 0 !important; display: flex; align-items: center; justify-content: center; }
+    body.app-shell .stock-top.fc-angosto .stock-btn-lineas > i { font-size: .95rem; margin: 0 !important; }
+
+    /* Totales como chips de una linea e interruptor de vista al lado. */
+    body.app-shell :is(.fc-top.fc-angosto > .fc-totales, .compras-top > .compras-totales) { order: 5; display: flex; flex-wrap: wrap; gap: .3rem; margin: 0 !important; flex: 0 1 auto; align-items: center; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-totales, .compras-top > .compras-totales) > [class*="col-"] { flex: 0 0 auto; width: auto; max-width: none; padding: 0; margin: 0 !important; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-totales, .compras-top > .compras-totales) > .col-12:not(:has(.card)) { flex: 0 0 100%; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-totales, .compras-top > .compras-totales) .card-body { display: flex; align-items: baseline; gap: .4rem; padding: .25rem .55rem; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-totales, .compras-top > .compras-totales) .card-body > * { margin: 0 !important; white-space: nowrap; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-totales, .compras-top > .compras-totales) .card-body > :first-child { font-size: .62rem; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-totales, .compras-top > .compras-totales) .card-body > :last-child { font-size: .9rem; }
+    body.app-shell .fc-top.fc-angosto .fc-oculto-escritorio { display: none; }
+    body.app-shell :is(.fc-top.fc-angosto > .fc-vista, .compras-top > .compras-vista-completa) { order: 5; margin-left: auto !important; white-space: nowrap; font-size: .8rem; }
+
+    /* Elaborados: las pestanas en un renglon con desplazamiento. */
+    body.app-shell .elaborados-tabs-card { margin-bottom: .45rem !important; }
+    body.app-shell .elaborados-tabs-card > .card-body { padding: .35rem !important; }
+    body.app-shell .elaborados-tabs-card .elaborados-tabs-nav { flex-wrap: nowrap !important; overflow-x: auto; }
+    body.app-shell .elaborados-tabs-card .nav-link { white-space: nowrap; padding: .3rem .6rem; font-size: .82rem; }
+
+    /* Ventas: total y cantidad mas chicos. */
+    body.app-shell .ventas-totales-card h5 { font-size: .95rem; }
+
+    /* Ventas > listado: cada venta en dos renglones (comprobante, forma de pago y cliente; abajo identificacion, caja e id), como ya se ve en
+       «Mis ventas» en modal. Solo CSS: los data-* que leen los filtros en vivo y el markup no cambian. */
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: .5rem; row-gap: 0; padding: .35rem .55rem; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) > .venta-icono { flex: 0 0 1.7rem; width: 1.7rem; margin: 0; text-align: center; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) > .venta-total { flex: 0 0 auto; width: auto; margin: 0; text-align: right; white-space: nowrap; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) > .venta-detalle-panel:not([hidden]) { flex: 0 0 100%; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) > .venta-icono i { font-size: 1.35rem; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) > .venta-info { flex: 1 1 0; display: flex; flex-wrap: wrap; align-content: center; column-gap: .3rem; row-gap: 0; min-width: 0; font-size: .82rem; line-height: 1.25; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) > .venta-info::before { content: ""; order: 2; flex: 0 0 100%; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) .venta-tipo-persona { order: 1; margin: 0; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) .venta-info > .venta-id { order: 3; margin: 0; font-size: .74rem; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) .venta-info > .venta-id + .venta-id::before { content: "· "; }
+    body.app-shell .ventas-card .venta-item:not(.venta-item-modal) .venta-obs { order: 4; flex: 0 0 100%; margin: 0; }
+
+    /* ---- «Ver lineas»: cada linea en una fila corta en vez de una tabla que se desplaza de costado. Las filas ocultas por los filtros en vivo
+       (d-none o display en linea) siguen ocultas: la grilla no usa !important. ---- */
+    body.app-shell .lineas-cel, body.app-shell .lineas-cel > tbody { display: block; width: 100%; }
+    body.app-shell .lineas-cel > thead { display: none; }
+    body.app-shell .lineas-cel > tbody > tr:not(.js-linea-row):not(.d-none) { display: block; }
+    body.app-shell .lineas-cel > tbody > tr:not(.js-linea-row) > td { display: block; }
+    body.app-shell .lineas-cel > tbody > tr.js-linea-row:not(.d-none) {
+        display: grid;
+        grid-template-columns: 2.8rem minmax(0, 1fr) minmax(0, auto);
+        gap: 0 .45rem;
+        padding: .3rem .55rem;
+        border-bottom: 1px solid var(--ui-border, #e5e7eb);
+    }
+    body.app-shell .lineas-cel > tbody > tr.js-linea-row > td { display: block; border: 0; padding: 0; min-width: 0; font-size: .82rem; line-height: 1.3; text-align: left; }
+    body.app-shell .lineas-cel > tbody > tr.js-linea-row > td:empty { display: none; }
+    body.app-shell .lineas-cel > tbody > tr.js-linea-row > td.lineas-sin-dato { display: none; }
+    body.app-shell .lineas-cel > tbody > tr.js-linea-row > td:not(:nth-child(3)):not(:nth-child(n+4)) { text-align: left !important; }
+    body.app-shell :is(.lineas-cel-stock, .lineas-cel-mov) > tbody > tr.js-linea-row > td.text-center:nth-child(4), body.app-shell .lineas-cel-mov > tbody > tr.js-linea-row > td.text-right:nth-child(4) { text-align: left !important; }
+    body.app-shell .lineas-cel > tbody > tr.js-linea-row > td[data-label]::before { content: attr(data-label) " "; color: var(--ui-text-muted, #6c757d); font-size: .72rem; }
+    /* Fila 1: codigo | producto | cantidad. */
+    body.app-shell :is(.lineas-cel-stock, .lineas-cel-mov, .lineas-cel-precio) tr.js-linea-row > td:nth-child(1) { grid-column: 1; grid-row: 1; color: var(--ui-text-muted, #6c757d); }
+    body.app-shell :is(.lineas-cel-stock, .lineas-cel-mov, .lineas-cel-precio) tr.js-linea-row > td:nth-child(2) { grid-column: 2; grid-row: 1; }
+    body.app-shell :is(.lineas-cel-stock, .lineas-cel-mov, .lineas-cel-precio) tr.js-linea-row > td:nth-child(3) { grid-column: 3; grid-row: 1; font-weight: 700; text-align: right; white-space: nowrap; }
+    /* Fila 2 y 3: lo que queda de cada tipo. */
+    body.app-shell .lineas-cel-stock tr.js-linea-row > td:nth-child(4) { grid-column: 2 / 4; grid-row: 2; font-size: .74rem; }
+    body.app-shell .lineas-cel-stock tr.js-linea-row > td:nth-child(5) { grid-column: 2 / 4; grid-row: 3; font-size: .74rem; color: var(--ui-text-muted, #6c757d); }
+    body.app-shell .lineas-cel-mov tr.js-linea-row > td:nth-child(4) { grid-column: 2; grid-row: 2; font-size: .74rem; }
+    body.app-shell .lineas-cel-mov tr.js-linea-row > td:nth-child(5) { grid-column: 3; grid-row: 2; font-size: .74rem; text-align: right; }
+    body.app-shell .lineas-cel-mov tr.js-linea-row > td:nth-child(6) { grid-column: 2 / 4; grid-row: 3; font-size: .74rem; color: var(--ui-text-muted, #6c757d); }
+    body.app-shell .lineas-cel-precio tr.js-linea-row > td:nth-child(4) { grid-column: 2; grid-row: 2; font-size: .76rem; }
+    body.app-shell .lineas-cel-precio tr.js-linea-row > td:nth-child(5) { grid-column: 3; grid-row: 2; font-size: .76rem; text-align: right; white-space: nowrap; }
+    /* Elaborados (tabla plana): fecha y sucursal; elaborado; ingrediente y cantidad; estado y acciones. */
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(1) { grid-column: 1 / 3; grid-row: 1; font-weight: 700; }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(2) { grid-column: 3; grid-row: 1; text-align: right; }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(3) { grid-column: 1; grid-row: 2; color: var(--ui-text-muted, #6c757d); }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(4) { grid-column: 2 / 4; grid-row: 2; }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(5) { grid-column: 1; grid-row: 3; color: var(--ui-text-muted, #6c757d); }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(6) { grid-column: 2; grid-row: 3; }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(7) { grid-column: 3; grid-row: 3; font-weight: 700; text-align: right; white-space: nowrap; }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(8) { grid-column: 1 / 3; grid-row: 4; align-self: center; font-size: .74rem; }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(9) { grid-column: 3; grid-row: 4; text-align: right; white-space: nowrap; }
+    body.app-shell .lineas-cel-elab tr.js-linea-row > td:nth-child(9) .btn { padding: .1rem .5rem; font-size: .76rem; }
+    body.app-shell .linea-registro-card > .card-header { padding: .45rem .55rem; }
+}

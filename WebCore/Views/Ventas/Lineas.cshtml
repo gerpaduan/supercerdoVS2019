@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+    <div class="card shadow-sm mb-3 elaborados-filtros-card" data-filtros-celular>
         <div class="card-body">
             <form method="get" action="@Url.Action("Lineas", "Ventas")" class="js-form-filtros-lineas">
                 <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
@@ -207,7 +207,7 @@
                     </div>
                 </div>
                 <div class="table-responsive js-sync-scroll-body">
-                    <table class="table table-sm table-hover mb-0">
+                    <table class="table table-sm table-hover mb-0 lineas-cel lineas-cel-precio">
                         <thead class="thead-light">
                             <tr>
                                 <th>Codigo producto</th>
@@ -230,8 +230,8 @@
                                     <td>@linea.Codigo</td>
                                     <td>@linea.Producto</td>
                                     <td class="text-right">@linea.CantidadKgTexto</td>
-                                    <td class="text-right">@linea.PrecioTexto</td>
-                                    <td class="text-right">@linea.TotalTexto</td>
+                                    <td class="text-right" data-label="Precio">@linea.PrecioTexto</td>
+                                    <td class="text-right" data-label="Total">@linea.TotalTexto</td>
                                 </tr>
                             }
                         </tbody>
@@ -677,3 +677,5 @@
     </script>
     <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js")" asp-append-version="true"></script>
 }
+
+@Html.Partial("~/Views/Shared/_FiltrosCelular.cshtml")

@@ -109,7 +109,7 @@
                 @* stock-fila-datos: en escritorio es una grilla con la columna de Fecha de ancho minimo (se ve completa, con la hora);
                    ver stock-editar-compacto.css. *@
                 <div class="row stock-fila-datos">
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-3 stock-col-sucursal">
                         <div class="form-group">
                             <label for="IdSucursal">Sucursal</label>
                             <select id="IdSucursal" name="IdSucursal" class="form-control">
@@ -120,7 +120,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-3 stock-col-fecha">
                         <div class="form-group">
                             <label for="FechaCompra">Fecha</label>
                             <input type="datetime-local"
@@ -130,7 +130,7 @@
                                    value="@Model.FechaCompra.ToString("yyyy-MM-ddTHH:mm")" />
                         </div>
                     </div>
-                    <div class="col-12 col-lg-6">
+                    <div class="col-12 col-lg-6 stock-col-accion">
                         <div class="form-group">
                             @* El interruptor va en el renglon del titulo (solo en Pesaje) para no sumar altura a la fila. *@
                             <div class="d-flex justify-content-between align-items-center">
@@ -321,6 +321,8 @@
                         <div class="border rounded p-3 mb-3 stock-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 stock-section-title">Agregar producto</h6>
+                                @* Solo celular: cantidad de items y total (en escritorio el Resumen esta a la derecha). Lo llena actualizarUltimaLineaCelular. *@
+                                <span id="lblResumenStockCel" class="d-md-none stock-resumen-cel"></span>
                                 @* stock-acciones-agregar: en celular (<768px) pasa a una grilla debajo del titulo (switch Balanza a lo ancho y
                                    los botones visibles repartidos en partes iguales); en desktop no cambia. *@
                                 <div class="d-flex flex-wrap align-items-center gap-3 stock-acciones-agregar">
@@ -333,16 +335,16 @@
                                             <i class="fas fa-balance-scale" aria-hidden="true"></i><span class="pt-balanza-txt">Balanza</span>
                                         </label>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados" data-edit-readonly-ignore="true">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados" data-edit-readonly-ignore="true" title="Ver acumulados" aria-label="Ver acumulados">
                                         <i class="fas fa-layer-group mr-1"></i> Ver acumulados
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary d-none d-lg-inline-block" id="btnToggleTecladoStock" title="Mostrar/ocultar teclado digital">
                                         <i class="fas fa-keyboard"></i> <i class="fas fa-chevron-down" id="iconoToggleTecladoStock"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-info @(esPesaje && !soloProductos ? "" : "d-none")" id="btnVerPorcentajePesaje" data-edit-readonly-ignore="true">
+                                    <button type="button" class="btn btn-sm btn-outline-info @(esPesaje && !soloProductos ? "" : "d-none")" id="btnVerPorcentajePesaje" data-edit-readonly-ignore="true" title="Ver porcentajes" aria-label="Ver porcentajes">
                                         <i class="fas fa-percent mr-1"></i> Ver Porc(%)
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary @(string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase) ? "" : "d-none")" id="btnProductosNoCargados">
+                                    <button type="button" class="btn btn-sm btn-outline-primary @(string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase) ? "" : "d-none")" id="btnProductosNoCargados" title="Productos no cargados" aria-label="Productos no cargados">
                                         <i class="fas fa-list mr-1"></i> Productos no cargados
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
@@ -368,7 +370,7 @@
                             <div class="numeric-keypad-toggle-layout" id="stockNumericKeypadLayout">
                                 <div class="numeric-keypad-toggle-fields">
                                     <div class="row align-items-end">
-                                        <div class="col-12 col-md-3 col-lg-3">
+                                        <div class="col-12 col-md-3 col-lg-3 stock-col-codigo">
                                             <div class="form-group">
                                                 <label for="txtCodigoProducto">Código</label>
                                                 <div class="input-group">
@@ -377,12 +379,12 @@
                                                             <i class="fas fa-barcode"></i>
                                                         </button>
                                                     </div>
-                                                    <input type="number" id="txtCodigoProducto" class="form-control pt-input-codigo" min="0" step="1" autocomplete="off" style="min-width:13ch;" />
+                                                    <input type="number" id="txtCodigoProducto" class="form-control pt-input-codigo" min="0" step="1" enterkeyhint="go" autocomplete="off" style="min-width:13ch;" />
                                                 </div>
                                                 <small id="scannerMsg" class="text-danger d-none"></small>
                                             </div>
                                         </div>
-                                        <div class="col-12 col-md-5 col-lg-6">
+                                        <div class="col-12 col-md-5 col-lg-6 stock-col-producto">
                                             <div class="form-group">
                                                 <label for="txtProductoNombre">Producto</label>
                                                 <div class="input-group">
@@ -400,13 +402,13 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-8 col-md-3 col-lg-2">
+                                        <div class="col-8 col-md-3 col-lg-2 stock-col-cantidad">
                                             <div class="form-group">
                                                 <label for="txtCantKgs" id="lblCantidadStock">Cantidad</label>
                                                 <input type="text" id="txtCantKgs" class="form-control solo-decimal pt-input-cantidad" inputmode="decimal" enterkeyhint="done" autocomplete="off" style="min-width:8ch;" data-permite-negativo="@(permiteNegativo ? "true" : "false")" />
                                             </div>
                                         </div>
-                                        <div class="col-4 col-md-1">
+                                        <div class="col-4 col-md-1 stock-col-agregar">
                                             <div class="form-group">
                                                 <label class="d-block invisible mb-0">&nbsp;</label>
                                                 <button type="button" class="btn btn-primary btn-block d-flex align-items-center justify-content-center" id="btnAgregarLineaStock" title="Agregar">
@@ -414,6 +416,17 @@
                                                 </button>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    @* Ultimo producto agregado (solo celular, mismo criterio que Movimientos/Editar, 2026-11-25): con el teclado abierto la tabla queda
+                                       tapada. La arma actualizarUltimaLineaCelular (stock.js). Sin name: no entra al form ni al guard de salida. *@
+                                    <div id="ultimoProductoStock" class="stock-ultimo-agregado d-md-none d-none" role="status" aria-live="polite">
+                                        <i class="fas fa-check-circle stock-ultimo-ico" aria-hidden="true"></i>
+                                        <span class="stock-ultimo-texto" id="txtUltimoProductoStock" title="Último producto agregado"></span>
+                                        <b class="stock-ultimo-cant" id="cantUltimoProductoStock"></b>
+                                        <button type="button" class="btn btn-sm btn-outline-primary js-edit-ultima-stock" id="btnEditarUltimoStock" data-sin-foco title="Corregir la cantidad de este producto" aria-label="Corregir la cantidad del último producto">
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -935,27 +948,75 @@
         padding-bottom: .1rem;
     }
 
-    /* Celular: acciones de "Agregar producto" (switch Balanza, Ver acumulados, Ver Porc(%), Productos no cargados, respaldo) en una
-       grilla debajo del titulo. auto-fit: 1 boton visible ocupa todo el ancho, 2 se reparten 50/50, 3 pasan a dos renglones; los
-       ocultos (d-none, los prende y apaga stock.js segun la accion) no cuentan. */
+    /* ==== Celular: pantalla mas baja (pedido 2026-11-25, mismo criterio que Movimientos/Editar y Elaborados/Carga) ====
+       Antes cada campo y cada boton iba en su renglon. Ahora: Sucursal | Accion y la Fecha en el suyo; en Agregar producto una cabecera con
+       solo iconos, Codigo | Producto y debajo Cantidad | +; el Resumen es una tira de dos cifras (la balanza ya se oculta en celular, custom.css). Solo CSS
+       (ids, names y JS no cambian) y solo < 768 px. Cada hijo de las grillas lleva fila y columna explicitas por clase. */
     @@media (max-width: 767.98px) {
-        .stock-page .stock-acciones-agregar {
-            width: 100%;
+        .stock-page .stock-fila-datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 .4rem; margin: 0; }
+        .stock-page .stock-fila-datos > [class*="col-"] { flex: none; width: auto; max-width: none; min-width: 0; padding: 0; }
+        .stock-page .stock-fila-datos > .stock-col-sucursal { grid-column: 1; grid-row: 1; }
+        .stock-page .stock-fila-datos > .stock-col-accion { grid-column: 2; grid-row: 1; }
+        .stock-page .stock-fila-datos > .stock-col-fecha { grid-column: 1 / -1; grid-row: 2; }
+        .stock-page .stock-fila-datos > .col-xl-4 { display: none; }
+        .stock-page .stock-fila-datos .form-group { margin-bottom: .3rem; }
+        .stock-page .stock-fila-datos label { font-size: .72rem; margin-bottom: .1rem; }
+        .stock-page .stock-hint-accion { display: none; }
+        .stock-page .stock-solo-productos { margin-bottom: 0 !important; font-size: .7rem; }
+        .stock-page .stock-action-button { font-size: 0 !important; padding-left: .55rem; padding-right: .55rem; }
+        .stock-page .stock-action-button > i { font-size: .9rem; margin: 0 !important; }
+
+        .stock-page .stock-section-box { padding: .45rem .55rem !important; margin-bottom: .45rem !important; }
+        .stock-page .stock-section-box .form-group { margin-bottom: .3rem; }
+        .stock-page .stock-section-box label { font-size: .72rem; margin-bottom: .1rem; }
+        .stock-page .stock-section-box > .d-flex { margin-bottom: .35rem !important; flex-wrap: nowrap !important; gap: .3rem; }
+        .stock-page .stock-section-box .stock-section-title { font-size: .72rem; white-space: nowrap; }
+        .stock-page .stock-resumen-cel { margin: 0 auto 0 .3rem; font-size: .72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; color: var(--ui-text-muted, #6c757d); }
+        .stock-page .stock-acciones-agregar { flex-wrap: nowrap !important; gap: .3rem !important; }
+        .stock-page .stock-acciones-agregar .pt-balanza-toggle { margin: 0 !important; }
+        .stock-page .stock-acciones-agregar > .btn { font-size: 0 !important; padding: .25rem .55rem; }
+        .stock-page .stock-acciones-agregar > .btn > i { font-size: .9rem; margin: 0 !important; }
+        .stock-page .stock-acciones-agregar > span.small { font-size: 0; }
+
+        .stock-page .stock-section-box .numeric-keypad-toggle-fields > .row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-            gap: .4rem;
+            grid-template-columns: 7.2rem minmax(0, 1fr) 2.7rem;
+            gap: 0 .4rem;
+            margin: 0;
+            align-items: end;
         }
+        .stock-page .stock-section-box .numeric-keypad-toggle-fields > .row > [class*="col-"] { flex: none; width: auto; max-width: none; min-width: 0; padding: 0; }
+        .stock-page .stock-col-codigo { grid-column: 1; grid-row: 1; }
+        .stock-page .stock-col-producto { grid-column: 2 / 4; grid-row: 1; }
+        .stock-page .stock-col-cantidad { grid-column: 1 / 3; grid-row: 2; }
+        .stock-page .stock-col-agregar { grid-column: 3; grid-row: 2; }
+        .stock-page .stock-col-codigo input { min-width: 0 !important; }
 
-        /* min-height en 0: cuando el switch Balanza esta oculto (sin balanza) el contenedor no debe dejar un renglon vacio
-           (si esta visible, su propio texto le da el alto). El padding-left no se toca: ahi se apoya el dibujo del switch. */
-        .stock-page .stock-acciones-agregar > .custom-control,
-        .stock-page .stock-acciones-agregar > span {
-            grid-column: 1 / -1;
-            margin-right: 0 !important;
-            min-height: 0;
+        .stock-page .stock-ultimo-agregado {
+            display: flex; align-items: center; gap: .4rem; margin-top: .1rem; padding: .3rem .45rem;
+            border-left: 3px solid #198754; border-radius: 0; background: #e9f6ee; color: #14532d; font-size: .8rem;
         }
+        .stock-page .stock-ultimo-ico { flex: 0 0 auto; color: #198754; }
+        .stock-page .stock-ultimo-texto { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .stock-page .stock-ultimo-cant { flex: 0 0 auto; white-space: nowrap; }
+        .stock-page .stock-ultimo-agregado .js-edit-ultima-stock { flex: 0 0 auto; padding: .15rem .45rem; line-height: 1.2; }
+        html.dark-mode .stock-page .stock-ultimo-agregado { background: #12301f; color: #bff0cf; border-left-color: #3fb868; }
+        html.dark-mode .stock-page .stock-ultimo-ico { color: #3fb868; }
+        form.edit-readonly-active .js-edit-ultima-stock { display: none !important; }
 
-        .stock-page .stock-acciones-agregar > .btn { width: 100%; }
+        /* Resumen de abajo: dos cifras en una tira y Accion / Usuario en una linea; sin titulo ni separador. */
+        .stock-page .stock-summary-card > .card-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .2rem .4rem; padding: .4rem .6rem; }
+        .stock-page .stock-summary-card .stock-section-title,
+        .stock-page .stock-summary-card .stock-resumen-hr { display: none; }
+        .stock-page .stock-summary-card .card-body > .d-flex.justify-content-between:not(.stock-resumen-pie) {
+            flex-direction: column; align-items: center; font-size: .68rem; line-height: 1.15; color: var(--ui-text-muted, #6c757d);
+        }
+        .stock-page .stock-summary-card .card-body > .d-flex.justify-content-between:not(.stock-resumen-pie) strong { font-size: .95rem; color: var(--ui-text, #1f2937); }
+        .stock-page .stock-summary-card .stock-resumen-pie { grid-column: 1 / -1; flex-wrap: nowrap !important; gap: .4rem; }
+        .stock-page .stock-summary-card .stock-resumen-pie > span { margin-top: 0 !important; min-width: 0; }
+        .stock-page .stock-summary-card .stock-resumen-pie > span:first-child { white-space: nowrap; font-size: .72rem; }
+        .stock-page .stock-summary-card .stock-resumen-pie label { font-size: .72rem; }
+        .stock-page .stock-summary-card .stock-resumen-pie input { min-height: 0; height: 1.8rem; font-size: .78rem; }
     }
 
     /* Celular: selector de orden de las lineas. Con .stock-search-toolbar para ganarle al min-height: 2.75rem de ui-refresh.css

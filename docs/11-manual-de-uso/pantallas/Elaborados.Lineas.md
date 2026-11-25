@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 6
 permiso: PENDIENTE
-revisada: 2026-11-13
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Listado de **cada ingrediente utilizado** en los elaborados registrados (una fila por ingrediente de cada registro), por sucursal y fechas.
@@ -25,3 +25,7 @@ De los registros cuyo producto tiene una fórmula [secreta](ayuda:concepto/formu
 
 ## Resto de la pantalla
 PENDIENTE: documentar qué hace exactamente "Filtrar solo ingredientes" y el botón *Seleccionar* (no verificado contra el código en esta revisión).
+
+## En el celular
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Los totales van de a dos.
+- Cada línea es una tarjeta: fecha y sucursal, elaborado, ingrediente y kilos, y el botón **Seleccionar** (desde 2026-11-25).

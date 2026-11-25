@@ -98,7 +98,7 @@
 
                 @* elaborados-fila-datos: en escritorio es una grilla con la columna de Fecha de ancho minimo (se ve completa, con hora y segundos); ver elaborados-compacto.css. *@
                 <div class="row elaborados-fila-datos">
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-3 ela-col-sucursal">
                         <div class="form-group">
                             <label for="IdSucursalRapido">Sucursal</label>
                             <select id="IdSucursalRapido" name="IdSucursal" class="form-control" disabled="@(esAnulado ? "disabled" : null)">
@@ -110,7 +110,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-3 ela-col-fecha">
                         <div class="form-group">
                             <label for="FechaEmbutidoRapido">Fecha</label>
                             <input type="datetime-local"
@@ -122,7 +122,7 @@
                                    readonly="@(esAnulado ? "readonly" : null)" />
                         </div>
                     </div>
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-3 ela-col-usuario">
                         <div class="form-group">
                             <label>Usuario</label>
                             <input type="text" class="form-control" value="@Model.UsuarioNombre" readonly />
@@ -199,6 +199,7 @@
                                        name="Cantidad"
                                        class="form-control form-control-lg solo-decimal text-right"
                                        inputmode="decimal"
+                                       enterkeyhint="done"
                                        autocomplete="off"
                                        value="@(Model.Cantidad > 0 ? Model.Cantidad.ToString("0.###", System.Globalization.CultureInfo.GetCultureInfo("es-AR")) : "")"
                                        readonly="@(esAnulado ? "readonly" : null)" />
@@ -364,6 +365,38 @@
     #tablaFormulaRapida th:nth-child(2),
     #tablaFormulaRapida td:nth-child(2) {
         display: none;
+    }
+
+    /* ==== Celular (pedido 2026-11-25, mismo criterio que Stock/Editar) ====
+       Sucursal | Usuario y la Fecha en su renglon; Codigo | Elaborado y Receta abajo; la tarjeta de cantidad sin texto de ayuda. Ademas, en
+       < 768 px se oculta el aviso de balanza no detectada (el interruptor y el estado ya los oculta custom.css) y las pestanas van en un renglon.
+       Solo CSS: ids, names y JS no cambian. */
+    @@media (max-width: 767.98px) {
+        #alertaBalanzaRapido { display: none !important; }
+        body.app-shell .elaborados-tabs-card { margin-bottom: .45rem !important; }
+        body.app-shell .elaborados-tabs-card > .card-body { padding: .35rem !important; }
+        body.app-shell .elaborados-tabs-card .elaborados-tabs-nav { flex-wrap: nowrap !important; overflow-x: auto; }
+        body.app-shell .elaborados-tabs-card .nav-link { white-space: nowrap; padding: .3rem .6rem; font-size: .82rem; }
+    }
+
+    @@media (max-width: 575.98px) {
+        .elaborados-fila-datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 .4rem; margin: 0; }
+        .elaborados-fila-datos > [class*="col-"] { flex: none; width: auto; max-width: none; min-width: 0; padding: 0; }
+        .elaborados-fila-datos > .ela-col-sucursal { grid-column: 1; grid-row: 1; }
+        .elaborados-fila-datos > .ela-col-usuario { grid-column: 2; grid-row: 1; }
+        .elaborados-fila-datos > .ela-col-fecha { grid-column: 1 / -1; grid-row: 2; }
+        .elaborados-fila-datos .form-group { margin-bottom: .3rem; }
+        .elaborados-fila-datos label { font-size: .72rem; margin-bottom: .1rem; }
+        .elaborados-box-strip { padding: .45rem .55rem !important; margin-bottom: .45rem !important; }
+        .elaborados-caja-fila { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: 0 .4rem; margin: 0; }
+        .elaborados-caja-fila > [class*="col-"] { flex: none; width: auto; max-width: none; min-width: 0; padding: 0; }
+        .elaborados-caja-fila > #wrapRecetaRapida { grid-column: 1 / -1; margin-top: .3rem; }
+        .elaborados-caja-fila .form-group { margin-bottom: .3rem; }
+        .elaborados-caja-fila label { font-size: .72rem; margin-bottom: .1rem; }
+        .elaborados-card-cantidad { margin-bottom: .45rem !important; }
+        .elaborados-card-cantidad > .card-body { padding: .5rem .6rem; }
+        .elaborados-card-cantidad .ela-solo-edicion > .d-flex { margin-bottom: .35rem !important; }
+        .elaborados-card-cantidad .ela-solo-edicion > .d-flex .small.text-muted { display: none; }
     }
 </style>
 

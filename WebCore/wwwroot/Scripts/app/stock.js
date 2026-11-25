@@ -119,6 +119,7 @@
             filtrosPesajesTimer: null,
             productoTimer: null,
             productoRequestSeq: 0,
+            focoCodigoTimer: null,   // foco a Codigo pendiente (focusCodigo); una busqueda nueva lo cancela
             comprasPesajeDetalle: {},
             loadingDetalleCompraPesaje: {},
             // Pesajes que el usuario desvinculo en esta edicion (id -> true). Se aplican al Guardar:
@@ -224,8 +225,13 @@
         return typeof input.setSelectionRange === 'function' && input.type !== 'number';
     }
 
+    // Foco a Codigo con 20 ms de demora. El temporizador queda en el estado del formulario para que una busqueda nueva lo cancele
+    // (cancelarFocoCodigo): suelto, si llegaba tarde devolvia el cursor a Codigo cuando el Enter ya lo habia llevado a Cantidad (2026-11-25).
     function focusCodigo($form) {
-        window.setTimeout(function () {
+        var state = getState($form);
+        cancelarFocoCodigo($form);
+        var timer = window.setTimeout(function () {
+            if (state) state.focoCodigoTimer = null;
             var $input = $form.find('#txtCodigoProducto');
             if (!$input.length) return;
             $input.focus();
@@ -239,6 +245,15 @@
                 }
             }
         }, 20);
+        if (state) state.focoCodigoTimer = timer;
+    }
+
+    // Descarta un foco a Codigo que todavia no se ejecuto.
+    function cancelarFocoCodigo($form) {
+        var state = getState($form);
+        if (!state) return;
+        window.clearTimeout(state.focoCodigoTimer);
+        state.focoCodigoTimer = null;
     }
 
 
@@ -684,6 +699,34 @@
         return !!(state && state.config && state.config.esPesaje);
     }
 
+    function esCelular() {
+        return !!(window.matchMedia && window.matchMedia('(max-width: 767.98px)').matches);
+    }
+
+    // Celular (<768 px, pedido 2026-11-25): resumen "N · X" en la cabecera de Agregar producto y franja con la ULTIMA linea cargada (orden de carga,
+    // no el de la pantalla), asi se verifica lo agregado aunque el teclado del telefono tape la tabla. Se llama desde recalculate(), que corre en todos
+    // los repintados. En escritorio los elementos existen pero estan ocultos (d-md-none). Usa .text(): el nombre no se interpreta como HTML.
+    function actualizarUltimaLineaCelular($form, totalKg) {
+        var state = getState($form);
+        var cantidad = state.lineas.length;
+        $form.find('#lblResumenStockCel').text(cantidad ? (cantidad + ' · ' + formatNumber(totalKg, 3)) : '');
+
+        var $franja = $form.find('#ultimoProductoStock');
+        if (!$franja.length) return;
+        if (!cantidad) {
+            $franja.addClass('d-none');
+            return;
+        }
+        var ultima = state.lineas[cantidad - 1];
+        // Mismas lineas que el lapiz de la tabla: "No contado" y las de un pesaje vinculado no se corrigen desde aca.
+        var bloqueada = !!ultima.noContado || ultima.idPesajeVinculado > 0;
+        $form.find('#txtUltimoProductoStock').text('#' + cantidad + ' · ' + (ultima.codigo || '') + ' ' + (ultima.producto || ''));
+        $form.find('#cantUltimoProductoStock').text(formatNumber(ultima.cantKgs, 3));
+        $form.find('#btnEditarUltimoStock').prop('disabled', bloqueada)
+            .attr('title', bloqueada ? (ultima.noContado ? 'Línea «No contado»: no se corrige desde acá' : 'Línea de un pesaje vinculado: no se corrige desde acá') : 'Corregir la cantidad de este producto');
+        $franja.removeClass('d-none');
+    }
+
     function recalculate($form) {
         var state = getState($form);
         var totalKg = 0;
@@ -694,6 +737,7 @@
 
         $form.find('#totalItems').text(state.lineas.length);
         $form.find('#totalKg').text(formatNumber(totalKg, 3));
+        actualizarUltimaLineaCelular($form, totalKg);
 
         // En «Solo productos» no hay Kgs.Medias: no se autocompleta con el total de las lineas.
         if (state.config.esPesaje && !esSoloProductos($form)) {
@@ -1009,7 +1053,8 @@
         state.filasCambiadas = [];
 
         $tbody.html(html);
-        if (filasNuevas.length && window.LineaEditor) window.LineaEditor.mostrarFilaNueva($tbody);
+        // En celular no se acerca la fila nueva con scroll (2026-11-25): con el teclado abierto la pagina saltaba; lo ultimo se ve en la franja.
+        if (filasNuevas.length && window.LineaEditor && !esCelular()) window.LineaEditor.mostrarFilaNueva($tbody);
         recalculate($form);
         rebuildHiddenInputs($form);
         syncSortHeadersStock($form);
@@ -2496,7 +2541,8 @@
                 }
                 syncCantidadReadonly($form);
                 if (!silencioso) {
-                    showWarning($form, 'No existe balanza conectada.');
+                    // En celular no se avisa (2026-11-25): el icono de la balanza ya queda apagado.
+                    if (!esCelular()) showWarning($form, 'No existe balanza conectada.');
                 }
                 if (allowFocusManual) {
                     focusCantidadManual($form);
@@ -2562,8 +2608,14 @@
         iniciarLecturaBalanza($form, true, !!allowFocusManual);
     }
 
+    // Busca el producto del campo Codigo. focusCantidad = true con Enter: si se encuentra, el foco pasa a Cantidad (o lo decide la balanza).
+    // focusCantidad = false es la busqueda automatica mientras se tipea (debounce del 'input'): NO mueve el foco. Antes llamaba a focusCodigo y,
+    // si el Enter ya habia lanzado otra busqueda que volvia rapido y ponia el foco en Cantidad, ese foco demorado lo devolvia a Codigo
+    // (2026-11-25, docs/07-operacion-y-soporte/incidencias-frecuentes.md).
     function loadProductByCode($form, codigo, focusCantidad) {
         var state = getState($form);
+        // Una busqueda nueva manda sobre cualquier foco a Codigo que hubiera quedado pendiente.
+        cancelarFocoCodigo($form);
         state.productoRequestSeq += 1;
         var requestSeq = state.productoRequestSeq;
 
@@ -2576,9 +2628,6 @@
                 if (!res || res.ok !== true) {
                     clearProductoInputs($form, true);
                     $form.find('#txtProductoNombre').val('No existe o sin coincidencia');
-                    if (!focusCantidad) {
-                        focusCodigo($form);
-                    }
                     return;
                 }
 
@@ -2586,8 +2635,6 @@
                 syncBalanzaConProducto($form, !!focusCantidad);
                 if (focusCantidad && !esPesableActual($form)) {
                     $form.find('#txtCantKgs').focus().select();
-                } else if (!focusCantidad) {
-                    focusCodigo($form);
                 }
             })
             .fail(function () {
@@ -2596,9 +2643,6 @@
                 }
                 clearProductoInputs($form, true);
                 $form.find('#txtProductoNombre').val('No existe o sin coincidencia');
-                if (!focusCantidad) {
-                    focusCodigo($form);
-                }
             });
     }
 
@@ -3301,15 +3345,29 @@
             scheduleDraft($form);
         });
 
-        // Lapiz de la fila: abre el panel de corregir. Modo vista: hay que apretar Modificar primero (el CSS tambien oculta el lapiz).
-        $form.on('click.stock', '.js-edit-linea', function () {
+        // Abre el panel "Corregir linea" de la linea con ese indice en state.lineas. Lo usan el lapiz de cada fila y el de la franja del ultimo
+        // producto (celular). Modo vista: hay que apretar Modificar primero (el CSS tambien oculta el lapiz).
+        function abrirEditorLinea(index) {
             if ($form.hasClass('edit-readonly-active')) return;
-            var index = parseInt($(this).attr('data-index'), 10);
             var linea = isNaN(index) ? null : state.lineas[index];
             if (!linea || linea.noContado || linea.idPesajeVinculado > 0) return;
             state.editor = { index: index, valor: valorInicialEditor(state, linea), error: '' };
             renderLineas($form);
             window.LineaEditor.enfocar('edtLineaKg');
+        }
+
+        $form.on('click.stock', '.js-edit-linea', function () {
+            abrirEditorLinea(parseInt($(this).attr('data-index'), 10));
+        });
+
+        // Lapiz de la franja del ultimo producto: si la busqueda de la lista lo estuviera ocultando se limpia el filtro, para ver el panel.
+        $form.on('click.stock', '.js-edit-ultima-stock', function () {
+            if (!state.lineas.length) return;
+            if (state.searchText) {
+                state.searchText = '';
+                $form.find('#filtroLineasStock').val('');
+            }
+            abrirEditorLinea(state.lineas.length - 1);
         });
 
         window.LineaEditor.enlazar({

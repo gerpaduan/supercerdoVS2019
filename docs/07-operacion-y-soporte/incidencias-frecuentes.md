@@ -13,6 +13,13 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-25 - Movimientos: Código ↵ lleva a Cant.Un. y el cursor vuelve solo a Código (sobre todo el primer producto)
+
+- **Sintoma**: se escribe un código (ej. `5`), Enter, el cursor llega a Cant.Un. y enseguida vuelve a Código. Intermitente, más frecuente en el primer producto.
+- **Causa**: dos búsquedas del mismo código. La automática del tipeo (`input`, 250 ms) llamaba a `focusCodigo()` al volver, que enfoca con un `setTimeout` de 30 ms sin guardar. Si el Enter caía en esos 30 ms y su búsqueda volvía antes, ese foco demorado pisaba el de Cant.Un. El contador de pedidos solo descarta respuestas que llegan **después** del Enter. En el primer producto la búsqueda automática tarda más (servidor en frío) y coincide más con el Enter.
+- **Verificaciones**: arnés con reloj falso (búsqueda automática de 150 ms, Enter con respuesta de 5 ms): antes, Enter entre 401 y 424 ms → foco en Código; después, Cant.Un. en todos los tiempos.
+- **Resolucion**: `movimientos.js` y `stock.js`: la búsqueda automática ya no mueve el foco y toda búsqueda nueva cancela un foco a Código pendiente (`cancelarFocoCodigo`). En Stock la carrera existía pero no se veía (su propio foco a Cantidad de 20 ms llega después). Elaborados, Compras y POS no tienen este patrón.
+
 ## 2026-11-25 - Celular: hay que deslizar dos veces para que la página se mueva
 
 - **Sintoma**: en el celular (Android, todas las pantallas) el primer deslizamiento arriba/abajo no mueve la página y el segundo sí.

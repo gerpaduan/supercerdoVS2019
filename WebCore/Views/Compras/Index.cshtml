@@ -59,7 +59,7 @@
         }
     </div>
 
-    <div class="card shadow-sm mb-3 compras-filtros-card">
+    <div class="card shadow-sm mb-3 compras-filtros-card" data-filtros-celular>
         <div class="card-body">
             <form method="get" action="@Url.Action("Index", "Compras")">
                 <div class="compras-filtros-stack">
@@ -854,3 +854,5 @@
         })();
     </script>
 }
+
+@Html.Partial("~/Views/Shared/_FiltrosCelular.cshtml")

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Compras
 orden: 2
 permiso: Compra.VerCompras (sin el permiso se muestra "Acceso denegado")
-revisada: 2026-11-09
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Ver **cada compra con sus líneas** (producto, cantidad, precio y total), con una tarjeta por compra, de un período.
@@ -34,3 +34,7 @@ El botón **Ver solo líneas** (debajo de los filtros) cambia la pantalla de una
 
 ## Titular (desde 2026-11-09; solo bases Postgres)
 - Con 2 o más titulares, el detalle de cada compra de cortes o media res muestra **Titular** (a nombre de quién se compró) junto a proveedor, sucursal y tipo.
+
+## En el celular
+- **Filtros plegados (desde 2026-11-25):** arriba hay una barra **Filtros** con un resumen de lo elegido (sucursal, fechas, etc.). Tocala para abrir los filtros; van de a dos por renglón y **Buscar** a lo ancho. Los totales van de a dos.
+- Cada línea se ve como una fila corta (código, producto y cantidad; debajo el resto), sin desplazarse de costado (desde 2026-11-25).

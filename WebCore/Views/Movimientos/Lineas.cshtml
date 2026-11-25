@@ -17,7 +17,7 @@
         </a>
     </div>
 
-    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+    <div class="card shadow-sm mb-3 elaborados-filtros-card" data-filtros-celular>
         <div class="card-body">
             <form method="get" action="@Url.Action("Lineas", "Movimientos")" class="js-form-filtros-lineas">
                 <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
@@ -131,7 +131,7 @@
                     </div>
                 </div>
                 <div class="table-responsive js-sync-scroll-body">
-                    <table class="table table-sm table-hover mb-0">
+                    <table class="table table-sm table-hover mb-0 lineas-cel lineas-cel-mov">
                         <thead class="thead-light">
                             <tr>
                                 <th>Código producto</th>
@@ -149,9 +149,9 @@
                                     <td>@linea.Codigo</td>
                                     <td>@linea.Producto</td>
                                     <td class="text-right">@linea.CantidadKgTexto</td>
-                                    <td class="text-right">@linea.CantidadUnidadTexto</td>
-                                    <td class="text-center">@(linea.Balanza ? "Sí" : "No")</td>
-                                    <td>@linea.Observacion</td>
+                                    <td class="text-right" data-label="Un.">@linea.CantidadUnidadTexto</td>
+                                    <td class="text-center" data-label="Balanza">@(linea.Balanza ? "Sí" : "No")</td>
+                                    <td class="@(string.IsNullOrWhiteSpace(linea.Observacion) || linea.Observacion == "-" ? "lineas-sin-dato" : null)">@linea.Observacion</td>
                                 </tr>
                             }
                         </tbody>
@@ -426,3 +426,5 @@
     </script>
     <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js")" asp-append-version="true"></script>
 }
+
+@Html.Partial("~/Views/Shared/_FiltrosCelular.cshtml")

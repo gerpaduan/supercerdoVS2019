@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 3
 permiso: Elaborado.IngresoEmbutidoRapido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-24
+revisada: 2026-11-25
 ---
 ## Para qué sirve
 Registrar un elaborado (o desarmarlo) cargando **solo la cantidad final**: el sistema calcula los ingredientes con la fórmula del producto y los guarda. Se llega desde *Elaborados → Ingreso rápido* (o *Desarme de elaborado*) eligiendo un producto, o abriendo un registro existente desde el listado.
@@ -101,3 +101,7 @@ También se abre desde el botón **Cargas** del POS (un ingreso rápido nuevo, s
 - Verificado el 2026-11-20 en la pantalla real con un agente de balanza simulado (peso que cambia, lectura congelada, agente colgado, peso inestable). PENDIENTE: probarlo con una balanza real.
 
 - **Aviso «Salir sin guardar» (desde 2026-11-20):** el foco arranca en «No, quedarme» con borde marcado; Enter solo activa el botón con foco y las flechas pasan a «Sí, salir». Ver [aviso «Salir sin guardar»](ayuda:concepto/aviso-salir-sin-guardar).
+
+## En el celular
+- (desde 2026-11-25) Las pestañas de Elaborados van en un renglón que se desliza; **Sucursal** y **Usuario** van juntos y la **Fecha** debajo; **Código** y **Elaborado** en un renglón.
+- El **Enter** del teclado del teléfono en la cantidad guarda. El aviso de balanza no detectada no se muestra en el celular.

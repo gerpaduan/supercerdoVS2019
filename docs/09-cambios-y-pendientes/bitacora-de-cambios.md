@@ -1,5 +1,19 @@
 # Bitacora de cambios
 
+## 2026-11-25 - Celular: Stock, Ingreso rápido, listados y «Ver líneas» más bajos
+
+- **Cambio:** Stock/Editar e Ingreso rápido rediseñados para < 768 px; filtros plegados con resumen en los listados de Stock, Movimientos, Elaborados, Compras y Ventas y en las cinco «Ver líneas»; ventas en dos renglones; líneas como filas cortas. Escritorio y tablet sin cambios (ver `docs/DECISIONS.md` 2026-11-25 (i)).
+- **Archivos:** `Views/{Stock/Editar,Elaborados/EditarIngresoRapido,{Stock,Movimientos,Elaborados,Compras,Ventas}/{Index,Lineas},Shared/_FiltrosCelular}.cshtml`, `wwwroot/Scripts/app/{stock,filtros-celular}.js`, `wwwroot/Content/css/filtros-celular.css`, `WebCore.Tests/js/filtros-celular.test.js`; manuales de esas pantallas.
+- **Verificado** (navegador integrado a 375 px, usuario de prueba ya borrado): inicio de la tabla o lista, antes → después: Stock/Nuevo 808 → 517 px, Pesaje 1074 → 730, Ingreso rápido (cantidad) 989 → 579, Stock 903 → 222, Movimientos 660 → 155, Elaborados 860 → 263, Compras 1119 → 261, Ventas 856 → 199. Código ↵ → Cantidad ↵ agrega y vuelve a Código; la franja sigue a agregar, corregir y quitar; sin lápiz en modo ver; los filtros abren, resumen y se abren solos al cambiar fecha; el filtro en vivo de líneas oculta filas. A 1366 px las piezas nuevas no se ven y las tablas siguen como tablas. `node --test WebCore.Tests/js/*.test.js` 187/187.
+- **Pendiente:** Android real (Enter del teclado), modo oscuro, tablet (768 px no se miró en pantalla); Pedidos, Reposición, Compras/Editar y administración sin diseño de celular; no deployado ni commiteado.
+
+## 2026-11-25 - Movimientos y Stock: el cursor ya no vuelve solo a Código después del Enter
+
+- **Cambio:** la búsqueda automática mientras se tipea el código ya no mueve el foco, y cada búsqueda nueva cancela un foco a Código que hubiera quedado pendiente (`cancelarFocoCodigo`). Arregla el caso en que Código ↵ llegaba a Cant.Un. y el cursor volvía a Código (ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md`, 2026-11-25).
+- **Archivos:** `WebCore/wwwroot/Scripts/app/movimientos.js`, `WebCore/wwwroot/Scripts/app/stock.js`.
+- **Verificado:** arnés en el navegador integrado con reloj y servidor falsos (sin login), contra el código anterior y el nuevo. Antes, Movimientos fallaba con Enter entre 401 y 424 ms; ahora va a Cant.Un. en todos los tiempos (100-600 ms). Stock (pesable y no pesable) va a Cantidad en todos. Solo tipear deja el foco en Código con el producto cargado. Recorrido Código ↵ → Cant.Un. ↵ agrega y vuelve a Código. `node --check` de los dos archivos y `node --test WebCore.Tests/js/*.test.js` (182/182) OK.
+- **Pendiente:** no probado en la app real con login ni con balanza física. Sin test automático propio: los scripts dependen del DOM y `WebCore.Tests/js` no tiene uno.
+
 ## 2026-11-25 - Movimientos/Editar en celular: más baja, Enter del teléfono, último agregado a la vista y datos de arriba más fuertes
 
 - **Cambio:** en < 768 px, Origen | Destino en un renglón; Código | Producto y debajo Cant.Un. | Kgs. | +; «Ver acumulados» solo con el icono; resumen «N · X kg» en la cabecera de Agregar producto; franja verde con el último producto agregado (y lápiz para corregirlo); Resumen de abajo como tira de tres cifras; `enterkeyhint="go"` en Código y Cant.Un.; al agregar ya no se hace scroll a la fila nueva en celular. Origen, Destino y Fecha en negro y negrita (blanco en modo oscuro) hasta 991 px. Escritorio sin cambios.
