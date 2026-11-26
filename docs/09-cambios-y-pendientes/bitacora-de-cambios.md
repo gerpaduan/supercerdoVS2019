@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-11-26 - Stock: «Unificar pesajes» en un Cierre de stock (balance por sectores)
+
+- **Cambio:** cada sector cuenta en un Pesaje «Solo productos» y el Cierre Stock los junta con el botón **Unificar pesajes** (mismo modal que «Vincular pesajes»). Chips «Unificado en Cierre #N» / «N pesajes unificados». «Vincular pesajes» de un Pesaje no deja tomar uno unificado en un cierre. Sin cambios de base ni SQL. Ver `docs/DECISIONS.md` (2026-11-26 b).
+- **Archivos:** `Controllers/StockController.cs`, `Helpers/ReglaUnificacionCierre.cs`, `Models/{StockEditVm,CompraIndexVm,CompraPesajeVm}.cs`, `Views/Stock/{Editar,_StockTabla,_StockDetalle}.cshtml`, `wwwroot/Scripts/app/stock.js`, `wwwroot/Content/css/pantalla-trabajo.css`, `WebCore.Tests/ReglaUnificacionCierreTests.cs`; módulo `stock-e-inventario.md`; manuales `Stock.Editar.md` y `Stock.Index.md`.
+- **Verificado** (Postgres local, navegador integrado, usuario y registros de prueba ya borrados): unificar dos pesajes y guardar; un pesaje de medias y uno ya unificado salen «No disponible» y el servidor rechaza el de medias en un POST directo; volver a guardar el pesaje y el cierre conserva el vínculo; la existencia suma los dos sectores una sola vez; eliminar el cierre queda bloqueado; desunificar y guardar quita sus líneas y libera el pesaje; chips y detalle en la lista, también con el cierre fuera del filtro.
+- **Pendiente:** no probado contra SQL Server ni en un celular real; no deployado.
+
 ## 2026-11-26 - POS en celular: se vuelve a poder deslizar arriba y abajo
 
 - **Cambio:** en Ventas y Expendios, la regla que anula «deslizar para recargar» queda solo en `html` (en `body` bloqueaba el desplazamiento desde Chrome 144). Ver `docs/DECISIONS.md` (2026-11-26).

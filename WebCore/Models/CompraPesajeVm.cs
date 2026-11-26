@@ -42,6 +42,8 @@ namespace WebCore.Models
         public float TotalKg { get; set; }
         public string Sucursal { get; set; } = "";
         public bool EsActual { get; set; }
+        // Modales "Unificar pesajes" y "Vincular pesajes": null si se puede elegir, o el motivo (ReglaUnificacionCierre).
+        public string? MotivoNoDisponible { get; set; }
     }
 
     public class CompraPesajeSeleccionLineaVm

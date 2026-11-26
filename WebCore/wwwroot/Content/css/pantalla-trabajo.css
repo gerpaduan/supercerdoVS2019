@@ -372,6 +372,12 @@ html.dark-mode.modo-ventana .pt-quien-operador {
         grid-template-columns: minmax(8.5rem, 9rem) minmax(0, 1fr) minmax(6.5rem, 7rem) auto;
     }
 
+    /* Cierre Stock (2026-11-26): suma un icono (Unificar pesajes, al lado de Productos no cargados). Los campos ceden ancho
+       (de 32 a 29 rem de base) para que a 1366 px ese icono no caiga solo al segundo renglon. */
+    body.app-shell .stock-editar-compacto .pt-box-agregar:not(:has(.teclado-desplegado)):has(#btnUnificarPesajesCierre:not(.d-none)) > .numeric-keypad-toggle-layout {
+        flex-basis: 29rem;
+    }
+
     body.app-shell .pantalla-trabajo .pt-box-agregar:not(:has(.teclado-desplegado)) > :first-child .d-flex > * {
         order: 2;
         margin: 0 !important;

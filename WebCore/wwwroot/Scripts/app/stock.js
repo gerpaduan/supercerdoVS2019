@@ -435,6 +435,10 @@
     }
 
     function clearCompraVinculadaPesaje($form) {
+        // Pesaje unificado en un Cierre Stock (2026-11-26): cambiar el proveedor no le saca el vinculo al cierre; eso se hace
+        // solo desunificandolo desde el cierre.
+        var state = getState($form);
+        if (state && state.config && state.config.pesajeUnificadoEnCierre) return;
         $form.find('#IdPesajeAjustado').val('');
         $form.find('#stockCompraVinculadaId').text('');
         $form.find('#stockCompraVinculadaProveedor').text('-');
@@ -613,8 +617,11 @@
 
     // Con una compra o pesajes vinculados los botones de vincular quedarian ocultos y el vinculo fuera de vista:
     // el interruptor no se deja activar (el servidor valida lo mismo en ValidarModelo).
+    // Un pesaje unificado en un Cierre Stock (config.pesajeUnificadoEnCierre) es justamente el conteo de un sector: ese
+    // vinculo no impide «Solo productos» (2026-11-26).
     function tieneVinculosPesaje($form) {
-        var idCompraVinculada = parseInt($form.find('#IdPesajeAjustado').val(), 10) || 0;
+        var state = getState($form);
+        var idCompraVinculada = (state.config && state.config.pesajeUnificadoEnCierre) ? 0 : (parseInt($form.find('#IdPesajeAjustado').val(), 10) || 0);
         return idCompraVinculada > 0 || getPesajesVinculados($form).length > 0;
     }
 
@@ -644,6 +651,7 @@
         $form.find('#wrapBtnVincularPesaje').toggleClass('d-none', !esPesaje);
         syncSoloProductosUi($form);
         $form.find('#btnProductosNoCargados').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
+        $form.find('#btnUnificarPesajesCierre').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
         actualizarContextoNoCargados($form);
         $form.find('#txtAyudaCantidad').text(getAyudaCantidad(tipoCompra));
 
@@ -653,7 +661,7 @@
 
         if (!esPesaje) {
             getPorcentajesModal().modal('hide');
-            getVincularPesajesModal().modal('hide');
+            if (String(tipoCompra).toLowerCase() !== 'cierre stock') getVincularPesajesModal().modal('hide');
             actualizarEstadoAjustePesaje($form, '');
         } else {
             actualizarEstadoAjustePesaje($form, $.trim($('#stockEstadoAjusteTexto').text() || ''));
@@ -833,7 +841,7 @@
             return;
         }
 
-        var html = 'Pesajes vinculados en esta edici&oacute;n: ';
+        var html = esModoCierre($form) ? 'Pesajes unificados en este cierre: ' : 'Pesajes vinculados en esta edici&oacute;n: ';
         $.each(items, function (index, item) {
             if (index > 0) html += ' | ';
             html += '<strong>#' + escapeHtml(item.id) + '</strong>';
@@ -1498,12 +1506,28 @@
         });
     }
 
+    // El registro es un Cierre Stock: el modal "Vincular pesajes" trabaja en modo "Unificar pesajes" (2026-11-26).
+    // Las funciones de vincular/desvincular son las mismas; cambian los textos y el servidor marca los no unificables.
+    function esModoCierre($form) {
+        var state = getState($form);
+        var tipo = (state && state.config && state.config.tipoCompra) || $form.find('#TipoCompra').val() || '';
+        return String(tipo).toLowerCase() === 'cierre stock';
+    }
+
+    // Deja el modal en modo pesaje (Vincular pesajes) o cierre (Unificar pesajes): titulo y texto de ayuda.
+    function prepararModalVincularPesajes($form, modoCierre) {
+        $('#tituloModalVincularPesajesStock').text(modoCierre ? 'Unificar pesajes en este cierre' : 'Vincular pesajes');
+        $('#ayudaModalVincularPesajesStock').html(modoCierre
+            ? 'Elegí el pesaje de cada sector: sus productos se copian a este cierre, que es el único que cuenta para el stock. Uno ya unificado se puede desunificar desde la columna Acci&oacute;n. Todo se aplica al guardar.'
+            : 'Un pesaje ya vinculado se puede desvincular desde la columna Acci&oacute;n: se quitan sus productos de este pesaje y se aplica al guardar.');
+    }
+
     function mostrarExitoVinculacion($form, mensaje) {
         if (window.Swal && typeof window.Swal.fire === 'function') {
             window.Swal.fire({
                 icon: 'success',
-                title: 'Pesaje vinculado correctamente',
-                text: mensaje || '',
+                title: esModoCierre($form) ? 'Pesaje unificado en el cierre' : 'Pesaje vinculado correctamente',
+                text: mensaje || (esModoCierre($form) ? 'Se aplica al presionar Guardar.' : ''),
                 timer: 1800,
                 showConfirmButton: false
             });
@@ -1589,7 +1613,7 @@
         getState($form).pesajesVinculablesItems = items || [];
 
         if (!items || !items.length) {
-            html = '<tr><td colspan="8" class="text-center text-muted py-4">No hay pesajes disponibles para vincular.</td></tr>';
+            html = '<tr><td colspan="8" class="text-center text-muted py-4">No hay pesajes disponibles para ' + (esModoCierre($form) ? 'unificar' : 'vincular') + '.</td></tr>';
         } else {
             $.each(items, function (index, item) {
                 var detailId = 'pesajeVinculableDetalle_' + escapeHtml(item.idCompra) + '_' + index;
@@ -1599,11 +1623,16 @@
                 // Un pesaje ya vinculado a este se puede desvincular (quita sus lineas de este pesaje
                 // y le saca el vinculo, previa confirmacion); el pesaje actual no tiene accion.
                 var puedeDesvincular = !esActual && yaVinculado;
-                var textoBoton = esActual ? 'Pesaje actual' : 'Vincular';
-                var disabled = esActual;
+                // El servidor manda motivoNoDisponible para los pesajes que no se pueden elegir (2026-11-26): en un cierre, los
+                // de medias, con ajuste, ya vinculados a otro...; en un pesaje, los unificados en un cierre. Salen deshabilitados.
+                var modoCierre = esModoCierre($form);
+                var motivo = (!puedeDesvincular && item.motivoNoDisponible) ? String(item.motivoNoDisponible) : '';
+                var textoBoton = esActual ? 'Pesaje actual' : (motivo ? 'No disponible' : (modoCierre ? 'Unificar' : 'Vincular'));
+                var disabled = esActual || !!motivo;
                 var botonAccionHtml = puedeDesvincular
-                    ? '<button type="button" class="btn btn-sm btn-outline-danger" data-action="desvincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '"><i class="fas fa-unlink mr-1"></i>Desvincular</button>'
-                    : '<button type="button" class="btn btn-sm ' + (disabled ? 'btn-outline-secondary' : 'btn-info') + '" data-action="vincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '"' + (disabled ? ' disabled="disabled"' : '') + '>' + textoBoton + '</button>';
+                    ? '<button type="button" class="btn btn-sm btn-outline-danger" data-action="desvincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '"><i class="fas fa-unlink mr-1"></i>' + (modoCierre ? 'Desunificar' : 'Desvincular') + '</button>'
+                    : '<button type="button" class="btn btn-sm ' + (disabled ? 'btn-outline-secondary' : 'btn-info') + '" data-action="vincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '"' + (disabled ? ' disabled="disabled"' : '') + (motivo ? ' title="' + escapeHtml(motivo) + '"' : '') + '>' + textoBoton + '</button>'
+                        + (motivo ? '<div class="small text-muted mt-1">' + escapeHtml(motivo) + '</div>' : '');
 
                 html += '<tr>'
                     + '<td>' + escapeHtml(item.idCompra || 0) + '</td>'
@@ -1647,6 +1676,7 @@
                 idSucursal: parseInt($form.find('#IdSucursal').val(), 10) || 0,
                 idCompraActual: parseInt($form.find('#IdCompra').val(), 10) || 0,
                 soloPesajes: true,
+                paraCierre: esModoCierre($form),
                 proveedor: $.trim($('#txtFiltroProveedorVincularPesajes').val() || ''),
                 fechaDesde: $('#txtFechaDesdeVincularPesajes').val() || '',
                 fechaHasta: $('#txtFechaHastaVincularPesajes').val() || ''
@@ -1812,28 +1842,31 @@
 
     // Pide confirmacion antes de desvincular: SweetAlert si esta cargado, si no window.confirm
     // (mismo criterio que reposicion-puntos.js). Llama a onConfirm o a onCancel segun la respuesta.
-    function confirmarDesvinculacion(idPesaje, calculo, onConfirm, onCancel) {
+    // modoCierre: se abrio desde "Unificar pesajes" de un Cierre Stock (2026-11-26); solo cambian los textos.
+    function confirmarDesvinculacion(idPesaje, calculo, onConfirm, onCancel, modoCierre) {
+        var esteRegistro = modoCierre ? 'este cierre' : 'este pesaje';
+        var verbo = modoCierre ? 'Desunificar' : 'Desvincular';
         var cantidadQuitar = calculo.indices.length;
         var faltantes = calculo.esperadas - calculo.encontradas;
         var kilosTexto = formatNumber(calculo.kilosTotal, 3);
 
         var detalleQuitar = cantidadQuitar > 0
-            ? 'Se quitarán ' + cantidadQuitar + (cantidadQuitar === 1 ? ' línea' : ' líneas') + ' (' + kilosTexto + ' kg) de este pesaje y se le sacará el vínculo al pesaje #' + idPesaje + '.'
-            : 'No se encontraron líneas de este pesaje para quitar; solo se le sacará el vínculo al pesaje #' + idPesaje + '.';
+            ? 'Se quitarán ' + cantidadQuitar + (cantidadQuitar === 1 ? ' línea' : ' líneas') + ' (' + kilosTexto + ' kg) de ' + esteRegistro + ' y se le sacará el vínculo al pesaje #' + idPesaje + '.'
+            : 'No se encontraron líneas de ' + esteRegistro + ' para quitar; solo se le sacará el vínculo al pesaje #' + idPesaje + '.';
         var detalleFaltantes = (faltantes > 0 && cantidadQuitar > 0)
-            ? 'No se encontraron en este pesaje ' + faltantes + ' de las ' + calculo.esperadas + ' líneas del pesaje #' + idPesaje + ' (se modificaron o ya se quitaron): esas no se tocan.'
+            ? 'No se encontraron en ' + esteRegistro + ' ' + faltantes + ' de las ' + calculo.esperadas + ' líneas del pesaje #' + idPesaje + ' (se modificaron o ya se quitaron): esas no se tocan.'
             : '';
         var detalleGuardar = 'Los cambios se aplican al presionar Guardar.';
 
         if (window.Swal && typeof window.Swal.fire === 'function') {
             window.Swal.fire({
                 icon: 'warning',
-                title: '¿Desvincular el pesaje #' + idPesaje + '?',
+                title: '¿' + verbo + ' el pesaje #' + idPesaje + '?',
                 html: escapeHtml(detalleQuitar)
                     + (detalleFaltantes ? '<br><br><span class="text-danger">' + escapeHtml(detalleFaltantes) + '</span>' : '')
                     + '<br><br>' + escapeHtml(detalleGuardar),
                 showCancelButton: true,
-                confirmButtonText: 'Desvincular',
+                confirmButtonText: verbo,
                 cancelButtonText: 'Cancelar',
                 focusCancel: true
             }).then(function (resultado) {
@@ -1846,7 +1879,7 @@
             return;
         }
 
-        var pregunta = detalleQuitar + (detalleFaltantes ? '\n\n' + detalleFaltantes : '') + '\n\n' + detalleGuardar + '\n\n¿Desvincular?';
+        var pregunta = detalleQuitar + (detalleFaltantes ? '\n\n' + detalleFaltantes : '') + '\n\n' + detalleGuardar + '\n\n¿' + verbo + '?';
         if (window.confirm(pregunta)) {
             onConfirm();
         } else {
@@ -1913,7 +1946,7 @@
                 mostrarExitoDesvinculacion($form, calculo.indices.length);
             }, function () {
                 $button.prop('disabled', false);
-            });
+            }, esModoCierre($form));
         }, function (mensaje) {
             showVincularPesajesWarning(mensaje || 'No se pudo desvincular el pesaje.');
             $button.prop('disabled', false);
@@ -3168,6 +3201,16 @@
         });
 
         $form.on('click.stock', '#btnVincularPesajes', function () {
+            prepararModalVincularPesajes($form, false);
+            resetFiltrosPesajesVinculables();
+            cargarPesajesVinculables($form);
+            window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
+            $modalVincularPesajes.modal('show');
+        });
+
+        // Unificar pesajes (2026-11-26): mismo modal y mismas funciones que Vincular pesajes, en modo cierre.
+        $form.on('click.stock', '#btnUnificarPesajesCierre', function () {
+            prepararModalVincularPesajes($form, true);
             resetFiltrosPesajesVinculables();
             cargarPesajesVinculables($form);
             window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');

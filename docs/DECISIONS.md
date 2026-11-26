@@ -1,3 +1,34 @@
+## 2026-11-26 (b) - Stock: «Unificar pesajes» en un Cierre Stock (balance por sectores)
+
+- **Pedido:** el balance de mercadería se hace en varios sectores a la vez, en registros distintos, y después se tiene que unificar en uno solo. Si se cargan varios Cierre Stock con la misma fecha y hora, las consultas de stock los suman, y queda uno solo que tiene que contar.
+- **Decisión:**
+  - Cada sector carga un **Pesaje** («Solo productos»).
+  - El Cierre Stock tiene **Unificar pesajes**: el mismo modal y el mismo `stock.js` que «Vincular pesajes», en modo cierre.
+  - Las líneas se copian tal cual (una por sector) y `SincronizarPesajesVinculados` acepta un Cierre como destino: el pesaje queda con `idpesajeajustado = <cierre>`.
+  - No hay SQL, columnas ni SPs nuevos. Los Pesajes no entran en ninguna consulta de stock ni de reportes, así que solo cuenta el cierre.
+  - La regla de qué pesaje es unificable vive en `WebCore/Helpers/ReglaUnificacionCierre.cs`: sin medias ni proveedor real, sin ajuste generado, sin otro vínculo, sin hijos, misma sucursal, no anulado. Se aplica en el modal (`motivoNoDisponible`, en lote) y otra vez al Guardar.
+  - Las líneas «no contado» no se copian (los pesajes no las tienen). «Productos no cargados» se usa una vez, en el cierre.
+- **Alternativas descartadas:**
+  - Unificar Cierres Stock en un cierre, pasando los de sector a otro tipo o a Pesaje con una columna «tipo original» para poder deshacer. El usuario eligió que solo se unifiquen pesajes: no toca la base y desunificar es el «Desvincular» que ya existía.
+  - Un tipo nuevo («Cierre Parcial» / «Cierre Unificado»): habría que agregarlo en ~15 lugares (UNION de `obtenerCompras` en los dos motores, combos, `tipoCompraToEnum`, que cae en Ingreso, permisos, eliminación…).
+  - Juntar las líneas por producto: se pierde el detalle por sector y desunificar se complica.
+  - Copiar las líneas «no contado»: un producto no contado por dos sectores entraría dos veces.
+- **Riesgos aceptados:**
+  - (1) El vínculo se guarda **después** de `AddOrEditCompra` y no en la misma transacción (es el patrón existente). Si falla, el cierre queda con las líneas y el pesaje sin vínculo: no duplica stock, porque el pesaje no cuenta; solo se pierde la trazabilidad.
+  - (2) `idpesajeajustado` suma un cuarto significado (pesaje → cierre), que se distingue por el tipo del destino.
+  - (3) Editar un pesaje ya unificado no cambia el cierre. Se avisa en la pantalla y no se bloquea.
+  - (4) «Vincular pesajes» de un **Pesaje** no deja tomar uno unificado en un cierre (modal y Guardar; pedido del usuario el mismo día). Sigue sin excluir los vinculados a una **compra** u **otro pesaje**: es un hueco previo y no se tocó.
+  - (5) Con un cierre fuera de la página del listado, el tipo del destino se consulta (una consulta por id) solo para los pesajes sin medias.
+- **Archivos:**
+  - `WebCore/Controllers/StockController.cs`
+  - `WebCore/Helpers/ReglaUnificacionCierre.cs`
+  - `WebCore/Models/{StockEditVm,CompraIndexVm,CompraPesajeVm}.cs`
+  - `WebCore/Views/Stock/{Editar,_StockTabla,_StockDetalle}.cshtml`
+  - `WebCore/wwwroot/Scripts/app/stock.js`
+  - `WebCore/wwwroot/Content/css/pantalla-trabajo.css` (en escritorio los campos ceden ancho en un cierre para que el icono nuevo entre en el renglón; en celular el título del cuadro cede ancho, en `Stock/Editar.cshtml`)
+  - `WebCore.Tests/ReglaUnificacionCierreTests.cs`
+  - Docs: `03-modulos/stock-e-inventario.md`, manuales `Stock.Editar.md` / `Stock.Index.md`.
+
 ## 2026-11-26 - POS (Ventas y Expendios) en celular: no se podía deslizar arriba y abajo
 
 - **Decisión:** `overscroll-behavior-y: none` (anular «deslizar para recargar», 2026-10-12) se aplica solo a `html`, no a `body` (`Views/Shared/_LayoutPOS.cshtml`).

@@ -41,6 +41,9 @@ namespace WebCore.Models
         public bool EsPesaje { get; set; }
         public bool EsAjuste { get; set; }
         public bool CompraVinculadaEsPesaje { get; set; }
+        // Unificar pesajes en un Cierre Stock (2026-11-26): la fila es un cierre / el pesaje esta unificado en un cierre.
+        public bool EsCierre { get; set; }
+        public bool CompraVinculadaEsCierre { get; set; }
         public List<int> PesajesHijosVinculadosIds { get; set; } = new List<int>();
         public string UsuarioCreacion { get; set; } = "";
         public DateTime? FechaCreacion { get; set; }

@@ -79,6 +79,42 @@ Un Pesaje que no es de cortes de media res se guarda sin proveedor, medias ni ki
 
 "Vincular pesajes" copia las líneas del pesaje elegido dentro del pesaje que se edita (con la etiqueta efímera `IdPesajeVinculado`) y, al Guardar, `StockController.SincronizarPesajesVinculados` le pone `idpesajeajustado = <este pesaje>` al pesaje elegido. **Desvincular** (2026-10-16, botón en la columna Acción del mismo modal, con confirmación): quita de este pesaje las líneas que vinieron de ese pesaje y lo saca de `PesajesVinculadosIds`, así que al Guardar el servidor le deja `idpesajeajustado = NULL`. Todo se aplica al Guardar (el estado vive en `stock.js`: `state.pesajesDesvinculados`, que también viaja en el borrador). Como el origen de cada línea no se persiste, las líneas de un pesaje ya guardado se reconocen **por contenido** (mismo producto y kilos que las líneas actuales del pesaje vinculado); si ese pesaje se editó después de vincularlo, esas líneas no coinciden y el diálogo avisa cuántas no se encontraron. Decisión y alternativas: `docs/DECISIONS.md` (2026-10-16). Manual: `docs/11-manual-de-uso/pantallas/Stock.Editar.md`.
 
+## Unificar pesajes en un Cierre Stock (2026-11-26)
+
+**Para qué:** el balance de mercadería se hace en varios sectores a la vez y tiene que quedar **un solo** Cierre Stock por sucursal y momento. Las consultas de stock **suman todos los cierres con la misma fecha y hora**: `CortePg.ObtenerExistenciaPorSucursalesPlano` (`c.fechacompra = s.fechaultimocierre`), el SP `a_ExistenciaStockPorSucursales`, y `CierreStockWeb` / `a_CierreStockWeb`, que comparan por minuto. Además, el "anteúltimo cierre" de `ReportesController` se rompe. **Flujo:**
+1. Cada sector carga su conteo como **Pesaje** («Solo productos»).
+2. En el Cierre Stock, el botón **Unificar pesajes** (`#btnUnificarPesajesCierre`, al lado de "Productos no cargados") abre el mismo modal y las mismas funciones de `stock.js` que "Vincular pesajes", en modo cierre (`esModoCierre`, `prepararModalVincularPesajes`).
+3. Las líneas se copian tal cual al cierre, **una por sector**; si un producto se contó en dos sectores quedan dos líneas y el stock las suma.
+4. Al Guardar, `SincronizarPesajesVinculados` (que ahora acepta un destino Pesaje **o** Cierre) pone `idpesajeajustado = <cierre>` en cada pesaje.
+5. **Desunificar** es el "Desvincular" de siempre.
+
+**Por qué funciona sin tocar SQL:** los Pesajes (`'Pesaje Cortes'`) **no cuentan para el stock**. Ninguna consulta de existencia ni de reportes los incluye: la base es `'Cierre Stock'` y los movimientos son `Cortes / Ingreso / Ajuste / Egreso`. Solo cuenta el cierre unificado. Se usan los métodos de repositorio de los dos motores que ya existían (`obtenerPesajesVinculadosPorDestino(s)`, `actualizarIdPesajeAjustado`).
+
+**Qué pesaje se puede unificar** (`WebCore/Helpers/ReglaUnificacionCierre.cs`, tests en `WebCore.Tests/ReglaUnificacionCierreTests.cs`):
+- Tiene que ser un Pesaje no anulado y de la misma sucursal.
+- No puede ser **de medias**: medias o kilos > 0, o proveedor real («sin pesar»).
+- No puede tener **ajuste generado**, porque el ajuste sí cuenta y se sumaría dos veces.
+- No puede tener `idpesajeajustado` apuntando a otro registro (la columna es una sola). Apuntando a este mismo cierre, sí.
+- No puede tener pesajes hijos.
+
+**Dónde se aplica la regla:**
+- **Modal:** `UltimasComprasPesaje(..., paraCierre: true)` devuelve `motivoNoDisponible` por fila, con ajustes e hijos en lote (`getIdsAjustePorPesajes`, `obtenerPesajesVinculadosPorDestinos`). El JS muestra esos pesajes deshabilitados con el motivo.
+- **Guardar:** `ValidarModelo` → `ValidarPesajesUnificadosEnCierre` revalida cada id; hace una consulta por pesaje elegido.
+
+**Pesaje ya unificado:**
+- No se puede tomar desde **Vincular pesajes** de otro Pesaje, porque le pisaría el vínculo con el cierre. El modal lo marca (`motivoNoDisponible`, `MotivoNoVinculableAPesaje`) y `ValidarPesajesNoUnificadosEnCierre` lo rechaza al Guardar.
+- `StockEditVm.CompraVinculadaEsCierre` muestra la caja "Unificado en Cierre Stock #N" con el aviso de que sus cambios no pasan al cierre.
+- Deshabilita "Vincular compra / pesajes".
+- `clearCompraVinculadaPesaje` no le borra el vínculo al cambiar el proveedor.
+- El vínculo a un cierre no cuenta como vínculo para «Solo productos» (`ApuntaACierre`, `config.pesajeUnificadoEnCierre`).
+
+**Listado** (`_StockTabla.cshtml`, `_StockDetalle.cshtml`):
+- El pesaje muestra el chip violeta **Unificado en Cierre #N**.
+- El cierre muestra el chip **N pesajes unificados**.
+- Si el cierre no está en la página, el tipo del destino se consulta solo para los pesajes sin medias (`cierresFueraDePagina`).
+
+**Borrar:** un cierre con pesajes unificados no se puede eliminar; ya lo bloqueaba `calcularBloqueosEliminacion`. Decisión y alternativas: `docs/DECISIONS.md` (2026-11-26). Manual: `Stock.Editar.md`.
+
 ## Qué pedir: reposición sugerida (2026-10-13)
 
 `Stock → Qué pedir` (`ReposicionController`, ruta `/Reposicion`, solo Postgres, solo lectura, permiso `Stock.VerStock`). Para cada producto que lleva stock y cada sucursal: si el stock está **por debajo del punto de stock** sugiere pedir `punto − stock` (stock negativo cuenta como 0); si **no tiene punto** y está en cero, lo avisa **solo si salió algo (ventas + consumo por elaboración) en los últimos N días** (30 por defecto), y los en cero sin movimiento quedan como contador. Agrupa por proveedor habitual (`corteproveedor`, compra más reciente), muestra consumo/día, días que alcanza, última salida, stock en otras sucursales y último precio/importe, y exporta a Excel.

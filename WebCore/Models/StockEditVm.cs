@@ -67,6 +67,9 @@ namespace WebCore.Models
 
         public bool CompraVinculadaEsPesaje { get; set; }
 
+        // El idPesajeAjustado de este pesaje apunta a un Cierre Stock: el pesaje esta unificado en ese cierre (2026-11-26).
+        public bool CompraVinculadaEsCierre { get; set; }
+
         public DateTime? FechaPesajeAjustado { get; set; }
 
         public string ProveedorPesajeAjustado { get; set; } = "";

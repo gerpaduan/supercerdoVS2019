@@ -169,7 +169,9 @@
                                 //    (si el destino no esta en la pagina, el clic sigue el href y abre el registro).
                                 //  - data-abrir-detalle (chip de pesajes vinculados): el clic despliega el Detalle de la fila, donde se listan.
                                 bool chipCompraOPadre = detalle.EsPesaje && detalle.IdCompraVinculada.HasValue;
-                                bool chipHijos = detalle.EsPesaje && detalle.PesajesHijosVinculadosIds != null && detalle.PesajesHijosVinculadosIds.Count > 0;
+                                // Un Cierre Stock tambien tiene hijos: los pesajes de los sectores unificados en el (2026-11-26).
+                                bool chipHijos = (detalle.EsPesaje || detalle.EsCierre) && detalle.PesajesHijosVinculadosIds != null && detalle.PesajesHijosVinculadosIds.Count > 0;
+                                string textoHijos = detalle.EsCierre ? "unificado" : "vinculado";
                                 bool chipAjuste = detalle.EsPesaje && detalle.IdAjusteRelacionado.HasValue;
                                 bool chipPesajeDeAjuste = !chipAjuste && (detalle.EsAjuste || esAjusteFila) && detalle.IdPesajeRelacionado.HasValue;
 
@@ -177,7 +179,13 @@
                                 {
                                     <div class="stock-vinculos">
                                         <i class="fas fa-link stock-vinculos-icono" aria-hidden="true" title="Registros vinculados"></i>
-                                        @if (chipCompraOPadre && detalle.CompraVinculadaEsPesaje)
+                                        @if (chipCompraOPadre && detalle.CompraVinculadaEsCierre)
+                                        {
+                                            <a class="stock-chip stock-chip-cierre" href="@Url.Action("Editar", "Stock", new { id = detalle.IdCompraVinculada.Value })"
+                                               data-stock-destino="@detalle.IdCompraVinculada.Value"
+                                               title="Cierre Stock en el que se unificó este pesaje. Clic para ir a él."><i class="fas fa-lock" aria-hidden="true"></i>Unificado en Cierre #@detalle.IdCompraVinculada.Value</a>
+                                        }
+                                        else if (chipCompraOPadre && detalle.CompraVinculadaEsPesaje)
                                         {
                                             <a class="stock-chip stock-chip-pesaje" href="@Url.Action("Editar", "Stock", new { id = detalle.IdCompraVinculada.Value })"
                                                data-stock-destino="@detalle.IdCompraVinculada.Value"
@@ -194,7 +202,7 @@
                                             <button type="button" class="stock-chip stock-chip-pesaje stock-chip-hijos"
                                                     data-stock-destino="@string.Join(",", detalle.PesajesHijosVinculadosIds)"
                                                     data-abrir-detalle="#@detailId"
-                                                    title="Pesajes vinculados a este: @string.Join(", ", detalle.PesajesHijosVinculadosIds.ConvertAll(id => "#" + id)). Clic para ver el detalle."><i class="fas fa-weight-hanging" aria-hidden="true"></i>@detalle.PesajesHijosVinculadosIds.Count pesaje@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s") vinculado@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s")</button>
+                                                    title="Pesajes @(textoHijos)s a este: @string.Join(", ", detalle.PesajesHijosVinculadosIds.ConvertAll(id => "#" + id)). Clic para ver el detalle."><i class="fas fa-weight-hanging" aria-hidden="true"></i>@detalle.PesajesHijosVinculadosIds.Count pesaje@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s") @textoHijos@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s")</button>
                                         }
 
                                         @if (chipAjuste)
@@ -390,10 +398,13 @@
     .stock-chip-ajuste { --chip-bg: #EAF3DE; --chip-borde: #97C459; --chip-texto: #27500A; }
     .stock-chip-compra { --chip-bg: #E1F5EE; --chip-borde: #5DCAA5; --chip-texto: #085041; }
     .stock-chip-hijos { border-style: dashed; }
+    /* Pesaje unificado en un Cierre Stock (2026-11-26): mismo violeta que la franja de los cierres. */
+    .stock-chip-cierre { --chip-bg: #EEEDFE; --chip-borde: #7F77DD; --chip-texto: #3C3489; }
 
     html.dark-mode .stock-chip { --chip-bg: #0C447C; --chip-borde: #378ADD; --chip-texto: #B5D4F4; }
     html.dark-mode .stock-chip-ajuste { --chip-bg: #27500A; --chip-borde: #639922; --chip-texto: #C0DD97; }
     html.dark-mode .stock-chip-compra { --chip-bg: #085041; --chip-borde: #1D9E75; --chip-texto: #9FE1CB; }
+    html.dark-mode .stock-chip-cierre { --chip-bg: #3C3489; --chip-borde: #7F77DD; --chip-texto: #CECBF6; }
 
     /* Resaltado de a pares: al pasar el mouse por un chip se tiñen la fila actual y la vinculada (JS en Index.cshtml). */
     tr.stock-fila-vinculo,

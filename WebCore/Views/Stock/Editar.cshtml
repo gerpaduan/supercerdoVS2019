@@ -22,6 +22,10 @@
     bool permiteNegativo = esAjuste || esEgreso;
     bool tieneCompraVinculadaPesaje = esPesaje && Model.IdPesajeAjustado.HasValue && Model.IdPesajeAjustado.Value > 0;
     bool compraVinculadaEsPesaje = Model.CompraVinculadaEsPesaje;
+    // Unificar pesajes en un Cierre Stock (2026-11-26): el cierre muestra el boton "Unificar pesajes"; un pesaje ya unificado
+    // muestra a que cierre pertenece y no deja pisar ese vinculo con "Vincular compra" / "Vincular pesajes".
+    bool esCierre = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase);
+    bool pesajeUnificadoEnCierre = tieneCompraVinculadaPesaje && Model.CompraVinculadaEsCierre;
     // «Solo productos» (campo GuardarSinPesaje): pesaje que no es de cortes de media res. Oculta Proveedor, medias, kilos y los botones
     // de vincular. Si el guardado fallo por faltar medias o kilos, el interruptor se resalta para que el usuario lo encuentre.
     bool soloProductos = esPesaje && Model.GuardarSinPesaje;
@@ -217,7 +221,7 @@
                         <div class="col-6 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnSeleccionarCompraPesaje">
                             <div class="form-group mb-lg-0">
                                 <label class="d-none d-lg-block">&nbsp;</label>
-                                <button type="button" class="btn btn-outline-primary btn-block stock-btn-vincular" id="btnSeleccionarCompraPesaje">
+                                <button type="button" class="btn btn-outline-primary btn-block stock-btn-vincular" id="btnSeleccionarCompraPesaje"@(pesajeUnificadoEnCierre ? Html.Raw(" disabled=\"disabled\" title=\"Este pesaje está unificado en un Cierre Stock\"") : Html.Raw(""))>
                                     <i class="fas fa-shopping-basket mr-1"></i> Vincular compra
                                 </button>
                             </div>
@@ -225,7 +229,7 @@
                         <div class="col-6 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnVincularPesaje">
                             <div class="form-group mb-lg-0">
                                 <label class="d-none d-lg-block">&nbsp;</label>
-                                <button type="button" class="btn btn-outline-info btn-block stock-btn-vincular" id="btnVincularPesajes">
+                                <button type="button" class="btn btn-outline-info btn-block stock-btn-vincular" id="btnVincularPesajes"@(pesajeUnificadoEnCierre ? Html.Raw(" disabled=\"disabled\" title=\"Este pesaje está unificado en un Cierre Stock\"") : Html.Raw(""))>
                                     <i class="fas fa-link mr-1"></i> Vincular pesajes
                                 </button>
                             </div>
@@ -236,7 +240,19 @@
                    linea (stock-editar-compacto.css). *@
                 <div class="row stock-fila-vinculada">
                     <div class="col-12 col-xl-8">
-                        @if (Model.EsEdicion && esPesaje)
+                        @if (Model.EsEdicion && pesajeUnificadoEnCierre)
+                        {
+                            @* Pesaje unificado en un Cierre Stock: sus lineas ya se copiaron al cierre; cambiarlo aca no cambia el cierre. *@
+                            <div class="stock-compra-vinculada-box" id="stockPesajeUnificadoCierreBox">
+                                <div class="small text-uppercase font-weight-bold mb-2">
+                                    Unificado en Cierre Stock
+                                    <a class="ml-1" href="@Url.Action("Editar", "Stock", new { id = Model.IdPesajeAjustado!.Value })" data-edit-readonly-ignore="true">#@Model.IdPesajeAjustado.Value</a>
+                                    <span class="text-muted font-weight-normal ml-1">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "")</span>
+                                </div>
+                                <div class="small">Los cambios en este pesaje no pasan al cierre. Para corregirlo, desunificalo desde el cierre, guardá el cierre y volvé a unificarlo.</div>
+                            </div>
+                        }
+                        else if (Model.EsEdicion && esPesaje)
                         {
                             <div class="stock-compra-vinculada-box @(tieneCompraVinculadaPesaje ? "" : "d-none")">
                                 <div class="small text-uppercase font-weight-bold mb-2">
@@ -346,6 +362,11 @@
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-primary @(string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase) ? "" : "d-none")" id="btnProductosNoCargados" title="Productos no cargados" aria-label="Productos no cargados">
                                         <i class="fas fa-list mr-1"></i> Productos no cargados
+                                    </button>
+                                    @* Unificar pesajes (2026-11-26): cada sector cuenta en un Pesaje y aca se juntan en este unico cierre.
+                                       Abre el mismo modal que "Vincular pesajes" (stock.js, modo cierre). *@
+                                    <button type="button" class="btn btn-sm btn-outline-info @(esCierre ? "" : "d-none")" id="btnUnificarPesajesCierre" title="Unificar los pesajes de cada sector en este cierre" aria-label="Unificar pesajes">
+                                        <i class="fas fa-object-group mr-1"></i> Unificar pesajes
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
                                         <i class="fas fa-shield-alt mr-1"></i> Activar respaldo automático
@@ -574,7 +595,7 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">Vincular pesajes</h5>
+                <h5 class="modal-title" id="tituloModalVincularPesajesStock">Vincular pesajes</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -582,7 +603,7 @@
             <div class="modal-body">
                 <div id="stockVincularPesajesWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
                 <div class="small text-muted mb-1">Se muestran solo pesajes de la misma sucursal, ordenados del m&aacute;s reciente al m&aacute;s antiguo.</div>
-                <div class="small text-muted mb-1">Un pesaje ya vinculado se puede desvincular desde la columna Acci&oacute;n: se quitan sus productos de este pesaje y se aplica al guardar.</div>
+                <div class="small text-muted mb-1" id="ayudaModalVincularPesajesStock">Un pesaje ya vinculado se puede desvincular desde la columna Acci&oacute;n: se quitan sus productos de este pesaje y se aplica al guardar.</div>
                 <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalVincularPesajesStock">-</strong></div>
                 <div class="row align-items-end mb-3 stock-modal-filters">
                     <div class="col-12 col-lg-4">
@@ -970,7 +991,8 @@
         .stock-page .stock-section-box .form-group { margin-bottom: .3rem; }
         .stock-page .stock-section-box label { font-size: .72rem; margin-bottom: .1rem; }
         .stock-page .stock-section-box > .d-flex { margin-bottom: .35rem !important; flex-wrap: nowrap !important; gap: .3rem; }
-        .stock-page .stock-section-box .stock-section-title { font-size: .72rem; white-space: nowrap; }
+        /* El titulo cede ancho (2026-11-26): en un cierre hay un icono mas (Unificar pesajes) y se salia del cuadro. */
+        .stock-page .stock-section-box .stock-section-title { font-size: .72rem; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .stock-page .stock-resumen-cel { margin: 0 auto 0 .3rem; font-size: .72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; color: var(--ui-text-muted, #6c757d); }
         .stock-page .stock-acciones-agregar { flex-wrap: nowrap !important; gap: .3rem !important; }
         .stock-page .stock-acciones-agregar .pt-balanza-toggle { margin: 0 !important; }
@@ -1353,6 +1375,8 @@
                 permiteCantidadNegativa: @(permiteNegativo ? "true" : "false"),
                 esEgreso: @(esEgreso ? "true" : "false"),
                 esPesaje: @(esPesaje ? "true" : "false"),
+                // Pesaje ya unificado en un Cierre Stock: su vinculo no impide «Solo productos» (ver StockController.ValidarModelo).
+                pesajeUnificadoEnCierre: @(pesajeUnificadoEnCierre ? "true" : "false"),
                 balanzaUrl: "http://localhost:5100/peso",
                 proveedorDefaultId: @Model.IdProveedor,
                 proveedorDefaultNombre: "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.ProveedorNombre ?? ""))",

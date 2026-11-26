@@ -5,7 +5,7 @@ rol: usuario
 modulo: Stock
 orden: 2
 permiso: Stock.AddOrEditStock para guardar (PENDIENTE: en WebCore el chequeo de abrir la pantalla está omitido, ver TODO en StockController)
-revisada: 2026-11-25
+revisada: 2026-11-26
 alias: Stock.Nuevo
 ---
 ## Para qué sirve
@@ -17,7 +17,7 @@ Un **Pesaje** normal pide **Proveedor, Cant.Medias y Kgs.Medias** (sirven para c
 - **Proveedor:** un pesaje nuevo queda con el proveedor «Indefinido». Si ya estaba guardado, conserva el proveedor que tenía.
 - **Guardar con medias o kilos en cero (2026-11-19):** si el Pesaje es de medias pero todavía no sabés cuántas medias o kilos fueron, podés dejar **Cant.Medias** y/o **Kgs.Medias** vacíos y apretar Guardar: sale el aviso *«No cargaste … Se va a guardar en cero»* con **Guardar en cero** / **Volver**. Al confirmar se guarda con el proveedor y todo lo demás; lo que no cargaste queda en 0. Mientras estén en cero, **Ver Porc(%)** y **Generar ajuste** avisan que faltan las medias y los kilos. Al abrirlo de nuevo se ve normal (no como «Solo productos») porque tiene proveedor; en la lista aparece como *Proveedor | sin pesar*. Si cambiás medias o kilos después de confirmar, el aviso vuelve a salir. Con el proveedor «Indefinido» y 0/0 se sigue tomando como «Solo productos». Verificado en el navegador el 2026-11-19 (aviso, «Volver», guardado en 0 con proveedor, lista y reapertura).
 - **Si intentás guardar sin medias o kilos** y el interruptor está apagado, el mensaje dice *«Si este pesaje no es de cortes de media res, active "Solo productos"»* y el interruptor se resalta en amarillo.
-- **No se puede activar** si el pesaje tiene una **compra o pesajes vinculados** (primero se desvinculan) ni si ya tiene un **ajuste generado** (primero se elimina el ajuste).
+- **No se puede activar** si el pesaje tiene una **compra o pesajes vinculados** (primero se desvinculan) ni si ya tiene un **ajuste generado** (primero se elimina el ajuste). Estar **unificado en un Cierre de stock** no lo impide (ver *Unificar pesajes en un Cierre de stock*, más abajo).
 - **Al abrir** un pesaje guardado sin medias ni kilos y sin vínculos, el interruptor aparece **activado**. Si tiene vínculos queda apagado y hay que cargar las medias o desvincular.
 - **En la lista de Stock** estos pesajes muestran *Solo productos* en vez del proveedor y los ceros.
 - Al cambiar la acción a otra distinta de Pesaje, el interruptor se apaga. El borrador también lo recuerda.
@@ -31,6 +31,8 @@ Aplica cuando el tipo del movimiento es **Pesaje**. El botón **Vincular pesajes
 2. Las líneas de ese pesaje se **agregan a este pesaje** (con la etiqueta *Pesaje vinculado #N*) y arriba aparece el aviso *Pesajes vinculados en esta edición*.
 3. El vínculo queda guardado recién cuando tocás **Guardar**.
 
+Un pesaje que está **unificado en un Cierre de stock** aparece como **No disponible** (*Está unificado en el Cierre Stock #N*) y no se puede vincular: primero hay que desunificarlo desde ese cierre. Si igual llega a Guardar (por ejemplo, desde un borrador viejo), el sistema no guarda y dice cuál es.
+
 ### Desvincular
 1. Abrí **Vincular pesajes**. Los pesajes que ya están vinculados a este muestran el botón rojo **Desvincular** (antes decían "Ya vinculado"). Si el pesaje es muy viejo y no aparece, ampliá *Fecha desde*.
 2. Tocá **Desvincular**. El sistema pide confirmación y dice **cuántas líneas (y cuántos kg) se van a quitar** de este pesaje.
@@ -42,6 +44,39 @@ Cosas a tener en cuenta:
 - Si este pesaje tiene dos líneas idénticas (mismo producto y kilos) y el pesaje vinculado aportó una, se quita una de las dos (son equivalentes).
 - Al guardar, el pesaje desvinculado queda marcado como *modificado* (cambia su fecha y usuario de última modificación).
 - La confirmación se puede cancelar sin efecto.
+
+## Unificar pesajes en un Cierre de stock (balance por sectores)
+Sirve cuando el balance de mercadería se hace **en varios sectores a la vez** (cámara, mostrador, depósito…). Al final tiene que quedar **un solo Cierre de stock** con todo lo contado. Dos cierres con la misma fecha y hora se sumarían, y el stock quedaría mal.
+
+### Cómo se hace
+1. **Cada sector** carga su conteo como un **Pesaje** con **Solo productos** activado: solo los productos y sus cantidades. Pueden hacerlo varias personas al mismo tiempo, cada una en su pesaje.
+2. Cuando todos terminaron, se crea **un Cierre de stock** (o se abre el que ya está) y se toca **Unificar pesajes**, el botón al lado de *Productos no cargados*.
+3. Se abre la lista de pesajes de la sucursal (por defecto, los de los últimos 7 días). En la fila de cada sector se toca **Unificar**: sus productos se copian al cierre.
+   - Si un producto se contó en dos sectores, queda una línea por sector y el stock suma las dos.
+   - Las líneas «no contado» no se copian.
+4. Si hace falta, se usa **Productos no cargados** para completar lo que no contó ningún sector.
+5. Se toca **Guardar**. Recién ahí los pesajes quedan unidos al cierre.
+
+Solo cuenta para el stock el **Cierre de stock**. Los pesajes de los sectores no cuentan nunca, así que no se duplica nada.
+
+### Pesajes que no se pueden unificar
+En la lista aparecen con el botón **No disponible** y el motivo debajo:
+- *Es un pesaje de medias*: tiene medias, kilos o un proveedor real; es de una compra, no un conteo.
+- *Tiene el ajuste #N generado*: el ajuste ya cuenta para el stock.
+- *Ya está vinculado al #N*: está unido a una compra, a otro pesaje o a otro cierre.
+- *Tiene pesajes vinculados a él*.
+
+Al **Guardar** el sistema vuelve a revisar lo mismo. Si algún pesaje no se puede unificar, no guarda y dice cuál y por qué.
+
+### Desunificar
+Igual que [desvincular](#desvincular): en **Unificar pesajes**, el pesaje ya unido muestra el botón rojo **Desunificar**. Al confirmar, sus líneas se quitan del cierre. Al **Guardar**, el pesaje queda suelto otra vez.
+
+### En el pesaje de un sector ya unificado
+- Arriba dice **Unificado en Cierre Stock #N**, con el enlace al cierre.
+- **Los cambios que hagas en ese pesaje no pasan al cierre**. Para corregir un conteo: desunificalo desde el cierre y guardá el cierre; después corregí el pesaje y volvé a unificarlo.
+- Los botones *Vincular compra* y *Vincular pesajes* quedan deshabilitados.
+- Un cierre con pesajes unificados **no se puede eliminar** hasta desunificarlos.
+- En la lista de Stock, el pesaje muestra el chip violeta *Unificado en Cierre #N* y el cierre muestra *N pesajes unificados*.
 
 ## Eliminar un movimiento de stock
 El botón rojo **Eliminar** aparece al abrir un movimiento **ya guardado** (ingreso, egreso, cierre, ajuste o pesaje) para quien puede modificarlo. Funciona igual que en [Compras](ayuda:pantalla/Compras.Editar): resumen y líneas, **motivo obligatorio** (10 a 300 caracteres) y **usuario y contraseña en cada eliminación** (ver [eliminar registros](ayuda:concepto/eliminar-registros)).

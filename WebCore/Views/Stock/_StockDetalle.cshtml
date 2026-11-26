@@ -94,20 +94,24 @@ else
     @if ((Model.EsPesaje && Model.IdCompraVinculada.HasValue && Model.IdCompraVinculada.Value > 0)
         || (Model.EsAjuste && Model.IdPesajeRelacionado.HasValue && Model.IdPesajeRelacionado.Value > 0)
         || (Model.EsPesaje && Model.IdAjusteRelacionado.HasValue)
-        || (Model.EsPesaje && Model.PesajesHijosVinculadosIds != null && Model.PesajesHijosVinculadosIds.Count > 0))
+        || ((Model.EsPesaje || Model.EsCierre) && Model.PesajesHijosVinculadosIds != null && Model.PesajesHijosVinculadosIds.Count > 0))
     {
         <div class="det-vinc">
             @if (Model.EsPesaje && Model.IdCompraVinculada.HasValue && Model.IdCompraVinculada.Value > 0)
             {
                 <div class="det-caja">
-                    <div class="t">@(Model.CompraVinculadaEsPesaje ? "Pesaje padre vinculado #" : "Compra vinculada #")@Model.IdCompraVinculada.Value</div>
+                    <div class="t">@(Model.CompraVinculadaEsCierre ? "Unificado en Cierre Stock #" : (Model.CompraVinculadaEsPesaje ? "Pesaje padre vinculado #" : "Compra vinculada #"))@Model.IdCompraVinculada.Value</div>
                     @if (!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada))
                     {
                         <div class="r">@Model.EstadoCompraVinculada</div>
                     }
                     else
                     {
-                        <div class="r">@StockRelacionadoResumen(Model.ProveedorCompraVinculada, Model.CantMediasCompraVinculada, Model.KgsCompraVinculada)</div>
+                        @* Un cierre no tiene proveedor ni medias: solo la fecha (2026-11-26). *@
+                        if (!Model.CompraVinculadaEsCierre)
+                        {
+                            <div class="r">@StockRelacionadoResumen(Model.ProveedorCompraVinculada, Model.CantMediasCompraVinculada, Model.KgsCompraVinculada)</div>
+                        }
                         <div class="f text-muted">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "")</div>
                     }
                 </div>
@@ -138,10 +142,10 @@ else
                 </div>
             }
 
-            @if (Model.EsPesaje && Model.PesajesHijosVinculadosIds != null && Model.PesajesHijosVinculadosIds.Count > 0)
+            @if ((Model.EsPesaje || Model.EsCierre) && Model.PesajesHijosVinculadosIds != null && Model.PesajesHijosVinculadosIds.Count > 0)
             {
                 <div class="det-caja">
-                    <div class="t">Pesajes vinculados a este (@Model.PesajesHijosVinculadosIds.Count)</div>
+                    <div class="t">@(Model.EsCierre ? "Pesajes unificados en este cierre" : "Pesajes vinculados a este") (@Model.PesajesHijosVinculadosIds.Count)</div>
                     <div>
                         @foreach (var idHijo in Model.PesajesHijosVinculadosIds)
                         {

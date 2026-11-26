@@ -1417,7 +1417,10 @@ namespace WebCore.Controllers
         // siguen (mismo criterio que el resto del archivo, ver header) -- el stub admin siempre
         // esta autorizado.
         [HttpGet]
-        public IActionResult UltimasComprasPesaje(int idSucursal = 0, int idCompraActual = 0, bool soloPesajes = false, bool soloComprasPesaje = false, string proveedor = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        // paraCierre (2026-11-26): el modal se abrio desde un Cierre Stock ("Unificar pesajes"). Cada pesaje trae
+        // motivoNoDisponible (ReglaUnificacionCierre): null si se puede elegir, o el texto de por que no. Sin paraCierre
+        // (Vincular pesajes de un Pesaje) solo marca los que ya estan unificados en un Cierre Stock.
+        public IActionResult UltimasComprasPesaje(int idSucursal = 0, int idCompraActual = 0, bool soloPesajes = false, bool soloComprasPesaje = false, string proveedor = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, bool paraCierre = false)
         {
             Entidades.Usuario user = _usuarioActual;
 
@@ -1434,6 +1437,36 @@ namespace WebCore.Controllers
                     ? UnirComprasParaPesajeSeleccion(sucursal, desde, hasta)
                     : _oCompraN.obtenerCompras(sucursal, NormalizarTipoFiltro("Todos"), "", desde, hasta, null) ?? new DataTable();
                 var items = new List<CompraPesajeListadoVm>();
+
+                // Unificar en un cierre: ajustes generados e hijos de los pesajes del listado, en lote (2 consultas en total,
+                // no una por fila).
+                Dictionary<int, int> ajustesPorPesaje = null;
+                Dictionary<int, List<int>> hijosPorPesaje = null;
+                int idProveedorIndefinido = _param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
+                if (paraCierre)
+                {
+                    var idsPesajeListado = dt.Rows.Cast<DataRow>()
+                        .Where(r => EsPesaje(LeerString(r, "tipoCompra")))
+                        .Select(r => LeerInt(r, "idCompra"))
+                        .Where(id => id > 0)
+                        .Distinct()
+                        .ToList();
+                    ajustesPorPesaje = _oCompraN.getIdsAjustePorPesajes(idsPesajeListado) ?? new Dictionary<int, int>();
+                    hijosPorPesaje = _oCompraN.obtenerPesajesVinculadosPorDestinos(idsPesajeListado) ?? new Dictionary<int, List<int>>();
+                }
+
+                // Vincular pesajes (en un Pesaje): uno unificado en un Cierre Stock no se puede tomar, porque pisaria el vinculo
+                // con el cierre. Solo se consultan los destinos de los pesajes sin medias (los unificables en un cierre).
+                HashSet<int> cierresDeUnificados = null;
+                if (soloPesajes && !paraCierre)
+                {
+                    cierresDeUnificados = new HashSet<int>(dt.Rows.Cast<DataRow>()
+                        .Where(r => EsPesaje(LeerString(r, "tipoCompra")) && (LeerIntNullable(r, "cantMedias") ?? 0) <= 0)
+                        .Select(r => LeerIntNullable(r, "idPesajeAjustado") ?? 0)
+                        .Where(id => id > 0)
+                        .Distinct()
+                        .Where(id => ApuntaACierre(id)));
+                }
 
                 var idsProcesados = new HashSet<int>();
                 var rowsOrdenadas = dt.Rows.Cast<DataRow>()
@@ -1495,7 +1528,16 @@ namespace WebCore.Controllers
                         Sucursal = row.Table.Columns.Contains("Sucursal") && row["Sucursal"] != DBNull.Value
                             ? Convert.ToString(row["Sucursal"])
                             : (row.Table.Columns.Contains("sucursal") && row["sucursal"] != DBNull.Value ? Convert.ToString(row["sucursal"]) : ""),
-                        EsActual = idCompraActual > 0 && idCompra == idCompraActual
+                        EsActual = idCompraActual > 0 && idCompra == idCompraActual,
+                        MotivoNoDisponible = paraCierre
+                            ? WebCore.Helpers.ReglaUnificacionCierre.MotivoNoUnificable(
+                                CandidatoCierreDesdeFila(row, sucursal, idProveedorIndefinido, ajustesPorPesaje, hijosPorPesaje),
+                                idCompraActual, sucursal)
+                            : (cierresDeUnificados != null
+                                ? WebCore.Helpers.ReglaUnificacionCierre.MotivoNoVinculableAPesaje(
+                                    LeerIntNullable(row, "idPesajeAjustado"),
+                                    cierresDeUnificados.Contains(LeerIntNullable(row, "idPesajeAjustado") ?? 0))
+                                : null)
                     });
                 }
 
@@ -1513,7 +1555,8 @@ namespace WebCore.Controllers
                         kgsMedias = c.KgsMedias,
                         totalKg = c.TotalKg,
                         sucursal = c.Sucursal,
-                        esActual = c.EsActual
+                        esActual = c.EsActual,
+                        motivoNoDisponible = c.MotivoNoDisponible
                     }).ToList()
                 });
             }
@@ -1873,7 +1916,23 @@ namespace WebCore.Controllers
                 .Where(x => x > 0)
                 .ToList();
             var ajustesPorPesaje = _oCompraN.getIdsAjustePorPesajes(idsPesaje);
-            var pesajesHijosPorDestino = _oCompraN.obtenerPesajesVinculadosPorDestinos(idsPesaje);
+            // Los Cierre Stock tambien son destino: sus pesajes unificados (2026-11-26).
+            var idsCierre = filasPorIdCompra.Values
+                .Where(x => EsCierre(LeerString(x, "tipoCompra")))
+                .Select(x => LeerInt(x, "idCompra"))
+                .Where(x => x > 0)
+                .ToList();
+            var pesajesHijosPorDestino = _oCompraN.obtenerPesajesVinculadosPorDestinos(idsPesaje.Concat(idsCierre).ToList());
+
+            // Pesaje «Solo productos» (sin medias) vinculado a un registro que no esta en esta pagina: puede estar unificado en
+            // un cierre de otra fecha. Se consulta el tipo solo para esos (los de medias apuntan a compras, que nunca estan en
+            // este listado, y son la mayoria: consultarlos a todos seria una consulta por fila).
+            var cierresFueraDePagina = new HashSet<int>(filasPorIdCompra.Values
+                .Where(x => EsPesaje(LeerString(x, "tipoCompra")) && (LeerIntNullable(x, "cantMedias") ?? 0) <= 0)
+                .Select(x => LeerIntNullable(x, "idPesajeAjustado") ?? 0)
+                .Where(id => id > 0 && !filasPorIdCompra.ContainsKey(id))
+                .Distinct()
+                .Where(id => ApuntaACierre(id)));
 
             foreach (DataRow row in dt.Rows)
             {
@@ -1881,17 +1940,18 @@ namespace WebCore.Controllers
                 if (detalles.ContainsKey(idCompra))
                     continue;
 
-                detalles[idCompra] = ConstruirDetalleIndexLiviano(row, filasPorIdCompra, ajustesPorPesaje, pesajesHijosPorDestino);
+                detalles[idCompra] = ConstruirDetalleIndexLiviano(row, filasPorIdCompra, ajustesPorPesaje, pesajesHijosPorDestino, cierresFueraDePagina);
             }
 
             return detalles;
         }
 
-        private CompraIndexDetalleVm ConstruirDetalleIndexLiviano(DataRow row, Dictionary<int, DataRow> filasPorIdCompra, Dictionary<int, int> ajustesPorPesaje, Dictionary<int, List<int>> pesajesHijosPorDestino)
+        private CompraIndexDetalleVm ConstruirDetalleIndexLiviano(DataRow row, Dictionary<int, DataRow> filasPorIdCompra, Dictionary<int, int> ajustesPorPesaje, Dictionary<int, List<int>> pesajesHijosPorDestino, HashSet<int> cierresFueraDePagina = null)
         {
             int idCompra = LeerInt(row, "idCompra");
             string tipoCompra = LeerString(row, "tipoCompra");
             bool esPesaje = EsPesaje(tipoCompra);
+            bool esCierre = EsCierre(tipoCompra);
             bool esAjuste = EsAjuste(tipoCompra);
             int? idPesajeRelacionado = LeerIntNullable(row, "idPesajeAjustado");
             int? idAjusteRelacionado = null;
@@ -1910,9 +1970,13 @@ namespace WebCore.Controllers
                 filasPorIdCompra.TryGetValue(idPesajeRelacionado.Value, out filaRelacionada);
 
             bool compraVinculadaEsPesaje = esPesaje && filaRelacionada != null && EsPesaje(LeerString(filaRelacionada, "tipoCompra"));
+            bool compraVinculadaEsCierre = esPesaje && idPesajeRelacionado.HasValue
+                && (filaRelacionada != null
+                    ? EsCierre(LeerString(filaRelacionada, "tipoCompra"))
+                    : (cierresFueraDePagina != null && cierresFueraDePagina.Contains(idPesajeRelacionado.Value)));
 
             List<int> pesajesHijos = null;
-            if (esPesaje && pesajesHijosPorDestino != null)
+            if ((esPesaje || esCierre) && pesajesHijosPorDestino != null)
                 pesajesHijosPorDestino.TryGetValue(idCompra, out pesajesHijos);
 
             return new CompraIndexDetalleVm
@@ -1940,7 +2004,9 @@ namespace WebCore.Controllers
                 EstadoPesajeRelacionado = "",
                 EsPesaje = esPesaje,
                 EsAjuste = esAjuste,
+                EsCierre = esCierre,
                 CompraVinculadaEsPesaje = compraVinculadaEsPesaje,
+                CompraVinculadaEsCierre = compraVinculadaEsCierre,
                 PesajesHijosVinculadosIds = pesajesHijos ?? new List<int>(),
                 UsuarioCreacion = LeerString(row, "CreadoPor", "creadoPorNombre", "usuarioCreacion"),
                 FechaCreacion = LeerDateTimeNullable(row, "creado", "fechaCreacion"),
@@ -1956,6 +2022,7 @@ namespace WebCore.Controllers
 
             bool esPesaje = EsPesaje(compra.TipoCompra);
             bool esAjuste = EsAjuste(compra.TipoCompra);
+            bool esCierre = EsCierre(compra.TipoCompra);
             int? idPesajeRelacionado = null;
             int? idAjusteRelacionado = null;
             Entidades.Compra pesajeRelacionado = null;
@@ -1975,6 +2042,7 @@ namespace WebCore.Controllers
                 .ToList();
 
             bool compraVinculadaEsPesaje = false;
+            bool compraVinculadaEsCierre = false;
             List<int> pesajesHijos = new List<int>();
 
             if (esPesaje)
@@ -1990,9 +2058,16 @@ namespace WebCore.Controllers
                     if (pesajeRelacionado == null || pesajeRelacionado.IdCompra <= 0)
                         estadoPesajeRelacionado = "No se encontro la compra vinculada.";
                     else
+                    {
                         compraVinculadaEsPesaje = EsPesaje(pesajeRelacionado.TipoCompra);
+                        compraVinculadaEsCierre = EsCierre(pesajeRelacionado.TipoCompra);
+                    }
                 }
 
+                pesajesHijos = _oCompraN.obtenerPesajesVinculadosPorDestino(compra.IdCompra) ?? new List<int>();
+            }
+            else if (esCierre)
+            {
                 pesajesHijos = _oCompraN.obtenerPesajesVinculadosPorDestino(compra.IdCompra) ?? new List<int>();
             }
             else if (esAjuste)
@@ -2038,7 +2113,9 @@ namespace WebCore.Controllers
                 EstadoPesajeRelacionado = estadoPesajeRelacionado,
                 EsPesaje = esPesaje,
                 EsAjuste = esAjuste,
+                EsCierre = esCierre,
                 CompraVinculadaEsPesaje = compraVinculadaEsPesaje,
+                CompraVinculadaEsCierre = compraVinculadaEsCierre,
                 PesajesHijosVinculadosIds = pesajesHijos,
                 UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
                 FechaCreacion = compra.Creado,
@@ -2217,7 +2294,10 @@ namespace WebCore.Controllers
             // SincronizarPesajesVinculados() los desvincula en silencio al guardar cualquier cambio
             // no relacionado (idsActuales arranca vacio, y todo lo que no esta en idsActuales se
             // trata como "a desvincular"). Bug real encontrado en vivo el 2026-08-13 en el
-            // original, ver docs/DECISIONS.md.
+            // original, ver docs/DECISIONS.md. Un Cierre Stock tambien es destino: los pesajes unificados en el (2026-11-26).
+            if (EsCierre(compra.TipoCompra))
+                model.PesajesVinculadosIds = _oCompraN.obtenerPesajesVinculadosPorDestino(compra.IdCompra) ?? new List<int>();
+
             if (EsPesaje(compra.TipoCompra))
             {
                 model.PesajesVinculadosIds = _oCompraN.obtenerPesajesVinculadosPorDestino(compra.IdCompra) ?? new List<int>();
@@ -2225,7 +2305,8 @@ namespace WebCore.Controllers
                 // Un pesaje guardado sin medias ni kilos y sin vínculos es «Solo productos»: se abre con el interruptor
                 // prendido para poder volver a guardarlo. Si tiene vínculos queda apagado (se cargan las medias o se desvincula).
                 bool sinMedias = (compra.CantMedias ?? 0) <= 0 && (compra.KgsMedias ?? 0f) <= 0f;
-                bool sinVinculos = !(compra.IdPesajeAjustado.HasValue && compra.IdPesajeAjustado.Value > 0)
+                // Estar unificado en un Cierre Stock no cuenta como vinculo (es el conteo de un sector, 2026-11-26).
+                bool sinVinculos = !(compra.IdPesajeAjustado.HasValue && compra.IdPesajeAjustado.Value > 0 && !model.CompraVinculadaEsCierre)
                     && model.PesajesVinculadosIds.Count == 0;
                 // Un pesaje en 0/0 con un proveedor real es un pesaje de medias guardado con los datos pendientes (se confirmo en
                 // el aviso de Guardar): se abre normal para poder completar medias y kilos. «Solo productos» deja el proveedor
@@ -2306,6 +2387,7 @@ namespace WebCore.Controllers
             model.CantMediasCompraVinculada = null;
             model.KgsCompraVinculada = null;
             model.CompraVinculadaEsPesaje = false;
+            model.CompraVinculadaEsCierre = false;
             if (!compra.IdPesajeAjustado.HasValue || compra.IdPesajeAjustado.Value <= 0)
             {
                 model.EstadoCompraVinculada = "";
@@ -2325,6 +2407,7 @@ namespace WebCore.Controllers
             model.CantMediasCompraVinculada = compraVinculada.CantMedias.HasValue ? compraVinculada.CantMedias : compra.CantMedias;
             model.KgsCompraVinculada = compraVinculada.KgsMedias.HasValue ? compraVinculada.KgsMedias : compra.KgsMedias;
             model.CompraVinculadaEsPesaje = EsPesaje(compraVinculada.TipoCompra);
+            model.CompraVinculadaEsCierre = EsCierre(compraVinculada.TipoCompra);
             model.EstadoCompraVinculada = "";
         }
 
@@ -2473,7 +2556,8 @@ namespace WebCore.Controllers
                     // «Solo productos»: el pesaje no es de cortes de media res, no lleva proveedor, medias ni kilos.
                     // Con una compra o pesajes vinculados los botones de vincular quedan ocultos y el vínculo se
                     // perdería de vista; con un ajuste generado, el ajuste quedaría calculado sobre medias que ya no están.
-                    bool tieneVinculos = (model.IdPesajeAjustado.HasValue && model.IdPesajeAjustado.Value > 0)
+                    // Estar unificado en un Cierre Stock no cuenta: es justamente el caso del conteo de un sector (2026-11-26).
+                    bool tieneVinculos = (model.IdPesajeAjustado.HasValue && model.IdPesajeAjustado.Value > 0 && !ApuntaACierre(model.IdPesajeAjustado))
                         || (model.PesajesVinculadosIds != null && model.PesajesVinculadosIds.Count > 0);
                     if (tieneVinculos)
                         return "Un pesaje «Solo productos» no puede tener una compra ni pesajes vinculados. Desvincúlelos antes de activarlo.";
@@ -2498,6 +2582,20 @@ namespace WebCore.Controllers
                             return "Ingrese los kilos de medias para el pesaje." + SugerenciaSoloProductos;
                     }
                 }
+            }
+
+            if (EsCierre(model.TipoCompra))
+            {
+                string errorUnificados = ValidarPesajesUnificadosEnCierre(model);
+                if (!string.IsNullOrEmpty(errorUnificados))
+                    return errorUnificados;
+            }
+
+            if (EsPesaje(model.TipoCompra))
+            {
+                string errorTomados = ValidarPesajesNoUnificadosEnCierre(model);
+                if (!string.IsNullOrEmpty(errorTomados))
+                    return errorTomados;
             }
 
             return "";
@@ -2551,7 +2649,8 @@ namespace WebCore.Controllers
 
         private void SincronizarPesajesVinculados(Entidades.Compra compraDestino, IEnumerable<int> pesajesVinculadosIds, Entidades.Usuario user)
         {
-            if (compraDestino == null || compraDestino.IdCompra <= 0 || !EsPesaje(compraDestino.TipoCompra))
+            // Destino Pesaje (vincular pesajes) o Cierre Stock (unificar pesajes de los sectores, 2026-11-26).
+            if (compraDestino == null || compraDestino.IdCompra <= 0 || !(EsPesaje(compraDestino.TipoCompra) || EsCierre(compraDestino.TipoCompra)))
                 return;
 
             var idsActuales = (pesajesVinculadosIds ?? Enumerable.Empty<int>())
@@ -2570,6 +2669,109 @@ namespace WebCore.Controllers
             {
                 _oCompraN.actualizarIdPesajeAjustado(idPesaje, null, user);
             }
+        }
+
+        // ===== Unificar pesajes en un Cierre Stock (2026-11-26, ver docs/DECISIONS.md) =====
+
+        // Arma el candidato de ReglaUnificacionCierre desde una fila de obtenerCompras (modal). Las filas ya vienen filtradas
+        // por la sucursal pedida; los ajustes y los hijos se calcularon en lote antes (UltimasComprasPesaje).
+        private static WebCore.Helpers.PesajeCandidatoCierre CandidatoCierreDesdeFila(DataRow row, int idSucursal, int idProveedorIndefinido,
+            Dictionary<int, int> ajustesPorPesaje, Dictionary<int, List<int>> hijosPorPesaje)
+        {
+            int idCompra = LeerInt(row, "idCompra");
+            int idAjuste = 0;
+            if (ajustesPorPesaje != null)
+                ajustesPorPesaje.TryGetValue(idCompra, out idAjuste);
+            List<int> hijos = null;
+            if (hijosPorPesaje != null)
+                hijosPorPesaje.TryGetValue(idCompra, out hijos);
+            int idSucursalFila = LeerInt(row, "idSucursal");
+            int idProveedor = LeerInt(row, "idProveedor");
+
+            return new WebCore.Helpers.PesajeCandidatoCierre
+            {
+                IdCompra = idCompra,
+                EsPesaje = EsPesaje(LeerString(row, "tipoCompra")),
+                Estado = LeerString(row, "estado"),
+                IdSucursal = idSucursalFila > 0 ? idSucursalFila : idSucursal,
+                CantMedias = LeerIntNullable(row, "cantMedias"),
+                KgsMedias = LeerFloatNullable(row, "kgsMedias"),
+                ProveedorReal = idProveedor > 0 && idProveedor != idProveedorIndefinido,
+                IdVinculado = LeerIntNullable(row, "idPesajeAjustado"),
+                IdAjusteGenerado = idAjuste,
+                CantidadHijos = hijos != null ? hijos.Count : 0
+            };
+        }
+
+        // Valida en el servidor cada pesaje que el cierre trae para unificar (no se confia en lo que marco el modal). Devuelve ""
+        // si todos se pueden unificar, o el error con el id y el motivo del primero que no. Una consulta por pesaje: son los
+        // pocos que se eligieron a mano en el modal.
+        private string ValidarPesajesUnificadosEnCierre(StockEditVm model)
+        {
+            if (model == null || !EsCierre(model.TipoCompra) || model.PesajesVinculadosIds == null)
+                return "";
+
+            int idProveedorIndefinido = _param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
+            foreach (int idPesaje in model.PesajesVinculadosIds.Where(id => id > 0 && id != model.IdCompra).Distinct())
+            {
+                Entidades.Compra pesaje = _oCompraN.findById_convertToCompra(idPesaje);
+                WebCore.Helpers.PesajeCandidatoCierre candidato = null;
+                if (pesaje != null && pesaje.IdCompra > 0)
+                {
+                    int idProveedor = pesaje.Proveedor != null ? pesaje.Proveedor.IdPersona : 0;
+                    candidato = new WebCore.Helpers.PesajeCandidatoCierre
+                    {
+                        IdCompra = pesaje.IdCompra,
+                        EsPesaje = EsPesaje(pesaje.TipoCompra),
+                        Estado = pesaje.Estado ?? "",
+                        IdSucursal = pesaje.Sucursal != null ? pesaje.Sucursal.IdSucursal : 0,
+                        CantMedias = pesaje.CantMedias,
+                        KgsMedias = pesaje.KgsMedias,
+                        ProveedorReal = idProveedor > 0 && idProveedor != idProveedorIndefinido,
+                        IdVinculado = pesaje.IdPesajeAjustado,
+                        IdAjusteGenerado = _oCompraN.getIdAjusteDelPesaje(pesaje.IdCompra),
+                        CantidadHijos = (_oCompraN.obtenerPesajesVinculadosPorDestino(pesaje.IdCompra) ?? new List<int>()).Count
+                    };
+                }
+
+                string motivo = WebCore.Helpers.ReglaUnificacionCierre.MotivoNoUnificable(candidato, model.IdCompra, model.IdSucursal);
+                if (!string.IsNullOrEmpty(motivo))
+                    return "No se puede unificar el pesaje #" + idPesaje + " en este cierre: " + motivo + " Desunificalo y volvé a guardar.";
+            }
+
+            return "";
+        }
+
+        // Al guardar un Pesaje: ninguno de los pesajes que vincula puede estar unificado en un Cierre Stock (le pisaria ese
+        // vinculo). Se revalida en el servidor porque un borrador viejo o un POST directo pueden traerlo igual.
+        private string ValidarPesajesNoUnificadosEnCierre(StockEditVm model)
+        {
+            if (model == null || !EsPesaje(model.TipoCompra) || model.PesajesVinculadosIds == null)
+                return "";
+
+            foreach (int idPesaje in model.PesajesVinculadosIds.Where(id => id > 0 && id != model.IdCompra).Distinct())
+            {
+                Entidades.Compra pesaje = _oCompraN.findById_convertToCompra(idPesaje);
+                int? idVinculado = pesaje != null ? pesaje.IdPesajeAjustado : null;
+                string motivo = WebCore.Helpers.ReglaUnificacionCierre.MotivoNoVinculableAPesaje(idVinculado, ApuntaACierre(idVinculado));
+                if (!string.IsNullOrEmpty(motivo))
+                    return "No se puede vincular el pesaje #" + idPesaje + ": " + motivo + " Desvinculalo y volvé a guardar.";
+            }
+
+            return "";
+        }
+
+        // El registro idCompra (el idPesajeAjustado de un pesaje) es un Cierre Stock: el pesaje esta unificado en ese cierre.
+        private bool ApuntaACierre(int? idCompra)
+        {
+            if (!idCompra.HasValue || idCompra.Value <= 0)
+                return false;
+
+            DataTable dt = _oCompraN.findById(idCompra.Value);
+            if (dt == null || dt.Rows.Count == 0)
+                return false;
+
+            return EsCierre(LeerString(dt.Rows[0], "tipoCompra"));
         }
 
         private static DateTime? ParseFechaHoraStockLinea(string text)
