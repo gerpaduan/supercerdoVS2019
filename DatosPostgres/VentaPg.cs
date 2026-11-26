@@ -448,8 +448,11 @@ namespace DatosPostgres
                     acumredondeoimporte, comisiontarjeta, pagomixtoefectivo, creado, idempresa)
                 VALUES (@idVendedor, @fechaVenta, @idSucursal, @turno, NULL, @observaciones, @idPersona,
                     @nroRemito, '', @enCtaCte, @formaPago, @tipoComprobante, @cuit, @email, @acumRedondeoKgs,
-                    @acumRedondeoImporte, @comisionTarjeta, @pagoMixtoEfectivo, now(), @idEmpresa);
-                SELECT idventa FROM ventas WHERE idsucursal = @idSucursal ORDER BY idventa DESC LIMIT 1;";
+                    @acumRedondeoImporte, @comisionTarjeta, @pagoMixtoEfectivo, now(), @idEmpresa)
+                RETURNING idventa;";
+            // RETURNING (2026-11-26, ver docs/DECISIONS.md "POS sin conexion"): antes se leia "la ultima venta de la
+            // sucursal" con un SELECT aparte; con dos ventas simultaneas en la misma sucursal (la subida de la cola
+            // offline y una venta online) podia devolver el id de la OTRA y las lineas quedaban colgadas de ella.
 
             Action<NpgsqlParameterCollection> setParams = p =>
             {

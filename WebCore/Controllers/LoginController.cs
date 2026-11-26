@@ -743,7 +743,7 @@ namespace WebCore.Controllers
 
             if (usuarioActual == null || !usuarioActual.Activo)
                 ModelState.AddModelError("", "No fue posible actualizar la clave rápida.");
-            else if (usuarioActual.Admin)
+            else if (usuarioActual.Admin && !WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal)
                 ModelState.AddModelError("", "Los administradores no usan clave rápida: ingresan siempre con su contraseña.");
             else if (string.IsNullOrEmpty(model.ClaveActual) || oUsuarioN.ValidarUsuarioWeb(usuarioActual.User, model.ClaveActual) == null)
                 ModelState.AddModelError(nameof(model.ClaveActual), "La contraseña actual es incorrecta.");
@@ -770,7 +770,10 @@ namespace WebCore.Controllers
             {
                 oUsuarioN.ActualizarPin(usuarioActual!.Id, model.NuevoPin);
                 RegistrarAcceso(usuarioActual, true, "Clave rápida (PIN) configurada", ObtenerDireccionIp(), null);
-                TempData["Success"] = "Tu clave rápida quedó configurada. Solo funciona desde dispositivos autorizados; desde cualquier otro dispositivo seguís ingresando con tu contraseña.";
+                // Admin (2026-11-26): el login con internet no acepta su PIN; solo sirve en el POS sin conexion.
+                TempData["Success"] = usuarioActual.Admin
+                    ? "Tu PIN quedó configurado. Como sos administrador, solo sirve para entrar al POS cuando no hay conexión; con internet seguís ingresando con tu contraseña."
+                    : "Tu clave rápida quedó configurada. Solo funciona desde dispositivos autorizados; desde cualquier otro dispositivo seguís ingresando con tu contraseña.";
             }
 
             return RedirectToAction(nameof(ChangePin));
@@ -780,6 +783,7 @@ namespace WebCore.Controllers
         {
             var usuario = _sesion.UsuarioActual;
             model.EsAdmin = usuario != null && usuario.Admin;
+            model.PinSoloSinConexion = model.EsAdmin && WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal;
             model.TienePin = usuario != null && usuario.TienePin;
             // Nunca se reenvian los valores tipeados.
             model.ClaveActual = "";
@@ -1530,6 +1534,11 @@ namespace WebCore.Controllers
                 new Claim(SesionClaims.AuthMethod, metodoAuth),
                 new Claim(SesionClaims.SinBloqueoInactividad, dispositivo != null && dispositivo.NoBloquearSesion ? "true" : "false"),
             };
+
+            // POS sin conexion (2026-11-26): la sesion recuerda desde que dispositivo seguro se abrio. Sin esto la PC no recibe
+            // las huellas de PIN para entrar sin conexion (ver SesionClaims.IdDispositivoSeguro).
+            if (dispositivo != null && !dispositivo.Bloqueado && dispositivo.Id > 0)
+                claims.Add(new Claim(SesionClaims.IdDispositivoSeguro, dispositivo.Id.ToString(CultureInfo.InvariantCulture)));
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);

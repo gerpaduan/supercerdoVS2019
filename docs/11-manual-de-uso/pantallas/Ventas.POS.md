@@ -8,7 +8,7 @@ permiso: PENDIENTE (no se verificó en esta revisión qué permiso exige la pant
 revisada: 2026-11-26
 ---
 ## Para qué sirve
-Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
+Registrar ventas en el mostrador. **Esta ayuda cubre solo lo que se agregó el 2026-10-19: el saldo de cuenta corriente del cliente y su opción en el ticket, y la opción de no imprimir el nombre de la empresa en el ticket no fiscal; y, desde el 2026-10-20, qué muestra **Mis ventas** (F6); y, desde el 2026-10-21, cobrar el saldo del cliente junto con la venta («El cliente paga ahora»). y, desde el 2026-10-29, el filtro «Persona» del modal Expendios; y, desde el 2026-11-02, el tema gris del POS; y, desde el 2026-11-03, el aviso «Tu sesión se cerró» del POS bloqueado; y, desde el 2026-11-09, la ventana «Venta completada», los atajos, la ventana «Línea de venta» (cantidad, eliminar, bonificar) y los videos tutoriales; y, desde el 2026-11-10, el aviso «Peso inestable» debajo de Cantidad; y, desde el 2026-11-11, qué pasa si te cierran la caja con el POS abierto, el tema gris más oscuro y el botón de brillo de pantalla; y, desde el 2026-11-13, el botón de tamaño de letra del carrito; y, desde el 2026-11-26, vender sin conexión.** El resto del POS (formas de pago, apertura de caja, borradores) está pendiente de documentar.
 
 ## Saldo del cliente
 Al elegir un cliente (lupa o **F9**), debajo de su nombre aparece **Saldo:**
@@ -398,3 +398,26 @@ Escribiendo con el teclado o leyendo con la pistola, cargar otro código con la 
 
 ## Desplazarse en el celular (2026-11-26)
 En el celular, deslizá el dedo hacia arriba o hacia abajo para ver el resto de la pantalla. Deslizar hacia abajo estando al principio no recarga el punto de venta. PENDIENTE: probarlo en un celular real.
+
+## Vender sin conexión (desde 2026-11-26)
+Si se corta internet (o el servidor no responde), el punto de venta puede seguir vendiendo y las ventas se cargan solas cuando vuelve la conexión. Lo prende el administrador del servidor (`PosOffline:Habilitado`, ver [configuraciones](../referencia/configuraciones.md)); con eso apagado el POS funciona como siempre.
+
+**Antes del corte (con internet):**
+- En el panel derecho, debajo de «Conexión balanza», se muestra si esta PC está **lista para vender sin conexión** y de cuándo son los precios guardados. Para estar lista, el POS tiene que haberse abierto con internet en esta PC, la PC tiene que ser un [dispositivo autorizado](ayuda:concepto/dispositivo-seguro) (desde el último ingreso) y quien vende tiene que tener [PIN](ayuda:concepto/clave-rapida-pin).
+- Los precios y productos se actualizan solos cada pocos minutos mientras hay internet. Si cambiás precios y se corta antes de que la PC los baje, se vende con los anteriores.
+
+**Cuando se corta:**
+- Aparece una banda roja **SIN CONEXIÓN** con la causa probable: *Esta PC no tiene red*, *Sin internet en el local* o *El servidor no responde*. Tocá **Seguir vendiendo sin conexión** (la venta que estabas armando queda guardada en la PC). Si la PC se prende sin internet, abrir el POS ya muestra el modo sin conexión.
+- **Quién vende:** tocá tu nombre e ingresá tu PIN. Cinco errores bloquean a ese usuario 5 minutos en esa PC.
+- **Caja:** si ya tenías la caja abierta se sigue con esa. Si no, **Abrir caja sin conexión** con el monto inicial: se crea en el sistema con esa hora cuando vuelva internet.
+- **Vender:** Código + Enter (o lector/etiqueta de balanza), **Buscar (F10)** por nombre o código, Cantidad a mano o con la balanza. Solo **Consumidor Final**, sin descuentos ni Cta. Cte. Cobrás con Efectivo (con *Paga con* y vuelto), Débito, Crédito, QR, Transferencia o **Pago mixto**; cada botón muestra el total con su recargo. Confirmá el cobro con el posnet o el celular antes de registrar.
+- Sale un ticket **X — VENTA SIN CONEXION** con número `OFF-…`. **No hay factura sin conexión**: las ventas que la pedían quedan *para facturar* y se facturan después desde Mis ventas.
+- Abajo se ven las operaciones de la PC que faltan subir. **Descargar respaldo** baja un archivo con todas, por si la PC se rompe antes de volver internet.
+
+**Cuando vuelve la conexión:**
+- La banda se pone verde. Tocá **Volver al POS normal**: al abrirse, sube primero la apertura de caja y después las ventas, una por una, y muestra el resultado. Cada venta queda con la fecha y hora en que se hizo.
+- Solo se suben las ventas del vendedor que tiene la sesión: las de otro vendedor esperan a que él entre al POS.
+- Si una venta llega cuando su caja ya se cerró, entra igual en esa caja y queda marcada **llegó tarde** (cambia los totales de esa caja). Si el precio cobrado no es el de lista, queda marcada para revisar. Una venta que el sistema no puede grabar (por ejemplo, un producto que ya no existe) queda en la PC como **REVISAR**: nunca se borra sola.
+- Al cerrar la caja se avisa cuántas ventas se hicieron sin conexión y, si en esa PC quedan ventas sin subir, no deja cerrar salvo **Cerrar igual**. Ver [Cajas abiertas](Cajas.CajasAbiertas.md).
+
+PENDIENTE: probado en una copia local, no en un corte de internet real ni en un celular; en Servidor SM y San Lorenzo no funciona hasta tener un certificado HTTPS válido. Mis ventas todavía no marca las ventas hechas sin conexión.

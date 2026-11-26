@@ -344,7 +344,10 @@ namespace WebCore.Infrastructure
 
         public static Negocio.Venta CrearVenta(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            if (!UsarPostgres) return new Negocio.Venta(empresa, param);
+            // PosClaveUnicaRepo (POS sin conexion, 2026-11-26): solo lo usa agregarVentaConClave, que solo se llama con
+            // PosOffline prendido. Construirlo no toca la base.
+            if (!UsarPostgres)
+                return new Negocio.Venta(empresa, param) { PosClaveUnicaRepo = CrearPosClaveUnicaRepository(empresa) };
 
             var personaRepo = new DatosPostgres.PersonaPg(PgConnString, empresa.IdEmpresa);
             var sucursalRepo = new DatosPostgres.SucursalPg(PgConnString, empresa.IdEmpresa);
@@ -354,7 +357,17 @@ namespace WebCore.Infrastructure
                 repo, empresa, param,
                 ctaCteN: CrearCuentaCorriente(empresa, param),
                 cierreCajaN: CrearCierreCaja(empresa, param),
-                personaN: CrearPersona(empresa, param));
+                personaN: CrearPersona(empresa, param))
+            {
+                PosClaveUnicaRepo = CrearPosClaveUnicaRepository(empresa)
+            };
+        }
+
+        // Clave unica de las operaciones del POS (posclaveunica / PosClaveUnica), segun DataEngine.
+        public static Contratos.IPosClaveUnicaRepository CrearPosClaveUnicaRepository(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return new Datos.PosClaveUnica(empresa);
+            return new DatosPostgres.PosClaveUnicaPg(PgConnString, empresa.IdEmpresa);
         }
 
         // Presupuestos de un cliente para el historial de precios (2026-10-04, ver

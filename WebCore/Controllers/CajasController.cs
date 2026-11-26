@@ -283,8 +283,46 @@ namespace WebCore.Controllers
                 soportaAuditoriaCierre = _oCierreN.SoportaAuditoriaCierre,
                 cambiosPosteriores = ObtenerCambiosPosterioresCierre(caja.Id),
                 // Advertencia "El cajero modifico N egresos de caja de esta caja" (2026-11-10): vacio en SQL Server.
-                egresosModificadosCajero = ObtenerEgresosModificadosCajero(caja)
+                egresosModificadosCajero = ObtenerEgresosModificadosCajero(caja),
+                // POS sin conexion (2026-11-26): ventas de esta caja que se hicieron sin conexion (y sus marcas), y el
+                // vendedor, para que el modal mire si en ESTA PC quedan ventas suyas sin subir.
+                idVendedor = caja.UsuarioInicio.Id,
+                posOfflineHabilitado = WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal,
+                ventasSinConexion = ObtenerVentasSinConexion(caja, fechaHastaVentas)
             });
+        }
+
+        // Ventas subidas desde el POS sin conexion que caen en la caja (vendedor + sucursal + fecha). Solo con PosOffline
+        // prendido (antes puede no existir la tabla). Si falla se registra y se devuelve vacio: es un aviso, no debe
+        // impedir cerrar la caja.
+        private List<object> ObtenerVentasSinConexion(Entidades.CierreCaja caja, DateTime fechaHasta)
+        {
+            var lista = new List<object>();
+            if (!WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal || caja?.FechaHoraInicio == null || caja.UsuarioInicio == null)
+                return lista;
+            try
+            {
+                var ventas = WebCore.Infrastructure.NegocioFactory.CrearPosClaveUnicaRepository(_empresa)
+                    .ListarVentasOfflineEnRango(caja.UsuarioInicio.Id, caja.Sucursal.idSucursal, caja.FechaHoraInicio.Value, fechaHasta);
+                foreach (var v in ventas)
+                {
+                    lista.Add(new
+                    {
+                        idVenta = v.IdRegistro,
+                        fecha = v.FechaLocal.ToString("dd/MM/yyyy HH:mm"),
+                        recibido = v.Recibido.ToString("dd/MM/yyyy HH:mm"),
+                        llegoTarde = v.LlegoTarde,
+                        pendienteFacturar = v.PendienteFacturar,
+                        difPrecio = v.DifPrecio,
+                        detalle = v.Detalle ?? ""
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("ObtenerVentasSinConexion caja " + caja.Id + ": " + ex.Message);
+            }
+            return lista;
         }
 
         public IActionResult CerrarCaja(

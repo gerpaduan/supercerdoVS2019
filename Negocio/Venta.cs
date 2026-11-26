@@ -150,6 +150,88 @@ namespace Negocio
             }
         }
 
+        // Clave unica de las operaciones del POS (POS sin conexion, 2026-11-26). Inyectada por propiedad (mismo criterio
+        // que CuentaCorriente.CierreCajaFactory) para no tocar los constructores: solo la usa agregarVentaConClave, y
+        // NegocioFactory.CrearVenta la carga segun el motor. Null = la funcionalidad no esta cableada.
+        public Contratos.IPosClaveUnicaRepository PosClaveUnicaRepo { get; set; }
+
+        // Resultado de agregarVentaConClave: el id de la venta y si ya existia (reintento de una venta ya grabada).
+        public sealed class ResultadoVentaConClave
+        {
+            public int IdVenta { get; set; }
+            public bool YaRegistrada { get; set; }
+        }
+
+        // Graba la venta Y su clave unica (posclaveunica) en la MISMA transaccion: si el clientId ya existia, el INSERT
+        // de la clave choca con el indice unico, se deshace la venta entera y se devuelve la que ya estaba grabada.
+        // Asi un reintento (respuesta perdida, cola offline que se vuelve a subir, servidor reiniciado) nunca duplica.
+        // clave.IdRegistro se completa aca con el id de la venta.
+        // Duplica a proposito el esqueleto transaccional de agregarVenta en vez de refactorizarlo: agregarVenta queda
+        // byte a byte igual (es el camino de todas las ventas de hoy) y esto solo corre con PosOffline prendido.
+        public ResultadoVentaConClave agregarVentaConClave(Entidades.Venta oVentaE, Entidades.PosClaveUnica clave)
+        {
+            if (oVentaE == null) throw new ArgumentNullException(nameof(oVentaE));
+            if (clave == null) throw new ArgumentNullException(nameof(clave));
+            if (PosClaveUnicaRepo == null) throw new InvalidOperationException("PosClaveUnicaRepo no esta configurado.");
+
+            // Camino rapido: el reintento mas comun (la venta ya entro hace rato) no abre transaccion.
+            var existente = PosClaveUnicaRepo.ObtenerPorClientId(clave.ClientId);
+            if (existente != null)
+                return ResultadoDeExistente(existente, clave.ClientId);
+
+            AgregarLeyendaRemitosAsociados(oVentaE);
+            clave.Tipo = Entidades.PosClaveUnica.TipoVenta;
+
+            try
+            {
+                var unitOfWork = oVentaD.IniciarUnitOfWork();
+                if (unitOfWork == null)
+                {
+                    using (TransactionScope scope = new TransactionScope())
+                    {
+                        EjecutarAgregarVenta(oVentaE, false, null);
+                        clave.IdRegistro = oVentaE.IdVenta;
+                        PosClaveUnicaRepo.Insertar(clave, null);
+                        scope.Complete();
+                    }
+                }
+                else
+                {
+                    using (unitOfWork)
+                    {
+                        EjecutarAgregarVenta(oVentaE, false, unitOfWork);
+                        clave.IdRegistro = oVentaE.IdVenta;
+                        PosClaveUnicaRepo.Insertar(clave, unitOfWork);
+                        unitOfWork.Completar();
+                    }
+                }
+            }
+            catch (Contratos.ClaveDuplicadaException)
+            {
+                // Dos envios simultaneos de la misma venta: el otro gano. Esta transaccion ya se deshizo (sin Complete /
+                // Completar); se devuelve la venta que grabo el otro.
+                var ganadora = PosClaveUnicaRepo.ObtenerPorClientId(clave.ClientId);
+                if (ganadora == null)
+                    throw new Exception("Error en registrar la venta: la clave " + clave.ClientId + " figura duplicada pero no se encontro.");
+                return ResultadoDeExistente(ganadora, clave.ClientId);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
+            }
+
+            return new ResultadoVentaConClave { IdVenta = oVentaE.IdVenta, YaRegistrada = false };
+        }
+
+        // La clave existente tiene que ser de una venta: un clientId de una apertura de caja reusado para una venta es un
+        // error del cliente, no un reintento.
+        private static ResultadoVentaConClave ResultadoDeExistente(Entidades.PosClaveUnica existente, Guid clientId)
+        {
+            if (!string.Equals(existente.Tipo, Entidades.PosClaveUnica.TipoVenta, StringComparison.Ordinal))
+                throw new InvalidOperationException("La clave " + clientId + " ya se uso para otra operacion (" + existente.Tipo + ").");
+            return new ResultadoVentaConClave { IdVenta = existente.IdRegistro, YaRegistrada = true };
+        }
+
         // Cuerpo real de agregarVenta, compartido entre el camino SQL Server (TransactionScope,
         // unitOfWork=null) y el camino Postgres (unitOfWork real, propagado a cada sub-llamada).
         private void EjecutarAgregarVenta(Entidades.Venta oVentaE, bool esNotaCredito, Contratos.IUnitOfWork unitOfWork)

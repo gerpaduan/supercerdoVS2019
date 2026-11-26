@@ -1,0 +1,295 @@
+{
+  "catalogo": {
+    "codProdGenerico": 900000,
+    "productos": [
+      {
+        "id": 10,
+        "codigo": 998,
+        "nombre": "Asado",
+        "precioKg": 2.42,
+        "pesable": true
+      },
+      {
+        "id": 11,
+        "codigo": 1001,
+        "nombre": "Vac\u00EDo especial",
+        "precioKg": 9999.99,
+        "pesable": true
+      },
+      {
+        "id": 12,
+        "codigo": 2002,
+        "nombre": "Chorizo x unidad",
+        "precioKg": 1234.56,
+        "pesable": false
+      },
+      {
+        "id": 13,
+        "codigo": 900000,
+        "nombre": "Gen\u00E9rico",
+        "precioKg": 1,
+        "pesable": false
+      },
+      {
+        "id": 14,
+        "codigo": 900002,
+        "nombre": "Gen\u00E9rico 2",
+        "precioKg": 1,
+        "pesable": true
+      },
+      {
+        "id": 15,
+        "codigo": 7791234567898,
+        "nombre": "Gaseosa",
+        "precioKg": 1500,
+        "pesable": false
+      }
+    ],
+    "formatos": [
+      {
+        "prefijo": 20,
+        "nombre": "Peso",
+        "longitudTotal": 13,
+        "posicionCodigo": 3,
+        "longitudCodigo": 5,
+        "posicionValor": 8,
+        "longitudValor": 5,
+        "tipoValor": "Cantidad",
+        "cantidadDecimales": 3
+      },
+      {
+        "prefijo": 21,
+        "nombre": "Precio",
+        "longitudTotal": 13,
+        "posicionCodigo": 3,
+        "longitudCodigo": 4,
+        "posicionValor": 7,
+        "longitudValor": 6,
+        "tipoValor": "Precio",
+        "cantidadDecimales": 2
+      },
+      {
+        "prefijo": 22,
+        "nombre": "Roto",
+        "longitudTotal": 12,
+        "posicionCodigo": 3,
+        "longitudCodigo": 5,
+        "posicionValor": 8,
+        "longitudValor": 4,
+        "tipoValor": "Cantidad",
+        "cantidadDecimales": 3
+      }
+    ]
+  },
+  "casos": [
+    {
+      "codigo": "998",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "producto",
+        "id": 10,
+        "codigo": 998,
+        "precioKg": 2.42,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "12345",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "noEncontrado"
+      }
+    },
+    {
+      "codigo": "abc",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "error"
+      }
+    },
+    {
+      "codigo": "",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "error"
+      }
+    },
+    {
+      "codigo": "1.5.5",
+      "ingresoCantidadX": true,
+      "esperado": {
+        "tipo": "error"
+      }
+    },
+    {
+      "codigo": "1500.50G2",
+      "ingresoCantidadX": true,
+      "esperado": {
+        "tipo": "producto",
+        "id": 14,
+        "codigo": 900002,
+        "precioKg": 1500.5,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "1500.5",
+      "ingresoCantidadX": true,
+      "esperado": {
+        "tipo": "producto",
+        "id": 13,
+        "codigo": 900000,
+        "precioKg": 1500.5,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "99.99G7",
+      "ingresoCantidadX": true,
+      "esperado": {
+        "tipo": "noEncontrado"
+      }
+    },
+    {
+      "codigo": "12.3",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "error"
+      }
+    },
+    {
+      "codigo": "998",
+      "ingresoCantidadX": true,
+      "esperado": {
+        "tipo": "producto",
+        "id": 13,
+        "codigo": 900000,
+        "precioKg": 998,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "x1G2",
+      "ingresoCantidadX": true,
+      "esperado": {
+        "tipo": "error"
+      }
+    },
+    {
+      "codigo": "1234,56",
+      "ingresoCantidadX": true,
+      "esperado": {
+        "tipo": "producto",
+        "id": 13,
+        "codigo": 900000,
+        "precioKg": 1234.56,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "2000998012342",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "producto",
+        "id": 10,
+        "codigo": 998,
+        "precioKg": 2.42,
+        "cantidadSugerida": 1.234
+      }
+    },
+    {
+      "codigo": "2109980123452",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "producto",
+        "id": 10,
+        "codigo": 998,
+        "precioKg": 123.45,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "2109981000004",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "producto",
+        "id": 10,
+        "codigo": 998,
+        "precioKg": 1000,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "2002002005005",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "producto",
+        "id": 12,
+        "codigo": 2002,
+        "precioKg": 1234.56,
+        "cantidadSugerida": 0.5
+      }
+    },
+    {
+      "codigo": "2055555001000",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "noEncontrado"
+      }
+    },
+    {
+      "codigo": "2300998010004",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "noEncontrado"
+      }
+    },
+    {
+      "codigo": "2000998012340",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "noEncontrado"
+      }
+    },
+    {
+      "codigo": "2200998010007",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "error"
+      }
+    },
+    {
+      "codigo": "7791234567898",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "producto",
+        "id": 15,
+        "codigo": 7791234567898,
+        "precioKg": 1500,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "1001",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "producto",
+        "id": 11,
+        "codigo": 1001,
+        "precioKg": 9999.99,
+        "cantidadSugerida": null
+      }
+    },
+    {
+      "codigo": "2002",
+      "ingresoCantidadX": false,
+      "esperado": {
+        "tipo": "producto",
+        "id": 12,
+        "codigo": 2002,
+        "precioKg": 1234.56,
+        "cantidadSugerida": null
+      }
+    }
+  ]
+}

@@ -36,17 +36,29 @@
                         </div>
                     }
 
-                    @if (Model.EsAdmin)
+                    @* Admin: sin POS sin conexion no hay PIN; con el, el PIN solo sirve para entrar al POS sin conexion (2026-11-26). *@
+                    @if (Model.EsAdmin && !Model.PinSoloSinConexion)
                     {
                         <div class="alert alert-info mb-0">Los administradores no usan clave rápida: ingresan siempre con su contraseña.</div>
                     }
                     else
                     {
-                        <p class="text-muted small">
-                            Un PIN de 4 a 6 dígitos para ingresar rápido. <strong>Solo funciona desde dispositivos autorizados</strong>;
-                            desde cualquier otro seguís ingresando con tu contraseña. Estado actual:
-                            @if (Model.TienePin) { <span class="badge badge-success">Configurado</span> } else { <span class="badge badge-secondary">Sin configurar</span> }
-                        </p>
+                        @if (Model.PinSoloSinConexion)
+                        {
+                            <p class="text-muted small">
+                                Como sos administrador, este PIN <strong>solo sirve para entrar al POS cuando no hay conexión</strong>
+                                (desde una PC autorizada). Con internet seguís ingresando con tu contraseña. Estado actual:
+                                @if (Model.TienePin) { <span class="badge badge-success">Configurado</span> } else { <span class="badge badge-secondary">Sin configurar</span> }
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="text-muted small">
+                                Un PIN de 4 a 6 dígitos para ingresar rápido. <strong>Solo funciona desde dispositivos autorizados</strong>;
+                                desde cualquier otro seguís ingresando con tu contraseña. Estado actual:
+                                @if (Model.TienePin) { <span class="badge badge-success">Configurado</span> } else { <span class="badge badge-secondary">Sin configurar</span> }
+                            </p>
+                        }
 
                         <form asp-controller="Login" asp-action="ChangePin" method="post" novalidate="novalidate">
                             @Html.AntiForgeryToken()

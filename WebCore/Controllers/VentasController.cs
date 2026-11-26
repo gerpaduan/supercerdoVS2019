@@ -4168,6 +4168,18 @@ namespace WebCore.Controllers
                         return Json(new { ok = true, ventaId = ventaYaRegistrada.Value, yaRegistrada = true });
                 }
 
+                // POS sin conexion (2026-11-26): con el interruptor prendido la venta online tambien deja su clave unica
+                // (posclaveunica), asi una venta cuya respuesta se perdio y despues sale por la cola offline no se duplica.
+                bool conClaveUnica = request.ClientId.HasValue && request.CobroSaldo == null
+                    && WebCore.Helpers.PosOfflineSettings.HabilitadoPara(user.IdSucursal);
+                if (conClaveUnica)
+                {
+                    var claveExistente = WebCore.Infrastructure.NegocioFactory.CrearPosClaveUnicaRepository(_empresa)
+                        .ObtenerPorClientId(request.ClientId!.Value);
+                    if (claveExistente != null && claveExistente.Tipo == Entidades.PosClaveUnica.TipoVenta)
+                        return Json(new { ok = true, ventaId = claveExistente.IdRegistro, yaRegistrada = true });
+                }
+
                 // Permisos POS del vendedor (2026-11-02): sin ningun "POS - ..." activo no se vende, y bonificar exige
                 // "POS - Bonificacion". El cliente ya lo oculta, pero una llamada directa llegaria igual hasta aca.
                 if (!TieneAlgunPermisoPOS(operador))
@@ -4292,7 +4304,27 @@ namespace WebCore.Controllers
                         return Json(new { ok = false, msg = errorCobro });
                 }
 
-                int idVenta = _oVentaN.agregarVenta(venta);
+                int idVenta;
+                if (conClaveUnica)
+                {
+                    // Misma venta, grabada junto con su clave en una sola transaccion (ver agregarVentaConClave).
+                    var resultadoClave = _oVentaN.agregarVentaConClave(venta, new Entidades.PosClaveUnica
+                    {
+                        ClientId = request.ClientId!.Value,
+                        Origen = Entidades.PosClaveUnica.OrigenOnline,
+                        IdSucursal = user.IdSucursal,
+                        IdUsuario = operador.Id,
+                        IdUsuarioSync = user.Id,
+                        FechaLocal = venta.FechaVenta
+                    });
+                    if (resultadoClave.YaRegistrada)
+                        return Json(new { ok = true, ventaId = resultadoClave.IdVenta, yaRegistrada = true });
+                    idVenta = resultadoClave.IdVenta;
+                }
+                else
+                {
+                    idVenta = _oVentaN.agregarVenta(venta);
+                }
 
                 // Ventas en curso: la venta ya quedo guardada, se marca el borrador como FINALIZADA. Mejor
                 // esfuerzo: si esto falla NO se le avisa al cajero (la venta esta bien); solo queda el

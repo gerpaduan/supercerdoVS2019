@@ -1,0 +1,187 @@
+<!doctype html>
+<!--
+  POS sin conexion (2026-11-26). Pagina ESTATICA que el service worker (sw-pos.js) muestra en lugar de Ventas/POS cuando
+  el servidor no responde. Se sirve con la URL del POS (<base>/Ventas/POS), por eso las rutas son relativas a esa
+  carpeta ("../"). No usa nada de CDN: todo lo que necesita queda guardado en la PC. Logica en pos-offline-app.js.
+  Detalle funcional: docs/11-manual-de-uso/pantallas/Ventas.POS.md "Vender sin conexión".
+-->
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>POS sin conexión</title>
+    <link rel="stylesheet" href="../lib/bootstrap/dist/css/bootstrap.min.css">
+    <style>
+        :root { --franja: #b02a37; --franja-ok: #198754; }
+        body { font-size: 0.85rem; background: #f4f5f7; }
+        .franja { background: var(--franja); color: #fff; padding: 6px 12px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .franja.ok { background: var(--franja-ok); }
+        .franja strong { letter-spacing: .03em; }
+        .franja .btn { font-size: 0.8rem; padding: 2px 8px; }
+        .franja .derecha { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        main { max-width: 1100px; margin: 0 auto; padding: 12px; }
+        .tarjeta { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); padding: 12px; margin-bottom: 12px; }
+        .usuarios { display: flex; flex-wrap: wrap; gap: 6px; }
+        .usuarios .btn.activo { outline: 3px solid #0d6efd; }
+        .tabla-carrito td, .tabla-carrito th { padding: 4px 6px; font-size: 0.85rem; vertical-align: middle; }
+        .tabla-carrito td.text-end { white-space: nowrap; }
+        .total { font-size: 1.8rem; font-weight: 700; }
+        .pagos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+        .pagos .btn { padding: 10px 6px; font-size: 0.9rem; }
+        .pagos .btn small { display: block; font-weight: 700; font-size: 1rem; }
+        .mensaje { min-height: 1.4em; }
+        .capa { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; padding-top: 8vh; z-index: 20; }
+        .capa[hidden] { display: none; }
+        .capa .caja-modal { background: #fff; border-radius: 8px; width: min(640px, 94vw); max-height: 80vh; overflow: auto; padding: 14px; }
+        .lista-busqueda button { display: flex; width: 100%; justify-content: space-between; text-align: left; border: 0; border-bottom: 1px solid #eee; background: none; padding: 6px 4px; font-size: 0.85rem; }
+        .lista-busqueda button:hover, .lista-busqueda button:focus { background: #e9f2ff; }
+        .estado-rechazada { color: #b02a37; }
+        @media (max-width: 576px) { .total { font-size: 1.4rem; } }
+    </style>
+</head>
+<body>
+    <header id="franja" class="franja" role="status" aria-live="polite">
+        <strong>SIN CONEXIÓN</strong>
+        <span id="textoCausa">Comprobando la conexión…</span>
+        <span id="textoPendientes"></span>
+        <span id="textoCatalogo"></span>
+        <div class="derecha">
+            <span id="textoVendedor"></span>
+            <button type="button" id="btnProbar" class="btn btn-light">Probar conexión</button>
+            <button type="button" id="btnVolverPos" class="btn btn-light" hidden>Volver al POS normal</button>
+            <button type="button" id="btnSalir" class="btn btn-outline-light" hidden>Salir</button>
+        </div>
+    </header>
+
+    <main>
+        <div id="mensajeGeneral" class="alert alert-info" hidden></div>
+
+        <!-- La PC nunca bajo el catalogo, o el navegador no permite guardar datos. -->
+        <section id="vistaNoPreparada" class="tarjeta" hidden>
+            <h5>Esta PC no está preparada para vender sin conexión</h5>
+            <p id="textoNoPreparada" class="mb-2">Para vender sin conexión, el POS tiene que haberse abierto al menos una vez con internet en esta PC.</p>
+            <p class="mb-0">Mientras tanto, anotá las ventas en papel y cargalas cuando vuelva la conexión.</p>
+        </section>
+
+        <!-- Login con PIN. -->
+        <section id="vistaLogin" class="tarjeta" hidden>
+            <h5>¿Quién vende?</h5>
+            <p class="text-muted mb-2">Tocá tu nombre e ingresá tu PIN.</p>
+            <div id="listaUsuarios" class="usuarios mb-3"></div>
+            <form id="formPin" class="row g-2 align-items-end" autocomplete="off" hidden>
+                <div class="col-auto">
+                    <label for="inputPin" class="form-label mb-0">PIN de <span id="nombrePin"></span></label>
+                    <input id="inputPin" type="password" inputmode="numeric" maxlength="6" class="form-control" autocomplete="off">
+                </div>
+                <div class="col-auto"><button type="submit" class="btn btn-primary">Entrar</button></div>
+            </form>
+            <div id="mensajeLogin" class="mensaje text-danger mt-2"></div>
+        </section>
+
+        <!-- Apertura de caja sin conexion. -->
+        <section id="vistaCaja" class="tarjeta" hidden>
+            <h5>Abrir caja sin conexión</h5>
+            <p class="text-muted mb-2">No hay una caja abierta tuya. Se crea en el sistema con esta hora cuando vuelva la conexión.</p>
+            <form id="formCaja" class="row g-2 align-items-end" autocomplete="off">
+                <div class="col-auto">
+                    <label for="inputCajaInicio" class="form-label mb-0">Monto inicial ($)</label>
+                    <input id="inputCajaInicio" type="text" inputmode="decimal" class="form-control">
+                </div>
+                <div class="col-auto"><button type="submit" class="btn btn-primary">Abrir caja</button></div>
+            </form>
+            <div id="mensajeCaja" class="mensaje text-danger mt-2"></div>
+        </section>
+
+        <!-- Venta. -->
+        <section id="vistaVenta" hidden>
+            <div class="tarjeta">
+                <form id="formCodigo" class="row g-2 align-items-end" autocomplete="off">
+                    <div class="col-6 col-md-2">
+                        <label for="inputCantidad" class="form-label mb-0">Cantidad</label>
+                        <input id="inputCantidad" type="text" inputmode="decimal" class="form-control" placeholder="balanza / 1">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="inputCodigo" class="form-label mb-0">Código (Enter)</label>
+                        <input id="inputCodigo" type="text" class="form-control" autofocus>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" id="btnBuscar" class="btn btn-outline-secondary">Buscar (F10)</button>
+                    </div>
+                    <div class="col-auto form-check ms-2">
+                        <input id="chkPrecioManual" type="checkbox" class="form-check-input">
+                        <label for="chkPrecioManual" class="form-check-label">Precio manual (código genérico)</label>
+                    </div>
+                    <div class="col-12 col-md small text-muted" id="textoBalanza"></div>
+                </form>
+                <div id="mensajeVenta" class="mensaje text-danger mt-1"></div>
+            </div>
+
+            <div class="tarjeta">
+                <div class="table-responsive">
+                    <table class="table table-sm tabla-carrito mb-2">
+                        <thead><tr><th>Producto</th><th class="text-end">Cantidad</th><th class="text-end">Precio</th><th class="text-end">Importe</th><th></th></tr></thead>
+                        <tbody id="cuerpoCarrito"></tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="text-muted">Consumidor Final · sin descuentos</span>
+                    <span class="total" id="textoTotal">$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="tarjeta">
+                <div class="mb-1 text-muted">Cobrar con:</div>
+                <div class="pagos" id="botonesPago"></div>
+            </div>
+        </section>
+
+        <!-- Cola: lo que falta subir y lo rechazado. -->
+        <section id="vistaCola" class="tarjeta" hidden>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <h6 class="mb-0">Ventas sin conexión en esta PC</h6>
+                <button type="button" id="btnRespaldo" class="btn btn-sm btn-outline-secondary">Descargar respaldo</button>
+            </div>
+            <div id="listaCola" class="small"></div>
+        </section>
+    </main>
+
+    <!-- Busqueda de productos (F10). -->
+    <div id="capaBuscar" class="capa" hidden>
+        <div class="caja-modal" role="dialog" aria-labelledby="tituloBuscar">
+            <div class="d-flex justify-content-between mb-2"><h6 id="tituloBuscar" class="mb-0">Buscar producto</h6><button type="button" class="btn-close" data-cerrar aria-label="Cerrar"></button></div>
+            <input id="inputBuscar" type="text" class="form-control mb-2" placeholder="Nombre o código">
+            <div id="listaBuscar" class="lista-busqueda"></div>
+        </div>
+    </div>
+
+    <!-- Cobro en efectivo (paga con / vuelto) y pago mixto. -->
+    <div id="capaCobro" class="capa" hidden>
+        <div class="caja-modal" role="dialog" aria-labelledby="tituloCobro">
+            <div class="d-flex justify-content-between mb-2"><h6 id="tituloCobro" class="mb-0">Cobrar</h6><button type="button" class="btn-close" data-cerrar aria-label="Cerrar"></button></div>
+            <form id="formCobro" autocomplete="off">
+                <div class="mb-2">Total: <strong id="cobroTotal"></strong></div>
+                <div id="grupoMixto" class="mb-2" hidden>
+                    <label for="selectOtraForma" class="form-label mb-0">El resto con</label>
+                    <select id="selectOtraForma" class="form-select"></select>
+                </div>
+                <div class="mb-2">
+                    <label for="inputEfectivo" class="form-label mb-0" id="labelEfectivo">Paga con ($, vacío = justo)</label>
+                    <input id="inputEfectivo" type="text" inputmode="decimal" class="form-control">
+                </div>
+                <div class="mb-2" id="textoVuelto"></div>
+                <div id="mensajeCobro" class="mensaje text-danger"></div>
+                <button type="submit" class="btn btn-success">Registrar venta</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../Scripts/carnisys.balanza.js"></script>
+    <script src="../Scripts/app/pos-offline-db.js"></script>
+    <script src="../Scripts/app/pos-offline-red.js"></script>
+    <script src="../Scripts/app/pos-offline-buscar.js"></script>
+    <script src="../Scripts/app/pos-offline-pin.js"></script>
+    <script src="../Scripts/app/pos-offline-sync.js"></script>
+    <script src="../Scripts/app/pos-offline-ticket.js"></script>
+    <script src="../Scripts/app/pos-offline-app.js"></script>
+</body>
+</html>

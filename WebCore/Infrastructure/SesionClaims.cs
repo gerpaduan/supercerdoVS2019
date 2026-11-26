@@ -18,5 +18,9 @@ namespace WebCore.Infrastructure
         // Bloqueo por inactividad (2026-10-15): "true" si el dispositivo desde el que se inicio sesion
         // esta marcado "No bloquear sesion". Se fija al loguearse: un cambio rige desde el proximo login.
         public const string SinBloqueoInactividad = "SinBloqueoInactividad";
+        // POS sin conexion (2026-11-26): id del dispositivo seguro (autorizado y no bloqueado) desde el que se inicio sesion,
+        // o ausente. Solo una sesion abierta en una PC autorizada recibe las huellas de PIN para el login sin conexion
+        // (VentasController.CatalogoOffline). Se fija al loguearse: autorizar la PC rige desde el proximo login.
+        public const string IdDispositivoSeguro = "IdDispositivoSeguro";
     }
 }

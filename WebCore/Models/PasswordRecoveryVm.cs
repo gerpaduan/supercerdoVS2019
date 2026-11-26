@@ -71,6 +71,9 @@ namespace WebCore.Models
         // Lo completa el controller (no viene del formulario).
         public bool TienePin { get; set; }
         public bool EsAdmin { get; set; }
+        // POS sin conexion (2026-11-26): un admin puede tener PIN, pero solo sirve para entrar al POS sin conexion (el login
+        // con internet ignora el PIN de un admin). true si es admin y el POS sin conexion esta habilitado.
+        public bool PinSoloSinConexion { get; set; }
         public string? Error { get; set; }
         public string? Success { get; set; }
     }

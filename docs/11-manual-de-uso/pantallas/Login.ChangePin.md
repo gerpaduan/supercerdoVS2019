@@ -4,7 +4,7 @@ titulo: Clave rápida (PIN)
 rol: usuario
 modulo: Acceso y seguridad
 orden: 4
-revisada: 2026-10-03
+revisada: 2026-11-26
 ---
 ## Para qué sirve
 Configurar o quitar tu [clave rápida (PIN)](ayuda:concepto/clave-rapida-pin): un número de 4 a 6 dígitos para ingresar rápido **solo desde dispositivos autorizados**. Se abre desde el menú de tu usuario → **Clave rápida (PIN)**. Arriba figura el estado: *Configurado* o *Sin configurar*.
@@ -18,7 +18,7 @@ Configurar o quitar tu [clave rápida (PIN)](ayuda:concepto/clave-rapida-pin): u
 ## Reglas
 - 4 a 6 dígitos, solo números.
 - No puede ser una **secuencia** (1234, 9876), **todos los dígitos iguales** (1111) ni el **número de tu usuario**.
-- Si sos **administrador** la pantalla te avisa que no corresponde: los administradores ingresan siempre con su contraseña.
+- Si sos **administrador**: con el [POS sin conexión](Ventas.POS.md) prendido podés cargar un PIN que **solo sirve para entrar al POS cuando no hay conexión** (con internet seguís ingresando con tu contraseña). Con el POS sin conexión apagado, la pantalla te avisa que no corresponde.
 - Cada alta o baja de PIN queda en la [auditoría de accesos](ayuda:pantalla/AuditoriaLogin.Index).
 
 ## Recordá

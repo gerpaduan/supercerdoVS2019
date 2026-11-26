@@ -1,5 +1,19 @@
 # Bitacora de cambios
 
+## 2026-11-26 - POS sin conexión: vender sin internet y subir las ventas solas
+
+- **Cambio:** con `PosOffline:Habilitado` prendido, el POS (`Ventas/POS`) puede vender sin conexión: Consumidor Final, sin descuentos, todas las formas de pago menos Cta. Cte., búsqueda F10 y etiquetas de balanza contra el catálogo guardado en la PC, login con PIN (también un PIN «solo sin conexión» para admins), apertura de caja sin conexión, ticket X propio y cola que se sube sola al volver. Tabla nueva `posclaveunica` (no se toca `ventas`) y el id de la venta grabada ahora sale de `RETURNING` / `SCOPE_IDENTITY()`. Aviso en el cierre de caja. Ver `docs/DECISIONS.md` (2026-11-26 e).
+- **Archivos:**
+  - Base: `DatosPostgres/DB-Migrations/20261126-Create_posclaveunica.sql`, `Datos/DB-Procedures/20261126-Create_PosClaveUnica_Alter_agregarVenta.sql`
+  - Capas: `Entidades/PosClaveUnica.cs`, `Contratos/IPosClaveUnicaRepository.cs`, `DatosPostgres/{PosClaveUnicaPg,VentaPg}.cs`, `Datos/PosClaveUnica.cs`, `Negocio/{Venta,VentaOffline}.cs`
+  - Web: `Controllers/VentasController.PosOffline.cs`, `VentasController.cs` (FinalizarVenta), `CajasController.cs`, `LoginController.cs` (claim y PIN de admin), `Helpers/PosOfflineSettings.cs`, `Infrastructure/{NegocioFactory,SesionClaims}.cs`, `Models/DTO/PosOfflineDtos.cs`, `Models/PasswordRecoveryVm.cs`
+  - Vistas: `Views/Ventas/{POS,_PosOffline}.cshtml`, `Views/Cajas/CajasAbiertas.cshtml`, `Views/Login/ChangePin.cshtml`
+  - Navegador: `wwwroot/{sw-pos.js,pos-offline.html,pos-offline-ping.txt}`, `wwwroot/Scripts/app/pos-offline-{db,red,buscar,pin,sync,ticket,app,online}.js`
+  - Tests: `Negocio.Tests/VentaOfflineTests.cs`, `Negocio.Tests/Fakes/FakePosClaveUnicaRepository.cs`, `WebCore.Tests/PosOffline{Barcode,Pin}ParidadTests.cs`, `WebCore.Tests/js/pos-offline-{buscar,pin}.test.js` y sus fixtures
+  - Docs: `DECISIONS.md`, `03-modulos/ventas-y-pos.md`, `07-operacion-y-soporte/despliegue-y-publicacion.md`, `09-cambios-y-pendientes/mejoras-futuras.md`, manual `Ventas.POS.md`, `Login.ChangePin.md`, `Cajas.CajasAbiertas.md`, `clave-rapida-pin.md`, `configuraciones.md`
+- **Verificado:** WebCore.Tests 405/405, Negocio.Tests 875/876 (el que falla ya fallaba en HEAD), Node 196/196, paridad JS↔C# de búsqueda y de PIN, arnés contra Postgres y SQL Server locales, y de punta a punta con login real contra la copia local (subida, rechazos, marcas, cierre, POS online con el interruptor prendido y apagado). Usuario, dispositivo, ventas y cajas de prueba ya borrados.
+- **Pendiente:** corte de internet real y celular real; contra SQL Server solo se probó la capa de datos (no la pantalla); Mis ventas sin marcas ni filtro; facturación en lote (agendada); no deployado; SM y SL necesitan HTTPS válido.
+
 ## 2026-11-26 - Guardado único: un doble clic o un reintento ya no graba dos veces
 
 - **Cambio:** Stock, Movimientos, Elaborados (carga e ingreso rápido) y Pagos/Cobros guardan una sola vez aunque se toque Guardar dos veces, se repita Enter o se reintente con los mismos datos. Stock muestra «Guardando…». Origen: «Egreso Stock» de Carré duplicado en SM (`Compras` 11755/11756, 316 ms). Ver `docs/DECISIONS.md` (2026-11-26 d).

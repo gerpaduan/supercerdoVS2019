@@ -1339,6 +1339,9 @@ else
 }
 
 @section Scripts {
+    @* POS sin conexion (2026-11-26): indicador, service worker y subida de la cola; con el interruptor apagado solo
+       desregistra el service worker. Ver _PosOffline.cshtml. *@
+    <partial name="~/Views/Ventas/_PosOffline.cshtml" model="posInstanceId" />
     <script src="~/Scripts/carnisys.balanza.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-state.js" asp-append-version="true"></script>
     <script src="~/Scripts/app/pos-keyboard.js" asp-append-version="true"></script>

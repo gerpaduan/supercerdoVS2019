@@ -561,6 +561,23 @@
                     <ul id="avisoEgresosModificadosDetalle" class="small mb-0 mt-1 pl-3 d-none"></ul>
                 </div>
 
+                @* POS sin conexion (2026-11-26, ver docs/DECISIONS.md "POS sin conexion"). Dos avisos que llena renderVentasSinConexion:
+                   - ventas de esta caja que se hicieron sin conexion (data.ventasSinConexion): cuantas llegaron con la caja ya
+                     cerrada, cuantas quedan para facturar y si hubo diferencias de precio. Solo advierte.
+                   - ventas del vendedor que siguen en ESTA PC sin subir (cola local): no deja cerrar salvo "Cerrar igual". *@
+                <div id="avisoVentasSinConexion" class="alert alert-info d-none py-2 mb-2" role="alert">
+                    <div id="avisoVentasSinConexionResumen"></div>
+                    <a href="#" id="btnVerVentasSinConexion" class="small">ver detalle</a>
+                    <ul id="avisoVentasSinConexionDetalle" class="small mb-0 mt-1 pl-3 d-none"></ul>
+                </div>
+                <div id="avisoColaSinSubir" class="alert alert-danger d-none py-2 mb-2" role="alert">
+                    <div id="avisoColaSinSubirTexto"></div>
+                    <div class="form-check mt-1">
+                        <input type="checkbox" class="form-check-input" id="chkCerrarConPendientes">
+                        <label class="form-check-label small" for="chkCerrarConPendientes">Cerrar igual (esas ventas van a quedar fuera del cierre hasta que se suban)</label>
+                    </div>
+                </div>
+
                 <form id="formCerrarCaja">
 
                     <input type="hidden" id="Id" name="Id" />
@@ -821,6 +838,11 @@
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    @if (WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal)
+    {
+        @* POS sin conexion: lectura de la cola local para el aviso del cierre (renderVentasSinConexion). *@
+        <script src="~/Scripts/app/pos-offline-db.js" asp-append-version="true"></script>
+    }
     <script>
         window.EgresosCajaUrls = {
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
@@ -1360,6 +1382,7 @@
                     // Conteo del cajero: se muestra y, en una caja abierta, se precarga como Caja Cierre.
                     renderCambiosPosteriores(data);
                     renderEgresosModificados(data);
+                    renderVentasSinConexion(data);
                     renderConteoCajero(data);
                     precargarConteoCajero(data);
                     // Caja abierta: se vigila si el cajero cambia su cierre mientras este modal siga abierto.
@@ -1464,6 +1487,57 @@
 
         // Una linea por modificacion: "Egreso N° · Tipo «descripcion» — cargado ..., modificado ... por X: cambios".
         // Los textos de los cambios los arma el servidor (WebCore.Helpers.EgresoModificadoCajero); aca todo va con .text().
+        // POS sin conexion (2026-11-26): avisos del cierre. Ver el comentario de #avisoVentasSinConexion.
+        function renderVentasSinConexion(data) {
+            $("#avisoVentasSinConexion").addClass("d-none");
+            $("#avisoVentasSinConexionResumen, #avisoVentasSinConexionDetalle").empty();
+            $("#avisoVentasSinConexionDetalle").addClass("d-none");
+            $("#btnVerVentasSinConexion").text("ver detalle");
+            $("#avisoColaSinSubir").addClass("d-none");
+            $("#chkCerrarConPendientes").prop("checked", false);
+            if (!data || !data.posOfflineHabilitado) return;
+
+            const ventas = data.ventasSinConexion || [];
+            if (ventas.length && !data.modoModificacion) {
+                const tarde = ventas.filter(function (v) { return v.llegoTarde; }).length;
+                const facturar = ventas.filter(function (v) { return v.pendienteFacturar; }).length;
+                const precio = ventas.filter(function (v) { return v.difPrecio; }).length;
+                let texto = ventas.length + (ventas.length === 1 ? " venta de esta caja se hizo" : " ventas de esta caja se hicieron") + " sin conexión";
+                const extras = [];
+                if (tarde) extras.push(tarde + (tarde === 1 ? " llegó" : " llegaron") + " con la caja ya cerrada");
+                if (facturar) extras.push(facturar + (facturar === 1 ? " queda" : " quedan") + " para facturar");
+                if (precio) extras.push(precio + " con precio distinto al de lista");
+                $("#avisoVentasSinConexionResumen").append($("<strong>").text(texto + (extras.length ? " (" + extras.join(", ") + ")." : ".")));
+                const $detalle = $("#avisoVentasSinConexionDetalle");
+                ventas.forEach(function (v) {
+                    const marcas = [];
+                    if (v.llegoTarde) marcas.push("llegó tarde");
+                    if (v.pendienteFacturar) marcas.push("para facturar");
+                    if (v.difPrecio) marcas.push(v.detalle || "precio distinto");
+                    $detalle.append($("<li>").text("Venta N° " + v.idVenta + " · " + v.fecha + " (subida " + v.recibido + ")" + (marcas.length ? " · " + marcas.join(" · ") : "")));
+                });
+                $("#avisoVentasSinConexion").removeClass("d-none");
+            }
+
+            // Cola local de esta PC: ventas del vendedor de la caja que todavia no se subieron.
+            if (!window.PosOfflineDb || data.modoModificacion) return;
+            window.PosOfflineDb.cola().then(function (cola) {
+                const pendientes = cola.filter(function (i) { return i.estado === "pendiente" && i.idVendedor === data.idVendedor; });
+                if (!pendientes.length) return;
+                const una = pendientes.length === 1;
+                $("#avisoColaSinSubirTexto").text("En esta PC hay " + pendientes.length + (una ? " operación" : " operaciones") +
+                    " de " + (data.vendedor || "este vendedor") + (una ? " hecha" : " hechas") + " sin conexión que todavía no " +
+                    (una ? "se subió" : "se subieron") + ". Abrí el POS con ese usuario para " + (una ? "subirla" : "subirlas") + " antes de cerrar.");
+                $("#avisoColaSinSubir").removeClass("d-none");
+            }).catch(function (e) { console.warn("No se pudo leer la cola sin conexión de esta PC", e); });
+        }
+
+        $(document).on("click", "#btnVerVentasSinConexion", function (e) {
+            e.preventDefault();
+            const $d = $("#avisoVentasSinConexionDetalle").toggleClass("d-none");
+            $(this).text($d.hasClass("d-none") ? "ver detalle" : "ocultar detalle");
+        });
+
         function renderEgresosModificados(data) {
             // Si el detalle estaba abierto (p. ej. al tocar "Actualizar datos"), se respeta.
             const estabaAbierto = !$("#avisoEgresosModificadosDetalle").hasClass("d-none");
@@ -1971,6 +2045,11 @@
         // confirmarVentaEnCurso: la segunda vuelta, tras avisar que el cajero tiene ventas sin finalizar.
         function guardarCierreCaja(confirmarVentaEnCurso) {
             if (!validarImportesCierre()) return;
+            // POS sin conexion: con ventas del vendedor sin subir en esta PC solo se cierra marcando "Cerrar igual".
+            if (!$("#avisoColaSinSubir").hasClass("d-none") && !$("#chkCerrarConPendientes").is(":checked")) {
+                $("#cerrarCajaError").removeClass("d-none").text("Hay ventas sin conexión de este vendedor sin subir en esta PC: subilas o marcá \"Cerrar igual\".");
+                return;
+            }
 
             let data = {
                 Id: $("#Id").val(),

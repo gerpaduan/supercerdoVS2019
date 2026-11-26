@@ -28,7 +28,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 |---|---|---|---|---|
 | conceptos | Bloqueo de usuarios por intentos fallidos | Acceso y seguridad | `conceptos/bloqueo-de-usuarios.md` | 2026-10-03 |
 | conceptos | Bloqueo por inactividad (sesión y POS) | Acceso y seguridad | `conceptos/bloqueo-por-inactividad.md` | 2026-10-21 |
-| conceptos | Clave rápida (PIN) | Acceso y seguridad | `conceptos/clave-rapida-pin.md` | 2026-10-03 |
+| conceptos | Clave rápida (PIN) | Acceso y seguridad | `conceptos/clave-rapida-pin.md` | 2026-11-26 |
 | conceptos | Eliminar compras, stock y movimientos | Acceso y seguridad | `conceptos/eliminar-registros.md` | 2026-10-22 |
 | conceptos | Ingresar con la dirección de tu empresa (CUIT) | Acceso y seguridad | `conceptos/login-por-cuit.md` | 2026-10-04 |
 | conceptos | Intentos de clave al autorizar (POS, Cierre de Caja, Ver fórmula) | Acceso y seguridad | `conceptos/intentos-de-clave-al-autorizar.md` | 2026-10-20 |
@@ -40,7 +40,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Aviso «Salir sin guardar» | Uso general | `conceptos/aviso-salir-sin-guardar.md` | 2026-11-24 |
 | conceptos | Un doble clic en Guardar no guarda dos veces | Uso general | `conceptos/guardado-unico.md` | 2026-11-26 |
 | pantallas | Cambiar contraseña | Acceso y seguridad | `pantallas/Login.ChangePassword.md` | 2026-10-03 |
-| pantallas | Clave rápida (PIN) | Acceso y seguridad | `pantallas/Login.ChangePin.md` | 2026-10-03 |
+| pantallas | Clave rápida (PIN) | Acceso y seguridad | `pantallas/Login.ChangePin.md` | 2026-11-26 |
 | pantallas | Desbloquear usuario (enlace del mail) | Acceso y seguridad | `pantallas/Login.UnlockAccount.md` | 2026-10-03 |
 | pantallas | Este dispositivo no está autorizado | Acceso y seguridad | `pantallas/Login.DispositivoNoAutorizado.md` | 2026-10-03 |
 | pantallas | Ingreso al sistema | Acceso y seguridad | `pantallas/Login.Index.md` | 2026-11-21 |
@@ -91,7 +91,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Dispositivo seguro (qué es y cómo se configura) | Acceso y seguridad | `conceptos/dispositivo-seguro.md` | 2026-10-15 |
 | pantallas | Auditoría de accesos | Acceso y seguridad | `pantallas/AuditoriaLogin.Index.md` | 2026-10-03 |
 | pantallas | Dispositivos seguros | Acceso y seguridad | `pantallas/DispositivosSeguros.Index.md` | 2026-10-22 |
-| pantallas | Cajas abiertas y cierre de caja | Caja | `pantallas/Cajas.CajasAbiertas.md` | 2026-11-16 |
+| pantallas | Cajas abiertas y cierre de caja | Caja | `pantallas/Cajas.CajasAbiertas.md` | 2026-11-26 |
 | pantallas | Certificado ARCA | Facturación | `pantallas/CertificadoArca.Index.md` | 2026-10-12 |
 | pantallas | Titulares de facturación | Facturación | `pantallas/TitularesFiscales.Index.md` | 2026-10-12 |
 | pantallas | Mi Empresa | Mi empresa | `pantallas/Empresa.Index.md` | 2026-10-03 |
@@ -107,7 +107,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Nuevo / Modificar usuario | Usuarios | `pantallas/Usuarios.Editar.md` | 2026-11-10 |
 | pantallas | Permisos del usuario | Usuarios | `pantallas/Usuarios.Permisos.md` | 2026-11-10 |
 | pantallas | Usuarios | Usuarios | `pantallas/Usuarios.Index.md` | 2026-11-10 |
-| referencia | Mapa de configuraciones de la empresa | Referencia | `referencia/configuraciones.md` | 2026-11-11 |
+| referencia | Mapa de configuraciones de la empresa | Referencia | `referencia/configuraciones.md` | 2026-11-26 |
 
 ## Manual del super administrador
 
