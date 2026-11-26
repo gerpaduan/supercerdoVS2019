@@ -88,8 +88,13 @@
         html, body {
             height: 100%;
             margin: 0;
-            /* Anula el "deslizar hacia abajo para recargar" (pull-to-refresh) y el rebote en celulares:
-               recargaba el POS sin querer a mitad de una venta (docs/DECISIONS.md, 2026-10-12). */
+        }
+
+        /* Anula el "deslizar hacia abajo para recargar" (pull-to-refresh) y el rebote en celulares:
+           recargaba el POS sin querer a mitad de una venta (docs/DECISIONS.md, 2026-10-12).
+           Va SOLO en html: en celular body tiene overflow:auto sin nada propio que desplazar y, desde
+           Chrome 144, con esta regla se queda con el gesto y la pagina no se mueve (2026-11-26). */
+        html {
             overscroll-behavior-y: none;
         }
 

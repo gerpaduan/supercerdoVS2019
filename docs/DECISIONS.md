@@ -1,3 +1,10 @@
+## 2026-11-26 - POS (Ventas y Expendios) en celular: no se podía deslizar arriba y abajo
+
+- **Decisión:** `overscroll-behavior-y: none` (anular «deslizar para recargar», 2026-10-12) se aplica solo a `html`, no a `body` (`Views/Shared/_LayoutPOS.cshtml`).
+- **Por qué:** en < 992 px `html` y `body` tienen `overflow: auto`, así que `body` es una caja de scroll sin nada que desplazar (la que se mueve es la página). Desde Chrome 144 `overscroll-behavior` vale también en esas cajas, y en `body` cortaba el gesto antes de llegar a la página.
+- **Alternativas descartadas:** quitar la regla (vuelve la recarga al deslizar a mitad de una venta); cambiar el `overflow` de `body` (toca más estilos del POS, repartidos entre el layout y `pos.css`).
+- **No volver a poner** `overscroll-behavior` en `body` en este layout.
+
 ## 2026-11-25 (i) - Celular: Stock, Ingreso rápido, listados y «Ver líneas» más bajos, con filtros plegados
 
 - **Pedido:** llevar a Stock el diseño de celular de (g)/(h), sumar Ingreso rápido, ocultar en celular el aviso de balanza no conectada y mejorar los listados (Stock, Movimientos, Elaborados, Compras, Ventas) y sus «Ver líneas».

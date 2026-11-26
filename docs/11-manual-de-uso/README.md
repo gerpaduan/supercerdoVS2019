@@ -73,14 +73,14 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Productos | Productos | `pantallas/Productos.Index.md` | 2026-11-20 |
 | pantallas | Tipos de producto | Productos | `pantallas/Productos.Tipos.md` | 2026-11-10 |
 | pantallas | Expendios generados | Punto de Expendio | `pantallas/PuntosExpendio.ExpendiosGenerados.md` | 2026-10-30 |
-| pantallas | Punto de expendio (pantalla de trabajo y app instalada) | Punto de Expendio | `pantallas/PuntosExpendio.POS.md` | 2026-11-25 |
+| pantallas | Punto de expendio (pantalla de trabajo y app instalada) | Punto de Expendio | `pantallas/PuntosExpendio.POS.md` | 2026-11-26 |
 | pantallas | Cargar o modificar un movimiento de stock | Stock | `pantallas/Stock.Editar.md` | 2026-11-25 |
 | pantallas | Líneas de stock | Stock | `pantallas/Stock.Lineas.md` | 2026-11-25 |
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-11-25 |
 | pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-11-24 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-11-10 |
 | pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-11-25 |
-| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-25 |
+| pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-26 |
 | pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-11-25 |
 
 ## Manual del administrador

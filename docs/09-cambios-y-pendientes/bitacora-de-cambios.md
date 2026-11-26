@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-11-26 - POS en celular: se vuelve a poder deslizar arriba y abajo
+
+- **Cambio:** en Ventas y Expendios, la regla que anula «deslizar para recargar» queda solo en `html` (en `body` bloqueaba el desplazamiento desde Chrome 144). Ver `docs/DECISIONS.md` (2026-11-26).
+- **Archivos:** `WebCore/Views/Shared/_LayoutPOS.cshtml`; manuales `Ventas.POS.md` y `PuntosExpendio.POS.md`; `incidencias-frecuentes.md`.
+- **Verificado:** página de prueba con los estilos reales del layout (sin login, contenido de relleno) en el navegador integrado a 375 px, Chrome 156, desplazamiento con rueda: antes 0 px; después baja 500 px y vuelve a subir 300 px. `dotnet build` de WebCore sin errores; `scripts/check-ayuda.ps1` no marca las dos pantallas.
+- **Pendiente:** celular real: que se deslice con el dedo y que no recargue al deslizar hacia abajo; no probado en el POS con login; no deployado.
+
 ## 2026-11-25 - Celular: Stock, Ingreso rápido, listados y «Ver líneas» más bajos
 
 - **Cambio:** Stock/Editar e Ingreso rápido rediseñados para < 768 px; filtros plegados con resumen en los listados de Stock, Movimientos, Elaborados, Compras y Ventas y en las cinco «Ver líneas»; ventas en dos renglones; líneas como filas cortas. Escritorio y tablet sin cambios (ver `docs/DECISIONS.md` 2026-11-25 (i)).

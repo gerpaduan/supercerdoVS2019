@@ -13,6 +13,13 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-26 - POS en celular: la pantalla no se desliza arriba ni abajo
+
+- **Sintoma**: en Ventas/POS y PuntosExpendio/POS, en celular (o ventana de menos de 992 px), no se puede desplazar la pantalla aunque haya contenido fuera de la vista.
+- **Causa**: `html, body { overscroll-behavior-y: none }` en `_LayoutPOS.cshtml`, con `overflow: auto` en `body`: desde Chrome 144 `body` se queda con el gesto aunque no tenga nada que desplazar.
+- **Verificaciones**: en la consola, `getComputedStyle(document.body).overscrollBehaviorY` (debe dar `auto`) y `getComputedStyle(document.documentElement).overscrollBehaviorY` (`none`). Si `document.scrollingElement.scrollHeight > innerHeight` y la pagina no se mueve, buscar `overscroll-behavior` en una caja intermedia.
+- **Resolucion**: la regla queda solo en `html`. PENDIENTE confirmar en un celular real; ver `docs/DECISIONS.md` (2026-11-26).
+
 ## 2026-11-25 - Movimientos: Código ↵ lleva a Cant.Un. y el cursor vuelve solo a Código (sobre todo el primer producto)
 
 - **Sintoma**: se escribe un código (ej. `5`), Enter, el cursor llega a Cant.Un. y enseguida vuelve a Código. Intermitente, más frecuente en el primer producto.

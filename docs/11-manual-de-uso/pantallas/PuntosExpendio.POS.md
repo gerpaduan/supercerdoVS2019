@@ -5,7 +5,7 @@ rol: usuario
 modulo: Punto de Expendio
 orden: 1
 permiso: cualquier usuario activo puede operar Expendio (verificado en `PuntosExpendioController.POS`); no pide permiso POS ni apertura de caja
-revisada: 2026-11-25
+revisada: 2026-11-26
 ---
 ## Para qué sirve
 Pantalla de trabajo del **Punto de expendio**: se elige el sector y se cargan los expendios. **Esta ayuda cubre solo cómo usarlo como aplicación instalada (desde 2026-11-17).** El resto de la pantalla está PENDIENTE de documentar.
@@ -41,3 +41,6 @@ Igual que en el POS de Ventas (ver [Punto de venta](ayuda:pantalla/Ventas.POS), 
 
 ## Leer el código con la cámara (2026-11-20)
 El recuadro de la cámara es más alto (120 px) y muestra el **centro** de la imagen, que es lo que se lee; el celular además aplica un zoom moderado si lo permite. **No cambia** la pausa: el mismo código no se vuelve a cargar antes de 2 s, y el alta rápida de un producto nuevo solo se ofrece con la segunda lectura igual. Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).
+
+## Desplazarse en el celular (2026-11-26)
+En el celular, deslizá el dedo hacia arriba o hacia abajo para ver el resto de la pantalla. Deslizar hacia abajo estando al principio no recarga el punto de venta. PENDIENTE: probarlo en un celular real.
