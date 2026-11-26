@@ -5,7 +5,7 @@ rol: usuario
 modulo: Movimientos
 orden: 2
 permiso: Movimientos (PENDIENTE: documentar el permiso exacto; esta página describe solo el panel «Stock destino»)
-revisada: 2026-11-25
+revisada: 2026-11-26
 ---
 ## Para qué sirve
 Armar un movimiento de mercadería de una sucursal a otra. Esta página documenta por ahora solo el panel **Stock destino**; el resto de la pantalla (origen, destino, fecha, agregar productos, guardar) no está documentado todavía (**PENDIENTE**).
@@ -190,3 +190,6 @@ También se abre desde el botón **Cargas** del POS (un movimiento nuevo nuevo, 
 El botón de la cámara exige **dos lecturas iguales seguidas** y ahora acepta también **UPC-A** (12 dígitos: un EAN-13 que empieza con 0; antes decía «Código inválido»). La cámara queda abierta para el siguiente producto y tras cada lectura hay una pausa de 2 s. El recuadro es más alto (120 px) y muestra el **centro** de la imagen, que es lo que se lee. Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).
 
 - **Aviso «Salir sin guardar» (desde 2026-11-20):** el foco arranca en «No, quedarme» con borde marcado; Enter solo activa el botón con foco y las flechas pasan a «Sí, salir». Ver [aviso «Salir sin guardar»](ayuda:concepto/aviso-salir-sin-guardar).
+
+## Doble clic o Enter repetido al guardar (2026-11-26)
+Un doble clic en **Guardar**, varios **Enter** / **Alt + Enter** o un reintento con **los mismos datos** (por ejemplo, después de que se cortó la conexión) guardan **una sola vez**: no se crea otro registro. Si cambiás algo y volvés a guardar, sí se guarda. Ver [Un doble clic en Guardar no guarda dos veces](ayuda:concepto/guardado-unico).

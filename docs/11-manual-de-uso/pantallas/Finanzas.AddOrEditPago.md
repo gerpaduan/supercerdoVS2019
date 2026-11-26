@@ -5,7 +5,7 @@ rol: usuario
 modulo: Finanzas
 orden: 1
 permiso: Sin permiso propio en el formulario; cambiar la persona requiere permiso de edición de pagos; eliminar requiere ese permiso o que el pago lo hayas cargado vos en tu caja abierta
-revisada: 2026-11-20
+revisada: 2026-11-26
 ---
 ## Para qué sirve
 Registrar un **pago** (entregás dinero a una persona) o un **cobro** (recibís dinero de una persona) y dejar el movimiento en su cuenta corriente. Se abre desde la cuenta corriente de la persona (**Agregar Pago / Cobro**), desde el listado de Pagos o desde el POS.
@@ -66,3 +66,6 @@ Ver también: [mapa de configuraciones](ayuda:referencia/configuraciones)
 - El listado de pagos y cobros (Finanzas > Pagos) suma el filtro **Titular** y una columna con el titular de cada pago. PENDIENTE: esa pantalla no tiene .md propio en el manual.
 
 - **Aviso «Salir sin guardar» (desde 2026-11-20):** el foco arranca en «No, quedarme» con borde marcado; Enter solo activa el botón con foco y las flechas pasan a «Sí, salir». Ver [aviso «Salir sin guardar»](ayuda:concepto/aviso-salir-sin-guardar).
+
+## Doble clic o Enter repetido al guardar (2026-11-26)
+Un doble clic en **Guardar**, varios **Enter** / **Alt + Enter** o un reintento con **los mismos datos** (por ejemplo, después de que se cortó la conexión) guardan **una sola vez**: no se crea otro registro. Si cambiás algo y volvés a guardar, sí se guarda. Ver [Un doble clic en Guardar no guarda dos veces](ayuda:concepto/guardado-unico).

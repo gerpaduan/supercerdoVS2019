@@ -1,3 +1,32 @@
+## 2026-11-26 (d) - Guardado único: un doble clic o un reintento no graba dos veces (Stock, Movimientos, Elaborados, Pagos)
+
+- **Bug:** en SM (SQL Server) quedaron dos «Egreso Stock» de Carré −6,5 kg (`Compras` 11755 y 11756), guardados con 316 ms de diferencia, del mismo usuario y con la misma hora de línea: un doble envío del mismo formulario. `Stock/Editar` es un POST tradicional sin ningún freno: cada clic o Enter mandaba otro POST, y con la cuenta de producción cada submit llamaba a `form.submit()` nativo. Movimientos, Elaborados y Pagos tenían freno en el navegador, pero ninguno en el servidor, así que un reintento después de perder la respuesta duplicaba. En Elaborados, además, `state.guardando` volvía a `false` al guardar bien, antes de navegar.
+- **Decisión:**
+  - **Servidor:** filtro `[EvitarGuardadoDoble]` (`WebCore/Helpers/GuardadoUnico.cs`) en `Stock/Guardar`, `Movimientos/Guardar`, `Elaborados/GuardarCarga`, `Elaborados/GuardarIngresoRapido` y `Finanzas/AddOrEditPagoPost`.
+    - **Clave:** empresa + usuario + acción + `TokenGuardado` (un Guid oculto que la vista genera cada vez que se dibuja) + SHA-256 de los campos del formulario, sin el antiforgery ni el token.
+    - **Flujo:** el primero ejecuta. Uno igual que llega mientras tanto espera hasta 30 s y recibe **el mismo resultado**: el mismo JSON, o la misma redirección con los avisos de TempData copiados. Si el primero falla (`ok=false`, redirección con `AlertType=error`, vista con errores o excepción), se libera y el reintento ejecuta.
+    - **Duración:** el recuerdo dura 600 s con token y 30 s sin token (pantallas viejas en caché). Se configura en App.config: `GuardadoUnico:VentanaSegundos`, `GuardadoUnico:VentanaSinTokenSegundos` y `GuardadoUnico:EsperaMaxSegundos`.
+  - **Navegador:**
+    - `stock.js` corta el submit mientras hay uno en camino y deja el botón en «Guardando…». La marca se pone en un handler de `document`, así corre después de todos los del form (confirmación de medias, producto pendiente, modo vista) y no traba si alguno frena. En la cuenta de producción se pone justo antes de `form.submit()`. `pageshow` con `persisted` la libera.
+    - `elaborados-carga.js` y `elaborados-rapido.js` ya no liberan `state.guardando` al guardar bien.
+- **Por qué los mismos datos y no solo el token:** si alguien vuelve atrás y cambia algo, o si Movimientos queda en la pantalla después de guardar (el id pasa de 0 al real), la huella cambia y se guarda. Así no se descarta nunca un guardado legítimo.
+- **Alternativas descartadas:**
+  - **Tabla de idempotencia** (una fila única por token): sobrevive a reinicios y sirve con varias instancias, pero pide migración en Postgres **y** en SQL Server (SM y SL) para un problema que en la práctica pasa en milisegundos. Lo eligió el usuario.
+  - **Solo navegador:** no cubre el reintento después de que se corta la respuesta.
+  - **Reusar `BorradorGenericoClientId`:** está apagado en SQL Server por defecto y su chequeo «ya finalizado» no es atómico (dos pedidos simultáneos pasan los dos, igual que `ObtenerIdVentaSiYaFinalizada` en Ventas).
+- **Riesgos aceptados:**
+  - El registro vive en la memoria del proceso, igual que la Session (`AddDistributedMemoryCache`): un reinicio o un reciclado de IIS justo entre los dos envíos deja pasar el segundo. Con varias instancias haría falta la tabla.
+  - Dos pestañas sin token (pantalla vieja) que guarden exactamente los mismos datos en menos de 30 s se toman como uno solo.
+  - `ok` se lee por reflexión del objeto anónimo de la respuesta.
+- **Ventas (POS) no se toca:** tiene su propio freno (`ClientId` del carrito), con la misma debilidad ante dos pedidos simultáneos. Queda como posible mejora.
+- **Verificado** (Postgres local, navegador integrado, usuario y registros de prueba ya borrados): doble clic, Enter repetido, Enter después del aviso de guardado y dos o tres POST simultáneos con los mismos datos dan **un** registro en las 5 acciones. Con otros datos se guarda otro. Tests: `WebCore.Tests/GuardadoUnicoTests.cs`, 18 casos; con el filtro apagado fallan 4.
+- **Archivos:**
+  - `WebCore/Helpers/GuardadoUnico.cs`, `WebCore/Program.cs`
+  - `WebCore/Controllers/{Stock,Movimientos,Elaborados,Finanzas}Controller.cs`
+  - `WebCore/Views/{Stock/Editar,Movimientos/Editar,Elaborados/Carga,Elaborados/EditarIngresoRapido,Finanzas/AddOrEditPago}.cshtml`
+  - `WebCore/wwwroot/Scripts/app/{stock,elaborados-carga,elaborados-rapido}.js`
+  - Manual: concepto `guardado-unico.md` y sus 5 pantallas.
+
 ## 2026-11-26 (b) - Stock: «Unificar pesajes» en un Cierre Stock (balance por sectores)
 
 - **Pedido:** el balance de mercadería se hace en varios sectores a la vez, en registros distintos, y después se tiene que unificar en uno solo. Si se cargan varios Cierre Stock con la misma fecha y hora, las consultas de stock los suman, y queda uno solo que tiene que contar.

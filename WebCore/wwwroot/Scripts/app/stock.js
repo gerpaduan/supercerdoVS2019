@@ -756,6 +756,26 @@
         }
     }
 
+    // Guardado en camino (ver "Un solo guardado a la vez" en bindEvents): deshabilita Guardar con "Guardando…" hasta que
+    // el navegador cambie de pagina. liberarGuardandoStock lo deja como estaba (volver atras desde la cache).
+    function marcarGuardandoStock($form) {
+        var state = getState($form);
+        state.guardandoStock = true;
+        var $save = $form.find('#btnGuardarStock');
+        if (!$save.length) return;
+        if ($save.data('textoOriginal') === undefined) $save.data('textoOriginal', $save.html());
+        $save.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Guardando…');
+    }
+
+    function liberarGuardandoStock($form) {
+        var state = getState($form);
+        state.guardandoStock = false;
+        var $save = $form.find('#btnGuardarStock');
+        if (!$save.length) return;
+        if ($save.data('textoOriginal') !== undefined) $save.html($save.data('textoOriginal'));
+        $save.prop('disabled', false);
+    }
+
     function rebuildHiddenInputs($form) {
         var state = getState($form);
         var $container = $form.find('#lineasHiddenContainer');
@@ -2985,6 +3005,30 @@
         $modalComprasPesaje.off('.stockCompras');
         $modalVincularPesajes.off('.stockVincular');
 
+        // ===== Un solo guardado a la vez (2026-11-26, ver docs/DECISIONS.md "Guardado unico") =====
+        // Esta pantalla es un POST tradicional: sin esto, cada clic en Guardar o cada Enter mandaba otro POST y el servidor
+        // creaba otro registro (paso en SM con un Egreso Stock). El servidor tambien frena el repetido (EvitarGuardadoDoble);
+        // esto evita mandarlo. Va PRIMERO: corta cualquier submit mientras el anterior sigue en camino.
+        $form.on('submit.stock', function (e) {
+            if (!state.guardandoStock) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        });
+
+        // La marca se pone recien cuando el submit va a salir de verdad: este handler esta en document, asi corre despues de
+        // TODOS los del form (confirmacion de medias en cero, producto pendiente, modo vista de edit-readonly.js). Si alguno lo
+        // freno, no se marca y la pantalla sigue usable. La cuenta de produccion sale por form.submit() nativo (sin evento) y
+        // se marca alla, justo antes.
+        $(document).on('submit.stock', '#' + ($form.attr('id') || 'formStock'), function (e) {
+            if (e.isDefaultPrevented()) return;
+            marcarGuardandoStock($form);
+        });
+
+        // Volver atras desde la cache del navegador deja la pagina tal cual quedo (con la marca puesta): se libera.
+        $(window).off('pageshow.stockGuardado').on('pageshow.stockGuardado', function (evt) {
+            if (evt.originalEvent && evt.originalEvent.persisted) liberarGuardandoStock($form);
+        });
+
         // Kgs.Medias usa punto decimal: la coma tipeada es el mismo separador (punto de gramos).
         $form.on('input.stock', '#KgsMedias', function () {
             if (this.value.indexOf(',') >= 0) {
@@ -3111,6 +3155,10 @@
 
             e.preventDefault();
             window.SeleccionUsuarioProduccion.conSeleccionDeUsuario($form, function () {
+                // form.submit() nativo no pasa por los handlers: la marca de "guardando" se pone aca (y si ya habia un
+                // guardado en camino, no se manda otro).
+                if (state.guardandoStock) return;
+                marcarGuardandoStock($form);
                 $form.get(0).submit();
             }, { titulo: '¿Quién está haciendo esta carga de stock?' });
         });

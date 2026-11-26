@@ -149,6 +149,8 @@
         <div class="card-body">
             <input type="hidden" id="hddIdPersona" value="@idPersona" />
             <input type="hidden" id="hddReturnUrl" value="@returnUrl" />
+            @* Guardado unico: Guid nuevo cada vez que se dibuja la pantalla; viaja en el POST del pago (ver btnGuardarPago) y un envio repetido con los mismos datos no graba dos veces (Helpers/GuardadoUnico.cs). *@
+            <input type="hidden" id="hddTokenGuardadoPago" value="@Guid.NewGuid().ToString("N")" />
 
             @if (esNuevo)
             {
@@ -1052,6 +1054,7 @@
                 '&importe=' + encodeURIComponent(importeParaEnviar()) +
                 '&Efectivo=' + encodeURIComponent(efectivoParaEnviar()) +
                 '&ChequesJson=' + encodeURIComponent($('#ChequesJson').val() || '') +
+                '&@(WebCore.Helpers.EvitarGuardadoDobleFilter.CampoToken)=' + encodeURIComponent($('#hddTokenGuardadoPago').val() || '') +
                 '&returnUrl=' + encodeURIComponent($('#hddReturnUrl').val() || '') +
                 // Faltaba mandar desdePos (Batch 10 de la quinta ronda, 2026-09-10, ver
                 // docs/DECISIONS.md) -- sin esto, AddOrEditPagoPost SIEMPRE recibia desdePos=false

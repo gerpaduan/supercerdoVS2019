@@ -1,5 +1,20 @@
 # Bitacora de cambios
 
+## 2026-11-26 - Guardado único: un doble clic o un reintento ya no graba dos veces
+
+- **Cambio:** Stock, Movimientos, Elaborados (carga e ingreso rápido) y Pagos/Cobros guardan una sola vez aunque se toque Guardar dos veces, se repita Enter o se reintente con los mismos datos. Stock muestra «Guardando…». Origen: «Egreso Stock» de Carré duplicado en SM (`Compras` 11755/11756, 316 ms). Ver `docs/DECISIONS.md` (2026-11-26 d).
+- **Archivos:**
+  - `Helpers/GuardadoUnico.cs`, `Program.cs`
+  - `Controllers/{Stock,Movimientos,Elaborados,Finanzas}Controller.cs`
+  - Vistas de esas 5 pantallas
+  - `wwwroot/Scripts/app/{stock,elaborados-carga,elaborados-rapido}.js`
+  - `WebCore.Tests/GuardadoUnicoTests.cs`
+  - Docs: concepto `guardado-unico.md`, las 5 pantallas del manual, `incidencias-frecuentes.md`
+- **Verificado:**
+  - `WebCore.Tests` 402/402. Con el filtro apagado fallan 4 de los 18 tests nuevos.
+  - Navegador integrado contra Postgres local: un registro por guardado en las 5 acciones (doble clic, Enter repetido, Enter tras el aviso y POST simultáneos); con otros datos se guarda otro. Usuario y registros de prueba ya borrados.
+- **Pendiente:** no probado contra SQL Server (SM/SL) ni en un celular real; no deployado. Los duplicados ya existentes en SM (11755/11756) no se tocaron.
+
 ## 2026-11-26 - Stock: «Unificar pesajes» en un Cierre de stock (balance por sectores)
 
 - **Cambio:** cada sector cuenta en un Pesaje «Solo productos» y el Cierre Stock los junta con el botón **Unificar pesajes** (mismo modal que «Vincular pesajes»). Chips «Unificado en Cierre #N» / «N pesajes unificados». «Vincular pesajes» de un Pesaje no deja tomar uno unificado en un cierre. Sin cambios de base ni SQL. Ver `docs/DECISIONS.md` (2026-11-26 b).

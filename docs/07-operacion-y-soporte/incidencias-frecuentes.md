@@ -13,6 +13,13 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-26 - Stock (y otras cargas): el mismo registro guardado dos veces
+
+- **Sintoma**: aparecen dos registros iguales (mismo tipo, sucursal, usuario y líneas) con menos de un segundo de diferencia. Caso real en SM: «Egreso Stock» de Carré −6,5 kg, `Compras` 11755 y 11756, 316 ms.
+- **Causa**: doble clic o Enter repetido en Guardar, o un reintento después de perder la respuesta. Stock no tenía ningún freno, y ninguna pantalla tenía freno en el servidor.
+- **Verificaciones**: buscar pares con `creado` a menos de 2 min, misma cabecera y mismas líneas (`CortePorCompra.creado` igual en las dos delata el doble envío). En el log de WebCore, `Guardado repetido frenado en <Controller>/<Acción>` indica que el freno nuevo actuó.
+- **Resolucion**: filtro `[EvitarGuardadoDoble]` y bloqueo del botón en `stock.js` (ver `docs/DECISIONS.md` 2026-11-26 d). Los duplicados que ya existen no se corrigen solos: se eliminan a mano desde la pantalla (queda en Registros eliminados), revisando antes cuál es el sobrante.
+
 ## 2026-11-26 - POS en celular: la pantalla no se desliza arriba ni abajo
 
 - **Sintoma**: en Ventas/POS y PuntosExpendio/POS, en celular (o ventana de menos de 992 px), no se puede desplazar la pantalla aunque haya contenido fuera de la vista.

@@ -5,7 +5,7 @@ rol: usuario
 modulo: Elaborados
 orden: 2
 permiso: Elaborado.IngresoEmbutido (editar) / Elaborado.VerEmbutidos (solo ver un registro existente)
-revisada: 2026-11-25
+revisada: 2026-11-26
 ---
 ## Para qué sirve
 Registrar un elaborado cargando **a mano los ingredientes** (con su peso). Los ingredientes de la fórmula marcados como *Auto* se agregan solos al guardar, calculados como porcentaje de lo cargado a mano.
@@ -125,3 +125,6 @@ También se abre desde el botón **Cargas** del POS (un elaborado nuevo nuevo, s
 - Verificado el 2026-11-20 en la pantalla real con un agente de balanza simulado (peso que cambia, lectura congelada, agente colgado, peso inestable). PENDIENTE: probarlo con una balanza real.
 
 - **Aviso «Salir sin guardar» (desde 2026-11-20):** el foco arranca en «No, quedarme» con borde marcado; Enter solo activa el botón con foco y las flechas pasan a «Sí, salir». Ver [aviso «Salir sin guardar»](ayuda:concepto/aviso-salir-sin-guardar).
+
+## Doble clic o Enter repetido al guardar (2026-11-26)
+Un doble clic en **Guardar**, varios **Enter** / **Alt + Enter** o un reintento con **los mismos datos** (por ejemplo, después de que se cortó la conexión) guardan **una sola vez**: no se crea otro registro. Si cambiás algo y volvés a guardar, sí se guarda. Ver [Un doble clic en Guardar no guarda dos veces](ayuda:concepto/guardado-unico).

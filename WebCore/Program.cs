@@ -27,6 +27,9 @@ builder.Services.AddScoped<WebCore.Services.IUsuarioSesionService, WebCore.Servi
 // Manual de uso / ayuda por pantalla (2026-10-03): lee los .md embebidos una sola vez, por eso singleton.
 builder.Services.AddSingleton<WebCore.Helpers.IAyudaService, WebCore.Helpers.AyudaService>();
 builder.Services.AddScoped<WebCore.Services.ICtaCteReservadaService, WebCore.Services.CtaCteReservadaService>();
+// Guardado unico (2026-11-26): registro en memoria de los guardados en curso y recientes, compartido por todos los
+// pedidos (por eso singleton). Ver Helpers/GuardadoUnico.cs y docs/DECISIONS.md.
+builder.Services.AddSingleton<WebCore.Helpers.RegistroGuardadoUnico>();
 
 // Config de AFIP por empresa (URLs por entorno + clave cifrada del pfx del certificado ARCA). Usa
 // Data Protection (default de ASP.NET Core, ya presente por la cookie de autenticacion).

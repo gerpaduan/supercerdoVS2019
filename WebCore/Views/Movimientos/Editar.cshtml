@@ -87,6 +87,8 @@
     <div class="card shadow-sm movimiento-panel-card pt-fill">
         <div class="card-body pt-fill">
             <form id="formMovimiento" class="pt-fill" method="post" action="@Url.Action("Guardar", "Movimientos")" novalidate>
+                @* Guardado unico: Guid nuevo cada vez que se dibuja la pantalla; un envio repetido con los mismos datos no graba dos veces (Helpers/GuardadoUnico.cs). *@
+                <input type="hidden" name="@WebCore.Helpers.EvitarGuardadoDobleFilter.CampoToken" value="@Guid.NewGuid().ToString("N")" />
                 @Html.AntiForgeryToken()
                 @* Pestana del POS desde la que se abrio esta carga (2026-11-18): el servidor la usa para aceptar la autorizacion de otro usuario. Vacio fuera del POS. *@
                 <input type="hidden" name="posInstanceId" value="@(ViewBag.PosInstanceId as string ?? "")" />

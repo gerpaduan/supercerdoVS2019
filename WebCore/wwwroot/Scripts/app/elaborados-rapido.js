@@ -960,11 +960,14 @@
                     type: 'POST',
                     data: $form.serialize()
                 }).done(function (resp) {
-                    state.guardando = false;
                     if (!resp || !resp.ok) {
+                        state.guardando = false;
                         showAlert('error', config.esDesarme ? 'Desarme' : 'Ingreso rápido', (resp && resp.mensaje) || 'No se pudo guardar el movimiento.');
                         return;
                     }
+                    // Guardado bien: state.guardando queda en true hasta irse de la pantalla (o cerrarse la ventana del POS).
+                    // Antes se liberaba aca y un Enter entre el aviso y la navegacion volvia a guardar lo mismo (ver
+                    // docs/DECISIONS.md "Guardado unico", 2026-11-26).
 
                     if (state.borradorGenerico && state.borradorGenerico.estaHabilitado()) {
                         state.borradorGenerico.marcarFinalizado(resp.idEmbutido);

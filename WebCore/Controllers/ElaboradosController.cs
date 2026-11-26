@@ -990,6 +990,8 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        // Un doble clic o un reintento con los mismos datos no graba dos veces (ver Helpers/GuardadoUnico.cs).
+        [WebCore.Helpers.EvitarGuardadoDoble]
         public JsonResult GuardarIngresoRapido(ElaboradoRapidoEditVm model, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             try
@@ -1101,6 +1103,8 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        // Un doble clic o un reintento con los mismos datos no graba dos veces (ver Helpers/GuardadoUnico.cs).
+        [WebCore.Helpers.EvitarGuardadoDoble]
         public JsonResult GuardarCarga(ElaboradoCargaVm model, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             try

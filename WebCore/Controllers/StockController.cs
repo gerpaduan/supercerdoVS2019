@@ -386,6 +386,8 @@ namespace WebCore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        // Un doble clic o un reintento con los mismos datos no graba dos veces (ver Helpers/GuardadoUnico.cs).
+        [WebCore.Helpers.EvitarGuardadoDoble]
         public IActionResult Guardar(StockEditVm model, int idUsuarioCreador = 0, string posInstanceId = "")
         {
             Entidades.Usuario user = _usuarioActual;

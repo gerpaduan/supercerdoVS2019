@@ -48,6 +48,8 @@
     <div class="card shadow-sm elaborados-panel-card elaborados-form-compact">
         <div class="card-body">
             <form id="formIngresoRapidoElaborado" class="@(esAnulado ? "ela-anulado" : "")" method="post"action="@Url.Action("GuardarIngresoRapido", "Elaborados")" novalidate>
+                @* Guardado unico: Guid nuevo cada vez que se dibuja la pantalla; un envio repetido con los mismos datos no graba dos veces (Helpers/GuardadoUnico.cs). *@
+                <input type="hidden" name="@WebCore.Helpers.EvitarGuardadoDobleFilter.CampoToken" value="@Guid.NewGuid().ToString("N")" />
                 @Html.AntiForgeryToken()
                 @* Pestana del POS desde la que se abrio esta carga (2026-11-18): el servidor la usa para aceptar la autorizacion de otro usuario. Vacio fuera del POS. *@
                 <input type="hidden" name="posInstanceId" value="@(ViewBag.PosInstanceId as string ?? "")" />
