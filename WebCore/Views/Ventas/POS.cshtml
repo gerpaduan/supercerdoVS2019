@@ -445,10 +445,9 @@
                                                         Flash
                                                     </button>
 
-                                                    @* Limpia #inputCodigo nomas -- utilidad general para descartar un
-                                                       codigo mal leido/tipeado, sin relacion con el alta rapida de
-                                                       producto (esa se cancela con el boton "Cancelar" del propio
-                                                       formulario, no con este). Siempre visible. *@
+                                                    @* Descarta el codigo leido o tipeado: vacia #inputCodigo y, si se
+                                                       estaba ofreciendo (o completando) el alta rapida de producto,
+                                                       equivale a "No" / "Cancelar". Siempre visible. *@
                                                     <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimpiarCodigoPOS">
                                                         Limpiar
                                                     </button>
@@ -2817,12 +2816,15 @@ else
                 videoSelector: "#videoScanner",
                 containerSelector: "#scannerContainer",
                 onCodeDetected: function (codigo) {
-                    // Con el formulario de alta rapida abierto, la camara sigue corriendo en
-                    // segundo plano (no se cierra sola) -- sin este corte, cualquier lectura
-                    // pisaria #inputCodigo y dispararia una busqueda nueva mientras el cajero esta
-                    // completando el formulario. No es el mismo chequeo que el de dos-lecturas de
-                    // abajo: esto corta TODO el manejo de esta lectura, no solo la sugerencia.
-                    if (posProduct && typeof posProduct.isModoAltaProductoActivo === "function" && posProduct.isModoAltaProductoActivo()) {
+                    // Con la sugerencia "¿Desea darlo de alta?" o el formulario de alta a la vista, la
+                    // camara sigue corriendo (no se cierra sola) -- sin este corte, cualquier lectura
+                    // pisaria #inputCodigo, se tomaria como un "No" y dispararia otra busqueda. El
+                    // codigo queda fijo hasta "No", "Cancelar", "Limpiar" o terminar el alta. No es el
+                    // mismo chequeo que el de dos-lecturas de abajo: esto corta TODO el manejo de
+                    // esta lectura, no solo la sugerencia.
+                    if (posProduct && (posProduct.isSugerenciaAltaVisible?.() || posProduct.isModoAltaProductoActivo?.())) {
+                        // Al soltarse el alta, el codigo vuelve a necesitar dos lecturas iguales.
+                        ultimoCodigoLeidoPOS = null;
                         return;
                     }
 
@@ -2841,11 +2843,15 @@ else
             document.getElementById("btnScanner")?.addEventListener("click", () => scannerPOS.iniciar());
             document.getElementById("btnCerrarScanner")?.addEventListener("click", () => scannerPOS.cerrar());
             document.getElementById("btnLimpiarCodigoPOS")?.addEventListener("click", () => {
+                // Limpiar = "No" al alta; el proximo codigo vuelve a necesitar dos lecturas iguales.
+                posProduct.descartarAltaRapida?.();
+                ultimoCodigoLeidoPOS = null;
                 var input = document.querySelector("#inputCodigo");
                 if (input) {
                     input.value = "";
                     input.focus();
                 }
+                posProduct.showWaiting?.();
             });
             document.getElementById("btnFlash")?.addEventListener("click", async () => {
                 var estado = await scannerPOS.toggleFlash();

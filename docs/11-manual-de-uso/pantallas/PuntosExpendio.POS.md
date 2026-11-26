@@ -42,5 +42,8 @@ Igual que en el POS de Ventas (ver [Punto de venta](ayuda:pantalla/Ventas.POS), 
 ## Leer el código con la cámara (2026-11-20)
 El recuadro de la cámara es más alto (120 px) y muestra el **centro** de la imagen, que es lo que se lee; el celular además aplica un zoom moderado si lo permite. **No cambia** la pausa: el mismo código no se vuelve a cargar antes de 2 s, y el alta rápida de un producto nuevo solo se ofrece con la segunda lectura igual. Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).
 
+### Código que no existe (desde 2026-11-26)
+Si la cámara lee dos veces seguidas el **mismo** código inexistente (unos 2 s apuntando), pregunta **«¿Desea darlo de alta?»**. Mientras está la pregunta, o el formulario de alta, la cámara **no cambia el código**. Se suelta con **No** (o **Cancelar** en el formulario) o completando el alta con **Sí**; después de «No», ese código no se vuelve a preguntar durante 5 s. Con el teclado o la pistola, cargar otro código cuenta como «No».
+
 ## Desplazarse en el celular (2026-11-26)
 En el celular, deslizá el dedo hacia arriba o hacia abajo para ver el resto de la pantalla. Deslizar hacia abajo estando al principio no recarga el punto de venta. PENDIENTE: probarlo en un celular real.

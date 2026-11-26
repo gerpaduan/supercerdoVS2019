@@ -28,7 +28,8 @@
         // Origen de la ultima lectura por camara: permite exigir dos lecturas iguales consecutivas
         // antes de ofrecer el alta rapida SOLO para ese canal (cámara) -- no gatea la busqueda en
         // si (manejarEnter sigue disparandose en cada lectura, igual que siempre), solo si se
-        // ofrece o no la sugerencia cuando el codigo no existe.
+        // ofrece o no la sugerencia cuando el codigo no existe. Una vez ofrecida, la vista deja de
+        // pasar lecturas de camara (isSugerenciaAltaVisible) para que el codigo quede fijo.
         let origenLecturaCamara = null;
 
         // Normaliza el codigo para que todas las comparaciones hablen el mismo
@@ -455,10 +456,20 @@
             origenLecturaCamara = { codigo: normalizeInput(codigo), confirmado: !!confirmadoPorDobleLectura };
         }
 
+        // Descarte explicito del alta (botones No y Cancelar, y Limpiar de la camara). El freeze de
+        // 5s vuelve a contar desde aca: sin esto, si el cajero tardaba mas de 5s en contestar y la
+        // camara seguia apuntando al mismo codigo, el aviso reaparecia apenas lo descartaba.
+        // No toca el foco: eso lo decide cada llamador.
+        function descartarAltaRapida() {
+            if (!sugerenciaAltaVisible() && !modoAltaProductoActivo) return;
+            timestampCongeladoAlta = Date.now();
+            ocultarBloquesAltaRapida();
+        }
+
         // Decide si corresponde ofrecer el alta rapida para "codigo" (ya confirmado por el server
         // como inexistente). No hace nada si: la feature esta deshabilitada en esta vista, ya hay
         // un alta en curso, el codigo vino de la camara sin las dos lecturas iguales todavia, o el
-        // mismo codigo ya fue sugerido/descartado hace menos de 5s (freeze).
+        // mismo codigo ya fue sugerido o descartado hace menos de 5s (freeze).
         function evaluarSugerenciaAlta(codigo) {
             if (!window.POS_ALTA_RAPIDA_HABILITADA) return;
             if (modoAltaProductoActivo) return;
@@ -490,7 +501,9 @@
 
         // Si la sugerencia de alta esta a la vista y el codigo del input ya no es el sugerido, el
         // usuario cambio de codigo: se interpreta como un "No" (se descarta la sugerencia sin
-        // tocar el foco -- sigue escribiendo/escaneando en #inputCodigo). Devuelve true si descarto.
+        // tocar el foco -- sigue escribiendo o usando la pistola en #inputCodigo). La camara no llega
+        // hasta aca: la vista ignora sus lecturas mientras la sugerencia esta visible.
+        // Devuelve true si descarto.
         function descartarSugerenciaSiCambioCodigo(codigoActual) {
             if (!sugerenciaAltaVisible()) return false;
             if (normalizeInput(codigoActual) === codigoParaAltaRapida) return false;
@@ -631,12 +644,12 @@
                 showFormularioAltaRapida(codigoParaAltaRapida);
             });
             $('#btnAltaRapidaNo').off('click').on('click', function () {
-                ocultarBloquesAltaRapida();
+                descartarAltaRapida();
                 focusCodigo();
             });
             $('#btnAltaRapidaGuardar').off('click').on('click', guardarAltaRapida);
             $('#btnAltaRapidaCancelar').off('click').on('click', function () {
-                ocultarBloquesAltaRapida();
+                descartarAltaRapida();
                 focusCodigo();
             });
         }
@@ -904,7 +917,9 @@
             registrarOrigenLecturaCamara: registrarOrigenLecturaCamara,
             isModoAltaProductoActivo: function () {
                 return modoAltaProductoActivo;
-            }
+            },
+            isSugerenciaAltaVisible: sugerenciaAltaVisible,
+            descartarAltaRapida: descartarAltaRapida
         };
 
         // Wrappers globales para mantener compatibilidad con el codigo que todavia

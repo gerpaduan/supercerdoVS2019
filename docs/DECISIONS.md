@@ -27,6 +27,13 @@
   - `WebCore/wwwroot/Scripts/app/{stock,elaborados-carga,elaborados-rapido}.js`
   - Manual: concepto `guardado-unico.md` y sus 5 pantallas.
 
+## 2026-11-26 (c) - POS: con la cámara, el código inexistente queda fijo mientras se ofrece el alta
+
+- **Pedido / bug:** con «¿Desea darlo de alta?» a la vista, la cámara seguía leyendo: otro código pisaba el input, se tomaba como «No» y cerraba la pregunta. El corte de `onCodeDetected` solo miraba el formulario abierto.
+- **Decisión:** en Ventas/POS y PuntosExpendio/POS la cámara ignora las lecturas con la pregunta o el formulario a la vista. **Limpiar** equivale a «No». La pausa de 5 s cuenta desde el descarte y, tras un bloqueo, vuelve a pedirse la doble lectura.
+- **Se mantiene** (2026-09-12): con teclado o pistola, cambiar de código sigue siendo «No».
+- **Alternativa descartada:** cerrar la cámara al ofrecer el alta (obligaría a reabrirla en cada «No»).
+
 ## 2026-11-26 (b) - Stock: «Unificar pesajes» en un Cierre Stock (balance por sectores)
 
 - **Pedido:** el balance de mercadería se hace en varios sectores a la vez, en registros distintos, y después se tiene que unificar en uno solo. Si se cargan varios Cierre Stock con la misma fecha y hora, las consultas de stock los suman, y queda uno solo que tiene que contar.

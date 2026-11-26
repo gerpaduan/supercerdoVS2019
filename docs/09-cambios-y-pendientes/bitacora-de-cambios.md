@@ -15,6 +15,12 @@
   - Navegador integrado contra Postgres local: un registro por guardado en las 5 acciones (doble clic, Enter repetido, Enter tras el aviso y POST simultáneos); con otros datos se guarda otro. Usuario y registros de prueba ya borrados.
 - **Pendiente:** no probado contra SQL Server (SM/SL) ni en un celular real; no deployado. Los duplicados ya existentes en SM (11755/11756) no se tocaron.
 
+## 2026-11-26 - POS: el código inexistente queda fijo mientras se ofrece el alta (cámara)
+
+- **Cambio:** con «¿Desea darlo de alta?» a la vista, la cámara ya no pisa el código ni cierra la pregunta; **Limpiar** equivale a «No». Ver `docs/DECISIONS.md` (2026-11-26 c).
+- **Archivos:** `wwwroot/Scripts/app/{pos-product,punto-expendio-pos}.js`, `Views/Ventas/POS.cshtml`; manuales `Ventas.POS.md`, `PuntosExpendio.POS.md`, `lectura-codigo-barra-camara.md`.
+- **Pendiente:** celular real; no deployado.
+
 ## 2026-11-26 - Stock: «Unificar pesajes» en un Cierre de stock (balance por sectores)
 
 - **Cambio:** cada sector cuenta en un Pesaje «Solo productos» y el Cierre Stock los junta con el botón **Unificar pesajes** (mismo modal que «Vincular pesajes»). Chips «Unificado en Cierre #N» / «N pesajes unificados». «Vincular pesajes» de un Pesaje no deja tomar uno unificado en un cierre. Sin cambios de base ni SQL. Ver `docs/DECISIONS.md` (2026-11-26 b).

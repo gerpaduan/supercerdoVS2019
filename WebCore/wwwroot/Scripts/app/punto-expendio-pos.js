@@ -130,17 +130,19 @@
             });
         }, { once: true });
 
-        // Alta rapida de producto (mismo criterio que Ventas/POS): con el formulario abierto se ignoran
-        // las lecturas, y el alta solo se ofrece en la segunda lectura IGUAL consecutiva (la busqueda
-        // en si se dispara en cada lectura, como siempre). posProduct se resuelve en runtime: se
-        // crea mas abajo, antes de que la camara pueda detectar algo.
+        // Alta rapida de producto (mismo criterio que Ventas/POS): con la sugerencia o el formulario a la
+        // vista se ignoran las lecturas (el codigo queda fijo), y el alta solo se ofrece en la segunda
+        // lectura IGUAL consecutiva (la busqueda en si se dispara en cada lectura, como siempre).
+        // posProduct se resuelve en runtime: se crea mas abajo, antes de que la camara pueda detectar algo.
         var ultimoCodigoLeidoCamara = null;
 
         var scanner = new BarcodeScanner({
             videoSelector: '#videoScanner',
             containerSelector: '#scannerContainer',
             onCodeDetected: function (codigo) {
-                if (posProduct && typeof posProduct.isModoAltaProductoActivo === 'function' && posProduct.isModoAltaProductoActivo()) {
+                if (posProduct && (posProduct.isSugerenciaAltaVisible?.() || posProduct.isModoAltaProductoActivo?.())) {
+                    // Al soltarse el alta, el codigo vuelve a necesitar dos lecturas iguales.
+                    ultimoCodigoLeidoCamara = null;
                     return;
                 }
 

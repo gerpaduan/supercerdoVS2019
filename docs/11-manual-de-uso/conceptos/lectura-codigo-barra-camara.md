@@ -3,7 +3,7 @@ titulo: Leer códigos de barra con la cámara del celular
 rol: usuario
 modulo: Cargas y ventas
 orden: 30
-revisada: 2026-11-20
+revisada: 2026-11-26
 ---
 # Leer códigos de barra con la cámara del celular
 
@@ -25,7 +25,7 @@ Un EAN-13 que empieza con 0 se guarda y se lee con **12 dígitos** (UPC-A). Desd
 ## Por qué pide «confirmar» y las pausas
 - **Alta de producto, catálogo global, Movimientos, Stock y Compras** exigen **dos lecturas iguales seguidas** antes de aceptar, para no cargar un producto equivocado por una lectura errada. En el alta de producto y en el catálogo global, la segunda lectura tiene que llegar **al menos 0,5 s después** de la primera (antes tardaba 2 s).
 - Tras aceptar un código hay una **pausa de 2 s** en la que no se acepta otra lectura, para no cargar el mismo producto dos veces. En el alta de producto la cámara se cierra sola; en Movimientos, Stock y Compras queda abierta para el siguiente producto.
-- **POS y POS de expendio:** el mismo código no se vuelve a cargar antes de 2 s. Si el producto no existe, el alta rápida solo se ofrece con la segunda lectura igual.
+- **POS y POS de expendio:** el mismo código no se vuelve a cargar antes de 2 s. Si el producto no existe, el alta rápida solo se ofrece con la segunda lectura igual; mientras se ofrece (o se completa), la cámara no cambia el código hasta **No**, **Cancelar**, **Limpiar** (solo POS de venta) o terminar el alta.
 
 ## Si no lee
 - *«Código inválido (solo EAN-8, EAN-13 o UPC-A)»*: el código leído no cierra con su dígito verificador (lectura errada o etiqueta dañada). Volvé a enfocar; si es un código propio de la casa, cargalo a mano.

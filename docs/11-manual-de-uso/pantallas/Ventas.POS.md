@@ -385,6 +385,15 @@ El botón **Cargas** de la barra de arriba (junto a la campana) abre, **sin sali
 ## Leer el código con la cámara (2026-11-20)
 El recuadro de la cámara es más alto (120 px) y muestra el **centro** de la imagen, que es lo que se lee; el celular además aplica un zoom moderado si lo permite. **No cambia** la pausa: el mismo código no se vuelve a cargar antes de 2 s, y el alta rápida de un producto nuevo solo se ofrece con la segunda lectura igual. Detalle y consejos: concepto «Leer códigos de barra con la cámara del celular» (`conceptos/lectura-codigo-barra-camara.md`).
 
+### Código que no existe (desde 2026-11-26)
+1. Con la primera lectura la pantalla solo avisa que no lo encontró.
+2. Si la cámara sigue apuntando al **mismo** código (unos 2 s, hasta que lo lee otra vez), pregunta **«¿Desea darlo de alta?»**. Dos lecturas de códigos distintos no lo preguntan.
+3. Mientras está la pregunta, o el formulario de alta, la cámara **no cambia el código**: se ignora todo lo que lea.
+4. Para soltarlo: **No** (o **Cancelar** en el formulario), **Limpiar** debajo de la cámara (equivale a «No» y además vacía el código) o completar el alta con **Sí**.
+5. Después de «No», ese mismo código no se vuelve a preguntar durante 5 s.
+
+Escribiendo con el teclado o leyendo con la pistola, cargar otro código con la pregunta a la vista cuenta como «No» (sin cambios).
+
 - **Aviso «Salir sin guardar» (desde 2026-11-20):** el foco arranca en «No, quedarme» con borde marcado; Enter solo activa el botón con foco y las flechas pasan a «Sí, salir». Ver [aviso «Salir sin guardar»](ayuda:concepto/aviso-salir-sin-guardar).
 
 ## Desplazarse en el celular (2026-11-26)

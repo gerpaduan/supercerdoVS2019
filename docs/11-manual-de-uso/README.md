@@ -32,7 +32,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | conceptos | Eliminar compras, stock y movimientos | Acceso y seguridad | `conceptos/eliminar-registros.md` | 2026-10-22 |
 | conceptos | Ingresar con la dirección de tu empresa (CUIT) | Acceso y seguridad | `conceptos/login-por-cuit.md` | 2026-10-04 |
 | conceptos | Intentos de clave al autorizar (POS, Cierre de Caja, Ver fórmula) | Acceso y seguridad | `conceptos/intentos-de-clave-al-autorizar.md` | 2026-10-20 |
-| conceptos | Leer códigos de barra con la cámara del celular | Cargas y ventas | `conceptos/lectura-codigo-barra-camara.md` | 2026-11-20 |
+| conceptos | Leer códigos de barra con la cámara del celular | Cargas y ventas | `conceptos/lectura-codigo-barra-camara.md` | 2026-11-26 |
 | conceptos | Buscar cliente, vendedor o proveedor en los filtros (F9 / F10) | Conceptos generales | `conceptos/selector-cliente-vendedor-proveedor.md` | 2026-10-13 |
 | conceptos | Menú de usuario (arriba a la derecha) | Conceptos generales | `conceptos/menu-de-usuario.md` | 2026-10-14 |
 | conceptos | Roles y permisos (quién puede hacer qué) | Conceptos generales | `conceptos/roles-y-permisos.md` | 2026-11-19 |
