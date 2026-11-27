@@ -7,6 +7,12 @@
 - **Verificado:** WebCore.Tests 419/419, Negocio.Tests 880/881 (el que falla, `EliminarCompra_ConEgresoEnCeroPorCtaCte`, ya fallaba en `0053bc14`+), Node 210/210, y de punta a punta con login real en la copia local: PC preparada al iniciar sesión desde el tablero, usuarios de toda la empresa, ingreso del cajero con contraseña, subida por otro usuario, vendedor dado de baja con marca y aviso en la campana, aviso de precios, vencimiento con borrado de claves y cola conservada, reloj atrasado, reactivación y freno de emergencia. Usuarios y datos de prueba borrados.
 - **Pendiente:** corte de internet real y celular; no desplegado; SM y SL necesitan HTTPS válido y su script SQL.
 
+## 2026-11-26 - Líneas de venta: carga mucho más rápida en rangos largos
+
+- **Cambio:** las líneas del rango se traen por lotes y no una consulta por venta (pantalla, PDF y Excel).
+- **Archivos:** `DatosPostgres/VentaPg.cs`, `Datos/Venta.cs`; docs `DECISIONS.md` (2026-11-26 f), `03-modulos/ventas-y-pos.md`, `incidencias-frecuentes.md`.
+- **Pendiente:** comparar el SP de SM y SL; no desplegado.
+
 ## 2026-11-26 - POS sin conexión: vender sin internet y subir las ventas solas
 
 - **Cambio:** con `PosOffline:Habilitado` prendido, el POS (`Ventas/POS`) puede vender sin conexión: Consumidor Final, sin descuentos, todas las formas de pago menos Cta. Cte., búsqueda F10 y etiquetas de balanza contra el catálogo guardado en la PC, login con PIN (también un PIN «solo sin conexión» para admins), apertura de caja sin conexión, ticket X propio y cola que se sube sola al volver. Tabla nueva `posclaveunica` (no se toca `ventas`) y el id de la venta grabada ahora sale de `RETURNING` / `SCOPE_IDENTITY()`. Aviso en el cierre de caja. Ver `docs/DECISIONS.md` (2026-11-26 e).

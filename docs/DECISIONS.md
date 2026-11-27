@@ -19,6 +19,16 @@
 - **Corregido:** en `b9e8fb74` la lista de usuarios sin conexión usaba `getUsuarioById` (sin permisos) y dejaba afuera a todos los no administradores.
 - **Archivos:** `WebCore/Helpers/{PosOfflineSettings,PosOfflineDisponibilidad}.cs`, `Controllers/{VentasController.PosOffline,VentasController,CajasController,LoginController,NotificacionesController}.cs`, `Views/Shared/{_PosOffline,_Layout,_LayoutPOS}.cshtml`, `Views/Notificaciones/_DetalleVentaSinConexion.cshtml`, `wwwroot/{pos-offline.html,sw-pos.js}`, `wwwroot/Scripts/app/pos-offline-{app,online,pin,sync,vigencia}.js`, `Negocio/VentaOffline.cs`, `Contratos/IPosClaveUnicaRepository.cs` + repos (`TablaDisponible`).
 
+## 2026-11-26 (f) - Líneas de venta: las líneas del rango se cargan por lotes
+
+- **Problema:** `getAllVentas(..., cargarLineas: true)` hacía una consulta de líneas por venta (en SQL Server además un `findCorteById` por línea). Medido en las bases locales: Postgres, año 2025 (47.939 ventas, 85.060 líneas) 136 s; SQL Server, 1 al 26/10/2026 (3.206 ventas, 5.447 líneas) 238 s.
+- **Decisión:** cabeceras en una consulta y líneas por lotes (`CargarLineasEnLote`; Postgres 5.000 ventas por lote con `ANY(@idsVenta)`, SQL Server 1.000 con `IN` parametrizado, compatible con 2008). Sin cambios de firmas, contratos ni schema. Después: Postgres año 2025 6 a 17 s según caché (3 a 12 s son las cabeceras); SQL Server, el mismo mes, 1,1 s, y el año 2025 completo 5,7 s (antes no se midió el año en SQL Server).
+- **Descartado:** repetir en la consulta de líneas el filtro de fechas de las ventas (duplica el WHERE); un solo comando sin lotes (timeout de 30 s en rangos de años); en SQL Server, seguir llamando al SP y solo cachear productos (deja una consulta por venta).
+- **Paridad:** hash del objeto completo por venta, antes contra después. Sin diferencias de datos. Cambia solo el orden entre líneas de un mismo producto en pocas ventas (Postgres 13 de 47.939; SQL Server 3 de 3.206): la consulta anterior no lo fijaba.
+- **Riesgos:** en SQL Server la consulta replica el SP `obtenerLineasVenta` (comparado con la base local y el relevamiento 2026-08-18; **PENDIENTE** comparar con el SP de SM y SL antes de desplegar). Las líneas de un mismo producto comparten la instancia de `Corte`. La Web clásica y WinForms usan `Datos/Venta.cs`.
+- **Pendiente:** la consulta de cabeceras suma toda la tabla `lineaventa` en cada llamada, aunque el rango sea de un día (no se tocó).
+- **Archivos:** `DatosPostgres/VentaPg.cs`, `Datos/Venta.cs`.
+
 ## 2026-11-26 (e) - POS sin conexión: ventas en cola que se suben solas
 
 - **Pedido:** si se corta internet en un local, no se puede vender (todas las cajas venden contra `carnisys.com`). El usuario quiere seguir vendiendo y que las ventas se carguen solas cuando vuelve la conexión.

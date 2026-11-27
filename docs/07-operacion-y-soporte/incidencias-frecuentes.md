@@ -13,6 +13,11 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
+## 2026-11-26 - Líneas de venta tarda minutos en rangos largos
+- **Síntoma**: la pantalla (y sus PDF/Excel) tarda minutos o parece colgada con meses de ventas.
+- **Causa**: `getAllVentas` con `cargarLineas` consultaba las líneas venta por venta.
+- **Fix**: carga por lotes (`CargarLineasEnLote` en `VentaPg.cs` y `Datos/Venta.cs`).
+
 ## 2026-11-26 - Stock (y otras cargas): el mismo registro guardado dos veces
 
 - **Sintoma**: aparecen dos registros iguales (mismo tipo, sucursal, usuario y líneas) con menos de un segundo de diferencia. Caso real en SM: «Egreso Stock» de Carré −6,5 kg, `Compras` 11755 y 11756, 316 ms.

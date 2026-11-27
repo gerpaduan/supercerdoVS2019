@@ -380,7 +380,9 @@ namespace DatosPostgres
                       )
                 ORDER BY v.fechaventa DESC;";
 
-            return DbPg.Reader(_connectionString, _idEmpresa, sql, dr => MapVenta(dr, cargarLineas), p =>
+            // Las cabeceras se leen siempre sin lineas: si se piden, se traen despues por lotes
+            // (CargarLineasEnLote) y no con una consulta por venta.
+            var ventas = DbPg.Reader(_connectionString, _idEmpresa, sql, dr => MapVenta(dr, false), p =>
             {
                 p.AddWithValue("fechaDesde", fechaDesde);
                 p.AddWithValue("fechaHastaMas1", fechaHasta.AddDays(1));
@@ -391,6 +393,54 @@ namespace DatosPostgres
                 p.AddWithValue("idSucursal", idSucursal ?? -1);
                 p.AddWithValue("soloAnulados", soloAnulados);
             });
+
+            if (cargarLineas)
+                CargarLineasEnLote(ventas);
+
+            return ventas;
+        }
+
+        // Cuantas ventas entran en cada consulta de lineas de getAllVentas. Partir el rango acota
+        // lo que tarda cada comando (Npgsql corta a los 30 s por defecto) en rangos de varios anios.
+        private const int VentasPorLoteDeLineas = 5000;
+
+        // Completa LineasVenta y CantItems de una lista de ventas con una consulta cada
+        // VentasPorLoteDeLineas ventas. Mismas lineas que llamar obtenerLineasVenta por venta
+        // (mismo SELECT/JOIN y orden por codigo); solo puede variar el orden entre lineas de un
+        // mismo producto, que la consulta por venta no fijaba. Antes getAllVentas hacia eso y un
+        // rango de un anio tardaba minutos -- ver docs/DECISIONS.md. Asume idventa sin repetir.
+        private void CargarLineasEnLote(List<Venta> ventas)
+        {
+            // Toda venta queda con su lista, aunque vacia (igual que obtenerLineasVenta).
+            var lineasPorVenta = new Dictionary<int, List<LineaVenta>>(ventas.Count);
+            var idsVenta = new int[ventas.Count];
+            for (int i = 0; i < ventas.Count; i++)
+            {
+                idsVenta[i] = ventas[i].IdVenta;
+                lineasPorVenta[idsVenta[i]] = new List<LineaVenta>();
+            }
+
+            for (int inicio = 0; inicio < idsVenta.Length; inicio += VentasPorLoteDeLineas)
+            {
+                var lote = new int[Math.Min(VentasPorLoteDeLineas, idsVenta.Length - inicio)];
+                Array.Copy(idsVenta, inicio, lote, 0, lote.Length);
+
+                // Producto repetido en una venta: primero la linea mas nueva (idlineaventa DESC), que
+                // es como las devolvia la consulta por venta (medido contra la base local).
+                var lineas = DbPg.Reader(_connectionString, _idEmpresa,
+                    SelectLineasVenta + " WHERE lv.idventa = ANY(@idsVenta) ORDER BY c.codigo, lv.idlineaventa DESC;",
+                    MapLineaVenta,
+                    p => p.AddWithValue("idsVenta", lote));
+
+                foreach (var linea in lineas)
+                    lineasPorVenta[linea.Venta.IdVenta].Add(linea);
+            }
+
+            foreach (var venta in ventas)
+            {
+                venta.LineasVenta = lineasPorVenta[venta.IdVenta];
+                venta.CantItems = venta.getCantItems(venta).ToString();
+            }
         }
 
         public List<Venta> getVentasBalancePeriodo(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
@@ -790,67 +840,73 @@ namespace DatosPostgres
             return idVenta > 0 ? getVentaById(idVenta) : null;
         }
 
-        public List<LineaVenta> obtenerLineasVenta(int idVenta)
-        {
-            // INNER JOIN a corte a proposito: el SP real (obtenerLineasVenta, verificado con
-            // sp_helptext) hace el mismo INNER JOIN, asi que una linea cuyo idCorte no es
-            // visible para el tenant actual (RLS de Corte, ej. un idCorte de otra empresa por
-            // un dato viejo/cruzado) queda excluida del resultado -- no solo con Corte=null.
-            // Confirmado con datos reales (Venta #23, idEmpresa=1, 2 lineas con idCorte=3 que
-            // pertenece a idEmpresa=3).
-            //
-            // Antes este JOIN se usaba solo para ese filtro y las columnas de corte se
-            // descartaban -- Corte se hidrataba con un _corteRepo.findCorteById() (conexion +
-            // transaccion propia) POR CADA LINEA. Bug de performance real (no de motor):
-            // confirmado con datos reales que una venta de 12 lineas tardaba varios cientos de
-            // ms de mas por esto solo -- ver docs/DECISIONS.md, 2026-08-21. Fix: se agregan las
-            // columnas de corte (con alias co_* para no chocar con columnas de lineaventa que
-            // se llaman igual: preciokg, idalicuotaiva, alicuotaiva, idempresa) al mismo SELECT
-            // que ya hacia el JOIN, y se arma el Corte directo de la fila -- mismo patron ya
-            // usado en CortePg.MapCorteListado/ObtenerCortesPorEmpresaListado para el mismo
-            // problema. Marca se resuelve con un LEFT JOIN liviano (igual que alli) en vez de
-            // buscarCorteById con maestro (que ya venia en false aca, asi que CorteMaestro
-            // nunca se poblaba -- sin cambio de comportamiento en ese punto).
-            return DbPg.Reader(_connectionString, _idEmpresa,
-                @"SELECT lv.idlineaventa, lv.idventa, lv.idcorte, lv.cantkg, lv.idalicuotaiva, lv.alicuotaiva, lv.preciokg,
+        // SELECT de lineas de venta sin WHERE/ORDER BY: lo comparten obtenerLineasVenta (una
+        // venta) y CargarLineasEnLote (getAllVentas), para que no puedan divergir.
+        //
+        // INNER JOIN a corte a proposito: el SP real (obtenerLineasVenta, verificado con
+        // sp_helptext) hace el mismo INNER JOIN, asi que una linea cuyo idCorte no es
+        // visible para el tenant actual (RLS de Corte, ej. un idCorte de otra empresa por
+        // un dato viejo/cruzado) queda excluida del resultado -- no solo con Corte=null.
+        // Confirmado con datos reales (Venta #23, idEmpresa=1, 2 lineas con idCorte=3 que
+        // pertenece a idEmpresa=3).
+        //
+        // Antes este JOIN se usaba solo para ese filtro y las columnas de corte se
+        // descartaban -- Corte se hidrataba con un _corteRepo.findCorteById() (conexion +
+        // transaccion propia) POR CADA LINEA. Bug de performance real (no de motor):
+        // confirmado con datos reales que una venta de 12 lineas tardaba varios cientos de
+        // ms de mas por esto solo -- ver docs/DECISIONS.md, 2026-08-21. Fix: se agregan las
+        // columnas de corte (con alias co_* para no chocar con columnas de lineaventa que
+        // se llaman igual: preciokg, idalicuotaiva, alicuotaiva, idempresa) al mismo SELECT
+        // que ya hacia el JOIN, y se arma el Corte directo de la fila -- mismo patron ya
+        // usado en CortePg.MapCorteListado/ObtenerCortesPorEmpresaListado para el mismo
+        // problema. Marca se resuelve con un LEFT JOIN liviano (igual que alli) en vez de
+        // buscarCorteById con maestro (que ya venia en false aca, asi que CorteMaestro
+        // nunca se poblaba -- sin cambio de comportamiento en ese punto).
+        private const string SelectLineasVenta = @"SELECT lv.idlineaventa, lv.idventa, lv.idcorte, lv.cantkg, lv.idalicuotaiva, lv.alicuotaiva, lv.preciokg,
                     lv.kgsajustetarj, lv.bonificacion, lv.idlineaventaanulado, lv.pesobalanza, lv.idanulado,
                     " + ColumnasCorteJoin + @"
                   FROM lineaventa lv
                   INNER JOIN corte c ON lv.idcorte = c.idcorte
-                  LEFT JOIN personas mk ON c.idmarca = mk.idpersona
-                  WHERE lv.idventa = @idVenta
-                  ORDER BY c.codigo;",
-                dr =>
-                {
-                    var oLinea = new LineaVenta
-                    {
-                        IdLineaVenta = Convert.ToInt32(dr["idlineaventa"]),
-                        Venta = new Venta { IdVenta = Convert.ToInt32(dr["idventa"]) },
-                        Corte = MapCorteDesdeJoin(dr, Convert.ToInt32(dr["idcorte"])),
-                        CantKg = dr["cantkg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["cantkg"]),
-                        IdAlicuotaIva = dr["idalicuotaiva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["idalicuotaiva"]),
-                        AlicuotaIva = dr["alicuotaiva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["alicuotaiva"]),
-                        PrecioKg = dr["preciokg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["preciokg"]),
-                        KgsAjusteTarj = dr["kgsajustetarj"] == DBNull.Value ? 0 : Convert.ToSingle(dr["kgsajustetarj"]),
-                        Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
-                        IndexAnulado = dr["idlineaventaanulado"] == DBNull.Value ? -1 : Convert.ToInt32(dr["idlineaventaanulado"])
-                    };
+                  LEFT JOIN personas mk ON c.idmarca = mk.idpersona";
 
-                    oLinea.KgsTotalCalculado = oLinea.CantKg;
-                    oLinea.PrecioKgOriginal = oLinea.PrecioKg;
-                    oLinea.PesoBalanza = dr["pesobalanza"] != DBNull.Value && Convert.ToBoolean(dr["pesobalanza"]);
-                    // idanulado GUARDA el Estado tal cual (agregarLineaVenta hace
-                    // AddWithValue("idAnulado", oLineaE.Estado) -- 0=activa, 1=anulada, ver
-                    // Entidades.LineaVenta.estados). Antes se leia "no es NULL -> 1", lo que
-                    // marcaba TODA linea activa (idanulado=0, un valor real, no NULL) como
-                    // anulada -- bug real encontrado probando "modificar venta" desde el POS:
-                    // el carrito se abria vacio porque la vista filtra por esAnulado(Estado).
-                    // Ver docs/DECISIONS.md.
-                    oLinea.Estado = dr["idanulado"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idanulado"]);
-
-                    return oLinea;
-                },
+        public List<LineaVenta> obtenerLineasVenta(int idVenta)
+        {
+            return DbPg.Reader(_connectionString, _idEmpresa,
+                SelectLineasVenta + " WHERE lv.idventa = @idVenta ORDER BY c.codigo;",
+                MapLineaVenta,
                 p => p.AddWithValue("idVenta", idVenta));
+        }
+
+        // Arma una LineaVenta (con su Corte propio) desde una fila de SelectLineasVenta.
+        private static LineaVenta MapLineaVenta(NpgsqlDataReader dr)
+        {
+            var oLinea = new LineaVenta
+            {
+                IdLineaVenta = Convert.ToInt32(dr["idlineaventa"]),
+                Venta = new Venta { IdVenta = Convert.ToInt32(dr["idventa"]) },
+                Corte = MapCorteDesdeJoin(dr, Convert.ToInt32(dr["idcorte"])),
+                CantKg = dr["cantkg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["cantkg"]),
+                IdAlicuotaIva = dr["idalicuotaiva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["idalicuotaiva"]),
+                AlicuotaIva = dr["alicuotaiva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["alicuotaiva"]),
+                PrecioKg = dr["preciokg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["preciokg"]),
+                KgsAjusteTarj = dr["kgsajustetarj"] == DBNull.Value ? 0 : Convert.ToSingle(dr["kgsajustetarj"]),
+                Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
+                IndexAnulado = dr["idlineaventaanulado"] == DBNull.Value ? -1 : Convert.ToInt32(dr["idlineaventaanulado"])
+            };
+
+            oLinea.KgsTotalCalculado = oLinea.CantKg;
+            oLinea.PrecioKgOriginal = oLinea.PrecioKg;
+            oLinea.PesoBalanza = dr["pesobalanza"] != DBNull.Value && Convert.ToBoolean(dr["pesobalanza"]);
+            // idanulado GUARDA el Estado tal cual (agregarLineaVenta hace
+            // AddWithValue("idAnulado", oLineaE.Estado) -- 0=activa, 1=anulada, ver
+            // Entidades.LineaVenta.estados). Antes se leia "no es NULL -> 1", lo que
+            // marcaba TODA linea activa (idanulado=0, un valor real, no NULL) como
+            // anulada -- bug real encontrado probando "modificar venta" desde el POS:
+            // el carrito se abria vacio porque la vista filtra por esAnulado(Estado).
+            // Ver docs/DECISIONS.md.
+            oLinea.Estado = dr["idanulado"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idanulado"]);
+
+            return oLinea;
         }
 
         public DataTable obtenerUltimosPreciosPorCliente(int idPersona, int topVentas = 10)
@@ -1470,7 +1526,7 @@ namespace DatosPostgres
 
         // Sin wrapper propio en Negocio.Venta -- solo se usa dentro de getExpedioById (mismo
         // patron que Datos.Venta.obtenerLineasExpendio). Mismo fix de N+1 que
-        // obtenerLineasVenta (ver ese comentario, docs/DECISIONS.md 2026-08-21): antes hacia
+        // obtenerLineasVenta (ver el comentario de SelectLineasVenta, docs/DECISIONS.md 2026-08-21): antes hacia
         // un findCorteById() por linea, ahora se joinea corte en la misma query.
         //
         // A diferencia de obtenerLineasVenta, el JOIN a corte aca es LEFT, no INNER: verificado

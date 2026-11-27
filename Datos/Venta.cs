@@ -275,11 +275,13 @@ namespace Datos
                       )
                 ORDER BY v.fechaVenta DESC;";
 
-            return Db.Reader(
+            // Las cabeceras se leen siempre sin lineas: si se piden, se traen despues por lotes
+            // (CargarLineasEnLote) y no con un SP por venta.
+            var ventas = Db.Reader(
                 _empresa,
                 sql,
                 CommandType.Text,
-                dr => MapVenta(dr, cargarLineas),
+                dr => MapVenta(dr, false),
                 p =>
                 {
                     p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
@@ -291,6 +293,87 @@ namespace Datos
                     p.Add("@soloAnulados", SqlDbType.Bit).Value = soloAnulados;
                 }
             );
+
+            if (cargarLineas)
+                CargarLineasEnLote(ventas);
+
+            return ventas;
+        }
+
+        // Cuantas ventas entran en cada consulta de lineas de getAllVentas (un parametro por venta;
+        // SQL Server admite hasta 2100 por comando).
+        private const int VentasPorLoteDeLineas = 1000;
+
+        // Completa LineasVenta y CantItems de una lista de ventas con una consulta cada
+        // VentasPorLoteDeLineas ventas, en vez de un SP obtenerLineasVenta por venta mas un
+        // findCorteById por linea -- ver docs/DECISIONS.md. Asume idVenta sin repetir en la lista.
+        //
+        // La consulta replica el SP obtenerLineasVenta (mismo INNER JOIN a Corte, mismo calculo de
+        // "estado", orden por codigo): si cambia el SP, cambiarla tambien.
+        //
+        // Cada Corte distinto se busca una sola vez: las lineas del mismo producto comparten la
+        // instancia, asi que quien consuma esta lista no debe modificar linea.Corte.
+        private void CargarLineasEnLote(List<Entidades.Venta> ventas)
+        {
+            var oCorteD = new Datos.Corte(_empresa, _param);
+            var cortes = new Dictionary<int, Entidades.Corte>();
+            Func<int, Entidades.Corte> buscarCorte = idCorte =>
+            {
+                Entidades.Corte corte;
+                if (!cortes.TryGetValue(idCorte, out corte))
+                {
+                    corte = oCorteD.findCorteById(idCorte, false);
+                    cortes[idCorte] = corte;
+                }
+                return corte;
+            };
+
+            // Toda venta queda con su lista, aunque vacia (igual que obtenerLineasVenta).
+            var lineasPorVenta = new Dictionary<int, List<Entidades.LineaVenta>>(ventas.Count);
+            foreach (var venta in ventas)
+                lineasPorVenta[venta.IdVenta] = new List<Entidades.LineaVenta>();
+
+            for (int inicio = 0; inicio < ventas.Count; inicio += VentasPorLoteDeLineas)
+            {
+                int primero = inicio;
+                int cantidad = Math.Min(VentasPorLoteDeLineas, ventas.Count - primero);
+
+                var nombres = new string[cantidad];
+                for (int i = 0; i < cantidad; i++)
+                    nombres[i] = "@v" + i;
+
+                // Solo se concatenan nombres de parametro, nunca valores.
+                string sql = @"
+                    SELECT lv.idLineaVenta, lv.idVenta, lv.idCorte, lv.cantKg, lv.kgsAjusteTarj,
+                           lv.idAlicuotaIva, lv.alicuotaIva, lv.precioKg, lv.bonificacion, lv.pesoBalanza,
+                           CASE WHEN lv.idAnulado = 0 THEN '' ELSE 'Anulado' END AS estado,
+                           lv.idLineaVentaAnulado
+                    FROM dbo.LineaVenta lv
+                    INNER JOIN dbo.Corte c ON lv.idCorte = c.idCorte
+                    WHERE lv.idVenta IN (" + string.Join(",", nombres) + @")
+                    ORDER BY c.codigo, lv.idLineaVenta;";
+
+                var lineas = Db.Reader(
+                    _empresa,
+                    sql,
+                    CommandType.Text,
+                    dr => MapLineaVenta(dr, buscarCorte),
+                    p =>
+                    {
+                        for (int i = 0; i < cantidad; i++)
+                            p.Add(nombres[i], SqlDbType.Int).Value = ventas[primero + i].IdVenta;
+                    }
+                );
+
+                foreach (var linea in lineas)
+                    lineasPorVenta[linea.Venta.IdVenta].Add(linea);
+            }
+
+            foreach (var venta in ventas)
+            {
+                venta.LineasVenta = lineasPorVenta[venta.IdVenta];
+                venta.CantItems = venta.getCantItems(venta).ToString();
+            }
         }
 
         public List<Entidades.Venta> getVentasBalancePeriodo(
@@ -624,40 +707,44 @@ namespace Datos
                 _empresa,
                 "obtenerLineasVenta",
                 CommandType.StoredProcedure,
-                dr =>
-                {
-                    var oLinea = new Entidades.LineaVenta
-                    {
-                        IdLineaVenta = Convert.ToInt32(dr["idLineaVenta"]),
-                        Venta = new Entidades.Venta { IdVenta = Convert.ToInt32(dr["idVenta"]) },
-                        Corte = oCorteD.findCorteById(Convert.ToInt32(dr["idCorte"]), false),
-                        CantKg = dr["cantKg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["cantKg"]),
-                        IdAlicuotaIva = dr["idAlicuotaIva"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idAlicuotaIva"]),
-                        AlicuotaIva = dr["alicuotaIva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["alicuotaIva"]),
-                        PrecioKg = dr["precioKg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["precioKg"]),
-                        KgsAjusteTarj = dr["kgsAjusteTarj"] == DBNull.Value ? 0 : Convert.ToSingle(dr["kgsAjusteTarj"]),
-                        Bonificacion = string.IsNullOrEmpty(dr["bonificacion"]?.ToString()) ? 0 : Convert.ToSingle(dr["bonificacion"]),
-                        IndexAnulado = dr["idLineaVentaAnulado"] == DBNull.Value ? -1 : Convert.ToInt32(dr["idLineaVentaAnulado"])
-                    };
-
-                    // Al editar una venta existente, WinForms reconstruye las líneas usando
-                    // KgsTotalCalculado como cantidad efectiva a regrabar.
-                    // Si no viene seteado desde BD, queda en 0 y la modificación pisa todos los kg.
-                    oLinea.KgsTotalCalculado = oLinea.CantKg;
-                    oLinea.PrecioKgOriginal = oLinea.PrecioKg;
-                    oLinea.PesoBalanza = (dr["pesoBalanza"] != DBNull.Value) && Convert.ToBoolean(dr["pesoBalanza"]);
-                    oLinea.Estado = string.IsNullOrEmpty(dr["estado"]?.ToString()) ? 0 : 1;
-
-                    return oLinea;
-                },
+                dr => MapLineaVenta(dr, idCorte => oCorteD.findCorteById(idCorte, false)),
                 p => p.AddWithValue("@idVenta", idVenta)
             );
         }
 
+        // Arma una LineaVenta desde una fila del SP obtenerLineasVenta o de la consulta de
+        // CargarLineasEnLote (mismas columnas). buscarCorte resuelve el producto por idCorte.
+        private static Entidades.LineaVenta MapLineaVenta(SqlDataReader dr, Func<int, Entidades.Corte> buscarCorte)
+        {
+            var oLinea = new Entidades.LineaVenta
+            {
+                IdLineaVenta = Convert.ToInt32(dr["idLineaVenta"]),
+                Venta = new Entidades.Venta { IdVenta = Convert.ToInt32(dr["idVenta"]) },
+                Corte = buscarCorte(Convert.ToInt32(dr["idCorte"])),
+                CantKg = dr["cantKg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["cantKg"]),
+                IdAlicuotaIva = dr["idAlicuotaIva"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idAlicuotaIva"]),
+                AlicuotaIva = dr["alicuotaIva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["alicuotaIva"]),
+                PrecioKg = dr["precioKg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["precioKg"]),
+                KgsAjusteTarj = dr["kgsAjusteTarj"] == DBNull.Value ? 0 : Convert.ToSingle(dr["kgsAjusteTarj"]),
+                Bonificacion = string.IsNullOrEmpty(dr["bonificacion"]?.ToString()) ? 0 : Convert.ToSingle(dr["bonificacion"]),
+                IndexAnulado = dr["idLineaVentaAnulado"] == DBNull.Value ? -1 : Convert.ToInt32(dr["idLineaVentaAnulado"])
+            };
+
+            // Al editar una venta existente, WinForms reconstruye las líneas usando
+            // KgsTotalCalculado como cantidad efectiva a regrabar.
+            // Si no viene seteado desde BD, queda en 0 y la modificación pisa todos los kg.
+            oLinea.KgsTotalCalculado = oLinea.CantKg;
+            oLinea.PrecioKgOriginal = oLinea.PrecioKg;
+            oLinea.PesoBalanza = (dr["pesoBalanza"] != DBNull.Value) && Convert.ToBoolean(dr["pesoBalanza"]);
+            oLinea.Estado = string.IsNullOrEmpty(dr["estado"]?.ToString()) ? 0 : 1;
+
+            return oLinea;
+        }
+
         // Ultimo precio cobrado por producto, sobre las ultimas @topVentas ventas del cliente
         // (no un tope de productos distintos) -- para el historial de precios del POS.
-        // Consulta liviana y propia (no reusa getAllVentas con cargarLineas:true) para evitar
-        // el patron N+1 de esa ruta (1 SP por venta + 1 lookup de Corte por linea).
+        // Consulta liviana y propia: no reusa getAllVentas, que trae las ventas completas de un
+        // rango de fechas y no las ultimas de un cliente.
         public DataTable obtenerUltimosPreciosPorCliente(int idPersona, int topVentas = 10)
         {
             const string sql = @"
