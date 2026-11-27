@@ -80,9 +80,9 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Stock | Stock | `pantallas/Stock.Index.md` | 2026-11-26 |
 | pantallas | Detalle de venta | Ventas | `pantallas/Ventas.DetalleVenta.md` | 2026-11-24 |
 | pantallas | Facturas | Ventas | `pantallas/Ventas.Facturas.md` | 2026-11-10 |
-| pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-11-25 |
+| pantallas | Líneas de venta | Ventas | `pantallas/Ventas.Lineas.md` | 2026-11-27 |
 | pantallas | Punto de venta (POS) — saldo del cliente y ticket | Ventas | `pantallas/Ventas.POS.md` | 2026-11-27 |
-| pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-11-25 |
+| pantallas | Ventas | Ventas | `pantallas/Ventas.Index.md` | 2026-11-27 |
 
 ## Manual del administrador
 
@@ -119,7 +119,7 @@ Encabezado de cada archivo: `pantalla` (solo pantallas), `titulo`, `rol` (`usuar
 | pantallas | Nueva / Modificar empresa | Administración de la plataforma | `pantallas/SystemAdministration.EditarEmpresa.md` | 2026-10-12 |
 | pantallas | Nuevo / Modificar usuario (administración del sistema) | Administración de la plataforma | `pantallas/SystemAdministration.EditarUsuario.md` | 2026-10-03 |
 | pantallas | Usuarios (administración del sistema) | Administración de la plataforma | `pantallas/SystemAdministration.Usuarios.md` | 2026-10-03 |
-| referencia | Mapa de configuraciones de la plataforma | Referencia | `referencia/configuraciones-plataforma.md` | 2026-10-12 |
+| referencia | Mapa de configuraciones de la plataforma | Referencia | `referencia/configuraciones-plataforma.md` | 2026-11-27 |
 
 ## Pantallas sin ayuda todavia
 

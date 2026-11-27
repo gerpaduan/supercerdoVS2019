@@ -1616,7 +1616,7 @@ namespace WebCore.Controllers
             }
         }
 
-        public IActionResult Lineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "")
+        public IActionResult Lineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "", string descuento = "", string anulaciones = "")
         {
             // Usuario de produccion: mismo gate que Index (Batch 5, ver docs/DECISIONS.md).
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
@@ -1624,6 +1624,8 @@ namespace WebCore.Controllers
 
             var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
+            model.FiltroDescuento = LineasVentaClasificacion.NormalizarFiltroDescuento(descuento);
+            model.FiltroAnulaciones = LineasVentaClasificacion.NormalizarFiltroAnulaciones(anulaciones);
 
             ViewBag.Title = "Lineas de venta";
             ViewBag.Sucursales = sucursales;
@@ -1637,13 +1639,13 @@ namespace WebCore.Controllers
         // puede divergir de lo que se ve (ventas reservadas ocultas incluidas). Ver docs/DECISIONS.md
         // 2026-10-13 "Exportar Lineas de venta a PDF y Excel".
         [HttpGet]
-        public IActionResult LineasPdf(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "")
+        public IActionResult LineasPdf(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "", string descuento = "", string anulaciones = "")
         {
             // Mismo gate de usuario de produccion que Lineas.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
                 return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
-            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor, descuento, anulaciones);
             byte[] pdfBytes = GenerarDocsCore.GenerarPdfLineasVenta(model, ObtenerNombreSucursalLineas(idSucursal));
 
             return File(pdfBytes, "application/pdf", ConstruirNombreArchivoLineas("pdf"));
@@ -1651,13 +1653,13 @@ namespace WebCore.Controllers
 
         // Idem LineasPdf pero a .xlsx real (ClosedXML, GenerarExcelCore).
         [HttpGet]
-        public IActionResult LineasExcel(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "")
+        public IActionResult LineasExcel(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "", string descuento = "", string anulaciones = "")
         {
             // Mismo gate de usuario de produccion que Lineas.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
                 return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
-            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor, descuento, anulaciones);
             byte[] excelBytes = GenerarExcelCore.GenerarExcelLineasVenta(model, ObtenerNombreSucursalLineas(idSucursal));
 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ConstruirNombreArchivoLineas("xlsx"));
@@ -1669,13 +1671,13 @@ namespace WebCore.Controllers
         // (vendedor, sucursal, cliente, formaPago, ventaId, comprobante). Ver docs/DECISIONS.md 2026-10-13
         // "Excel compacto de Lineas de venta".
         [HttpGet]
-        public IActionResult LineasExcelCompacto(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "", string datos = "")
+        public IActionResult LineasExcelCompacto(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "", string idsCliente = "", string idsVendedor = "", string datos = "", string descuento = "", string anulaciones = "")
         {
             // Mismo gate de usuario de produccion que Lineas.
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
                 return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.PathBase + Request.Path + Request.QueryString });
 
-            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor);
+            var model = ConstruirModeloLineas(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, producto, idsCliente, idsVendedor, descuento, anulaciones);
             var opciones = OpcionesExcelLineasCompacto.DesdeCsv(datos);
             byte[] excelBytes = ExcelLineasVentaCompacto.Generar(model, ObtenerNombreSucursalLineas(idSucursal), opciones);
 
@@ -1702,8 +1704,11 @@ namespace WebCore.Controllers
         // y sus exports (LineasPdf / LineasExcel): trae todo el rango sin paginar, oculta las ventas reservadas
         // (_ctaCteReservada) y aplica los filtros de cliente / vendedor / forma de pago / producto.
         // No toca ViewBag ni el gate de usuario: eso queda en cada accion.
-        private VentaLineasIndexVm ConstruirModeloLineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal, string cliente, string vendedor, string formasPago, string producto, string idsCliente = "", string idsVendedor = "")
+        private VentaLineasIndexVm ConstruirModeloLineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal, string cliente, string vendedor, string formasPago, string producto, string idsCliente = "", string idsVendedor = "", string descuento = "", string anulaciones = "")
         {
+            // Filtros por linea: solo los mandan los exports (la pantalla trae todo y filtra en el navegador).
+            string filtroDescuento = LineasVentaClasificacion.NormalizarFiltroDescuento(descuento);
+            string filtroAnulaciones = LineasVentaClasificacion.NormalizarFiltroAnulaciones(anulaciones);
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
@@ -1749,13 +1754,19 @@ namespace WebCore.Controllers
                 VendedoresSeleccionados = seleccionVendedor.Items,
                 Producto = producto ?? "",
                 FormasPagoCsv = formasPago ?? "",
-                FormasPagoSeleccionadas = formasPagoSeleccionadas
+                FormasPagoSeleccionadas = formasPagoSeleccionadas,
+                FiltroDescuento = filtroDescuento,
+                FiltroAnulaciones = filtroAnulaciones
             };
 
             foreach (var venta in ventas.OrderByDescending(x => x.FechaVenta))
             {
-                var lineas = (venta.LineasVenta ?? new List<Entidades.LineaVenta>())
+                // Se clasifica la venta ENTERA (la anulacion se reconoce por la pareja) y recien despues se filtra.
+                var todas = venta.LineasVenta ?? new List<Entidades.LineaVenta>();
+                var marcas = LineasVentaClasificacion.Clasificar(todas);
+                var lineas = todas
                     .Where(x => CoincideProductoVenta(x, producto))
+                    .Where(x => LineasVentaClasificacion.Coincide(marcas.Lineas[x], marcas.ConAnulacion, filtroDescuento, filtroAnulaciones))
                     .ToList();
 
                 if (lineas.Count == 0)
@@ -1776,6 +1787,8 @@ namespace WebCore.Controllers
                     TotalTexto = venta.TotalImporte.ToString("C"),
                     TotalImporte = Convert.ToDecimal(venta.TotalImporte),
                     TotalKg = lineas.Sum(x => Convert.ToDecimal(x.CantKg)),
+                    ConAnulacion = marcas.ConAnulacion,
+                    Cancelada = marcas.Cancelada,
                     // returnUrl agregado (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
                     // "Batch 4: boton Volver siempre visible + recuerda el filtro de origen") --
                     // antes faltaba, asi que "Volver" no aparecia al entrar a DetalleVenta desde
@@ -1793,15 +1806,22 @@ namespace WebCore.Controllers
 
                 foreach (var linea in lineas)
                 {
-                    float totalLinea = linea.CantKg * linea.PrecioKg;
+                    // En "Solo lo anulado" lo anulado se informa en positivo (afecta al renglon de anulacion sin original).
+                    float cantidad = filtroAnulaciones == LineasVentaClasificacion.SoloAnulado ? Math.Abs(linea.CantKg) : linea.CantKg;
+                    float totalLinea = cantidad * linea.PrecioKg;
+                    var marcasLinea = marcas.Lineas[linea];
                     grupo.Lineas.Add(new VentaLineaDetalleVm
                     {
+                        TipoDescuento = marcasLinea.TipoDescuento,
+                        DescuentoTexto = marcasLinea.DescuentoTexto,
+                        TipoAnulacion = marcasLinea.TipoAnulacion,
+                        SoloAnulado = marcasLinea.SoloAnulado,
                         Codigo = linea.Corte != null ? linea.Corte.Codigo.ToString() : "-",
                         Producto = linea.Corte != null ? linea.Corte.CorteDesc : "-",
-                        CantidadKgTexto = linea.CantKg.ToString("N3"),
+                        CantidadKgTexto = cantidad.ToString("N3"),
                         PrecioTexto = linea.PrecioKg.ToString("N2"),
                         TotalTexto = totalLinea.ToString("N2"),
-                        CantidadKg = Convert.ToDecimal(linea.CantKg),
+                        CantidadKg = Convert.ToDecimal(cantidad),
                         Precio = Convert.ToDecimal(linea.PrecioKg),
                         Total = Convert.ToDecimal(totalLinea)
                     });

@@ -90,8 +90,22 @@
         return true;
     }
 
-    function lineMatchesFilters(line, page) {
-        var producto = getLiveFilterValue(page, 'producto');
+    // Filtros que se miran en cada linea. Se leen UNA vez por filtrado (no por fila: buscar en la pagina por cada linea es caro).
+    // "descuento" y "anulaciones" solo existen en Ventas (mismas reglas que LineasVentaClasificacion.Coincide).
+    function leerFiltrosDeLinea(page) {
+        return {
+            producto: getLiveFilterValue(page, 'producto'),
+            descuento: getLiveFilterValue(page, 'descuento'),
+            anulaciones: getLiveFilterValue(page, 'anulaciones')
+        };
+    }
+
+    function lineMatchesFilters(line, filtros) {
+        if (filtros.descuento && line.getAttribute('data-descuento') !== filtros.descuento) return false;
+        if (filtros.anulaciones === 'solo' && line.getAttribute('data-solo-anulado') !== '1') return false;
+        if (filtros.anulaciones === 'ventas' && line.getAttribute('data-venta-anulacion') !== '1') return false;
+
+        var producto = filtros.producto;
         if (!producto) return true;
 
         var codigo = normalizarTexto(line.getAttribute('data-codigo'));
@@ -153,14 +167,21 @@
         var totalKg = 0;
         var totalImporte = 0;
         var totalUnidades = 0;
+        var soloAnulado = getLiveFilterValue(page, 'anulaciones') === 'solo';
+        var cantidad = function (valor) { return soloAnulado ? Math.abs(valor) : valor; };
+
+        page.classList.toggle('vl-solo-anulado', soloAnulado);
+        Array.prototype.forEach.call(page.querySelectorAll('[data-texto-solo]'), function (titulo) {
+            titulo.textContent = titulo.getAttribute(soloAnulado ? 'data-texto-solo' : 'data-texto-normal');
+        });
 
         Array.prototype.forEach.call(cards, function (card) {
             totalRegistros++;
             var rows = card.querySelectorAll('.js-linea-row:not(.d-none)');
             Array.prototype.forEach.call(rows, function (row) {
                 totalLineas++;
-                totalKg += parseDecimal(row.getAttribute('data-kg'));
-                totalImporte += parseDecimal(row.getAttribute('data-total'));
+                totalKg += cantidad(parseDecimal(row.getAttribute('data-kg')));
+                totalImporte += cantidad(parseDecimal(row.getAttribute('data-total')));
                 totalUnidades += parseDecimal(row.getAttribute('data-unidades'));
             });
         });
@@ -182,6 +203,7 @@
     function filtrar(page) {
         var cards = page.querySelectorAll('.js-registro-card');
         var visibles = 0;
+        var filtrosDeLinea = leerFiltrosDeLinea(page);
 
         Array.prototype.forEach.call(cards, function (card) {
             var groupOk = cardMatchesGroupFilters(card, page);
@@ -189,7 +211,7 @@
             var rows = card.querySelectorAll('.js-linea-row');
 
             Array.prototype.forEach.call(rows, function (row) {
-                var match = groupOk && lineMatchesFilters(row, page);
+                var match = groupOk && lineMatchesFilters(row, filtrosDeLinea);
                 row.classList.toggle('d-none', !match);
                 if (match) lineasVisibles++;
             });
@@ -201,7 +223,61 @@
 
         renderClientEmpty(page, visibles);
         recalcTotals(page);
+        Array.prototype.forEach.call(cards, function (card) { marcarFilasAlternas(card.querySelectorAll('.js-linea-row')); });
         sincronizarVistaPlana();
+    }
+
+    // Filas intercaladas: marca una de cada dos filas VISIBLES (con nth-child, las ocultas por los filtros rompian el intercalado).
+    // El color lo pone cada pantalla; hoy solo Lineas de venta tiene estilo para "lc-alterna".
+    function marcarFilasAlternas(filas) {
+        var visibles = 0;
+        Array.prototype.forEach.call(filas, function (fila) {
+            if (fila.classList.contains('d-none')) return;
+            fila.classList.toggle('lc-alterna', visibles % 2 === 1);
+            visibles++;
+        });
+    }
+
+    // Clase CSS de una columna de la vista plana: "campo:Forma de pago" -> "lc-forma-de-pago", "total" -> "lc-total".
+    function claseColumna(col) {
+        return 'lc-' + String(col.etiquetaCampo || col.clave).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    }
+
+    // Nombres de las sucursales en el orden del combo de la pantalla. Se leen UNA sola vez: buscar en la pagina por cada fila
+    // congelaba el navegador con miles de lineas.
+    var nombresSucursales = null;
+
+    function indiceSucursal(page, nombre) {
+        if (!nombresSucursales) {
+            nombresSucursales = Array.prototype.filter.call(page.querySelectorAll('select[name="idSucursal"] option'), function (opcion) { return opcion.value !== '-1'; })
+                .map(function (opcion) { return opcion.textContent.trim(); });
+        }
+        return Math.max(0, nombresSucursales.indexOf(nombre)) % 4;
+    }
+
+    // Resaltados de la vista plana de VENTAS: fecha con la hora destacada, sucursal con su color y cantidad recuadrada. El color de la
+    // sucursal sale de su posicion en el combo de la pantalla (mismo criterio que Lineas.cshtml en la vista agrupada).
+    function decorarCeldaVentas(page, col, texto, row) {
+        if (col.clave === 'producto') {
+            var anulacion = row.getAttribute('data-anulacion');
+            // Las marcas pueden bajar de renglon: en un solo renglon la tabla ya no entraba a lo ancho.
+            return '<span class="js-producto-nombre">' + escaparHtml(texto) + '</span>'
+                + (anulacion ? ' <span class="vl-marca">' + (anulacion === 'contra' ? 'Anulación' : 'Anulada') + '</span>' : '')
+                + (row.getAttribute('data-cancelada') === '1' ? ' <span class="vl-marca vl-marca-cancelada">Venta cancelada</span>' : '');
+        }
+        var tipoDescuento = row.getAttribute('data-descuento');
+        if (col.clave === 'descuento' && tipoDescuento) {
+            return '<span class="vl-dr vl-dr-' + escaparHtml(tipoDescuento) + '">' + escaparHtml(texto) + '</span>';
+        }
+        if (col.clave === 'fecha') {
+            var partes = /^(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})$/.exec(texto);
+            if (partes) return '<span class="vl-fecha">' + partes[1] + ' <span class="vl-hora">' + partes[2] + '</span></span>';
+        }
+        if (col.etiquetaCampo === 'Sucursal' && texto && texto !== '-') {
+            return '<span class="vl-suc vl-suc-' + indiceSucursal(page, texto) + '">' + escaparHtml(texto) + '</span>';
+        }
+        if (col.clave === 'kg') return '<span class="vl-cant">' + escaparHtml(texto) + '</span>';
+        return escaparHtml(texto);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -259,10 +335,11 @@
     function definirColumnasVistaPlana(camposCabecera) {
         if (vistaPlana && vistaPlana.modo === 'movimientos') return definirColumnasVistaPlanaMovimientos(camposCabecera);
 
-        var columnas = [
-            { clave: 'fecha', texto: 'Fecha', tipo: 'fecha', primerOrden: 'desc' },
-            { clave: 'creado', texto: 'Creado', tipo: 'fecha', primerOrden: 'desc' }
-        ];
+        // En Ventas "Creado" va a la derecha de "Total línea" (2026-11-26); en Compras sigue al lado de "Fecha".
+        var esVentas = !!vistaPlana && vistaPlana.modo === 'ventas';
+        var columnaCreado = { clave: 'creado', texto: 'Creado', tipo: 'fecha', primerOrden: 'desc' };
+        var columnas = [{ clave: 'fecha', texto: esVentas ? 'Fecha y hora' : 'Fecha', tipo: 'fecha', primerOrden: 'desc' }];
+        if (!esVentas) columnas.push(columnaCreado);
 
         // Datos de la cabecera de la compra/venta (proveedor, sucursal, cliente, vendedor...), por etiqueta: asi la misma
         // logica sirve para Compras y Ventas. "Fecha" ya es la primera columna.
@@ -275,7 +352,9 @@
         columnas.push({ clave: 'producto', texto: 'Producto', tipo: 'texto' });
         columnas.push({ clave: 'kg', texto: 'Cantidad / kg', tipo: 'num', derecha: true });
         columnas.push({ clave: 'precio', texto: 'Precio', tipo: 'num', derecha: true });
+        if (esVentas) columnas.push({ clave: 'descuento', texto: 'Desc./Rec.', tipo: 'texto' });
         columnas.push({ clave: 'total', texto: 'Total línea', tipo: 'num', derecha: true });
+        if (esVentas) columnas.push(columnaCreado);
         columnas.push({ clave: 'acciones', texto: '', tipo: 'acciones' });
         return columnas;
     }
@@ -325,7 +404,9 @@
                         fecha: porEtiqueta['Fecha'] || '',
                         creado: creadoTexto,
                         codigo: celdas[0] ? celdas[0].textContent.trim() : '',
-                        producto: celdas[1] ? celdas[1].textContent.trim() : '',
+                        // En Ventas la celda de producto trae ademas las marcas: el nombre va en su propio span.
+                        producto: celdas[1] ? (celdas[1].querySelector('.js-producto-nombre') || celdas[1]).textContent.trim() : '',
+                        descuento: row.getAttribute('data-descuento-texto') || '-',
                         kg: celdas[2] ? celdas[2].textContent.trim() : '',
                         precio: celdas[3] ? celdas[3].textContent.trim() : '',
                         total: celdas[4] ? celdas[4].textContent.trim() : ''
@@ -339,6 +420,7 @@
                         producto: normalizarTexto(textos.producto),
                         kg: parseDecimal(row.getAttribute('data-kg')),
                         precio: parseDecimal(row.getAttribute('data-precio')),
+                        descuento: normalizarTexto(row.getAttribute('data-descuento-texto')),
                         total: parseDecimal(row.getAttribute('data-total'))
                     };
                 }
@@ -362,10 +444,14 @@
                     if (col.derecha) clases.push('text-right');
                     // Solo "Fecha" va en una linea; "Creado" (con segundos) puede partirse para que la tabla entre en pantalla.
                     if (col.clave === 'fecha') clases.push('js-plana-nowrap');
-                    return '<td' + (clases.length ? ' class="' + clases.join(' ') + '"' : '') + '>' + escaparHtml(texto) + '</td>';
+                    clases.push(claseColumna(col));
+                    var contenido = vistaPlana.modo === 'ventas' ? decorarCeldaVentas(page, col, texto, row) : escaparHtml(texto);
+                    return '<td class="' + clases.join(' ') + '">' + contenido + '</td>';
                 });
 
-                html.push('<tr>' + celdasHtml.join('') + '</tr>');
+                // La fila plana hereda las marcas de anulacion de su linea (fondo y tachado).
+                var clasesFila = ['anulada', 'contra', 'original-anulada'].filter(function (c) { return row.classList.contains(c); }).join(' ');
+                html.push('<tr' + (clasesFila ? ' class="' + clasesFila + '"' : '') + '>' + celdasHtml.join('') + '</tr>');
                 filas.push({ tr: null, card: card, row: row, orden: orden, idx: filas.length });
             });
         });
@@ -377,7 +463,8 @@
 
         encabezado.innerHTML = columnas.map(function (col) {
             if (col.tipo === 'acciones') return '<th></th>';
-            return '<th class="js-plana-ordenable' + (col.derecha ? ' text-right' : '') + '" data-clave="' + escaparHtml(col.clave)
+            // La clase "lc-<columna>" (la misma que llevan sus celdas) permite ocultar la columna (columnas-visibles.js).
+            return '<th class="js-plana-ordenable ' + claseColumna(col) + (col.derecha ? ' text-right' : '') + '" data-clave="' + escaparHtml(col.clave)
                 // <wbr> tras la "/" deja partir "Nro/comprobante" en dos renglones (si no es la columna mas ancha de la tabla).
                 + '" title="Ordenar por ' + escaparHtml(col.texto) + '">' + escaparHtml(col.texto).replace(/\//g, '/<wbr>') + '<span class="js-plana-flecha"></span></th>';
         }).join('');
@@ -439,6 +526,7 @@
         var fragmento = document.createDocumentFragment();
         copia.forEach(function (fila) { fragmento.appendChild(fila.tr); });
         vistaPlana.cuerpo.appendChild(fragmento);
+        marcarFilasAlternas(vistaPlana.cuerpo.children);
 
         Array.prototype.forEach.call(vistaPlana.encabezado.querySelectorAll('th.js-plana-ordenable'), function (th) {
             var activa = th.getAttribute('data-clave') === criterio.clave;
@@ -456,6 +544,7 @@
             var oculta = fila.row.classList.contains('d-none') || fila.card.classList.contains('d-none');
             fila.tr.classList.toggle('d-none', oculta);
         });
+        marcarFilasAlternas(vistaPlana.cuerpo.children);
     }
 
     function claveAlmacenamientoVista(boton) {
@@ -474,6 +563,11 @@
         // "Ver detalles" solo tiene sentido en la vista agrupada.
         var switchDetalles = page.querySelector('.js-detalles-switch-wrap');
         if (switchDetalles) switchDetalles.classList.toggle('d-none', activa);
+
+        // Controles propios de la vista plana (ej. "Columnas" en Ventas).
+        Array.prototype.forEach.call(page.querySelectorAll('.js-solo-vista-plana'), function (item) {
+            item.classList.toggle('d-none', !activa);
+        });
 
         var texto = boton.querySelector('.js-vista-texto');
         if (texto) texto.textContent = boton.getAttribute(activa ? 'data-texto-agrupada' : 'data-texto-plana');

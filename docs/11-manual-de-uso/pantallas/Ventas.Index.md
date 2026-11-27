@@ -5,7 +5,7 @@ rol: usuario
 modulo: Ventas
 orden: 1
 permiso: Venta.VerVentas (sin el permiso se muestra "Acceso denegado"; a los usuarios de producción les pide elegir el operador de Ventas antes de entrar)
-revisada: 2026-11-25
+revisada: 2026-11-27
 ---
 ## Para qué sirve
 Ver las **ventas de un período**, agrupadas por día, con la cantidad y el total de lo que se está mostrando. Tocando una venta se **despliega** su detalle sin salir de la lista.
@@ -20,9 +20,17 @@ Ver las **ventas de un período**, agrupadas por día, con la cantidad y el tota
 ## Filtros
 - **Desde / Hasta**: al cambiarlos aparece el aviso de que hay filtros sin aplicar; tocá **Buscar** para recargar.
 - **Sucursal**: al cambiarla, la pantalla se recarga sola.
+- **Limpiar filtros** (debajo de *Buscar*): vuelve la pantalla a como se entra: hoy, todas las sucursales y sin vendedor, cliente, forma de pago ni comprobante. También olvida los filtros recordados.
 - **Vendedor** y **Cliente**: escribiendo buscás por letras; con la **lupa** (o **F9** vendedor, **F10** cliente) elegís de una lista, de a uno o varios, y filtra **exacto** por esas personas. Ver [cómo funciona el selector](ayuda:concepto/selector-cliente-vendedor-proveedor). Cliente busca por razón social o identificación.
 - **Forma de pago** y **Tipo comprobante**: se tildan en el desplegable.
 - Vendedor, Cliente, Forma de pago y Tipo comprobante se aplican **en el momento** sobre lo ya cargado y recalculan **Cant.** y **Total**. Los filtros quedan recordados en la sesión del navegador (al volver a la pantalla siguen puestos).
+
+## Aviso de búsqueda pesada
+Antes de cargar un período grande (desde **5.000 ventas**, configurable) aparece *Esta búsqueda puede demorar* con la cantidad.
+- **Cambiar el período**: no carga nada; ajustá las fechas.
+- **Buscar igual**: carga. La pantalla puede dejar de responder: esperá, sin cerrar ni recargar.
+
+Aparece al tocar *Buscar*, al cambiar la sucursal, al entrar con un período recordado y en *Ver lineas* (que cuenta **líneas**, desde 1.500). Si no se puede contar, busca sin preguntar. Solo con base Postgres.
 
 ## Botones de arriba
 - **Facturas**: abre el listado de [facturas](ayuda:pantalla/Ventas.Facturas) del mismo período y sucursal (no lleva Vendedor ni Cliente).

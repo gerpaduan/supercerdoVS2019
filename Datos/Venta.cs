@@ -347,7 +347,7 @@ namespace Datos
                     SELECT lv.idLineaVenta, lv.idVenta, lv.idCorte, lv.cantKg, lv.kgsAjusteTarj,
                            lv.idAlicuotaIva, lv.alicuotaIva, lv.precioKg, lv.bonificacion, lv.pesoBalanza,
                            CASE WHEN lv.idAnulado = 0 THEN '' ELSE 'Anulado' END AS estado,
-                           lv.idLineaVentaAnulado
+                           lv.idLineaVentaAnulado, lv.ajustePrecio
                     FROM dbo.LineaVenta lv
                     INNER JOIN dbo.Corte c ON lv.idCorte = c.idCorte
                     WHERE lv.idVenta IN (" + string.Join(",", nombres) + @")
@@ -737,6 +737,14 @@ namespace Datos
             oLinea.PrecioKgOriginal = oLinea.PrecioKg;
             oLinea.PesoBalanza = (dr["pesoBalanza"] != DBNull.Value) && Convert.ToBoolean(dr["pesoBalanza"]);
             oLinea.Estado = string.IsNullOrEmpty(dr["estado"]?.ToString()) ? 0 : 1;
+
+            // ajustePrecio viene en la consulta por lotes (Ventas > Lineas); el SP obtenerLineasVenta no lo garantiza.
+            for (int i = 0; i < dr.FieldCount; i++)
+            {
+                if (!string.Equals(dr.GetName(i), "ajustePrecio", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!dr.IsDBNull(i)) oLinea.AjustePrecio = Convert.ToSingle(dr.GetValue(i));
+                break;
+            }
 
             return oLinea;
         }

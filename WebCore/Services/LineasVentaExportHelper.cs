@@ -69,6 +69,13 @@ namespace WebCore.Services
             if (model.FormasPagoSeleccionadas.Count > 0)
                 partes.Add("Forma de pago: " + string.Join(", ", model.FormasPagoSeleccionadas));
 
+            // Mismos textos que los combos de la pantalla.
+            if (model.FiltroDescuento == LineasVentaClasificacion.Descuento) partes.Add("Descuento / recargo: Con descuento");
+            else if (model.FiltroDescuento == LineasVentaClasificacion.Recargo) partes.Add("Descuento / recargo: Con recargo");
+            else if (model.FiltroDescuento == LineasVentaClasificacion.PrecioDistinto) partes.Add("Descuento / recargo: Precio distinto al de lista");
+            if (model.FiltroAnulaciones == LineasVentaClasificacion.VentasConAnulaciones) partes.Add("Anulaciones: Ventas con anulaciones");
+            else if (model.FiltroAnulaciones == LineasVentaClasificacion.SoloAnulado) partes.Add("Anulaciones: Solo lo anulado");
+
             return partes.Count == 0 ? "" : "Filtros: " + string.Join(Separador, partes);
         }
 

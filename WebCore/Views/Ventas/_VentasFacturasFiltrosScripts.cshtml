@@ -12,6 +12,11 @@
    script (lee de el las URLs de los endpoints) y el script antes del IIFE de abajo, que usa window.FiltroPicker. *@
 <partial name="~/Views/Shared/_FiltroPickerModal.cshtml" />
 <script src="~/Scripts/app/filtro-picker.js" asp-append-version="true"></script>
+@if (esVentas)
+{
+    @* Aviso antes de una busqueda pesada (solo Ventas/Index: Facturas ya carga de a paginas). *@
+    <script src="~/Scripts/app/aviso-busqueda-pesada.js" asp-append-version="true"></script>
+}
 
 <script>
         (function () {
@@ -44,6 +49,16 @@
 
             let fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
             let fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
+            let sucursalAplicada = idSucursal ? idSucursal.value : "";
+            let consultandoCantidad = false;
+            const urlContar = '@Url.Action("ContarBusqueda", "Ventas")';
+
+            // "Limpiar filtros" (solo Ventas/Index): olvida lo recordado en la sesion y entra de nuevo sin parametros. Se engancha
+            // aca, antes de restaurar nada, para que funcione aunque la pantalla este preguntando por un periodo pesado.
+            document.getElementById("btnLimpiarFiltrosVentas")?.addEventListener("click", function () {
+                if (window.sessionStorage) window.sessionStorage.removeItem(storageKey);
+                navegarConLoader(form.action, false);
+            });
 
             function showNavigationLoading(message) {
                 if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === 'function') {
@@ -51,9 +66,9 @@
                 }
             }
 
-            function navegarConLoader(url, useReplace) {
+            function navegarConLoader(url, useReplace, mensaje) {
                 if (!url) return;
-                showNavigationLoading('Cargando solicitud...');
+                showNavigationLoading(mensaje || 'Cargando solicitud...');
                 window.setTimeout(function () {
                     if (useReplace) {
                         window.location.replace(url);
@@ -63,8 +78,8 @@
                 }, 40);
             }
 
-            function submitConLoader() {
-                showNavigationLoading('Cargando solicitud...');
+            function submitConLoader(mensaje) {
+                showNavigationLoading(mensaje || 'Cargando solicitud...');
                 window.setTimeout(function () {
                     if (nativeFormSubmit) {
                         nativeFormSubmit.call(form);
@@ -145,11 +160,38 @@
 
                 const query = params.toString();
                 if (query) {
-                    navegarConLoader(form.action + "?" + query, true);
+                    // Si el periodo recordado es pesado se pregunta antes de volver a cargarlo; al cancelar se olvida y queda el de hoy.
+                    confirmarBusqueda('ventas', state.server,
+                        function (mensaje) { navegarConLoader(form.action + "?" + query, true, mensaje); },
+                        function () {
+                            const guardado = getStoredState();
+                            delete guardado.server;
+                            window.sessionStorage.setItem(storageKey, JSON.stringify(guardado));
+                            window.location.replace(form.action);
+                        });
                     return true;
                 }
 
                 return false;
+            }
+
+            // ---- Aviso de busqueda pesada (aviso-busqueda-pesada.js, solo Ventas) ----
+            // Antes de cargar, el servidor cuenta lo que traeria el filtro; si supera el limite se pregunta. En Facturas (que
+            // carga de a paginas), sin el componente o si el conteo falla, se sigue como siempre.
+            function confirmarBusqueda(pantalla, filtros, alSeguir, alCancelar) {
+                if (esFacturas || !window.AvisoBusquedaPesada) {
+                    alSeguir('');
+                    return;
+                }
+                if (consultandoCantidad) return;
+                consultandoCantidad = true;
+                if (btnFiltrar) btnFiltrar.disabled = true;
+                window.AvisoBusquedaPesada.confirmar(urlContar, pantalla, filtros).then(function (respuesta) {
+                    consultandoCantidad = false;
+                    if (btnFiltrar) btnFiltrar.disabled = false;
+                    if (respuesta.continuar) alSeguir(respuesta.mensaje);
+                    else if (alCancelar) alCancelar();
+                });
             }
 
             if (restoreServerStateIfNeeded()) {
@@ -290,18 +332,23 @@
 
             if (idSucursal) {
                 idSucursal.addEventListener('change', function () {
-                    saveServerState();
-                    setBuscando('Actualizando búsqueda en vivo...');
-
                     if (hayFechasPendientes()) {
                         if (fechaDesde) fechaDesde.value = fechaDesdeAplicada;
                         if (fechaHasta) fechaHasta.value = fechaHastaAplicada;
-                        saveServerState();
                         verificarCambios();
                         actualizarAvisoPendiente();
                     }
 
-                    submitConLoader();
+                    confirmarBusqueda('ventas', getServerState(),
+                        function (mensaje) {
+                            saveServerState();
+                            setBuscando('Actualizando búsqueda en vivo...');
+                            submitConLoader(mensaje);
+                        },
+                        function () {
+                            idSucursal.value = sucursalAplicada;
+                            saveServerState();
+                        });
                 });
             }
 
@@ -317,13 +364,18 @@
                 }
 
                 e.preventDefault();
-                fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
-                fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
-                saveServerState();
-                actualizarAvisoPendiente();
-                setBuscando();
-                form.dataset.loadingSubmitPending = 'true';
-                submitConLoader();
+                // Las fechas pasan a "aplicadas" recien si se confirma la busqueda.
+                confirmarBusqueda('ventas', getServerState(),
+                    function (mensaje) {
+                        fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
+                        fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
+                        saveServerState();
+                        actualizarAvisoPendiente();
+                        setBuscando();
+                        form.dataset.loadingSubmitPending = 'true';
+                        submitConLoader(mensaje);
+                    },
+                    function () { if (fechaDesde) fechaDesde.focus(); });
             });
 
 
@@ -696,7 +748,9 @@
             params.set("idsVendedor", picker.getIds(buscadorVendedor));
             params.set("formasPago", getSeleccionados(filtroFormaPagoChecks).join(","));
 
-            navegarConLoader(baseUrl + "?" + params.toString(), false);
+            // Lineas trae una fila por cada linea de cada venta: se avisa con su propio limite.
+            confirmarBusqueda('lineas', getServerState(),
+                function (mensaje) { navegarConLoader(baseUrl + "?" + params.toString(), false, mensaje); });
         });
 
         document.getElementById("btnVerFacturasVentas")?.addEventListener("click", function () {

@@ -1,25 +1,77 @@
 ﻿@model VentaLineasIndexVm
 @using Entidades
+@inject WebCore.Services.IUsuarioSesionService Sesion
 
 @{
     ViewBag.Title = "Lineas de venta";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    // Color de cada sucursal en la tabla: su posicion en la lista (lineas-agrupadas.js usa el mismo orden, el del select).
+    var colorSucursal = sucursales.Select((s, i) => new { Nombre = s.SucursalNombre ?? "", Indice = i % 4 })
+        .GroupBy(x => x.Nombre).ToDictionary(g => g.Key, g => g.First().Indice);
 }
 
 <div class="container-fluid px-2 px-md-3" data-lineas-agrupadas-page="ventas">
     <partial name="_AvisoReservadasListado" />
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <h4 class="mb-2 mb-md-0">Lineas de venta</h4>
-        <div class="d-flex flex-wrap gap-2">
+    @* Sin titulo propio: el nombre de la pantalla ya lo muestra la barra superior (2026-11-26, ver docs/DECISIONS.md). *@
+    <div class="vl-acciones">
+        <a class="btn btn-sm btn-outline-secondary vl-volver js-volver-ventas" title="Volver al indice de ventas"
+           data-fecha-desde="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm")" data-fecha-hasta="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm")" data-id-sucursal="@Model.IdSucursal"
+           href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+        @* "Ver detalles" solo aplica a la vista agrupada (en la vista plana ya se ven todos los datos): lineas-agrupadas.js lo oculta. *@
+        <div class="custom-control custom-switch js-detalles-switch-wrap">
+            <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesVentas" />
+            <label class="custom-control-label" for="expandirDetallesVentas">Ver detalles</label>
+        </div>
+        @* Columnas visibles de la tabla plana (columnas-visibles.js; la eleccion se recuerda por usuario en este navegador). Solo se
+           muestra en "Ver solo líneas": lineas-agrupadas.js alterna .js-solo-vista-plana. Cada value es la clase "lc-<value>" de la
+           columna; data-control = queda en la vista rapida "Control"; disabled = siempre visible. *@
+        <div class="vl-columnas js-solo-vista-plana d-none" data-columnas
+             data-columnas-tabla=".lineas-tabla-plana" data-columnas-clave="lineasColumnasOcultas_ventas_@(Sesion.UsuarioActual?.Id)">
+            <button type="button" class="btn btn-sm btn-outline-secondary js-columnas-boton" aria-expanded="false">
+                <i class="fas fa-columns mr-1"></i> <span class="js-columnas-texto">Columnas</span> <i class="fas fa-caret-down ml-1"></i>
+            </button>
+            <div class="vl-col-panel js-columnas-panel">
+                <div class="vl-col-titulo">Vista rápida</div>
+                <div class="vl-col-rapidas">
+                    <button type="button" class="btn btn-sm btn-outline-secondary js-columnas-todas">Todas</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary js-columnas-control">Control</button>
+                </div>
+                <div class="vl-col-titulo">Columnas</div>
+                <div class="js-columnas-lista">
+                    <label><input type="checkbox" value="fecha" data-control checked> Fecha y hora</label>
+                    <label><input type="checkbox" value="nro-comprobante" checked> Nro/comprobante</label>
+                    <label><input type="checkbox" value="sucursal" checked> Sucursal</label>
+                    <label><input type="checkbox" value="cliente" checked> Cliente</label>
+                    <label><input type="checkbox" value="vendedor" checked> Vendedor</label>
+                    <label><input type="checkbox" value="forma-de-pago" checked> Forma de pago</label>
+                    <label><input type="checkbox" value="codigo" data-control checked> Código</label>
+                    <label><input type="checkbox" value="producto" data-control checked disabled> Producto <small>siempre</small></label>
+                    <label><input type="checkbox" value="kg" data-control checked> Cantidad / kg</label>
+                    <label><input type="checkbox" value="precio" checked> Precio</label>
+                    <label><input type="checkbox" value="descuento" checked> Desc./Rec.</label>
+                    <label><input type="checkbox" value="total" checked> Total línea</label>
+                    <label><input type="checkbox" value="creado" checked> Creado</label>
+                </div>
+            </div>
+        </div>
+        @* Alterna entre tarjetas por venta y una tabla plana con una fila por linea (ordenable). Ver lineas-agrupadas.js. *@
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVistaSoloLineas"
+                data-clave-vista="ventas"
+                data-texto-plana="Ver solo líneas"
+                data-texto-agrupada="Ver agrupado por venta">
+            <i class="fas fa-list mr-1"></i><span class="js-vista-texto">Ver solo líneas</span>
+        </button>
             @* Exportar PDF / Excel: el href inicial (con los filtros del servidor) es solo un respaldo; el script del final
                lo reconstruye con los filtros "en vivo" y las fechas aplicadas (ver "Exportar a PDF / Excel" en Scripts). *@
-            <a class="btn btn-outline-danger js-exportar-lineas"
+            <a class="btn btn-sm btn-outline-danger js-exportar-lineas"
                href="@Url.Action("LineasPdf", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss"), idSucursal = Model.IdSucursal, cliente = Model.Cliente, vendedor = Model.Vendedor, idsCliente = Model.IdsCliente, idsVendedor = Model.IdsVendedor, producto = Model.Producto, formasPago = Model.FormasPagoCsv })"
                data-export-url="@Url.Action("LineasPdf", "Ventas")"
                title="Exportar a PDF lo que se ve en pantalla">
                 <i class="fas fa-file-pdf mr-1"></i> PDF
             </a>
-            <a class="btn btn-outline-success js-exportar-lineas"
+            <a class="btn btn-sm btn-outline-success js-exportar-lineas"
                href="@Url.Action("LineasExcel", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss"), idSucursal = Model.IdSucursal, cliente = Model.Cliente, vendedor = Model.Vendedor, idsCliente = Model.IdsCliente, idsVendedor = Model.IdsVendedor, producto = Model.Producto, formasPago = Model.FormasPagoCsv })"
                data-export-url="@Url.Action("LineasExcel", "Ventas")"
                title="Exportar a Excel lo que se ve en pantalla">
@@ -27,25 +79,29 @@
             </a>
             @* Excel compacto para imprimir (sin colores, letra 8, dos columnas por hoja): antes de descargar pregunta que
                datos de la venta incluir (ver "Excel compacto" en Scripts). *@
-            <button type="button" class="btn btn-outline-success js-exportar-compacto"
+            <button type="button" class="btn btn-sm btn-outline-success js-exportar-compacto"
                     data-export-url="@Url.Action("LineasExcelCompacto", "Ventas")"
                     title="Excel sin colores y en dos columnas por hoja, para imprimir">
                 <i class="fas fa-print mr-1"></i> Excel compacto
             </button>
-            <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
-                <i class="fas fa-arrow-left mr-1"></i> Volver al indice
-            </a>
-        </div>
     </div>
 
-    <div class="card shadow-sm mb-3 elaborados-filtros-card" data-filtros-celular>
+    <div class="card shadow-sm mb-2 elaborados-filtros-card" data-filtros-celular>
         <div class="card-body">
             <form method="get" action="@Url.Action("Lineas", "Ventas")" class="js-form-filtros-lineas">
                 <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
                     Se modificaron filtros principales. Presioná <strong>Buscar</strong> para recargar los datos.
                 </div>
 
-                <div class="elaborados-filtros-grid lineas-filtros-grid cols-4">
+                <div class="elaborados-filtros-grid vl-fila vl-fila-1">
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Fecha desde</label>
+                        <input name="fechaDesde" id="fechaDesdeVentasLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Fecha hasta</label>
+                        <input name="fechaHasta" id="fechaHastaVentasLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label">Sucursal</label>
                         <select name="idSucursal" id="idSucursalVentasLineas" class="form-control">
@@ -56,32 +112,26 @@
                             }
                         </select>
                     </div>
-                    <div class="form-group mb-0">
-                        <label class="elaborados-filtro-label">Fecha desde</label>
-                        <input name="fechaDesde" id="fechaDesdeVentasLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="elaborados-filtro-label">Fecha hasta</label>
-                        <input name="fechaHasta" id="fechaHastaVentasLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="elaborados-filtro-label">Producto</label>
-                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="producto" value="@Model.Producto" placeholder="Codigo o descripcion" autocomplete="off" />
-                    </div>
                     <div class="form-group mb-0 lineas-filtro-accion">
                         <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
-                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarVentasLineas">
+                        <button type="submit" class="btn btn-primary btn-block" id="btnBuscarVentasLineas">
                             <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                         </button>
                     </div>
+                    @* Limpiar filtros: vuelve a la pantalla como se entra (hoy de 00:00 a 23:59, todas las sucursales y sin filtros). *@
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <a class="btn btn-outline-secondary btn-block js-limpiar-filtros"
+                           href="@Url.Action("Lineas", "Ventas", new { fechaDesde = DateTime.Today.ToString("yyyy-MM-ddT00:00:00"), fechaHasta = DateTime.Today.ToString("yyyy-MM-ddT23:59:00") })">
+                            <i class="fas fa-eraser mr-1"></i> Limpiar filtros
+                        </a>
+                    </div>
                 </div>
 
-                <div class="mt-2">
-                    <div id="estadoBusquedaVentasLineas" class="text-muted small">Resultados actualizados.</div>
-                </div>
+                <div id="estadoBusquedaVentasLineas" class="text-muted small" aria-live="polite"></div>
 
-                <div class="row mt-3">
-                    <div class="col-12 col-md-4 mb-3">
+                <div class="elaborados-filtros-grid vl-fila vl-fila-2">
+                    <div class="form-group mb-0">
                         <label class="elaborados-filtro-label">Cliente</label>
                         @* Selector multi-seleccion (filtro-picker.js): F10 clientes. Con seleccion filtra por ID exacto; el hidden
                            idsCliente (dentro del form) conserva la seleccion al apretar Buscar / cambiar de sucursal. *@
@@ -89,73 +139,87 @@
                                data-filtro-picker="cliente" data-filtro-picker-tecla="F10" data-ids-name="idsCliente"
                                data-ids="@Model.IdsCliente" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(Model.ClientesSeleccionados)" />
                     </div>
-                    <div class="col-12 col-md-4 mb-3">
+                    <div class="form-group mb-0">
                         <label class="elaborados-filtro-label">Vendedor</label>
                         @* Idem: F9 vendedores. *@
                         <input type="text" class="form-control js-filtro-vivo" data-live-filter="vendedor" value="@Model.Vendedor" placeholder="Nombre del vendedor" autocomplete="off"
                                data-filtro-picker="vendedor" data-filtro-picker-tecla="F9" data-ids-name="idsVendedor"
                                data-ids="@Model.IdsVendedor" data-items="@WebCore.Services.FiltroPickerService.ItemsAJson(Model.VendedoresSeleccionados)" />
                     </div>
-                    <div class="col-12 col-md-4 mb-3">
+                    <div class="form-group mb-0">
                         <label class="elaborados-filtro-label d-block">Forma de pago</label>
-                        <div class="border rounded p-2">
+                        <div class="vl-pagos">
                             @foreach (var formaPago in new[] { "Efectivo", "Debito", "Credito", "CtaCte", "Qr", "Transferencia" })
                             {
-                                <label class="mr-3 mb-1">
+                                <label class="vl-pago mb-0">
                                     <input type="checkbox"
                                            class="js-filtro-vivo"
                                            data-live-filter="formaPago"
                                            value="@formaPago"
                                            @(Model.FormasPagoSeleccionadas.Any(x => string.Equals(x, formaPago, StringComparison.OrdinalIgnoreCase)) ? "checked" : "") />
-                                    <span class="ml-1">@formaPago</span>
+                                    <span>@formaPago</span>
                                 </label>
                             }
                         </div>
                     </div>
-                </div>
-
-                <div class="d-flex align-items-center flex-wrap mt-1" style="gap:.75rem;">
-                    @* "Ver detalles" solo aplica a la vista agrupada (en la vista plana ya se ven todos los datos): lineas-agrupadas.js lo oculta. *@
-                    <div class="custom-control custom-switch mr-3 js-detalles-switch-wrap">
-                        <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesVentas" />
-                        <label class="custom-control-label" for="expandirDetallesVentas">Ver detalles</label>
+                    @* Filtros por linea (2026-11-27): se aplican en el navegador como los demas; llevan name para que Buscar conserve lo
+                       elegido. El servidor solo los aplica en PDF y Excel (LineasVentaClasificacion). *@
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="filtroDescuentoVentasLineas">Descuento / recargo</label>
+                        <select name="descuento" id="filtroDescuentoVentasLineas" class="form-control js-filtro-vivo" data-live-filter="descuento">
+                            <option value="">Todas</option>
+                            <option value="desc" selected="@(Model.FiltroDescuento == "desc" ? "selected" : null)">Con descuento</option>
+                            <option value="rec" selected="@(Model.FiltroDescuento == "rec" ? "selected" : null)">Con recargo</option>
+                            <option value="precio" selected="@(Model.FiltroDescuento == "precio" ? "selected" : null)">Precio distinto al de lista</option>
+                        </select>
                     </div>
-                    @* Alterna entre tarjetas por venta y una tabla plana con una fila por linea (ordenable). Ver lineas-agrupadas.js. *@
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVistaSoloLineas"
-                            data-clave-vista="ventas"
-                            data-texto-plana="Ver solo líneas"
-                            data-texto-agrupada="Ver agrupado por venta">
-                        <i class="fas fa-list mr-1"></i><span class="js-vista-texto">Ver solo líneas</span>
-                    </button>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="filtroAnulacionesVentasLineas">Anulaciones</label>
+                        <select name="anulaciones" id="filtroAnulacionesVentasLineas" class="form-control js-filtro-vivo" data-live-filter="anulaciones">
+                            <option value="">Todas</option>
+                            <option value="ventas" selected="@(Model.FiltroAnulaciones == "ventas" ? "selected" : null)">Ventas con anulaciones</option>
+                            <option value="solo" selected="@(Model.FiltroAnulaciones == "solo" ? "selected" : null)">Solo lo anulado</option>
+                        </select>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="lineas-resumen-grid cols-4 mb-3">
-        <div class="card border-left-primary shadow-sm lineas-resumen-card">
-            <div class="card-body py-3">
-                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalKg">0,000</div>
+    <div class="lineas-resumen-grid cols-4 vl-totales mb-2">
+        <div class="card lineas-resumen-card vl-total vl-total-kg">
+            <div class="card-body">
+                <span class="vl-total-label" data-texto-normal="Total Kg" data-texto-solo="Kg anulados">Total Kg</span>
+                <span class="vl-total-valor" id="totalKg">0,000</span>
             </div>
         </div>
-        <div class="card border-left-success shadow-sm lineas-resumen-card">
-            <div class="card-body py-3">
-                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total pesos</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalImporte">$ 0,00</div>
+        <div class="card lineas-resumen-card vl-total vl-total-pesos">
+            <div class="card-body">
+                <span class="vl-total-label" data-texto-normal="Total pesos" data-texto-solo="Pesos anulados">Total pesos</span>
+                <span class="vl-total-valor" id="totalImporte">$ 0,00</span>
             </div>
         </div>
-        <div class="card border-left-info shadow-sm lineas-resumen-card">
-            <div class="card-body py-3">
-                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Cantidad de lineas</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalLineas">0</div>
+        <div class="card lineas-resumen-card vl-total vl-total-lineas">
+            <div class="card-body">
+                <span class="vl-total-label" data-texto-normal="Cantidad de lineas" data-texto-solo="Ítems anulados">Cantidad de lineas</span>
+                <span class="vl-total-valor" id="totalLineas">0</span>
             </div>
         </div>
-        <div class="card border-left-secondary shadow-sm lineas-resumen-card">
-            <div class="card-body py-3">
-                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Cantidad de registros</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRegistros">0</div>
+        <div class="card lineas-resumen-card vl-total vl-total-registros">
+            <div class="card-body">
+                <span class="vl-total-label" data-texto-normal="Cantidad de registros" data-texto-solo="Ventas">Cantidad de registros</span>
+                <span class="vl-total-valor" id="totalRegistros">0</span>
             </div>
+        </div>
+    </div>
+
+    @* Producto: ultimo campo, inmediatamente arriba de la tabla, con el cursor puesto al entrar. Va fuera del <form> a proposito:
+       filtra en vivo y Enter no recarga la pantalla (antes borraba lo escrito). *@
+    <div class="vl-producto mb-2">
+        <div class="input-group">
+            <label class="input-group-text mb-0" for="productoVentasLineas"><i class="fas fa-search mr-1"></i> Producto</label>
+            <input type="text" id="productoVentasLineas" class="form-control js-filtro-vivo" data-live-filter="producto" value="@Model.Producto" placeholder="Tipeá código o descripción" autocomplete="off" spellcheck="false" />
+            <button type="button" class="btn btn-outline-secondary js-borrar-producto" title="Borrar producto" aria-label="Borrar producto"><i class="fas fa-times"></i></button>
         </div>
     </div>
 
@@ -188,7 +252,14 @@
                 <div class="card-header bg-white">
                     <div class="d-flex justify-content-between align-items-start flex-wrap">
                         <div>
-                            <div class="linea-resumen-principal">@venta.ResumenCompacto</div>
+                            @{
+                                var sucursalVenta = venta.Campos.FirstOrDefault(x => x.Etiqueta == "Sucursal")?.Valor ?? "-";
+                            }
+                            <div class="linea-resumen-principal">
+                                <span class="vl-fecha">@venta.FechaVenta.ToString("dd/MM/yyyy") <span class="vl-hora">@venta.FechaVenta.ToString("HH:mm")</span></span>
+                                <span class="vl-suc vl-suc-@(colorSucursal.TryGetValue(sucursalVenta, out var indiceColor) ? indiceColor : 0)">@sucursalVenta</span>
+                                <span class="vl-vend">@(vendedor != null ? vendedor.Valor : "-")</span>
+                            </div>
                             <div class="linea-resumen-secundario">@venta.ResumenSecundario</div>
                         </div>
                         <div class="linea-resumen-tools mt-2 mt-md-0">
@@ -207,7 +278,7 @@
                     </div>
                 </div>
                 <div class="table-responsive js-sync-scroll-body">
-                    <table class="table table-sm table-hover mb-0 lineas-cel lineas-cel-precio">
+                    <table class="table table-sm table-hover mb-0 vl-tabla lineas-cel lineas-cel-precio">
                         <thead class="thead-light">
                             <tr>
                                 <th>Codigo producto</th>
@@ -220,18 +291,40 @@
                         <tbody>
                             @foreach (var linea in venta.Lineas)
                             {
-                                <tr class="js-linea-row"
+                                var claseAnulada = linea.TipoAnulacion == "contra" ? "anulada contra" : (linea.TipoAnulacion == "original" ? "anulada original-anulada" : "");
+
+                                <tr class="js-linea-row @claseAnulada"
+                                    data-descuento="@linea.TipoDescuento"
+                                    data-descuento-texto="@linea.DescuentoTexto"
+                                    data-anulacion="@linea.TipoAnulacion"
+                                    data-solo-anulado="@(linea.SoloAnulado ? "1" : "0")"
+                                    data-venta-anulacion="@(venta.ConAnulacion ? "1" : "0")"
+                                    data-cancelada="@(venta.Cancelada ? "1" : "0")"
                                     data-codigo="@linea.Codigo"
                                     data-producto="@linea.Producto"
                                     data-kg="@linea.CantidadKg"
                                     data-precio="@linea.Precio"
                                     data-total="@linea.Total"
                                     data-unidades="0">
-                                    <td>@linea.Codigo</td>
-                                    <td>@linea.Producto</td>
-                                    <td class="text-right">@linea.CantidadKgTexto</td>
-                                    <td class="text-right" data-label="Precio">@linea.PrecioTexto</td>
-                                    <td class="text-right" data-label="Total">@linea.TotalTexto</td>
+                                    <td class="lc-codigo">@linea.Codigo</td>
+                                    <td class="lc-producto">
+                                        <span class="js-producto-nombre">@linea.Producto</span>
+                                        @if (linea.TipoDescuento != "")
+                                        {
+                                            <span class="vl-dr vl-dr-@linea.TipoDescuento">@linea.DescuentoTexto</span>
+                                        }
+                                        @if (linea.TipoAnulacion != "")
+                                        {
+                                            <span class="vl-marca">@(linea.TipoAnulacion == "contra" ? "Anulación" : "Anulada")</span>
+                                        }
+                                        @if (venta.Cancelada)
+                                        {
+                                            <span class="vl-marca vl-marca-cancelada">Venta cancelada</span>
+                                        }
+                                    </td>
+                                    <td class="text-right lc-kg"><span class="vl-cant">@linea.CantidadKgTexto</span></td>
+                                    <td class="text-right lc-precio" data-label="Precio">@linea.PrecioTexto</td>
+                                    <td class="text-right lc-total" data-label="Total">@linea.TotalTexto</td>
                                 </tr>
                             }
                         </tbody>
@@ -246,7 +339,7 @@
        (encabezado y filas se generan en el navegador); empieza oculta. *@
     <div class="card shadow-sm js-vista-plana d-none">
         <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0 elaborados-table-compact lineas-tabla-plana">
+            <table class="table table-sm table-hover mb-0 vl-tabla elaborados-table-compact lineas-tabla-plana">
                 <thead class="thead-light"><tr class="js-plana-encabezado"></tr></thead>
                 <tbody class="js-plana-cuerpo"></tbody>
             </table>
@@ -255,161 +348,217 @@
 </div>
 
 <style>
+    /* Lineas de venta (rediseño 2026-11-26, ver docs/DECISIONS.md): botones chicos, filtros en dos renglones, totales en tira, Producto pegado
+       a la tabla y datos resaltados. Todo va acotado a esta pantalla: Compras, Stock y Movimientos comparten el script pero no estos estilos. */
     .container-fluid[data-lineas-agrupadas-page="ventas"] {
-        font-size: .9rem;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .card-body {
-        padding: .82rem 1rem;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .card-body {
-        padding: .72rem .85rem;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtro-label {
-        font-size: .76rem;
-        font-weight: 600;
-        margin-bottom: .18rem;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .form-control,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .btn {
-        min-height: 2.35rem;
-        font-size: .87rem;
-        padding: .32rem .62rem;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .alert,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .small,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .text-muted,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .custom-control-label {
-        font-size: .8rem !important;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-grid {
-        gap: .65rem;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .card-body {
-        padding: .58rem .76rem !important;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .text-xs {
-        font-size: .67rem;
-        line-height: 1.05;
-        margin-bottom: .12rem !important;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .h5 {
-        font-size: .96rem;
-        line-height: 1.05;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-registro-card .card-header {
-        padding: .68rem .82rem;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-principal {
         font-size: .86rem;
-        line-height: 1.15;
     }
 
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-secundario,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-registro-extra .small,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-empty-state {
-        font-size: .78rem !important;
+    /* ---- Botones de arriba ---- */
+    [data-lineas-agrupadas-page="ventas"] .vl-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .35rem; margin-bottom: .45rem; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-acciones .btn { font-size: .76rem; line-height: 1.15; padding: .24rem .6rem; min-height: 0; border-radius: .45rem; margin: 0; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-acciones .btn.vl-volver { margin-right: auto; }
+    [data-lineas-agrupadas-page="ventas"] .vl-acciones .custom-control-label { font-size: .78rem; }
+
+    /* ---- Elegir columnas ---- */
+    [data-lineas-agrupadas-page="ventas"] .vl-columnas { position: relative; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-acciones .btn.hay-ocultas { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 700; }
+    [data-lineas-agrupadas-page="ventas"] .vl-col-panel { display: none; position: absolute; right: 0; top: calc(100% + .3rem); z-index: 1050; width: 250px; max-height: 70vh; overflow-y: auto; padding: .55rem .65rem; background: #fff; color: #000; border: 1px solid #cbd5e1; border-radius: .6rem; box-shadow: 0 10px 28px rgba(15, 23, 42, .18); text-align: left; }
+    [data-lineas-agrupadas-page="ventas"] .vl-col-panel.abierto { display: block; }
+    [data-lineas-agrupadas-page="ventas"] .vl-col-titulo { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #475569; margin-bottom: .25rem; }
+    [data-lineas-agrupadas-page="ventas"] .vl-col-rapidas { display: flex; gap: .35rem; margin-bottom: .45rem; padding-bottom: .45rem; border-bottom: 1px solid #e2e8f0; }
+    [data-lineas-agrupadas-page="ventas"] .vl-col-rapidas .btn { flex: 1; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-acciones .vl-col-rapidas .btn.activa { background: #1e293b; border-color: #1e293b; color: #fff; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-col-panel label { display: flex; align-items: center; gap: .5rem; margin: 0; padding: .16rem .2rem; font-size: .82rem; font-weight: 400; text-transform: none; cursor: pointer; border-radius: .3rem; }
+    [data-lineas-agrupadas-page="ventas"] .vl-col-panel label:hover { background: #eef4ff; }
+    [data-lineas-agrupadas-page="ventas"] .vl-col-panel label small { margin-left: auto; color: #64748b; }
+    /* Con pocas columnas la tabla no se estira: quedan juntas a la izquierda y el sobrante va despues de la ultima (el ojo). */
+    @@media (min-width: 768px) {
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla.compacta > thead > tr > th,
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla.compacta > tbody > tr > td { white-space: nowrap; padding-left: .8rem; padding-right: .8rem; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla.compacta > thead > tr > th:last-child,
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla.compacta > tbody > tr > td:last-child { width: 100%; }
+        [data-lineas-agrupadas-page="ventas"] table.vl-tabla.compacta > thead > tr > th wbr { display: none; }
+    }
+    /* En celular el panel va centrado en la pantalla: anclado al boton se salia por un costado. */
+    @@media (max-width: 767.98px) {
+        [data-lineas-agrupadas-page="ventas"] .vl-col-panel { position: fixed; right: auto; left: 50%; top: 15vh; transform: translateX(-50%); }
+    }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-col-panel { background: #162032; color: #f1f5f9; border-color: #334155; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-col-panel label:hover { background: #243044; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-col-titulo { color: #cbd5e1; }
+
+    /* ---- Filtros ---- */
+    [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .card-body { padding: .55rem .7rem; }
+    [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .alert { font-size: .8rem; }
+    [data-lineas-agrupadas-page="ventas"] .elaborados-filtro-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin-bottom: .12rem; color: #1f2937; }
+    [data-lineas-agrupadas-page="ventas"] #estadoBusquedaVentasLineas:not(:empty) { margin-top: .3rem; font-size: .78rem; }
+    [data-lineas-agrupadas-page="ventas"] .vl-fila-2 { margin-top: .45rem; }
+    [data-lineas-agrupadas-page="ventas"] .js-limpiar-filtros { display: block; width: 100%; }
+
+    /* Contenido de los campos en negro fuerte con letra normal; el texto de ayuda queda gris. */
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .form-control,
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .form-control { color: #000; font-weight: 400; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .form-control::placeholder,
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .form-control::placeholder { color: #8a94a6; }
+
+    /* Formas de pago como botones: la casilla sigue existiendo (la leen los filtros y los exports), solo se oculta a la vista. */
+    [data-lineas-agrupadas-page="ventas"] .vl-pagos { display: flex; flex-wrap: wrap; gap: .25rem; }
+    [data-lineas-agrupadas-page="ventas"] .vl-pago { position: relative; cursor: pointer; }
+    [data-lineas-agrupadas-page="ventas"] .vl-pago input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    [data-lineas-agrupadas-page="ventas"] .vl-pago span { display: flex; align-items: center; height: 2rem; padding: 0 .65rem; border: 1px solid var(--ui-border, #d6dbe4); border-radius: 999px; font-size: .78rem; }
+    [data-lineas-agrupadas-page="ventas"] .vl-pago input:checked + span { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 700; }
+    [data-lineas-agrupadas-page="ventas"] .vl-pago input:focus-visible + span { box-shadow: 0 0 0 .2rem rgba(37, 99, 235, .35); }
+
+    /* ---- Totales en una tira ---- */
+    [data-lineas-agrupadas-page="ventas"] .vl-totales { gap: .4rem; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-total { border: 1px solid var(--ui-border, #e3e8ef); border-left: 4px solid var(--vl-color) !important; border-radius: .55rem; }
+    [data-lineas-agrupadas-page="ventas"] .vl-total-kg { --vl-color: #2563eb; }
+    [data-lineas-agrupadas-page="ventas"] .vl-total-pesos { --vl-color: #15803d; }
+    [data-lineas-agrupadas-page="ventas"] .vl-total-lineas { --vl-color: #0e7490; }
+    [data-lineas-agrupadas-page="ventas"] .vl-total-registros { --vl-color: #64748b; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-total .card-body { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .1rem .5rem; padding: .32rem .75rem; }
+    [data-lineas-agrupadas-page="ventas"] .vl-total-label { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--vl-color); }
+    [data-lineas-agrupadas-page="ventas"] .vl-total-valor { font-size: 1rem; font-weight: 700; white-space: nowrap; }
+
+    /* ---- Producto, pegado a la tabla: contorno azul sutil, sin fondo (2026-11-27) ---- */
+    [data-lineas-agrupadas-page="ventas"] .vl-producto { padding: .45rem .5rem; }
+    [data-lineas-agrupadas-page="ventas"] .vl-producto .input-group { border: 1.5px solid #6ea8fe; border-radius: .7rem; box-shadow: 0 0 0 2px rgba(37, 99, 235, .10); background: #fff; flex-wrap: nowrap; overflow: hidden; }
+    [data-lineas-agrupadas-page="ventas"] .vl-producto .input-group:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(37, 99, 235, .16); }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .input-group-text,
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .form-control,
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .btn { height: 2.2rem; min-height: 2.2rem; font-size: .82rem; padding: .2rem .65rem; border: 0; box-shadow: none; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .input-group-text { background: #fff; color: #1d4ed8; font-weight: 700; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .form-control { background: #fff; font-size: .95rem; }
+
+    /* ---- Tarjetas de la vista agrupada ---- */
+    [data-lineas-agrupadas-page="ventas"] .linea-registro-card .card-header { padding: .5rem .75rem; }
+    [data-lineas-agrupadas-page="ventas"] .linea-resumen-principal { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .84rem; line-height: 1.15; }
+    [data-lineas-agrupadas-page="ventas"] .linea-resumen-secundario,
+    [data-lineas-agrupadas-page="ventas"] .linea-registro-extra .small,
+    [data-lineas-agrupadas-page="ventas"] .lineas-empty-state { font-size: .78rem !important; }
+    [data-lineas-agrupadas-page="ventas"] .linea-resumen-tools .badge,
+    [data-lineas-agrupadas-page="ventas"] .linea-resumen-tools .btn { font-size: .78rem; }
+
+    /* ---- Tablas (las dos vistas) ---- */
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla { font-size: .8rem; }
+    body.app-shell #content [data-lineas-agrupadas-page="ventas"] table.vl-tabla > thead > tr > th { font-size: .64rem; font-weight: 400; letter-spacing: .02em; text-transform: uppercase; padding: .4rem .45rem; line-height: 1.1; vertical-align: bottom; background: #e8edf5 !important; color: #000 !important; border-bottom: 2px solid #cbd5e1; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td { color: #475569; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-codigo,
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-cliente,
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-vendedor,
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-precio { color: #000; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-producto { font-weight: 700; color: #0f172a; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-total { font-weight: 700; color: #0f172a; white-space: nowrap; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-creado { font-size: .72rem; color: #7b879a; }
+    [data-lineas-agrupadas-page="ventas"] td.lc-vendedor,
+    [data-lineas-agrupadas-page="ventas"] td.lc-precio { white-space: nowrap; }
+
+    /* Datos resaltados */
+    [data-lineas-agrupadas-page="ventas"] .vl-fecha { white-space: nowrap; font-weight: 700; color: #0f172a; }
+    [data-lineas-agrupadas-page="ventas"] .vl-hora { display: inline-block; margin-left: .3rem; padding: .02rem .36rem; border-radius: .35rem; background: #e5e7eb; color: #0f172a; font-weight: 700; font-variant-numeric: tabular-nums; }
+    [data-lineas-agrupadas-page="ventas"] .vl-suc { display: inline-block; white-space: nowrap; padding: .08rem .5rem; border-radius: 999px; font-size: .78rem; color: #000; background: #c8ede7; }
+    [data-lineas-agrupadas-page="ventas"] .vl-suc-1 { background: #e2d5fa; }
+    [data-lineas-agrupadas-page="ventas"] .vl-suc-2 { background: #fde2c8; }
+    [data-lineas-agrupadas-page="ventas"] .vl-suc-3 { background: #d6e4ff; }
+    [data-lineas-agrupadas-page="ventas"] .vl-vend { white-space: nowrap; color: #000; }
+    [data-lineas-agrupadas-page="ventas"] .vl-cant { display: inline-block; min-width: 4.4rem; text-align: right; padding: .08rem .45rem; border-radius: .4rem; background: #ffedc2; color: #0f172a; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* ---- Descuento / recargo y anulaciones ---- */
+    [data-lineas-agrupadas-page="ventas"] .vl-dr { display: inline-block; padding: .05rem .45rem; border-radius: .35rem; font-size: .74rem; font-weight: 700; white-space: nowrap; }
+    [data-lineas-agrupadas-page="ventas"] .vl-dr-desc { background: #dcf5e3; color: #14602c; }
+    [data-lineas-agrupadas-page="ventas"] .vl-dr-rec { background: #ffe4d1; color: #8a3400; }
+    [data-lineas-agrupadas-page="ventas"] .vl-dr-precio { background: #eceef2; color: #374151; }
+    [data-lineas-agrupadas-page="ventas"] .vl-marca { display: inline-block; margin-left: .4rem; padding: 0 .4rem; border: 1px solid currentColor; border-radius: 999px; color: #b42318; font-size: .66rem; font-weight: 700; line-height: 1.35; vertical-align: middle; white-space: nowrap; }
+    [data-lineas-agrupadas-page="ventas"] .vl-marca-cancelada { color: #fff; background: #b42318; border-color: #b42318; }
+    [data-lineas-agrupadas-page="ventas"] .lc-producto .vl-dr { margin-left: .4rem; }
+    /* El tachado va solo sobre los datos del item anulado; en "Solo lo anulado" (todo anulado) no se tacha. */
+    [data-lineas-agrupadas-page="ventas"]:not(.vl-solo-anulado) tr.original-anulada .js-producto-nombre,
+    [data-lineas-agrupadas-page="ventas"]:not(.vl-solo-anulado) tr.original-anulada .vl-cant,
+    [data-lineas-agrupadas-page="ventas"]:not(.vl-solo-anulado) tr.original-anulada > td.lc-precio,
+    [data-lineas-agrupadas-page="ventas"]:not(.vl-solo-anulado) tr.original-anulada > td.lc-total { text-decoration: line-through; text-decoration-color: #b42318; }
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.contra > td.lc-total,
+    body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.contra .vl-cant { color: #b42318; }
+
+    /* Filas intercaladas: la clase lc-alterna la pone lineas-agrupadas.js sobre las filas VISIBLES (con nth-child, filtrar rompia el intercalado).
+       Desde 768 px: en celular cada linea es una grilla (filtros-celular.css) y el fondo va en la fila. */
+    @@media (min-width: 768px) {
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td { padding: .3rem .45rem; line-height: 1.2; vertical-align: middle; background: #fff; box-shadow: none; border-bottom: 1px solid #e6ebf2; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.lc-alterna > td { background: #f1f6fd; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr:hover > td { background: #e2edfc; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.anulada > td { background: #fff3f2; }
+        /* La vista plana tiene muchas columnas: con menos margen lateral entra sin desplazarse en una pantalla de 1524 px. */
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.lineas-tabla-plana > thead > tr > th,
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.lineas-tabla-plana > tbody > tr > td { padding-left: .3rem; padding-right: .3rem; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-fila-1,
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-fila-2 { gap: .5rem; align-items: end; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .form-control,
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .input-group-text,
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .btn { min-height: 2rem; font-size: .82rem; padding: .2rem .55rem; }
     }
 
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-tools .badge,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-tools .btn {
-        font-size: .78rem;
+    @@media (max-width: 767.98px) {
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td { background: transparent; box-shadow: none; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.lc-alterna { background: #f1f6fd; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.anulada { background: #fff3f2; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-grid.vl-fila-2 > :nth-child(3) { grid-column: 1 / -1 !important; }
     }
 
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .table {
-        font-size: .84rem;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .table th,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .table td {
-        padding: .42rem .58rem;
-        line-height: 1.15;
-        vertical-align: middle;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .table thead th,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .table > thead > tr > th {
-        font-size: .73rem;
-        font-weight: 700;
-        letter-spacing: .02em;
-        text-transform: uppercase;
-        padding-top: .38rem;
-        padding-bottom: .38rem;
-        line-height: 1.1;
-    }
-
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .table thead.thead-light th,
-    .container-fluid[data-lineas-agrupadas-page="ventas"] .table .thead-light th {
-        font-size: .73rem !important;
-        font-weight: 700;
-        letter-spacing: .02em;
-        text-transform: uppercase;
-        padding-top: .38rem;
-        padding-bottom: .38rem;
-        line-height: 1.1;
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-grid.vl-fila-1,
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-grid.vl-fila-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        [data-lineas-agrupadas-page="ventas"] .vl-fila-2 > :nth-child(3) { grid-column: 1 / -1; }
+        [data-lineas-agrupadas-page="ventas"] .lineas-filtro-accion { grid-column: auto; }
     }
 
     @@media (min-width: 1200px) {
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .mb-3 {
-            margin-bottom: .85rem !important;
-        }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-grid.vl-fila-1 { grid-template-columns: minmax(190px, 1fr) minmax(190px, 1fr) minmax(150px, .9fr) auto auto; }
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-grid.vl-fila-2 { grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto; }
+    }
 
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .card-body {
-            padding: .7rem .85rem;
-        }
+    /* Los cinco campos en un renglon solo cuando entran; mas angosto, los dos ultimos bajan. */
+    @@media (min-width: 1500px) {
+        body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-grid.vl-fila-2 { grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) auto minmax(150px, .75fr) minmax(180px, .85fr); }
+    }
 
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .card-body {
-            padding: .65rem .8rem;
-        }
+    /* ---- Modo oscuro: el negro pasa a blanco ---- */
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtro-label { color: #cbd5e1; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .form-control,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .form-control { color: #fff; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .input-group,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .input-group-text,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .form-control { background: #0f172a; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-producto .input-group-text { color: #8ab4ff; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-total-label { filter: brightness(1.7); }
+    html.dark-mode body.app-shell #content [data-lineas-agrupadas-page="ventas"] table.vl-tabla > thead > tr > th { background: #243044 !important; color: #fff !important; border-bottom-color: #475569; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td { color: #a9b6c9; border-bottom-color: #2a374c; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-codigo,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-cliente,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-vendedor,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-precio,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-producto,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td.lc-total,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-fecha,
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-vend { color: #fff; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-hora { background: #374151; color: #f8fafc; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-marca { color: #ff9d94; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-marca-cancelada { color: #fff; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-suc { background: #123f3a; color: #fff; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-suc-1 { background: #33205a; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-suc-2 { background: #4a2a10; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-suc-3 { background: #1e2f57; }
+    html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] .vl-cant { background: #4a3208; color: #ffd780; }
 
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .form-control,
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .btn {
-            min-height: 2.15rem;
-            font-size: .84rem;
-            padding: .28rem .56rem;
-        }
+    @@media (min-width: 768px) {
+        html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr > td { background: #162032; }
+        html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.lc-alterna > td { background: #1c2940; }
+        html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr:hover > td { background: #263a5c; }
+        html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.anulada > td { background: #33191b; }
+    }
 
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .card-body {
-            padding: .5rem .7rem !important;
-        }
-
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .h5 {
-            font-size: .86rem;
-        }
-
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-registro-card .card-header {
-            padding: .6rem .78rem;
-        }
-
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-principal {
-            font-size: .81rem;
-        }
-
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .table {
-            font-size: .8rem;
-        }
-
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .table thead th,
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .table > thead > tr > th {
-            font-size: .68rem;
-        }
-
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .table thead.thead-light th,
-        .container-fluid[data-lineas-agrupadas-page="ventas"] .table .thead-light th {
-            font-size: .68rem !important;
-            padding-top: .34rem;
-            padding-bottom: .34rem;
-        }
+    @@media (max-width: 767.98px) {
+        html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.lc-alterna { background: #1c2940; }
+        html.dark-mode body.app-shell [data-lineas-agrupadas-page="ventas"] table.vl-tabla > tbody > tr.anulada { background: #33191b; }
     }
 </style>
 
@@ -420,6 +569,8 @@
     @* Selector multi-seleccion de Cliente / Vendedor: el modal va ANTES del script del componente (lee de el las URLs). *@
     <partial name="~/Views/Shared/_FiltroPickerModal.cshtml" />
     <script src="@Url.Content("~/Scripts/app/filtro-picker.js")" asp-append-version="true"></script>
+    @* Aviso antes de una busqueda pesada: va antes del script de abajo, que usa window.AvisoBusquedaPesada. *@
+    <script src="@Url.Content("~/Scripts/app/aviso-busqueda-pesada.js")" asp-append-version="true"></script>
     <script>
         (function () {
             var form = document.querySelector('.js-form-filtros-lineas');
@@ -446,8 +597,8 @@
                 }
             }
 
-            function submitConLoader() {
-                showNavigationLoading('Cargando solicitud...');
+            function submitConLoader(mensaje) {
+                showNavigationLoading(mensaje || 'Cargando solicitud...');
                 window.setTimeout(function () {
                     if (nativeFormSubmit) {
                         nativeFormSubmit.call(form);
@@ -474,15 +625,43 @@
                 if (estado) estado.textContent = mensaje || 'Actualizando búsqueda...';
             }
 
-            function enviarEnVivo() {
-                setBuscando('Actualizando búsqueda en vivo...');
+            // ---- Aviso de busqueda pesada (aviso-busqueda-pesada.js) ----
+            // Antes de recargar, el servidor cuenta lo que traeria el filtro; si supera el limite se pregunta. Sin el
+            // componente, o si el conteo falla, se busca como siempre.
+            var urlContar = '@Url.Action("ContarBusqueda", "Ventas")';
+            var consultandoCantidad = false;
+            var sucursalAplicada = inputSucursal ? inputSucursal.value : '-1';
 
+            function confirmarBusqueda(pantalla, filtros, alSeguir, alCancelar) {
+                if (!window.AvisoBusquedaPesada) {
+                    alSeguir('');
+                    return;
+                }
+                if (consultandoCantidad) return;
+                consultandoCantidad = true;
+                if (btnBuscar) btnBuscar.disabled = true;
+                window.AvisoBusquedaPesada.confirmar(urlContar, pantalla, filtros).then(function (respuesta) {
+                    consultandoCantidad = false;
+                    if (btnBuscar) btnBuscar.disabled = false;
+                    if (respuesta.continuar) alSeguir(respuesta.mensaje);
+                    else if (alCancelar) alCancelar();
+                });
+            }
+
+            function enviarEnVivo() {
                 if (hayFechasPendientes()) {
                     if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
                     if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                    actualizarAviso();
                 }
 
-                submitConLoader();
+                confirmarBusqueda('lineas',
+                    { fechaDesde: fechasAplicadas.fechaDesde, fechaHasta: fechasAplicadas.fechaHasta, idSucursal: inputSucursal.value },
+                    function (mensaje) {
+                        setBuscando('Actualizando búsqueda en vivo...');
+                        submitConLoader(mensaje);
+                    },
+                    function () { inputSucursal.value = sucursalAplicada; });
             }
 
             if (inputFechaDesde) inputFechaDesde.addEventListener('change', actualizarAviso);
@@ -528,6 +707,8 @@
                 params.set('idsCliente', idsFiltroVivo('cliente'));
                 params.set('idsVendedor', idsFiltroVivo('vendedor'));
                 params.set('formasPago', formasPagoTildadas());
+                params.set('descuento', valorFiltroVivo('descuento'));
+                params.set('anulaciones', valorFiltroVivo('anulaciones'));
                 return urlBase + '?' + params.toString();
             }
 
@@ -664,18 +845,60 @@
                 }
 
                 event.preventDefault();
-                fechasAplicadas = {
+                var pedidas = {
                     fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
                     fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
                 };
-                actualizarAviso();
-                setBuscando('Actualizando búsqueda...');
-                form.dataset.loadingSubmitPending = 'true';
-                submitConLoader();
+                // Las fechas pasan a "aplicadas" recien si se confirma: si se cancela, los exports siguen con las de la pantalla.
+                confirmarBusqueda('lineas',
+                    { fechaDesde: pedidas.fechaDesde, fechaHasta: pedidas.fechaHasta, idSucursal: inputSucursal ? inputSucursal.value : '-1' },
+                    function (mensaje) {
+                        fechasAplicadas = pedidas;
+                        actualizarAviso();
+                        setBuscando('Actualizando búsqueda...');
+                        form.dataset.loadingSubmitPending = 'true';
+                        submitConLoader(mensaje);
+                    },
+                    function () {
+                        // lineas-agrupadas.js oculta el aviso al enviar: si se cancela, las fechas siguen sin aplicar y hay que mostrarlo.
+                        actualizarAviso();
+                        if (inputFechaDesde) inputFechaDesde.focus();
+                    });
             });
+
+            // "Volver" recarga el indice de Ventas con el mismo periodo: tambien se avisa. Con Ctrl/Shift (otra pestaña) no se intercepta.
+            var enlaceVolver = document.querySelector('.js-volver-ventas');
+            if (enlaceVolver) {
+                enlaceVolver.addEventListener('click', function (event) {
+                    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+                    event.preventDefault();
+                    confirmarBusqueda('ventas',
+                        { fechaDesde: enlaceVolver.dataset.fechaDesde, fechaHasta: enlaceVolver.dataset.fechaHasta, idSucursal: enlaceVolver.dataset.idSucursal },
+                        function (mensaje) {
+                            showNavigationLoading(mensaje || 'Cargando solicitud...');
+                            window.location.href = enlaceVolver.href;
+                        });
+                });
+            }
+
+            // ---- Producto ----
+            var inputProducto = document.getElementById('productoVentasLineas');
+            var borrarProducto = document.querySelector('.js-borrar-producto');
+            if (borrarProducto && inputProducto) {
+                borrarProducto.addEventListener('click', function () {
+                    inputProducto.value = '';
+                    inputProducto.dispatchEvent(new Event('input', { bubbles: true }));
+                    inputProducto.focus();
+                });
+            }
+            // Cursor puesto en Producto al entrar, solo en computadora (en un celular o tablet abriria el teclado solo).
+            if (inputProducto && window.matchMedia && window.matchMedia('(min-width: 768px) and (pointer: fine)').matches) {
+                inputProducto.focus({ preventScroll: true });
+            }
         })();
     </script>
     <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/columnas-visibles.js")" asp-append-version="true"></script>
 }
 
 @Html.Partial("~/Views/Shared/_FiltrosCelular.cshtml")

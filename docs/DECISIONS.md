@@ -1,3 +1,21 @@
+## 2026-11-27 (c) - Líneas de venta: filtros de descuento/recargo y anulaciones, y resaltados más suaves
+
+- **Pedido (con maqueta aprobada):** filtrar las líneas con recargo o descuento y las anuladas; resaltados menos invasivos (buscador de Producto con contorno azul fino y sin fondo; encabezados chicos, sin negrita y en negro; hora en gris; producto, cantidad, hora y total con el grosor de la fecha).
+- **Descuento / recargo:** Todas / Con descuento / Con recargo / Precio distinto al de lista. El porcentaje (`bonificacion`: > 0 descuento, < 0 recargo) manda; sin porcentaje, `ajustePrecio` (cobrado menos lista **al grabar**) distinto de cero. Para esto la consulta de líneas trae además `ajustePrecio` (Postgres y SQL Server; sin cambios de schema ni de firmas). Columna **Desc./Rec.** (se oculta desde Columnas). Límite: una venta regrabada después de un cambio de lista puede quedar marcada sin que nadie tocara el precio.
+- **Anulaciones:** Todas (con marcas) / **Ventas con anulaciones** (la venta entera, recomendada para controlar: se ve qué se sacó y qué se cobró) / **Solo lo anulado** (una fila por ítem anulado; totales en positivo con títulos «Kg anulados», etc.). Una anulación son dos líneas (la original y un renglón negativo que la apunta con `idLineaVentaAnulado`); un renglón sin original se muestra él. «Venta cancelada» = todo lo cargado anulado.
+- **Dónde:** reglas en `LineasVentaClasificacion` (marcas y exports) y las mismas en `lineas-agrupadas.js` (pantalla). La pantalla trae todo y filtra en el navegador; **PDF, Excel y Excel compacto** filtran en el servidor y lo dicen en el encabezado. Los combos van en el formulario: Buscar conserva lo elegido.
+- **Descartado:** filtrar solo por línea anulada (se pierde el contexto de la venta); filtrar en el servidor también la pantalla (al volver a «Todas» faltarían filas).
+- **Nota:** el tema fija los encabezados de tabla en 14 px con un selector que usa `#content`; el tamaño propio de esta pantalla necesita el mismo id para ganarle (antes se veían más grandes que en la maqueta).
+- **Pendiente:** sin probar contra SQL Server; PDF/Excel no marcan qué líneas son anulaciones.
+
+## 2026-11-27 (b) - Líneas de venta: elegir qué columnas se ven
+
+- **Pedido (con maqueta aprobada):** ocultar columnas que no interesan en un control (nro/comprobante, sucursal, cliente, vendedor, forma de pago…) y poder volver a verlas, para que «Fecha y hora» quede pegada a código, producto y cantidad.
+- **Decisión:** botón **Columnas** (solo en «Ver solo líneas») con una casilla por columna y vistas rápidas **Todas** / **Control** (fecha y hora, código, producto, cantidad). Producto no se puede ocultar. El botón dice cuántas hay ocultas. Con 7 visibles o menos la tabla se compacta a la izquierda (desde 768 px). La elección se guarda en `localStorage` por usuario (`lineasColumnasOcultas_ventas_<id>`). Filtros, totales, PDF y Excel no cambian.
+- **Cómo:** `columnas-visibles.js`, declarativo (`data-columnas`) y reusable en otras pantallas; oculta por la clase `lc-<columna>` que ahora llevan también los encabezados de `lineas-agrupadas.js`.
+- **Descartado:** una «x» en cada encabezado (se toca sin querer al ordenar); guardarlo en la base por usuario (migración, para algo que se rehace en un toque); reordenar columnas (ocultando ya quedan juntas).
+- **Archivos:** `Views/Ventas/Lineas.cshtml`, `wwwroot/Scripts/app/{columnas-visibles,lineas-agrupadas}.js`, `WebCore.Tests/js/columnas-visibles.test.js`.
+
 ## 2026-11-27 - POS sin conexión: siempre habilitado, 15 días por inicio de sesión, contraseña y usuarios de toda la empresa
 
 - **Pedido (conversado):** nada de interruptor por sucursal; que cualquier PC quede lista con solo iniciar sesión (una PC de producción puede tener que pasar al mostrador) y que el permiso caiga solo si nadie la usa. Cambia la entrada 2026-11-26 (e) en habilitación, preparación, login y subida; el resto sigue vigente.
@@ -18,6 +36,14 @@
 - **Verificado:** de punta a punta en la copia local (Postgres) con un admin y un cajero de prueba, ya borrados; SQL Server solo compila.
 - **Corregido:** en `b9e8fb74` la lista de usuarios sin conexión usaba `getUsuarioById` (sin permisos) y dejaba afuera a todos los no administradores.
 - **Archivos:** `WebCore/Helpers/{PosOfflineSettings,PosOfflineDisponibilidad}.cs`, `Controllers/{VentasController.PosOffline,VentasController,CajasController,LoginController,NotificacionesController}.cs`, `Views/Shared/{_PosOffline,_Layout,_LayoutPOS}.cshtml`, `Views/Notificaciones/_DetalleVentaSinConexion.cshtml`, `wwwroot/{pos-offline.html,sw-pos.js}`, `wwwroot/Scripts/app/pos-offline-{app,online,pin,sync,vigencia}.js`, `Negocio/VentaOffline.cs`, `Contratos/IPosClaveUnicaRepository.cs` + repos (`TablaDisponible`).
+
+## 2026-11-26 (g) - Ventas y Líneas de venta: rediseño y aviso antes de una búsqueda pesada
+
+- **Pedido (con maqueta aprobada):** botones chicos; en Líneas, sin título repetido, Producto como último campo pegado a la tabla, «Creado» a la derecha de «Total línea», filas intercaladas y datos resaltados; en las dos pantallas, contenido de los filtros en **negro con letra normal** (no negrita) y «Limpiar filtros»; avisar antes de una búsqueda que pueda trabar la PC. El bloque de Ventas conserva su ancho (60 %).
+- **Aviso:** `GET Ventas/ContarBusqueda` cuenta ventas (Ventas) o líneas (Líneas) **antes** de cargar; si supera el límite se pregunta «Cambiar el período» (destacado y con Escape) o «Buscar igual». Se pregunta en *Buscar*, cambio de sucursal, *Ver lineas*, *Volver* y al restaurar un período guardado. **Nunca bloquea:** sin permiso, en SQL Server, con error o si el conteo pasa de 15 s se busca como siempre. Componente reusable `aviso-busqueda-pesada.js`; interfaz propia `IConteoVentasRepository` (solo Postgres) para no tocar el clásico.
+- **Límites** (`BusquedaPesada:LimiteVentas` 5000, `LimiteLineas` 1500; 0 apaga), medidos el 2026-11-27 en la PC de desarrollo con Chrome sin ventana, apuntando a unos 6 s: Líneas en el navegador 149 líneas 0,6 s, 1.390 ~5 s, 3.042 ~30 s (igual antes y después del rediseño); Ventas (servidor + navegador) 3.244 ventas 1,4 + 2,7 s, 7.602 1,7 + 6,9 s, 19.309 2,7 + 13,4 s.
+- **Descartado:** avisar por cantidad de días (no refleja el volumen real); paginar (cambia cómo funcionan filtros, totales y exports); negrita para resaltar los campos.
+- **Pendiente:** la demora de Líneas crece mucho más que la cantidad porque `lineas-agrupadas.js` (`filtrar`) busca los campos de filtro en toda la página por cada tarjeta; una prueba en memoria bajó 3.042 líneas de ~30 s a 7-10 s. Es anterior a este cambio y afecta también a Compras y Movimientos: **sin aplicar**, a decidir. El aviso en las demás pantallas (Compras, Movimientos, Stock, Elaborados) tampoco está hecho. `Ventas/Lineas` no valida un permiso propio (anterior; el conteo replica ese criterio).
 
 ## 2026-11-26 (f) - Líneas de venta: las líneas del rango se cargan por lotes
 

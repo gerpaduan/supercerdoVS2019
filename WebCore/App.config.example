@@ -76,6 +76,10 @@
     <!-- Minutos que la Session del servidor (autorizacion del operador de la cuenta de produccion) sigue viva sin
          actividad del navegador; se renueva con cada request. Entre 5 y 1440; sin la clave: 720 = 12 h (igual que el login). -->
     <add key="Sesion:IdleTimeoutMinutos" value="720" />
+    <!-- Aviso antes de una busqueda pesada en Ventas y Lineas de venta: cantidad a partir de la cual se pregunta antes de
+         cargar. 0 apaga el aviso. Sin la clave: 5000 ventas y 1500 lineas. Solo Postgres. -->
+    <add key="BusquedaPesada:LimiteVentas" value="5000" />
+    <add key="BusquedaPesada:LimiteLineas" value="1500" />
   </appSettings>
   <connectionStrings>
     <add name="ConexionPrincipal"

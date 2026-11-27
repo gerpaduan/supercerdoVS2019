@@ -6,19 +6,34 @@
 
 @Html.Partial("~/Views/Ventas/_VentasStyles.cshtml")
 
-<div class="container-fluid  p-0 vista-venta">
+@* Propio de este listado (2026-11-26, ver docs/DECISIONS.md): botones de arriba chicos, contenido de los filtros en negro fuerte con letra
+   normal y "Limpiar filtros" debajo de "Buscar". Facturas comparte _VentasStyles y no cambia. *@
+<style>
+    body.app-shell .vista-ventas-listado .vta-acciones .btn { font-size: .76rem; line-height: 1.15; padding: .24rem .6rem; min-height: 0; border-radius: .45rem; margin: 0; }
+    body.app-shell .vista-ventas-listado .filtros-ventas-card .form-control,
+    body.app-shell .vista-ventas-listado .filtros-ventas-card .filtro-forma-pago-btn { color: #000; font-weight: 400; }
+    body.app-shell .vista-ventas-listado .filtros-ventas-card .form-control::placeholder { color: #8a94a6; }
+    html.dark-mode body.app-shell .vista-ventas-listado .filtros-ventas-card .form-control,
+    html.dark-mode body.app-shell .vista-ventas-listado .filtros-ventas-card .filtro-forma-pago-btn { color: #fff; }
+
+    @@media (min-width: 768px) {
+        body.app-shell .vista-ventas-listado .filtros-fila-sucursal { grid-template-columns: minmax(0, 1fr) 140px; align-items: end; }
+    }
+</style>
+
+<div class="container-fluid  p-0 vista-venta vista-ventas-listado">
     <partial name="_AvisoReservadasListado" />
 
-    <div class="d-flex justify-content-end mb-3">
+    <div class="d-flex justify-content-end mb-2 vta-acciones" style="gap:.35rem;">
         <button type="button"
                 id="btnVerFacturasVentas"
-                class="btn btn-outline-secondary mr-2"
+                class="btn btn-sm btn-outline-secondary"
                 data-base-url="@Url.Action("Facturas", "Ventas")">
             <i class="fas fa-file-invoice-dollar mr-1"></i> Facturas
         </button>
         <button type="button"
                 id="btnVerLineasVentas"
-                class="btn btn-outline-primary"
+                class="btn btn-sm btn-outline-primary"
                 data-base-url="@Url.Action("Lineas", "Ventas")">
             <i class="fas fa-stream mr-1"></i> Ver lineas
         </button>
@@ -134,6 +149,13 @@
                                 </option>
                             }
                         </select>
+                    </div>
+                    @* Vuelve la pantalla a como se entra: hoy, todas las sucursales y sin vendedor, cliente, forma de pago ni comprobante
+                       (tambien olvida lo recordado en la sesion). Ver _VentasFacturasFiltrosScripts.cshtml. *@
+                    <div class="form-group mb-0">
+                        <button type="button" id="btnLimpiarFiltrosVentas" class="btn btn-outline-secondary btn-block">
+                            <i class="fas fa-eraser mr-1"></i> Limpiar filtros
+                        </button>
                     </div>
                 </div>
 

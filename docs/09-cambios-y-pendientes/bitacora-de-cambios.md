@@ -1,11 +1,29 @@
 # Bitacora de cambios
 
+## 2026-11-27 - Líneas de venta: filtros de descuento/recargo y anulaciones
+
+- **Cambio:** dos filtros nuevos, columna «Desc./Rec.», marcas de anulación y venta cancelada, y resaltados más suaves. Ver `docs/DECISIONS.md` (2026-11-27 (c)).
+- **Archivos:** `Services/{LineasVentaClasificacion,LineasVentaExportHelper}.cs`, `Controllers/VentasController.cs`, `Models/VentasVm.cs`, `Views/Ventas/Lineas.cshtml`, `wwwroot/Scripts/app/lineas-agrupadas.js`, `DatosPostgres/VentaPg.cs`, `Datos/Venta.cs`, `WebCore.Tests/LineasVentaClasificacionTests.cs`.
+- **Pendiente:** no desplegado; sin probar contra SQL Server (SM/SL) ni en un celular real.
+
+## 2026-11-27 - Líneas de venta: botón «Columnas»
+
+- **Cambio:** en «Ver solo líneas» se eligen las columnas visibles, con vista rápida «Control»; se recuerda por usuario en el navegador. Ver `docs/DECISIONS.md` (2026-11-27 b).
+- **Archivos:** `Views/Ventas/Lineas.cshtml`, `wwwroot/Scripts/app/{columnas-visibles,lineas-agrupadas}.js`, `WebCore.Tests/js/columnas-visibles.test.js`; manual `Ventas.Lineas.md`.
+- **Pendiente:** no desplegado; sin probar en un celular real.
+
 ## 2026-11-27 - POS sin conexión: siempre habilitado, 15 días por inicio de sesión y contraseña
 
 - **Cambio:** habilitado en todas las sucursales (queda freno de emergencia y se apaga solo sin la tabla); cualquier inicio de sesión prepara la PC y renueva 15 días; ingreso sin conexión con contraseña o PIN; se guardan los usuarios de toda la empresa (admins solo en sus PC); sube cualquier usuario de la sucursal y los vendedores no habilitados quedan marcados con aviso al admin; aviso de precios viejos. Corrige que solo los administradores quedaban habilitados para entrar sin conexión. Ver `docs/DECISIONS.md` (2026-11-27).
 - **Archivos:** ver la entrada de `DECISIONS.md`; tests `PosOfflineDisponibilidadTests.cs`, `PosOfflinePinParidadTests.cs`, `js/pos-offline-{pin,vigencia}.test.js`, `VentaOfflineTests.cs`.
 - **Verificado:** WebCore.Tests 419/419, Negocio.Tests 880/881 (el que falla, `EliminarCompra_ConEgresoEnCeroPorCtaCte`, ya fallaba en `0053bc14`+), Node 210/210, y de punta a punta con login real en la copia local: PC preparada al iniciar sesión desde el tablero, usuarios de toda la empresa, ingreso del cajero con contraseña, subida por otro usuario, vendedor dado de baja con marca y aviso en la campana, aviso de precios, vencimiento con borrado de claves y cola conservada, reloj atrasado, reactivación y freno de emergencia. Usuarios y datos de prueba borrados.
 - **Pendiente:** corte de internet real y celular; no desplegado; SM y SL necesitan HTTPS válido y su script SQL.
+
+## 2026-11-27 - Ventas y Líneas de venta: rediseño y aviso de búsqueda pesada
+
+- **Cambio:** botones chicos, filtros en negro y «Limpiar filtros»; en Líneas, Producto pegado a la tabla, «Creado» a la derecha de «Total línea», filas intercaladas y datos resaltados; aviso con la cantidad antes de cargar un período grande. Ver `docs/DECISIONS.md` (2026-11-26 g).
+- **Archivos:** `Views/Ventas/{Index,Lineas,_VentasFacturasFiltrosScripts}.cshtml`, `wwwroot/Scripts/app/{lineas-agrupadas,aviso-busqueda-pesada}.js`, `Controllers/VentasController.Conteo.cs`, `Helpers/BusquedaPesadaSettings.cs`, `Infrastructure/NegocioFactory.cs`, `Contratos/IConteoVentasRepository.cs`, `DatosPostgres/ConteoVentasPg.cs`, `App.config.example`; tests `BusquedaPesadaTests.cs` y `js/aviso-busqueda-pesada.test.js`.
+- **Pendiente:** no desplegado; sin probar contra SQL Server ni en un celular real; demora de Líneas con miles de filas a decidir.
 
 ## 2026-11-26 - Líneas de venta: carga mucho más rápida en rangos largos
 

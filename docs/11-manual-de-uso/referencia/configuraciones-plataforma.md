@@ -3,7 +3,7 @@ titulo: Mapa de configuraciones de la plataforma
 rol: superadmin
 modulo: Referencia
 orden: 1
-revisada: 2026-10-12
+revisada: 2026-11-27
 ---
 # Mapa de configuraciones de la plataforma
 
@@ -32,6 +32,8 @@ Lo que se configura **a nivel de plataforma o servidor** (no por empresa). Para 
 | `ExistenciaCarga:UmbralLatenciaMs` | 5000 | Si el último cálculo de existencia tardó más que esto (milisegundos), el servidor se considera cargado y las automáticas esperan. Rango 500–120000. Normal: ~1000 ms. |
 | `ExistenciaCarga:ReintentoSegundos` | 120 | Cada cuántos segundos reintenta una automática postergada, y cuánto dura la espera tras un cálculo lento (pasada esa espera deja entrar **una** prueba cuya duración reemplaza a la anterior). Rango 10–3600. |
 | `ExistenciaCarga:JitterInicialMaxSegundos` | 5 | La primera búsqueda automática de cada pantalla espera entre 0 y este valor (segundos) al azar, para que las pantallas abiertas a la vez no lleguen juntas. 0 = sin espera. Rango 0–60. |
+| `BusquedaPesada:LimiteVentas` | 5000 | [Ventas](ayuda:pantalla/Ventas.Index): a partir de **más** de estas ventas en el período se advierte antes de cargar. **0** apaga el aviso. Solo Postgres. |
+| `BusquedaPesada:LimiteLineas` | 1500 | [Líneas de venta](ayuda:pantalla/Ventas.Lineas): igual, contando **líneas**. **0** apaga el aviso. |
 | `Pedidos:DiasPrecioViejo` | 90 | [Pedidos](ayuda:pantalla/Pedidos.Detalle): un precio de última compra de hace **más** de estos días (respecto de la fecha del pedido) se marca como viejo (⚠) en el armado, el detalle, el PDF y el Excel (el ticket no lleva importes). Rango 1–3650. No cambia el importe, solo la advertencia. |
 | `Pedidos:DiasPrecioMaximo` | 365 | [Pedidos](ayuda:pantalla/Pedidos.Detalle) y *Ingresar pedido*: una compra de hace **más** de estos días (respecto de hoy) **no da precio**: el producto queda «sin precio», no suma al total y el total se rotula «parcial». Evita que precios de hace años (inflación) subestimen el importe. Rango 30–36500. Distinto de `DiasPrecioViejo` (ese avisa y sí suma). |
 | `Smtp*` (host, usuario, remitente…) | — | Envío de mails: recuperación de contraseña, desbloqueo, código de dispositivo y avisos a administradores. Sin esto esas funciones no mandan mails. |

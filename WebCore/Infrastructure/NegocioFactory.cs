@@ -390,6 +390,15 @@ namespace WebCore.Infrastructure
             return new DatosPostgres.ExpendioClientePg(PgConnString, empresa.IdEmpresa);
         }
 
+        // Conteo previo de un listado de ventas, para avisar antes de una busqueda pesada (2026-11-26, ver
+        // docs/DECISIONS.md). Solo Postgres: en SQL Server devuelve null y simplemente no se avisa.
+        public static Contratos.IConteoVentasRepository CrearConteoVentasRepository(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return null;
+
+            return new DatosPostgres.ConteoVentasPg(PgConnString, empresa.IdEmpresa);
+        }
+
         // Auditoria de las autorizaciones provisorias del POS (2026-11-03, ver docs/DECISIONS.md). Solo Postgres: en SQL
         // Server devuelve null y quien lo usa lo trata como "no se puede autorizar" (falla cerrada).
         public static Contratos.IAutorizacionPosRepository CrearAutorizacionPosRepository(IEmpresaContext empresa)

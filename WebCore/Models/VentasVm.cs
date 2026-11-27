@@ -128,6 +128,10 @@ namespace WebCore.Models
         public string Producto { get; set; }
         public string FormasPagoCsv { get; set; }
         public List<string> FormasPagoSeleccionadas { get; set; }
+        // Filtros por linea (LineasVentaClasificacion): "" = sin filtro. La pantalla los aplica en el navegador; los exports,
+        // en el servidor.
+        public string FiltroDescuento { get; set; } = "";
+        public string FiltroAnulaciones { get; set; } = "";
         public List<VentaLineasGrupoVm> Ventas { get; set; }
     }
 
@@ -157,6 +161,9 @@ namespace WebCore.Models
         public string EditUrl { get; set; }
         public decimal TotalImporte { get; set; }
         public decimal TotalKg { get; set; }
+        // Tiene alguna linea anulada / todo lo cargado quedo anulado.
+        public bool ConAnulacion { get; set; }
+        public bool Cancelada { get; set; }
         public List<CabeceraDetalleCampoVm> Campos { get; set; }
         public List<VentaLineaDetalleVm> Lineas { get; set; }
     }
@@ -171,5 +178,11 @@ namespace WebCore.Models
         public decimal CantidadKg { get; set; }
         public decimal Precio { get; set; }
         public decimal Total { get; set; }
+        // "desc", "rec", "precio" o "" y su texto ("Desc. 10 %").
+        public string TipoDescuento { get; set; } = "";
+        public string DescuentoTexto { get; set; } = "";
+        // "original", "contra" o ""; SoloAnulado = entra en el filtro "Solo lo anulado".
+        public string TipoAnulacion { get; set; } = "";
+        public bool SoloAnulado { get; set; }
     }
 }

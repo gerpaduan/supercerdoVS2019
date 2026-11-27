@@ -863,7 +863,7 @@ namespace DatosPostgres
         // buscarCorteById con maestro (que ya venia en false aca, asi que CorteMaestro
         // nunca se poblaba -- sin cambio de comportamiento en ese punto).
         private const string SelectLineasVenta = @"SELECT lv.idlineaventa, lv.idventa, lv.idcorte, lv.cantkg, lv.idalicuotaiva, lv.alicuotaiva, lv.preciokg,
-                    lv.kgsajustetarj, lv.bonificacion, lv.idlineaventaanulado, lv.pesobalanza, lv.idanulado,
+                    lv.kgsajustetarj, lv.bonificacion, lv.idlineaventaanulado, lv.pesobalanza, lv.idanulado, lv.ajusteprecio,
                     " + ColumnasCorteJoin + @"
                   FROM lineaventa lv
                   INNER JOIN corte c ON lv.idcorte = c.idcorte
@@ -891,6 +891,8 @@ namespace DatosPostgres
                 PrecioKg = dr["preciokg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["preciokg"]),
                 KgsAjusteTarj = dr["kgsajustetarj"] == DBNull.Value ? 0 : Convert.ToSingle(dr["kgsajustetarj"]),
                 Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
+                // Precio cobrado menos precio de lista al grabar (filtro "Precio distinto al de lista" de Lineas).
+                AjustePrecio = dr["ajusteprecio"] == DBNull.Value ? 0 : Convert.ToSingle(dr["ajusteprecio"]),
                 IndexAnulado = dr["idlineaventaanulado"] == DBNull.Value ? -1 : Convert.ToInt32(dr["idlineaventaanulado"])
             };
 
