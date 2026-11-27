@@ -3,7 +3,7 @@ titulo: Clave rápida (PIN)
 rol: usuario
 modulo: Acceso y seguridad
 orden: 20
-revisada: 2026-11-26
+revisada: 2026-11-27
 ---
 # Clave rápida (PIN)
 
@@ -12,8 +12,8 @@ Un número corto (de **4 a 6 dígitos**) que podés usar **en lugar de tu contra
 
 ## Cuándo vale
 - **Solo desde un dispositivo autorizado** por tu empresa (tu PC o celular de siempre). Desde cualquier otro dispositivo el PIN **no sirve**: ahí ingresás con tu contraseña completa.
-- Los **administradores no usan PIN para ingresar**: entran siempre con su contraseña. Con el POS sin conexión prendido pueden cargar uno que solo sirve para vender sin conexión.
-- **Sin conexión** (POS sin internet): el PIN es lo que se usa para entrar al punto de venta en una PC autorizada. Ver [Vender sin conexión](ayuda:pantalla/Ventas.POS).
+- Los **administradores no usan PIN para ingresar**: entran siempre con su contraseña. Con el POS sin conexión disponible pueden cargar uno que solo sirve para vender sin conexión.
+- **Sin conexión** (POS sin internet): se entra con la **contraseña** de siempre o con el PIN; no hace falta tener PIN. Ver [Vender sin conexión](ayuda:pantalla/Ventas.POS).
 - La contraseña completa **siempre sigue funcionando**: el PIN es un atajo, no la reemplaza.
 
 ## Cómo se configura

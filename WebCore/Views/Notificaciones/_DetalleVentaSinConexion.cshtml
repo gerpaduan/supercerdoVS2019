@@ -1,0 +1,19 @@
+@model Entidades.Notificacion
+@using System.Globalization
+
+@* Aviso al admin (2026-11-26, POS sin conexion): se cargo una venta o apertura de caja de un vendedor dado de baja,
+   bloqueado o sin permiso. Se muestra en el modal global de la campana; "Marcar atendida" lo maneja
+   Scripts/app/advertencias-admin.js. Ver docs/DECISIONS.md "POS sin conexion". *@
+
+<h5 class="mb-1"><i class="fas fa-triangle-exclamation text-warning mr-1"></i> @Model.Titulo</h5>
+<div class="small text-muted mb-2">@Model.Creado.ToString("dd/MM/yyyy HH:mm", new CultureInfo("es-AR"))</div>
+<div class="alert alert-warning py-2">@Model.Mensaje</div>
+
+@if (!Model.EstaAtendida)
+{
+    <div class="text-end mt-3">
+        <button type="button" class="btn btn-success js-atender-notificacion" data-id="@Model.Id">
+            <i class="fas fa-check-double mr-1"></i> Marcar atendida
+        </button>
+    </div>
+}

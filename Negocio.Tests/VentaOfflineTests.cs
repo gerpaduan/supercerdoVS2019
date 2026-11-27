@@ -113,6 +113,21 @@ namespace NegocioTests
             Assert.Contains("administrador", Negocio.VentaOffline.Validar(pedido, Limites(), Ahora));
         }
 
+        // ---------- Vendedor ----------
+
+        [Theory]
+        [InlineData(true, false, true, null)]
+        [InlineData(false, false, true, "dado de baja")]
+        [InlineData(false, true, false, "dado de baja")]
+        [InlineData(true, true, true, "bloqueado")]
+        [InlineData(true, false, false, "permisos de POS")]
+        public void MotivoRevisarVendedor_MarcaBajaBloqueoYFaltaDePermiso(bool activo, bool bloqueado, bool permiso, string esperado)
+        {
+            string motivo = Negocio.VentaOffline.MotivoRevisarVendedor(activo, bloqueado, permiso);
+            if (esperado == null) Assert.Null(motivo);
+            else Assert.Contains(esperado, motivo);
+        }
+
         // ---------- ClasificarCaja ----------
 
         [Fact]

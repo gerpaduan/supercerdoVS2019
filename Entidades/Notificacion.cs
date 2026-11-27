@@ -43,6 +43,11 @@ namespace Entidades
         // al renovar cambia y el aviso anterior deja de aplicar. Ver WebCore.Services.CertificadoArcaEstadoService.
         public const string TipoCertificadoArcaPorVencer = "CERTIFICADO_ARCA_POR_VENCER";
 
+        // POS sin conexion (2026-11-26): se cargo una venta o apertura de caja de un vendedor dado de baja, bloqueado o
+        // sin permiso. RefId = idventa (venta) o id de cierrecaja (apertura).
+        public const string TipoVentaSinConexionVendedor = "VENTA_SIN_CONEXION_VENDEDOR";
+        public const string TipoCajaSinConexionVendedor = "CAJA_SIN_CONEXION_VENDEDOR";
+
         public const string SeveridadAdvertencia = "ADVERTENCIA";
         public const string SeveridadInfo = "INFO";
 

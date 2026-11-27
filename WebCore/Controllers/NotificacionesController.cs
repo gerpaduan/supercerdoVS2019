@@ -53,6 +53,9 @@ namespace WebCore.Controllers
                     new { idOperador, dia = dia.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) }) ?? "";
             }
 
+            if (n.Tipo == Entidades.Notificacion.TipoVentaSinConexionVendedor || n.Tipo == Entidades.Notificacion.TipoCajaSinConexionVendedor)
+                return Url.Action("DetalleVentaSinConexion", "Notificaciones", new { idNotificacion = n.Id }) ?? "";
+
             if (n.Tipo == Entidades.Notificacion.TipoCertificadoArcaPorVencer)
                 // Titulares fiscales: el aviso de un titular no principal lleva su id en el RefId (idtitular * 1.000.000.000 + fecha).
                 return Url.Action("Index", "CertificadoArca", n.RefId >= WebCore.Services.CertificadoArcaEstadoService.FactorTitular
@@ -182,6 +185,19 @@ namespace WebCore.Controllers
         // Detalle de un borrador de Compras/Stock/Movimientos/Embutidos: resumen, linea de tiempo de
         // eventos y estado final. Sin desglose de items (ver DetalleBorradorGenericoVm): la vista muestra
         // el payload crudo, de solo lectura.
+        // Detalle (en el modal de la campana) del aviso de una venta o apertura de caja sin conexion cuyo vendedor ya no
+        // esta habilitado: el mensaje ya trae todo; solo se puede marcar como atendido.
+        [HttpGet]
+        public IActionResult DetalleVentaSinConexion(int idNotificacion)
+        {
+            if (!EsAdmin) return StatusCode(403);
+            if (!WebCore.Helpers.PosBorradorSettings.CampanaAdminHabilitada) return NotFound();
+
+            var notificacion = CrearNegocio().ObtenerNotificacion(idNotificacion);
+            if (notificacion == null) return NotFound();
+            return PartialView("~/Views/Notificaciones/_DetalleVentaSinConexion.cshtml", notificacion);
+        }
+
         [HttpGet]
         public IActionResult DetalleBorradorGenerico(int id, string modulo, int idNotificacion = 0)
         {

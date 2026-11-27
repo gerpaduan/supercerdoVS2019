@@ -1,14 +1,18 @@
-// POS sin conexion (2026-11-26): endpoints que usa el POS para preparar el modo offline y para subir lo que hizo
-// mientras no habia red (ventas y aperturas de caja). Ver docs/DECISIONS.md "POS sin conexion" y
+// POS sin conexion (2026-11-26): endpoints que usa el navegador para preparar la PC (catalogo y usuarios) y para subir lo
+// que se hizo mientras no habia red (ventas y aperturas de caja). Ver docs/DECISIONS.md "POS sin conexion" y
 // docs/03-modulos/ventas-y-pos.md.
 //
 // Puntos que conviene no perder de vista:
-//  - Con PosOffline:Habilitado apagado (o la sucursal fuera de PosOffline:SoloSucursales) todo responde
-//    deshabilitado=true y nada toca la base: el POS sigue como antes.
+//  - Viene habilitado en todas las sucursales. Con el freno de emergencia (PosOffline:Habilitado=false) o sin la tabla
+//    posclaveunica todo responde deshabilitado=true y el sistema sigue como antes.
+//  - Cualquier usuario con sesion prepara la PC (no hace falta dispositivo autorizado): recibe las huellas de clave y PIN
+//    de los usuarios de SU EMPRESA (todas las sucursales). La de un administrador solo viaja a las sesiones de ESE
+//    administrador.
 //  - Idempotencia real: cada venta/apertura trae un clientId de la PC; posclaveunica tiene indice unico y el INSERT va
 //    en la misma transaccion que la venta (Negocio.Venta.agregarVentaConClave). Reintentar nunca duplica.
-//  - Solo sube el propio vendedor: el vendedor que vendio con PIN tiene que ser el operador de la sesion que sube.
-//  - Nunca se pierde una venta cobrada: lo que no se puede grabar vuelve con rechazada=true y queda en la PC.
+//  - La puede subir cualquier usuario de la sucursal. El vendedor es el que vendio; quien sube queda registrado.
+//  - Nunca se pierde una venta cobrada: si el vendedor ya no esta habilitado se carga igual, marcada y con aviso al
+//    admin; lo que no se puede grabar vuelve con rechazada=true y queda en la PC.
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,21 +26,27 @@ namespace WebCore.Controllers
 {
     public partial class VentasController
     {
+        // Largo maximo del texto libre que se guarda en posclaveunica.detalle.
+        private const int MaxDetalleOffline = 4000;
+
         private JsonResult PosOfflineDeshabilitado() => Json(new { ok = false, deshabilitado = true });
 
-        // Estado para el POS: si rige el modo offline, quien es el operador, su caja, la configuracion y un token
-        // antiforgery fresco (la pagina offline es estatica y no trae el del render). El POS lo llama al abrir y al
-        // volver la conexion, antes de subir la cola.
+        private bool PosOfflineRige(Entidades.Usuario? user) =>
+            user != null && user.IdSucursal > 0 && PosOfflineDisponibilidad.Disponible(_empresa);
+
+        // Estado para el navegador: si rige el modo offline, la caja del operador, la configuracion y un token antiforgery
+        // fresco (la pagina offline es estatica y no trae el del render). Se llama antes de subir la cola.
         [HttpGet]
         public IActionResult EstadoPosOffline(string? posInstanceId)
         {
             var user = _usuarioActual;
-            if (user == null || !PosOfflineSettings.HabilitadoPara(user.IdSucursal))
+            if (!PosOfflineRige(user))
                 return PosOfflineDeshabilitado();
 
             var operador = ResolverOperadorPOS(posInstanceId, user);
-            bool requiereOperador = user.EsUsuarioProduccion && operador != null && operador.Id == user.Id;
-            var caja = requiereOperador ? null : ObtenerCierreCajaActual(operador);
+            // La cuenta compartida de produccion sin operador autorizado no es un vendedor: no se informa caja.
+            bool sinOperador = operador == null || (user.EsUsuarioProduccion && operador.Id == user.Id);
+            var caja = sinOperador ? null : ObtenerCierreCajaActual(operador);
             var tokens = HttpContext.RequestServices.GetRequiredService<IAntiforgery>().GetAndStoreTokens(HttpContext);
 
             return Json(new
@@ -44,8 +54,7 @@ namespace WebCore.Controllers
                 ok = true,
                 deshabilitado = false,
                 token = tokens.RequestToken,
-                requiereOperador,
-                operador = requiereOperador || operador == null ? null : new { id = operador.Id, nombre = operador.Nombre ?? "" },
+                operador = sinOperador ? null : new { id = operador!.Id, nombre = operador.Nombre ?? "" },
                 sucursal = new { id = user.IdSucursal, nombre = user.Sucursal?.SucursalNombre ?? "" },
                 caja = caja == null ? null : new
                 {
@@ -64,16 +73,17 @@ namespace WebCore.Controllers
             });
         }
 
-        // Catalogo para vender sin conexion: productos de la empresa (misma lista que ProductosController.ListarProductos y
-        // misma busqueda por codigo que BuscarProducto), formatos de etiqueta de balanza activos, codigo base generico y
-        // factores de precio por forma de pago. Con 'version' igual a la vigente responde sinCambios (no reenvia todo).
-        // Limite conocido: el servidor arma el catalogo completo en cada pedido (para calcular la version); con pocos
-        // miles de productos y un pedido cada PosOffline:MinutosRefrescoCatalogo por caja es aceptable.
+        // Datos para vender sin conexion: productos de la empresa (misma lista que ProductosController.ListarProductos y
+        // misma busqueda por codigo que BuscarProducto), formatos de etiqueta de balanza activos, codigo base generico,
+        // factores por forma de pago y los usuarios que pueden entrar sin conexion. Con 'version' igual a la vigente
+        // responde sinCambios (no reenvia todo).
+        // Limite conocido: el servidor arma todo en cada pedido (para calcular la version) y lee un usuario por vez; con
+        // pocos miles de productos, decenas de usuarios y un pedido cada MinutosRefrescoCatalogo por PC es aceptable.
         [HttpGet]
         public IActionResult CatalogoOffline(string? version)
         {
             var user = _usuarioActual;
-            if (user == null || !PosOfflineSettings.HabilitadoPara(user.IdSucursal))
+            if (!PosOfflineRige(user))
                 return PosOfflineDeshabilitado();
 
             try
@@ -108,15 +118,17 @@ namespace WebCore.Controllers
                     })
                     .ToList();
 
-                bool dispositivoAutorizado = SesionDesdeDispositivoAutorizado();
+                var (usuarios, adminsVigentes) = UsuariosParaOffline(user);
                 var contenido = new
                 {
+                    idEmpresa,
                     codProdGenerico = _param.GetLong(Entidades.ParamKeys.CodProdGenerico, 0L),
                     productos,
                     formatos,
                     factores = ObtenerConfiguracionFormaPagoPOS(),
-                    dispositivoAutorizado,
-                    usuarios = dispositivoAutorizado ? UsuariosConPinParaOffline(user.IdSucursal) : new List<object>(),
+                    usuarios,
+                    // Para que la PC descarte un admin guardado antes que ya no lo es o que cambio su clave.
+                    adminsVigentes,
                     // Encabezado del ticket X (mismo criterio que ConstruirLineasTicketVenta).
                     ticket = new
                     {
@@ -127,13 +139,14 @@ namespace WebCore.Controllers
                         ocultarEncabezado = OcultarEncabezadoTicketNoFiscal()
                     },
                     sucursal = new { id = user.IdSucursal, nombre = user.Sucursal?.SucursalNombre ?? "" },
-                    idConsumidorFinal = _param.GetInt(Entidades.ParamKeys.IdConsumidorFinal, 0)
+                    idConsumidorFinal = _param.GetInt(Entidades.ParamKeys.IdConsumidorFinal, 0),
+                    diasVigencia = PosOfflineSettings.DiasVigencia,
+                    horasAvisoPrecios = PosOfflineSettings.HorasAvisoPrecios
                 };
 
                 // Version = huella del contenido: igual contenido, igual version (la PC no vuelve a bajar lo mismo).
                 string json = System.Text.Json.JsonSerializer.Serialize(contenido);
-                string versionActual = Convert.ToHexString(
-                    System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(json))).Substring(0, 16);
+                string versionActual = HuellaCorta(json);
                 if (string.Equals(version, versionActual, StringComparison.OrdinalIgnoreCase))
                     return Json(new { ok = true, sinCambios = true, version = versionActual });
 
@@ -143,15 +156,18 @@ namespace WebCore.Controllers
                     sinCambios = false,
                     version = versionActual,
                     generado = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    contenido.idEmpresa,
                     contenido.codProdGenerico,
                     contenido.productos,
                     contenido.formatos,
                     contenido.factores,
-                    contenido.dispositivoAutorizado,
                     contenido.usuarios,
+                    contenido.adminsVigentes,
                     contenido.ticket,
                     contenido.sucursal,
-                    contenido.idConsumidorFinal
+                    contenido.idConsumidorFinal,
+                    contenido.diasVigencia,
+                    contenido.horasAvisoPrecios
                 });
             }
             catch (Exception ex)
@@ -163,9 +179,9 @@ namespace WebCore.Controllers
         }
 
         // Sube UNA venta hecha sin conexion. Respuestas:
-        //  ok=true (ventaId, yaRegistrada, llegoTarde, sinCaja, pendienteFacturar, difPrecio): grabada (o ya estaba).
+        //  ok=true (ventaId, yaRegistrada, llegoTarde, sinCaja, pendienteFacturar, difPrecio, vendedorNoHabilitado).
         //  ok=false, rechazada=true (msg): no se puede grabar tal como esta; la PC la deja apartada para revisar.
-        //  ok=false, requiereOperador / otroVendedor: falta que entre el vendedor correcto; la PC reintenta despues.
+        //  ok=false, otraSucursal: la sube alguien de esa sucursal; la PC la saltea.
         //  ok=false (sin rechazada) o error HTTP: problema transitorio; la PC reintenta.
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -174,22 +190,14 @@ namespace WebCore.Controllers
             try
             {
                 var user = _usuarioActual;
-                if (user == null || !PosOfflineSettings.HabilitadoPara(user.IdSucursal))
+                if (!PosOfflineRige(user))
                     return PosOfflineDeshabilitado();
                 if (request == null || request.ClientId == Guid.Empty)
                     return Json(new { ok = false, rechazada = true, msg = "La venta llegó sin código." });
 
-                // Vendedor: el que vendio con PIN tiene que ser el operador de esta sesion (mismo criterio que
-                // FinalizarVenta para la cuenta compartida de produccion).
-                var operador = ResolverOperadorPOS(request.PosInstanceId, user);
-                if (user.EsUsuarioProduccion && operador != null && operador.Id == user.Id)
-                    return Json(new { ok = false, requiereOperador = true, msg = "Ingresá con tu usuario para subir las ventas sin conexión." });
-                if (operador == null || operador.Id != request.IdVendedor)
-                    return Json(new { ok = false, otroVendedor = true, msg = "Estas ventas son de otro vendedor: se suben cuando él entre al POS." });
-
-                // Sucursal: la de la sesion, como en FinalizarVenta.
+                // Sucursal: la de la sesion que sube, como en FinalizarVenta.
                 if (request.IdSucursalPOS != user.IdSucursal)
-                    return Json(new { ok = false, otraSucursal = true, msg = "La venta es de otra sucursal: cambiá a esa sucursal para subirla." });
+                    return Json(new { ok = false, otraSucursal = true, msg = "La venta es de otra sucursal: la sube un usuario trabajando en esa sucursal." });
 
                 // Reintento de una venta ya grabada: se responde sin revalidar (la primera vez ya paso todo).
                 var claveRepo = WebCore.Infrastructure.NegocioFactory.CrearPosClaveUnicaRepository(_empresa);
@@ -200,6 +208,10 @@ namespace WebCore.Controllers
                         return Json(new { ok = false, rechazada = true, msg = "El código de la venta ya se usó para otra operación." });
                     return Json(RespuestaVentaOffline(existente, yaRegistrada: true));
                 }
+
+                var vendedor = ResolverVendedorOffline(request.IdVendedor, user);
+                if (vendedor == null)
+                    return Json(new { ok = false, rechazada = true, msg = "El vendedor de la venta no existe en esta empresa." });
 
                 // Reglas de la venta offline (Consumidor Final, sin descuentos, formas de pago, fecha).
                 var pedido = new Negocio.VentaOffline.Pedido
@@ -247,8 +259,8 @@ namespace WebCore.Controllers
                 }
 
                 // Caja por FECHA DE LA VENTA (no por la hora de llegada): abierta, ya cerrada (llego tarde) o ninguna.
-                var cajaAbierta = ObtenerCierreCajaActual(operador);
-                var cajaCerrada = _oCierreN.BuscarCajaCerradaQueContiene(operador.Id, user.IdSucursal, request.FechaLocal);
+                var cajaAbierta = ObtenerCierreCajaActual(vendedor);
+                var cajaCerrada = _oCierreN.BuscarCajaCerradaQueContiene(vendedor.Id, user.IdSucursal, request.FechaLocal);
                 var estadoCaja = Negocio.VentaOffline.ClasificarCaja(request.FechaLocal, cajaAbierta, cajaCerrada);
 
                 // Precios: se acepta lo cobrado; si difiere de la lista vigente (con cualquier factor de forma de pago)
@@ -269,6 +281,10 @@ namespace WebCore.Controllers
                     FormasPagoFacturaAutomatica.Parse(_param.GetString(Entidades.ParamKeys.FormasPagoFacturaAutomatica, "")),
                     EmpresaTieneCertificadoFacturaElectronica(user));
 
+                // Vendedor dado de baja, bloqueado o sin permiso: la venta entra igual (ya se cobro), marcada y con aviso.
+                string? motivoVendedor = Negocio.VentaOffline.MotivoRevisarVendedor(
+                    vendedor.Activo, vendedor.Bloqueado, TieneAlgunPermisoPOS(vendedor));
+
                 // Venta: mismos campos que FinalizarVenta para una venta a Consumidor Final (ticket X, sin cta cte).
                 string formaPago = Negocio.VentaOffline.FormasPagoPermitidas
                     .First(f => string.Equals(f, request.FormaPago, StringComparison.OrdinalIgnoreCase));
@@ -276,7 +292,7 @@ namespace WebCore.Controllers
                 {
                     Persona = persona,
                     Sucursal = sucursal,
-                    Vendedor = operador,
+                    Vendedor = vendedor,
                     FechaVenta = request.FechaLocal,
                     TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()),
                     Observaciones = request.Observaciones ?? "",
@@ -300,12 +316,17 @@ namespace WebCore.Controllers
                 CompletarAnulacionesVenta(lineas);
                 venta.LineasVenta = lineas;
 
+                var detalles = new List<string>();
+                if (diferencias.Length > 0) detalles.Add("Precios: " + diferencias);
+                if (motivoVendedor != null)
+                    detalles.Add("Revisar: " + motivoVendedor + " (vendió " + vendedor.Nombre + ", la subió " + user.Nombre + ")");
+
                 var clave = new Entidades.PosClaveUnica
                 {
                     ClientId = request.ClientId,
                     Origen = Entidades.PosClaveUnica.OrigenOffline,
                     IdSucursal = user.IdSucursal,
-                    IdUsuario = operador.Id,
+                    IdUsuario = vendedor.Id,
                     IdUsuarioSync = user.Id,
                     FechaLocal = request.FechaLocal,
                     LlegoTarde = estadoCaja == Negocio.VentaOffline.EstadoCaja.LlegoTarde,
@@ -314,7 +335,7 @@ namespace WebCore.Controllers
                     DifPrecio = diferencias.Length > 0,
                     CausaCorte = Negocio.VentaOffline.NormalizarCausaCorte(request.CausaCorte),
                     VersionCatalogo = Recortar(request.VersionCatalogo, 40),
-                    Detalle = diferencias.Length > 0 ? Recortar("Precios: " + diferencias, 4000) : null
+                    Detalle = detalles.Count > 0 ? Recortar(string.Join(" · ", detalles), MaxDetalleOffline) : null
                 };
 
                 var resultado = _oVentaN.agregarVentaConClave(venta, clave);
@@ -328,7 +349,14 @@ namespace WebCore.Controllers
                 }
 
                 clave.IdRegistro = resultado.IdVenta;
-                return Json(RespuestaVentaOffline(clave, yaRegistrada: false));
+                if (motivoVendedor != null)
+                {
+                    AvisarVendedorNoHabilitado(Entidades.Notificacion.TipoVentaSinConexionVendedor, user.IdSucursal, resultado.IdVenta,
+                        "Venta sin conexión para revisar",
+                        "Se cargó la venta #" + resultado.IdVenta + " hecha sin conexión el " + request.FechaLocal.ToString("dd/MM/yyyy HH:mm") +
+                        " por " + vendedor.Nombre + ": " + motivoVendedor + ". La subió " + user.Nombre + ".");
+                }
+                return Json(RespuestaVentaOffline(clave, yaRegistrada: false, vendedorNoHabilitado: motivoVendedor != null));
             }
             catch (Exception ex)
             {
@@ -349,16 +377,10 @@ namespace WebCore.Controllers
             try
             {
                 var user = _usuarioActual;
-                if (user == null || !PosOfflineSettings.HabilitadoPara(user.IdSucursal))
+                if (!PosOfflineRige(user))
                     return PosOfflineDeshabilitado();
                 if (request == null || request.ClientId == Guid.Empty)
                     return Json(new { ok = false, rechazada = true, msg = "La apertura llegó sin código." });
-
-                var operador = ResolverOperadorPOS(request.PosInstanceId, user);
-                if (user.EsUsuarioProduccion && operador != null && operador.Id == user.Id)
-                    return Json(new { ok = false, requiereOperador = true, msg = "Ingresá con tu usuario para subir la apertura de caja." });
-                if (operador == null || operador.Id != request.IdVendedor)
-                    return Json(new { ok = false, otroVendedor = true, msg = "La apertura es de otro vendedor." });
                 if (request.IdSucursalPOS != user.IdSucursal)
                     return Json(new { ok = false, otraSucursal = true, msg = "La apertura es de otra sucursal." });
                 if (request.CajaInicio <= 0)
@@ -377,8 +399,14 @@ namespace WebCore.Controllers
                     return Json(new { ok = true, idCierre = existente.IdRegistro, yaRegistrada = true });
                 }
 
-                string detalle = null;
-                var cajaAbierta = ObtenerCierreCajaActual(operador);
+                var vendedor = ResolverVendedorOffline(request.IdVendedor, user);
+                if (vendedor == null)
+                    return Json(new { ok = false, rechazada = true, msg = "El usuario de la apertura no existe en esta empresa." });
+                string? motivoVendedor = Negocio.VentaOffline.MotivoRevisarVendedor(
+                    vendedor.Activo, vendedor.Bloqueado, TieneAlgunPermisoPOS(vendedor));
+
+                string? detalle = null;
+                var cajaAbierta = ObtenerCierreCajaActual(vendedor);
                 int idCierre;
                 bool reutilizada = cajaAbierta != null;
                 if (reutilizada)
@@ -396,7 +424,7 @@ namespace WebCore.Controllers
                     // No se puede abrir antes de que cerrara la ultima caja del vendedor: se corre al segundo siguiente
                     // (las ventas anteriores a esa hora quedan en la caja cerrada, como "llego tarde").
                     var ultima = _oCierreN.findByIdOrLast(
-                        new Entidades.CierreCaja { Sucursal = sucursal, UsuarioInicio = operador },
+                        new Entidades.CierreCaja { Sucursal = sucursal, UsuarioInicio = vendedor },
                         Entidades.CierreCaja.tipoBusqueda.FindLast, "");
                     if (ultima?.FechaHoraCierre != null && ultima.FechaHoraCierre.Value >= fechaApertura)
                     {
@@ -408,7 +436,7 @@ namespace WebCore.Controllers
                     var nuevoCierre = new Entidades.CierreCaja
                     {
                         Sucursal = sucursal,
-                        UsuarioInicio = operador,
+                        UsuarioInicio = vendedor,
                         FechaHoraInicio = fechaApertura,
                         CajaInicio = (float)request.CajaInicio
                     };
@@ -423,7 +451,7 @@ namespace WebCore.Controllers
                 }
 
                 // La clave va despues de crear la caja (addOrEditCierreCaja no participa de una transaccion compartida).
-                // Riesgo aceptado: dos subidas SIMULTANEAS de la misma apertura; la PC las sube de a una, en orden.
+                // Riesgo aceptado: dos subidas SIMULTANEAS de la misma apertura; la PC las sube de a una (navigator.locks).
                 try
                 {
                     claveRepo.Insertar(new Entidades.PosClaveUnica
@@ -433,7 +461,7 @@ namespace WebCore.Controllers
                         IdRegistro = idCierre,
                         Origen = Entidades.PosClaveUnica.OrigenOffline,
                         IdSucursal = user.IdSucursal,
-                        IdUsuario = operador.Id,
+                        IdUsuario = vendedor.Id,
                         IdUsuarioSync = user.Id,
                         FechaLocal = request.FechaLocal,
                         CausaCorte = Negocio.VentaOffline.NormalizarCausaCorte(request.CausaCorte),
@@ -446,7 +474,15 @@ namespace WebCore.Controllers
                     return Json(new { ok = true, idCierre = ganadora?.IdRegistro ?? idCierre, yaRegistrada = true });
                 }
 
-                return Json(new { ok = true, idCierre, reutilizada, detalle });
+                if (motivoVendedor != null && !reutilizada)
+                {
+                    AvisarVendedorNoHabilitado(Entidades.Notificacion.TipoCajaSinConexionVendedor, user.IdSucursal, idCierre,
+                        "Caja abierta sin conexión para revisar",
+                        "Se creó la caja #" + idCierre + " abierta sin conexión el " + request.FechaLocal.ToString("dd/MM/yyyy HH:mm") +
+                        " por " + vendedor.Nombre + ": " + motivoVendedor + ". La subió " + user.Nombre + ". Hay que cerrarla.");
+                }
+
+                return Json(new { ok = true, idCierre, reutilizada, detalle, vendedorNoHabilitado = motivoVendedor != null });
             }
             catch (Exception ex)
             {
@@ -456,49 +492,89 @@ namespace WebCore.Controllers
             }
         }
 
-        // true si esta sesion se abrio desde un dispositivo seguro que sigue autorizado (no bloqueado despues del login).
-        private bool SesionDesdeDispositivoAutorizado()
+        // Quien vendio (con sus permisos), esté activo o no; null si no es un usuario de la empresa de la sesion o es la
+        // cuenta compartida de produccion (que no vende por si sola).
+        private Entidades.Usuario? ResolverVendedorOffline(int idVendedor, Entidades.Usuario user)
         {
-            string? claim = User?.FindFirst(WebCore.Infrastructure.SesionClaims.IdDispositivoSeguro)?.Value;
-            if (!int.TryParse(claim, out int idDispositivo) || idDispositivo <= 0)
-                return false;
-
-            var dispositivo = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(_empresa)
-                .Listar(_usuarioActual.IdEmpresa)
-                ?.FirstOrDefault(d => d != null && d.Id == idDispositivo);
-            return dispositivo != null && !dispositivo.Bloqueado;
+            if (idVendedor <= 0) return null;
+            var vendedor = _oUsuarioN.getUsuarioConPermisos(idVendedor);
+            if (vendedor == null || vendedor.IdEmpresa != user.IdEmpresa || vendedor.EsUsuarioProduccion) return null;
+            return vendedor;
         }
 
-        // Huellas de PIN para entrar al POS sin conexion (decision del usuario 2026-11-26: todos los PIN de la sucursal,
-        // incluidos los admins, cuyo PIN solo sirve sin conexion). Solo usuarios activos, con PIN, con algun permiso de
-        // POS (admin siempre) y de esta sucursal (los admin, de cualquiera). Nunca viaja el PIN: solo el hash PBKDF2-SHA256
-        // del servidor (Utilidades.PasswordSecurity) con su sal e iteraciones, que la PC verifica con WebCrypto.
-        // Limite conocido: una lectura por usuario (getUsuarioById trae el hash y los permisos); para pocos usuarios.
-        private List<object> UsuariosConPinParaOffline(int idSucursal)
+        // Campana del admin (solo bases con notificaciones, Postgres). La venta o la caja ya quedaron guardadas: si el
+        // aviso falla se registra en el log y se sigue (el dato esta igual en posclaveunica.detalle).
+        private void AvisarVendedorNoHabilitado(string tipo, int idSucursal, int idRegistro, string titulo, string mensaje)
         {
-            var resultado = new List<object>();
-            foreach (var basico in _oUsuarioN.ListarUsuariosParaLogin(_usuarioActual.IdEmpresa) ?? new List<Entidades.Usuario>())
+            if (!PosBorradorSettings.SoportaNotificaciones) return;
+            try
             {
-                var u = _oUsuarioN.getUsuarioById(basico.Id);
-                if (u == null || !u.Activo || !u.TienePin) continue;
-                if (!u.Admin && u.IdSucursal != idSucursal) continue;
-                if (!TieneAlgunPermisoPOS(u)) continue;
+                CrearVentaBorradorN().RegistrarNotificacion(new Entidades.Notificacion
+                {
+                    IdSucursal = idSucursal,
+                    Tipo = tipo,
+                    Severidad = Entidades.Notificacion.SeveridadAdvertencia,
+                    Titulo = titulo,
+                    Mensaje = mensaje,
+                    RefId = idRegistro
+                }, true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("No se pudo avisar al admin (" + tipo + " " + idRegistro + "): " + ex.Message);
+            }
+        }
 
-                resultado.Add(new
+        // Usuarios que pueden entrar sin conexion desde una PC preparada por esta sesion (decision del usuario 2026-11-27):
+        //  - los no administradores activos de la empresa (cualquier sucursal) con algun permiso de POS;
+        //  - un administrador SOLO si es quien inicio sesion (su clave no viaja a las PC donde no entro).
+        // Nunca la cuenta compartida de produccion. Nunca viaja la clave ni el PIN: solo su huella PBKDF2-SHA256 del
+        // servidor (Utilidades.PasswordSecurity) con sal e iteraciones, que la PC verifica con WebCrypto. Un usuario que
+        // solo tiene la clave vieja sin huella queda afuera hasta que inicie sesion con conexion.
+        private (List<object> usuarios, List<object> adminsVigentes) UsuariosParaOffline(Entidades.Usuario sesion)
+        {
+            var usuarios = new List<object>();
+            var adminsVigentes = new List<object>();
+            foreach (var basico in _oUsuarioN.ListarUsuariosParaLogin(sesion.IdEmpresa) ?? new List<Entidades.Usuario>())
+            {
+                // getUsuarioConPermisos: getUsuarioById no trae permisos y dejaria afuera a todos los no administradores.
+                var u = _oUsuarioN.getUsuarioConPermisos(basico.Id);
+                if (u == null || !u.Activo || u.Bloqueado || u.EsUsuarioProduccion) continue;
+
+                string version = HuellaCorta(string.Join("|", u.PasswordHash, u.PasswordSalt, u.PinHash, u.PinSalt));
+                if (u.Admin)
+                {
+                    adminsVigentes.Add(new { id = u.Id, version });
+                    if (u.Id != sesion.Id) continue;
+                }
+
+                if (!TieneAlgunPermisoPOS(u)) continue;
+                bool tieneClave = !string.IsNullOrWhiteSpace(u.PasswordHash) && !string.IsNullOrWhiteSpace(u.PasswordSalt);
+                if (!tieneClave && !u.TienePin) continue;
+
+                usuarios.Add(new
                 {
                     id = u.Id,
                     nombre = u.Nombre ?? "",
                     usuario = u.User ?? "",
                     admin = u.Admin,
-                    pinHash = u.PinHash,
-                    pinSalt = u.PinSalt,
+                    version,
+                    claveHash = tieneClave ? u.PasswordHash : null,
+                    claveSalt = tieneClave ? u.PasswordSalt : null,
+                    claveIteraciones = u.PasswordHashIterations > 0 ? u.PasswordHashIterations : Utilidades.PasswordSecurity.DefaultIterations,
+                    pinHash = u.TienePin ? u.PinHash : null,
+                    pinSalt = u.TienePin ? u.PinSalt : null,
                     pinIteraciones = u.PinHashIterations > 0 ? u.PinHashIterations : Utilidades.PasswordSecurity.DefaultIterations
                 });
             }
-            return resultado;
+            return (usuarios, adminsVigentes);
         }
 
-        private static object RespuestaVentaOffline(Entidades.PosClaveUnica clave, bool yaRegistrada)
+        // 16 caracteres hexadecimales del SHA-256: para comparar si algo cambio.
+        private static string HuellaCorta(string texto) => Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(texto))).Substring(0, 16);
+
+        private static object RespuestaVentaOffline(Entidades.PosClaveUnica clave, bool yaRegistrada, bool vendedorNoHabilitado = false)
         {
             return new
             {
@@ -508,7 +584,8 @@ namespace WebCore.Controllers
                 llegoTarde = clave.LlegoTarde,
                 sinCaja = clave.SinCaja,
                 pendienteFacturar = clave.PendienteFacturar,
-                difPrecio = clave.DifPrecio
+                difPrecio = clave.DifPrecio,
+                vendedorNoHabilitado
             };
         }
 

@@ -7,6 +7,10 @@ namespace Contratos
 {
     public interface IPosClaveUnicaRepository
     {
+        // true si la tabla existe (y en Postgres el usuario de la app puede escribirla). Si no, el POS sin conexion
+        // queda apagado en esa base sin afectar las ventas.
+        bool TablaDisponible();
+
         // Registro existente con ese clientId (de cualquier tipo), o null.
         Entidades.PosClaveUnica ObtenerPorClientId(Guid clientId);
 

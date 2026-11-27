@@ -1,13 +1,13 @@
 /*
- * POS sin conexion, lado POS NORMAL (2026-11-26). Se carga desde Views/Ventas/_PosOffline.cshtml solo con PosOffline
- * habilitado. Con conexion:
+ * POS sin conexion, lado CON CONEXION (2026-11-27). Se carga desde Views/Shared/_PosOffline.cshtml en cualquier
+ * pantalla con sesion iniciada (diseños _Layout y _LayoutPOS):
  *  - registra el service worker (sw-pos.js) que despues muestra la pagina offline si el servidor no responde;
- *  - baja el catalogo (y las huellas de PIN) al abrir y cada PosOffline:MinutosRefrescoCatalogo;
- *  - sube la cola de ventas hechas sin conexion (al abrir y cada vez que vuelve la red) y muestra el resultado;
- *  - si se corta, ofrece "Seguir vendiendo sin conexión" (no saca al cajero solo: el carrito en curso queda guardado
- *    como siempre en el borrador del POS).
- * Indicador: #posOfflineEstado, dentro del panel derecho del POS debajo de "Conexion balanza" (.pos-balanza-card); si ese
- * panel no esta (POS sin caja), queda fijo arriba al centro.
+ *  - PREPARA la PC (catalogo y usuarios; renueva su vigencia) apenas alguien inicia sesion, al cambiar de sucursal y
+ *    cada PosOffline:MinutosRefrescoCatalogo mientras haya una pantalla abierta;
+ *  - sube la cola de operaciones hechas sin conexion (al abrir y cada vez que vuelve la red);
+ *  - en el POS ademas muestra el indicador (#posOfflineEstado, dentro del panel de la balanza) y, si se corta la red, la
+ *    banda con "Seguir vendiendo sin conexión" (no saca al cajero solo: el carrito queda en el borrador del POS).
+ * Sin HTTPS valido (contexto no seguro) no hace nada: el navegador no permite trabajar sin conexion y no se guardan claves.
  */
 (function (window, document) {
     'use strict';
@@ -15,32 +15,42 @@
     var Db = window.PosOfflineDb;
     var Red = window.PosOfflineRed;
     var Sync = window.PosOfflineSync;
-    var raiz = document.getElementById('posOfflineEstado');
-    if (!raiz || !Db || !Red || !Sync) return;
+    var datos = document.getElementById('posOfflineDatos');
+    if (!datos || !Db || !Red || !Sync) return;
 
     var SEGUNDOS_CHEQUEO_RED = 30;
-    var config = { minutosRefrescoCatalogo: 10, segundosTimeoutPing: 4, urlChequeoInternet: '' };
-    var posInstanceId = raiz.getAttribute('data-pos-instance') || '';
-    var preparado = false;
-    var textoEstado = raiz.querySelector('[data-texto]');
-    var botonOffline = raiz.querySelector('[data-ir-offline]');
-    var avisoCorte = document.getElementById('posOfflineCorte');
+    var MINUTOS_REFRESCO_DEFAULT = 10;
+    // Cada cuanto se mira si ya toca volver a preparar la PC.
+    var SEGUNDOS_REVISION = 60;
 
+    var indicador = document.getElementById('posOfflineEstado');
+    var avisoCorte = document.getElementById('posOfflineCorte');
+    if (!window.isSecureContext || !('serviceWorker' in navigator) || !window.indexedDB) {
+        if (indicador) indicador.hidden = true;
+        return;
+    }
+
+    // Identifica el inicio de sesion (usuario, sucursal y momento): si cambia, hay que preparar la PC enseguida.
+    var login = datos.getAttribute('data-login') || '';
+    var posInstanceId = datos.getAttribute('data-pos-instance') || '';
+    var config = { minutosRefrescoCatalogo: MINUTOS_REFRESCO_DEFAULT, segundosTimeoutPing: 4, urlChequeoInternet: '' };
+    var preparado = false;
     var enPanel = false;
 
     function setEstado(texto, clase) {
-        textoEstado.textContent = texto;
-        raiz.title = texto;
-        raiz.className = 'pos-offline-estado ' + (clase || '') + (enPanel ? ' en-panel' : '');
+        if (!indicador) return;
+        indicador.querySelector('[data-texto]').textContent = texto;
+        indicador.title = texto;
+        indicador.className = 'pos-offline-estado ' + (clase || '') + (enPanel ? ' en-panel' : '');
     }
 
     // Mueve el indicador y el resultado al panel de la balanza (lugar propio, sin tapar el POS).
     function ubicarEnPanel() {
         var panel = document.querySelector('.pos-balanza-card');
-        if (!panel) return;
+        if (!panel || !indicador) return;
         enPanel = true;
-        panel.appendChild(raiz);
-        raiz.classList.add('en-panel');
+        panel.appendChild(indicador);
+        indicador.classList.add('en-panel');
         var resultado = document.getElementById('posOfflineResultado');
         if (resultado) { panel.appendChild(resultado); resultado.classList.add('en-panel'); }
     }
@@ -50,54 +60,43 @@
     }
 
     function registrarServiceWorker() {
-        if (!('serviceWorker' in navigator) || !window.isSecureContext) {
-            return Promise.reject(new Error('el navegador no permite trabajar sin conexión en esta dirección (hace falta HTTPS)'));
-        }
-        var url = raiz.getAttribute('data-sw-url');
-        var scope = raiz.getAttribute('data-sw-scope');
-        return navigator.serviceWorker.register(url, { scope: scope });
+        return navigator.serviceWorker.register(datos.getAttribute('data-sw-url'), { scope: datos.getAttribute('data-sw-scope') });
     }
 
-    function describirPreparacion(catalogo) {
-        var cuando = catalogo && catalogo.bajado
-            ? new Date(catalogo.bajado).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-            : '';
-        if (!catalogo) return { texto: 'Sin conexión: esta PC todavía no está preparada.', clase: 'pendiente' };
-        if (!catalogo.dispositivoAutorizado) return { texto: 'Sin conexión: PC no autorizada, no se podrá entrar con PIN.', clase: 'pendiente' };
-        if (!catalogo.usuarios || catalogo.usuarios.length === 0) return { texto: 'Sin conexión: nadie tiene PIN en esta sucursal.', clase: 'pendiente' };
-        return { texto: 'Listo para vender sin conexión (precios del ' + cuando + ').', clase: 'listo' };
-    }
-
-    function refrescarCatalogo() {
-        return Sync.actualizarCatalogo().then(function (r) {
-            if (r.ok) {
-                var d = describirPreparacion(r.catalogo);
-                preparado = d.clase === 'listo';
-                setEstado(d.texto, d.clase);
+    function mostrarPreparacion(catalogo) {
+        var texto = 'Sin conexión: esta PC todavía no está preparada.';
+        var clase = 'pendiente';
+        preparado = false;
+        if (catalogo && catalogo.revisado) {
+            if (!catalogo.usuarios || catalogo.usuarios.length === 0) {
+                texto = 'Sin conexión: no hay usuarios guardados en esta PC.';
+            } else {
+                var cuando = new Date(catalogo.revisado).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                texto = 'Listo para vender sin conexión (precios del ' + cuando + ').';
+                clase = 'listo';
+                preparado = true;
             }
-            return r;
-        }).catch(function () { return { ok: false }; });
+        }
+        setEstado(texto, clase);
     }
 
-    function subir() {
-        return Sync.subirCola({ posInstanceId: posInstanceId }).then(function (r) {
-            if (!r || r.enCurso || r.deshabilitado) return r;
-            return Db.leer('configOffline').then(function (c) {
-                if (c) config = Object.assign(config, c);
-                var partes = [];
-                if (r.subidas > 0) partes.push('Se subieron ' + r.subidas + ' operaciones hechas sin conexión.');
-                if (r.rechazadas > 0 || r.rechazadasTotal > 0) partes.push((r.rechazadasTotal || r.rechazadas) + ' para revisar (ver en el modo sin conexión).');
-                if (r.pendientes > 0) partes.push(r.pendientes + ' pendientes de subir' + (r.deOtroVendedor ? ' (de otro vendedor)' : '') + '.');
-                (r.avisos || []).forEach(function (a) { partes.push(a); });
-                if (partes.length) mostrarResultado(partes);
-                return r;
-            });
-        });
+    function aplicarConfig() {
+        return Db.leer('configOffline').then(function (c) { if (c) config = Object.assign(config, c); });
     }
 
     function mostrarResultado(partes) {
         var cont = document.getElementById('posOfflineResultado');
-        if (!cont) return;
+        if (!cont) {
+            // Fuera del POS: aviso discreto que se puede cerrar con un clic.
+            cont = document.createElement('div');
+            cont.id = 'posOfflineResultado';
+            cont.setAttribute('role', 'status');
+            cont.style.cssText = 'position:fixed;right:12px;bottom:12px;z-index:1060;max-width:360px;font-size:.78rem;' +
+                'background:#fff8e1;color:#212529;border:1px solid #ffe08a;border-radius:6px;padding:8px 10px;cursor:pointer;';
+            cont.title = 'Tocá para cerrar';
+            cont.addEventListener('click', function () { cont.remove(); });
+            document.body.appendChild(cont);
+        }
         cont.innerHTML = '';
         partes.forEach(function (p) {
             var div = document.createElement('div');
@@ -105,6 +104,51 @@
             cont.appendChild(div);
         });
         cont.hidden = false;
+    }
+
+    // Sube lo pendiente. Solo consulta al servidor si hay algo en la cola.
+    function subir() {
+        return Db.cola().then(function (cola) {
+            if (!cola.some(function (i) { return i.estado === 'pendiente'; })) return null;
+            return Sync.subirCola({ posInstanceId: posInstanceId }).then(function (r) {
+                if (!r || r.enCurso || r.deshabilitado) return r;
+                var partes = [];
+                if (r.subidas > 0) partes.push((r.subidas === 1 ? 'Se subió 1 operación hecha' : 'Se subieron ' + r.subidas + ' operaciones hechas') + ' sin conexión.');
+                if (r.rechazadasTotal > 0) partes.push(r.rechazadasTotal + ' para revisar (ver en el modo sin conexión).');
+                if (r.pendientes > 0) partes.push(r.pendientes + ' pendientes de subir' + (r.deOtraSucursal ? ' (de otra sucursal)' : '') + '.');
+                (r.avisos || []).forEach(function (a) { partes.push(a); });
+                if (partes.length) mostrarResultado(partes);
+                return r;
+            });
+        });
+    }
+
+    // Baja catalogo y usuarios (renueva la vigencia) y recuerda para que inicio de sesion y cuando se hizo.
+    function preparar() {
+        return Sync.recordarEstado(posInstanceId)
+            .then(aplicarConfig)
+            .then(Sync.actualizarCatalogo)
+            .then(function (r) {
+                if (!r.ok) return r;
+                mostrarPreparacion(r.catalogo);
+                Db.pedirPersistencia();
+                return Db.guardar('preparado', { login: login, fecha: Date.now() }).then(function () { return r; });
+            });
+    }
+
+    // Prepara solo si cambio el inicio de sesion o paso el intervalo (compartido entre pestanas).
+    function prepararSiToca() {
+        return Db.leer('preparado').then(function (p) {
+            var minutos = Math.max(1, config.minutosRefrescoCatalogo || MINUTOS_REFRESCO_DEFAULT);
+            if (p && p.login === login && Date.now() - p.fecha < minutos * 60000) return null;
+            return preparar();
+        });
+    }
+
+    function ciclo() {
+        return subir().then(prepararSiToca).catch(function (e) {
+            console.warn('POS sin conexión: no se pudo preparar la PC', e);
+        });
     }
 
     function chequearRed() {
@@ -122,29 +166,24 @@
 
     function iniciar() {
         ubicarEnPanel();
-        botonOffline.addEventListener('click', irOffline);
-        if (avisoCorte) {
-            var b = avisoCorte.querySelector('[data-ir-offline]');
-            if (b) b.addEventListener('click', irOffline);
-        }
-        Db.pedirPersistencia();
+        [indicador, avisoCorte].forEach(function (el) {
+            var boton = el && el.querySelector('[data-ir-offline]');
+            if (boton) boton.addEventListener('click', irOffline);
+        });
+
         registrarServiceWorker().catch(function (e) {
             setEstado('Sin conexión no disponible: ' + e.message + '.', 'pendiente');
         });
-        Db.leer('catalogo').then(function (c) {
-            var d = describirPreparacion(c);
-            preparado = d.clase === 'listo';
-            setEstado(d.texto, d.clase);
-        }).catch(function (e) { setEstado('Sin conexión no disponible: ' + e.message, 'pendiente'); });
+        Db.leer('catalogo').then(mostrarPreparacion).catch(function (e) { setEstado('Sin conexión no disponible: ' + e.message, 'pendiente'); });
 
-        // Primero subir lo pendiente (trae tambien la configuracion) y despues el catalogo.
-        subir().then(refrescarCatalogo).then(function () {
-            setInterval(refrescarCatalogo, Math.max(1, config.minutosRefrescoCatalogo || 10) * 60000);
+        aplicarConfig().then(ciclo);
+        setInterval(ciclo, SEGUNDOS_REVISION * 1000);
+        // El aviso de corte es solo del POS.
+        if (avisoCorte) {
             setInterval(chequearRed, SEGUNDOS_CHEQUEO_RED * 1000);
-        });
-
-        window.addEventListener('online', function () { chequearRed().then(function (r) { if (r.online) subir(); }); });
-        window.addEventListener('offline', chequearRed);
+            window.addEventListener('offline', chequearRed);
+        }
+        window.addEventListener('online', function () { chequearRed().then(function (r) { if (r.online) ciclo(); }); });
     }
 
     iniciar();

@@ -287,18 +287,18 @@ namespace WebCore.Controllers
                 // POS sin conexion (2026-11-26): ventas de esta caja que se hicieron sin conexion (y sus marcas), y el
                 // vendedor, para que el modal mire si en ESTA PC quedan ventas suyas sin subir.
                 idVendedor = caja.UsuarioInicio.Id,
-                posOfflineHabilitado = WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal,
+                posOfflineHabilitado = WebCore.Helpers.PosOfflineDisponibilidad.Disponible(_empresa),
                 ventasSinConexion = ObtenerVentasSinConexion(caja, fechaHastaVentas)
             });
         }
 
-        // Ventas subidas desde el POS sin conexion que caen en la caja (vendedor + sucursal + fecha). Solo con PosOffline
-        // prendido (antes puede no existir la tabla). Si falla se registra y se devuelve vacio: es un aviso, no debe
-        // impedir cerrar la caja.
+        // Ventas subidas desde el POS sin conexion que caen en la caja (vendedor + sucursal + fecha). Solo con la funcion
+        // disponible (la tabla puede no existir). Si falla se registra y se devuelve vacio: es un aviso, no debe impedir
+        // cerrar la caja.
         private List<object> ObtenerVentasSinConexion(Entidades.CierreCaja caja, DateTime fechaHasta)
         {
             var lista = new List<object>();
-            if (!WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal || caja?.FechaHoraInicio == null || caja.UsuarioInicio == null)
+            if (!WebCore.Helpers.PosOfflineDisponibilidad.Disponible(_empresa) || caja?.FechaHoraInicio == null || caja.UsuarioInicio == null)
                 return lista;
             try
             {

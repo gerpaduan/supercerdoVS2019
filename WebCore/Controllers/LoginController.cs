@@ -743,7 +743,7 @@ namespace WebCore.Controllers
 
             if (usuarioActual == null || !usuarioActual.Activo)
                 ModelState.AddModelError("", "No fue posible actualizar la clave rápida.");
-            else if (usuarioActual.Admin && !WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal)
+            else if (usuarioActual.Admin && !WebCore.Helpers.PosOfflineDisponibilidad.Disponible(_sesion.Empresa))
                 ModelState.AddModelError("", "Los administradores no usan clave rápida: ingresan siempre con su contraseña.");
             else if (string.IsNullOrEmpty(model.ClaveActual) || oUsuarioN.ValidarUsuarioWeb(usuarioActual.User, model.ClaveActual) == null)
                 ModelState.AddModelError(nameof(model.ClaveActual), "La contraseña actual es incorrecta.");
@@ -783,7 +783,7 @@ namespace WebCore.Controllers
         {
             var usuario = _sesion.UsuarioActual;
             model.EsAdmin = usuario != null && usuario.Admin;
-            model.PinSoloSinConexion = model.EsAdmin && WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal;
+            model.PinSoloSinConexion = model.EsAdmin && WebCore.Helpers.PosOfflineDisponibilidad.Disponible(_sesion.Empresa);
             model.TienePin = usuario != null && usuario.TienePin;
             // Nunca se reenvian los valores tipeados.
             model.ClaveActual = "";
@@ -1535,10 +1535,8 @@ namespace WebCore.Controllers
                 new Claim(SesionClaims.SinBloqueoInactividad, dispositivo != null && dispositivo.NoBloquearSesion ? "true" : "false"),
             };
 
-            // POS sin conexion (2026-11-26): la sesion recuerda desde que dispositivo seguro se abrio. Sin esto la PC no recibe
-            // las huellas de PIN para entrar sin conexion (ver SesionClaims.IdDispositivoSeguro).
-            if (dispositivo != null && !dispositivo.Bloqueado && dispositivo.Id > 0)
-                claims.Add(new Claim(SesionClaims.IdDispositivoSeguro, dispositivo.Id.ToString(CultureInfo.InvariantCulture)));
+            // POS sin conexion (2026-11-26): ver SesionClaims.MomentoLogin.
+            claims.Add(new Claim(SesionClaims.MomentoLogin, DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture)));
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);

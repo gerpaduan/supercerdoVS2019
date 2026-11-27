@@ -28,6 +28,15 @@ namespace DatosPostgres
             _idEmpresa = idEmpresa;
         }
 
+        public bool TablaDisponible()
+        {
+            // to_regclass devuelve NULL si la tabla no existe (sin error); el privilegio se mira solo si existe.
+            object resultado = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT CASE WHEN to_regclass('public.posclaveunica') IS NULL THEN false " +
+                "ELSE has_table_privilege('public.posclaveunica', 'INSERT') END");
+            return resultado is bool disponible && disponible;
+        }
+
         public Entidades.PosClaveUnica ObtenerPorClientId(Guid clientId)
         {
             List<Entidades.PosClaveUnica> filas = DbPg.Reader(

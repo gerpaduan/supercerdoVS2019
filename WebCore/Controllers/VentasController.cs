@@ -4168,10 +4168,10 @@ namespace WebCore.Controllers
                         return Json(new { ok = true, ventaId = ventaYaRegistrada.Value, yaRegistrada = true });
                 }
 
-                // POS sin conexion (2026-11-26): con el interruptor prendido la venta online tambien deja su clave unica
-                // (posclaveunica), asi una venta cuya respuesta se perdio y despues sale por la cola offline no se duplica.
+                // POS sin conexion (2026-11-26): la venta online tambien deja su clave unica (posclaveunica), asi una venta
+                // cuya respuesta se perdio y despues sale por la cola offline no se duplica. Sin la tabla, camino de siempre.
                 bool conClaveUnica = request.ClientId.HasValue && request.CobroSaldo == null
-                    && WebCore.Helpers.PosOfflineSettings.HabilitadoPara(user.IdSucursal);
+                    && WebCore.Helpers.PosOfflineDisponibilidad.Disponible(_empresa);
                 if (conClaveUnica)
                 {
                     var claveExistente = WebCore.Infrastructure.NegocioFactory.CrearPosClaveUnicaRepository(_empresa)

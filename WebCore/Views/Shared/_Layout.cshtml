@@ -1602,6 +1602,9 @@
 
     @await RenderSectionAsync("Scripts", required: false)
 
+    @* POS sin conexion (2026-11-27): prepara la PC y sube lo pendiente en cualquier pantalla con sesion. *@
+    <partial name="_PosOffline" />
+
     @* Bloqueo por inactividad (2026-10-15, ver docs/DECISIONS.md "Bloqueo por inactividad"). Minutos
        efectivos = 0 (no se carga nada) para el usuario de produccion, con 0 configurado, o si la sesion
        se inicio desde un dispositivo marcado "No bloquear sesion" (claim). Este layout no se usa en el

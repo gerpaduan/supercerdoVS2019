@@ -14,6 +14,8 @@ namespace NegocioTests.Fakes
         public int Inserciones { get; private set; }
         public Contratos.IUnitOfWork UltimoUnitOfWork { get; private set; }
 
+        public bool TablaDisponible() => true;
+
         public PosClaveUnica ObtenerPorClientId(Guid clientId)
         {
             return Claves.TryGetValue(clientId, out var clave) ? clave : null;

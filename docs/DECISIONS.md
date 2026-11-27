@@ -1,3 +1,24 @@
+## 2026-11-27 - POS sin conexión: siempre habilitado, 15 días por inicio de sesión, contraseña y usuarios de toda la empresa
+
+- **Pedido (conversado):** nada de interruptor por sucursal; que cualquier PC quede lista con solo iniciar sesión (una PC de producción puede tener que pasar al mostrador) y que el permiso caiga solo si nadie la usa. Cambia la entrada 2026-11-26 (e) en habilitación, preparación, login y subida; el resto sigue vigente.
+- **Decisión:**
+  - **Habilitado en todas las sucursales.** `PosOffline:Habilitado` pasa a ser freno de emergencia (default `true`). Sin la tabla `posclaveunica` la función queda apagada sola (`PosOfflineDisponibilidad`, reintenta cada 5 min) para que publicar sin migrar no rompa ventas. Se quitó `PosOffline:SoloSucursales`.
+  - **Preparación en cualquier pantalla con sesión** (`Views/Shared/_PosOffline.cshtml` en `_Layout` y `_LayoutPOS`): al iniciar sesión (claim `MomentoLogin`), al cambiar de sucursal y cada `MinutosRefrescoCatalogo`.
+  - **Vigencia 15 días** (`DiasVigencia`) desde la última preparación; cada una la renueva. Vencida: se borran las claves y no se vende; la cola se conserva. Reloj atrasado más de 1 h: bloqueo hasta reconectar.
+  - **Sin dispositivo autorizado** (se quitó el claim `IdDispositivoSeguro`). La regla de ingreso de la empresa (exigir dispositivo seguro) no cambia.
+  - **Usuarios guardados: todos los de la empresa** (cualquier sucursal) activos, no bloqueados, con permiso de POS, nunca la cuenta de producción. **Excepción: la de un administrador solo se guarda en las PC donde él mismo inició sesión** (se conserva mientras siga vigente y sin cambiar la clave: `adminsVigentes` + versión).
+  - **Ingreso sin conexión con la contraseña de siempre o con el PIN** (PBKDF2-SHA256 del servidor verificado con WebCrypto; 5 intentos, bloqueo 5 min por PC).
+  - **Sube cualquier usuario de la sucursal.** Vendedor dado de baja, bloqueado o sin permiso: la venta (o apertura) **entra igual**, marcada en `posclaveunica.detalle` con quién la subió, y con aviso al admin en la campana (`VENTA_SIN_CONEXION_VENDEDOR` / `CAJA_SIN_CONEXION_VENDEDOR`, solo Postgres).
+  - Precios de más de 24 h (`HorasAvisoPrecios`): aviso rojo, no bloquea. Antigüedad máxima de una venta al subir: **20 días** (antes 7). La caja guardada en la PC es por sucursal y vendedor.
+- **Alternativas descartadas:** interruptor por sucursal en pantalla; PC autorizada obligatoria; guardar solo los datos de quien inicia sesión (en una PC de producción no quedaba ningún cajero); contraseñas de admin en todas las PC; solo PIN (nadie en la VPS lo tenía cargado).
+- **Riesgos aceptados (explicados y elegidos por el usuario):**
+  - Cualquier equipo donde alguien inicie sesión (también un celular personal) queda con las huellas de contraseña y PIN de los usuarios no administradores de **toda la empresa**: con acceso al equipo y conocimientos se pueden probar claves sin límite de intentos; si se descubre una contraseña, sirve también con internet.
+  - Un usuario dado de baja puede seguir entrando en una PC que no se conecte, hasta que venza (15 días).
+  - Un usuario con sesión puede subir ventas atribuidas a otro vendedor de la empresa (queda registrado quién las subió).
+- **Verificado:** de punta a punta en la copia local (Postgres) con un admin y un cajero de prueba, ya borrados; SQL Server solo compila.
+- **Corregido:** en `b9e8fb74` la lista de usuarios sin conexión usaba `getUsuarioById` (sin permisos) y dejaba afuera a todos los no administradores.
+- **Archivos:** `WebCore/Helpers/{PosOfflineSettings,PosOfflineDisponibilidad}.cs`, `Controllers/{VentasController.PosOffline,VentasController,CajasController,LoginController,NotificacionesController}.cs`, `Views/Shared/{_PosOffline,_Layout,_LayoutPOS}.cshtml`, `Views/Notificaciones/_DetalleVentaSinConexion.cshtml`, `wwwroot/{pos-offline.html,sw-pos.js}`, `wwwroot/Scripts/app/pos-offline-{app,online,pin,sync,vigencia}.js`, `Negocio/VentaOffline.cs`, `Contratos/IPosClaveUnicaRepository.cs` + repos (`TablaDisponible`).
+
 ## 2026-11-26 (e) - POS sin conexión: ventas en cola que se suben solas
 
 - **Pedido:** si se corta internet en un local, no se puede vender (todas las cajas venden contra `carnisys.com`). El usuario quiere seguir vendiendo y que las ventas se carguen solas cuando vuelve la conexión.

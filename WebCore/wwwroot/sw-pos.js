@@ -1,6 +1,6 @@
 /*
- * Service worker del POS sin conexion (2026-11-26, ver docs/DECISIONS.md "POS sin conexion"). Se registra SOLO con
- * PosOffline habilitado (Views/Ventas/_PosOffline.cshtml), con scope <base>/Ventas/POS: no controla /Login ni ninguna
+ * Service worker del POS sin conexion (2026-11-26, ver docs/DECISIONS.md "POS sin conexion"). Lo registra cualquier
+ * pantalla con sesion (Views/Shared/_PosOffline.cshtml), con scope <base>/Ventas/POS: no controla /Login ni ninguna
  * otra pantalla. Es otro archivo que sw.js (ese es el "kill switch" del service worker viejo del Web clasico y no se
  * reutiliza, DECISIONS 2026-10-13).
  *
@@ -10,7 +10,7 @@
  *    responde 502/503/504, devuelve pos-offline.html desde la cache. Con ?modo=offline la devuelve directo.
  *  - Archivos de la pagina offline: red primero, cache si falla.
  *  - Todo lo demas (pedidos del POS, imagenes, otras pantallas): no lo toca, va a la red como siempre.
- *  - Mensaje 'desregistrar' o PosOffline apagado: el POS normal lo desregistra (kill switch en _PosOffline.cshtml).
+ *  - Freno de emergencia (PosOffline:Habilitado=false): las pantallas lo desregistran (ver _PosOffline.cshtml).
  */
 'use strict';
 
@@ -28,6 +28,7 @@ var ARCHIVOS = [
     'Scripts/app/pos-offline-red.js',
     'Scripts/app/pos-offline-buscar.js',
     'Scripts/app/pos-offline-pin.js',
+    'Scripts/app/pos-offline-vigencia.js',
     'Scripts/app/pos-offline-sync.js',
     'Scripts/app/pos-offline-ticket.js',
     'Scripts/app/pos-offline-app.js',

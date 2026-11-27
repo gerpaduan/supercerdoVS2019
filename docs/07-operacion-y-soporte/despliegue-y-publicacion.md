@@ -1106,6 +1106,15 @@ Tablas nuevas de auditoría: sin ellas, **eliminar falla** (el resto de la aplic
 - **Rollback**: deshabilitar `WebCoreAppWatchdog`, detener `WebCoreApp` y matar `WebCore.exe`, `robocopy C:\WebCore_backup_20261124b C:\WebCore /MIR /XD AFIP /R:2 /W:5`, arrancar, habilitar watchdog.
 - **PENDIENTE (usuario)**: en SM, Movimientos/Stock/Elaborados en ventana (`?ventana=1`) y Ctrl+F5: el par − / + debe verse a la izquierda de «Pantalla completa».
 
+## Redeploy WebCore + 1 migración en VPS luden -- 2026-11-26 ("limpio", solo VPS; commit `b9e8fb74`; imagen `carnisys-web:20261126-2013`; anterior `20261121-2000`, re-taggeada `prev-20261126`; tag local `pre-deploy-luden-20261126` = `9893c0c7`, lo que estaba desplegado)
+- A pedido del usuario ("deployalo en el VPS"). `HEAD` desde un `git worktree` limpio (la rama no está pusheada). **SM y San Lorenzo no se tocaron.** Entran los 18 commits desde el 21/11: pantalla dividida y ventanas independientes, celular, reportes, «Unificar pesajes», guardado único y **POS sin conexión**.
+- `WebCore.Tests` 405/405, JS 196/196. `linux-x64 --self-contained false`, sin `App.config`/`WebCore.dll.config` (solo `AFIP.dll.config`); tgz SHA256 `b6a63daeb5e0a53d8c47043dd3c076976ade7c0653945e832a7ae57a3fb5aab0` (igual local/remoto).
+- **Orden ejecutado:** backup `/srv/carnisys/backups/carnisys-pre-deploy-20261126-2012.dump` (43 MB, 85 tablas, chmod 600) → migración `20261126-Create_posclaveunica.sql` como `carnisys_admin` (86 tablas; RLS activo; 4 índices; `carnisys_user` lee y usa la secuencia) → `docker build` → `docker compose up -d web`.
+- **Interruptor:** `WebCore.dll.config` de la VPS sin claves `PosOffline:*` (apagado). No se editó el config.
+- **Verificado (externo):** `https://carnisys.com/Login` 200 (título «Ingresar»), `www` 301, `/Ventas/POS` sin sesión redirige a Login, `sw-pos.js`, `pos-offline.html`, `pos-offline-ping.txt` y `pos-offline-{app,buscar}.js` con el mismo hash que el publish; `web` healthy sin líneas `fail:`/`crit:`; los demás contenedores del host no se reiniciaron.
+- **NO probado:** login ni pantallas con sesión en la VPS (incluida una venta con el `RETURNING idventa` nuevo).
+- **Rollback:** `docker tag carnisys-web:prev-20261126 carnisys-web:latest` y `cd /srv/carnisys && docker compose up -d web`. La tabla `posclaveunica` puede quedar (el código anterior no la usa).
+
 ## Unificar SuperCerdo SM + SL (SQL Server local) y volcarla a carnisys (Postgres local, empresa 1)
 
 Reglas y porque: `docs/DECISIONS.md` (2026-10-27). Todo corre en la maquina de desarrollo; no toca los servidores SM/SL ni la VPS.
@@ -1187,15 +1196,15 @@ Cambio: los cajeros (no administradores también) modifican sus propios egresos 
 5. Desinstalar (no hay desinstalador, PENDIENTE): salir desde el ícono de la bandeja, borrar `%LocalAppData%\CarniSys\BalanzaAgent` y la clave `Carnisys.Balanza.Agent` de `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
 - **PENDIENTE**: no se actualizó ninguna PC todavía (2026-11-20).
 
-## POS sin conexión -- orden de despliegue (2026-11-26; NO DESPLEGADO)
+## POS sin conexión -- orden de despliegue (2026-11-26; en VPS luden desplegado con el interruptor APAGADO; SM y SL sin desplegar)
 
 Ver `docs/DECISIONS.md` 2026-11-26 (e) y `docs/03-modulos/ventas-y-pos.md` «POS sin conexión». **Orden obligatorio: migración primero, código después, interruptor al final.**
 
 1. **Restore point**: `git tag pre-pos-offline-YYYYMMDD` antes de publicar.
 2. **Migración Postgres (VPS luden)**: `DatosPostgres/DB-Migrations/20261126-Create_posclaveunica.sql`, como `carnisys_admin`. Crea `posclaveunica` (RLS, índice único `(idempresa, clientid)`) y da `GRANT SELECT, INSERT, UPDATE` a `carnisys_user`, `cs_admin_pg`. Aditiva e idempotente; no toca `ventas`. Aplicada en la base local el 2026-11-26.
 3. **SQL Server (Servidor SM / San Lorenzo)**: antes de correr `Datos/DB-Procedures/20261126-Create_PosClaveUnica_Alter_agregarVenta.sql`, comparar su `ALTER PROCEDURE agregarVenta` con `sp_helptext 'agregarVenta'` de esa base: si difiere, NO correrlo. Crea `PosClaveUnica` y cambia el SP a `SCOPE_IDENTITY()` (mismo resultado para el Web clásico). Aplicado en el `SuperCerdo` local (SQL Server 2022) el 2026-11-26. El código no necesita la tabla con el interruptor apagado, pero **sí usa el SP corregido siempre** (el cambio de `SCOPE_IDENTITY` es retrocompatible: el código viejo también lo lee igual).
-4. **Deploy de código**: mismos pasos que el resto de esta guía. Sin dependencias nuevas. Archivos estáticos nuevos en `wwwroot`: `sw-pos.js`, `pos-offline.html`, `pos-offline-ping.txt`, `Scripts/app/pos-offline-*.js`.
-5. **Prender** en `WebCore.dll.config` (VPS: el config de la imagen): `PosOffline:Habilitado=true` y, para probar en un solo local, `PosOffline:SoloSucursales=<idSucursal>`. Opcional: `PosOffline:UrlChequeoInternet` (una URL pública liviana; sin ella la banda no distingue «sin internet» de «servidor caído»). Resto de claves y defaults en `WebCore/Helpers/PosOfflineSettings.cs`.
-6. **Requisitos por PC**: HTTPS válido (`carnisys.com` sí; SM y SL con certificado autofirmado **no**), PC registrada como dispositivo seguro y que el usuario vuelva a iniciar sesión después de autorizarla (el claim `IdDispositivoSeguro` se fija al loguearse), cajeros con PIN, y abrir el POS una vez con internet.
+4. **Deploy de código**: mismos pasos que el resto de esta guía. Sin dependencias nuevas. Archivos estáticos en `wwwroot`: `sw-pos.js`, `pos-offline.html`, `pos-offline-ping.txt`, `Scripts/app/pos-offline-*.js`. **Desde 2026-11-27 la función queda activa apenas se publica** si la base tiene la tabla.
+5. **Config** (`WebCore.dll.config`): no hace falta nada. `PosOffline:Habilitado=false` es el freno de emergencia. Opcional: `PosOffline:UrlChequeoInternet` (una URL pública liviana; sin ella la banda no distingue «sin internet» de «servidor caído»). Resto de claves y defaults en `WebCore/Helpers/PosOfflineSettings.cs`.
+6. **Requisitos por PC**: HTTPS válido (`carnisys.com` sí; SM y SL con certificado autofirmado **no**) y que alguien inicie sesión en ella (renueva 15 días). No requiere dispositivo autorizado ni PIN.
 7. **Verificar**: en el POS, el indicador del panel derecho (debajo de «Conexión balanza») dice «Listo para vender sin conexión (precios del …)». En DevTools → Application: service worker `sw-pos.js` activo con scope `/Ventas/POS` e IndexedDB `carnisys-pos-offline` con `catalogo`. Prueba de corte: `/Ventas/POS?modo=offline`, entrar con PIN, vender, volver al POS normal y comprobar la venta en Mis ventas y en `posclaveunica`.
-8. **Rollback funcional**: `PosOffline:Habilitado=false` y reiniciar: al abrir el POS se desregistra el service worker y se borran sus caches. Si quedaron ventas sin subir en alguna PC, subirlas antes (con el interruptor prendido) o pedir el «Descargar respaldo» de esa PC. La tabla se puede dejar (no la usa nada con el interruptor apagado). Rollback de código: el tag del paso 1.
+8. **Rollback funcional**: `PosOffline:Habilitado=false` y reiniciar: la siguiente pantalla con sesión desregistra el service worker y borra caches y claves. Si quedaron ventas sin subir en alguna PC, subirlas antes o pedir el «Descargar respaldo» de esa PC. La tabla se puede dejar. Rollback de código: el tag del paso 1.

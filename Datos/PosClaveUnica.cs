@@ -27,6 +27,13 @@ namespace Datos
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
         }
 
+        public bool TablaDisponible()
+        {
+            object resultado = Db.Scalar(_empresa,
+                "SELECT CASE WHEN OBJECT_ID('dbo.PosClaveUnica', 'U') IS NULL THEN 0 ELSE 1 END", CommandType.Text);
+            return resultado != null && resultado != DBNull.Value && Convert.ToInt32(resultado) == 1;
+        }
+
         public Entidades.PosClaveUnica ObtenerPorClientId(Guid clientId)
         {
             List<Entidades.PosClaveUnica> filas = Db.Reader(

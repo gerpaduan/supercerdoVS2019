@@ -162,6 +162,16 @@ namespace Negocio
             return sb.ToString();
         }
 
+        // Motivo por el que una venta ya cobrada tiene que revisarse por su vendedor (null = nada que revisar). La venta se
+        // carga igual (la plata ya se cobro), queda marcada y se avisa al administrador (decision del usuario 2026-11-26).
+        public static string MotivoRevisarVendedor(bool activo, bool bloqueado, bool tienePermisoPos)
+        {
+            if (!activo) return "el vendedor está dado de baja";
+            if (bloqueado) return "el vendedor está bloqueado";
+            if (!tienePermisoPos) return "el vendedor ya no tiene permisos de POS";
+            return null;
+        }
+
         // Normaliza la causa del corte informada por el navegador (texto libre de un cliente: se acota a la lista).
         public static string NormalizarCausaCorte(string causa)
         {

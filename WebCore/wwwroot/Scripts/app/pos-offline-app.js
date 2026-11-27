@@ -1,6 +1,6 @@
 /*
  * POS sin conexion: logica de la pagina pos-offline.html (2026-11-26). Flujo:
- *   catalogo guardado? -> quien vende (PIN) -> caja (la abierta que informo el servidor, o apertura sin conexion)
+ *   datos guardados y vigentes? -> quien vende (contraseña o PIN) -> caja (la que informo el servidor, o apertura sin conexion)
  *   -> venta (codigo / F10 / balanza, Consumidor Final, sin descuentos) -> cobro (todas las formas menos Cta Cte)
  *   -> la venta va a la cola (IndexedDB) y sale el ticket. Cuando vuelve la conexion se suben solas (PosOfflineSync).
  * Nada de esto toca el servidor mientras no hay conexion. Detalle: docs/03-modulos/ventas-y-pos.md "POS sin conexion".
@@ -14,10 +14,15 @@
     var Pin = window.PosOfflinePin;
     var Sync = window.PosOfflineSync;
     var Ticket = window.PosOfflineTicket;
+    var Vig = window.PosOfflineVigencia;
 
     // Sesion offline: vence a las 12 h, igual que la cookie del servidor.
     var HORAS_SESION = 12;
     var SEGUNDOS_CHEQUEO_RED = 20;
+    // Con mas usuarios que esto aparece el buscador.
+    var USUARIOS_PARA_BUSCADOR = 8;
+    // Dias restantes a partir de los cuales se avisa que el permiso esta por vencer.
+    var DIAS_AVISO_VENCIMIENTO = 3;
     var FORMAS = [
         { clave: 'Efectivo', texto: 'Efectivo', tecla: '1' },
         { clave: 'Debito', texto: 'Débito', tecla: '2' },
@@ -34,7 +39,9 @@
         carrito: [],
         causa: null,
         online: false,
-        cobro: null
+        cobro: null,
+        ultimoVisto: 0,
+        vigencia: null
     };
 
     function $(id) { return document.getElementById(id); }
@@ -105,9 +112,49 @@
         mostrar('btnVolverPos', estado.online);
         $('textoVendedor').textContent = estado.sesion ? 'Vende: ' + estado.sesion.nombre : '';
         mostrar('btnSalir', !!estado.sesion);
-        if (estado.catalogo && estado.catalogo.bajado) {
-            $('textoCatalogo').textContent = 'Precios del ' + fechaTexto(new Date(estado.catalogo.bajado));
+        var vig = estado.vigencia;
+        if (vig && vig.revisado) {
+            var texto = 'Precios del ' + fechaTexto(new Date(vig.revisado));
+            if (vig.vigente && vig.diasRestantes <= DIAS_AVISO_VENCIMIENTO) {
+                texto += ' · el permiso sin conexión vence en ' + vig.diasRestantes + (vig.diasRestantes === 1 ? ' día' : ' días');
+            }
+            $('textoCatalogo').textContent = texto;
         }
+        var viejos = !!(vig && vig.vigente && vig.preciosViejos);
+        if (viejos) {
+            $('avisoPrecios').textContent = 'ATENCIÓN: los precios son del ' + fechaTexto(new Date(vig.revisado)) + ' y pueden estar desactualizados.';
+        }
+        mostrar('avisoPrecios', viejos);
+    }
+
+    // Revisa la vigencia (15 dias, reloj) y recuerda la hora mas alta vista. Si vencio, borra las claves guardadas (la cola
+    // se conserva). Devuelve true si se puede vender.
+    function revisarVigencia() {
+        var ahora = Date.now();
+        estado.vigencia = Vig.evaluar(estado.catalogo, estado.ultimoVisto, ahora);
+        if (estado.vigencia.motivo !== 'reloj' && ahora > estado.ultimoVisto) {
+            estado.ultimoVisto = ahora;
+            Db.guardar('ultimoVisto', ahora).catch(function (e) { console.warn('No se pudo guardar la hora vista', e); });
+        }
+        if (estado.vigencia.vigente) return true;
+
+        if (estado.vigencia.motivo === 'vencida' && estado.catalogo.usuarios && estado.catalogo.usuarios.length) {
+            estado.catalogo = Vig.sinClaves(estado.catalogo);
+            estado.sesion = null;
+            Promise.all([Db.guardar('catalogo', estado.catalogo), Db.borrar('sesion')])
+                .catch(function (e) { console.warn('No se pudieron borrar las claves vencidas', e); });
+        }
+        noPreparada(Vig.texto(estado.vigencia.motivo));
+        return false;
+    }
+
+    // Vuelve a leer lo guardado (otra pestaña pudo actualizarlo al volver la conexion).
+    function releerDatos() {
+        return Promise.all([Db.leer('catalogo'), Db.leer('ultimoVisto'), Db.leer('configOffline')]).then(function (v) {
+            estado.catalogo = v[0];
+            estado.ultimoVisto = Number(v[1]) || 0;
+            estado.config = v[2] || estado.config;
+        });
     }
 
     function refrescarCola() {
@@ -140,18 +187,19 @@
         if (vista === 'vistaCaja') $('inputCajaInicio').focus();
     }
 
-    // ---------------------------------------------------------------- login con PIN
+    // ---------------------------------------------------------------- ingreso
 
     function renderUsuarios() {
-        var usuarios = (estado.catalogo.usuarios || []).slice().sort(function (a, b) { return a.nombre.localeCompare(b.nombre); });
+        var todos = (estado.catalogo.usuarios || []).slice().sort(function (a, b) { return a.nombre.localeCompare(b.nombre); });
+        var filtro = $('inputFiltroUsuario').value.trim().toLowerCase();
+        var usuarios = todos.filter(function (u) {
+            return !filtro || (u.nombre + ' ' + (u.usuario || '')).toLowerCase().indexOf(filtro) >= 0;
+        });
+        mostrar('inputFiltroUsuario', todos.length > USUARIOS_PARA_BUSCADOR);
         var cont = $('listaUsuarios');
         cont.innerHTML = '';
-        if (!estado.catalogo.dispositivoAutorizado) {
-            mensaje('mensajeLogin', 'Esta PC no figura como dispositivo autorizado: sin conexión no se puede entrar. Pedile a un administrador que la autorice.');
-            return;
-        }
-        if (usuarios.length === 0) {
-            mensaje('mensajeLogin', 'Nadie de esta sucursal tiene PIN. Cada cajero lo configura en su menú de usuario → Clave rápida (PIN).');
+        if (todos.length === 0) {
+            mensaje('mensajeLogin', 'No hay usuarios guardados en esta PC: alguien tiene que iniciar sesión con internet.');
             return;
         }
         usuarios.forEach(function (u) {
@@ -176,7 +224,7 @@
     function entrar(evento) {
         evento.preventDefault();
         var u = estado.usuarioElegido;
-        if (!u) return;
+        if (!u || !revisarVigencia()) return;
         Pin.verificar(u, $('inputPin').value, Db).then(function (r) {
             $('inputPin').value = '';
             if (!r.ok) { mensaje('mensajeLogin', r.mensaje); return; }
@@ -196,13 +244,23 @@
     function irSegunCaja() {
         return Promise.all([Db.leer('cajas'), recuperarCarrito()]).then(function (valores) {
             var cajas = valores[0];
-            var caja = cajas && cajas[estado.sesion.idUsuario];
+            var caja = cajas && cajas[claveCaja()];
             irA(caja && caja.abierta ? 'vistaVenta' : 'vistaCaja');
         });
     }
 
+    function idSucursal() {
+        return estado.catalogo.sucursal ? estado.catalogo.sucursal.id : 0;
+    }
+
+    // La caja guardada es por sucursal y vendedor (la PC puede cambiar de sucursal).
+    function claveCaja() {
+        return Sync.claveCaja(idSucursal(), estado.sesion.idUsuario);
+    }
+
     function abrirCaja(evento) {
         evento.preventDefault();
+        if (!revisarVigencia()) return;
         var monto = numero($('inputCajaInicio').value);
         if (!(monto > 0)) { mensaje('mensajeCaja', 'Ingresá un monto mayor a 0.'); return; }
         var ahora = new Date();
@@ -227,7 +285,7 @@
             .then(function () { return Db.leer('cajas'); })
             .then(function (cajas) {
                 cajas = cajas || {};
-                cajas[estado.sesion.idUsuario] = { abierta: true, offline: true, fechaInicio: item.pedido.fechaLocal, informado: ahora.toISOString() };
+                cajas[claveCaja()] = { abierta: true, offline: true, fechaInicio: item.pedido.fechaLocal, informado: ahora.toISOString() };
                 return Db.guardar('cajas', cajas);
             })
             .then(function () { $('inputCajaInicio').value = ''; return refrescarCola(); })
@@ -427,6 +485,8 @@
 
     // Arma la venta, la deja en la cola (lo primero: si algo falla despues, la venta ya esta a salvo) e imprime el ticket.
     function registrarVenta(forma, esMixto, efectivoMixto, pagaCon) {
+        // El carrito no se pierde si el permiso vencio con la venta armada.
+        if (!revisarVigencia()) return;
         var ahora = new Date();
         var clientId = uuid();
         var lineas = estado.carrito.map(function (l) {
@@ -487,6 +547,7 @@
     // ---------------------------------------------------------------- conexion y subida
 
     function chequearRed() {
+        if (estado.sesion) revisarVigencia();
         return Red.chequear({ segundosTimeout: estado.config.segundosTimeoutPing, urlChequeoInternet: estado.config.urlChequeoInternet })
             .then(function (r) {
                 estado.online = r.online;
@@ -500,12 +561,13 @@
     function subirEnSegundoPlano() {
         return Sync.subirCola({}).then(function (r) {
             if (r.sinSesion) {
-                mostrarAviso('Volvió la conexión. Tocá "Volver al POS normal" e ingresá con tu usuario para subir las ventas.');
+                mostrarAviso('Volvió la conexión. Tocá "Volver al POS normal" e iniciá sesión para subir las ventas.');
             } else if (r.subidas > 0 || r.rechazadas > 0) {
-                mostrarAviso('Se subieron ' + r.subidas + ' operaciones' + (r.rechazadas ? ', ' + r.rechazadas + ' quedaron para revisar' : '') + '.' +
+                mostrarAviso((r.subidas === 1 ? 'Se subió 1 operación' : 'Se subieron ' + r.subidas + ' operaciones') +
+                    (r.rechazadas ? ', ' + r.rechazadas + ' para revisar' : '') + '.' +
                     (r.avisos.length ? ' ' + r.avisos.join(' ') : ''));
-            } else if (r.deOtroVendedor > 0) {
-                mostrarAviso('Hay ventas de otro vendedor: se suben cuando él entre al POS con internet.');
+            } else if (r.deOtraSucursal > 0) {
+                mostrarAviso('Hay ventas de otra sucursal: se suben cuando alguien trabaje en esa sucursal con internet.');
             }
             return refrescarCola();
         });
@@ -545,6 +607,7 @@
 
     function enlazar() {
         $('formPin').addEventListener('submit', entrar);
+        $('inputFiltroUsuario').addEventListener('input', renderUsuarios);
         $('formCaja').addEventListener('submit', abrirCaja);
         // El formulario tiene dos campos de texto y ningun boton de envio: el navegador no lo envia con Enter (envio
         // implicito del HTML), asi que Enter se maneja a mano. Enter en Cantidad pasa a Codigo.
@@ -592,13 +655,11 @@
             window.CarnisysBalanza.start({ onPeso: function (l) { $('textoBalanza').textContent = l && l.peso > 0 ? 'Balanza: ' + l.peso + ' kg' : ''; } });
             window.CarnisysBalanza.activar();
         }
-        Promise.all([Db.leer('catalogo'), Db.leer('configOffline'), Db.leer('sesion')])
+        Promise.all([releerDatos(), Db.leer('sesion')])
             .then(function (valores) {
-                estado.catalogo = valores[0];
-                estado.config = valores[1] || {};
-                var sesion = valores[2];
+                var sesion = valores[1];
                 refrescarCola();
-                if (!estado.catalogo || !estado.catalogo.productos) { noPreparada(); return; }
+                if (!revisarVigencia()) return;
                 var vigente = sesion && (Date.now() - sesion.inicio) < HORAS_SESION * 3600 * 1000
                     && (estado.catalogo.usuarios || []).some(function (u) { return u.id === sesion.idUsuario; });
                 if (vigente) {

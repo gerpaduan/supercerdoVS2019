@@ -36,6 +36,7 @@
         .lista-busqueda button { display: flex; width: 100%; justify-content: space-between; text-align: left; border: 0; border-bottom: 1px solid #eee; background: none; padding: 6px 4px; font-size: 0.85rem; }
         .lista-busqueda button:hover, .lista-busqueda button:focus { background: #e9f2ff; }
         .estado-rechazada { color: #b02a37; }
+        .aviso-precios { background: #b02a37; color: #fff; padding: 6px 12px; font-weight: 700; text-align: center; }
         @media (max-width: 576px) { .total { font-size: 1.4rem; } }
     </style>
 </head>
@@ -53,25 +54,28 @@
         </div>
     </header>
 
+    <div id="avisoPrecios" class="aviso-precios" role="alert" hidden></div>
+
     <main>
         <div id="mensajeGeneral" class="alert alert-info" hidden></div>
 
-        <!-- La PC nunca bajo el catalogo, o el navegador no permite guardar datos. -->
+        <!-- La PC no tiene datos, vencio su vigencia, tiene el reloj atrasado o no permite guardar datos. -->
         <section id="vistaNoPreparada" class="tarjeta" hidden>
             <h5>Esta PC no está preparada para vender sin conexión</h5>
-            <p id="textoNoPreparada" class="mb-2">Para vender sin conexión, el POS tiene que haberse abierto al menos una vez con internet en esta PC.</p>
+            <p id="textoNoPreparada" class="mb-2">Para vender sin conexión, alguien tiene que haber iniciado sesión con internet en esta PC.</p>
             <p class="mb-0">Mientras tanto, anotá las ventas en papel y cargalas cuando vuelva la conexión.</p>
         </section>
 
-        <!-- Login con PIN. -->
+        <!-- Ingreso con contraseña o PIN. -->
         <section id="vistaLogin" class="tarjeta" hidden>
             <h5>¿Quién vende?</h5>
-            <p class="text-muted mb-2">Tocá tu nombre e ingresá tu PIN.</p>
+            <p class="text-muted mb-2">Tocá tu nombre e ingresá tu contraseña (o tu PIN).</p>
+            <input id="inputFiltroUsuario" type="search" class="form-control mb-2" placeholder="Buscar usuario" autocomplete="off" hidden>
             <div id="listaUsuarios" class="usuarios mb-3"></div>
             <form id="formPin" class="row g-2 align-items-end" autocomplete="off" hidden>
                 <div class="col-auto">
-                    <label for="inputPin" class="form-label mb-0">PIN de <span id="nombrePin"></span></label>
-                    <input id="inputPin" type="password" inputmode="numeric" maxlength="6" class="form-control" autocomplete="off">
+                    <label for="inputPin" class="form-label mb-0">Contraseña o PIN de <span id="nombrePin"></span></label>
+                    <input id="inputPin" type="password" class="form-control" autocomplete="off">
                 </div>
                 <div class="col-auto"><button type="submit" class="btn btn-primary">Entrar</button></div>
             </form>
@@ -180,6 +184,7 @@
     <script src="../Scripts/app/pos-offline-red.js"></script>
     <script src="../Scripts/app/pos-offline-buscar.js"></script>
     <script src="../Scripts/app/pos-offline-pin.js"></script>
+    <script src="../Scripts/app/pos-offline-vigencia.js"></script>
     <script src="../Scripts/app/pos-offline-sync.js"></script>
     <script src="../Scripts/app/pos-offline-ticket.js"></script>
     <script src="../Scripts/app/pos-offline-app.js"></script>

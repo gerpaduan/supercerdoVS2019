@@ -1,57 +1,44 @@
 // Configuracion del POS sin conexion (2026-11-26), leida de App.config (appSettings, claves "PosOffline:*"). Mismo
-// mecanismo que PosBorradorSettings. Con PosOffline:Habilitado apagado (default) no se registra el service worker, no
-// se baja el catalogo y el servidor no toca la tabla posclaveunica: el POS se comporta igual que antes.
+// mecanismo que PosBorradorSettings. Viene HABILITADO en todas las sucursales (decision del usuario 2026-11-26):
+// "PosOffline:Habilitado=false" es solo el freno de emergencia. Si la base no tiene la tabla posclaveunica la funcion
+// queda apagada sola (ver PosOfflineDisponibilidad), nunca rompe las ventas.
 // Ver docs/DECISIONS.md "POS sin conexion" y docs/03-modulos/ventas-y-pos.md.
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 
 namespace WebCore.Helpers
 {
     public static class PosOfflineSettings
     {
+        private const int DiasVigenciaDefault = 15;
+        private const int HorasAvisoPreciosDefault = 24;
         private const int MinutosToleranciaFuturoDefault = 10;
-        private const int DiasMaximosAntiguedadDefault = 7;
+        // Mayor que DiasVigencia: una PC puede vender sin conexion hasta DiasVigencia y subir las ventas despues.
+        private const int DiasMaximosAntiguedadDefault = 20;
         private const int MaxLineasDefault = 300;
         private const int MinutosRefrescoCatalogoDefault = 10;
         private const int FallasSeguidasParaCorteDefault = 2;
         private const int SegundosTimeoutPingDefault = 4;
 
-        // Interruptor general. Apagado por defecto: hay que haber corrido antes la migracion de posclaveunica en esa base
-        // (DatosPostgres/DB-Migrations/20261126-Create_posclaveunica.sql o su espejo de SQL Server).
-        public static bool HabilitadoGlobal => LeerBool("PosOffline:Habilitado", false);
+        // Freno de emergencia: prendido por defecto. Quien necesite saber si la funcion rige usa
+        // PosOfflineDisponibilidad (que ademas mira que exista la tabla).
+        public static bool Habilitado => LeerBool("PosOffline:Habilitado", true);
 
-        // Sucursales donde rige (CSV de idSucursal). Vacio = todas. Sirve para prenderlo primero en un solo local.
-        public static IReadOnlyCollection<int> SoloSucursales
-        {
-            get
-            {
-                return Leer("PosOffline:SoloSucursales")
-                    .Split(',')
-                    .Select(s => int.TryParse(s.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int id) ? id : 0)
-                    .Where(id => id > 0)
-                    .Distinct()
-                    .ToList();
-            }
-        }
+        // Dias que una PC puede vender sin conexion desde la ultima vez que un usuario inicio sesion (o uso el sistema
+        // con la sesion abierta) en ella. Pasados, la PC borra las claves guardadas y no deja vender hasta conectarse.
+        public static int DiasVigencia => LeerEntero("PosOffline:DiasVigencia", DiasVigenciaDefault, 1, 60);
 
-        // true si el POS sin conexion rige para esa sucursal.
-        public static bool HabilitadoPara(int idSucursal)
-        {
-            if (!HabilitadoGlobal || idSucursal <= 0) return false;
-            var solo = SoloSucursales;
-            return solo.Count == 0 || solo.Contains(idSucursal);
-        }
+        // Antiguedad de los precios guardados a partir de la cual la pantalla sin conexion avisa en rojo.
+        public static int HorasAvisoPrecios => LeerEntero("PosOffline:HorasAvisoPrecios", HorasAvisoPreciosDefault, 1, 720);
 
         // Minutos que la hora de la PC puede adelantar a la del servidor sin rechazar la venta.
         public static int MinutosToleranciaFuturo => LeerEntero("PosOffline:MinutosToleranciaFuturo", MinutosToleranciaFuturoDefault, 0, 240);
 
         // Una venta offline mas vieja que esto al llegar se rechaza y queda en la PC para que la revise un admin.
-        public static int DiasMaximosAntiguedad => LeerEntero("PosOffline:DiasMaximosAntiguedad", DiasMaximosAntiguedadDefault, 1, 60);
+        public static int DiasMaximosAntiguedad => LeerEntero("PosOffline:DiasMaximosAntiguedad", DiasMaximosAntiguedadDefault, 1, 90);
 
         public static int MaxLineas => LeerEntero("PosOffline:MaxLineas", MaxLineasDefault, 10, 2000);
 
-        // Cada cuantos minutos el POS vuelve a bajar el catalogo mientras hay conexion.
+        // Cada cuantos minutos una PC con sesion vuelve a bajar catalogo y usuarios mientras hay conexion.
         public static int MinutosRefrescoCatalogo => LeerEntero("PosOffline:MinutosRefrescoCatalogo", MinutosRefrescoCatalogoDefault, 1, 240);
 
         // Fallas de red seguidas antes de pasar a "sin conexion" (evita que una red lenta se tome como corte).

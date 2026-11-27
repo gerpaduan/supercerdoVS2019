@@ -520,6 +520,9 @@
 
     @await RenderSectionAsync("Scripts", required: false)
 
+    @* POS sin conexion (2026-11-27): prepara la PC, sube lo pendiente y, en Ventas/POS, indicador y aviso de corte. *@
+    <partial name="_PosOffline" />
+
     <script>
         (function () {
             const STORAGE_KEY = "carnisys-theme";

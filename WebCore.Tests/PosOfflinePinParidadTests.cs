@@ -11,6 +11,8 @@ namespace WebCore.Tests
     public class PosOfflinePinParidadTests
     {
         private const string Pin = "4826";
+        // Con ñ y simbolo: el navegador tiene que codificar en UTF-8 igual que el servidor.
+        private const string Clave = "Señal-2026!";
         private const int Iteraciones = 1000;
 
         private static string RutaFixture()
@@ -36,12 +38,21 @@ namespace WebCore.Tests
                     ["pinHash"] = hash.Hash,
                     ["pinIteraciones"] = hash.Iterations
                 };
+                var hashClave = Utilidades.PasswordSecurity.HashPassword(Clave, Iteraciones);
+                json["clave"] = Clave;
+                json["claveSalt"] = hashClave.Salt;
+                json["claveHash"] = hashClave.Hash;
+                json["claveIteraciones"] = hashClave.Iterations;
                 File.WriteAllText(ruta, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }).Replace("\r\n", "\n") + "\n");
             }
 
             Assert.True(File.Exists(ruta), "Falta el fixture " + ruta + ": correr con REGENERAR_FIXTURES=1.");
             var leido = JsonNode.Parse(File.ReadAllText(ruta))!;
             Assert.Equal(Pin, leido["pin"]!.GetValue<string>());
+            Assert.Equal(Clave, leido["clave"]!.GetValue<string>());
+            Assert.True(Utilidades.PasswordSecurity.VerifyPassword(
+                Clave, leido["claveHash"]!.GetValue<string>(), leido["claveSalt"]!.GetValue<string>(),
+                leido["claveIteraciones"]!.GetValue<int>()));
             Assert.True(Utilidades.PasswordSecurity.VerifyPassword(
                 leido["pin"]!.GetValue<string>(), leido["pinHash"]!.GetValue<string>(),
                 leido["pinSalt"]!.GetValue<string>(), leido["pinIteraciones"]!.GetValue<int>()));

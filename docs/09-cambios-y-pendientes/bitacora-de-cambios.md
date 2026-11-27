@@ -1,5 +1,12 @@
 # Bitacora de cambios
 
+## 2026-11-27 - POS sin conexión: siempre habilitado, 15 días por inicio de sesión y contraseña
+
+- **Cambio:** habilitado en todas las sucursales (queda freno de emergencia y se apaga solo sin la tabla); cualquier inicio de sesión prepara la PC y renueva 15 días; ingreso sin conexión con contraseña o PIN; se guardan los usuarios de toda la empresa (admins solo en sus PC); sube cualquier usuario de la sucursal y los vendedores no habilitados quedan marcados con aviso al admin; aviso de precios viejos. Corrige que solo los administradores quedaban habilitados para entrar sin conexión. Ver `docs/DECISIONS.md` (2026-11-27).
+- **Archivos:** ver la entrada de `DECISIONS.md`; tests `PosOfflineDisponibilidadTests.cs`, `PosOfflinePinParidadTests.cs`, `js/pos-offline-{pin,vigencia}.test.js`, `VentaOfflineTests.cs`.
+- **Verificado:** WebCore.Tests 419/419, Negocio.Tests 880/881 (el que falla, `EliminarCompra_ConEgresoEnCeroPorCtaCte`, ya fallaba en `0053bc14`+), Node 210/210, y de punta a punta con login real en la copia local: PC preparada al iniciar sesión desde el tablero, usuarios de toda la empresa, ingreso del cajero con contraseña, subida por otro usuario, vendedor dado de baja con marca y aviso en la campana, aviso de precios, vencimiento con borrado de claves y cola conservada, reloj atrasado, reactivación y freno de emergencia. Usuarios y datos de prueba borrados.
+- **Pendiente:** corte de internet real y celular; no desplegado; SM y SL necesitan HTTPS válido y su script SQL.
+
 ## 2026-11-26 - POS sin conexión: vender sin internet y subir las ventas solas
 
 - **Cambio:** con `PosOffline:Habilitado` prendido, el POS (`Ventas/POS`) puede vender sin conexión: Consumidor Final, sin descuentos, todas las formas de pago menos Cta. Cte., búsqueda F10 y etiquetas de balanza contra el catálogo guardado en la PC, login con PIN (también un PIN «solo sin conexión» para admins), apertura de caja sin conexión, ticket X propio y cola que se sube sola al volver. Tabla nueva `posclaveunica` (no se toca `ventas`) y el id de la venta grabada ahora sale de `RETURNING` / `SCOPE_IDENTITY()`. Aviso en el cierre de caja. Ver `docs/DECISIONS.md` (2026-11-26 e).
@@ -12,7 +19,7 @@
   - Tests: `Negocio.Tests/VentaOfflineTests.cs`, `Negocio.Tests/Fakes/FakePosClaveUnicaRepository.cs`, `WebCore.Tests/PosOffline{Barcode,Pin}ParidadTests.cs`, `WebCore.Tests/js/pos-offline-{buscar,pin}.test.js` y sus fixtures
   - Docs: `DECISIONS.md`, `03-modulos/ventas-y-pos.md`, `07-operacion-y-soporte/despliegue-y-publicacion.md`, `09-cambios-y-pendientes/mejoras-futuras.md`, manual `Ventas.POS.md`, `Login.ChangePin.md`, `Cajas.CajasAbiertas.md`, `clave-rapida-pin.md`, `configuraciones.md`
 - **Verificado:** WebCore.Tests 405/405, Negocio.Tests 875/876 (el que falla ya fallaba en HEAD), Node 196/196, paridad JS↔C# de búsqueda y de PIN, arnés contra Postgres y SQL Server locales, y de punta a punta con login real contra la copia local (subida, rechazos, marcas, cierre, POS online con el interruptor prendido y apagado). Usuario, dispositivo, ventas y cajas de prueba ya borrados.
-- **Pendiente:** corte de internet real y celular real; contra SQL Server solo se probó la capa de datos (no la pantalla); Mis ventas sin marcas ni filtro; facturación en lote (agendada); no deployado; SM y SL necesitan HTTPS válido.
+- **Pendiente:** corte de internet real y celular real; contra SQL Server solo se probó la capa de datos (no la pantalla); Mis ventas sin marcas ni filtro; facturación en lote (agendada); desplegado en la VPS luden el 2026-11-26 con el interruptor apagado (SM y SL sin desplegar); SM y SL necesitan HTTPS válido.
 
 ## 2026-11-26 - Guardado único: un doble clic o un reintento ya no graba dos veces
 

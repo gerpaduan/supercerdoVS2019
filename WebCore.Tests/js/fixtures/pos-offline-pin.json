@@ -1,6 +1,10 @@
 {
   "pin": "4826",
-  "pinSalt": "mUlXGnq02LGyGopUd5L6Rw==",
-  "pinHash": "arAw9Cj/bS653jMYT9ojgwKGpeWRgaWNth1yIODTun8=",
-  "pinIteraciones": 1000
+  "pinSalt": "HhnpvLHDLkCGGnJSutZaRg==",
+  "pinHash": "Y0KhmxJwGKsrxbTkXtoyVDb1WNvbgIwp2NP9mCVBfdE=",
+  "pinIteraciones": 1000,
+  "clave": "Se\u00F1al-2026!",
+  "claveSalt": "mrZEnmK\u002BE2Nx/RrMbzAnEA==",
+  "claveHash": "X5hv\u002B4Bu9NV\u002BbwCfzZIMbRcIHP2BB6bSeU0pdaWcrrY=",
+  "claveIteraciones": 1000
 }

@@ -838,7 +838,7 @@
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
-    @if (WebCore.Helpers.PosOfflineSettings.HabilitadoGlobal)
+    @if (WebCore.Helpers.PosOfflineSettings.Habilitado)
     {
         @* POS sin conexion: lectura de la cola local para el aviso del cierre (renderVentasSinConexion). *@
         <script src="~/Scripts/app/pos-offline-db.js" asp-append-version="true"></script>
@@ -1513,7 +1513,8 @@
                     const marcas = [];
                     if (v.llegoTarde) marcas.push("llegó tarde");
                     if (v.pendienteFacturar) marcas.push("para facturar");
-                    if (v.difPrecio) marcas.push(v.detalle || "precio distinto");
+                    // detalle: diferencias de precio y/o vendedor dado de baja y quien la subio.
+                    if (v.detalle) marcas.push(v.detalle); else if (v.difPrecio) marcas.push("precio distinto");
                     $detalle.append($("<li>").text("Venta N° " + v.idVenta + " · " + v.fecha + " (subida " + v.recibido + ")" + (marcas.length ? " · " + marcas.join(" · ") : "")));
                 });
                 $("#avisoVentasSinConexion").removeClass("d-none");
@@ -1527,7 +1528,7 @@
                 const una = pendientes.length === 1;
                 $("#avisoColaSinSubirTexto").text("En esta PC hay " + pendientes.length + (una ? " operación" : " operaciones") +
                     " de " + (data.vendedor || "este vendedor") + (una ? " hecha" : " hechas") + " sin conexión que todavía no " +
-                    (una ? "se subió" : "se subieron") + ". Abrí el POS con ese usuario para " + (una ? "subirla" : "subirlas") + " antes de cerrar.");
+                    (una ? "se subió" : "se subieron") + ". Iniciá sesión con internet en esta PC para " + (una ? "subirla" : "subirlas") + " antes de cerrar.");
                 $("#avisoColaSinSubir").removeClass("d-none");
             }).catch(function (e) { console.warn("No se pudo leer la cola sin conexión de esta PC", e); });
         }
